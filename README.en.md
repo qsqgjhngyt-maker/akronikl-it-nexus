@@ -1,66 +1,54 @@
-{
-  "brand.subtitle": "Инженерная образовательная IT-платформа",
-  "nav.home": "Главная",
-  "nav.academy": "Академия",
-  "nav.skills": "Карта навыков",
-  "nav.labs": "Лаборатории",
-  "nav.projects": "Проекты",
-  "nav.practices": "Практики",
-  "nav.akronikl": "Akronikl",
-  "hero.eyebrow": "AKRONIKL IT NEXUS · PLATFORM SHELL",
-  "hero.title": "Знания становятся системой.",
-  "hero.text": "Глубокая теория, практика, проекты, Skill Graph и AI-наставник в одной инженерной образовательной среде.",
-  "hero.free": "Основной образовательный путь — бесплатно",
-  "hero.openCourse": "Открыть C++ Foundation",
-  "hero.catalog": "Каталог направлений",
-  "metrics.disciplines": "дисциплины в карте",
-  "metrics.locales": "активные локали",
-  "metrics.cpp": "тем C++ mapped",
-  "metrics.paywall": "paywall в учебном ядре",
-  "section.continue": "Первая траектория",
-  "section.catalog": "Карта направлений",
-  "section.catalogText": "53 дисциплины уже зафиксированы в архитектуре. Сейчас реализуется первый reference-курс C++.",
-  "section.architecture": "Что уже работает в alpha.1",
-  "course.cpp.status": "Migration baseline",
-  "course.cpp.desc": "40 тем старого C++ v7 получили стабильные ID. Контент переносится только после rights/provenance audit.",
-  "course.progress": "Прогресс",
-  "course.open": "Открыть структуру курса",
-  "course.topics": "тем",
-  "course.sections": "разделов",
-  "catalog.search": "Поиск по дисциплинам…",
-  "catalog.all": "Все направления",
-  "catalog.planned": "Запланировано",
-  "catalog.available": "Доступно в alpha",
-  "catalog.user": "утверждено",
-  "catalog.proposal": "расширение концепции",
-  "migration.title": "Найден прогресс старого C++ v7",
-  "migration.text": "Nexus может безопасно импортировать прогресс из старого курса. Исходный ключ не будет удалён или изменён.",
-  "migration.import": "Импортировать прогресс",
-  "migration.done": "Прогресс импортирован",
-  "migration.none": "Legacy-прогресс не найден на этом домене",
-  "migration.detected": "Обнаружено завершённых тем: {done} из 40",
-  "settings.ui": "Интерфейс",
-  "settings.course": "Курс",
-  "settings.mentor": "Akronikl",
-  "settings.language": "Языки",
-  "akronikl.title": "Akronikl Context Model",
-  "akronikl.text": "В alpha.1 наставник ещё не подключён к облачной модели. Уже существует языконезависимый контекст: курс → тема → задача → код → попытки.",
-  "akronikl.ready": "Контекстный слой готов",
-  "akronikl.offline": "AI Gateway: не подключён",
-  "akronikl.future": "Позже: текст + голос RU/EN и любые подключаемые локали.",
-  "architecture.storage": "Namespaced storage",
-  "architecture.i18n": "Dynamic i18n",
-  "architecture.migration": "C++ v7 migration",
-  "architecture.pwa": "Offline shell",
-  "architecture.context": "Akronikl context",
-  "architecture.ids": "Stable content IDs",
-  "course.back": "← Назад в Академию",
-  "course.baselineNotice": "Это структурный baseline. Полные уроки ещё не перенесены.",
-  "course.benchmark": "Эталонный урок",
-  "course.completed": "Пройдено",
-  "course.pending": "Контент готовится",
-  "footer.status": "v0.1.0-alpha.1 · Platform Shell",
-  "footer.mission": "Russian-first, not Russian-only · Free to learn.",
-  "common.close": "Закрыть",
-  "common.notReady": "Этот раздел запланирован и пока не опубликован."
-}
+# AKRONIKL IT NEXUS
+
+**Engineering IT Learning Platform**
+
+> **Nexus — the node of connections. The horizon beyond which knowledge becomes a system.**
+
+Akronikl IT Nexus is a modular IT learning platform combining deep theory, interactive labs, programming, projects, practical placements, Skill Graph and the contextual AI mentor Akronikl.
+
+## Mission
+
+**High-quality engineering education should not begin with the question: “Can you afford it?”**
+
+The core learning path is designed to remain free. The platform is Russian-first, not Russian-only, and is open to international learners.
+
+## Languages
+
+RU and EN are the first complete locales. The architecture is multilingual-by-design so additional languages can be added without rewriting the core. UI, course and Akronikl text/voice language can be selected independently.
+
+## Status
+
+**Foundation / pre-implementation.** The original `cpp-course` remains an immutable baseline/reference source; its monolithic architecture is not copied into the new platform.
+
+## Rights and licensing
+
+Free access to knowledge is separate from the right to commercially resell the project. A public license is intentionally **not activated yet** until ownership, third-party materials and contribution rights are audited. The target model uses a noncommercial software license for code, CC BY-NC-SA 4.0 for original learning content, separate brand protection and original third-party licenses.
+
+See [`RIGHTS_AND_LICENSING.en.md`](RIGHTS_AND_LICENSING.en.md) and [`docs/en/08-legal`](docs/en/08-legal).
+
+## Documentation
+
+Normative primary documentation: [`docs/ru`](docs/ru).  
+English mirror: [`docs/en`](docs/en).
+
+## First implementation plan
+
+1. C++ v7 baseline regression and rights/provenance audit.
+2. Extract platform core without changing behavior.
+3. Create stable-ID `cpp` course package.
+4. Migrate progress safely.
+5. Add locale registry and Akronikl Context Model.
+6. Create three reference-quality lessons.
+7. Scale only after PASS.
+
+## Repository
+
+Official repository name: `akronikl-it-nexus`  
+Namespace: `akronikl:it-nexus:*`
+
+
+## Current implementation
+
+**v0.1.1-alpha.1 / Platform Shell + C++ Reference Integration.** The Foundation is preserved. The root `index.html` is now self-diagnostic, and the C++ v7 monolith has been decomposed into a modular course package with 40 Russian lesson bodies, 6 practicums, 7 projects, quizzes, browser sandbox, and a safe legacy-progress bridge. The original `cpp-course` remains an immutable reference baseline.
+
+See [`RELEASE_v0.1.1-alpha.1.md`](RELEASE_v0.1.1-alpha.1.md).
