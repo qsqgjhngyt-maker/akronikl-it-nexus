@@ -2,4 +2,6 @@
 
 # Akronikl IT Nexus Lesson Standard
 
-A full technical lesson should include purpose, learning outcomes, a quick explanation, a core model, a deeper reasoning section, independent full theory, internal/runtime model when relevant, fully worked examples, line-by-line code explanation where useful, controlled “what if” experiments, error analysis, progressive practice, lab/mini-experiment, understanding checks, contextual Akronikl support, prerequisites/related topics, and a final skill checklist. Section sizes are driven by the topic, not by a rigid template.
+Where relevant, a full technical lesson includes: practical purpose, learning outcomes, a concise core model, deeper causal explanation, terms and abbreviations expanded at first meaningful use, foundational self-contained theory, an internal execution/data/memory model, multiple worked examples, code analysis, controlled experiments, symptom→stage→cause→fix diagnostics, progressive practice, a lab, understanding checks that test transfer rather than recall alone, contextual Akronikl support, prerequisites/related topics, Skill Graph, and a final understanding checklist.
+
+Programming lessons should use **Nexus Sandbox** according to `SANDBOX_STANDARD.md` whenever in-platform execution is technically feasible. Learner-facing lessons must not expose internal provenance/source-document references.

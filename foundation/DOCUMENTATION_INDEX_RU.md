@@ -1,10 +1,11 @@
-> **Основной язык документации: русский.** Русская версия является нормативной. Английская версия поддерживается как вторичное зеркало для международных пользователей.
+> **Основной язык документации: русский.** Русская версия является нормативной. Английская версия поддерживается как синхронизированное вторичное зеркало.
 
 # Индекс документации
 
 - `docs/ru/00-product/BRAND_IDENTITY.md`
 - `docs/ru/00-product/BRAND_PHILOSOPHY.md`
 - `docs/ru/00-product/COMPETITIVE_CONCEPT.md`
+- `docs/ru/00-product/OPEN_EDUCATION_MISSION.md`
 - `docs/ru/00-product/PLATFORM_COURSE_CATALOG.md`
 - `docs/ru/00-product/PRODUCT_SCOPE.md`
 - `docs/ru/00-product/PRODUCT_VISION.md`
@@ -21,7 +22,9 @@
 - `docs/ru/03-content/CODE_EXAMPLE_STANDARD.md`
 - `docs/ru/03-content/FULL_THEORY_STANDARD.md`
 - `docs/ru/03-content/LAB_STANDARD.md`
+- `docs/ru/03-content/LEARNING_AND_KNOWLEDGE_ASSIMILATION_STANDARD.md`
 - `docs/ru/03-content/LESSON_STANDARD.md`
+- `docs/ru/03-content/SANDBOX_STANDARD.md`
 - `docs/ru/04-security/API_SECURITY.md`
 - `docs/ru/04-security/SECRET_MANAGEMENT.md`
 - `docs/ru/05-qa/QA_STRATEGY.md`
@@ -31,9 +34,19 @@
 - `docs/ru/06-release/VERSIONING.md`
 - `docs/ru/07-roadmap/FIRST_SPRINT.md`
 - `docs/ru/07-roadmap/ROADMAP.md`
+- `docs/ru/08-legal/BRAND_AND_TRADEMARK_POLICY.md`
+- `docs/ru/08-legal/CONTRIBUTION_RIGHTS_POLICY.md`
+- `docs/ru/08-legal/LEGAL_ACTION_CHECKLIST.md`
+- `docs/ru/08-legal/LEGAL_RESEARCH_REPORT_2026-09-17.md`
+- `docs/ru/08-legal/LEGAL_STRATEGY.md`
+- `docs/ru/08-legal/LICENSING_MODEL.md`
+- `docs/ru/08-legal/THIRD_PARTY_AND_PROVENANCE_POLICY.md`
 - `docs/ru/adr/ADR-0001-RU_PRIMARY_EN_MIRROR.md`
 - `docs/ru/adr/ADR-0002-MODULAR_PLATFORM.md`
 - `docs/ru/adr/ADR-0003-SECURE_AI_GATEWAY.md`
 - `docs/ru/adr/ADR-0004-STABLE_CONTENT_IDS.md`
 - `docs/ru/adr/ADR-0005-CONTENT_DEPTH_BEFORE_SCALE.md`
 - `docs/ru/adr/ADR-0006-BRAND_NAME_AND_NEXUS_PHILOSOPHY.md`
+- `docs/ru/adr/ADR-0007-MULTILINGUAL_BY_DESIGN.md`
+- `docs/ru/adr/ADR-0008-FREE_EDUCATION_NONCOMMERCIAL_MODEL.md`
+- `docs/ru/adr/ADR-0009-MULTI_LAYER_RIGHTS_MODEL.md`

@@ -1,10 +1,11 @@
-> **Documentation language policy:** Russian is the normative source. This English version is a secondary mirror for international users. If wording diverges, the Russian version prevails.
+> **Documentation language policy:** Russian is the normative source. This English version is a synchronized secondary mirror. If wording diverges, the Russian version prevails.
 
 # Documentation Index
 
 - `docs/en/00-product/BRAND_IDENTITY.md`
 - `docs/en/00-product/BRAND_PHILOSOPHY.md`
 - `docs/en/00-product/COMPETITIVE_CONCEPT.md`
+- `docs/en/00-product/OPEN_EDUCATION_MISSION.md`
 - `docs/en/00-product/PLATFORM_COURSE_CATALOG.md`
 - `docs/en/00-product/PRODUCT_SCOPE.md`
 - `docs/en/00-product/PRODUCT_VISION.md`
@@ -21,7 +22,9 @@
 - `docs/en/03-content/CODE_EXAMPLE_STANDARD.md`
 - `docs/en/03-content/FULL_THEORY_STANDARD.md`
 - `docs/en/03-content/LAB_STANDARD.md`
+- `docs/en/03-content/LEARNING_AND_KNOWLEDGE_ASSIMILATION_STANDARD.md`
 - `docs/en/03-content/LESSON_STANDARD.md`
+- `docs/en/03-content/SANDBOX_STANDARD.md`
 - `docs/en/04-security/API_SECURITY.md`
 - `docs/en/04-security/SECRET_MANAGEMENT.md`
 - `docs/en/05-qa/QA_STRATEGY.md`
@@ -31,9 +34,19 @@
 - `docs/en/06-release/VERSIONING.md`
 - `docs/en/07-roadmap/FIRST_SPRINT.md`
 - `docs/en/07-roadmap/ROADMAP.md`
+- `docs/en/08-legal/BRAND_AND_TRADEMARK_POLICY.md`
+- `docs/en/08-legal/CONTRIBUTION_RIGHTS_POLICY.md`
+- `docs/en/08-legal/LEGAL_ACTION_CHECKLIST.md`
+- `docs/en/08-legal/LEGAL_RESEARCH_REPORT_2026-09-17.md`
+- `docs/en/08-legal/LEGAL_STRATEGY.md`
+- `docs/en/08-legal/LICENSING_MODEL.md`
+- `docs/en/08-legal/THIRD_PARTY_AND_PROVENANCE_POLICY.md`
 - `docs/en/adr/ADR-0001-RU_PRIMARY_EN_MIRROR.md`
 - `docs/en/adr/ADR-0002-MODULAR_PLATFORM.md`
 - `docs/en/adr/ADR-0003-SECURE_AI_GATEWAY.md`
 - `docs/en/adr/ADR-0004-STABLE_CONTENT_IDS.md`
 - `docs/en/adr/ADR-0005-CONTENT_DEPTH_BEFORE_SCALE.md`
 - `docs/en/adr/ADR-0006-BRAND_NAME_AND_NEXUS_PHILOSOPHY.md`
+- `docs/en/adr/ADR-0007-MULTILINGUAL_BY_DESIGN.md`
+- `docs/en/adr/ADR-0008-FREE_EDUCATION_NONCOMMERCIAL_MODEL.md`
+- `docs/en/adr/ADR-0009-MULTI_LAYER_RIGHTS_MODEL.md`

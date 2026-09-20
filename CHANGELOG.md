@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.1.2-alpha.2 — Benchmark 01 · Theory & Nexus Sandbox
+
+- Benchmark Standard повышен до 1.1.
+- «Прочитать спокойно» заменено на профессиональную структуру: «Фундаментальная теория → Системный разбор темы».
+- Первый урок расширен до 16 разделов фундаментальной теории и словаря из 20 терминов/сокращений.
+- Разъясняются IDE, CLI, I/O, compiler, linker, toolchain, runtime, process, OS, stdin/stdout/stderr и другие базовые понятия.
+- Пользовательские отсылки к PDF удалены из интерфейса и учебного текста C++; source/provenance остаётся внутренним слоем.
+- Кодовый блок оформлен как Nexus Sandbox: встроенный редактор, stdin/stdout, runtime self-test, сброс и очистка вывода.
+- Для мобильного ввода отключены autocorrect/autocapitalize и увеличен размер шрифта редактора на узких экранах.
+- RU/EN benchmark сохраняют один stable ID и общий прогресс.
+
 ## v0.1.2-alpha.1 — Benchmark Lesson 01
 
 - Первый эталонный урок Nexus `cpp.first-cpp-program` доведён до Benchmark Standard 1.0.

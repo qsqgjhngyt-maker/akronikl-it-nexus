@@ -18,7 +18,7 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
-**v0.1.2-alpha.1 / Benchmark Lesson 01.** The working v0.1.1-alpha.3 runtime remains the baseline. C++ is the first reference course, and `cpp.first-cpp-program` is now the first full Nexus benchmark lesson: deep theory, toolchain internals, line-by-line walkthrough, controlled experiments, symptom→cause→fix error cases, lab work, Skill Graph links, and complete RU/EN lesson bodies. The remaining 39 topics still use the v7 baseline.
+**v0.1.2-alpha.2 / Benchmark Lesson 01 · Standard 1.1.** C++ is the first active Nexus course. `cpp.first-cpp-program` now includes 16 sections of foundational theory, a 20-entry beginner glossary, systematic toolchain/runtime diagnostics, RU/EN parity, and Nexus Sandbox with integrated editor, stdin/stdout, runtime self-test, and saved code. Learner-facing PDF/source-document references are removed; provenance remains internal.
 
 ## Rights and licensing
 
@@ -52,3 +52,7 @@ Namespace: `akronikl:it-nexus:*`
 **v0.1.1-alpha.1 / Platform Shell + C++ Reference Integration.** The Foundation is preserved. The root `index.html` is now self-diagnostic, and the C++ v7 monolith has been decomposed into a modular course package with 40 Russian lesson bodies, 6 practicums, 7 projects, quizzes, browser sandbox, and a safe legacy-progress bridge. The original `cpp-course` remains an immutable reference baseline.
 
 See [`RELEASE_v0.1.1-alpha.1.md`](RELEASE_v0.1.1-alpha.1.md).
+
+## Current benchmark focus
+
+`cpp.first-cpp-program` now includes foundational theory, an expanded beginner glossary, systematic diagnostics, RU/EN parity, and Nexus Sandbox so core exercises stay inside the platform without requiring a desktop IDE. Learner-facing PDF/source-document references are removed; provenance remains internal.
