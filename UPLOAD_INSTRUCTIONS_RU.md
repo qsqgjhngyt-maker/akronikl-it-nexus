@@ -1,19 +1,25 @@
-# AKRONIKL IT NEXUS v0.1.1-alpha.1 — инструкция по загрузке
+# AKRONIKL IT NEXUS v0.1.1-alpha.3 — Runtime Completeness Fix
 
-Этот пакет заменяет предыдущую цепочку alpha.1 / alpha.1.1 / alpha.1.2 / alpha.1.3 одним проверенным runtime.
+Диагностика GitHub Pages показала, что часть обязательных runtime-файлов не была загружена в репозиторий.
 
-1. Распакуйте ZIP локально.
-2. Загрузите **всё содержимое** архива в корень `akronikl-it-nexus`, сохраняя папки.
-3. Подтвердите замену одноимённых файлов.
-4. Не загружайте сам ZIP в репозиторий.
-5. После коммита откройте `index.html` в GitHub: он должен быть > 1 KB и начинаться с `<!doctype html>`.
-6. Дождитесь зелёного GitHub Pages deployment.
-7. Откройте `https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/?v=0.1.1-alpha.1`.
+## Что обнаружено отсутствующим
 
-Рекомендуемый commit:
+- `core/i18n.js`
+- `core/migrations/cpp-v7.js`
+- `akronikl/context.js`
+- `locales/registry.json`
+- `locales/ru/ui.json`
+- `locales/en/ui.json`
+- `courses/catalog.json`
 
-`feat: интегрирован C++ v7 в модульный Platform Shell v0.1.1-alpha.1`
+Из-за этого `core/app.js` не мог завершить ES-module import/bootstrap.
 
-Описание:
+## Что делать
 
-`Восстановлена надёжная точка входа GitHub Pages и перенесён рабочий cpp-course v7 в модульную архитектуру Nexus: 40 тем, 6 практикумов, 7 проектов, стабильные ID, прогресс, тесты, песочница, PWA и provenance-контроль.`
+1. Распаковать ZIP.
+2. Загрузить **всё содержимое** архива в корень `akronikl-it-nexus`, сохраняя структуру папок и заменяя существующие файлы.
+3. `UPLOAD_INSTRUCTIONS_RU.md` в GitHub загружать необязательно.
+4. После коммита дождаться зелёного GitHub Pages deployment.
+5. Открыть `https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/?v=0.1.1-alpha.3`.
+
+Пакет содержит полный набор boot-critical runtime-файлов, а не только семь отсутствовавших файлов, чтобы исключить повторную неполную загрузку.
