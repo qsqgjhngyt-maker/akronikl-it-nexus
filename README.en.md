@@ -18,7 +18,7 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
-**Foundation / pre-implementation.** The original `cpp-course` remains an immutable baseline/reference source; its monolithic architecture is not copied into the new platform.
+**v0.1.2-alpha.1 / Benchmark Lesson 01.** The working v0.1.1-alpha.3 runtime remains the baseline. C++ is the first reference course, and `cpp.first-cpp-program` is now the first full Nexus benchmark lesson: deep theory, toolchain internals, line-by-line walkthrough, controlled experiments, symptom→cause→fix error cases, lab work, Skill Graph links, and complete RU/EN lesson bodies. The remaining 39 topics still use the v7 baseline.
 
 ## Rights and licensing
 

@@ -1,0 +1,381 @@
+{
+  "schemaVersion": 1,
+  "courseId": "cpp",
+  "locale": "en",
+  "status": "partial-benchmark-authoring",
+  "fallbackLocale": "ru",
+  "lessons": [
+    {
+      "id": "cpp.first-cpp-program",
+      "legacyIndex": 8,
+      "order": 9,
+      "sectionId": "cpp.section.cpp-basics",
+      "title": "Your First C++ Program",
+      "description": "Program structure, main, standard output, and the path from source code to execution.",
+      "theory": [
+        "A minimal portable C++ program makes the required declarations available, defines main, and executes statements inside its body. In our learning model, main is the entry point to the user-written part of a hosted program.",
+        "#include <iostream> is handled during preprocessing and makes declarations for standard stream I/O available. std::cout is the standard output stream object inside namespace std.",
+        "The Nexus reference style uses explicit std::cout and the newline character \\n. This keeps name origin visible and avoids the extra flush performed by std::endl when that flush is not needed."
+      ],
+      "deep": "A few lines of Hello World still pass through the complete engineering pipeline: preprocessing, compilation, object-code generation, linking, process startup, and only then execution of main. That makes the example useful for understanding both syntax and the toolchain.",
+      "analogy": "Think of a theatre production: the header tells us which tools are available, the compiler checks the script, the linker assembles scenes and resources, the runtime opens the stage, and main starts the user-visible performance.",
+      "commonMistake": "Memorizing #include, using namespace std, and main as magic boilerplate. Then the first compiler diagnostic feels random. In Nexus every line should have an explainable job.",
+      "code": "#include <iostream>\n\nint main() {\n    std::cout << \"Hello, C++!\\n\";\n    return 0;\n}",
+      "task": "Print two lines: your name and the phrase \"I am learning C++\". Use std::cout and '\\n'.",
+      "hint": "You can perform two std::cout operations in sequence. Do not add using namespace std.",
+      "solution": "#include <iostream>\n\nint main() {\n    std::cout << \"Ivan\\n\";\n    std::cout << \"I am learning C++\\n\";\n    return 0;\n}",
+      "quiz": {
+        "question": "Which function begins the user-written part of a normal hosted C++ program after runtime setup?",
+        "answers": [
+          "start",
+          "main",
+          "run"
+        ],
+        "correctIndex": 1
+      },
+      "requirements": [
+        "std::cout",
+        "\\n",
+        "return 0"
+      ],
+      "terms": [
+        [
+          "main",
+          "the special function where the user-written part of a hosted program begins"
+        ],
+        [
+          "#include",
+          "a preprocessing directive used to include a header"
+        ],
+        [
+          "iostream",
+          "the standard header for stream input and output"
+        ],
+        [
+          "std",
+          "the namespace used by most of the C++ standard library"
+        ],
+        [
+          "statement",
+          "a complete operation or command in the program"
+        ],
+        [
+          "toolchain",
+          "the build tools such as preprocessor, compiler, linker, and related components"
+        ]
+      ],
+      "visualization": "flow",
+      "pdfPages": "12–17",
+      "pdfNotes": [
+        "The historical layer of the source material shows Borland C++ 5.5, command-line bcc32.exe, Visual Studio 2010 with stdafx.h, and C++ Builder with vcl.h. Nexus preserves these as environment-specific history, not as the modern portable baseline.",
+        "The source presents a C++ program as a set of functions and discusses main, function bodies, return, prototypes, default parameters, variable argument counts, pass-by-value, overloading, and headers.",
+        "The source also compares C++ structure with Delphi/Pascal. Nexus keeps that comparison as historical context."
+      ],
+      "benchmark": {
+        "standardVersion": "1.0",
+        "status": "benchmark-complete",
+        "whyItMatters": "Your first program is not a ritual made of magic lines. It is a compact model of the whole C++ journey: a source file makes library declarations available, the compiler checks and translates code, the linker assembles the program, the runtime prepares a process, and control eventually reaches main. Once you understand this path, compiler, linker, and runtime errors stop feeling random.",
+        "outcomes": [
+          "Read a minimal C++ program and explain the purpose of every line.",
+          "Distinguish a preprocessing directive, a function, a statement, a namespace, and a standard-library object.",
+          "Explain the path source code → compilation → linking → process startup → main.",
+          "Modify program output independently and diagnose several common beginner errors.",
+          "Explain why the Nexus reference example uses std::cout and '\\n' instead of relying on using namespace std and unnecessary std::endl."
+        ],
+        "prerequisites": [
+          "Understand that a program is a formal description of an algorithm.",
+          "Know that source code is text processed by a compiler toolchain.",
+          "Be able to distinguish a text string from a numeric value at a basic level."
+        ],
+        "quickUnderstand": [
+          "A C++ program contains declarations and functions. In a normal console application, main is the special function where user-written execution begins.",
+          "#include <iostream> makes the standard stream I/O declarations available, including std::cout.",
+          "std::cout << \"Hello\" sends text to the standard output stream. '\\n' adds a newline.",
+          "Curly braces define the function body, while a semicolon terminates most expression statements.",
+          "If control reaches the end of main without an explicit return, it is treated as a successful return 0; we keep return 0 in this first lesson to make the relationship visible."
+        ],
+        "fullTheory": {
+          "lead": "A minimal C++ program is small only in source-code size. Behind those few lines are the language, standard library, preprocessing, compilation, linking, process startup, and the rules of function execution. This section explains that path without magic and clearly separates modern portable practice from historical IDE-specific details.",
+          "sections": [
+            {
+              "title": "1. Source file and translation unit",
+              "paragraphs": [
+                "A .cpp file is an ordinary text file. The compiler does not understand your business goal the way a human does; it parses the text according to the C++ grammar, checks types and structure, and produces a lower-level representation.",
+                "After preprocessing directives have been handled, the compiler works with a translation unit. For a beginner example, you can think of this as your .cpp file after the required header declarations have become visible.",
+                "A real project usually contains multiple .cpp and .h/.hpp files. Each .cpp file is typically compiled separately, then the results are connected by the linker."
+              ]
+            },
+            {
+              "title": "2. What #include <iostream> actually does",
+              "paragraphs": [
+                "#include is a preprocessing directive. It is processed before the main compilation stage. Angle brackets ask the implementation to locate the standard header iostream using configured include paths.",
+                "The iostream header declares standard stream input/output interfaces. It lets the compiler know about std::cout, std::cin, and related types and operations.",
+                "Including a header is not the same as copying a finished program into yours. The header provides declarations; the underlying library implementations are connected according to the implementation and toolchain."
+              ]
+            },
+            {
+              "title": "3. Why std::cout starts with std::",
+              "paragraphs": [
+                "Most names in the C++ standard library live inside namespace std. Namespaces reduce collisions: two components can use the same short name if they are placed in different namespaces.",
+                "That is why std::cout is explicit and clear. using namespace std; allows shorter spelling, but it imports many names into the current scope and can increase collision risk in larger programs.",
+                "Older teaching examples use using namespace std; very frequently. It is common historically, but the Nexus reference style shows the explicit std:: qualification from the beginning."
+              ]
+            },
+            {
+              "title": "4. main and the real start of a process",
+              "paragraphs": [
+                "In a hosted C++ environment, main has special status: after process and runtime setup, it becomes the entry point to the user-written part of the program. The operating system does not necessarily jump directly to main; runtime startup code may execute first.",
+                "One standard form is int main(). The return type int means the program communicates an integer exit status to its environment. Zero conventionally means success.",
+                "If execution reaches the closing brace of main without an explicit return, C++ treats that as return 0. We still write return 0; in the first lesson so the connection between function return and process exit status is visible."
+              ]
+            },
+            {
+              "title": "5. What happens in std::cout << \"Hello, C++!\\n\";",
+              "paragraphs": [
+                "std::cout is the standard output stream object. In this context, operator << is overloaded to insert data into that stream. The stream is on the left and the value to output is on the right.",
+                "The string literal \"Hello, C++!\\n\" contains a sequence of characters. The escape sequence \\n represents a newline.",
+                "You will also see std::endl. It inserts a newline and additionally flushes the stream. When an immediate flush is not required, '\\n' is often the better default."
+              ]
+            },
+            {
+              "title": "6. Braces, semicolons, and structure",
+              "paragraphs": [
+                "Curly braces { } delimit a compound statement, or block. Here they define the body of main. Statements inside the block execute according to program control flow.",
+                "A semicolon terminates most expression statements and declarations. When one is missing, the compiler may report the problem on the following line because that is where the parser finally proves the previous construct is incomplete.",
+                "Indentation and line breaks often do not change C++ syntax, but they strongly affect readability. Formatting is engineering discipline, not decoration."
+              ]
+            },
+            {
+              "title": "7. From source code to a running program",
+              "paragraphs": [
+                "A useful simplified pipeline is preprocessing → compilation → object code → linking → execution. Compilers may internally combine or optimize stages, but this mental model remains useful.",
+                "A compile error means a source unit could not be translated correctly, for example because of syntax, unknown names, or type mismatches. A linker error occurs later, when declarations were understood but required definitions cannot be connected. A runtime error happens after the program has started.",
+                "Classifying the stage of failure is one of the fastest ways to improve debugging."
+              ]
+            },
+            {
+              "title": "8. The modern portable baseline",
+              "paragraphs": [
+                "For new Nexus examples we use a portable standard form: #include <iostream>, explicit std::cout, and '\\n'. It does not depend on Visual Studio, Borland C++ Builder, or a particular precompiled-header setup.",
+                "Older stdafx.h, conio.h, vcl.h, and similar environment-specific elements may matter when reading historical code, but they should not be taught as mandatory parts of modern standard C++.",
+                "The goal is to understand the minimal program as a connected system, not memorize it as a template."
+              ]
+            }
+          ]
+        },
+        "inside": [
+          {
+            "title": "1. Preprocessor",
+            "text": "Processes #include and other directives, producing the text seen by the core compilation stage."
+          },
+          {
+            "title": "2. Compiler",
+            "text": "Parses C++, checks syntax and types, builds an internal representation, and generates object code."
+          },
+          {
+            "title": "3. Linker",
+            "text": "Combines object files and required library implementations into the final program."
+          },
+          {
+            "title": "4. Runtime / OS",
+            "text": "Creates the process, prepares runtime state, and connects standard streams."
+          },
+          {
+            "title": "5. main",
+            "text": "After startup work, control reaches main and the user-written scenario begins."
+          },
+          {
+            "title": "6. Exit status",
+            "text": "The value returned from main becomes the process exit code; 0 conventionally indicates success."
+          }
+        ],
+        "walkthrough": [
+          {
+            "line": "#include <iostream>",
+            "explanation": "Ask the preprocessor to make the standard stream I/O declarations available."
+          },
+          {
+            "line": "",
+            "explanation": "A blank line does nothing for the compiler, but visually separates library setup from the program body."
+          },
+          {
+            "line": "int main() {",
+            "explanation": "Define main, returning int, and open the function body."
+          },
+          {
+            "line": "    std::cout << \"Hello, C++!\\n\";",
+            "explanation": "Insert a string literal into standard output and append a newline."
+          },
+          {
+            "line": "    return 0;",
+            "explanation": "Explicitly report successful completion. Reaching the end of main would also imply 0, but we keep it visible here."
+          },
+          {
+            "line": "}",
+            "explanation": "Close the body of main."
+          }
+        ],
+        "experiments": [
+          {
+            "title": "Remove #include <iostream>",
+            "change": "Delete the first line and try to run the program.",
+            "predict": "Before running, predict which stage will fail.",
+            "explanation": "The compiler no longer sees the required stream declarations. This is a compile-stage failure, not a runtime failure."
+          },
+          {
+            "title": "Remove std::",
+            "change": "Keep cout but do not add using namespace std.",
+            "predict": "Why will the name stop resolving?",
+            "explanation": "cout is declared inside namespace std. The explicit qualifier states where the name comes from."
+          },
+          {
+            "title": "Replace '\\n' with std::endl",
+            "change": "Compare the visible result.",
+            "predict": "Will the text look different?",
+            "explanation": "The visible line break is usually the same, but std::endl also flushes the stream."
+          },
+          {
+            "title": "Remove return 0",
+            "change": "Close main directly after the output statement.",
+            "predict": "Will a standard program still compile?",
+            "explanation": "Yes. Reaching the end of main is treated as returning 0."
+          }
+        ],
+        "errors": [
+          {
+            "title": "cout was not declared / unknown identifier",
+            "wrongCode": "#include <iostream>\nint main() {\n    cout << \"Hello\\n\";\n}",
+            "symptom": "The compiler reports that cout cannot be found.",
+            "reason": "cout lives in namespace std, but the code refers to it as if it were a global name.",
+            "fix": "Use std::cout or intentionally introduce the required name with a using declaration."
+          },
+          {
+            "title": "Missing semicolon",
+            "wrongCode": "#include <iostream>\nint main() {\n    std::cout << \"Hello\\n\"\n    return 0;\n}",
+            "symptom": "The diagnostic may point at return or the next line.",
+            "reason": "The output statement was never terminated, so the parser only proves the problem when it reaches the next construct.",
+            "fix": "Inspect the previous line and add ; after the output expression."
+          },
+          {
+            "title": "Typographic quotes",
+            "wrongCode": "std::cout << “Hello, C++!”;",
+            "symptom": "The compiler sees unexpected characters or an invalid token sequence.",
+            "reason": "Smart quotes from a rich-text editor are not C++ string delimiters.",
+            "fix": "Use plain ASCII quotes: \"Hello, C++!\"."
+          },
+          {
+            "title": "main without a return type",
+            "wrongCode": "main() {\n    return 0;\n}",
+            "symptom": "A modern C++ compiler rejects the declaration.",
+            "reason": "C++ does not infer an omitted function return type.",
+            "fix": "Write int main()."
+          }
+        ],
+        "practice": [
+          {
+            "level": "Foundation",
+            "title": "Two lines",
+            "prompt": "Print your name on the first line and \"I am learning C++\" on the second. Use std::cout and '\\n'.",
+            "hint": "Two output statements are enough."
+          },
+          {
+            "level": "Understanding",
+            "title": "Predict the failure",
+            "prompt": "Take the working program and separately remove #include, std::, and a semicolon. Before running each version, write down what stage you expect to fail and why.",
+            "hint": "All three stop successful execution before runtime, but for different language/toolchain reasons."
+          },
+          {
+            "level": "Transfer",
+            "title": "Mini profile",
+            "prompt": "Build a program that prints a heading, your name, an IT area you are interested in, and one learning goal. Format it as a readable multi-line screen.",
+            "hint": "Design the expected output first, then write the C++."
+          }
+        ],
+        "lab": {
+          "title": "Lab: explain the program like an engineer",
+          "goal": "Do more than produce Hello World: prove that you understand the stages of its life.",
+          "steps": [
+            "Run the reference example and save the output.",
+            "Change only the string literal and verify that only user-visible output changes.",
+            "Create one compile error and record the diagnostic.",
+            "Fix the error and explain why the fix belongs to that stage.",
+            "Remove return 0 and verify that the program still finishes successfully.",
+            "Explain the chain preprocess → compile → link → run → main in your own words."
+          ],
+          "proof": "The lab is complete when you can explain #include, std::cout, main, ;, and return 0 without hints and distinguish a compile error from a runtime error."
+        },
+        "knowledgeCheck": [
+          {
+            "question": "Why does a program using std::cout include <iostream>?",
+            "answers": [
+              "Because iostream provides the required stream I/O declarations",
+              "Because iostream starts the operating system",
+              "Because main does not exist without iostream"
+            ],
+            "correctIndex": 0,
+            "explanation": "The header provides declarations for standard stream interfaces; main is governed separately by the language."
+          },
+          {
+            "question": "What does std:: most accurately represent in std::cout?",
+            "answers": [
+              "A file name",
+              "The standard-library namespace",
+              "A linker command"
+            ],
+            "correctIndex": 1,
+            "explanation": "std is the namespace that contains most standard-library names."
+          },
+          {
+            "question": "Compilation succeeds, but the linker cannot find a required function definition. Which stage has failed?",
+            "answers": [
+              "Preprocessing",
+              "Linking",
+              "Execution of main"
+            ],
+            "correctIndex": 1,
+            "explanation": "If source units compiled but definitions cannot be connected, the failure is at link time."
+          },
+          {
+            "question": "Why is '\\n' often preferred over std::endl for ordinary output?",
+            "answers": [
+              "std::endl is forbidden in modern C++",
+              "'\\n' adds a newline without forcing an additional flush",
+              "'\\n' works only on Windows"
+            ],
+            "correctIndex": 1,
+            "explanation": "std::endl inserts a newline and flushes the stream; that extra operation is not always necessary."
+          }
+        ],
+        "skillGraph": {
+          "strengthens": [
+            "cpp.syntax.program-structure",
+            "cpp.toolchain.translation-pipeline",
+            "cpp.standard-library.io",
+            "debugging.error-stage-classification"
+          ],
+          "unlocks": [
+            "cpp.tokens-identifiers-keywords",
+            "cpp.comments-constants-literals",
+            "cpp.data-types"
+          ]
+        },
+        "summary": [
+          "I can explain every line in a minimal C++ program.",
+          "I understand the difference between #include, std::cout, and main.",
+          "I can describe the path from source code to a running process.",
+          "I can distinguish at least compile, link, and runtime failures.",
+          "I know why new Nexus examples use std::cout and '\\n'."
+        ],
+        "modernNotes": [
+          "The Nexus reference style does not use using namespace std; in the minimal modern example.",
+          "For a normal newline, '\\n' is preferred; std::endl is useful when an explicit flush is actually required.",
+          "The lesson code does not depend on IDE-specific precompiled headers."
+        ],
+        "historicalContext": [
+          "Borland C++ 5.5, bcc32.exe, Visual Studio 2010, stdafx.h, C++ Builder, and vcl.h remain in the source map as historical/environment-specific examples.",
+          "They are useful when reading legacy code, but they are not mandatory parts of a modern portable C++ program."
+        ]
+      }
+    }
+  ]
+}
