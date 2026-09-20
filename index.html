@@ -1,2 +1,128 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#07111f"><meta name="description" content="AKRONIKL IT NEXUS — бесплатная инженерная образовательная IT-платформа"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png"><link rel="stylesheet" href="./styles/app.css?v=0.1.1-alpha.1"><title>AKRONIKL IT NEXUS</title></head><body><div id="boot-status" class="boot-screen"><div class="brand-mark">ANX</div><h1>AKRONIKL IT NEXUS</h1><p>Запускаем Platform Shell v0.1.1…</p><small>Если этот экран не исчезнет, ошибка будет показана здесь, а не белым экраном.</small></div><div id="app"></div><noscript><div class="boot-error">Для интерактивной платформы требуется JavaScript.</div></noscript><script type="module" src="./core/app.js?v=0.1.1-alpha.1"></script></body></html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="AKRONIKL IT NEXUS — бесплатная инженерная образовательная IT-платформа">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="./styles/app.css?v=0.1.1-alpha.2">
+  <title>AKRONIKL IT NEXUS</title>
+  <style>
+    html,body{margin:0;min-height:100%;background:#07111f;color:#f4f8ff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    #boot-status.anx-diag{box-sizing:border-box;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;background:#07111f}
+    #boot-status .diag-card{width:min(880px,94vw);padding:28px;border:1px solid #1f3b57;border-radius:18px;background:#0b1828;box-shadow:0 24px 80px rgba(0,0,0,.28)}
+    #boot-status .brand-mark{display:inline-grid;place-items:center;width:42px;height:42px;border:1px solid #3b8891;border-radius:12px;background:#132d3d;font-weight:800;margin-bottom:12px}
+    #boot-status h1{font-size:28px;margin:4px 0 12px}
+    #boot-status p{color:#94b8da;margin:8px 0}
+    #boot-status .status{margin:16px 0 0;font-weight:700;color:#b9d8f4}
+    #boot-status .diag-log{margin:18px 0 0;text-align:left;max-height:42vh;overflow:auto;background:#06101c;border:1px solid #183148;border-radius:12px;padding:14px;font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;color:#c8dcf0}
+    #boot-status .ok{color:#75e6b3}.bad{color:#ff8f9f}.warn{color:#ffd37a}
+  </style>
+</head>
+<body>
+  <div id="boot-status" class="anx-diag">
+    <div class="diag-card">
+      <div class="brand-mark">ANX</div>
+      <h1>AKRONIKL IT NEXUS</h1>
+      <p>Диагностический запуск Platform Shell v0.1.1-alpha.2</p>
+      <div id="boot-message" class="status">Проверяем файлы публикации…</div>
+      <pre id="boot-log" class="diag-log">Старт диагностики…</pre>
+    </div>
+  </div>
+  <div id="app"></div>
+  <noscript><div style="padding:24px;color:#fff;background:#721c24">Для интерактивной платформы требуется JavaScript.</div></noscript>
+  <script>
+  (() => {
+    const msg = document.getElementById('boot-message');
+    const log = document.getElementById('boot-log');
+    const stamp = Date.now();
+    const lines = [];
+    const add = (kind, text) => {
+      lines.push(`${kind} ${text}`);
+      log.textContent = lines.join('\n');
+    };
+    const showFatal = (title, detail) => {
+      msg.innerHTML = `<span class="bad">${title}</span>`;
+      add('✗', detail || title);
+    };
+    window.addEventListener('error', ev => {
+      add('✗', `window.error: ${ev.message || 'unknown'} @ ${ev.filename || '?'}:${ev.lineno || 0}:${ev.colno || 0}`);
+    });
+    window.addEventListener('unhandledrejection', ev => {
+      add('✗', `unhandledrejection: ${ev.reason?.stack || ev.reason || 'unknown'}`);
+    });
+
+    const required = [
+      './core/app.js',
+      './core/i18n.js',
+      './core/course-registry.js',
+      './core/storage.js',
+      './core/migrations/cpp-v7.js',
+      './akronikl/context.js',
+      './locales/registry.json',
+      './locales/ru/ui.json',
+      './locales/en/ui.json',
+      './courses/catalog.json',
+      './courses/cpp/manifest.json',
+      './courses/cpp/curriculum.json',
+      './courses/cpp/data/lessons.ru.json',
+      './courses/cpp/data/practicums.ru.json',
+      './courses/cpp/data/projects.ru.json',
+      './styles/app.css'
+    ];
+
+    async function checkResource(url) {
+      try {
+        const r = await fetch(`${url}?boot=${stamp}`, { cache: 'no-store' });
+        const text = await r.text();
+        const type = r.headers.get('content-type') || '(без content-type)';
+        if (!r.ok) {
+          add('✗', `${url} → HTTP ${r.status}, ${type}`);
+          return false;
+        }
+        if (!text.length) {
+          add('✗', `${url} → HTTP ${r.status}, но файл ПУСТОЙ`);
+          return false;
+        }
+        add('✓', `${url} → ${r.status}, ${text.length} B, ${type}`);
+        return true;
+      } catch (e) {
+        add('✗', `${url} → ${e?.message || e}`);
+        return false;
+      }
+    }
+
+    async function boot() {
+      let ok = true;
+      for (const url of required) ok = (await checkResource(url)) && ok;
+      if (!ok) {
+        showFatal('Найдены отсутствующие или пустые файлы', 'Исправьте строки с ✗ выше. Приложение пока не запускаем.');
+        return;
+      }
+
+      msg.innerHTML = '<span class="ok">Все обязательные файлы доступны. Запускаем модуль…</span>';
+      add('→', 'dynamic import ./core/app.js');
+      try {
+        await import(`./core/app.js?v=0.1.1-alpha.2&boot=${stamp}`);
+        add('✓', 'Модуль core/app.js и его import-зависимости загружены.');
+      } catch (e) {
+        showFatal('Ошибка загрузки JS-модуля', e?.stack || e?.message || String(e));
+        return;
+      }
+
+      setTimeout(() => {
+        const bootEl = document.getElementById('boot-status');
+        const appEl = document.getElementById('app');
+        if (bootEl && (!appEl || !appEl.children.length)) {
+          showFatal('Модуль загрузился, но приложение не отрисовалось', 'Проверьте журнал выше: bootstrap завис или завершился до render().');
+        }
+      }, 5000);
+    }
+
+    boot().catch(e => showFatal('Критическая ошибка bootloader', e?.stack || String(e)));
+  })();
+  </script>
+</body>
+</html>
