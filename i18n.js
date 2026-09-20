@@ -1,0 +1,20 @@
+{
+  "name": "AKRONIKL IT NEXUS",
+  "repository": "akronikl-it-nexus",
+  "phase": "implementation-alpha",
+  "foundationVersion": "0.3",
+  "primaryLanguage": "ru",
+  "secondaryLanguage": "en",
+  "namespace": "akronikl:it-nexus:*",
+  "mentor": "Akronikl",
+  "version": "0.1.0-alpha.1",
+  "releaseName": "Platform Shell",
+  "contentModel": "multilingual-by-design",
+  "defaultLocale": "ru",
+  "supportedLocales": [
+    "ru",
+    "en"
+  ],
+  "courseCountPlanned": 53,
+  "referenceCourse": "cpp"
+}

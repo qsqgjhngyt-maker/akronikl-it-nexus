@@ -1,36 +1,66 @@
-> **Основной язык документации: русский.** Русская версия является нормативной. Английская версия поддерживается как синхронизированное вторичное зеркало.
-# Юридический action checklist
-
-## P0 — до публикации первой большой версии
-
-- [ ] Не добавлять `LICENSE` до окончания первичного rights audit.
-- [ ] Зафиксировать правообладателя и авторов ключевых компонентов.
-- [ ] Создать `THIRD_PARTY_NOTICES`/реестр зависимостей.
-- [ ] Провести provenance-аудит C++ baseline и исходных PDF.
-- [ ] Удалить/заменить всё, для чего права не ясны.
-- [ ] Зафиксировать правила AI-generated drafts и human review.
-- [ ] Провести предварительный trademark clearance `AKRONIKL`, `AKRONIKL IT NEXUS` и ключевых логотипов.
-- [ ] Получить юридическую проверку выбранной software-лицензии и mixed-license structure.
-
-## P1 — перед активацией лицензий
-
-- [ ] Выбрать окончательную software-лицензию.
-- [ ] Определить точные директории/файлы под CC BY-NC-SA 4.0.
-- [ ] Исключить brand assets из общей лицензии.
-- [ ] Добавить copyright notices.
-- [ ] Добавить `THIRD_PARTY_NOTICES`.
-- [ ] Утвердить contributor policy/CLA или иной механизм.
-- [ ] Проверить совместимость лицензий зависимостей.
-
-## P2 — защита бренда и доказательств
-
-- [ ] Рассмотреть регистрацию ПО/БД в Роспатенте как дополнительную доказательную меру; она добровольна и не создаёт авторское право сама по себе.
-- [ ] Подать товарный знак после clearance, если проект переходит в устойчивую публичную эксплуатацию.
-- [ ] Сохранять release ZIP, SHA-256, Git tags и changelog.
-- [ ] Вести историю авторства контента и переводов.
-
-## P3 — международное расширение
-
-- [ ] Определить приоритетные страны/регионы.
-- [ ] Оценить расширение trademark-защиты через национальные ведомства или Madrid System.
-- [ ] Проверить privacy/child-safety/consumer-law требования по мере появления аккаунтов, аналитики и облачного AI.
+{
+  "brand.subtitle": "Инженерная образовательная IT-платформа",
+  "nav.home": "Главная",
+  "nav.academy": "Академия",
+  "nav.skills": "Карта навыков",
+  "nav.labs": "Лаборатории",
+  "nav.projects": "Проекты",
+  "nav.practices": "Практики",
+  "nav.akronikl": "Akronikl",
+  "hero.eyebrow": "AKRONIKL IT NEXUS · PLATFORM SHELL",
+  "hero.title": "Знания становятся системой.",
+  "hero.text": "Глубокая теория, практика, проекты, Skill Graph и AI-наставник в одной инженерной образовательной среде.",
+  "hero.free": "Основной образовательный путь — бесплатно",
+  "hero.openCourse": "Открыть C++ Foundation",
+  "hero.catalog": "Каталог направлений",
+  "metrics.disciplines": "дисциплины в карте",
+  "metrics.locales": "активные локали",
+  "metrics.cpp": "тем C++ mapped",
+  "metrics.paywall": "paywall в учебном ядре",
+  "section.continue": "Первая траектория",
+  "section.catalog": "Карта направлений",
+  "section.catalogText": "53 дисциплины уже зафиксированы в архитектуре. Сейчас реализуется первый reference-курс C++.",
+  "section.architecture": "Что уже работает в alpha.1",
+  "course.cpp.status": "Migration baseline",
+  "course.cpp.desc": "40 тем старого C++ v7 получили стабильные ID. Контент переносится только после rights/provenance audit.",
+  "course.progress": "Прогресс",
+  "course.open": "Открыть структуру курса",
+  "course.topics": "тем",
+  "course.sections": "разделов",
+  "catalog.search": "Поиск по дисциплинам…",
+  "catalog.all": "Все направления",
+  "catalog.planned": "Запланировано",
+  "catalog.available": "Доступно в alpha",
+  "catalog.user": "утверждено",
+  "catalog.proposal": "расширение концепции",
+  "migration.title": "Найден прогресс старого C++ v7",
+  "migration.text": "Nexus может безопасно импортировать прогресс из старого курса. Исходный ключ не будет удалён или изменён.",
+  "migration.import": "Импортировать прогресс",
+  "migration.done": "Прогресс импортирован",
+  "migration.none": "Legacy-прогресс не найден на этом домене",
+  "migration.detected": "Обнаружено завершённых тем: {done} из 40",
+  "settings.ui": "Интерфейс",
+  "settings.course": "Курс",
+  "settings.mentor": "Akronikl",
+  "settings.language": "Языки",
+  "akronikl.title": "Akronikl Context Model",
+  "akronikl.text": "В alpha.1 наставник ещё не подключён к облачной модели. Уже существует языконезависимый контекст: курс → тема → задача → код → попытки.",
+  "akronikl.ready": "Контекстный слой готов",
+  "akronikl.offline": "AI Gateway: не подключён",
+  "akronikl.future": "Позже: текст + голос RU/EN и любые подключаемые локали.",
+  "architecture.storage": "Namespaced storage",
+  "architecture.i18n": "Dynamic i18n",
+  "architecture.migration": "C++ v7 migration",
+  "architecture.pwa": "Offline shell",
+  "architecture.context": "Akronikl context",
+  "architecture.ids": "Stable content IDs",
+  "course.back": "← Назад в Академию",
+  "course.baselineNotice": "Это структурный baseline. Полные уроки ещё не перенесены.",
+  "course.benchmark": "Эталонный урок",
+  "course.completed": "Пройдено",
+  "course.pending": "Контент готовится",
+  "footer.status": "v0.1.0-alpha.1 · Platform Shell",
+  "footer.mission": "Russian-first, not Russian-only · Free to learn.",
+  "common.close": "Закрыть",
+  "common.notReady": "Этот раздел запланирован и пока не опубликован."
+}

@@ -1,0 +1,24 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const root=path.resolve(new URL('..',import.meta.url).pathname);
+const readJson=p=>JSON.parse(fs.readFileSync(path.join(root,p),'utf8'));
+const failures=[];
+const assert=(c,m)=>{if(!c)failures.push(m)};
+const catalog=readJson('courses/catalog.json');
+const curriculum=readJson('courses/cpp/curriculum.json');
+const ru=readJson('locales/ru/ui.json');
+const en=readJson('locales/en/ui.json');
+assert(catalog.courses.length===53,'catalog must contain 53 disciplines');
+assert(new Set(catalog.courses.map(x=>x.id)).size===53,'catalog IDs must be unique');
+assert(curriculum.lessons.length===40,'C++ must map 40 legacy topics');
+assert(new Set(curriculum.lessons.map(x=>x.id)).size===40,'C++ stable IDs must be unique');
+assert(new Set(curriculum.lessons.map(x=>x.legacyIndex)).size===40,'legacy indexes must be unique');
+assert(curriculum.lessons.every((x,i)=>x.legacyIndex===i),'legacy indexes must be 0..39 in order');
+assert(JSON.stringify(Object.keys(ru).sort())===JSON.stringify(Object.keys(en).sort()),'RU/EN UI keys must match');
+assert(!fs.existsSync(path.join(root,'LICENSE')),'root LICENSE must not be introduced in alpha.1');
+const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
+assert(!/https?:\/\//.test(index.replace(/content="https?:\/\/[^\"]*"/g,'')),'index must not load external runtime resources');
+const sw=fs.readFileSync(path.join(root,'service-worker.js'),'utf8');
+for(const res of ['./index.html','./styles/app.css','./core/app.js','./courses/catalog.json']) assert(sw.includes(res),`SW missing ${res}`);
+if(failures.length){console.error('FAIL');for(const f of failures)console.error('-',f);process.exit(1)}
+console.log('PASS: alpha.1 structural verification');
