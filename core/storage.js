@@ -1,6 +1,6 @@
 const STATE_KEY='akronikl:it-nexus:state:v1';const PREFS_KEY='akronikl:it-nexus:prefs:v1';
 const defaultState=()=>({schemaVersion:1,courses:{},skills:{},migrations:{},updatedAt:null});
-const defaultPrefs=()=>({uiLocale:'ru',courseLocale:'ru',mentorLocale:'ru'});
+const defaultPrefs=()=>({uiLocale:'ru',courseLocale:'ru',mentorLocale:'ru',sidebarCollapsed:false,focusReading:false,effectsQuality:'auto'});
 function parse(raw,fallback){try{return raw?JSON.parse(raw):fallback}catch{return fallback}}
 export function loadState(){return {...defaultState(),...parse(localStorage.getItem(STATE_KEY),defaultState())}}
 export function saveState(state){const next={...state,updatedAt:new Date().toISOString()};localStorage.setItem(STATE_KEY,JSON.stringify(next));return next}

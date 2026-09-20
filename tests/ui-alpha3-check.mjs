@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const app=fs.readFileSync(new URL('../core/app.js', import.meta.url),'utf8');
+const css=fs.readFileSync(new URL('../styles/app.css', import.meta.url),'utf8');
+const storage=fs.readFileSync(new URL('../core/storage.js', import.meta.url),'utf8');
+const mustApp=['sidebarCollapse','focusMode','termDrawer','termSearch','effectsQuality','createSandboxController','startParticleField','project-studio-teaser'];
+const mustCss=['.sidebar-collapsed','.term-drawer','.nexus-particles','.glass-panel','.sandbox-status','.editor-lines','.project-studio-teaser','prefers-reduced-motion'];
+const assert=(v,m)=>{if(!v)throw new Error(m)};
+for(const x of mustApp)assert(app.includes(x),`app missing ${x}`);
+for(const x of mustCss)assert(css.includes(x),`css missing ${x}`);
+for(const x of ['sidebarCollapsed','focusReading','effectsQuality'])assert(storage.includes(x),`prefs missing ${x}`);
+console.log('UI_ALPHA3_PASS');

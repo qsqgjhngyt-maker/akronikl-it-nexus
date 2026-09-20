@@ -1,0 +1,17 @@
+import {browserRuntimeProvider} from '../sandbox/providers/browser-runtime.js';
+import {analyzeSource,parseRuntimeError} from '../sandbox/diagnostics.js';
+import {sandboxProviders} from '../sandbox/sandbox.js';
+const assert=(v,m)=>{if(!v)throw new Error(m)};
+const source='#include <iostream>\nint main() {\n  std::cout << "Привет\\n";\n  return 0;\n}';
+const n=browserRuntimeProvider.normalize(source);
+assert(n.adapted,'std::cout should trigger browser compatibility adapter');
+assert(n.code.includes('cout <<'),'normalized source should contain cout');
+assert(n.code.includes('using namespace std;'),'compatibility adapter should inject namespace directive for JSCPP');
+assert(n.original.includes('std::cout'),'stored learner source must remain unchanged');
+const a=analyzeSource(source,['std::cout','return 0']);
+assert(a.requirementsPassed===2,'requirements check failed');
+assert(a.issues.filter(x=>x.level==='error').length===0,'valid source should have no structural errors');
+const d=parseRuntimeError(new Error('Parsing Failure: line 3 (column 8): unexpected token'),source);
+assert(d.line===3 && d.title,'runtime diagnostic parsing failed');
+assert(sandboxProviders.length===3,'provider registry must expose browser/WASM/cloud');
+console.log('SANDBOX_PROVIDER_PASS',sandboxProviders.map(x=>x.id));

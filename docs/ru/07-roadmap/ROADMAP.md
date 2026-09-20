@@ -41,3 +41,6 @@
 
 ## Этап 7 — Практики и портфолио
 Три технологические практики, производственные/эксплуатационные практики и capstone.
+
+## Future milestone — Nexus Project Studio
+После стабилизации Sandbox и эталонных программных курсов: собственные capstone-проекты, файловое дерево, тесты, build providers, snapshots/версии, Akronikl Project Mentor и Portfolio Release.

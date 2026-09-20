@@ -18,7 +18,7 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
-**v0.1.2-alpha.2 / Benchmark Lesson 01 · Standard 1.1.** C++ is the first active Nexus course. `cpp.first-cpp-program` now includes 16 sections of foundational theory, a 20-entry beginner glossary, systematic toolchain/runtime diagnostics, RU/EN parity, and Nexus Sandbox with integrated editor, stdin/stdout, runtime self-test, and saved code. Learner-facing PDF/source-document references are removed; provenance remains internal.
+**v0.1.2-alpha.3 / Benchmark UX & Sandbox Foundation.** The C++ benchmark lesson now has collapsible navigation, Focus Reading, a separate scrollable Terminology Reference with clickable terms, the adaptive Nexus Glass particle layer, and a provider-based Nexus Sandbox. Browser Runtime adds a compatibility adapter for standard forms such as `std::cout`, live structural checks, assignment requirements, learner-friendly diagnostics, and raw technical output as a secondary layer. Nexus Project Studio architecture is recorded for future versioned capstones, builds/tests, Akronikl Project Mentor, and Portfolio Release.
 
 ## Rights and licensing
 
@@ -47,12 +47,6 @@ Official repository name: `akronikl-it-nexus`
 Namespace: `akronikl:it-nexus:*`
 
 
-## Current implementation
-
-**v0.1.1-alpha.1 / Platform Shell + C++ Reference Integration.** The Foundation is preserved. The root `index.html` is now self-diagnostic, and the C++ v7 monolith has been decomposed into a modular course package with 40 Russian lesson bodies, 6 practicums, 7 projects, quizzes, browser sandbox, and a safe legacy-progress bridge. The original `cpp-course` remains an immutable reference baseline.
-
-See [`RELEASE_v0.1.1-alpha.1.md`](RELEASE_v0.1.1-alpha.1.md).
-
 ## Current benchmark focus
 
-`cpp.first-cpp-program` now includes foundational theory, an expanded beginner glossary, systematic diagnostics, RU/EN parity, and Nexus Sandbox so core exercises stay inside the platform without requiring a desktop IDE. Learner-facing PDF/source-document references are removed; provenance remains internal.
+`cpp.first-cpp-program` is the first Standard 1.2 benchmark. Its terminology, deep theory, cross-platform Sandbox, diagnostics, and RU/EN structure define the pattern to be validated before scaling.

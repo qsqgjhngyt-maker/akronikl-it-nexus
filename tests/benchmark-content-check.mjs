@@ -18,8 +18,8 @@ assert(ru.lessons.length===40,'RU baseline must remain 40 lessons');
 assert(en.lessons.length===1,'EN partial package must contain exactly the first authored benchmark lesson');
 assert(ruLesson && enLesson,'Benchmark lesson must exist in RU and EN');
 for(const field of required){assert(field in ruLesson.benchmark,`RU benchmark missing ${field}`);assert(field in enLesson.benchmark,`EN benchmark missing ${field}`)}
-assert(ruLesson.benchmark.standardVersion==='1.1','RU benchmark must use Standard 1.1');
-assert(enLesson.benchmark.standardVersion==='1.1','EN benchmark must use Standard 1.1');
+assert(ruLesson.benchmark.standardVersion==='1.2','RU benchmark must use Standard 1.2');
+assert(enLesson.benchmark.standardVersion==='1.2','EN benchmark must use Standard 1.2');
 assert(ruLesson.benchmark.fullTheory.sections.length>=16,'RU full theory too shallow');
 assert(enLesson.benchmark.fullTheory.sections.length>=16,'EN full theory too shallow');
 assert(ruLesson.benchmark.glossary.length>=18,'RU glossary too small');

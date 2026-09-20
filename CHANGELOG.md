@@ -1,3 +1,13 @@
+# CHANGELOG
+
+## v0.1.2-alpha.3 — Benchmark UX & Universal Sandbox Foundation
+
+- Collapsible sidebar + mobile drawer and Focus Reading.
+- Independent terminology drawer with search/context links.
+- Nexus Glass + adaptive gold/silver particle field.
+- Provider-based Sandbox, Browser Runtime compatibility adapter, live diagnostics and assignment checks.
+- Nexus Project Studio architecture and ADR-0010.
+
 # Changelog
 
 ## v0.1.2-alpha.2 — Benchmark 01 · Theory & Nexus Sandbox
