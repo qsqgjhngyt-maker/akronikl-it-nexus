@@ -1,0 +1,186 @@
+import { loadBundle, loadLocaleRegistry, textFor, translator } from './i18n.js';
+import { getCatalog, getCppCourse } from './course-registry.js';
+import { loadPrefs, savePrefs, loadState } from './storage.js';
+import { inspectLegacyCppV7, importLegacyCppV7, getCppProgress } from './migrations/cpp-v7.js';
+import { setAkroniklContext } from '../akronikl/context.js';
+
+const app = document.querySelector('#app');
+let prefs = loadPrefs();
+let registry, catalog, t;
+
+const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+
+async function bootstrap() {
+  [registry, catalog] = await Promise.all([loadLocaleRegistry(), getCatalog()]);
+  await refreshTranslator();
+  window.addEventListener('hashchange', render);
+  if (!window.__ANX_DISABLE_SW__ && 'serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  }
+  render();
+}
+
+async function refreshTranslator() {
+  const bundle = await loadBundle(prefs.uiLocale);
+  t = translator(bundle);
+  document.documentElement.lang = prefs.uiLocale;
+  document.documentElement.dir = registry.supported.find(x => x.code === prefs.uiLocale)?.direction || 'ltr';
+  document.title = `AKRONIKL IT NEXUS · ${t('brand.subtitle')}`;
+}
+
+function route() {
+  const params = new URLSearchParams(location.hash.replace(/^#/, ''));
+  return { course: params.get('course'), view: params.get('view') || 'home' };
+}
+
+function selectHtml(id, label, value) {
+  const options = registry.supported.filter(x => x.enabled).map(x => `<option value="${x.code}" ${x.code===value?'selected':''}>${esc(x.nativeName)}</option>`).join('');
+  return `<label class="language-field"><span>${esc(label)}</span><select id="${id}">${options}</select></label>`;
+}
+
+function shell(content, active='home') {
+  const navItems=[
+    ['home','⌂','nav.home'],['academy','◫','nav.academy'],['skills','◇','nav.skills'],['labs','⌘','nav.labs'],['projects','△','nav.projects'],['practices','▣','nav.practices'],['akronikl','✦','nav.akronikl']
+  ];
+  return `
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#"><span class="brand-mark">ANX</span><span><strong>AKRONIKL</strong><small>IT NEXUS</small></span></a>
+      <nav class="side-nav">${navItems.map(([id,icon,key])=>`<a href="#view=${id}" data-view="${id}" class="${active===id?'active':''}"><span>${icon}</span><b>${esc(t(key))}</b></a>`).join('')}</nav>
+      <div class="side-mission"><strong>NEXUS</strong><span>${esc(t('footer.mission'))}</span></div>
+    </aside>
+    <div class="stage">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+        <div class="top-title"><strong>AKRONIKL IT NEXUS</strong><span>${esc(t('brand.subtitle'))}</span></div>
+        <div class="language-cluster" aria-label="${esc(t('settings.language'))}">
+          ${selectHtml('uiLocale',t('settings.ui'),prefs.uiLocale)}
+          ${selectHtml('courseLocale',t('settings.course'),prefs.courseLocale)}
+          ${selectHtml('mentorLocale',t('settings.mentor'),prefs.mentorLocale)}
+        </div>
+        <span class="alpha-chip">α1</span>
+      </header>
+      <main class="content">${content}</main>
+      <footer><span>${esc(t('footer.status'))}</span><span>${esc(t('footer.mission'))}</span></footer>
+    </div>
+  </div>`;
+}
+
+function architectureCards() {
+  const keys=['storage','i18n','migration','pwa','context','ids'];
+  return `<div class="architecture-grid">${keys.map(k=>`<article><span>✓</span><strong>${esc(t('architecture.'+k))}</strong></article>`).join('')}</div>`;
+}
+
+function migrationBanner() {
+  const info = inspectLegacyCppV7();
+  if (!info.found) return `<div class="migration subtle"><div><strong>${esc(t('migration.none'))}</strong><span>Legacy key: cpp_programming_pdf_course_v1</span></div></div>`;
+  return `<div class="migration ${info.alreadyImported?'done':''}">
+    <div><strong>${esc(info.alreadyImported?t('migration.done'):t('migration.title'))}</strong><span>${esc(t('migration.detected',{done:info.done}))}</span><p>${esc(t('migration.text'))}</p></div>
+    <button class="btn ${info.alreadyImported?'ghost':'primary'}" id="importLegacy" ${info.alreadyImported?'disabled':''}>${esc(info.alreadyImported?t('migration.done'):t('migration.import'))}</button>
+  </div>`;
+}
+
+function cppCard() {
+  const p=getCppProgress();
+  return `<article class="course-feature">
+    <div class="course-code">C<span>++</span></div>
+    <div class="course-copy"><div class="eyebrow">${esc(t('course.cpp.status'))}</div><h3>${esc(textFor({ru:'Программирование на C++',en:'C++ Programming'},prefs.courseLocale))}</h3><p>${esc(t('course.cpp.desc'))}</p>
+      <div class="progress-row"><span>${esc(t('course.progress'))}: <b>${p.done}/40</b></span><span>${p.pct}%</span></div><div class="progress"><i style="width:${p.pct}%"></i></div>
+      <div class="course-stats"><span><b>40</b> ${esc(t('course.topics'))}</span><span><b>6</b> ${esc(t('course.sections'))}</span><span><b>3</b> benchmark</span></div>
+      <a class="btn primary" href="#course=cpp">${esc(t('course.open'))}</a>
+    </div>
+  </article>`;
+}
+
+function catalogSection() {
+  const cats=[...new Map(catalog.courses.map(c=>[c.category,c.categoryTitle])).entries()];
+  const cards=catalog.courses.map(c=>courseCatalogCard(c)).join('');
+  return `<section class="section" id="catalog"><div class="section-head"><div><span class="eyebrow">ACADEMY MAP</span><h2>${esc(t('section.catalog'))}</h2><p>${esc(t('section.catalogText'))}</p></div></div>
+    <div class="catalog-tools"><input id="courseSearch" type="search" placeholder="${esc(t('catalog.search'))}"><div class="category-chips"><button class="chip active" data-cat="all">${esc(t('catalog.all'))}</button>${cats.map(([id,title])=>`<button class="chip" data-cat="${id}">${esc(textFor(title,prefs.uiLocale))}</button>`).join('')}</div></div>
+    <div class="course-grid" id="courseGrid">${cards}</div>
+  </section>`;
+}
+
+function courseCatalogCard(c) {
+  const title=textFor(c.title,prefs.courseLocale);
+  const category=textFor(c.categoryTitle,prefs.uiLocale);
+  const status=c.status==='available-alpha'?t('catalog.available'):t('catalog.planned');
+  const origin=c.origin==='proposal'?t('catalog.proposal'):t('catalog.user');
+  const href=c.route||'#view=academy';
+  return `<a class="course-card ${c.status==='available-alpha'?'available':''}" href="${href}" data-category="${c.category}" data-search="${esc((title+' '+category).toLowerCase())}">
+    <div class="course-card-top"><span class="course-index">${String(c.order).padStart(2,'0')}</span><span class="status-dot"></span></div><h3>${esc(title)}</h3><p>${esc(category)}</p><div class="card-meta"><span>${esc(status)}</span><span>${esc(origin)}</span></div>
+  </a>`;
+}
+
+function homeView(active = 'home', compact = false) {
+  const content=`
+    <section class="hero ${compact?'compact':''}"><div class="hero-orbit" aria-hidden="true"><i></i><i></i><i></i><b>N</b></div><div class="hero-copy"><div class="eyebrow">${esc(t('hero.eyebrow'))}</div><h1>${esc(t('hero.title'))}</h1><p>${esc(t('hero.text'))}</p><div class="hero-actions"><a class="btn primary" href="#course=cpp">${esc(t('hero.openCourse'))}</a><a class="btn ghost" href="#view=academy">${esc(t('hero.catalog'))}</a></div><div class="free-line">◎ ${esc(t('hero.free'))}</div></div></section>
+    <section class="metrics"><article><b>53</b><span>${esc(t('metrics.disciplines'))}</span></article><article><b>2+</b><span>${esc(t('metrics.locales'))}</span></article><article><b>40</b><span>${esc(t('metrics.cpp'))}</span></article><article><b>0</b><span>${esc(t('metrics.paywall'))}</span></article></section>
+    ${migrationBanner()}
+    <section class="section"><div class="section-head"><div><span class="eyebrow">REFERENCE PATH</span><h2>${esc(t('section.continue'))}</h2></div></div>${cppCard()}</section>
+    <section class="section"><div class="section-head"><div><span class="eyebrow">FOUNDATION → IMPLEMENTATION</span><h2>${esc(t('section.architecture'))}</h2></div></div>${architectureCards()}</section>
+    ${catalogSection()}
+    <section class="akronikl-panel"><div class="akronikl-symbol">A</div><div><span class="eyebrow">CONTEXT-FIRST AI</span><h2>${esc(t('akronikl.title'))}</h2><p>${esc(t('akronikl.text'))}</p><div class="context-path"><span>course</span><i>→</i><span>lesson</span><i>→</i><span>task</span><i>→</i><span>code</span><i>→</i><span>attempts</span></div><div class="akronikl-status"><span class="ok">● ${esc(t('akronikl.ready'))}</span><span>○ ${esc(t('akronikl.offline'))}</span></div><small>${esc(t('akronikl.future'))}</small></div></section>`;
+  return shell(content,active);
+}
+
+async function courseView() {
+  const {manifest,curriculum}=await getCppCourse();
+  setAkroniklContext({courseId:'cpp',lessonId:null,sectionId:null});
+  const progress=getCppProgress();
+  const state=loadState();
+  const doneLessons=state.courses?.cpp?.lessons||{};
+  const benchmark=new Set(manifest.benchmarkLessons);
+  const sections=curriculum.sections.map(sec=>{
+    const items=sec.lessonIds.map(id=>curriculum.lessons.find(x=>x.id===id)).map(l=>{
+      const done=Boolean(doneLessons[l.id]?.completed);
+      return `<li class="topic ${done?'done':''}"><span class="topic-order">${String(l.order).padStart(2,'0')}</span><div><strong>${esc(textFor(l.title,prefs.courseLocale))}</strong><small>${esc(l.id)}</small></div>${benchmark.has(l.id)?`<em>${esc(t('course.benchmark'))}</em>`:''}<span class="topic-state">${done?'✓ '+esc(t('course.completed')):esc(t('course.pending'))}</span></li>`;
+    }).join('');
+    return `<section class="module"><div class="module-head"><span>${String(sec.order).padStart(2,'0')}</span><div><h2>${esc(textFor(sec.title,prefs.courseLocale))}</h2><small>${sec.lessonIds.length} ${esc(t('course.topics'))}</small></div></div><ol>${items}</ol></section>`;
+  }).join('');
+  const content=`<a class="back-link" href="#view=academy">${esc(t('course.back'))}</a><section class="course-hero"><div class="course-code large">C<span>++</span></div><div><span class="eyebrow">REFERENCE COURSE · ${esc(manifest.status.toUpperCase())}</span><h1>${esc(textFor(manifest.title,prefs.courseLocale))}</h1><p>${esc(textFor(manifest.description,prefs.courseLocale))}</p><div class="progress-row"><span>${esc(t('course.progress'))}: <b>${progress.done}/40</b></span><span>${progress.pct}%</span></div><div class="progress"><i style="width:${progress.pct}%"></i></div></div></section><div class="notice">⚙ ${esc(t('course.baselineNotice'))}</div>${migrationBanner()}<div class="modules">${sections}</div>`;
+  return shell(content,'academy');
+}
+
+function placeholderView(view) {
+  const titleKey={'academy':'nav.academy','skills':'nav.skills','labs':'nav.labs','projects':'nav.projects','practices':'nav.practices','akronikl':'nav.akronikl'}[view]||'nav.home';
+  if(view==='academy') return homeView('academy', true);
+  const content=`<section class="placeholder"><div class="hero-orbit small"><i></i><i></i><i></i><b>N</b></div><span class="eyebrow">SPRINT 1</span><h1>${esc(t(titleKey))}</h1><p>${esc(t('common.notReady'))}</p><a class="btn ghost" href="#">${esc(t('nav.home'))}</a></section>`;
+  return shell(content,view);
+}
+
+async function render() {
+  const r=route();
+  app.innerHTML = r.course==='cpp' ? await courseView() : (r.view==='home'?homeView():placeholderView(r.view));
+  bind();
+}
+
+function bind() {
+  const menu=document.querySelector('#menuBtn'); const side=document.querySelector('#sidebar');
+  if(menu&&side) menu.onclick=()=>side.classList.toggle('open');
+  for (const [id,key] of [['uiLocale','uiLocale'],['courseLocale','courseLocale'],['mentorLocale','mentorLocale']]) {
+    const el=document.querySelector('#'+id); if(!el) continue;
+    el.onchange=async e=>{prefs=savePrefs({...prefs,[key]:e.target.value}); if(key==='uiLocale') await refreshTranslator(); render();};
+  }
+  const imp=document.querySelector('#importLegacy');
+  if(imp) imp.onclick=()=>{importLegacyCppV7(); render();};
+  const search=document.querySelector('#courseSearch');
+  const chips=[...document.querySelectorAll('[data-cat]')];
+  let cat='all';
+  function filter(){
+    const q=(search?.value||'').trim().toLowerCase();
+    document.querySelectorAll('#courseGrid .course-card').forEach(card=>{
+      const showCat=cat==='all'||card.dataset.category===cat;
+      const showQ=!q||card.dataset.search.includes(q);
+      card.hidden=!(showCat&&showQ);
+    });
+  }
+  if(search) search.oninput=filter;
+  chips.forEach(ch=>ch.onclick=()=>{cat=ch.dataset.cat;chips.forEach(x=>x.classList.toggle('active',x===ch));filter();});
+  document.querySelectorAll('.course-card:not(.available)').forEach(card=>card.addEventListener('click',e=>{e.preventDefault();}));
+}
+
+bootstrap().catch(err=>{
+  console.error(err);
+  app.innerHTML=`<main style="padding:32px;font-family:system-ui;background:#08111f;color:white;min-height:100vh"><h1>AKRONIKL IT NEXUS</h1><p>Platform shell failed to start.</p><pre>${esc(err?.stack||err)}</pre></main>`;
+});
