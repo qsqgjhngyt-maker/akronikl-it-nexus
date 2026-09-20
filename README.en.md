@@ -1,41 +1,36 @@
-# AKRONIKL IT NEXUS
+> **Основной язык документации: русский.** Русская версия является нормативной. Английская версия поддерживается как синхронизированное вторичное зеркало.
+# Юридический action checklist
 
-**Engineering IT Learning Platform**
+## P0 — до публикации первой большой версии
 
-> **Nexus — the node of connections. The horizon beyond which knowledge becomes a system.**
+- [ ] Не добавлять `LICENSE` до окончания первичного rights audit.
+- [ ] Зафиксировать правообладателя и авторов ключевых компонентов.
+- [ ] Создать `THIRD_PARTY_NOTICES`/реестр зависимостей.
+- [ ] Провести provenance-аудит C++ baseline и исходных PDF.
+- [ ] Удалить/заменить всё, для чего права не ясны.
+- [ ] Зафиксировать правила AI-generated drafts и human review.
+- [ ] Провести предварительный trademark clearance `AKRONIKL`, `AKRONIKL IT NEXUS` и ключевых логотипов.
+- [ ] Получить юридическую проверку выбранной software-лицензии и mixed-license structure.
 
-Akronikl IT Nexus is a modular IT learning platform combining deep theory, interactive labs, programming, projects, practical placements, a Skill Graph and the contextual AI mentor Akronikl.
+## P1 — перед активацией лицензий
 
-## Status
+- [ ] Выбрать окончательную software-лицензию.
+- [ ] Определить точные директории/файлы под CC BY-NC-SA 4.0.
+- [ ] Исключить brand assets из общей лицензии.
+- [ ] Добавить copyright notices.
+- [ ] Добавить `THIRD_PARTY_NOTICES`.
+- [ ] Утвердить contributor policy/CLA или иной механизм.
+- [ ] Проверить совместимость лицензий зависимостей.
 
-**Foundation / pre-implementation.** The repository starts from a clean architecture. The original `cpp-course` is preserved as an immutable baseline and the source for the first C++ reference course, but its monolithic architecture is not copied into the new platform.
+## P2 — защита бренда и доказательств
 
-## Philosophy
+- [ ] Рассмотреть регистрацию ПО/БД в Роспатенте как дополнительную доказательную меру; она добровольна и не создаёт авторское право сама по себе.
+- [ ] Подать товарный знак после clearance, если проект переходит в устойчивую публичную эксплуатацию.
+- [ ] Сохранять release ZIP, SHA-256, Git tags и changelog.
+- [ ] Вести историю авторства контента и переводов.
 
-**Nexus is the node of connections, the center where disciplines converge.**
+## P3 — международное расширение
 
-“Event horizon” is used as a brand metaphor for the transition point beyond which isolated knowledge becomes an engineering system.
-
-See [`docs/en/00-product/BRAND_PHILOSOPHY.md`](docs/en/00-product/BRAND_PHILOSOPHY.md).
-
-## Documentation
-
-Normative primary documentation: [`docs/ru`](docs/ru).  
-English mirror: [`docs/en`](docs/en).
-
-The Russian branch is the source of truth. English is maintained for international users.
-
-## First implementation plan
-
-1. C++ v7 baseline regression.
-2. Extract platform core without changing behavior.
-3. Create stable-ID `cpp` course package.
-4. Migrate progress safely.
-5. Build the Akronikl Context Model.
-6. Create three reference-quality lessons.
-7. Scale to other disciplines only after PASS.
-
-## Repository
-
-Official repository name: `akronikl-it-nexus`  
-Namespace: `akronikl:it-nexus:*`
+- [ ] Определить приоритетные страны/регионы.
+- [ ] Оценить расширение trademark-защиты через национальные ведомства или Madrid System.
+- [ ] Проверить privacy/child-safety/consumer-law требования по мере появления аккаунтов, аналитики и облачного AI.
