@@ -1,12 +1,16 @@
-# Установка v0.1.2-alpha.4.1
+# Загрузка AKRONIKL IT NEXUS v0.1.4-alpha.1
 
-База: рабочий `v0.1.2-alpha.4`.
+База: текущая рабочая `v0.1.3-alpha.1`.
 
-1. Распаковать hotfix-архив.
-2. Загрузить всё содержимое архива в корень `akronikl-it-nexus` с сохранением папок и заменой существующих файлов.
-3. Сам ZIP в GitHub не загружать. `UPLOAD_INSTRUCTIONS_RU.md` можно не загружать.
-4. Дождаться зелёного `pages build and deployment`, затем дать GitHub Pages немного времени на обновление CDN.
-5. Открыть `https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/?v=0.1.2-alpha.4.1`.
-6. Проверить dropdown: `Интерфейс`, `Курс`, `Akronikl`, `FX`.
+1. Распакуйте `AKRONIKL_IT_NEXUS_v0.1.4-alpha.1_BENCHMARK_03_OOP_PATCH_FROM_v0.1.3-alpha.1.zip`.
+2. Загрузите **всё содержимое** архива в корень репозитория с сохранением структуры папок и заменой файлов.
+3. Сам ZIP в GitHub не загружайте.
+4. Дождитесь зелёного GitHub Pages deployment и обновления CDN.
+5. Откройте `?v=0.1.4-alpha.1`, затем тему 37 «ООП: инкапсуляция, наследование и полиморфизм».
+6. Проверьте RU/EN, интерактивную OOP-модель, Nexus Sandbox и Справочник терминов.
 
-Ожидаемый результат: вместо светлого системного popup открывается тёмное полупрозрачное Nexus Glass меню. Проверить мышью, клавиатурой и тапом на телефоне.
+Коммит:
+`feat: добавлен Benchmark 03 OOP и Lesson Standard 1.0 candidate`
+
+Описание:
+`Третий эталонный урок C++ переведён на глубокий стандарт Nexus: инкапсуляция, композиция, наследование, virtual dispatch, object slicing, RU/EN, интерактивная OOP-модель и candidate-final Lesson Standard 1.0.`

@@ -18,8 +18,6 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
-**v0.1.3-alpha.1 / Benchmark 02 — Pointer & Memory Model.** The second benchmark lesson, `Pointers, References, and Addresses`, is now fully authored in RU/EN with deep lifetime/UB/RAII theory, an interactive symbolic memory model, Nexus Sandbox Pointer Lab, and Skill Graph integration. The first benchmark and the alpha.4.1 visual/UX baseline are preserved.
-
 **v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Native system select popups in the top bar have been replaced with a custom Nexus Glass Dropdown to eliminate bright Windows/Chromium menus and keep a consistent desktop/mobile appearance. All alpha.4 functionality remains intact.
 
 **v0.1.2-alpha.4 / Benchmark UX & Sandbox Foundation.** The C++ benchmark lesson now has collapsible navigation, Focus Reading, a separate scrollable Terminology Reference with clickable terms, the adaptive Nexus Glass particle layer, and a provider-based Nexus Sandbox. Browser Runtime adds a compatibility adapter for standard forms such as `std::cout`, live structural checks, assignment requirements, learner-friendly diagnostics, and raw technical output as a secondary layer. Nexus Project Studio architecture is recorded for future versioned capstones, builds/tests, Akronikl Project Mentor, and Portfolio Release.
@@ -54,3 +52,8 @@ Namespace: `akronikl:it-nexus:*`
 ## Current benchmark focus
 
 `cpp.first-cpp-program` is the first Standard 1.2 benchmark. Its terminology, deep theory, cross-platform Sandbox, diagnostics, and RU/EN structure define the pattern to be validated before scaling.
+
+
+## Current development
+
+`v0.1.4-alpha.1`: all three C++ benchmark lessons are complete; Lesson Standard 1.0 is ready to freeze after live smoke.

@@ -1291,6 +1291,707 @@
         ],
         "historicalContext": "C and early C++ rely heavily on raw addresses and manual resource management. Modern C++ keeps pointers fundamental but layers types and idioms on top to reduce manual ownership and lifetime errors."
       }
+    },
+    {
+      "id": "cpp.oop-principles",
+      "legacyIndex": 36,
+      "order": 37,
+      "sectionId": "cpp.section.oop",
+      "title": "OOP: Encapsulation, Inheritance, and Polymorphism",
+      "description": "Designing your own types: state, invariants, interface, inheritance, and dynamic polymorphism without magic.",
+      "theory": [
+        "Object-oriented programming (OOP) organizes parts of a program around types and objects that combine state with permitted operations. In C++, OOP complements algorithms rather than replacing them.",
+        "A class describes a type; an object is a concrete instance of that type at runtime. Data members hold state, member functions implement behavior, and the class contract defines which state transitions are valid.",
+        "Encapsulation is broader than the private keyword: it means preserving invariants through a controlled interface. Inheritance models specialization, while runtime polymorphism lets a common base interface dispatch to behavior of the actual derived object.",
+        "Modern C++ combines OOP with composition, RAII, generic programming, algorithms, and value semantics. Deep inheritance trees are not a goal; use inheritance only when it represents a stable type relationship."
+      ],
+      "deep": "The central OOP question is not “how do I write class?” but “who owns this state, who may change it, and what guarantee does the type make to the rest of the program?” A class with private fields can still be poorly encapsulated if its interface allows inconsistent states.",
+      "analogy": "A bank account stores a balance, but a client does not edit the database number directly. The client performs allowed operations such as deposit, withdraw, and query. The interface protects domain rules.",
+      "commonMistake": "Treating encapsulation, inheritance, and polymorphism as a checklist for every project. Good C++ uses classes when they simplify responsibility; composition often beats inheritance, and a public interface should remain small.",
+      "code": "#include <iostream>\n\nclass Counter {\nprivate:\n    int value;\npublic:\n    Counter(int start) : value(start) {}\n    void add(int delta) { value += delta; }\n    int get() const { return value; }\n};\n\nint main() {\n    Counter c(10);\n    c.add(5);\n    std::cout << c.get() << \\\"\\n\\\";\n    return 0;\n}",
+      "task": "Create a Wallet class with a private balance field. Its constructor accepts the initial balance, deposit(int amount) accepts only positive values, and getBalance() returns the current balance. Create Wallet(1000), deposit 250, and print 1250.",
+      "hint": "Keep balance private. In deposit, validate amount > 0 before changing balance. External code should use methods rather than writing the field directly.",
+      "solution": "#include <iostream>\n\nclass Wallet {\nprivate:\n    int balance;\npublic:\n    Wallet(int start) : balance(start >= 0 ? start : 0) {}\n    void deposit(int amount) { if (amount > 0) balance += amount; }\n    int getBalance() const { return balance; }\n};\n\nint main() {\n    Wallet w(1000);\n    w.deposit(250);\n    std::cout << w.getBalance() << \\\"\\n\\\";\n    return 0;\n}",
+      "quiz": {
+        "question": "What most accurately describes encapsulation?",
+        "answers": [
+          "Any use of private",
+          "Controlling object state through a stable interface while preserving invariants",
+          "Making every class inherit from another"
+        ],
+        "correctIndex": 1
+      },
+      "requirements": [
+        "class Wallet",
+        "private:",
+        "deposit",
+        "getBalance"
+      ],
+      "terms": [
+        [
+          "OOP",
+          "Object-Oriented Programming: organizing software around types, objects, and responsibility"
+        ],
+        [
+          "class",
+          "a user-defined type describing state, operations, and access rules"
+        ],
+        [
+          "object",
+          "a concrete runtime instance of a type"
+        ],
+        [
+          "encapsulation",
+          "protecting invariants and hiding implementation details behind a controlled interface"
+        ],
+        [
+          "inheritance",
+          "defining a specialized type from a base type"
+        ],
+        [
+          "polymorphism",
+          "using a common interface while concrete types provide different behavior"
+        ]
+      ],
+      "visualization": "oop",
+      "benchmark": {
+        "standardVersion": "1.2",
+        "interactiveModelVersion": "1.0",
+        "status": "benchmark-complete",
+        "labels": {
+          "insideTitle": "Class → object → interface → dispatch",
+          "walkTitle": "Reading object-oriented code"
+        },
+        "whyItMatters": "OOP becomes valuable when it creates clear responsibility boundaries, not merely when code contains the class keyword. A type can guarantee valid state, hide changeable implementation details, and provide a stable interface. These ideas underpin library APIs, GUI systems, games, services, domain models, and large C++ applications.",
+        "outcomes": [
+          "Distinguish class, object, state, behavior, and invariant.",
+          "Explain public/private/protected as access-control mechanisms rather than decoration.",
+          "Design a small class whose callers do not need direct access to internal state.",
+          "Distinguish composition from inheritance and use inheritance only for a stable is-a relationship.",
+          "Understand virtual, override, and dynamic dispatch through a base reference or pointer.",
+          "Explain object slicing and the role of a virtual destructor in a polymorphic base.",
+          "Use Nexus Sandbox and the interactive OOP model to test design reasoning."
+        ],
+        "prerequisites": [
+          "You already know functions, parameters, scope, and basic C++ types.",
+          "You understand a reference as an alias from the pointers/references lesson.",
+          "You do not need to know vtables or compiler internals in advance.",
+          "The Nexus model teaches language semantics; the concrete virtual-dispatch implementation depends on compiler and ABI."
+        ],
+        "quickUnderstand": [
+          "A class describes a type; an object is a concrete instance.",
+          "Object state lives in data members; methods define permitted operations.",
+          "private blocks ordinary external access and helps the class preserve invariants.",
+          "A public interface is a promise to callers and should usually remain small.",
+          "Public inheritance usually expresses “Derived is a kind of Base”; otherwise composition is often better.",
+          "virtual allows a call through a base reference/pointer to select an override based on the actual dynamic type.",
+          "override asks the compiler to verify that a derived method truly overrides a virtual base method.",
+          "OOP does not mean deep hierarchies: modern C++ combines values, composition, RAII, algorithms, and polymorphism where appropriate."
+        ],
+        "fullTheory": {
+          "lead": "Build one model in order: user-defined type → object state → invariant → public interface → composition → inheritance → virtual dispatch. Then the classic OOP terms become engineering tools instead of slogans.",
+          "sections": [
+            {
+              "title": "1. OOP as responsibility design",
+              "paragraphs": [
+                "Procedural thinking asks which steps to perform. Object design adds: which component owns this state and is responsible for keeping it valid? The approaches work together; a method still contains an algorithm.",
+                "The benefit appears at scale: local type rules reduce the number of places that can accidentally break state.",
+                "C++ is multiparadigm, so OOP is a tool rather than a mandatory religion."
+              ]
+            },
+            {
+              "title": "2. Class and object are different",
+              "paragraphs": [
+                "class Counter { ... }; describes a type. It does not create a particular counter object.",
+                "Counter c(10); creates a concrete Counter instance with its own value state.",
+                "Many objects may share one class definition while each object has its own identity, state, and lifetime."
+              ]
+            },
+            {
+              "title": "3. State, behavior, and invariant",
+              "paragraphs": [
+                "State is the current values of an object's data members; behavior is the set of operations offered by the type.",
+                "An invariant is a condition that must remain true for a valid object—for example, a balance may be required to stay non-negative.",
+                "A good class is built around invariants: construction creates a valid state and public operations do not let callers break it."
+              ]
+            },
+            {
+              "title": "4. private, public, and protected",
+              "paragraphs": [
+                "private members are inaccessible to ordinary external code and separate implementation details from the public contract.",
+                "public members form the external interface. The less callers know about internals, the easier implementation changes become.",
+                "protected exposes members to derived classes and should be used carefully because wide protected state tightly couples an inheritance hierarchy."
+              ]
+            },
+            {
+              "title": "5. Encapsulation is broader than private",
+              "paragraphs": [
+                "A class may have private fields and still be poorly encapsulated if it exposes trivial setters/getters that allow contradictory states.",
+                "Encapsulation is control: the object enforces its rules through meaningful operations such as deposit(), withdraw(), or rename().",
+                "The public API should express domain actions rather than mirror raw storage."
+              ]
+            },
+            {
+              "title": "6. Construction and valid initial state",
+              "paragraphs": [
+                "A constructor participates in object creation and should establish a coherent initial state.",
+                "Counter(int start) : value(start) {} initializes value before entering the constructor body.",
+                "Invalid inputs need an explicit contract: reject construction, normalize only when that behavior is intentional, or report failure appropriately."
+              ]
+            },
+            {
+              "title": "7. const member functions",
+              "paragraphs": [
+                "int get() const promises not to modify the object through the ordinary const contract.",
+                "This allows the method to be called on const objects and documents observation rather than mutation.",
+                "const-correctness is part of the type's interface: it communicates which operations are state-changing."
+              ]
+            },
+            {
+              "title": "8. Composition: objects containing objects",
+              "paragraphs": [
+                "Composition models has-a: Car has an Engine; Order has LineItems.",
+                "Composition is often simpler than inheritance because dependencies are explicit and reusable components do not claim a subtype relationship.",
+                "Start by considering values and composition; use inheritance when callers genuinely need a common type."
+              ]
+            },
+            {
+              "title": "9. Inheritance and is-a",
+              "paragraphs": [
+                "class BonusAccount : public Account defines a derived type. Public inheritance usually promises that BonusAccount can be used where Account is expected.",
+                "The derived class receives the accessible base interface and may add specialization; private base state does not become directly accessible derived state.",
+                "Inheritance only for code reuse creates brittle designs. Reuse and subtyping are different goals."
+              ]
+            },
+            {
+              "title": "10. virtual and dynamic type",
+              "paragraphs": [
+                "A non-virtual call is selected from static type information. A virtual call through a base interface may select an override based on the actual dynamic type.",
+                "If Account& view refers to BonusAccount and kind() is virtual, view.kind() can execute BonusAccount::kind().",
+                "The C++ standard specifies behavior but does not require a particular vtable layout. A virtual table is a common ABI technique, not a literal language object."
+              ]
+            },
+            {
+              "title": "11. override as intent checking",
+              "paragraphs": [
+                "override marks a derived member that is expected to override a virtual base member.",
+                "If the signature is accidentally different, the compiler reports the problem instead of silently creating an unrelated overload/member.",
+                "It is a low-cost automatic check of architectural intent."
+              ]
+            },
+            {
+              "title": "12. Base references and pointers",
+              "paragraphs": [
+                "Runtime polymorphism is commonly used through Base& or Base*. A reference fits a required object; a pointer can represent optionality/address semantics.",
+                "A base reference does not copy the derived object, so the dynamic type remains derived.",
+                "This is why pointers and references were a prerequisite for the OOP benchmark."
+              ]
+            },
+            {
+              "title": "13. Object slicing",
+              "paragraphs": [
+                "Copying a derived object by value into a base object discards the derived part because the destination is a separate Base object.",
+                "Polymorphic APIs therefore commonly take Base& or Base* rather than Base by value.",
+                "Slicing demonstrates how value semantics and object models interact in C++."
+              ]
+            },
+            {
+              "title": "14. Abstract classes and pure virtual functions",
+              "paragraphs": [
+                "virtual void draw() = 0; is pure virtual. A class with a pure virtual function is abstract and cannot be directly instantiated.",
+                "Such a type can express a common interface that concrete derived classes must implement.",
+                "Use abstract interfaces when the system genuinely needs interchangeable implementations under one contract."
+              ]
+            },
+            {
+              "title": "15. Virtual destructors in polymorphic bases",
+              "paragraphs": [
+                "If a derived object may be destroyed through a pointer to the base, the base destructor must be virtual as part of that design.",
+                "Otherwise deleting through Base* can cause undefined behavior and incomplete destruction of the derived object.",
+                "This applies to polymorphic bases intended for that ownership/deletion pattern."
+              ]
+            },
+            {
+              "title": "16. Practical modern C++ design",
+              "paragraphs": [
+                "Start with simple values, small types, and explicit invariants. Add inheritance/virtual only when a real common interface and substitutability are needed.",
+                "Prefer composition for implementation reuse and RAII for resource management.",
+                "A strong class reduces the number of invalid states callers must reason about and makes incorrect operations difficult or impossible."
+              ]
+            }
+          ]
+        },
+        "glossary": [
+          {
+            "term": "OOP",
+            "full": "Object-Oriented Programming",
+            "definition": "A programming paradigm that organizes software around types, objects, state, and responsibility.",
+            "example": "Wallet manages balance through its own operations."
+          },
+          {
+            "term": "class",
+            "full": "class",
+            "definition": "A user-defined type describing data, operations, and access rules.",
+            "example": "class Counter { ... };"
+          },
+          {
+            "term": "object",
+            "full": "object",
+            "definition": "A concrete runtime instance of a type with its own state and lifetime.",
+            "example": "Counter c(10);"
+          },
+          {
+            "term": "state",
+            "full": "object state",
+            "definition": "The current values of an object's data members.",
+            "example": "balance = 1250."
+          },
+          {
+            "term": "invariant",
+            "full": "class invariant",
+            "definition": "A condition that should remain true for every valid object state.",
+            "example": "balance >= 0 when overdraft is forbidden."
+          },
+          {
+            "term": "member",
+            "full": "class member",
+            "definition": "A data member, member function, nested type, or other entity declared in a class.",
+            "example": "value is a data member of Counter."
+          },
+          {
+            "term": "method",
+            "full": "member function",
+            "definition": "A function declared as a member of a class.",
+            "example": "c.add(5)."
+          },
+          {
+            "term": "constructor",
+            "full": "constructor",
+            "definition": "A special member involved in creating and initializing an object.",
+            "example": "Counter(int start) : value(start) {}"
+          },
+          {
+            "term": "destructor",
+            "full": "destructor",
+            "definition": "A special member executed as an object lifetime ends.",
+            "example": "virtual ~Base() {}"
+          },
+          {
+            "term": "encapsulation",
+            "full": "encapsulation",
+            "definition": "Controlling state and hiding implementation details behind a stable interface and invariants.",
+            "example": "balance is private and changes through deposit()."
+          },
+          {
+            "term": "access control",
+            "full": "access control",
+            "definition": "public/private/protected rules that restrict member access.",
+            "example": "main cannot directly assign a private field."
+          },
+          {
+            "term": "interface",
+            "full": "public interface",
+            "definition": "The operations and guarantees exposed to callers.",
+            "example": "deposit(), withdraw(), getBalance()."
+          },
+          {
+            "term": "composition",
+            "full": "composition",
+            "definition": "A has-a relationship where an object contains or uses other objects.",
+            "example": "Car has an Engine."
+          },
+          {
+            "term": "inheritance",
+            "full": "inheritance",
+            "definition": "Defining a specialized derived type from a base type.",
+            "example": "class BonusAccount : public Account."
+          },
+          {
+            "term": "base class",
+            "full": "base class",
+            "definition": "The class from which another class derives.",
+            "example": "Account is the base of BonusAccount."
+          },
+          {
+            "term": "derived class",
+            "full": "derived class",
+            "definition": "A class declared as inheriting from a base class.",
+            "example": "BonusAccount is derived."
+          },
+          {
+            "term": "virtual",
+            "full": "virtual function",
+            "definition": "A member for which a call through a base interface may select an override by dynamic type.",
+            "example": "virtual const char* kind() const."
+          },
+          {
+            "term": "override",
+            "full": "override specifier",
+            "definition": "A compiler-checked declaration that a derived member overrides a virtual base member.",
+            "example": "kind() const override."
+          },
+          {
+            "term": "dynamic dispatch",
+            "full": "dynamic dispatch",
+            "definition": "Runtime selection of a virtual override based on the actual object type.",
+            "example": "Account& view = bonus; view.kind() calls BonusAccount::kind()."
+          },
+          {
+            "term": "polymorphism",
+            "full": "runtime polymorphism",
+            "definition": "Using one base interface with objects of different concrete types.",
+            "example": "A function accepts Shape& and calls virtual draw()."
+          },
+          {
+            "term": "abstract class",
+            "full": "abstract class",
+            "definition": "A class that cannot be instantiated directly because it contains pure virtual members.",
+            "example": "class Shape { virtual void draw() = 0; };"
+          },
+          {
+            "term": "pure virtual",
+            "full": "pure virtual function",
+            "definition": "A virtual function declared with = 0 to define an interface requirement.",
+            "example": "virtual double area() const = 0;"
+          },
+          {
+            "term": "object slicing",
+            "full": "object slicing",
+            "definition": "Loss of the derived portion when a derived object is copied by value into a base object.",
+            "example": "Base b = derived;"
+          },
+          {
+            "term": "ABI",
+            "full": "Application Binary Interface",
+            "definition": "Platform conventions governing binary calls and object representation.",
+            "example": "A vtable is a common ABI implementation technique, not a C++ language requirement."
+          }
+        ],
+        "interactiveOop": {
+          "title": "Interactive object and polymorphism model",
+          "description": "Step through class definition, object state, encapsulated updates, inheritance, a base reference, and virtual dispatch.",
+          "steps": [
+            {
+              "title": "Define the base type",
+              "phase": "class",
+              "balance": 1000,
+              "bonusRate": 0,
+              "derived": false,
+              "baseRef": false,
+              "dispatch": "Account::kind()",
+              "explanation": "Account defines an interface and private balance state; this is a type model, not yet a particular object."
+            },
+            {
+              "title": "Create an object",
+              "phase": "object",
+              "balance": 1000,
+              "bonusRate": 0,
+              "derived": false,
+              "baseRef": false,
+              "dispatch": "Account::kind()",
+              "explanation": "Account wallet(1000) creates one object and construction establishes valid initial state."
+            },
+            {
+              "title": "Change state through the interface",
+              "phase": "encapsulation",
+              "balance": 1250,
+              "bonusRate": 0,
+              "derived": false,
+              "baseRef": false,
+              "dispatch": "Account::kind()",
+              "explanation": "wallet.deposit(250) updates private balance through a public operation rather than direct external field access."
+            },
+            {
+              "title": "Add a specialization",
+              "phase": "inheritance",
+              "balance": 1250,
+              "bonusRate": 5,
+              "derived": true,
+              "baseRef": false,
+              "dispatch": "BonusAccount::kind()",
+              "explanation": "BonusAccount publicly derives from Account and adds bonusRate while preserving the base contract."
+            },
+            {
+              "title": "Bind a base reference",
+              "phase": "base-ref",
+              "balance": 1250,
+              "bonusRate": 5,
+              "derived": true,
+              "baseRef": true,
+              "dispatch": "BonusAccount::kind()",
+              "explanation": "Account& view = bonus refers to the same BonusAccount object without copying it."
+            },
+            {
+              "title": "Virtual dispatch",
+              "phase": "dispatch",
+              "balance": 1250,
+              "bonusRate": 5,
+              "derived": true,
+              "baseRef": true,
+              "dispatch": "BonusAccount::kind()",
+              "explanation": "view.kind() selects the override using the dynamic type. This is runtime polymorphism."
+            }
+          ]
+        },
+        "inside": [
+          {
+            "title": "Type",
+            "text": "class defines structure, access rules, and operations; declaring a class does not instantiate an object."
+          },
+          {
+            "title": "Object",
+            "text": "Construction creates a concrete instance and should establish invariants."
+          },
+          {
+            "title": "Encapsulation",
+            "text": "Private state is changed through meaningful public operations rather than arbitrary external writes."
+          },
+          {
+            "title": "Inheritance",
+            "text": "Derived publicly inherits Base when it genuinely models a subtype that callers can use through the Base contract."
+          },
+          {
+            "title": "Base reference",
+            "text": "Base& can refer to a Derived object without copying and without slicing."
+          },
+          {
+            "title": "Virtual dispatch",
+            "text": "A virtual call through Base& selects an override according to the object's dynamic type at runtime."
+          }
+        ],
+        "walkthrough": [
+          {
+            "line": "class Counter {",
+            "explanation": "Begin the definition of a user-defined Counter type."
+          },
+          {
+            "line": "private: int value;",
+            "explanation": "value is private state and ordinary external code cannot access it directly."
+          },
+          {
+            "line": "Counter(int start) : value(start) {}",
+            "explanation": "Construction establishes initial state."
+          },
+          {
+            "line": "void add(int delta) { value += delta; }",
+            "explanation": "A public operation controls state mutation."
+          },
+          {
+            "line": "int get() const { return value; }",
+            "explanation": "A const observer exposes state without promising mutation."
+          },
+          {
+            "line": "Counter c(10);",
+            "explanation": "Create one concrete c object with its own value state."
+          },
+          {
+            "line": "c.add(5);",
+            "explanation": "Caller uses the public interface rather than touching private storage."
+          },
+          {
+            "line": "std::cout << c.get();",
+            "explanation": "Read through the interface while representation remains an implementation detail."
+          }
+        ],
+        "experiments": [
+          {
+            "title": "Attempt direct private access",
+            "change": "Add c.value = 100; in main.",
+            "predict": "The compiler should reject the access.",
+            "explanation": "Access control enforces the class boundary; state should change through allowed operations."
+          },
+          {
+            "title": "Create a second object",
+            "change": "Add Counter d(50); and modify only d.",
+            "predict": "c remains unchanged.",
+            "explanation": "Objects of the same class keep independent state."
+          },
+          {
+            "title": "Remove const from get()",
+            "change": "Remove the trailing const and consider const Counter x(5);.",
+            "predict": "x.get() is no longer callable.",
+            "explanation": "const member functions are part of the read-only contract."
+          },
+          {
+            "title": "Compare virtual and non-virtual",
+            "change": "In a full C++ provider, call similarly named virtual and non-virtual members through Base&.",
+            "predict": "Virtual selects the derived override; non-virtual follows static type resolution.",
+            "explanation": "Runtime polymorphism depends on a virtual contract."
+          }
+        ],
+        "errors": [
+          {
+            "title": "Public mutable state",
+            "wrongCode": "class Wallet { public: int balance; };",
+            "symptom": "Any caller may write inconsistent state.",
+            "reason": "The type does not protect its invariant and exposes storage details.",
+            "fix": "Keep state private and expose domain operations such as deposit/withdraw/query."
+          },
+          {
+            "title": "Inheritance only for reuse",
+            "wrongCode": "class Engine : public Car { /* need one method */ };",
+            "symptom": "The hierarchy is logically strange and brittle.",
+            "reason": "There is no is-a relationship; code reuse was confused with subtyping.",
+            "fix": "Prefer composition when the relationship is has-a or uses-a."
+          },
+          {
+            "title": "Missing override check",
+            "wrongCode": "struct D: B { void draw(int x) { } };",
+            "symptom": "A base call may use an unexpected implementation.",
+            "reason": "The derived signature does not match and the compiler was not asked to verify override intent.",
+            "fix": "Use override and correct the signature."
+          },
+          {
+            "title": "Object slicing",
+            "wrongCode": "Derived d;\nBase b = d;\nb.virtualMethod();",
+            "symptom": "Derived-specific state/behavior is lost in the copied Base object.",
+            "reason": "A separate Base object was created by value.",
+            "fix": "Use Base& or Base* for runtime polymorphism and manage lifetime explicitly."
+          }
+        ],
+        "practice": [
+          {
+            "level": "Foundation",
+            "title": "Protect an invariant",
+            "prompt": "Create Temperature with private value and setCelsius() accepting only -273..1000, plus getCelsius() const.",
+            "hint": "Do not let callers assign value directly."
+          },
+          {
+            "level": "Intermediate",
+            "title": "Composition instead of inheritance",
+            "prompt": "Design Order containing PaymentInfo as a member rather than inheriting from it. Explain the has-a relationship.",
+            "hint": "Ask whether “Order is a PaymentInfo” is actually true."
+          },
+          {
+            "level": "Transfer",
+            "title": "Polymorphic interface",
+            "prompt": "Define Shape with virtual area() const and derived Circle/Rectangle. printArea accepts const Shape&.",
+            "hint": "Do not copy a derived object into Shape by value."
+          }
+        ],
+        "lab": {
+          "title": "Design a safe Account",
+          "goal": "Combine invariants, interface, inheritance, and virtual dispatch without exposing state unnecessarily.",
+          "steps": [
+            "Create Account with private balance and a constructor.",
+            "Add deposit/withdraw so invalid amounts and overdraft are rejected.",
+            "Add getBalance() const.",
+            "Add virtual kind() const and a virtual base destructor.",
+            "Create BonusAccount : public Account with bonusRate and an override of kind().",
+            "Create BonusAccount bonus and Account& view = bonus.",
+            "Call view.kind() and explain why the derived implementation is selected.",
+            "Explain why direct external access to balance is not part of the public contract."
+          ],
+          "proof": "You can identify the actual object, its state, the operations preserving its invariant, why Base& does not copy it, and how a virtual call selects the override."
+        },
+        "knowledgeCheck": [
+          {
+            "question": "What is an object relative to a class?",
+            "answers": [
+              "A synonym for the class",
+              "A concrete instance of the type with its own state and lifetime",
+              "Only a class method"
+            ],
+            "correctIndex": 1,
+            "explanation": "A class describes a type; an object is a concrete instance."
+          },
+          {
+            "question": "Why does private alone not guarantee good encapsulation?",
+            "answers": [
+              "private is forbidden in C++",
+              "Trivial setters/getters may still expose all details and allow invalid states",
+              "private only works with inheritance"
+            ],
+            "correctIndex": 1,
+            "explanation": "Encapsulation is the design of stable operations and invariants, not merely access syntax."
+          },
+          {
+            "question": "When is public inheritance most appropriate?",
+            "answers": [
+              "For any code reuse",
+              "When Derived should be validly usable as a kind of Base",
+              "When a field must be hidden"
+            ],
+            "correctIndex": 1,
+            "explanation": "Public inheritance models a subtype/is-a contract."
+          },
+          {
+            "question": "What does override provide?",
+            "answers": [
+              "It makes a method virtual without a base",
+              "Compiler verification that a derived method overrides a virtual base member",
+              "It disables inheritance"
+            ],
+            "correctIndex": 1,
+            "explanation": "override catches accidental signature mismatches."
+          },
+          {
+            "question": "Why is Base b = derived; problematic for runtime polymorphism?",
+            "answers": [
+              "Object slicing occurs",
+              "Base is always abstract",
+              "Derived is deleted"
+            ],
+            "correctIndex": 0,
+            "explanation": "Copying by value creates a separate Base and discards the derived portion."
+          },
+          {
+            "question": "Why can a polymorphic base need a virtual destructor?",
+            "answers": [
+              "To destroy the real derived object correctly through Base*",
+              "To speed up construction",
+              "To make private public"
+            ],
+            "correctIndex": 0,
+            "explanation": "Deletion through a base pointer requires an appropriate virtual destructor when that ownership pattern is supported."
+          }
+        ],
+        "sandboxModel": {
+          "title": "Nexus Sandbox · OOP Lab",
+          "description": "Practice classes and methods inside Nexus while the interactive OOP model explains inheritance and dispatch independently of Browser Runtime limits.",
+          "points": [
+            "Editor and stdout remain inside Nexus.",
+            "Task validation checks class/private/method requirements.",
+            "The OOP model explains object state and virtual dispatch independent of the runtime provider.",
+            "Future WASM/secure build providers will support full modern C++ in the same UI."
+          ],
+          "limit": "Browser Runtime remains a fast educational provider; advanced hierarchies, full STL, and project builds move to extended providers without changing the Nexus Sandbox experience."
+        },
+        "skillGraph": {
+          "strengthens": [
+            "cpp.oop.class-object",
+            "cpp.oop.encapsulation",
+            "cpp.oop.invariants",
+            "cpp.oop.inheritance",
+            "cpp.oop.virtual-dispatch",
+            "cpp.const.correctness"
+          ],
+          "unlocks": [
+            "cpp.classes.state-control",
+            "cpp.constructors.destructors",
+            "cpp.raii.resource-owners",
+            "cpp.design.composition",
+            "cpp.project-studio.architecture"
+          ]
+        },
+        "summary": [
+          "I distinguish class from object.",
+          "I can state a class invariant and protect it with a public interface.",
+          "I understand that private is a means, not the end of encapsulation.",
+          "I distinguish has-a composition from is-a inheritance.",
+          "I understand Base&, dynamic type, virtual, and override.",
+          "I can explain object slicing.",
+          "I know when a polymorphic base needs a virtual destructor."
+        ],
+        "modernNotes": [
+          "Prefer small types with clear invariants.",
+          "Use composition by default for implementation reuse; inheritance for genuine subtyping/interfaces.",
+          "Mark overrides with override.",
+          "Polymorphic APIs commonly use references/pointers and must document ownership/lifetime.",
+          "RAII and value semantics remain foundational in modern C++ object design."
+        ],
+        "historicalContext": "C++ object orientation grew from Simula-inspired ideas and early C with Classes. Modern C++ retains classes, inheritance, and virtual dispatch while combining them with value semantics, RAII, generic programming, and composition."
+      }
     }
   ]
 }
