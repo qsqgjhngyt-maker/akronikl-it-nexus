@@ -35,5 +35,7 @@ assert(py.provider.id==='test-python','Router is not language-neutral for Python
 
 const worker=fs.readFileSync(new URL('../sandbox/workers/wasm-runtime-worker.js',import.meta.url),'utf8');
 assert(worker.includes("message.type==='probe'"),'WASM worker probe protocol missing');
-assert(worker.includes('compilerReady:false'),'WASM foundation must not falsely claim compiler integration');
+assert(worker.includes('runClang'),'Modern C++ Worker must invoke the real Clang API');
+assert(worker.includes('WebAssembly.instantiate'),'Modern C++ Worker must instantiate the compiled WASI module');
+assert(worker.includes("type:'runtime-result'"),'Modern C++ Worker result protocol missing');
 console.log('POLYGLOT_RUNTIME_PASS',programmingLanguages.length,modern.reason);

@@ -18,7 +18,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Статус
 
-**v0.1.5-alpha.1 / Nexus Polyglot Runtime Foundation.** Ядро Nexus Sandbox стало language-neutral: добавлены Runtime Router, единый provider contract, реестр языков программирования, автоматическая маршрутизация и WASM Worker foundation. C++ остаётся первым reference language, но больше не зашит в ядро исполнения.
+**v0.1.5-alpha.2 / Modern C++ Compiler Integration.** Polyglot Runtime Router теперь подключает реальный `Nexus WASM C++ Runtime`: Modern C++ компилируется в отдельном Worker через закреплённый Clang/LLD toolchain и выполняется как WASI-модуль. Простой C++ по-прежнему остаётся на быстром Browser Runtime.
 
 **Исторический baseline UI: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Нативные системные выпадающие списки в верхней панели заменены на собственный Nexus Glass Dropdown, чтобы убрать светлые popup-меню Windows/Chromium и сохранить единый стиль на ПК и мобильных устройствах. Все возможности alpha.4 сохранены.
 
@@ -47,7 +47,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Текущий этап
 
-Текущий исполняемый релиз: [`RELEASE_v0.1.5-alpha.1.md`](RELEASE_v0.1.5-alpha.1.md). История изменений: [`CHANGELOG_v0.1.5-alpha.1.md`](CHANGELOG_v0.1.5-alpha.1.md).
+Текущий исполняемый релиз: [`RELEASE_v0.1.5-alpha.2.md`](RELEASE_v0.1.5-alpha.2.md). История изменений: [`CHANGELOG_v0.1.5-alpha.2.md`](CHANGELOG_v0.1.5-alpha.2.md).
 
 ## План первой реализации
 
@@ -67,4 +67,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Текущая разработка
 
-`v0.1.5-alpha.1`: после успешного live-smoke `v0.1.4-alpha.2.2` **Nexus Lesson Standard 1.0 заморожен как Normative / Production**. Runtime Core переведён на Polyglot architecture: 24 основных языковых трека зарегистрированы, Router выбирает provider по `languageId` и capabilities, а Modern C++ WASM подключается следующим этапом без изменения UX Sandbox.
+`v0.1.5-alpha.2`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**, а Polyglot Runtime получает первый реальный extended provider. Modern C++ / STL / OOP маршрутизируются в `Nexus WASM C++ Runtime`; Clang/WASI toolchain лениво загружается в Worker, реальная диагностика компилятора сохраняется, исходник не отправляется в удалённый compiler API.

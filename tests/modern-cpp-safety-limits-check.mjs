@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import {MODERN_CPP_LIMITS} from '../sandbox/runtime-assets.js';
+const worker=fs.readFileSync(new URL('../sandbox/workers/wasm-runtime-worker.js',import.meta.url),'utf8');
+const assert=(v,m)=>{if(!v)throw new Error(m)};
+assert(MODERN_CPP_LIMITS.maxSourceBytes>0,'source limit missing');
+assert(MODERN_CPP_LIMITS.maxTotalInputBytes>=MODERN_CPP_LIMITS.maxSourceBytes,'total input limit must cover source limit');
+assert(MODERN_CPP_LIMITS.maxCompiledWasmBytes>MODERN_CPP_LIMITS.maxTotalInputBytes,'compiled wasm limit unexpectedly small');
+assert(MODERN_CPP_LIMITS.maxOutputChars>0,'output limit missing');
+assert(worker.includes('WASM_INPUT_TOO_LARGE'),'total input guard missing');
+assert(worker.includes('WASM_OUTPUT_TOO_LARGE'),'compiled wasm guard missing');
+assert(worker.includes("phase==='run'?'WASM_EXECUTION_TIMEOUT'" )===false,'provider timeout belongs outside worker');
+console.log('MODERN_CPP_SAFETY_LIMITS_PASS',{source:MODERN_CPP_LIMITS.maxSourceBytes,input:MODERN_CPP_LIMITS.maxTotalInputBytes,wasm:MODERN_CPP_LIMITS.maxCompiledWasmBytes,output:MODERN_CPP_LIMITS.maxOutputChars});

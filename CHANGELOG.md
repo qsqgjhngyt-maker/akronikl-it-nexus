@@ -1,3 +1,11 @@
+# CHANGELOG v0.1.5-alpha.2
+
+- Real on-demand `Nexus WASM C++ Runtime` integrated through pinned Clang/LLD + WASI.
+- Modern C++ / STL / OOP now route to a real compiler instead of the lightweight Browser Runtime fallback.
+- Dedicated Worker, lazy toolchain loading, progress UI, compiler/run timings, real line/column diagnostics and phase-specific safety timeouts.
+- Learner source remains local to the browser; external delivery is used for pinned runtime assets only.
+- Basic C++ stays on the fast Browser Runtime; Lesson Standard 1.0 and benchmark content remain unchanged.
+
 # CHANGELOG v0.1.5-alpha.1
 
 - Nexus Sandbox core is now language-neutral through an explicit `languageId`.

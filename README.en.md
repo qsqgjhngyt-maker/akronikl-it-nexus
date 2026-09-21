@@ -18,7 +18,7 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
-**v0.1.5-alpha.1 / Nexus Polyglot Runtime Foundation.** Nexus Sandbox now uses a language-neutral Runtime Router, a shared provider contract, a Programming language registry, automatic provider routing, and a WASM Worker foundation. C++ remains the first reference language but is no longer hard-coded into the execution core.
+**v0.1.5-alpha.2 / Modern C++ Compiler Integration.** The Polyglot Runtime Router now connects a real `Nexus WASM C++ Runtime`: Modern C++ is compiled inside a dedicated Worker using a pinned Clang/LLD toolchain and executed as a WASI module. Basic C++ still stays on the fast Browser Runtime.
 
 **Historical UI baseline: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Native system select popups in the top bar have been replaced with a custom Nexus Glass Dropdown to eliminate bright Windows/Chromium menus and keep a consistent desktop/mobile appearance. All alpha.4 functionality remains intact.
 
@@ -58,4 +58,4 @@ Nexus Lesson Standard 1.0 is now **Normative / Production** after three accepted
 
 ## Current development
 
-`v0.1.5-alpha.1` introduces the language-neutral Nexus Polyglot Runtime Foundation. Lesson Standard 1.0 is frozen as Normative / Production after the `v0.1.4-alpha.2.2` live pass. Runtime Router, provider contract, a 24-track programming-language registry, automatic provider routing, and a WASM Worker foundation are now in place. Modern C++ compiler integration follows in `v0.1.5-alpha.2`.
+`v0.1.5-alpha.2` connects the first real extended provider to the Polyglot Runtime. Modern C++ / STL / OOP are routed to `Nexus WASM C++ Runtime`; the pinned Clang/WASI toolchain is lazy-loaded in a Worker, real compiler diagnostics are preserved, and learner source is not submitted to a remote compiler API.

@@ -37,8 +37,10 @@ function missingStandardLibrary(evidence='',source=''){
 export function parseRuntimeError(error,source='',options={}){
   const raw=String(error?.message||error||'Неизвестная ошибка');
   const firstRaw=String(error?.anxFirstError||'');
-  const evidence=firstRaw?`${firstRaw}\n${raw}`:raw;
-  const m=raw.match(/line\s+(\d+)\s*\(column\s*(\d+)\)/i)||raw.match(/line\s+(\d+)/i)||raw.match(/(?:^|\n)\s*(\d+)\s*:\s*(\d+)\b/)||firstRaw.match(/line\s+(\d+)\s*\(column\s*(\d+)\)/i)||firstRaw.match(/line\s+(\d+)/i)||firstRaw.match(/(?:^|\n)\s*(\d+)\s*:\s*(\d+)\b/);
+  const compilerRaw=String(error?.anxCompilerOutput||'');
+  const evidence=[firstRaw,compilerRaw,raw].filter(Boolean).join('\n');
+  const clangMatch=compilerRaw.match(/(?:^|\n)([^:\n]+):(\d+):(\d+):\s*(fatal\s+error|error|warning):\s*([^\n]+)/i);
+  const m=clangMatch?[clangMatch[0],clangMatch[2],clangMatch[3]]:(raw.match(/line\s+(\d+)\s*\(column\s*(\d+)\)/i)||raw.match(/line\s+(\d+)/i)||raw.match(/(?:^|\n)\s*(\d+)\s*:\s*(\d+)\b/)||firstRaw.match(/line\s+(\d+)\s*\(column\s*(\d+)\)/i)||firstRaw.match(/line\s+(\d+)/i)||firstRaw.match(/(?:^|\n)\s*(\d+)\s*:\s*(\d+)\b/));
   const rawLine=m?Number(m[1]):null;const offset=Number(error?.anxLineOffset||0);const detectedLine=rawLine?Math.max(1,rawLine-offset):null;const detectedColumn=m&&m[2]?Number(m[2]):null;
   const locale=options.locale==='en'?'en':'ru';
   const analysis=options.analysis||null;
@@ -48,7 +50,8 @@ export function parseRuntimeError(error,source='',options={}){
   const compatibilityRetryFailed=error?.anxCompatibilityRetry===true;
   const missingStdLibrary=missingStandardLibrary(evidence,source);
   const noStaticErrors=!analysis||analysis.issues?.filter(x=>x.level==='error').length===0;
-  const providerLimit=noStaticErrors&&(((parseLike||compatibilityRetryFailed)&&bestEffort.length>0)||Boolean(missingStdLibrary));
+  const explicitProviderLimit=error?.anxProviderLimit===true||['WASM_TOOLCHAIN_UNAVAILABLE','WASM_ENVIRONMENT_UNAVAILABLE','WASM_COMPILER_TIMEOUT'].includes(error?.code);
+  const providerLimit=explicitProviderLimit||(noStaticErrors&&(((parseLike||compatibilityRetryFailed)&&bestEffort.length>0)||Boolean(missingStdLibrary)));
   const line=providerLimit?null:detectedLine;
   const column=providerLimit?null:detectedColumn;
   let kind='runtime-error';
@@ -56,9 +59,18 @@ export function parseRuntimeError(error,source='',options={}){
   let explanation=locale==='en'?'The environment could not execute the program. Open technical output and inspect the reported line.':'Среда не смогла выполнить программу. Откройте технический вывод и проверьте указанную строку.';
   if(providerLimit){
     kind='provider-limit';
-    title=locale==='en'?'Browser Runtime limitation':'Ограничение Browser Runtime';
+    const wasmProviderLimit=String(error?.code||'').startsWith('WASM_');
+    title=wasmProviderLimit?(locale==='en'?'Modern C++ Runtime limitation':'Ограничение Modern C++ Runtime'):(locale==='en'?'Browser Runtime limitation':'Ограничение Browser Runtime');
     const featureText=labels(bestEffort,locale);
-    if(missingStdLibrary){
+    if(error?.code==='WASM_TOOLCHAIN_UNAVAILABLE'||error?.code==='WASM_ENVIRONMENT_UNAVAILABLE'){
+      explanation=locale==='en'
+        ?'The Modern C++ provider could not load its pinned Clang/WASI toolchain. This is an environment or network limitation, not proof that the learner source is invalid. Retry when the runtime assets are reachable.'
+        :'Modern C++ provider не смог загрузить закреплённый Clang/WASI toolchain. Это ограничение среды или сети, а не доказательство ошибки исходного кода ученика. Повторите запуск, когда runtime-assets будут доступны.';
+    }else if(error?.code==='WASM_COMPILER_TIMEOUT'){
+      explanation=locale==='en'
+        ?'The in-browser compiler exceeded the safety time limit. Nexus stopped the Worker to keep the interface responsive; this does not by itself prove that the C++ source is invalid.'
+        :'Браузерный компилятор превысил безопасный лимит времени. Nexus остановил Worker, чтобы интерфейс не завис; само по себе это не доказывает ошибку C++-кода.';
+    }else if(missingStdLibrary){
       explanation=locale==='en'
         ?`Nexus structural checks did not find a basic syntax-shape error. The lightweight Browser Runtime does not provide the standard C++ header <${missingStdLibrary}> required by this program. This is an environment limitation, not proof that your C++ source is invalid. The same Sandbox UI will route such code to an extended provider when it becomes available.`
         :`Структурная проверка Nexus не нашла базовой ошибки формы кода. В лёгком Browser Runtime отсутствует стандартный заголовок C++ <${missingStdLibrary}>, который требуется этой программе. Это ограничение среды, а не доказательство ошибки вашего C++. В дальнейшем тот же Nexus Sandbox будет направлять такой код в расширенный provider.`;
@@ -67,15 +79,26 @@ export function parseRuntimeError(error,source='',options={}){
         ?`Nexus structural checks did not find a basic syntax-shape error, but the lightweight Browser Runtime does not guarantee full support for: ${featureText}. ${compatibilityRetryFailed?'A safe compatibility retry was attempted, but the lightweight provider still could not execute this program. ':''}This is an environment limitation, not proof that your C++ source is invalid. The same Sandbox UI will route such code to an extended provider when it becomes available.`
         :`Структурная проверка Nexus не нашла базовой ошибки формы кода, но лёгкий Browser Runtime не гарантирует полную поддержку конструкций: ${featureText}. ${compatibilityRetryFailed?'Безопасный compatibility retry был выполнен, но лёгкий provider всё равно не смог запустить программу. ':''}Это ограничение среды, а не доказательство ошибки вашего C++. В дальнейшем тот же Nexus Sandbox будет направлять такой код в расширенный provider.`;
     }
+  }else if(clangMatch){
+    kind='compiler-error';title=locale==='en'?'C++ compilation error':'Ошибка компиляции C++';
+    const compilerMessage=String(clangMatch[5]||'').trim();
+    explanation=locale==='en'
+      ?`Clang rejected the source at the marked location: ${compilerMessage}`
+      :`Clang отклонил исходный код в отмеченном месте: ${compilerMessage}`;
+  }else if(error?.code==='WASM_EXECUTION_TIMEOUT'){
+    kind='runtime-timeout';title=locale==='en'?'Execution time limit exceeded':'Превышено время выполнения';
+    explanation=locale==='en'
+      ?'The compiled program did not finish within the Nexus safety limit. Check for an infinite loop, blocking input, or unexpectedly heavy work.'
+      :'Скомпилированная программа не завершилась за безопасный лимит Nexus. Проверьте бесконечный цикл, ожидание ввода или неожиданно тяжёлую операцию.';
   }else if(parseLike){
     kind='syntax-error';title=locale==='en'?'Syntax error':'Ошибка синтаксиса';
     explanation=locale==='en'?'The parser could not read a C++ construct. Check brackets, semicolons, quotes, and the construct near the marked line.':'Парсер не смог разобрать конструкцию C++. Проверьте скобки, точки с запятой, кавычки и конструкцию рядом с отмеченной строкой.';
   }
-  if(!providerLimit&&/std::|unexpected token.*:/i.test(raw)){
+  if(!providerLimit&&!clangMatch&&/(std::|unexpected token.*:)/i.test(raw)){
     explanation=locale==='en'?'The current Browser Runtime supports a teaching subset of C++. Nexus applies compatibility adaptations for common standard-library names; inspect the technical output if the error repeats.':'Текущий Browser Runtime поддерживает учебное подмножество C++. Nexus применяет слой совместимости для распространённых стандартных имён; если ошибка повторяется, проверьте технический вывод.';
   }
-  if(!providerLimit&&/not defined|unknown identifier|undeclared/i.test(raw)){kind='unknown-name';title=locale==='en'?'Unknown name':'Неизвестное имя';explanation=locale==='en'?'The code uses a name that is not known in this scope. Check declarations, function names, and headers.':'В коде используется имя, которое среда не знает в этой области видимости. Проверьте объявление переменной, функции или заголовка.'}
+  if(!providerLimit&&!clangMatch&&/(not defined|unknown identifier|undeclared)/i.test(raw)){kind='unknown-name';title=locale==='en'?'Unknown name':'Неизвестное имя';explanation=locale==='en'?'The code uses a name that is not known in this scope. Check declarations, function names, and headers.':'В коде используется имя, которое среда не знает в этой области видимости. Проверьте объявление переменной, функции или заголовка.'}
   const snippet=line?String(source).split('\n')[line-1]||'':'';
-  const technicalRaw=firstRaw?`${locale==='en'?'Primary Browser Runtime attempt':'Первичная попытка Browser Runtime'}:\n${firstRaw}\n\n${locale==='en'?'Compatibility retry':'Compatibility retry'}:\n${raw}`:raw;
-  return{kind,title,explanation,line,column,raw:technicalRaw,snippet,capability,bestEffort,providerLimit,compatibilityRetryFailed,missingStdLibrary};
+  const technicalRaw=compilerRaw||((firstRaw?`${locale==='en'?'Primary Browser Runtime attempt':'Первичная попытка Browser Runtime'}:\n${firstRaw}\n\n${locale==='en'?'Compatibility retry':'Compatibility retry'}:\n${raw}`:raw));
+  return{kind,title,explanation,line,column,raw:technicalRaw,snippet,capability,bestEffort,providerLimit,compatibilityRetryFailed,missingStdLibrary,compilerDiagnostic:Boolean(clangMatch),phase:error?.anxPhase||null};
 }

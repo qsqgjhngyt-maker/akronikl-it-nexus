@@ -29,10 +29,13 @@ async function probeOop(provider,languageId='cpp'){
 }
 
 export async function sandboxSelfTest({languageId='cpp'}={}){
-  const route=await pickProvider({languageId,source:''});
-  const basic=await probeBasic(route.provider,languageId);
-  const oop=await probeOop(route.provider,languageId);
-  return{ok:basic.ok,provider:route.provider,basic,oop,route,languageId};
+  const basicSource='#include <iostream>\nint main(){std::cout << "NEXUS_OK\\n";return 0;}';
+  const oopSource='#include <iostream>\n#include <string>\nclass A{public:virtual std::string value(){return "1";}};\nclass B:public A{public:std::string value() override{return "2";}};\nint main(){B b;A& a=b;std::cout<<a.value()<<"\\n";return 0;}';
+  const basicRoute=await pickProvider({languageId,source:basicSource});
+  const basic=await probeBasic(basicRoute.provider,languageId);
+  const oopRoute=await pickProvider({languageId,source:oopSource});
+  const oop=await probeOop(oopRoute.provider,languageId);
+  return{ok:basic.ok,provider:oopRoute.provider,basic,oop,route:oopRoute,basicRoute,oopRoute,languageId};
 }
 
 function routeReasonText(route,en=false){
@@ -82,6 +85,18 @@ export function createSandboxController({editor,stdin,output,engine,status,route
   };
   const setRuntimeState=(kind,text)=>{runtimeState={kind,text};renderAnalysis()};
   const setEngine=(state,text)=>{if(engine){engine.className=`engine-status ${state}`;engine.textContent=text}};
+  const renderProviderProgress=(snapshot={})=>{
+    const phase=snapshot.phase||'';
+    const percent=Number.isFinite(snapshot.percent)?` ${snapshot.percent}%`:'';
+    let runtimeText=en?'Runtime: preparing':'Runtime: подготовка';
+    let engineText=en?'Modern C++ · preparing':'Modern C++ · подготовка';
+    let outputText=en?'Preparing Modern C++ Runtime…':'Подготавливаем Modern C++ Runtime…';
+    if(phase==='toolchain'){runtimeText=en?`Runtime: loading compiler${percent}`:`Runtime: загрузка компилятора${percent}`;engineText=en?`Clang/WASI · loading${percent}`:`Clang/WASI · загрузка${percent}`;outputText=en?`First Modern C++ launch downloads the pinned Clang/WASI toolchain${percent}. It is cached by the browser for later runs.`:`Первый запуск Modern C++ загружает закреплённый Clang/WASI toolchain${percent}. После этого браузер использует кэш для следующих запусков.`}
+    else if(phase==='runner'){runtimeText=en?'Runtime: preparing WASI':'Runtime: подготовка WASI';engineText=en?'WASI · preparing':'WASI · подготовка';outputText=en?'Preparing the isolated WASI execution environment…':'Подготавливаем изолированную среду выполнения WASI…'}
+    else if(phase==='compile'){runtimeText=en?'Runtime: compiling':'Runtime: компиляция';engineText=en?'Clang · compiling':'Clang · компиляция';outputText=en?'Clang is compiling the source to a WASI WebAssembly executable…':'Clang компилирует исходный код в исполняемый WASI WebAssembly-модуль…'}
+    else if(phase==='run'){runtimeText=en?'Runtime: running WASM':'Runtime: выполнение WASM';engineText=en?'WASI · running':'WASI · выполнение';outputText=en?'Compilation passed. Running the program inside the isolated WASI Worker…':'Компиляция пройдена. Выполняем программу внутри изолированного WASI Worker…'}
+    setRuntimeState('busy',runtimeText);setEngine('busy',engineText);output.className='output';output.textContent=outputText;
+  };
   const showDiagnostic=(diag)=>{
     lastErrorLine=diag.line;renderLines();
     output.className='output '+(diag.providerLimit?'provider-limit-output':'error-output');
@@ -92,21 +107,26 @@ export function createSandboxController({editor,stdin,output,engine,status,route
     lastErrorLine=null;lastRoute=null;setRouteInfo(null);setRuntimeState('busy',en?'Runtime: routing':'Runtime: маршрутизация');setEngine('busy',en?'Nexus Runtime · routing':'Nexus Runtime · маршрутизация');
     output.className='output';output.textContent=en?'Selecting runtime provider…':'Выбираем runtime provider…';
     const analysis=renderAnalysis();
-    let route=null;
+    let route=null;let unsubscribeRuntime=null;
     try{
       const request={languageId:language,source:editor.value,stdin:stdin?.value||'',metadata:{origin:'lesson-sandbox'}};
       route=await pickProvider(request);setRouteInfo(route);
+      if(typeof route.provider?.subscribe==='function')unsubscribeRuntime=route.provider.subscribe(snapshot=>{if(route?.provider?.id==='wasm-cpp')renderProviderProgress(snapshot)});
       setRuntimeState('busy',en?'Runtime: running':'Runtime: выполняется');setEngine('busy',en?`${route.provider.label} · running`:`${route.provider.label} · выполняется`);
       const result=await route.provider.run(request);
+      unsubscribeRuntime?.();unsubscribeRuntime=null;
       setEngine('ok',en?`${route.provider.label} · ready`:`${route.provider.label} · готов`);
       setRuntimeState('ok',en?'Runtime: passed':'Runtime: выполнено');
       const adapter=result.normalized?.adapted?`\n\n${en?'Compatibility adapter':'Адаптер совместимости'}: ${result.normalized.changes.join(', ')}`:'';
-      const exit=result.exitCode!==undefined&&result.exitCode!==0?`\n${en?'Exit code':'Код завершения'}: ${result.exitCode}`:'';
+      const exit=result.exitCode!==undefined?`\n${en?'Exit code':'Код завершения'}: ${result.exitCode}`:'';
       const routing=`\n\n${en?'Provider':'Provider'}: ${route.provider.label}${route.preferredUnavailable?` · ${en?'fallback while':'fallback, пока'} ${route.preferredUnavailable.provider.label} ${en?'is unavailable':'недоступен'}`:''}`;
+      const compiler=result.compiler?`\n${en?'Compiler':'Компилятор'}: ${result.compiler}${Number.isFinite(result.compileMs)?`\n${en?'Compile':'Компиляция'}: ${result.compileMs} ms`:''}${Number.isFinite(result.runMs)?` · ${en?'Run':'выполнение'}: ${result.runMs} ms`:''}`:'';
+      const compilerDiagnostics=result.compilerStderr?.trim()?`\n\n${en?'Compiler diagnostics':'Диагностика компилятора'}:\n${result.compilerStderr.trim()}`:'';
       output.className='output success-output';
-      output.textContent=(result.stdout||(en?'(program produced no output)':'(программа ничего не вывела)'))+exit+adapter+routing+`\nNexus Sandbox · ${result.elapsedMs} ms`;
+      output.textContent=(result.stdout||(en?'(program produced no output)':'(программа ничего не вывела)'))+exit+adapter+routing+compiler+compilerDiagnostics+`\nNexus Sandbox · ${result.elapsedMs} ms`;
       return result;
     }catch(err){
+      unsubscribeRuntime?.();unsubscribeRuntime=null;
       if(err?.anxRuntimeRoute?.candidates&&!route){
         setRouteInfo(null);
         setEngine('bad',en?'Nexus Runtime · no provider':'Nexus Runtime · provider недоступен');
@@ -133,11 +153,14 @@ export function createSandboxController({editor,stdin,output,engine,status,route
       setRuntimeState(result.oop.ok?'ok':'warn',en?(result.oop.ok?'Runtime: base + OOP passed':'Runtime: base passed · OOP best-effort'):(result.oop.ok?'Runtime: база + OOP пройдены':'Runtime: база пройдена · OOP best-effort'));
       output.className='output '+(result.oop.ok?'success-output':'provider-limit-output');
       output.innerHTML=result.oop.ok
-        ?(en?'✓ Routed Browser Runtime is ready. Console I/O and the OOP capability probe passed.':'✓ Маршрутизируемый Browser Runtime готов. Консольный ввод/вывод и OOP-проверка выполнены успешно.')
-        :(en?'✓ Base console runtime is ready.<br>⚠ Advanced OOP is currently best-effort in the lightweight Browser Runtime. The Runtime Router already knows that the future WASM provider is preferred for this capability.':'✓ Базовый консольный runtime готов.<br>⚠ Расширенное ООП сейчас работает в лёгком Browser Runtime в режиме best-effort. Runtime Router уже знает, что для этой возможности предпочтителен будущий WASM provider.');
+        ?(en?`✓ Fast Browser Runtime passed the console probe.<br>✓ Modern C++ probe passed through ${escapeHtml(result.oopRoute?.provider?.label||'Nexus Runtime')}.`:`✓ Быстрый Browser Runtime прошёл консольную проверку.<br>✓ Modern C++ проверка пройдена через ${escapeHtml(result.oopRoute?.provider?.label||'Nexus Runtime')}.`)
+        :(en?'✓ Base console runtime is ready.<br>⚠ The Modern C++ provider could not complete the OOP probe. Open the technical diagnostic and retry after the toolchain is available.':'✓ Базовый консольный runtime готов.<br>⚠ Modern C++ provider не смог завершить OOP-проверку. Откройте техническую диагностику и повторите после загрузки toolchain.');
       return result;
     }catch(err){
-      setEngine('bad',en?'Nexus Runtime · self-test failed':'Nexus Runtime · ошибка самопроверки');setRuntimeState('bad',en?'Runtime: self-test failed':'Runtime: самопроверка не пройдена');showDiagnostic(parseRuntimeError(err,editor.value,{analysis:renderAnalysis(),locale}));throw err;
+      const diag=parseRuntimeError(err,editor.value,{analysis:renderAnalysis(),locale});
+      if(diag.providerLimit){setEngine('warn',en?'Nexus Runtime · environment limit':'Nexus Runtime · ограничение среды');setRuntimeState('warn',en?'Runtime: provider limit':'Runtime: ограничение provider')}
+      else{setEngine('bad',en?'Nexus Runtime · self-test failed':'Nexus Runtime · ошибка самопроверки');setRuntimeState('bad',en?'Runtime: self-test failed':'Runtime: самопроверка не пройдена')}
+      showDiagnostic(diag);throw err;
     }
   };
   editor.addEventListener('input',()=>{lastErrorLine=null;lastRoute=null;runtimeState={kind:'idle',text:en?'Runtime: not run':'Runtime: не запускался'};setRouteInfo(null);onCodeChange(editor.value);renderAnalysis()});

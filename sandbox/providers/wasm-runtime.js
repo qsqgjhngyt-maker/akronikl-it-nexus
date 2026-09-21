@@ -1,15 +1,135 @@
-import {normalizeRuntimeRequest,RUNTIME_SUPPORT} from '../provider-contract.js';
+import {normalizeRuntimeRequest,runtimeResult,RUNTIME_SUPPORT} from '../provider-contract.js';
+import {MODERN_CPP_LIMITS,modernCppToolchainLabel} from '../runtime-assets.js';
 
 const MODERN_CPP_PATTERNS=[
-  /#\s*include\s*<(string|vector|memory|map|unordered_map|set|algorithm|ranges|filesystem|thread|future|optional|variant|tuple|regex|format)>/,
-  /\b(virtual|override|final|template|concept|constexpr|unique_ptr|shared_ptr|make_unique|make_shared)\b/
+  /#\s*include\s*<(string|string_view|vector|memory|map|unordered_map|set|unordered_set|algorithm|ranges|filesystem|thread|future|optional|variant|tuple|regex|format|array|deque|list|queue|stack)>/,
+  /\b(virtual|override|final|template|concept|constexpr|unique_ptr|shared_ptr|weak_ptr|make_unique|make_shared|std::vector|std::string|std::map|std::unordered_map)\b/
 ];
 
-const state={status:'idle',lastProbe:null};
+const BUSY_STATES=new Set(['loading-toolchain','loading-wasi-runner','compiling','running']);
+const state={status:'idle',phase:null,percent:null,compilerReady:false,lastProbe:null,lastError:null};
 const listeners=new Set();
-const emit=()=>listeners.forEach(fn=>{try{fn({...state})}catch{}});
+const pending=new Map();
+let worker=null;
+let sequence=0;
 
-function needsModernCpp(source=''){return MODERN_CPP_PATTERNS.some(pattern=>pattern.test(String(source||'')))}
+const emit=()=>listeners.forEach(fn=>{try{fn({...state})}catch{}});
+const patchState=update=>{Object.assign(state,update);emit()};
+const needsModernCpp=source=>MODERN_CPP_PATTERNS.some(pattern=>pattern.test(String(source||'')));
+const workerSupported=()=>typeof Worker!=='undefined'&&typeof WebAssembly!=='undefined'&&typeof URL!=='undefined';
+
+function resetWorker(reason='reset'){
+  try{worker?.terminate()}catch{}
+  worker=null;
+  for(const [id,entry] of pending){
+    clearTimeout(entry.timer);
+    const error=new Error(`Nexus WASM Runtime worker stopped: ${reason}`);
+    error.code='WASM_WORKER_RESET';
+    entry.reject(error);
+    pending.delete(id);
+  }
+  patchState({status:'idle',phase:null,percent:null});
+}
+
+function timeoutForPhase(phase){
+  if(phase==='toolchain'||phase==='runner')return MODERN_CPP_LIMITS.toolchainTimeoutMs;
+  if(phase==='compile')return MODERN_CPP_LIMITS.compileTimeoutMs;
+  if(phase==='run')return MODERN_CPP_LIMITS.executionTimeoutMs;
+  return MODERN_CPP_LIMITS.toolchainTimeoutMs;
+}
+
+function arm(entry,phase='toolchain'){
+  clearTimeout(entry.timer);
+  entry.phase=phase;
+  entry.timer=setTimeout(()=>{
+    const error=new Error(phase==='run'
+      ?'Программа не завершилась за допустимое время выполнения в Nexus WASM Runtime.'
+      :'Nexus WASM Runtime превысил допустимое время подготовки или компиляции.');
+    error.code=phase==='run'?'WASM_EXECUTION_TIMEOUT':'WASM_COMPILER_TIMEOUT';
+    error.anxPhase=phase;
+    error.anxProvider=wasmRuntimeProvider;
+    error.anxCapability=entry.capability;
+    pending.delete(entry.requestId);
+    try{worker?.terminate()}catch{}
+    worker=null;
+    patchState({status:'error',phase,lastError:error.message});
+    entry.reject(error);
+  },timeoutForPhase(phase));
+}
+
+function ensureWorker(){
+  if(worker)return worker;
+  if(!workerSupported())throw Object.assign(new Error('Web Worker / WebAssembly API недоступны в этом браузере.'),{code:'WASM_ENVIRONMENT_UNAVAILABLE'});
+  worker=new Worker(new URL('../workers/wasm-runtime-worker.js',import.meta.url),{type:'module'});
+  worker.onmessage=event=>{
+    const message=event.data||{};
+    const entry=pending.get(message.requestId);
+    if(message.type==='runtime-progress'){
+      const phase=message.phase||entry?.phase||null;
+      if(entry)arm(entry,phase);
+      patchState({status:message.status||phase||'busy',phase,percent:Number.isFinite(message.percent)?message.percent:null,lastError:null});
+      return;
+    }
+    if(message.type==='probe-result'){
+      if(entry){clearTimeout(entry.timer);pending.delete(message.requestId);entry.resolve(message)}
+      patchState({status:message.compilerReady?'ready':'idle',phase:null,percent:null,compilerReady:Boolean(message.compilerReady),lastProbe:message,lastError:null});
+      return;
+    }
+    if(message.type==='runtime-result'){
+      if(!entry)return;
+      clearTimeout(entry.timer);pending.delete(message.requestId);
+      patchState({status:'ready',phase:null,percent:100,compilerReady:true,lastError:null});
+      entry.resolve(runtimeResult(wasmRuntimeProvider,message.result,{compiler:message.result?.compiler,target:message.result?.target,compileMs:message.result?.compileMs,runMs:message.result?.runMs,languageId:message.result?.languageId,compilerStdout:message.result?.compilerStdout,compilerStderr:message.result?.compilerStderr}));
+      return;
+    }
+    if(message.type==='runtime-error'){
+      if(!entry)return;
+      clearTimeout(entry.timer);pending.delete(message.requestId);
+      const raw=String(message.compilerOutput||message.raw||message.message||'WASM runtime failure');
+      const error=new Error(raw||String(message.message||'WASM runtime failure'));
+      error.code=message.code||'WASM_RUNTIME_FAILURE';
+      error.anxPhase=message.phase||entry.phase||null;
+      error.anxProvider=wasmRuntimeProvider;
+      error.anxCapability=entry.capability;
+      error.anxCompilerOutput=String(message.compilerOutput||message.raw||'');
+      error.anxProviderLimit=['WASM_TOOLCHAIN_UNAVAILABLE','WASM_ENVIRONMENT_UNAVAILABLE','WASM_COMPILER_TIMEOUT'].includes(error.code);
+      patchState({status:message.state==='ready'?'ready':'error',phase:error.anxPhase,percent:null,compilerReady:Boolean(message.compilerReady),lastError:error.message});
+      if(error.code==='WASM_TOOLCHAIN_UNAVAILABLE'){
+        try{worker?.terminate()}catch{}
+        worker=null;
+      }
+      entry.reject(error);
+    }
+  };
+  worker.onerror=event=>{
+    const message=event?.message||'Nexus WASM Runtime worker failed.';
+    const entries=[...pending.values()];
+    pending.clear();
+    for(const entry of entries){
+      clearTimeout(entry.timer);
+      const error=new Error(message);
+      error.code='WASM_WORKER_FAILURE';
+      error.anxProvider=wasmRuntimeProvider;
+      error.anxCapability=entry.capability;
+      error.anxProviderLimit=true;
+      entry.reject(error);
+    }
+    try{worker?.terminate()}catch{}
+    worker=null;
+    patchState({status:'error',phase:null,percent:null,lastError:message});
+  };
+  return worker;
+}
+
+function requestWorker(type,payload,capability){
+  const requestId=`wasm-${Date.now()}-${++sequence}`;
+  const runtimeWorker=ensureWorker();
+  return new Promise((resolve,reject)=>{
+    const entry={requestId,resolve,reject,capability,timer:null,phase:'toolchain'};
+    pending.set(requestId,entry);arm(entry,'toolchain');
+    runtimeWorker.postMessage({type,requestId,...payload});
+  });
+}
 
 export const wasmRuntimeProvider={
   id:'wasm-cpp',
@@ -17,10 +137,10 @@ export const wasmRuntimeProvider={
   tier:'wasm',
   priority:40,
   languages:['c','cpp'],
-  planned:true,
-  lifecycle:'foundation-worker-ready/compiler-planned',
-  workerUrl:'./sandbox/workers/wasm-runtime-worker.js',
-  capabilities:{stdin:true,stdout:true,unicode:true,files:'virtual-planned',threads:'planned',gui:false,fullStdlib:'planned-full',multiFile:'planned'},
+  planned:false,
+  lifecycle:'ready-on-demand/pinned-clang-wasi',
+  toolchain:modernCppToolchainLabel(),
+  capabilities:{stdin:true,stdout:true,unicode:true,files:true,threads:false,gui:false,fullStdlib:true,multiFile:'basic',cppStandard:'c++20',compilerDiagnostics:true,workerIsolation:true},
   getState(){return{...state}},
   subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn)},
   inspect(input={}){
@@ -33,29 +153,27 @@ export const wasmRuntimeProvider={
       features:modern?[{id:'cpp.modern-runtime',labelRu:'Modern C++ / STL',labelEn:'Modern C++ / STL',support:RUNTIME_SUPPORT.GUARANTEED}]:[],
       bestEffort:[],
       reasons:[modern?'modern-cpp-preferred':'wasm-toolchain-capable'],
-      scoreHint:modern?80:-80
+      scoreHint:modern?110:-90
     };
   },
-  async available(){return false},
+  async available(input={}){
+    const request=normalizeRuntimeRequest(input);
+    return this.languages.includes(request.languageId)&&workerSupported();
+  },
   async probeFoundation(){
-    if(typeof Worker==='undefined')return{ok:false,state:'worker-unavailable',compilerReady:false,reason:'web-worker-api-unavailable'};
-    state.status='loading';emit();
-    const result=await new Promise((resolve,reject)=>{
-      const worker=new Worker(new URL('../workers/wasm-runtime-worker.js',import.meta.url),{type:'module'});
-      const requestId=`probe-${Date.now()}`;
-      const timer=setTimeout(()=>{worker.terminate();reject(new Error('WASM foundation worker probe timeout.'))},5000);
-      worker.onmessage=event=>{if(event.data?.requestId!==requestId)return;clearTimeout(timer);worker.terminate();resolve(event.data)};
-      worker.onerror=event=>{clearTimeout(timer);worker.terminate();reject(new Error(event.message||'WASM foundation worker failed.'))};
-      worker.postMessage({type:'probe',requestId});
-    });
-    state.status=result.ok?'foundation-ready':'unavailable';state.lastProbe=result;emit();return result;
+    const result=await requestWorker('probe',{},this.inspect({languageId:'cpp',source:''}));
+    state.lastProbe=result;return result;
   },
   async run(input={}){
     const request=normalizeRuntimeRequest(input);
-    const error=new Error(`Nexus WASM Runtime compiler is not integrated yet for ${request.languageId}.`);
-    error.code='WASM_COMPILER_NOT_READY';
-    error.anxProvider=this;
-    error.anxCapability=this.inspect(request);
-    throw error;
-  }
+    if(!this.languages.includes(request.languageId))throw new Error(`Nexus WASM Runtime does not support ${request.languageId}.`);
+    if(BUSY_STATES.has(state.status)){
+      const error=new Error('Nexus WASM Runtime уже выполняет другую задачу. Дождитесь завершения текущей компиляции.');
+      error.code='WASM_RUNTIME_BUSY';throw error;
+    }
+    const capability=this.inspect(request);
+    patchState({status:'loading-toolchain',phase:'toolchain',percent:0,lastError:null});
+    return requestWorker('run',{request},capability);
+  },
+  shutdown(){resetWorker('shutdown')}
 };
