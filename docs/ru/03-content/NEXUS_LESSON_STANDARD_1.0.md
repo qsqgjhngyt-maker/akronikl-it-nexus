@@ -1,6 +1,6 @@
 # Nexus Lesson Standard 1.0
 
-**Статус:** candidate-final после трёх benchmark-уроков C++; становится нормативным после live-smoke и принятия Benchmark 03 в GitHub Pages.
+**Статус:** **Normative / Production 1.0**. Зафиксирован после успешного live-smoke Benchmark 03 и Runtime Capability Diagnostics в `v0.1.4-alpha.2.2`.
 
 ## Цель
 
@@ -42,4 +42,4 @@
 
 ## Freeze rule
 
-После успешного live-smoke Benchmark 03 этот документ получает статус **Normative / Production 1.0**. Дальнейшие изменения структуры урока оформляются как 1.1+ и проходят регрессию на всех трёх эталонах.
+Live-smoke Benchmark 03 и Runtime Capability Diagnostics успешно приняты в `v0.1.4-alpha.2.2`. Стандарт **заморожен как Normative / Production 1.0**. Дальнейшие изменения структуры урока оформляются как 1.1+ и проходят регрессию на всех трёх эталонах.

@@ -1,6 +1,6 @@
 # Nexus Lesson Standard 1.0
 
-**Status:** candidate-final after three C++ benchmark lessons; becomes normative after live smoke and acceptance of Benchmark 03 on GitHub Pages.
+**Status:** **Normative / Production 1.0**. Frozen after successful Benchmark 03 live smoke and Runtime Capability Diagnostics in `v0.1.4-alpha.2.2`.
 
 ## Goal
 
@@ -42,4 +42,4 @@ A Nexus lesson must guide a learner through **understand → model → experimen
 
 ## Freeze rule
 
-After Benchmark 03 passes live smoke, this document becomes **Normative / Production 1.0**. Structural changes after that are versioned as 1.1+ and must regress against all three benchmarks.
+Benchmark 03 live smoke and Runtime Capability Diagnostics were accepted in `v0.1.4-alpha.2.2`. The standard is **frozen as Normative / Production 1.0**. Structural changes after that are versioned as 1.1+ and must regress against all three benchmarks.

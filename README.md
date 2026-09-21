@@ -18,7 +18,9 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Статус
 
-**v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Нативные системные выпадающие списки в верхней панели заменены на собственный Nexus Glass Dropdown, чтобы убрать светлые popup-меню Windows/Chromium и сохранить единый стиль на ПК и мобильных устройствах. Все возможности alpha.4 сохранены.
+**v0.1.5-alpha.1 / Nexus Polyglot Runtime Foundation.** Ядро Nexus Sandbox стало language-neutral: добавлены Runtime Router, единый provider contract, реестр языков программирования, автоматическая маршрутизация и WASM Worker foundation. C++ остаётся первым reference language, но больше не зашит в ядро исполнения.
+
+**Исторический baseline UI: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Нативные системные выпадающие списки в верхней панели заменены на собственный Nexus Glass Dropdown, чтобы убрать светлые popup-меню Windows/Chromium и сохранить единый стиль на ПК и мобильных устройствах. Все возможности alpha.4 сохранены.
 
 **v0.1.2-alpha.4 / Benchmark UX & Sandbox Foundation.** Эталонный урок C++ получил скрываемую навигацию, Focus Reading, отдельный «Справочник терминов» с собственным скроллом и кликабельными терминами, футуристический Nexus Glass UI с адаптивными серебряно-золотыми частицами и новый provider-based Nexus Sandbox. Browser Runtime теперь имеет слой совместимости для стандартных форм вроде `std::cout`, живую структурную проверку, требования задания, понятную диагностику и технический вывод вторым уровнем. Архитектура Nexus Project Studio с версиями, build/test и Akronikl Project Mentor зафиксирована на будущее.
 
@@ -45,7 +47,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Текущий этап
 
-Текущий исполняемый релиз: [`RELEASE_v0.1.2-alpha.4.1.md`](RELEASE_v0.1.2-alpha.4.1.md). История изменений: [`CHANGELOG_v0.1.2-alpha.4.1.md`](CHANGELOG_v0.1.2-alpha.4.1.md).
+Текущий исполняемый релиз: [`RELEASE_v0.1.5-alpha.1.md`](RELEASE_v0.1.5-alpha.1.md). История изменений: [`CHANGELOG_v0.1.5-alpha.1.md`](CHANGELOG_v0.1.5-alpha.1.md).
 
 ## План первой реализации
 
@@ -65,4 +67,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Текущая разработка
 
-`v0.1.4-alpha.2.2`: второй live-smoke hotfix распознаёт отсутствие известного стандартного C++ заголовка/библиотеки (например `<string>`) в лёгком Browser Runtime как ограничение provider, а не как ошибку кода ученика. Опечатки и неизвестные заголовки не маскируются. Lesson Standard 1.0 остаётся candidate-final до чистого live-smoke.
+`v0.1.5-alpha.1`: после успешного live-smoke `v0.1.4-alpha.2.2` **Nexus Lesson Standard 1.0 заморожен как Normative / Production**. Runtime Core переведён на Polyglot architecture: 24 основных языковых трека зарегистрированы, Router выбирает provider по `languageId` и capabilities, а Modern C++ WASM подключается следующим этапом без изменения UX Sandbox.

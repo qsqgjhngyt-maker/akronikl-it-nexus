@@ -1,9 +1,10 @@
+import {normalizeRuntimeRequest,runtimeResult,RUNTIME_SUPPORT} from '../provider-contract.js';
+
 const RUNNER_URL='https://felixhao28.github.io/JSCPP/dist/JSCPP.es5.min.js';
 let runnerPromise=null;
 
 const FEATURE_RULES=[
   {id:'cpp.class',labelRu:'классы',labelEn:'classes',pattern:/\b(class|struct)\s+[A-Za-z_]\w*/},
-  {id:'cpp.constructor',labelRu:'конструкторы',labelEn:'constructors',pattern:/\b[A-Za-z_]\w*\s*\([^;{}]*\)\s*(?::[^{}]+)?\s*\{/},
   {id:'cpp.inheritance',labelRu:'наследование',labelEn:'inheritance',pattern:/\b(class|struct)\s+[A-Za-z_]\w*\s*:\s*(public|protected|private)?\s*[A-Za-z_]\w*/},
   {id:'cpp.virtual',labelRu:'virtual-функции',labelEn:'virtual functions',pattern:/\bvirtual\b/},
   {id:'cpp.override',labelRu:'override',labelEn:'override',pattern:/\boverride\b/},
@@ -19,9 +20,24 @@ const BEST_EFFORT=new Set([
   'cpp.templates','cpp.exceptions','cpp.smart-pointers','cpp.threads'
 ]);
 
-function detectFeatures(source=''){
-  const code=String(source??'');
-  return FEATURE_RULES.filter(x=>x.pattern.test(code)).map(x=>({id:x.id,labelRu:x.labelRu,labelEn:x.labelEn,support:BEST_EFFORT.has(x.id)?'best-effort':'guaranteed'}));
+const EXTENDED_STDLIB_HEADERS=new Set([
+  'algorithm','array','atomic','chrono','deque','exception','filesystem','format','fstream','functional','future','iomanip','list','map','memory','mutex','optional','queue','random','ranges','regex','set','sstream','stdexcept','string','string_view','thread','tuple','type_traits','unordered_map','unordered_set','utility','variant','vector'
+]);
+
+function sourceFrom(input){return normalizeRuntimeRequest(typeof input==='string'?{languageId:'cpp',source:input}:input).source}
+
+function detectFeatures(input=''){
+  const code=sourceFrom(input);
+  const features=FEATURE_RULES.filter(x=>x.pattern.test(code)).map(x=>({id:x.id,labelRu:x.labelRu,labelEn:x.labelEn,support:BEST_EFFORT.has(x.id)?RUNTIME_SUPPORT.BEST_EFFORT:RUNTIME_SUPPORT.GUARANTEED}));
+  const classNames=[...code.matchAll(/\b(?:class|struct)\s+([A-Za-z_]\w*)/g)].map(x=>x[1]);
+  if(classNames.some(name=>new RegExp(`\\b${name}\\s*\\(`).test(code))){
+    features.push({id:'cpp.constructor',labelRu:'конструкторы',labelEn:'constructors',support:RUNTIME_SUPPORT.BEST_EFFORT});
+  }
+  for(const match of code.matchAll(/^\s*#\s*include\s*<([^>]+)>/gm)){
+    const header=String(match[1]||'').trim();
+    if(EXTENDED_STDLIB_HEADERS.has(header))features.push({id:`cpp.stdlib.${header}`,labelRu:`стандартная библиотека <${header}>`,labelEn:`standard library <${header}>`,support:RUNTIME_SUPPORT.BEST_EFFORT});
+  }
+  return features;
 }
 
 function isParseLike(error){
@@ -39,23 +55,29 @@ async function runWithRuntime(runtime,code,stdin){
   const started=performance.now();
   const result=runtime.run(code,String(stdin??''),{stdio:{write:value=>{stdout+=String(value)}}});
   const exitCode=result&&result.v!==undefined?result.v:result;
-  return{stdout,exitCode,elapsedMs:Math.max(0,Math.round(performance.now()-started))};
+  return{stdout,stderr:'',exitCode,elapsedMs:Math.max(0,Math.round(performance.now()-started))};
 }
 
 export const browserRuntimeProvider={
   id:'browser-jscpp',
   label:'Nexus Browser Runtime',
   tier:'browser',
+  priority:30,
+  languages:['cpp'],
+  lifecycle:'ready-on-demand',
   capabilities:{
     stdin:true,stdout:true,unicode:true,files:false,threads:false,gui:false,fullStdlib:false,multiFile:false,
     guaranteed:['console-io','variables','expressions','conditions','loops','functions','basic-arrays'],
-    bestEffort:['classes','constructors','inheritance','virtual','override','templates','exceptions','smart-pointers']
+    bestEffort:['classes','constructors','inheritance','virtual','override','templates','exceptions','smart-pointers','extended-stdlib']
   },
-  async available(){return true},
-  inspect(source){
-    const features=detectFeatures(source);
-    const bestEffort=features.filter(x=>x.support==='best-effort');
-    return{features,bestEffort,confidence:bestEffort.length?'best-effort':'guaranteed'};
+  async available(input={}){return normalizeRuntimeRequest(input).languageId==='cpp'},
+  inspect(input=''){
+    const request=normalizeRuntimeRequest(typeof input==='string'?{languageId:'cpp',source:input}:input);
+    if(request.languageId!=='cpp')return{support:RUNTIME_SUPPORT.UNSUPPORTED,confidence:RUNTIME_SUPPORT.UNSUPPORTED,features:[],bestEffort:[],reasons:['language-not-supported']};
+    const features=detectFeatures(request);
+    const bestEffort=features.filter(x=>x.support===RUNTIME_SUPPORT.BEST_EFFORT);
+    const support=bestEffort.length?RUNTIME_SUPPORT.BEST_EFFORT:RUNTIME_SUPPORT.GUARANTEED;
+    return{features,bestEffort,support,confidence:support,reasons:bestEffort.length?['lightweight-cpp-subset']:[]};
   },
   async load(){
     if(window.JSCPP)return window.JSCPP;
@@ -89,14 +111,16 @@ export const browserRuntimeProvider={
       const lines=code.split('\n');let lastInclude=-1;for(let i=0;i<lines.length;i++)if(/^\s*#\s*include\b/.test(lines[i]))lastInclude=i;
       lines.splice(lastInclude+1,0,'using namespace std;');code=lines.join('\n');changes.push('added using namespace std;');lineOffset=1;
     }
-    return{original,code,adapted:changes.length>0,changes,lineOffset,capability:this.inspect(original)};
+    return{original,code,adapted:changes.length>0,changes,lineOffset,capability:this.inspect({languageId:'cpp',source:original})};
   },
-  async run(source,stdin=''){
+  async run(input,legacyStdin=''){
+    const request=normalizeRuntimeRequest(typeof input==='string'?{languageId:'cpp',source:input,stdin:legacyStdin}:input);
+    if(request.languageId!=='cpp')throw new Error(`Nexus Browser Runtime does not support ${request.languageId}.`);
     const runtime=await this.load();
-    const normalized=this.normalize(source);
+    const normalized=this.normalize(request.source);
     try{
-      const first=await runWithRuntime(runtime,normalized.code,stdin);
-      return{...first,provider:this,normalized,capability:normalized.capability,compatibilityRetry:false};
+      const first=await runWithRuntime(runtime,normalized.code,request.stdin);
+      return runtimeResult(this,first,{normalized,capability:normalized.capability,compatibilityRetry:false,languageId:'cpp'});
     }catch(firstError){
       // `override` is a compile-time correctness annotation. Removing it in the
       // temporary Browser Runtime copy preserves the intended virtual-dispatch
@@ -104,9 +128,9 @@ export const browserRuntimeProvider={
       const retryCode=isParseLike(firstError)?stripOverrideForCompatibility(normalized.code):null;
       if(retryCode&&retryCode!==normalized.code){
         try{
-          const retry=await runWithRuntime(runtime,retryCode,stdin);
+          const retry=await runWithRuntime(runtime,retryCode,request.stdin);
           const retryNormalized={...normalized,code:retryCode,adapted:true,changes:[...normalized.changes,'override → removed in temporary Browser Runtime copy']};
-          return{...retry,provider:this,normalized:retryNormalized,capability:normalized.capability,compatibilityRetry:true};
+          return runtimeResult(this,retry,{normalized:retryNormalized,capability:normalized.capability,compatibilityRetry:true,languageId:'cpp'});
         }catch(secondError){
           try{secondError.anxCompatibilityRetry=true;secondError.anxFirstError=String(firstError?.message||firstError||'');}catch{}
           firstError=secondError;

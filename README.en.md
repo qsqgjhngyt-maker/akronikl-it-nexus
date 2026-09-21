@@ -18,7 +18,9 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
-**v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Native system select popups in the top bar have been replaced with a custom Nexus Glass Dropdown to eliminate bright Windows/Chromium menus and keep a consistent desktop/mobile appearance. All alpha.4 functionality remains intact.
+**v0.1.5-alpha.1 / Nexus Polyglot Runtime Foundation.** Nexus Sandbox now uses a language-neutral Runtime Router, a shared provider contract, a Programming language registry, automatic provider routing, and a WASM Worker foundation. C++ remains the first reference language but is no longer hard-coded into the execution core.
+
+**Historical UI baseline: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Native system select popups in the top bar have been replaced with a custom Nexus Glass Dropdown to eliminate bright Windows/Chromium menus and keep a consistent desktop/mobile appearance. All alpha.4 functionality remains intact.
 
 **v0.1.2-alpha.4 / Benchmark UX & Sandbox Foundation.** The C++ benchmark lesson now has collapsible navigation, Focus Reading, a separate scrollable Terminology Reference with clickable terms, the adaptive Nexus Glass particle layer, and a provider-based Nexus Sandbox. Browser Runtime adds a compatibility adapter for standard forms such as `std::cout`, live structural checks, assignment requirements, learner-friendly diagnostics, and raw technical output as a secondary layer. Nexus Project Studio architecture is recorded for future versioned capstones, builds/tests, Akronikl Project Mentor, and Portfolio Release.
 
@@ -51,9 +53,9 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Current benchmark focus
 
-`cpp.first-cpp-program` is the first Standard 1.2 benchmark. Its terminology, deep theory, cross-platform Sandbox, diagnostics, and RU/EN structure define the pattern to be validated before scaling.
+Nexus Lesson Standard 1.0 is now **Normative / Production** after three accepted C++ benchmark lessons and the `v0.1.4-alpha.2.2` live Runtime Diagnostics pass. C++ remains the reference course while the runtime architecture becomes polyglot.
 
 
 ## Current development
 
-`v0.1.4-alpha.2.2`: the second live-smoke hotfix classifies a missing known standard C++ header/library (for example `<string>`) in the lightweight Browser Runtime as a provider limitation instead of a learner-code error. Misspelled and unknown headers are not hidden. Lesson Standard 1.0 remains candidate-final pending a clean live smoke.
+`v0.1.5-alpha.1` introduces the language-neutral Nexus Polyglot Runtime Foundation. Lesson Standard 1.0 is frozen as Normative / Production after the `v0.1.4-alpha.2.2` live pass. Runtime Router, provider contract, a 24-track programming-language registry, automatic provider routing, and a WASM Worker foundation are now in place. Modern C++ compiler integration follows in `v0.1.5-alpha.2`.

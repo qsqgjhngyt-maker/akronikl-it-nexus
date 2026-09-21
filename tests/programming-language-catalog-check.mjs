@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+const catalog=JSON.parse(fs.readFileSync(new URL('../courses/catalog.json',import.meta.url),'utf8'));
+const languages=JSON.parse(fs.readFileSync(new URL('../courses/programming/languages.json',import.meta.url),'utf8'));
+const assert=(v,m)=>{if(!v)throw new Error(m)};
+const ids=languages.tracks.map(x=>x.id);
+assert(new Set(ids).size===ids.length,'Programming language track IDs must be unique');
+assert(languages.referenceLanguage==='cpp','C++ must remain the reference language for the current implementation phase');
+for(const id of ['c','cpp','python','java','csharp','javascript','typescript','go','rust','kotlin','swift','dart','php','ruby','r','julia','lua','onec'])assert(ids.includes(id),`missing core language track ${id}`);
+const programming=catalog.courses.find(x=>x.id==='programming');
+assert(programming?.languageTracksFile==='./courses/programming/languages.json','Programming catalog entry does not point to language tracks');
+assert(programming?.languageTrackCount===languages.tracks.length,'Programming languageTrackCount mismatch');
+console.log('PROGRAMMING_LANGUAGE_CATALOG_PASS',ids.length);

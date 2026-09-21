@@ -63,3 +63,8 @@
 ## Правило добавления новых дисциплин
 
 Курс добавляется только после фиксации: цели, prerequisites, skill outcomes, curriculum map, источников, структуры лабораторных и критериев финального проекта. Наличие карточки курса не означает готовность содержания.
+
+
+## Programming Language Tracks
+
+Блок **«Программирование»** проектируется как polyglot-направление. В `v0.1.5-alpha.1` зарегистрированы 24 основных языковых трека: C, C++, Rust, Python, Java, C#, Go, JavaScript, TypeScript, Kotlin, Swift, Dart, PHP, Ruby, Scala, Bash, PowerShell, R, Julia, Lua, 1С:Предприятие, Assembly, Fortran и Perl. Перечень расширяемый; C++ остаётся первым reference-course.

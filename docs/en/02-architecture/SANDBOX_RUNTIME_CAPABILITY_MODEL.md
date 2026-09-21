@@ -1,9 +1,11 @@
 # Nexus Sandbox Runtime Capability Model
 
-**Status:** architecture standard, v0.1.4-alpha.2  
+**Status:** architecture standard, v0.1.5-alpha.1
 **Normative language:** RU; this file is the required English mirror.
 
 ## Goal
+
+Starting with `v0.1.5-alpha.1`, Nexus Sandbox uses a **language-neutral Runtime Router**. C++ remains the first reference language, while the provider contract takes an explicit `languageId` and is designed for all Programming language tracks.
 
 Nexus Sandbox remains one learning and engineering environment even when different topics require different execution engines. Learners should not need to manage runtime providers themselves.
 

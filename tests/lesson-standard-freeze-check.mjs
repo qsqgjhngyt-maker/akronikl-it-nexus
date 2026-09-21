@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const assert=(v,m)=>{if(!v)throw new Error(m)};
+const ru=fs.readFileSync(new URL('../docs/ru/03-content/NEXUS_LESSON_STANDARD_1.0.md',import.meta.url),'utf8');
+const en=fs.readFileSync(new URL('../docs/en/03-content/NEXUS_LESSON_STANDARD_1.0.md',import.meta.url),'utf8');
+const manifest=JSON.parse(fs.readFileSync(new URL('../courses/cpp/manifest.json',import.meta.url),'utf8'));
+assert(ru.includes('Normative / Production 1.0'),'RU Lesson Standard is not frozen');
+assert(en.includes('Normative / Production 1.0'),'EN Lesson Standard is not frozen');
+assert(manifest.benchmarkStatus?.standardVersion==='1.0','C++ manifest standardVersion mismatch');
+assert(manifest.benchmarkStatus?.status==='normative-production','C++ manifest normative status missing');
+assert(manifest.benchmarkStatus?.liveAcceptedVersion==='0.1.4-alpha.2.2','live acceptance baseline mismatch');
+console.log('LESSON_STANDARD_FREEZE_PASS');
