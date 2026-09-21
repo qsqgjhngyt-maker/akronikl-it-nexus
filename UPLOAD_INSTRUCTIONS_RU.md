@@ -1,25 +1,12 @@
-# AKRONIKL IT NEXUS v0.1.1-alpha.3 — Runtime Completeness Fix
+# Установка v0.1.2-alpha.4.1
 
-Диагностика GitHub Pages показала, что часть обязательных runtime-файлов не была загружена в репозиторий.
+База: рабочий `v0.1.2-alpha.4`.
 
-## Что обнаружено отсутствующим
+1. Распаковать hotfix-архив.
+2. Загрузить всё содержимое архива в корень `akronikl-it-nexus` с сохранением папок и заменой существующих файлов.
+3. Сам ZIP в GitHub не загружать. `UPLOAD_INSTRUCTIONS_RU.md` можно не загружать.
+4. Дождаться зелёного `pages build and deployment`, затем дать GitHub Pages немного времени на обновление CDN.
+5. Открыть `https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/?v=0.1.2-alpha.4.1`.
+6. Проверить dropdown: `Интерфейс`, `Курс`, `Akronikl`, `FX`.
 
-- `core/i18n.js`
-- `core/migrations/cpp-v7.js`
-- `akronikl/context.js`
-- `locales/registry.json`
-- `locales/ru/ui.json`
-- `locales/en/ui.json`
-- `courses/catalog.json`
-
-Из-за этого `core/app.js` не мог завершить ES-module import/bootstrap.
-
-## Что делать
-
-1. Распаковать ZIP.
-2. Загрузить **всё содержимое** архива в корень `akronikl-it-nexus`, сохраняя структуру папок и заменяя существующие файлы.
-3. `UPLOAD_INSTRUCTIONS_RU.md` в GitHub загружать необязательно.
-4. После коммита дождаться зелёного GitHub Pages deployment.
-5. Открыть `https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/?v=0.1.1-alpha.3`.
-
-Пакет содержит полный набор boot-critical runtime-файлов, а не только семь отсутствовавших файлов, чтобы исключить повторную неполную загрузку.
+Ожидаемый результат: вместо светлого системного popup открывается тёмное полупрозрачное Nexus Glass меню. Проверить мышью, клавиатурой и тапом на телефоне.

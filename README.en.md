@@ -18,6 +18,8 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
+**v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Native system select popups in the top bar have been replaced with a custom Nexus Glass Dropdown to eliminate bright Windows/Chromium menus and keep a consistent desktop/mobile appearance. All alpha.4 functionality remains intact.
+
 **v0.1.2-alpha.4 / Benchmark UX & Sandbox Foundation.** The C++ benchmark lesson now has collapsible navigation, Focus Reading, a separate scrollable Terminology Reference with clickable terms, the adaptive Nexus Glass particle layer, and a provider-based Nexus Sandbox. Browser Runtime adds a compatibility adapter for standard forms such as `std::cout`, live structural checks, assignment requirements, learner-friendly diagnostics, and raw technical output as a secondary layer. Nexus Project Studio architecture is recorded for future versioned capstones, builds/tests, Akronikl Project Mentor, and Portfolio Release.
 
 ## Rights and licensing
