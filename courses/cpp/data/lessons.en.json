@@ -654,6 +654,643 @@
         ]
       },
       "provenanceRef": "courses/cpp/PROVENANCE.md#cpp.first-cpp-program"
+    },
+    {
+      "id": "cpp.pointers-references-addresses",
+      "legacyIndex": 18,
+      "order": 19,
+      "sectionId": "cpp.section.cpp-basics",
+      "title": "Pointers, References, and Addresses",
+      "description": "The address model of memory: object, address, pointer, reference, lifetime, and safe access without mystique.",
+      "theory": [
+        "A variable has a value, but a live object also has a location in the program's address space. An address denotes that location; a pointer can store such an address as its own value.",
+        "The expression &value obtains the address of value. If p has type int*, p can store an address of an int. The expression *p dereferences p and accesses the int at the stored address.",
+        "The declaration int& ref = value creates a reference—an alias for the existing object. Writing through value, *p, or ref can modify the same object when they are all connected to value.",
+        "Address-based code must respect lifetime. A pointer may still contain a numeric address after the target object has died; dereferencing such a dangling pointer is undefined behavior. Modern C++ therefore prefers RAII, containers, and smart pointers for ownership."
+      ],
+      "deep": "Core model: value is one int object with a value and an address; p is a separate pointer object storing that address; *p accesses value through the address; ref is another name for value. They are related but not identical.",
+      "analogy": "A building has an address; a note containing that address is like a pointer; a second name for the same person is like a reference. The note is not the building, and the second name does not create a second person.",
+      "commonMistake": "Confusing p, &value, and *p. p is the stored address; &value obtains value's address; *p accesses the object through that address. The symbols * and & also have different meanings in declarations and expressions.",
+      "code": "#include <iostream>\n\nint main() {\n    int value = 10;\n    int* p = &value;\n    *p = 25;\n    std::cout << value << \"\\n\";\n    return 0;\n}",
+      "task": "Create n = 3, make ptr point to n, and use *ptr so the program prints 12. Then print n and *ptr separated by a space and verify that they match.",
+      "hint": "After int* ptr = &n;, the expression *ptr denotes the same object n through the stored address.",
+      "solution": "#include <iostream>\n\nint main() {\n    int n = 3;\n    int* ptr = &n;\n    *ptr *= 4;\n    std::cout << n << \" \" << *ptr << \"\\n\";\n    return 0;\n}",
+      "quiz": {
+        "question": "What does *p mean when p is a valid int*?",
+        "answers": [
+          "It obtains p's address",
+          "It accesses the int object at the address stored in p",
+          "It creates a new int"
+        ],
+        "correctIndex": 1
+      },
+      "requirements": [
+        "int* ptr",
+        "&n",
+        "*ptr"
+      ],
+      "terms": [
+        [
+          "address",
+          "a value denoting an object's location in the process address space"
+        ],
+        [
+          "pointer",
+          "an object whose value can represent another object's address or a null state"
+        ],
+        [
+          "dereference",
+          "accessing an object through a pointer"
+        ],
+        [
+          "reference",
+          "an alias—another name for an existing object"
+        ],
+        [
+          "nullptr",
+          "the type-safe null pointer literal in modern C++"
+        ],
+        [
+          "lifetime",
+          "the interval during which an object exists and may be accessed"
+        ]
+      ],
+      "visualization": "pointer",
+      "benchmark": {
+        "standardVersion": "1.2",
+        "interactiveModelVersion": "1.0",
+        "status": "benchmark-complete",
+        "labels": {
+          "insideTitle": "Связь объекта, адреса, указателя и ссылки",
+          "walkTitle": "Разбор адресного кода"
+        },
+        "whyItMatters": "Pointers are not mysterious C++ magic; they are an explicit way to work with the address model. This model underlies arrays, function interfaces, linked structures, polymorphism, resource management, and many libraries. The goal is to keep object, address, pointer, and alias conceptually separate—and then connect them safely.",
+        "outcomes": [
+          "Distinguish an object's value, its address, and a pointer's value.",
+          "Read int*, int&, &value, p, *p, and ref by context.",
+          "Explain nullptr, dangling pointers, lifetime, and undefined behavior.",
+          "Compare pass-by-value, pointer parameters, and reference parameters.",
+          "Understand basic const forms for pointers and references.",
+          "Use Nexus Sandbox and the interactive memory model to validate predictions."
+        ],
+        "prerequisites": [
+          "You only need basic variables, expressions, and functions.",
+          "No prior knowledge of stack/heap, new/delete, or machine addresses is required.",
+          "Addresses shown by Nexus are symbolic teaching addresses, not browser memory addresses."
+        ],
+        "quickUnderstand": [
+          "value is one int object with a value and an address while it is alive.",
+          "&value obtains value's address.",
+          "int* p declares a pointer to int; p is a separate object.",
+          "p = &value stores value's address in p.",
+          "*p dereferences the pointer and denotes the target object.",
+          "int& ref = value creates an alias for value rather than a second int.",
+          "nullptr means the pointer intentionally points to no object; it must not be dereferenced.",
+          "An address is usable only while the target object remains alive and the access is valid."
+        ],
+        "fullTheory": {
+          "lead": "Do not memorize punctuation first. Build one stable model: a live object, its address, a separate pointer storing that address, a reference aliasing the object, and lifetime rules governing valid access.",
+          "sections": [
+            {
+              "title": "1. Object, value, and storage",
+              "paragraphs": [
+                "int value = 10; creates an int object whose logical state is 10. During execution the implementation also needs storage for that state.",
+                "We model a live object as having an address in the process address space. The numeric address can change between runs and is rarely important by itself.",
+                "Keep language semantics separate from a literal memory diagram: C++ exposes address operations, but an optimizer may represent objects differently as long as observable behavior is preserved."
+              ]
+            },
+            {
+              "title": "2. Address-of operator &",
+              "paragraphs": [
+                "The expression &value means “obtain the address of value”. Here & is the unary address-of operator.",
+                "The result type is related to the target type: the address of an int has type int*.",
+                "The address is not a copy of value's number. It is a separate value that can later be used to access the object while lifetime rules remain satisfied."
+              ]
+            },
+            {
+              "title": "3. A pointer is its own object",
+              "paragraphs": [
+                "int* p; declares p as an object capable of holding the address of an int.",
+                "After int* p = &value;, p stores value's address. p and value remain two different objects.",
+                "Pointer size is platform/ABI-dependent and should not be confused with sizeof(int)."
+              ]
+            },
+            {
+              "title": "4. The two roles of *",
+              "paragraphs": [
+                "In int* p, * participates in the declaration and says p is a pointer to int.",
+                "In the expression *p, * is the dereference operator and denotes the object at p's stored address.",
+                "Therefore *p = 25; changes value when p points to value."
+              ]
+            },
+            {
+              "title": "5. A reference is an alias",
+              "paragraphs": [
+                "int& ref = value; binds ref to the existing object value.",
+                "ref = 30; changes value because ref is another name for that object.",
+                "Assigning ref = other later does not rebind an ordinary reference; it assigns other's value to the already-bound target."
+              ]
+            },
+            {
+              "title": "6. p, &value, *p, and ref",
+              "paragraphs": [
+                "value denotes the object in an ordinary expression; &value obtains its address; p stores an address; *p denotes the target; ref is an alias.",
+                "When p == &value and ref is bound to value, writes through value, *p, or ref are observable through the other access paths.",
+                "This is aliasing: multiple expressions may denote one object."
+              ]
+            },
+            {
+              "title": "7. nullptr and pointer checks",
+              "paragraphs": [
+                "nullptr is the modern C++ null pointer literal: it represents an intentional “points to no object” state.",
+                "Storing or comparing nullptr is valid; dereferencing it is not.",
+                "A non-null check does not prove that a pointer is otherwise valid or that the target is still alive."
+              ]
+            },
+            {
+              "title": "8. Lifetime and dangling pointers",
+              "paragraphs": [
+                "Lifetime is the interval during which an object exists according to the language rules.",
+                "If a pointer retains the address of a local object after that object dies, the pointer becomes dangling.",
+                "Dereferencing a dangling pointer causes undefined behavior even if the numeric address still looks plausible."
+              ]
+            },
+            {
+              "title": "9. Undefined behavior",
+              "paragraphs": [
+                "Undefined behavior (UB) means the C++ standard imposes no required behavior after certain rules are violated.",
+                "This is not the same as a normal exception or a guaranteed crash. Optimizers may rely on the assumption that valid programs do not execute UB.",
+                "Pointer safety requires reasoning about initialization, lifetime, type, and bounds—not merely syntax."
+              ]
+            },
+            {
+              "title": "10. Function parameters: value, pointer, reference",
+              "paragraphs": [
+                "int x receives a copy; changing x does not change the caller's object.",
+                "int* p receives a copy of an address and may modify *p after validating the pointer.",
+                "int& x is an alias for the caller's object. const int& provides non-copying read access while preventing mutation through that reference."
+              ]
+            },
+            {
+              "title": "11. const and access direction",
+              "paragraphs": [
+                "const int* p is a pointer to const int: p may be redirected, but *p may not be modified through p.",
+                "int* const p is a const pointer to int: p's stored address is fixed, but the target int may be modified.",
+                "const int* const p combines both restrictions; const int& is a common read-only reference form."
+              ]
+            },
+            {
+              "title": "12. Pointers and arrays",
+              "paragraphs": [
+                "An array and a pointer are not the same type, but array names convert to pointers to the first element in many expressions.",
+                "For a pointer into an array, p + 1 advances to the next element of the pointed-to type rather than one byte.",
+                "Pointer arithmetic is only valid within carefully defined bounds of the same array object."
+              ]
+            },
+            {
+              "title": "13. Dynamic storage and modern C++",
+              "paragraphs": [
+                "new can create an object with dynamic storage and returns a pointer; delete ends the corresponding lifetime and releases storage.",
+                "Manual new/delete is error-prone, so modern C++ usually prefers automatic objects, containers, and RAII.",
+                "std::unique_ptr expresses unique ownership; std::shared_ptr is reserved for genuine shared ownership. Raw pointers remain useful for non-owning observation and low-level interfaces."
+              ]
+            },
+            {
+              "title": "14. Stack and heap are implementation models",
+              "paragraphs": [
+                "Teaching often says locals live on the stack and new allocates on the heap. That can be a useful implementation model but is not the full language definition.",
+                "The standard talks about storage duration, lifetime, and observable behavior; optimizers may keep values in registers or eliminate objects entirely.",
+                "Nexus therefore uses symbolic addresses to teach relationships rather than claiming to display the browser's physical memory layout."
+              ]
+            },
+            {
+              "title": "15. Why this unlocks later topics",
+              "paragraphs": [
+                "References and pointers let functions work with existing objects without mandatory copies.",
+                "Linked structures represent connections between nodes; low-level implementations often use pointers or smart pointers.",
+                "Runtime polymorphism is commonly used through base-class references or pointers, making this lesson foundational for OOP."
+              ]
+            },
+            {
+              "title": "16. A practical safety checklist",
+              "paragraphs": [
+                "Before dereferencing, ask: is the pointer initialized, non-null, still pointing to a live object, and within valid type/bounds rules?",
+                "If you cannot justify those conditions, change the design or add the appropriate invariant/check rather than hoping for a crash you can catch later.",
+                "In modern application C++, prefer values, references, containers, and RAII by default; use raw pointers when their semantics are deliberate and clear."
+              ]
+            }
+          ]
+        },
+        "glossary": [
+          {
+            "term": "object",
+            "full": "object",
+            "definition": "A C++ entity with type, lifetime, and state.",
+            "example": "int value = 10; creates an int object."
+          },
+          {
+            "term": "address",
+            "full": "memory address",
+            "definition": "A value used to denote an object location in the process address space.",
+            "example": "&value obtains value's address."
+          },
+          {
+            "term": "pointer",
+            "full": "pointer",
+            "definition": "An object that can store a suitable object address or a null state.",
+            "example": "int* p = &value;"
+          },
+          {
+            "term": "dereference",
+            "full": "dereference",
+            "definition": "Accessing an object through a stored pointer address.",
+            "example": "*p = 25;"
+          },
+          {
+            "term": "reference",
+            "full": "reference",
+            "definition": "An alias—another name for an existing object.",
+            "example": "int& ref = value;"
+          },
+          {
+            "term": "alias",
+            "full": "alias",
+            "definition": "Another expression/name that denotes the same object.",
+            "example": "value, *p, and ref may alias one int."
+          },
+          {
+            "term": "nullptr",
+            "full": "null pointer literal",
+            "definition": "The type-safe modern C++ null pointer literal.",
+            "example": "int* p = nullptr;"
+          },
+          {
+            "term": "lifetime",
+            "full": "object lifetime",
+            "definition": "The interval during which an object exists and may be accessed according to language rules.",
+            "example": "A local object normally dies when its block ends."
+          },
+          {
+            "term": "dangling pointer",
+            "full": "dangling pointer",
+            "definition": "A pointer whose target object has died or whose address has been invalidated.",
+            "example": "Returning a pointer to a local object creates a dangling pointer."
+          },
+          {
+            "term": "UB",
+            "full": "Undefined Behavior",
+            "definition": "A situation for which the C++ standard imposes no required program behavior.",
+            "example": "Dereferencing a dangling pointer can cause UB."
+          },
+          {
+            "term": "RAII",
+            "full": "Resource Acquisition Is Initialization",
+            "definition": "The C++ idiom that binds resource ownership to object lifetime.",
+            "example": "std::vector releases its storage automatically."
+          },
+          {
+            "term": "raw pointer",
+            "full": "raw pointer",
+            "definition": "A plain T* that does not by itself express automatic ownership.",
+            "example": "int* p may be a non-owning observer."
+          },
+          {
+            "term": "smart pointer",
+            "full": "smart pointer",
+            "definition": "An RAII object that manages dynamic ownership.",
+            "example": "std::unique_ptr<T>."
+          },
+          {
+            "term": "const",
+            "full": "const qualification",
+            "definition": "A qualifier restricting modification through a given access path.",
+            "example": "const int& prevents modification through the reference."
+          },
+          {
+            "term": "stack",
+            "full": "call stack",
+            "definition": "A common implementation area for call frames/local state; not a mandatory physical model in the C++ standard.",
+            "example": "Local variables are often implemented in a stack frame."
+          },
+          {
+            "term": "heap",
+            "full": "dynamic storage / heap",
+            "definition": "A common implementation term for dynamic storage managed by an allocator.",
+            "example": "new typically acquires dynamic storage."
+          },
+          {
+            "term": "storage duration",
+            "full": "storage duration",
+            "definition": "The language category describing how long an object's storage exists.",
+            "example": "Many local objects have automatic storage duration."
+          },
+          {
+            "term": "pointer arithmetic",
+            "full": "pointer arithmetic",
+            "definition": "Moving a pointer among elements of the same array within valid bounds.",
+            "example": "p + 1 denotes the next T element."
+          },
+          {
+            "term": "ABI",
+            "full": "Application Binary Interface",
+            "definition": "Platform conventions for binary calls, data layout, sizes, and related details.",
+            "example": "Pointer size depends on the target ABI."
+          }
+        ],
+        "interactiveMemory": {
+          "title": "Interactive memory model",
+          "description": "Step through one object and observe access by name, pointer, and reference. Addresses are symbolic teaching values, not real browser addresses.",
+          "addressNote": "0x1000 and 0x2000 are Nexus teaching addresses, not browser memory addresses.",
+          "addresses": {
+            "value": "0x1000",
+            "pointer": "0x2000"
+          },
+          "steps": [
+            {
+              "title": "Create value",
+              "value": 10,
+              "pointerBound": false,
+              "referenceBound": false,
+              "explanation": "int value = 10; creates one int object with value 10."
+            },
+            {
+              "title": "Store the address",
+              "value": 10,
+              "pointerBound": true,
+              "referenceBound": false,
+              "explanation": "int* p = &value; creates a separate pointer p and stores value's address."
+            },
+            {
+              "title": "Bind a reference",
+              "value": 10,
+              "pointerBound": true,
+              "referenceBound": true,
+              "explanation": "int& ref = value; aliases the existing value object; no second int is created."
+            },
+            {
+              "title": "Write through *p",
+              "value": 25,
+              "pointerBound": true,
+              "referenceBound": true,
+              "explanation": "*p = 25; dereferences p and modifies the same value object."
+            },
+            {
+              "title": "Write through ref",
+              "value": 30,
+              "pointerBound": true,
+              "referenceBound": true,
+              "explanation": "ref += 5; modifies the aliased object, so value and *p are now also 30."
+            }
+          ]
+        },
+        "inside": [
+          {
+            "title": "value object",
+            "text": "One live int with a value and a symbolic address 0x1000."
+          },
+          {
+            "title": "&value",
+            "text": "Address-of produces an address value suitable for int*."
+          },
+          {
+            "title": "p",
+            "text": "A separate pointer object stores 0x1000; Nexus shows p itself at symbolic 0x2000."
+          },
+          {
+            "title": "*p",
+            "text": "Dereference follows the stored address and denotes value."
+          },
+          {
+            "title": "ref",
+            "text": "A reference aliases value and does not create a second int."
+          },
+          {
+            "title": "lifetime",
+            "text": "Every access path remains valid only while value is alive and the pointer is not invalidated."
+          }
+        ],
+        "walkthrough": [
+          {
+            "line": "int value = 10;",
+            "explanation": "Create one int object."
+          },
+          {
+            "line": "int* p = &value;",
+            "explanation": "Create a pointer and store value's address."
+          },
+          {
+            "line": "int& ref = value;",
+            "explanation": "Bind a reference alias to value."
+          },
+          {
+            "line": "*p = 25;",
+            "explanation": "Dereference p and modify value."
+          },
+          {
+            "line": "ref += 5;",
+            "explanation": "Modify the same object through the alias."
+          },
+          {
+            "line": "std::cout << value;",
+            "explanation": "Read the final state through the original name."
+          }
+        ],
+        "experiments": [
+          {
+            "title": "Compare p and &value",
+            "change": "Track p and &value in Nexus or a full compiler.",
+            "predict": "They denote the same target address when p points to value.",
+            "explanation": "p stores the result of &value."
+          },
+          {
+            "title": "Modify only through *p",
+            "change": "Run *p += 7 and print value.",
+            "predict": "value changes even though its name was not used in the assignment.",
+            "explanation": "Dereference denotes the target object."
+          },
+          {
+            "title": "Use nullptr safely",
+            "change": "Set int* p = nullptr; and guard dereference with if (p).",
+            "predict": "The dereference branch does not run.",
+            "explanation": "Null is a valid pointer state but not a dereferenceable object address."
+          },
+          {
+            "title": "Reference versus copy",
+            "change": "Create int copy = value; and int& ref = value;, then modify each.",
+            "predict": "copy changes independently; ref changes value.",
+            "explanation": "A copy is a new object; a reference is an alias."
+          }
+        ],
+        "errors": [
+          {
+            "title": "Dereferencing nullptr",
+            "wrongCode": "int* p = nullptr;\n*p = 7;",
+            "symptom": "Invalid access / possible crash.",
+            "reason": "nullptr does not designate a live int.",
+            "fix": "Do not dereference null; establish a valid target and guard optional pointers."
+          },
+          {
+            "title": "Uninitialized pointer",
+            "wrongCode": "int* p;\nstd::cout << *p;",
+            "symptom": "Unpredictable behavior.",
+            "reason": "p has no meaningful target address.",
+            "fix": "Initialize pointers immediately with a valid address or nullptr."
+          },
+          {
+            "title": "Dangling pointer",
+            "wrongCode": "int* p;\n{ int x=5; p=&x; }\nstd::cout << *p;",
+            "symptom": "May appear to work, crash, or vary across builds.",
+            "reason": "x's lifetime ended.",
+            "fix": "Do not keep an address beyond the target lifetime."
+          },
+          {
+            "title": "Confusing p with *p",
+            "wrongCode": "int value=10;\nint* p=&value;\np = 20;",
+            "symptom": "Type error.",
+            "reason": "p expects an address, while 20 is an int value.",
+            "fix": "Use *p = 20; to modify the pointed-to int."
+          }
+        ],
+        "practice": [
+          {
+            "level": "Foundation",
+            "title": "One object, three access paths",
+            "prompt": "Create value, p, and ref. Modify through value, *p, and ref and print value after each step.",
+            "hint": "All three paths should affect one object."
+          },
+          {
+            "level": "Intermediate",
+            "title": "Safe pointer parameter",
+            "prompt": "Write bool setPositive(int* target, int value): reject nullptr/non-positive values and otherwise write to *target.",
+            "hint": "Validate first; dereference only after validation."
+          },
+          {
+            "level": "Transfer",
+            "title": "Reference API",
+            "prompt": "Write swapValues(int& a, int& b) without std::swap and explain why caller objects change.",
+            "hint": "Reference parameters alias caller objects."
+          }
+        ],
+        "lab": {
+          "title": "Aliasing map for one object",
+          "goal": "Prove experimentally that value, *p, and ref can denote one object while copy is independent.",
+          "steps": [
+            "Create int value = 10;.",
+            "Create int* p = &value; and int& ref = value;.",
+            "Create int copy = value;.",
+            "Set *p = 20 and print value, *p, ref, copy.",
+            "Run ref += 5 and print again.",
+            "Set copy = 99 and verify that value remains unchanged.",
+            "Explain which expressions alias one object and why."
+          ],
+          "proof": "Before running, you can predict all four values after each step and explain them using object, pointer, dereference, reference, alias, and lifetime."
+        },
+        "knowledgeCheck": [
+          {
+            "question": "What does p store after int* p = &value;?",
+            "answers": [
+              "A copy of value",
+              "value's address",
+              "The ref reference"
+            ],
+            "correctIndex": 1,
+            "explanation": "p is a separate pointer object storing value's address."
+          },
+          {
+            "question": "What does *p = 42 change when p points to value?",
+            "answers": [
+              "The address inside p",
+              "The value object",
+              "The type of p"
+            ],
+            "correctIndex": 1,
+            "explanation": "*p denotes the target object."
+          },
+          {
+            "question": "How does int copy = value differ from int& ref = value?",
+            "answers": [
+              "No difference",
+              "copy creates a separate int; ref aliases value",
+              "ref copies and copy aliases"
+            ],
+            "correctIndex": 1,
+            "explanation": "A copy has independent state; a reference denotes the original object."
+          },
+          {
+            "question": "Is dereferencing nullptr safe?",
+            "answers": [
+              "Yes, it produces 0",
+              "No",
+              "Only for int*"
+            ],
+            "correctIndex": 1,
+            "explanation": "nullptr does not designate a live target object."
+          },
+          {
+            "question": "Why can a non-null pointer still be invalid?",
+            "answers": [
+              "Its target may have died, leaving a dangling pointer",
+              "All pointers are always invalid",
+              "int* cannot be compared"
+            ],
+            "correctIndex": 0,
+            "explanation": "A null check does not prove lifetime validity."
+          },
+          {
+            "question": "What does const int* p mean?",
+            "answers": [
+              "p cannot change but *p can",
+              "The target cannot be modified through p, while p may be redirected",
+              "Neither p nor the target can change"
+            ],
+            "correctIndex": 1,
+            "explanation": "const qualifies the pointed-to int in this form."
+          }
+        ],
+        "sandboxModel": {
+          "title": "Nexus Sandbox · Pointer Lab",
+          "description": "Use the browser runtime for pointer exercises while the interactive memory model explains references and lifetime independently of provider limitations.",
+          "points": [
+            "Editor and stdout stay inside Nexus.",
+            "Task checks validate pointer syntax requirements.",
+            "Pointer Lab connects runtime output with the address model.",
+            "Future WASM/secure build providers will support advanced projects in the same UI."
+          ],
+          "limit": "Browser Runtime is an educational provider; full modern C++ compatibility will come from extended providers without changing the Nexus Sandbox interface."
+        },
+        "skillGraph": {
+          "strengthens": [
+            "cpp.memory.address-model",
+            "cpp.pointers.dereference",
+            "cpp.references.aliasing",
+            "cpp.lifetime.safety",
+            "cpp.const-correctness"
+          ],
+          "unlocks": [
+            "cpp.arrays.pointer-relations",
+            "cpp.linked-structures",
+            "cpp.oop.polymorphism",
+            "cpp.raii.smart-pointers",
+            "cpp.project-studio.native-build"
+          ]
+        },
+        "summary": [
+          "I distinguish object, address, pointer, and reference.",
+          "I can explain &, *, int*, and int& by context.",
+          "I understand nullptr and do not dereference it.",
+          "I can explain dangling pointers through lifetime.",
+          "I distinguish a copy from an alias.",
+          "I understand basic const pointer/reference forms.",
+          "I know why modern C++ prefers RAII over manual ownership."
+        ],
+        "modernNotes": [
+          "Prefer values and RAII by default.",
+          "Use std::unique_ptr for unique dynamic ownership; use std::shared_ptr only for genuine shared ownership.",
+          "Treat raw T* as non-owning unless an API explicitly documents ownership.",
+          "Prefer nullptr over 0/NULL in modern C++."
+        ],
+        "historicalContext": "C and early C++ rely heavily on raw addresses and manual resource management. Modern C++ keeps pointers fundamental but layers types and idioms on top to reduce manual ownership and lifetime errors."
+      }
     }
   ]
 }

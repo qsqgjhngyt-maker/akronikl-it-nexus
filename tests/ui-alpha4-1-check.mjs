@@ -13,6 +13,6 @@ const checks=[
   ['keyboard support',select.includes("ev.key==='ArrowDown'")&&select.includes("ev.key===ESCAPE")],
   ['outside click closes',select.includes("document.addEventListener('pointerdown'")],
   ['glass dropdown styles',css.includes('Nexus Glass Dropdown hotfix')&&css.includes('.nexus-select-menu')],
-  ['service worker caches selector module',sw.includes('./core/glass-select.js')&&sw.includes('alpha.4.1')]
+  ['service worker caches selector module',sw.includes('./core/glass-select.js')&&/alpha\.(4\.1|1)|v0\.1\.3-alpha\.1/.test(sw)]
 ];
 for(const [name,ok] of checks){console.log(`${ok?'PASS':'FAIL'} ${name}`);if(!ok)process.exitCode=1}

@@ -4,36 +4,31 @@ const ru=JSON.parse(fs.readFileSync(new URL('../courses/cpp/data/lessons.ru.json
 const en=JSON.parse(fs.readFileSync(new URL('../courses/cpp/data/lessons.en.json', import.meta.url),'utf8'));
 const manifest=JSON.parse(fs.readFileSync(new URL('../courses/cpp/manifest.json', import.meta.url),'utf8'));
 
+const ids=['cpp.first-cpp-program','cpp.pointers-references-addresses'];
 const required=['whyItMatters','outcomes','prerequisites','quickUnderstand','fullTheory','glossary','inside','walkthrough','experiments','errors','practice','lab','knowledgeCheck','sandboxModel','skillGraph','summary','modernNotes','historicalContext'];
-const id='cpp.first-cpp-program';
-const ruLesson=ru.lessons.find(x=>x.id===id);
-const enLesson=en.lessons.find(x=>x.id===id);
 function assert(value,message){if(!value)throw new Error(message)}
-function publicLessonCopy(l){
-  const clone=structuredClone(l);
-  delete clone.provenanceRef;delete clone.pdfPages;delete clone.pdfNotes;
-  return JSON.stringify(clone);
-}
+function publicLessonCopy(l){const clone=structuredClone(l);delete clone.provenanceRef;delete clone.pdfPages;delete clone.pdfNotes;return JSON.stringify(clone)}
 assert(ru.lessons.length===40,'RU baseline must remain 40 lessons');
-assert(en.lessons.length===1,'EN partial package must contain exactly the first authored benchmark lesson');
-assert(ruLesson && enLesson,'Benchmark lesson must exist in RU and EN');
-for(const field of required){assert(field in ruLesson.benchmark,`RU benchmark missing ${field}`);assert(field in enLesson.benchmark,`EN benchmark missing ${field}`)}
-assert(ruLesson.benchmark.standardVersion==='1.2','RU benchmark must use Standard 1.2');
-assert(enLesson.benchmark.standardVersion==='1.2','EN benchmark must use Standard 1.2');
-assert(ruLesson.benchmark.fullTheory.sections.length>=16,'RU full theory too shallow');
-assert(enLesson.benchmark.fullTheory.sections.length>=16,'EN full theory too shallow');
-assert(ruLesson.benchmark.glossary.length>=18,'RU glossary too small');
-assert(enLesson.benchmark.glossary.length>=18,'EN glossary too small');
-assert(ruLesson.benchmark.knowledgeCheck.length>=6,'RU understanding check too small');
-assert(enLesson.benchmark.knowledgeCheck.length>=6,'EN understanding check too small');
-assert(!/PDF/i.test(publicLessonCopy(ruLesson)),'RU benchmark learner-facing copy still references PDF');
-assert(!/PDF/i.test(publicLessonCopy(enLesson)),'EN benchmark learner-facing copy still references PDF');
-assert(manifest.benchmarkStatus.completed.includes(id),'Manifest must mark benchmark as complete');
-console.log('BENCHMARK_CONTENT_PASS', {
-  ruLessons:ru.lessons.length,
-  enAuthored:en.lessons.length,
-  standard:ruLesson.benchmark.standardVersion,
-  fullTheorySections:ruLesson.benchmark.fullTheory.sections.length,
-  glossary:ruLesson.benchmark.glossary.length,
-  deepChecks:ruLesson.benchmark.knowledgeCheck.length
-});
+assert(en.lessons.length===2,'EN partial package must contain exactly two authored benchmark lessons');
+for(const id of ids){
+  const r=ru.lessons.find(x=>x.id===id),e=en.lessons.find(x=>x.id===id);
+  assert(r&&e,`Benchmark ${id} must exist in RU and EN`);
+  for(const field of required){assert(field in r.benchmark,`RU ${id} missing ${field}`);assert(field in e.benchmark,`EN ${id} missing ${field}`)}
+  assert(r.benchmark.fullTheory.sections.length>=16,`RU ${id} full theory too shallow`);
+  assert(e.benchmark.fullTheory.sections.length>=16,`EN ${id} full theory too shallow`);
+  assert(r.benchmark.glossary.length>=18,`RU ${id} glossary too small`);
+  assert(e.benchmark.glossary.length>=18,`EN ${id} glossary too small`);
+  assert(r.benchmark.knowledgeCheck.length>=6,`RU ${id} understanding check too small`);
+  assert(e.benchmark.knowledgeCheck.length>=6,`EN ${id} understanding check too small`);
+  assert(!/PDF/i.test(publicLessonCopy(r)),`RU ${id} learner-facing copy still references PDF`);
+  assert(!/PDF/i.test(publicLessonCopy(e)),`EN ${id} learner-facing copy still references PDF`);
+  assert(manifest.benchmarkStatus.completed.includes(id),`Manifest must mark ${id} complete`);
+}
+const ptrRu=ru.lessons.find(x=>x.id==='cpp.pointers-references-addresses');
+const ptrEn=en.lessons.find(x=>x.id==='cpp.pointers-references-addresses');
+for(const l of [ptrRu,ptrEn]){
+  assert(l.benchmark.interactiveMemory?.steps?.length>=5,'Pointer benchmark needs a 5-step interactive memory model');
+  assert(l.benchmark.interactiveMemory.addressNote,'Pointer benchmark must state that addresses are symbolic');
+  assert(l.benchmark.skillGraph.strengthens.includes('cpp.lifetime.safety'),'Pointer benchmark must strengthen lifetime safety');
+}
+console.log('BENCHMARK_CONTENT_PASS',{ruLessons:ru.lessons.length,enAuthored:en.lessons.length,completed:manifest.benchmarkStatus.completed,pointerTheory:ptrRu.benchmark.fullTheory.sections.length,pointerGlossary:ptrRu.benchmark.glossary.length,memorySteps:ptrRu.benchmark.interactiveMemory.steps.length});

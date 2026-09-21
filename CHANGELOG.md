@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v0.1.3-alpha.1 — Benchmark 02 · Pointers, References & Memory Model
+
+- Второй эталонный урок `cpp.pointers-references-addresses` полностью авторизован на RU/EN.
+- Добавлены 16 разделов фундаментальной теории: object/address/pointer/reference, nullptr, lifetime, dangling pointer, UB, const, arrays, dynamic storage, RAII и smart pointers.
+- Добавлена интерактивная символическая модель памяти с пошаговой связью `value → &value → p → *p → ref`.
+- Адреса визуализатора явно обозначены как учебные, а не реальные адреса браузера.
+- Nexus Sandbox получает Pointer Lab для практики разыменования и требований задания.
+- Skill Graph связывает тему с массивами, linked structures, полиморфизмом, RAII и будущим Project Studio.
+- EN authored coverage увеличен с 1 до 2 уроков; остальные 38 используют RU fallback.
+
 ## v0.1.2-alpha.3 — Benchmark UX & Universal Sandbox Foundation
 
 - Collapsible sidebar + mobile drawer and Focus Reading.
