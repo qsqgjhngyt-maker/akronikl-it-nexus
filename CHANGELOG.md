@@ -44,3 +44,7 @@
 - Добавлен минимальный Akronikl Context Model без внешнего AI.
 - Добавлен network-first service worker с быстрым обновлением shell.
 - Добавлен PWA manifest и временный инженерный знак ANX.
+
+
+## v0.1.2-alpha.4 — Visual & Reading Polish
+- Рабочая глобальная навигация, collapsible lesson tools rail, усиленный Nexus Glass, depth particles и polishing режима чтения.
