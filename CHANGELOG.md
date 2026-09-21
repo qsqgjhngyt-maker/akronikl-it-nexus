@@ -8,6 +8,14 @@
 
 # CHANGELOG
 
+## v0.1.4-alpha.2.1
+- Live-smoke hotfix for OOP Browser Runtime classification.
+- If the initial `override` parse fails and the safe temporary retry also fails inside the lightweight provider, Nexus now classifies the result as an environment/provider limitation instead of a learner-code error.
+- Provider limitations no longer highlight a learner source line as erroneous.
+- Technical output preserves both the primary Browser Runtime failure and the compatibility-retry failure.
+- Benchmark lesson content, stable IDs, legacy progress migration, and task content are unchanged.
+
+
 ## v0.1.2-alpha.3 — Benchmark UX & Universal Sandbox Foundation
 
 - Collapsible sidebar + mobile drawer and Focus Reading.

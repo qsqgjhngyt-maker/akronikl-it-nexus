@@ -56,4 +56,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Current development
 
-`v0.1.4-alpha.2`: all three C++ benchmark lessons remain complete; Sandbox now distinguishes learner-code errors from lightweight Browser Runtime limits. Lesson Standard 1.0 remains candidate-final pending live runtime smoke.
+`v0.1.4-alpha.2.1`: live-smoke hotfix closes the false red learner-code error after a failed OOP compatibility retry. Browser Runtime limits remain environment warnings and no learner source line is marked as erroneous. Lesson Standard 1.0 remains candidate-final pending a repeat live smoke.

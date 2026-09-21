@@ -37,4 +37,23 @@ assert(!/\boverride\b/.test(retry.normalized.code),'temporary runtime copy shoul
 assert(retry.normalized.changes.some(x=>x.includes('override')),'adapter changes must disclose override retry');
 delete globalThis.window;
 
-console.log('RUNTIME_CAPABILITY_PASS',assessment.bestEffort.map(x=>x.id));
+// Live regression: first attempt fails on `override`, then the safe temporary
+// compatibility retry fails deeper inside the lightweight provider. This is an
+// environment-capability warning, not a learner-code error.
+globalThis.window={JSCPP:{run(code){
+  if(/\boverride\b/.test(code))throw new Error('Parsing Failure: line 3 (column 44): Expected {');
+  throw new Error('Lightweight runtime cannot execute virtual dispatch');
+}}};
+let liveRetryError=null;
+try{await browserRuntimeProvider.run(oop,'')}catch(error){liveRetryError=error}
+assert(liveRetryError,'failed compatibility retry must surface an error object');
+const liveRetryDiag=parseRuntimeError(liveRetryError,oop,{analysis,capability:assessment,locale:'ru'});
+assert(liveRetryDiag.kind==='provider-limit','failed OOP compatibility retry must be classified as provider limit');
+assert(liveRetryDiag.providerLimit===true,'live retry providerLimit flag missing');
+assert(liveRetryDiag.compatibilityRetryFailed===true,'compatibility retry failure metadata missing');
+assert(liveRetryDiag.line===null,'provider limitation must not highlight a learner source line as erroneous');
+assert(liveRetryDiag.raw.includes('Первичная попытка Browser Runtime'),'technical output must preserve the primary parser failure');
+assert(liveRetryDiag.raw.includes('Compatibility retry'),'technical output must preserve the retry failure');
+delete globalThis.window;
+
+console.log('RUNTIME_CAPABILITY_PASS' ,assessment.bestEffort.map(x=>x.id));
