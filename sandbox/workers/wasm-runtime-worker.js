@@ -1,6 +1,6 @@
 import {MODERN_CPP_TOOLCHAIN,MODERN_CPP_LIMITS,modernCppToolchainLabel} from '../runtime-assets.js';
 
-const FOUNDATION_VERSION='0.1.5-alpha.2';
+const FOUNDATION_VERSION='0.1.5-alpha.2.1';
 let compilerModulePromise=null;
 let wasiModulePromise=null;
 let compilerReady=false;

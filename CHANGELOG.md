@@ -1,3 +1,9 @@
+# CHANGELOG v0.1.5-alpha.2.1
+
+- Fixed learner-visible escaped quotes in the RU/EN OOP benchmark starter and solution.
+- Added regression coverage for executable sample escaping.
+- Modern C++ compiler/router behavior unchanged.
+
 # CHANGELOG v0.1.5-alpha.2
 
 - Real on-demand `Nexus WASM C++ Runtime` integrated through pinned Clang/LLD + WASI.

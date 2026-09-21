@@ -18,7 +18,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Статус
 
-**v0.1.5-alpha.2 / Modern C++ Compiler Integration.** Polyglot Runtime Router теперь подключает реальный `Nexus WASM C++ Runtime`: Modern C++ компилируется в отдельном Worker через закреплённый Clang/LLD toolchain и выполняется как WASI-модуль. Простой C++ по-прежнему остаётся на быстром Browser Runtime.
+**v0.1.5-alpha.2.1 / OOP Example Escape Hotfix.** Polyglot Runtime Router теперь подключает реальный `Nexus WASM C++ Runtime`: Modern C++ компилируется в отдельном Worker через закреплённый Clang/LLD toolchain и выполняется как WASI-модуль. Простой C++ по-прежнему остаётся на быстром Browser Runtime.
 
 **Исторический baseline UI: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Нативные системные выпадающие списки в верхней панели заменены на собственный Nexus Glass Dropdown, чтобы убрать светлые popup-меню Windows/Chromium и сохранить единый стиль на ПК и мобильных устройствах. Все возможности alpha.4 сохранены.
 
@@ -47,7 +47,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Текущий этап
 
-Текущий исполняемый релиз: [`RELEASE_v0.1.5-alpha.2.md`](RELEASE_v0.1.5-alpha.2.md). История изменений: [`CHANGELOG_v0.1.5-alpha.2.md`](CHANGELOG_v0.1.5-alpha.2.md).
+Текущий исполняемый релиз: [`RELEASE_v0.1.5-alpha.2.1.md`](RELEASE_v0.1.5-alpha.2.1.md). История изменений: [`CHANGELOG_v0.1.5-alpha.2.1.md`](CHANGELOG_v0.1.5-alpha.2.1.md).
 
 ## План первой реализации
 
