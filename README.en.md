@@ -56,4 +56,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Current development
 
-`v0.1.4-alpha.1`: all three C++ benchmark lessons are complete; Lesson Standard 1.0 is ready to freeze after live smoke.
+`v0.1.4-alpha.2`: all three C++ benchmark lessons remain complete; Sandbox now distinguishes learner-code errors from lightweight Browser Runtime limits. Lesson Standard 1.0 remains candidate-final pending live runtime smoke.

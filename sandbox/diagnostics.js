@@ -17,14 +17,37 @@ export function analyzeSource(source,requirements=[]){
   return{issues,checks,requirementsPassed:checks.filter(x=>x.ok).length,requirementsTotal:checks.length,lineCount:lines.length};
 }
 
-export function parseRuntimeError(error,source=''){
+const labels=(features,locale='ru')=>(features||[]).map(x=>locale==='en'?(x.labelEn||x.id):(x.labelRu||x.id)).join(', ');
+
+export function parseRuntimeError(error,source='',options={}){
   const raw=String(error?.message||error||'Неизвестная ошибка');
   const m=raw.match(/line\s+(\d+)\s*\(column\s*(\d+)\)/i)||raw.match(/line\s+(\d+)/i);
   const rawLine=m?Number(m[1]):null;const offset=Number(error?.anxLineOffset||0);const line=rawLine?Math.max(1,rawLine-offset):null;const column=m&&m[2]?Number(m[2]):null;
-  let title='Ошибка выполнения';let explanation='Среда не смогла выполнить программу. Откройте технический вывод и проверьте указанную строку.';
-  if(/Parsing Failure|Expected|parse|syntax/i.test(raw)){title='Ошибка синтаксиса';explanation='Парсер не смог разобрать конструкцию C++. Проверьте скобки, точки с запятой, кавычки и конструкцию рядом с отмеченной строкой.'}
-  if(/std::|unexpected token.*:/i.test(raw)){explanation='Текущий браузерный runtime поддерживает учебное подмножество C++. Nexus применяет слой совместимости для стандартных имён std::cout/std::cin; если ошибка повторяется, проверьте технический вывод.'}
-  if(/not defined|unknown identifier|undeclared/i.test(raw)){title='Неизвестное имя';explanation='В коде используется имя, которое среда не знает в этой области видимости. Проверьте объявление переменной, функции или заголовка.'}
+  const locale=options.locale==='en'?'en':'ru';
+  const analysis=options.analysis||null;
+  const capability=error?.anxCapability||options.capability||null;
+  const bestEffort=capability?.bestEffort||[];
+  const parseLike=/Parsing Failure|Expected|parse|syntax|unexpected token/i.test(raw);
+  const noStaticErrors=!analysis||analysis.issues?.filter(x=>x.level==='error').length===0;
+  const providerLimit=parseLike&&noStaticErrors&&bestEffort.length>0;
+  let kind='runtime-error';
+  let title=locale==='en'?'Runtime error':'Ошибка выполнения';
+  let explanation=locale==='en'?'The environment could not execute the program. Open technical output and inspect the reported line.':'Среда не смогла выполнить программу. Откройте технический вывод и проверьте указанную строку.';
+  if(providerLimit){
+    kind='provider-limit';
+    title=locale==='en'?'Browser Runtime limitation':'Ограничение Browser Runtime';
+    const featureText=labels(bestEffort,locale);
+    explanation=locale==='en'
+      ?`Nexus structural checks did not find a basic syntax-shape error, but the lightweight Browser Runtime does not guarantee full support for: ${featureText}. This message does not prove that your C++ source is invalid. The same Sandbox UI will route such code to an extended provider when it becomes available.`
+      :`Структурная проверка Nexus не нашла базовой ошибки формы кода, но лёгкий Browser Runtime не гарантирует полную поддержку конструкций: ${featureText}. Это сообщение не доказывает, что ваш C++ неверен. В дальнейшем тот же Nexus Sandbox будет направлять такой код в расширенный provider.`;
+  }else if(parseLike){
+    kind='syntax-error';title=locale==='en'?'Syntax error':'Ошибка синтаксиса';
+    explanation=locale==='en'?'The parser could not read a C++ construct. Check brackets, semicolons, quotes, and the construct near the marked line.':'Парсер не смог разобрать конструкцию C++. Проверьте скобки, точки с запятой, кавычки и конструкцию рядом с отмеченной строкой.';
+  }
+  if(!providerLimit&&/std::|unexpected token.*:/i.test(raw)){
+    explanation=locale==='en'?'The current Browser Runtime supports a teaching subset of C++. Nexus applies compatibility adaptations for common standard-library names; inspect the technical output if the error repeats.':'Текущий Browser Runtime поддерживает учебное подмножество C++. Nexus применяет слой совместимости для распространённых стандартных имён; если ошибка повторяется, проверьте технический вывод.';
+  }
+  if(/not defined|unknown identifier|undeclared/i.test(raw)){kind='unknown-name';title=locale==='en'?'Unknown name':'Неизвестное имя';explanation=locale==='en'?'The code uses a name that is not known in this scope. Check declarations, function names, and headers.':'В коде используется имя, которое среда не знает в этой области видимости. Проверьте объявление переменной, функции или заголовка.'}
   const snippet=line?String(source).split('\n')[line-1]||'':'';
-  return{title,explanation,line,column,raw,snippet};
+  return{kind,title,explanation,line,column,raw,snippet,capability,bestEffort,providerLimit};
 }

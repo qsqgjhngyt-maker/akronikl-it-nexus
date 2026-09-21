@@ -4,12 +4,12 @@ const ru=JSON.parse(fs.readFileSync(new URL('../courses/cpp/data/lessons.ru.json
 const en=JSON.parse(fs.readFileSync(new URL('../courses/cpp/data/lessons.en.json', import.meta.url),'utf8'));
 const manifest=JSON.parse(fs.readFileSync(new URL('../courses/cpp/manifest.json', import.meta.url),'utf8'));
 
-const ids=['cpp.first-cpp-program','cpp.pointers-references-addresses'];
+const ids=['cpp.first-cpp-program','cpp.pointers-references-addresses','cpp.oop-principles'];
 const required=['whyItMatters','outcomes','prerequisites','quickUnderstand','fullTheory','glossary','inside','walkthrough','experiments','errors','practice','lab','knowledgeCheck','sandboxModel','skillGraph','summary','modernNotes','historicalContext'];
 function assert(value,message){if(!value)throw new Error(message)}
 function publicLessonCopy(l){const clone=structuredClone(l);delete clone.provenanceRef;delete clone.pdfPages;delete clone.pdfNotes;return JSON.stringify(clone)}
 assert(ru.lessons.length===40,'RU baseline must remain 40 lessons');
-assert(en.lessons.length===2,'EN partial package must contain exactly two authored benchmark lessons');
+assert(en.lessons.length===3,'EN partial package must contain exactly three authored benchmark lessons');
 for(const id of ids){
   const r=ru.lessons.find(x=>x.id===id),e=en.lessons.find(x=>x.id===id);
   assert(r&&e,`Benchmark ${id} must exist in RU and EN`);
@@ -31,4 +31,10 @@ for(const l of [ptrRu,ptrEn]){
   assert(l.benchmark.interactiveMemory.addressNote,'Pointer benchmark must state that addresses are symbolic');
   assert(l.benchmark.skillGraph.strengthens.includes('cpp.lifetime.safety'),'Pointer benchmark must strengthen lifetime safety');
 }
-console.log('BENCHMARK_CONTENT_PASS',{ruLessons:ru.lessons.length,enAuthored:en.lessons.length,completed:manifest.benchmarkStatus.completed,pointerTheory:ptrRu.benchmark.fullTheory.sections.length,pointerGlossary:ptrRu.benchmark.glossary.length,memorySteps:ptrRu.benchmark.interactiveMemory.steps.length});
+const oopRu=ru.lessons.find(x=>x.id==='cpp.oop-principles');
+const oopEn=en.lessons.find(x=>x.id==='cpp.oop-principles');
+for(const l of [oopRu,oopEn]){
+  assert(l.benchmark.interactiveOop?.steps?.length>=6,'OOP benchmark needs a 6-step interactive OOP model');
+  assert(l.benchmark.skillGraph.strengthens.includes('cpp.oop.virtual-dispatch'),'OOP benchmark must strengthen virtual dispatch');
+}
+console.log('BENCHMARK_CONTENT_PASS',{ruLessons:ru.lessons.length,enAuthored:en.lessons.length,completed:manifest.benchmarkStatus.completed,pointerTheory:ptrRu.benchmark.fullTheory.sections.length,pointerGlossary:ptrRu.benchmark.glossary.length,memorySteps:ptrRu.benchmark.interactiveMemory.steps.length,oopSteps:oopRu.benchmark.interactiveOop.steps.length});

@@ -62,3 +62,7 @@
 - Убраны светлые системные popup-меню Windows/Chromium на тёмном интерфейсе.
 - Dropdown поддерживает мышь, touch, клавиатуру, Esc, закрытие по клику снаружи и прокрутку длинных списков локалей.
 - Реестр языков остаётся динамическим: будущие локали подключаются без хардкода компонента.
+
+## v0.1.4-alpha.2
+- Sandbox now distinguishes learner-code problems from lightweight Browser Runtime capability limits.
+- OOP capability probe and safe `override` compatibility retry added.

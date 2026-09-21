@@ -65,4 +65,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Текущая разработка
 
-`v0.1.4-alpha.1`: завершены три benchmark-урока C++; Lesson Standard 1.0 подготовлен к фиксации после live-smoke.
+`v0.1.4-alpha.2`: три benchmark-урока C++ сохранены; Sandbox теперь различает ошибки кода и ограничения лёгкого Browser Runtime. Lesson Standard 1.0 остаётся candidate-final до live-smoke runtime-диагностики.
