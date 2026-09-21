@@ -65,4 +65,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Текущая разработка
 
-`v0.1.4-alpha.2.1`: live-smoke hotfix закрывает ложную красную ошибку после неудачного OOP compatibility retry. Ограничение Browser Runtime теперь остаётся предупреждением среды и не подсвечивает строку ученика как ошибочную. Lesson Standard 1.0 остаётся candidate-final до повторного live-smoke.
+`v0.1.4-alpha.2.2`: второй live-smoke hotfix распознаёт отсутствие известного стандартного C++ заголовка/библиотеки (например `<string>`) в лёгком Browser Runtime как ограничение provider, а не как ошибку кода ученика. Опечатки и неизвестные заголовки не маскируются. Lesson Standard 1.0 остаётся candidate-final до чистого live-smoke.

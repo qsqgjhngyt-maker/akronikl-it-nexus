@@ -56,4 +56,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Current development
 
-`v0.1.4-alpha.2.1`: live-smoke hotfix closes the false red learner-code error after a failed OOP compatibility retry. Browser Runtime limits remain environment warnings and no learner source line is marked as erroneous. Lesson Standard 1.0 remains candidate-final pending a repeat live smoke.
+`v0.1.4-alpha.2.2`: the second live-smoke hotfix classifies a missing known standard C++ header/library (for example `<string>`) in the lightweight Browser Runtime as a provider limitation instead of a learner-code error. Misspelled and unknown headers are not hidden. Lesson Standard 1.0 remains candidate-final pending a clean live smoke.

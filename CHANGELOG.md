@@ -8,6 +8,13 @@
 
 # CHANGELOG
 
+## v0.1.4-alpha.2.2
+- Live-smoke hotfix for missing standard-library headers in the lightweight Browser Runtime.
+- Known standard C++ headers/libraries reported as unavailable by the provider (for example `<string>`) are classified as `provider-limit`, not learner-code errors.
+- Misspelled/non-standard headers remain normal errors and keep line/column diagnostics.
+- Added regression coverage for both `<string>` provider limitation and `<strng>` learner error.
+- Benchmark lesson content, stable IDs, legacy indices, and progress migration are unchanged.
+
 ## v0.1.4-alpha.2.1
 - Live-smoke hotfix for OOP Browser Runtime classification.
 - If the initial `override` parse fails and the safe temporary retry also fails inside the lightweight provider, Nexus now classifies the result as an environment/provider limitation instead of a learner-code error.
