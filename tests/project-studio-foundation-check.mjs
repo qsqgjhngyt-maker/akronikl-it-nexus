@@ -42,7 +42,7 @@ assert(browserRuntimeProvider.inspect(request).support==='unsupported','Browser 
 assert(wasmRuntimeProvider.inspect(request).support==='guaranteed','WASM Runtime must accept Project Studio C++ project');
 
 const dashboard=projectStudioDashboardMarkup({projects:listProjects(),courseProjects:[courseDef],locale:'ru'});
-for(const token of ['NEXUS PROJECT STUDIO','МОИ ПРОЕКТЫ','Nexus Sync','Export & Release','#view=project-studio&template=cpp%3Afinance'])assert(dashboard.includes(token),`Project Studio dashboard missing ${token}`);
+for(const token of ['NEXUS PROJECT STUDIO','МОИ ПРОЕКТЫ','Nexus Sync & Team','Next: Account Link','#view=project-studio&template=cpp%3Afinance'])assert(dashboard.includes(token),`Project Studio dashboard missing ${token}`);
 const detail=projectStudioViewMarkup({project:getProject(project.id),courseProject:courseDef,locale:'ru'});
 for(const token of ['MANIFEST','CHECKPOINTS','id="psCheckpoint"','id="runCode"','src/main.cpp'])assert(detail.includes(token),`Project Studio detail missing ${token}`);
 

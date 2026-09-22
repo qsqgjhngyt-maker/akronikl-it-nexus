@@ -18,7 +18,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Статус
 
-**v0.1.7-alpha.1.3.2 / Editor Gutter & Layout Sync Hotfix.** Code Studio теперь жёстко синхронизирует высоту gutter с динамическим viewport редактора: нумерация строк прокручивается вместе с кодом и больше не может растянуть workspace в большую пустую «чёрную дыру». Предыдущий auto-resize, Project VFS и session-only resume сохранены.
+**v0.1.7-alpha.2.1 / Nexus Sync & Team Data Foundation.** Project Studio получил persistent local identity, private ownership, роли и path-scoped ACL с приоритетом DENY, audit-модель и Cloudflare Worker + D1/R2 backend kit. Облачная синхронизация ещё не включена: production-auth намеренно остаётся закрытым до подключения проверенного аккаунта.
 
 **Исторический baseline UI: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Нативные системные выпадающие списки в верхней панели заменены на собственный Nexus Glass Dropdown, чтобы убрать светлые popup-меню Windows/Chromium и сохранить единый стиль на ПК и мобильных устройствах. Все возможности alpha.4 сохранены.
 
@@ -47,7 +47,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Текущий этап
 
-Текущий исполняемый релиз: [`RELEASE_v0.1.7-alpha.1.3.2.md`](RELEASE_v0.1.7-alpha.1.3.2.md). История изменений: [`CHANGELOG_v0.1.7-alpha.1.3.2.md`](CHANGELOG_v0.1.7-alpha.1.3.2.md).
+Текущий исполняемый релиз: [`RELEASE_v0.1.7-alpha.2.1.md`](RELEASE_v0.1.7-alpha.2.1.md). История изменений: [`CHANGELOG_v0.1.7-alpha.2.1.md`](CHANGELOG_v0.1.7-alpha.2.1.md).
 
 ## План первой реализации
 
@@ -67,4 +67,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Текущая разработка
 
-`v0.1.7-alpha.1.3.2`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**. Поверх Project VFS, bidirectional auto-resize и session-only resume добавлена жёсткая синхронизация viewport/gutter без изменения учебного контента.
+`v0.1.7-alpha.2.1`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**. Project Studio поверх стабильного VFS/Runtime получил Sync & Team data foundation; учебный контент и C++ stable IDs не менялись.
