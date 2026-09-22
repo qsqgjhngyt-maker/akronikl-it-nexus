@@ -94,7 +94,7 @@ export function bindCodeStudio({editor,locale='ru',languageId='cpp',fileName='ma
   const initialFiles=seedFiles({source:editor.value,files,entryFile:fileName});
   const workspace=createCodeWorkspace({languageId,entryFile:fileName,files:initialFiles,activeFile:activeFile||fileName});
   const activeInitial=workspace.getFile();if(activeInitial)editor.value=activeInitial.content;
-  const highlight=root.querySelector('#editorHighlight'),gutter=root.querySelector('#editorLines'),cursorEl=root.querySelector('#codeCursor'),stage=root.querySelector('.code-editor-stage');
+  const highlight=root.querySelector('#editorHighlight'),gutter=root.querySelector('#editorLines'),cursorEl=root.querySelector('#codeCursor'),stage=root.querySelector('.code-editor-stage'),editorShell=stage?.closest('.code-studio-editor');
   const searchbar=root.querySelector('#codeSearchbar'),searchInput=root.querySelector('#codeSearchInput'),searchCount=root.querySelector('#codeSearchCount');
   const problems=root.querySelector('#codeStudioProblems'),problemsList=root.querySelector('#codeProblemsList'),problemsCount=root.querySelector('#codeProblemsCount');
   const treeList=root.querySelector('#codeFileTreeList'),tabs=root.querySelector('#codeFileTabs');
@@ -141,7 +141,11 @@ export function bindCodeStudio({editor,locale='ru',languageId='cpp',fileName='ma
     const viewportMax=Math.max(initialStageHeight,Math.min(hardCap,viewportCap));
     const effectiveLines=effectiveEditorLineCount(editor.value);
     const height=calculateEditorStageHeight({lineCount:effectiveLines,lineHeight,padding,minHeight:initialStageHeight,maxHeight:viewportMax});
-    const wasHeight=currentStageHeight;currentStageHeight=height;stage.style.height=`${height}px`;stage.dataset.autoOverflow=height>=viewportMax?'scroll':'fit';stage.dataset.effectiveLines=String(effectiveLines);
+    const wasHeight=currentStageHeight;currentStageHeight=height;
+    stage.style.height=`${height}px`;
+    if(editorShell){editorShell.style.height=`${height}px`;editorShell.style.minHeight=`${height}px`;editorShell.style.maxHeight=`${height}px`}
+    if(gutter){gutter.style.height=`${height}px`;gutter.style.minHeight='0px';gutter.style.maxHeight=`${height}px`;gutter.style.overflow='hidden'}
+    stage.dataset.autoOverflow=height>=viewportMax?'scroll':'fit';stage.dataset.effectiveLines=String(effectiveLines);
     const empty=!String(editor.value).trim();
     if(empty){editor.scrollTop=0;editor.scrollLeft=0;if(highlight){highlight.scrollTop=0;highlight.scrollLeft=0}if(gutter)gutter.scrollTop=0}
     else if(height<wasHeight){const meaningfulBottom=Math.max(0,Math.ceil(effectiveLines*lineHeight+padding-height));editor.scrollTop=Math.min(editor.scrollTop,meaningfulBottom);if(highlight)highlight.scrollTop=editor.scrollTop;if(gutter)gutter.scrollTop=editor.scrollTop}

@@ -18,7 +18,7 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
-**v0.1.7-alpha.1.3.1 / Editor Viewport Recovery Hotfix.** Code Studio now ignores trailing blank-line tails when sizing the outer viewport, collapses cleared files back to the compact baseline, and caps large sources to an internal-scroll viewport. Project VFS and session-only resume remain unchanged.
+**v0.1.7-alpha.1.3.2 / Editor Gutter & Layout Sync Hotfix.** Code Studio now binds the line-number gutter to the same dynamic viewport as the editor, keeping line numbers in scroll lockstep with code and preventing the gutter from stretching the workspace into a large empty area. Project VFS, auto-resize, and session-only resume remain unchanged.
 
 **Historical UI baseline: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Native system select popups in the top bar have been replaced with a custom Nexus Glass Dropdown to eliminate bright Windows/Chromium menus and keep a consistent desktop/mobile appearance. All alpha.4 functionality remains intact.
 
@@ -58,4 +58,4 @@ Nexus Lesson Standard 1.0 is now **Normative / Production** after three accepted
 
 ## Current development
 
-`v0.1.7-alpha.1.3.1` keeps the proven multi-file Clang/WASI baseline and hardens Project Studio nested VFS mapping, Code Studio bidirectional auto-resize, and session-only positional resume while preserving persistent code, projects, checkpoints, and progress.
+`v0.1.7-alpha.1.3.2` keeps the proven Project VFS, multi-file Clang/WASI baseline, bidirectional auto-resize, and session-only positional resume while adding bounded gutter/layout synchronization.

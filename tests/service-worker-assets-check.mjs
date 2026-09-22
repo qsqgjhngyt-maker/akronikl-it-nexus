@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const sw=fs.readFileSync(path.join(root,'service-worker.js'),'utf8');
 const assert=(v,m)=>{if(!v)throw new Error(m)};
-assert(sw.includes("akronikl-it-nexus-v0.1.7-alpha.1.3.1"),'service worker cache version mismatch');
+assert(sw.includes("akronikl-it-nexus-v0.1.7-alpha.1.3.2"),'service worker cache version mismatch');
 const match=sw.match(/const CORE=(\[[^;]+\]);/s);assert(match,'CORE asset list not found');
 const assets=JSON.parse(match[1]);
 for(const asset of assets){
