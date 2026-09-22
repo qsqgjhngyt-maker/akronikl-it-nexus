@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import {createViewResume,VIEW_RESUME_KEY} from '../core/view-resume.js';
+const assert=(value,message)=>{if(!value)throw new Error(message)};
+const sessionMemory=new Map();const sessionStorage={getItem:k=>sessionMemory.get(k)??null,setItem:(k,v)=>sessionMemory.set(k,String(v)),removeItem:k=>sessionMemory.delete(k)};
+let pos={x:0,y:880},applied=null;
+const resume=createViewResume({storage:sessionStorage,getPosition:()=>pos,applyPosition:v=>{applied=v},scheduleFrame:fn=>fn(),addListener:()=>{},removeListener:()=>{},historyObject:{scrollRestoration:'auto'}});
+resume.begin('#course=cpp&lesson=cpp.first-program');resume.save();assert(sessionMemory.has(VIEW_RESUME_KEY),'Current-session scroll was not saved');pos={x:0,y:0};assert(resume.restore(),'Current-session scroll was not restorable');assert(applied?.y===880,'Current-session scroll restored wrong position');
+const freshSession=new Map();assert(!freshSession.has(VIEW_RESUME_KEY),'A fresh session must not inherit page resume state');
+const viewResume=fs.readFileSync(new URL('../core/view-resume.js',import.meta.url),'utf8');assert(viewResume.includes('storage=globalThis.sessionStorage'),'Page resume must use sessionStorage');
+const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8');for(const token of ['sessionKey:`course:cpp:lesson:${r.lesson}`','sessionKey:`course:cpp:practicum:${r.practicum}`'])assert(app.includes(token),`Course editor session key missing: ${token}`);assert(!app.includes('viewState:persisted?.viewState||null'),'Persistent lesson viewState must not restore caret/scroll across sessions');
+const projectStudio=fs.readFileSync(new URL('../project-studio/project-studio.js',import.meta.url),'utf8');assert(projectStudio.includes('sessionKey:`project:${projectId}`'),'Project Studio editor view must be session-scoped');assert(!projectStudio.includes('viewState:project.workspace?.viewState'),'Project Studio must not restore persistent caret/scroll');
+const codeStudio=fs.readFileSync(new URL('../sandbox/code-studio.js',import.meta.url),'utf8');assert(codeStudio.includes("SESSION_VIEW_PREFIX='akronikl:code-studio:view:v1:'"),'Code Studio session view store missing');assert(codeStudio.includes('const studioSnapshot=()=>({...workspace.snapshot()})'),'Persistent workspace snapshot must exclude transient viewState');
+console.log('SESSION_ONLY_RESUME_PASS');

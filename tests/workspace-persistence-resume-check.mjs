@@ -14,9 +14,9 @@ assert(workspace.activeFile==='main.cpp','Active-file removal must fall back to 
 assert(workspace.getFile('main.cpp')?.content==='int main(){return 0;}','Removing another file must never mutate main.cpp');
 
 const studio=fs.readFileSync(new URL('../sandbox/code-studio.js',import.meta.url),'utf8');
-for(const token of ['viewState=null','fileViews=new Map','studioSnapshot','restoreEditorView','syncCurrent=true','switchFile(workspace.activeFile,{emit:false,syncCurrent:false})'])assert(studio.includes(token),`Code Studio persistence marker missing: ${token}`);
+for(const token of ['sessionKey=null','fileViews=new Map','studioSnapshot','restoreEditorView','syncCurrent=true','switchFile(workspace.activeFile,{emit:false,syncCurrent:false})'])assert(studio.includes(token),`Code Studio persistence marker missing: ${token}`);
 const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8');
-for(const token of ["createViewResume","viewState:persisted?.viewState||null","viewResume.begin","viewResume.restore","viewResume.install"])assert(app.includes(token),`App resume integration missing: ${token}`);
+for(const token of ["createViewResume","sessionKey:`course:cpp:lesson:${r.lesson}`","viewResume.begin","viewResume.restore","viewResume.install"])assert(app.includes(token),`App resume integration missing: ${token}`);
 
 const memory=new Map();
 const storage={getItem:key=>memory.get(key)??null,setItem:(key,value)=>memory.set(key,String(value))};

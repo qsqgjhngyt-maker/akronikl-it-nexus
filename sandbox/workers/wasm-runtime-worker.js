@@ -1,6 +1,7 @@
 import {MODERN_CPP_TOOLCHAIN,MODERN_CPP_LIMITS,modernCppToolchainLabel} from '../runtime-assets.js';
+import {flatFilesToVirtualTree} from '../virtual-files.js';
 
-const FOUNDATION_VERSION='0.1.6-alpha.2.1';
+const FOUNDATION_VERSION='0.1.7-alpha.1.3';
 let compilerModulePromise=null;
 let wasiModulePromise=null;
 let compilerReady=false;
@@ -87,13 +88,27 @@ function normalizedFiles(request,entryFile){
   return files;
 }
 
-function collectTranslationUnits(files,languageId='cpp',entryFile='main.cpp'){
+function collectTranslationUnits(files,languageId='cpp',entryFile='main.cpp',requestedUnits=null){
   const isC=languageId==='c';
   const sourceRe=isC?/\.c$/i:/\.(?:cc|cpp|cxx|c\+\+)$/i;
-  const units=Object.keys(files||{}).filter(path=>sourceRe.test(path));
-  if(!units.includes(entryFile)&&sourceRe.test(entryFile))units.unshift(entryFile);
+  const available=new Set(Object.keys(files||{}).filter(path=>sourceRe.test(path)));
+  let units=Array.isArray(requestedUnits)&&requestedUnits.length
+    ?requestedUnits.map(path=>String(path||'').replace(/\\/g,'/').replace(/^\/+/, '')).filter(path=>available.has(path))
+    :[...available];
+  if(!units.includes(entryFile)&&available.has(entryFile))units.unshift(entryFile);
+  units=[...new Set(units)];
   units.sort((a,b)=>a===entryFile?-1:b===entryFile?1:a.localeCompare(b));
   return units;
+}
+
+function includeArgs(request={}){
+  const roots=Array.isArray(request?.metadata?.includeRoots)?request.metadata.includeRoots:[];
+  const args=[];
+  for(const root of roots){
+    const safe=String(root||'').replace(/\\/g,'/').replace(/^\/+|\/+$/g,'');
+    if(safe&&!safe.includes('../'))args.push('-I',safe);
+  }
+  return args;
 }
 
 async function compile(requestId,request){
@@ -125,15 +140,15 @@ async function compile(requestId,request){
         throw error;
       }
     }
-    const translationUnits=collectTranslationUnits(virtualFiles,languageId,entryFile);
+    const translationUnits=collectTranslationUnits(virtualFiles,languageId,entryFile,request?.metadata?.translationUnits);
     if(!translationUnits.length){
       const error=new Error('No compilable translation units were found in the Nexus workspace.');
       error.code='WASM_NO_TRANSLATION_UNITS';
       throw error;
     }
     const filesOut=await runClang(
-      [compiler,stdFlag,...(isC?[]:['-fno-exceptions']),'-O0','-g0','-fdiagnostics-color=never',...translationUnits,'-o',outputFile],
-      virtualFiles,
+      [compiler,stdFlag,...(isC?[]:['-fno-exceptions']),'-O0','-g0','-fdiagnostics-color=never',...includeArgs(request),...translationUnits,'-o',outputFile],
+      flatFilesToVirtualTree(virtualFiles),
       {
         decodeASCII:false,
         stdout:value=>compilerOut.push(value),

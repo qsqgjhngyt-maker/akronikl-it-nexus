@@ -4,13 +4,13 @@ const version=JSON.parse(fs.readFileSync(new URL('version.json',root),'utf8')).v
 const index=fs.readFileSync(new URL('index.html',root),'utf8');
 const app=fs.readFileSync(new URL('core/app.js',root),'utf8');
 const sw=fs.readFileSync(new URL('service-worker.js',root),'utf8');
-const expected='0.1.7-alpha.1.2';
+const expected='0.1.7-alpha.1.3';
 const assert=(v,m)=>{if(!v)throw new Error(m)};
 assert(version===expected,`version.json mismatch: ${version}`);
 assert(index.includes(`app.css?v=${expected}`),'index CSS cache-buster version mismatch');
 assert(index.includes(`core/app.js?v=${expected}`),'index app cache-buster version mismatch');
 assert(index.includes(`Platform Shell v${expected}`),'boot screen version mismatch');
-assert(app.includes('v0.1.7 α1.2'),'topbar alpha chip mismatch');
+assert(app.includes('v0.1.7 α1.3'),'topbar alpha chip mismatch');
 assert(app.includes(`Platform Shell v${expected}`),'footer version mismatch');
-assert(sw.includes('akronikl-it-nexus-v0.1.7-alpha.1.2'),'service worker cache version mismatch');
+assert(sw.includes('akronikl-it-nexus-v0.1.7-alpha.1.3'),'service worker cache version mismatch');
 console.log('RELEASE_VERSION_CONSISTENCY_PASS',version);

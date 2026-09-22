@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import {calculateEditorStageHeight} from '../sandbox/code-studio.js';
+const assert=(value,message)=>{if(!value)throw new Error(message)};
+const base=calculateEditorStageHeight({lineCount:1,lineHeight:20,padding:32,minHeight:340,maxHeight:720});
+const grown=calculateEditorStageHeight({lineCount:28,lineHeight:20,padding:32,minHeight:340,maxHeight:720});
+const capped=calculateEditorStageHeight({lineCount:200,lineHeight:20,padding:32,minHeight:340,maxHeight:720});
+const shrunk=calculateEditorStageHeight({lineCount:1,lineHeight:20,padding:32,minHeight:340,maxHeight:720});
+assert(base===340,'Compact editor must start at baseline height');
+assert(grown>base&&grown<720,'Editor must grow for larger source');
+assert(capped===720,'Editor growth must cap at max height and use inner scroll');
+assert(shrunk===base,'Clearing a large source must shrink editor back to baseline');
+const studio=fs.readFileSync(new URL('../sandbox/code-studio.js',import.meta.url),'utf8');
+for(const token of ['recalculateEditorHeight','calculateEditorStageHeight','syncVisuals=()=>{recalculateEditorHeight()'])assert(studio.includes(token),`Auto-resize integration missing ${token}`);
+const css=fs.readFileSync(new URL('../styles/app.css',import.meta.url),'utf8');assert(css.includes('.code-editor-stage{')&&css.includes('resize:none'),'Editor stage must be auto-sized rather than permanently manually stretched');
+console.log('EDITOR_AUTO_RESIZE_PASS',base,grown,capped,shrunk);

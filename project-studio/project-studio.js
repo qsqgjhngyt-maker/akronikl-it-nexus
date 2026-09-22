@@ -1,6 +1,7 @@
 import {codeStudioMarkup,bindCodeStudio} from '../sandbox/code-studio.js';
 import {createSandboxController} from '../sandbox/sandbox.js';
 import {getProject,patchProject,createCheckpoint,restoreCheckpoint,toggleProjectMilestone,deleteProject} from './project-store.js';
+import {projectRuntimeRequest} from './project-build.js';
 
 const e=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
 const fmt=value=>{try{return new Intl.DateTimeFormat('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value))}catch{return String(value||'')}};
@@ -23,9 +24,10 @@ export function projectStudioViewMarkup({project,courseProject=null,locale='ru'}
 
 export function bindProjectStudio({projectId,locale='ru',onChanged=()=>{},onDeleted=()=>{}}={}){
   const project=getProject(projectId);if(!project)return null;const en=locale==='en';const editor=document.querySelector('#editor');if(!editor)return null;
-  const studio=bindCodeStudio({editor,locale,languageId:project.languageId||'cpp',fileName:project.manifest?.entryFile||'src/main.cpp',files:project.workspace?.files||[],activeFile:project.workspace?.activeFile||project.manifest?.entryFile,viewState:project.workspace?.viewState||null,onWorkspaceChange:snapshot=>{patchProject(projectId,{workspace:snapshot});onChanged()}});
+  const studio=bindCodeStudio({editor,locale,languageId:project.languageId||'cpp',fileName:project.manifest?.entryFile||'src/main.cpp',files:project.workspace?.files||[],activeFile:project.workspace?.activeFile||project.manifest?.entryFile,sessionKey:`project:${projectId}`,onWorkspaceChange:snapshot=>{patchProject(projectId,{workspace:snapshot});onChanged()}});
   const stdin=document.querySelector('#stdin'),output=document.querySelector('#output'),engine=document.querySelector('#engine'),status=document.querySelector('#sandboxStatus'),routeInfo=document.querySelector('#runtimeRoute');
-  const controller=createSandboxController({editor,stdin,output,engine,status,routeInfo,requirements:[],locale,languageId:project.languageId||'cpp',codeStudio:studio,onCodeChange:()=>{}});
+  const runtimeStudio={...studio,runtimeRequest:value=>projectRuntimeRequest(studio,getProject(projectId)||project,value,'run')};
+  const controller=createSandboxController({editor,stdin,output,engine,status,routeInfo,requirements:[],locale,languageId:project.languageId||'cpp',codeStudio:runtimeStudio,onCodeChange:()=>{}});
   stdin?.addEventListener('input',()=>patchProject(projectId,{stdin:stdin.value}));
   document.querySelector('#runCode')?.addEventListener('click',()=>controller.run().catch(()=>{}));
   document.querySelector('#testRuntime')?.addEventListener('click',()=>controller.selfTest().catch(()=>{}));
