@@ -1,7 +1,7 @@
 # Nexus Project Studio — архитектура итоговых инженерных проектов
 
 ## Назначение
-Nexus Project Studio — будущий модуль AKRONIKL IT NEXUS, в котором учащийся после освоения курса создаёт собственный работающий продукт внутри той же экосистемы. Это не отдельный внешний IDE-сценарий, а продолжение учебного пути: **изучить → понять → попробовать → проверить → создать → выпустить**.
+Nexus Project Studio — отдельный рабочий модуль AKRONIKL IT NEXUS, в котором учащийся после освоения курса создаёт собственный работающий продукт внутри той же экосистемы. Это не отдельный внешний IDE-сценарий, а продолжение учебного пути: **изучить → понять → попробовать → проверить → создать → выпустить**.
 
 ## Основные сценарии
 - выбрать предложенный итоговый проект или сформулировать собственную идею;
@@ -26,5 +26,11 @@ Project Studio использует единый Nexus Sandbox API. Просты
 ## Безопасность
 Cloud/build provider обязан быть изолирован: ограничения CPU/RAM/времени, запрет произвольного доступа к инфраструктуре, контролируемая файловая система, аудит зависимостей и отсутствие секретов в клиентском коде.
 
+## Реализация v0.1.7-alpha.1
+Project Studio Foundation реализована поверх стабильного Code Studio: persistent project entity, manifest, nested workspace, milestones, checkpoints/restore и запуск через единый Runtime Router. C++ проекты курса создают/возобновляют один и тот же Project Studio workspace.
+
+## Синхронизация и выпуск
+Project manifest уже содержит local-first sync/release metadata. Device-to-device cloud sync, conflicts, source export и Secure Build artifacts добавляются следующими слоями без изменения базовой project entity.
+
 ## Статус
-Архитектура зафиксирована в v0.1.2-alpha.3. Полноценная реализация Project Studio — отдельный будущий этап после стабилизации Nexus Sandbox и benchmark-уроков.
+v0.1.7-alpha.1 — Foundation implemented; cloud sync/export/Secure Build/Nexus Tests staged for subsequent releases.

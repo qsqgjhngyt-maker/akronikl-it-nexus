@@ -6,3 +6,9 @@ Stage 0 Foundation: baseline, backup, bilingual docs, requirements and ADRs. Sta
 
 ## Future milestone — Nexus Project Studio
 After Sandbox and benchmark programming courses are stable: original capstones, project file trees, tests, build providers, snapshots/version history, Akronikl Project Mentor, and Portfolio Release.
+
+
+## Nexus Project Studio — implementation begins
+`v0.1.7-alpha.1` promotes Project Studio from roadmap to an executable Foundation: project entity, manifest, persistent workspace, nested paths, milestones, checkpoints, and reuse of the unified Code Studio/Runtime Router. C++ practicums and course projects are connected to live Studio workflows.
+
+Next layers: Nexus Sync (phone ↔ PC, offline queue, conflicts), Project Export & Release (source ZIP / release snapshot), Nexus Tests, and Secure Build for native/Docker artifacts.

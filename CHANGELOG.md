@@ -1,3 +1,11 @@
+# CHANGELOG v0.1.7-alpha.1
+
+- Nexus Project Studio Foundation is now executable, not roadmap-only.
+- Added Programming hub, persistent project entities, manifest, nested workspace paths, milestones and checkpoints.
+- C++ practicums now open in Code Studio; C++ course projects promote into Project Studio.
+- Existing Clang/WASM and v0.1.6-alpha.2.1 persistence/resume baseline remains unchanged.
+- Cloud sync, export, native/Docker build and Nexus Tests remain staged future layers.
+
 # CHANGELOG v0.1.6-alpha.1
 
 - Added Nexus Code Studio Foundation above the existing Sandbox/Runtime Router.

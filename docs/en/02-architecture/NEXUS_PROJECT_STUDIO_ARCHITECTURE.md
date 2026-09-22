@@ -1,7 +1,7 @@
 # Nexus Project Studio — capstone engineering project architecture
 
 ## Purpose
-Nexus Project Studio is a future AKRONIKL IT NEXUS module where a learner turns course knowledge into a real working product without leaving the platform. The intended learning path is **learn → understand → experiment → validate → build → release**.
+Nexus Project Studio is a dedicated AKRONIKL IT NEXUS module where a learner turns course knowledge into a real working product without leaving the platform. The intended learning path is **learn → understand → experiment → validate → build → release**.
 
 ## Core scenarios
 - choose a suggested capstone or define an original idea;
@@ -26,5 +26,11 @@ Project Studio consumes the unified Nexus Sandbox API. Browser Runtime handles f
 ## Security
 Cloud/build execution must be isolated with CPU/RAM/time quotas, restricted filesystem and network access, dependency controls, and no secrets exposed to the client.
 
+## v0.1.7-alpha.1 implementation
+Project Studio Foundation is implemented above the stable Code Studio baseline: persistent project entities, manifest, nested workspace, milestones, checkpoints/restore, and execution through the unified Runtime Router. C++ course projects create or resume the same Project Studio workspace.
+
+## Sync and release
+The project manifest already carries local-first sync/release metadata. Device-to-device cloud sync, conflict handling, source export, and Secure Build artifacts are later layers and do not require replacing the base project entity.
+
 ## Status
-Architecture is recorded in v0.1.2-alpha.3. Full Project Studio implementation is a later milestone after Nexus Sandbox and benchmark lessons are stable.
+v0.1.7-alpha.1 — Foundation implemented; cloud sync/export/Secure Build/Nexus Tests are staged for later releases.

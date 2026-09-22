@@ -42,5 +42,7 @@
 ## Этап 7 — Практики и портфолио
 Три технологические практики, производственные/эксплуатационные практики и capstone.
 
-## Future milestone — Nexus Project Studio
-После стабилизации Sandbox и эталонных программных курсов: собственные capstone-проекты, файловое дерево, тесты, build providers, snapshots/версии, Akronikl Project Mentor и Portfolio Release.
+## Nexus Project Studio — старт реализации
+`v0.1.7-alpha.1` переводит Project Studio из roadmap в рабочий Foundation: project entity, manifest, persistent workspace, nested paths, milestones, checkpoints и reuse единого Code Studio/Runtime Router. C++ практикумы и проекты связаны с живыми Studio-средами.
+
+Следующие слои: Nexus Sync (смартфон ↔ ПК, offline queue, conflicts), Project Export & Release (source ZIP / release snapshot), Nexus Tests и Secure Build для native/Docker artifacts.
