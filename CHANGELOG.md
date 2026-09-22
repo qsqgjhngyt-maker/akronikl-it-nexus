@@ -1,3 +1,9 @@
+# CHANGELOG v0.1.7-alpha.1.2
+
+- Fixed browser-blocking `SyntaxError: Unexpected identifier 'placeholder'` in the final published `core/app.js`.
+- Added a dedicated production-entry syntax gate executed against the post-patch application entry.
+- Project Studio lazy loading/recovery and all runtime/content behavior remain unchanged.
+
 # CHANGELOG v0.1.7-alpha.1.1
 
 - Boot Recovery Hotfix: Project Studio modules are lazy-loaded instead of blocking initial Platform Shell evaluation.

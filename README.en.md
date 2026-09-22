@@ -18,7 +18,7 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
-**v0.1.7-alpha.1.1 / Project Studio Boot Recovery Hotfix.** Programming is now an available hub; C++ practicums open in Code Studio and course projects can become persistent Project Studio workspaces with a manifest, milestones and checkpoints.
+**v0.1.7-alpha.1.2 / Production Entry Syntax Hotfix.** Programming is now an available hub; C++ practicums open in Code Studio and course projects can become persistent Project Studio workspaces with a manifest, milestones and checkpoints.
 
 **Historical UI baseline: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Native system select popups in the top bar have been replaced with a custom Nexus Glass Dropdown to eliminate bright Windows/Chromium menus and keep a consistent desktop/mobile appearance. All alpha.4 functionality remains intact.
 
@@ -58,4 +58,4 @@ Nexus Lesson Standard 1.0 is now **Normative / Production** after three accepted
 
 ## Current development
 
-`v0.1.7-alpha.1` keeps the proven multi-file Clang/WASI and persistence/resume baseline while adding the executable Project Studio Foundation: project entities, manifests, milestones, checkpoints, and C++ course/practicum bridges.
+`v0.1.7-alpha.1.2` keeps the proven multi-file Clang/WASI and persistence/resume baseline while adding the executable Project Studio Foundation: project entities, manifests, milestones, checkpoints, and C++ course/practicum bridges.
