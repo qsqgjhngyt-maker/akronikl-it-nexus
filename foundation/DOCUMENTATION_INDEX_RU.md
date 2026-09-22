@@ -16,6 +16,7 @@
 - `docs/ru/02-architecture/AI_AKRONIKL_ARCHITECTURE.md`
 - `docs/ru/02-architecture/COURSE_PACKAGE_ARCHITECTURE.md`
 - `docs/ru/02-architecture/DATA_MODEL.md`
+- `docs/ru/02-architecture/NEXUS_CODE_STUDIO_ARCHITECTURE.md`
 - `docs/ru/02-architecture/PLATFORM_ARCHITECTURE.md`
 - `docs/ru/02-architecture/PWA_OFFLINE_ARCHITECTURE.md`
 - `docs/ru/03-content/ASSESSMENT_STANDARD.md`

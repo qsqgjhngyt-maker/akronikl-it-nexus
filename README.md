@@ -18,7 +18,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Статус
 
-**v0.1.5-alpha.2.2 / C++ WASI Exception ABI Alignment Hotfix.** Polyglot Runtime Router теперь подключает реальный `Nexus WASM C++ Runtime`: Modern C++ компилируется в отдельном Worker через закреплённый Clang/LLD toolchain и выполняется как WASI-модуль. Простой C++ по-прежнему остаётся на быстром Browser Runtime.
+**v0.1.6-alpha.1 / Nexus Code Studio Foundation.** Поверх подтверждённого Polyglot Runtime и Clang/WASI добавлен IDE-слой: синтаксическая подсветка, номера строк, bracket matching, auto-indent, поиск, undo/redo, Problems и переход к `line:column` диагностики. Внутренняя Code Workspace-модель уже language-neutral и готова к будущим `.cpp/.h` и Project Studio.
 
 **Исторический baseline UI: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Нативные системные выпадающие списки в верхней панели заменены на собственный Nexus Glass Dropdown, чтобы убрать светлые popup-меню Windows/Chromium и сохранить единый стиль на ПК и мобильных устройствах. Все возможности alpha.4 сохранены.
 
@@ -47,7 +47,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Текущий этап
 
-Текущий исполняемый релиз: [`RELEASE_v0.1.5-alpha.2.2.md`](RELEASE_v0.1.5-alpha.2.2.md). История изменений: [`CHANGELOG_v0.1.5-alpha.2.2.md`](CHANGELOG_v0.1.5-alpha.2.2.md).
+Текущий исполняемый релиз: [`RELEASE_v0.1.6-alpha.1.md`](RELEASE_v0.1.6-alpha.1.md). История изменений: [`CHANGELOG_v0.1.6-alpha.1.md`](CHANGELOG_v0.1.6-alpha.1.md).
 
 ## План первой реализации
 
@@ -67,4 +67,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Текущая разработка
 
-`v0.1.5-alpha.2`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**, а Polyglot Runtime получает первый реальный extended provider. Modern C++ / STL / OOP маршрутизируются в `Nexus WASM C++ Runtime`; Clang/WASI toolchain лениво загружается в Worker, реальная диагностика компилятора сохраняется, исходник не отправляется в удалённый compiler API.
+`v0.1.6-alpha.1`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**, проверенный Modern C++ Runtime не меняется, а Nexus Sandbox получает Code Studio Foundation и виртуальную workspace-модель для последующего multi-file Project Studio.

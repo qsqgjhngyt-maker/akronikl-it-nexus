@@ -49,7 +49,7 @@ function routeReasonText(route,en=false){
   return en?`AUTO · ${label}`:`AUTO · ${label}`;
 }
 
-export function createSandboxController({editor,stdin,output,engine,status,routeInfo,requirements=[],locale='ru',languageId='cpp',onCodeChange=()=>{}}){
+export function createSandboxController({editor,stdin,output,engine,status,routeInfo,requirements=[],locale='ru',languageId='cpp',codeStudio=null,onCodeChange=()=>{}}){
   const en=locale==='en';
   const language=languageId||'cpp';
   let lastErrorLine=null;
@@ -74,6 +74,7 @@ export function createSandboxController({editor,stdin,output,engine,status,route
   const renderAnalysis=()=>{
     const analysis=analyzeSource(editor.value,requirements);
     renderLines();
+    codeStudio?.setStaticDiagnostics?.(analysis.issues||[]);
     if(status){
       const hard=analysis.issues.filter(x=>x.level==='error').length;
       const warn=analysis.issues.filter(x=>x.level==='warning').length;
@@ -99,12 +100,15 @@ export function createSandboxController({editor,stdin,output,engine,status,route
   };
   const showDiagnostic=(diag)=>{
     lastErrorLine=diag.line;renderLines();
+    codeStudio?.setRuntimeDiagnostics?.([diag]);
     output.className='output '+(diag.providerLimit?'provider-limit-output':'error-output');
     const badge=diag.providerLimit?`<span class="diagnostic-badge provider-limit">${en?'ENVIRONMENT LIMIT':'ОГРАНИЧЕНИЕ СРЕДЫ'}</span>`:'';
-    output.innerHTML=`${badge}<div class="diagnostic-head"><strong>${escapeHtml(diag.title)}</strong>${diag.line?`<span>${en?'line':'строка'} ${diag.line}${diag.column?`, ${en?'column':'столбец'} ${diag.column}`:''}</span>`:''}</div><p class="diagnostic-help">${escapeHtml(diag.explanation)}</p>${diag.snippet?`<pre class="diagnostic-snippet"><code>${escapeHtml(diag.snippet)}</code></pre>`:''}<details><summary>${en?'Technical output':'Технический вывод'}</summary><pre>${escapeHtml(diag.raw)}</pre></details>`;
+    const location=diag.line?`<button type="button" class="diagnostic-jump" data-line="${diag.line}" data-column="${diag.column||1}">${en?'line':'строка'} ${diag.line}${diag.column?`, ${en?'column':'столбец'} ${diag.column}`:''} ↗</button>`:'';
+    output.innerHTML=`${badge}<div class="diagnostic-head"><strong>${escapeHtml(diag.title)}</strong>${location}</div><p class="diagnostic-help">${escapeHtml(diag.explanation)}</p>${diag.snippet?`<pre class="diagnostic-snippet"><code>${escapeHtml(diag.snippet)}</code></pre>`:''}<details><summary>${en?'Technical output':'Технический вывод'}</summary><pre>${escapeHtml(diag.raw)}</pre></details>`;
+    output.querySelector('.diagnostic-jump')?.addEventListener('click',event=>codeStudio?.jumpTo?.(Number(event.currentTarget.dataset.line)||1,Number(event.currentTarget.dataset.column)||1));
   };
   const run=async()=>{
-    lastErrorLine=null;lastRoute=null;setRouteInfo(null);setRuntimeState('busy',en?'Runtime: routing':'Runtime: маршрутизация');setEngine('busy',en?'Nexus Runtime · routing':'Nexus Runtime · маршрутизация');
+    lastErrorLine=null;lastRoute=null;codeStudio?.clearRuntimeDiagnostics?.();setRouteInfo(null);setRuntimeState('busy',en?'Runtime: routing':'Runtime: маршрутизация');setEngine('busy',en?'Nexus Runtime · routing':'Nexus Runtime · маршрутизация');
     output.className='output';output.textContent=en?'Selecting runtime provider…':'Выбираем runtime provider…';
     const analysis=renderAnalysis();
     let route=null;let unsubscribeRuntime=null;
@@ -122,6 +126,7 @@ export function createSandboxController({editor,stdin,output,engine,status,route
       const routing=`\n\n${en?'Provider':'Provider'}: ${route.provider.label}${route.preferredUnavailable?` · ${en?'fallback while':'fallback, пока'} ${route.preferredUnavailable.provider.label} ${en?'is unavailable':'недоступен'}`:''}`;
       const compiler=result.compiler?`\n${en?'Compiler':'Компилятор'}: ${result.compiler}${Number.isFinite(result.compileMs)?`\n${en?'Compile':'Компиляция'}: ${result.compileMs} ms`:''}${Number.isFinite(result.runMs)?` · ${en?'Run':'выполнение'}: ${result.runMs} ms`:''}`:'';
       const compilerDiagnostics=result.compilerStderr?.trim()?`\n\n${en?'Compiler diagnostics':'Диагностика компилятора'}:\n${result.compilerStderr.trim()}`:'';
+      codeStudio?.clearRuntimeDiagnostics?.();
       output.className='output success-output';
       output.textContent=(result.stdout||(en?'(program produced no output)':'(программа ничего не вывела)'))+exit+adapter+routing+compiler+compilerDiagnostics+`\nNexus Sandbox · ${result.elapsedMs} ms`;
       return result;
@@ -146,7 +151,7 @@ export function createSandboxController({editor,stdin,output,engine,status,route
     }
   };
   const selfTest=async()=>{
-    lastErrorLine=null;setRuntimeState('busy',en?'Runtime: self-test':'Runtime: самопроверка');setEngine('busy',en?'Nexus Runtime · self-test':'Nexus Runtime · самопроверка');output.className='output';output.textContent=en?'Testing routed runtime…':'Проверяем маршрутизируемую среду…';
+    lastErrorLine=null;codeStudio?.clearRuntimeDiagnostics?.();setRuntimeState('busy',en?'Runtime: self-test':'Runtime: самопроверка');setEngine('busy',en?'Nexus Runtime · self-test':'Nexus Runtime · самопроверка');output.className='output';output.textContent=en?'Testing routed runtime…':'Проверяем маршрутизируемую среду…';
     try{
       const result=await sandboxSelfTest({languageId:language});setRouteInfo(result.route);if(!result.ok)throw new Error('Self-test returned unexpected output.');
       setEngine(result.oop.ok?'ok':'warn',en?(result.oop.ok?'Nexus Runtime · full probe passed':'Nexus Runtime · base ready, OOP limited'):(result.oop.ok?'Nexus Runtime · полная проверка пройдена':'Nexus Runtime · база готова, OOP ограничено'));
@@ -163,7 +168,7 @@ export function createSandboxController({editor,stdin,output,engine,status,route
       showDiagnostic(diag);throw err;
     }
   };
-  editor.addEventListener('input',()=>{lastErrorLine=null;lastRoute=null;runtimeState={kind:'idle',text:en?'Runtime: not run':'Runtime: не запускался'};setRouteInfo(null);onCodeChange(editor.value);renderAnalysis()});
+  editor.addEventListener('input',()=>{lastErrorLine=null;lastRoute=null;codeStudio?.clearRuntimeDiagnostics?.();runtimeState={kind:'idle',text:en?'Runtime: not run':'Runtime: не запускался'};setRouteInfo(null);onCodeChange(editor.value);renderAnalysis()});
   editor.addEventListener('scroll',()=>{const gutter=document.querySelector('#editorLines');if(gutter)gutter.scrollTop=editor.scrollTop});
   setRouteInfo(null);renderAnalysis();
   return{run,selfTest,renderAnalysis,getRoute:()=>lastRoute};
