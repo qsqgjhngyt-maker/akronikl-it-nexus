@@ -18,7 +18,7 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
-**v0.1.6-alpha.1 / C++ WASI Exception ABI Alignment Hotfix.** The Polyglot Runtime Router now connects a real `Nexus WASM C++ Runtime`: Modern C++ is compiled inside a dedicated Worker using a pinned Clang/LLD toolchain and executed as a WASI module. Basic C++ still stays on the fast Browser Runtime.
+**v0.1.6-alpha.2 / Multi-file Code Studio.** The proven Code Studio now has a real multi-file workspace: file tree/tabs, add/rename/delete, per-file Undo/Redo, persistent snapshots, multi-translation-unit Clang/WASM builds, and file-aware Problems navigation.
 
 **Historical UI baseline: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Native system select popups in the top bar have been replaced with a custom Nexus Glass Dropdown to eliminate bright Windows/Chromium menus and keep a consistent desktop/mobile appearance. All alpha.4 functionality remains intact.
 
@@ -58,4 +58,4 @@ Nexus Lesson Standard 1.0 is now **Normative / Production** after three accepted
 
 ## Current development
 
-`v0.1.5-alpha.2` connects the first real extended provider to the Polyglot Runtime. Modern C++ / STL / OOP are routed to `Nexus WASM C++ Runtime`; the pinned Clang/WASI toolchain is lazy-loaded in a Worker, real compiler diagnostics are preserved, and learner source is not submitted to a remote compiler API.
+`v0.1.6-alpha.2` promotes the Code Workspace to a real multi-file editing and build workflow while preserving the proven Polyglot Runtime and pinned Clang/WASI worker path. Multi-file C++ is routed directly to the WASM provider and linked into one executable module.

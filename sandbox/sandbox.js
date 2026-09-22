@@ -56,6 +56,8 @@ export function createSandboxController({editor,stdin,output,engine,status,route
   let lastRoute=null;
   let runtimeState={kind:'idle',text:en?'Runtime: not run':'Runtime: не запускался'};
   const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const runtimeRequest=()=>codeStudio?.runtimeRequest?.(stdin?.value||'')||{languageId:language,source:editor.value,stdin:stdin?.value||'',entryFile:language==='c'?'main.c':'main.cpp',metadata:{origin:'lesson-sandbox'}};
+  const projectSnapshot=()=>codeStudio?.getSnapshot?.()||null;
   const setRouteInfo=(route=null)=>{
     lastRoute=route||lastRoute;
     if(routeInfo){
@@ -67,12 +69,26 @@ export function createSandboxController({editor,stdin,output,engine,status,route
     }
   };
   const renderLines=()=>{
+    if(codeStudio)return;
     const gutter=document.querySelector('#editorLines');if(!gutter)return;
     const lines=editor.value.split('\n');
     gutter.innerHTML=lines.map((_,i)=>`<span class="${lastErrorLine===i+1?'error-line':''}">${i+1}</span>`).join('');
   };
+  const analyzeProject=()=>{
+    const snapshot=projectSnapshot();
+    if(!snapshot||!Array.isArray(snapshot.files)||snapshot.files.length<=1)return analyzeSource(editor.value,requirements);
+    const issues=[];const combined=[];
+    for(const file of snapshot.files){
+      const content=String(file.content??'');combined.push(content);
+      const perFile=analyzeSource(content,[],{requireMain:file.path===snapshot.entryFile});
+      for(const issue of perFile.issues||[])issues.push({...issue,file:file.path});
+    }
+    const joined=combined.join('\n');
+    const checks=(requirements||[]).map(requirement=>({requirement,ok:joined.includes(requirement)}));
+    return{issues,checks,requirementsPassed:checks.filter(x=>x.ok).length,requirementsTotal:checks.length,lineCount:String(codeStudio?.getEntrySource?.()||'').split('\n').length,multiFile:true};
+  };
   const renderAnalysis=()=>{
-    const analysis=analyzeSource(editor.value,requirements);
+    const analysis=analyzeProject();
     renderLines();
     codeStudio?.setStaticDiagnostics?.(analysis.issues||[]);
     if(status){
@@ -94,7 +110,7 @@ export function createSandboxController({editor,stdin,output,engine,status,route
     let outputText=en?'Preparing Modern C++ Runtime…':'Подготавливаем Modern C++ Runtime…';
     if(phase==='toolchain'){runtimeText=en?`Runtime: loading compiler${percent}`:`Runtime: загрузка компилятора${percent}`;engineText=en?`Clang/WASI · loading${percent}`:`Clang/WASI · загрузка${percent}`;outputText=en?`First Modern C++ launch downloads the pinned Clang/WASI toolchain${percent}. It is cached by the browser for later runs.`:`Первый запуск Modern C++ загружает закреплённый Clang/WASI toolchain${percent}. После этого браузер использует кэш для следующих запусков.`}
     else if(phase==='runner'){runtimeText=en?'Runtime: preparing WASI':'Runtime: подготовка WASI';engineText=en?'WASI · preparing':'WASI · подготовка';outputText=en?'Preparing the isolated WASI execution environment…':'Подготавливаем изолированную среду выполнения WASI…'}
-    else if(phase==='compile'){runtimeText=en?'Runtime: compiling':'Runtime: компиляция';engineText=en?'Clang · compiling':'Clang · компиляция';outputText=en?'Clang is compiling the source to a WASI WebAssembly executable…':'Clang компилирует исходный код в исполняемый WASI WebAssembly-модуль…'}
+    else if(phase==='compile'){runtimeText=en?'Runtime: compiling project':'Runtime: компиляция проекта';engineText=en?'Clang · compiling':'Clang · компиляция';outputText=en?'Clang is compiling and linking the Nexus workspace…':'Clang компилирует и линкует файлы Nexus workspace…'}
     else if(phase==='run'){runtimeText=en?'Runtime: running WASM':'Runtime: выполнение WASM';engineText=en?'WASI · running':'WASI · выполнение';outputText=en?'Compilation passed. Running the program inside the isolated WASI Worker…':'Компиляция пройдена. Выполняем программу внутри изолированного WASI Worker…'}
     setRuntimeState('busy',runtimeText);setEngine('busy',engineText);output.className='output';output.textContent=outputText;
   };
@@ -103,17 +119,17 @@ export function createSandboxController({editor,stdin,output,engine,status,route
     codeStudio?.setRuntimeDiagnostics?.([diag]);
     output.className='output '+(diag.providerLimit?'provider-limit-output':'error-output');
     const badge=diag.providerLimit?`<span class="diagnostic-badge provider-limit">${en?'ENVIRONMENT LIMIT':'ОГРАНИЧЕНИЕ СРЕДЫ'}</span>`:'';
-    const location=diag.line?`<button type="button" class="diagnostic-jump" data-line="${diag.line}" data-column="${diag.column||1}">${en?'line':'строка'} ${diag.line}${diag.column?`, ${en?'column':'столбец'} ${diag.column}`:''} ↗</button>`:'';
+    const fileLabel=diag.file?`${escapeHtml(diag.file)} · `:'';
+    const location=diag.line?`<button type="button" class="diagnostic-jump" data-file="${escapeHtml(diag.file||'')}" data-line="${diag.line}" data-column="${diag.column||1}">${fileLabel}${en?'line':'строка'} ${diag.line}${diag.column?`, ${en?'column':'столбец'} ${diag.column}`:''} ↗</button>`:'';
     output.innerHTML=`${badge}<div class="diagnostic-head"><strong>${escapeHtml(diag.title)}</strong>${location}</div><p class="diagnostic-help">${escapeHtml(diag.explanation)}</p>${diag.snippet?`<pre class="diagnostic-snippet"><code>${escapeHtml(diag.snippet)}</code></pre>`:''}<details><summary>${en?'Technical output':'Технический вывод'}</summary><pre>${escapeHtml(diag.raw)}</pre></details>`;
-    output.querySelector('.diagnostic-jump')?.addEventListener('click',event=>codeStudio?.jumpTo?.(Number(event.currentTarget.dataset.line)||1,Number(event.currentTarget.dataset.column)||1));
+    output.querySelector('.diagnostic-jump')?.addEventListener('click',event=>{const file=event.currentTarget.dataset.file;const line=Number(event.currentTarget.dataset.line)||1,column=Number(event.currentTarget.dataset.column)||1;file?codeStudio?.jumpTo?.(file,line,column):codeStudio?.jumpTo?.(line,column)});
   };
   const run=async()=>{
     lastErrorLine=null;lastRoute=null;codeStudio?.clearRuntimeDiagnostics?.();setRouteInfo(null);setRuntimeState('busy',en?'Runtime: routing':'Runtime: маршрутизация');setEngine('busy',en?'Nexus Runtime · routing':'Nexus Runtime · маршрутизация');
     output.className='output';output.textContent=en?'Selecting runtime provider…':'Выбираем runtime provider…';
     const analysis=renderAnalysis();
-    let route=null;let unsubscribeRuntime=null;
+    let route=null;let unsubscribeRuntime=null;const request=runtimeRequest();
     try{
-      const request={languageId:language,source:editor.value,stdin:stdin?.value||'',metadata:{origin:'lesson-sandbox'}};
       route=await pickProvider(request);setRouteInfo(route);
       if(typeof route.provider?.subscribe==='function')unsubscribeRuntime=route.provider.subscribe(snapshot=>{if(route?.provider?.id==='wasm-cpp')renderProviderProgress(snapshot)});
       setRuntimeState('busy',en?'Runtime: running':'Runtime: выполняется');setEngine('busy',en?`${route.provider.label} · running`:`${route.provider.label} · выполняется`);
@@ -124,7 +140,8 @@ export function createSandboxController({editor,stdin,output,engine,status,route
       const adapter=result.normalized?.adapted?`\n\n${en?'Compatibility adapter':'Адаптер совместимости'}: ${result.normalized.changes.join(', ')}`:'';
       const exit=result.exitCode!==undefined?`\n${en?'Exit code':'Код завершения'}: ${result.exitCode}`:'';
       const routing=`\n\n${en?'Provider':'Provider'}: ${route.provider.label}${route.preferredUnavailable?` · ${en?'fallback while':'fallback, пока'} ${route.preferredUnavailable.provider.label} ${en?'is unavailable':'недоступен'}`:''}`;
-      const compiler=result.compiler?`\n${en?'Compiler':'Компилятор'}: ${result.compiler}${Number.isFinite(result.compileMs)?`\n${en?'Compile':'Компиляция'}: ${result.compileMs} ms`:''}${Number.isFinite(result.runMs)?` · ${en?'Run':'выполнение'}: ${result.runMs} ms`:''}`:'';
+      const build=Array.isArray(result.translationUnits)&&result.translationUnits.length>1?`\n${en?'Build':'Сборка'}: ${result.translationUnits.join(' + ')} (${result.translationUnits.length} TU)`:'';
+      const compiler=result.compiler?`\n${en?'Compiler':'Компилятор'}: ${result.compiler}${build}${Number.isFinite(result.compileMs)?`\n${en?'Compile':'Компиляция'}: ${result.compileMs} ms`:''}${Number.isFinite(result.runMs)?` · ${en?'Run':'выполнение'}: ${result.runMs} ms`:''}`:'';
       const compilerDiagnostics=result.compilerStderr?.trim()?`\n\n${en?'Compiler diagnostics':'Диагностика компилятора'}:\n${result.compilerStderr.trim()}`:'';
       codeStudio?.clearRuntimeDiagnostics?.();
       output.className='output success-output';
@@ -138,8 +155,8 @@ export function createSandboxController({editor,stdin,output,engine,status,route
         setRuntimeState('bad',en?'Runtime: provider unavailable':'Runtime: provider недоступен');
         output.className='output error-output';output.textContent=err.message;throw err;
       }
-      const capability=err?.anxCapability||route?.assessment||browserRuntimeProvider.inspect({languageId:language,source:editor.value});
-      const diag=parseRuntimeError(err,editor.value,{analysis,capability,locale});
+      const capability=err?.anxCapability||route?.assessment||browserRuntimeProvider.inspect(request);
+      const diag=parseRuntimeError(err,request.source,{analysis,capability,locale,files:request.files,entryFile:request.entryFile,activeFile:codeStudio?.getActiveFile?.()});
       if(diag.providerLimit){
         setEngine('warn',en?'Nexus Runtime · environment limit':'Nexus Runtime · ограничение среды');
         setRuntimeState('warn',en?'Runtime: provider limit':'Runtime: ограничение provider');
@@ -162,14 +179,16 @@ export function createSandboxController({editor,stdin,output,engine,status,route
         :(en?'✓ Base console runtime is ready.<br>⚠ The Modern C++ provider could not complete the OOP probe. Open the technical diagnostic and retry after the toolchain is available.':'✓ Базовый консольный runtime готов.<br>⚠ Modern C++ provider не смог завершить OOP-проверку. Откройте техническую диагностику и повторите после загрузки toolchain.');
       return result;
     }catch(err){
-      const diag=parseRuntimeError(err,editor.value,{analysis:renderAnalysis(),locale});
+      const request=runtimeRequest();const diag=parseRuntimeError(err,request.source,{analysis:renderAnalysis(),locale,files:request.files,entryFile:request.entryFile,activeFile:codeStudio?.getActiveFile?.()});
       if(diag.providerLimit){setEngine('warn',en?'Nexus Runtime · environment limit':'Nexus Runtime · ограничение среды');setRuntimeState('warn',en?'Runtime: provider limit':'Runtime: ограничение provider')}
       else{setEngine('bad',en?'Nexus Runtime · self-test failed':'Nexus Runtime · ошибка самопроверки');setRuntimeState('bad',en?'Runtime: self-test failed':'Runtime: самопроверка не пройдена')}
       showDiagnostic(diag);throw err;
     }
   };
-  editor.addEventListener('input',()=>{lastErrorLine=null;lastRoute=null;codeStudio?.clearRuntimeDiagnostics?.();runtimeState={kind:'idle',text:en?'Runtime: not run':'Runtime: не запускался'};setRouteInfo(null);onCodeChange(editor.value);renderAnalysis()});
+  const resetIdle=()=>{lastErrorLine=null;lastRoute=null;codeStudio?.clearRuntimeDiagnostics?.();runtimeState={kind:'idle',text:en?'Runtime: not run':'Runtime: не запускался'};setRouteInfo(null);onCodeChange(codeStudio?.getEntrySource?.()??editor.value);renderAnalysis()};
+  editor.addEventListener('input',resetIdle);
+  editor.addEventListener('nexus-workspace-active',()=>{lastErrorLine=null;lastRoute=null;runtimeState={kind:'idle',text:en?'Runtime: not run':'Runtime: не запускался'};setRouteInfo(null);renderAnalysis()});
   editor.addEventListener('scroll',()=>{const gutter=document.querySelector('#editorLines');if(gutter)gutter.scrollTop=editor.scrollTop});
   setRouteInfo(null);renderAnalysis();
-  return{run,selfTest,renderAnalysis,getRoute:()=>lastRoute};
+  return{run,selfTest,renderAnalysis,getRoute:()=>lastRoute,getRequest:runtimeRequest};
 }

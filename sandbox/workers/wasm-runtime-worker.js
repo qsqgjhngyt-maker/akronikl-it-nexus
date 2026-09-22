@@ -1,6 +1,6 @@
 import {MODERN_CPP_TOOLCHAIN,MODERN_CPP_LIMITS,modernCppToolchainLabel} from '../runtime-assets.js';
 
-const FOUNDATION_VERSION='0.1.5-alpha.2.2';
+const FOUNDATION_VERSION='0.1.6-alpha.2';
 let compilerModulePromise=null;
 let wasiModulePromise=null;
 let compilerReady=false;
@@ -83,8 +83,17 @@ function normalizedFiles(request,entryFile){
       if(typeof value==='string'||value instanceof Uint8Array)files[safe]=value;
     }
   }
-  files[entryFile]=String(request?.source??'');
+  files[entryFile]=String(request?.source??files[entryFile]??'');
   return files;
+}
+
+function collectTranslationUnits(files,languageId='cpp',entryFile='main.cpp'){
+  const isC=languageId==='c';
+  const sourceRe=isC?/\.c$/i:/\.(?:cc|cpp|cxx|c\+\+)$/i;
+  const units=Object.keys(files||{}).filter(path=>sourceRe.test(path));
+  if(!units.includes(entryFile)&&sourceRe.test(entryFile))units.unshift(entryFile);
+  units.sort((a,b)=>a===entryFile?-1:b===entryFile?1:a.localeCompare(b));
+  return units;
 }
 
 async function compile(requestId,request){
@@ -96,7 +105,8 @@ async function compile(requestId,request){
   }
   const languageId=String(request?.languageId||'cpp').toLowerCase();
   const isC=languageId==='c';
-  const entryFile=isC?'main.c':'main.cpp';
+  const defaultEntry=isC?'main.c':'main.cpp';
+  const entryFile=String(request?.entryFile||request?.metadata?.entryFile||defaultEntry).replace(/\\/g,'/').replace(/^\/+/, '')||defaultEntry;
   const compiler=isC?'clang':'clang++';
   const stdFlag=isC?'-std=c17':'-std=c++20';
   const outputFile='program.wasm';
@@ -106,9 +116,24 @@ async function compile(requestId,request){
   const {runClang}=await loadCompiler(requestId);
   progress(requestId,'compile','compiling',{compiler,entryFile});
   try{
+    const virtualFiles=normalizedFiles(request,entryFile);
+    guardInputFootprint(virtualFiles);
+    for(const [path,value] of Object.entries(virtualFiles)){
+      if(byteLength(value)>MODERN_CPP_LIMITS.maxSourceBytes){
+        const error=new Error(`Source file ${path} is too large for the in-browser compiler safety limit.`);
+        error.code='WASM_SOURCE_TOO_LARGE';
+        throw error;
+      }
+    }
+    const translationUnits=collectTranslationUnits(virtualFiles,languageId,entryFile);
+    if(!translationUnits.length){
+      const error=new Error('No compilable translation units were found in the Nexus workspace.');
+      error.code='WASM_NO_TRANSLATION_UNITS';
+      throw error;
+    }
     const filesOut=await runClang(
-      [compiler,stdFlag,...(isC?[]:['-fno-exceptions']),'-O0','-g0','-fdiagnostics-color=never',entryFile,'-o',outputFile],
-      (()=>{const files=normalizedFiles(request,entryFile);guardInputFootprint(files);return files})(),
+      [compiler,stdFlag,...(isC?[]:['-fno-exceptions']),'-O0','-g0','-fdiagnostics-color=never',...translationUnits,'-o',outputFile],
+      virtualFiles,
       {
         decodeASCII:false,
         stdout:value=>compilerOut.push(value),
@@ -140,7 +165,8 @@ async function compile(requestId,request){
       compiler,
       compilerStdout:compilerOut.value(),
       compilerStderr:compilerErr.value(),
-      compileMs:elapsed(started)
+      compileMs:elapsed(started),
+      translationUnits
     };
   }catch(error){
     compilerOut.flush();compilerErr.flush();
@@ -217,6 +243,8 @@ async function handleRun(message){
         compilerStdout:compiled.compilerStdout,
         compilerStderr:compiled.compilerStderr,
         compiler:modernCppToolchainLabel(),
+        entryFile:compiled.entryFile,
+        translationUnits:compiled.translationUnits,
         target:MODERN_CPP_TOOLCHAIN.target,
         languageId:String(request.languageId||'cpp').toLowerCase()
       }
@@ -242,7 +270,7 @@ self.addEventListener('message',event=>{
       type:'probe-result',requestId:message.requestId||null,ok:true,state,
       foundationVersion:FOUNDATION_VERSION,compilerReady,
       lazy:true,toolchain:modernCppToolchainLabel(),
-      capabilities:{workerIsolation:true,virtualFilesystem:true,compiler:'clang',wasiRunner:'preview1',cppStandard:'c++20',stdlib:true},
+      capabilities:{workerIsolation:true,virtualFilesystem:true,multiFile:true,compiler:'clang',wasiRunner:'preview1',cppStandard:'c++20',stdlib:true},
       reason:compilerReady?'modern-cpp-compiler-ready':'modern-cpp-compiler-lazy-load'
     });
     return;

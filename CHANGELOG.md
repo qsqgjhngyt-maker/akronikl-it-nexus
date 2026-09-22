@@ -53,6 +53,14 @@
 
 # CHANGELOG
 
+## v0.1.6-alpha.2 — Multi-file Code Studio
+
+- Реальное дерево/вкладки файлов в Code Studio.
+- Persistent workspace с add/rename/delete и per-file Undo/Redo.
+- Runtime request передаёт все файлы проекта и entry file.
+- Clang/WASM компилирует и линкует несколько translation units.
+- Problems сохраняет filename:line:column и открывает нужный файл.
+
 ## v0.1.4-alpha.2.2
 - Live-smoke hotfix for missing standard-library headers in the lightweight Browser Runtime.
 - Known standard C++ headers/libraries reported as unavailable by the provider (for example `<string>`) are classified as `provider-limit`, not learner-code errors.

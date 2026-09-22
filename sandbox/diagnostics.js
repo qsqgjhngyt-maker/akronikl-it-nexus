@@ -1,9 +1,10 @@
 const count=(s,ch)=>[...s].filter(x=>x===ch).length;
 
-export function analyzeSource(source,requirements=[]){
+export function analyzeSource(source,requirements=[],options={}){
   const code=String(source??'');
   const issues=[];
-  if(!/\b(?:int|auto)\s+main\s*\(/.test(code))issues.push({level:'error',line:1,message:'Не найдена точка входа main().'});
+  const requireMain=options?.requireMain!==false;
+  if(requireMain&&!/\b(?:int|auto)\s+main\s*\(/.test(code))issues.push({level:'error',line:1,message:'Не найдена точка входа main().'});
   const pairs=[['{','}','фигурные скобки'],['(',')','круглые скобки'],['[',']','квадратные скобки']];
   for(const [a,b,label] of pairs){const da=count(code,a),db=count(code,b);if(da!==db)issues.push({level:'error',line:1,message:`Не сбалансированы ${label}: ${da} / ${db}.`})}
   const lines=code.split('\n');
@@ -42,6 +43,8 @@ export function parseRuntimeError(error,source='',options={}){
   const clangMatch=compilerRaw.match(/(?:^|\n)([^:\n]+):(\d+):(\d+):\s*(fatal\s+error|error|warning):\s*([^\n]+)/i);
   const m=clangMatch?[clangMatch[0],clangMatch[2],clangMatch[3]]:(raw.match(/line\s+(\d+)\s*\(column\s*(\d+)\)/i)||raw.match(/line\s+(\d+)/i)||raw.match(/(?:^|\n)\s*(\d+)\s*:\s*(\d+)\b/)||firstRaw.match(/line\s+(\d+)\s*\(column\s*(\d+)\)/i)||firstRaw.match(/line\s+(\d+)/i)||firstRaw.match(/(?:^|\n)\s*(\d+)\s*:\s*(\d+)\b/));
   const rawLine=m?Number(m[1]):null;const offset=Number(error?.anxLineOffset||0);const detectedLine=rawLine?Math.max(1,rawLine-offset):null;const detectedColumn=m&&m[2]?Number(m[2]):null;
+  const normalizeDiagnosticFile=value=>String(value||'').trim().replace(/\\/g,'/').replace(/^\.\//,'').replace(/^\/+/, '');
+  const detectedFile=clangMatch?normalizeDiagnosticFile(clangMatch[1]):normalizeDiagnosticFile(options.activeFile||options.entryFile||'');
   const locale=options.locale==='en'?'en':'ru';
   const analysis=options.analysis||null;
   const capability=error?.anxCapability||options.capability||null;
@@ -54,6 +57,7 @@ export function parseRuntimeError(error,source='',options={}){
   const providerLimit=explicitProviderLimit||(noStaticErrors&&(((parseLike||compatibilityRetryFailed)&&bestEffort.length>0)||Boolean(missingStdLibrary)));
   const line=providerLimit?null:detectedLine;
   const column=providerLimit?null:detectedColumn;
+  const file=providerLimit?null:(detectedFile||null);
   let kind='runtime-error';
   let title=locale==='en'?'Runtime error':'Ошибка выполнения';
   let explanation=locale==='en'?'The environment could not execute the program. Open technical output and inspect the reported line.':'Среда не смогла выполнить программу. Откройте технический вывод и проверьте указанную строку.';
@@ -102,7 +106,9 @@ export function parseRuntimeError(error,source='',options={}){
     explanation=locale==='en'?'The current Browser Runtime supports a teaching subset of C++. Nexus applies compatibility adaptations for common standard-library names; inspect the technical output if the error repeats.':'Текущий Browser Runtime поддерживает учебное подмножество C++. Nexus применяет слой совместимости для распространённых стандартных имён; если ошибка повторяется, проверьте технический вывод.';
   }
   if(!providerLimit&&!clangMatch&&/(not defined|unknown identifier|undeclared)/i.test(raw)){kind='unknown-name';title=locale==='en'?'Unknown name':'Неизвестное имя';explanation=locale==='en'?'The code uses a name that is not known in this scope. Check declarations, function names, and headers.':'В коде используется имя, которое среда не знает в этой области видимости. Проверьте объявление переменной, функции или заголовка.'}
-  const snippet=line?String(source).split('\n')[line-1]||'':'';
+  const files=options.files&&typeof options.files==='object'?options.files:null;
+  const fileSource=file&&files&&Object.prototype.hasOwnProperty.call(files,file)?String(files[file]??''):String(source??'');
+  const snippet=line?fileSource.split('\n')[line-1]||'':'';
   const technicalRaw=compilerRaw||((firstRaw?`${locale==='en'?'Primary Browser Runtime attempt':'Первичная попытка Browser Runtime'}:\n${firstRaw}\n\n${locale==='en'?'Compatibility retry':'Compatibility retry'}:\n${raw}`:raw));
-  return{kind,title,explanation,line,column,raw:technicalRaw,snippet,capability,bestEffort,providerLimit,compatibilityRetryFailed,missingStdLibrary,compilerDiagnostic:Boolean(clangMatch),phase:error?.anxPhase||null};
+  return{kind,title,explanation,file,line,column,raw:technicalRaw,snippet,capability,bestEffort,providerLimit,compatibilityRetryFailed,missingStdLibrary,compilerDiagnostic:Boolean(clangMatch),phase:error?.anxPhase||null};
 }

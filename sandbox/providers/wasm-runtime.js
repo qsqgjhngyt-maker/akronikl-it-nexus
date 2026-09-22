@@ -1,4 +1,4 @@
-import {normalizeRuntimeRequest,runtimeResult,RUNTIME_SUPPORT} from '../provider-contract.js';
+import {normalizeRuntimeRequest,runtimeResult,runtimeProjectFileCount,runtimeProjectSource,RUNTIME_SUPPORT} from '../provider-contract.js';
 import {MODERN_CPP_LIMITS,modernCppToolchainLabel} from '../runtime-assets.js';
 
 const CPP_EXCEPTION_SYNTAX=/\b(?:try|catch|throw)\b/;
@@ -83,7 +83,7 @@ function ensureWorker(){
       if(!entry)return;
       clearTimeout(entry.timer);pending.delete(message.requestId);
       patchState({status:'ready',phase:null,percent:100,compilerReady:true,lastError:null});
-      entry.resolve(runtimeResult(wasmRuntimeProvider,message.result,{compiler:message.result?.compiler,target:message.result?.target,compileMs:message.result?.compileMs,runMs:message.result?.runMs,languageId:message.result?.languageId,compilerStdout:message.result?.compilerStdout,compilerStderr:message.result?.compilerStderr}));
+      entry.resolve(runtimeResult(wasmRuntimeProvider,message.result,{compiler:message.result?.compiler,target:message.result?.target,compileMs:message.result?.compileMs,runMs:message.result?.runMs,languageId:message.result?.languageId,compilerStdout:message.result?.compilerStdout,compilerStderr:message.result?.compilerStderr,entryFile:message.result?.entryFile,translationUnits:Array.isArray(message.result?.translationUnits)?message.result.translationUnits:[]}));
       return;
     }
     if(message.type==='runtime-error'){
@@ -150,14 +150,17 @@ export const wasmRuntimeProvider={
   inspect(input={}){
     const request=normalizeRuntimeRequest(input);
     if(!this.languages.includes(request.languageId))return{support:RUNTIME_SUPPORT.UNSUPPORTED,confidence:RUNTIME_SUPPORT.UNSUPPORTED,reasons:['language-not-supported']};
-    const modern=request.languageId==='cpp'&&needsModernCpp(request.source);
+    const projectFiles=runtimeProjectFileCount(request);
+    const projectSource=runtimeProjectSource(request);
+    const modern=request.languageId==='cpp'&&needsModernCpp(projectSource);
+    const multiFile=projectFiles>1;
     return{
       support:RUNTIME_SUPPORT.GUARANTEED,
       confidence:RUNTIME_SUPPORT.GUARANTEED,
-      features:modern?[{id:'cpp.modern-runtime',labelRu:'Modern C++ / STL',labelEn:'Modern C++ / STL',support:RUNTIME_SUPPORT.GUARANTEED}]:[],
+      features:[...(modern?[{id:'cpp.modern-runtime',labelRu:'Modern C++ / STL',labelEn:'Modern C++ / STL',support:RUNTIME_SUPPORT.GUARANTEED}]:[]),...(multiFile?[{id:'project.multi-file',labelRu:'многофайловая сборка',labelEn:'multi-file build',support:RUNTIME_SUPPORT.GUARANTEED}]:[])],
       bestEffort:[],
-      reasons:[modern?'modern-cpp-preferred':'wasm-toolchain-capable'],
-      scoreHint:modern?110:-90
+      reasons:[multiFile?'multi-file-wasm-required':modern?'modern-cpp-preferred':'wasm-toolchain-capable'],
+      scoreHint:multiFile?180:(modern?110:-90)
     };
   },
   async available(input={}){
@@ -176,7 +179,7 @@ export const wasmRuntimeProvider={
       error.code='WASM_RUNTIME_BUSY';throw error;
     }
     const capability=this.inspect(request);
-    if(request.languageId==='cpp'&&usesCppExceptions(request.source)){
+    if(request.languageId==='cpp'&&usesCppExceptions(runtimeProjectSource(request))){
       const error=new Error('The pinned Nexus WASM C++ sysroot is built without C++ exception support; try/throw/catch requires a future exception-enabled provider.');
       error.code='WASM_CPP_EXCEPTIONS_UNSUPPORTED';
       error.anxProvider=wasmRuntimeProvider;

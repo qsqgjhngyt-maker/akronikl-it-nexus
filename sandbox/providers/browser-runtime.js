@@ -1,4 +1,4 @@
-import {normalizeRuntimeRequest,runtimeResult,RUNTIME_SUPPORT} from '../provider-contract.js';
+import {normalizeRuntimeRequest,runtimeResult,runtimeProjectFileCount,RUNTIME_SUPPORT} from '../provider-contract.js';
 
 const RUNNER_URL='https://felixhao28.github.io/JSCPP/dist/JSCPP.es5.min.js';
 let runnerPromise=null;
@@ -74,6 +74,7 @@ export const browserRuntimeProvider={
   inspect(input=''){
     const request=normalizeRuntimeRequest(typeof input==='string'?{languageId:'cpp',source:input}:input);
     if(request.languageId!=='cpp')return{support:RUNTIME_SUPPORT.UNSUPPORTED,confidence:RUNTIME_SUPPORT.UNSUPPORTED,features:[],bestEffort:[],reasons:['language-not-supported']};
+    if(runtimeProjectFileCount(request)>1)return{support:RUNTIME_SUPPORT.UNSUPPORTED,confidence:RUNTIME_SUPPORT.UNSUPPORTED,features:[],bestEffort:[],reasons:['multi-file-not-supported'],requires:['wasm-or-secure-build']};
     const features=detectFeatures(request);
     const bestEffort=features.filter(x=>x.support===RUNTIME_SUPPORT.BEST_EFFORT);
     const support=bestEffort.length?RUNTIME_SUPPORT.BEST_EFFORT:RUNTIME_SUPPORT.GUARANTEED;

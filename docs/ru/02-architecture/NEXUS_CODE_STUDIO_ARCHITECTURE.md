@@ -1,81 +1,57 @@
 # Nexus Code Studio Architecture
 
-**Статус:** Foundation / v0.1.6-alpha.1  
-**Runtime baseline:** v0.1.5-alpha.2.2 LIVE PASS
+**Статус:** Multi-file / v0.1.6-alpha.2  
+**Runtime baseline:** v0.1.5-alpha.2.2 LIVE PASS  
+**Single-file Code Studio baseline:** v0.1.6-alpha.1 LIVE PASS
 
 ## Назначение
 
-Nexus Code Studio — IDE-слой над единым Nexus Sandbox. Он не заменяет Runtime Router и providers, а предоставляет единый профессиональный интерфейс редактирования, диагностики и будущей multi-file работы для всех языков блока «Программирование».
+Nexus Code Studio — IDE-слой над единым Nexus Sandbox. Runtime Router остаётся language-neutral, а workspace теперь является реальной многофайловой моделью, а не только foundation API.
 
 ## Инварианты
 
-1. Код ученика остаётся source of truth и не переписывается компилятором или UI незаметно.
-2. Runtime Router остаётся language-neutral.
-3. Modern C++ по-прежнему выполняется через проверенный Clang/WASI Worker provider.
-4. Ошибки компилятора, статический анализ и ограничения provider не смешиваются.
-5. Code Studio не должен ухудшать mobile input и PWA/offline-поведение.
+1. Код ученика остаётся source of truth и не переписывается незаметно.
+2. Один и тот же Code Studio работает и для одного файла, и для проекта.
+3. Browser Runtime остаётся быстрым one-file provider; multi-file направляется в WASM/расширенный provider.
+4. Headers, translation units и diagnostics не смешиваются: `.h/.hpp` — вход VFS, `.cpp/.cc/.cxx` — единицы компиляции.
+5. Диагностика хранит `file:line:column` и открывает правильный файл.
+6. Workspace snapshot сохраняется в том же lesson state без смены legacy progress key.
 
 ## Слои
 
 ```text
 Nexus Code Studio
-  ├─ Editor UI
+  ├─ File Tree / Tabs
+  │   ├─ add
+  │   ├─ rename
+  │   └─ delete
+  ├─ Editor
   │   ├─ syntax highlighting
   │   ├─ line numbers
   │   ├─ bracket matching
-  │   ├─ auto-indent / Tab
+  │   ├─ auto-indent
   │   ├─ find
-  │   └─ undo / redo
+  │   └─ per-file undo / redo
   ├─ Problems
-  │   ├─ static diagnostics
-  │   ├─ compiler diagnostics
-  │   └─ provider limits
+  │   └─ file : line : column → jump
   ├─ Code Workspace
-  │   ├─ languageId
-  │   ├─ entry file
-  │   ├─ active file
+  │   ├─ entryFile
+  │   ├─ activeFile
   │   └─ virtual files
   └─ Nexus Sandbox
-      └─ Runtime Router → providers
+      └─ Runtime Router
+          └─ Nexus WASM C++ Runtime
+              └─ Clang: main.cpp + *.cpp → program.wasm
 ```
 
-## Редактор v0.1.6-alpha.1
+## Multi-file build
 
-Foundation использует нативный `textarea` как реальное поле ввода и локальный подсвеченный mirror-layer. Это сохраняет нормальный ввод, selection, touch/IME и существующее хранение прогресса, но добавляет синтаксическую подсветку без внешней CDN-зависимости.
-
-Первая реализация подсветки ориентирована на C++ reference-course. Контракт Code Studio остаётся language-neutral; highlighter/provider для новых языков добавляется отдельно.
+Runtime request содержит `source`, `entryFile` и `files`. Browser Runtime объявляет multi-file unsupported, после чего Router выбирает WASM provider. Worker помещает все файлы в виртуальную файловую систему Clang, выбирает C/C++ translation units по расширению и передаёт их одной compile/link-команде. Header-файлы доступны через обычные `#include "..."`.
 
 ## Диагностика
 
-`line:column` от Clang отображается в двух местах:
+Clang diagnostic вида `Printer.cpp:4:12: error: ...` превращается в Problem с именем файла. Клик переключает active file на `Printer.cpp`, выставляет caret на строку 4, столбец 12 и сохраняет workspace active state.
 
-- в обычном подробном выводе Nexus Sandbox;
-- в панели **Problems**.
+## Граница alpha.2
 
-Строка диагностики кликабельна и переводит caret непосредственно в указанную позицию исходника.
-
-## Workspace foundation
-
-`sandbox/code-workspace.js` вводит виртуальную файловую модель уже в alpha.1, хотя UI пока показывает один `main.cpp`.
-
-Модель поддерживает:
-
-- stable path;
-- active file;
-- content updates;
-- add/remove/rename для будущего multi-file UI;
-- language metadata;
-- snapshot/serialization;
-- подписку на изменения.
-
-Это позволяет добавить `.cpp/.h`, tests и Project Studio без замены редактора или Runtime Router.
-
-## Следующие этапы
-
-- multi-file tabs/tree;
-- compile request с массивом файлов;
-- `.h/.cpp` build graph;
-- tests panel;
-- snapshots/version history;
-- Akronikl diagnostics context;
-- Project Studio integration.
+Пока отсутствуют CMake/custom flags, package manager, полноценное дерево папок, отдельный test runner и snapshot history. Это следующие слои Project Studio.

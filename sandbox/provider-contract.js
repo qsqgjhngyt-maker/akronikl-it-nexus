@@ -11,19 +11,48 @@ export const RUNTIME_AVAILABILITY=Object.freeze({
 });
 
 const asArray=value=>Array.isArray(value)?value:[];
+const normalizeFileMap=value=>{
+  if(!value||typeof value!=='object')return null;
+  const out={};
+  for(const [name,content] of Object.entries(value)){
+    const safe=String(name||'').trim().replace(/\\/g,'/').replace(/^\/+/, '');
+    if(!safe||safe.includes('../'))continue;
+    if(typeof content==='string'||content instanceof Uint8Array)out[safe]=content;
+  }
+  return Object.keys(out).length?out:null;
+};
 
 export function normalizeRuntimeRequest(input={},stdin=''){
   if(typeof input==='string'){
-    return{languageId:'cpp',source:input,stdin:String(stdin??''),files:null,metadata:{}};
+    return{languageId:'cpp',source:input,stdin:String(stdin??''),files:null,entryFile:'main.cpp',metadata:{}};
   }
   const request=input&&typeof input==='object'?input:{};
+  const languageId=String(request.languageId||request.language||'cpp').toLowerCase();
+  const fallbackEntry=languageId==='c'?'main.c':'main.cpp';
+  const metadata=request.metadata&&typeof request.metadata==='object'?request.metadata:{};
   return{
-    languageId:String(request.languageId||request.language||'cpp').toLowerCase(),
+    languageId,
     source:String(request.source??''),
     stdin:String(request.stdin??''),
-    files:request.files&&typeof request.files==='object'?request.files:null,
-    metadata:request.metadata&&typeof request.metadata==='object'?request.metadata:{}
+    files:normalizeFileMap(request.files),
+    entryFile:String(request.entryFile||metadata.entryFile||fallbackEntry).replace(/\\/g,'/').replace(/^\/+/, '')||fallbackEntry,
+    metadata
   };
+}
+
+export function runtimeFileEntries(input={}){
+  const request=normalizeRuntimeRequest(input);
+  const files=request.files?{...request.files}:{};
+  if(request.source!==''||!Object.prototype.hasOwnProperty.call(files,request.entryFile))files[request.entryFile]=request.source;
+  return Object.entries(files);
+}
+
+export function runtimeProjectSource(input={}){
+  return runtimeFileEntries(input).map(([path,content])=>`// --- ${path} ---\n${String(content??'')}`).join('\n');
+}
+
+export function runtimeProjectFileCount(input={}){
+  return runtimeFileEntries(input).length;
 }
 
 export function normalizeProviderAssessment(value={}){
