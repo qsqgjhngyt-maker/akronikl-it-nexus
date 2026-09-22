@@ -18,7 +18,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Статус
 
-**v0.1.6-alpha.2 / Multi-file Code Studio.** Подтверждённый Code Studio теперь работает с реальным многофайловым workspace: дерево/вкладки файлов, add/rename/delete, отдельная история Undo/Redo, persistent snapshot и настоящая сборка нескольких C++ translation units через Clang/WASM. Problems сохраняет `file:line:column` и открывает нужный файл.
+**v0.1.6-alpha.2.1 / Workspace Persistence & Resume Hotfix.** Исправлена потеря целостности workspace при удалении активного файла: содержимое удаляемого файла больше не может записаться в `main.cpp`. После обновления страницы Nexus восстанавливает позицию длинного урока, активный файл Code Studio, caret и внутреннюю прокрутку редактора. Multi-file Clang/WASM baseline из alpha.2 сохранён.
 
 **Исторический baseline UI: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Нативные системные выпадающие списки в верхней панели заменены на собственный Nexus Glass Dropdown, чтобы убрать светлые popup-меню Windows/Chromium и сохранить единый стиль на ПК и мобильных устройствах. Все возможности alpha.4 сохранены.
 
@@ -47,7 +47,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Текущий этап
 
-Текущий исполняемый релиз: [`RELEASE_v0.1.6-alpha.2.md`](RELEASE_v0.1.6-alpha.2.md). История изменений: [`CHANGELOG_v0.1.6-alpha.2.md`](CHANGELOG_v0.1.6-alpha.2.md).
+Текущий исполняемый релиз: [`RELEASE_v0.1.6-alpha.2.1.md`](RELEASE_v0.1.6-alpha.2.1.md). История изменений: [`CHANGELOG_v0.1.6-alpha.2.1.md`](CHANGELOG_v0.1.6-alpha.2.1.md).
 
 ## План первой реализации
 
@@ -67,4 +67,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Текущая разработка
 
-`v0.1.6-alpha.2`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**, Modern C++ Runtime сохраняет проверенный Clang/WASI baseline, а Code Studio получил реальную multi-file editing/build цепочку как фундамент Project Studio.
+`v0.1.6-alpha.2.1`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**, multi-file Clang/WASI baseline не меняется, а Code Studio получил безопасный CRUD persistence и resume-state для длинных уроков и файлового workspace.

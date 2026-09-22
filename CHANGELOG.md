@@ -53,6 +53,15 @@
 
 # CHANGELOG
 
+## v0.1.6-alpha.2.1 — Workspace Persistence & Resume Hotfix
+
+- Fixed active-file deletion ordering that could copy the deleted editor buffer into `main.cpp`.
+- Added safe active-file fallback without resynchronizing stale deleted-file text.
+- Added persisted Code Studio view state: active file, caret selection, and per-file editor scroll offsets.
+- Added route-scoped page scroll resume in session storage so long lessons return to the previous position after reload.
+- Added regression coverage for deletion safety, view-state integration, resume-state behavior, versioning, and Service Worker assets.
+- Multi-file Clang/WASM build behavior, lesson content, stable IDs, legacy indices, and progress migration remain unchanged.
+
 ## v0.1.6-alpha.2 — Multi-file Code Studio
 
 - Реальное дерево/вкладки файлов в Code Studio.

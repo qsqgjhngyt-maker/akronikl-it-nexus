@@ -18,7 +18,7 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
-**v0.1.6-alpha.2 / Multi-file Code Studio.** The proven Code Studio now has a real multi-file workspace: file tree/tabs, add/rename/delete, per-file Undo/Redo, persistent snapshots, multi-translation-unit Clang/WASM builds, and file-aware Problems navigation.
+**v0.1.6-alpha.2.1 / Workspace Persistence & Resume Hotfix.** Fixes active-file deletion corruption so removed-file text can no longer overwrite `main.cpp`. Reload now restores the long-page position, active Code Studio file, caret selection, and per-file editor scroll while preserving the proven alpha.2 multi-file Clang/WASM path.
 
 **Historical UI baseline: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Native system select popups in the top bar have been replaced with a custom Nexus Glass Dropdown to eliminate bright Windows/Chromium menus and keep a consistent desktop/mobile appearance. All alpha.4 functionality remains intact.
 
@@ -58,4 +58,4 @@ Nexus Lesson Standard 1.0 is now **Normative / Production** after three accepted
 
 ## Current development
 
-`v0.1.6-alpha.2` promotes the Code Workspace to a real multi-file editing and build workflow while preserving the proven Polyglot Runtime and pinned Clang/WASI worker path. Multi-file C++ is routed directly to the WASM provider and linked into one executable module.
+`v0.1.6-alpha.2.1` keeps the proven multi-file Clang/WASI workflow and hardens workspace persistence. Active-file deletion is safe, and reload resumes both lesson page position and the editor context (active file, caret, and per-file scroll).

@@ -1,6 +1,6 @@
 # Nexus Code Studio Architecture
 
-**Статус:** Multi-file / v0.1.6-alpha.2  
+**Статус:** Multi-file / v0.1.6-alpha.2.1  
 **Runtime baseline:** v0.1.5-alpha.2.2 LIVE PASS  
 **Single-file Code Studio baseline:** v0.1.6-alpha.1 LIVE PASS
 
@@ -55,3 +55,9 @@ Clang diagnostic вида `Printer.cpp:4:12: error: ...` превращаетс�
 ## Граница alpha.2
 
 Пока отсутствуют CMake/custom flags, package manager, полноценное дерево папок, отдельный test runner и snapshot history. Это следующие слои Project Studio.
+## Resume state
+
+- Удаление активного файла сначала фиксирует его собственный buffer, затем удаляет файл и загружает fallback-файл без повторной синхронизации старого текста.
+- Workspace snapshot хранит `viewState` по файлам: selection/caret и scrollTop/scrollLeft.
+- Позиция длинной страницы хранится отдельно в sessionStorage по hash-route и восстанавливается после render/reload.
+

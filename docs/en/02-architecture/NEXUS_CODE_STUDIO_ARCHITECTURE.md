@@ -1,6 +1,6 @@
 # Nexus Code Studio Architecture
 
-**Status:** Multi-file / v0.1.6-alpha.2  
+**Status:** Multi-file / v0.1.6-alpha.2.1  
 **Runtime baseline:** v0.1.5-alpha.2.2 LIVE PASS  
 **Single-file Code Studio baseline:** v0.1.6-alpha.1 LIVE PASS
 
@@ -28,3 +28,9 @@ A Clang diagnostic such as `Printer.cpp:4:12: error: ...` becomes a file-aware P
 ## Alpha.2 boundary
 
 CMake/custom flags, package management, full folder projects, dedicated test runners and snapshot/version history remain future Project Studio layers.
+## Resume state
+
+- Active-file deletion commits only the file being removed, then loads the fallback file without re-syncing stale editor text.
+- Workspace snapshots persist per-file `viewState`: selection/caret plus scrollTop/scrollLeft.
+- Long-page position is stored separately in sessionStorage per hash route and restored after render/reload.
+
