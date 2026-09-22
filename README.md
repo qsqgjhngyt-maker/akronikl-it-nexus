@@ -18,7 +18,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Статус
 
-**v0.1.7-alpha.2.1 / Nexus Sync & Team Data Foundation.** Project Studio получил persistent local identity, private ownership, роли и path-scoped ACL с приоритетом DENY, audit-модель и Cloudflare Worker + D1/R2 backend kit. Облачная синхронизация ещё не включена: production-auth намеренно остаётся закрытым до подключения проверенного аккаунта.
+**v0.1.7-alpha.2.2 / Cloudflare Sync Transport Preview.** Project Studio теперь умеет реально подключаться к Cloudflare Worker + D1 + R2: одноразовый bootstrap первого владельца, Nexus Token account, PUSH/PULL, импорт облачного проекта на другое устройство и безопасный revision conflict вместо тихой перезаписи. Local-first, ACL и audit foundation сохранены.
 
 **Исторический baseline UI: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Нативные системные выпадающие списки в верхней панели заменены на собственный Nexus Glass Dropdown, чтобы убрать светлые popup-меню Windows/Chromium и сохранить единый стиль на ПК и мобильных устройствах. Все возможности alpha.4 сохранены.
 
@@ -47,7 +47,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Текущий этап
 
-Текущий исполняемый релиз: [`RELEASE_v0.1.7-alpha.2.1.md`](RELEASE_v0.1.7-alpha.2.1.md). История изменений: [`CHANGELOG_v0.1.7-alpha.2.1.md`](CHANGELOG_v0.1.7-alpha.2.1.md).
+Текущий исполняемый релиз: [`RELEASE_v0.1.7-alpha.2.2.md`](RELEASE_v0.1.7-alpha.2.2.md). История изменений: [`CHANGELOG_v0.1.7-alpha.2.2.md`](CHANGELOG_v0.1.7-alpha.2.2.md).
 
 ## План первой реализации
 
@@ -67,4 +67,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Текущая разработка
 
-`v0.1.7-alpha.2.1`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**. Project Studio поверх стабильного VFS/Runtime получил Sync & Team data foundation; учебный контент и C++ stable IDs не менялись.
+`v0.1.7-alpha.2.2`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**. Поверх стабильного Project Studio включён первый реальный Cloudflare transport preview для межустройственного sync; учебный контент и C++ stable IDs не менялись.

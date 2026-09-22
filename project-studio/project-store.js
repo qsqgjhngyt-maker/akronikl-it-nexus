@@ -65,6 +65,31 @@ export function saveProjectDb(db){const next={...db,schemaVersion:DB_SCHEMA_VERS
 export function listProjects(){return Object.values(loadProjectDb().projects).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||''))).map(clone)}
 export function getProject(id){const item=loadProjectDb().projects?.[id];return item?clone(item):null}
 
+export function updateProjectSyncState(projectId,patch={}){
+  const db=loadProjectDb(),current=db.projects?.[projectId];if(!current)throw new Error(`Project not found: ${projectId}`);
+  const next=normalizeProject({...current,sync:{...current.sync,...clone(patch)}});db.projects[projectId]=next;saveProjectDb(db);return clone(next);
+}
+
+export function linkProjectOwnerToAccount(projectId,subjectId){
+  const clean=String(subjectId||'').trim();if(!clean)throw new Error('Account subject id is required.');
+  const current=getProject(projectId);if(!current)throw new Error(`Project not found: ${projectId}`);
+  if(current.access?.workspaceKind==='team'&&current.access?.ownerId!==clean)return current;
+  if(current.access?.ownerId===clean)return current;
+  const previousOwner=current.access?.ownerId;const members=(current.access?.members||[]).map(member=>member.subjectId===previousOwner?{...member,subjectId:clean,role:'owner'}:member);
+  if(!members.some(member=>member.subjectId===clean))members.unshift({subjectId:clean,role:'owner',status:'active',addedAt:now(),addedBy:clean});
+  const before=current.sync?.localRevision||0;const updated=patchProject(projectId,{access:{...current.access,ownerId:clean,members}});
+  appendAuditEvent(projectId,{actorId:clean,action:'identity.account-linked',scope:'/',revisionBefore:before,revisionAfter:updated.sync.localRevision,summary:`${previousOwner||'local'} → ${clean}`});return updated;
+}
+
+export function applyCloudProject(remoteProject,{serverRevision=0,syncedAt=now(),provider='cloudflare'}={}){
+  if(!remoteProject?.id)throw new Error('Cloud project id is required.');
+  const db=loadProjectDb();const existing=db.projects?.[remoteProject.id];
+  const normalized=normalizeProject(clone(remoteProject));
+  normalized.sync={...normalizeSync(normalized),mode:'cloud',provider,status:'synced',serverRevision:Number(serverRevision||0),baseServerRevision:Number(serverRevision||0),lastSyncedAt:syncedAt,conflict:null};
+  normalized.createdAt=normalized.createdAt||existing?.createdAt||syncedAt;normalized.updatedAt=normalized.updatedAt||syncedAt;
+  db.projects[normalized.id]=normalized;saveProjectDb(db);return clone(normalized);
+}
+
 export function putProject(project){
   if(!project?.id)throw new Error('Project id is required.');
   const db=loadProjectDb();const prev=db.projects[project.id];const stamp=now();

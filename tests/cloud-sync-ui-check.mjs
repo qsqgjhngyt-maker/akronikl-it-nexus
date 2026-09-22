@@ -1,0 +1,10 @@
+import {projectStudioDashboardMarkup,projectStudioViewMarkup} from '../project-studio/project-studio.js';
+import {createProject,getProject} from '../project-studio/project-store.js';
+const assert=(v,m)=>{if(!v)throw new Error(m)};
+const mem=new Map();globalThis.localStorage={getItem:k=>mem.has(k)?mem.get(k):null,setItem:(k,v)=>mem.set(k,String(v)),removeItem:k=>mem.delete(k),clear:()=>mem.clear()};
+const project=createProject({id:'cloud-ui',title:'Cloud UI'});
+let html=projectStudioDashboardMarkup({projects:[project],courseProjects:[],locale:'ru'});
+for(const token of ['id="psCloudSetup"','id="psCloudImport"','Cloudflare Transport'])assert(html.includes(token),`dashboard cloud control missing: ${token}`);
+html=projectStudioViewMarkup({project:getProject(project.id),locale:'ru'});
+for(const token of ['id="psCloudConfigure"','Cloudflare пока не подключён'])assert(html.includes(token),`project cloud setup control missing: ${token}`);
+console.log('CLOUD_SYNC_UI_PASS');
