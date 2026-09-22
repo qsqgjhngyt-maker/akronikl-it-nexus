@@ -76,8 +76,15 @@ export function codeStudioMarkup({source='',locale='ru',languageId='cpp',files=n
   return `<div class="code-studio" id="codeStudio" data-language="${escapeHtml(languageId)}"><div class="code-studio-toolbar"><div class="code-studio-left"><span class="code-studio-mark">⌘</span><strong>CODE STUDIO</strong><span class="code-studio-mode">${en?'multi-file workspace':'multi-file · workspace'}</span></div><div class="code-studio-actions"><button type="button" class="studio-icon-btn" id="codeUndo" title="${en?'Undo (Ctrl+Z)':'Отменить (Ctrl+Z)'}" aria-label="${en?'Undo':'Отменить'}">↶</button><button type="button" class="studio-icon-btn" id="codeRedo" title="${en?'Redo (Ctrl+Y)':'Повторить (Ctrl+Y)'}" aria-label="${en?'Redo':'Повторить'}">↷</button><button type="button" class="studio-icon-btn wide" id="codeSearch" title="${en?'Find (Ctrl+F)':'Поиск (Ctrl+F)'}">⌕ <span>${en?'Find':'Поиск'}</span></button><span class="code-cursor" id="codeCursor">Ln 1, Col 1</span></div></div><div class="code-searchbar" id="codeSearchbar" hidden><input id="codeSearchInput" type="search" autocomplete="off" spellcheck="false" placeholder="${en?'Find in file':'Найти в файле'}"><span id="codeSearchCount">0/0</span><button type="button" id="codeSearchPrev" aria-label="${en?'Previous match':'Предыдущее совпадение'}">↑</button><button type="button" id="codeSearchNext" aria-label="${en?'Next match':'Следующее совпадение'}">↓</button><button type="button" id="codeSearchClose" aria-label="${en?'Close find':'Закрыть поиск'}">×</button></div><div class="code-workspace-shell"><aside class="code-file-tree" id="codeFileTree"><header><strong>${en?'FILES':'ФАЙЛЫ'}</strong><div><button type="button" id="codeLoadDemo" title="${en?'Load 4-file C++ demo':'Загрузить C++ демо из 4 файлов'}">◇</button><button type="button" id="codeAddFile" title="${en?'New file':'Новый файл'}">＋</button></div></header><div class="code-file-tree-list" id="codeFileTreeList"></div></aside><div class="code-editor-pane"><div class="code-file-tabs" id="codeFileTabs"></div><div class="editor-shell code-studio-editor"><pre class="editor-lines" id="editorLines" aria-hidden="true"></pre><div class="code-editor-stage"><pre class="editor-highlight" id="editorHighlight" aria-hidden="true"><code>${escapeHtml(initial)}</code></pre><textarea id="editor" class="editor code-input" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="${en?'Source code editor':'Редактор исходного кода'}">${escapeHtml(initial)}</textarea></div></div></div></div><section class="code-problems" id="codeStudioProblems" hidden><header><div><strong>${en?'Problems':'Проблемы'}</strong><span id="codeProblemsCount">0</span></div><small>${en?'Click a diagnostic to open its file and location':'Нажмите на диагностику, чтобы открыть файл и позицию'}</small></header><div id="codeProblemsList" class="code-problems-list"></div></section></div>`;
 }
 
-export function calculateEditorStageHeight({lineCount=1,lineHeight=20.15,padding=32,minHeight=340,maxHeight=720}={}){
-  const lines=Math.max(1,Number(lineCount)||1),lh=Math.max(1,Number(lineHeight)||20.15),pad=Math.max(0,Number(padding)||0),min=Math.max(120,Number(minHeight)||340),max=Math.max(min,Number(maxHeight)||720);
+export function effectiveEditorLineCount(source=''){
+  const lines=String(source??'').replace(/\r\n?/g,'\n').split('\n');
+  while(lines.length>1&&/^\s*$/.test(lines.at(-1)))lines.pop();
+  if(lines.length===1&&/^\s*$/.test(lines[0]))return 1;
+  return Math.max(1,lines.length);
+}
+
+export function calculateEditorStageHeight({lineCount=1,lineHeight=20.15,padding=32,minHeight=340,maxHeight=540}={}){
+  const lines=Math.max(1,Number(lineCount)||1),lh=Math.max(1,Number(lineHeight)||20.15),pad=Math.max(0,Number(padding)||0),min=Math.max(120,Number(minHeight)||340),max=Math.max(min,Number(maxHeight)||540);
   return Math.min(max,Math.max(min,Math.ceil(lines*lh+pad+4)));
 }
 
@@ -124,7 +131,22 @@ export function bindCodeStudio({editor,locale='ru',languageId='cpp',fileName='ma
   const renderHighlight=()=>{if(!highlight)return;const pair=bracketPair(editor.value,editor.selectionStart);highlight.innerHTML=`<code>${languageId==='cpp'?cppHighlight(editor.value,pair):genericHighlight(editor.value,pair)}</code>`;highlight.scrollTop=editor.scrollTop;highlight.scrollLeft=editor.scrollLeft};
   const renderCursor=()=>{if(!cursorEl)return;const pos=editor.selectionStart;const before=editor.value.slice(0,pos);const lines=before.split('\n');const line=lines.length,col=lines.at(-1).length+1;cursorEl.textContent=`Ln ${line}, Col ${col}`};
   const initialStageHeight=stage?Math.max(240,Math.round(stage.getBoundingClientRect?.().height||parseFloat(getComputedStyle(stage).height)||340)):340;
-  const recalculateEditorHeight=()=>{if(!stage)return initialStageHeight;const style=getComputedStyle(editor),lineHeight=parseFloat(style.lineHeight)||20.15,padding=(parseFloat(style.paddingTop)||0)+(parseFloat(style.paddingBottom)||0);const viewportMax=Math.max(initialStageHeight,Math.min(760,Math.round((globalThis.innerHeight||900)*0.72)));const height=calculateEditorStageHeight({lineCount:editor.value.split('\n').length,lineHeight,padding,minHeight:initialStageHeight,maxHeight:viewportMax});stage.style.height=`${height}px`;stage.dataset.autoOverflow=height>=viewportMax?'scroll':'fit';return height};
+  let currentStageHeight=initialStageHeight;
+  const recalculateEditorHeight=()=>{
+    if(!stage)return initialStageHeight;
+    const style=getComputedStyle(editor),lineHeight=parseFloat(style.lineHeight)||20.15,padding=(parseFloat(style.paddingTop)||0)+(parseFloat(style.paddingBottom)||0);
+    const mobile=(globalThis.innerWidth||1024)<=760;
+    const viewportCap=Math.round((globalThis.innerHeight||900)*(mobile?0.58:0.62));
+    const hardCap=mobile?460:540;
+    const viewportMax=Math.max(initialStageHeight,Math.min(hardCap,viewportCap));
+    const effectiveLines=effectiveEditorLineCount(editor.value);
+    const height=calculateEditorStageHeight({lineCount:effectiveLines,lineHeight,padding,minHeight:initialStageHeight,maxHeight:viewportMax});
+    const wasHeight=currentStageHeight;currentStageHeight=height;stage.style.height=`${height}px`;stage.dataset.autoOverflow=height>=viewportMax?'scroll':'fit';stage.dataset.effectiveLines=String(effectiveLines);
+    const empty=!String(editor.value).trim();
+    if(empty){editor.scrollTop=0;editor.scrollLeft=0;if(highlight){highlight.scrollTop=0;highlight.scrollLeft=0}if(gutter)gutter.scrollTop=0}
+    else if(height<wasHeight){const meaningfulBottom=Math.max(0,Math.ceil(effectiveLines*lineHeight+padding-height));editor.scrollTop=Math.min(editor.scrollTop,meaningfulBottom);if(highlight)highlight.scrollTop=editor.scrollTop;if(gutter)gutter.scrollTop=editor.scrollTop}
+    return height;
+  };
   const syncVisuals=()=>{recalculateEditorHeight();renderGutter();renderHighlight();renderCursor();if(gutter)gutter.scrollTop=editor.scrollTop};
   const syncWorkspace=()=>{try{workspace.setActiveContent(editor.value)}catch{}};
   const pushHistory=(path=workspace.activeFile)=>{if(applyingHistory)return;const safe=normalizeWorkspacePath(path);const h=historyFor(safe);const value=workspace.getFile(safe)?.content??(safe===workspace.activeFile?editor.value:'');if(h.values[h.index]===value)return;h.values=h.values.slice(0,h.index+1);h.values.push(value);if(h.values.length>150)h.values.shift();else h.index++};

@@ -1,7 +1,7 @@
 import {MODERN_CPP_TOOLCHAIN,MODERN_CPP_LIMITS,modernCppToolchainLabel} from '../runtime-assets.js';
 import {flatFilesToVirtualTree} from '../virtual-files.js';
 
-const FOUNDATION_VERSION='0.1.7-alpha.1.3';
+const FOUNDATION_VERSION='0.1.7-alpha.1.3.1';
 let compilerModulePromise=null;
 let wasiModulePromise=null;
 let compilerReady=false;

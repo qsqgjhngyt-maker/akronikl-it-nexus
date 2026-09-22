@@ -18,7 +18,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Статус
 
-**v0.1.7-alpha.1.3 / Project VFS Paths + Editor Resize + Session Resume Hotfix.** Project Studio теперь передаёт вложенные `src/`, `include/`, `tests/` в Clang/WASI через корректное дерево виртуальной файловой системы; обычный Run не подмешивает test translation units. Code Studio автоматически растёт и уменьшается вместе с кодом, а точные позиции страницы/caret/editor scroll живут только в текущей сессии. Код, проекты, checkpoints и прогресс остаются постоянными.
+**v0.1.7-alpha.1.3.1 / Editor Viewport Recovery Hotfix.** Code Studio теперь не раздувает внешнюю область из-за пустого хвоста строк: после очистки редактор сам возвращается к компактной высоте, а большие реальные файлы переходят на внутренний scroll. Project VFS и session-only resume остаются без изменений.
 
 **Исторический baseline UI: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Нативные системные выпадающие списки в верхней панели заменены на собственный Nexus Glass Dropdown, чтобы убрать светлые popup-меню Windows/Chromium и сохранить единый стиль на ПК и мобильных устройствах. Все возможности alpha.4 сохранены.
 
@@ -47,7 +47,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Текущий этап
 
-Текущий исполняемый релиз: [`RELEASE_v0.1.7-alpha.1.3.md`](RELEASE_v0.1.7-alpha.1.3.md). История изменений: [`CHANGELOG_v0.1.7-alpha.1.3.md`](CHANGELOG_v0.1.7-alpha.1.3.md).
+Текущий исполняемый релиз: [`RELEASE_v0.1.7-alpha.1.3.1.md`](RELEASE_v0.1.7-alpha.1.3.1.md). История изменений: [`CHANGELOG_v0.1.7-alpha.1.3.1.md`](CHANGELOG_v0.1.7-alpha.1.3.1.md).
 
 ## План первой реализации
 
@@ -67,4 +67,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Текущая разработка
 
-`v0.1.7-alpha.1.3`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**. Project Studio Foundation получила корректную nested-VFS сборку, Code Studio — bidirectional auto-resize, а UI resume разделён на persistent data и session-only positional state.
+`v0.1.7-alpha.1.3.1`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**. Project Studio Foundation получила корректную nested-VFS сборку, Code Studio — bidirectional auto-resize, а UI resume разделён на persistent data и session-only positional state.

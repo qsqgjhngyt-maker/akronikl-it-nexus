@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import {effectiveEditorLineCount,calculateEditorStageHeight} from '../sandbox/code-studio.js';
+const assert=(value,message)=>{if(!value)throw new Error(message)};
+assert(effectiveEditorLineCount('')===1,'Empty editor must use one effective line');
+assert(effectiveEditorLineCount('   \n\t\n')===1,'Whitespace-only source must collapse to one effective line');
+assert(effectiveEditorLineCount('int main() {}\n\n\n   \n')===1,'Trailing blank tail must not expand editor height');
+assert(effectiveEditorLineCount('int a;\n\nint b;\n\n')===3,'Internal blank lines must remain part of meaningful height');
+const compact=calculateEditorStageHeight({lineCount:1,lineHeight:20,padding:32,minHeight:340,maxHeight:540});
+const medium=calculateEditorStageHeight({lineCount:20,lineHeight:20,padding:32,minHeight:340,maxHeight:540});
+const capped=calculateEditorStageHeight({lineCount:200,lineHeight:20,padding:32,minHeight:340,maxHeight:540});
+assert(compact===340,'Cleared editor must return to compact baseline');
+assert(medium>compact&&medium<540,'Meaningful medium source must grow editor');
+assert(capped===540,'Large source must cap and use internal scrolling');
+const studio=fs.readFileSync(new URL('../sandbox/code-studio.js',import.meta.url),'utf8');
+for(const token of ['effectiveEditorLineCount(editor.value)','hardCap=mobile?460:540','editor.scrollTop=0','stage.dataset.effectiveLines'])assert(studio.includes(token),`Viewport recovery integration missing ${token}`);
+console.log('EDITOR_VIEWPORT_RECOVERY_PASS',compact,medium,capped);
