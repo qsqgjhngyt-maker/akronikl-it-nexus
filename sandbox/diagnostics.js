@@ -50,7 +50,7 @@ export function parseRuntimeError(error,source='',options={}){
   const compatibilityRetryFailed=error?.anxCompatibilityRetry===true;
   const missingStdLibrary=missingStandardLibrary(evidence,source);
   const noStaticErrors=!analysis||analysis.issues?.filter(x=>x.level==='error').length===0;
-  const explicitProviderLimit=error?.anxProviderLimit===true||['WASM_TOOLCHAIN_UNAVAILABLE','WASM_ENVIRONMENT_UNAVAILABLE','WASM_COMPILER_TIMEOUT'].includes(error?.code);
+  const explicitProviderLimit=error?.anxProviderLimit===true||['WASM_TOOLCHAIN_UNAVAILABLE','WASM_ENVIRONMENT_UNAVAILABLE','WASM_COMPILER_TIMEOUT','WASM_CPP_EXCEPTIONS_UNSUPPORTED'].includes(error?.code);
   const providerLimit=explicitProviderLimit||(noStaticErrors&&(((parseLike||compatibilityRetryFailed)&&bestEffort.length>0)||Boolean(missingStdLibrary)));
   const line=providerLimit?null:detectedLine;
   const column=providerLimit?null:detectedColumn;
@@ -70,6 +70,10 @@ export function parseRuntimeError(error,source='',options={}){
       explanation=locale==='en'
         ?'The in-browser compiler exceeded the safety time limit. Nexus stopped the Worker to keep the interface responsive; this does not by itself prove that the C++ source is invalid.'
         :'Браузерный компилятор превысил безопасный лимит времени. Nexus остановил Worker, чтобы интерфейс не завис; само по себе это не доказывает ошибку C++-кода.';
+    }else if(error?.code==='WASM_CPP_EXCEPTIONS_UNSUPPORTED'){
+      explanation=locale==='en'
+        ?'The pinned browser-side C++ sysroot is built without C++ exception support. try/throw/catch currently require a future exception-enabled provider. This is a provider capability limit, not proof that the learner source is conceptually invalid C++.'
+        :'Закреплённый браузерный C++ sysroot собран без поддержки C++-исключений. Конструкции try/throw/catch сейчас потребуют будущий provider с exception support. Это ограничение текущего provider, а не доказательство концептуальной ошибки C++-кода ученика.';
     }else if(missingStdLibrary){
       explanation=locale==='en'
         ?`Nexus structural checks did not find a basic syntax-shape error. The lightweight Browser Runtime does not provide the standard C++ header <${missingStdLibrary}> required by this program. This is an environment limitation, not proof that your C++ source is invalid. The same Sandbox UI will route such code to an extended provider when it becomes available.`

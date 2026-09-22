@@ -18,7 +18,7 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
-**v0.1.5-alpha.2.1 / OOP Example Escape Hotfix.** The Polyglot Runtime Router now connects a real `Nexus WASM C++ Runtime`: Modern C++ is compiled inside a dedicated Worker using a pinned Clang/LLD toolchain and executed as a WASI module. Basic C++ still stays on the fast Browser Runtime.
+**v0.1.5-alpha.2.2 / C++ WASI Exception ABI Alignment Hotfix.** The Polyglot Runtime Router now connects a real `Nexus WASM C++ Runtime`: Modern C++ is compiled inside a dedicated Worker using a pinned Clang/LLD toolchain and executed as a WASI module. Basic C++ still stays on the fast Browser Runtime.
 
 **Historical UI baseline: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Native system select popups in the top bar have been replaced with a custom Nexus Glass Dropdown to eliminate bright Windows/Chromium menus and keep a consistent desktop/mobile appearance. All alpha.4 functionality remains intact.
 

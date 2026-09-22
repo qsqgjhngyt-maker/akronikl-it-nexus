@@ -1,6 +1,6 @@
 import {MODERN_CPP_TOOLCHAIN,MODERN_CPP_LIMITS,modernCppToolchainLabel} from '../runtime-assets.js';
 
-const FOUNDATION_VERSION='0.1.5-alpha.2.1';
+const FOUNDATION_VERSION='0.1.5-alpha.2.2';
 let compilerModulePromise=null;
 let wasiModulePromise=null;
 let compilerReady=false;
@@ -107,7 +107,7 @@ async function compile(requestId,request){
   progress(requestId,'compile','compiling',{compiler,entryFile});
   try{
     const filesOut=await runClang(
-      [compiler,stdFlag,'-O0','-g0','-fdiagnostics-color=never',entryFile,'-o',outputFile],
+      [compiler,stdFlag,...(isC?[]:['-fno-exceptions']),'-O0','-g0','-fdiagnostics-color=never',entryFile,'-o',outputFile],
       (()=>{const files=normalizedFiles(request,entryFile);guardInputFootprint(files);return files})(),
       {
         decodeASCII:false,

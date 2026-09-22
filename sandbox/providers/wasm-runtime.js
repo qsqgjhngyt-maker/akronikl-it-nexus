@@ -1,6 +1,8 @@
 import {normalizeRuntimeRequest,runtimeResult,RUNTIME_SUPPORT} from '../provider-contract.js';
 import {MODERN_CPP_LIMITS,modernCppToolchainLabel} from '../runtime-assets.js';
 
+const CPP_EXCEPTION_SYNTAX=/\b(?:try|catch|throw)\b/;
+
 const MODERN_CPP_PATTERNS=[
   /#\s*include\s*<(string|string_view|vector|memory|map|unordered_map|set|unordered_set|algorithm|ranges|filesystem|thread|future|optional|variant|tuple|regex|format|array|deque|list|queue|stack)>/,
   /\b(virtual|override|final|template|concept|constexpr|unique_ptr|shared_ptr|weak_ptr|make_unique|make_shared|std::vector|std::string|std::map|std::unordered_map)\b/
@@ -16,6 +18,8 @@ let sequence=0;
 const emit=()=>listeners.forEach(fn=>{try{fn({...state})}catch{}});
 const patchState=update=>{Object.assign(state,update);emit()};
 const needsModernCpp=source=>MODERN_CPP_PATTERNS.some(pattern=>pattern.test(String(source||'')));
+const codeOnly=source=>String(source||'').replace(/\/\*[\s\S]*?\*\//g,' ').replace(/\/\/.*$/gm,' ').replace(/\"(?:\\.|[^\"\\])*\"/g,'""').replace(/'(?:\\.|[^'\\])*'/g,"''");
+const usesCppExceptions=source=>CPP_EXCEPTION_SYNTAX.test(codeOnly(source));
 const workerSupported=()=>typeof Worker!=='undefined'&&typeof WebAssembly!=='undefined'&&typeof URL!=='undefined';
 
 function resetWorker(reason='reset'){
@@ -140,7 +144,7 @@ export const wasmRuntimeProvider={
   planned:false,
   lifecycle:'ready-on-demand/pinned-clang-wasi',
   toolchain:modernCppToolchainLabel(),
-  capabilities:{stdin:true,stdout:true,unicode:true,files:true,threads:false,gui:false,fullStdlib:true,multiFile:'basic',cppStandard:'c++20',compilerDiagnostics:true,workerIsolation:true},
+  capabilities:{stdin:true,stdout:true,unicode:true,files:true,threads:false,gui:false,fullStdlib:true,multiFile:'basic',cppStandard:'c++20',cppExceptions:false,compilerDiagnostics:true,workerIsolation:true},
   getState(){return{...state}},
   subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn)},
   inspect(input={}){
@@ -172,6 +176,14 @@ export const wasmRuntimeProvider={
       error.code='WASM_RUNTIME_BUSY';throw error;
     }
     const capability=this.inspect(request);
+    if(request.languageId==='cpp'&&usesCppExceptions(request.source)){
+      const error=new Error('The pinned Nexus WASM C++ sysroot is built without C++ exception support; try/throw/catch requires a future exception-enabled provider.');
+      error.code='WASM_CPP_EXCEPTIONS_UNSUPPORTED';
+      error.anxProvider=wasmRuntimeProvider;
+      error.anxCapability=capability;
+      error.anxProviderLimit=true;
+      throw error;
+    }
     patchState({status:'loading-toolchain',phase:'toolchain',percent:0,lastError:null});
     return requestWorker('run',{request},capability);
   },
