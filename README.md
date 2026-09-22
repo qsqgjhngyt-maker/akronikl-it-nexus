@@ -18,7 +18,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Статус
 
-**v0.1.7-alpha.1 / Nexus Project Studio Foundation.** Раздел «Программирование» стал рабочим hub, C++ практикумы открываются в Code Studio, а проекты курса можно продолжать как отдельные persistent-проекты в Nexus Project Studio. Добавлены project manifest, nested workspace, milestones и checkpoints с восстановлением. Облачная синхронизация и экспорт — следующие слои поверх этой модели.
+**v0.1.7-alpha.1.1 / Project Studio Boot Recovery Hotfix.** Раздел «Программирование» стал рабочим hub, C++ практикумы открываются в Code Studio, а проекты курса можно продолжать как отдельные persistent-проекты в Nexus Project Studio. Добавлены project manifest, nested workspace, milestones и checkpoints с восстановлением. Облачная синхронизация и экспорт — следующие слои поверх этой модели.
 
 **Исторический baseline UI: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Нативные системные выпадающие списки в верхней панели заменены на собственный Nexus Glass Dropdown, чтобы убрать светлые popup-меню Windows/Chromium и сохранить единый стиль на ПК и мобильных устройствах. Все возможности alpha.4 сохранены.
 
@@ -47,7 +47,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Текущий этап
 
-Текущий исполняемый релиз: [`RELEASE_v0.1.7-alpha.1.md`](RELEASE_v0.1.7-alpha.1.md). История изменений: [`CHANGELOG_v0.1.7-alpha.1.md`](CHANGELOG_v0.1.7-alpha.1.md).
+Текущий исполняемый релиз: [`RELEASE_v0.1.7-alpha.1.1.md`](RELEASE_v0.1.7-alpha.1.1.md). История изменений: [`CHANGELOG_v0.1.7-alpha.1.1.md`](CHANGELOG_v0.1.7-alpha.1.1.md).
 
 ## План первой реализации
 
@@ -67,4 +67,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Текущая разработка
 
-`v0.1.7-alpha.1`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**, Code Studio/Clang-WASI baseline сохранён, а поверх него работает Project Studio Foundation с project entity, manifest, checkpoints и связкой Темы → Практикумы → Проекты.
+`v0.1.7-alpha.1.1`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**, Code Studio/Clang-WASI baseline сохранён, а поверх него работает Project Studio Foundation с project entity, manifest, checkpoints и связкой Темы → Практикумы → Проекты.

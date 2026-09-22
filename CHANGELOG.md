@@ -1,3 +1,9 @@
+# CHANGELOG v0.1.7-alpha.1.1
+
+- Boot Recovery Hotfix: Project Studio modules are lazy-loaded instead of blocking initial Platform Shell evaluation.
+- Added boot error capture/watchdog and route-level recovery UI.
+- Project Studio data/runtime behavior remains unchanged.
+
 # CHANGELOG v0.1.7-alpha.1
 
 - Nexus Project Studio Foundation is now executable, not roadmap-only.
