@@ -7,7 +7,7 @@ const mem=new Map();globalThis.localStorage={getItem:k=>mem.has(k)?mem.get(k):nu
 let remote=null,revision=0;
 globalThis.fetch=async(url,options={})=>{
   const path=new URL(url).pathname;
-  if(path==='/api/v1/health')return Response.json({ok:true,version:'0.1.7-alpha.2.2',authMode:'nexus-token',bootstrapOpen:true});
+  if(path==='/api/v1/health')return Response.json({ok:true,version:'0.1.7-alpha.2.2.1-d1',authMode:'nexus-token',bootstrapOpen:true});
   if(path==='/api/v1/bootstrap')return Response.json({ok:true,subject:{id:'user-cloud-1',displayName:'Akronikl'},token:'nxk_test_token_abcdefghijklmnopqrstuvwxyz'}, {status:201});
   if(path==='/api/v1/me')return Response.json({subject:{id:'user-cloud-1',displayName:'Akronikl'},authMode:'nexus-token'});
   if(path==='/api/v1/projects'&&(!options.method||options.method==='GET'))return Response.json({projects:remote?[{id:remote.id,title:remote.title,languageId:remote.languageId,revision,updatedAt:'2026-09-22T00:00:00Z'}]:[]});

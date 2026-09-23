@@ -9,7 +9,7 @@ export function createCloudflareSyncProvider({baseUrl='',tokenProvider=null}={})
   const request=async(path,options={})=>{
     if(!endpoint)throw new Error('Nexus Cloudflare Sync endpoint is not configured.');
     const bearer=options.skipAuth?null:await token();
-    const response=await fetch(endpoint+path,{...options,headers:{'content-type':'application/json',...(bearer?{authorization:`Bearer ${bearer}`}:{'authorization':''}),...(options.headers||{})}});
+    const response=await fetch(endpoint+path,{...options,headers:{'content-type':'application/json',...(bearer?{authorization:`Bearer ${bearer}`}:{}),...(options.headers||{})}});
     const body=await readJson(response);
     if(!response.ok){const error=new Error(body?.error?.message||body?.message||`Sync HTTP ${response.status}`);error.status=response.status;error.payload=body;throw error}
     return body;

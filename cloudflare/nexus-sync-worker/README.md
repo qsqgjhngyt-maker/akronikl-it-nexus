@@ -1,74 +1,43 @@
 # AKRONIKL IT NEXUS — Cloudflare Sync Worker
 
-Version: `0.1.7-alpha.2.2`
+Version: `0.1.7-alpha.2.2.1`
 
-This package is the first real cross-device Nexus Sync transport. It is intentionally local-first: projects remain usable without the cloud, while Cloudflare stores authoritative cloud revisions and immutable project snapshots.
+This package is the D1-only cross-device Nexus Sync transport used by the current alpha hotfix. Nexus stays local-first while Cloudflare stores account/workspace/project metadata, revisions, audit records and JSON project snapshots in D1. R2 is **not required** for this stage.
 
 ## Components
-
-- **Cloudflare Worker** — authenticated API, CORS, ACL checks, revision conflict protection.
-- **D1** — Nexus accounts, account token hashes, workspaces, members, projects, ACL, revisions, invites and audit metadata.
-- **R2** — immutable JSON project snapshots by workspace/project/revision.
-- **Nexus Token auth** — long random `nxk_...` bearer token. D1 stores only the SHA-256 token hash.
-- **One-time bootstrap** — the first owner account can be created with a Worker secret `BOOTSTRAP_SECRET`. Bootstrap automatically closes after the first account exists.
-
-## Safety model
-
-- `AUTH_MODE=nexus-token` is required for the real transport preview.
-- `BOOTSTRAP_SECRET` is a Worker **secret**, never a public `vars` value.
-- The browser never chooses an R2 object key; the Worker constructs it from verified workspace/project/revision data.
-- Every existing project write requires membership/ACL checks and an exact `baseRevision`.
-- A stale write returns HTTP `409 REVISION_CONFLICT`; cloud state is not silently overwritten.
-- Explicit ACL `deny` has priority over role or explicit `allow`.
-- `ALLOWED_ORIGIN` should be the exact GitHub Pages origin, for example `https://example.github.io`.
+- **Cloudflare Worker** — authenticated API, CORS, ACL checks and revision conflict protection.
+- **D1** — accounts, token hashes, workspaces, membership, projects, ACL, revisions, audit and `project_snapshots`.
+- **Nexus Token auth** — long random `nxk_...` bearer token; only SHA-256 hashes are stored.
+- **One-time bootstrap** — first owner account protected by encrypted Worker secret `BOOTSTRAP_SECRET`.
 
 ## D1 migrations
-
-Apply both migrations, in order:
-
-1. `migrations/0001_sync_team_foundation.sql`
-2. `migrations/0002_nexus_account_tokens.sql`
-
-With Wrangler, Cloudflare D1 migrations can be applied with:
-
-```bash
-npx wrangler d1 migrations apply akronikl-nexus-sync --remote
-```
+Apply in order:
+1. `0001_sync_team_foundation.sql`
+2. `0002_nexus_account_tokens.sql`
+3. `0003_d1_only_project_snapshots.sql`
 
 ## Dashboard deployment
+`dist/worker.js` is self-contained. Bind only:
+- D1 → `DB`
 
-For a no-CLI setup, `dist/worker.js` is a self-contained Worker module suitable for the Cloudflare dashboard editor. Bind:
-
-- D1 as `DB`
-- R2 as `SNAPSHOTS`
-
-Set text variables:
-
+Text variables:
 - `ENVIRONMENT=production`
 - `AUTH_MODE=nexus-token`
 - `ALLOWED_ORIGIN=https://YOUR-GITHUB-PAGES-HOST`
 
-Set encrypted secret:
+Encrypted secret:
+- `BOOTSTRAP_SECRET=<long random secret>`
 
-- `BOOTSTRAP_SECRET=<your long random secret>`
+No R2 binding is required.
 
-After the Worker is deployed, open Nexus Project Studio → **Cloud Sync**. For the first account, leave the token field empty and enter the bootstrap secret. Nexus will call `/api/v1/bootstrap`, receive the first owner token once, save it on that device, and display it for you to copy to the second device.
+## Security / transport invariants
+- Explicit ACL `deny` overrides allow.
+- HTTP `409 REVISION_CONFLICT` protects against stale writes.
+- `OPTIONS` CORS preflight reflects requested headers for the exact allowed origin.
+- Health/bootstrap `skipAuth` calls do not send an empty Authorization header from the client.
+- D1 snapshot size is capped at 1,500,000 bytes per revision.
+- Bootstrap closes after the first Nexus account exists.
 
 ## API
-
-Unauthenticated:
-
-- `GET /api/v1/health`
-- `POST /api/v1/bootstrap` — only while no Nexus account exists; requires `x-nexus-bootstrap-secret`
-
-Authenticated (`Authorization: Bearer nxk_...`):
-
-- `GET /api/v1/me`
-- `GET /api/v1/projects`
-- `GET /api/v1/projects/:id`
-- `PUT /api/v1/projects/:id`
-- `GET /api/v1/projects/:id/audit`
-
-## Current scope
-
-This is the first transport preview, not the final account UX. It is designed to validate real PC ↔ Cloudflare ↔ phone sync before adding Google/OIDC sign-in, invitations and full Team management screens.
+Unauthenticated: `GET /api/v1/health`, `POST /api/v1/bootstrap`.
+Authenticated: `GET /api/v1/me`, project list/get/put and audit routes.
