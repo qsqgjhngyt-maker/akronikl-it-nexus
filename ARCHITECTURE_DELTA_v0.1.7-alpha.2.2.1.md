@@ -1,31 +1,33 @@
 # Architecture Delta — v0.1.7-alpha.2.2.1
 
-## Cloud Sync Bootstrap Transport Hotfix — D1-only
+## Cloud Sync D1-only + verified optimistic concurrency
 
-### Decision
-For the current alpha stage, immutable project snapshots move from mandatory R2 storage to D1 `project_snapshots`. This removes the R2 billing/subscription dependency while preserving the existing project/revision metadata model.
+### Transport
+- Health/bootstrap calls с `skipAuth` не формируют пустой `Authorization`.
+- Worker preflight отражает `Access-Control-Request-Headers` при разрешённом origin.
+- Exact-origin CORS restriction сохранён.
 
-### Transport changes
-- Browser health/bootstrap calls made with `skipAuth` omit `Authorization` entirely instead of sending an empty header.
-- Worker `OPTIONS` responses reflect `Access-Control-Request-Headers` when present, while retaining a safe fallback list.
-- `ALLOWED_ORIGIN` remains exact-origin constrained.
+### Storage
+- Immutable project snapshots текущего alpha-этапа хранятся в D1 `project_snapshots`.
+- Лимит snapshot: 1,500,000 bytes.
+- Legacy `r2_key`/`latest_r2_key` сохранены для совместимости и используют `d1:<project>:<revision>` locator.
 
-### Storage changes
-- New table `project_snapshots` stores `snapshot_json`, content hash, size, creator and revision.
-- Snapshot limit is currently 1,500,000 bytes per project revision to stay below D1 per-value constraints with headroom.
-- Legacy `latest_r2_key` / `r2_key` columns are retained for schema compatibility and receive an internal `d1:<project>:<revision>` locator. No R2 binding is required.
+### Concurrency
+Cloud Sync использует optimistic concurrency:
+- клиент отправляет `baseRevision`;
+- сервер сравнивает её с `current_revision`;
+- stale write отклоняется `409 REVISION_CONFLICT`;
+- пользователь выполняет PULL, получает новую базу и повторяет PUSH.
 
-### Reproducibility
-The repository Worker source, dashboard `dist/worker.js`, Wrangler example, setup schema and migrations are aligned to D1-only operation.
+Механизм подтверждён LIVE-тестом: stale PUSH был отклонён, затем выполнены PULL rev 5 и PUSH rev 6 без потери удалённого изменения.
 
-### Not changed
-- Project Studio local-first model.
-- ACL roles, path scopes and explicit DENY precedence.
-- Audit model.
-- Clang/WASM runtime, Code Studio, course content and stable C++ IDs.
+### Cross-device
+Подтверждена двусторонняя цепочка:
+`PC ↔ GitHub Pages client ↔ Cloudflare Worker ↔ D1 ↔ iPhone`.
 
 ### Deferred
-- Google/OIDC sign-in and session rotation.
-- Team invitation acceptance UI.
-- Background queue flush and three-way merge.
-- Large/binary artifact storage (`.exe`, ML model files, build artifacts) outside D1.
+- автоматический three-way merge;
+- background queue reconciliation;
+- large/binary artifact storage;
+- полноценный OIDC/session layer;
+- team invitation acceptance UI.

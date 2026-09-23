@@ -3,17 +3,25 @@
 Base: `v0.1.7-alpha.2.2`
 
 ## Fixed
-- Cloud bootstrap request no longer emits an empty `Authorization` header when authentication is intentionally skipped.
-- Worker preflight CORS now accepts the browser-requested header set.
-- Service Worker cache revision bumped to prevent stale Cloud Sync client code after GitHub Pages deployment.
+- Bootstrap Cloud Sync transport: no empty `Authorization` on `skipAuth`.
+- Worker CORS preflight handles browser-requested headers.
+- Service Worker cache revision forces patched Cloud Sync client delivery.
 
 ## Changed
-- Cloud project snapshot persistence is now D1-only for the alpha transport stage.
-- Cloudflare deployment package no longer requires an R2 binding.
-- Worker/dashboard kit and migration set are aligned with the actual deployed D1-only backend.
+- Project snapshots operate in D1-only mode for the current alpha stage.
+- Cloudflare deployment package no longer requires R2.
 
-## Diagnostics retained
-Before the client hotfix, the real bootstrap attempt reached `POST /api/v1/bootstrap` but Chromium reported `net::ERR_CONNECTION_RESET` / `Failed to fetch`. Production health remained available and returned `bootstrapOpen=true`. This observation is retained as part of the release history and must be closed by LIVE retest.
+## LIVE verification closed — 2026-09-24
+- Bootstrap first account: **PASS**.
+- D1 account/token persistence: **PASS**.
+- Desktop PUSH rev 1 / rev 2: **PASS**.
+- PC → iPhone PULL: **PASS**.
+- iPhone → PC PULL: **PASS**.
+- Revision conflict rejection: **PASS**.
+- Conflict recovery through rev 6: **PASS**.
 
-## Content/runtime
-No changes to C++ educational content, Clang/WASM, Project VFS, editor/gutter, checkpoints or milestones.
+## Evidence
+`docs/evidence/releases/v0.1.7-alpha.2.2.1/` contains selected test screenshots and index.
+
+## Runtime/content
+C++ content, Clang/WASM, Project VFS, Code Studio and editor behavior were not changed by this hotfix.

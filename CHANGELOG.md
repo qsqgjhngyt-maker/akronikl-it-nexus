@@ -1,4 +1,4 @@
-- 0.1.7-alpha.2.2.1 — Cloud Sync Bootstrap Transport Hotfix — D1-only: dynamic CORS preflight headers, no empty Authorization on bootstrap, D1 snapshot storage, SW cache/version bump. LIVE bootstrap retest pending.
+- 0.1.7-alpha.2.2.1 — Cloud Sync Bootstrap Transport Hotfix — D1-only: transport fixes + D1 snapshots. LIVE bootstrap, cross-device sync, conflict rejection and recovery: PASS.
 # CHANGELOG v0.1.7-alpha.2.2.1
 
 Current executable release: **v0.1.7-alpha.2.2.1 — Cloud Sync Bootstrap Transport Hotfix — D1-only**.

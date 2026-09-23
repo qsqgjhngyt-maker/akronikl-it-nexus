@@ -1,29 +1,41 @@
 # AKRONIKL IT NEXUS v0.1.7-alpha.2.2.1
 
-**Release name:** Cloud Sync Bootstrap Transport Hotfix — D1-only
+**Release name:** Cloud Sync Bootstrap Transport Hotfix — D1-only  
+**Final verification status:** **LIVE PASS**  
+**Closed:** 2026-09-24
 
 ## Purpose
-This hotfix packages the Cloud Sync corrections made during the first real GitHub Pages → Cloudflare Worker → D1 bootstrap attempt. It keeps the application local-first and does not change C++ course content, Clang/WASM, Project VFS, editor behavior, milestones or checkpoints.
+Релиз закрывает первый реальный цикл GitHub Pages → Cloudflare Worker → D1 → несколько устройств и подтверждает работу Nexus Account, push/pull, аудита, облачных ревизий и защиты от stale write.
 
-## Included fixes
-- Cloudflare Worker CORS preflight reflects the browser-requested `Access-Control-Request-Headers`.
-- Client `sync/cloudflare-provider.js` no longer sends an empty `Authorization` header when `skipAuth=true` (health/bootstrap).
-- Snapshot persistence is D1-only; R2 is not required for this stage.
-- `project_snapshots` D1 migration is included for reproducible setup.
-- Service Worker cache keys and executable release version are bumped to force delivery of the patched client.
-- Dashboard Worker source/dist are aligned with the deployed D1-only Worker implementation.
+## Implemented fixes
+- Bootstrap/health `skipAuth` больше не отправляет пустой `Authorization`.
+- CORS preflight Worker учитывает фактически запрошенные `Access-Control-Request-Headers`.
+- Snapshot storage на текущем alpha-этапе работает в D1-only режиме.
+- Добавлена воспроизводимая миграция `project_snapshots`.
+- Service Worker cache/release metadata обновлены для доставки исправленного клиента.
 
-## Observed LIVE status before this package
-- Production `/api/v1/health`: **PASS**.
-- D1 binding: **PASS**.
-- `AUTH_MODE=nexus-token`: **PASS**.
-- `bootstrapOpen=true`: **PASS**.
-- First-owner bootstrap from GitHub Pages: **FAIL / `net::ERR_CONNECTION_RESET`** before the client hotfix.
-- This release therefore ships with status **PARTIAL — LIVE bootstrap retest required**.
+## LIVE verification
+- First-owner bootstrap: **PASS**.
+- Nexus Account authentication: **PASS**.
+- Token authentication/use: **PASS**.
+- D1 persistence: **PASS**.
+- Initial/repeated project PUSH: **PASS**.
+- PC → Cloud → iPhone PULL: **PASS**.
+- iPhone → Cloud → PC PULL: **PASS**.
+- Audit logging: **PASS**.
+- Revision conflict detection: **PASS**.
+- Stale write protection / lost update prevention: **PASS**.
+- Conflict recovery → Cloud revision 6: **PASS**.
+
+## Diagnostic history
+До hotfix bootstrap из GitHub Pages завершался `net::ERR_CONNECTION_RESET / Failed to fetch`. После применения совокупного transport hotfix bootstrap и дальнейшие cloud-сценарии прошли. Единственная конкретная первопричина между CORS/preflight и пустым `Authorization` отдельно не изолировалась; в документации сохраняется корректная формулировка **combined transport hotfix resolved the failure**.
 
 ## Security invariants
-- `BOOTSTRAP_SECRET` remains a Cloudflare encrypted Worker secret and is never committed to GitHub.
-- Nexus account tokens are generated as `nxk_...`; D1 stores only their SHA-256 hashes.
-- Bootstrap closes after the first account exists.
-- Production `dev:<subject>` authentication remains disabled.
-- Existing project writes remain guarded by membership/ACL and revision conflict protection.
+- `BOOTSTRAP_SECRET` не хранится в GitHub.
+- Полный `nxk_...` токен не публикуется; сервер хранит SHA-256 hash.
+- Bootstrap закрывается после создания первого аккаунта.
+- Production dev-auth запрещён.
+- Writes защищены ACL и optimistic concurrency (`baseRevision`).
+
+## Evidence
+См. [`docs/evidence/releases/v0.1.7-alpha.2.2.1/EVIDENCE_INDEX.md`](docs/evidence/releases/v0.1.7-alpha.2.2.1/EVIDENCE_INDEX.md).

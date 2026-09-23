@@ -1,55 +1,65 @@
 # LIVE TEST PROTOCOL — v0.1.7-alpha.2.2.1
 
-**Current status at package build:** PARTIAL / awaiting bootstrap retest.
+**Final status: LIVE PASS**  
+Дата закрытия протокола: **2026-09-24**
 
-## A. Worker production health
-Open:
-`https://akronikl-nexus-sync.akronikl.workers.dev/api/v1/health`
+## 1. Production health / bootstrap
+- Worker `/api/v1/health`: **PASS**.
+- `storage=d1-only`: **PASS**.
+- `authMode=nexus-token`: **PASS**.
+- `d1=true`: **PASS**.
+- После создания первого аккаунта `bootstrapOpen=false`: **PASS**.
 
-Expected:
-- `ok: true`
-- `storage: "d1-only"`
-- `authMode: "nexus-token"`
-- `d1: true`
-- before first account: `bootstrapOpen: true`
+## 2. Nexus Account / token
+- Первый Nexus Account `Akronikl` создан в D1: **PASS**.
+- Токен создан и реально использован (`last_used_at` заполнен): **PASS**.
+- Полный `nxk_...` токен в D1 и доказательных скриншотах не хранится/не публикуется: **PASS**.
 
-## B. GitHub Pages cache refresh
-1. Publish PATCH/FULL to GitHub Pages.
-2. Wait for Pages deployment to finish.
-3. Use `Ctrl+F5` on PC.
-4. On PWA/mobile, fully close and reopen; if stale code persists, clear site/PWA cache once.
-5. Verify top-right version: `v0.1.7 α2.2.1`.
+## 3. Project Cloud PUSH
+- Первый PUSH с ПК → Cloud revision 1: **PASS**.
+- Повторный PUSH → Cloud revision 2: **PASS**.
+- Audit `sync.pushed`: **PASS**.
 
-## C. First-owner bootstrap
-1. Project Studio → `Cloud Sync`.
-2. Worker URL: `https://akronikl-nexus-sync.akronikl.workers.dev`
-3. Leave Nexus Cloud Token empty.
-4. Enter `BOOTSTRAP_SECRET` locally. **Do not paste it into chat, GitHub or screenshots.**
-5. Account name: `Akronikl`.
-6. Continue.
+## 4. Cross-device: PC → iPhone
+1. На ПК проект отправлен в облако.
+2. На iPhone подключён тот же Nexus Account.
+3. Выполнен PULL.
+4. iPhone получил Cloud revision 2, checkpoints/этапы/файлы проекта.
 
-Expected:
-- no `Failed to fetch`;
-- Worker returns HTTP 201;
-- Nexus shows one-time `nxk_...` token;
-- token is saved securely by the owner;
-- `/api/v1/health` then reports `bootstrapOpen: false`.
+Результат: **PASS**.
 
-## D. Account verification
-With saved token, reconnect Cloud Sync. Expected `/api/v1/me` success and account name `Akronikl`.
+## 5. Cross-device: iPhone → PC
+1. На смартфоне выполнено изменение проекта и PUSH.
+2. На ПК выполнен PULL.
+3. ПК получил актуальное содержимое и Cloud revision 4.
 
-## E. Project push/pull
-1. Open existing test project.
-2. Push to cloud.
-3. Confirm D1 rows in `projects`, `project_revisions`, `project_snapshots`, `audit_events`.
-4. On a second browser/device, configure Worker URL + saved Nexus token.
-5. Import/pull project.
-6. Verify code, file tree, checkpoints and milestones remain intact.
+Результат: **PASS**.
 
-## F. Conflict test
-1. Modify same project on device A and push.
-2. Without pulling A's revision, modify stale copy on device B and push.
-3. Expected: HTTP 409 `REVISION_CONFLICT`; no silent overwrite.
+## 6. Optimistic concurrency / stale write protection
+Начальная общая база: Cloud revision 4.
 
-## Failure capture
-If bootstrap still fails, capture DevTools Network entries for `OPTIONS /api/v1/bootstrap` and `POST /api/v1/bootstrap`: status, request headers, response headers and console error. Do not expose secrets/tokens.
+1. Смартфон сформировал более новую облачную ревизию.
+2. ПК без PULL попытался PUSH из устаревшей base revision.
+3. Worker отклонил запись: `Cloud project changed since this client base revision.`
+4. Молчаливой перезаписи удалённых изменений не произошло.
+
+Результаты:
+- Revision conflict detection: **PASS**.
+- Stale write protection: **PASS**.
+- Lost update prevention: **PASS**.
+
+## 7. Conflict recovery
+1. После конфликта ПК сделал PULL и получил Cloud revision 5.
+2. Удалённое изменение со смартфона сохранилось.
+3. На ПК добавлено новое изменение.
+4. Новый PUSH успешно создал Cloud revision 6.
+
+Результаты:
+- Conflict recovery: **PASS**.
+- Post-conflict synchronization: **PASS**.
+- Audit trail: **PASS**.
+
+## 8. Final result
+**AKRONIKL IT NEXUS Cloud Sync — CROSS-DEVICE + CONCURRENCY LIVE PASS.**
+
+Доказательства: [`docs/evidence/releases/v0.1.7-alpha.2.2.1/EVIDENCE_INDEX.md`](docs/evidence/releases/v0.1.7-alpha.2.2.1/EVIDENCE_INDEX.md).
