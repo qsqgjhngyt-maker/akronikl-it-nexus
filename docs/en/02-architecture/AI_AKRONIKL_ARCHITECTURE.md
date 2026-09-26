@@ -1,5 +1,13 @@
-> **Documentation language policy:** Russian is the normative source. This English version is a secondary mirror for international users. If wording diverges, the Russian version prevails.
+# Akronikl / Nexus AI Architecture
 
-# Akronikl Architecture
+**Current:** structured client context foundation only.  
+**Target:** research architecture with context policy, Learner Model, Skill Graph, approved RAG, project/code grounding and a secure AI gateway.
 
-Browser/PWA sends a minimal contextual request to a secure API Gateway/Worker, which handles auth/rate limits, secret storage, provider routing and privacy-preserving logs. API keys must never appear in client code, localStorage or public GitHub. The AI gateway and code runner remain isolated. Offline heuristics, static hints and built-in explanations stay available without AI.
+No production LLM gateway is implemented in runtime `v0.1.7-alpha.2.2.1`.
+
+Security rules:
+- no provider key in public JS/localStorage/repository;
+- no account/session token in prompts;
+- no blind upload of DOM/localStorage/project;
+- no AI override of server ACL;
+- no unrestricted production shell execution.
