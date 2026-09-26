@@ -1,17 +1,27 @@
-> **Основной язык документации: русский.** Русская версия является нормативной. Английская версия поддерживается как вторичное зеркало для международных пользователей.
+> **Основной язык документации: русский.** Русская версия является нормативной.
 
-# Безопасность API
+# API Security
 
-## Базовое правило
-Ни один секрет провайдера AI не должен попадать в публичный клиент.
+## Current rules
+- HTTPS only;
+- exact CORS origin allowlist;
+- Worker performs server-side authentication/authorization;
+- snapshot/input limits;
+- no raw secret logging;
+- no implicit trust in browser roles/project ownership.
 
-## Требования
-- HTTPS;
-- server-side secret store;
-- rate limit и abuse protection;
-- минимальный контекст запроса;
-- CORS по необходимости, а не `*` без причины;
-- журналирование без токенов/ключей и без полного пользовательского кода по умолчанию;
-- отдельный домен/контур для code runner;
-- input/output limits;
-- возможность заменить AI provider без изменения course content.
+## Identity v2 rules
+- server-side provider broker;
+- provider callbacks validated against one-time transaction;
+- protected session credential is HttpOnly and revocable;
+- mutating cookie-auth APIs require CSRF/origin protection;
+- rate limiting for auth/recovery;
+- uniform responses where enumeration is a risk;
+- step-up for sensitive actions.
+
+## AI
+No AI provider secret belongs in public client.
+Identity/session secrets never enter prompts or AI context.
+
+## Runner
+Code execution boundary remains separate from identity authorization. Identity grants permission to request an action; it does not make arbitrary code trusted.

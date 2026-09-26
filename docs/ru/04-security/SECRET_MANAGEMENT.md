@@ -1,9 +1,32 @@
-> **Основной язык документации: русский.** Русская версия является нормативной. Английская версия поддерживается как вторичное зеркало для международных пользователей.
+> **Основной язык документации: русский.** Русская версия является нормативной.
 
 # Управление секретами
 
-Секреты не хранятся в Git, ZIP курса, PWA cache, localStorage, IndexedDB или исходных картах.
+## Never store in Git/browser-readable storage
+- OAuth/OIDC client secret;
+- Apple/provider private signing material;
+- SMS provider secret;
+- AI provider key;
+- TOTP encryption key;
+- session-signing/HMAC keys;
+- OTP HMAC key;
+- BOOTSTRAP_SECRET.
 
-Допустимые места: секреты Cloudflare Worker/серверной платформы, managed secret manager, локальный `.env` вне Git для разработки.
+## Allowed storage
+- Cloudflare Worker Secrets / managed secret manager;
+- local `.env` excluded from Git for development.
 
-Каждый секрет имеет владельца, назначение, среду, дату ротации и процедуру отзыва. При подозрении на утечку ключ ротируется, а не «прячется» новым commit.
+## Current alpha exception/debt
+The current raw `nxk_...` account token is stored by the browser Cloud Sync config. This is an accepted alpha foundation only and must be migrated away before Identity v2 public production.
+
+## Secret lifecycle
+Every secret should have:
+- owner;
+- purpose;
+- environment;
+- creation/rotation date;
+- rotation procedure;
+- revoke procedure.
+
+## Logging rule
+Secrets are redacted before logging. A suspected secret is rotated/revoked; deleting a Git commit alone is not sufficient.
