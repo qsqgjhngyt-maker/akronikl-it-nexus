@@ -9,5 +9,5 @@ for(const staticImport of ["from '../project-studio/project-store.js'","from '..
 }
 for(const token of ['async function loadProjectStudio()','import(`../project-studio/project-store.js${suffix}`)','import(`../project-studio/project-templates.js${suffix}`)','import(`../project-studio/project-studio.js${suffix}`)','async function safeRender()','function renderFailure(err)'])assert(app.includes(token),`boot recovery app token missing: ${token}`);
 for(const token of ["window.addEventListener('error'","window.addEventListener('unhandledrejection'",'setTimeout(()=>','Boot Recovery включён','__NEXUS_BOOT_OK__'])assert(index.includes(token),`boot diagnostic missing: ${token}`);
-assert(sw.includes('akronikl-it-nexus-v0.1.7-alpha.2.3'),'hotfix SW cache key missing');
+assert(sw.includes('akronikl-it-nexus-v0.1.7-alpha.2.4.1'),'hotfix SW cache key missing');
 console.log('BOOT_RECOVERY_HOTFIX_PASS');

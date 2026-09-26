@@ -1,3 +1,5 @@
+
+> **Current runtime: v0.1.7-alpha.2.4.1 — Nexus Account Shell Foundation.** Account state is now visible globally; full Identity v2 remains the next implementation stage.
 # AKRONIKL IT NEXUS
 
 **Engineering IT Learning Platform**
