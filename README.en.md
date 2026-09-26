@@ -18,7 +18,7 @@ RU and EN are the first complete locales. The architecture is multilingual-by-de
 
 ## Status
 
-**v0.1.7-alpha.2.2.1 / Cloud Sync Bootstrap Transport Hotfix — D1-only.** The transport now uses Worker + D1 without mandatory R2, fixes bootstrap CORS preflight behavior and omits empty `Authorization` during `skipAuth`. Local-first, ACL, audit and revision-conflict foundations stay intact; a LIVE bootstrap retest is still required after the observed `ERR_CONNECTION_RESET`.
+**v0.1.7-alpha.2.3 / Architecture & AI Research Baseline.** WORK01–WORK08 close the current-state audit, requirements, architecture/data/security baselines, Identity v2 target design, AI Research Design, competitive research and diploma evidence. The Cloud Sync LIVE PASS from v0.1.7-alpha.2.2.1 is retained; production Identity v2 and full Nexus AI are not implemented yet.
 
 **Historical UI baseline: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Native system select popups in the top bar have been replaced with a custom Nexus Glass Dropdown to eliminate bright Windows/Chromium menus and keep a consistent desktop/mobile appearance. All alpha.4 functionality remains intact.
 
@@ -58,4 +58,4 @@ Nexus Lesson Standard 1.0 is now **Normative / Production** after three accepted
 
 ## Current development
 
-`v0.1.7-alpha.2.2.1` keeps the proven Project VFS, multi-file Clang/WASI baseline, editor viewport/gutter synchronization and session-only resume while hardening the Cloudflare bootstrap path and moving snapshot storage to D1-only. Course content and stable C++ IDs are unchanged.
+`v0.1.7-alpha.2.3` closes the **Architecture & AI Research Baseline** while retaining the proven Project Studio and Cloud Sync behavior from the previous runtime baseline. The next implementation phases focus on Identity, cloud learning state, Skill Graph and later Nexus AI.

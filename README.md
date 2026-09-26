@@ -18,7 +18,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Статус
 
-**v0.1.7-alpha.2.2.1 / Cloud Sync Bootstrap Transport Hotfix — D1-only.** Cloud transport переведён на Worker + D1 без обязательного R2, исправлен CORS preflight bootstrap и убран пустой `Authorization` при `skipAuth`. Local-first, ACL, audit и revision-conflict защита сохранены; LIVE bootstrap retest после `ERR_CONNECTION_RESET` ещё требуется.
+**v0.1.7-alpha.2.3 / Architecture & AI Research Baseline.** Закрыт полный цикл WORK01–WORK08: аудит текущего состояния, требования, C4/DFD/API, ER/Data Dictionary, Identity & Security design, AI Research Design, competitive research и diploma evidence. Cloud Sync LIVE PASS из v0.1.7-alpha.2.2.1 сохранён; production Identity v2 и полноценный Nexus AI ещё не внедрены.
 
 **Исторический baseline UI: v0.1.2-alpha.4.1 / Nexus Glass Dropdown Hotfix.** Нативные системные выпадающие списки в верхней панели заменены на собственный Nexus Glass Dropdown, чтобы убрать светлые popup-меню Windows/Chromium и сохранить единый стиль на ПК и мобильных устройствах. Все возможности alpha.4 сохранены.
 
@@ -47,7 +47,7 @@ RU и EN — первые полноценные локали. Архитект�
 
 ## Текущий этап
 
-Текущий исполняемый релиз: [`RELEASE_v0.1.7-alpha.2.2.1.md`](RELEASE_v0.1.7-alpha.2.2.1.md). История изменений: [`CHANGELOG_v0.1.7-alpha.2.2.1.md`](CHANGELOG_v0.1.7-alpha.2.2.1.md).
+Текущий релиз: [`RELEASE_v0.1.7-alpha.2.3.md`](RELEASE_v0.1.7-alpha.2.3.md). История изменений: [`CHANGELOG_v0.1.7-alpha.2.3.md`](CHANGELOG_v0.1.7-alpha.2.3.md).
 
 ## План первой реализации
 
@@ -67,4 +67,4 @@ Namespace: `akronikl:it-nexus:*`
 
 ## Текущая разработка
 
-`v0.1.7-alpha.2.2.1`: **Nexus Lesson Standard 1.0 остаётся Normative / Production**. Исправляется bootstrap transport и фиксируется D1-only snapshot storage; учебный контент, C++ stable IDs, Clang/WASM и Project VFS не менялись.
+`v0.1.7-alpha.2.3`: **Architecture & AI Research Baseline**. Runtime-функции Cloud Sync/Project Studio сохраняют проверенный baseline предыдущего релиза; текущий релиз закрывает инженерную, архитектурную и исследовательскую базу перед реализацией Identity v2, Cloud Profile, Skill Map и будущего Nexus AI.

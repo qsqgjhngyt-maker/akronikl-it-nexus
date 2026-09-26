@@ -3,6 +3,7 @@ const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8');
 const select=fs.readFileSync(new URL('../core/glass-select.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('../styles/app.css',import.meta.url),'utf8');
 const sw=fs.readFileSync(new URL('../service-worker.js',import.meta.url),'utf8');
+const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8')).version;
 const checks=[
   ['no native select markup',!app.includes('<select')&&!app.includes('<option')],
   ['custom selector renderer',app.includes('function glassSelect(')&&app.includes('data-nexus-select')],
@@ -13,6 +14,6 @@ const checks=[
   ['keyboard support',select.includes("ev.key==='ArrowDown'")&&select.includes("ev.key===ESCAPE")],
   ['outside click closes',select.includes("document.addEventListener('pointerdown'")],
   ['glass dropdown styles',css.includes('Nexus Glass Dropdown hotfix')&&css.includes('.nexus-select-menu')],
-  ['service worker caches selector module',sw.includes('./core/glass-select.js')&&/v0\.1\.(?:2-alpha\.4\.1|3-alpha\.1|4-alpha\.(?:1|2)|5-alpha\.(?:1|2)|6-alpha\.(?:1|2)|7-alpha\.(?:1|2\.(?:1|2)))/.test(sw)]
+  ['service worker caches selector module',sw.includes('./core/glass-select.js')&&sw.includes(`akronikl-it-nexus-v${version}`)]
 ];
 for(const [name,ok] of checks){console.log(`${ok?'PASS':'FAIL'} ${name}`);if(!ok)process.exitCode=1}

@@ -1,6 +1,8 @@
-- 0.1.7-alpha.2.2.1 — Cloud Sync Bootstrap Transport Hotfix — D1-only: transport fixes + D1 snapshots. LIVE bootstrap, cross-device sync, conflict rejection and recovery: PASS.
-# CHANGELOG v0.1.7-alpha.2.2.1
+- 0.1.7-alpha.2.3 — Architecture & AI Research Baseline: closes WORK01–WORK08, formalizes requirements/architecture/data/security/AI research/competitive research and bumps frontend/cache metadata. Existing Cloud Sync LIVE PASS retained.
+- 0.1.7-alpha.2.2.1 — Cloud Sync Bootstrap Transport Hotfix — D1-only: dynamic CORS preflight headers, no empty Authorization on bootstrap, D1 snapshot storage, SW cache/version bump. LIVE bootstrap retest later completed successfully.
 
-Current executable release: **v0.1.7-alpha.2.2.1 — Cloud Sync Bootstrap Transport Hotfix — D1-only**.
+# CHANGELOG v0.1.7-alpha.2.3
 
-See [`CHANGELOG_v0.1.7-alpha.2.2.1.md`](CHANGELOG_v0.1.7-alpha.2.2.1.md) for the current delta. Historical changelogs are preserved alongside it.
+Current release: **v0.1.7-alpha.2.3 — Architecture & AI Research Baseline**.
+
+See [`CHANGELOG_v0.1.7-alpha.2.3.md`](CHANGELOG_v0.1.7-alpha.2.3.md). Historical changelogs are preserved alongside it.
