@@ -18,7 +18,7 @@ for(const token of ['D1','project_snapshots','Explicit ACL `deny`','HTTP `409 RE
 const {default:workerModule}=await import('../cloudflare/nexus-sync-worker/src/index.js');
 const fakeDB={prepare(){return{first:async()=>({n:0})}}};
 let response=await workerModule.fetch(new Request('https://sync.example/api/v1/health'),{AUTH_MODE:'nexus-token',DB:fakeDB});
-let payload=await response.json();assert(response.status===200&&payload.ok===true&&payload.version==='0.1.7-alpha.2.2.1-d1'&&payload.storage==='d1-only'&&payload.d1===true,'Worker health smoke failed');
+let payload=await response.json();assert(response.status===200&&payload.ok===true&&payload.version==='0.1.7-alpha.2.4.2-identity-foundation'&&payload.storage==='d1-only'&&payload.d1===true,'Worker health smoke failed');
 response=await workerModule.fetch(new Request('https://sync.example/api/v1/projects'),{AUTH_MODE:'disabled'});
 payload=await response.json();assert(response.status===503&&payload.error?.code==='AUTH_NOT_CONFIGURED','Protected route must stay closed when auth is disabled');
 console.log('CLOUDFLARE_SYNC_BACKEND_FOUNDATION_PASS');

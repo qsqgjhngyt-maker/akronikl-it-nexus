@@ -1,5 +1,7 @@
-const VERSION = '0.1.7-alpha.2.2.1-d1';
+const VERSION = '0.1.7-alpha.2.4.2-identity-foundation';
 const MAX_SNAPSHOT_BYTES = 1500000;
+const SESSION_IDLE_MINUTES = 60;
+const SESSION_ABSOLUTE_HOURS = 8;
 
 const ROLE_GRANTS = Object.freeze({
   owner: ['*'],
@@ -231,6 +233,171 @@ function randomToken() {
     .replace(/=+$/, '')}`;
 }
 
+
+function randomSessionToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+
+  let binary = '';
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+
+  return `nxs_${btoa(binary)
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
+    .replace(/=+$/, '')}`;
+}
+
+function datePlusMinutes(iso, minutes) {
+  return new Date(
+    new Date(iso).getTime() +
+    Number(minutes || 0) * 60 * 1000
+  ).toISOString();
+}
+
+function datePlusHours(iso, hours) {
+  return new Date(
+    new Date(iso).getTime() +
+    Number(hours || 0) * 60 * 60 * 1000
+  ).toISOString();
+}
+
+function minIso(a, b) {
+  return new Date(
+    Math.min(
+      new Date(a).getTime(),
+      new Date(b).getTime()
+    )
+  ).toISOString();
+}
+
+function bridgeEnabled(env) {
+  return String(
+    env.IDENTITY_V2_BRIDGE_ENABLED || 'false'
+  ).toLowerCase() === 'true';
+}
+
+async function securityEvent(
+  env,
+  {
+    subjectId = null,
+    sessionId = null,
+    deviceId = null,
+    action,
+    result = 'success',
+    metadata = {}
+  } = {}
+) {
+  try {
+    await env.DB
+      .prepare(`
+        INSERT INTO identity_security_events (
+          id,
+          subject_id,
+          session_id,
+          device_id,
+          action,
+          result,
+          metadata_json,
+          created_at
+        ) VALUES (
+          ?1, ?2, ?3, ?4,
+          ?5, ?6, ?7, ?8
+        )
+      `)
+      .bind(
+        id('sec'),
+        subjectId,
+        sessionId,
+        deviceId,
+        clean(action),
+        clean(result) || 'success',
+        JSON.stringify(metadata || {}),
+        now()
+      )
+      .run();
+  } catch {
+    // Security audit must not expose secrets or make a valid auth
+    // operation fail because an auxiliary event write failed.
+  }
+}
+
+async function authenticateSessionBearer(rawToken, env) {
+  const tokenHash = await sha256(rawToken);
+  const stamp = now();
+
+  const row = await env.DB
+    .prepare(`
+      SELECT
+        s.id AS subject_id,
+        s.display_name,
+        x.id AS session_id,
+        x.device_id,
+        x.auth_strength,
+        x.idle_expires_at,
+        x.absolute_expires_at
+      FROM account_sessions x
+      JOIN account_subjects s
+        ON s.id = x.subject_id
+      WHERE
+        x.secret_hash = ?1
+        AND x.status = 'active'
+        AND s.status = 'active'
+        AND x.idle_expires_at > ?2
+        AND x.absolute_expires_at > ?2
+      LIMIT 1
+    `)
+    .bind(tokenHash, stamp)
+    .first();
+
+  if (!row) {
+    throw new ApiError(
+      401,
+      'INVALID_SESSION',
+      'Nexus session is invalid, expired, or revoked.'
+    );
+  }
+
+  const refreshedIdle = minIso(
+    datePlusMinutes(stamp, SESSION_IDLE_MINUTES),
+    row.absolute_expires_at
+  );
+
+  await env.DB.batch([
+    env.DB
+      .prepare(`
+        UPDATE account_sessions
+        SET
+          last_seen_at = ?1,
+          idle_expires_at = ?2
+        WHERE id = ?3
+      `)
+      .bind(stamp, refreshedIdle, row.session_id),
+    ...(row.device_id
+      ? [
+          env.DB
+            .prepare(`
+              UPDATE account_devices
+              SET last_seen_at = ?1
+              WHERE id = ?2
+            `)
+            .bind(stamp, row.device_id)
+        ]
+      : [])
+  ]);
+
+  return {
+    subjectId: row.subject_id,
+    displayName: row.display_name,
+    sessionId: row.session_id,
+    deviceId: row.device_id || null,
+    authStrength:
+      row.auth_strength || 'legacy-bridge',
+    authMode: 'nexus-session'
+  };
+}
+
 async function sameSecret(a, b) {
   if (!a || !b) return false;
 
@@ -252,6 +419,21 @@ async function authenticate(request, env) {
       503,
       'AUTH_NOT_CONFIGURED',
       'Nexus account authentication is not configured yet.'
+    );
+  }
+
+  const authorization =
+    request.headers.get('authorization') || '';
+
+  const sessionMatch =
+    /^Bearer\s+(nxs_[A-Za-z0-9_-]{24,})$/i.exec(
+      authorization
+    );
+
+  if (sessionMatch) {
+    return authenticateSessionBearer(
+      sessionMatch[1],
+      env
     );
   }
 
@@ -483,9 +665,568 @@ async function bootstrapAccount(request, env) {
   };
 }
 
+
+async function identityCapabilities(env) {
+  let schemaReady = false;
+
+  try {
+    if (env.DB) {
+      await env.DB
+        .prepare(`
+          SELECT id
+          FROM account_sessions
+          LIMIT 1
+        `)
+        .first();
+      schemaReady = true;
+    }
+  } catch {
+    schemaReady = false;
+  }
+
+  return {
+    ok: true,
+    identityVersion: 'v2-foundation',
+    sessionFoundation: schemaReady,
+    bridgeEnabled:
+      schemaReady && bridgeEnabled(env),
+    legacyTokenCompatible: true,
+    cookieSessionEnabled: false,
+    firstPartyDeploymentRequired: true,
+    session: {
+      idleMinutes: SESSION_IDLE_MINUTES,
+      absoluteHours: SESSION_ABSOLUTE_HOURS
+    }
+  };
+}
+
+function safeDeviceId(value) {
+  const v = clean(value);
+  return /^[A-Za-z0-9._:-]{6,180}$/.test(v)
+    ? v
+    : id('device');
+}
+
+function safeLabel(value, fallback = 'Nexus device') {
+  return clean(value).slice(0, 120) || fallback;
+}
+
+function safePlatform(value) {
+  return clean(value).slice(0, 120) || null;
+}
+
+async function createSessionBridge(request, env, actor) {
+  if (actor.authMode !== 'nexus-token') {
+    throw new ApiError(
+      409,
+      'LEGACY_BRIDGE_REQUIRES_TOKEN',
+      'Session bridge requires the current Nexus token credential.'
+    );
+  }
+
+  if (!bridgeEnabled(env)) {
+    throw new ApiError(
+      403,
+      'IDENTITY_BRIDGE_DISABLED',
+      'Identity v2 session bridge is disabled.'
+    );
+  }
+
+  const body = await bodyJson(request);
+  const stamp = now();
+  const deviceId = safeDeviceId(body?.deviceId);
+  const deviceLabel = safeLabel(body?.deviceLabel);
+  const platform = safePlatform(body?.platform);
+
+  const existingDevice = await env.DB
+    .prepare(`
+      SELECT subject_id
+      FROM account_devices
+      WHERE id = ?1
+      LIMIT 1
+    `)
+    .bind(deviceId)
+    .first();
+
+  if (
+    existingDevice &&
+    existingDevice.subject_id !== actor.subjectId
+  ) {
+    throw new ApiError(
+      409,
+      'DEVICE_ID_CONFLICT',
+      'Device identifier already belongs to another account.'
+    );
+  }
+
+  if (existingDevice) {
+    await env.DB
+      .prepare(`
+        UPDATE account_devices
+        SET
+          label = ?1,
+          platform = ?2,
+          status = 'active',
+          last_seen_at = ?3
+        WHERE id = ?4
+      `)
+      .bind(
+        deviceLabel,
+        platform,
+        stamp,
+        deviceId
+      )
+      .run();
+  } else {
+    await env.DB
+      .prepare(`
+        INSERT INTO account_devices (
+          id,
+          subject_id,
+          label,
+          platform,
+          status,
+          first_seen_at,
+          last_seen_at
+        ) VALUES (
+          ?1, ?2, ?3, ?4,
+          'active', ?5, ?5
+        )
+      `)
+      .bind(
+        deviceId,
+        actor.subjectId,
+        deviceLabel,
+        platform,
+        stamp
+      )
+      .run();
+  }
+
+  const sessionId = id('session');
+  const token = randomSessionToken();
+  const tokenHash = await sha256(token);
+  const idleExpiresAt =
+    datePlusMinutes(stamp, SESSION_IDLE_MINUTES);
+  const absoluteExpiresAt =
+    datePlusHours(stamp, SESSION_ABSOLUTE_HOURS);
+
+  await env.DB
+    .prepare(`
+      INSERT INTO account_sessions (
+        id,
+        subject_id,
+        device_id,
+        secret_hash,
+        status,
+        auth_strength,
+        created_at,
+        last_seen_at,
+        idle_expires_at,
+        absolute_expires_at
+      ) VALUES (
+        ?1, ?2, ?3, ?4,
+        'active', 'legacy-bridge',
+        ?5, ?5, ?6, ?7
+      )
+    `)
+    .bind(
+      sessionId,
+      actor.subjectId,
+      deviceId,
+      tokenHash,
+      stamp,
+      idleExpiresAt,
+      absoluteExpiresAt
+    )
+    .run();
+
+  await securityEvent(env, {
+    subjectId: actor.subjectId,
+    sessionId,
+    deviceId,
+    action: 'auth.session.bridge_created',
+    metadata: {
+      authStrength: 'legacy-bridge'
+    }
+  });
+
+  return {
+    ok: true,
+    session: {
+      id: sessionId,
+      subjectId: actor.subjectId,
+      deviceId,
+      status: 'active',
+      authStrength: 'legacy-bridge',
+      createdAt: stamp,
+      idleExpiresAt,
+      absoluteExpiresAt
+    },
+    token,
+    warning:
+      'Foundation token is shown once. Do not store it in Git, screenshots, or long-lived browser storage.'
+  };
+}
+
+async function currentSession(env, actor) {
+  if (!actor.sessionId) {
+    return {
+      authMode: actor.authMode,
+      subject: {
+        id: actor.subjectId,
+        displayName:
+          actor.displayName || actor.subjectId
+      },
+      session: null,
+      bridgeAvailable: bridgeEnabled(env)
+    };
+  }
+
+  const row = await env.DB
+    .prepare(`
+      SELECT
+        x.id,
+        x.device_id,
+        x.status,
+        x.auth_strength,
+        x.created_at,
+        x.last_seen_at,
+        x.idle_expires_at,
+        x.absolute_expires_at,
+        d.label AS device_label,
+        d.platform AS device_platform
+      FROM account_sessions x
+      LEFT JOIN account_devices d
+        ON d.id = x.device_id
+      WHERE
+        x.id = ?1
+        AND x.subject_id = ?2
+      LIMIT 1
+    `)
+    .bind(actor.sessionId, actor.subjectId)
+    .first();
+
+  return {
+    authMode: actor.authMode,
+    subject: {
+      id: actor.subjectId,
+      displayName:
+        actor.displayName || actor.subjectId
+    },
+    session: row
+      ? {
+          id: row.id,
+          deviceId: row.device_id,
+          deviceLabel: row.device_label,
+          devicePlatform: row.device_platform,
+          status: row.status,
+          authStrength: row.auth_strength,
+          createdAt: row.created_at,
+          lastSeenAt: row.last_seen_at,
+          idleExpiresAt: row.idle_expires_at,
+          absoluteExpiresAt: row.absolute_expires_at
+        }
+      : null,
+    bridgeAvailable: bridgeEnabled(env)
+  };
+}
+
+async function listIdentitySessions(env, actor) {
+  const result = await env.DB
+    .prepare(`
+      SELECT
+        x.id,
+        x.device_id,
+        x.status,
+        x.auth_strength,
+        x.created_at,
+        x.last_seen_at,
+        x.idle_expires_at,
+        x.absolute_expires_at,
+        x.revoked_at,
+        x.revoked_reason,
+        d.label AS device_label,
+        d.platform AS device_platform
+      FROM account_sessions x
+      LEFT JOIN account_devices d
+        ON d.id = x.device_id
+      WHERE x.subject_id = ?1
+      ORDER BY x.last_seen_at DESC
+      LIMIT 100
+    `)
+    .bind(actor.subjectId)
+    .all();
+
+  return {
+    sessions: (result.results || []).map(row => ({
+      id: row.id,
+      deviceId: row.device_id,
+      deviceLabel: row.device_label,
+      devicePlatform: row.device_platform,
+      status: row.status,
+      authStrength: row.auth_strength,
+      createdAt: row.created_at,
+      lastSeenAt: row.last_seen_at,
+      idleExpiresAt: row.idle_expires_at,
+      absoluteExpiresAt: row.absolute_expires_at,
+      revokedAt: row.revoked_at,
+      revokedReason: row.revoked_reason,
+      current: Boolean(
+        actor.sessionId &&
+        row.id === actor.sessionId
+      )
+    }))
+  };
+}
+
+async function listIdentityDevices(env, actor) {
+  const result = await env.DB
+    .prepare(`
+      SELECT
+        d.id,
+        d.label,
+        d.platform,
+        d.status,
+        d.first_seen_at,
+        d.last_seen_at,
+        SUM(
+          CASE
+            WHEN x.status = 'active'
+              AND x.idle_expires_at > ?2
+              AND x.absolute_expires_at > ?2
+            THEN 1 ELSE 0
+          END
+        ) AS active_sessions
+      FROM account_devices d
+      LEFT JOIN account_sessions x
+        ON x.device_id = d.id
+      WHERE d.subject_id = ?1
+      GROUP BY
+        d.id, d.label, d.platform,
+        d.status, d.first_seen_at,
+        d.last_seen_at
+      ORDER BY d.last_seen_at DESC
+      LIMIT 100
+    `)
+    .bind(actor.subjectId, now())
+    .all();
+
+  return {
+    devices: (result.results || []).map(row => ({
+      id: row.id,
+      label: row.label,
+      platform: row.platform,
+      status: row.status,
+      firstSeenAt: row.first_seen_at,
+      lastSeenAt: row.last_seen_at,
+      activeSessions:
+        Number(row.active_sessions || 0)
+    }))
+  };
+}
+
+async function revokeIdentitySession(
+  env,
+  actor,
+  sessionId,
+  reason = 'user-revoked'
+) {
+  const row = await env.DB
+    .prepare(`
+      SELECT id, subject_id, device_id, status
+      FROM account_sessions
+      WHERE id = ?1
+      LIMIT 1
+    `)
+    .bind(sessionId)
+    .first();
+
+  if (
+    !row ||
+    row.subject_id !== actor.subjectId
+  ) {
+    throw new ApiError(
+      404,
+      'SESSION_NOT_FOUND',
+      'Session not found.'
+    );
+  }
+
+  if (row.status !== 'revoked') {
+    const stamp = now();
+    await env.DB
+      .prepare(`
+        UPDATE account_sessions
+        SET
+          status = 'revoked',
+          revoked_at = ?1,
+          revoked_reason = ?2
+        WHERE id = ?3
+      `)
+      .bind(
+        stamp,
+        safeLabel(reason, 'user-revoked'),
+        sessionId
+      )
+      .run();
+
+    await securityEvent(env, {
+      subjectId: actor.subjectId,
+      sessionId,
+      deviceId: row.device_id,
+      action: 'auth.session.revoked',
+      metadata: {
+        self: actor.sessionId === sessionId
+      }
+    });
+  }
+
+  return {
+    ok: true,
+    sessionId,
+    revoked: true
+  };
+}
+
+async function revokeAllIdentitySessions(
+  env,
+  actor,
+  { keepCurrent = false } = {}
+) {
+  const stamp = now();
+  let statement;
+
+  if (
+    keepCurrent &&
+    actor.sessionId
+  ) {
+    statement = env.DB
+      .prepare(`
+        UPDATE account_sessions
+        SET
+          status = 'revoked',
+          revoked_at = ?1,
+          revoked_reason = 'revoke-all'
+        WHERE
+          subject_id = ?2
+          AND status = 'active'
+          AND id <> ?3
+      `)
+      .bind(
+        stamp,
+        actor.subjectId,
+        actor.sessionId
+      );
+  } else {
+    statement = env.DB
+      .prepare(`
+        UPDATE account_sessions
+        SET
+          status = 'revoked',
+          revoked_at = ?1,
+          revoked_reason = 'revoke-all'
+        WHERE
+          subject_id = ?2
+          AND status = 'active'
+      `)
+      .bind(stamp, actor.subjectId);
+  }
+
+  const result = await statement.run();
+
+  await securityEvent(env, {
+    subjectId: actor.subjectId,
+    sessionId: actor.sessionId || null,
+    deviceId: actor.deviceId || null,
+    action: 'auth.session.revoked_all',
+    metadata: {
+      keepCurrent: Boolean(
+        keepCurrent && actor.sessionId
+      )
+    }
+  });
+
+  return {
+    ok: true,
+    revoked:
+      Number(result?.meta?.changes || 0),
+    keptCurrent: Boolean(
+      keepCurrent && actor.sessionId
+    )
+  };
+}
+
+async function revokeIdentityDevice(
+  env,
+  actor,
+  deviceId
+) {
+  const device = await env.DB
+    .prepare(`
+      SELECT id, subject_id, status
+      FROM account_devices
+      WHERE id = ?1
+      LIMIT 1
+    `)
+    .bind(deviceId)
+    .first();
+
+  if (
+    !device ||
+    device.subject_id !== actor.subjectId
+  ) {
+    throw new ApiError(
+      404,
+      'DEVICE_NOT_FOUND',
+      'Device not found.'
+    );
+  }
+
+  const stamp = now();
+  await env.DB.batch([
+    env.DB
+      .prepare(`
+        UPDATE account_devices
+        SET
+          status = 'revoked',
+          last_seen_at = ?1
+        WHERE id = ?2
+      `)
+      .bind(stamp, deviceId),
+    env.DB
+      .prepare(`
+        UPDATE account_sessions
+        SET
+          status = 'revoked',
+          revoked_at = ?1,
+          revoked_reason = 'device-revoked'
+        WHERE
+          device_id = ?2
+          AND status = 'active'
+      `)
+      .bind(stamp, deviceId)
+  ]);
+
+  await securityEvent(env, {
+    subjectId: actor.subjectId,
+    sessionId: actor.sessionId || null,
+    deviceId,
+    action: 'auth.device.revoked'
+  });
+
+  return {
+    ok: true,
+    deviceId,
+    revoked: true
+  };
+}
+
 async function health(env) {
   let bootstrapOpen = null;
   let d1 = false;
+  const identity =
+    await identityCapabilities(env);
 
   try {
     if (env.DB) {
@@ -515,6 +1256,10 @@ async function health(env) {
     ),
     d1,
     bootstrapOpen,
+    identityV2SessionFoundation:
+      identity.sessionFoundation,
+    identityV2BridgeEnabled:
+      identity.bridgeEnabled,
     maxSnapshotBytes:
       MAX_SNAPSHOT_BYTES
   };
@@ -1576,6 +2321,145 @@ async function route(
         env
       ),
       201
+    );
+  }
+
+  if (
+    path === '/api/v2/auth/capabilities' &&
+    request.method === 'GET'
+  ) {
+    return json(
+      await identityCapabilities(env)
+    );
+  }
+
+  if (path.startsWith('/api/v2/')) {
+    const actor =
+      await authenticate(request, env);
+
+    if (
+      path === '/api/v2/session/bridge' &&
+      request.method === 'POST'
+    ) {
+      return json(
+        await createSessionBridge(
+          request,
+          env,
+          actor
+        ),
+        201
+      );
+    }
+
+    if (
+      path === '/api/v2/session' &&
+      request.method === 'GET'
+    ) {
+      return json(
+        await currentSession(env, actor)
+      );
+    }
+
+    if (
+      path === '/api/v2/session' &&
+      request.method === 'DELETE'
+    ) {
+      if (!actor.sessionId) {
+        throw new ApiError(
+          409,
+          'NO_CURRENT_SESSION',
+          'Current credential is not a Nexus session.'
+        );
+      }
+      return json(
+        await revokeIdentitySession(
+          env,
+          actor,
+          actor.sessionId,
+          'logout'
+        )
+      );
+    }
+
+    if (
+      path === '/api/v2/sessions' &&
+      request.method === 'GET'
+    ) {
+      return json(
+        await listIdentitySessions(env, actor)
+      );
+    }
+
+    if (
+      path === '/api/v2/sessions/revoke-all' &&
+      request.method === 'POST'
+    ) {
+      const body = await bodyJson(request);
+      return json(
+        await revokeAllIdentitySessions(
+          env,
+          actor,
+          {
+            keepCurrent:
+              body?.keepCurrent === true
+          }
+        )
+      );
+    }
+
+    const sessionMatch =
+      /^\/api\/v2\/sessions\/([^/]+)$/.exec(
+        path
+      );
+
+    if (
+      sessionMatch &&
+      request.method === 'DELETE'
+    ) {
+      return json(
+        await revokeIdentitySession(
+          env,
+          actor,
+          decodeURIComponent(
+            sessionMatch[1]
+          )
+        )
+      );
+    }
+
+    if (
+      path === '/api/v2/devices' &&
+      request.method === 'GET'
+    ) {
+      return json(
+        await listIdentityDevices(env, actor)
+      );
+    }
+
+    const deviceMatch =
+      /^\/api\/v2\/devices\/([^/]+)$/.exec(
+        path
+      );
+
+    if (
+      deviceMatch &&
+      request.method === 'DELETE'
+    ) {
+      return json(
+        await revokeIdentityDevice(
+          env,
+          actor,
+          decodeURIComponent(
+            deviceMatch[1]
+          )
+        )
+      );
+    }
+
+    throw new ApiError(
+      404,
+      'NOT_FOUND',
+      'Identity route not found.'
     );
   }
 

@@ -1,6 +1,7 @@
 import {loadLocalIdentity} from './identity.js';
 import {cloudflareSyncSummary} from '../sync/cloudflare-config.js';
 import {disconnectCloudAccount} from '../sync/cloud-sync.js';
+import {identityV2Capabilities} from '../sync/identity-v2-client.js';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
@@ -180,7 +181,8 @@ export function accountPageMarkup(locale='ru',tab='overview'){
     <section class="account-panel glass-panel">
       <span class="eyebrow">IDENTITY v2 · TARGET</span>
       <h2>${en?'Devices & sessions':'Устройства и сессии'}</h2>
-      <p>${en?'Revocable server-side sessions, device labels, recent activity and remote sign-out are designed but not implemented in the current runtime.':'Отзываемые серверные сессии, названия устройств, последняя активность и удалённый выход уже спроектированы, но пока не реализованы в runtime.'}</p>
+      <p>${en?'The server-side session foundation is introduced in this release. Normal browser sign-in still uses the legacy Cloud bridge until first-party Identity v2 is enabled.':'В этом релизе появляется серверный фундамент сессий. Обычный вход в браузере пока остаётся на legacy Cloud bridge до включения first-party Identity v2.'}</p>
+      <div class="identity-foundation-status" id="identitySessionFoundation">${en?'Checking server foundation…':'Проверяю серверный фундамент…'}</div>
     </section>
   </div>`;
 
@@ -198,6 +200,7 @@ export function accountPageMarkup(locale='ru',tab='overview'){
       <span class="eyebrow">IDENTITY v2</span>
       <h2>${en?'Target security':'Целевая безопасность'}</h2>
       <ul class="account-security-list">
+        <li id="identityServerFoundation">${en?'Identity v2 server foundation: checking…':'Identity v2 server foundation: проверка…'}</li>
         <li>Passkey / WebAuthn</li>
         <li>TOTP MFA + recovery codes</li>
         <li>Revocable HttpOnly sessions</li>
@@ -229,6 +232,42 @@ export function accountPageMarkup(locale='ru',tab='overview'){
   </section>`;
 }
 
+
+async function refreshIdentityFoundationStatus(locale='ru'){
+  const en=locale==='en';
+  const nodes=[
+    document.querySelector('#identityServerFoundation'),
+    document.querySelector('#identitySessionFoundation')
+  ].filter(Boolean);
+  if(!nodes.length)return;
+
+  const apply=(text,kind='')=>{
+    for(const node of nodes){
+      node.textContent=text;
+      node.classList.remove('ok','warn','bad');
+      if(kind)node.classList.add(kind);
+    }
+  };
+
+  try{
+    const status=await identityV2Capabilities();
+    if(status.sessionFoundation){
+      const suffix=status.bridgeEnabled
+        ? (en?' · migration bridge enabled':' · migration bridge включён')
+        : (en?' · migration bridge disabled':' · migration bridge выключен');
+      apply((en?'Server session foundation available':'Серверный фундамент сессий доступен')+suffix,'ok');
+      return;
+    }
+    if(status.reachable){
+      apply(en?'Worker reachable, Identity v2 session foundation is not deployed':'Worker доступен, Identity v2 session foundation ещё не развернут','warn');
+      return;
+    }
+    apply(en?'Identity v2 server status is unavailable':'Статус Identity v2 сервера недоступен','warn');
+  }catch{
+    apply(en?'Identity v2 server check failed':'Не удалось проверить Identity v2 сервер','warn');
+  }
+}
+
 export function bindAccountShell({locale='ru',onChanged=()=>{}}={}){
   const button=document.querySelector('#accountMenuButton');
   const menu=document.querySelector('#accountMenu');
@@ -258,6 +297,7 @@ export function bindAccountShell({locale='ru',onChanged=()=>{}}={}){
   globalThis.__NEXUS_ACCOUNT_OUTSIDE_CLOSE__=close;
   document.addEventListener('click',close);
   document.querySelectorAll('#accountMenu a').forEach(a=>a.addEventListener('click',close));
+  refreshIdentityFoundationStatus(locale);
 
   document.querySelector('#accountDisconnect')?.addEventListener('click',()=>{
     const en=locale==='en';
