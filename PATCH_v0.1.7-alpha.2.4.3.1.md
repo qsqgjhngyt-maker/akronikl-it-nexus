@@ -16,3 +16,17 @@
 
 ## Backend
 No Worker/D1 patch is part of this increment.
+
+## Routing correction after LIVE smoke
+
+A LIVE desktop check found that the newly added `Nexus Cloud` tab fell through to the Security content because the final tab-content selector omitted the `cloud` case.
+
+Corrected mapping:
+
+`overview → overview`  
+`cloud → cloud`  
+`learning → learning`  
+`devices → devices`  
+`security → security`
+
+No backend, D1 or Cloud Sync protocol change.

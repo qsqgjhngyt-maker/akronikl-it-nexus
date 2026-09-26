@@ -22,3 +22,9 @@
 5. все настройки из project SYNC ведут в Account Center.
 
 Это решение сокращает когнитивную неоднозначность и готовит UI к будущему Identity v2, где Cloud connection станет частью Account/Device lifecycle, а не функцией списка проектов.
+
+## LIVE routing correction
+
+Desktop LIVE smoke exposed a small but important content-selector omission: the new `Nexus Cloud` tab was present, but its `cloud` block was not selected and the renderer fell through to `security`.
+
+The defect was corrected before release without changing Worker, D1, Cloud Sync transport or account data. A dedicated regression test was added so future tab additions cannot silently repeat this exact failure.

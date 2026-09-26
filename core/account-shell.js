@@ -341,7 +341,7 @@ const cloud=`<div class="account-grid">
     </section>
   </div>`;
 
-  const content=current==='overview'?overview:current==='learning'?learning:current==='devices'?devices:security;
+  const content=current==='overview'?overview:current==='cloud'?cloud:current==='learning'?learning:current==='devices'?devices:security;
 
   return `<section class="account-page">
     <div class="account-page-head glass-panel">

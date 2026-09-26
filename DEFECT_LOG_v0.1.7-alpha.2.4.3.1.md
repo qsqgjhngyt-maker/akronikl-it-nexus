@@ -21,3 +21,24 @@ Data loss: none observed.
 
 ### Post-deploy verification
 PENDING.
+
+## LIVE-2431-001 — Nexus Cloud tab rendered Security content
+
+**Status:** FIXED IN CANDIDATE BEFORE RELEASE  
+**Detected:** desktop LIVE smoke  
+**Impact:** frontend content routing only; no Cloud Sync/backend/data impact.
+
+Observed:
+- `Nexus Cloud` tab became active;
+- Security content rendered instead of the existing cloud configuration block.
+
+Root cause:
+- the new `cloud` tab/content was added, but the final `content` selector did not include `current==='cloud'`.
+
+Fix:
+- added explicit `cloud → cloud` mapping;
+- added automated regression test `tests/account-cloud-tab-routing-check.mjs`.
+
+Expected after fix:
+- local-only → `Подключить Nexus Cloud`;
+- cloud-linked → `Изменить подключение` + `Отключить на этом устройстве`.

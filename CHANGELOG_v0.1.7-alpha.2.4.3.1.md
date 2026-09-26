@@ -22,3 +22,8 @@
 
 ### Backend
 No Worker or D1 deployment is required.
+
+### Cloud tab routing correction
+- fixed `Account Center → Nexus Cloud` rendering the Security panel;
+- `Nexus Cloud` now renders its own connection-management block;
+- added automated regression coverage for local-only and cloud-linked action labels.
