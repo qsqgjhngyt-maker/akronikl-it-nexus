@@ -7,7 +7,7 @@ const worker=fs.readFileSync(new URL('../cloudflare/nexus-sync-worker/src/index.
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 
 const checks=[
-  ['release version',version.version==='0.1.7-alpha.2.4.3'],
+  ['release version',version.version==='0.1.7-alpha.2.4.3.1'],
   ['session credential is sessionStorage-only',client.includes("sessionStorage")&&!client.includes("localStorage")],
   ['formal server-session storage key',client.includes('akronikl:it-nexus:identity-v2:session:v1')],
   ['session-first resolver',client.includes("mode=sessionCredential")&&client.includes("'nexus-session'")],

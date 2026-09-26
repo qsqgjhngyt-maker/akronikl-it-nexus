@@ -1,10 +1,14 @@
+import fs from 'node:fs';
 import {projectStudioDashboardMarkup,projectStudioViewMarkup} from '../project-studio/project-studio.js';
 import {createProject,getProject} from '../project-studio/project-store.js';
 const assert=(v,m)=>{if(!v)throw new Error(m)};
 const mem=new Map();globalThis.localStorage={getItem:k=>mem.has(k)?mem.get(k):null,setItem:(k,v)=>mem.set(k,String(v)),removeItem:k=>mem.delete(k),clear:()=>mem.clear()};
 const project=createProject({id:'cloud-ui',title:'Cloud UI'});
 let html=projectStudioDashboardMarkup({projects:[project],courseProjects:[],locale:'ru'});
-for(const token of ['id="psCloudSetup"','id="psCloudImport"','Cloudflare Transport'])assert(html.includes(token),`dashboard cloud control missing: ${token}`);
+assert(!html.includes('id=\"psCloudSetup\"'),'projects dashboard must not own Nexus Cloud account setup');
+for(const token of ['id=\"psCloudImport\"','Cloudflare Transport'])assert(html.includes(token),`dashboard cloud control missing: ${token}`);
 html=projectStudioViewMarkup({project:getProject(project.id),locale:'ru'});
-for(const token of ['id="psCloudConfigure"','Cloudflare пока не подключён'])assert(html.includes(token),`project cloud setup control missing: ${token}`);
+for(const token of ['id=\"psCloudConfigure\"','Cloudflare пока не подключён'])assert(html.includes(token),`project cloud settings control missing: ${token}`);
+const source=fs.readFileSync(new URL('../project-studio/project-studio.js',import.meta.url),'utf8');
+assert(source.includes("#view=account&tab=cloud"),'project Cloud settings/import fallback must route to Account → Nexus Cloud');
 console.log('CLOUD_SYNC_UI_PASS');

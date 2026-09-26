@@ -1,6 +1,6 @@
 import {loadLocalIdentity} from './identity.js';
-import {cloudflareSyncSummary} from '../sync/cloudflare-config.js';
-import {disconnectCloudAccount} from '../sync/cloud-sync.js';
+import {cloudflareSyncSummary,loadCloudflareSyncConfig} from '../sync/cloudflare-config.js';
+import {bootstrapCloudAccount,connectCloudAccount,disconnectCloudAccount} from '../sync/cloud-sync.js';
 import {
   identityV2Capabilities,
   identityV2CredentialState,
@@ -52,6 +52,40 @@ const identityTransportLabel=(mode,en)=>{
   if(mode==='legacy-token')return en?'Legacy credential + server API':'Legacy credential + server API';
   return en?'Not authenticated':'Нет credential';
 };
+
+async function runAccountCloudSetup(en=false){
+  const current=loadCloudflareSyncConfig();
+  const baseUrl=prompt(
+    en?'Nexus Cloud Worker URL':'URL Nexus Cloud Worker',
+    current.baseUrl||'https://akronikl-nexus-sync.akronikl.workers.dev'
+  );
+  if(!baseUrl?.trim())return null;
+
+  const token=prompt(
+    en?'Nexus Cloud token (leave empty only for first-account bootstrap)':'Nexus Cloud Token (оставьте пустым только при первом создании аккаунта)',
+    ''
+  );
+  if(token===null)return null;
+  if(token.trim())return connectCloudAccount({baseUrl:baseUrl.trim(),token:token.trim()});
+
+  const secret=prompt(
+    en?'Bootstrap secret from Worker settings':'BOOTSTRAP_SECRET из настроек Worker',
+    ''
+  );
+  if(!secret?.trim())return null;
+  const displayName=prompt(en?'Account display name':'Имя аккаунта','Akronikl')||'Akronikl';
+  const result=await bootstrapCloudAccount({
+    baseUrl:baseUrl.trim(),
+    bootstrapSecret:secret.trim(),
+    displayName:displayName.trim()||'Akronikl'
+  });
+  const {token:oneTimeToken}=result;
+  prompt(
+    en?'SAVE THIS TOKEN. It is shown only once.':'СОХРАНИТЕ ЭТОТ TOKEN. Сервер показывает его только один раз.',
+    oneTimeToken
+  );
+  return result;
+}
 
 export function accountSnapshot(locale='ru'){
   const en=locale==='en';
@@ -107,6 +141,7 @@ export function accountChipMarkup(locale='ru'){
         </div>
       </div>
       <a role="menuitem" href="#view=account">${en?'Profile':'Профиль'}</a>
+      <a role="menuitem" href="#view=account&tab=cloud">${en?'Nexus Cloud':'Nexus Cloud'}</a>
       <a role="menuitem" href="#view=account&tab=learning">${en?'My learning':'Моё обучение'}</a>
       <a role="menuitem" href="#view=project-studio">${en?'My projects':'Мои проекты'}</a>
       <a role="menuitem" href="#view=skills">${en?'Skill map':'Карта навыков'}</a>
@@ -139,7 +174,7 @@ export function accountHomeCardMarkup(locale='ru'){
     </div>
     <div class="account-home-actions">
       <a class="btn primary" href="#view=account">${en?'Open account':'Открыть аккаунт'}</a>
-      ${a.connected?'':`<a class="btn" href="#view=project-studio">${en?'Connect Cloud':'Подключить Cloud'}</a>`}
+      ${a.connected?'':`<a class="btn" href="#view=account&tab=cloud">${en?'Connect Cloud':'Подключить Cloud'}</a>`}
     </div>
   </section>`;
 }
@@ -149,9 +184,10 @@ const tabLink=(id,label,current)=>`<a href="#view=account&tab=${encodeURICompone
 export function accountPageMarkup(locale='ru',tab='overview'){
   const en=locale==='en';
   const a=accountSnapshot(locale);
-  const current=['overview','learning','devices','security'].includes(tab)?tab:'overview';
+  const current=['overview','cloud','learning','devices','security'].includes(tab)?tab:'overview';
   const nav=[
     ['overview',en?'Profile':'Профиль'],
+    ['cloud',en?'Nexus Cloud':'Nexus Cloud'],
     ['learning',en?'Learning':'Обучение'],
     ['devices',en?'Devices':'Устройства'],
     ['security',en?'Security':'Безопасность']
@@ -183,11 +219,45 @@ export function accountPageMarkup(locale='ru',tab='overview'){
         <div class="identity-method planned"><b>◆</b><div><strong>Passkey</strong><span>WebAuthn · Face ID / Touch ID / PIN</span></div><em>PLANNED</em></div>
       </div>
       <div class="account-actions">
-        <a class="btn" href="#view=project-studio">${a.connected?(en?'Cloud Sync settings':'Настройки Cloud Sync'):(en?'Connect current Nexus Cloud':'Подключить текущий Nexus Cloud')}</a>
-        ${a.connected?`<button class="btn danger" id="accountDisconnect">${en?'Disconnect on this device':'Отключить на этом устройстве'}</button>`:''}
+        <a class="btn" href="#view=account&tab=cloud">${a.connected?(en?'Open Nexus Cloud settings':'Открыть настройки Nexus Cloud'):(en?'Connect current Nexus Cloud':'Подключить текущий Nexus Cloud')}</a>
       </div>
     </section>
   </div>`;
+
+
+const cloud=`<div class="account-grid">
+  <section class="account-panel glass-panel">
+    <span class="eyebrow">NEXUS CLOUD · ACCOUNT</span>
+    <h2>${a.connected?(en?'Cloud connection':'Подключение к облаку'):(en?'Connect Nexus Cloud':'Подключить Nexus Cloud')}</h2>
+    <p>${a.connected
+      ? (en?'This device is linked to the current Nexus Cloud account. Project Studio uses this account for explicit cloud import, PUSH and PULL.':'Это устройство связано с текущим Nexus Cloud аккаунтом. Project Studio использует эту учётную запись для явных операций импорта, PUSH и PULL.')
+      : (en?'Connect this device to Nexus Cloud once here. Project pages no longer own account setup.':'Подключите устройство к Nexus Cloud один раз здесь. Страницы проектов больше не управляют подключением аккаунта.')}</p>
+    <dl class="account-dl">
+      <div><dt>${en?'State':'Состояние'}</dt><dd>${esc(a.state)}</dd></div>
+      <div><dt>${en?'Account':'Аккаунт'}</dt><dd>${esc(a.displayName)}</dd></div>
+      <div><dt>Subject</dt><dd>${esc(a.subjectShort)}</dd></div>
+      <div><dt>Endpoint</dt><dd>${a.connected?esc(a.host):'—'}</dd></div>
+      <div><dt>${en?'This device':'Это устройство'}</dt><dd>${esc(a.deviceShort)}</dd></div>
+    </dl>
+    <div class="account-actions">
+      <button class="btn primary" type="button" id="accountCloudConfigure">${a.connected?(en?'Change connection':'Изменить подключение'):(en?'Connect Nexus Cloud':'Подключить Nexus Cloud')}</button>
+      ${a.connected?`<button class="btn danger" type="button" id="accountCloudDisconnect">${en?'Disconnect on this device':'Отключить на этом устройстве'}</button>`:''}
+    </div>
+  </section>
+  <section class="account-panel glass-panel">
+    <span class="eyebrow">PROJECT SYNC · RESPONSIBILITY</span>
+    <h2>${en?'Clear separation of responsibilities':'Чёткое разделение ответственности'}</h2>
+    <div class="cloud-responsibility-list">
+      <div><strong>${en?'Account Center':'Account Center'}</strong><span>${en?'Connect / change / disconnect Nexus Cloud for this device.':'Подключение / изменение / отключение Nexus Cloud на устройстве.'}</span></div>
+      <div><strong>${en?'Projects':'Проекты'}</strong><span>${en?'Create local projects or import an existing project from the linked cloud account.':'Создание локальных проектов или импорт существующего проекта из подключённого облака.'}</span></div>
+      <div><strong>${en?'Open project · SYNC':'Открытый проект · SYNC'}</strong><span>${en?'Explicit PUSH / PULL, revisions and audit for this project.':'Явные PUSH / PULL, revisions и audit конкретного проекта.'}</span></div>
+    </div>
+    <div class="account-cloud-safety">
+      <strong>${en?'Alpha credential note':'Примечание по alpha credential'}</strong>
+      <span>${en?'The current legacy Nexus Cloud Token remains an alpha migration credential. Raw token value is never rendered here.':'Текущий legacy Nexus Cloud Token остаётся временным alpha credential периода миграции. Raw token здесь никогда не отображается.'}</span>
+    </div>
+  </section>
+</div>`;
 
   const learning=`<section class="account-panel glass-panel account-wide">
     <span class="eyebrow">CLOUD PROFILE · NEXT</span>
@@ -521,12 +591,25 @@ export function bindAccountShell({locale='ru',onChanged=()=>{}}={}){
   refreshIdentityDevicesSessions(locale);
   document.querySelector('#identityRuntimeRefresh')?.addEventListener('click',()=>refreshIdentityDevicesSessions(locale));
 
-  document.querySelector('#accountDisconnect')?.addEventListener('click',()=>{
-    const en=locale==='en';
-    if(!confirm(en
-      ? 'Disconnect Nexus Cloud on this device? Local projects will remain on this device.'
-      : 'Отключить Nexus Cloud на этом устройстве? Локальные проекты останутся на устройстве.'))return;
-    disconnectCloudAccount();
-    onChanged();
-  });
+
+document.querySelector('#accountCloudConfigure')?.addEventListener('click',async()=>{
+  const en=locale==='en';
+  try{
+    const result=await runAccountCloudSetup(en);
+    if(result)onChanged();
+  }catch(error){
+    alert(`${en?'Nexus Cloud setup error':'Ошибка подключения Nexus Cloud'}: ${error?.message||error}`);
+  }
+});
+
+const disconnect=()=>{
+  const en=locale==='en';
+  if(!confirm(en
+    ? 'Disconnect Nexus Cloud on this device? Local projects will remain on this device.'
+    : 'Отключить Nexus Cloud на этом устройстве? Локальные проекты останутся на устройстве.'))return;
+  disconnectCloudAccount();
+  onChanged();
+};
+document.querySelector('#accountCloudDisconnect')?.addEventListener('click',disconnect);
+document.querySelector('#accountDisconnect')?.addEventListener('click',disconnect);
 }

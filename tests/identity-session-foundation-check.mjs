@@ -8,7 +8,7 @@ const sw=fs.readFileSync(new URL('../service-worker.js',import.meta.url),'utf8')
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 
 const checks=[
-  ['release version',version.version==='0.1.7-alpha.2.4.3'],
+  ['release version',version.version==='0.1.7-alpha.2.4.3.1'],
   ['worker session version',worker.includes("0.1.7-alpha.2.4.2-identity-foundation")],
   ['account_devices migration',migration.includes('CREATE TABLE IF NOT EXISTS account_devices')],
   ['account_sessions migration',migration.includes('CREATE TABLE IF NOT EXISTS account_sessions')],
