@@ -1,0 +1,24 @@
+# User Stories — English Mirror
+
+| ID | Linked requirements |
+| --- | --- |
+| US-001 | FR-PROGRESS-001 |
+| US-002 | FR-CODE-001 |
+| US-003 | FR-CODE-002 |
+| US-004 | FR-PROJ-003 |
+| US-005 | FR-SYNC-003 |
+| US-006 | FR-SYNC-004 |
+| US-007 | FR-ID-002, FR-PROGRESS-002 |
+| US-008 | FR-ID-003, FR-ID-004 |
+| US-009 | FR-ID-006 |
+| US-010 | FR-ID-005 |
+| US-011 | FR-ADMIN-001, FR-CMS-001 |
+| US-012 | FR-CMS-002 |
+| US-013 | FR-SUPPORT-001 |
+| US-014 | FR-AI-001, FR-AI-005 |
+| US-015 | FR-AI-002, FR-AI-003 |
+| US-016 | FR-AI-006 |
+| US-017 | FR-AI-008 |
+| US-018 | FR-AI-009, SEC-AI-001 |
+| US-019 | FR-TEAM-001, FR-TEAM-002 |
+| US-020 | FR-AUDIT-001 |
