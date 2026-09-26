@@ -7,7 +7,7 @@ const sw=fs.readFileSync(new URL('../service-worker.js',import.meta.url),'utf8')
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 
 const checks=[
-  ['release version',version.version==='0.1.7-alpha.2.4.2'],
+  ['release version',version.version==='0.1.7-alpha.2.4.3'],
   ['account module imported',app.includes("from './account-shell.js'")],
   ['global account chip rendered',app.includes('accountChipMarkup(prefs.uiLocale)')],
   ['home account card rendered',app.includes('accountHomeCardMarkup(prefs.uiLocale)')],

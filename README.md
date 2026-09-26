@@ -1,3 +1,5 @@
+> **Текущий runtime: v0.1.7-alpha.2.4.3 — Devices & Sessions / Session Migration Foundation.** Account Center теперь показывает реальные серверные устройства/сессии и использует session-first credential resolver с безопасным legacy rollback.
+
 > **Текущий runtime: v0.1.7-alpha.2.4.2 — Identity v2 Session Foundation.** Серверные устройства/сессии и отзыв уже реализованы как foundation; legacy Cloud Sync остаётся совместимым.
 
 

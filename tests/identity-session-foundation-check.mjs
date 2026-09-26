@@ -8,7 +8,7 @@ const sw=fs.readFileSync(new URL('../service-worker.js',import.meta.url),'utf8')
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 
 const checks=[
-  ['release version',version.version==='0.1.7-alpha.2.4.2'],
+  ['release version',version.version==='0.1.7-alpha.2.4.3'],
   ['worker session version',worker.includes("0.1.7-alpha.2.4.2-identity-foundation")],
   ['account_devices migration',migration.includes('CREATE TABLE IF NOT EXISTS account_devices')],
   ['account_sessions migration',migration.includes('CREATE TABLE IF NOT EXISTS account_sessions')],
@@ -24,7 +24,7 @@ const checks=[
   ['bridge default is explicit env gate',worker.includes('IDENTITY_V2_BRIDGE_ENABLED')],
   ['capability checks schema readiness',worker.includes('sessionFoundation: schemaReady')&&worker.includes('FROM account_sessions')],
   ['disabled auth remains authoritative',worker.indexOf("mode === 'disabled'")<worker.indexOf('sessionMatch')],
-  ['frontend only reads unauth capabilities',client.includes('/api/v2/auth/capabilities')&&!client.includes('token')],
+  ['identity client supports capability endpoint',client.includes('/api/v2/auth/capabilities')],
   ['account shell exposes server status',account.includes('identityServerFoundation')&&account.includes('identitySessionFoundation')],
   ['service worker caches identity client',sw.includes('./sync/identity-v2-client.js')]
 ];

@@ -1,7 +1,15 @@
 import {loadLocalIdentity} from './identity.js';
 import {cloudflareSyncSummary} from '../sync/cloudflare-config.js';
 import {disconnectCloudAccount} from '../sync/cloud-sync.js';
-import {identityV2Capabilities} from '../sync/identity-v2-client.js';
+import {
+  identityV2Capabilities,
+  identityV2CredentialState,
+  listIdentityV2Sessions,
+  listIdentityV2Devices,
+  revokeIdentityV2Session,
+  revokeIdentityV2Device,
+  clearIdentityV2SessionCredential
+} from '../sync/identity-v2-client.js';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({
   '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
@@ -18,6 +26,31 @@ const initial=value=>{
   const text=String(value||'N').trim();
   const ch=[...text][0]||'N';
   return ch.toUpperCase();
+};
+
+const formatIdentityTime=(value,locale='ru')=>{
+  if(!value)return '—';
+  const date=new Date(value);
+  if(Number.isNaN(date.getTime()))return '—';
+  try{
+    return new Intl.DateTimeFormat(locale==='en'?'en-US':'ru-RU',{
+      dateStyle:'short',
+      timeStyle:'short'
+    }).format(date);
+  }catch{return date.toLocaleString()}
+};
+
+const identityStatusLabel=(value,en)=>{
+  const status=String(value||'unknown');
+  if(status==='active')return en?'Active':'Активно';
+  if(status==='revoked')return en?'Revoked':'Отозвано';
+  return status;
+};
+
+const identityTransportLabel=(mode,en)=>{
+  if(mode==='nexus-session')return en?'Server session':'Server session';
+  if(mode==='legacy-token')return en?'Legacy credential + server API':'Legacy credential + server API';
+  return en?'Not authenticated':'Нет credential';
 };
 
 export function accountSnapshot(locale='ru'){
@@ -168,6 +201,7 @@ export function accountPageMarkup(locale='ru',tab='overview'){
     </div>
   </section>`;
 
+  const credential=identityV2CredentialState();
   const devices=`<div class="account-grid">
     <section class="account-panel glass-panel">
       <span class="eyebrow">CURRENT DEVICE</span>
@@ -176,36 +210,61 @@ export function accountPageMarkup(locale='ru',tab='overview'){
         <div><dt>ID</dt><dd>${esc(a.deviceShort)}</dd></div>
         <div><dt>${en?'State':'Состояние'}</dt><dd>${esc(a.accountState)}</dd></div>
         <div><dt>Cloud</dt><dd>${a.connected?(en?'connected':'подключён'):(en?'not configured':'не настроен')}</dd></div>
+        <div><dt>${en?'Identity transport':'Identity transport'}</dt><dd>${esc(identityTransportLabel(credential.mode,en))}</dd></div>
       </dl>
     </section>
     <section class="account-panel glass-panel">
-      <span class="eyebrow">IDENTITY v2 · TARGET</span>
-      <h2>${en?'Devices & sessions':'Устройства и сессии'}</h2>
-      <p>${en?'The server-side session foundation is introduced in this release. Normal browser sign-in still uses the legacy Cloud bridge until first-party Identity v2 is enabled.':'В этом релизе появляется серверный фундамент сессий. Обычный вход в браузере пока остаётся на legacy Cloud bridge до включения first-party Identity v2.'}</p>
+      <span class="eyebrow">SESSION MIGRATION</span>
+      <h2>${en?'Safe migration state':'Безопасная миграция'}</h2>
+      <p>${en
+        ? 'Account Center can prefer a server session when one exists in sessionStorage and automatically fall back to the current legacy credential if that session expires. Cloud Sync itself remains unchanged for rollback.'
+        : 'Account Center умеет предпочитать server session из sessionStorage и безопасно откатываться к текущему legacy credential, если session истекла. Сам Cloud Sync пока не меняется — это наш rollback.'}</p>
+      <div class="identity-migration-state ${credential.mode==='nexus-session'?'ok':'warn'}">
+        <strong>${esc(identityTransportLabel(credential.mode,en))}</strong>
+        <span>${credential.rollbackAvailable
+          ? (en?'Legacy rollback is available':'Legacy rollback доступен')
+          : (en?'No legacy rollback credential':'Legacy rollback credential отсутствует')}</span>
+      </div>
       <div class="identity-foundation-status" id="identitySessionFoundation">${en?'Checking server foundation…':'Проверяю серверный фундамент…'}</div>
     </section>
-  </div>`;
+  </div>
+  <section class="account-panel glass-panel account-wide identity-runtime-panel">
+    <div class="identity-runtime-head">
+      <div>
+        <span class="eyebrow">IDENTITY v2 · LIVE DATA</span>
+        <h2>${en?'Devices & server sessions':'Устройства и серверные сессии'}</h2>
+        <p>${en
+          ? 'The list is read from the production Identity v2 API. Raw credentials are never rendered.'
+          : 'Список загружается из production Identity v2 API. Raw credentials никогда не выводятся в интерфейс.'}</p>
+      </div>
+      <button class="btn" type="button" id="identityRuntimeRefresh">${en?'Refresh':'Обновить'}</button>
+    </div>
+    <div id="identityDevicesSessions" class="identity-runtime-loading">${en?'Loading server identity state…':'Загружаю серверное состояние Identity…'}</div>
+  </section>`;
 
   const security=`<div class="account-grid">
     <section class="account-panel glass-panel">
       <span class="eyebrow">CURRENT SECURITY</span>
-      <h2>${en?'Alpha authentication bridge':'Alpha-мост авторизации'}</h2>
+      <h2>${en?'Current migration security':'Текущая безопасность миграции'}</h2>
       <ul class="account-security-list">
-        <li class="ok">✓ ${en?'Server stores token hash, not raw token':'Сервер хранит hash токена, а не raw token'}</li>
-        <li class="ok">✓ ${en?'Worker enforces project authorization':'Worker проверяет права проекта'}</li>
-        <li class="warn">! ${en?'Current long-lived token is browser-readable alpha debt':'Текущий long-lived token в браузере — alpha debt'}</li>
+        <li class="ok">✓ ${en?'Server stores session secret hash, not raw nxs credential':'Сервер хранит hash session secret, а не raw nxs credential'}</li>
+        <li class="ok">✓ ${en?'Server-side session revoke is LIVE verified':'Server-side revoke сессии LIVE подтверждён'}</li>
+        <li class="ok">✓ ${en?'Devices / sessions API is available':'Devices / sessions API доступен'}</li>
+        <li class="ok">✓ ${en?'Legacy Cloud Sync rollback remains available':'Legacy Cloud Sync rollback сохранён'}</li>
+        <li class="warn">! ${en?'Normal browser sign-in still depends on a browser-readable legacy token':'Обычный вход браузера пока зависит от browser-readable legacy token'}</li>
       </ul>
     </section>
     <section class="account-panel glass-panel">
       <span class="eyebrow">IDENTITY v2</span>
-      <h2>${en?'Target security':'Целевая безопасность'}</h2>
+      <h2>${en?'Security roadmap':'Дорожная карта безопасности'}</h2>
       <ul class="account-security-list">
         <li id="identityServerFoundation">${en?'Identity v2 server foundation: checking…':'Identity v2 server foundation: проверка…'}</li>
+        <li class="ok">✓ ${en?'Revocable server sessions':'Отзываемые серверные сессии'}</li>
+        <li class="ok">✓ ${en?'Devices / sessions management foundation':'Фундамент управления устройствами / сессиями'}</li>
+        <li>${en?'First-party HttpOnly session':'First-party HttpOnly session'}</li>
         <li>Passkey / WebAuthn</li>
         <li>TOTP MFA + recovery codes</li>
-        <li>Revocable HttpOnly sessions</li>
         <li>Explicit account linking</li>
-        <li>Devices / sessions management</li>
         <li>Step-up for sensitive/admin actions</li>
       </ul>
       <p class="account-muted">${en?'No session token, provider secret or recovery credential is rendered on this page.':'На этой странице не отображаются session token, provider secret или recovery credential.'}</p>
@@ -232,6 +291,167 @@ export function accountPageMarkup(locale='ru',tab='overview'){
   </section>`;
 }
 
+
+function identityRuntimeErrorMessage(error,en){
+  const code=String(error?.code||'IDENTITY_V2_ERROR');
+  if(code==='CLOUD_NOT_CONFIGURED')return en?'Nexus Cloud is not configured on this device.':'Nexus Cloud не настроен на этом устройстве.';
+  if(code==='IDENTITY_CREDENTIAL_MISSING')return en?'No account credential is available.':'Нет доступного account credential.';
+  if(code==='INVALID_SESSION')return en?'The server session is no longer valid. Legacy fallback will be used when available.':'Server session больше недействительна. При наличии будет использован legacy fallback.';
+  return error?.message||code;
+}
+
+function deviceRowMarkup(device,{locale='ru',currentDeviceId=null}={}){
+  const en=locale==='en';
+  const current=Boolean(currentDeviceId&&device.id===currentDeviceId);
+  const active=device.status==='active';
+  return `<article class="identity-runtime-item ${current?'current':''} ${active?'':'revoked'}">
+    <div class="identity-runtime-item-main">
+      <div class="identity-runtime-title">
+        <strong>${esc(device.label||device.platform||(en?'Nexus device':'Устройство Nexus'))}</strong>
+        ${current?`<span class="identity-badge current">${en?'THIS DEVICE':'ЭТО УСТРОЙСТВО'}</span>`:''}
+        <span class="identity-badge ${active?'active':'revoked'}">${esc(identityStatusLabel(device.status,en))}</span>
+      </div>
+      <div class="identity-runtime-meta">
+        <span>${esc(device.platform||'—')}</span>
+        <span>ID ${esc(shortId(device.id))}</span>
+        <span>${en?'Last seen':'Последняя активность'}: ${esc(formatIdentityTime(device.lastSeenAt,locale))}</span>
+        <span>${en?'Active sessions':'Активные сессии'}: ${Number(device.activeSessions||0)}</span>
+      </div>
+    </div>
+    <div class="identity-runtime-actions">
+      ${active?`<button class="btn danger small" type="button"
+        data-identity-action="revoke-device"
+        data-device-id="${esc(device.id)}"
+        data-current-device="${current?'1':'0'}">${current?(en?'Disconnect this device':'Отключить это устройство'):(en?'Revoke device':'Отключить устройство')}</button>`:''}
+    </div>
+  </article>`;
+}
+
+function sessionRowMarkup(session,{locale='ru'}={}){
+  const en=locale==='en';
+  const active=session.status==='active';
+  const title=session.deviceLabel||session.devicePlatform||(en?'Nexus session':'Сессия Nexus');
+  return `<article class="identity-runtime-item ${session.current?'current':''} ${active?'':'revoked'}">
+    <div class="identity-runtime-item-main">
+      <div class="identity-runtime-title">
+        <strong>${esc(title)}</strong>
+        ${session.current?`<span class="identity-badge current">${en?'CURRENT':'ТЕКУЩАЯ'}</span>`:''}
+        <span class="identity-badge ${active?'active':'revoked'}">${esc(identityStatusLabel(session.status,en))}</span>
+      </div>
+      <div class="identity-runtime-meta">
+        <span>${esc(session.authStrength||'—')}</span>
+        <span>ID ${esc(shortId(session.id))}</span>
+        <span>${en?'Last seen':'Последняя активность'}: ${esc(formatIdentityTime(session.lastSeenAt,locale))}</span>
+        <span>${en?'Absolute expiry':'Absolute expiry'}: ${esc(formatIdentityTime(session.absoluteExpiresAt,locale))}</span>
+      </div>
+    </div>
+    <div class="identity-runtime-actions">
+      ${active?`<button class="btn danger small" type="button"
+        data-identity-action="revoke-session"
+        data-session-id="${esc(session.id)}"
+        data-current-session="${session.current?'1':'0'}">${session.current?(en?'Sign out this session':'Завершить эту сессию'):(en?'End session':'Завершить сессию')}</button>`:''}
+    </div>
+  </article>`;
+}
+
+async function refreshIdentityDevicesSessions(locale='ru'){
+  const root=document.querySelector('#identityDevicesSessions');
+  if(!root)return;
+  const en=locale==='en';
+  const identity=loadLocalIdentity();
+
+  root.className='identity-runtime-loading';
+  root.textContent=en?'Loading server identity state…':'Загружаю серверное состояние Identity…';
+
+  try{
+    const [devicesResult,sessionsResult]=await Promise.all([
+      listIdentityV2Devices(),
+      listIdentityV2Sessions()
+    ]);
+
+    const devices=devicesResult.devices||[];
+    const sessions=sessionsResult.sessions||[];
+    const fallback=Boolean(devicesResult.legacyFallback||sessionsResult.legacyFallback);
+    const mode=sessionsResult.credentialMode||devicesResult.credentialMode||identityV2CredentialState().mode;
+
+    const activeSessions=sessions.filter(item=>item.status==='active').length;
+    const currentSessions=sessions.filter(item=>item.current).length;
+
+    root.className='identity-runtime';
+    root.innerHTML=`<div class="identity-runtime-summary">
+      <span class="identity-summary-chip ${mode==='nexus-session'?'ok':'warn'}">${esc(identityTransportLabel(mode,en))}</span>
+      <span>${en?'Devices':'Устройства'}: <strong>${devices.length}</strong></span>
+      <span>${en?'Active sessions':'Активные сессии'}: <strong>${activeSessions}</strong></span>
+      <span>${en?'Current server session':'Текущая server session'}: <strong>${currentSessions||0}</strong></span>
+      ${fallback?`<span class="identity-summary-chip warn">${en?'Stale session cleared · legacy rollback used':'Старая session очищена · использован legacy rollback'}</span>`:''}
+    </div>
+    <div class="identity-runtime-columns">
+      <section>
+        <h3>${en?'Server devices':'Серверные устройства'}</h3>
+        <div class="identity-runtime-list">
+          ${devices.length
+            ? devices.map(device=>deviceRowMarkup(device,{locale,currentDeviceId:identity.deviceId})).join('')
+            : `<div class="identity-empty">${en?'No server devices yet.':'Серверных устройств пока нет.'}</div>`}
+        </div>
+      </section>
+      <section>
+        <h3>${en?'Server sessions':'Серверные сессии'}</h3>
+        <div class="identity-runtime-list">
+          ${sessions.length
+            ? sessions.map(session=>sessionRowMarkup(session,{locale})).join('')
+            : `<div class="identity-empty">${en?'No server sessions yet.':'Серверных сессий пока нет.'}</div>`}
+        </div>
+      </section>
+    </div>
+    <div class="identity-runtime-note">${mode==='nexus-session'
+      ? (en?'Account Center is using a revocable server session. Legacy Cloud remains available only as migration rollback.':'Account Center использует отзываемую server session. Legacy Cloud остаётся только как migration rollback.')
+      : (en?'Account Center is controlling the Identity v2 server through the current legacy credential. This is the migration compatibility mode; Cloud Sync remains unchanged.':'Account Center управляет Identity v2 сервером через текущий legacy credential. Это режим миграционной совместимости; Cloud Sync остаётся без изменений.')}</div>`;
+
+    root.onclick=async event=>{
+      const button=event.target?.closest?.('[data-identity-action]');
+      if(!button)return;
+      const action=button.dataset.identityAction;
+      button.disabled=true;
+
+      try{
+        if(action==='revoke-session'){
+          const id=button.dataset.sessionId;
+          const current=button.dataset.currentSession==='1';
+          const ok=confirm(current
+            ? (en?'End the current server session? Account Center will fall back to the legacy credential if available.':'Завершить текущую server session? Account Center откатится на legacy credential, если он доступен.')
+            : (en?'End this server session?':'Завершить эту серверную сессию?'));
+          if(!ok)return;
+          await revokeIdentityV2Session(id,{current});
+          if(current)clearIdentityV2SessionCredential();
+          await refreshIdentityDevicesSessions(locale);
+          return;
+        }
+
+        if(action==='revoke-device'){
+          const id=button.dataset.deviceId;
+          const currentDevice=button.dataset.currentDevice==='1';
+          const ok=confirm(currentDevice
+            ? (en?'Disconnect this device from server Identity? Any active server sessions on it will be revoked. Local projects and the legacy Cloud configuration will remain.':'Отключить это устройство от server Identity? Все активные server sessions на нём будут отозваны. Локальные проекты и legacy Cloud configuration останутся.')
+            : (en?'Revoke this device and all active server sessions on it?':'Отключить это устройство и отозвать все активные server sessions на нём?'));
+          if(!ok)return;
+          await revokeIdentityV2Device(id,{currentDevice});
+          if(currentDevice)clearIdentityV2SessionCredential();
+          await refreshIdentityDevicesSessions(locale);
+        }
+      }catch(error){
+        root.className='identity-runtime-error';
+        root.innerHTML=`<strong>${en?'Identity action failed':'Ошибка Identity action'}</strong><span>${esc(identityRuntimeErrorMessage(error,en))}</span><button class="btn" type="button" id="identityRuntimeRetry">${en?'Retry':'Повторить'}</button>`;
+        document.querySelector('#identityRuntimeRetry')?.addEventListener('click',()=>refreshIdentityDevicesSessions(locale));
+      }finally{
+        button.disabled=false;
+      }
+    };
+  }catch(error){
+    root.className='identity-runtime-error';
+    root.innerHTML=`<strong>${en?'Could not load Devices & Sessions':'Не удалось загрузить Devices & Sessions'}</strong><span>${esc(identityRuntimeErrorMessage(error,en))}</span><button class="btn" type="button" id="identityRuntimeRetry">${en?'Retry':'Повторить'}</button>`;
+    document.querySelector('#identityRuntimeRetry')?.addEventListener('click',()=>refreshIdentityDevicesSessions(locale));
+  }
+}
 
 async function refreshIdentityFoundationStatus(locale='ru'){
   const en=locale==='en';
@@ -298,6 +518,8 @@ export function bindAccountShell({locale='ru',onChanged=()=>{}}={}){
   document.addEventListener('click',close);
   document.querySelectorAll('#accountMenu a').forEach(a=>a.addEventListener('click',close));
   refreshIdentityFoundationStatus(locale);
+  refreshIdentityDevicesSessions(locale);
+  document.querySelector('#identityRuntimeRefresh')?.addEventListener('click',()=>refreshIdentityDevicesSessions(locale));
 
   document.querySelector('#accountDisconnect')?.addEventListener('click',()=>{
     const en=locale==='en';

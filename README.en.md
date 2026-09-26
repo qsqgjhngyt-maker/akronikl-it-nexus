@@ -1,3 +1,5 @@
+> **Current runtime: v0.1.7-alpha.2.4.3 — Devices & Sessions / Session Migration Foundation.** Account Center now shows real server devices/sessions and uses a session-first credential resolver with safe legacy rollback.
+
 > **Current runtime: v0.1.7-alpha.2.4.2 — Identity v2 Session Foundation.** Server-side devices/sessions and revocation are now a foundation while legacy Cloud Sync remains compatible.
 
 
