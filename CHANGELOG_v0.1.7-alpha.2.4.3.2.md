@@ -1,13 +1,21 @@
 # CHANGELOG v0.1.7-alpha.2.4.3.2
 
-## Fixed
-- Account Center no longer requires F5 to update `Identity transport` after revoking the current server session.
-- `SESSION MIGRATION` state now switches immediately from `Server session` to `Legacy credential + server API` when the temporary `nxs_...` credential is removed.
-- automatic stale-session fallback also refreshes the top summary.
+## Identity Session UI State Refresh Hotfix
 
-## Unchanged
-- session revoke API;
-- device revoke API;
-- D1 schema;
-- Cloud Sync protocol;
-- migration bridge policy.
+### Исправлено
+- верхняя сводка Identity больше не остаётся stale после отзыва текущей server-session;
+- Session Migration мгновенно отражает automatic legacy fallback;
+- live Devices & Sessions и верхние карточки используют согласованное credential state.
+
+### LIVE подтверждение
+- revoke current session through UI: PASS;
+- fallback without F5: PASS;
+- D1 revoked state: PASS;
+- security audit: PASS;
+- disposable device revoke: PASS;
+- working device preserved: PASS.
+
+### Production
+- Worker: unchanged;
+- D1 schema: unchanged;
+- `IDENTITY_V2_BRIDGE_ENABLED=false`.

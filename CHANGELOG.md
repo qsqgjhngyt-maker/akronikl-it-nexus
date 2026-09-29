@@ -1,4 +1,4 @@
-- 0.1.7-alpha.2.4.3.2 — Identity Session UI State Refresh Hotfix: Account Center top Identity summary now refreshes immediately after current-session revoke / legacy fallback; no Worker, D1 or Cloud Sync protocol change.
+- 0.1.7-alpha.2.4.3.2 — Identity Session UI State Refresh Hotfix: FULL LIVE PASS; no-F5 session revoke fallback + controlled device revoke confirmed.
 - 0.1.7-alpha.2.4.3.1 — Cloud UX & Account Routing Cleanup: Nexus Cloud account setup moved to Account Center; Projects dashboard now contains only project actions; cloud import/settings route through the Account Center; backend unchanged.
 - 0.1.7-alpha.2.4.3 — Devices & Sessions / Session Migration Foundation: real server device/session UI, revoke actions, session-first Account Center resolver and safe legacy rollback; backend 2.4.2 retained.
 - 0.1.7-alpha.2.4.2 — Identity v2 Session Foundation LIVE PASS: D1 sessions/devices/security audit, revocation, controlled legacy bridge, Cloud Sync backward compatibility and full session lifecycle production verification.

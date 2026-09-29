@@ -1,19 +1,43 @@
 # RELEASE v0.1.7-alpha.2.4.3.2
 
-**Name:** Identity Session UI State Refresh Hotfix  
-**Date:** 2026-09-29  
-**Type:** frontend-only Identity v2 hotfix
+**Название:** Identity Session UI State Refresh Hotfix  
+**Дата закрытия:** 2026-09-29  
+**Тип:** frontend-only Identity v2 hotfix  
+**Статус:** FULL LIVE PASS
 
-## Purpose
-Close the final UX defect discovered during the real Account Center session revoke / automatic legacy fallback LIVE test.
+## Назначение
+Закрыть последний UX-дефект, обнаруженный при реальном отзыве текущей server-session и автоматическом fallback на legacy Nexus credential.
 
-## Result
-Account Center summary and live session panel now derive from the same canonical browser credential state after every Identity refresh.
+## Что исправлено
+После отзыва текущей `nxs_...` session Account Center без F5 синхронно обновляет:
+- `CURRENT DEVICE → Identity transport`;
+- `SESSION MIGRATION`;
+- live Devices & Sessions summary.
 
-## Server baseline
-No backend deployment required.
+## Подтверждено LIVE
+- controlled server session;
+- bridge returned to false;
+- current session revoke through UI;
+- immediate automatic legacy fallback;
+- no-F5 summary refresh;
+- D1 revoked state;
+- security audit;
+- disposable device revoke;
+- preservation of the working registered device.
 
-## Release gate
-- automated regression: required PASS;
-- post-deploy desktop reactive revoke smoke: required;
-- iPhone/Android spot-check: required.
+## Финальное D1-состояние controlled test
+- devices: 2
+- active devices: 1
+- revoked devices: 1
+- sessions: 3
+- active sessions: 0
+- revoked sessions: 3
+- security events: 7
+
+## Production
+`IDENTITY_V2_BRIDGE_ENABLED=false`
+
+Worker and D1 schema are unchanged by this hotfix.
+
+## Следующий этап
+`v0.1.7-alpha.2.4.4 — Session-First Cloud Migration Foundation`

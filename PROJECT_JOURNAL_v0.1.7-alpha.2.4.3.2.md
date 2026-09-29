@@ -1,16 +1,31 @@
 # PROJECT JOURNAL — v0.1.7-alpha.2.4.3.2
 
-Date: 2026-09-29
+Дата: 2026-09-29
 
-The controlled Identity v2 UI lifecycle test reached FULL server-side success:
-- disposable device/session created;
-- bridge returned to false;
-- Account Center authenticated with server session;
-- current session revoked through product UI;
-- live block fell back to legacy credential;
-- D1 moved active 1→0 and revoked 1→2;
-- security audit recorded `auth.session.revoked success`.
+## Причина hotfix
+Во время controlled Identity v2 session lifecycle теста серверная session отзывалась корректно и нижний LIVE-блок сразу переходил на legacy fallback, но верхние карточки Account Center оставались в состоянии `Server session` до F5.
 
-The test also exposed a narrow frontend defect: summary cards were rendered once and did not react to credential removal until F5.
+## Исправление
+Введена единая реактивная проекция credential state для:
+- CURRENT DEVICE;
+- SESSION MIGRATION;
+- Devices & Sessions live summary.
 
-Decision: fix state projection only; do not touch the proven Worker/session lifecycle.
+## LIVE-проверка после исправления
+1. `v0.1.7-alpha.2.4.3.2` опубликован.
+2. Создана новая disposable `nxs_...` session.
+3. Bridge возвращён в `false`.
+4. Account Center увидел текущую server session.
+5. Session отозвана через UI.
+6. Без F5 верхняя и нижняя части интерфейса одновременно перешли на `Legacy credential + server API`.
+7. Disposable device отозван отдельно.
+8. D1 подтвердил итоговые счётчики и security events.
+
+## Итог
+Hotfix и полный controlled Devices & Sessions lifecycle закрыты как FULL LIVE PASS.
+
+## Production state
+`IDENTITY_V2_BRIDGE_ENABLED=false`
+
+## Следующая архитектурная работа
+`v0.1.7-alpha.2.4.4 — Session-First Cloud Migration Foundation`.
