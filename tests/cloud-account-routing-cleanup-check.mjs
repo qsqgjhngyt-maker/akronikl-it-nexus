@@ -3,7 +3,7 @@ const project=fs.readFileSync(new URL('../project-studio/project-studio.js',impo
 const account=fs.readFileSync(new URL('../core/account-shell.js',import.meta.url),'utf8');
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 const checks=[
- ['release version',version.version==='0.1.7-alpha.2.4.4'],
+ ['release version',version.version==='0.1.7-alpha.2.4.5'],
  ['projects dashboard setup button removed',!project.includes('id=\"psCloudSetup\"')],
  ['projects dashboard retains cloud import',project.includes('id=\"psCloudImport\"')],
  ['unconfigured cloud import routes to account',project.includes("location.hash='#view=account&tab=cloud'")],

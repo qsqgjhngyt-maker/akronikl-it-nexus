@@ -1,7 +1,9 @@
-const VERSION = '0.1.7-alpha.2.4.2-identity-foundation';
+const VERSION = '0.1.7-alpha.2.4.5-first-party-cookie-foundation';
 const MAX_SNAPSHOT_BYTES = 1500000;
 const SESSION_IDLE_MINUTES = 60;
 const SESSION_ABSOLUTE_HOURS = 8;
+const FIRST_PARTY_SESSION_COOKIE = '__Host-nexus_session';
+const FIRST_PARTY_COOKIE_MAX_AGE_SECONDS = SESSION_ABSOLUTE_HOURS * 60 * 60;
 
 const ROLE_GRANTS = Object.freeze({
   owner: ['*'],
@@ -151,6 +153,94 @@ function evaluateProjectAccess(
   };
 }
 
+function envFlag(env, name) {
+  return String(env?.[name] || 'false').toLowerCase() === 'true';
+}
+
+function firstPartySessionEnabled(env) {
+  return (
+    envFlag(env, 'FIRST_PARTY_SESSION_ENABLED') &&
+    envFlag(env, 'FIRST_PARTY_DEPLOYMENT_CONFIRMED')
+  );
+}
+
+function allowedOrigin(env) {
+  return String(env.ALLOWED_ORIGIN || '').trim();
+}
+
+function requestMatchesFirstPartyOrigin(request, env) {
+  const allowed = allowedOrigin(env);
+  if (!allowed) return false;
+
+  const origin = request.headers.get('origin');
+  if (origin) return origin === allowed;
+
+  try {
+    return new URL(request.url).origin === allowed;
+  } catch {
+    return false;
+  }
+}
+
+function requireFirstPartyRequest(request, env) {
+  if (!firstPartySessionEnabled(env)) {
+    throw new ApiError(
+      409,
+      'FIRST_PARTY_SESSION_DISABLED',
+      'First-party HttpOnly session transport is not enabled for this deployment.'
+    );
+  }
+
+  if (!requestMatchesFirstPartyOrigin(request, env)) {
+    throw new ApiError(
+      403,
+      'FIRST_PARTY_ORIGIN_REQUIRED',
+      'First-party session requests require the configured Nexus application origin.'
+    );
+  }
+}
+
+function cookieValue(request, name) {
+  const raw = request.headers.get('cookie') || '';
+  const prefix = `${name}=`;
+
+  for (const part of raw.split(';')) {
+    const value = part.trim();
+    if (value.startsWith(prefix)) {
+      return value.slice(prefix.length);
+    }
+  }
+
+  return '';
+}
+
+function firstPartySessionCookie(rawToken) {
+  return [
+    `${FIRST_PARTY_SESSION_COOKIE}=${String(rawToken || '')}`,
+    'Path=/',
+    'HttpOnly',
+    'Secure',
+    'SameSite=Strict',
+    `Max-Age=${FIRST_PARTY_COOKIE_MAX_AGE_SECONDS}`
+  ].join('; ');
+}
+
+function clearFirstPartySessionCookie() {
+  return [
+    `${FIRST_PARTY_SESSION_COOKIE}=`,
+    'Path=/',
+    'HttpOnly',
+    'Secure',
+    'SameSite=Strict',
+    'Max-Age=0',
+    'Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+  ].join('; ');
+}
+
+function requestHasFirstPartySessionCookie(request) {
+  return Boolean(cookieValue(request, FIRST_PARTY_SESSION_COOKIE));
+}
+
 function corsHeaders(request, env) {
   const origin = request.headers.get('origin');
   const allowed = String(env.ALLOWED_ORIGIN || '').trim();
@@ -164,6 +254,9 @@ function corsHeaders(request, env) {
 
   return {
     'access-control-allow-origin': origin,
+    ...(firstPartySessionEnabled(env)
+      ? {'access-control-allow-credentials': 'true'}
+      : {}),
     'access-control-allow-methods':
       'GET,PUT,POST,DELETE,OPTIONS',
     'access-control-allow-headers':
@@ -437,6 +530,27 @@ async function authenticate(request, env) {
     );
   }
 
+  if (!authorization && firstPartySessionEnabled(env)) {
+    const cookieToken = cookieValue(
+      request,
+      FIRST_PARTY_SESSION_COOKIE
+    );
+
+    if (cookieToken) {
+      requireFirstPartyRequest(request, env);
+
+      const actor = await authenticateSessionBearer(
+        cookieToken,
+        env
+      );
+
+      return {
+        ...actor,
+        authMode: 'nexus-cookie'
+      };
+    }
+  }
+
   if (mode === 'dev') {
     if (
       String(env.ENVIRONMENT || 'development') ===
@@ -691,8 +805,16 @@ async function identityCapabilities(env) {
     bridgeEnabled:
       schemaReady && bridgeEnabled(env),
     legacyTokenCompatible: true,
-    cookieSessionEnabled: false,
-    firstPartyDeploymentRequired: true,
+    cookieSessionEnabled: firstPartySessionEnabled(env),
+    cookieSessionFoundation: true,
+    firstPartyDeploymentRequired: !firstPartySessionEnabled(env),
+    cookie: {
+      name: FIRST_PARTY_SESSION_COOKIE,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Strict',
+      hostOnly: true
+    },
     session: {
       idleMinutes: SESSION_IDLE_MINUTES,
       absoluteHours: SESSION_ABSOLUTE_HOURS
@@ -867,6 +989,69 @@ async function createSessionBridge(request, env, actor) {
     warning:
       'Foundation token is shown once. Do not store it in Git, screenshots, or long-lived browser storage.'
   };
+}
+
+async function upgradeSessionToFirstPartyCookie(request, env, actor) {
+  requireFirstPartyRequest(request, env);
+
+  if (actor.authMode !== 'nexus-session' || !actor.sessionId) {
+    throw new ApiError(
+      409,
+      'SESSION_BEARER_REQUIRED',
+      'Cookie upgrade requires an authenticated Nexus session bearer.'
+    );
+  }
+
+  const authorization = request.headers.get('authorization') || '';
+  const match = /^Bearer\s+(nxs_[A-Za-z0-9_-]{24,})$/i.exec(authorization);
+
+  if (!match) {
+    throw new ApiError(
+      409,
+      'SESSION_BEARER_REQUIRED',
+      'Cookie upgrade requires the current Nexus session bearer.'
+    );
+  }
+
+  await securityEvent(env, {
+    subjectId: actor.subjectId,
+    sessionId: actor.sessionId,
+    deviceId: actor.deviceId || null,
+    action: 'auth.session.cookie_upgraded',
+    metadata: {
+      cookie: FIRST_PARTY_SESSION_COOKIE,
+      sameSite: 'Strict'
+    }
+  });
+
+  return json(
+    {
+      ok: true,
+      cookieSession: true,
+      sessionId: actor.sessionId,
+      authMode: 'nexus-cookie',
+      clearBrowserSessionCredential: true
+    },
+    200,
+    {
+      'set-cookie': firstPartySessionCookie(match[1])
+    }
+  );
+}
+
+function clearFirstPartyCookieResponse(request, env) {
+  requireFirstPartyRequest(request, env);
+
+  return json(
+    {
+      ok: true,
+      cookieCleared: true
+    },
+    200,
+    {
+      'set-cookie': clearFirstPartySessionCookie()
+    }
+  );
 }
 
 async function currentSession(env, actor) {
@@ -1260,6 +1445,12 @@ async function health(env) {
       identity.sessionFoundation,
     identityV2BridgeEnabled:
       identity.bridgeEnabled,
+    identityV2CookieSessionFoundation:
+      identity.cookieSessionFoundation,
+    identityV2CookieSessionEnabled:
+      identity.cookieSessionEnabled,
+    firstPartyDeploymentRequired:
+      identity.firstPartyDeploymentRequired,
     maxSnapshotBytes:
       MAX_SNAPSHOT_BYTES
   };
@@ -2333,6 +2524,16 @@ async function route(
     );
   }
 
+  if (
+    path === '/api/v2/session/cookie/clear' &&
+    request.method === 'POST'
+  ) {
+    return clearFirstPartyCookieResponse(
+      request,
+      env
+    );
+  }
+
   if (path.startsWith('/api/v2/')) {
     const actor =
       await authenticate(request, env);
@@ -2348,6 +2549,17 @@ async function route(
           actor
         ),
         201
+      );
+    }
+
+    if (
+      path === '/api/v2/session/cookie/upgrade' &&
+      request.method === 'POST'
+    ) {
+      return upgradeSessionToFirstPartyCookie(
+        request,
+        env,
+        actor
       );
     }
 
@@ -2371,13 +2583,19 @@ async function route(
           'Current credential is not a Nexus session.'
         );
       }
+      const revoked = await revokeIdentitySession(
+        env,
+        actor,
+        actor.sessionId,
+        'logout'
+      );
+
       return json(
-        await revokeIdentitySession(
-          env,
-          actor,
-          actor.sessionId,
-          'logout'
-        )
+        revoked,
+        200,
+        actor.authMode === 'nexus-cookie'
+          ? {'set-cookie': clearFirstPartySessionCookie()}
+          : {}
       );
     }
 
@@ -2600,10 +2818,18 @@ export default {
         }
       };
 
+      const responseHeaders =
+        error?.code === 'INVALID_SESSION' &&
+        firstPartySessionEnabled(env) &&
+        requestHasFirstPartySessionCookie(request)
+          ? {'set-cookie': clearFirstPartySessionCookie()}
+          : {};
+
       return withCors(
         json(
           body,
-          status
+          status,
+          responseHeaders
         ),
         request,
         env

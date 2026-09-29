@@ -7,10 +7,10 @@ const worker=fs.readFileSync(new URL('../cloudflare/nexus-sync-worker/src/index.
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 
 const checks=[
-  ['release version',version.version==='0.1.7-alpha.2.4.4'],
-  ['session credential is sessionStorage-only',client.includes("sessionStorage")&&!client.includes("localStorage")],
+  ['release version',version.version==='0.1.7-alpha.2.4.5'],
+  ['raw nxs credential remains sessionStorage-only',client.includes("sessionStore()?.setItem(SESSION_KEY")&&!client.includes("markerStore()?.setItem(SESSION_KEY")],
   ['formal server-session storage key',client.includes('akronikl:it-nexus:identity-v2:session:v1')],
-  ['session-first resolver',client.includes("mode=sessionCredential")&&client.includes("'nexus-session'")],
+  ['credential resolver supports cookie/session precedence',client.includes("cookieSessionPresent")&&client.includes("'nexus-cookie'")&&client.includes("'nexus-session'")],
   ['legacy rollback resolver',client.includes("legacyCredential")&&client.includes("'legacy-token'")&&client.includes('rollbackAvailable')],
   ['stale session clears before fallback',client.includes('clearIdentityV2SessionCredential();')&&client.includes('mayFallback')],
   ['sessions API client',client.includes("'/api/v2/sessions'")],

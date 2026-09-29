@@ -1,8 +1,10 @@
 import {loadCloudflareSyncConfig} from './cloudflare-config.js';
 
 const SESSION_KEY='akronikl:it-nexus:identity-v2:session:v1';
+const COOKIE_MARKER_KEY='akronikl:it-nexus:identity-v2:cookie-session:v1';
 const trimBase=value=>String(value||'').trim().replace(/\/+$/,'');
 const sessionStore=()=>globalThis.sessionStorage||null;
+const markerStore=()=>globalThis.localStorage||null;
 
 async function readJson(response){
   const text=await response.text();
@@ -44,37 +46,72 @@ export function clearIdentityV2SessionCredential(){
   return true;
 }
 
+export function identityV2CookieMarkerStorageKey(){return COOKIE_MARKER_KEY}
+
+export function loadIdentityV2CookieSessionMarker(){
+  const cloud=loadCloudflareSyncConfig();
+  const endpoint=trimBase(cloud.baseUrl);
+  const marker=String(markerStore()?.getItem(COOKIE_MARKER_KEY)||'');
+
+  if(!marker||!endpoint||marker!==endpoint){
+    if(marker)markerStore()?.removeItem(COOKIE_MARKER_KEY);
+    return '';
+  }
+
+  return marker;
+}
+
+export function saveIdentityV2CookieSessionMarker(endpoint){
+  const value=trimBase(endpoint);
+  if(!value)throw new Error('Invalid first-party cookie endpoint.');
+  markerStore()?.setItem(COOKIE_MARKER_KEY,value);
+  return true;
+}
+
+export function clearIdentityV2CookieSessionMarker(){
+  markerStore()?.removeItem(COOKIE_MARKER_KEY);
+  return true;
+}
+
 export function identityV2CredentialState(){
   const cloud=loadCloudflareSyncConfig();
+  const endpoint=trimBase(cloud.baseUrl);
+  const cookieSessionPresent=Boolean(loadIdentityV2CookieSessionMarker());
   const sessionCredential=loadIdentityV2SessionCredential();
   const legacyCredential=String(cloud.token||'');
-  const mode=sessionCredential
-    ? 'nexus-session'
-    : legacyCredential
-      ? 'legacy-token'
-      : 'none';
+  const mode=cookieSessionPresent
+    ? 'nexus-cookie'
+    : sessionCredential
+      ? 'nexus-session'
+      : legacyCredential
+        ? 'legacy-token'
+        : 'none';
 
   return{
     mode,
+    cookieSessionPresent,
     sessionCredentialPresent:Boolean(sessionCredential),
     legacyCredentialPresent:Boolean(legacyCredential),
     cloudConfigured:Boolean(cloud.baseUrl&&cloud.subjectId),
-    endpoint:trimBase(cloud.baseUrl),
+    endpoint,
     rollbackAvailable:Boolean(legacyCredential)
   };
 }
 
 function credentialCandidates(){
   const cloud=loadCloudflareSyncConfig();
+  const endpoint=trimBase(cloud.baseUrl);
+  const cookieSessionPresent=Boolean(loadIdentityV2CookieSessionMarker());
   const sessionCredential=loadIdentityV2SessionCredential();
   const legacyCredential=String(cloud.token||'');
   const list=[];
 
+  if(cookieSessionPresent)list.push({mode:'nexus-cookie',cookie:true});
   if(sessionCredential)list.push({mode:'nexus-session',token:sessionCredential});
   if(legacyCredential)list.push({mode:'legacy-token',token:legacyCredential});
 
   return{
-    endpoint:trimBase(cloud.baseUrl),
+    endpoint,
     candidates:list
   };
 }
@@ -93,10 +130,11 @@ async function authenticatedRequest(path,{method='GET',body=null,allowLegacyFall
     try{
       response=await fetch(endpoint+path,{
         method,
+        ...(candidate.cookie?{credentials:'include'}:{}),
         headers:{
           'accept':'application/json',
           ...(body!==null?{'content-type':'application/json'}:{}),
-          'authorization':`Bearer ${candidate.token}`
+          ...(!candidate.cookie?{'authorization':`Bearer ${candidate.token}`}:{})
         },
         ...(body!==null?{body:JSON.stringify(body)}:{})
       });
@@ -121,14 +159,18 @@ async function authenticatedRequest(path,{method='GET',body=null,allowLegacyFall
     // account credential during migration. Never fall back for arbitrary
     // authorization failures.
     const mayFallback=
-      candidate.mode==='nexus-session' &&
+      ['nexus-cookie','nexus-session'].includes(candidate.mode) &&
       allowLegacyFallback &&
-      candidates[i+1]?.mode==='legacy-token' &&
+      Boolean(candidates[i+1]) &&
       response.status===401 &&
       ['INVALID_SESSION','UNAUTHORIZED'].includes(code);
 
     if(mayFallback){
-      clearIdentityV2SessionCredential();
+      if(candidate.mode==='nexus-cookie'){
+        clearIdentityV2CookieSessionMarker();
+      }else{
+        clearIdentityV2SessionCredential();
+      }
       continue;
     }
 
@@ -181,7 +223,9 @@ export async function identityV2Capabilities(){
       bridgeEnabled:Boolean(body?.bridgeEnabled),
       legacyTokenCompatible:Boolean(body?.legacyTokenCompatible),
       cookieSessionEnabled:Boolean(body?.cookieSessionEnabled),
+      cookieSessionFoundation:Boolean(body?.cookieSessionFoundation),
       firstPartyDeploymentRequired:body?.firstPartyDeploymentRequired!==false,
+      cookie:body?.cookie||null,
       session:body?.session||null,
       reason:null
     };
@@ -192,6 +236,105 @@ export async function identityV2Capabilities(){
       bridgeEnabled:false,
       reason:error?.message||'network-error'
     };
+  }
+}
+
+export async function identityV2UpgradeSessionToCookie(){
+  const config=loadCloudflareSyncConfig();
+  const endpoint=trimBase(config.baseUrl);
+  const token=loadIdentityV2SessionCredential();
+
+  if(!endpoint){
+    throw new IdentityV2ClientError('Nexus Cloud endpoint is not configured.',{code:'CLOUD_NOT_CONFIGURED'});
+  }
+  if(!token){
+    throw new IdentityV2ClientError('A Nexus server session is required for HttpOnly upgrade.',{code:'SESSION_BEARER_REQUIRED'});
+  }
+
+  const capabilities=await identityV2Capabilities();
+  if(!capabilities.cookieSessionEnabled){
+    throw new IdentityV2ClientError(
+      'First-party HttpOnly session transport is not enabled for this deployment.',
+      {code:'FIRST_PARTY_SESSION_DISABLED'}
+    );
+  }
+
+  const response=await fetch(endpoint+'/api/v2/session/cookie/upgrade',{
+    method:'POST',
+    credentials:'include',
+    headers:{
+      'accept':'application/json',
+      'authorization':`Bearer ${token}`
+    }
+  });
+  const payload=await readJson(response);
+
+  if(!response.ok){
+    throw new IdentityV2ClientError(
+      payload?.error?.message||'HttpOnly session upgrade failed.',
+      {status:response.status,code:payload?.error?.code||`HTTP_${response.status}`,payload}
+    );
+  }
+
+  saveIdentityV2CookieSessionMarker(endpoint);
+  clearIdentityV2SessionCredential();
+
+  return payload;
+}
+
+export async function identityV2ProbeFirstPartyCookie(){
+  const config=loadCloudflareSyncConfig();
+  const endpoint=trimBase(config.baseUrl);
+  if(!endpoint)return{ok:false,reason:'cloud-not-configured'};
+
+  const capabilities=await identityV2Capabilities();
+  if(!capabilities.cookieSessionEnabled){
+    clearIdentityV2CookieSessionMarker();
+    return{ok:false,reason:'cookie-session-disabled'};
+  }
+
+  const response=await fetch(endpoint+'/api/v2/session',{
+    method:'GET',
+    credentials:'include',
+    headers:{'accept':'application/json'}
+  });
+  const payload=await readJson(response);
+
+  if(response.ok&&payload?.authMode==='nexus-cookie'){
+    saveIdentityV2CookieSessionMarker(endpoint);
+    return{ok:true,session:payload.session||null,subject:payload.subject||null};
+  }
+
+  if(response.status===401){
+    clearIdentityV2CookieSessionMarker();
+    return{ok:false,reason:payload?.error?.code||'UNAUTHORIZED'};
+  }
+
+  throw new IdentityV2ClientError(
+    payload?.error?.message||'HttpOnly session probe failed.',
+    {status:response.status,code:payload?.error?.code||`HTTP_${response.status}`,payload}
+  );
+}
+
+export async function identityV2ClearFirstPartyCookie(){
+  const config=loadCloudflareSyncConfig();
+  const endpoint=trimBase(config.baseUrl);
+  clearIdentityV2CookieSessionMarker();
+  if(!endpoint)return{ok:true,skipped:true};
+
+  try{
+    const response=await fetch(endpoint+'/api/v2/session/cookie/clear',{
+      method:'POST',
+      credentials:'include',
+      headers:{'accept':'application/json'}
+    });
+    const payload=await readJson(response);
+    if(!response.ok){
+      return{ok:false,status:response.status,code:payload?.error?.code||`HTTP_${response.status}`};
+    }
+    return payload;
+  }catch{
+    return{ok:false,code:'NETWORK_ERROR'};
   }
 }
 
@@ -223,7 +366,8 @@ export async function listIdentityV2Devices(){
 }
 
 export async function revokeCurrentIdentityV2Session(){
-  if(!loadIdentityV2SessionCredential()){
+  const state=identityV2CredentialState();
+  if(!['nexus-cookie','nexus-session'].includes(state.mode)){
     return{ok:true,skipped:true,reason:'no-server-session'};
   }
 
@@ -233,6 +377,7 @@ export async function revokeCurrentIdentityV2Session(){
   });
 
   clearIdentityV2SessionCredential();
+  clearIdentityV2CookieSessionMarker();
 
   return{
     ...(result.payload||{}),
@@ -246,7 +391,7 @@ export async function revokeIdentityV2Session(sessionId,{current=false}={}){
   const id=String(sessionId||'').trim();
   if(!id)throw new IdentityV2ClientError('Session id is required.',{code:'SESSION_ID_REQUIRED'});
   const result=await authenticatedRequest(`/api/v2/sessions/${encodeURIComponent(id)}`,{method:'DELETE'});
-  if(current)clearIdentityV2SessionCredential();
+  if(current){clearIdentityV2SessionCredential();clearIdentityV2CookieSessionMarker();}
   return{
     ...(result.payload||{}),
     credentialMode:result.credentialMode,
@@ -258,7 +403,7 @@ export async function revokeIdentityV2Device(deviceId,{currentDevice=false}={}){
   const id=String(deviceId||'').trim();
   if(!id)throw new IdentityV2ClientError('Device id is required.',{code:'DEVICE_ID_REQUIRED'});
   const result=await authenticatedRequest(`/api/v2/devices/${encodeURIComponent(id)}`,{method:'DELETE'});
-  if(currentDevice)clearIdentityV2SessionCredential();
+  if(currentDevice){clearIdentityV2SessionCredential();clearIdentityV2CookieSessionMarker();}
   return{
     ...(result.payload||{}),
     credentialMode:result.credentialMode,
@@ -271,7 +416,7 @@ export async function revokeAllIdentityV2Sessions({keepCurrent=true}={}){
     method:'POST',
     body:{keepCurrent:Boolean(keepCurrent)}
   });
-  if(!keepCurrent)clearIdentityV2SessionCredential();
+  if(!keepCurrent){clearIdentityV2SessionCredential();clearIdentityV2CookieSessionMarker();}
   return{
     ...(result.payload||{}),
     credentialMode:result.credentialMode,

@@ -48,6 +48,7 @@ const identityStatusLabel=(value,en)=>{
 };
 
 const identityTransportLabel=(mode,en)=>{
+  if(mode==='nexus-cookie')return en?'First-party HttpOnly session':'First-party HttpOnly session';
   if(mode==='nexus-session')return en?'Server session':'Server session';
   if(mode==='legacy-token')return en?'Legacy credential + server API':'Legacy credential + server API';
   return en?'Not authenticated':'Нет credential';
@@ -295,7 +296,7 @@ const cloud=`<div class="account-grid">
       <p>${en
         ? 'Account Center and Cloud Sync prefer a server session from sessionStorage and fall back to the current legacy credential only after an allowed 401. The legacy token remains controlled rollback.'
         : 'Account Center и Cloud Sync предпочитают server session из sessionStorage и безопасно откатываются к текущему legacy credential только при допустимом 401. Legacy token остаётся контролируемым rollback.'}</p>
-      <div class="identity-migration-state ${credential.mode==='nexus-session'?'ok':'warn'}" id="identityMigrationState">
+      <div class="identity-migration-state ${['nexus-cookie','nexus-session'].includes(credential.mode)?'ok':'warn'}" id="identityMigrationState">
         <strong id="identityMigrationMode">${esc(identityTransportLabel(credential.mode,en))}</strong>
         <span id="identityMigrationRollback">${credential.rollbackAvailable
           ? (en?'Legacy rollback is available':'Legacy rollback доступен')
@@ -337,7 +338,7 @@ const cloud=`<div class="account-grid">
         <li id="identityServerFoundation">${en?'Identity v2 server foundation: checking…':'Identity v2 server foundation: проверка…'}</li>
         <li class="ok">✓ ${en?'Revocable server sessions':'Отзываемые серверные сессии'}</li>
         <li class="ok">✓ ${en?'Devices / sessions management foundation':'Фундамент управления устройствами / сессиями'}</li>
-        <li>${en?'First-party HttpOnly session':'First-party HttpOnly session'}</li>
+        <li id="identityCookieFoundation">${en?'First-party HttpOnly session: checking…':'First-party HttpOnly session: проверка…'}</li>
         <li>Passkey / WebAuthn</li>
         <li>TOTP MFA + recovery codes</li>
         <li>Explicit account linking</li>
@@ -384,7 +385,7 @@ function refreshIdentityCredentialSummary(locale='ru'){
 
   if(migration){
     migration.classList.remove('ok','warn');
-    migration.classList.add(credential.mode==='nexus-session'?'ok':'warn');
+    migration.classList.add(['nexus-cookie','nexus-session'].includes(credential.mode)?'ok':'warn');
   }
 
   return credential;
@@ -555,36 +556,71 @@ async function refreshIdentityDevicesSessions(locale='ru'){
 
 async function refreshIdentityFoundationStatus(locale='ru'){
   const en=locale==='en';
-  const nodes=[
+  const sessionNodes=[
     document.querySelector('#identityServerFoundation'),
     document.querySelector('#identitySessionFoundation')
   ].filter(Boolean);
-  if(!nodes.length)return;
+  const cookieNode=document.querySelector('#identityCookieFoundation');
 
-  const apply=(text,kind='')=>{
-    for(const node of nodes){
+  const applySession=(text,kind='')=>{
+    for(const node of sessionNodes){
       node.textContent=text;
       node.classList.remove('ok','warn','bad');
       if(kind)node.classList.add(kind);
     }
   };
 
+  const applyCookie=(text,kind='')=>{
+    if(!cookieNode)return;
+    cookieNode.textContent=text;
+    cookieNode.classList.remove('ok','warn','bad');
+    if(kind)cookieNode.classList.add(kind);
+  };
+
+  if(!sessionNodes.length&&!cookieNode)return;
+
   try{
     const status=await identityV2Capabilities();
+
     if(status.sessionFoundation){
       const suffix=status.bridgeEnabled
         ? (en?' · migration bridge enabled':' · migration bridge включён')
         : (en?' · migration bridge disabled':' · migration bridge выключен');
-      apply((en?'Server session foundation available':'Серверный фундамент сессий доступен')+suffix,'ok');
-      return;
+      applySession((en?'Server session foundation available':'Серверный фундамент сессий доступен')+suffix,'ok');
+    }else if(status.reachable){
+      applySession(en?'Worker reachable, Identity v2 session foundation is not deployed':'Worker доступен, Identity v2 session foundation ещё не развернут','warn');
+    }else{
+      applySession(en?'Identity v2 server status is unavailable':'Статус Identity v2 сервера недоступен','warn');
     }
-    if(status.reachable){
-      apply(en?'Worker reachable, Identity v2 session foundation is not deployed':'Worker доступен, Identity v2 session foundation ещё не развернут','warn');
-      return;
+
+    if(status.cookieSessionEnabled){
+      applyCookie(
+        en
+          ? '✓ First-party HttpOnly session transport enabled'
+          : '✓ First-party HttpOnly session transport включён',
+        'ok'
+      );
+    }else if(status.cookieSessionFoundation&&status.firstPartyDeploymentRequired){
+      applyCookie(
+        en
+          ? '◌ HttpOnly session foundation ready · first-party deployment required'
+          : '◌ Фундамент HttpOnly-сессий готов · требуется first-party deployment',
+        'warn'
+      );
+    }else if(status.cookieSessionFoundation){
+      applyCookie(
+        en?'◌ HttpOnly session foundation available':'◌ Фундамент HttpOnly-сессий доступен',
+        'warn'
+      );
+    }else{
+      applyCookie(
+        en?'First-party HttpOnly session foundation is not deployed':'Фундамент first-party HttpOnly-сессий ещё не развернут',
+        'warn'
+      );
     }
-    apply(en?'Identity v2 server status is unavailable':'Статус Identity v2 сервера недоступен','warn');
   }catch{
-    apply(en?'Identity v2 server check failed':'Не удалось проверить Identity v2 сервер','warn');
+    applySession(en?'Identity v2 server check failed':'Не удалось проверить Identity v2 сервер','warn');
+    applyCookie(en?'HttpOnly foundation check failed':'Не удалось проверить HttpOnly foundation','warn');
   }
 }
 

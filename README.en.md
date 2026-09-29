@@ -1,4 +1,4 @@
-> **Current runtime: v0.1.7-alpha.2.4.4 — Cloud Sync session-first migration foundation.** When an `nxs_...` server session exists, Cloud Sync uses it first and retains legacy `nxk_...` only as controlled rollback.
+> **Current runtime: v0.1.7-alpha.2.4.5 — First-party HttpOnly session foundation.** Cookie transport is staged but remains disabled in the current `github.io → workers.dev` deployment; the proven `nxs-first → controlled nxk rollback` path remains active.
 
 > **Current runtime: v0.1.7-alpha.2.4.2 — Identity v2 Session Foundation.** Server-side devices/sessions and revocation are now a foundation while legacy Cloud Sync remains compatible.
 

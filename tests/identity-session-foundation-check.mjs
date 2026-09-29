@@ -8,14 +8,17 @@ const sw=fs.readFileSync(new URL('../service-worker.js',import.meta.url),'utf8')
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 
 const checks=[
-  ['release version',version.version==='0.1.7-alpha.2.4.4'],
-  ['worker session version',worker.includes("0.1.7-alpha.2.4.2-identity-foundation")],
+  ['release version',version.version==='0.1.7-alpha.2.4.5'],
+  ['worker session version',worker.includes("0.1.7-alpha.2.4.5-first-party-cookie-foundation")],
   ['account_devices migration',migration.includes('CREATE TABLE IF NOT EXISTS account_devices')],
   ['account_sessions migration',migration.includes('CREATE TABLE IF NOT EXISTS account_sessions')],
   ['security events migration',migration.includes('CREATE TABLE IF NOT EXISTS identity_security_events')],
   ['session hash is unique',migration.includes('secret_hash TEXT NOT NULL UNIQUE')],
   ['session route capability',worker.includes("'/api/v2/auth/capabilities'")],
   ['legacy bridge route',worker.includes("'/api/v2/session/bridge'")],
+  ['cookie foundation route',worker.includes("'/api/v2/session/cookie/upgrade'")&&worker.includes("'/api/v2/session/cookie/clear'")],
+  ['cookie deployment is two-key gated',worker.includes('FIRST_PARTY_SESSION_ENABLED')&&worker.includes('FIRST_PARTY_DEPLOYMENT_CONFIRMED')],
+  ['host-only cookie hardening',worker.includes('__Host-nexus_session')&&worker.includes('SameSite=Strict')&&worker.includes('HttpOnly')&&worker.includes('Secure')],
   ['session list route',worker.includes("'/api/v2/sessions'")],
   ['device list route',worker.includes("'/api/v2/devices'")],
   ['session revocation',worker.includes('revokeIdentitySession')],

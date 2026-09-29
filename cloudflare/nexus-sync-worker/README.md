@@ -1,89 +1,84 @@
 # AKRONIKL IT NEXUS — Cloudflare Sync / Identity Worker
 
-Version: `0.1.7-alpha.2.4.2-identity-foundation`
+Version: `0.1.7-alpha.2.4.5-first-party-cookie-foundation`
 
-This package keeps the proven D1-only Cloud Sync API and adds the first **Identity v2 server/session foundation** without breaking legacy `nxk_...` authentication.
+Этот Worker сохраняет подтверждённый D1-only Cloud Sync / Identity v2 lifecycle и добавляет **first-party HttpOnly session foundation**, выключенный по умолчанию.
 
-## Current production-compatible behavior
-- D1-only project snapshots;
-- Nexus token auth remains valid;
-- project ACL and optimistic concurrency remain unchanged;
-- current GitHub Pages client can continue using Cloud Sync.
+## Текущий production-compatible режим
+- `nxk_...` legacy rollback остаётся совместимым;
+- `nxs_...` server sessions остаются совместимыми;
+- Cloud Sync session-first lifecycle не меняется;
+- ACL / `409 REVISION_CONFLICT` / D1 snapshots не меняются;
+- D1 migration не требуется.
 
-## New Identity v2 foundation
-Migration `0004_identity_v2_session_foundation.sql` adds:
-- `account_devices`;
-- `account_sessions`;
-- `identity_security_events`.
+## Новый first-party cookie foundation
+Подготовлены:
+- `__Host-nexus_session`;
+- `HttpOnly`;
+- `Secure`;
+- `SameSite=Strict`;
+- `Path=/`;
+- без `Domain` (host-only);
+- точная проверка Origin;
+- credentialed CORS только при включённом first-party deployment;
+- upgrade существующей `nxs_...` session в HttpOnly cookie без возврата raw token в body;
+- очистка stale/revoked cookie;
+- logout/revoke с очисткой cookie.
 
-New API foundation:
-- `GET /api/v2/auth/capabilities`
-- `POST /api/v2/session/bridge`
-- `GET /api/v2/session`
-- `DELETE /api/v2/session`
-- `GET /api/v2/sessions`
-- `DELETE /api/v2/sessions/:id`
-- `POST /api/v2/sessions/revoke-all`
-- `GET /api/v2/devices`
-- `DELETE /api/v2/devices/:id`
+Новые API:
+- `POST /api/v2/session/cookie/upgrade`
+- `POST /api/v2/session/cookie/clear`
 
-`nxs_...` session secrets are stored in D1 only as SHA-256 hashes. Raw session tokens are returned once by the migration bridge.
+`GET /api/v2/session` и существующие защищённые API могут использовать cookie credential только когда first-party transport явно включён.
 
-## Important security boundary
-This is **not yet the final public browser session model**.
+## Двухключевой production gate
+Обе переменные должны быть `true`:
 
-The current `github.io ↔ workers.dev` deployment does not switch to long-lived cookie sessions in this release. Public Identity v2 still requires the first-party/same-site deployment design from WORK05.
+```text
+FIRST_PARTY_SESSION_ENABLED=true
+FIRST_PARTY_DEPLOYMENT_CONFIRMED=true
+```
+
+Если хотя бы одна `false`/отсутствует, cookie auth выключена.
+
+### Текущий GitHub Pages production
+Для текущей схемы `github.io ↔ workers.dev` **обе переменные должны оставаться false**.
+
+Причина: foundation предназначен для будущего same-site / first-party deployment. Этот релиз не делает сторонние cookies production-моделью.
 
 ## Migration bridge
-Text variable:
 
 ```text
 IDENTITY_V2_BRIDGE_ENABLED=false
 ```
 
-Default recommendation: keep it `false` until migration testing is intentionally performed.
+Оставлять `false`, кроме коротких controlled migration tests.
 
-When enabled, an authenticated legacy Nexus token can create a short-lived server session through `/api/v2/session/bridge`.
-
-Session defaults:
-- idle timeout: 60 minutes;
-- absolute timeout: 8 hours.
-
-## D1 migrations
-Apply in order:
-1. `0001_sync_team_foundation.sql`
-2. `0002_nexus_account_tokens.sql`
-3. `0003_d1_only_project_snapshots.sql`
-4. `0004_identity_v2_session_foundation.sql`
-
-## Dashboard deployment
-`dist/worker.js` is self-contained.
-
-Bindings:
-- D1 → `DB`
-
-Text variables:
+## Text variables текущего production
 - `ENVIRONMENT=production`
 - `AUTH_MODE=nexus-token`
 - `ALLOWED_ORIGIN=https://YOUR-GITHUB-PAGES-HOST`
 - `IDENTITY_V2_BRIDGE_ENABLED=false`
+- `FIRST_PARTY_SESSION_ENABLED=false`
+- `FIRST_PARTY_DEPLOYMENT_CONFIRMED=false`
 
 Encrypted secret:
 - `BOOTSTRAP_SECRET=<existing secret>`
 
-## Deployment order
-1. Apply D1 migration 0004.
-2. Deploy the new Worker.
-3. Verify `/api/v2/auth/capabilities`.
-4. Deploy frontend overlay.
-5. Perform legacy Cloud Sync regression.
-6. Optionally enable bridge for controlled session lifecycle testing.
+## D1
+Схема остаётся на migration `0004_identity_v2_session_foundation.sql`.
+Новой migration в `2.4.5` нет.
 
-## Existing API
-Existing `/api/v1/*` routes remain backward compatible.
+## Безопасность
+- raw session token не сохраняется в D1;
+- HttpOnly cookie использует тот же server-side hash/session record;
+- cookie-auth запросы требуют configured Nexus app Origin;
+- explicit `Authorization` остаётся авторитетным, cookie не подменяет явно переданный credential;
+- stale/invalid cookie очищается ответом Worker;
+- first-party CORS credentials не рекламируются, пока transport выключен.
 
-## Retained Cloud Sync security invariants
-- Explicit ACL `deny` overrides allow.
-- HTTP `409 REVISION_CONFLICT` protects against stale writes.
+## Сохранённые Cloud Sync invariants
+- D1 table `project_snapshots` остаётся хранилищем snapshot-проектов.
+- Explicit ACL `deny` имеет приоритет над allow.
+- HTTP `409 REVISION_CONFLICT` остаётся защитой от stale write.
 - Bootstrap closes after the first Nexus account exists.
-- D1 remains the project snapshot storage for this stage.

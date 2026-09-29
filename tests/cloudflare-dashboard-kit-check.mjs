@@ -3,8 +3,10 @@ const root=new URL('../',import.meta.url);const assert=(v,m)=>{if(!v)throw new E
 const dist=fs.readFileSync(new URL('cloudflare/nexus-sync-worker/dist/worker.js',root),'utf8');
 const setup=fs.readFileSync(new URL('cloudflare/nexus-sync-worker/setup/INITIAL_SCHEMA.sql',root),'utf8');
 const guide=fs.readFileSync(new URL('cloudflare/nexus-sync-worker/CLOUDFLARE_SCREEN_BY_SCREEN_RU.md',root),'utf8');
+const wrangler=fs.readFileSync(new URL('cloudflare/nexus-sync-worker/wrangler.jsonc.example',root),'utf8');
 assert(!/^import\s/m.test(dist),'dashboard Worker must be self-contained without imports');
-assert(dist.includes("const VERSION = '0.1.7-alpha.2.4.2-identity-foundation'")&&dist.includes('export default'),'dashboard Worker version/export missing');
+assert(wrangler.includes('FIRST_PARTY_SESSION_ENABLED')&&wrangler.includes('FIRST_PARTY_DEPLOYMENT_CONFIRMED'),'first-party deployment gates missing from Wrangler example');
+assert(dist.includes("const VERSION = '0.1.7-alpha.2.4.5-first-party-cookie-foundation'")&&dist.includes('export default'),'dashboard Worker version/export missing');
 for(const table of ['projects','audit_events','account_subjects','account_tokens','project_snapshots'])assert(setup.includes(`CREATE TABLE IF NOT EXISTS ${table}`),`combined D1 schema missing ${table}`);
 for(const token of ['DB','BOOTSTRAP_SECRET','bootstrap','D1','No R2'])assert(guide.includes(token),`screen-by-screen guide missing ${token}`);
 console.log('CLOUDFLARE_DASHBOARD_KIT_PASS');

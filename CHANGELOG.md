@@ -1,3 +1,4 @@
+- 0.1.7-alpha.2.4.5 — Фундамент first-party HttpOnly-сессий: безопасный `__Host`/HttpOnly foundation с two-key gate; текущий GitHub Pages production остаётся cookie-disabled.
 - 0.1.7-alpha.2.4.4 — Переход Cloud Sync на приоритет серверных сессий: полная LIVE-проверка пройдена; PULL/PUSH via nxs, stale-session fallback, Android/iPhone regression, D1 proof.
 - 0.1.7-alpha.2.4.3.2 — Identity Session UI State Refresh Hotfix: FULL LIVE PASS; no-F5 session revoke fallback + controlled device revoke confirmed.
 - 0.1.7-alpha.2.4.3.1 — Cloud UX & Account Routing Cleanup: Nexus Cloud account setup moved to Account Center; Projects dashboard now contains only project actions; cloud import/settings route through the Account Center; backend unchanged.

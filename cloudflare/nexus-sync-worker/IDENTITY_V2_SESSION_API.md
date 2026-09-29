@@ -5,50 +5,68 @@
 ### GET `/api/v2/auth/capabilities`
 No auth required.
 
-Returns foundation status, bridge flag and session timeouts.
+Возвращает:
+- server session foundation;
+- bridge flag;
+- first-party cookie foundation;
+- cookie transport enabled/disabled;
+- first-party deployment requirement;
+- session timeouts.
 
-## Authenticated
-Legacy `nxk_...` or session `nxs_...` can authenticate the following routes unless noted.
+## Authenticated credentials
+Поддерживаются:
+- legacy `nxk_...`;
+- bearer `nxs_...`;
+- first-party HttpOnly cookie — только при явно подтверждённом first-party deployment.
 
 ### POST `/api/v2/session/bridge`
-Requires **legacy `nxk_...`** plus `IDENTITY_V2_BRIDGE_ENABLED=true`.
-
-Body example:
-
-```json
-{
-  "deviceId": "device-existing-id",
-  "deviceLabel": "Desktop Chrome",
-  "platform": "Windows"
-}
-```
-
-Returns raw `nxs_...` once.
+Только legacy `nxk_...` + `IDENTITY_V2_BRIDGE_ENABLED=true`.
 
 ### GET `/api/v2/session`
-Returns current auth/session metadata.
+Возвращает текущую session metadata.
 
 ### DELETE `/api/v2/session`
-Revokes current `nxs_...` session.
+Отзывает текущую session. При cookie-auth также очищает `__Host-nexus_session`.
 
 ### GET `/api/v2/sessions`
-Lists account sessions.
+Список session аккаунта.
 
 ### DELETE `/api/v2/sessions/:id`
-Revokes one account-owned session.
+Отзывает указанную session.
 
 ### POST `/api/v2/sessions/revoke-all`
-Body:
-
-```json
-{"keepCurrent": true}
-```
+Отзывает активные session аккаунта.
 
 ### GET `/api/v2/devices`
-Lists account devices and active-session counts.
+Список устройств.
 
 ### DELETE `/api/v2/devices/:id`
-Marks device revoked and revokes its active sessions.
+Отзывает устройство и его активные session.
 
-## Security
-The API never returns stored session hashes.
+## First-party cookie foundation
+
+### POST `/api/v2/session/cookie/upgrade`
+Требует:
+- `FIRST_PARTY_SESSION_ENABLED=true`;
+- `FIRST_PARTY_DEPLOYMENT_CONFIRMED=true`;
+- точный configured Origin;
+- действующий Bearer `nxs_...`.
+
+Устанавливает:
+
+```text
+__Host-nexus_session=<session credential>; Path=/; HttpOnly; Secure; SameSite=Strict
+```
+
+`Domain` не устанавливается.
+Raw session token не возвращается в JSON body.
+
+После успешного ответа frontend должен удалить browser-readable `nxs_...` из `sessionStorage`.
+
+### POST `/api/v2/session/cookie/clear`
+Не требует auth, потому что только очищает host-only cookie, но требует подтверждённый first-party deployment и точный app Origin.
+
+Используется для удаления stale HttpOnly cookie, в том числе когда server session уже недействительна.
+
+## Security boundary
+В текущем `github.io ↔ workers.dev` deployment cookie transport должен оставаться выключенным.

@@ -1,4 +1,4 @@
-> **Текущий runtime: v0.1.7-alpha.2.4.4 — Переход Cloud Sync на приоритет серверных сессий.** При наличии `nxs_...` Cloud Sync использует server session первой, legacy `nxk_...` остаётся контролируемым rollback.
+> **Текущий runtime: v0.1.7-alpha.2.4.5 — Фундамент first-party HttpOnly-сессий.** Cookie transport подготовлен, но в текущем `github.io → workers.dev` production остаётся выключенным; рабочая схема `nxs-first → controlled nxk rollback` сохраняется.
 
 > **Текущий runtime: v0.1.7-alpha.2.4.2 — Identity v2 Session Foundation.** Серверные устройства/сессии и отзыв уже реализованы как foundation; legacy Cloud Sync остаётся совместимым.
 
