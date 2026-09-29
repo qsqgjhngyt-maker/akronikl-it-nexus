@@ -19,3 +19,11 @@ Cloud Sync:
 First-party HttpOnly transport ещё не создан. Удалить `nxk_...` сейчас означало бы потерять безопасный rollback и межустройственную совместимость.
 
 `2.4.4` специально ограничен как промежуточный миграционный слой.
+
+## LIVE boot failure и усиление quality gate
+
+Первый GitHub Pages smoke `2.4.4` выявил boot-blocking SyntaxError в Account Center: duplicate lexical declaration `credential`.
+
+Дефект не связан с session-first transport, Worker или D1. Он возник в UI markup-функции при объединении уже существующей Devices credential state с новым Cloud credential state.
+
+После исправления в pipeline добавлен отдельный **ESM module import smoke**, потому что один `node --check` оказался недостаточным gate для этого конкретного случая.

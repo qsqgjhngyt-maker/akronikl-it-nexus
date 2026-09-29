@@ -21,3 +21,9 @@
 - отказ от legacy token;
 - HttpOnly session;
 - федеративный вход.
+
+### Исправление запуска кандидата
+- устранено двойное объявление `credential` в `Account Center`;
+- исправлен boot-blocking `SyntaxError`;
+- добавлен обязательный ESM module import smoke-test;
+- уточнён текст Session Migration: Cloud Sync в `2.4.4` уже использует session-first модель.

@@ -20,3 +20,13 @@ Backend:
 - Worker не меняется;
 - D1 не меняется;
 - bridge production-default остаётся false.
+
+## LIVE boot correction
+
+После первой публикации кандидата GitHub Pages обнаружен:
+`SyntaxError: Identifier 'credential' has already been declared`.
+
+Исправлен только frontend Account Center.
+Worker, D1, Cloud Sync API и production variables не изменялись.
+
+Добавлен regression gate реального ESM-import ключевых frontend-модулей.

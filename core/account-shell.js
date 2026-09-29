@@ -278,7 +278,6 @@ const cloud=`<div class="account-grid">
     </div>
   </section>`;
 
-  const credential=identityV2CredentialState();
   const devices=`<div class="account-grid">
     <section class="account-panel glass-panel">
       <span class="eyebrow">CURRENT DEVICE</span>
@@ -294,8 +293,8 @@ const cloud=`<div class="account-grid">
       <span class="eyebrow">SESSION MIGRATION</span>
       <h2>${en?'Safe migration state':'Безопасная миграция'}</h2>
       <p>${en
-        ? 'Account Center can prefer a server session when one exists in sessionStorage and automatically fall back to the current legacy credential if that session expires. Cloud Sync itself remains unchanged for rollback.'
-        : 'Account Center умеет предпочитать server session из sessionStorage и безопасно откатываться к текущему legacy credential, если session истекла. Сам Cloud Sync пока не меняется — это наш rollback.'}</p>
+        ? 'Account Center and Cloud Sync prefer a server session from sessionStorage and fall back to the current legacy credential only after an allowed 401. The legacy token remains controlled rollback.'
+        : 'Account Center и Cloud Sync предпочитают server session из sessionStorage и безопасно откатываются к текущему legacy credential только при допустимом 401. Legacy token остаётся контролируемым rollback.'}</p>
       <div class="identity-migration-state ${credential.mode==='nexus-session'?'ok':'warn'}" id="identityMigrationState">
         <strong id="identityMigrationMode">${esc(identityTransportLabel(credential.mode,en))}</strong>
         <span id="identityMigrationRollback">${credential.rollbackAvailable
