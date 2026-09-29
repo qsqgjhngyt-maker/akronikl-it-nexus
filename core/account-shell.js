@@ -280,7 +280,7 @@ const cloud=`<div class="account-grid">
         <div><dt>ID</dt><dd>${esc(a.deviceShort)}</dd></div>
         <div><dt>${en?'State':'Состояние'}</dt><dd>${esc(a.accountState)}</dd></div>
         <div><dt>Cloud</dt><dd>${a.connected?(en?'connected':'подключён'):(en?'not configured':'не настроен')}</dd></div>
-        <div><dt>${en?'Identity transport':'Identity transport'}</dt><dd>${esc(identityTransportLabel(credential.mode,en))}</dd></div>
+        <div><dt>${en?'Identity transport':'Identity transport'}</dt><dd id="identityTransportSummary">${esc(identityTransportLabel(credential.mode,en))}</dd></div>
       </dl>
     </section>
     <section class="account-panel glass-panel">
@@ -289,9 +289,9 @@ const cloud=`<div class="account-grid">
       <p>${en
         ? 'Account Center can prefer a server session when one exists in sessionStorage and automatically fall back to the current legacy credential if that session expires. Cloud Sync itself remains unchanged for rollback.'
         : 'Account Center умеет предпочитать server session из sessionStorage и безопасно откатываться к текущему legacy credential, если session истекла. Сам Cloud Sync пока не меняется — это наш rollback.'}</p>
-      <div class="identity-migration-state ${credential.mode==='nexus-session'?'ok':'warn'}">
-        <strong>${esc(identityTransportLabel(credential.mode,en))}</strong>
-        <span>${credential.rollbackAvailable
+      <div class="identity-migration-state ${credential.mode==='nexus-session'?'ok':'warn'}" id="identityMigrationState">
+        <strong id="identityMigrationMode">${esc(identityTransportLabel(credential.mode,en))}</strong>
+        <span id="identityMigrationRollback">${credential.rollbackAvailable
           ? (en?'Legacy rollback is available':'Legacy rollback доступен')
           : (en?'No legacy rollback credential':'Legacy rollback credential отсутствует')}</span>
       </div>
@@ -359,6 +359,29 @@ const cloud=`<div class="account-grid">
     <nav class="account-tabs">${nav.map(([id,label])=>tabLink(id,label,current)).join('')}</nav>
     ${content}
   </section>`;
+}
+
+
+function refreshIdentityCredentialSummary(locale='ru'){
+  const en=locale==='en';
+  const credential=identityV2CredentialState();
+  const transport=document.querySelector('#identityTransportSummary');
+  const migration=document.querySelector('#identityMigrationState');
+  const mode=document.querySelector('#identityMigrationMode');
+  const rollback=document.querySelector('#identityMigrationRollback');
+
+  if(transport)transport.textContent=identityTransportLabel(credential.mode,en);
+  if(mode)mode.textContent=identityTransportLabel(credential.mode,en);
+  if(rollback)rollback.textContent=credential.rollbackAvailable
+    ? (en?'Legacy rollback is available':'Legacy rollback доступен')
+    : (en?'No legacy rollback credential':'Legacy rollback credential отсутствует');
+
+  if(migration){
+    migration.classList.remove('ok','warn');
+    migration.classList.add(credential.mode==='nexus-session'?'ok':'warn');
+  }
+
+  return credential;
 }
 
 
@@ -442,7 +465,8 @@ async function refreshIdentityDevicesSessions(locale='ru'){
     const devices=devicesResult.devices||[];
     const sessions=sessionsResult.sessions||[];
     const fallback=Boolean(devicesResult.legacyFallback||sessionsResult.legacyFallback);
-    const mode=sessionsResult.credentialMode||devicesResult.credentialMode||identityV2CredentialState().mode;
+    const currentCredential=refreshIdentityCredentialSummary(locale);
+    const mode=sessionsResult.credentialMode||devicesResult.credentialMode||currentCredential.mode;
 
     const activeSessions=sessions.filter(item=>item.status==='active').length;
     const currentSessions=sessions.filter(item=>item.current).length;
@@ -588,6 +612,7 @@ export function bindAccountShell({locale='ru',onChanged=()=>{}}={}){
   document.addEventListener('click',close);
   document.querySelectorAll('#accountMenu a').forEach(a=>a.addEventListener('click',close));
   refreshIdentityFoundationStatus(locale);
+  refreshIdentityCredentialSummary(locale);
   refreshIdentityDevicesSessions(locale);
   document.querySelector('#identityRuntimeRefresh')?.addEventListener('click',()=>refreshIdentityDevicesSessions(locale));
 

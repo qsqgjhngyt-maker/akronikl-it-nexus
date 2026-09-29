@@ -1,4 +1,4 @@
-> **Current runtime: v0.1.7-alpha.2.4.3.1 — Cloud UX & Account Routing Cleanup.** Account Center now shows real server devices/sessions and uses a session-first credential resolver with safe legacy rollback.
+> **Current runtime: v0.1.7-alpha.2.4.3.2 — Identity Session UI State Refresh Hotfix.** After revoking the current server session, Account Center now immediately synchronizes its Identity transport / Session Migration summary with live state without a page reload.
 
 > **Current runtime: v0.1.7-alpha.2.4.2 — Identity v2 Session Foundation.** Server-side devices/sessions and revocation are now a foundation while legacy Cloud Sync remains compatible.
 

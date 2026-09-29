@@ -1,4 +1,4 @@
-> **Текущий runtime: v0.1.7-alpha.2.4.3.1 — Cloud UX & Account Routing Cleanup.** Account Center теперь показывает реальные серверные устройства/сессии и использует session-first credential resolver с безопасным legacy rollback.
+> **Текущий runtime: v0.1.7-alpha.2.4.3.2 — Identity Session UI State Refresh Hotfix.** После revoke текущей server session Account Center теперь сразу синхронизирует верхнюю сводку Identity transport / Session Migration с live-состоянием без F5.
 
 > **Текущий runtime: v0.1.7-alpha.2.4.2 — Identity v2 Session Foundation.** Серверные устройства/сессии и отзыв уже реализованы как foundation; legacy Cloud Sync остаётся совместимым.
 
