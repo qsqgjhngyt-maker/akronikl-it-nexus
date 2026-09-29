@@ -4,7 +4,7 @@ const account=fs.readFileSync(new URL('../core/account-shell.js',import.meta.url
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 
 const checks=[
-  ['release version',version.version==='0.1.7-alpha.2.4.3.2'],
+  ['release version',version.version==='0.1.7-alpha.2.4.4'],
   ['transport summary has stable id',account.includes('id="identityTransportSummary"')],
   ['migration state has stable id',account.includes('id="identityMigrationState"')],
   ['migration mode has stable id',account.includes('id="identityMigrationMode"')],

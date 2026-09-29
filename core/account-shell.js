@@ -184,6 +184,7 @@ const tabLink=(id,label,current)=>`<a href="#view=account&tab=${encodeURICompone
 export function accountPageMarkup(locale='ru',tab='overview'){
   const en=locale==='en';
   const a=accountSnapshot(locale);
+  const credential=identityV2CredentialState();
   const current=['overview','cloud','learning','devices','security'].includes(tab)?tab:'overview';
   const nav=[
     ['overview',en?'Profile':'Профиль'],
@@ -211,7 +212,11 @@ export function accountPageMarkup(locale='ru',tab='overview'){
       <span class="eyebrow">SIGN-IN METHODS</span>
       <h2>${en?'Authentication methods':'Способы входа'}</h2>
       <div class="identity-method-list">
-        <div class="identity-method active"><b>☁</b><div><strong>Nexus Cloud Token</strong><span>${a.connected?(en?'Connected · alpha bridge':'Подключён · alpha bridge'):(en?'Not connected on this device':'Не подключён на этом устройстве')}</span></div><em>${a.connected?'ACTIVE':'ALPHA'}</em></div>
+        <div class="identity-method active"><b>☁</b><div><strong>Nexus Cloud Token</strong><span>${a.connected
+          ? (credential.mode==='nexus-session'
+              ? (en?'Available as controlled rollback · Cloud Sync uses server session first':'Доступен как контролируемый rollback · Cloud Sync сначала использует server session')
+              : (en?'Current migration credential · server session will take priority when present':'Текущий migration credential · при наличии server session получит приоритет'))
+          : (en?'Not connected on this device':'Не подключён на этом устройстве')}</span></div><em>${a.connected?(credential.mode==='nexus-session'?'ROLLBACK':'ACTIVE'):'ALPHA'}</em></div>
         <div class="identity-method planned"><b>Y</b><div><strong>Yandex ID</strong><span>${en?'Identity v2 provider adapter':'Адаптер Identity v2'}</span></div><em>PLANNED</em></div>
         <div class="identity-method planned"><b>G</b><div><strong>Google</strong><span>${en?'Federated sign-in':'Федеративный вход'}</span></div><em>PLANNED</em></div>
         <div class="identity-method planned"><b></b><div><strong>Apple</strong><span>${en?'Federated sign-in':'Федеративный вход'}</span></div><em>PLANNED</em></div>
@@ -230,7 +235,7 @@ const cloud=`<div class="account-grid">
     <span class="eyebrow">NEXUS CLOUD · ACCOUNT</span>
     <h2>${a.connected?(en?'Cloud connection':'Подключение к облаку'):(en?'Connect Nexus Cloud':'Подключить Nexus Cloud')}</h2>
     <p>${a.connected
-      ? (en?'This device is linked to the current Nexus Cloud account. Project Studio uses this account for explicit cloud import, PUSH and PULL.':'Это устройство связано с текущим Nexus Cloud аккаунтом. Project Studio использует эту учётную запись для явных операций импорта, PUSH и PULL.')
+      ? (en?'This device is linked to the current Nexus Cloud account. Project Studio uses this account for import, PUSH and PULL. When a server session exists, Cloud Sync prefers it and keeps the legacy token only as controlled rollback.':'Это устройство связано с текущим Nexus Cloud аккаунтом. Project Studio использует эту учётную запись для импорта, PUSH и PULL. При наличии server session Cloud Sync сначала использует её, а legacy token остаётся контролируемым rollback.')
       : (en?'Connect this device to Nexus Cloud once here. Project pages no longer own account setup.':'Подключите устройство к Nexus Cloud один раз здесь. Страницы проектов больше не управляют подключением аккаунта.')}</p>
     <dl class="account-dl">
       <div><dt>${en?'State':'Состояние'}</dt><dd>${esc(a.state)}</dd></div>
@@ -238,6 +243,8 @@ const cloud=`<div class="account-grid">
       <div><dt>Subject</dt><dd>${esc(a.subjectShort)}</dd></div>
       <div><dt>Endpoint</dt><dd>${a.connected?esc(a.host):'—'}</dd></div>
       <div><dt>${en?'This device':'Это устройство'}</dt><dd>${esc(a.deviceShort)}</dd></div>
+      <div><dt>${en?'Cloud Sync auth':'Авторизация Cloud Sync'}</dt><dd>${esc(identityTransportLabel(credential.mode,en))}</dd></div>
+      <div><dt>${en?'Legacy rollback':'Legacy rollback'}</dt><dd>${credential.rollbackAvailable?(en?'available':'доступен'):(en?'not available':'недоступен')}</dd></div>
     </dl>
     <div class="account-actions">
       <button class="btn primary" type="button" id="accountCloudConfigure">${a.connected?(en?'Change connection':'Изменить подключение'):(en?'Connect Nexus Cloud':'Подключить Nexus Cloud')}</button>
@@ -621,18 +628,31 @@ document.querySelector('#accountCloudConfigure')?.addEventListener('click',async
   const en=locale==='en';
   try{
     const result=await runAccountCloudSetup(en);
+    if(result?.previousSessionRetirement?.attempted&&!result?.previousSessionRetirement?.revoked){
+      alert(en
+        ? 'The account connection changed, but the previous server session could not be revoked. Review Devices & Sessions when the network is available.'
+        : 'Подключение аккаунта изменено, но предыдущую серверную сессию не удалось отозвать. При доступной сети проверьте раздел «Устройства и сессии».');
+    }
     if(result)onChanged();
   }catch(error){
     alert(`${en?'Nexus Cloud setup error':'Ошибка подключения Nexus Cloud'}: ${error?.message||error}`);
   }
 });
 
-const disconnect=()=>{
+const disconnect=async()=>{
   const en=locale==='en';
   if(!confirm(en
     ? 'Disconnect Nexus Cloud on this device? Local projects will remain on this device.'
     : 'Отключить Nexus Cloud на этом устройстве? Локальные проекты останутся на устройстве.'))return;
-  disconnectCloudAccount();
+
+  const result=await disconnectCloudAccount();
+
+  if(result?.serverSessionAttempted&&!result?.serverSessionRevoked){
+    alert(en
+      ? 'Nexus Cloud was disconnected locally, but the server session could not be revoked. Review Devices & Sessions when the network is available.'
+      : 'Nexus Cloud отключён локально, но серверную сессию не удалось отозвать. При доступной сети проверьте раздел «Устройства и сессии».');
+  }
+
   onChanged();
 };
 document.querySelector('#accountCloudDisconnect')?.addEventListener('click',disconnect);

@@ -1,4 +1,4 @@
-> **Current runtime: v0.1.7-alpha.2.4.3.2 — Identity Session UI State Refresh Hotfix.** After revoking the current server session, Account Center now immediately synchronizes its Identity transport / Session Migration summary with live state without a page reload.
+> **Current runtime: v0.1.7-alpha.2.4.4 — Cloud Sync session-first migration foundation.** When an `nxs_...` server session exists, Cloud Sync uses it first and retains legacy `nxk_...` only as controlled rollback.
 
 > **Current runtime: v0.1.7-alpha.2.4.2 — Identity v2 Session Foundation.** Server-side devices/sessions and revocation are now a foundation while legacy Cloud Sync remains compatible.
 

@@ -144,6 +144,10 @@ async function authenticatedRequest(path,{method='GET',body=null,allowLegacyFall
   );
 }
 
+export async function identityV2AuthenticatedRequest(path,options={}){
+  return authenticatedRequest(path,options);
+}
+
 export async function identityV2Capabilities(){
   const config=loadCloudflareSyncConfig();
   const endpoint=trimBase(config.baseUrl);
@@ -215,6 +219,26 @@ export async function listIdentityV2Devices(){
     devices:Array.isArray(result.payload?.devices)?result.payload.devices:[],
     credentialMode:result.credentialMode,
     legacyFallback:result.legacyFallback
+  };
+}
+
+export async function revokeCurrentIdentityV2Session(){
+  if(!loadIdentityV2SessionCredential()){
+    return{ok:true,skipped:true,reason:'no-server-session'};
+  }
+
+  const result=await authenticatedRequest('/api/v2/session',{
+    method:'DELETE',
+    allowLegacyFallback:false
+  });
+
+  clearIdentityV2SessionCredential();
+
+  return{
+    ...(result.payload||{}),
+    credentialMode:result.credentialMode,
+    legacyFallback:false,
+    skipped:false
   };
 }
 

@@ -4,6 +4,7 @@ import {getProject,patchProject,createCheckpoint,restoreCheckpoint,toggleProject
 import {projectRuntimeRequest} from './project-build.js';
 import {cloudflareSyncSummary} from '../sync/cloudflare-config.js';
 import {listCloudProjects,importCloudProject,enableProjectCloud,pushProjectNow,pullProjectNow,cloudSyncReady} from '../sync/cloud-sync.js';
+import {identityV2CredentialState} from '../sync/identity-v2-client.js';
 
 const e=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
 const fmt=value=>{try{return new Intl.DateTimeFormat('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(value))}catch{return String(value||'')}};
@@ -12,10 +13,25 @@ const syncLabel=(project,en=false)=>project?.sync?.mode==='cloud'?(project.sync.
 
 function cloudControls(project,en=false){
   const cloud=cloudflareSyncSummary();
-  if(!cloud.configured)return`<div class="ps-cloud-actions"><button class="btn tiny" id="psCloudConfigure">⚙ ${en?'Nexus Cloud settings':'Nexus Cloud'}</button></div><div class="ps-note compact">${en?'Cloudflare transport is not connected on this device.':'Cloudflare пока не подключён на этом устройстве.'}</div>`;
+  const credential=identityV2CredentialState();
+  const authLabel=credential.mode==='nexus-session'
+    ? (en?'server session':'server session')
+    : credential.mode==='legacy-token'
+      ? (en?'legacy fallback':'legacy fallback')
+      : (en?'none':'нет');
+
+  if(!cloud.configured){
+    return`<div class="ps-cloud-actions"><button class="btn tiny" id="psCloudConfigure">⚙ ${en?'Nexus Cloud settings':'Nexus Cloud'}</button></div><div class="ps-note compact">${en?'Cloudflare transport is not connected on this device.':'Cloudflare пока не подключён на этом устройстве.'}</div>`;
+  }
+
   const account=e(cloud.displayName||cloud.subjectId||'Nexus Account');
-  if(project.sync?.mode!=='cloud')return`<div class="ps-note compact">${en?'Account':'Аккаунт'}: ${account}<br>${e(cloud.host)}</div><div class="ps-cloud-actions"><button class="btn tiny primary" id="psEnableCloud">☁ ${en?'Enable cloud':'Включить облако'}</button><button class="btn tiny" id="psCloudConfigure">⚙ ${en?'Cloud settings':'Настройки'}</button></div>`;
-  return`<div class="ps-note compact">${en?'Account':'Аккаунт'}: ${account}<br>${e(cloud.host)}</div><div class="ps-cloud-actions"><button class="btn tiny primary" id="psCloudPush">↑ PUSH</button><button class="btn tiny" id="psCloudPull">↓ PULL</button><button class="btn tiny" id="psCloudConfigure">⚙</button></div>`;
+  const transport=`<br>${en?'auth transport':'auth transport'}: ${e(authLabel)}`;
+
+  if(project.sync?.mode!=='cloud'){
+    return`<div class="ps-note compact">${en?'Account':'Аккаунт'}: ${account}<br>${e(cloud.host)}${transport}</div><div class="ps-cloud-actions"><button class="btn tiny primary" id="psEnableCloud">☁ ${en?'Enable cloud':'Включить облако'}</button><button class="btn tiny" id="psCloudConfigure">⚙ ${en?'Cloud settings':'Настройки'}</button></div>`;
+  }
+
+  return`<div class="ps-note compact">${en?'Account':'Аккаунт'}: ${account}<br>${e(cloud.host)}${transport}</div><div class="ps-cloud-actions"><button class="btn tiny primary" id="psCloudPush">↑ PUSH</button><button class="btn tiny" id="psCloudPull">↓ PULL</button><button class="btn tiny" id="psCloudConfigure">⚙</button></div>`;
 }
 
 export function projectStudioDashboardMarkup({projects=[],courseProjects=[],locale='ru'}={}){

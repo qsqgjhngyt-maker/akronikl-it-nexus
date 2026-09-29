@@ -1,7 +1,7 @@
 {
-  "version": "0.1.7-alpha.2.4.3.2",
+  "version": "0.1.7-alpha.2.4.4",
   "channel": "alpha",
-  "build": "identity-session-ui-state-refresh-hotfix",
+  "build": "cloud-sync-session-first-migration-foundation",
   "date": "2026-09-29",
   "foundation": "v0.3",
   "legacyCpp": "v7",
@@ -12,7 +12,7 @@
     "cppProjectsRu": 7,
     "benchmarkLessonsComplete": 3
   },
-  "notes": "Fixes stale Account Center Identity transport / Session Migration summary after current server-session revoke or automatic legacy fallback. The live Devices & Sessions block and the top summary now react to the same credential state without requiring a page reload.",
+  "notes": "Cloud Sync теперь при наличии server session сначала использует nxs credential для /api/v1 операций. Legacy nxk остаётся контролируемым rollback и используется только после 401 INVALID_SESSION/UNAUTHORIZED. 403/409 и другие ответы не маскируются fallback.",
   "lessonStandard": "1.0-normative-production",
   "runtime": {
     "router": "language-neutral",
@@ -88,18 +88,22 @@
       "d1-only-project-snapshots",
       "cloudflare-worker-d1-only-transport",
       "bootstrap-cors-preflight-hotfix",
-      "skipauth-no-empty-authorization"
+      "skipauth-no-empty-authorization",
+      "session-first-cloud-auth",
+      "legacy-token-controlled-fallback",
+      "no-fallback-on-authorization-or-conflict",
+      "account-boundary-session-retirement"
     ],
-    "sync": "cloudflare-worker+d1+nexus-token-auth+manual-push-pull+remote-import; D1-only snapshots; OIDC login planned",
+    "sync": "cloudflare-worker+d1+session-first-auth+legacy-rollback+manual-push-pull+remote-import; D1-only snapshots",
     "export": "manifest-ready-release-planned"
   },
   "baseline": {
     "name": "Architecture & AI Research Baseline",
     "workPackages": 8,
-    "cloudSyncEvidence": "LIVE PASS; backward compatibility reverified on v0.1.7-alpha.2.4.2",
+    "cloudSyncEvidence": "v0.1.7-alpha.2.4.3.2 FULL LIVE PASS; v0.1.7-alpha.2.4.4 session-first migration candidate pending LIVE",
     "aiStatus": "research-design",
-    "identityV2Status": "server-session-foundation-live",
+    "identityV2Status": "server-session-foundation-live; Cloud Sync session-first migration candidate",
     "runtimeBehaviorDelta": "documentation/metadata baseline closure"
   },
-  "phase": "identity-session-ui-state-refresh-hotfix"
+  "phase": "cloud-sync-session-first-migration-foundation"
 }

@@ -1,4 +1,4 @@
-> **Текущий runtime: v0.1.7-alpha.2.4.3.2 — Identity Session UI State Refresh Hotfix.** После revoke текущей server session Account Center теперь сразу синхронизирует верхнюю сводку Identity transport / Session Migration с live-состоянием без F5.
+> **Текущий runtime: v0.1.7-alpha.2.4.4 — Переход Cloud Sync на приоритет серверных сессий.** При наличии `nxs_...` Cloud Sync использует server session первой, legacy `nxk_...` остаётся контролируемым rollback.
 
 > **Текущий runtime: v0.1.7-alpha.2.4.2 — Identity v2 Session Foundation.** Серверные устройства/сессии и отзыв уже реализованы как foundation; legacy Cloud Sync остаётся совместимым.
 
