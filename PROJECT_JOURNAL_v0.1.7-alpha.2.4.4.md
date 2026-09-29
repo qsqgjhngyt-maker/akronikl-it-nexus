@@ -2,28 +2,16 @@
 
 Дата: 2026-09-29
 
-После закрытия полного Devices & Sessions lifecycle на `2.4.3.x` начата миграция Project Studio на ту же модель credential, которую уже использует Account Center.
+Этап `2.4.4` устранил архитектурный разрыв между Account Center и Project Studio: оба теперь используют единый session-first credential flow.
 
-Главный инженерный вывод аудита: Worker менять не требуется. Его `authenticate()` уже принимает `nxs_...` перед legacy `nxk_...` для всех защищённых API-маршрутов.
+## Проверенный production lifecycle
 
-Поэтому изменение выполняется в frontend transport layer.
+`legacy baseline → controlled nxs → bridge=false → PULL/PUSH через nxs → rev 8 → server revoke → stale browser nxs → automatic legacy fallback → Android/iPhone regression → device cleanup → D1 proof`
 
-## Принятое решение
-Cloud Sync:
-- предпочитает server session;
-- legacy token использует только после строго определённого `401`;
-- не пытается «лечить» через legacy реальные `403/409`;
-- отзывает текущую session при account relink/disconnect по возможности.
+Первый deploy кандидата выявил boot-blocking duplicate declaration. Дефект был устранён до релиза, а pipeline усилен реальным ESM import smoke-test.
 
-## Почему legacy token пока не удаляется
-First-party HttpOnly transport ещё не создан. Удалить `nxk_...` сейчас означало бы потерять безопасный rollback и межустройственную совместимость.
+## Инженерный вывод
 
-`2.4.4` специально ограничен как промежуточный миграционный слой.
+Session-first transport можно внедрять без изменения Worker/D1, потому что production Worker уже принимает `nxs` на защищённых `/api/v1/*` маршрутах.
 
-## LIVE boot failure и усиление quality gate
-
-Первый GitHub Pages smoke `2.4.4` выявил boot-blocking SyntaxError в Account Center: duplicate lexical declaration `credential`.
-
-Дефект не связан с session-first transport, Worker или D1. Он возник в UI markup-функции при объединении уже существующей Devices credential state с новым Cloud credential state.
-
-После исправления в pipeline добавлен отдельный **ESM module import smoke**, потому что один `node --check` оказался недостаточным gate для этого конкретного случая.
+Legacy token пока оставлен как контролируемый rollback; следующий этап должен убрать его из normal path только после появления first-party session transport.

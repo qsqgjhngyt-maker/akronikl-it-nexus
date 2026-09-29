@@ -1,43 +1,24 @@
 # Изменения безопасности — v0.1.7-alpha.2.4.4
 
-## 1. Разрешённый fallback
+## Подтверждённые свойства
 
-Fallback с `nxs_...` на `nxk_...` выполняется только если server session получила:
+- server session имеет приоритет над legacy token;
+- legacy fallback ограничен допустимым `401`;
+- `403` и `409` не обходятся другим credential;
+- stale `nxs` удаляется перед legacy retry;
+- при relink/disconnect session retirement выполняется по возможности;
+- bridge после controlled issuance возвращается в `false`;
+- raw credentials не входят в release evidence.
 
-- HTTP `401` + `INVALID_SESSION`;
-- HTTP `401` + `UNAUTHORIZED`.
+## Финальный controlled state
 
-Перед legacy retry stale `nxs_...` удаляется из `sessionStorage`.
+- active devices: 1;
+- active sessions: 0;
+- revoked sessions: 4;
+- security events: 10.
 
-## 2. Запрещённый fallback
+## Не закрыто этим этапом
 
-Legacy retry **не выполняется** для:
-
-- `403 FORBIDDEN`;
-- `409 REVISION_CONFLICT`;
-- network failure;
-- `5xx`;
-- других business/security ошибок.
-
-Это предотвращает обход решения сервера заменой credential.
-
-## 3. Account trust boundary
-
-При успешной смене Nexus Cloud connection:
-- старая server session по возможности отзывается сервером;
-- browser credential затем удаляется;
-- только после этого сохраняется новая Cloud account config.
-
-При локальном отключении Nexus Cloud:
-- текущая server session по возможности отзывается;
-- локальные session/config credentials удаляются независимо от результата сети;
-- если server revoke не удался, UI сообщает пользователю проверить «Устройства и сессии».
-
-## 4. Что не решено этим релизом
-
-- `nxk_...` всё ещё browser-readable и хранится в legacy localStorage config;
-- `nxs_...` browser-readable в `sessionStorage`;
-- first-party HttpOnly cookie не реализована;
-- federation / Passkey / MFA не реализованы.
-
-Поэтому `2.4.4` — migration foundation, а не финальная модель авторизации.
+- HttpOnly first-party session;
+- удаление browser-readable legacy token из normal sign-in path;
+- federated providers / Passkey / MFA.

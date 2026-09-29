@@ -1,13 +1,10 @@
-AKRONIKL IT NEXUS v0.1.7-alpha.2.4.4 — ПРОВЕРКА СБОРКИ
+AKRONIKL IT NEXUS v0.1.7-alpha.2.4.4 — ПРОВЕРКА СБОРКИ И LIVE-ЗАКРЫТИЕ
 Дата: 2026-09-29
-
-Этап:
-Переход Cloud Sync на приоритет серверных сессий
+Этап: Переход Cloud Sync на приоритет серверных сессий
 
 LIVE BOOT DEFECT
 - первый GitHub Pages deploy: FAIL
 - ошибка: duplicate lexical declaration `credential`
-- причина: Account Center markup
 - исправлено до релиза: ДА
 - Worker/D1 затронуты: НЕТ
 
@@ -19,7 +16,7 @@ AUTOMATED AFTER FIX
 - ESM module import smoke: PASS
 - Account Shell direct import: PASS
 
-SESSION-FIRST
+SESSION-FIRST AUTOMATED
 - nxs используется первой: PASS
 - успешная nxs не вызывает legacy retry: PASS
 - 401 INVALID_SESSION очищает stale session: PASS
@@ -28,24 +25,39 @@ SESSION-FIRST
 - 409 REVISION_CONFLICT не вызывает fallback: PASS
 - conflict state сохраняется: PASS
 
-ACCOUNT BOUNDARY
-- relink пытается отозвать старую server session: PASS
-- disconnect пытается отозвать current server session: PASS
-- browser session credential очищается: PASS
-- raw credential не выводится в Project Studio: PASS
+LIVE PRODUCTION
+- boot после hotfix: PASS
+- legacy baseline: PASS
+- Project Studio auth transport = legacy fallback: PASS
+- controlled nxs session issuance: PASS
+- bridge возвращён в false до normal use: PASS
+- Project Studio auth transport = server session: PASS
+- PULL через nxs: PASS
+- PUSH через nxs: PASS
+- cloud revision 7 → 8: PASS
+- stale nxs preparation: PASS
+- следующий PULL после server revoke: PASS
+- automatic controlled legacy fallback: PASS
+- auth transport → legacy fallback: PASS
+- Android discovery/PULL rev 8 via legacy fallback: PASS
+- iPhone discovery/PULL rev 8 via legacy fallback: PASS
+- test device revoke: PASS
+- working registered device preserved: PASS
 
-BACKEND
-- Worker change: NO
-- D1 migration: NO
-- Cloud Sync API contract change: NO
-- production bridge target: false
+FINAL D1
+- devices=3
+- active_devices=1
+- revoked_devices=2
+- sessions=4
+- active_sessions=0
+- revoked_sessions=4
+- security_events=10
 
-LIVE AFTER FIX
-- boot smoke: PENDING
-- production PULL via nxs: PENDING
-- production PUSH via nxs: PENDING
-- stale-session automatic fallback: PENDING
-- mobile regression: PENDING
+PRODUCTION CLOSE
+- Worker changed by 2.4.4: NO
+- D1 schema changed by 2.4.4: NO
+- Cloud Sync API contract changed: NO
+- IDENTITY_V2_BRIDGE_ENABLED=false: PASS
 
 ИТОГ:
-ИСПРАВЛЕННЫЙ КАНДИДАТ ГОТОВ К ПОВТОРНОЙ LIVE-ПРОВЕРКЕ
+ПЕРЕХОД CLOUD SYNC НА ПРИОРИТЕТ СЕРВЕРНЫХ СЕССИЙ — ПОЛНАЯ LIVE-ПРОВЕРКА ПРОЙДЕНА

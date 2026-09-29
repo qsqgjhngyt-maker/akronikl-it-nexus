@@ -1,44 +1,24 @@
 # Журнал дефектов — v0.1.7-alpha.2.4.4
 
-## Известные ограничения кандидата
+## BOOT-244-001 — Nexus не завершал загрузку после первой публикации кандидата
 
-### LIM-244-001 — legacy token всё ещё обязателен для normal linked-account configuration
-Статус: ожидаемое ограничение этапа.
-
-Даже при наличии `nxs_...` существующий Cloud account config содержит `nxk_...` для rollback. Полный session-only режим не заявляется.
-
-### LIM-244-002 — server session остаётся browser-readable
-`nxs_...` хранится в `sessionStorage`, а не HttpOnly cookie. Это промежуточная foundation-модель.
-
-### LIM-244-003 — best-effort revoke при сетевой ошибке
-При account relink/disconnect frontend пытается отозвать старую server session. Если сеть недоступна:
-- browser credential очищается;
-- server session может оставаться до expiry/revoke;
-- при disconnect пользователь получает предупреждение.
-
-## LIVE defects
-Заполняется после production smoke.
-
-## BOOT-244-001 — Nexus не завершал загрузку после публикации кандидата
-
-**Обнаружено:** LIVE smoke GitHub Pages  
 **Симптом:** `SyntaxError: Identifier 'credential' has already been declared`  
-**Статус:** ИСПРАВЛЕНО В КАНДИДАТЕ ДО РЕЛИЗА  
+**Статус:** ИСПРАВЛЕНО / LIVE ПОДТВЕРЖДЕНО  
 **Потеря данных:** нет  
 **Backend / D1:** не затронуты
 
-### Причина
-В `core/account-shell.js`, внутри `accountPageMarkup()`, после добавления session-first статуса `credential` был объявлен второй раз в том же lexical scope.
+Причина — двойное lexical declaration `credential` в `core/account-shell.js`. После исправления добавлен обязательный ESM module import smoke. Повторный GitHub Pages boot прошёл успешно.
 
-### Почему старый gate пропустил
-`node --check` для этого файла вернул успешный результат, однако реальный ESM import воспроизводил тот же SyntaxError, что Chrome.
+## Известные архитектурные ограничения этапа
 
-### Исправление
-- удалено второе объявление `credential`;
-- добавлен `tests/module-import-smoke-check.mjs`;
-- новый gate импортирует ключевые frontend ES modules, а не только выполняет `node --check`.
+### LIM-244-001 — legacy token всё ещё нужен как rollback
+Полный session-only режим не заявляется. `nxk_...` остаётся migration/rollback credential до first-party session transport.
 
-### Проверка
-- прямой `import('./core/account-shell.js')`: PASS;
-- полный module import smoke: PASS;
-- полная регрессия: PASS.
+### LIM-244-002 — server session пока browser-readable
+`nxs_...` хранится в `sessionStorage`, а не в HttpOnly cookie.
+
+### LIM-244-003 — best-effort revoke при сетевой ошибке
+При relink/disconnect frontend пытается отозвать server session. При сетевой ошибке browser credential очищается, но server session может существовать до expiry/revoke.
+
+## LIVE defects после boot-hotfix
+Новых product/security дефектов в session-first Cloud Sync lifecycle не выявлено.

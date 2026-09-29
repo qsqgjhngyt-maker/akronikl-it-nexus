@@ -3,27 +3,25 @@
 ## Переход Cloud Sync на приоритет серверных сессий
 
 ### Добавлено
-- session-first authentication для Project Studio Cloud Sync;
+- session-first auth для Project Studio Cloud Sync;
 - controlled legacy fallback только после допустимого 401;
-- отображение `auth transport` в SYNC-панели;
-- отзыв текущей server session при relink/disconnect;
-- предупреждение при неудачном revoke во время local disconnect.
+- отображение `auth transport`;
+- account-boundary session retirement при relink/disconnect;
+- ESM module import quality gate.
 
-### Сохранено
-- PUSH/PULL API;
-- revision conflict semantics;
-- ACL;
-- D1 schema;
+### LIVE подтверждено
+- PULL/PUSH via nxs;
+- cloud rev 7→8;
+- stale-session automatic fallback;
+- Android/iPhone legacy regression;
+- test device cleanup;
+- final D1/security state.
+
+### Исправлено
+- boot-blocking duplicate `credential` declaration в первом candidate deploy.
+
+### Не изменялось
 - Worker;
-- legacy rollback.
-
-### Не заявляется
-- отказ от legacy token;
-- HttpOnly session;
-- федеративный вход.
-
-### Исправление запуска кандидата
-- устранено двойное объявление `credential` в `Account Center`;
-- исправлен boot-blocking `SyntaxError`;
-- добавлен обязательный ESM module import smoke-test;
-- уточнён текст Session Migration: Cloud Sync в `2.4.4` уже использует session-first модель.
+- D1 schema;
+- ACL;
+- revision-conflict semantics.
