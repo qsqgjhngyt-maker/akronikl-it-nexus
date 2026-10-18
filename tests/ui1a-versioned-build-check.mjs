@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {readFile,mkdtemp} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+const root=path.resolve(fileURLToPath(new URL('../',import.meta.url))),tmp=await mkdtemp(path.join(tmpdir(),'nexus-ui1a-build-check-')),out=path.join(tmp,'public'),config=JSON.parse(await readFile(path.join(root,'release-candidate.json')));
+const run=spawnSync(process.execPath,[path.join(root,'tools/build-ui1a-release.mjs'),'--out',out],{encoding:'utf8'});assert.equal(run.status,0,run.stderr);
+const index=await readFile(path.join(out,'index.html'),'utf8'),manifest=JSON.parse(await readFile(path.join(out,'BUILD_MANIFEST.json'))),sourceManifest=await readFile(path.join(root,'manifest.webmanifest'));
+assert.ok(index.includes('./releases/'+config.assetGeneration+'/core/app.js?v='+config.version));assert.ok(index.includes('./releases/'+config.assetGeneration+'/styles/app.css?v='+config.version));assert.ok(!index.includes('?v=0.1.7-alpha.2.4.5'));
+assert.deepEqual(await readFile(path.join(out,'manifest.webmanifest')),sourceManifest,'PWA identity bytes changed');assert.equal(manifest.legacyWorkerIncluded,false);
+assert.ok(!manifest.files.some(r=>r.file.endsWith('/service-worker.js')||r.file==='service-worker.js'));
+const hash=b=>createHash('sha256').update(b).digest('hex');for(const r of manifest.files)assert.equal(hash(await readFile(path.join(out,r.file))),r.sha256,r.file);
+for(const path of ['core/app.js','core/i18n.js','sandbox/workers/wasm-runtime-worker.js','project-studio/project-studio.js','courses/cpp/curriculum.json','styles/app.css'])assert.ok(manifest.files.some(r=>r.file==='releases/'+config.assetGeneration+'/'+path),path);
+const app=await readFile(path.join(root,'core/app.js'),'utf8');assert.ok(app.includes("PROJECT_STUDIO_VERSION='"+config.version+"'"));assert.ok(app.includes('if(RELEASE_CONTRACTS.pwa&&'));
+console.log('UI1A_VERSIONED_BUILD_PASS',manifest.files.length,'assets; PWA identity preserved; migration BLOCKED');

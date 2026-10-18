@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {RELEASE_CONTRACTS} from '../core/ui1a-release-contracts.js';
 const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8');
 const select=fs.readFileSync(new URL('../core/glass-select.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('../styles/app.css',import.meta.url),'utf8');
@@ -14,6 +15,6 @@ const checks=[
   ['keyboard support',select.includes("ev.key==='ArrowDown'")&&select.includes("ev.key===ESCAPE")],
   ['outside click closes',select.includes("document.addEventListener('pointerdown'")],
   ['glass dropdown styles',css.includes('Nexus Glass Dropdown hotfix')&&css.includes('.nexus-select-menu')],
-  ['service worker caches selector module',sw.includes('./core/glass-select.js')&&sw.includes(`akronikl-it-nexus-v${version}`)]
+  ['historical selector cache source preserved, candidate registration disabled',sw.includes('./core/glass-select.js')&&sw.includes('akronikl-it-nexus-v0.1.7-alpha.2.4.5')&&RELEASE_CONTRACTS.pwa===false]
 ];
 for(const [name,ok] of checks){console.log(`${ok?'PASS':'FAIL'} ${name}`);if(!ok)process.exitCode=1}
