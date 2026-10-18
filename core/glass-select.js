@@ -108,6 +108,10 @@ export function bindGlassSelects(){
       if(!inside)closeAll();
     });
     window.addEventListener('resize',()=>closeAll());
-    window.addEventListener('scroll',()=>closeAll(),true);
+    window.addEventListener('scroll',event=>{
+      const region=event.target.closest?.('[data-nexus-select-scroll]');
+      if(region?.querySelector('[data-nexus-select].open')||event.target.closest?.('.nexus-select-menu'))return;
+      closeAll();
+    },true);
   }
 }

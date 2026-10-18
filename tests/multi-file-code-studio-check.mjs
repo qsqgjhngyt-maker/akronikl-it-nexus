@@ -24,7 +24,8 @@ assert(wasm.support==='guaranteed','WASM Runtime must guarantee basic multi-file
 assert(wasm.reasons.includes('multi-file-wasm-required'),'WASM Runtime multi-file reason missing');
 
 const markup=codeStudioMarkup({files:MULTI_FILE_CPP_DEMO,activeFile:'Printer.cpp',entryFile:'main.cpp',locale:'ru',languageId:'cpp'});
-for(const token of ['id="codeFileTree"','id="codeFileTreeList"','id="codeFileTabs"','id="codeAddFile"','id="codeLoadDemo"','multi-file'])assert(markup.includes(token),`Multi-file markup missing ${token}`);
+for(const token of ['id="codeFileTree"','id="codeFileTreeList"','id="codeFileTabs"','id="codeAddFile"','id="codeLoadDemo"','data-studio-files','aria-controls="codeFileTree"'])assert(markup.includes(token),`Multi-file markup missing ${token}`);
+assert(markup.includes('aria-label="Загрузить C++ демо из 4 файлов"'),'Multi-file demo action must describe its four-file workspace');
 assert(markup.includes('std::string Printer::name'),'Active file content was not rendered');
 
 const files=Object.fromEntries(MULTI_FILE_CPP_DEMO.map(file=>[file.path,file.content]));

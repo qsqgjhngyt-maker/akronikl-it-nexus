@@ -180,7 +180,7 @@ export function accountHomeCardMarkup(locale='ru'){
   </section>`;
 }
 
-const tabLink=(id,label,current)=>`<a href="#view=account&tab=${encodeURIComponent(id)}" class="${current===id?'active':''}">${esc(label)}</a>`;
+const tabLink=(id,label,current)=>`<a href="#view=account&tab=${encodeURIComponent(id)}" class="${current===id?'active':''}" aria-current="${current===id?'page':'false'}">${esc(label)}</a>`;
 
 export function accountPageMarkup(locale='ru',tab='overview'){
   const en=locale==='en';
@@ -202,28 +202,28 @@ export function accountPageMarkup(locale='ru',tab='overview'){
         <span class="account-avatar xl">${esc(a.avatar)}</span>
         <div><h2>${esc(a.displayName)}</h2><p>${esc(a.status)}</p></div>
       </div>
-      <dl class="account-dl">
+      <details class="account-connection-details"><summary>${en?'Connection details':'Сведения о подключении'}</summary><dl class="account-dl">
         <div><dt>${en?'Account state':'Состояние'}</dt><dd>${esc(a.state)}</dd></div>
         <div><dt>${en?'Subject':'Subject'}</dt><dd>${esc(a.subjectShort)}</dd></div>
         <div><dt>${en?'Device':'Устройство'}</dt><dd>${esc(a.deviceShort)}</dd></div>
         <div><dt>Cloud</dt><dd>${a.connected?esc(a.host):'—'}</dd></div>
-      </dl>
+      </dl></details>
     </section>
     <section class="account-panel glass-panel">
       <span class="eyebrow">SIGN-IN METHODS</span>
       <h2>${en?'Authentication methods':'Способы входа'}</h2>
       <div class="identity-method-list">
-        <div class="identity-method active"><b>☁</b><div><strong>Nexus Cloud Token</strong><span>${a.connected
+        <div class="identity-method ${a.connected?'active':'disconnected'}"><b>☁</b><div><strong>Nexus Cloud Token</strong><span>${a.connected
           ? (credential.mode==='nexus-session'
               ? (en?'Available as controlled rollback · Cloud Sync uses server session first':'Доступен как контролируемый rollback · Cloud Sync сначала использует server session')
               : (en?'Current migration credential · server session will take priority when present':'Текущий migration credential · при наличии server session получит приоритет'))
           : (en?'Not connected on this device':'Не подключён на этом устройстве')}</span></div><em>${a.connected?(credential.mode==='nexus-session'?'ROLLBACK':'ACTIVE'):'ALPHA'}</em></div>
-        <div class="identity-method planned"><b>Y</b><div><strong>Yandex ID</strong><span>${en?'Identity v2 provider adapter':'Адаптер Identity v2'}</span></div><em>PLANNED</em></div>
+        <details class="account-planned-methods"><summary>${en?'Upcoming sign-in methods':'Будущие способы входа'}</summary><div class="identity-method planned"><b>Y</b><div><strong>Yandex ID</strong><span>${en?'Identity v2 provider adapter':'Адаптер Identity v2'}</span></div><em>${en?'Planned':'В планах'}</em></div>
         <div class="identity-method planned"><b>G</b><div><strong>Google</strong><span>${en?'Federated sign-in':'Федеративный вход'}</span></div><em>PLANNED</em></div>
         <div class="identity-method planned"><b></b><div><strong>Apple</strong><span>${en?'Federated sign-in':'Федеративный вход'}</span></div><em>PLANNED</em></div>
         <div class="identity-method planned"><b>⌕</b><div><strong>${en?'Phone / OTP':'Телефон / OTP'}</strong><span>${en?'Requires SMS provider and anti-abuse layer':'Потребует SMS-провайдера и anti-abuse слоя'}</span></div><em>PLANNED</em></div>
         <div class="identity-method planned"><b>◆</b><div><strong>Passkey</strong><span>WebAuthn · Face ID / Touch ID / PIN</span></div><em>PLANNED</em></div>
-      </div>
+      </details></div>
       <div class="account-actions">
         <a class="btn" href="#view=account&tab=cloud">${a.connected?(en?'Open Nexus Cloud settings':'Открыть настройки Nexus Cloud'):(en?'Connect current Nexus Cloud':'Подключить текущий Nexus Cloud')}</a>
       </div>
@@ -238,7 +238,7 @@ const cloud=`<div class="account-grid">
     <p>${a.connected
       ? (en?'This device is linked to the current Nexus Cloud account. Project Studio uses this account for import, PUSH and PULL. When a server session exists, Cloud Sync prefers it and keeps the legacy token only as controlled rollback.':'Это устройство связано с текущим Nexus Cloud аккаунтом. Project Studio использует эту учётную запись для импорта, PUSH и PULL. При наличии server session Cloud Sync сначала использует её, а legacy token остаётся контролируемым rollback.')
       : (en?'Connect this device to Nexus Cloud once here. Project pages no longer own account setup.':'Подключите устройство к Nexus Cloud один раз здесь. Страницы проектов больше не управляют подключением аккаунта.')}</p>
-    <dl class="account-dl">
+    <details class="account-connection-details"><summary>${en?'Connection details':'Сведения о подключении'}</summary><dl class="account-dl">
       <div><dt>${en?'State':'Состояние'}</dt><dd>${esc(a.state)}</dd></div>
       <div><dt>${en?'Account':'Аккаунт'}</dt><dd>${esc(a.displayName)}</dd></div>
       <div><dt>Subject</dt><dd>${esc(a.subjectShort)}</dd></div>
@@ -246,7 +246,7 @@ const cloud=`<div class="account-grid">
       <div><dt>${en?'This device':'Это устройство'}</dt><dd>${esc(a.deviceShort)}</dd></div>
       <div><dt>${en?'Cloud Sync auth':'Авторизация Cloud Sync'}</dt><dd>${esc(identityTransportLabel(credential.mode,en))}</dd></div>
       <div><dt>${en?'Legacy rollback':'Legacy rollback'}</dt><dd>${credential.rollbackAvailable?(en?'available':'доступен'):(en?'not available':'недоступен')}</dd></div>
-    </dl>
+    </dl></details>
     <div class="account-actions">
       <button class="btn primary" type="button" id="accountCloudConfigure">${a.connected?(en?'Change connection':'Изменить подключение'):(en?'Connect Nexus Cloud':'Подключить Nexus Cloud')}</button>
       ${a.connected?`<button class="btn danger" type="button" id="accountCloudDisconnect">${en?'Disconnect on this device':'Отключить на этом устройстве'}</button>`:''}
@@ -270,8 +270,8 @@ const cloud=`<div class="account-grid">
   const learning=`<section class="account-panel glass-panel account-wide">
     <span class="eyebrow">CLOUD PROFILE · NEXT</span>
     <h2>${en?'Learning continuity':'Непрерывность обучения'}</h2>
-    <p>${en?'Current course progress remains local-first. The next phase will bind preferences, progress and Skill Map state to Nexus Account with offline-safe reconciliation.':'Сейчас прогресс курса остаётся local-first. Следующий этап свяжет настройки, прогресс и состояние Skill Map с Nexus Account с безопасным offline reconciliation.'}</p>
-    <div class="account-roadmap">
+    <p>${en?'Your course progress is saved on this device. Open the C++ learning path to continue. Cross-device course progress is planned.':'Прогресс курса сохраняется на этом устройстве. Откройте траекторию C++, чтобы продолжить. Перенос учебного прогресса между устройствами пока в планах.'}</p>
+    <div class="account-actions"><a class="btn primary" href="#course=cpp">${en?'Continue learning C++':'Продолжить C++'} →</a><a class="btn" href="#view=projects">${en?'My projects':'Мои проекты'}</a></div><div class="account-roadmap">
       <span class="done">✓ ${en?'Visible account shell':'Видимый Account Shell'}</span>
       <span>${en?'Cloud profile':'Cloud Profile'}</span>
       <span>${en?'Cross-device progress':'Прогресс между устройствами'}</span>
@@ -283,12 +283,12 @@ const cloud=`<div class="account-grid">
     <section class="account-panel glass-panel">
       <span class="eyebrow">CURRENT DEVICE</span>
       <h2>${en?'This device':'Это устройство'}</h2>
-      <dl class="account-dl">
+      <details class="account-connection-details"><summary>${en?'Connection details':'Сведения о подключении'}</summary><dl class="account-dl">
         <div><dt>ID</dt><dd>${esc(a.deviceShort)}</dd></div>
         <div><dt>${en?'State':'Состояние'}</dt><dd>${esc(a.accountState)}</dd></div>
         <div><dt>Cloud</dt><dd>${a.connected?(en?'connected':'подключён'):(en?'not configured':'не настроен')}</dd></div>
         <div><dt>${en?'Identity transport':'Identity transport'}</dt><dd id="identityTransportSummary">${esc(identityTransportLabel(credential.mode,en))}</dd></div>
-      </dl>
+      </dl></details>
     </section>
     <section class="account-panel glass-panel">
       <span class="eyebrow">SESSION MIGRATION</span>
@@ -322,27 +322,27 @@ const cloud=`<div class="account-grid">
   const security=`<div class="account-grid">
     <section class="account-panel glass-panel">
       <span class="eyebrow">CURRENT SECURITY</span>
-      <h2>${en?'Current migration security':'Текущая безопасность миграции'}</h2>
+      <h2>${en?'Access and sessions':'Доступ и сессии'}</h2>
       <ul class="account-security-list">
-        <li class="ok">✓ ${en?'Server stores session secret hash, not raw nxs credential':'Сервер хранит hash session secret, а не raw nxs credential'}</li>
-        <li class="ok">✓ ${en?'Server-side session revoke is LIVE verified':'Server-side revoke сессии LIVE подтверждён'}</li>
-        <li class="ok">✓ ${en?'Devices / sessions API is available':'Devices / sessions API доступен'}</li>
-        <li class="ok">✓ ${en?'Legacy Cloud Sync rollback remains available':'Legacy Cloud Sync rollback сохранён'}</li>
-        <li class="warn">! ${en?'Normal browser sign-in still depends on a browser-readable legacy token':'Обычный вход браузера пока зависит от browser-readable legacy token'}</li>
+        <li>${en?'Review devices linked to your account and end sessions you no longer need.':'Проверяйте устройства аккаунта и завершайте сессии, которые больше не нужны.'}</li>
+        <li>${en?'Server data is available after configuring your account connection.':'Серверные данные доступны после настройки подключения аккаунта.'}</li>
+        
+        
+        <li>${en?'The current account bridge supports migration credentials; see connection details for your device.':'Текущий мост аккаунта поддерживает миграционные данные входа; подробности доступны в настройках подключения.'}</li>
       </ul>
     </section>
     <section class="account-panel glass-panel">
       <span class="eyebrow">IDENTITY v2</span>
-      <h2>${en?'Security roadmap':'Дорожная карта безопасности'}</h2>
+      <h2>${en?'Server capabilities and upcoming features':'Возможности сервера и развитие'}</h2>
       <ul class="account-security-list">
         <li id="identityServerFoundation">${en?'Identity v2 server foundation: checking…':'Identity v2 server foundation: проверка…'}</li>
-        <li class="ok">✓ ${en?'Revocable server sessions':'Отзываемые серверные сессии'}</li>
-        <li class="ok">✓ ${en?'Devices / sessions management foundation':'Фундамент управления устройствами / сессиями'}</li>
+        
+        
         <li id="identityCookieFoundation">${en?'First-party HttpOnly session: checking…':'First-party HttpOnly session: проверка…'}</li>
-        <li>Passkey / WebAuthn</li>
-        <li>TOTP MFA + recovery codes</li>
-        <li>Explicit account linking</li>
-        <li>Step-up for sensitive/admin actions</li>
+        <li>Passkey / WebAuthn · ${en?'planned':'в планах'}</li>
+        <li>TOTP MFA + recovery codes · ${en?'planned':'в планах'}</li>
+        <li>${en?'Account linking · planned':'Связывание аккаунтов · в планах'}</li>
+        <li>${en?'Verification for sensitive and admin actions · planned':'Подтверждение важных и административных действий · в планах'}</li>
       </ul>
       <p class="account-muted">${en?'No session token, provider secret or recovery credential is rendered on this page.':'На этой странице не отображаются session token, provider secret или recovery credential.'}</p>
     </section>
@@ -350,12 +350,12 @@ const cloud=`<div class="account-grid">
 
   const content=current==='overview'?overview:current==='cloud'?cloud:current==='learning'?learning:current==='devices'?devices:security;
 
-  return `<section class="account-page">
+  return `<section class="account-page" data-nexus-account>
     <div class="account-page-head glass-panel">
       <div>
-        <span class="eyebrow">NEXUS ACCOUNT · v1 FOUNDATION</span>
-        <h1>${en?'Your identity across Nexus':'Ваша учётная запись Nexus'}</h1>
-        <p>${en?'Account Shell is now a first-class platform surface. This release bridges the existing Nexus Cloud account into the global UI without pretending that Identity v2 is already complete.':'Account Shell теперь полноценная часть платформы. Этот релиз выводит существующий Nexus Cloud аккаунт в глобальный интерфейс, не выдавая будущую Identity v2 за готовую реализацию.'}</p>
+        <span class="eyebrow">NEXUS ACCOUNT</span>
+        <h1>${en?'Your space in Nexus':'Ваше пространство Nexus'}</h1>
+        <p>${en?'Your profile, learning and projects, with device and connection settings in one place.':'Профиль, обучение и проекты — вместе с настройками устройства и подключения.'}</p>
       </div>
       <div class="account-status-card ${a.connected?'connected':'local'}">
         <span class="account-avatar xl">${esc(a.avatar)}</span>
@@ -363,7 +363,7 @@ const cloud=`<div class="account-grid">
         <small>${esc(a.status)}</small>
       </div>
     </div>
-    <nav class="account-tabs">${nav.map(([id,label])=>tabLink(id,label,current)).join('')}</nav>
+    <nav class="account-tabs" aria-label="${en?'Account sections':'Разделы личного кабинета'}">${nav.map(([id,label])=>tabLink(id,label,current)).join('')}</nav>
     ${content}
   </section>`;
 }

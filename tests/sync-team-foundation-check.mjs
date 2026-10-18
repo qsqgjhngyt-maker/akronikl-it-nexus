@@ -51,7 +51,10 @@ assert(status.configured===false&&status.online===false,'unconfigured provider m
 const dashboard=projectStudioDashboardMarkup({projects:[getProject(project.id)],courseProjects:[],locale:'ru'});
 for(const token of ['Nexus Sync & Team','Команда · 2','ОБЛАКО'])assert(dashboard.includes(token),`dashboard missing sync/team token: ${token}`);
 const detail=projectStudioViewMarkup({project:getProject(project.id),courseProject:null,locale:'ru'});
-for(const token of ['ACCESS','SYNC','AUDIT','ACL READY','явный DENY'])assert(detail.includes(token),`project detail missing sync/team token: ${token}`);
+// Проверяем сохранение функций после локализации UI, а не прежние технические бейджи.
+for(const token of ['ps-access-panel','ps-sync-panel','ps-audit-panel','Доступ к проекту','Облако и синхронизация','История проекта','явный DENY'])assert(detail.includes(token),`project detail missing sync/team feature: ${token}`);
+const detailEn=projectStudioViewMarkup({project:getProject(project.id),courseProject:null,locale:'en'});
+for(const token of ['Project access','Cloud and synchronization','Project history','explicit DENY'])assert(detailEn.includes(token),`English project detail missing sync/team feature: ${token}`);
 
 // Backward migration: old schema-v1 project must receive access + sync v1 without changing storage namespace.
 mem.clear();

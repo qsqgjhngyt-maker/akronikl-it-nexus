@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-const account=fs.readFileSync(new URL('../core/account-shell.js',import.meta.url),'utf8');
+const account=fs.readFileSync(new URL('../core/account-shell.js',import.meta.url),'utf8').replaceAll('\r\n','\n');
 const client=fs.readFileSync(new URL('../sync/identity-v2-client.js',import.meta.url),'utf8');
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 

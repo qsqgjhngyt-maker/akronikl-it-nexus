@@ -44,10 +44,14 @@ assert(wasmRuntimeProvider.inspect(request).support==='guaranteed','WASM Runtime
 const dashboard=projectStudioDashboardMarkup({projects:listProjects(),courseProjects:[courseDef],locale:'ru'});
 for(const token of ['NEXUS PROJECT STUDIO','МОИ ПРОЕКТЫ','Nexus Sync & Team','Cloudflare Transport','#view=project-studio&template=cpp%3Afinance'])assert(dashboard.includes(token),`Project Studio dashboard missing ${token}`);
 const detail=projectStudioViewMarkup({project:getProject(project.id),courseProject:courseDef,locale:'ru'});
-for(const token of ['MANIFEST','CHECKPOINTS','id="psCheckpoint"','id="runCode"','src/main.cpp'])assert(detail.includes(token),`Project Studio detail missing ${token}`);
+for(const token of ['Файлы и сборка','CHECKPOINTS','id="psCheckpoint"','id="runCode"','src/main.cpp'])assert(detail.includes(token),`Project Studio detail missing ${token}`);
 
 const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8');
-for(const token of ['programmingHub()','practicumView(id)','projectStudioDashboard()','projectStudioProject(projectId)','bindProjectStudio','ensureTemplateProject','Решить в Code Studio','Открыть в Project Studio'])assert(app.includes(token),`App integration missing ${token}`);
+for(const token of ['programmingHub()','practicumView(id)','projectStudioDashboard()','projectStudioProject(projectId)','bindProjectStudio','ensurePracticeWorkingCopy',"t('learningUi.solve')","t('learningUi.projectOpen')"])assert(app.includes(token),`App integration missing ${token}`);
+for(const [locale,solve,open] of [['ru','Решить в Code Studio','Открыть в Project Studio'],['en','Solve in Code Studio','Open in Project Studio']]){
+  const labels=JSON.parse(fs.readFileSync(new URL(`../locales/${locale}/ui.json`,import.meta.url),'utf8'));
+  assert(labels['learningUi.solve']===solve&&labels['learningUi.projectOpen']===open,`Course-to-Studio labels missing for ${locale}`);
+}
 const catalog=JSON.parse(fs.readFileSync(new URL('../courses/catalog.json',import.meta.url),'utf8'));const programming=catalog.courses.find(x=>x.id==='programming');
 assert(programming?.route==='#view=programming','Programming academy card is not routed to hub');assert(programming?.status==='available-alpha','Programming hub status must be available-alpha');
 console.log('PROJECT_STUDIO_FOUNDATION_PASS',project.id,listProjects().length);

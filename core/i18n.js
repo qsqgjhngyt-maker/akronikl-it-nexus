@@ -1,8 +1,9 @@
+import {fetchPublicJSON} from './offline-assets.js';
 let registry;
 const bundles = new Map();
 
 export async function loadLocaleRegistry() {
-  if (!registry) registry = await fetch('./locales/registry.json', { cache: 'no-store' }).then(r => r.json());
+  if (!registry) registry = await fetchPublicJSON('./locales/registry.json').then(r => r.json());
   return registry;
 }
 
@@ -11,7 +12,7 @@ export async function loadBundle(code) {
   const supported = reg.supported.some(x => x.code === code && x.enabled);
   const target = supported ? code : reg.fallback;
   if (!bundles.has(target)) {
-    const data = await fetch(`./locales/${target}/ui.json`, { cache: 'no-store' }).then(r => {
+    const data = await fetchPublicJSON(`./locales/${target}/ui.json`).then(r => {
       if (!r.ok) throw new Error(`Locale ${target} failed: ${r.status}`);
       return r.json();
     });

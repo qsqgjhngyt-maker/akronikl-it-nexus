@@ -1,5 +1,6 @@
+import {fetchPublicJSON} from './offline-assets.js';
 let catalogCache; let cppCache; let programmingCache;
-async function getJson(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(`${url}: HTTP ${r.status}`);return r.json();}
+async function getJson(url){const r=await fetchPublicJSON(url);if(!r.ok)throw new Error(`${url}: HTTP ${r.status}`);return r.json();}
 export async function getCatalog(){if(!catalogCache)catalogCache=await getJson('./courses/catalog.json');return catalogCache;}
 export async function getCppCourse(){if(!cppCache){const [manifest,curriculum,lessonsRu,lessonsEn,practicumsRu,projectsRu]=await Promise.all([
  getJson('./courses/cpp/manifest.json'),
