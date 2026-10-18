@@ -326,8 +326,8 @@ const cloud=`<div class="account-grid">
       <ul class="account-security-list">
         <li>${en?'Review devices linked to your account and end sessions you no longer need.':'Проверяйте устройства аккаунта и завершайте сессии, которые больше не нужны.'}</li>
         <li>${en?'Server data is available after configuring your account connection.':'Серверные данные доступны после настройки подключения аккаунта.'}</li>
-        
-        
+
+
         <li>${en?'The current account bridge supports migration credentials; see connection details for your device.':'Текущий мост аккаунта поддерживает миграционные данные входа; подробности доступны в настройках подключения.'}</li>
       </ul>
     </section>
@@ -336,8 +336,8 @@ const cloud=`<div class="account-grid">
       <h2>${en?'Server capabilities and upcoming features':'Возможности сервера и развитие'}</h2>
       <ul class="account-security-list">
         <li id="identityServerFoundation">${en?'Identity v2 server foundation: checking…':'Identity v2 server foundation: проверка…'}</li>
-        
-        
+
+
         <li id="identityCookieFoundation">${en?'First-party HttpOnly session: checking…':'First-party HttpOnly session: проверка…'}</li>
         <li>Passkey / WebAuthn · ${en?'planned':'в планах'}</li>
         <li>TOTP MFA + recovery codes · ${en?'planned':'в планах'}</li>
