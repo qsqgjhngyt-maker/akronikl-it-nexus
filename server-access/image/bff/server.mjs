@@ -1166,7 +1166,7 @@ ${sha(body)}`).digest("hex");
   }
   const data = await boundedJSON(upstream.body, 16384);
   if (upstream.status !== 200) {
-    const safe = ["FRESH_PASSKEY_REQUIRED", "EXPLICIT_LINK_REQUIRED", "OWNER_EMAIL_REQUIRED", "IDENTITY_ALREADY_LINKED", "IDENTITY_REJECTED", "TRANSACTION_REJECTED", "RATE_LIMITED"];
+    const safe = ["ACCOUNT_SESSION_CHANGED", "FRESH_PASSKEY_REQUIRED", "EXPLICIT_LINK_REQUIRED", "OWNER_EMAIL_REQUIRED", "IDENTITY_ALREADY_LINKED", "IDENTITY_REJECTED", "TRANSACTION_REJECTED", "RATE_LIMITED"];
     deny(safe.includes(data.error?.code) ? data.error.code : "OAUTH_UNAVAILABLE", [400, 401, 403, 409, 429, 503].includes(upstream.status) ? upstream.status : 502);
   }
   if (data.ok !== true) deny("OAUTH_UNAVAILABLE", 502);
@@ -1198,9 +1198,13 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
         if (req.headers.origin !== GATEWAY_ORIGIN || count2(req, "origin") !== 1 || req.headers["x-nexus-oauth-request"] !== "1" || count2(req, "x-nexus-oauth-request") !== 1 || req.headers["content-type"] !== "application/json" || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") deny("WRITE_ORIGIN_REQUIRED", 403);
         const input = await boundedJSON(req, 1024, true);
         if (Object.keys(input).join(",") !== "intent" || !["login", "link"].includes(input.intent)) deny("INVALID_INPUT");
+        const expectedAccountId = req.headers["x-nexus-oauth-account"], expectationHeaders = count2(req, "x-nexus-oauth-account");
+        if (input.intent === "link") {
+          if (expectationHeaders !== 1 || typeof expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(expectedAccountId)) deny("ACCOUNT_EXPECTATION_REQUIRED");
+        } else if (expectedAccountId !== void 0 || expectationHeaders !== 0) deny("INVALID_INPUT");
         if (input.intent === "link" && !context2.session) deny("FRESH_PASSKEY_REQUIRED", 401);
         const state2 = random(), codeVerifier = random(), nonce = random(), flow = "nof_" + random();
-        const result = await service(env, fetchImpl, { op: "begin", provider, intent: input.intent, stateHash: sha(state2), flowHash: sha(flow), codeVerifier, nonce, ...input.intent === "link" ? { sessionHash: sha(context2.session) } : {} });
+        const result = await service(env, fetchImpl, { op: "begin", provider, intent: input.intent, stateHash: sha(state2), flowHash: sha(flow), codeVerifier, nonce, ...input.intent === "link" ? { sessionHash: sha(context2.session), expectedAccountId } : {} });
         if (typeof result.txId !== "string" || result.txId.length > 80 || typeof result.expiresAt !== "string") deny("OAUTH_UNAVAILABLE", 502);
         return reply6(res, 200, { authorizationURL: oauthAuthorizationURL({ provider, env, state: state2, codeVerifier, nonce }) }, [flowCookie(flow, 600)]);
       }

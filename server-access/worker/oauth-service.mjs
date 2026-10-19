@@ -61,12 +61,17 @@ async function freshPasskey(db,{sessionHash,sessionId,accountId}={}){
 
 async function begin(env,data){
  const names=['op','provider','intent','stateHash','flowHash','codeVerifier','nonce'];
- if(data.intent==='link')names.push('sessionHash');
+ if(data.intent==='link')names.push('sessionHash','expectedAccountId');
  if(!exact(data,names)||!providerAllowed(env,data.provider)||!['login','link'].includes(data.intent)||
   !hash(data.stateHash)||!hash(data.flowHash)||typeof data.codeVerifier!=='string'||!/^[A-Za-z0-9._~-]{43,128}$/.test(data.codeVerifier)||
-  typeof data.nonce!=='string'||!/^[A-Za-z0-9_-]{22,128}$/.test(data.nonce)||(data.intent==='link'&&!hash(data.sessionHash)))deny('INVALID_INPUT');
+  typeof data.nonce!=='string'||!/^[A-Za-z0-9_-]{22,128}$/.test(data.nonce)||(data.intent==='link'&&(!hash(data.sessionHash)||
+   typeof data.expectedAccountId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(data.expectedAccountId))))deny('INVALID_INPUT');
  let account=null;
- if(data.intent==='link'){account=await freshPasskey(env.DB,{sessionHash:data.sessionHash});if(!account)deny('FRESH_PASSKEY_REQUIRED',401)}
+ if(data.intent==='link'){
+  account=await freshPasskey(env.DB,{sessionHash:data.sessionHash});if(!account)deny('FRESH_PASSKEY_REQUIRED',401);
+  // Ожидание вкладки не выбирает actor. Текущую identity устанавливает только session.
+  if(account.subject_id!==data.expectedAccountId)deny('ACCOUNT_SESSION_CHANGED',401);
+ }
  const txId=uuid(),created=now(),expiresAt=new Date(Date.now()+600000).toISOString();
  try{const saved=await statement(env.DB,`INSERT INTO nexus_oauth_transactions(id,state_hash,flow_hash,provider,intent,code_verifier,nonce,authorized_account_id,authorized_session_id,created_at,expires_at)
  VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)`,txId,data.stateHash,data.flowHash,data.provider,data.intent,data.codeVerifier,data.nonce,account?.subject_id||null,account?.id||null,created,expiresAt).run();

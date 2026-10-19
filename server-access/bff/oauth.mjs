@@ -59,7 +59,7 @@ async function service(env,fetchImpl,payload){
  if(upstream.redirected||!/^application\/json(?:\s*;|$)/i.test(upstream.headers.get('content-type')||'')){await upstream.body?.cancel();deny('OAUTH_UNAVAILABLE',502)}
  const data=await boundedJSON(upstream.body,16384);
  if(upstream.status!==200){
-  const safe=['FRESH_PASSKEY_REQUIRED','EXPLICIT_LINK_REQUIRED','OWNER_EMAIL_REQUIRED','IDENTITY_ALREADY_LINKED','IDENTITY_REJECTED','TRANSACTION_REJECTED','RATE_LIMITED'];
+  const safe=['ACCOUNT_SESSION_CHANGED','FRESH_PASSKEY_REQUIRED','EXPLICIT_LINK_REQUIRED','OWNER_EMAIL_REQUIRED','IDENTITY_ALREADY_LINKED','IDENTITY_REJECTED','TRANSACTION_REJECTED','RATE_LIMITED'];
   deny(safe.includes(data.error?.code)?data.error.code:'OAUTH_UNAVAILABLE',[400,401,403,409,429,503].includes(upstream.status)?upstream.status:502);
  }
  if(data.ok!==true)deny('OAUTH_UNAVAILABLE',502);return data;
@@ -90,9 +90,13 @@ export function createOAuthHandler({env={},fetchImpl=fetch}={}){
     if(req.headers.origin!==GATEWAY_ORIGIN||count(req,'origin')!==1||req.headers['x-nexus-oauth-request']!=='1'||count(req,'x-nexus-oauth-request')!==1||req.headers['content-type']!=='application/json'||(req.headers['sec-fetch-site']!==undefined&&req.headers['sec-fetch-site']!=='same-origin'))deny('WRITE_ORIGIN_REQUIRED',403);
     const input=await boundedJSON(req,1024,true);
     if(Object.keys(input).join(',')!=='intent'||!['login','link'].includes(input.intent))deny('INVALID_INPUT');
+    const expectedAccountId=req.headers['x-nexus-oauth-account'],expectationHeaders=count(req,'x-nexus-oauth-account');
+    if(input.intent==='link'){
+     if(expectationHeaders!==1||typeof expectedAccountId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(expectedAccountId))deny('ACCOUNT_EXPECTATION_REQUIRED');
+    }else if(expectedAccountId!==undefined||expectationHeaders!==0)deny('INVALID_INPUT');
     if(input.intent==='link'&&!context.session)deny('FRESH_PASSKEY_REQUIRED',401);
     const state=random(),codeVerifier=random(),nonce=random(),flow='nof_'+random();
-    const result=await service(env,fetchImpl,{op:'begin',provider,intent:input.intent,stateHash:sha(state),flowHash:sha(flow),codeVerifier,nonce,...(input.intent==='link'?{sessionHash:sha(context.session)}:{})});
+    const result=await service(env,fetchImpl,{op:'begin',provider,intent:input.intent,stateHash:sha(state),flowHash:sha(flow),codeVerifier,nonce,...(input.intent==='link'?{sessionHash:sha(context.session),expectedAccountId}:{})});
     if(typeof result.txId!=='string'||result.txId.length>80||typeof result.expiresAt!=='string')deny('OAUTH_UNAVAILABLE',502);
     return reply(res,200,{authorizationURL:oauthAuthorizationURL({provider,env,state,codeVerifier,nonce})},[flowCookie(flow,600)]);
    }

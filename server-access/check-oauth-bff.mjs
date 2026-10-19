@@ -9,6 +9,7 @@ const INTERNAL='/api/v2/account/internal/oauth',PREFIX='/api/v2/account/oauth/';
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const key='SYNTHETIC_OAUTH_SERVICE_KEY_ONLY_20261019';
 const session='nxs_'+'S'.repeat(43),accessToken='SYNTHETIC_PROVIDER_ACCESS_TOKEN',refreshToken='SYNTHETIC_PROVIDER_REFRESH_TOKEN';
+const sessionB='nxs_'+'T'.repeat(43),accountA='synthetic-account-a',accountB='synthetic-account-b';
 const env={OAUTH_PROXY_ENABLED:'true',PRIVATE_GATEWAY_CONFIRMED:'true',OAUTH_SERVICE_KEY:key,
  GOOGLE_CLIENT_ID:'synthetic.apps.googleusercontent.com',GOOGLE_CLIENT_SECRET:'SYNTHETIC_GOOGLE_SECRET',
  YANDEX_CLIENT_ID:'synthetic-yandex-client',YANDEX_CLIENT_SECRET:'SYNTHETIC_YANDEX_SECRET',VK_CLIENT_ID:'123456',MAILRU_CLIENT_ID:'configured-but-unsupported',MAILRU_CLIENT_SECRET:'SYNTHETIC_MAILRU_SECRET'};
@@ -41,9 +42,13 @@ function fixture(settings={}){
    assert.equal(headers.get('x-nexus-service-signature'),createHmac('sha256',key).update(`v1\nPOST\n${INTERNAL}\n${timestamp}\n${nonce}\n${sha(options.body)}`).digest('hex'));
    assert.equal(options.body.includes(session),false);const data=JSON.parse(options.body);
    if(data.op==='begin'){
-    assert.deepEqual(Object.keys(data).sort(),['op','provider','intent','stateHash','flowHash','codeVerifier','nonce',...(data.intent==='link'?['sessionHash']:[])].sort());
+    assert.deepEqual(Object.keys(data).sort(),['op','provider','intent','stateHash','flowHash','codeVerifier','nonce',...(data.intent==='link'?['sessionHash','expectedAccountId']:[])].sort());
     assert.match(data.stateHash,/^[a-f0-9]{64}$/);assert.match(data.flowHash,/^[a-f0-9]{64}$/);assert.match(data.codeVerifier,/^[A-Za-z0-9_-]{43}$/);assert.match(data.nonce,/^[A-Za-z0-9_-]{43}$/);
-    if(data.intent==='link')assert.equal(data.sessionHash,sha(session));
+    if(data.intent==='link'){
+     const actor=data.sessionHash===sha(session)?accountA:data.sessionHash===sha(sessionB)?accountB:null;
+     assert.ok(actor);assert.match(data.expectedAccountId,/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/);
+     if(actor!==data.expectedAccountId)return Response.json({error:{code:'ACCOUNT_SESSION_CHANGED'}},{status:401});
+    }
     const row={...data,txId:randomUUID(),claimed:false};transactions.set(data.stateHash,row);
     return Response.json({ok:true,txId:row.txId,expiresAt:new Date(Date.now()+600000).toISOString()});
    }
@@ -91,7 +96,7 @@ function fixture(settings={}){
 }
 async function invoke(handler,req){const res=response();const handled=await handler(req,res);if(handled){assert.equal(res.headers['cache-control'],'no-store');assert.equal(res.headers.vary,'*');assert.equal(res.headers['referrer-policy'],'no-referrer')}return{handled,res}};
 async function start(f,provider='google',intent='login'){
- const {res}=await invoke(f.handler,request({path:PREFIX+provider+'/start',method:'POST',body:{intent},...(intent==='link'?{sessionValue:session}: {})}));assert.equal(res.status,200,JSON.stringify(res.body));
+ const {res}=await invoke(f.handler,request({path:PREFIX+provider+'/start',method:'POST',body:{intent},...(intent==='link'?{sessionValue:session,headers:{'x-nexus-oauth-account':accountA}}: {})}));assert.equal(res.status,200,JSON.stringify(res.body));
  const data=JSON.parse(res.body),url=new URL(data.authorizationURL);assert.equal(url.searchParams.get('response_type'),'code');assert.equal(url.searchParams.get('redirect_uri'),oauthCallbackURL(provider));
  assert.equal(url.searchParams.has('client_secret'),false);assert.equal(url.searchParams.has('code_verifier'),false);
  const cookie=res.headers['set-cookie'][0];assert.match(cookie,/; Path=\/; HttpOnly; Secure; SameSite=Lax; Max-Age=600$/);
@@ -119,7 +124,18 @@ await check('start защищён Host/Origin/write header и strict JSON',async
   request({path:PREFIX+'google/start',method:'POST',body:{intent:'login'},headers:{'sec-fetch-site':'cross-site'}})])assert.equal((await invoke(f.handler,req)).res.status,403);
  for(const body of [{intent:'login',accountId:'forbidden'},'{"intent":"login","intent":"link"}',[],{intent:'password'}])assert.equal((await invoke(f.handler,request({path:PREFIX+'google/start',method:'POST',body}))).res.status,400);
  assert.equal(f.calls.length,0);
- assert.equal((await invoke(f.handler,request({path:PREFIX+'google/start',method:'POST',body:{intent:'link'}}))).res.status,401);
+ assert.equal((await invoke(f.handler,request({path:PREFIX+'google/start',method:'POST',body:{intent:'link'},headers:{'x-nexus-oauth-account':accountA}}))).res.status,401);
+});
+await check('cross-tab link требует exactly-one expectation и отклоняет cookie B/expected A',async()=>{
+ const f=fixture(),path=PREFIX+'google/start';
+ for(const headers of [{},{'x-nexus-oauth-account':'../invalid'}]){
+  const before=f.calls.length;const {res}=await invoke(f.handler,request({path,method:'POST',body:{intent:'link'},sessionValue:session,headers}));assert.equal(res.status,400);assert.equal(f.calls.length,before);
+ }
+ const req=request({path,method:'POST',body:{intent:'link'},sessionValue:session,headers:{'x-nexus-oauth-account':accountA}});req.rawHeaders.push('x-nexus-oauth-account',accountA);
+ assert.equal((await invoke(f.handler,req)).res.status,400);
+ const changed=await invoke(f.handler,request({path,method:'POST',body:{intent:'link'},sessionValue:sessionB,headers:{'x-nexus-oauth-account':accountA}}));assert.equal(changed.res.status,401);assert.equal(JSON.parse(changed.res.body).error.code,'ACCOUNT_SESSION_CHANGED');assert.equal(changed.res.headers['set-cookie'],undefined);assert.equal(f.transactions.size,0);assert.equal(f.completed.length,0);assert.equal(f.calls.some(x=>x.origin!==WORKER_ORIGIN),false);
+ const before=f.calls.length;
+ assert.equal((await invoke(f.handler,request({path,method:'POST',body:{intent:'login'},headers:{'x-nexus-oauth-account':accountA}}))).res.status,400);assert.equal(f.calls.length,before);
 });
 await check('valid Google signature → только HttpOnly session cookie и fixed root',async()=>{
  const f=fixture(),flow=await start(f);const {res}=await invoke(f.handler,callback(flow));assert.equal(res.status,303,res.body);assert.equal(res.headers.location,GATEWAY_ORIGIN+'/');

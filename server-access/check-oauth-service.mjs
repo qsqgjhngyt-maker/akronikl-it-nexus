@@ -47,8 +47,8 @@ const issuers={google:'https://accounts.google.com',yandex:'https://login.yandex
 function profile(provider='google',subject='synthetic-subject',email='learner@example.invalid'){
  return{issuer:issuers[provider],subject,email,emailVerified:email!==null,displayName:'Synthetic learner'};
 }
-async function flow({provider='google',intent='login',sessionHash,override=env}={}){
- const input={op:'begin',provider,intent,stateHash:hash(),flowHash:hash(),codeVerifier:'A'.repeat(43),nonce:'B'.repeat(43),...(intent==='link'?{sessionHash}:{})};
+async function flow({provider='google',intent='login',sessionHash,expectedAccountId='synthetic-protected-account',override=env}={}){
+ const input={op:'begin',provider,intent,stateHash:hash(),flowHash:hash(),codeVerifier:'A'.repeat(43),nonce:'B'.repeat(43),...(intent==='link'?{sessionHash,expectedAccountId}:{})};
  const started=await call(input,{},override);assert.equal(started.status,200,JSON.stringify(started));
  const claimed=await call({op:'claim',provider,stateHash:input.stateHash,flowHash:input.flowHash},{},override);assert.equal(claimed.status,200,JSON.stringify(claimed));
  assert.deepEqual(Object.keys(claimed.body).sort(),['codeVerifier','intent','nonce','ok','txId']);
@@ -72,7 +72,7 @@ await check('feature/key default OFF и HMAC ingress fail closed без identity
 });
 await check('strict begin provider/PKCE/nonce keys и Mail.ru отдельный secure-adapter flag',async()=>{
  const base={op:'begin',provider:'google',intent:'login',stateHash:hash(),flowHash:hash(),codeVerifier:'A'.repeat(43),nonce:'B'.repeat(43)};
- for(const change of [{provider:'fake'},{provider:'mailru'},{codeVerifier:'A'.repeat(42)},{nonce:'short'},{stateHash:'bad'},{accountId:'forbidden'},{authStrength:'admin'},{sessionHash:hash()}])assert.equal((await call({...base,...change})).status,400);
+ for(const change of [{provider:'fake'},{provider:'mailru'},{codeVerifier:'A'.repeat(42)},{nonce:'short'},{stateHash:'bad'},{accountId:'forbidden'},{expectedAccountId:'forbidden'},{authStrength:'admin'},{sessionHash:hash()}])assert.equal((await call({...base,...change})).status,400);
  const secure={...env,OAUTH_MAILRU_SECURE_ADAPTER_ENABLED:'true'};
  const transaction=await flow({provider:'mailru',override:secure});const result=await finish(transaction,profile('mailru','synthetic-mailru'),secure);assert.equal(result.status,200);
 });
@@ -140,11 +140,19 @@ await check('owner email unknown identity требует explicit link; pending 
  assert.throws(()=>db.prepare("UPDATE nexus_oauth_account_policies SET status='enforced',activated_at=? WHERE account_id=?").run(created,owner),/OAUTH_VERIFIED_OWNER_EMAIL_REQUIRED/);
 });
 await check('link требует свежий именно Passkey session, не OAuth/старую/revoked',async()=>{
- const base={op:'begin',provider:'google',intent:'link',stateHash:hash(),flowHash:hash(),codeVerifier:'A'.repeat(43),nonce:'B'.repeat(43)};
+ const base={op:'begin',provider:'google',intent:'link',stateHash:hash(),flowHash:hash(),codeVerifier:'A'.repeat(43),nonce:'B'.repeat(43),expectedAccountId:owner};
  for(const sessionHash of [hash(),sha(learnerSecret)])assert.equal((await call({...base,sessionHash})).status,401);
  db.prepare("UPDATE account_sessions SET created_at=? WHERE id='synthetic-passkey-session'").run(new Date(Date.now()-301000).toISOString());
  assert.equal((await call({...base,sessionHash:passkeyHash})).status,401);
  db.prepare("UPDATE account_sessions SET created_at=? WHERE id='synthetic-passkey-session'").run(created);
+});
+await check('cross-tab OAuth link: свежая cookie B + expectation A закрыты до tx INSERT',async()=>{
+ const base={op:'begin',provider:'google',intent:'link',stateHash:hash(),flowHash:hash(),codeVerifier:'A'.repeat(43),nonce:'B'.repeat(43),sessionHash:passkeyHash};
+ const before=count('nexus_oauth_transactions'),beforeIdentities=count('oauth_identities');
+ assert.equal((await call(base)).status,400);
+ assert.equal((await call({...base,expectedAccountId:'../invalid'})).status,400);
+ const changed=await call({...base,expectedAccountId:learnerAccount});assert.equal(changed.status,401);assert.equal(changed.body.error.code,'ACCOUNT_SESSION_CHANGED');
+ assert.equal(count('nexus_oauth_transactions'),before);assert.equal(count('oauth_identities'),beforeIdentities);
 });
 let ownerFlow;
 await check('owner link exact verified allowlisted email и доказательство до enforcement',async()=>{
