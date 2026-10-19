@@ -9,6 +9,16 @@ export function destinationFor(hash=''){
  for(const key of ['course','lesson','practicum','project','template','tab','focus']){const value=supplied.get(key);if(!value)continue;if(key==='project'){if(value.length<=256&&value!=='.'&&value!=='..'&&!/[/\\\u0000-\u001f\u007f]/.test(value))safe.set(key,value)}else if(value.length<=160&&/^[A-Za-z0-9._:-]+$/.test(value))safe.set(key,value)}
  return ENTRY_ORIGIN+'/#'+safe.toString();
 }
+export function fullDocumentDestinationFor(hash='',locationRef=globalThis.location){
+ const destination=new URL(destinationFor(hash));
+ // Landing может быть выдана самим '/'. Смена только # не вызывает HTML gate.
+ // Оба фиксированных пути обслуживает gate; query и внешний return URL не нужны.
+ if(locationRef?.origin===ENTRY_ORIGIN&&locationRef.pathname===destination.pathname)destination.pathname='/index.html';
+ return destination.href;
+}
+export function navigateToNexus(hash=globalThis.location?.hash||'',locationRef=globalThis.location){
+ const destination=fullDocumentDestinationFor(hash,locationRef);locationRef.assign(destination);return destination;
+}
 function eligible(body){return body?.account?.status==='active'&&typeof body.account.accountId==='string'&&body.account.accountId.length>0&&body.account.accountId.length<=256&&typeof body.account.displayName==='string'&&body.account.displayName.length<=512&&Array.isArray(body.loginMethods)&&body.enrollmentAvailable===false}
 export async function readEntryAccount(locationRef=globalThis.location,fetchImpl=globalThis.fetch){
  if(locationRef?.origin!==ENTRY_ORIGIN)return{kind:'foreign'};
@@ -22,7 +32,7 @@ export async function readEntryAccount(locationRef=globalThis.location,fetchImpl
   throw Error('SESSION_CHECK_FAILED');
  }finally{clearTimeout(timer)}
 }
-function bindEntry(){
+export function bindEntry({loadPasskeyClient=()=>import('/account/access/passkey-client.js')}={}){
  const login=document.querySelector('[data-login]'),label=document.querySelector('[data-login-label]'),status=document.querySelector('[data-status]'),welcome=document.querySelector('[data-account]'),name=document.querySelector('[data-account-name]'),switcher=document.querySelector('[data-switch]'),motion=document.querySelector('[data-motion]'),motionLabel=document.querySelector('[data-motion-label]');
  const scene=initGalaxy(document.querySelector('#galaxy'),{onMotionChange:moving=>{motion.setAttribute('aria-pressed',String(!moving));motionLabel.textContent=moving?'Остановить движение':'Включить движение';motion.setAttribute('aria-label',moving?'Остановить движение галактики':'Включить движение галактики')}});
  motion.addEventListener('click',()=>scene.setMotion(!scene.isMoving()));
@@ -33,7 +43,7 @@ function bindEntry(){
  const clearAccount=()=>{signedIn=false;welcome.hidden=true;name.textContent='';switcher.hidden=true;label.textContent='Войти в Nexus';login.href=ENTRY_URL};
  const passkey=()=>{
   if(location.origin!==ENTRY_ORIGIN)return Promise.reject(Error('FIRST_PARTY_REQUIRED'));
-  accessPromise??=import('/account/access/passkey-client.js').catch(error=>{accessPromise=null;throw error});return accessPromise;
+  accessPromise??=loadPasskeyClient().catch(error=>{accessPromise=null;throw error});return accessPromise;
  };
  if(location.origin!==ENTRY_ORIGIN){clearAccount();setStatus('Вход откроется на защищённом серверном адресе Nexus.');return}
  bindProviderButtons(document.querySelector('[data-provider-buttons]'),{onStatus:setStatus});
@@ -41,14 +51,18 @@ function bindEntry(){
   const current=++version;setStatus('Проверяем вашу сессию. Войти ключом можно уже сейчас.');
   try{
    const result=await readEntryAccount();if(current!==version||busy)return;
-   if(result.kind==='signed-in'){signedIn=true;name.textContent=result.account.displayName;welcome.hidden=false;switcher.hidden=false;label.textContent='Продолжить в Nexus';login.href=destinationFor(location.hash);setStatus('Вы вошли. Ваше пространство готово.','success')}
+   if(result.kind==='signed-in'){signedIn=true;name.textContent=result.account.displayName;welcome.hidden=false;switcher.hidden=false;label.textContent='Продолжить в Nexus';login.href=fullDocumentDestinationFor(location.hash);setStatus('Вы вошли. Ваше пространство готово.','success')}
    else{clearAccount();setStatus('Вход ключом доступа: Windows Hello, телефон или аппаратный ключ.')}
   }catch{if(current===version&&!busy){clearAccount();setStatus('Не удалось проверить сессию. Вы по-прежнему можете войти ключом доступа.')}}
  };
  login.addEventListener('click',async event=>{
-  if(signedIn&&!busy)return;
+  if(signedIn&&!busy){
+   login.href=fullDocumentDestinationFor(location.hash);
+   if(event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||event.button>0)return;
+   event.preventDefault();navigateToNexus(location.hash);return;
+  }
   event.preventDefault();if(busy)return;++version;setBusy(true);setStatus('Подтвердите вход на вашем устройстве.');
-  try{const client=await passkey();await client.login();setStatus('Вход подтверждён. Открываем Nexus…','success');location.assign(destinationFor(location.hash))}
+  try{const client=await passkey();await client.login();setStatus('Вход подтверждён. Открываем Nexus…','success');navigateToNexus(location.hash)}
   catch(error){setStatus(error?.name==='NotAllowedError'?'Подтверждение отменено или истекло время ожидания. Можно попробовать ещё раз.':error?.message==='SESSION_REQUIRED'?'Сессия завершена. Повторите вход ключом.':'Не удалось завершить вход. Попробуйте ещё раз; ваш ключ остаётся на устройстве.','error')}
   finally{setBusy(false)}
  });
@@ -60,6 +74,6 @@ function bindEntry(){
  });
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!busy)update()});
  addEventListener('pagehide',()=>{++version;scene.destroy()},{once:true});
- update();
+ return update();
 }
 if(typeof document!=='undefined')bindEntry();

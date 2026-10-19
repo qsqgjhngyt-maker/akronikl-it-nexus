@@ -103,8 +103,11 @@ export function createOAuthHandler({env={},fetchImpl=fetch}={}){
    if(!context.flow)deny('FLOW_REQUIRED',401);
    const params=url.searchParams;
    if([...params.keys()].some(name=>params.getAll(name).length!==1))deny('INVALID_INPUT');
-   const metadata=provider==='google'?['scope','authuser','prompt','iss']:provider==='vk'?['type','expires_in']:[];
+   // Яндекс добавляет служебный cid в реальный callback. Это opaque metadata:
+   // он не заменяет state/PKCE или проверку client_id authenticated /info.
+   const metadata=provider==='google'?['scope','authuser','prompt','iss']:provider==='vk'?['type','expires_in']:provider==='yandex'?['cid']:[];
    if([...params.keys()].some(name=>!['code','state',...(provider==='vk'?['device_id']:[]),...metadata].includes(name)))deny('INVALID_INPUT');
+   if(params.has('cid')&&!/^[A-Za-z0-9_-]{1,256}$/.test(params.get('cid')||''))deny('INVALID_INPUT');
    const code=params.get('code'),state=params.get('state'),deviceId=params.get('device_id');
    if(typeof code!=='string'||!code.length||code.length>4096||/[\x00-\x20\x7f]/.test(code)||!(/^[A-Za-z0-9_-]{43}$/.test(state||''))||provider==='vk'&&(typeof deviceId!=='string'||!deviceId.length||deviceId.length>512||/[\x00-\x20\x7f]/.test(deviceId)))deny('INVALID_INPUT');
    if(params.has('iss')&&!['https://accounts.google.com','accounts.google.com'].includes(params.get('iss')))deny('PROVIDER_REJECTED',401);

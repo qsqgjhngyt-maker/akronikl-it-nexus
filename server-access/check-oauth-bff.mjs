@@ -178,6 +178,29 @@ await check('Yandex authenticated native login@yandex.ru даёт узкий cur
   const wrong=fixture({yandexUser:{client_id}}),badFlow=await start(wrong,'yandex');assert.equal((await invoke(wrong.handler,callback(badFlow))).res.status,401);assert.equal(wrong.completed.length,0);
  }
 });
+await check('Yandex optional bounded cid не меняет state/PKCE/profile identity',async()=>{
+ const f=fixture(),flow=await start(f,'yandex'),cid='synthetic_correlation-'.padEnd(256,'A');
+ const {res}=await invoke(f.handler,callback(flow,{cid}));assert.equal(res.status,303,res.body);
+ assert.deepEqual(f.completed[0],{issuer:'https://login.yandex.ru',subject:'synthetic-yandex-sub',email:'synthetic@yandex.ru',emailVerified:true,displayName:'Synthetic Yandex'});
+ assert.equal(JSON.stringify({headers:res.headers,body:res.body}).includes(cid),false);
+ const wrong=fixture(),wrongFlow=await start(wrong,'yandex');
+ const rejected=await invoke(wrong.handler,callback(wrongFlow,{cid:'synthetic-cid',state:'Z'.repeat(43)}));
+ assert.equal(rejected.res.status,401);assert.equal(JSON.parse(rejected.res.body).error.code,'TRANSACTION_REJECTED');
+ assert.equal(wrong.completed.length,0);assert.equal(wrong.calls.some(x=>x.origin==='https://oauth.yandex.ru'),false);
+});
+await check('cid закрыт для других providers, дубликатов, неизвестных и недопустимых значений',async()=>{
+ for(const cid of ['', 'A'.repeat(257), 'contains space', 'contains/slash', 'contains.dot', 'кириллица', 'line\nbreak']){
+  const f=fixture(),flow=await start(f,'yandex'),before=f.calls.length;
+  const {res}=await invoke(f.handler,callback(flow,{cid}));assert.equal(res.status,400);assert.equal(JSON.parse(res.body).error.code,'INVALID_INPUT');
+  assert.equal(f.calls.length,before);assert.equal(f.completed.length,0);
+ }
+ for(const kind of ['duplicate','unknown','google','vk']){
+  const provider=['google','vk'].includes(kind)?kind:'yandex',f=fixture(),flow=await start(f,provider),before=f.calls.length;
+  const req=callback(flow,{cid:'synthetic-cid'});if(kind==='duplicate')req.url+='&cid=second-cid';if(kind==='unknown')req.url+='&unknown=synthetic';
+  const {res}=await invoke(f.handler,req);assert.equal(res.status,400);assert.equal(JSON.parse(res.body).error.code,'INVALID_INPUT');
+  assert.equal(f.calls.length,before);assert.equal(f.completed.length,0);
+ }
+});
 await check('Yandex external/contact/spoofed/missing login и aliases не дают owner email proof',async()=>{
  for(const yandexUser of [
   {default_email:'someone.else@yandex.ru',email_verified:true},

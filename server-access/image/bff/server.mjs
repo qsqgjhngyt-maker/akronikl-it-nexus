@@ -1,8 +1,8 @@
-// server-access/bff/server.mjs
+// nexus-auth-gate-candidate-2026-10-19/server-access/bff/server.mjs
 import http from "node:http";
 import { readFileSync } from "node:fs";
 
-// server-access/bff/passkey.mjs
+// nexus-auth-gate-candidate-2026-10-19/server-access/bff/passkey.mjs
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import { isIP } from "node:net";
 var INTERNAL = "/api/v2/account/internal/passkey";
@@ -160,7 +160,7 @@ ${digest(body)}`;
   };
 }
 
-// server-access/bff/account-read.mjs
+// nexus-auth-gate-candidate-2026-10-19/server-access/bff/account-read.mjs
 import { createHash as createHash2, createHmac as createHmac2, randomBytes as randomBytes2, timingSafeEqual } from "node:crypto";
 var WORKER_ORIGIN = "https://akronikl-nexus-sync.akronikl.workers.dev";
 var GATEWAY_ORIGIN = "https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net";
@@ -345,7 +345,7 @@ ${bodyHash}`;
   };
 }
 
-// server-access/bff/feedback.mjs
+// nexus-auth-gate-candidate-2026-10-19/server-access/bff/feedback.mjs
 import { createHash as createHash3, createHmac as createHmac3, randomBytes as randomBytes3 } from "node:crypto";
 var INTERNAL2 = "/api/v2/feedback/internal";
 var reply3 = (res, status, body) => {
@@ -425,7 +425,7 @@ ${digest3}`;
   };
 }
 
-// server-access/bff/yc6-probe-handler.mjs
+// nexus-auth-gate-candidate-2026-10-19/server-access/bff/yc6-probe-handler.mjs
 import { createHash as createHash4, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
 var PROBE_COOKIE_NAME = "__Host-nexus_probe";
 var PROBE_MAX_AGE_SECONDS = 300;
@@ -597,7 +597,7 @@ function handleProbeRequest(req, res) {
   });
 }
 
-// server-access/bff/routes.mjs
+// nexus-auth-gate-candidate-2026-10-19/server-access/bff/routes.mjs
 function createCombinedHandler(options) {
   const account = createAccountReadHandler(options);
   const feedback = createFeedbackHandler(options);
@@ -611,7 +611,7 @@ function createCombinedHandler(options) {
   });
 }
 
-// server-access/bff/entry-gate.mjs
+// nexus-auth-gate-candidate-2026-10-19/server-access/bff/entry-gate.mjs
 import { createHash as createHash5, createHmac as createHmac4, randomBytes as randomBytes5 } from "node:crypto";
 var ENTRY_SHELL_URL = "https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/nexus-shell.html";
 var PATHS2 = /* @__PURE__ */ new Set(["/", "/index.html", "/nexus-shell.html"]);
@@ -772,7 +772,7 @@ ${hash}`).digest("hex");
   };
 }
 
-// server-access/bff/cloud-session.mjs
+// nexus-auth-gate-candidate-2026-10-19/server-access/bff/cloud-session.mjs
 import { createHash as createHash6, createHmac as createHmac5, randomBytes as randomBytes6 } from "node:crypto";
 var BASE = "/api/v2/cloud";
 var INTERNAL3 = BASE + "/internal";
@@ -906,10 +906,10 @@ ${digest3}`;
   };
 }
 
-// server-access/bff/oauth.mjs
+// nexus-auth-gate-candidate-2026-10-19/server-access/bff/oauth.mjs
 import { createHash as createHash8, createHmac as createHmac6, randomBytes as randomBytes7, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 
-// server-access/bff/oauth-providers.mjs
+// nexus-auth-gate-candidate-2026-10-19/server-access/bff/oauth-providers.mjs
 import { createHash as createHash7, createPublicKey, verify, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 var PROVIDERS = Object.freeze({
   google: { label: "Google", prefix: "GOOGLE", authorize: "https://accounts.google.com/o/oauth2/v2/auth", token: "https://oauth2.googleapis.com/token" },
@@ -1063,7 +1063,7 @@ async function exchangeOAuthProfile({ provider, env, code, state, deviceId, code
   return { issuer: "https://id.vk.ru", subject: tokenSubject, email: email(data.user.email), emailVerified: false, displayName: display([data.user.first_name, data.user.last_name].filter((x) => typeof x === "string").join(" "), "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C VK") };
 }
 
-// server-access/bff/oauth.mjs
+// nexus-auth-gate-candidate-2026-10-19/server-access/bff/oauth.mjs
 var PREFIX = "/api/v2/account/oauth/";
 var INTERNAL4 = "/api/v2/account/internal/oauth";
 var sha = (value) => createHash8("sha256").update(value).digest("hex");
@@ -1211,8 +1211,9 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
       if (!context2.flow) deny("FLOW_REQUIRED", 401);
       const params = url.searchParams;
       if ([...params.keys()].some((name) => params.getAll(name).length !== 1)) deny("INVALID_INPUT");
-      const metadata = provider === "google" ? ["scope", "authuser", "prompt", "iss"] : provider === "vk" ? ["type", "expires_in"] : [];
+      const metadata = provider === "google" ? ["scope", "authuser", "prompt", "iss"] : provider === "vk" ? ["type", "expires_in"] : provider === "yandex" ? ["cid"] : [];
       if ([...params.keys()].some((name) => !["code", "state", ...provider === "vk" ? ["device_id"] : [], ...metadata].includes(name))) deny("INVALID_INPUT");
+      if (params.has("cid") && !/^[A-Za-z0-9_-]{1,256}$/.test(params.get("cid") || "")) deny("INVALID_INPUT");
       const code = params.get("code"), state = params.get("state"), deviceId = params.get("device_id");
       if (typeof code !== "string" || !code.length || code.length > 4096 || /[\x00-\x20\x7f]/.test(code) || !/^[A-Za-z0-9_-]{43}$/.test(state || "") || provider === "vk" && (typeof deviceId !== "string" || !deviceId.length || deviceId.length > 512 || /[\x00-\x20\x7f]/.test(deviceId))) deny("INVALID_INPUT");
       if (params.has("iss") && !["https://accounts.google.com", "accounts.google.com"].includes(params.get("iss"))) deny("PROVIDER_REJECTED", 401);
@@ -1229,7 +1230,7 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
   };
 }
 
-// server-access/bff/server.mjs
+// nexus-auth-gate-candidate-2026-10-19/server-access/bff/server.mjs
 var passkey = createPasskeyHandler({ env: process.env });
 var existing = createCombinedHandler({ env: process.env });
 var landingBody = readFileSync(new URL("../public/entry.html", import.meta.url));
