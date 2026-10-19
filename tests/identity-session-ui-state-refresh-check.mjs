@@ -5,7 +5,7 @@ const client=fs.readFileSync(new URL('../sync/identity-v2-client.js',import.meta
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 
 const checks=[
-  ['release version',version.version==='0.1.7-alpha.2.4.6-ui1a.1'],
+  ['release version',version.version==='0.1.7-alpha.2.4.6-ui1a.2'],
   ['transport summary has stable id',account.includes('id="identityTransportSummary"')],
   ['migration state has stable id',account.includes('id="identityMigrationState"')],
   ['migration mode has stable id',account.includes('id="identityMigrationMode"')],
