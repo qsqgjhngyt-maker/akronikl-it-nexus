@@ -1,5 +1,6 @@
 // Presentation of the existing first-party Account API; no identity or sync storage writes.
 import {RELEASE_CONTRACTS} from './ui1a-release-contracts.js';
+import {serverAccountURL} from './server-account-origin.js';
 let dispose=()=>{};
 export function bindNexusAccountAccess(locale='ru'){
  dispose();const page=document.querySelector('[data-nexus-account]');if(!page)return;
@@ -17,7 +18,7 @@ export function bindNexusAccountAccess(locale='ru'){
  const read=async path=>{const response=await fetch(path,{credentials:'same-origin',cache:'no-store',redirect:'error',signal:AbortSignal.any([signal,AbortSignal.timeout(6000)]),headers:{accept:'application/json'}});const text=await response.text();if(text.length>65536)throw Error('Response limit');return {status:response.status,body:JSON.parse(text)}};
  let version=0;
  const update=async()=>{
-  if(!RELEASE_CONTRACTS.serverPasskeyAccess){name.hidden=true;login.hidden=true;logout.hidden=true;status.textContent=words.unavailable;panel.dataset.state='unavailable';setAvailability(false);return}
+  if(!RELEASE_CONTRACTS.serverPasskeyAccess){name.hidden=true;logout.hidden=true;login.href=serverAccountURL('access');login.textContent=words.login;login.hidden=false;status.textContent=en?'Passkey sign-in opens on the Nexus server. Your projects on this device stay here.':'Вход ключом откроется на серверном адресе Nexus. Локальные проекты на этом устройстве останутся здесь.';panel.dataset.state='server-link';setAvailability(true);return}
   const current=++version;name.hidden=true;name.textContent='';login.hidden=true;logout.hidden=true;refresh.disabled=true;status.textContent=words.checking;panel.dataset.state='checking';
   try{
    const [account,keys]=await Promise.all([read('/api/v2/account'),read('/api/v2/account/passkey/keys')]);

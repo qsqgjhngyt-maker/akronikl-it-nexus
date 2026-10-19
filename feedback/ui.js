@@ -1,4 +1,5 @@
 import {feedbackApi} from './client.js';
+import {isServerAccountOrigin,serverAccountURL} from '../core/server-account-origin.js';
 import {activePrincipalId} from '../core/identity.js';
 import {bindGlassSelects} from '../core/glass-select.js';
 const copy={
@@ -17,6 +18,10 @@ export function reviewSlotMarkup(course='',home=false){return `<section class="f
 let dispose=()=>{};
 export function bindFeedbackUi({locale='ru',catalog=[],route={},version='0.1.7-alpha.2.4.5'}={}){
  dispose();const controller=new AbortController(),signal=controller.signal,l=key=>label(locale,key),principal=activePrincipalId();let dialog=null,account=null;
+ if(!isServerAccountOrigin()){
+  const host=document.querySelector('[data-feedback-page],[data-reviews-page],[data-moderation-page]');
+  if(host){const panel=document.createElement('section');panel.className='feedback-panel glass-panel';const text=document.createElement('p');text.textContent=locale==='en'?'Sign in and submit feedback on the Nexus server. Local drafts and projects stay on this address.':'Вход и отправка отзывов доступны на серверном адресе Nexus. Локальные черновики и проекты сохраняются на этом адресе.';const link=document.createElement('a');link.className='btn primary';link.href=serverAccountURL(host.matches('[data-moderation-page]')?'feedback-admin':host.matches('[data-reviews-page]')?'reviews':'feedback');link.textContent=locale==='en'?'Open server Nexus':'Открыть серверный Nexus';panel.append(text,link);host.prepend(panel)}
+ }
  const current=()=>!signal.aborted&&activePrincipalId()===principal;
  const api=(path,options={})=>feedbackApi('/api/v2/feedback/'+path,{signal,...options});
  const errors=error=>error.code==='SESSION_REQUIRED'?l('session'):error.code==='MODERATOR_REQUIRED'?l('denied'):['STALE_VERSION','STALE_REVISION','REQUEST_CONFLICT','INVALID_TRANSITION'].includes(error.code)?l('stale'):error.code==='RATE_LIMITED'?l('limited'):['INVALID_INPUT','INVALID_CONTEXT','INPUT_TOO_LARGE'].includes(error.code)?l('invalid'):error.status===0?l('network'):l('unavailable');
