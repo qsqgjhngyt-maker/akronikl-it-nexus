@@ -5,6 +5,7 @@ import {createHash,createHmac} from 'node:crypto';
 import {readV2CookieContext} from './bff/gateway-cookie-context.mjs';
 import {createAccountReadHandler,sessionFromIngress,GATEWAY_ORIGIN,WORKER_ORIGIN} from './bff/account-read.mjs';
 import {createPasskeyHandler} from './bff/passkey.mjs';
+import {createOAuthHandler} from './bff/oauth.mjs';
 const marker='accountReadContract',contextHeader='x-yc-apigateway-operation-context';
 const session='nxs_'+'S'.repeat(43),flow='npf_'+'P'.repeat(43),oauth='nof_'+'O'.repeat(43),newSession='nxs_'+'N'.repeat(43);
 const cookie=`__Host-nexus_session=${session}; __Host-nexus_passkey_flow=${flow}; __Host-nexus_oauth_flow=${oauth}; theme=light`;
@@ -115,5 +116,45 @@ await test('Реальный Passkey handler: mismatch/дубликаты/нев
   const res=await invoke(passkey,req);assert.equal(res.status,401);assert.equal(res.body.error.code,'INGRESS_REJECTED');
  }
  assert.equal(calls.length,before);
+});
+const syntheticSession='__Host-nexus_session=nxs_'+'A'.repeat(43),syntheticFlow='__Host-nexus_oauth_flow=nof_'+'B'.repeat(43),syntheticPasskey='__Host-nexus_passkey_flow=npf_'+'C'.repeat(43);
+const syntheticCookie=[syntheticSession,syntheticPasskey,syntheticFlow].join('; ');
+const probePath='/api/v2/account/oauth/yandex/callback?code=synthetic-invalid&state='+'D'.repeat(43)+'&cid=synthetic';
+const probeHandler=createOAuthHandler({env:{OAUTH_PROXY_ENABLED:'true',PRIVATE_GATEWAY_CONFIRMED:'true',OAUTH_SERVICE_KEY:key,YANDEX_CLIENT_ID:'synthetic-yandex-client',YANDEX_CLIENT_SECRET:'SYNTHETIC_COOKIE_CONTEXT_SECRET'},fetchImpl:()=>assert.fail('Rejected ingress must not reach upstream')});
+function probeRequest(options={}){
+ return request({contract:'oauthIngressContract',path:probePath,contextCookie:syntheticFlow,actualCookie:syntheticCookie,extraHeaders:{'x-nexus-transport-probe':'cookie-shape-v1'},...options});
+}
+await test('OAuth synthetic-only probe: mismatch раскрывает только фиксированный V2 enum',async()=>{
+ const res=await invoke(probeHandler,probeRequest());
+ assert.equal(res.status,401);assert.deepEqual(res.body,{error:{code:'INGRESS_REJECTED',probeReason:'v2_cookie_mismatch_expected_F'}});
+ assert.equal(res.headers['cache-control'],'no-store');assert.equal(res.headers.vary,'*');
+ for(const value of [syntheticSession,syntheticFlow,syntheticPasskey,'cookieHeader'])assert.equal(JSON.stringify(res.body).includes(value),false);
+});
+await test('OAuth probe enum закрыт для обычного запроса, неизвестного cookie и повторного probe header',async()=>{
+ const normal=probeRequest({extraHeaders:{}}),unknown=probeRequest({actualCookie:syntheticCookie+'; theme=light'}),duplicate=probeRequest();
+ duplicate.rawHeaders.push('x-nexus-transport-probe','cookie-shape-v1');
+ for(const req of [normal,unknown,duplicate,noActual({contract:'oauthIngressContract',path:probePath,contextCookie:syntheticFlow,extraHeaders:{'x-nexus-transport-probe':'cookie-shape-v1'}})]){
+  const res=await invoke(probeHandler,req);assert.equal(res.status,401);assert.deepEqual(res.body,{error:{code:'INGRESS_REJECTED'}});
+ }
+});
+await test('OAuth synthetic-only probe: V1/other shape и V2 presence отличаются без credential',async()=>{
+ for(const [options,reason] of [
+  [{contextJSON:JSON.stringify({oauthIngressContract:'v1',cookieHeader:syntheticFlow})},'shape'],
+  [{contextJSON:JSON.stringify({oauthIngressContract:'v3',cookieHeader:syntheticFlow})},'shape_other'],
+  [{contextCookie:'-'},'v2_absent_context'],
+  [{contextJSON:JSON.stringify({oauthIngressContract:'v2',cookieHeader:syntheticFlow,extra:true})},'v2_context_shape']
+ ]){
+  const res=await invoke(probeHandler,probeRequest(options));assert.equal(res.status,401);assert.deepEqual(res.body,{error:{code:'INGRESS_REJECTED',probeReason:reason}});
+ }
+});
+await test('OAuth synthetic-only probe: expected fixture классифицируется только в фиксированный enum',async()=>{
+ for(const [contextCookie,actualCookie,suffix] of [
+  [syntheticSession,syntheticFlow,'S'],[syntheticPasskey,syntheticFlow,'P'],
+  [[syntheticFlow,syntheticSession,syntheticPasskey].join('; '),syntheticFlow,'SPF'],
+  ['__Host-nexus_session=nxs_'+'Z'.repeat(43),syntheticFlow,'OTHER']
+ ]){
+  const res=await invoke(probeHandler,probeRequest({contextCookie,actualCookie}));assert.equal(res.status,401);
+  assert.deepEqual(res.body,{error:{code:'INGRESS_REJECTED',probeReason:'v2_cookie_mismatch_expected_'+suffix}});
+ }
 });
 console.log(JSON.stringify({status:'PASS',tests,networkRequests:0,serversStarted:0,browsersStarted:0,realCredentials:false,legacyV1Preserved:true,v2ContextOnlyForbidden:true}));

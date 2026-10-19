@@ -26,7 +26,10 @@ function htmlCallbackError(req,res,status,code,cookies){
 }
 class Rejected extends Error{constructor(code,status=400){super(code);this.code=code;this.status=status}}
 const deny=(code,status)=>{throw new Rejected(code,status)};
-const INGRESS_PROBE_REASONS=new Set(['context_count','base64','utf8','json','shape','session_format','flow_format','cookie_count','syntax','session_mismatch','flow_mismatch']);
+const INGRESS_PROBE_REASONS=new Set(['context_count','base64','utf8','json','shape','shape_other','session_format','flow_format','cookie_count','syntax','session_mismatch','flow_mismatch',
+ 'v2_raw_headers','v2_marker_argument','v2_context_count','v2_context_base64','v2_context_utf8','v2_context_json','v2_context_shape',
+ 'v2_cookie_header_count','v2_absent_context','v2_absent_raw','v2_context_cookie_syntax','v2_raw_cookie_syntax','v2_protected_duplicate',
+ 'v2_cookie_mismatch_expected_S','v2_cookie_mismatch_expected_F','v2_cookie_mismatch_expected_P','v2_cookie_mismatch_expected_SPF','v2_cookie_mismatch_expected_OTHER','v2_rejected']);
 const SYNTHETIC_COOKIE_PAIRS=new Set([
  '__Host-nexus_session=nxs_'+'A'.repeat(43),
  '__Host-nexus_oauth_flow=nof_'+'B'.repeat(43),
@@ -46,7 +49,7 @@ function ingress(req){
  let text,data;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes)}catch{fail('utf8')}
  try{data=JSON.parse(text)}catch{fail('json')}
  if(data?.oauthIngressContract==='v2'){
-  let v2;try{v2=readV2CookieContext(req,'oauthIngressContract')}catch{deny('INGRESS_REJECTED',401)}
+  let v2;try{v2=readV2CookieContext(req,'oauthIngressContract')}catch(error){fail(INGRESS_PROBE_REASONS.has(error.cookieContextReason)?error.cookieContextReason:'v2_rejected')}
   if(v2===undefined)deny('INGRESS_REJECTED',401);
   const session=v2.get('__Host-nexus_session')??null,flow=v2.get('__Host-nexus_oauth_flow')??null;
   if(session!==null&&!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session))fail('session_format');
@@ -54,7 +57,7 @@ function ingress(req){
   return{session,flow};
  }
  if(raw.length>4096)fail('base64');
- if(!data||typeof data!=='object'||Array.isArray(data)||Object.keys(data).sort().join(',')!=='oauthFlowCookie,oauthIngressContract,sessionCookie'||text.match(/"(?:[^"\\]|\\.)*"/g)?.length!==6||data.oauthIngressContract!=='v1'||typeof data.sessionCookie!=='string'||typeof data.oauthFlowCookie!=='string')fail('shape');
+ if(!data||typeof data!=='object'||Array.isArray(data)||Object.keys(data).sort().join(',')!=='oauthFlowCookie,oauthIngressContract,sessionCookie'||text.match(/"(?:[^"\\]|\\.)*"/g)?.length!==6||data.oauthIngressContract!=='v1'||typeof data.sessionCookie!=='string'||typeof data.oauthFlowCookie!=='string')fail(data?.oauthIngressContract==='v1'?'shape':'shape_other');
  const optional=value=>value==='-'?null:value;
  const session=optional(data.sessionCookie),flow=optional(data.oauthFlowCookie);
  if(session!==null&&!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session))fail('session_format');

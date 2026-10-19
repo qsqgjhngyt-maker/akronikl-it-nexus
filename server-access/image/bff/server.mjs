@@ -10,59 +10,70 @@ import { isIP } from "node:net";
 import { timingSafeEqual } from "node:crypto";
 var CONTEXT_HEADER = "x-yc-apigateway-operation-context";
 var PROTECTED = /* @__PURE__ */ new Set(["__Host-nexus_session", "__Host-nexus_passkey_flow", "__Host-nexus_oauth_flow", "__Host-nexus_probe"]);
-var reject = () => {
-  throw Error("INGRESS_REJECTED");
+var SYNTHETIC_CONTEXTS = /* @__PURE__ */ new Map();
+var syntheticS = "__Host-nexus_session=nxs_" + "A".repeat(43);
+var syntheticF = "__Host-nexus_oauth_flow=nof_" + "B".repeat(43);
+var syntheticP = "__Host-nexus_passkey_flow=npf_" + "C".repeat(43);
+for (const [name, pairs] of [["S", [syntheticS]], ["F", [syntheticF]], ["P", [syntheticP]], ["SPF", [syntheticS, syntheticP, syntheticF]]]) SYNTHETIC_CONTEXTS.set(pairs.sort().join("; "), "v2_cookie_mismatch_expected_" + name);
+var reject = (reason) => {
+  const error2 = Error("INGRESS_REJECTED");
+  error2.cookieContextReason = reason;
+  throw error2;
 };
 function count(req, name) {
-  if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2 !== 0) return reject();
+  if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2 !== 0) return reject("v2_raw_headers");
   let total = 0;
   for (let i = 0; i < req.rawHeaders.length; i += 2) {
-    if (typeof req.rawHeaders[i] !== "string" || typeof req.rawHeaders[i + 1] !== "string") return reject();
+    if (typeof req.rawHeaders[i] !== "string" || typeof req.rawHeaders[i + 1] !== "string") return reject("v2_raw_headers");
     if (req.rawHeaders[i].toLowerCase() === name) total++;
   }
   return total;
 }
-function parseCookies(raw) {
-  if (typeof raw !== "string" || raw.length === 0 || raw.length > 4096 || !/^[\x09\x20-\x7e]+$/.test(raw)) return reject();
+function parseCookies(raw, syntaxReason) {
+  if (typeof raw !== "string" || raw.length === 0 || raw.length > 4096 || !/^[\x09\x20-\x7e]+$/.test(raw)) return reject(syntaxReason);
   const values = /* @__PURE__ */ new Map(), pairs = [];
   for (const part of raw.split(";")) {
     const pair = part.trim(), at = pair.indexOf("=");
-    if (at < 1) return reject();
+    if (at < 1) return reject(syntaxReason);
     const name = pair.slice(0, at), value = pair.slice(at + 1);
-    if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name) || !/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value)) return reject();
-    if (PROTECTED.has(name) && values.has(name)) return reject();
+    if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name) || !/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value)) return reject(syntaxReason);
+    if (PROTECTED.has(name) && values.has(name)) return reject("v2_protected_duplicate");
     values.set(name, value);
     pairs.push(name + "=" + value);
   }
   return { values, canonical: pairs.sort().join("; ") };
 }
 function readV2CookieContext(req, marker) {
-  if (typeof marker !== "string" || !/^[A-Za-z][A-Za-z0-9]{0,63}$/.test(marker) || marker === "cookieHeader") return reject();
-  if (count(req, CONTEXT_HEADER) !== 1) return reject();
+  if (typeof marker !== "string" || !/^[A-Za-z][A-Za-z0-9]{0,63}$/.test(marker) || marker === "cookieHeader") return reject("v2_marker_argument");
+  if (count(req, CONTEXT_HEADER) !== 1) return reject("v2_context_count");
   const raw = req.headers?.[CONTEXT_HEADER];
-  if (typeof raw !== "string" || !raw.length || raw.length > 8192 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) return reject();
+  if (typeof raw !== "string" || !raw.length || raw.length > 8192 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) return reject("v2_context_base64");
   let text4, data;
+  const bytes = Buffer.from(raw, "base64");
+  if (bytes.length > 6144 || bytes.toString("base64") !== raw) return reject("v2_context_base64");
   try {
-    const bytes = Buffer.from(raw, "base64");
-    if (bytes.length > 6144 || bytes.toString("base64") !== raw) return reject();
     text4 = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+  } catch {
+    return reject("v2_context_utf8");
+  }
+  try {
     data = JSON.parse(text4);
   } catch {
-    return reject();
+    return reject("v2_context_json");
   }
-  if (!data || typeof data !== "object" || Array.isArray(data)) return reject();
+  if (!data || typeof data !== "object" || Array.isArray(data)) return reject("v2_context_shape");
   if (data[marker] === "v1") return void 0;
-  if (data[marker] !== "v2" || Object.keys(data).sort().join(",") !== [marker, "cookieHeader"].sort().join(",") || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 4 || typeof data.cookieHeader !== "string") return reject();
+  if (data[marker] !== "v2" || Object.keys(data).sort().join(",") !== [marker, "cookieHeader"].sort().join(",") || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 4 || typeof data.cookieHeader !== "string") return reject("v2_context_shape");
   const actual = req.headers?.cookie, present = actual !== void 0, cookieCount = count(req, "cookie");
-  if (!present && cookieCount !== 0 || present && (cookieCount !== 1 || typeof actual !== "string")) return reject();
+  if (!present && cookieCount !== 0 || present && (cookieCount !== 1 || typeof actual !== "string")) return reject("v2_cookie_header_count");
   if (data.cookieHeader === "-") {
-    if (present) return reject();
+    if (present) return reject("v2_absent_context");
     return /* @__PURE__ */ new Map();
   }
-  if (!present) return reject();
-  const expected = parseCookies(data.cookieHeader), received = parseCookies(actual);
+  if (!present) return reject("v2_absent_raw");
+  const expected = parseCookies(data.cookieHeader, "v2_context_cookie_syntax"), received = parseCookies(actual, "v2_raw_cookie_syntax");
   const left = Buffer.from(expected.canonical, "ascii"), right = Buffer.from(received.canonical, "ascii");
-  if (left.length !== right.length || !timingSafeEqual(left, right)) return reject();
+  if (left.length !== right.length || !timingSafeEqual(left, right)) return reject(SYNTHETIC_CONTEXTS.get(expected.canonical) ?? "v2_cookie_mismatch_expected_OTHER");
   return received.values;
 }
 
@@ -1191,7 +1202,39 @@ var Rejected = class extends Error {
 var deny = (code, status) => {
   throw new Rejected(code, status);
 };
-var INGRESS_PROBE_REASONS = /* @__PURE__ */ new Set(["context_count", "base64", "utf8", "json", "shape", "session_format", "flow_format", "cookie_count", "syntax", "session_mismatch", "flow_mismatch"]);
+var INGRESS_PROBE_REASONS = /* @__PURE__ */ new Set([
+  "context_count",
+  "base64",
+  "utf8",
+  "json",
+  "shape",
+  "shape_other",
+  "session_format",
+  "flow_format",
+  "cookie_count",
+  "syntax",
+  "session_mismatch",
+  "flow_mismatch",
+  "v2_raw_headers",
+  "v2_marker_argument",
+  "v2_context_count",
+  "v2_context_base64",
+  "v2_context_utf8",
+  "v2_context_json",
+  "v2_context_shape",
+  "v2_cookie_header_count",
+  "v2_absent_context",
+  "v2_absent_raw",
+  "v2_context_cookie_syntax",
+  "v2_raw_cookie_syntax",
+  "v2_protected_duplicate",
+  "v2_cookie_mismatch_expected_S",
+  "v2_cookie_mismatch_expected_F",
+  "v2_cookie_mismatch_expected_P",
+  "v2_cookie_mismatch_expected_SPF",
+  "v2_cookie_mismatch_expected_OTHER",
+  "v2_rejected"
+]);
 var SYNTHETIC_COOKIE_PAIRS = /* @__PURE__ */ new Set([
   "__Host-nexus_session=nxs_" + "A".repeat(43),
   "__Host-nexus_oauth_flow=nof_" + "B".repeat(43),
@@ -1228,8 +1271,8 @@ function ingress(req) {
     let v2;
     try {
       v2 = readV2CookieContext(req, "oauthIngressContract");
-    } catch {
-      deny("INGRESS_REJECTED", 401);
+    } catch (error2) {
+      fail(INGRESS_PROBE_REASONS.has(error2.cookieContextReason) ? error2.cookieContextReason : "v2_rejected");
     }
     if (v2 === void 0) deny("INGRESS_REJECTED", 401);
     const session2 = v2.get("__Host-nexus_session") ?? null, flow2 = v2.get("__Host-nexus_oauth_flow") ?? null;
@@ -1238,7 +1281,7 @@ function ingress(req) {
     return { session: session2, flow: flow2 };
   }
   if (raw.length > 4096) fail("base64");
-  if (!data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).sort().join(",") !== "oauthFlowCookie,oauthIngressContract,sessionCookie" || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.oauthIngressContract !== "v1" || typeof data.sessionCookie !== "string" || typeof data.oauthFlowCookie !== "string") fail("shape");
+  if (!data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).sort().join(",") !== "oauthFlowCookie,oauthIngressContract,sessionCookie" || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.oauthIngressContract !== "v1" || typeof data.sessionCookie !== "string" || typeof data.oauthFlowCookie !== "string") fail(data?.oauthIngressContract === "v1" ? "shape" : "shape_other");
   const optional = (value) => value === "-" ? null : value;
   const session = optional(data.sessionCookie), flow = optional(data.oauthFlowCookie);
   if (session !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail("session_format");
