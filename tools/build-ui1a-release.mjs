@@ -11,7 +11,7 @@ const files=[];async function walk(dir,prefix=''){for(const e of await readdir(p
 const manifest=await readFile(path.join(source,'manifest.webmanifest')),prefix='releases/'+config.assetGeneration+'/',records=[],hash=b=>createHash('sha256').update(b).digest('hex');
 async function output(file,b,origin){const target=path.join(out,file);await mkdir(path.dirname(target),{recursive:true});await writeFile(target,b);records.push({file,bytes:b.length,sha256:hash(b),source:origin})}
 for(const file of files){const b=await readFile(path.join(source,file));await output(prefix+file,b,file)}
-let index=await readFile(path.join(source,'index.html'),'utf8');for(const ref of ['styles/app.css','core/app.js','assets/icons/apple-touch-icon.png'])index=index.replaceAll('./'+ref,'./'+prefix+ref);
+let index=await readFile(path.join(source,'index.html'),'utf8');index=index.replaceAll(/\.\/releases\/ui1a-[a-z0-9-]+\//g,'./');for(const ref of ['styles/app.css','core/app.js','assets/icons/apple-touch-icon.png'])index=index.replaceAll('./'+ref,'./'+prefix+ref);
 index=index.replace('href="./manifest.webmanifest"','href="./manifest.webmanifest?v='+config.version+'"');
 await output('index.html',Buffer.from(index),'index.html: generation path rendering');await output('manifest.webmanifest',manifest,'manifest.webmanifest: identity preserved');await output('version.json',await readFile(path.join(source,'version.json')),'version.json');
 // Stable manifest icon aliases содержат прежние bytes; не меняют id/start_url/scope.
