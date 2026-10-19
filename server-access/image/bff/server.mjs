@@ -1,8 +1,8 @@
-// nexus-auth-gate-candidate-2026-10-19/server-access/bff/server.mjs
+// server-access/bff/server.mjs
 import http from "node:http";
 import { readFileSync } from "node:fs";
 
-// nexus-auth-gate-candidate-2026-10-19/server-access/bff/passkey.mjs
+// server-access/bff/passkey.mjs
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import { isIP } from "node:net";
 var INTERNAL = "/api/v2/account/internal/passkey";
@@ -160,7 +160,7 @@ ${digest(body)}`;
   };
 }
 
-// nexus-auth-gate-candidate-2026-10-19/server-access/bff/account-read.mjs
+// server-access/bff/account-read.mjs
 import { createHash as createHash2, createHmac as createHmac2, randomBytes as randomBytes2, timingSafeEqual } from "node:crypto";
 var WORKER_ORIGIN = "https://akronikl-nexus-sync.akronikl.workers.dev";
 var GATEWAY_ORIGIN = "https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net";
@@ -345,7 +345,7 @@ ${bodyHash}`;
   };
 }
 
-// nexus-auth-gate-candidate-2026-10-19/server-access/bff/feedback.mjs
+// server-access/bff/feedback.mjs
 import { createHash as createHash3, createHmac as createHmac3, randomBytes as randomBytes3 } from "node:crypto";
 var INTERNAL2 = "/api/v2/feedback/internal";
 var reply3 = (res, status, body) => {
@@ -425,7 +425,7 @@ ${digest3}`;
   };
 }
 
-// nexus-auth-gate-candidate-2026-10-19/server-access/bff/yc6-probe-handler.mjs
+// server-access/bff/yc6-probe-handler.mjs
 import { createHash as createHash4, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
 var PROBE_COOKIE_NAME = "__Host-nexus_probe";
 var PROBE_MAX_AGE_SECONDS = 300;
@@ -597,7 +597,7 @@ function handleProbeRequest(req, res) {
   });
 }
 
-// nexus-auth-gate-candidate-2026-10-19/server-access/bff/routes.mjs
+// server-access/bff/routes.mjs
 function createCombinedHandler(options) {
   const account = createAccountReadHandler(options);
   const feedback = createFeedbackHandler(options);
@@ -611,7 +611,7 @@ function createCombinedHandler(options) {
   });
 }
 
-// nexus-auth-gate-candidate-2026-10-19/server-access/bff/entry-gate.mjs
+// server-access/bff/entry-gate.mjs
 import { createHash as createHash5, createHmac as createHmac4, randomBytes as randomBytes5 } from "node:crypto";
 var ENTRY_SHELL_URL = "https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/nexus-shell.html";
 var PATHS2 = /* @__PURE__ */ new Set(["/", "/index.html", "/nexus-shell.html"]);
@@ -772,7 +772,7 @@ ${hash}`).digest("hex");
   };
 }
 
-// nexus-auth-gate-candidate-2026-10-19/server-access/bff/cloud-session.mjs
+// server-access/bff/cloud-session.mjs
 import { createHash as createHash6, createHmac as createHmac5, randomBytes as randomBytes6 } from "node:crypto";
 var BASE = "/api/v2/cloud";
 var INTERNAL3 = BASE + "/internal";
@@ -906,10 +906,10 @@ ${digest3}`;
   };
 }
 
-// nexus-auth-gate-candidate-2026-10-19/server-access/bff/oauth.mjs
+// server-access/bff/oauth.mjs
 import { createHash as createHash8, createHmac as createHmac6, randomBytes as randomBytes7, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 
-// nexus-auth-gate-candidate-2026-10-19/server-access/bff/oauth-providers.mjs
+// server-access/bff/oauth-providers.mjs
 import { createHash as createHash7, createPublicKey, verify, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 var PROVIDERS = Object.freeze({
   google: { label: "Google", prefix: "GOOGLE", authorize: "https://accounts.google.com/o/oauth2/v2/auth", token: "https://oauth2.googleapis.com/token" },
@@ -1063,7 +1063,7 @@ async function exchangeOAuthProfile({ provider, env, code, state, deviceId, code
   return { issuer: "https://id.vk.ru", subject: tokenSubject, email: email(data.user.email), emailVerified: false, displayName: display([data.user.first_name, data.user.last_name].filter((x) => typeof x === "string").join(" "), "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C VK") };
 }
 
-// nexus-auth-gate-candidate-2026-10-19/server-access/bff/oauth.mjs
+// server-access/bff/oauth.mjs
 var PREFIX = "/api/v2/account/oauth/";
 var INTERNAL4 = "/api/v2/account/internal/oauth";
 var sha = (value) => createHash8("sha256").update(value).digest("hex");
@@ -1096,39 +1096,61 @@ var Rejected = class extends Error {
 var deny = (code, status) => {
   throw new Rejected(code, status);
 };
+var INGRESS_PROBE_REASONS = /* @__PURE__ */ new Set(["context_count", "base64", "utf8", "json", "shape", "session_format", "flow_format", "cookie_count", "syntax", "session_mismatch", "flow_mismatch"]);
+var SYNTHETIC_COOKIE_PAIRS = /* @__PURE__ */ new Set([
+  "__Host-nexus_session=nxs_" + "A".repeat(43),
+  "__Host-nexus_oauth_flow=nof_" + "B".repeat(43),
+  "__Host-nexus_passkey_flow=npf_" + "C".repeat(43)
+]);
+function syntheticIngressProbe(req) {
+  if (count2(req, "x-nexus-transport-probe") !== 1 || req.headers["x-nexus-transport-probe"] !== "cookie-shape-v1" || typeof req.headers.cookie !== "string" || !req.headers.cookie || req.headers.cookie.length > 512) return false;
+  const pairs = req.headers.cookie.split(";").map((value) => value.trim());
+  return pairs.length > 0 && pairs.length <= 3 && new Set(pairs).size === pairs.length && pairs.every((value) => SYNTHETIC_COOKIE_PAIRS.has(value));
+}
 function ingress(req) {
-  if (count2(req, "x-yc-apigateway-operation-context") !== 1) deny("INGRESS_REJECTED", 401);
+  const fail = (reason) => {
+    const error2 = new Rejected("INGRESS_REJECTED", 401);
+    error2.probeReason = reason;
+    throw error2;
+  };
+  if (count2(req, "x-yc-apigateway-operation-context") !== 1) fail("context_count");
   const raw = req.headers["x-yc-apigateway-operation-context"];
-  if (typeof raw !== "string" || raw.length > 4096 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) deny("INGRESS_REJECTED", 401);
+  if (typeof raw !== "string" || raw.length > 4096 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) fail("base64");
   const bytes = Buffer.from(raw, "base64");
-  if (bytes.toString("base64") !== raw) deny("INGRESS_REJECTED", 401);
+  if (bytes.toString("base64") !== raw) fail("base64");
   let text4, data;
   try {
     text4 = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    fail("utf8");
+  }
+  try {
     data = JSON.parse(text4);
   } catch {
-    deny("INGRESS_REJECTED", 401);
+    fail("json");
   }
-  if (!data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).sort().join(",") !== "oauthFlowCookie,oauthIngressContract,sessionCookie" || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.oauthIngressContract !== "v1" || typeof data.sessionCookie !== "string" || typeof data.oauthFlowCookie !== "string") deny("INGRESS_REJECTED", 401);
+  if (!data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).sort().join(",") !== "oauthFlowCookie,oauthIngressContract,sessionCookie" || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.oauthIngressContract !== "v1" || typeof data.sessionCookie !== "string" || typeof data.oauthFlowCookie !== "string") fail("shape");
   const optional = (value) => value === "-" ? null : value;
   const session = optional(data.sessionCookie), flow = optional(data.oauthFlowCookie);
-  if (session !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session) || flow !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow)) deny("INGRESS_REJECTED", 401);
+  if (session !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail("session_format");
+  if (flow !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow)) fail("flow_format");
   if (req.headers.cookie !== void 0) {
-    if (count2(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) deny("INGRESS_REJECTED", 401);
+    if (count2(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) fail("cookie_count");
     const found = {};
     for (const part of req.headers.cookie.split(";")) {
       const pair = part.trim(), at = pair.indexOf("=");
-      if (at < 1) deny("INGRESS_REJECTED", 401);
+      if (at < 1) fail("syntax");
       const name = pair.slice(0, at), value = pair.slice(at + 1);
-      if (!/^[!#$%&'*+.^_`|~A-Za-z0-9-]+$/.test(name) || !/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value)) deny("INGRESS_REJECTED", 401);
+      if (!/^[!#$%&'*+.^_`|~A-Za-z0-9-]+$/.test(name) || !/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value)) fail("syntax");
       if (["__Host-nexus_session", "__Host-nexus_oauth_flow"].includes(name)) {
-        if (Object.hasOwn(found, name)) deny("INGRESS_REJECTED", 401);
+        if (Object.hasOwn(found, name)) fail("syntax");
         found[name] = value;
       }
     }
     const fromCookie = found["__Host-nexus_session"] ?? null, fromFlow = found["__Host-nexus_oauth_flow"] ?? null;
-    if (!(fromCookie === null && session === null) && !same(fromCookie, session) || !(fromFlow === null && flow === null) && !same(fromFlow, flow)) deny("INGRESS_REJECTED", 401);
-  } else if (count2(req, "cookie") !== 0) deny("INGRESS_REJECTED", 401);
+    if (!(fromCookie === null && session === null) && !same(fromCookie, session)) fail("session_mismatch");
+    if (!(fromFlow === null && flow === null) && !same(fromFlow, flow)) fail("flow_mismatch");
+  } else if (count2(req, "cookie") !== 0) fail("cookie_count");
   return { session, flow };
 }
 async function boundedJSON(source, max, flatIntent = false) {
@@ -1225,12 +1247,13 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
       return reply6(res, 303, null, [sessionCookie(completed.sessionSecret), flowCookie("", 0)], { location: GATEWAY_ORIGIN + (claim.intent === "link" ? "/#view=account" : "/") });
     } catch (error2) {
       const known = error2 instanceof Rejected;
-      return reply6(res, known ? error2.status : error2.message === "PROVIDER_REJECTED" ? 401 : 502, { error: { code: known ? error2.code : error2.message === "PROVIDER_REJECTED" ? "PROVIDER_REJECTED" : "OAUTH_UNAVAILABLE" } }, callback ? [flowCookie("", 0)] : []);
+      const probeReason = known && error2.code === "INGRESS_REJECTED" && INGRESS_PROBE_REASONS.has(error2.probeReason) && syntheticIngressProbe(req) ? error2.probeReason : null;
+      return reply6(res, known ? error2.status : error2.message === "PROVIDER_REJECTED" ? 401 : 502, { error: { code: known ? error2.code : error2.message === "PROVIDER_REJECTED" ? "PROVIDER_REJECTED" : "OAUTH_UNAVAILABLE", ...probeReason ? { probeReason } : {} } }, callback ? [flowCookie("", 0)] : []);
     }
   };
 }
 
-// nexus-auth-gate-candidate-2026-10-19/server-access/bff/server.mjs
+// server-access/bff/server.mjs
 var passkey = createPasskeyHandler({ env: process.env });
 var existing = createCombinedHandler({ env: process.env });
 var landingBody = readFileSync(new URL("../public/entry.html", import.meta.url));

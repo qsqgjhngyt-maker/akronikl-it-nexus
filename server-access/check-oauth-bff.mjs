@@ -232,4 +232,44 @@ await check('ambiguous Cookie и ingress/context hints закрыты до claim
   const before=f.calls.length;assert.equal((await invoke(f.handler,req)).res.status,401);assert.equal(f.calls.length,before);
  }
 });
+await check('transport probe сообщает только bounded enum для явных synthetic cookies',async()=>{
+ const sessionValue='nxs_'+'A'.repeat(43),flow='nof_'+'B'.repeat(43),passkey='npf_'+'C'.repeat(43);
+ const cookie=`__Host-nexus_session=${sessionValue}; __Host-nexus_oauth_flow=${flow}; __Host-nexus_passkey_flow=${passkey}`;
+ const context={oauthIngressContract:'v1',sessionCookie:sessionValue,oauthFlowCookie:flow};
+ const base=()=>request({path:PREFIX+'yandex/callback?code=synthetic-invalid&state='+'D'.repeat(43),flow,sessionValue,headers:{cookie,'x-nexus-transport-probe':'cookie-shape-v1'}});
+ const encoded=value=>Buffer.from(typeof value==='string'?value:JSON.stringify(value)).toString('base64');
+ const replace=(req,name,value)=>{req.headers[name]=value;req.rawHeaders=Object.entries(req.headers).flat()};
+ const changes={
+  context_count:req=>req.rawHeaders.push('x-yc-apigateway-operation-context',encoded(context)),
+  base64:req=>replace(req,'x-yc-apigateway-operation-context','!'),
+  utf8:req=>replace(req,'x-yc-apigateway-operation-context',Buffer.from([255]).toString('base64')),
+  json:req=>replace(req,'x-yc-apigateway-operation-context',encoded('{')),
+  shape:req=>replace(req,'x-yc-apigateway-operation-context',encoded({...context,extra:'forbidden'})),
+  session_format:req=>replace(req,'x-yc-apigateway-operation-context',encoded({...context,sessionCookie:'invalid'})),
+  flow_format:req=>replace(req,'x-yc-apigateway-operation-context',encoded({...context,oauthFlowCookie:'invalid'})),
+  cookie_count:req=>req.rawHeaders.push('cookie','__Host-nexus_passkey_flow='+passkey),
+  session_mismatch:req=>replace(req,'x-yc-apigateway-operation-context',encoded({...context,sessionCookie:'nxs_'+'Z'.repeat(43)})),
+  flow_mismatch:req=>replace(req,'x-yc-apigateway-operation-context',encoded({...context,oauthFlowCookie:'nof_'+'Z'.repeat(43)}))
+ };
+ for(const [reason,change] of Object.entries(changes)){
+  const f=fixture(),req=base();change(req);const {res}=await invoke(f.handler,req);
+  assert.equal(res.status,401);assert.deepEqual(JSON.parse(res.body),{error:{code:'INGRESS_REJECTED',probeReason:reason}});
+  assert.equal(f.calls.length,0);for(const value of [cookie,sessionValue,flow,passkey,encoded(context)])assert.equal(res.body.includes(value),false);
+ }
+});
+await check('transport probe не раскрывает enum без opt-in или с обычными/неизвестными/повторёнными cookies',async()=>{
+ const flow='nof_'+'B'.repeat(43),cookie='__Host-nexus_oauth_flow='+flow;
+ for(const kind of ['no-opt-in','wrong-opt-in','duplicate-opt-in','other-cookie','mixed-cookie','duplicate-cookie','cookie-syntax']){
+  const headers={cookie,'x-nexus-transport-probe':'cookie-shape-v1','x-yc-apigateway-operation-context':'!'};
+  if(kind==='no-opt-in')delete headers['x-nexus-transport-probe'];
+  if(kind==='wrong-opt-in')headers['x-nexus-transport-probe']='other';
+  if(kind==='other-cookie')headers.cookie='__Host-nexus_oauth_flow=nof_'+'R'.repeat(43);
+  if(kind==='mixed-cookie')headers.cookie+='; unrelated=synthetic';
+  if(kind==='duplicate-cookie')headers.cookie+='; '+cookie;
+  if(kind==='cookie-syntax')headers.cookie+='; invalid';
+  const f=fixture(),req=request({path:PREFIX+'yandex/callback?code=synthetic-invalid&state='+'D'.repeat(43),flow,headers});
+  if(kind==='duplicate-opt-in')req.rawHeaders.push('x-nexus-transport-probe','cookie-shape-v1');
+  const {res}=await invoke(f.handler,req);assert.equal(res.status,401);assert.deepEqual(JSON.parse(res.body),{error:{code:'INGRESS_REJECTED'}});assert.equal(f.calls.length,0);
+ }
+});
 console.log(JSON.stringify({status:'PASS',tests,networkRequests:0,serversStarted:0,browsersStarted:0,realProviderCredentials:false,googleSignature:'RSA-2048 real verification',providerTokensStored:false}));

@@ -17,29 +17,43 @@ const reply=(res,status,body,cookies=[],extra={})=>{
 };
 class Rejected extends Error{constructor(code,status=400){super(code);this.code=code;this.status=status}}
 const deny=(code,status)=>{throw new Rejected(code,status)};
+const INGRESS_PROBE_REASONS=new Set(['context_count','base64','utf8','json','shape','session_format','flow_format','cookie_count','syntax','session_mismatch','flow_mismatch']);
+const SYNTHETIC_COOKIE_PAIRS=new Set([
+ '__Host-nexus_session=nxs_'+'A'.repeat(43),
+ '__Host-nexus_oauth_flow=nof_'+'B'.repeat(43),
+ '__Host-nexus_passkey_flow=npf_'+'C'.repeat(43)
+]);
+function syntheticIngressProbe(req){
+ if(count(req,'x-nexus-transport-probe')!==1||req.headers['x-nexus-transport-probe']!=='cookie-shape-v1'||typeof req.headers.cookie!=='string'||!req.headers.cookie||req.headers.cookie.length>512)return false;
+ const pairs=req.headers.cookie.split(';').map(value=>value.trim());
+ return pairs.length>0&&pairs.length<=3&&new Set(pairs).size===pairs.length&&pairs.every(value=>SYNTHETIC_COOKIE_PAIRS.has(value));
+}
 function ingress(req){
- if(count(req,'x-yc-apigateway-operation-context')!==1)deny('INGRESS_REJECTED',401);
+ const fail=reason=>{const error=new Rejected('INGRESS_REJECTED',401);error.probeReason=reason;throw error};
+ if(count(req,'x-yc-apigateway-operation-context')!==1)fail('context_count');
  const raw=req.headers['x-yc-apigateway-operation-context'];
- if(typeof raw!=='string'||raw.length>4096||!/^[A-Za-z0-9+/]+={0,2}$/.test(raw))deny('INGRESS_REJECTED',401);
- const bytes=Buffer.from(raw,'base64');if(bytes.toString('base64')!==raw)deny('INGRESS_REJECTED',401);
- let text,data;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);data=JSON.parse(text)}catch{deny('INGRESS_REJECTED',401)}
- if(!data||typeof data!=='object'||Array.isArray(data)||Object.keys(data).sort().join(',')!=='oauthFlowCookie,oauthIngressContract,sessionCookie'||text.match(/"(?:[^"\\]|\\.)*"/g)?.length!==6||data.oauthIngressContract!=='v1'||typeof data.sessionCookie!=='string'||typeof data.oauthFlowCookie!=='string')deny('INGRESS_REJECTED',401);
+ if(typeof raw!=='string'||raw.length>4096||!/^[A-Za-z0-9+/]+={0,2}$/.test(raw))fail('base64');
+ const bytes=Buffer.from(raw,'base64');if(bytes.toString('base64')!==raw)fail('base64');
+ let text,data;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes)}catch{fail('utf8')}
+ try{data=JSON.parse(text)}catch{fail('json')}
+ if(!data||typeof data!=='object'||Array.isArray(data)||Object.keys(data).sort().join(',')!=='oauthFlowCookie,oauthIngressContract,sessionCookie'||text.match(/"(?:[^"\\]|\\.)*"/g)?.length!==6||data.oauthIngressContract!=='v1'||typeof data.sessionCookie!=='string'||typeof data.oauthFlowCookie!=='string')fail('shape');
  const optional=value=>value==='-'?null:value;
  const session=optional(data.sessionCookie),flow=optional(data.oauthFlowCookie);
- if(session!==null&&!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)||flow!==null&&!/^nof_[A-Za-z0-9_-]{43}$/.test(flow))deny('INGRESS_REJECTED',401);
+ if(session!==null&&!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session))fail('session_format');
+ if(flow!==null&&!/^nof_[A-Za-z0-9_-]{43}$/.test(flow))fail('flow_format');
  if(req.headers.cookie!==undefined){
-  if(count(req,'cookie')!==1||typeof req.headers.cookie!=='string'||req.headers.cookie.length>8192)deny('INGRESS_REJECTED',401);
+  if(count(req,'cookie')!==1||typeof req.headers.cookie!=='string'||req.headers.cookie.length>8192)fail('cookie_count');
   const found={};
   for(const part of req.headers.cookie.split(';')){
-   const pair=part.trim(),at=pair.indexOf('=');if(at<1)deny('INGRESS_REJECTED',401);
+   const pair=part.trim(),at=pair.indexOf('=');if(at<1)fail('syntax');
    const name=pair.slice(0,at),value=pair.slice(at+1);
-   if(!/^[!#$%&'*+.^_`|~A-Za-z0-9-]+$/.test(name)||!/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value))deny('INGRESS_REJECTED',401);
-   if(['__Host-nexus_session','__Host-nexus_oauth_flow'].includes(name)){if(Object.hasOwn(found,name))deny('INGRESS_REJECTED',401);found[name]=value}
+   if(!/^[!#$%&'*+.^_`|~A-Za-z0-9-]+$/.test(name)||!/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value))fail('syntax');
+   if(['__Host-nexus_session','__Host-nexus_oauth_flow'].includes(name)){if(Object.hasOwn(found,name))fail('syntax');found[name]=value}
   }
   const fromCookie=found['__Host-nexus_session']??null,fromFlow=found['__Host-nexus_oauth_flow']??null;
-  if((!(fromCookie===null&&session===null)&&!same(fromCookie,session))||
-     (!(fromFlow===null&&flow===null)&&!same(fromFlow,flow)))deny('INGRESS_REJECTED',401);
- }else if(count(req,'cookie')!==0)deny('INGRESS_REJECTED',401);
+  if(!(fromCookie===null&&session===null)&&!same(fromCookie,session))fail('session_mismatch');
+  if(!(fromFlow===null&&flow===null)&&!same(fromFlow,flow))fail('flow_mismatch');
+ }else if(count(req,'cookie')!==0)fail('cookie_count');
  return{session,flow};
 }
 async function boundedJSON(source,max,flatIntent=false){
@@ -119,7 +133,8 @@ export function createOAuthHandler({env={},fetchImpl=fetch}={}){
    return reply(res,303,null,[sessionCookie(completed.sessionSecret),flowCookie('',0)],{location:GATEWAY_ORIGIN+(claim.intent==='link'?'/#view=account':'/')});
   }catch(error){
    const known=error instanceof Rejected;
-   return reply(res,known?error.status:error.message==='PROVIDER_REJECTED'?401:502,{error:{code:known?error.code:error.message==='PROVIDER_REJECTED'?'PROVIDER_REJECTED':'OAUTH_UNAVAILABLE'}},callback?[flowCookie('',0)]:[]);
+   const probeReason=known&&error.code==='INGRESS_REJECTED'&&INGRESS_PROBE_REASONS.has(error.probeReason)&&syntheticIngressProbe(req)?error.probeReason:null;
+   return reply(res,known?error.status:error.message==='PROVIDER_REJECTED'?401:502,{error:{code:known?error.code:error.message==='PROVIDER_REJECTED'?'PROVIDER_REJECTED':'OAUTH_UNAVAILABLE',...(probeReason?{probeReason}:{})}},callback?[flowCookie('',0)]:[]);
   }
  };
 }
