@@ -15,11 +15,22 @@ const tablesAfter=db.prepare("SELECT name FROM sqlite_master WHERE type='table'"
 assert.ok(tablesBefore.every(x=>tablesAfter.includes(x)));check.push('Six additive migrations against current schema');
 assert.ok(['nexus_passkey_credentials','feedback_permissions','feedback_items','login_methods','session_login_methods','account_service_nonces'].every(x=>tablesAfter.includes(x)));
 for(const path of ['/api/v2/account/passkey/keys','/api/v2/account','/api/v2/account/internal/read']){
- const r=await worker.fetch(new Request('https://fixture.invalid'+path),{},{});assert.equal(r.status,404);assert.equal(r.headers.get('cache-control'),'no-store');
+ const r=await worker.fetch(new Request('https://fixture.invalid'+path),{},{});assert.equal(r.status,404);assert.equal(r.headers.get('cache-control'),'no-store');assert.equal(r.headers.get('vary'),'*');
 }check.push('Public credential/Account paths fail closed with no-store');
-const feedback=await worker.fetch(new Request('https://fixture.invalid/api/v2/feedback/reviews'),{},{});assert.equal(feedback.status,503);check.push('Feedback disabled without explicit server configuration');
+const feedback=await worker.fetch(new Request('https://fixture.invalid/api/v2/feedback/reviews'),{},{});assert.equal(feedback.status,503);assert.equal(feedback.headers.get('vary'),'*');check.push('Feedback disabled without explicit server configuration and cannot enter Cache API');
 const {grantModeratorSQL}=await import('./admin/moderator-permission.mjs');
 db.exec("INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES('synthetic-akronikl','Synthetic','active','2026-10-19','2026-10-19')");
 db.prepare(grantModeratorSQL.replaceAll('?1','?')).run('synthetic-akronikl');
 assert.equal(db.prepare('SELECT count(*) AS n FROM feedback_permissions').get().n,0);check.push('Moderator cannot be granted without eligible login method');
+db.exec("INSERT INTO login_methods(id,account_id,kind,status,created_at) VALUES('synthetic-oauth','synthetic-akronikl','oauth','active','2026-10-19')");
+const grant=db.prepare(grantModeratorSQL.replaceAll('?1','?'));
+grant.run('synthetic-akronikl');
+assert.equal(db.prepare('SELECT count(*) AS n FROM feedback_permissions').get().n,0);
+db.exec("INSERT INTO login_methods(id,account_id,kind,status,created_at) VALUES('synthetic-passkey','synthetic-akronikl','passkey','active','2026-10-19')");
+grant.run('synthetic-akronikl');
+assert.equal(db.prepare('SELECT count(*) AS n FROM feedback_permissions').get().n,0);check.push('OAuth or a passkey method without its credential cannot grant moderator');
+db.exec("INSERT INTO nexus_passkey_users(account_id,user_id) VALUES('synthetic-akronikl','AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')");
+db.exec("INSERT INTO nexus_passkey_credentials(id,account_id,login_method_id,public_key,counter,device_type,backed_up,transports_json,last_commit_id,created_at) VALUES('synthetic-key','synthetic-akronikl','synthetic-passkey','synthetic-public-key',0,'multiDevice',1,'[]','synthetic-commit','2026-10-19')");
+grant.run('synthetic-akronikl');
+assert.equal(db.prepare('SELECT can_moderate FROM feedback_permissions WHERE account_id=?').get('synthetic-akronikl').can_moderate,1);check.push('Matching active passkey credential permits the explicit trusted moderator grant');
 db.close();console.log(JSON.stringify({passed:check,productionDBWrites:0,realAuthenticatorUsed:false}));

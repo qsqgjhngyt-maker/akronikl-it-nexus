@@ -1,8 +1,8 @@
-// bff/server.mjs
+// server-access/bff/server.mjs
 import http from "node:http";
 import { readFileSync } from "node:fs";
 
-// bff/passkey.mjs
+// server-access/bff/passkey.mjs
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import { isIP } from "node:net";
 var INTERNAL = "/api/v2/account/internal/passkey";
@@ -18,7 +18,7 @@ var routes = /* @__PURE__ */ new Map([
 var digest = (value) => createHash("sha256").update(value).digest("hex");
 var reply = (res, status, body, cookies2 = []) => {
   const data = JSON.stringify(body);
-  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff", "content-length": Buffer.byteLength(data), ...cookies2.length ? { "set-cookie": cookies2 } : {} });
+  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "content-length": Buffer.byteLength(data), ...cookies2.length ? { "set-cookie": cookies2 } : {} });
   res.end(data);
 };
 var count = (req, name) => {
@@ -160,7 +160,7 @@ ${digest(body)}`;
   };
 }
 
-// bff/account-read.mjs
+// server-access/bff/account-read.mjs
 import { createHash as createHash2, createHmac as createHmac2, randomBytes as randomBytes2, timingSafeEqual } from "node:crypto";
 var WORKER_ORIGIN = "https://akronikl-nexus-sync.akronikl.workers.dev";
 var GATEWAY_ORIGIN = "https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net";
@@ -173,6 +173,7 @@ function reply2(res, status, body) {
     "Content-Type": "application/json; charset=utf-8",
     "Content-Length": Buffer.byteLength(data),
     "Cache-Control": "no-store",
+    "Vary": "*",
     "X-Content-Type-Options": "nosniff"
   });
   res.end(data);
@@ -344,12 +345,12 @@ ${bodyHash}`;
   };
 }
 
-// bff/feedback.mjs
+// server-access/bff/feedback.mjs
 import { createHash as createHash3, createHmac as createHmac3, randomBytes as randomBytes3 } from "node:crypto";
 var INTERNAL2 = "/api/v2/feedback/internal";
 var reply3 = (res, status, body) => {
   const data = JSON.stringify(body);
-  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff", "content-length": Buffer.byteLength(data) });
+  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "content-length": Buffer.byteLength(data) });
   res.end(data);
 };
 async function readBody(stream, max) {
@@ -420,7 +421,7 @@ ${digest2}`;
   };
 }
 
-// bff/yc6-probe-handler.mjs
+// server-access/bff/yc6-probe-handler.mjs
 import { createHash as createHash4, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
 var PROBE_COOKIE_NAME = "__Host-nexus_probe";
 var PROBE_MAX_AGE_SECONDS = 300;
@@ -592,7 +593,7 @@ function handleProbeRequest(req, res) {
   });
 }
 
-// bff/routes.mjs
+// server-access/bff/routes.mjs
 function createCombinedHandler(options) {
   const account = createAccountReadHandler(options);
   const feedback = createFeedbackHandler(options);
@@ -606,7 +607,7 @@ function createCombinedHandler(options) {
   });
 }
 
-// bff/server.mjs
+// server-access/bff/server.mjs
 var passkey = createPasskeyHandler({ env: process.env });
 var existing = createCombinedHandler({ env: process.env });
 var assets = /* @__PURE__ */ new Map([
@@ -615,22 +616,23 @@ var assets = /* @__PURE__ */ new Map([
   ["/account/access/passkey-client.js", ["text/javascript; charset=utf-8", readFileSync(new URL("../public/passkey-client.js", import.meta.url))]]
 ]);
 var server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
+  res.setHeader("vary", "*");
   try {
     if (req.url?.startsWith("/api/v2/account/passkey/")) return await passkey(req, res);
     if (assets.has(req.url)) {
       const [contentType, content] = assets.get(req.url);
       if (req.method !== "GET" || process.env.PASSKEY_PROXY_ENABLED !== "true" || req.headers.host !== new URL(process.env.PASSKEY_ORIGIN).host) {
-        res.writeHead(404, { "cache-control": "no-store" });
+        res.writeHead(404, { "cache-control": "no-store", "vary": "*" });
         res.end();
         return;
       }
-      res.writeHead(200, { "content-type": contentType, "cache-control": "no-store", "x-content-type-options": "nosniff", "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'", "permissions-policy": "publickey-credentials-create=(self), publickey-credentials-get=(self)" });
+      res.writeHead(200, { "content-type": contentType, "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'", "permissions-policy": "publickey-credentials-create=(self), publickey-credentials-get=(self)" });
       res.end(content);
       return;
     }
     await existing(req, res);
   } catch {
-    if (!res.headersSent) res.writeHead(500, { "cache-control": "no-store" });
+    if (!res.headersSent) res.writeHead(500, { "cache-control": "no-store", "vary": "*" });
     res.end();
   }
 });

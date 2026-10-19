@@ -12,6 +12,18 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Проверить запрет Cache.put для реального ответа BFF
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+          CACHE_BOUNDARY_EVIDENCE: cache-boundary-evidence.json
+        run: node server-access/check-legacy-cache-boundary.mjs
+      - name: Сохранить результат браузерной проверки
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nexus-cache-boundary-evidence
+          path: cache-boundary-evidence.json
+          retention-days: 2
       - name: Build audited BFF image
         run: |
           docker build --platform linux/amd64 -t nexus-access-bff:${GITHUB_SHA} server-access/image
@@ -23,4 +35,5 @@ jobs:
           path: |
             nexus-access-bff.tar
             nexus-access-bff.tar.sha256
+            cache-boundary-evidence.json
           retention-days: 2

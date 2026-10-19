@@ -3,7 +3,7 @@ const INTERNAL='/api/v2/feedback/internal',BASE='/api/v2/feedback';
 const encoder=new TextEncoder();
 class FeedbackError extends Error{constructor(status,code){super(code);this.status=status;this.code=code}}
 const fail=(status,code)=>{throw new FeedbackError(status,code)};
-const response=(body,status=200)=>Response.json(body,{status,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}});
+const response=(body,status=200)=>Response.json(body,{status,headers:{'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff'}});
 const sha=async value=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',typeof value==='string'?encoder.encode(value):value))].map(x=>x.toString(16).padStart(2,'0')).join('');
 export async function boundedFeedbackJson(request,max=32768){
  const reader=request.body?.getReader();if(!reader)fail(400,'INVALID_INPUT');let size=0;const chunks=[];

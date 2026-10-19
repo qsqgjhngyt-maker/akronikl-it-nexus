@@ -11,7 +11,7 @@ const hex=bytes=>Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,'
 export const sha=async value=>hex(await crypto.subtle.digest('SHA-256',encoder.encode(value)));
 class Rejected extends Error {constructor(code,status=400){super(code);this.code=code;this.status=status}}
 const reject=(code,status)=>{throw new Rejected(code,status)};
-const response=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'}});
+const response=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','vary':'*','x-content-type-options':'nosniff'}});
 const sql=(db,text,...args)=>db.prepare(text).bind(...args);
 const first=(db,text,...args)=>sql(db,text,...args).first();
 const all=async(db,text,...args)=>(await sql(db,text,...args).all()).results||[];

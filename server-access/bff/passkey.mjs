@@ -11,7 +11,7 @@ const routes=new Map([
  ['/api/v2/account/passkey/logout',['POST','logout']]
 ]);
 const digest=value=>createHash('sha256').update(value).digest('hex');
-const reply=(res,status,body,cookies=[])=>{const data=JSON.stringify(body);res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','content-length':Buffer.byteLength(data),...(cookies.length?{'set-cookie':cookies}:{})});res.end(data)};
+const reply=(res,status,body,cookies=[])=>{const data=JSON.stringify(body);res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','content-length':Buffer.byteLength(data),...(cookies.length?{'set-cookie':cookies}:{})});res.end(data)};
 const count=(req,name)=>{let value=0;for(let i=0;i<(req.rawHeaders||[]).length;i+=2)if(req.rawHeaders[i].toLowerCase()===name)value++;return value};
 const cookies=(name,value,age)=>`${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${age}`;
 function context(req){

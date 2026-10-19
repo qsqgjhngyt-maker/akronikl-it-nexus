@@ -1,7 +1,7 @@
 import {createHash,createHmac,randomBytes} from 'node:crypto';
 import {GATEWAY_ORIGIN,WORKER_ORIGIN,sessionFromIngress} from './account-read.mjs';
 const INTERNAL='/api/v2/feedback/internal';
-const reply=(res,status,body)=>{const data=JSON.stringify(body);res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff','content-length':Buffer.byteLength(data)});res.end(data)};
+const reply=(res,status,body)=>{const data=JSON.stringify(body);res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','content-length':Buffer.byteLength(data)});res.end(data)};
 async function readBody(stream,max){let length=0;const chunks=[];for await(const part of stream){length+=part.length;if(length>max)throw Error('BODY_TOO_LARGE');chunks.push(part)}return JSON.parse(Buffer.concat(chunks).toString('utf8'))}
 async function readResponse(response){const reader=response.body?.getReader();if(!reader)throw Error('EMPTY_RESPONSE');let size=0;const parts=[];try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>512000)throw Error('RESPONSE_TOO_LARGE');parts.push(value)}return JSON.parse(Buffer.concat(parts).toString('utf8'))}finally{await reader.cancel().catch(()=>{});reader.releaseLock()}}
 export function createFeedbackHandler({env={},fetchImpl=fetch}={}){

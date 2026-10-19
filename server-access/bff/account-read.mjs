@@ -12,6 +12,7 @@ function reply(res, status, body) {
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(data),
     'Cache-Control': 'no-store',
+    'Vary': '*',
     'X-Content-Type-Options': 'nosniff'
   });
   res.end(data);
