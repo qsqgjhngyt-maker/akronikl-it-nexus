@@ -14,12 +14,18 @@ export function createFeedbackHandler({env={},fetchImpl=fetch}={}){
   if(req.method!=='GET'&&(req.headers.origin!==origin||req.headers['x-nexus-feedback-write']!=='1'||req.headers['content-type']!=='application/json'||path.search))return reply(res,403,{error:{code:'WRITE_ORIGIN_REQUIRED'}});
   const isPublic=path.pathname==='/api/v2/feedback/reviews'&&req.method==='GET';
   const session=isPublic?null:sessionFromIngress(req);if(!isPublic&&!session)return reply(res,401,{error:{code:'SESSION_REQUIRED'}});
+  const expectedAccountId=isPublic?null:req.headers['x-nexus-feedback-account'];
+  const expectationHeaders=Array.isArray(req.rawHeaders)?req.rawHeaders.filter((name,index)=>index%2===0&&typeof name==='string'&&name.toLowerCase()==='x-nexus-feedback-account').length:0;
+  const hasExpectation=!isPublic&&(expectedAccountId!==undefined||expectationHeaders>0);
+  // До cutover старый frontend без заголовка получает прежний четырёхпольный envelope.
+  // Переданный заголовок проверяется всегда, даже когда compatibility flag выключен.
+  if(!isPublic&&(hasExpectation||env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED==='true')&&(expectationHeaders!==1||typeof expectedAccountId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(expectedAccountId)))return reply(res,401,{error:{code:'SESSION_REQUIRED'}});
   try{
    let upstream;
    if(isPublic){upstream=await fetchImpl(WORKER_ORIGIN+req.url,{method:'GET',redirect:'error',signal:AbortSignal.timeout(5000),headers:{accept:'application/json'}})}
    else{
     if(typeof env.FEEDBACK_SERVICE_KEY!=='string'||env.FEEDBACK_SERVICE_KEY.length<32)return reply(res,503,{error:{code:'FEEDBACK_UNAVAILABLE'}});
-    const payload=req.method==='GET'?null:await readBody(req,20000),body=JSON.stringify({method:req.method,path:req.url,payload,sessionHash:createHash('sha256').update(session).digest('hex')});
+    const payload=req.method==='GET'?null:await readBody(req,20000),body=JSON.stringify({method:req.method,path:req.url,payload,sessionHash:createHash('sha256').update(session).digest('hex'),...(hasExpectation?{expectedAccountId}:{})});
     const stamp=String(Date.now()),nonce=randomBytes(16).toString('hex'),digest=createHash('sha256').update(body).digest('hex'),canonical=`v1\nPOST\n${INTERNAL}\n${stamp}\n${nonce}\n${digest}`;
     upstream=await fetchImpl(WORKER_ORIGIN+INTERNAL,{method:'POST',body,redirect:'error',signal:AbortSignal.timeout(5000),headers:{accept:'application/json','content-type':'application/json','x-nexus-service-timestamp':stamp,'x-nexus-service-nonce':nonce,'x-nexus-service-signature':createHmac('sha256',env.FEEDBACK_SERVICE_KEY).update(canonical).digest('hex')}});
    }

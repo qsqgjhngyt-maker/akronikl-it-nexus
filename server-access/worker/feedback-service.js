@@ -47,10 +47,13 @@ async function verifyEnvelope(request,env){
  const {bytes,value}=await boundedFeedbackJson(request),key=await crypto.subtle.importKey('raw',encoder.encode(env.FEEDBACK_SERVICE_KEY),{name:'HMAC',hash:'SHA-256'},false,['verify']);
  const canonical=`v1\nPOST\n${INTERNAL}\n${stamp}\n${nonce}\n${await sha(bytes)}`;
  if(!await crypto.subtle.verify('HMAC',key,Uint8Array.from(signature.match(/../g),x=>parseInt(x,16)),encoder.encode(canonical)))fail(401,'SERVICE_DENIED');
- object(value);if(Object.keys(value).sort().join(',')!=='method,path,payload,sessionHash'||!/^[a-f0-9]{64}$/.test(value.sessionHash||'')||!['GET','POST','PATCH'].includes(value.method)||typeof value.path!=='string'||!value.path.startsWith(BASE+'/')||value.path.length>512)fail(401,'SERVICE_DENIED');
+ object(value);const envelopeKeys=Object.keys(value).sort().join(','),hasExpectation=envelopeKeys==='expectedAccountId,method,path,payload,sessionHash';
+ if(!(hasExpectation||envelopeKeys==='method,path,payload,sessionHash'&&env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED!=='true')||hasExpectation&&(typeof value.expectedAccountId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId))||!/^[a-f0-9]{64}$/.test(value.sessionHash||'')||!['GET','POST','PATCH'].includes(value.method)||typeof value.path!=='string'||!value.path.startsWith(BASE+'/')||value.path.length>512)fail(401,'SERVICE_DENIED');
  const added=await query(env.DB,'INSERT OR IGNORE INTO feedback_service_nonces(nonce,expires_at) VALUES(?1,?2)',nonce,new Date(Number(stamp)+30000).toISOString()).run();if(added.meta.changes!==1)fail(401,'SERVICE_DENIED');
  await query(env.DB,'DELETE FROM feedback_service_nonces WHERE expires_at<?1',new Date().toISOString()).run();
  const foundation=await readEligibleAccountFoundation(env.DB,value.sessionHash);if(!foundation)fail(401,'SESSION_REQUIRED');
+ // Ожидание клиента не авторизует actor: actor всегда выводится из сессии.
+ if(hasExpectation&&foundation.account.accountId!==value.expectedAccountId)fail(401,'SESSION_REQUIRED');
  return{...value,actor:foundation.account};
 }
 export async function feedbackOperation(db,{method,path,payload,actor}){

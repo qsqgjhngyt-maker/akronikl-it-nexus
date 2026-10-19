@@ -33,8 +33,8 @@ function context(req) {
   if (typeof value !== "string" || value.length > 4096 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) throw Error("INGRESS_REJECTED");
   const bytes = Buffer.from(value, "base64");
   if (bytes.toString("base64") !== value) throw Error("INGRESS_REJECTED");
-  const text2 = new TextDecoder("utf-8", { fatal: true }).decode(bytes), data = JSON.parse(text2);
-  if (!data || Object.keys(data).sort().join(",") !== "flowCookie,passkeyIngressContract,sessionCookie" || text2.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.passkeyIngressContract !== "v1" || typeof data.flowCookie !== "string" || typeof data.sessionCookie !== "string") throw Error("INGRESS_REJECTED");
+  const text4 = new TextDecoder("utf-8", { fatal: true }).decode(bytes), data = JSON.parse(text4);
+  if (!data || Object.keys(data).sort().join(",") !== "flowCookie,passkeyIngressContract,sessionCookie" || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.passkeyIngressContract !== "v1" || typeof data.flowCookie !== "string" || typeof data.sessionCookie !== "string") throw Error("INGRESS_REJECTED");
   const optional = (value2) => ["", "-"].includes(value2) ? null : value2;
   const flow = optional(data.flowCookie), session = optional(data.sessionCookie);
   if (flow && !/^npf_[A-Za-z0-9_-]{43}$/.test(flow) || session && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) throw Error("INGRESS_REJECTED");
@@ -103,8 +103,8 @@ function createPasskeyHandler({ env, fetchImpl = fetch }) {
     if (req.headers.host !== origin.host || count(req, "host") !== 1 || req.headers.authorization || req.headers.origin && req.headers.origin !== origin.origin || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin") return reply(res, 403, { error: { code: "ORIGIN_REJECTED" } });
     if (method === "POST" && (req.headers.origin !== origin.origin || count(req, "origin") !== 1 || req.headers["x-nexus-passkey-write"] !== "1" || req.headers["content-type"] !== "application/json")) return reply(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
     try {
-      const ingress = context(req), isOptions = op.endsWith("-options");
-      const flow = isOptions || !op.endsWith("-verify") ? "npf_" + randomBytes(32).toString("base64url") : ingress.flow;
+      const ingress2 = context(req), isOptions = op.endsWith("-options");
+      const flow = isOptions || !op.endsWith("-verify") ? "npf_" + randomBytes(32).toString("base64url") : ingress2.flow;
       if (!flow) return reply(res, 401, { error: { code: "FLOW_REQUIRED" } });
       const input = method === "GET" ? {} : await readJSON(req, 65536);
       if (!input || typeof input !== "object" || Array.isArray(input)) throw Error("INVALID_INPUT");
@@ -116,7 +116,7 @@ function createPasskeyHandler({ env, fetchImpl = fetch }) {
           mapped = { inviteHash: digest(input.invitationToken) };
         } else mapped = {};
       }
-      const sessionHash = ingress.session ? digest(ingress.session) : null;
+      const sessionHash = ingress2.session ? digest(ingress2.session) : null;
       const forwarded = String(req.headers["x-forwarded-for"] || "").split(",").at(-1).trim();
       const networkHash = createHmac("sha256", env.PASSKEY_SERVICE_KEY).update(isIP(forwarded) ? forwarded : String(req.socket?.remoteAddress || "unknown")).digest("hex");
       const body = JSON.stringify({ op, input: mapped, flowHash: digest(flow), sessionHash, networkHash }), timestamp = String(Date.now()), nonce = randomBytes(16).toString("hex");
@@ -153,8 +153,8 @@ ${digest(body)}`;
       }
       if (op === "revoke" && data.ok === true) return reply(res, 200, { ok: true });
       throw Error("UPSTREAM_INVALID");
-    } catch (error) {
-      const code = ["INPUT_TOO_LARGE", "INVALID_INPUT", "INGRESS_REJECTED"].includes(error.message) ? error.message : error instanceof SyntaxError ? "INVALID_INPUT" : "PASSKEY_UNAVAILABLE";
+    } catch (error2) {
+      const code = ["INPUT_TOO_LARGE", "INVALID_INPUT", "INGRESS_REJECTED"].includes(error2.message) ? error2.message : error2 instanceof SyntaxError ? "INVALID_INPUT" : "PASSKEY_UNAVAILABLE";
       return reply(res, code === "INPUT_TOO_LARGE" ? 413 : code === "INGRESS_REJECTED" ? 401 : code === "INVALID_INPUT" ? 400 : 502, { error: { code } });
     }
   };
@@ -180,12 +180,12 @@ function reply2(res, status, body) {
 }
 function headerCount(req, name) {
   if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2 !== 0) return -1;
-  let count2 = 0;
+  let count3 = 0;
   for (let i = 0; i < req.rawHeaders.length; i += 2) {
     if (typeof req.rawHeaders[i] !== "string") return -1;
-    if (req.rawHeaders[i].toLowerCase() === name) count2++;
+    if (req.rawHeaders[i].toLowerCase() === name) count3++;
   }
-  return count2;
+  return count3;
 }
 function sessionFromContext(req) {
   if (headerCount(req, "x-yc-apigateway-operation-context") !== 1) return null;
@@ -255,10 +255,10 @@ async function boundedJson(response) {
       chunks.push(value);
     }
     return JSON.parse(Buffer.concat(chunks).toString("utf8"));
-  } catch (error) {
+  } catch (error2) {
     await reader.cancel().catch(() => {
     });
-    throw error;
+    throw error2;
   } finally {
     reader.releaseLock();
   }
@@ -395,19 +395,23 @@ function createFeedbackHandler({ env = {}, fetchImpl = fetch } = {}) {
     const isPublic = path.pathname === "/api/v2/feedback/reviews" && req.method === "GET";
     const session = isPublic ? null : sessionFromIngress(req);
     if (!isPublic && !session) return reply3(res, 401, { error: { code: "SESSION_REQUIRED" } });
+    const expectedAccountId = isPublic ? null : req.headers["x-nexus-feedback-account"];
+    const expectationHeaders = Array.isArray(req.rawHeaders) ? req.rawHeaders.filter((name, index) => index % 2 === 0 && typeof name === "string" && name.toLowerCase() === "x-nexus-feedback-account").length : 0;
+    const hasExpectation = !isPublic && (expectedAccountId !== void 0 || expectationHeaders > 0);
+    if (!isPublic && (hasExpectation || env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED === "true") && (expectationHeaders !== 1 || typeof expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(expectedAccountId))) return reply3(res, 401, { error: { code: "SESSION_REQUIRED" } });
     try {
       let upstream;
       if (isPublic) {
         upstream = await fetchImpl(WORKER_ORIGIN + req.url, { method: "GET", redirect: "error", signal: AbortSignal.timeout(5e3), headers: { accept: "application/json" } });
       } else {
         if (typeof env.FEEDBACK_SERVICE_KEY !== "string" || env.FEEDBACK_SERVICE_KEY.length < 32) return reply3(res, 503, { error: { code: "FEEDBACK_UNAVAILABLE" } });
-        const payload = req.method === "GET" ? null : await readBody(req, 2e4), body = JSON.stringify({ method: req.method, path: req.url, payload, sessionHash: createHash3("sha256").update(session).digest("hex") });
-        const stamp = String(Date.now()), nonce = randomBytes3(16).toString("hex"), digest2 = createHash3("sha256").update(body).digest("hex"), canonical = `v1
+        const payload = req.method === "GET" ? null : await readBody(req, 2e4), body = JSON.stringify({ method: req.method, path: req.url, payload, sessionHash: createHash3("sha256").update(session).digest("hex"), ...hasExpectation ? { expectedAccountId } : {} });
+        const stamp = String(Date.now()), nonce = randomBytes3(16).toString("hex"), digest3 = createHash3("sha256").update(body).digest("hex"), canonical = `v1
 POST
 ${INTERNAL2}
 ${stamp}
 ${nonce}
-${digest2}`;
+${digest3}`;
         upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL2, { method: "POST", body, redirect: "error", signal: AbortSignal.timeout(5e3), headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": stamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": createHmac3("sha256", env.FEEDBACK_SERVICE_KEY).update(canonical).digest("hex") } });
       }
       if (!upstream.headers.get("content-type")?.startsWith("application/json")) throw Error("UPSTREAM_INVALID");
@@ -415,8 +419,8 @@ ${digest2}`;
       const allowedCodes = ["INVALID_INPUT", "INVALID_CONTEXT", "INPUT_TOO_LARGE", "RATE_LIMITED", "STALE_VERSION", "STALE_REVISION", "REQUEST_CONFLICT", "INVALID_TRANSITION", "NOT_FOUND", "MODERATOR_REQUIRED", "SESSION_REQUIRED", "FEEDBACK_UNAVAILABLE"];
       if (!upstream.ok) return reply3(res, [400, 401, 403, 404, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502, { error: { code: allowedCodes.includes(data?.error?.code) ? data.error.code : "FEEDBACK_UNAVAILABLE" } });
       return reply3(res, 200, data);
-    } catch (error) {
-      return reply3(res, error.message === "BODY_TOO_LARGE" ? 413 : error instanceof SyntaxError ? 400 : 502, { error: { code: error.message === "BODY_TOO_LARGE" ? "INPUT_TOO_LARGE" : error instanceof SyntaxError ? "INVALID_INPUT" : "FEEDBACK_UNAVAILABLE" } });
+    } catch (error2) {
+      return reply3(res, error2.message === "BODY_TOO_LARGE" ? 413 : error2 instanceof SyntaxError ? 400 : 502, { error: { code: error2.message === "BODY_TOO_LARGE" ? "INPUT_TOO_LARGE" : error2 instanceof SyntaxError ? "INVALID_INPUT" : "FEEDBACK_UNAVAILABLE" } });
     }
   };
 }
@@ -607,10 +611,633 @@ function createCombinedHandler(options) {
   });
 }
 
+// server-access/bff/entry-gate.mjs
+import { createHash as createHash5, createHmac as createHmac4, randomBytes as randomBytes5 } from "node:crypto";
+var ENTRY_SHELL_URL = "https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/nexus-shell.html";
+var PATHS2 = /* @__PURE__ */ new Set(["/", "/index.html", "/nexus-shell.html"]);
+var INTERNAL_PATH2 = "/api/v2/account/internal/read";
+var MAX_ACCOUNT_BYTES = 65536;
+var MAX_HTML_BYTES = 256 * 1024;
+function headerCount2(req, name) {
+  if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2 !== 0) return -1;
+  let count3 = 0;
+  for (let i = 0; i < req.rawHeaders.length; i += 2) {
+    if (typeof req.rawHeaders[i] !== "string") return -1;
+    if (req.rawHeaders[i].toLowerCase() === name) count3++;
+  }
+  return count3;
+}
+function reply4(req, res, status, body, contentType = "application/json; charset=utf-8", extra = {}) {
+  const data = Buffer.isBuffer(body) ? body : Buffer.from(JSON.stringify(body));
+  res.writeHead(status, {
+    "Content-Type": contentType,
+    "Content-Length": data.length,
+    "Cache-Control": "no-store",
+    "Vary": "*",
+    "X-Content-Type-Options": "nosniff",
+    ...extra
+  });
+  res.end(req.method === "HEAD" ? void 0 : data);
+  return true;
+}
+function error(req, res, status, code, extra) {
+  return reply4(req, res, status, { error: { code } }, void 0, extra);
+}
+async function boundedBytes(response, max, type) {
+  if (response.redirected || !type.test(response.headers.get("content-type") || "")) {
+    await response.body?.cancel();
+    throw Error("\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 upstream");
+  }
+  const declared = response.headers.get("content-length");
+  const encoded = response.headers.get("content-encoding");
+  if (declared !== null && (!/^\d+$/.test(declared) || Number(declared) > max)) {
+    await response.body?.cancel();
+    throw Error("\u041F\u0440\u0435\u0432\u044B\u0448\u0435\u043D \u0440\u0430\u0437\u043C\u0435\u0440 upstream");
+  }
+  const reader = response.body?.getReader();
+  if (!reader) throw Error("\u041F\u0443\u0441\u0442\u043E\u0439 \u043E\u0442\u0432\u0435\u0442 upstream");
+  let length = 0;
+  const chunks = [];
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > max) throw Error("\u041F\u0440\u0435\u0432\u044B\u0448\u0435\u043D \u0440\u0430\u0437\u043C\u0435\u0440 upstream");
+      chunks.push(value);
+    }
+    if (!length || declared !== null && (!encoded || encoded.toLowerCase() === "identity") && Number(declared) !== length) throw Error("\u041D\u0435\u043F\u043E\u043B\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 upstream");
+    return Buffer.concat(chunks, length);
+  } catch (failure) {
+    await reader.cancel().catch(() => {
+    });
+    throw failure;
+  } finally {
+    reader.releaseLock();
+  }
+}
+function exactKeys(value, names) {
+  return value !== null && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join(",") === [...names].sort().join(",");
+}
+function text2(value, max, nonempty = false) {
+  return typeof value === "string" && value.length <= max && (!nonempty || value.length > 0);
+}
+function isActiveAccountDTO(body) {
+  if (!exactKeys(body, ["account", "loginMethods", "enrollmentAvailable"]) || body.enrollmentAvailable !== false || !exactKeys(body.account, ["accountId", "displayName", "status"]) || body.account.status !== "active" || !text2(body.account.accountId, 256, true) || !text2(body.account.displayName, 512) || !Array.isArray(body.loginMethods) || body.loginMethods.length === 0 || body.loginMethods.length > 100) return false;
+  const ids = /* @__PURE__ */ new Set();
+  let active = false;
+  for (const method of body.loginMethods) {
+    if (!exactKeys(method, ["id", "kind", "status", "createdAt", "disabledAt"]) || !text2(method.id, 256, true) || ids.has(method.id) || !["oauth", "password", "passkey"].includes(method.kind) || !["pending", "active", "disabled"].includes(method.status) || !text2(method.createdAt, 64, true) || !(method.disabledAt === null || text2(method.disabledAt, 64, true))) return false;
+    ids.add(method.id);
+    if (method.status === "active" && method.disabledAt === null) active = true;
+  }
+  return active;
+}
+function createEntryGateHandler({ env = {}, fetchImpl = fetch, landingBody: landingBody2 } = {}) {
+  const landing = Buffer.isBuffer(landingBody2) ? Buffer.from(landingBody2) : null;
+  return async (req, res) => {
+    if (env.NEXUS_ENTRY_GATE_ENABLED !== "true" || typeof req.url !== "string") return false;
+    const path = req.url.split("?")[0];
+    if (!PATHS2.has(path)) return false;
+    if (req.url !== path) return error(req, res, 400, "ENTRY_TARGET_REJECTED");
+    if (!["GET", "HEAD"].includes(req.method)) {
+      return error(req, res, 405, "METHOD_NOT_ALLOWED", { Allow: "GET, HEAD" });
+    }
+    if (headerCount2(req, "host") !== 1 || req.headers.host !== new URL(GATEWAY_ORIGIN).host || req.headers.origin !== void 0 && req.headers.origin !== GATEWAY_ORIGIN) {
+      return error(req, res, 403, "ORIGIN_REJECTED");
+    }
+    if (req.headers.authorization !== void 0 || headerCount2(req, "authorization") > 0) {
+      return error(req, res, 403, "BROWSER_BEARER_REJECTED");
+    }
+    if (env.PRIVATE_GATEWAY_CONFIRMED !== "true" || env.ACCOUNT_READ_ENABLED !== "true" || typeof env.ACCOUNT_SERVICE_KEY !== "string" || env.ACCOUNT_SERVICE_KEY.length < 32 || !landing || !landing.length || landing.length > MAX_HTML_BYTES) {
+      return error(req, res, 503, "ENTRY_GATE_UNAVAILABLE");
+    }
+    const publicOrDenied = (status, code) => path === "/nexus-shell.html" ? error(req, res, status, code) : reply4(req, res, 200, landing, "text/html; charset=utf-8");
+    const session = sessionFromIngress(req);
+    if (!session) return publicOrDenied(401, "AUTHENTICATION_REQUIRED");
+    try {
+      const body = JSON.stringify({ path: "/api/v2/account", sessionHash: createHash5("sha256").update(session).digest("hex") });
+      const stamp = String(Date.now());
+      const nonce = randomBytes5(16).toString("hex");
+      const hash = createHash5("sha256").update(body).digest("hex");
+      const signature = createHmac4("sha256", env.ACCOUNT_SERVICE_KEY).update(`v1
+POST
+${INTERNAL_PATH2}
+${stamp}
+${nonce}
+${hash}`).digest("hex");
+      const account = await fetchImpl(WORKER_ORIGIN + INTERNAL_PATH2, {
+        method: "POST",
+        body,
+        credentials: "omit",
+        cache: "no-store",
+        redirect: "error",
+        signal: AbortSignal.timeout(5e3),
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "x-nexus-service-timestamp": stamp,
+          "x-nexus-service-nonce": nonce,
+          "x-nexus-service-signature": signature
+        }
+      });
+      if (account.status !== 200) {
+        await account.body?.cancel();
+        if (account.status === 401 || account.status === 403) {
+          return publicOrDenied(account.status, "SESSION_REJECTED");
+        }
+        return error(req, res, 502, "ENTRY_ACCOUNT_UNAVAILABLE");
+      }
+      const dto = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(
+        await boundedBytes(account, MAX_ACCOUNT_BYTES, /^application\/json(?:\s*;|$)/i)
+      ));
+      if (!isActiveAccountDTO(dto)) return error(req, res, 502, "ENTRY_ACCOUNT_INVALID");
+      const shell = await fetchImpl(ENTRY_SHELL_URL, {
+        method: "GET",
+        headers: { accept: "text/html" },
+        credentials: "omit",
+        cache: "no-store",
+        redirect: "error",
+        signal: AbortSignal.timeout(5e3)
+      });
+      if (shell.status !== 200) {
+        await shell.body?.cancel();
+        return error(req, res, 502, "ENTRY_SHELL_UNAVAILABLE");
+      }
+      const html = await boundedBytes(shell, MAX_HTML_BYTES, /^text\/html(?:\s*;|$)/i);
+      return reply4(req, res, 200, html, "text/html; charset=utf-8");
+    } catch {
+      return error(req, res, 502, "ENTRY_UPSTREAM_UNAVAILABLE");
+    }
+  };
+}
+
+// server-access/bff/cloud-session.mjs
+import { createHash as createHash6, createHmac as createHmac5, randomBytes as randomBytes6 } from "node:crypto";
+var BASE = "/api/v2/cloud";
+var INTERNAL3 = BASE + "/internal";
+var MAX_REQUEST = 155e4;
+var MAX_RESPONSE = 21e5;
+var reply5 = (res, status, body) => {
+  const data = JSON.stringify(body);
+  res.writeHead(status, {
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store",
+    "vary": "*",
+    "x-content-type-options": "nosniff",
+    "content-length": Buffer.byteLength(data)
+  });
+  res.end(data);
+  return true;
+};
+function legacyPath(method, path) {
+  if (typeof path !== "string" || path.length > 2048 || !path.startsWith(BASE + "/") || /[?#\\]/.test(path)) return null;
+  const rest = path.slice(BASE.length);
+  if (method === "GET" && (rest === "/me" || rest === "/projects")) return "/api/v1" + rest;
+  const match = /^\/projects\/([^/]+)(\/audit)?$/.exec(rest);
+  if (!match || !["GET", "PUT"].includes(method) || match[2] && method !== "GET") return null;
+  try {
+    const id = decodeURIComponent(match[1]);
+    if (!id || id.length > 256 || id === "." || id === ".." || /[/\\\u0000-\u001f\u007f]/.test(id) || encodeURIComponent(id) !== match[1]) return null;
+    return "/api/v1" + rest;
+  } catch {
+    return null;
+  }
+}
+async function readNodeBody(req, max) {
+  let length = 0;
+  const parts = [];
+  for await (const part of req) {
+    length += part.length;
+    if (length > max) throw Error("INPUT_TOO_LARGE");
+    parts.push(part);
+  }
+  try {
+    return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts)));
+  } catch {
+    throw Error("INVALID_INPUT");
+  }
+}
+async function readResponse2(response) {
+  const reader = response.body?.getReader();
+  if (!reader) throw Error();
+  let length = 0;
+  const parts = [];
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      length += value.byteLength;
+      if (length > MAX_RESPONSE) throw Error();
+      parts.push(value);
+    }
+    return new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts));
+  } finally {
+    await reader.cancel().catch(() => {
+    });
+    reader.releaseLock();
+  }
+}
+function createCloudSessionHandler({ env = {}, fetchImpl = fetch } = {}) {
+  return async (req, res) => {
+    if (typeof req.url !== "string" || !req.url.startsWith(BASE + "/")) return false;
+    if (env.CLOUD_SESSION_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.CLOUD_SERVICE_KEY !== "string" || env.CLOUD_SERVICE_KEY.length < 32)
+      return reply5(res, 503, { error: { code: "CLOUD_UNAVAILABLE" } });
+    if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || req.headers.origin && req.headers.origin !== GATEWAY_ORIGIN || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin" || req.headers.authorization)
+      return reply5(res, 403, { error: { code: "ORIGIN_REJECTED" } });
+    if (!["GET", "PUT"].includes(req.method)) return reply5(res, 405, { error: { code: "METHOD_NOT_ALLOWED" } });
+    const path = legacyPath(req.method, req.url);
+    if (!path) return reply5(res, 404, { error: { code: "NOT_FOUND" } });
+    if (req.method === "PUT" && (req.headers.origin !== GATEWAY_ORIGIN || req.headers["x-nexus-cloud-request"] !== "1" || req.headers["content-type"] !== "application/json"))
+      return reply5(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
+    const sessionCookie2 = sessionFromIngress(req);
+    if (!sessionCookie2) return reply5(res, 401, { error: { code: "SESSION_REQUIRED" } });
+    const expectedAccountId = req.headers["x-nexus-cloud-account"];
+    if (typeof expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(expectedAccountId))
+      return reply5(res, 400, { error: { code: "ACCOUNT_EXPECTATION_REQUIRED" } });
+    try {
+      const payload = req.method === "GET" ? null : await readNodeBody(req, MAX_REQUEST);
+      if (req.method === "PUT" && (!payload || typeof payload !== "object" || Array.isArray(payload)))
+        return reply5(res, 400, { error: { code: "INVALID_INPUT" } });
+      const body = JSON.stringify({ method: req.method, path, payload, sessionCookie: sessionCookie2, expectedAccountId });
+      const stamp = String(Date.now()), nonce = randomBytes6(16).toString("hex");
+      const digest3 = createHash6("sha256").update(body).digest("hex");
+      const canonical = `v1
+POST
+${INTERNAL3}
+${stamp}
+${nonce}
+${digest3}`;
+      const upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL3, {
+        method: "POST",
+        body,
+        redirect: "error",
+        credentials: "omit",
+        cache: "no-store",
+        signal: AbortSignal.timeout(8e3),
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          "x-nexus-service-timestamp": stamp,
+          "x-nexus-service-nonce": nonce,
+          "x-nexus-service-signature": createHmac5("sha256", env.CLOUD_SERVICE_KEY).update(canonical).digest("hex")
+        }
+      });
+      if (!upstream.headers.get("content-type")?.toLowerCase().startsWith("application/json")) throw Error();
+      const raw = await readResponse2(upstream);
+      if (raw.includes(sessionCookie2) || raw.includes(env.CLOUD_SERVICE_KEY)) throw Error();
+      const data = JSON.parse(raw);
+      if (!upstream.ok) {
+        const code = data?.error?.code;
+        return reply5(
+          res,
+          [400, 401, 403, 404, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502,
+          { error: {
+            code: typeof code === "string" && /^[A-Z_]{2,64}$/.test(code) ? code : "CLOUD_UNAVAILABLE",
+            ...code === "REVISION_CONFLICT" ? { details: data.error.details } : {}
+          } }
+        );
+      }
+      return reply5(res, 200, data);
+    } catch (error2) {
+      const status = error2?.message === "INPUT_TOO_LARGE" ? 413 : error2?.message === "INVALID_INPUT" ? 400 : 502;
+      return reply5(res, status, { error: { code: status === 413 ? "INPUT_TOO_LARGE" : status === 400 ? "INVALID_INPUT" : "CLOUD_UNAVAILABLE" } });
+    }
+  };
+}
+
+// server-access/bff/oauth.mjs
+import { createHash as createHash8, createHmac as createHmac6, randomBytes as randomBytes7, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+
+// server-access/bff/oauth-providers.mjs
+import { createHash as createHash7, createPublicKey, verify, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+var PROVIDERS = Object.freeze({
+  google: { label: "Google", prefix: "GOOGLE", authorize: "https://accounts.google.com/o/oauth2/v2/auth", token: "https://oauth2.googleapis.com/token" },
+  yandex: { label: "\u042F\u043D\u0434\u0435\u043A\u0441 ID", prefix: "YANDEX", authorize: "https://oauth.yandex.ru/authorize", token: "https://oauth.yandex.ru/token" },
+  vk: { label: "VK ID", prefix: "VK", authorize: "https://id.vk.ru/authorize", token: "https://id.vk.ru/oauth2/auth" }
+});
+var ENDPOINTS = /* @__PURE__ */ new Set(["https://oauth2.googleapis.com/token", "https://www.googleapis.com/oauth2/v3/certs", "https://oauth.yandex.ru/token", "https://login.yandex.ru/info", "https://id.vk.ru/oauth2/auth", "https://id.vk.ru/oauth2/user_info"]);
+var requireThat = (value) => {
+  if (!value) throw Error("PROVIDER_REJECTED");
+};
+var safeSecret = (value) => typeof value === "string" && value.length > 0 && value.length <= 2048 && !/[\x00-\x20\x7f]/.test(value);
+var equal = (a, b) => typeof a === "string" && typeof b === "string" && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual3(Buffer.from(a), Buffer.from(b));
+var plain = (value) => !!value && typeof value === "object" && !Array.isArray(value);
+var text3 = (value, max) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\x00-\x1f\x7f]/.test(value);
+var email = (value) => value === void 0 || value === null || value === "" ? null : (requireThat(text3(value, 320) && /^\S+@\S+\.\S+$/.test(value)), value.trim().toLowerCase());
+var display = (value, fallback) => text3(value, 512) && value.trim() ? value.trim() : fallback;
+var subject = (value) => {
+  requireThat(text3(value, 512) && value === value.trim());
+  return value;
+};
+var digest2 = (value) => createHash7("sha256").update(value).digest();
+function authoritativeYandexEmail(user, address) {
+  return typeof user.login === "string" && /^[a-z][a-z0-9.-]{0,63}$/.test(user.login) && address === user.login + "@yandex.ru";
+}
+var oauthCallbackURL = (provider) => {
+  requireThat(Object.hasOwn(PROVIDERS, provider));
+  return GATEWAY_ORIGIN + "/api/v2/account/oauth/" + provider + "/callback";
+};
+function configuration(env, provider) {
+  const definition = PROVIDERS[provider];
+  if (!definition) return null;
+  const clientId = env[definition.prefix + "_CLIENT_ID"], clientSecret = env[definition.prefix + "_CLIENT_SECRET"];
+  if (!safeSecret(clientId) || provider !== "vk" && !safeSecret(clientSecret)) return null;
+  return { ...definition, clientId, clientSecret: provider === "vk" ? void 0 : clientSecret };
+}
+function configuredOAuthProviders(env = {}) {
+  return Object.keys(PROVIDERS).filter((id) => configuration(env, id)).map((id) => ({ id, label: PROVIDERS[id].label }));
+}
+function oauthAuthorizationURL({ provider, env, state, codeVerifier, nonce }) {
+  const config = configuration(env, provider);
+  requireThat(config);
+  const url = new URL(config.authorize);
+  url.search = new URLSearchParams({
+    client_id: config.clientId,
+    response_type: "code",
+    redirect_uri: oauthCallbackURL(provider),
+    state,
+    code_challenge: digest2(codeVerifier).toString("base64url"),
+    code_challenge_method: provider === "vk" ? "s256" : "S256",
+    scope: provider === "google" ? "openid email profile" : provider === "yandex" ? "login:info login:email" : "email",
+    ...provider === "google" ? { nonce, prompt: "select_account" } : {}
+  }).toString();
+  return url.href;
+}
+async function json(fetchImpl, url, options = {}) {
+  const target = new URL(url);
+  requireThat(target.protocol === "https:" && !target.username && !target.password && !target.hash && ENDPOINTS.has(target.origin + target.pathname));
+  const response = await fetchImpl(target.href, { ...options, credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(3e3) });
+  if (response.status !== 200 || response.redirected || !/^application\/json(?:\s*;|$)/i.test(response.headers.get("content-type") || "")) {
+    await response.body?.cancel();
+    throw Error("PROVIDER_REJECTED");
+  }
+  const reader = response.body?.getReader();
+  requireThat(reader);
+  const parts = [];
+  let length = 0;
+  try {
+    while (true) {
+      const { done, value: value2 } = await reader.read();
+      if (done) break;
+      length += value2.length;
+      requireThat(length <= 65536);
+      parts.push(value2);
+    }
+    const value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts, length)));
+    requireThat(plain(value) && !Object.hasOwn(value, "error"));
+    return value;
+  } finally {
+    await reader.cancel().catch(() => {
+    });
+    reader.releaseLock();
+  }
+}
+var formHeaders = { accept: "application/json", "content-type": "application/x-www-form-urlencoded" };
+function validateToken(token) {
+  requireThat(plain(token) && typeof token.access_token === "string" && token.access_token.length > 0 && token.access_token.length <= 8192 && !/[\x00-\x20\x7f]/.test(token.access_token) && typeof token.token_type === "string" && token.token_type.toLowerCase() === "bearer" && Number.isFinite(token.expires_in) && token.expires_in > 0);
+}
+function jwtJSON(segment) {
+  requireThat(typeof segment === "string" && segment.length > 0 && /^[A-Za-z0-9_-]+$/.test(segment));
+  const bytes = Buffer.from(segment, "base64url");
+  requireThat(bytes.toString("base64url") === segment);
+  const value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  requireThat(plain(value));
+  return value;
+}
+async function googleProfile(token, config, nonce, fetchImpl) {
+  requireThat(typeof token.id_token === "string" && token.id_token.length <= 16384);
+  const pieces = token.id_token.split(".");
+  requireThat(pieces.length === 3);
+  const header = jwtJSON(pieces[0]), claims = jwtJSON(pieces[1]);
+  requireThat(header.alg === "RS256" && text3(header.kid, 128) && Object.keys(header).every((key2) => ["alg", "kid", "typ"].includes(key2)) && (header.typ === void 0 || header.typ === "JWT"));
+  requireThat(/^[A-Za-z0-9_-]+$/.test(pieces[2]));
+  const signature = Buffer.from(pieces[2], "base64url");
+  requireThat(signature.toString("base64url") === pieces[2]);
+  const jwks = await json(fetchImpl, "https://www.googleapis.com/oauth2/v3/certs", { method: "GET", headers: { accept: "application/json" } });
+  requireThat(Array.isArray(jwks.keys) && jwks.keys.length > 0 && jwks.keys.length <= 20);
+  const candidates = jwks.keys.filter((key2) => key2?.kid === header.kid);
+  requireThat(candidates.length === 1);
+  const jwk = candidates[0];
+  requireThat(jwk.kty === "RSA" && (jwk.use === void 0 || jwk.use === "sig") && (jwk.alg === void 0 || jwk.alg === "RS256") && text3(jwk.n, 2048) && text3(jwk.e, 16) && !Object.hasOwn(jwk, "d"));
+  const key = createPublicKey({ key: jwk, format: "jwk" }), bits = key.asymmetricKeyDetails?.modulusLength;
+  requireThat(bits >= 2048 && bits <= 8192);
+  requireThat(verify("RSA-SHA256", Buffer.from(pieces[0] + "." + pieces[1]), key, signature));
+  const current = Math.floor(Date.now() / 1e3), aud = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+  requireThat(["https://accounts.google.com", "accounts.google.com"].includes(claims.iss) && aud.length > 0 && aud.length <= 8 && aud.every((x) => typeof x === "string") && aud.includes(config.clientId));
+  requireThat((claims.azp === void 0 || claims.azp === config.clientId) && (aud.length === 1 || claims.azp === config.clientId));
+  requireThat(Number.isInteger(claims.exp) && claims.exp > current && Number.isInteger(claims.iat) && claims.iat <= current + 60 && claims.iat >= current - 600 && claims.exp > claims.iat && claims.exp - claims.iat <= 7200);
+  requireThat(claims.nbf === void 0 || Number.isInteger(claims.nbf) && claims.nbf <= current + 60);
+  requireThat(equal(claims.nonce, nonce) && typeof claims.sub === "string" && /^[\x21-\x7e]{1,255}$/.test(claims.sub));
+  if (claims.at_hash !== void 0) requireThat(equal(claims.at_hash, digest2(token.access_token).subarray(0, 16).toString("base64url")));
+  const address = email(claims.email), domain = address?.split("@").at(-1);
+  const authoritative = domain === "gmail.com" || text3(claims.hd, 253) && claims.hd.toLowerCase() === domain;
+  return { issuer: "https://accounts.google.com", subject: claims.sub, email: address, emailVerified: claims.email_verified === true && !!address && !!authoritative, displayName: display(claims.name, "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C Google") };
+}
+async function exchangeOAuthProfile({ provider, env, code, state, deviceId, codeVerifier, nonce, fetchImpl = fetch }) {
+  const config = configuration(env, provider);
+  requireThat(config);
+  requireThat(text3(code, 4096) && text3(state, 128) && /^[A-Za-z0-9._~-]{43,128}$/.test(codeVerifier) && text3(nonce, 128));
+  const body = new URLSearchParams({ grant_type: "authorization_code", code, client_id: config.clientId, redirect_uri: oauthCallbackURL(provider), code_verifier: codeVerifier, ...config.clientSecret ? { client_secret: config.clientSecret } : {} });
+  let token;
+  if (provider === "vk") {
+    requireThat(text3(deviceId, 512));
+    const target = new URL(config.token);
+    target.search = new URLSearchParams({ grant_type: "authorization_code", redirect_uri: oauthCallbackURL(provider), client_id: config.clientId, code_verifier: codeVerifier, state, device_id: deviceId }).toString();
+    token = await json(fetchImpl, target.href, { method: "POST", headers: formHeaders, body: new URLSearchParams({ code }).toString() });
+  } else token = await json(fetchImpl, config.token, { method: "POST", headers: formHeaders, body: body.toString() });
+  validateToken(token);
+  if (provider === "google") return googleProfile(token, config, nonce, fetchImpl);
+  if (provider === "yandex") {
+    const user = await json(fetchImpl, "https://login.yandex.ru/info?format=json", { method: "GET", headers: { accept: "application/json", authorization: "OAuth " + token.access_token } });
+    requireThat(user.client_id === config.clientId);
+    const address = email(user.default_email);
+    return { issuer: "https://login.yandex.ru", subject: subject(user.id), email: address, emailVerified: authoritativeYandexEmail(user, address), displayName: display(user.real_name || user.display_name || user.login, "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u042F\u043D\u0434\u0435\u043A\u0441") };
+  }
+  requireThat(equal(token.state, state));
+  const tokenSubject = typeof token.user_id === "number" && Number.isSafeInteger(token.user_id) && token.user_id > 0 ? String(token.user_id) : subject(token.user_id);
+  const userInfoURL = new URL("https://id.vk.ru/oauth2/user_info");
+  userInfoURL.search = new URLSearchParams({ client_id: config.clientId }).toString();
+  const data = await json(fetchImpl, userInfoURL.href, { method: "POST", headers: formHeaders, body: new URLSearchParams({ access_token: token.access_token }).toString() });
+  requireThat(plain(data.user) && subject(data.user.user_id) === tokenSubject);
+  return { issuer: "https://id.vk.ru", subject: tokenSubject, email: email(data.user.email), emailVerified: false, displayName: display([data.user.first_name, data.user.last_name].filter((x) => typeof x === "string").join(" "), "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C VK") };
+}
+
+// server-access/bff/oauth.mjs
+var PREFIX = "/api/v2/account/oauth/";
+var INTERNAL4 = "/api/v2/account/internal/oauth";
+var sha = (value) => createHash8("sha256").update(value).digest("hex");
+var random = () => randomBytes7(32).toString("base64url");
+var count2 = (req, name) => {
+  if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2 !== 0) return -1;
+  let total = 0;
+  for (let i = 0; i < req.rawHeaders.length; i += 2) {
+    if (typeof req.rawHeaders[i] !== "string") return -1;
+    if (req.rawHeaders[i].toLowerCase() === name) total++;
+  }
+  return total;
+};
+var same = (a, b) => typeof a === "string" && typeof b === "string" && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual4(Buffer.from(a), Buffer.from(b));
+var flowCookie = (value, age) => `__Host-nexus_oauth_flow=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${age}`;
+var sessionCookie = (value) => `__Host-nexus_session=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=43200`;
+var reply6 = (res, status, body, cookies2 = [], extra = {}) => {
+  const data = body === null ? "" : JSON.stringify(body);
+  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(data), "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", ...cookies2.length ? { "set-cookie": cookies2 } : {}, ...extra });
+  res.end(data);
+  return true;
+};
+var Rejected = class extends Error {
+  constructor(code, status = 400) {
+    super(code);
+    this.code = code;
+    this.status = status;
+  }
+};
+var deny = (code, status) => {
+  throw new Rejected(code, status);
+};
+function ingress(req) {
+  if (count2(req, "x-yc-apigateway-operation-context") !== 1) deny("INGRESS_REJECTED", 401);
+  const raw = req.headers["x-yc-apigateway-operation-context"];
+  if (typeof raw !== "string" || raw.length > 4096 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) deny("INGRESS_REJECTED", 401);
+  const bytes = Buffer.from(raw, "base64");
+  if (bytes.toString("base64") !== raw) deny("INGRESS_REJECTED", 401);
+  let text4, data;
+  try {
+    text4 = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    data = JSON.parse(text4);
+  } catch {
+    deny("INGRESS_REJECTED", 401);
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).sort().join(",") !== "oauthFlowCookie,oauthIngressContract,sessionCookie" || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.oauthIngressContract !== "v1" || typeof data.sessionCookie !== "string" || typeof data.oauthFlowCookie !== "string") deny("INGRESS_REJECTED", 401);
+  const optional = (value) => value === "-" ? null : value;
+  const session = optional(data.sessionCookie), flow = optional(data.oauthFlowCookie);
+  if (session !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session) || flow !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow)) deny("INGRESS_REJECTED", 401);
+  if (req.headers.cookie !== void 0) {
+    if (count2(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) deny("INGRESS_REJECTED", 401);
+    const found = {};
+    for (const part of req.headers.cookie.split(";")) {
+      const pair = part.trim(), at = pair.indexOf("=");
+      if (at < 1) deny("INGRESS_REJECTED", 401);
+      const name = pair.slice(0, at), value = pair.slice(at + 1);
+      if (!/^[!#$%&'*+.^_`|~A-Za-z0-9-]+$/.test(name) || !/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value)) deny("INGRESS_REJECTED", 401);
+      if (["__Host-nexus_session", "__Host-nexus_oauth_flow"].includes(name)) {
+        if (Object.hasOwn(found, name)) deny("INGRESS_REJECTED", 401);
+        found[name] = value;
+      }
+    }
+    const fromCookie = found["__Host-nexus_session"] ?? null, fromFlow = found["__Host-nexus_oauth_flow"] ?? null;
+    if (!(fromCookie === null && session === null) && !same(fromCookie, session) || !(fromFlow === null && flow === null) && !same(fromFlow, flow)) deny("INGRESS_REJECTED", 401);
+  } else if (count2(req, "cookie") !== 0) deny("INGRESS_REJECTED", 401);
+  return { session, flow };
+}
+async function boundedJSON(source, max, flatIntent = false) {
+  let length = 0;
+  const parts = [];
+  for await (const part of source) {
+    const bytes = Buffer.from(part);
+    length += bytes.length;
+    if (length > max) deny("INPUT_TOO_LARGE", 413);
+    parts.push(bytes);
+  }
+  let value;
+  try {
+    const text4 = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts, length));
+    value = JSON.parse(text4);
+    if (flatIntent && text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 2) deny("INVALID_INPUT");
+  } catch {
+    deny("INVALID_INPUT");
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) deny("INVALID_INPUT");
+  return value;
+}
+async function service(env, fetchImpl, payload) {
+  const body = JSON.stringify(payload), timestamp = String(Date.now()), nonce = randomBytes7(16).toString("hex");
+  const signature = createHmac6("sha256", env.OAUTH_SERVICE_KEY).update(`v1
+POST
+${INTERNAL4}
+${timestamp}
+${nonce}
+${sha(body)}`).digest("hex");
+  const upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL4, { method: "POST", credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(2500), body, headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": timestamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": signature } });
+  if (upstream.redirected || !/^application\/json(?:\s*;|$)/i.test(upstream.headers.get("content-type") || "")) {
+    await upstream.body?.cancel();
+    deny("OAUTH_UNAVAILABLE", 502);
+  }
+  const data = await boundedJSON(upstream.body, 16384);
+  if (upstream.status !== 200) {
+    const safe = ["FRESH_PASSKEY_REQUIRED", "EXPLICIT_LINK_REQUIRED", "OWNER_EMAIL_REQUIRED", "IDENTITY_ALREADY_LINKED", "IDENTITY_REJECTED", "TRANSACTION_REJECTED", "RATE_LIMITED"];
+    deny(safe.includes(data.error?.code) ? data.error.code : "OAUTH_UNAVAILABLE", [400, 401, 403, 409, 429, 503].includes(upstream.status) ? upstream.status : 502);
+  }
+  if (data.ok !== true) deny("OAUTH_UNAVAILABLE", 502);
+  return data;
+}
+function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
+  return async (req, res) => {
+    if (typeof req.url !== "string" || !req.url.startsWith(PREFIX)) return false;
+    let callback = false;
+    try {
+      if (req.url.length > 8192) deny("INVALID_INPUT");
+      const url = new URL(req.url, GATEWAY_ORIGIN), route = url.pathname.slice(PREFIX.length).split("/");
+      callback = route.length === 2 && route[1] === "callback";
+      if (req.url.split("?")[0] !== url.pathname || url.hash) deny("INVALID_INPUT");
+      if (env.OAUTH_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.OAUTH_SERVICE_KEY !== "string" || env.OAUTH_SERVICE_KEY.length < 32) deny("OAUTH_UNAVAILABLE", 503);
+      if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || count2(req, "host") !== 1 || req.headers.authorization !== void 0 || count2(req, "authorization") > 0 || req.headers.origin !== void 0 && req.headers.origin !== GATEWAY_ORIGIN) deny("ORIGIN_REJECTED", 403);
+      const providers = configuredOAuthProviders(env);
+      if (req.url === PREFIX + "providers") {
+        if (req.method !== "GET") deny("METHOD_NOT_ALLOWED", 405);
+        return reply6(res, 200, { providers });
+      }
+      const [provider, action] = route;
+      if (route.length !== 2 || !["start", "callback"].includes(action)) deny("NOT_FOUND", 404);
+      if (!providers.some((item) => item.id === provider)) deny("OAUTH_PROVIDER_UNAVAILABLE", 503);
+      if (req.method !== (action === "start" ? "POST" : "GET")) deny("METHOD_NOT_ALLOWED", 405);
+      const context2 = ingress(req);
+      if (action === "start") {
+        if (url.search || req.url !== url.pathname) deny("INVALID_INPUT");
+        if (req.headers.origin !== GATEWAY_ORIGIN || count2(req, "origin") !== 1 || req.headers["x-nexus-oauth-request"] !== "1" || count2(req, "x-nexus-oauth-request") !== 1 || req.headers["content-type"] !== "application/json" || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") deny("WRITE_ORIGIN_REQUIRED", 403);
+        const input = await boundedJSON(req, 1024, true);
+        if (Object.keys(input).join(",") !== "intent" || !["login", "link"].includes(input.intent)) deny("INVALID_INPUT");
+        if (input.intent === "link" && !context2.session) deny("FRESH_PASSKEY_REQUIRED", 401);
+        const state2 = random(), codeVerifier = random(), nonce = random(), flow = "nof_" + random();
+        const result = await service(env, fetchImpl, { op: "begin", provider, intent: input.intent, stateHash: sha(state2), flowHash: sha(flow), codeVerifier, nonce, ...input.intent === "link" ? { sessionHash: sha(context2.session) } : {} });
+        if (typeof result.txId !== "string" || result.txId.length > 80 || typeof result.expiresAt !== "string") deny("OAUTH_UNAVAILABLE", 502);
+        return reply6(res, 200, { authorizationURL: oauthAuthorizationURL({ provider, env, state: state2, codeVerifier, nonce }) }, [flowCookie(flow, 600)]);
+      }
+      if (!context2.flow) deny("FLOW_REQUIRED", 401);
+      const params = url.searchParams;
+      if ([...params.keys()].some((name) => params.getAll(name).length !== 1)) deny("INVALID_INPUT");
+      const metadata = provider === "google" ? ["scope", "authuser", "prompt", "iss"] : provider === "vk" ? ["type", "expires_in"] : [];
+      if ([...params.keys()].some((name) => !["code", "state", ...provider === "vk" ? ["device_id"] : [], ...metadata].includes(name))) deny("INVALID_INPUT");
+      const code = params.get("code"), state = params.get("state"), deviceId = params.get("device_id");
+      if (typeof code !== "string" || !code.length || code.length > 4096 || /[\x00-\x20\x7f]/.test(code) || !/^[A-Za-z0-9_-]{43}$/.test(state || "") || provider === "vk" && (typeof deviceId !== "string" || !deviceId.length || deviceId.length > 512 || /[\x00-\x20\x7f]/.test(deviceId))) deny("INVALID_INPUT");
+      if (params.has("iss") && !["https://accounts.google.com", "accounts.google.com"].includes(params.get("iss"))) deny("PROVIDER_REJECTED", 401);
+      const claim = await service(env, fetchImpl, { op: "claim", provider, stateHash: sha(state), flowHash: sha(context2.flow) });
+      if (typeof claim.txId !== "string" || claim.txId.length > 80 || !["login", "link"].includes(claim.intent) || typeof claim.codeVerifier !== "string" || !/^[A-Za-z0-9._~-]{43,128}$/.test(claim.codeVerifier) || typeof claim.nonce !== "string" || !/^[A-Za-z0-9_-]{22,128}$/.test(claim.nonce)) deny("OAUTH_UNAVAILABLE", 502);
+      const profile = await exchangeOAuthProfile({ provider, env, code, state, deviceId, codeVerifier: claim.codeVerifier, nonce: claim.nonce, fetchImpl });
+      const completed = await service(env, fetchImpl, { op: "complete", txId: claim.txId, flowHash: sha(context2.flow), profile });
+      if (!/^nxs_[A-Za-z0-9_-]{43}$/.test(completed.sessionSecret || "")) deny("OAUTH_UNAVAILABLE", 502);
+      return reply6(res, 303, null, [sessionCookie(completed.sessionSecret), flowCookie("", 0)], { location: GATEWAY_ORIGIN + (claim.intent === "link" ? "/#view=account" : "/") });
+    } catch (error2) {
+      const known = error2 instanceof Rejected;
+      return reply6(res, known ? error2.status : error2.message === "PROVIDER_REJECTED" ? 401 : 502, { error: { code: known ? error2.code : error2.message === "PROVIDER_REJECTED" ? "PROVIDER_REJECTED" : "OAUTH_UNAVAILABLE" } }, callback ? [flowCookie("", 0)] : []);
+    }
+  };
+}
+
 // server-access/bff/server.mjs
 var passkey = createPasskeyHandler({ env: process.env });
 var existing = createCombinedHandler({ env: process.env });
+var landingBody = readFileSync(new URL("../public/entry.html", import.meta.url));
+var entryGate = createEntryGateHandler({ env: process.env, landingBody });
+var cloud = createCloudSessionHandler({ env: process.env });
+var oauth = createOAuthHandler({ env: process.env });
 var assets = /* @__PURE__ */ new Map([
+  ["/account/entry/", ["text/html; charset=utf-8", landingBody]],
+  ["/account/entry/entry.css", ["text/css; charset=utf-8", readFileSync(new URL("../public/entry.css", import.meta.url))]],
+  ["/account/entry/entry.js", ["text/javascript; charset=utf-8", readFileSync(new URL("../public/entry.js", import.meta.url))]],
+  ["/account/entry/galaxy.js", ["text/javascript; charset=utf-8", readFileSync(new URL("../public/galaxy.js", import.meta.url))]],
+  ["/account/entry/oauth-client.js", ["text/javascript; charset=utf-8", readFileSync(new URL("../public/oauth-client.js", import.meta.url))]],
   ["/account/access/", ["text/html; charset=utf-8", readFileSync(new URL("../public/index.html", import.meta.url))]],
   ["/account/access/page.js", ["text/javascript; charset=utf-8", readFileSync(new URL("../public/page.js", import.meta.url))]],
   ["/account/access/passkey-client.js", ["text/javascript; charset=utf-8", readFileSync(new URL("../public/passkey-client.js", import.meta.url))]]
@@ -618,7 +1245,12 @@ var assets = /* @__PURE__ */ new Map([
 var server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
   res.setHeader("vary", "*");
   try {
+    if (await entryGate(req, res)) return;
+    if (await cloud(req, res)) return;
+    if (await oauth(req, res)) return;
     if (req.url?.startsWith("/api/v2/account/passkey/")) return await passkey(req, res);
+    if (req.url === "/account/entry") req.url = "/account/entry/";
+    if (req.url === "/account/access") req.url = "/account/access/";
     if (assets.has(req.url)) {
       const [contentType, content] = assets.get(req.url);
       if (req.method !== "GET" || process.env.PASSKEY_PROXY_ENABLED !== "true" || req.headers.host !== new URL(process.env.PASSKEY_ORIGIN).host) {
@@ -626,7 +1258,7 @@ var server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
         res.end();
         return;
       }
-      res.writeHead(200, { "content-type": contentType, "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'", "permissions-policy": "publickey-credentials-create=(self), publickey-credentials-get=(self)" });
+      res.writeHead(200, { "content-type": contentType, "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'", "permissions-policy": "publickey-credentials-create=(self), publickey-credentials-get=(self)" });
       res.end(content);
       return;
     }

@@ -1,11 +1,17 @@
 import legacy from './legacy-sync.js';
 import {handlePasskeyService} from './passkey-service.mjs';
+import {handleOAuthService} from './oauth-service.mjs';
+import {handleCloudSessionRequest} from './cloud-session-service.mjs';
 import {handleFeedbackRequest} from './feedback-service.js';
 import {verifyAccountServiceRequest} from './account-service-auth.js';
 import {readEligibleAccountFoundation} from './account-foundation.js';
 const reply=(status,code)=>Response.json({error:{code}},{status,headers:{'cache-control':'no-store','vary':'*'}});
 export default {async fetch(request,env,context){
  const path=new URL(request.url).pathname;
+ if(path==='/api/v2/cloud/internal')return handleCloudSessionRequest(request,env,context);
+ if(path.startsWith('/api/v2/cloud/'))return reply(404,'NOT_FOUND');
+ if(path==='/api/v2/account/internal/oauth')return handleOAuthService(request,env);
+ if(path.startsWith('/api/v2/account/oauth/'))return reply(404,'NOT_FOUND');
  if(path==='/api/v2/account/internal/passkey')return handlePasskeyService(request,env);
  if(path.startsWith('/api/v2/account/passkey/'))return reply(404,'NOT_FOUND');
  if(path.startsWith('/api/v2/feedback/'))return handleFeedbackRequest(request,env);
