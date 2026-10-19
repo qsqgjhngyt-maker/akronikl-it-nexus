@@ -1,0 +1,26 @@
+name: Build access BFF image (no cloud credentials)
+on:
+  push:
+    branches: [main]
+    paths: ['server-access/**', '.github/workflows/build-access-bff.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Build audited BFF image
+        run: |
+          docker build --platform linux/amd64 -t nexus-access-bff:${GITHUB_SHA} server-access/image
+          docker save nexus-access-bff:${GITHUB_SHA} -o nexus-access-bff.tar
+          sha256sum nexus-access-bff.tar > nexus-access-bff.tar.sha256
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nexus-access-bff-image
+          path: |
+            nexus-access-bff.tar
+            nexus-access-bff.tar.sha256
+          retention-days: 2

@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {DatabaseSync} from 'node:sqlite';
+import worker from './worker/entry.mjs';
+const root=new URL('./',import.meta.url),check=[];
+const old=await readFile(new URL('../cloudflare/nexus-sync-worker/src/index.js',root));
+assert.deepEqual(await readFile(new URL('worker/legacy-sync.js',root)),old);check.push('Legacy Cloud Sync exact bytes');
+if(!process.argv[2])throw Error('Укажите путь к локальному снимку текущей D1 schema; пользовательские данные не требуются');
+const schema=JSON.parse(await readFile(process.argv[2],'utf8'));
+const rows=schema.flatMap(x=>x.results||[]),db=new DatabaseSync(':memory:');
+for(const type of ['table','index','trigger'])for(const row of rows.filter(x=>x.type===type&&!x.name.startsWith('sqlite_')&&!x.name.startsWith('_cf_')&&x.sql))db.exec(row.sql);
+const tablesBefore=db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(x=>x.name);
+for(const name of ['0005_login_methods_registry.sql','0006_account_lifecycle_hardening.sql','0007_identity_owner_and_issuance_guards.sql','0008_account_service_nonces.sql','0009_passkeys.sql','0010_feedback.sql'])db.exec(await readFile(new URL('migrations/'+name,root),'utf8'));
+const tablesAfter=db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(x=>x.name);
+assert.ok(tablesBefore.every(x=>tablesAfter.includes(x)));check.push('Six additive migrations against current schema');
+assert.ok(['nexus_passkey_credentials','feedback_permissions','feedback_items','login_methods','session_login_methods','account_service_nonces'].every(x=>tablesAfter.includes(x)));
+for(const path of ['/api/v2/account/passkey/keys','/api/v2/account','/api/v2/account/internal/read']){
+ const r=await worker.fetch(new Request('https://fixture.invalid'+path),{},{});assert.equal(r.status,404);assert.equal(r.headers.get('cache-control'),'no-store');
+}check.push('Public credential/Account paths fail closed with no-store');
+const feedback=await worker.fetch(new Request('https://fixture.invalid/api/v2/feedback/reviews'),{},{});assert.equal(feedback.status,503);check.push('Feedback disabled without explicit server configuration');
+const {grantModeratorSQL}=await import('./admin/moderator-permission.mjs');
+db.exec("INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES('synthetic-akronikl','Synthetic','active','2026-10-19','2026-10-19')");
+db.prepare(grantModeratorSQL.replaceAll('?1','?')).run('synthetic-akronikl');
+assert.equal(db.prepare('SELECT count(*) AS n FROM feedback_permissions').get().n,0);check.push('Moderator cannot be granted without eligible login method');
+db.close();console.log(JSON.stringify({passed:check,productionDBWrites:0,realAuthenticatorUsed:false}));
