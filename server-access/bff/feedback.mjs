@@ -1,5 +1,6 @@
 import {createHash,createHmac,randomBytes} from 'node:crypto';
 import {GATEWAY_ORIGIN,WORKER_ORIGIN,sessionFromIngress} from './account-read.mjs';
+import {readV2CookieContext} from './gateway-cookie-context.mjs';
 const INTERNAL='/api/v2/feedback/internal';
 const reply=(res,status,body)=>{const data=JSON.stringify(body);res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','content-length':Buffer.byteLength(data)});res.end(data)};
 async function readBody(stream,max){let length=0;const chunks=[];for await(const part of stream){length+=part.length;if(length>max)throw Error('BODY_TOO_LARGE');chunks.push(part)}return JSON.parse(Buffer.concat(chunks).toString('utf8'))}
@@ -13,7 +14,12 @@ export function createFeedbackHandler({env={},fetchImpl=fetch}={}){
   const path=new URL(req.url,origin);if(path.pathname.includes('%')||!/^\/api\/v2\/feedback\/(reviews|me|items|moderation|items\/[a-zA-Z0-9-]+(?:\/(withdraw|moderate|events))?)$/.test(path.pathname)||path.pathname!==req.url.split('?')[0])return reply(res,404,{error:{code:'NOT_FOUND'}});
   if(req.method!=='GET'&&(req.headers.origin!==origin||req.headers['x-nexus-feedback-write']!=='1'||req.headers['content-type']!=='application/json'||path.search))return reply(res,403,{error:{code:'WRITE_ORIGIN_REQUIRED'}});
   const isPublic=path.pathname==='/api/v2/feedback/reviews'&&req.method==='GET';
-  const session=isPublic?null:sessionFromIngress(req);if(!isPublic&&!session)return reply(res,401,{error:{code:'SESSION_REQUIRED'}});
+  let session=null;
+  if(!isPublic){
+   try{const v2=readV2CookieContext(req,'accountReadContract');session=v2===undefined?sessionFromIngress(req):v2.get('__Host-nexus_session')??null}
+   catch{return reply(res,401,{error:{code:'SESSION_REQUIRED'}})}
+   if(typeof session!=='string'||!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session))return reply(res,401,{error:{code:'SESSION_REQUIRED'}});
+  }
   const expectedAccountId=isPublic?null:req.headers['x-nexus-feedback-account'];
   const expectationHeaders=Array.isArray(req.rawHeaders)?req.rawHeaders.filter((name,index)=>index%2===0&&typeof name==='string'&&name.toLowerCase()==='x-nexus-feedback-account').length:0;
   const hasExpectation=!isPublic&&(expectedAccountId!==undefined||expectationHeaders>0);

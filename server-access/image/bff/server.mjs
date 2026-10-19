@@ -5,6 +5,68 @@ import { readFileSync } from "node:fs";
 // server-access/bff/passkey.mjs
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import { isIP } from "node:net";
+
+// server-access/bff/gateway-cookie-context.mjs
+import { timingSafeEqual } from "node:crypto";
+var CONTEXT_HEADER = "x-yc-apigateway-operation-context";
+var PROTECTED = /* @__PURE__ */ new Set(["__Host-nexus_session", "__Host-nexus_passkey_flow", "__Host-nexus_oauth_flow", "__Host-nexus_probe"]);
+var reject = () => {
+  throw Error("INGRESS_REJECTED");
+};
+function count(req, name) {
+  if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2 !== 0) return reject();
+  let total = 0;
+  for (let i = 0; i < req.rawHeaders.length; i += 2) {
+    if (typeof req.rawHeaders[i] !== "string" || typeof req.rawHeaders[i + 1] !== "string") return reject();
+    if (req.rawHeaders[i].toLowerCase() === name) total++;
+  }
+  return total;
+}
+function parseCookies(raw) {
+  if (typeof raw !== "string" || raw.length === 0 || raw.length > 4096 || !/^[\x09\x20-\x7e]+$/.test(raw)) return reject();
+  const values = /* @__PURE__ */ new Map(), pairs = [];
+  for (const part of raw.split(";")) {
+    const pair = part.trim(), at = pair.indexOf("=");
+    if (at < 1) return reject();
+    const name = pair.slice(0, at), value = pair.slice(at + 1);
+    if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name) || !/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value)) return reject();
+    if (PROTECTED.has(name) && values.has(name)) return reject();
+    values.set(name, value);
+    pairs.push(name + "=" + value);
+  }
+  return { values, canonical: pairs.sort().join("; ") };
+}
+function readV2CookieContext(req, marker) {
+  if (typeof marker !== "string" || !/^[A-Za-z][A-Za-z0-9]{0,63}$/.test(marker) || marker === "cookieHeader") return reject();
+  if (count(req, CONTEXT_HEADER) !== 1) return reject();
+  const raw = req.headers?.[CONTEXT_HEADER];
+  if (typeof raw !== "string" || !raw.length || raw.length > 8192 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) return reject();
+  let text4, data;
+  try {
+    const bytes = Buffer.from(raw, "base64");
+    if (bytes.length > 6144 || bytes.toString("base64") !== raw) return reject();
+    text4 = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+    data = JSON.parse(text4);
+  } catch {
+    return reject();
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data)) return reject();
+  if (data[marker] === "v1") return void 0;
+  if (data[marker] !== "v2" || Object.keys(data).sort().join(",") !== [marker, "cookieHeader"].sort().join(",") || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 4 || typeof data.cookieHeader !== "string") return reject();
+  const actual = req.headers?.cookie, present = actual !== void 0, cookieCount = count(req, "cookie");
+  if (!present && cookieCount !== 0 || present && (cookieCount !== 1 || typeof actual !== "string")) return reject();
+  if (data.cookieHeader === "-") {
+    if (present) return reject();
+    return /* @__PURE__ */ new Map();
+  }
+  if (!present) return reject();
+  const expected = parseCookies(data.cookieHeader), received = parseCookies(actual);
+  const left = Buffer.from(expected.canonical, "ascii"), right = Buffer.from(received.canonical, "ascii");
+  if (left.length !== right.length || !timingSafeEqual(left, right)) return reject();
+  return received.values;
+}
+
+// server-access/bff/passkey.mjs
 var INTERNAL = "/api/v2/account/internal/passkey";
 var routes = /* @__PURE__ */ new Map([
   ["/api/v2/account/passkey/register/options", ["POST", "register-options"]],
@@ -21,14 +83,20 @@ var reply = (res, status, body, cookies2 = []) => {
   res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "content-length": Buffer.byteLength(data), ...cookies2.length ? { "set-cookie": cookies2 } : {} });
   res.end(data);
 };
-var count = (req, name) => {
+var count2 = (req, name) => {
   let value = 0;
   for (let i = 0; i < (req.rawHeaders || []).length; i += 2) if (req.rawHeaders[i].toLowerCase() === name) value++;
   return value;
 };
 var cookies = (name, value, age) => `${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${age}`;
 function context(req) {
-  if (count(req, "x-yc-apigateway-operation-context") !== 1) throw Error("INGRESS_REJECTED");
+  const v2 = readV2CookieContext(req, "passkeyIngressContract");
+  if (v2 !== void 0) {
+    const flow2 = v2.get("__Host-nexus_passkey_flow") ?? null, session2 = v2.get("__Host-nexus_session") ?? null;
+    if (flow2 !== null && !/^npf_[A-Za-z0-9_-]{43}$/.test(flow2) || session2 !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session2)) throw Error("INGRESS_REJECTED");
+    return { flow: flow2, session: session2 };
+  }
+  if (count2(req, "x-yc-apigateway-operation-context") !== 1) throw Error("INGRESS_REJECTED");
   const value = req.headers["x-yc-apigateway-operation-context"];
   if (typeof value !== "string" || value.length > 4096 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) throw Error("INGRESS_REJECTED");
   const bytes = Buffer.from(value, "base64");
@@ -39,7 +107,7 @@ function context(req) {
   const flow = optional(data.flowCookie), session = optional(data.sessionCookie);
   if (flow && !/^npf_[A-Za-z0-9_-]{43}$/.test(flow) || session && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) throw Error("INGRESS_REJECTED");
   if (req.headers.cookie !== void 0) {
-    if (count(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) throw Error("INGRESS_REJECTED");
+    if (count2(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) throw Error("INGRESS_REJECTED");
     const found = {};
     for (const part of req.headers.cookie.split(";")) {
       const p = part.trim(), at = p.indexOf("=");
@@ -100,8 +168,8 @@ function createPasskeyHandler({ env, fetchImpl = fetch }) {
     if (origin.origin !== env.PASSKEY_ORIGIN || worker.origin !== env.PASSKEY_WORKER_ORIGIN || worker.protocol !== "https:") return reply(res, 503, { error: { code: "PASSKEY_UNAVAILABLE" } });
     const [method, op] = route;
     if (req.method !== method) return reply(res, 405, { error: { code: "METHOD_NOT_ALLOWED" } });
-    if (req.headers.host !== origin.host || count(req, "host") !== 1 || req.headers.authorization || req.headers.origin && req.headers.origin !== origin.origin || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin") return reply(res, 403, { error: { code: "ORIGIN_REJECTED" } });
-    if (method === "POST" && (req.headers.origin !== origin.origin || count(req, "origin") !== 1 || req.headers["x-nexus-passkey-write"] !== "1" || req.headers["content-type"] !== "application/json")) return reply(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
+    if (req.headers.host !== origin.host || count2(req, "host") !== 1 || req.headers.authorization || req.headers.origin && req.headers.origin !== origin.origin || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin") return reply(res, 403, { error: { code: "ORIGIN_REJECTED" } });
+    if (method === "POST" && (req.headers.origin !== origin.origin || count2(req, "origin") !== 1 || req.headers["x-nexus-passkey-write"] !== "1" || req.headers["content-type"] !== "application/json")) return reply(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
     try {
       const ingress2 = context(req), isOptions = op.endsWith("-options");
       const flow = isOptions || !op.endsWith("-verify") ? "npf_" + randomBytes(32).toString("base64url") : ingress2.flow;
@@ -161,7 +229,7 @@ ${digest(body)}`;
 }
 
 // server-access/bff/account-read.mjs
-import { createHash as createHash2, createHmac as createHmac2, randomBytes as randomBytes2, timingSafeEqual } from "node:crypto";
+import { createHash as createHash2, createHmac as createHmac2, randomBytes as randomBytes2, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
 var WORKER_ORIGIN = "https://akronikl-nexus-sync.akronikl.workers.dev";
 var GATEWAY_ORIGIN = "https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net";
 var PATHS = /* @__PURE__ */ new Set(["/api/v2/account", "/api/v2/account/login-methods"]);
@@ -180,12 +248,12 @@ function reply2(res, status, body) {
 }
 function headerCount(req, name) {
   if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2 !== 0) return -1;
-  let count3 = 0;
+  let count4 = 0;
   for (let i = 0; i < req.rawHeaders.length; i += 2) {
     if (typeof req.rawHeaders[i] !== "string") return -1;
-    if (req.rawHeaders[i].toLowerCase() === name) count3++;
+    if (req.rawHeaders[i].toLowerCase() === name) count4++;
   }
-  return count3;
+  return count4;
 }
 function sessionFromContext(req) {
   if (headerCount(req, "x-yc-apigateway-operation-context") !== 1) return null;
@@ -225,6 +293,15 @@ function sessionFromCookie(req) {
   return session;
 }
 function sessionFromIngress(req) {
+  try {
+    const cookies2 = readV2CookieContext(req, "accountReadContract");
+    if (cookies2 !== void 0) {
+      const session = cookies2.get("__Host-nexus_session");
+      return typeof session === "string" && /^nxs_[A-Za-z0-9_-]{24,256}$/.test(session) ? session : null;
+    }
+  } catch {
+    return null;
+  }
   const context2 = sessionFromContext(req);
   if (!context2) return null;
   if (req.headers.cookie === void 0) {
@@ -234,7 +311,7 @@ function sessionFromIngress(req) {
   if (!cookie) return null;
   const expected = Buffer.from(context2);
   const received = Buffer.from(cookie);
-  if (expected.length !== received.length || !timingSafeEqual(expected, received)) return null;
+  if (expected.length !== received.length || !timingSafeEqual2(expected, received)) return null;
   return context2;
 }
 async function boundedJson(response) {
@@ -393,8 +470,16 @@ function createFeedbackHandler({ env = {}, fetchImpl = fetch } = {}) {
     if (path.pathname.includes("%") || !/^\/api\/v2\/feedback\/(reviews|me|items|moderation|items\/[a-zA-Z0-9-]+(?:\/(withdraw|moderate|events))?)$/.test(path.pathname) || path.pathname !== req.url.split("?")[0]) return reply3(res, 404, { error: { code: "NOT_FOUND" } });
     if (req.method !== "GET" && (req.headers.origin !== origin || req.headers["x-nexus-feedback-write"] !== "1" || req.headers["content-type"] !== "application/json" || path.search)) return reply3(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
     const isPublic = path.pathname === "/api/v2/feedback/reviews" && req.method === "GET";
-    const session = isPublic ? null : sessionFromIngress(req);
-    if (!isPublic && !session) return reply3(res, 401, { error: { code: "SESSION_REQUIRED" } });
+    let session = null;
+    if (!isPublic) {
+      try {
+        const v2 = readV2CookieContext(req, "accountReadContract");
+        session = v2 === void 0 ? sessionFromIngress(req) : v2.get("__Host-nexus_session") ?? null;
+      } catch {
+        return reply3(res, 401, { error: { code: "SESSION_REQUIRED" } });
+      }
+      if (typeof session !== "string" || !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) return reply3(res, 401, { error: { code: "SESSION_REQUIRED" } });
+    }
     const expectedAccountId = isPublic ? null : req.headers["x-nexus-feedback-account"];
     const expectationHeaders = Array.isArray(req.rawHeaders) ? req.rawHeaders.filter((name, index) => index % 2 === 0 && typeof name === "string" && name.toLowerCase() === "x-nexus-feedback-account").length : 0;
     const hasExpectation = !isPublic && (expectedAccountId !== void 0 || expectationHeaders > 0);
@@ -426,7 +511,7 @@ ${digest3}`;
 }
 
 // server-access/bff/yc6-probe-handler.mjs
-import { createHash as createHash4, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+import { createHash as createHash4, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 var PROBE_COOKIE_NAME = "__Host-nexus_probe";
 var PROBE_MAX_AGE_SECONDS = 300;
 function sendJson(res, status, body, extraHeaders = {}) {
@@ -496,7 +581,7 @@ function matchesGatewayContext(raw, context2) {
   if (typeof raw !== "string" || typeof context2 !== "string" || raw.length > 128 || context2.length > 128) return false;
   const actual = Buffer.from(raw);
   const expected = Buffer.from(context2);
-  return actual.length === expected.length && timingSafeEqual2(actual, expected);
+  return actual.length === expected.length && timingSafeEqual3(actual, expected);
 }
 function probeCookieHeader(value) {
   return [
@@ -620,12 +705,12 @@ var MAX_ACCOUNT_BYTES = 65536;
 var MAX_HTML_BYTES = 256 * 1024;
 function headerCount2(req, name) {
   if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2 !== 0) return -1;
-  let count3 = 0;
+  let count4 = 0;
   for (let i = 0; i < req.rawHeaders.length; i += 2) {
     if (typeof req.rawHeaders[i] !== "string") return -1;
-    if (req.rawHeaders[i].toLowerCase() === name) count3++;
+    if (req.rawHeaders[i].toLowerCase() === name) count4++;
   }
-  return count3;
+  return count4;
 }
 function reply4(req, res, status, body, contentType = "application/json; charset=utf-8", extra = {}) {
   const data = Buffer.isBuffer(body) ? body : Buffer.from(JSON.stringify(body));
@@ -907,10 +992,10 @@ ${digest3}`;
 }
 
 // server-access/bff/oauth.mjs
-import { createHash as createHash8, createHmac as createHmac6, randomBytes as randomBytes7, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash8, createHmac as createHmac6, randomBytes as randomBytes7, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
 
 // server-access/bff/oauth-providers.mjs
-import { createHash as createHash7, createPublicKey, verify, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+import { createHash as createHash7, createPublicKey, verify, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 var PROVIDERS = Object.freeze({
   google: { label: "Google", prefix: "GOOGLE", authorize: "https://accounts.google.com/o/oauth2/v2/auth", token: "https://oauth2.googleapis.com/token" },
   yandex: { label: "\u042F\u043D\u0434\u0435\u043A\u0441 ID", prefix: "YANDEX", authorize: "https://oauth.yandex.ru/authorize", token: "https://oauth.yandex.ru/token" },
@@ -921,7 +1006,7 @@ var requireThat = (value) => {
   if (!value) throw Error("PROVIDER_REJECTED");
 };
 var safeSecret = (value) => typeof value === "string" && value.length > 0 && value.length <= 2048 && !/[\x00-\x20\x7f]/.test(value);
-var equal = (a, b) => typeof a === "string" && typeof b === "string" && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual3(Buffer.from(a), Buffer.from(b));
+var equal = (a, b) => typeof a === "string" && typeof b === "string" && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual4(Buffer.from(a), Buffer.from(b));
 var plain = (value) => !!value && typeof value === "object" && !Array.isArray(value);
 var text3 = (value, max) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\x00-\x1f\x7f]/.test(value);
 var email = (value) => value === void 0 || value === null || value === "" ? null : (requireThat(text3(value, 320) && /^\S+@\S+\.\S+$/.test(value)), value.trim().toLowerCase());
@@ -1068,7 +1153,7 @@ var PREFIX = "/api/v2/account/oauth/";
 var INTERNAL4 = "/api/v2/account/internal/oauth";
 var sha = (value) => createHash8("sha256").update(value).digest("hex");
 var random = () => randomBytes7(32).toString("base64url");
-var count2 = (req, name) => {
+var count3 = (req, name) => {
   if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2 !== 0) return -1;
   let total = 0;
   for (let i = 0; i < req.rawHeaders.length; i += 2) {
@@ -1077,7 +1162,7 @@ var count2 = (req, name) => {
   }
   return total;
 };
-var same = (a, b) => typeof a === "string" && typeof b === "string" && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual4(Buffer.from(a), Buffer.from(b));
+var same = (a, b) => typeof a === "string" && typeof b === "string" && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual5(Buffer.from(a), Buffer.from(b));
 var flowCookie = (value, age) => `__Host-nexus_oauth_flow=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${age}`;
 var sessionCookie = (value) => `__Host-nexus_session=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=43200`;
 var reply6 = (res, status, body, cookies2 = [], extra = {}) => {
@@ -1086,6 +1171,16 @@ var reply6 = (res, status, body, cookies2 = [], extra = {}) => {
   res.end(data);
   return true;
 };
+function htmlCallbackError(req, res, status, code, cookies2) {
+  if (typeof req.headers.accept !== "string" || !req.headers.accept.split(",").some((value) => /^text\/html(?:\s*;|$)/i.test(value.trim()) && !/;\s*q=0(?:\.0*)?(?:\s*;|\s*$)/i.test(value))) return false;
+  const linking = code === "EXPLICIT_LINK_REQUIRED";
+  const title = linking ? "\u041F\u0440\u0438\u0432\u044F\u0436\u0438\u0442\u0435 \u0441\u043F\u043E\u0441\u043E\u0431 \u0432\u0445\u043E\u0434\u0430" : "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044C \u0432\u0445\u043E\u0434";
+  const message = linking ? "\u042D\u0442\u043E\u0442 \u0441\u043F\u043E\u0441\u043E\u0431 \u0432\u0445\u043E\u0434\u0430 \u0435\u0449\u0451 \u043D\u0435 \u043F\u0440\u0438\u0432\u044F\u0437\u0430\u043D \u043A \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044E\u0449\u0435\u043C\u0443 \u0430\u043A\u043A\u0430\u0443\u043D\u0442\u0443. \u0412\u043E\u0439\u0434\u0438\u0442\u0435 \u043A\u043B\u044E\u0447\u043E\u043C \u0438 \u043F\u0440\u0438\u0432\u044F\u0436\u0438\u0442\u0435 \u0435\u0433\u043E \u0432 \u0440\u0430\u0437\u0434\u0435\u043B\u0435 \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438 \u2014 \u043F\u0440\u043E\u0435\u043A\u0442\u044B \u0438 \u043F\u0440\u0430\u0432\u0430 \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u0442\u0441\u044F." : "\u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u043D\u0430\u0447\u0430\u0442\u044C \u0432\u0445\u043E\u0434 \u0437\u0430\u043D\u043E\u0432\u043E. \u0415\u0441\u043B\u0438 \u043F\u0440\u043E\u0431\u043B\u0435\u043C\u0430 \u043F\u043E\u0432\u0442\u043E\u0440\u044F\u0435\u0442\u0441\u044F, \u0432\u043E\u0439\u0434\u0438\u0442\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044E\u0449\u0438\u043C \u043A\u043B\u044E\u0447\u043E\u043C \u0434\u043E\u0441\u0442\u0443\u043F\u0430.";
+  const data = `<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} \xB7 Nexus</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#091321;color:#eaf4ff;font:17px/1.6 system-ui,sans-serif}main{box-sizing:border-box;max-width:680px;margin:24px;padding:clamp(24px,5vw,48px);border:1px solid #506278;border-radius:24px;background:#132033}small{color:#93ded7;letter-spacing:.12em}h1{font-size:clamp(25px,5vw,36px);line-height:1.2}p{color:#c5d2e3}nav{display:flex;flex-wrap:wrap;gap:14px;margin-top:28px}a{color:#a8eee0;text-underline-offset:4px}a:first-child{padding:10px 16px;border:1px solid #7bcfc1;border-radius:12px}a:focus-visible{outline:3px solid #fff;outline-offset:4px}</style><main><small>AKRONIKL \xB7 IT NEXUS</small><h1>${title}</h1><p>${message}</p><nav><a href="${GATEWAY_ORIGIN}/account/access/">\u0412\u043E\u0439\u0442\u0438 \u043A\u043B\u044E\u0447\u043E\u043C \u0434\u043E\u0441\u0442\u0443\u043F\u0430</a>${linking ? `<a href="${GATEWAY_ORIGIN}/#view=account&amp;tab=security">\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u044C \u0430\u043A\u043A\u0430\u0443\u043D\u0442\u0430</a>` : `<a href="${GATEWAY_ORIGIN}/account/entry/">\u041D\u0430\u0447\u0430\u0442\u044C \u0432\u0445\u043E\u0434 \u0437\u0430\u043D\u043E\u0432\u043E</a>`}</nav></main></html>`;
+  res.writeHead(status, { "content-type": "text/html; charset=utf-8", "content-length": Buffer.byteLength(data), "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", ...cookies2.length ? { "set-cookie": cookies2 } : {} });
+  res.end(data);
+  return true;
+}
 var Rejected = class extends Error {
   constructor(code, status = 400) {
     super(code);
@@ -1103,7 +1198,7 @@ var SYNTHETIC_COOKIE_PAIRS = /* @__PURE__ */ new Set([
   "__Host-nexus_passkey_flow=npf_" + "C".repeat(43)
 ]);
 function syntheticIngressProbe(req) {
-  if (count2(req, "x-nexus-transport-probe") !== 1 || req.headers["x-nexus-transport-probe"] !== "cookie-shape-v1" || typeof req.headers.cookie !== "string" || !req.headers.cookie || req.headers.cookie.length > 512) return false;
+  if (count3(req, "x-nexus-transport-probe") !== 1 || req.headers["x-nexus-transport-probe"] !== "cookie-shape-v1" || typeof req.headers.cookie !== "string" || !req.headers.cookie || req.headers.cookie.length > 512) return false;
   const pairs = req.headers.cookie.split(";").map((value) => value.trim());
   return pairs.length > 0 && pairs.length <= 3 && new Set(pairs).size === pairs.length && pairs.every((value) => SYNTHETIC_COOKIE_PAIRS.has(value));
 }
@@ -1113,9 +1208,9 @@ function ingress(req) {
     error2.probeReason = reason;
     throw error2;
   };
-  if (count2(req, "x-yc-apigateway-operation-context") !== 1) fail("context_count");
+  if (count3(req, "x-yc-apigateway-operation-context") !== 1) fail("context_count");
   const raw = req.headers["x-yc-apigateway-operation-context"];
-  if (typeof raw !== "string" || raw.length > 4096 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) fail("base64");
+  if (typeof raw !== "string" || raw.length > 8192 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) fail("base64");
   const bytes = Buffer.from(raw, "base64");
   if (bytes.toString("base64") !== raw) fail("base64");
   let text4, data;
@@ -1129,13 +1224,27 @@ function ingress(req) {
   } catch {
     fail("json");
   }
+  if (data?.oauthIngressContract === "v2") {
+    let v2;
+    try {
+      v2 = readV2CookieContext(req, "oauthIngressContract");
+    } catch {
+      deny("INGRESS_REJECTED", 401);
+    }
+    if (v2 === void 0) deny("INGRESS_REJECTED", 401);
+    const session2 = v2.get("__Host-nexus_session") ?? null, flow2 = v2.get("__Host-nexus_oauth_flow") ?? null;
+    if (session2 !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session2)) fail("session_format");
+    if (flow2 !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow2)) fail("flow_format");
+    return { session: session2, flow: flow2 };
+  }
+  if (raw.length > 4096) fail("base64");
   if (!data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).sort().join(",") !== "oauthFlowCookie,oauthIngressContract,sessionCookie" || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.oauthIngressContract !== "v1" || typeof data.sessionCookie !== "string" || typeof data.oauthFlowCookie !== "string") fail("shape");
   const optional = (value) => value === "-" ? null : value;
   const session = optional(data.sessionCookie), flow = optional(data.oauthFlowCookie);
   if (session !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail("session_format");
   if (flow !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow)) fail("flow_format");
   if (req.headers.cookie !== void 0) {
-    if (count2(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) fail("cookie_count");
+    if (count3(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) fail("cookie_count");
     const found = {};
     for (const part of req.headers.cookie.split(";")) {
       const pair = part.trim(), at = pair.indexOf("=");
@@ -1150,7 +1259,7 @@ function ingress(req) {
     const fromCookie = found["__Host-nexus_session"] ?? null, fromFlow = found["__Host-nexus_oauth_flow"] ?? null;
     if (!(fromCookie === null && session === null) && !same(fromCookie, session)) fail("session_mismatch");
     if (!(fromFlow === null && flow === null) && !same(fromFlow, flow)) fail("flow_mismatch");
-  } else if (count2(req, "cookie") !== 0) fail("cookie_count");
+  } else if (count3(req, "cookie") !== 0) fail("cookie_count");
   return { session, flow };
 }
 async function boundedJSON(source, max, flatIntent = false) {
@@ -1204,7 +1313,7 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
       callback = route.length === 2 && route[1] === "callback";
       if (req.url.split("?")[0] !== url.pathname || url.hash) deny("INVALID_INPUT");
       if (env.OAUTH_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.OAUTH_SERVICE_KEY !== "string" || env.OAUTH_SERVICE_KEY.length < 32) deny("OAUTH_UNAVAILABLE", 503);
-      if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || count2(req, "host") !== 1 || req.headers.authorization !== void 0 || count2(req, "authorization") > 0 || req.headers.origin !== void 0 && req.headers.origin !== GATEWAY_ORIGIN) deny("ORIGIN_REJECTED", 403);
+      if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || count3(req, "host") !== 1 || req.headers.authorization !== void 0 || count3(req, "authorization") > 0 || req.headers.origin !== void 0 && req.headers.origin !== GATEWAY_ORIGIN) deny("ORIGIN_REJECTED", 403);
       const providers = configuredOAuthProviders(env);
       if (req.url === PREFIX + "providers") {
         if (req.method !== "GET") deny("METHOD_NOT_ALLOWED", 405);
@@ -1217,10 +1326,10 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
       const context2 = ingress(req);
       if (action === "start") {
         if (url.search || req.url !== url.pathname) deny("INVALID_INPUT");
-        if (req.headers.origin !== GATEWAY_ORIGIN || count2(req, "origin") !== 1 || req.headers["x-nexus-oauth-request"] !== "1" || count2(req, "x-nexus-oauth-request") !== 1 || req.headers["content-type"] !== "application/json" || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") deny("WRITE_ORIGIN_REQUIRED", 403);
+        if (req.headers.origin !== GATEWAY_ORIGIN || count3(req, "origin") !== 1 || req.headers["x-nexus-oauth-request"] !== "1" || count3(req, "x-nexus-oauth-request") !== 1 || req.headers["content-type"] !== "application/json" || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") deny("WRITE_ORIGIN_REQUIRED", 403);
         const input = await boundedJSON(req, 1024, true);
         if (Object.keys(input).join(",") !== "intent" || !["login", "link"].includes(input.intent)) deny("INVALID_INPUT");
-        const expectedAccountId = req.headers["x-nexus-oauth-account"], expectationHeaders = count2(req, "x-nexus-oauth-account");
+        const expectedAccountId = req.headers["x-nexus-oauth-account"], expectationHeaders = count3(req, "x-nexus-oauth-account");
         if (input.intent === "link") {
           if (expectationHeaders !== 1 || typeof expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(expectedAccountId)) deny("ACCOUNT_EXPECTATION_REQUIRED");
         } else if (expectedAccountId !== void 0 || expectationHeaders !== 0) deny("INVALID_INPUT");
@@ -1248,7 +1357,9 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
     } catch (error2) {
       const known = error2 instanceof Rejected;
       const probeReason = known && error2.code === "INGRESS_REJECTED" && INGRESS_PROBE_REASONS.has(error2.probeReason) && syntheticIngressProbe(req) ? error2.probeReason : null;
-      return reply6(res, known ? error2.status : error2.message === "PROVIDER_REJECTED" ? 401 : 502, { error: { code: known ? error2.code : error2.message === "PROVIDER_REJECTED" ? "PROVIDER_REJECTED" : "OAUTH_UNAVAILABLE", ...probeReason ? { probeReason } : {} } }, callback ? [flowCookie("", 0)] : []);
+      const status = known ? error2.status : error2.message === "PROVIDER_REJECTED" ? 401 : 502, code = known ? error2.code : error2.message === "PROVIDER_REJECTED" ? "PROVIDER_REJECTED" : "OAUTH_UNAVAILABLE", cookies2 = callback ? [flowCookie("", 0)] : [];
+      if (callback && htmlCallbackError(req, res, status, code, cookies2)) return true;
+      return reply6(res, status, { error: { code, ...probeReason ? { probeReason } : {} } }, cookies2);
     }
   };
 }

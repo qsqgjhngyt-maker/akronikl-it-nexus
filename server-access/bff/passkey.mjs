@@ -1,5 +1,6 @@
 import {createHash,createHmac,randomBytes} from 'node:crypto';
 import {isIP} from 'node:net';
+import {readV2CookieContext} from './gateway-cookie-context.mjs';
 const INTERNAL='/api/v2/account/internal/passkey';
 const routes=new Map([
  ['/api/v2/account/passkey/register/options',['POST','register-options']],
@@ -15,6 +16,12 @@ const reply=(res,status,body,cookies=[])=>{const data=JSON.stringify(body);res.w
 const count=(req,name)=>{let value=0;for(let i=0;i<(req.rawHeaders||[]).length;i+=2)if(req.rawHeaders[i].toLowerCase()===name)value++;return value};
 const cookies=(name,value,age)=>`${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${age}`;
 function context(req){
+ const v2=readV2CookieContext(req,'passkeyIngressContract');
+ if(v2!==undefined){
+  const flow=v2.get('__Host-nexus_passkey_flow')??null,session=v2.get('__Host-nexus_session')??null;
+  if(flow!==null&&!/^npf_[A-Za-z0-9_-]{43}$/.test(flow)||session!==null&&!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session))throw Error('INGRESS_REJECTED');
+  return{flow,session};
+ }
  if(count(req,'x-yc-apigateway-operation-context')!==1)throw Error('INGRESS_REJECTED');
  const value=req.headers['x-yc-apigateway-operation-context'];
  if(typeof value!=='string'||value.length>4096||!/^[A-Za-z0-9+/]+={0,2}$/.test(value))throw Error('INGRESS_REJECTED');

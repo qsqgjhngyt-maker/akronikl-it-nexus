@@ -1,6 +1,7 @@
 import {createHash,createHmac,randomBytes,timingSafeEqual} from 'node:crypto';
 import {GATEWAY_ORIGIN,WORKER_ORIGIN} from './account-read.mjs';
 import {configuredOAuthProviders,oauthAuthorizationURL,exchangeOAuthProfile} from './oauth-providers.mjs';
+import {readV2CookieContext} from './gateway-cookie-context.mjs';
 const PREFIX='/api/v2/account/oauth/',INTERNAL='/api/v2/account/internal/oauth';
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const random=()=>randomBytes(32).toString('base64url');
@@ -15,6 +16,14 @@ const reply=(res,status,body,cookies=[],extra={})=>{
  const data=body===null?'':JSON.stringify(body);
  res.writeHead(status,{'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(data),'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer',...(cookies.length?{'set-cookie':cookies}:{}),...extra});res.end(data);return true;
 };
+function htmlCallbackError(req,res,status,code,cookies){
+ if(typeof req.headers.accept!=='string'||!req.headers.accept.split(',').some(value=>/^text\/html(?:\s*;|$)/i.test(value.trim())&&!/;\s*q=0(?:\.0*)?(?:\s*;|\s*$)/i.test(value)))return false;
+ const linking=code==='EXPLICIT_LINK_REQUIRED';
+ const title=linking?'Привяжите способ входа':'Не удалось завершить вход';
+ const message=linking?'Этот способ входа ещё не привязан к существующему аккаунту. Войдите ключом и привяжите его в разделе безопасности — проекты и права сохранятся.':'Попробуйте начать вход заново. Если проблема повторяется, войдите существующим ключом доступа.';
+ const data=`<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} · Nexus</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#091321;color:#eaf4ff;font:17px/1.6 system-ui,sans-serif}main{box-sizing:border-box;max-width:680px;margin:24px;padding:clamp(24px,5vw,48px);border:1px solid #506278;border-radius:24px;background:#132033}small{color:#93ded7;letter-spacing:.12em}h1{font-size:clamp(25px,5vw,36px);line-height:1.2}p{color:#c5d2e3}nav{display:flex;flex-wrap:wrap;gap:14px;margin-top:28px}a{color:#a8eee0;text-underline-offset:4px}a:first-child{padding:10px 16px;border:1px solid #7bcfc1;border-radius:12px}a:focus-visible{outline:3px solid #fff;outline-offset:4px}</style><main><small>AKRONIKL · IT NEXUS</small><h1>${title}</h1><p>${message}</p><nav><a href="${GATEWAY_ORIGIN}/account/access/">Войти ключом доступа</a>${linking?`<a href="${GATEWAY_ORIGIN}/#view=account&amp;tab=security">Открыть безопасность аккаунта</a>`:`<a href="${GATEWAY_ORIGIN}/account/entry/">Начать вход заново</a>`}</nav></main></html>`;
+ res.writeHead(status,{'content-type':'text/html; charset=utf-8','content-length':Buffer.byteLength(data),'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",...(cookies.length?{'set-cookie':cookies}:{})});res.end(data);return true;
+}
 class Rejected extends Error{constructor(code,status=400){super(code);this.code=code;this.status=status}}
 const deny=(code,status)=>{throw new Rejected(code,status)};
 const INGRESS_PROBE_REASONS=new Set(['context_count','base64','utf8','json','shape','session_format','flow_format','cookie_count','syntax','session_mismatch','flow_mismatch']);
@@ -32,10 +41,19 @@ function ingress(req){
  const fail=reason=>{const error=new Rejected('INGRESS_REJECTED',401);error.probeReason=reason;throw error};
  if(count(req,'x-yc-apigateway-operation-context')!==1)fail('context_count');
  const raw=req.headers['x-yc-apigateway-operation-context'];
- if(typeof raw!=='string'||raw.length>4096||!/^[A-Za-z0-9+/]+={0,2}$/.test(raw))fail('base64');
+ if(typeof raw!=='string'||raw.length>8192||!/^[A-Za-z0-9+/]+={0,2}$/.test(raw))fail('base64');
  const bytes=Buffer.from(raw,'base64');if(bytes.toString('base64')!==raw)fail('base64');
  let text,data;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes)}catch{fail('utf8')}
  try{data=JSON.parse(text)}catch{fail('json')}
+ if(data?.oauthIngressContract==='v2'){
+  let v2;try{v2=readV2CookieContext(req,'oauthIngressContract')}catch{deny('INGRESS_REJECTED',401)}
+  if(v2===undefined)deny('INGRESS_REJECTED',401);
+  const session=v2.get('__Host-nexus_session')??null,flow=v2.get('__Host-nexus_oauth_flow')??null;
+  if(session!==null&&!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session))fail('session_format');
+  if(flow!==null&&!/^nof_[A-Za-z0-9_-]{43}$/.test(flow))fail('flow_format');
+  return{session,flow};
+ }
+ if(raw.length>4096)fail('base64');
  if(!data||typeof data!=='object'||Array.isArray(data)||Object.keys(data).sort().join(',')!=='oauthFlowCookie,oauthIngressContract,sessionCookie'||text.match(/"(?:[^"\\]|\\.)*"/g)?.length!==6||data.oauthIngressContract!=='v1'||typeof data.sessionCookie!=='string'||typeof data.oauthFlowCookie!=='string')fail('shape');
  const optional=value=>value==='-'?null:value;
  const session=optional(data.sessionCookie),flow=optional(data.oauthFlowCookie);
@@ -134,7 +152,9 @@ export function createOAuthHandler({env={},fetchImpl=fetch}={}){
   }catch(error){
    const known=error instanceof Rejected;
    const probeReason=known&&error.code==='INGRESS_REJECTED'&&INGRESS_PROBE_REASONS.has(error.probeReason)&&syntheticIngressProbe(req)?error.probeReason:null;
-   return reply(res,known?error.status:error.message==='PROVIDER_REJECTED'?401:502,{error:{code:known?error.code:error.message==='PROVIDER_REJECTED'?'PROVIDER_REJECTED':'OAUTH_UNAVAILABLE',...(probeReason?{probeReason}:{})}},callback?[flowCookie('',0)]:[]);
+   const status=known?error.status:error.message==='PROVIDER_REJECTED'?401:502,code=known?error.code:error.message==='PROVIDER_REJECTED'?'PROVIDER_REJECTED':'OAUTH_UNAVAILABLE',cookies=callback?[flowCookie('',0)]:[];
+   if(callback&&htmlCallbackError(req,res,status,code,cookies))return true;
+   return reply(res,status,{error:{code,...(probeReason?{probeReason}:{})}},cookies);
   }
  };
 }

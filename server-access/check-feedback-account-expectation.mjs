@@ -37,6 +37,10 @@ function request({path='/api/v2/feedback/me',method='GET',session=sessions.a,exp
   const all={host:new URL(GATEWAY_ORIGIN).host,'x-yc-apigateway-operation-context':context,...(expected===undefined?{}:{'x-nexus-feedback-account':expected}),...(method==='GET'?{}:{origin:GATEWAY_ORIGIN,'content-type':'application/json','x-nexus-feedback-write':'1'}),...headers};
   const req=Readable.from([Buffer.from(payload===undefined?'':JSON.stringify(payload))]);return Object.assign(req,{url:path,method,headers:all,rawHeaders:rawHeaders||Object.entries(all).flat()});
 }
+function v2Request(options={}){
+  const req=request(options),cookieHeader='__Host-nexus_session='+(options.session||sessions.a)+'; __Host-nexus_oauth_flow=nof_'+'C'.repeat(43);
+  req.headers.cookie=cookieHeader;req.headers['x-yc-apigateway-operation-context']=Buffer.from(JSON.stringify({accountReadContract:'v2',cookieHeader})).toString('base64');req.rawHeaders=Object.entries(req.headers).flat();return req;
+}
 async function run(req,{fetchImpl=bridge,...options}={}){const res={writeHead(status,headers){this.status=status;this.headers=headers},end(body){this.raw=String(body);this.body=JSON.parse(body)}};await createFeedbackHandler({env:bffEnv,fetchImpl,...options})(req,res);assert.equal(res.headers['cache-control'],'no-store');assert.equal(res.headers.vary,'*');for(const secret of [...Object.values(sessions),key])assert.equal(res.raw.includes(secret),false);return res}
 const privateSnapshot=()=>JSON.stringify(['feedback_permissions','feedback_items','feedback_revisions','feedback_events','feedback_rate_limits'].map(table=>db.prepare('SELECT * FROM '+table+' ORDER BY rowid').all()));
 const message={kind:'message',type:'idea',body:'Synthetic feedback message for account test.',context:{},requestKey:'synthetic-request-key-a'};
@@ -113,5 +117,32 @@ await check('Неизвестные/неверные envelope поля и replay
 await check('Account expectation не заменяет active eligible session',async()=>{
   db.prepare("UPDATE account_sessions SET status='revoked',revoked_at=? WHERE id='session-b'").run(new Date().toISOString());
   const before=privateSnapshot(),reads=feedbackReads;const result=await run(request({session:sessions.b,expected:'b'}));assert.equal(result.status,401);assert.equal(privateSnapshot(),before);assert.equal(feedbackReads,reads);
+});
+await check('V2 raw Cookie context сохраняет verified actor и account expectation',async()=>{
+  const me=await run(v2Request());assert.equal(me.status,200);assert.equal(me.body.account.id,'a');
+  const before=privateSnapshot(),reads=feedbackReads;
+  const mismatch=await run(v2Request({expected:'b'}));assert.equal(mismatch.status,401);assert.equal(privateSnapshot(),before);assert.equal(feedbackReads,reads);
+});
+await check('V2 private feedback отклоняет mismatch, missing raw и duplicate protected cookies до Worker',async()=>{
+  const before=fetches;
+  for(const kind of ['mismatch','missing-raw','duplicate-cookie','extra-context']){
+    const req=v2Request(),cookieHeader=req.headers.cookie;
+    if(kind==='mismatch')req.headers.cookie=cookieHeader.replace(sessions.a,sessions.b);
+    if(kind==='missing-raw')delete req.headers.cookie;
+    if(kind==='duplicate-cookie'){
+      req.headers.cookie=cookieHeader+'; __Host-nexus_session='+sessions.a;
+      req.headers['x-yc-apigateway-operation-context']=Buffer.from(JSON.stringify({accountReadContract:'v2',cookieHeader:req.headers.cookie})).toString('base64');
+    }
+    if(kind==='extra-context')req.headers['x-yc-apigateway-operation-context']=Buffer.from(JSON.stringify({accountReadContract:'v2',cookieHeader,extra:'forbidden'})).toString('base64');
+    req.rawHeaders=Object.entries(req.headers).flat();const result=await run(req);assert.equal(result.status,401,kind);assert.deepEqual(result.body,{error:{code:'SESSION_REQUIRED'}});
+  }
+  assert.equal(fetches,before);
+});
+await check('V2 transport не продлевает expired session и не принимает неизвестный token',async()=>{
+  const before=privateSnapshot(),reads=feedbackReads;
+  db.prepare("UPDATE account_sessions SET idle_expires_at=? WHERE id='session-a'").run(new Date(Date.now()-10000).toISOString());
+  try{assert.equal((await run(v2Request())).status,401);assert.equal((await run(v2Request({session:'nxs_'+'Z'.repeat(43)}))).status,401)}
+  finally{db.prepare("UPDATE account_sessions SET idle_expires_at=? WHERE id='session-a'").run(future)}
+  assert.equal(privateSnapshot(),before);assert.equal(feedbackReads,reads);
 });
 db.close();console.log(JSON.stringify({status:'PASS',checks,syntheticOnly:true,network:false,servers:false,browser:false,cutoverFlag:'FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED=true'}));

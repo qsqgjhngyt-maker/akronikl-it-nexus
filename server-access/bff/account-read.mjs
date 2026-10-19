@@ -1,5 +1,6 @@
 // Локальный кандидат интеграции. Не заменяет работающий YC-6 probe.
 import {createHash, createHmac, randomBytes, timingSafeEqual} from 'node:crypto';
+import {readV2CookieContext} from './gateway-cookie-context.mjs';
 export const WORKER_ORIGIN = 'https://akronikl-nexus-sync.akronikl.workers.dev';
 export const GATEWAY_ORIGIN = 'https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net';
 const PATHS = new Set(['/api/v2/account', '/api/v2/account/login-methods']);
@@ -81,6 +82,13 @@ function sessionFromCookie(req) {
 }
 
 export function sessionFromIngress(req) {
+  try {
+    const cookies = readV2CookieContext(req, 'accountReadContract');
+    if (cookies !== undefined) {
+      const session = cookies.get('__Host-nexus_session');
+      return typeof session === 'string' && /^nxs_[A-Za-z0-9_-]{24,256}$/.test(session) ? session : null;
+    }
+  } catch { return null; }
   const context = sessionFromContext(req);
   if (!context) return null;
   // Обязательный transport — context. Raw Cookie только дополняет проверку,

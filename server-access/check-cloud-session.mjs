@@ -53,7 +53,13 @@ function request({path='/api/v2/cloud/me',method='GET',session=sessions.a,payloa
     'x-nexus-cloud-account':Object.entries(sessions).find(([,value])=>value===session)?.[0]||'a',
     ...(method==='PUT'?{origin:GATEWAY_ORIGIN,'content-type':'application/json','x-nexus-cloud-request':'1'}:{}),...headers};
   const req=Readable.from([Buffer.from(body??(payload===undefined?'':JSON.stringify(payload)))]);
-  Object.assign(req,{url:path,method,headers:normalized,rawHeaders:rawHeaders||Object.entries(normalized).flat()});return req;
+  // Отсутствующий HTTP header не создаёт rawHeaders pair с JS undefined: Node выдаёт только строки.
+  Object.assign(req,{url:path,method,headers:normalized,rawHeaders:rawHeaders||Object.entries(normalized).filter(([,value])=>value!==undefined).flat()});return req;
+}
+const multiCookie=session=>`appearance=night; __Host-nexus_session=${session}; __Host-nexus_oauth_flow=nof_${'f'.repeat(43)}; tracker=synthetic`;
+function v2Request({session=sessions.a,contextCookie=multiCookie(session),actualCookie=contextCookie,headers={},...options}={}){
+  const context=Buffer.from(JSON.stringify({accountReadContract:'v2',cookieHeader:contextCookie})).toString('base64');
+  return request({...options,session,headers:{'x-yc-apigateway-operation-context':context,cookie:actualCookie,...headers}});
 }
 async function run(req,{fetchImpl=bridge,...options}={}){
   const res={writeHead(status,headers){this.status=status;this.headers=headers},end(body){this.raw=String(body);this.body=JSON.parse(body)}};
@@ -121,6 +127,37 @@ await check('старая вкладка A с новой общей cookie B н�
   }
   assert.equal(legacyCalls,0);
   assert.equal(db.prepare('SELECT snapshot_json FROM project_snapshots WHERE project_id=?').get(project.id).snapshot_json,before);
+});
+await check('V2 multi-cookie проходит реальный HMAC/Foundation/legacy subject и сохраняет project ACL',async()=>{
+  let checked=0;
+  const fetchImpl=async(url,options)=>{
+    const headers=new Headers(options.headers),payload=JSON.parse(options.body);
+    const canonical=`v1\nPOST\n${CLOUD_INTERNAL_PATH}\n${headers.get('x-nexus-service-timestamp')}\n${headers.get('x-nexus-service-nonce')}\n${hash(options.body)}`;
+    assert.equal(headers.get('x-nexus-service-signature'),createHmac('sha256',key).update(canonical).digest('hex'));
+    assert.equal(payload.sessionCookie,sessions[payload.expectedAccountId]);checked++;
+    return bridge(url,options);
+  };
+  const reordered=multiCookie(sessions.a).split('; ').reverse().join(';  ');
+  const me=await run(v2Request({actualCookie:reordered}),{fetchImpl});assert.equal(me.status,200);
+  assert.deepEqual(me.body,{subject:{id:'a',displayName:'Synthetic a'},authMode:'nexus-session'});
+  const own=await run(v2Request({path:'/api/v2/cloud/projects/'+project.id}),{fetchImpl});assert.equal(own.status,200);assert.deepEqual(own.body.project,project);
+  const denied=await run(v2Request({session:sessions.b,path:'/api/v2/cloud/projects/'+project.id}),{fetchImpl});assert.equal(denied.status,403);assert.equal(denied.body.error.code,'FORBIDDEN');
+  assert.equal(checked,3);assert.equal(db.prepare('SELECT owner_subject_id FROM projects WHERE id=?').get(project.id).owner_subject_id,'a');
+});
+await check('V2 stale context, duplicate cookie/header и missing actual отклоняются 401 до upstream',async()=>{
+  const before=calls;const cookie=multiCookie(sessions.a);
+  const duplicateCookie=cookie+'; __Host-nexus_session='+sessions.a;
+  const missingActual=v2Request();delete missingActual.headers.cookie;
+  missingActual.rawHeaders=missingActual.rawHeaders.filter((_,index,array)=>index%2===0?array[index].toLowerCase()!=='cookie':array[index-1].toLowerCase()!=='cookie');
+  const duplicateHeader=v2Request();duplicateHeader.rawHeaders.push('Cookie',cookie);
+  const duplicateContext=v2Request();duplicateContext.rawHeaders.push('X-Yc-Apigateway-Operation-Context',duplicateContext.headers['x-yc-apigateway-operation-context']);
+  for(const req of [
+    v2Request({actualCookie:multiCookie(sessions.b)}),
+    v2Request({contextCookie:duplicateCookie,actualCookie:duplicateCookie}),
+    v2Request({actualCookie:cookie.replace('tracker=synthetic','tracker=stale')}),
+    missingActual,duplicateHeader,duplicateContext
+  ]){const result=await run(req);assert.equal(result.status,401);assert.equal(result.body.error.code,'SESSION_REQUIRED')}
+  assert.equal(calls,before);
 });
 await check('same-origin/CSRF, raw cookie disagreement и запрет произвольных proxy paths',async()=>{
   const before=calls;

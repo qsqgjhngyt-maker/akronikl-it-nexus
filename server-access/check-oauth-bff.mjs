@@ -61,7 +61,7 @@ function fixture(settings={}){
    assert.equal(data.op,'complete');assert.equal(data.txId,lastClaim.txId);assert.equal(data.flowHash,lastClaim.flowHash);
    assert.deepEqual(Object.keys(data).sort(),['flowHash','op','profile','txId']);
    assert.deepEqual(Object.keys(data.profile).sort(),['displayName','email','emailVerified','issuer','subject']);completed.push(data.profile);
-   if(settings.denyComplete)return Response.json({error:{code:'OWNER_EMAIL_REQUIRED'}},{status:403});
+   if(settings.denyComplete)return Response.json({error:{code:settings.denialCode||'OWNER_EMAIL_REQUIRED'}},{status:403});
    return Response.json({ok:true,sessionSecret:session});
   }
   assert.equal(headers.get('x-nexus-service-signature'),null);
@@ -105,6 +105,11 @@ async function start(f,provider='google',intent='login'){
 function callback(flow,patch={}){
  const params=new URLSearchParams({code:'synthetic-code',state:flow.state,...(flow.provider==='vk'?{device_id:'synthetic-device'}:{}),...patch});
  return request({path:PREFIX+flow.provider+'/callback?'+params.toString(),flow:flow.flow,headers:{'sec-fetch-site':'cross-site',cookie:'__Host-nexus_oauth_flow='+flow.flow}});
+}
+function v2Context(req,cookieHeader){
+ if(cookieHeader===undefined)delete req.headers.cookie;else req.headers.cookie=cookieHeader;
+ req.headers['x-yc-apigateway-operation-context']=Buffer.from(JSON.stringify({oauthIngressContract:'v2',cookieHeader:cookieHeader??'-'})).toString('base64');
+ req.rawHeaders=Object.entries(req.headers).flat();return req;
 }
 const check=async(name,fn)=>{await fn();tests++;console.log('PASS '+name)};
 
@@ -271,5 +276,61 @@ await check('transport probe не раскрывает enum без opt-in или
   if(kind==='duplicate-opt-in')req.rawHeaders.push('x-nexus-transport-probe','cookie-shape-v1');
   const {res}=await invoke(f.handler,req);assert.equal(res.status,401);assert.deepEqual(JSON.parse(res.body),{error:{code:'INGRESS_REJECTED'}});assert.equal(f.calls.length,0);
  }
+});
+await check('OAuth V2 raw Cookie context проходит link begin/callback с прежним PKCE и profile verification',async()=>{
+ const f=fixture(),cookieHeader='__Host-nexus_session='+session+'; __Host-nexus_passkey_flow=npf_'+'C'.repeat(43);
+ const req=v2Context(request({path:PREFIX+'yandex/start',method:'POST',body:{intent:'link'},sessionValue:session,headers:{'x-nexus-oauth-account':accountA}}),cookieHeader);
+ const begun=await invoke(f.handler,req);assert.equal(begun.res.status,200,begun.res.body);
+ const url=new URL(JSON.parse(begun.res.body).authorizationURL),flow={provider:'yandex',state:url.searchParams.get('state'),flow:begun.res.headers['set-cookie'][0].match(/^__Host-nexus_oauth_flow=([^;]+)/)[1]};
+ const completed=await invoke(f.handler,v2Context(callback(flow,{cid:'synthetic-cid'}),cookieHeader+'; __Host-nexus_oauth_flow='+flow.flow));
+ assert.equal(completed.res.status,303,completed.res.body);assert.equal(completed.res.headers.location,GATEWAY_ORIGIN+'/#view=account');
+ assert.equal(f.completed.length,1);assert.equal(f.completed[0].subject,'synthetic-yandex-sub');assert.equal(f.completed[0].emailVerified,true);
+});
+await check('OAuth V2 поддерживает bounded Cookie с context длиннее 4096, V1 сохраняет прежний предел',async()=>{
+ const f=fixture(),flow=await start(f,'yandex'),cookieHeader='__Host-nexus_oauth_flow='+flow.flow+'; synthetic_padding='+'P'.repeat(3200);
+ const req=v2Context(callback(flow),cookieHeader);assert.ok(cookieHeader.length<=4096);assert.ok(req.headers['x-yc-apigateway-operation-context'].length>4096);assert.ok(req.headers['x-yc-apigateway-operation-context'].length<=8192);
+ const {res}=await invoke(f.handler,req);assert.equal(res.status,303,res.body);assert.equal(f.completed.length,1);
+ const legacy=fixture(),legacyFlow=await start(legacy,'yandex'),legacyReq=callback(legacyFlow),before=legacy.calls.length;
+ const context=JSON.stringify({oauthIngressContract:'v1',sessionCookie:'-',oauthFlowCookie:legacyFlow.flow});
+ legacyReq.headers['x-yc-apigateway-operation-context']=Buffer.from(' '.repeat(3200)+context).toString('base64');legacyReq.rawHeaders=Object.entries(legacyReq.headers).flat();
+ assert.ok(legacyReq.headers['x-yc-apigateway-operation-context'].length>4096);const denied=await invoke(legacy.handler,legacyReq);assert.equal(denied.res.status,401);assert.deepEqual(JSON.parse(denied.res.body),{error:{code:'INGRESS_REJECTED'}});assert.equal(legacy.calls.length,before);
+});
+await check('OAuth V2 mismatch/missing raw/duplicate protected cookie остаются INGRESS_REJECTED до claim',async()=>{
+ for(const kind of ['mismatch','missing-raw','duplicate-cookie','duplicate-context','extra-context','invalid-session','invalid-flow']){
+  const f=fixture(),flow=await start(f,'yandex'),cookieHeader='__Host-nexus_session='+session+'; __Host-nexus_oauth_flow='+flow.flow;
+  const req=v2Context(callback(flow),cookieHeader),before=f.calls.length;
+  if(kind==='mismatch')req.headers.cookie=cookieHeader.replace(session,sessionB);
+  if(kind==='missing-raw')delete req.headers.cookie;
+  if(kind==='duplicate-cookie')req.headers.cookie=cookieHeader+'; __Host-nexus_session='+session;
+  if(kind==='invalid-session')req.headers.cookie=cookieHeader.replace(session,'invalid');
+  if(kind==='invalid-flow')req.headers.cookie=cookieHeader.replace(flow.flow,'invalid');
+  if(['duplicate-cookie','invalid-session','invalid-flow'].includes(kind))req.headers['x-yc-apigateway-operation-context']=Buffer.from(JSON.stringify({oauthIngressContract:'v2',cookieHeader:req.headers.cookie})).toString('base64');
+  if(kind==='extra-context')req.headers['x-yc-apigateway-operation-context']=Buffer.from(JSON.stringify({oauthIngressContract:'v2',cookieHeader,extra:'forbidden'})).toString('base64');
+  req.rawHeaders=Object.entries(req.headers).flat();if(kind==='duplicate-context')req.rawHeaders.push('x-yc-apigateway-operation-context',req.headers['x-yc-apigateway-operation-context']);
+  const {res}=await invoke(f.handler,req);assert.equal(res.status,401,kind+': '+res.body);assert.deepEqual(JSON.parse(res.body),{error:{code:'INGRESS_REJECTED'}});assert.equal(f.calls.length,before);assert.equal(f.completed.length,0);
+ }
+});
+await check('OAuth V2 не превращает истёкший Passkey в новое разрешение link',async()=>{
+ let calls=0;const handler=createOAuthHandler({env,fetchImpl:async(url,options)=>{calls++;assert.equal(url,WORKER_ORIGIN+INTERNAL);const data=JSON.parse(options.body);assert.equal(data.op,'begin');assert.equal(data.sessionHash,sha(session));return Response.json({error:{code:'FRESH_PASSKEY_REQUIRED'}},{status:401})}});
+ const req=v2Context(request({path:PREFIX+'yandex/start',method:'POST',body:{intent:'link'},headers:{'x-nexus-oauth-account':accountA}}),'__Host-nexus_session='+session);
+ const {res}=await invoke(handler,req);assert.equal(res.status,401);assert.deepEqual(JSON.parse(res.body),{error:{code:'FRESH_PASSKEY_REQUIRED'}});assert.equal(res.headers['set-cookie'],undefined);assert.equal(calls,1);
+});
+await check('Browser callback EXPLICIT_LINK_REQUIRED показывает безопасное объяснение и fixed links',async()=>{
+ const f=fixture({denyComplete:true,denialCode:'EXPLICIT_LINK_REQUIRED'}),flow=await start(f,'yandex');
+ const req=callback(flow,{cid:'synthetic-correlation'});req.headers.accept='text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';req.rawHeaders=Object.entries(req.headers).flat();
+ const {res}=await invoke(f.handler,req);assert.equal(res.status,403);assert.match(res.headers['content-type'],/^text\/html/);
+ assert.ok(res.body.includes('Этот способ входа ещё не привязан к существующему аккаунту.'));
+ assert.ok(res.body.includes(GATEWAY_ORIGIN+'/account/access/'));assert.ok(res.body.includes(GATEWAY_ORIGIN+'/#view=account&amp;tab=security'));
+ assert.equal(res.headers['content-security-policy'],"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'");
+ assert.match(res.headers['set-cookie'][0],/^__Host-nexus_oauth_flow=;.*Max-Age=0$/);
+ for(const hidden of ['synthetic-code',flow.state,flow.flow,'synthetic-correlation','synthetic@yandex.ru',accessToken,refreshToken,session])assert.equal(res.body.includes(hidden),false);
+ assert.equal(/<script|<form/i.test(res.body),false);
+});
+await check('API callback остаётся JSON; generic browser error не отражает query',async()=>{
+ const f=fixture({denyComplete:true,denialCode:'EXPLICIT_LINK_REQUIRED'}),flow=await start(f,'yandex'),json=await invoke(f.handler,callback(flow));
+ assert.equal(json.res.status,403);assert.match(json.res.headers['content-type'],/^application\/json/);assert.deepEqual(JSON.parse(json.res.body),{error:{code:'EXPLICIT_LINK_REQUIRED'}});
+ const browser=fixture(),browserFlow=await start(browser,'yandex'),req=callback(browserFlow,{unexpected:'<img src=x onerror=alert(1)>'});req.headers.accept='text/html';req.rawHeaders=Object.entries(req.headers).flat();
+ const html=await invoke(browser.handler,req);assert.equal(html.res.status,400);assert.match(html.res.headers['content-type'],/^text\/html/);assert.ok(html.res.body.includes('Не удалось завершить вход'));
+ assert.equal(html.res.body.includes('unexpected'),false);assert.equal(html.res.body.includes('onerror'),false);assert.equal(html.res.body.includes(browserFlow.state),false);
 });
 console.log(JSON.stringify({status:'PASS',tests,networkRequests:0,serversStarted:0,browsersStarted:0,realProviderCredentials:false,googleSignature:'RSA-2048 real verification',providerTokensStored:false}));

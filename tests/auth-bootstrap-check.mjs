@@ -25,7 +25,7 @@ function fakeTimers(){
   tick(){for(const value of [...intervals])value.callback()},expire(){for(const value of [...timeouts])value.callback()}
  };
 }
-function fixture({hash='#view=home',origin=SERVER_ACCOUNT_ORIGIN,fetcher,importer}={}){
+function fixture({hash='#view=home',origin=SERVER_ACCOUNT_ORIGIN,fetcher,importer,useDefaultTimers=false}={}){
  const log=[],calls=[],navigation=[],timers=fakeTimers(),windowImpl=new EventTarget(),documentImpl=new EventTarget();
  windowImpl.Event=Event;documentImpl.hidden=false;
  let clears=0,captured=null;
@@ -39,7 +39,7 @@ function fixture({hash='#view=home',origin=SERVER_ACCOUNT_ORIGIN,fetcher,importe
   assert.equal(options.credentials,'same-origin');assert.equal(options.cache,'no-store');assert.equal(options.redirect,'error');assert.deepEqual(options.headers,{accept:'application/json'});assert.ok(options.signal instanceof AbortSignal);
   return fetcher?fetcher(url,options):next();
  };
- const bootstrap=createNexusBootstrap({fetchImpl,locationImpl,documentImpl,windowImpl,storage,timers,importApp:async()=>{
+ const bootstrap=createNexusBootstrap({fetchImpl,locationImpl,documentImpl,windowImpl,storage,...(useDefaultTimers?{}:{timers}),importApp:async()=>{
   log.push('app:import');assert.equal(controller.verifiedAccount()?.accountId,A);captured=controller.accountLocalStorage();captured.setItem(KEY,'synthetic-preserved-progress');if(importer)await importer();
  }});
  return{bootstrap,log,calls,navigation,timers,windowImpl,documentImpl,locationImpl,controller,local,
@@ -70,6 +70,25 @@ await check('server proof завершается до любых private reads �
  assert.ok(f.log.indexOf('storage:initialize')>f.log.indexOf('fetch:request'));assert.ok(f.log.indexOf('app:import')>f.log.indexOf('storage:initialize'));
  assert.equal(f.captured.getItem(KEY),'synthetic-preserved-progress');assert.equal(await f.bootstrap.startNexus(),true);assert.equal(f.calls.length,1);assert.equal(f.log.filter(x=>x==='app:import').length,1);
  assert.equal(f.timers.timeouts.size,0);assert.equal([...f.timers.intervals][0].ms,60000);assert.ok(f.timers.unrefs>=2);f.bootstrap.dispose();
+});
+await check('production default timers сохраняют Window receiver до fetch и при очистке/polling',async()=>{
+ const names=['setTimeout','clearTimeout','setInterval','clearInterval'],originals=Object.fromEntries(names.map(name=>[name,globalThis[name]]));
+ const nativeLike=fakeTimers(),receivers=[];let f;
+ for(const name of names)globalThis[name]=function(...args){
+  receivers.push({name,globalReceiver:this===globalThis});
+  assert.equal(this,globalThis,`Native Window.${name}: Illegal invocation`);
+  return nativeLike[name](...args);
+ };
+ try{
+  f=fixture({useDefaultTimers:true});const started=await f.bootstrap.startNexus();
+  assert.ok(receivers.every(call=>call.globalReceiver),'Production default timer потерял Window receiver: '+JSON.stringify(receivers));
+  assert.equal(started,true);assert.equal(f.calls.length,1);assert.equal(f.navigation.length,0);assert.equal(f.captured.getItem(KEY),'synthetic-preserved-progress');
+  assert.deepEqual(receivers.map(call=>call.name),['setTimeout','clearTimeout','setInterval']);
+  assert.equal(nativeLike.timeouts.size,0);assert.equal(nativeLike.intervals.size,1);
+  f.bootstrap.dispose();assert.equal(nativeLike.intervals.size,0);assert.equal(receivers.at(-1).name,'clearInterval');assert.ok(receivers.every(call=>call.globalReceiver));
+ }finally{
+  f?.bootstrap.dispose();for(const name of names)globalThis[name]=originals[name];
+ }
 });
 await check('invalid/expired/revoked/error initial session никогда не открывает storage/app',async()=>{
  for(const next of [()=>json({},401),()=>json({},403),()=>json({},503),()=>json({...dto(),loginMethods:[]}),()=>new Response('<html>bad</html>',{headers:{'content-type':'text/html'}}),()=>{throw Error('synthetic network failure')},()=>json(dto(),200,{vary:'accept-encoding'}),()=>new Response('x'.repeat(65537),{headers:{'content-type':'application/json','cache-control':'no-store',vary:'*'}})]){
