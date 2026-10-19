@@ -7,7 +7,7 @@ const worker=fs.readFileSync(new URL('../cloudflare/nexus-sync-worker/src/index.
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 
 const checks=[
-  ['release version',version.version==='0.1.7-alpha.2.4.6-ui1a.2'],
+  ['release version',version.version==='0.1.7-alpha.2.4.6-ui1a.3'],
   ['raw nxs credential remains sessionStorage-only',client.includes("sessionStore()?.setItem(SESSION_KEY")&&!client.includes("markerStore()?.setItem(SESSION_KEY")],
   ['formal server-session storage key',client.includes('akronikl:it-nexus:identity-v2:session:v1')],
   ['credential resolver supports cookie/session precedence',client.includes("cookieSessionPresent")&&client.includes("'nexus-cookie'")&&client.includes("'nexus-session'")],

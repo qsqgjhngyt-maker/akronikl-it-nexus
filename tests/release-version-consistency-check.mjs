@@ -5,7 +5,7 @@ const projectVersion=JSON.parse(fs.readFileSync(new URL('project.json',root),'ut
 const index=fs.readFileSync(new URL('index.html',root),'utf8');
 const app=fs.readFileSync(new URL('core/app.js',root),'utf8');
 const sw=fs.readFileSync(new URL('service-worker.js',root),'utf8');
-const expected='0.1.7-alpha.2.4.6-ui1a.2';
+const expected='0.1.7-alpha.2.4.6-ui1a.3';
 const assert=(v,m)=>{if(!v)throw new Error(m)};
 assert(version===expected,`version.json mismatch: ${version}`);
 assert(projectVersion===expected,`project.json mismatch: ${projectVersion}`);

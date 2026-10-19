@@ -16,7 +16,7 @@ export function reviewsPageMarkup(locale='ru'){return `<section class="feedback-
 export function moderationPageMarkup(locale='ru'){return `<section class="feedback-page" data-moderation-page>${head(locale,'moderation','moderationIntro')}<div data-feedback-moderation role="status">${label(locale,'checking')}</div></section>`}
 export function reviewSlotMarkup(course='',home=false){return `<section class="feedback-public-slot" data-feedback-public ${home?'data-home-reviews':''} data-review-course="${escape(course)}" hidden></section>`}
 let dispose=()=>{};
-export function bindFeedbackUi({locale='ru',catalog=[],route={},version='0.1.7-alpha.2.4.6-ui1a.2'}={}){
+export function bindFeedbackUi({locale='ru',catalog=[],route={},version='0.1.7-alpha.2.4.6-ui1a.3'}={}){
  dispose();const controller=new AbortController(),signal=controller.signal,l=key=>label(locale,key),principal=activePrincipalId();let dialog=null,account=null;
  if(!isServerAccountOrigin()){
   const host=document.querySelector('[data-feedback-page],[data-reviews-page],[data-moderation-page]');
