@@ -1,5 +1,5 @@
 import {getProject,createCheckpoint,restoreCheckpoint,renameProject,deleteProject,getProjectAudit} from './project-store.js';
-import {activePrincipalId} from '../core/identity.js';
+import {activePrincipalId,isCurrentProjectOwner} from '../core/identity.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 
 // Common Project Studio storage actions, independent of the execution adapter.
@@ -8,7 +8,7 @@ export function projectControlsMarkup(t){
 }
 export function bindProjectControls({mount,t,projectId,save,onRestore,onRename,onDelete,onError}){
  const controller=new AbortController(),options={signal:controller.signal};
- const owned=()=>{const project=getProject(projectId());if(!project||project.access?.ownerId!==activePrincipalId())throw Error(t('graphics.workshop.unavailable'));return project};
+ const owned=()=>{const project=getProject(projectId());if(!project||!isCurrentProjectOwner(project.access))throw Error(t('graphics.workshop.unavailable'));return project};
  const guarded=fn=>{try{fn()}catch(error){onError(error)}};
  const refresh=()=>{
   const project=projectId()?owned():null;

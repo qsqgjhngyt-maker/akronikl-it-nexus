@@ -1,3 +1,4 @@
+import {accountLocalStorage} from '../account-storage.js';
 import { loadState, saveState } from '../storage.js';
 
 export const LEGACY_KEY = 'cpp_programming_pdf_course_v1';
@@ -12,7 +13,7 @@ const lessonIds = [
 
 function parseLegacy() {
   try {
-    const raw = localStorage.getItem(LEGACY_KEY);
+    const raw = accountLocalStorage().getItem(LEGACY_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw);
     return data && typeof data === 'object' ? { raw, data } : null;

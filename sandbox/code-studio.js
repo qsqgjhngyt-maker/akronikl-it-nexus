@@ -1,3 +1,4 @@
+import {accountSessionStorage} from '../core/account-storage.js';
 import {createCodeWorkspace,normalizeWorkspacePath} from './code-workspace.js';
 
 const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
@@ -99,7 +100,7 @@ export function bindCodeStudio({editor,locale='ru',languageId='cpp',fileName='ma
   const problems=root.querySelector('#codeStudioProblems'),problemsList=root.querySelector('#codeProblemsList'),problemsCount=root.querySelector('#codeProblemsCount');
   const treeList=root.querySelector('#codeFileTreeList'),tabs=root.querySelector('#codeFileTabs');
   const histories=new Map();const fileViews=new Map();let historyTimer=null,viewTimer=null,applyingHistory=false,staticDiagnostics=[],runtimeDiagnostics=[],searchIndex=-1;
-  const SESSION_VIEW_PREFIX='akronikl:code-studio:view:v1:';const resolvedSessionKey=sessionKey?`${SESSION_VIEW_PREFIX}${String(sessionKey)}`:null;const sessionStore=(()=>{try{return globalThis.sessionStorage||null}catch{return null}})();
+  const SESSION_VIEW_PREFIX='akronikl:code-studio:view:v1:';const resolvedSessionKey=sessionKey?`${SESSION_VIEW_PREFIX}${String(sessionKey)}`:null;const sessionStore=(()=>{try{return accountSessionStorage()}catch{return null}})();
   const sanitizeView=(value={},sourceLength=Number.MAX_SAFE_INTEGER)=>({selectionStart:Math.max(0,Math.min(Number(value.selectionStart)||0,sourceLength)),selectionEnd:Math.max(0,Math.min(Number(value.selectionEnd??value.selectionStart)||0,sourceLength)),scrollTop:Math.max(0,Number(value.scrollTop)||0),scrollLeft:Math.max(0,Number(value.scrollLeft)||0)});
   const loadSessionViewState=()=>{if(!resolvedSessionKey||!sessionStore)return null;try{return JSON.parse(sessionStore.getItem(resolvedSessionKey)||'null')}catch{return null}};
   const saveSessionViewState=value=>{if(!resolvedSessionKey||!sessionStore)return;try{sessionStore.setItem(resolvedSessionKey,JSON.stringify(value))}catch{}};

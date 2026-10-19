@@ -1,7 +1,9 @@
+import {accountLocalStorage} from '../core/account-storage.js';
+
 const QUEUE_KEY='akronikl:it-nexus:sync-queue:v1';
 const now=()=>new Date().toISOString();
 const clone=value=>JSON.parse(JSON.stringify(value));
-const storage=()=>globalThis.localStorage||null;
+const storage=()=>accountLocalStorage();
 const parse=(raw,fallback)=>{try{return raw?JSON.parse(raw):fallback}catch{return fallback}};
 function loadDb(){return{schemaVersion:1,items:{},...parse(storage()?.getItem(QUEUE_KEY),{})}}
 function saveDb(db){storage()?.setItem(QUEUE_KEY,JSON.stringify({...db,schemaVersion:1}));}

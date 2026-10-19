@@ -1,7 +1,9 @@
+import {accountLocalStorage} from '../core/account-storage.js';
+
 const AUDIT_KEY='akronikl:it-nexus:audit:v1';
 const now=()=>new Date().toISOString();
 const clone=value=>JSON.parse(JSON.stringify(value));
-const storage=()=>globalThis.localStorage||null;
+const storage=()=>accountLocalStorage();
 const parse=(raw,fallback)=>{try{return raw?JSON.parse(raw):fallback}catch{return fallback}};
 const uid=()=>`audit-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,9)}`;
 function loadDb(){return{schemaVersion:1,events:[],...parse(storage()?.getItem(AUDIT_KEY),{})}}

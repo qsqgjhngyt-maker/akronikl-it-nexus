@@ -1,4 +1,4 @@
-import {activePrincipalId} from './identity.js';
+import {activePrincipalId,isCurrentProjectOwner} from './identity.js';
 import {evaluateProjectAccess} from '../collaboration/access-control.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const title=(value,locale)=>typeof value==='string'?value:value?.[locale]||value?.ru||'';
@@ -6,7 +6,7 @@ const checklist=(values,total)=>new Set((values||[]).filter(value=>Number.isInte
 const level=value=>value==='средний'?'intermediate':value==='средний+'?'intermediate-plus':value==='выше среднего'?'advanced':'unspecified';
 
 export function ensurePracticeWorkingCopy(api,definition,principal=activePrincipalId()){
- const own=api.listProjects().filter(p=>p.origin?.courseId==='cpp'&&p.origin?.projectId===definition.id&&p.access?.ownerId===principal&&evaluateProjectAccess(p.access,{subjectId:principal,action:'view'}).allowed).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')))[0];
+ const own=api.listProjects().filter(p=>p.origin?.courseId==='cpp'&&p.origin?.projectId===definition.id&&isCurrentProjectOwner(p.access)&&evaluateProjectAccess(p.access,{subjectId:principal,action:'view'}).allowed).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')))[0];
  if(own)return own;
  const template=api.cppCourseProjectTemplate(definition);
  return api.createProject({...template,sourceRoots:template.manifest.sourceRoots,includeRoots:template.manifest.includeRoots,testRoots:template.manifest.testRoots,origin:{...template.origin,templateKey:template.templateKey}});

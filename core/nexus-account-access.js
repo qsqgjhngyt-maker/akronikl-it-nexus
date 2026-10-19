@@ -54,6 +54,7 @@ export function bindNexusAccountAccess(locale='ru'){
   try{
    const response=await boundedRequest([signal],fetchSignal=>fetch('/api/v2/account/passkey/logout',{method:'POST',credentials:'same-origin',cache:'no-store',redirect:'error',signal:fetchSignal,headers:{'content-type':'application/json','x-nexus-passkey-write':'1'},body:'{}'}));
    if(!response.ok)throw Error('Logout failed');
+   if(typeof window.dispatchEvent==='function')window.dispatchEvent(new Event('nexus:session-ended'));
    if(!signal.aborted&&panel.isConnected)signedOut();
   }catch{if(!signal.aborted&&panel.isConnected){status.textContent=words.failed;panel.dataset.state='unavailable';setAvailability(false)}}
   finally{loggingOut=false;if(!signal.aborted){logout.disabled=false;refresh.disabled=false}}

@@ -1,3 +1,5 @@
+import {currentProjectSubjectAlias} from '../core/identity.js';
+
 export const PROJECT_ACTIONS=Object.freeze([
   'view','edit','create','delete','run','build','release','manage_members','manage_access','audit_view'
 ]);
@@ -54,7 +56,8 @@ function policyApplies(policy,{subjectId,role,path,action}){
 }
 
 export function findProjectMember(access,subjectId){
-  return (access?.members||[]).find(member=>member?.subjectId===subjectId&&member?.status!=='revoked')||null;
+  const alias=currentProjectSubjectAlias(access,subjectId);
+  return (access?.members||[]).find(member=>member?.subjectId===subjectId&&member?.status!=='revoked')||(alias!==subjectId?(access?.members||[]).find(member=>member?.subjectId===alias&&member?.status!=='revoked'):null)||null;
 }
 
 export function evaluateProjectAccess(access,{subjectId,path='/',action='view'}={}){
@@ -65,7 +68,7 @@ export function evaluateProjectAccess(access,{subjectId,path='/',action='view'}=
   const grants=ROLE_GRANTS[role]||[];
   let allowed=grants.includes('*')||grants.includes(action);
   if(!allowed)allowed=(ROLE_SCOPED_GRANTS[role]||[]).some(grant=>scopeMatches(grant.scope,path)&&(grant.actions||[]).includes(action));
-  const matched=(access?.policies||[]).filter(policy=>policyApplies(policy,{subjectId,role,path,action}));
+  const matched=(access?.policies||[]).filter(policy=>policyApplies(policy,{subjectId,role,path,action})||member.subjectId!==subjectId&&policyApplies(policy,{subjectId:member.subjectId,role,path,action}));
   if(matched.some(policy=>policy.effect==='deny'))return{allowed:false,reason:'explicit-deny',role,matchedPolicies:matched};
   if(matched.some(policy=>policy.effect==='allow'))allowed=true;
   return{allowed,reason:allowed?'role-or-policy-allow':'not-granted',role,matchedPolicies:matched};

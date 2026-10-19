@@ -1,4 +1,6 @@
 import {loadLocalIdentity} from './identity.js';
+import {verifiedAccount} from './account-storage.js';
+import {unifiedAccountMarkup,bindUnifiedAccount} from './account-unified.js';
 import {cloudflareSyncSummary,loadCloudflareSyncConfig} from '../sync/cloudflare-config.js';
 import {bootstrapCloudAccount,connectCloudAccount,disconnectCloudAccount} from '../sync/cloud-sync.js';
 import {
@@ -89,6 +91,8 @@ async function runAccountCloudSetup(en=false){
 }
 
 export function accountSnapshot(locale='ru'){
+  const verified=verifiedAccount();
+  if(verified){const identity=loadLocalIdentity();return{state:'server-session',connected:true,displayName:verified.displayName,avatar:initial(verified.displayName),status:locale==='en'?'Signed in to Nexus':'Вход в Nexus выполнен',host:'Nexus Cloud',subjectId:verified.accountId,subjectShort:shortId(verified.accountId),deviceId:identity.deviceId,deviceShort:shortId(identity.deviceId),accountState:'server-session'}}
   const en=locale==='en';
   const identity=loadLocalIdentity();
   const cloud=cloudflareSyncSummary();
@@ -148,6 +152,7 @@ export function accountChipMarkup(locale='ru'){
       <a role="menuitem" href="#view=skills">${en?'Skill map':'Карта навыков'}</a>
       <a role="menuitem" href="#view=account&tab=devices">${en?'Devices & sessions':'Устройства и сессии'}</a>
       <a role="menuitem" href="#view=account&tab=security">${en?'Security':'Безопасность'}</a>
+      ${verifiedAccount()?`<button role="menuitem" class="btn" type="button" data-unified-logout>${en?'Switch account / Sign out':'Сменить аккаунт / Выйти'}</button>`:''}
       <div class="account-menu-foot">
         <span>${a.connected?esc(a.host):(en?'Identity v2 foundation':'Фундамент Identity v2')}</span>
       </div>
@@ -183,6 +188,7 @@ export function accountHomeCardMarkup(locale='ru'){
 const tabLink=(id,label,current)=>`<a href="#view=account&tab=${encodeURIComponent(id)}" class="${current===id?'active':''}" aria-current="${current===id?'page':'false'}">${esc(label)}</a>`;
 
 export function accountPageMarkup(locale='ru',tab='overview'){
+  if(verifiedAccount())return unifiedAccountMarkup(locale,tab);
   const en=locale==='en';
   const a=accountSnapshot(locale);
   const credential=identityV2CredentialState();
@@ -653,6 +659,7 @@ export function bindAccountShell({locale='ru',onChanged=()=>{}}={}){
   globalThis.__NEXUS_ACCOUNT_OUTSIDE_CLOSE__=close;
   document.addEventListener('click',close);
   document.querySelectorAll('#accountMenu a').forEach(a=>a.addEventListener('click',close));
+  if(verifiedAccount()){bindUnifiedAccount(locale);return}
   refreshIdentityFoundationStatus(locale);
   refreshIdentityCredentialSummary(locale);
   refreshIdentityDevicesSessions(locale);

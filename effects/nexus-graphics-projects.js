@@ -1,5 +1,6 @@
+import {accountLocalStorage} from '../core/account-storage.js';
 import {createProject,patchProject,getProject,listProjects} from '../project-studio/project-store.js';
-import {activePrincipalId} from '../core/identity.js';
+import {activePrincipalId,isCurrentProjectOwner} from '../core/identity.js';
 import {normalizeWorkspacePath} from '../sandbox/code-workspace.js';
 
 export const graphicsDefaults={planets:10,inclination:48,speed:1,stars:1,moons:true,rings:true};
@@ -34,9 +35,9 @@ export function graphicsProgram(document){
   let line=1;const ranges=[],code=files.map(file=>{const start=line;line+=file.content.split('\n').length+1;ranges.push({file:file.path,start,end:line-1});return file.content+'\n'}).join('\n');
   return {code,ranges,files:Object.fromEntries(doc.files.map(f=>[f.path,f.content]))};
 }
-export function ownGraphicsProjects(){const owner=activePrincipalId();return listProjects().filter(p=>p.origin?.kind==='graphics-lab'&&p.access?.ownerId===owner)}
+export function ownGraphicsProjects(){return listProjects().filter(p=>p.origin?.kind==='graphics-lab'&&isCurrentProjectOwner(p.access))}
 export function graphicsProjectDocument(id){
-  const p=getProject(id);if(!p||p.origin?.kind!=='graphics-lab'||p.access?.ownerId!==activePrincipalId())throw Error('Graphics project unavailable');
+  const p=getProject(id);if(!p||p.origin?.kind!=='graphics-lab'||!isCurrentProjectOwner(p.access))throw Error('Graphics project unavailable');
   const code=p.workspace.files.find(f=>f.path==='scene.js')?.content,settings=JSON.parse(p.workspace.files.find(f=>f.path==='settings.json')?.content||'{}');
   return normalizeGraphicsDocument({name:p.title,code,settings,files:p.workspace.files,activeFile:p.workspace.activeFile,template:p.origin.template,projectId:p.id});
 }
@@ -47,13 +48,13 @@ export function saveGraphicsProject(document){
   return p.id;
 }
 const draftKey=()=> 'akronikl:it-nexus:graphics-drafts:v1:'+activePrincipalId();
-export function readGraphicsDrafts(){try{const db=JSON.parse(localStorage.getItem(draftKey())||'null');return db?.version===1&&db.drafts&&typeof db.drafts==='object'?db:{version:1,active:null,drafts:{}}}catch{return {version:1,active:null,drafts:{}}}}
+export function readGraphicsDrafts(){try{const db=JSON.parse(accountLocalStorage().getItem(draftKey())||'null');return db?.version===1&&db.drafts&&typeof db.drafts==='object'?db:{version:1,active:null,drafts:{}}}catch{return {version:1,active:null,drafts:{}}}}
 export function writeGraphicsDraft(key,document,changed=true,removeKey=null){
   const db=readGraphicsDrafts();if(!db.drafts[key]&&Object.keys(db.drafts).length>=20)throw Error('Draft limit reached');
   if(removeKey&&removeKey!==key&&removeKey.startsWith('draft:'))delete db.drafts[removeKey];
   db.drafts[key]={...normalizeGraphicsDocument(document),changed,updatedAt:new Date().toISOString()};db.active=key;
-  localStorage.setItem(draftKey(),JSON.stringify(db));return db;
+  accountLocalStorage().setItem(draftKey(),JSON.stringify(db));return db;
 }
-export function removeGraphicsDraft(key){const db=readGraphicsDrafts();delete db.drafts[key];if(db.active===key)db.active=null;localStorage.setItem(draftKey(),JSON.stringify(db))}
+export function removeGraphicsDraft(key){const db=readGraphicsDrafts();delete db.drafts[key];if(db.active===key)db.active=null;accountLocalStorage().setItem(draftKey(),JSON.stringify(db))}
 export function graphicsProjectJSON(document){return JSON.stringify({format:'nexus-graphics-project',version:1,document:normalizeGraphicsDocument(document)},null,2)}
 export function readGraphicsProjectJSON(text){if(typeof text!=='string'||text.length>120000)throw Error('Invalid graphics project');const data=JSON.parse(text);if(data.format!=='nexus-graphics-project'||data.version!==1)throw Error('Unsupported graphics project');return {...normalizeGraphicsDocument(data.document),projectId:null}}

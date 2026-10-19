@@ -1,10 +1,11 @@
+import {accountLocalStorage,accountSessionStorage} from '../core/account-storage.js';
 import {loadCloudflareSyncConfig} from './cloudflare-config.js';
 
 const SESSION_KEY='akronikl:it-nexus:identity-v2:session:v1';
 const COOKIE_MARKER_KEY='akronikl:it-nexus:identity-v2:cookie-session:v1';
 const trimBase=value=>String(value||'').trim().replace(/\/+$/,'');
-const sessionStore=()=>globalThis.sessionStorage||null;
-const markerStore=()=>globalThis.localStorage||null;
+const sessionStore=()=>accountSessionStorage();
+const markerStore=()=>accountLocalStorage();
 
 async function readJson(response){
   const text=await response.text();

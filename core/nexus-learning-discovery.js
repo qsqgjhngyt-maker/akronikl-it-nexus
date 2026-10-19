@@ -1,4 +1,5 @@
-import {activePrincipalId} from './identity.js';
+import {accountLocalStorage} from './account-storage.js';
+import {activePrincipalId,isCurrentProjectOwner} from './identity.js';
 import {evaluateProjectAccess} from '../collaboration/access-control.js';
 import {languageLabel} from '../sandbox/languages.js';
 import {practicesPageMarkup,bindPractices} from './nexus-practices.js';
@@ -9,7 +10,7 @@ const focusValue=value=>['task','lab'].includes(value)?value:'';
 const lessonLink=(id,focus='')=>`#course=cpp&lesson=${encodeURIComponent(id)}${focusValue(focus)?'&focus='+focus:''}`;
 
 // A local navigation bookmark. This never writes course progress, workspaces or session credentials.
-export function createLearningResume({storage=globalThis.localStorage,principal=activePrincipalId,now=()=>new Date().toISOString()}={}){
+export function createLearningResume({storage=accountLocalStorage(),principal=activePrincipalId,now=()=>new Date().toISOString()}={}){
  const key=()=> 'akronikl:it-nexus:learning-resume:v1:'+encodeURIComponent(principal());
  const read=()=>{try{const value=JSON.parse(storage?.getItem(key())||'null');return value?.schemaVersion===1&&value.courses&&typeof value.courses==='object'?value.courses:{}}catch{return{}}};
  const remember=(course,lessonId,focus='')=>{
@@ -48,7 +49,7 @@ export function bindRecentProjects({loadProjects,t,locale='ru'}={}){
  const load=async()=>{
   try{
    const projects=await loadProjects();if(!current())return;
-   const visible=projects.filter(project=>evaluateProjectAccess(project.access,{subjectId:principal,action:'view'}).allowed&&(project.origin?.kind!=='graphics-lab'||project.access?.ownerId===principal)).slice(0,3);
+   const visible=projects.filter(project=>evaluateProjectAccess(project.access,{subjectId:principal,action:'view'}).allowed&&(project.origin?.kind!=='graphics-lab'||isCurrentProjectOwner(project.access))).slice(0,3);
    target.removeAttribute('role');
    target.innerHTML=visible.length?`<div class="discovery-project-grid">${visible.map(project=>{let date='';try{date=new Intl.DateTimeFormat(locale,{day:'numeric',month:'short',year:'numeric'}).format(new Date(project.updatedAt))}catch{}return `<article class="discovery-project-card glass-panel" data-recent-project="${escape(project.id)}"><div class="learning-card-kicker"><span>${escape(languageLabel(project.languageId,locale))}</span><span>${escape(t(project.origin?.kind==='graphics-lab'?'discovery.recent.graphics':project.origin?.courseId?'discovery.recent.course':'discovery.recent.own'))}</span></div><h3>${escape(project.title)}</h3><p>${escape(project.description||t('discovery.recent.noDescription'))}</p>${date?`<small>${escape(t('discovery.recent.updated',{date}))}</small>`:''}<a class="btn" href="#view=project-studio&project=${encodeURIComponent(project.id)}">${escape(t('discovery.recent.open'))}<span aria-hidden="true">↗</span></a></article>`}).join('')}</div>`:`<div class="discovery-empty glass-panel"><h3>${escape(t('discovery.recent.empty'))}</h3><p>${escape(t('discovery.recent.emptyText'))}</p><a class="btn" href="#course=cpp&tab=projects">${escape(t('codeHub.courseProjects'))} →</a><a class="btn" href="#view=projects">${escape(t('nav.myProjects'))} ↗</a></div>`;
   }catch{if(!current())return;target.textContent=t('discovery.recent.failed');const retry=document.createElement('button');retry.className='btn';retry.type='button';retry.textContent=t('shell.error.retry');retry.onclick=()=>{target.textContent=t('discovery.recent.loading');load()};target.append(retry)}

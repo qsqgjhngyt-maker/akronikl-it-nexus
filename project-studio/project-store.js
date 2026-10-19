@@ -1,3 +1,4 @@
+import {accountLocalStorage,verifiedAccount} from '../core/account-storage.js';
 import {loadLocalIdentity,activePrincipalId,personalWorkspaceId} from '../core/identity.js';
 import {createPrivateAccessModel,accessSummary} from '../collaboration/access-control.js';
 import {appendAuditEvent,listAuditEvents} from '../collaboration/audit-log.js';
@@ -10,7 +11,7 @@ const now=()=>new Date().toISOString();
 const clone=value=>JSON.parse(JSON.stringify(value));
 const safeId=value=>String(value||'project').trim().toLowerCase().replace(/[^a-z0-9._-]+/g,'-').replace(/^-+|-+$/g,'')||'project';
 const uid=prefix=>`${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`;
-function storage(){return globalThis.localStorage||null}
+function storage(){return accountLocalStorage()}
 function parse(raw,fallback){try{return raw?JSON.parse(raw):fallback}catch{return fallback}}
 function defaultDb(){return{schemaVersion:DB_SCHEMA_VERSION,projects:{},updatedAt:null}}
 
@@ -119,7 +120,7 @@ export function patchProject(id,patch){
 export function createProject(input={}){
   const title=String(input.title||'Новый проект').trim()||'Новый проект';const id=input.id||uid(safeId(title));const languageId=input.languageId||'cpp';const entryFile=input.entryFile||'src/main.cpp';
   const files=Array.isArray(input.files)&&input.files.length?input.files:[{path:entryFile,content:'#include <iostream>\n\nint main() {\n    std::cout << "Hello, Nexus!\\n";\n    return 0;\n}\n',languageId}];
-  const identity=loadLocalIdentity();const ownerId=identity.accountSubjectId||identity.localPrincipalId;const workspaceId=identity.personalWorkspaceId;
+  const identity=loadLocalIdentity();const ownerId=verifiedAccount().accountId;const workspaceId=identity.personalWorkspaceId;
   const project={id,schemaVersion:2,title,languageId,description:String(input.description||''),origin:clone(input.origin||{kind:'user'}),manifest:{schemaVersion:1,id,title,languageId,entryFile,sourceRoots:input.sourceRoots||['src'],includeRoots:input.includeRoots||['include'],testRoots:input.testRoots||['tests'],build:{profile:'wasm-debug',standard:languageId==='cpp'?'c++20':'default',runtime:'auto'},sync:{strategy:'local-first',cloud:'foundation'},release:{status:'draft'}},workspace:{languageId,entryFile,activeFile:input.activeFile||entryFile,revision:0,files:clone(files)},progress:{milestones:[],tests:{passed:0,total:0},stage:'draft'},checkpoints:[],access:clone(input.access||createPrivateAccessModel({ownerId,workspaceId})),sync:{schemaVersion:1,strategy:'local-first',mode:'local-only',provider:'none',status:'local',revision:0,localRevision:0,serverRevision:null,baseServerRevision:null,lastLocalChangeAt:null,lastSyncedAt:null,conflict:null},release:{status:'draft',artifacts:[]}};
   const created=putProject(project);
   appendAuditEvent(created.id,{actorId:ownerId,action:'project.created',scope:'/',revisionAfter:created.sync.localRevision,summary:`Project created: ${created.title}`});

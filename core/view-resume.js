@@ -1,3 +1,5 @@
+import {accountSessionStorage} from './account-storage.js';
+
 const VIEW_RESUME_KEY='akronikl:it-nexus:view-resume:v1';
 
 const safeParse=(raw,fallback={})=>{try{return raw?JSON.parse(raw):fallback}catch{return fallback}};
@@ -5,7 +7,7 @@ const safeNumber=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value
 const routeKey=value=>String(value||'#view=home');
 
 export function createViewResume({
-  storage=globalThis.sessionStorage,
+  storage=accountSessionStorage(),
   getPosition=()=>({x:globalThis.scrollX||0,y:globalThis.scrollY||0}),
   applyPosition=pos=>globalThis.scrollTo?.({left:pos.x,top:pos.y,behavior:'auto'}),
   scheduleFrame=fn=>globalThis.requestAnimationFrame?globalThis.requestAnimationFrame(fn):setTimeout(fn,0),

@@ -20,14 +20,17 @@ import {
 } from '../project-studio/project-store.js';
 import {appendAuditEvent} from '../collaboration/audit-log.js';
 import {clearQueuedProjectSync} from './sync-queue.js';
+import {serverCloudSessionAvailable,serverCloudRequest} from './server-cloud-client.js';
+import {verifiedAccount} from '../core/account-storage.js';
 
 const now=()=>new Date().toISOString();
 const trimBase=value=>String(value||'').trim().replace(/\/+$/,'');
 
 function providerFrom(config=loadCloudflareSyncConfig()){
+  if(verifiedAccount()&&!serverCloudSessionAvailable())throw Error('SERVER_SESSION_REQUIRED');
   return createCloudflareSyncProvider({
     baseUrl:config.baseUrl,
-    authenticatedRequest:identityV2AuthenticatedRequest
+    authenticatedRequest:serverCloudSessionAvailable()?serverCloudRequest:identityV2AuthenticatedRequest
   });
 }
 
@@ -53,10 +56,14 @@ async function retireCurrentServerSession(){
 }
 
 export function cloudSyncCredentialState(){
+  if(verifiedAccount()&&!serverCloudSessionAvailable())return{mode:'none',rollbackAvailable:false};
+  if(serverCloudSessionAvailable())return{mode:'nexus-cookie',rollbackAvailable:false};
   return identityV2CredentialState();
 }
 
 export async function cloudHealth(baseUrl=null){
+  if(verifiedAccount()&&!serverCloudSessionAvailable())throw Error('SERVER_SESSION_REQUIRED');
+  if(serverCloudSessionAvailable()){await serverCloudRequest('/api/v1/me');return{configured:true,online:true}}
   const cfg=loadCloudflareSyncConfig();
   return createCloudflareSyncProvider({
     baseUrl:trimBase(baseUrl||cfg.baseUrl)
@@ -68,6 +75,7 @@ export async function bootstrapCloudAccount({
   bootstrapSecret,
   displayName='Nexus Owner'
 }={}){
+  if(verifiedAccount())throw Error('В Nexus Cloud используется текущий вход. Отдельный bootstrap не требуется.');
   const endpoint=trimBase(baseUrl);
   if(!endpoint)throw new Error('Cloudflare Worker URL is required.');
 
@@ -95,6 +103,7 @@ export async function bootstrapCloudAccount({
 }
 
 export async function connectCloudAccount({baseUrl,token}={}){
+  if(verifiedAccount())throw Error('В Nexus Cloud используется текущий аккаунт Nexus. Смените аккаунт через выход.');
   const endpoint=trimBase(baseUrl);
   if(!endpoint||!token)throw new Error('Worker URL and Nexus account token are required.');
 
@@ -127,6 +136,7 @@ export async function connectCloudAccount({baseUrl,token}={}){
 }
 
 export async function disconnectCloudAccount(){
+  if(verifiedAccount())throw Error('Для смены аккаунта используйте выход из Nexus.');
   const sessionResult=await retireCurrentServerSession();
 
   clearIdentityV2SessionCredential();
@@ -159,7 +169,13 @@ export async function enableProjectCloud(projectId){
   const cfg=loadCloudflareSyncConfig();
   if(!cloudflareSyncConfigured())throw new Error('Connect Nexus Cloud first.');
 
-  linkProjectOwnerToAccount(projectId,cfg.subjectId);
+  const current=getProject(projectId),identity=loadLocalIdentity();
+  if(!current)throw Error('Проект не найден.');
+  if(current.access?.ownerId!==cfg.subjectId&&current.access?.workspaceKind!=='team'){
+    // Явная команда подключения собственного локального проекта, а не перенос при входе.
+    if(current.access?.ownerId!==identity.localPrincipalId||current.access?.workspaceId!==identity.personalWorkspaceId||current.sync?.mode==='cloud')throw Error('Этот проект принадлежит другому аккаунту. Автоматический перенос запрещён.');
+    linkProjectOwnerToAccount(projectId,cfg.subjectId);
+  }
   updateProjectSyncState(projectId,{
     mode:'cloud',
     provider:'cloudflare',
@@ -182,7 +198,7 @@ export async function pushProjectNow(projectId){
     project.access?.ownerId!==cfg.subjectId &&
     project.access?.workspaceKind!=='team'
   ){
-    project=linkProjectOwnerToAccount(projectId,cfg.subjectId);
+    throw Error('Владелец проекта не совпадает с текущим аккаунтом. Подключите свой локальный проект к облаку явно.');
   }
 
   updateProjectSyncState(projectId,{
@@ -221,6 +237,7 @@ export async function pushProjectNow(projectId){
 
     return result;
   }catch(error){
+    if(error?.code==='ACCOUNT_SESSION_CHANGED'||!verifiedAccount())throw error;
     if(Number(error?.status)===409){
       const serverRevision=
         error?.payload?.error?.details?.serverRevision??null;
