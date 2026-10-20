@@ -63,6 +63,16 @@ try{
   const f=fixture({hash:'#nexusLogin=oauth',signedIn:false});await f.bind();
   assert.equal(f.navigations.length,0);assert.deepEqual(f.historyChanges,[ENTRY_ORIGIN+'/#view=home']);
  });
+ await check('OAuth link hint сохраняет Security после server proof и удаляет маркер до перехода',async()=>{
+  const f=fixture({hash:'#nexusLogin=oauth&view=account&tab=security&next=https://attacker.invalid&token=synthetic'});await f.bind();
+  assert.deepEqual(f.navigations,[{target:ENTRY_ORIGIN+'/index.html#view=account&tab=security',sameDocument:false}]);
+  assert.deepEqual(f.historyChanges,[ENTRY_ORIGIN+'/#view=account&tab=security']);assert.equal(f.requests.length,1);assert.equal(f.logins,0);
+ });
+ await check('поддельный link hint без сессии и повторная загрузка не обходят Account gate',async()=>{
+  const f=fixture({hash:'#nexusLogin=oauth&view=account&tab=security',signedIn:false});await f.bind();
+  assert.equal(f.navigations.length,0);assert.equal(f.locationRef.hash,'#view=account&tab=security');
+  await f.bind();assert.equal(f.navigations.length,0);assert.equal(f.logins,0);
+ });
  await check('неизвестный fragment или внешний redirect не включает auto-continue',async()=>{
   const f=fixture({hash:'#nexusLogin=other&next=https://attacker.invalid'});await f.bind();
   assert.equal(f.navigations.length,0);assert.equal(f.historyChanges.length,0);
