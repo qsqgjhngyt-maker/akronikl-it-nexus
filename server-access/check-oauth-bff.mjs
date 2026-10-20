@@ -143,7 +143,7 @@ await check('cross-tab link требует exactly-one expectation и откло
  assert.equal((await invoke(f.handler,request({path,method:'POST',body:{intent:'login'},headers:{'x-nexus-oauth-account':accountA}}))).res.status,400);assert.equal(f.calls.length,before);
 });
 await check('valid Google signature → только HttpOnly session cookie и fixed root',async()=>{
- const f=fixture(),flow=await start(f);const {res}=await invoke(f.handler,callback(flow));assert.equal(res.status,303,res.body);assert.equal(res.headers.location,GATEWAY_ORIGIN+'/');
+ const f=fixture(),flow=await start(f);const {res}=await invoke(f.handler,callback(flow));assert.equal(res.status,303,res.body);assert.equal(res.headers.location,GATEWAY_ORIGIN+'/#nexusLogin=oauth');
  assert.equal(res.body,'');assert.match(res.headers['set-cookie'][0],/^__Host-nexus_session=nxs_[A-Za-z0-9_-]{43}; Path=\/; HttpOnly; Secure; SameSite=Strict; Max-Age=43200$/);assert.match(res.headers['set-cookie'][1],/SameSite=Lax; Max-Age=0$/);
  assert.equal(f.completed[0].emailVerified,true);assert.equal(f.completed[0].subject,'synthetic-google-sub');
  const visible=JSON.stringify({body:res.body,location:res.headers.location,authorizationURL:flow.authorizationURL});for(const secret of [accessToken,refreshToken,env.GOOGLE_CLIENT_SECRET,session])assert.equal(visible.includes(secret),false);
