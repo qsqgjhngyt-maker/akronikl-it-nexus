@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 const root=fileURLToPath(new URL('../',import.meta.url)),out=path.resolve(process.argv[2]);await mkdir(out,{recursive:true});
 const suites=[
+ 'server-access/check-cookie-ingress-v3-source-only.mjs','server-access/check-cookie-ingress-v31-security.mjs','server-access/check-cookie-ingress-runtime.mjs',
  'tests/auth-hotfix-flow-check.mjs','tests/auth-esm-bundle-check.mjs','tests/entry-document-navigation-check.mjs','tests/oauth-link-client-check.mjs','tests/entry-galaxy-check.mjs',
  'server-access/check-oauth-bff.mjs','server-access/check-oauth-service.mjs','server-access/check-gateway-cookie-context.mjs','server-access/check-entry-gate.mjs','server-access/check-cloud-session.mjs','server-access/check-feedback-account-expectation.mjs',
  'tests/auth-bootstrap-check.mjs','tests/account-storage-isolation-check.mjs','tests/nexus-account-access-recovery-check.mjs','tests/cloud-unified-client-check.mjs','tests/feedback-account-context-check.mjs','tests/cloud-expired-session-check.mjs','tests/cloud-sync-client-transport-check.mjs','tests/cloud-sync-session-first-migration-check.mjs','tests/session-only-resume-check.mjs','tests/first-party-cookie-client-check.mjs','tests/first-party-cookie-foundation-check.mjs','tests/server-account-origin-check.mjs',

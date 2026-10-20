@@ -81,9 +81,9 @@ function sessionFromCookie(req) {
   return session;
 }
 
-export function sessionFromIngress(req) {
+export function sessionFromIngress(req, options = {}) {
   try {
-    const cookies = readV2CookieContext(req, 'accountReadContract');
+    const cookies = readV2CookieContext(req, 'accountReadContract', options);
     if (cookies !== undefined) {
       const session = cookies.get('__Host-nexus_session');
       return typeof session === 'string' && /^nxs_[A-Za-z0-9_-]{24,256}$/.test(session) ? session : null;
@@ -173,7 +173,7 @@ export function createAccountReadHandler({env = {}, fetchImpl = fetch} = {}) {
     // YC-6 transport: cookie parameter → Gateway context → private container.
     // Context сам по себе не аутентифицирует Gateway; IAM проверяется отдельно.
     if (req.headers.authorization) return reply(res, 403, {error: {code: 'BROWSER_BEARER_REJECTED'}});
-    const session = sessionFromIngress(req);
+    const session = sessionFromIngress(req, {env});
     if (!session) return reply(res, 401, {error: {code: 'SESSION_REQUIRED'}});
     const serviceKey = env.ACCOUNT_SERVICE_KEY;
     if (typeof serviceKey !== 'string' || serviceKey.length < 32) {

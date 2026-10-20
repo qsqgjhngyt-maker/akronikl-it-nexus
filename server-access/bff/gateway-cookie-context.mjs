@@ -16,14 +16,14 @@ function count(req,name){
  }
  return total;
 }
-function parseCookies(raw,syntaxReason){
+function parseCookies(raw,syntaxReason,duplicateReason='v2_protected_duplicate'){
  if(typeof raw!=='string'||raw.length===0||raw.length>4096||!/^[\x09\x20-\x7e]+$/.test(raw))return reject(syntaxReason);
  const values=new Map(),pairs=[];
  for(const part of raw.split(';')){
   const pair=part.trim(),at=pair.indexOf('=');if(at<1)return reject(syntaxReason);
   const name=pair.slice(0,at),value=pair.slice(at+1);
   if(!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name)||!/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value))return reject(syntaxReason);
-  if(PROTECTED.has(name)&&values.has(name))return reject('v2_protected_duplicate');
+  if(PROTECTED.has(name)&&values.has(name))return reject(duplicateReason);
   // Неиспользуемые cookies могут повторяться; сравнение ниже сохраняет каждую пару.
   values.set(name,value);pairs.push(name+'='+value);
  }
@@ -33,7 +33,7 @@ function parseCookies(raw,syntaxReason){
 /** V2: Gateway передаёт целый Cookie header; private container/IAM остаётся обязательным.
  * Возвращает Map только после двусторонней сверки. V1 делегируется старому parser.
  */
-export function readV2CookieContext(req,marker){
+export function readV2CookieContext(req,marker,{env={}}={}){
  if(typeof marker!=='string'||!/^[A-Za-z][A-Za-z0-9]{0,63}$/.test(marker)||marker==='cookieHeader')return reject('v2_marker_argument');
  if(count(req,CONTEXT_HEADER)!==1)return reject('v2_context_count');
  const raw=req.headers?.[CONTEXT_HEADER];
@@ -45,6 +45,23 @@ export function readV2CookieContext(req,marker){
  try{data=JSON.parse(text)}catch{return reject('v2_context_json')}
  if(!data||typeof data!=='object'||Array.isArray(data))return reject('v2_context_shape');
  if(data[marker]==='v1')return undefined;
+ // V3.1 source-only candidate. Explicit injected configuration; never a request flag.
+ // The legacy wire marker stays v3. This marker is NOT IAM/origin/freshness proof.
+ if(data[marker]==='v3'){
+  if(env.COOKIE_INGRESS_V3_ENABLED!=='true'||env.PRIVATE_GATEWAY_CONFIRMED!=='true')return reject('v3_disabled');
+  if(Object.keys(data).length!==1||!Object.hasOwn(data,marker)||text.match(/"(?:[^"\\]|\\.)*"/g)?.length!==2)return reject('v3_context_shape');
+  const rawContext=req.rawHeaders.filter((_,i)=>i%2===1&&req.rawHeaders[i-1].toLowerCase()===CONTEXT_HEADER);
+  if(rawContext[0]!==raw)return reject('v3_header_inconsistent');
+  const actual=req.headers?.cookie,present=actual!==undefined,cookieCount=count(req,'cookie');
+  if(!present){if(cookieCount!==0)return reject('v3_cookie_header_count');return new Map()}
+  // Split HTTP/2 Cookie fields are deliberately rejected. An upstream must present
+  // one unambiguous field; this parser does not guess how a proxy joined duplicates.
+  if(cookieCount!==1||typeof actual!=='string')return reject('v3_cookie_header_count');
+  const rawCookie=req.rawHeaders.filter((_,i)=>i%2===1&&req.rawHeaders[i-1].toLowerCase()==='cookie');
+  if(rawCookie[0]!==actual)return reject('v3_header_inconsistent');
+  if(!/^[\x20-\x7e]+$/.test(actual))return reject('v3_raw_cookie_syntax');
+  return parseCookies(actual,'v3_raw_cookie_syntax','v3_protected_duplicate').values;
+ }
  if(data[marker]!=='v2'||Object.keys(data).sort().join(',')!==[marker,'cookieHeader'].sort().join(',')||
   text.match(/"(?:[^"\\]|\\.)*"/g)?.length!==4||typeof data.cookieHeader!=='string')return reject('v2_context_shape');
  const actual=req.headers?.cookie,present=actual!==undefined,cookieCount=count(req,'cookie');

@@ -140,7 +140,8 @@ await test('OAuth probe enum закрыт для обычного запроса
 await test('OAuth synthetic-only probe: V1/other shape и V2 presence отличаются без credential',async()=>{
  for(const [options,reason] of [
   [{contextJSON:JSON.stringify({oauthIngressContract:'v1',cookieHeader:syntheticFlow})},'shape'],
-  [{contextJSON:JSON.stringify({oauthIngressContract:'v3',cookieHeader:syntheticFlow})},'shape_other'],
+  // V3 is explicitly dispatched and fails closed; only the synthetic diagnostic changes.
+  [{contextJSON:JSON.stringify({oauthIngressContract:'v3',cookieHeader:syntheticFlow})},'v2_rejected'],
   [{contextCookie:'-'},'v2_absent_context'],
   [{contextJSON:JSON.stringify({oauthIngressContract:'v2',cookieHeader:syntheticFlow,extra:true})},'v2_context_shape']
  ]){

@@ -16,7 +16,7 @@ export function createFeedbackHandler({env={},fetchImpl=fetch}={}){
   const isPublic=path.pathname==='/api/v2/feedback/reviews'&&req.method==='GET';
   let session=null;
   if(!isPublic){
-   try{const v2=readV2CookieContext(req,'accountReadContract');session=v2===undefined?sessionFromIngress(req):v2.get('__Host-nexus_session')??null}
+   try{const v2=readV2CookieContext(req,'accountReadContract',{env});session=v2===undefined?sessionFromIngress(req,{env}):v2.get('__Host-nexus_session')??null}
    catch{return reply(res,401,{error:{code:'SESSION_REQUIRED'}})}
    if(typeof session!=='string'||!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session))return reply(res,401,{error:{code:'SESSION_REQUIRED'}});
   }

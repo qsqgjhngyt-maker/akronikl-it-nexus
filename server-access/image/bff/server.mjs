@@ -29,7 +29,7 @@ function count(req, name) {
   }
   return total;
 }
-function parseCookies(raw, syntaxReason) {
+function parseCookies(raw, syntaxReason, duplicateReason = "v2_protected_duplicate") {
   if (typeof raw !== "string" || raw.length === 0 || raw.length > 4096 || !/^[\x09\x20-\x7e]+$/.test(raw)) return reject(syntaxReason);
   const values = /* @__PURE__ */ new Map(), pairs = [];
   for (const part of raw.split(";")) {
@@ -37,13 +37,13 @@ function parseCookies(raw, syntaxReason) {
     if (at < 1) return reject(syntaxReason);
     const name = pair.slice(0, at), value = pair.slice(at + 1);
     if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name) || !/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value)) return reject(syntaxReason);
-    if (PROTECTED.has(name) && values.has(name)) return reject("v2_protected_duplicate");
+    if (PROTECTED.has(name) && values.has(name)) return reject(duplicateReason);
     values.set(name, value);
     pairs.push(name + "=" + value);
   }
   return { values, canonical: pairs.sort().join("; ") };
 }
-function readV2CookieContext(req, marker) {
+function readV2CookieContext(req, marker, { env = {} } = {}) {
   if (typeof marker !== "string" || !/^[A-Za-z][A-Za-z0-9]{0,63}$/.test(marker) || marker === "cookieHeader") return reject("v2_marker_argument");
   if (count(req, CONTEXT_HEADER) !== 1) return reject("v2_context_count");
   const raw = req.headers?.[CONTEXT_HEADER];
@@ -63,6 +63,22 @@ function readV2CookieContext(req, marker) {
   }
   if (!data || typeof data !== "object" || Array.isArray(data)) return reject("v2_context_shape");
   if (data[marker] === "v1") return void 0;
+  if (data[marker] === "v3") {
+    if (env.COOKIE_INGRESS_V3_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true") return reject("v3_disabled");
+    if (Object.keys(data).length !== 1 || !Object.hasOwn(data, marker) || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 2) return reject("v3_context_shape");
+    const rawContext = req.rawHeaders.filter((_, i) => i % 2 === 1 && req.rawHeaders[i - 1].toLowerCase() === CONTEXT_HEADER);
+    if (rawContext[0] !== raw) return reject("v3_header_inconsistent");
+    const actual2 = req.headers?.cookie, present2 = actual2 !== void 0, cookieCount2 = count(req, "cookie");
+    if (!present2) {
+      if (cookieCount2 !== 0) return reject("v3_cookie_header_count");
+      return /* @__PURE__ */ new Map();
+    }
+    if (cookieCount2 !== 1 || typeof actual2 !== "string") return reject("v3_cookie_header_count");
+    const rawCookie = req.rawHeaders.filter((_, i) => i % 2 === 1 && req.rawHeaders[i - 1].toLowerCase() === "cookie");
+    if (rawCookie[0] !== actual2) return reject("v3_header_inconsistent");
+    if (!/^[\x20-\x7e]+$/.test(actual2)) return reject("v3_raw_cookie_syntax");
+    return parseCookies(actual2, "v3_raw_cookie_syntax", "v3_protected_duplicate").values;
+  }
   if (data[marker] !== "v2" || Object.keys(data).sort().join(",") !== [marker, "cookieHeader"].sort().join(",") || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 4 || typeof data.cookieHeader !== "string") return reject("v2_context_shape");
   const actual = req.headers?.cookie, present = actual !== void 0, cookieCount = count(req, "cookie");
   if (!present && cookieCount !== 0 || present && (cookieCount !== 1 || typeof actual !== "string")) return reject("v2_cookie_header_count");
@@ -100,8 +116,8 @@ var count2 = (req, name) => {
   return value;
 };
 var cookies = (name, value, age) => `${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${age}`;
-function context(req) {
-  const v2 = readV2CookieContext(req, "passkeyIngressContract");
+function context(req, env) {
+  const v2 = readV2CookieContext(req, "passkeyIngressContract", { env });
   if (v2 !== void 0) {
     const flow2 = v2.get("__Host-nexus_passkey_flow") ?? null, session2 = v2.get("__Host-nexus_session") ?? null;
     if (flow2 !== null && !/^npf_[A-Za-z0-9_-]{43}$/.test(flow2) || session2 !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session2)) throw Error("INGRESS_REJECTED");
@@ -182,7 +198,7 @@ function createPasskeyHandler({ env, fetchImpl = fetch }) {
     if (req.headers.host !== origin.host || count2(req, "host") !== 1 || req.headers.authorization || req.headers.origin && req.headers.origin !== origin.origin || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin") return reply(res, 403, { error: { code: "ORIGIN_REJECTED" } });
     if (method === "POST" && (req.headers.origin !== origin.origin || count2(req, "origin") !== 1 || req.headers["x-nexus-passkey-write"] !== "1" || req.headers["content-type"] !== "application/json")) return reply(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
     try {
-      const ingress2 = context(req), isOptions = op.endsWith("-options");
+      const ingress2 = context(req, env), isOptions = op.endsWith("-options");
       const flow = isOptions || !op.endsWith("-verify") ? "npf_" + randomBytes(32).toString("base64url") : ingress2.flow;
       if (!flow) return reply(res, 401, { error: { code: "FLOW_REQUIRED" } });
       const input = method === "GET" ? {} : await readJSON(req, 65536);
@@ -303,9 +319,9 @@ function sessionFromCookie(req) {
   }
   return session;
 }
-function sessionFromIngress(req) {
+function sessionFromIngress(req, options = {}) {
   try {
-    const cookies2 = readV2CookieContext(req, "accountReadContract");
+    const cookies2 = readV2CookieContext(req, "accountReadContract", options);
     if (cookies2 !== void 0) {
       const session = cookies2.get("__Host-nexus_session");
       return typeof session === "string" && /^nxs_[A-Za-z0-9_-]{24,256}$/.test(session) ? session : null;
@@ -389,7 +405,7 @@ function createAccountReadHandler({ env = {}, fetchImpl = fetch } = {}) {
       return reply2(res, 403, { error: { code: "ORIGIN_REJECTED" } });
     }
     if (req.headers.authorization) return reply2(res, 403, { error: { code: "BROWSER_BEARER_REJECTED" } });
-    const session = sessionFromIngress(req);
+    const session = sessionFromIngress(req, { env });
     if (!session) return reply2(res, 401, { error: { code: "SESSION_REQUIRED" } });
     const serviceKey = env.ACCOUNT_SERVICE_KEY;
     if (typeof serviceKey !== "string" || serviceKey.length < 32) {
@@ -484,8 +500,8 @@ function createFeedbackHandler({ env = {}, fetchImpl = fetch } = {}) {
     let session = null;
     if (!isPublic) {
       try {
-        const v2 = readV2CookieContext(req, "accountReadContract");
-        session = v2 === void 0 ? sessionFromIngress(req) : v2.get("__Host-nexus_session") ?? null;
+        const v2 = readV2CookieContext(req, "accountReadContract", { env });
+        session = v2 === void 0 ? sessionFromIngress(req, { env }) : v2.get("__Host-nexus_session") ?? null;
       } catch {
         return reply3(res, 401, { error: { code: "SESSION_REQUIRED" } });
       }
@@ -809,7 +825,7 @@ function createEntryGateHandler({ env = {}, fetchImpl = fetch, landingBody: land
       return error(req, res, 503, "ENTRY_GATE_UNAVAILABLE");
     }
     const publicOrDenied = (status, code) => path === "/nexus-shell.html" ? error(req, res, status, code) : reply4(req, res, 200, landing, "text/html; charset=utf-8");
-    const session = sessionFromIngress(req);
+    const session = sessionFromIngress(req, { env });
     if (!session) return publicOrDenied(401, "AUTHENTICATION_REQUIRED");
     try {
       const body = JSON.stringify({ path: "/api/v2/account", sessionHash: createHash5("sha256").update(session).digest("hex") });
@@ -946,7 +962,7 @@ function createCloudSessionHandler({ env = {}, fetchImpl = fetch } = {}) {
     if (!path) return reply5(res, 404, { error: { code: "NOT_FOUND" } });
     if (req.method === "PUT" && (req.headers.origin !== GATEWAY_ORIGIN || req.headers["x-nexus-cloud-request"] !== "1" || req.headers["content-type"] !== "application/json"))
       return reply5(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
-    const sessionCookie2 = sessionFromIngress(req);
+    const sessionCookie2 = sessionFromIngress(req, { env });
     if (!sessionCookie2) return reply5(res, 401, { error: { code: "SESSION_REQUIRED" } });
     const expectedAccountId = req.headers["x-nexus-cloud-account"];
     if (typeof expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(expectedAccountId))
@@ -1245,7 +1261,7 @@ function syntheticIngressProbe(req) {
   const pairs = req.headers.cookie.split(";").map((value) => value.trim());
   return pairs.length > 0 && pairs.length <= 3 && new Set(pairs).size === pairs.length && pairs.every((value) => SYNTHETIC_COOKIE_PAIRS.has(value));
 }
-function ingress(req) {
+function ingress(req, env) {
   const fail = (reason) => {
     const error2 = new Rejected("INGRESS_REJECTED", 401);
     error2.probeReason = reason;
@@ -1267,10 +1283,10 @@ function ingress(req) {
   } catch {
     fail("json");
   }
-  if (data?.oauthIngressContract === "v2") {
+  if (data?.oauthIngressContract === "v2" || data?.oauthIngressContract === "v3") {
     let v2;
     try {
-      v2 = readV2CookieContext(req, "oauthIngressContract");
+      v2 = readV2CookieContext(req, "oauthIngressContract", { env });
     } catch (error2) {
       fail(INGRESS_PROBE_REASONS.has(error2.cookieContextReason) ? error2.cookieContextReason : "v2_rejected");
     }
@@ -1366,7 +1382,7 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
       if (route.length !== 2 || !["start", "callback"].includes(action)) deny("NOT_FOUND", 404);
       if (!providers.some((item) => item.id === provider)) deny("OAUTH_PROVIDER_UNAVAILABLE", 503);
       if (req.method !== (action === "start" ? "POST" : "GET")) deny("METHOD_NOT_ALLOWED", 405);
-      const context2 = ingress(req);
+      const context2 = ingress(req, env);
       if (action === "start") {
         if (url.search || req.url !== url.pathname) deny("INVALID_INPUT");
         if (req.headers.origin !== GATEWAY_ORIGIN || count3(req, "origin") !== 1 || req.headers["x-nexus-oauth-request"] !== "1" || count3(req, "x-nexus-oauth-request") !== 1 || req.headers["content-type"] !== "application/json" || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") deny("WRITE_ORIGIN_REQUIRED", 403);

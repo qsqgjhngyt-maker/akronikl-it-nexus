@@ -15,8 +15,8 @@ const digest=value=>createHash('sha256').update(value).digest('hex');
 const reply=(res,status,body,cookies=[])=>{const data=JSON.stringify(body);res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','content-length':Buffer.byteLength(data),...(cookies.length?{'set-cookie':cookies}:{})});res.end(data)};
 const count=(req,name)=>{let value=0;for(let i=0;i<(req.rawHeaders||[]).length;i+=2)if(req.rawHeaders[i].toLowerCase()===name)value++;return value};
 const cookies=(name,value,age)=>`${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${age}`;
-function context(req){
- const v2=readV2CookieContext(req,'passkeyIngressContract');
+function context(req,env){
+ const v2=readV2CookieContext(req,'passkeyIngressContract',{env});
  if(v2!==undefined){
   const flow=v2.get('__Host-nexus_passkey_flow')??null,session=v2.get('__Host-nexus_session')??null;
   if(flow!==null&&!/^npf_[A-Za-z0-9_-]{43}$/.test(flow)||session!==null&&!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session))throw Error('INGRESS_REJECTED');
@@ -51,7 +51,7 @@ export function createPasskeyHandler({env,fetchImpl=fetch}){
   if(req.headers.host!==origin.host||count(req,'host')!==1||req.headers.authorization||req.headers.origin&&req.headers.origin!==origin.origin||req.headers['sec-fetch-site']&&req.headers['sec-fetch-site']!=='same-origin')return reply(res,403,{error:{code:'ORIGIN_REJECTED'}});
   if(method==='POST'&&(req.headers.origin!==origin.origin||count(req,'origin')!==1||req.headers['x-nexus-passkey-write']!=='1'||req.headers['content-type']!=='application/json'))return reply(res,403,{error:{code:'WRITE_ORIGIN_REQUIRED'}});
   try{
-   const ingress=context(req),isOptions=op.endsWith('-options');
+   const ingress=context(req,env),isOptions=op.endsWith('-options');
    const flow=isOptions||!op.endsWith('-verify')?'npf_'+randomBytes(32).toString('base64url'):ingress.flow;
    if(!flow)return reply(res,401,{error:{code:'FLOW_REQUIRED'}});
    const input=method==='GET'?{}:await readJSON(req,65536);
