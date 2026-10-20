@@ -76,7 +76,7 @@ async function verify(request, env) {
   const inserted=await env.DB.prepare(`INSERT OR IGNORE INTO account_service_nonces(nonce,expires_at)
     VALUES(?1,?2)`).bind(nonce,new Date(Number(stamp)+30000).toISOString()).run();
   if (!inserted.success || Number(inserted.meta?.changes)!==1) fail(401,'SERVICE_DENIED');
-  const foundation=await readEligibleAccountFoundation(env.DB,await sha(value.sessionCookie));
+  const foundation=await readEligibleAccountFoundation(env.DB,await sha(value.sessionCookie),undefined,env);
   if (!foundation) fail(401,'SESSION_REQUIRED');
   // expectedAccountId никогда не выбирает actor. Только равенство подтверждённому сервером account.
   if (foundation.account.accountId!==value.expectedAccountId) fail(409,'ACCOUNT_SESSION_CHANGED');

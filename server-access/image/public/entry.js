@@ -3,12 +3,12 @@ import {bindProviderButtons} from './oauth-client.js';
 export const ENTRY_ORIGIN='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net';
 export const ENTRY_URL=ENTRY_ORIGIN+'/account/entry/';
 const accessURL=ENTRY_ORIGIN+'/account/access/';
-const allowedViews=new Set(['home','academy','skills','akronikl','programming','labs','practices','projects','project-studio','account','feedback','reviews','feedback-admin','computer-graphics']);
+const allowedViews=new Set(['home','academy','skills','akronikl','programming','labs','practices','projects','project-studio','account','feedback','reviews','feedback-admin','computer-graphics','admin','blog']);
 // Маркер перехода — только UX-подсказка; решение принимает /api/v2/account.
 export function isOAuthReturnHint(hash=''){return new URLSearchParams(String(hash).replace(/^#/, '')).get('nexusLogin')==='oauth'}
 export function destinationFor(hash=''){
  const supplied=new URLSearchParams(String(hash).replace(/^#/,'')),view=supplied.get('view'),safe=new URLSearchParams({view:allowedViews.has(view)?view:'home'});
- for(const key of ['course','lesson','practicum','project','template','tab','focus']){const value=supplied.get(key);if(!value)continue;if(key==='project'){if(value.length<=256&&value!=='.'&&value!=='..'&&!/[/\\\u0000-\u001f\u007f]/.test(value))safe.set(key,value)}else if(value.length<=160&&/^[A-Za-z0-9._:-]+$/.test(value))safe.set(key,value)}
+ for(const key of ['course','lesson','practicum','project','template','tab','focus','article']){const value=supplied.get(key);if(!value)continue;if(key==='project'){if(value.length<=256&&value!=='.'&&value!=='..'&&!/[/\\\u0000-\u001f\u007f]/.test(value))safe.set(key,value)}else if(value.length<=160&&/^[A-Za-z0-9._:-]+$/.test(value))safe.set(key,value)}
  return ENTRY_ORIGIN+'/#'+safe.toString();
 }
 export function fullDocumentDestinationFor(hash='',locationRef=globalThis.location){
@@ -108,9 +108,9 @@ export function bindEntry({loadPasskeyClient=()=>import('/account/access/passkey
   }catch(error){
    clearInterval(ticker);if(attempt!==version)return;if(timings[phase]===undefined)finish(phase,'error');
    const cancelled=error?.name==='NotAllowedError'||error?.message==='PASSKEY_CANCELLED';
-   const reason=cancelled?'Подтверждение отменено или истекло время ожидания. Можно попробовать ещё раз.':phase==='client'?'Не удалось загрузить клиент входа. Попробуйте ещё раз.':phase==='session'?'Серверная сессия не подтверждена. Обновите страницу для проверки; повторный вход автоматически не запускается.':phase==='verify'?'Сервер не подтвердил результат входа. Обновите страницу для проверки сессии.':error?.message==='INGRESS_REJECTED'?'Сервер отклонил передачу Cookie. Вход не завершён.':client?.message?.(error)||'Не удалось получить запрос для входа. Попробуйте ещё раз.';
+   const reason=cancelled?'Подтверждение отменено или истекло время ожидания. Можно попробовать ещё раз.':error?.message==='ALPHA_ACCESS_CLOSED'?'Доступ к Nexus закрыт. Обратитесь к администратору.':phase==='client'?'Не удалось загрузить клиент входа. Попробуйте ещё раз.':phase==='session'?'Серверная сессия не подтверждена. Обновите страницу для проверки; повторный вход автоматически не запускается.':phase==='verify'?'Сервер не подтвердил результат входа. Обновите страницу для проверки сессии.':error?.message==='INGRESS_REJECTED'?'Сервер отклонил передачу Cookie. Вход не завершён.':client?.message?.(error)||'Не удалось получить запрос для входа. Попробуйте ещё раз.';
    status.dataset.authStage=phase;
-   status.dataset.authCode=['INGRESS_REJECTED','FLOW_REQUIRED','CHALLENGE_REJECTED','PASSKEY_REJECTED','RATE_LIMITED','PASSKEY_UNAVAILABLE','PASSKEY_RESPONSE_INVALID','ISSUANCE_UNCONFIRMED','SESSION_NOT_ESTABLISHED'].includes(error?.message)?error.message:cancelled?'CANCELLED':'UNCONFIRMED';
+   status.dataset.authCode=['ALPHA_ACCESS_CLOSED','INGRESS_REJECTED','FLOW_REQUIRED','CHALLENGE_REJECTED','PASSKEY_REJECTED','RATE_LIMITED','PASSKEY_UNAVAILABLE','PASSKEY_RESPONSE_INVALID','ISSUANCE_UNCONFIRMED','SESSION_NOT_ESTABLISHED'].includes(error?.message)?error.message:cancelled?'CANCELLED':'UNCONFIRMED';
    setStatus(reason+' '+summary(),'error');
   }finally{clearInterval(ticker);if(attempt===version){activeAttempt=null;setBusy(false);lockProviders(false)}}
  });

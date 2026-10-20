@@ -8,11 +8,13 @@ const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE)
 const frontend=pathToFileURL(process.env.NEXUS_FRONTEND_DIR.replace(/[\\/]?$/,'/'));
 const generation=JSON.parse(await readFile(new URL('version.json',frontend))).releaseCandidate.assetGeneration;
 const origin='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net';
-const f=await fixture(frontend,{oauth:true}),results=[],boundaries=[],providerRequests=[],pageErrors=[];
+const f=await fixture(frontend,{oauth:true}),results=[],boundaries=[],providerRequests=[],pageErrors=[],navigations=[];
 const browser=await chromium.launch({executablePath:process.env.NEXUS_CHROME_PATH,headless:true,args:['--disable-background-networking','--disable-component-update']});
 const context=await browser.newContext(),page=await context.newPage();
 page.setDefaultTimeout(4000);
 page.on('pageerror',()=>pageErrors.push('page-error'));
+const clockStart=performance.now();
+page.on('framenavigated',frame=>{if(frame===page.mainFrame()){const u=new URL(frame.url());navigations.push({path:u.pathname,hash:u.hash.startsWith('#view=')?u.hash:'',atMs:Math.round(performance.now()-clockStart)})}});
 const type=p=>p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.json')?'application/json':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.png')?'image/png':'text/html';
 let unauthorizedNetwork=0,strictReturnRequests=0;
 await context.route('**/*',async route=>{
@@ -42,7 +44,7 @@ await context.route('**/*',async route=>{
   return route.fulfill({body:await readFile(new URL(path,frontend)),contentType:type(path)});
  }catch{return route.fulfill({status:500,body:'SYNTHETIC_FIXTURE_FAILED'})}
 });
-const check=async(name,fn)=>{const start=performance.now();try{await fn();results.push({name,status:'PASS',durationMs:Math.round(performance.now()-start)})}catch(error){results.push({name,status:'FAIL',failure:error.name,durationMs:Math.round(performance.now()-start)})}console.log(results.at(-1).status+' '+name)};
+const check=async(name,fn)=>{const start=performance.now();try{await fn();results.push({name,status:'PASS',durationMs:Math.round(performance.now()-start)})}catch(error){results.push({name,status:'FAIL',failure:error.name,detail:String(error.message).slice(0,1200),pageState:await page.evaluate(()=>({path:location.pathname,hash:location.hash,boot:document.querySelector('#boot-status')?.textContent?.slice(0,300)||null,hasAccount:!!document.querySelector('[data-unified-account]'),hasApp:!!document.querySelector('#app')})).catch(()=>null),durationMs:Math.round(performance.now()-start)})}console.log(results.at(-1).status+' '+name)};
 const count=table=>f.db.prepare('SELECT count(*) n FROM '+table).get().n;
 const app=async()=>{await page.locator('[data-unified-account]').waitFor()};
 try{
@@ -97,11 +99,11 @@ try{
   assert.equal(new URL(page.url()).hash,'#view=account&tab=security');
  });
  assert.equal(unauthorizedNetwork,0);
- const result={status:results.every(x=>x.status==='PASS')?'PASS':'FAIL',checks:results,boundaries,providerRequests,strictReturnRequests,externalRequests:0,realAccounts:false,pageErrors};
+ const result={status:results.every(x=>x.status==='PASS')?'PASS':'FAIL',checks:results,boundaries,providerRequests,strictReturnRequests,externalRequests:0,realAccounts:false,pageErrors,navigations};
  await writeFile(process.env.NEXUS_BROWSER_RESULT,JSON.stringify(result,null,2)+'\n',{flag:'wx'});
  if(result.status!=='PASS')process.exitCode=1;
 }catch(error){
- const diagnostics={status:'FIXTURE_OR_SETUP_FAIL',failure:error.name,checks:results,boundaries,providerRequests,pageErrors,currentPath:new URL(page.url()).pathname,externalRequests:unauthorizedNetwork};
+ const diagnostics={status:'FIXTURE_OR_SETUP_FAIL',failure:error.name,checks:results,boundaries,providerRequests,pageErrors,navigations,currentPath:new URL(page.url()).pathname,externalRequests:unauthorizedNetwork};
  await writeFile(process.env.NEXUS_BROWSER_RESULT,JSON.stringify(diagnostics,null,2)+'\n',{flag:'wx'});process.exitCode=1;
  console.log(JSON.stringify({status:diagnostics.status,failure:diagnostics.failure,currentPath:diagnostics.currentPath,boundaries}));
 }finally{await browser.close();f.close()}

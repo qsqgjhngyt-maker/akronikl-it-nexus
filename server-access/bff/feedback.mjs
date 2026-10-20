@@ -11,7 +11,7 @@ export function createFeedbackHandler({env={},fetchImpl=fetch}={}){
   const origin=env.FEEDBACK_GATEWAY_ORIGIN||GATEWAY_ORIGIN,host=new URL(origin).host;
   if(req.headers.host!==host||req.headers.origin&&req.headers.origin!==origin||req.headers['sec-fetch-site']&&req.headers['sec-fetch-site']!=='same-origin'||req.headers.authorization)return reply(res,403,{error:{code:'ORIGIN_REJECTED'}});
   if(!['GET','POST','PATCH'].includes(req.method))return reply(res,405,{error:{code:'METHOD_NOT_ALLOWED'}});
-  const path=new URL(req.url,origin);if(path.pathname.includes('%')||!/^\/api\/v2\/feedback\/(reviews|me|items|moderation|items\/[a-zA-Z0-9-]+(?:\/(withdraw|moderate|events))?)$/.test(path.pathname)||path.pathname!==req.url.split('?')[0])return reply(res,404,{error:{code:'NOT_FOUND'}});
+  const path=new URL(req.url,origin);if(path.pathname.includes('%')||!/^\/api\/v2\/feedback\/(reviews|me|items|moderation|items\/[a-zA-Z0-9-]+(?:\/(withdraw|moderate|events|delete|conversation|replies(?:\/[a-zA-Z0-9-]+\/delete)?))?)$/.test(path.pathname)||path.pathname!==req.url.split('?')[0])return reply(res,404,{error:{code:'NOT_FOUND'}});
   if(req.method!=='GET'&&(req.headers.origin!==origin||req.headers['x-nexus-feedback-write']!=='1'||req.headers['content-type']!=='application/json'||path.search))return reply(res,403,{error:{code:'WRITE_ORIGIN_REQUIRED'}});
   const isPublic=path.pathname==='/api/v2/feedback/reviews'&&req.method==='GET';
   let session=null;
@@ -36,7 +36,7 @@ export function createFeedbackHandler({env={},fetchImpl=fetch}={}){
     upstream=await fetchImpl(WORKER_ORIGIN+INTERNAL,{method:'POST',body,redirect:'error',signal:AbortSignal.timeout(5000),headers:{accept:'application/json','content-type':'application/json','x-nexus-service-timestamp':stamp,'x-nexus-service-nonce':nonce,'x-nexus-service-signature':createHmac('sha256',env.FEEDBACK_SERVICE_KEY).update(canonical).digest('hex')}});
    }
    if(!upstream.headers.get('content-type')?.startsWith('application/json'))throw Error('UPSTREAM_INVALID');const data=await readResponse(upstream);
-   const allowedCodes=['INVALID_INPUT','INVALID_CONTEXT','INPUT_TOO_LARGE','RATE_LIMITED','STALE_VERSION','STALE_REVISION','REQUEST_CONFLICT','INVALID_TRANSITION','NOT_FOUND','MODERATOR_REQUIRED','SESSION_REQUIRED','FEEDBACK_UNAVAILABLE'];
+   const allowedCodes=['INVALID_INPUT','INVALID_CONTEXT','INPUT_TOO_LARGE','RATE_LIMITED','STALE_VERSION','STALE_REVISION','REQUEST_CONFLICT','ITEM_DELETED','INVALID_TRANSITION','NOT_FOUND','MODERATOR_REQUIRED','SESSION_REQUIRED','FEEDBACK_UNAVAILABLE'];
    if(!upstream.ok)return reply(res,[400,401,403,404,409,413,429,503].includes(upstream.status)?upstream.status:502,{error:{code:allowedCodes.includes(data?.error?.code)?data.error.code:'FEEDBACK_UNAVAILABLE'}});
    return reply(res,200,data);
   }catch(error){return reply(res,error.message==='BODY_TOO_LARGE'?413:error instanceof SyntaxError?400:502,{error:{code:error.message==='BODY_TOO_LARGE'?'INPUT_TOO_LARGE':error instanceof SyntaxError?'INVALID_INPUT':'FEEDBACK_UNAVAILABLE'}})}

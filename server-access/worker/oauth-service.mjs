@@ -1,5 +1,6 @@
 // Приватный BFF→Worker OAuth protocol. Provider tokens сюда не передаются и не хранятся.
 import {Buffer} from 'node:buffer';
+import {AlphaError,oauthAdmissionCommands} from './alpha-admission.mjs';
 const INTERNAL='/api/v2/account/internal/oauth';
 const ISSUERS=Object.freeze({google:'https://accounts.google.com',yandex:'https://login.yandex.ru',vk:'https://id.vk.ru',mailru:'https://oauth.mail.ru'});
 const encoder=new TextEncoder();
@@ -139,6 +140,7 @@ async function complete(env,data){
  const commands=[statement(env.DB,`UPDATE nexus_oauth_transactions SET completed_at=?1,commit_id=?2
   WHERE id=?3 AND flow_hash=?4 AND claimed_at IS NOT NULL AND completed_at IS NULL AND expires_at>?1`,created,commitId,tx.id,data.flowHash)];
  if(isNewAccount)commands.push(statement(env.DB,"INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,?2,'active',?3,?3)",accountId,profile.displayName,created));
+ commands.push(...await oauthAdmissionCommands(env,accountId,created));
  if(isNewIdentity){
   commands.push(statement(env.DB,"INSERT INTO login_methods(id,account_id,kind,status,created_at) VALUES(?1,?2,'oauth','active',?3)",methodId,accountId,created));
   commands.push(statement(env.DB,'INSERT INTO oauth_identities(login_method_id,account_id,provider,issuer,provider_subject,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?6)',methodId,accountId,tx.provider,profile.issuer,profile.subject,created));
@@ -156,7 +158,7 @@ async function complete(env,data){
   if(committed.length!==commands.length||committed.some(x=>!x.success))deny('ISSUANCE_UNCONFIRMED',503);
   const receipt=await first(env.DB,'SELECT session_id FROM nexus_oauth_receipts WHERE id=?1 AND tx_id=?2 AND account_id=?3',commitId,tx.id,accountId);
   if(receipt?.session_id!==sessionId)deny('ISSUANCE_UNCONFIRMED',503);
- }catch{deny('ISSUANCE_UNCONFIRMED',503)}
+ }catch(error){const message=String(error?.message||'');if(message.includes('ALPHA_CAPACITY_REACHED'))deny('ALPHA_CAPACITY_REACHED',409);if(message.includes('ALPHA_ACCESS_REQUIRED'))deny('ALPHA_ACCESS_CLOSED',403);deny('ISSUANCE_UNCONFIRMED',503)}
  return{ok:true,sessionSecret:secret};
 }
 
@@ -165,6 +167,6 @@ export async function handleOAuthService(request,env){
   const data=await ingress(request,env);
   return response(await (data.op==='begin'?begin(env,data):data.op==='claim'?claim(env,data):complete(env,data)));
  }catch(error){
-  return response({error:{code:error instanceof Rejected?error.code:'OAUTH_UNAVAILABLE'}},error instanceof Rejected?error.status:503);
+  return response({error:{code:error instanceof Rejected||error instanceof AlphaError?error.code:'OAUTH_UNAVAILABLE'}},error instanceof Rejected||error instanceof AlphaError?error.status:503);
  }
 }

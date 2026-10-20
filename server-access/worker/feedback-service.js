@@ -1,3 +1,4 @@
+import {communityOperation,CommunityError,teamPermission} from './community-service.mjs';
 import {readEligibleAccountFoundation} from './account-foundation.js';
 const INTERNAL='/api/v2/feedback/internal',BASE='/api/v2/feedback';
 const encoder=new TextEncoder();
@@ -51,20 +52,23 @@ async function verifyEnvelope(request,env){
  if(!(hasExpectation||envelopeKeys==='method,path,payload,sessionHash'&&env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED!=='true')||hasExpectation&&(typeof value.expectedAccountId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId))||!/^[a-f0-9]{64}$/.test(value.sessionHash||'')||!['GET','POST','PATCH'].includes(value.method)||typeof value.path!=='string'||!value.path.startsWith(BASE+'/')||value.path.length>512)fail(401,'SERVICE_DENIED');
  const added=await query(env.DB,'INSERT OR IGNORE INTO feedback_service_nonces(nonce,expires_at) VALUES(?1,?2)',nonce,new Date(Number(stamp)+30000).toISOString()).run();if(added.meta.changes!==1)fail(401,'SERVICE_DENIED');
  await query(env.DB,'DELETE FROM feedback_service_nonces WHERE expires_at<?1',new Date().toISOString()).run();
- const foundation=await readEligibleAccountFoundation(env.DB,value.sessionHash);if(!foundation)fail(401,'SESSION_REQUIRED');
+ const foundation=await readEligibleAccountFoundation(env.DB,value.sessionHash,undefined,env);if(!foundation)fail(401,'SESSION_REQUIRED');
  // Ожидание клиента не авторизует actor: actor всегда выводится из сессии.
  if(hasExpectation&&foundation.account.accountId!==value.expectedAccountId)fail(401,'SESSION_REQUIRED');
  return{...value,actor:foundation.account};
 }
-export async function feedbackOperation(db,{method,path,payload,actor}){
+export async function feedbackOperation(db,value,env={}){
+ const {method,path,payload,actor}=value;
+ const extension=await communityOperation({...env,DB:db},value);if(extension!==undefined)return extension;
  const url=new URL(path,'https://nexus.invalid'),pathname=url.pathname;
- const permission=await query(db,'SELECT can_moderate FROM feedback_permissions WHERE account_id=?1',actor.accountId).first(),moderator=permission?.can_moderate===1;
+ const moderator=await teamPermission(db,actor.accountId,env);
  if(pathname===BASE+'/me'&&method==='GET'){
   const limit=Math.min(20,Math.max(1,Math.floor(Number(url.searchParams.get('limit'))||20))),offset=Math.min(10000,Math.max(0,Math.floor(Number(url.searchParams.get('offset'))||0)));
   const total=await query(db,'SELECT count(*) AS count FROM feedback_items WHERE author_id=?1',actor.accountId).first();
   return{account:{id:actor.accountId,displayName:actor.displayName},canModerate:moderator,total:total.count,offset,items:(await rows(query(db,joined+' WHERE i.author_id=?1 ORDER BY i.created_at DESC,i.id LIMIT ?2 OFFSET ?3',actor.accountId,limit,offset))).map(authorDto)};
  }
  if(pathname===BASE+'/items'&&method==='POST'){
+  if(env.COMMUNITY_ENABLED==='true'&&await query(db,'SELECT 1 ok FROM feedback_deleted_items WHERE author_id=?1 AND request_key=?2',actor.accountId,payload?.requestKey||'').first())fail(409,'ITEM_DELETED');
   const input=validateFeedbackInput(payload),requestKey=string(payload.requestKey,80,10);if(!/^[a-zA-Z0-9-]+$/.test(requestKey))fail(400,'INVALID_INPUT');const digest=await sha(JSON.stringify(input));
   const duplicate=await query(db,joined+' WHERE i.author_id=?1 AND i.request_key=?2',actor.accountId,requestKey).first();if(duplicate){if(duplicate.request_hash!==digest)fail(409,'REQUEST_CONFLICT');return{item:authorDto(duplicate)}}
   await rate(db,actor.accountId);const id=crypto.randomUUID(),stamp=new Date().toISOString(),status=input.kind==='review'?'pending':'submitted';
@@ -116,6 +120,6 @@ export async function handleFeedbackRequest(request,env){
  try{if(env.FEEDBACK_ENABLED!=='true'||!env.DB)fail(503,'FEEDBACK_UNAVAILABLE');
   if(url.pathname===BASE+'/reviews'&&request.method==='GET')return response(await publicReviews(env.DB,url.searchParams));
   if(url.pathname!==INTERNAL)fail(404,'NOT_FOUND');
-  const envelope=await verifyEnvelope(request,env);return response(await feedbackOperation(env.DB,envelope));
- }catch(error){return response({error:{code:error instanceof FeedbackError?error.code:'FEEDBACK_UNAVAILABLE'}},error instanceof FeedbackError?error.status:503)}
+  const envelope=await verifyEnvelope(request,env);return response(await feedbackOperation(env.DB,envelope,env));
+ }catch(error){return response({error:{code:error instanceof FeedbackError||error instanceof CommunityError?error.code:'FEEDBACK_UNAVAILABLE'}},error instanceof FeedbackError||error instanceof CommunityError?error.status:503)}
 }

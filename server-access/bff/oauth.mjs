@@ -19,8 +19,13 @@ const reply=(res,status,body,cookies=[],extra={})=>{
 function htmlCallbackError(req,res,status,code,cookies){
  if(typeof req.headers.accept!=='string'||!req.headers.accept.split(',').some(value=>/^text\/html(?:\s*;|$)/i.test(value.trim())&&!/;\s*q=0(?:\.0*)?(?:\s*;|\s*$)/i.test(value)))return false;
  const linking=code==='EXPLICIT_LINK_REQUIRED';
- const title=linking?'Привяжите способ входа':'Не удалось завершить вход';
- const message=linking?'Этот способ входа ещё не привязан к существующему аккаунту. Войдите ключом и привяжите его в разделе безопасности — проекты и права сохранятся.':'Попробуйте начать вход заново. Если проблема повторяется, войдите существующим ключом доступа.';
+ const alpha={
+  ALPHA_ACCESS_CLOSED:['Доступ к тестированию закрыт','Обратитесь к администратору Nexus. Данные аккаунта сохраняются.'],
+  ALPHA_INVITATION_REQUIRED:['Тестирование по приглашениям','Запросите у администратора приглашение для первого входа.'],
+  ALPHA_CAPACITY_REACHED:['Все места заняты','Достигнут лимит альфа-тестировщиков. Обратитесь к администратору.']
+ }[code];
+ const title=alpha?alpha[0]:linking?'Привяжите способ входа':'Не удалось завершить вход';
+ const message=alpha?alpha[1]:linking?'Этот способ входа ещё не привязан к существующему аккаунту. Войдите ключом и привяжите его в разделе безопасности — проекты и права сохранятся.':'Попробуйте начать вход заново. Если проблема повторяется, войдите существующим ключом доступа.';
  const data=`<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title} · Nexus</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#091321;color:#eaf4ff;font:17px/1.6 system-ui,sans-serif}main{box-sizing:border-box;max-width:680px;margin:24px;padding:clamp(24px,5vw,48px);border:1px solid #506278;border-radius:24px;background:#132033}small{color:#93ded7;letter-spacing:.12em}h1{font-size:clamp(25px,5vw,36px);line-height:1.2}p{color:#c5d2e3}nav{display:flex;flex-wrap:wrap;gap:14px;margin-top:28px}a{color:#a8eee0;text-underline-offset:4px}a:first-child{padding:10px 16px;border:1px solid #7bcfc1;border-radius:12px}a:focus-visible{outline:3px solid #fff;outline-offset:4px}</style><main><small>AKRONIKL · IT NEXUS</small><h1>${title}</h1><p>${message}</p><nav><a href="${GATEWAY_ORIGIN}/account/access/">Войти ключом доступа</a>${linking?`<a href="${GATEWAY_ORIGIN}/#view=account&amp;tab=security">Открыть безопасность аккаунта</a>`:`<a href="${GATEWAY_ORIGIN}/account/entry/">Начать вход заново</a>`}</nav></main></html>`;
  res.writeHead(status,{'content-type':'text/html; charset=utf-8','content-length':Buffer.byteLength(data),'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",...(cookies.length?{'set-cookie':cookies}:{})});res.end(data);return true;
 }
@@ -94,7 +99,7 @@ async function service(env,fetchImpl,payload){
  if(upstream.redirected||!/^application\/json(?:\s*;|$)/i.test(upstream.headers.get('content-type')||'')){await upstream.body?.cancel();deny('OAUTH_UNAVAILABLE',502)}
  const data=await boundedJSON(upstream.body,16384);
  if(upstream.status!==200){
-  const safe=['ACCOUNT_SESSION_CHANGED','FRESH_PASSKEY_REQUIRED','EXPLICIT_LINK_REQUIRED','OWNER_EMAIL_REQUIRED','IDENTITY_ALREADY_LINKED','IDENTITY_REJECTED','TRANSACTION_REJECTED','RATE_LIMITED'];
+  const safe=['ALPHA_INVITATION_REQUIRED','ALPHA_ACCESS_CLOSED','ALPHA_CAPACITY_REACHED','ALPHA_CONTROL_UNAVAILABLE','ACCOUNT_SESSION_CHANGED','FRESH_PASSKEY_REQUIRED','EXPLICIT_LINK_REQUIRED','OWNER_EMAIL_REQUIRED','IDENTITY_ALREADY_LINKED','IDENTITY_REJECTED','TRANSACTION_REJECTED','RATE_LIMITED'];
   deny(safe.includes(data.error?.code)?data.error.code:'OAUTH_UNAVAILABLE',[400,401,403,409,429,503].includes(upstream.status)?upstream.status:502);
  }
  if(data.ok!==true)deny('OAUTH_UNAVAILABLE',502);return data;

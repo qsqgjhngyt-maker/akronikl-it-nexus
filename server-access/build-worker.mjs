@@ -1,0 +1,10 @@
+import {build} from 'esbuild';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+const root=new URL('./',import.meta.url),out=new URL('worker-bundle/',root);
+await mkdir(out,{recursive:true});
+const result=await build({entryPoints:[fileURLToPath(new URL('worker/entry.mjs',root))],outfile:fileURLToPath(new URL('entry.mjs',out)),bundle:true,platform:'node',format:'esm',target:'es2022',external:['node:*'],metafile:true,logLevel:'warning'});
+const bytes=await readFile(new URL('entry.mjs',out));
+const info={status:'BUILT_NOT_DEPLOYED',sha256:createHash('sha256').update(bytes).digest('hex'),bytes:bytes.length,requiresCloudflareNodejsCompat:true,inputs:Object.keys(result.metafile.inputs).sort()};
+await writeFile(new URL('BUILD_INFO.json',out),JSON.stringify(info,null,2)+'\n');console.log(JSON.stringify({status:info.status,sha256:info.sha256,bytes:info.bytes}));

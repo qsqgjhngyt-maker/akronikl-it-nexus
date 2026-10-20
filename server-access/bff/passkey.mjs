@@ -3,6 +3,9 @@ import {isIP} from 'node:net';
 import {readV2CookieContext} from './gateway-cookie-context.mjs';
 const INTERNAL='/api/v2/account/internal/passkey';
 const routes=new Map([
+ ['/api/v2/account/passkey/registration',['GET','registration-policy']],
+ ['/api/v2/account/passkey/register/cancel',['POST','cancel-public-registration']],
+ ['/api/v2/account/passkey/invitation',['POST','invitation-info']],
  ['/api/v2/account/passkey/register/options',['POST','register-options']],
  ['/api/v2/account/passkey/register/verify',['POST','register-verify']],
  ['/api/v2/account/passkey/authenticate/options',['POST','authenticate-options']],
@@ -52,14 +55,17 @@ export function createPasskeyHandler({env,fetchImpl=fetch}){
   if(method==='POST'&&(req.headers.origin!==origin.origin||count(req,'origin')!==1||req.headers['x-nexus-passkey-write']!=='1'||req.headers['content-type']!=='application/json'))return reply(res,403,{error:{code:'WRITE_ORIGIN_REQUIRED'}});
   try{
    const ingress=context(req,env),isOptions=op.endsWith('-options');
-   const flow=isOptions||!op.endsWith('-verify')?'npf_'+randomBytes(32).toString('base64url'):ingress.flow;
+   const flow=isOptions||!op.endsWith('-verify')&&op!=='cancel-public-registration'?'npf_'+randomBytes(32).toString('base64url'):ingress.flow;
    if(!flow)return reply(res,401,{error:{code:'FLOW_REQUIRED'}});
    const input=method==='GET'?{}:await readJSON(req,65536);
    if(!input||typeof input!=='object'||Array.isArray(input))throw Error('INVALID_INPUT');
    let mapped=input;
-   if(op==='register-options'){
-    if(Object.keys(input).some(k=>k!=='invitationToken'))throw Error('INVALID_INPUT');
-    if(input.invitationToken!==undefined){if(typeof input.invitationToken!=='string'||!/^npi_[A-Za-z0-9_-]{43}$/.test(input.invitationToken))throw Error('INVALID_INPUT');mapped={inviteHash:digest(input.invitationToken)}}else mapped={};
+   if(op==='register-options'||op==='invitation-info'){
+    if(Object.keys(input).some(k=>!['invitationToken','username','displayName','registration'].includes(k)))throw Error('INVALID_INPUT');
+    if('registration' in input){
+     if(op!=='register-options'||input.registration!=='open'||'invitationToken' in input||Object.keys(input).sort().join(',')!=='displayName,registration,username'||typeof input.username!=='string'||typeof input.displayName!=='string')throw Error('INVALID_INPUT');
+     mapped={registration:'open',username:input.username,displayName:input.displayName};
+    }else if(input.invitationToken!==undefined){if(typeof input.invitationToken!=='string'||!/^npi_[A-Za-z0-9_-]{43}$/.test(input.invitationToken))throw Error('INVALID_INPUT');mapped={inviteHash:digest(input.invitationToken),...(input.username!==undefined?{username:input.username}:{}),...(input.displayName!==undefined?{displayName:input.displayName}:{})}}else{if(input.username!==undefined||input.displayName!==undefined)throw Error('INVALID_INPUT');mapped={}}
    }
    const sessionHash=ingress.session?digest(ingress.session):null;
    // Used for throttling only. It is never an identity or authorization predicate.
@@ -70,13 +76,16 @@ export function createPasskeyHandler({env,fetchImpl=fetch}){
    const upstream=await fetchImpl(worker.origin+INTERNAL,{method:'POST',body,redirect:'error',signal:AbortSignal.timeout(12000),headers:{accept:'application/json','content-type':'application/json','x-nexus-service-timestamp':timestamp,'x-nexus-service-nonce':nonce,'x-nexus-service-signature':createHmac('sha256',env.PASSKEY_SERVICE_KEY).update(canonical).digest('hex')}});
    if(!upstream.headers.get('content-type')?.startsWith('application/json'))throw Error('UPSTREAM_INVALID');
    const data=await upstreamJSON(upstream);
-   const safeCodes=['PASSKEY_UNAVAILABLE','INVALID_INPUT','INPUT_TOO_LARGE','RATE_LIMITED','ENROLLMENT_REQUIRED','FRESH_LOGIN_REQUIRED','KEY_LIMIT','PASSKEY_REJECTED','CHALLENGE_REJECTED','SESSION_REQUIRED','LAST_KEY_OR_NOT_FOUND','ISSUANCE_UNCONFIRMED'];
+   const safeCodes=['REGISTRATION_CLOSED','REGISTRATION_UNAVAILABLE','ALREADY_SIGNED_IN','ALPHA_CAPACITY_REACHED','USERNAME_UNAVAILABLE','PROFILE_INPUT_REQUIRED','ALPHA_ACCESS_CLOSED','ALPHA_CONTROL_UNAVAILABLE','PASSKEY_UNAVAILABLE','INVALID_INPUT','INPUT_TOO_LARGE','RATE_LIMITED','ENROLLMENT_REQUIRED','FRESH_LOGIN_REQUIRED','KEY_LIMIT','PASSKEY_REJECTED','CHALLENGE_REJECTED','SESSION_REQUIRED','LAST_KEY_OR_NOT_FOUND','ISSUANCE_UNCONFIRMED'];
    if(!upstream.ok)return reply(res,[400,401,403,409,413,429,503].includes(upstream.status)?upstream.status:502,{error:{code:safeCodes.includes(data?.error?.code)?data.error.code:'PASSKEY_UNAVAILABLE'}});
+   if(op==='registration-policy'){if(Object.keys(data).sort().join(',')!=='available,reason'||typeof data.available!=='boolean'||!['open','invitation','capacity'].includes(data.reason)||data.available!==(data.reason==='open'))throw Error('UPSTREAM_INVALID');return reply(res,200,{available:data.available,reason:data.reason})}
+   if(op==='cancel-public-registration'){if(Object.keys(data).join(',')!=='ok'||data.ok!==true)throw Error('UPSTREAM_INVALID');return reply(res,200,{ok:true},[cookies('__Host-nexus_passkey_flow','',0)])}
    if(isOptions){if(typeof data.challengeId!=='string'||!data.options)throw Error('UPSTREAM_INVALID');return reply(res,200,{challengeId:data.challengeId,options:data.options},[cookies('__Host-nexus_passkey_flow',flow,120)])}
    if(op==='register-verify'){if(data.ok!==true||'sessionSecret' in data)throw Error('UPSTREAM_INVALID');return reply(res,200,{ok:true},[cookies('__Host-nexus_passkey_flow','',0)])}
    if(op==='authenticate-verify'){if(data.ok!==true||!/^nxs_[A-Za-z0-9_-]{43}$/.test(data.sessionSecret||''))throw Error('UPSTREAM_INVALID');return reply(res,200,{ok:true},[cookies('__Host-nexus_session',data.sessionSecret,43200),cookies('__Host-nexus_passkey_flow','',0)])}
    if(op==='logout'){if(data.ok!==true||data.clearSession!==true)throw Error('UPSTREAM_INVALID');return reply(res,200,{ok:true},[cookies('__Host-nexus_session','',0),cookies('__Host-nexus_passkey_flow','',0)])}
    if(op==='keys'){if(!Array.isArray(data.keys)||data.keys.length>10)throw Error('UPSTREAM_INVALID');return reply(res,200,{keys:data.keys.map(k=>({id:k.id,status:k.status,createdAt:k.createdAt,deviceType:k.deviceType}))})}
+   if(op==='invitation-info'){if(typeof data.profileRequired!=='boolean'||typeof data.expiresAt!=='string'||data.expiresAt.length>64)throw Error('UPSTREAM_INVALID');return reply(res,200,{profileRequired:data.profileRequired,expiresAt:data.expiresAt})}
    if(op==='revoke'&&data.ok===true)return reply(res,200,{ok:true});
    throw Error('UPSTREAM_INVALID');
   }catch(error){const code=['INPUT_TOO_LARGE','INVALID_INPUT','INGRESS_REJECTED'].includes(error.message)?error.message:error instanceof SyntaxError?'INVALID_INPUT':'PASSKEY_UNAVAILABLE';return reply(res,code==='INPUT_TOO_LARGE'?413:code==='INGRESS_REJECTED'?401:code==='INVALID_INPUT'?400:502,{error:{code}})}

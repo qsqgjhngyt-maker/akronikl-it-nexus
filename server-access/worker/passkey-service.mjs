@@ -1,4 +1,6 @@
 import {Buffer} from 'node:buffer';
+import {AlphaError,alphaAccess,managedInvitation,validUsername,validDisplayName} from './alpha-admission.mjs';
+import {registrationPolicy,reservePublicRegistration,cancelPublicRegistration} from './public-registration.mjs';
 import {generateRegistrationOptions,generateAuthenticationOptions,verifyRegistrationResponse,verifyAuthenticationResponse} from '@simplewebauthn/server';
 const INTERNAL='/api/v2/account/internal/passkey';
 const encoder=new TextEncoder();
@@ -51,7 +53,8 @@ async function ingress(request,env){
  await sql(env.DB,'DELETE FROM nexus_passkey_challenges WHERE id IN (SELECT id FROM nexus_passkey_challenges WHERE consumed_at IS NULL AND expires_at<?1 LIMIT 500)',stamp()).run();
  return data;
 }
-async function eligible(db,sessionHash,recent=false){
+async function eligible(env,sessionHash,recent=false){
+ const db=env.DB;
  if(!sessionHash)return null;
  const row=await first(db,`SELECT s.id,s.subject_id,s.created_at,a.display_name,slm.login_method_id FROM account_sessions s
  JOIN account_subjects a ON a.id=s.subject_id AND a.status='active'
@@ -60,12 +63,30 @@ async function eligible(db,sessionHash,recent=false){
  JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active'
  WHERE s.secret_hash=?1 AND s.status='active' AND s.auth_strength='account-method-v1' AND s.revoked_at IS NULL
  AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2`,sessionHash,stamp());
- if(!row)return null;
+ if(!row||!await alphaAccess(env,row.subject_id))return null;
  const age=Date.now()-Date.parse(row.created_at);
  return recent&&(!Number.isFinite(age)||age<0||age>300000)?null:row;
 }
 async function registerOptions(env,settings,payload){
- const{input,flowHash,sessionHash}=payload;if(!keys(input,['inviteHash']))reject('INVALID_INPUT');
+ const{flowHash,sessionHash}=payload;let input=payload.input;if(!keys(input,['inviteHash','username','displayName','registration']))reject('INVALID_INPUT');
+ if('registration' in input){
+  if(input.registration!=='open'||'inviteHash' in input||Object.keys(input).length!==3)reject('INVALID_INPUT');
+  if(sessionHash)reject('ALREADY_SIGNED_IN',409);
+  if(!validUsername(input.username)||!validDisplayName(input.displayName))reject('PROFILE_INPUT_REQUIRED');
+  if(await first(env.DB,'SELECT 1 ok FROM nexus_account_profiles WHERE username=?1',input.username))reject('USERNAME_UNAVAILABLE',409);
+  const inviteHash=await sha(random());
+  await reservePublicRegistration(env,{networkHash:payload.networkHash,inviteHash});
+  input={inviteHash,username:input.username,displayName:input.displayName};
+ }
+ let enrollment=null;
+ if(hash(input.inviteHash)){
+  const managed=await managedInvitation(env,input.inviteHash);
+  if(managed){
+   if(!validUsername(input.username)||!validDisplayName(input.displayName))reject('PROFILE_INPUT_REQUIRED',400);
+   if(await first(env.DB,'SELECT 1 ok FROM nexus_account_profiles WHERE username=?1',input.username))reject('USERNAME_UNAVAILABLE',409);
+   enrollment={username:input.username,displayName:input.displayName};
+  }else if(input.username!==undefined||input.displayName!==undefined)reject('INVALID_INPUT');
+ }else if(input.username!==undefined||input.displayName!==undefined)reject('INVALID_INPUT');
  let account,inviteHash=null,authorizedSessionId=null;
  if(hash(input.inviteHash)){
   const inv=await first(env.DB,`SELECT i.account_id,i.purpose,a.display_name FROM nexus_passkey_invites i
@@ -73,24 +94,33 @@ async function registerOptions(env,settings,payload){
    WHERE i.token_hash=?1 AND i.consumed_at IS NULL AND i.expires_at>?2`,input.inviteHash,stamp());
   if(!inv)reject('ENROLLMENT_REQUIRED',403);
   if(inv.purpose==='bootstrap'&&(await first(env.DB,"SELECT count(*) AS count FROM login_methods WHERE account_id=?1 AND kind='passkey' AND status='active'",inv.account_id)).count)reject('ENROLLMENT_REQUIRED',403);
-  account={id:inv.account_id,display_name:inv.display_name};inviteHash=input.inviteHash;
+  account={id:inv.account_id,display_name:enrollment?.displayName||inv.display_name};inviteHash=input.inviteHash;
  }else{
   if('inviteHash' in input)reject('INVALID_INPUT');
-  const session=await eligible(env.DB,sessionHash,true);if(!session)reject('FRESH_LOGIN_REQUIRED',401);
+  const session=await eligible(env,sessionHash,true);if(!session)reject('FRESH_LOGIN_REQUIRED',401);
   account={id:session.subject_id,display_name:session.display_name};authorizedSessionId=session.id;
  }
  await sql(env.DB,'INSERT INTO nexus_passkey_users(account_id,user_id) VALUES(?1,?2) ON CONFLICT(account_id) DO NOTHING',account.id,random()).run();
  const user=await first(env.DB,'SELECT user_id FROM nexus_passkey_users WHERE account_id=?1',account.id);
  const existing=await all(env.DB,`SELECT k.id,k.transports_json FROM nexus_passkey_credentials k JOIN login_methods lm ON lm.id=k.login_method_id WHERE k.account_id=?1 AND lm.status='active'`,account.id);
  if(existing.length>=10)reject('KEY_LIMIT',409);
- const options=await generateRegistrationOptions({rpName:'AKRONIKL IT NEXUS',rpID:settings.rpID,userID:Buffer.from(user.user_id,'base64url'),userName:account.display_name,userDisplayName:account.display_name,attestationType:'none',supportedAlgorithmIDs:[-7,-257],timeout:120000,authenticatorSelection:{residentKey:'required',userVerification:'required'},excludeCredentials:existing.map(k=>({id:k.id,transports:JSON.parse(k.transports_json)}))});
+ const options=await generateRegistrationOptions({rpName:'AKRONIKL IT NEXUS',rpID:settings.rpID,userID:Buffer.from(user.user_id,'base64url'),userName:enrollment?.username||account.display_name,userDisplayName:account.display_name,attestationType:'none',supportedAlgorithmIDs:[-7,-257],timeout:120000,authenticatorSelection:{residentKey:'required',userVerification:'required'},excludeCredentials:existing.map(k=>({id:k.id,transports:JSON.parse(k.transports_json)}))});
  const challengeId=id();await sql(env.DB,`INSERT INTO nexus_passkey_challenges(id,purpose,challenge,flow_hash,account_id,invite_hash,authorized_session_id,expires_at) VALUES(?1,'register',?2,?3,?4,?5,?6,?7)`,challengeId,options.challenge,flowHash,account.id,inviteHash,authorizedSessionId,after(120000)).run();
+ if(enrollment)await sql(env.DB,'INSERT INTO nexus_invite_enrollments(challenge_id,token_hash,username,display_name,created_at) VALUES(?1,?2,?3,?4,?5)',challengeId,inviteHash,enrollment.username,enrollment.displayName,stamp()).run();
  return{challengeId,options};
 }
 async function authenticateOptions(env,settings,payload){
  if(!keys(payload.input,[])||Object.keys(payload.input).length)reject('INVALID_INPUT');
  const options=await generateAuthenticationOptions({rpID:settings.rpID,userVerification:'required',timeout:120000});
  const challengeId=id();await sql(env.DB,`INSERT INTO nexus_passkey_challenges(id,purpose,challenge,flow_hash,expires_at) VALUES(?1,'authenticate',?2,?3,?4)`,challengeId,options.challenge,payload.flowHash,after(120000)).run();return{challengeId,options};
+}
+async function invitationInfo(env,payload){
+ if(!keys(payload.input,['inviteHash'])||!hash(payload.input.inviteHash))reject('INVALID_INPUT');
+ const managed=await managedInvitation(env,payload.input.inviteHash);
+ if(managed)return {profileRequired:true,expiresAt:managed.expires_at};
+ const row=await first(env.DB,'SELECT i.expires_at FROM nexus_passkey_invites i JOIN account_subjects a ON a.id=i.account_id AND a.status=\'active\' WHERE i.token_hash=?1 AND i.consumed_at IS NULL AND i.expires_at>?2',payload.input.inviteHash,stamp());
+ if(!row)reject('ENROLLMENT_REQUIRED',403);
+ return {profileRequired:false,expiresAt:row.expires_at};
 }
 async function verifyAndIssue(env,settings,payload,action){
  const{input,flowHash}=payload;
@@ -114,6 +144,7 @@ async function verifyAndIssue(env,settings,payload,action){
    JOIN login_methods lm ON lm.id=k.login_method_id AND lm.account_id=a.id AND lm.status='active'
    WHERE k.id=?1`,input.response.id);
   if(!row||input.response.response?.userHandle!==row.user_id)reject('PASSKEY_REJECTED',401);
+  if(!await alphaAccess(env,row.account_id))reject('ALPHA_ACCESS_CLOSED',403);
   let verified;try{verified=await verifyAuthenticationResponse({response:input.response,expectedChallenge:challenge.challenge,expectedOrigin:settings.origin,expectedRPID:settings.rpID,requireUserVerification:true,credential:{id:row.id,publicKey:Buffer.from(row.public_key,'base64url'),counter:row.counter,transports:JSON.parse(row.transports_json)}})}catch{reject('PASSKEY_REJECTED',401)}
   if(!verified.verified||!verified.authenticationInfo?.userVerified)reject('PASSKEY_REJECTED',401);
   accountId=row.account_id;methodId=row.login_method_id;oldVersion=row.counter_version;
@@ -124,6 +155,15 @@ async function verifyAndIssue(env,settings,payload,action){
  const now=stamp(),commitId=id(),sessionId=action==='authenticate'?id():null,deviceId=action==='authenticate'?id():null,secret=action==='authenticate'?'nxs_'+random():null,secretHash=secret?await sha(secret):null;
  const commands=[sql(env.DB,'UPDATE nexus_passkey_challenges SET consumed_at=?1,commit_id=?2 WHERE id=?3 AND purpose=?4 AND flow_hash=?5 AND consumed_at IS NULL AND expires_at>?1',now,commitId,challenge.id,action,flowHash)];
  if(action==='register'){
+  if(challenge.invite_hash&&env.ALPHA_ADMISSION_ENABLED==='true'){
+   await managedInvitation(env,challenge.invite_hash);
+   const chosen=await first(env.DB,'SELECT username,display_name FROM nexus_invite_enrollments WHERE challenge_id=?1 AND token_hash=?2',challenge.id,challenge.invite_hash);
+   if(!chosen||!validUsername(chosen.username)||!validDisplayName(chosen.display_name))reject('PROFILE_INPUT_REQUIRED',400);
+   commands.push(sql(env.DB,'INSERT INTO nexus_account_profiles(account_id,username,created_at) VALUES(?1,?2,?3)',accountId,chosen.username,now));
+   commands.push(sql(env.DB,'UPDATE account_subjects SET display_name=?1,updated_at=?2 WHERE id=?3',chosen.display_name,now,accountId));
+   commands.push(sql(env.DB,"UPDATE nexus_alpha_members SET state='active',reserved_until=NULL,version=version+1,updated_at=?1 WHERE account_id=?2 AND state='invited' AND reserved_until>?1",now,accountId));
+   commands.push(sql(env.DB,"UPDATE nexus_admin_invites SET state='accepted' WHERE token_hash=?1 AND state='ready'",challenge.invite_hash));
+  }
   if(challenge.invite_hash){
    const invitation=await first(env.DB,'SELECT purpose FROM nexus_passkey_invites WHERE token_hash=?1 AND account_id=?2 AND consumed_at IS NULL AND expires_at>?3',challenge.invite_hash,accountId,now);
    if(!invitation)reject('CHALLENGE_REJECTED',401);
@@ -144,12 +184,12 @@ async function verifyAndIssue(env,settings,payload,action){
  }
  commands.push(sql(env.DB,'INSERT INTO nexus_passkey_audit(id,account_id,login_method_id,session_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)',commitId,accountId,methodId,sessionId,action,now));
  commands.push(sql(env.DB,'INSERT INTO nexus_passkey_receipts(id,challenge_id,credential_id,account_id,login_method_id,session_id,device_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)',commitId,challenge.id,credential.id,accountId,methodId,sessionId,deviceId,action,now));
- try{const committed=await env.DB.batch(commands);if(committed.length!==commands.length||committed.some(x=>!x.success))reject('ISSUANCE_UNCONFIRMED',503)}catch{reject('ISSUANCE_UNCONFIRMED',503)}
+ try{const committed=await env.DB.batch(commands);if(committed.length!==commands.length||committed.some(x=>!x.success))reject('ISSUANCE_UNCONFIRMED',503)}catch(error){if(String(error?.message||'').includes('nexus_account_profiles.username'))reject('USERNAME_UNAVAILABLE',409);if(String(error?.message||'').includes('REGISTRATION_CLOSED'))reject('REGISTRATION_CLOSED',403);reject('ISSUANCE_UNCONFIRMED',503)}
  // Never retry ambiguous commits, and never expose a secret before confirmed batch.
  return secret?{ok:true,sessionSecret:secret}:{ok:true};
 }
 async function accountOperation(env,payload){
- const session=await eligible(env.DB,payload.sessionHash);if(!session)reject('SESSION_REQUIRED',401);
+ const session=await eligible(env,payload.sessionHash);if(!session)reject('SESSION_REQUIRED',401);
  if(payload.op==='logout'){
   if(!keys(payload.input,[])||Object.keys(payload.input).length)reject('INVALID_INPUT');
   await sql(env.DB,"UPDATE account_sessions SET status='revoked',revoked_at=?1,revoked_reason='passkey-logout' WHERE id=?2 AND status='active'",stamp(),session.id).run();return{ok:true,clearSession:true};
@@ -160,7 +200,7 @@ async function accountOperation(env,payload){
  }
  if(payload.op==='revoke'){
   if(!keys(payload.input,['methodId'])||typeof payload.input.methodId!=='string'||payload.input.methodId.length>80)reject('INVALID_INPUT');
-  if(!await eligible(env.DB,payload.sessionHash,true))reject('FRESH_LOGIN_REQUIRED',401);
+  if(!await eligible(env,payload.sessionHash,true))reject('FRESH_LOGIN_REQUIRED',401);
   const revoked=await sql(env.DB,`UPDATE login_methods SET status='disabled',disabled_at=?1,version=version+1
    WHERE id=?2 AND account_id=?3 AND kind='passkey' AND status='active'
    AND (SELECT count(*) FROM login_methods WHERE account_id=?3 AND status='active')>1`,stamp(),payload.input.methodId,session.subject_id).run();
@@ -170,11 +210,17 @@ async function accountOperation(env,payload){
 }
 export async function handlePasskeyService(request,env){
  try{const settings=config(env),payload=await ingress(request,env);let result;
-  if(payload.op==='register-options')result=await registerOptions(env,settings,payload);
+  if(payload.op==='registration-policy'){if(!keys(payload.input,[])||Object.keys(payload.input).length)reject('INVALID_INPUT');result=await registrationPolicy(env)}
+  else if(payload.op==='cancel-public-registration'){
+   if(!keys(payload.input,['challengeId'])||typeof payload.input.challengeId!=='string'||payload.input.challengeId.length>80)reject('INVALID_INPUT');
+   result=await cancelPublicRegistration(env,{challengeId:payload.input.challengeId,flowHash:payload.flowHash});
+  }
+  else if(payload.op==='invitation-info')result=await invitationInfo(env,payload);
+  else if(payload.op==='register-options')result=await registerOptions(env,settings,payload);
   else if(payload.op==='authenticate-options')result=await authenticateOptions(env,settings,payload);
   else if(payload.op==='register-verify')result=await verifyAndIssue(env,settings,payload,'register');
   else if(payload.op==='authenticate-verify')result=await verifyAndIssue(env,settings,payload,'authenticate');
   else result=await accountOperation(env,payload);
   return response(result);
- }catch(error){return response({error:{code:error instanceof Rejected?error.code:'PASSKEY_UNAVAILABLE'}},error instanceof Rejected?error.status:503)}
+ }catch(error){return response({error:{code:error instanceof Rejected||error instanceof AlphaError?error.code:'PASSKEY_UNAVAILABLE'}},error instanceof Rejected||error instanceof AlphaError?error.status:503)}
 }

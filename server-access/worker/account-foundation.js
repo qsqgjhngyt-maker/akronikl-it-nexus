@@ -1,3 +1,4 @@
+import {alphaAccess} from './alpha-admission.mjs';
 // Только чтение. Enrollment, OAuth и управление credentials здесь не включены.
 export async function readAccountFoundation(db, accountId) {
   const account = await db.prepare(`
@@ -20,7 +21,7 @@ export async function readAccountFoundation(db, accountId) {
 }
 
 // Только новый Account path: legacy-bridge и сессии без Login Method не подходят.
-export async function readEligibleAccountFoundation(db, sessionHash, stamp = new Date().toISOString()) {
+export async function readEligibleAccountFoundation(db, sessionHash, stamp = new Date().toISOString(), env = {}) {
   const actor = await db.prepare(`
     SELECT s.id AS account_id
     FROM account_sessions x
@@ -37,5 +38,6 @@ export async function readEligibleAccountFoundation(db, sessionHash, stamp = new
       AND x.idle_expires_at > ?2 AND x.absolute_expires_at > ?2
     LIMIT 1
   `).bind(sessionHash, stamp).first();
+  if(actor&&!await alphaAccess(env,actor.account_id))return null;
   return actor ? readAccountFoundation(db, actor.account_id) : null;
 }

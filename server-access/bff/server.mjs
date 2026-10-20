@@ -1,15 +1,19 @@
 import http from 'node:http';
+import {createContentHandler} from './content.mjs';
 import {readFileSync} from 'node:fs';
 import {createPasskeyHandler} from './passkey.mjs';
 import {createCombinedHandler} from './routes.mjs';
 import {createEntryGateHandler} from './entry-gate.mjs';
 import {createCloudSessionHandler} from './cloud-session.mjs';
 import {createOAuthHandler} from './oauth.mjs';
+import {createAccountControlHandler} from './account-control.mjs';
 const passkey=createPasskeyHandler({env:process.env}),existing=createCombinedHandler({env:process.env});
 const landingBody=readFileSync(new URL('../public/entry.html',import.meta.url));
 const entryGate=createEntryGateHandler({env:process.env,landingBody});
 const cloud=createCloudSessionHandler({env:process.env});
 const oauth=createOAuthHandler({env:process.env});
+const control=createAccountControlHandler({env:process.env});
+const content=createContentHandler({env:process.env});
 const assets=new Map([
  ['/account/entry/',['text/html; charset=utf-8',landingBody]],
  ['/account/entry/entry.css',['text/css; charset=utf-8',readFileSync(new URL('../public/entry.css',import.meta.url))]],
@@ -25,6 +29,8 @@ const server=http.createServer({maxHeaderSize:16384},async(req,res)=>{
  res.setHeader('vary','*');
  try{
   if(await entryGate(req,res))return;
+  if(await content(req,res))return;
+  if(await control(req,res))return;
   if(await cloud(req,res))return;
   if(await oauth(req,res))return;
   if(req.url?.startsWith('/api/v2/account/passkey/'))return await passkey(req,res);
