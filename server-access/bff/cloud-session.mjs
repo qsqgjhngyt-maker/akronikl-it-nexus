@@ -42,7 +42,7 @@ export function createCloudSessionHandler({env={},fetchImpl=fetch}={}) {
     if(req.method==='PUT'&&(req.headers.origin!==GATEWAY_ORIGIN||
        req.headers['x-nexus-cloud-request']!=='1'||req.headers['content-type']!=='application/json'))
       return reply(res,403,{error:{code:'WRITE_ORIGIN_REQUIRED'}});
-    const sessionCookie=sessionFromIngress(req);
+    const sessionCookie=sessionFromIngress(req,{env});
     if(!sessionCookie)return reply(res,401,{error:{code:'SESSION_REQUIRED'}});
     // Это ожидание document, а не identity proof. Worker сравнит его с действительной cookie session.
     // Защищает старую вкладку A от чтения/записи данных B после смены общей HttpOnly cookie.

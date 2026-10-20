@@ -131,7 +131,7 @@ export function createEntryGateHandler({env = {}, fetchImpl = fetch, landingBody
     }
     const publicOrDenied = (status, code) => path === '/nexus-shell.html' ?
       error(req, res, status, code) : reply(req, res, 200, landing, 'text/html; charset=utf-8');
-    const session = sessionFromIngress(req);
+    const session = sessionFromIngress(req, {env});
     if (!session) return publicOrDenied(401, 'AUTHENTICATION_REQUIRED');
     try {
       // Credential браузера не пересылается: только SHA256 в существующем Account protocol.

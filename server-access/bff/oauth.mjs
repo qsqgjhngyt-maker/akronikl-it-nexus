@@ -40,7 +40,7 @@ function syntheticIngressProbe(req){
  const pairs=req.headers.cookie.split(';').map(value=>value.trim());
  return pairs.length>0&&pairs.length<=3&&new Set(pairs).size===pairs.length&&pairs.every(value=>SYNTHETIC_COOKIE_PAIRS.has(value));
 }
-function ingress(req){
+function ingress(req,env){
  const fail=reason=>{const error=new Rejected('INGRESS_REJECTED',401);error.probeReason=reason;throw error};
  if(count(req,'x-yc-apigateway-operation-context')!==1)fail('context_count');
  const raw=req.headers['x-yc-apigateway-operation-context'];
@@ -48,8 +48,8 @@ function ingress(req){
  const bytes=Buffer.from(raw,'base64');if(bytes.toString('base64')!==raw)fail('base64');
  let text,data;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes)}catch{fail('utf8')}
  try{data=JSON.parse(text)}catch{fail('json')}
- if(data?.oauthIngressContract==='v2'){
-  let v2;try{v2=readV2CookieContext(req,'oauthIngressContract')}catch(error){fail(INGRESS_PROBE_REASONS.has(error.cookieContextReason)?error.cookieContextReason:'v2_rejected')}
+ if(data?.oauthIngressContract==='v2'||data?.oauthIngressContract==='v3'){
+  let v2;try{v2=readV2CookieContext(req,'oauthIngressContract',{env})}catch(error){fail(INGRESS_PROBE_REASONS.has(error.cookieContextReason)?error.cookieContextReason:'v2_rejected')}
   if(v2===undefined)deny('INGRESS_REJECTED',401);
   const session=v2.get('__Host-nexus_session')??null,flow=v2.get('__Host-nexus_oauth_flow')??null;
   if(session!==null&&!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session))fail('session_format');
@@ -119,7 +119,7 @@ export function createOAuthHandler({env={},fetchImpl=fetch}={}){
    if(route.length!==2||!['start','callback'].includes(action))deny('NOT_FOUND',404);
    if(!providers.some(item=>item.id===provider))deny('OAUTH_PROVIDER_UNAVAILABLE',503);
    if(req.method!==(action==='start'?'POST':'GET'))deny('METHOD_NOT_ALLOWED',405);
-   const context=ingress(req);
+   const context=ingress(req,env);
    if(action==='start'){
     if(url.search||req.url!==url.pathname)deny('INVALID_INPUT');
     if(req.headers.origin!==GATEWAY_ORIGIN||count(req,'origin')!==1||req.headers['x-nexus-oauth-request']!=='1'||count(req,'x-nexus-oauth-request')!==1||req.headers['content-type']!=='application/json'||(req.headers['sec-fetch-site']!==undefined&&req.headers['sec-fetch-site']!=='same-origin'))deny('WRITE_ORIGIN_REQUIRED',403);
