@@ -38,5 +38,8 @@ const server=http.createServer({maxHeaderSize:16384},async(req,res)=>{
   await existing(req,res);
  }catch{if(!res.headersSent)res.writeHead(500,{'cache-control':'no-store','vary':'*'});res.end()}
 });
+// Avoid backend connection reuse while investigating stale Gateway metadata.
+// This does not replace strict per-request Cookie/context validation.
+server.maxRequestsPerSocket=1;
 server.requestTimeout=15000;server.headersTimeout=10000;server.listen(Number(process.env.PORT||8080),'0.0.0.0');
 for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>{server.close(()=>process.exit(0));setTimeout(()=>process.exit(1),5000).unref()});

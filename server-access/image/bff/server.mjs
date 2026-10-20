@@ -1450,6 +1450,7 @@ var server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
     res.end();
   }
 });
+server.maxRequestsPerSocket = 1;
 server.requestTimeout = 15e3;
 server.headersTimeout = 1e4;
 server.listen(Number(process.env.PORT || 8080), "0.0.0.0");
