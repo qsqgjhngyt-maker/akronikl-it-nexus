@@ -1,7 +1,7 @@
 // Настоящий bindEntry с синтетическим DOM и Passkey-client stub; никакой церемонии/сети.
 import assert from 'node:assert/strict';
 import {ENTRY_ORIGIN,fullDocumentDestinationFor,navigateToNexus,bindEntry} from '../server-access/public/entry.js';
-const saved=new Map(['location','document','fetch','addEventListener'].map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]));
+const saved=new Map(['location','document','fetch','addEventListener','history'].map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]));
 class Node{
  constructor(){this.handlers=new Map();this.attributes=new Map();this.dataset={};this.hidden=true;this.disabled=false;this.textContent='';this.href=''}
  setAttribute(name,value){this.attributes.set(name,String(value))}
@@ -10,17 +10,18 @@ class Node{
 }
 function fixture({pathname='/',hash='#view=home',signedIn=true}={}){
  const nodes=new Map(['[data-login]','[data-login-label]','[data-status]','[data-account]','[data-account-name]','[data-switch]','[data-motion]','[data-motion-label]'].map(selector=>[selector,new Node()]));
- const navigations=[],windowEvents=[],documentEvents=[],requests=[];let passkeyLoads=0,logins=0;
+ const navigations=[],windowEvents=[],documentEvents=[],requests=[],historyChanges=[];let passkeyLoads=0,logins=0;
  const locationRef={origin:ENTRY_ORIGIN,pathname,hash,search:'',href:ENTRY_ORIGIN+pathname+hash,
   assign(target){const next=new URL(target);navigations.push({target,sameDocument:next.origin===this.origin&&next.pathname===this.pathname&&next.search===this.search})},replace(){throw Error('Unexpected replace')}};
  globalThis.location=locationRef;
+ globalThis.history={replaceState(_state,_title,target){const url=new URL(target,ENTRY_ORIGIN);historyChanges.push(url.href);locationRef.pathname=url.pathname;locationRef.search=url.search;locationRef.hash=url.hash}};
  globalThis.document={hidden:false,querySelector:selector=>nodes.get(selector)||null,querySelectorAll:selector=>{assert.equal(selector,'[data-key-access]');return[]},addEventListener(type,callback){documentEvents.push({type,callback})}};
  globalThis.addEventListener=(type,callback)=>windowEvents.push({type,callback});
  globalThis.fetch=async(path,options)=>{
   requests.push({path,options});assert.equal(path,'/api/v2/account');assert.equal(options.credentials,'same-origin');
-  return signedIn?Response.json({account:{accountId:'synthetic-account',displayName:'Synthetic',status:'active'},loginMethods:[],enrollmentAvailable:false}):Response.json({error:{code:'SESSION_REQUIRED'}},{status:401});
+  return signedIn||logins>0?Response.json({account:{accountId:'synthetic-account',displayName:'Synthetic',status:'active'},loginMethods:[],enrollmentAvailable:false}):Response.json({error:{code:'SESSION_REQUIRED'}},{status:401});
  };
- return{nodes,navigations,locationRef,requests,get passkeyLoads(){return passkeyLoads},get logins(){return logins},
+ return{nodes,navigations,locationRef,requests,historyChanges,get passkeyLoads(){return passkeyLoads},get logins(){return logins},
   async bind(){await bindEntry({loadPasskeyClient:async()=>{passkeyLoads++;return{async login(){logins++;return{ok:true}}}}})}
  };
 }
@@ -51,6 +52,20 @@ try{
    const f=fixture({signedIn});await f.bind();f.locationRef.hash='#view=project-studio&project='+encodeURIComponent('проект-галактика');await f.nodes.get('[data-login]').click();
    assert.equal(f.navigations[0].sameDocument,false);assert.equal(safeParams(new URL(f.navigations[0].target).hash).get('project'),'проект-галактика');
   }
+ });
+ await check('OAuth callback hint после подтверждённой сессии открывает Nexus без второго клика',async()=>{
+  const f=fixture({hash:'#nexusLogin=oauth'});await f.bind();
+  assert.deepEqual(f.navigations,[{target:ENTRY_ORIGIN+'/index.html#view=home',sameDocument:false}]);
+  assert.deepEqual(f.historyChanges,[ENTRY_ORIGIN+'/#view=home']);
+  assert.equal(f.passkeyLoads,0);assert.equal(f.logins,0);
+ });
+ await check('OAuth hint не обходит серверный 401 и не открывает приложение',async()=>{
+  const f=fixture({hash:'#nexusLogin=oauth',signedIn:false});await f.bind();
+  assert.equal(f.navigations.length,0);assert.deepEqual(f.historyChanges,[ENTRY_ORIGIN+'/#view=home']);
+ });
+ await check('неизвестный fragment или внешний redirect не включает auto-continue',async()=>{
+  const f=fixture({hash:'#nexusLogin=other&next=https://attacker.invalid'});await f.bind();
+  assert.equal(f.navigations.length,0);assert.equal(f.historyChanges.length,0);
  });
  await check('modified Continue сохраняет native new-tab link с полным document path',async()=>{
   const f=fixture();await f.bind();assert.equal(await f.nodes.get('[data-login]').click({ctrlKey:true}),false);assert.equal(f.navigations.length,0);assert.equal(new URL(f.nodes.get('[data-login]').href).pathname,'/index.html');

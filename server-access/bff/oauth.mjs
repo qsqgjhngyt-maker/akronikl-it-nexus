@@ -151,7 +151,7 @@ export function createOAuthHandler({env={},fetchImpl=fetch}={}){
    const profile=await exchangeOAuthProfile({provider,env,code,state,deviceId,codeVerifier:claim.codeVerifier,nonce:claim.nonce,fetchImpl});
    const completed=await service(env,fetchImpl,{op:'complete',txId:claim.txId,flowHash:sha(context.flow),profile});
    if(!/^nxs_[A-Za-z0-9_-]{43}$/.test(completed.sessionSecret||''))deny('OAUTH_UNAVAILABLE',502);
-   return reply(res,303,null,[sessionCookie(completed.sessionSecret),flowCookie('',0)],{location:GATEWAY_ORIGIN+(claim.intent==='link'?'/#view=account':'/')});
+   return reply(res,303,null,[sessionCookie(completed.sessionSecret),flowCookie('',0)],{location:GATEWAY_ORIGIN+(claim.intent==='link'?'/#view=account':'/#nexusLogin=oauth')});
   }catch(error){
    const known=error instanceof Rejected;
    const probeReason=known&&error.code==='INGRESS_REJECTED'&&INGRESS_PROBE_REASONS.has(error.probeReason)&&syntheticIngressProbe(req)?error.probeReason:null;
