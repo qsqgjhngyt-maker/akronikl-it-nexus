@@ -183,6 +183,19 @@ await check('Yandex authenticated native login@yandex.ru даёт узкий cur
   const wrong=fixture({yandexUser:{client_id}}),badFlow=await start(wrong,'yandex');assert.equal((await invoke(wrong.handler,callback(badFlow))).res.status,401);assert.equal(wrong.completed.length,0);
  }
 });
+await check('Yandex login/link require visible account consent; Google/VK contracts remain unchanged',async()=>{
+ for(const intent of ['login','link']){
+  const f=fixture(),flow=await start(f,'yandex',intent),url=new URL(flow.authorizationURL);
+  assert.equal(url.searchParams.get('force_confirm'),'yes');assert.equal(url.searchParams.get('code_challenge_method'),'S256');
+  assert.equal(url.searchParams.get('scope'),'login:info login:email');
+  assert.equal(url.searchParams.has('login_hint'),false);assert.equal(url.searchParams.has('client_secret'),false);
+ }
+ for(const provider of ['google','vk']){
+  const flow=await start(fixture(),provider),url=new URL(flow.authorizationURL);
+  assert.equal(url.searchParams.has('force_confirm'),false);
+  if(provider==='google')assert.equal(url.searchParams.get('prompt'),'select_account');
+ }
+});
 await check('Yandex optional bounded cid не меняет state/PKCE/profile identity',async()=>{
  const f=fixture(),flow=await start(f,'yandex'),cid='synthetic_correlation-'.padEnd(256,'A');
  const {res}=await invoke(f.handler,callback(flow,{cid}));assert.equal(res.status,303,res.body);
@@ -226,7 +239,7 @@ await check('VK PKCE/device_id, token state и user_id проверяются',a
  for(const settings of [{token:{state:'wrong'}},{vkUser:{user_id:'different-user'}}]){const bad=fixture(settings),badFlow=await start(bad,'vk');assert.equal((await invoke(bad.handler,callback(badFlow))).res.status,401);assert.equal(bad.completed.length,0)}
 });
 await check('link sessionHash из private ingress; fixed account redirect; Worker denial не раскрывает secret',async()=>{
- const f=fixture(),flow=await start(f,'google','link');assert.equal((await invoke(f.handler,callback(flow))).res.headers.location,GATEWAY_ORIGIN+'/#view=account');
+ const f=fixture(),flow=await start(f,'google','link');assert.equal((await invoke(f.handler,callback(flow))).res.headers.location,GATEWAY_ORIGIN+'/#nexusLogin=oauth&view=account&tab=security');
  const denied=fixture({denyComplete:true}),deniedFlow=await start(denied);const {res}=await invoke(denied.handler,callback(deniedFlow));assert.equal(res.status,403);assert.equal(JSON.parse(res.body).error.code,'OWNER_EMAIL_REQUIRED');assert.equal(res.headers['set-cookie'].some(x=>x.startsWith('__Host-nexus_session=')),false);
 });
 await check('ambiguous Cookie и ingress/context hints закрыты до claim',async()=>{
@@ -283,7 +296,7 @@ await check('OAuth V2 raw Cookie context проходит link begin/callback с
  const begun=await invoke(f.handler,req);assert.equal(begun.res.status,200,begun.res.body);
  const url=new URL(JSON.parse(begun.res.body).authorizationURL),flow={provider:'yandex',state:url.searchParams.get('state'),flow:begun.res.headers['set-cookie'][0].match(/^__Host-nexus_oauth_flow=([^;]+)/)[1]};
  const completed=await invoke(f.handler,v2Context(callback(flow,{cid:'synthetic-cid'}),cookieHeader+'; __Host-nexus_oauth_flow='+flow.flow));
- assert.equal(completed.res.status,303,completed.res.body);assert.equal(completed.res.headers.location,GATEWAY_ORIGIN+'/#view=account');
+ assert.equal(completed.res.status,303,completed.res.body);assert.equal(completed.res.headers.location,GATEWAY_ORIGIN+'/#nexusLogin=oauth&view=account&tab=security');
  assert.equal(f.completed.length,1);assert.equal(f.completed[0].subject,'synthetic-yandex-sub');assert.equal(f.completed[0].emailVerified,true);
 });
 await check('OAuth V2 поддерживает bounded Cookie с context длиннее 4096, V1 сохраняет прежний предел',async()=>{

@@ -1072,7 +1072,8 @@ function oauthAuthorizationURL({ provider, env, state, codeVerifier, nonce }) {
     code_challenge: digest2(codeVerifier).toString("base64url"),
     code_challenge_method: provider === "vk" ? "s256" : "S256",
     scope: provider === "google" ? "openid email profile" : provider === "yandex" ? "login:info login:email" : "email",
-    ...provider === "google" ? { nonce, prompt: "select_account" } : {}
+    // Яндекс иначе может использовать прежнее согласие без выбора аккаунта.
+    ...provider === "google" ? { nonce, prompt: "select_account" } : provider === "yandex" ? { force_confirm: "yes" } : {}
   }).toString();
   return url.href;
 }
@@ -1412,7 +1413,7 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
       const profile = await exchangeOAuthProfile({ provider, env, code, state, deviceId, codeVerifier: claim.codeVerifier, nonce: claim.nonce, fetchImpl });
       const completed = await service(env, fetchImpl, { op: "complete", txId: claim.txId, flowHash: sha(context2.flow), profile });
       if (!/^nxs_[A-Za-z0-9_-]{43}$/.test(completed.sessionSecret || "")) deny("OAUTH_UNAVAILABLE", 502);
-      return reply6(res, 303, null, [sessionCookie(completed.sessionSecret), flowCookie("", 0)], { location: GATEWAY_ORIGIN + (claim.intent === "link" ? "/#view=account" : "/#nexusLogin=oauth") });
+      return reply6(res, 303, null, [sessionCookie(completed.sessionSecret), flowCookie("", 0)], { location: GATEWAY_ORIGIN + (claim.intent === "link" ? "/#nexusLogin=oauth&view=account&tab=security" : "/#nexusLogin=oauth") });
     } catch (error2) {
       const known = error2 instanceof Rejected;
       const probeReason = known && error2.code === "INGRESS_REJECTED" && INGRESS_PROBE_REASONS.has(error2.probeReason) && syntheticIngressProbe(req) ? error2.probeReason : null;

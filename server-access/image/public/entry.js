@@ -55,7 +55,8 @@ export function bindEntry({loadPasskeyClient=()=>import('/account/access/passkey
  bindProviderButtons(providerContainer,{onStatus:setStatus,acquire:()=>{if(busy)return false;++version;setBusy(true);return true},release:()=>setBusy(false)});
  // Consume a UX hint once even if Account read fails; a hint never proves identity.
  const oauthReturn=isOAuthReturnHint(location.hash);
- if(oauthReturn){try{globalThis.history?.replaceState?.(null,'',location.pathname+'#view=home')}catch{}}
+ const oauthDestinationHash=new URL(destinationFor(location.hash)).hash;
+ if(oauthReturn){try{globalThis.history?.replaceState?.(null,'',location.pathname+oauthDestinationHash)}catch{}}
  let oauthReturnPending=oauthReturn;
  const update=async()=>{
   const current=++version;setStatus('Проверяем вашу сессию. Войти ключом можно уже сейчас.');
@@ -68,7 +69,7 @@ export function bindEntry({loadPasskeyClient=()=>import('/account/access/passkey
     if(oauthReturnPending){
      // После внешнего OAuth strict cookie сначала подтверждается same-origin запросом.
      // Маркер удаляется из истории ДО полной навигации во избежание redirect-loop.
-     const destination=fullDocumentDestinationFor('#view=home');
+     const destination=fullDocumentDestinationFor(oauthDestinationHash);
      oauthReturnPending=false;
      setStatus('Вход подтверждён. Открываем Nexus…','success');
      location.assign(destination);

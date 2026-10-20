@@ -55,7 +55,8 @@ export function oauthAuthorizationURL({provider,env,state,codeVerifier,nonce}){
  url.search=new URLSearchParams({client_id:config.clientId,response_type:'code',redirect_uri:oauthCallbackURL(provider),state,
   code_challenge:digest(codeVerifier).toString('base64url'),code_challenge_method:provider==='vk'?'s256':'S256',
   scope:provider==='google'?'openid email profile':provider==='yandex'?'login:info login:email':'email',
-  ...(provider==='google'?{nonce,prompt:'select_account'}:{})}).toString();
+  // Яндекс иначе может использовать прежнее согласие без выбора аккаунта.
+  ...(provider==='google'?{nonce,prompt:'select_account'}:provider==='yandex'?{force_confirm:'yes'}:{})}).toString();
  return url.href;
 }
 

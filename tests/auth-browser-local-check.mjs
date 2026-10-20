@@ -6,6 +6,7 @@ import {pathToFileURL} from 'node:url';
 import {fixture} from './helpers/auth-fixture.mjs';
 const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
 const frontend=pathToFileURL(process.env.NEXUS_FRONTEND_DIR.replace(/[\\/]?$/,'/'));
+const generation=JSON.parse(await readFile(new URL('version.json',frontend))).releaseCandidate.assetGeneration;
 const f=await fixture(frontend),origin='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net';
 const browser=await chromium.launch({executablePath:process.env.NEXUS_CHROME_PATH,headless:true,args:['--disable-background-networking','--disable-component-update']});
 const context=await browser.newContext(),page=await context.newPage(),errors=[],blocked=[],timings=[];
@@ -23,7 +24,7 @@ await context.route('**/*',async route=>{
   if(url.pathname==='/api/v2/account/oauth/providers')return route.fulfill({status:200,json:{providers:[]}});
   const result=await f.dispatch(url.href,{method:req.method(),headers:await req.allHeaders(),body:req.postData()});
   if(result){const headers={};for(const[k,v]of Object.entries(result.headers))headers[k.toLowerCase()]=Array.isArray(v)?v.join('\n'):String(v);return route.fulfill({status:result.status,headers,body:result.body})}
-  let path=url.pathname.slice(1);if(path.startsWith('account/entry/'))path='entry-assets/ui1a-alpha8-20261020-auth-entry/'+path.split('/').at(-1);
+  let path=url.pathname.slice(1);if(path.startsWith('account/entry/'))path='entry-assets/'+generation+'/'+path.split('/').at(-1);
   if(path==='account/access/passkey-client.js'){const body=await readFile(new URL('../server-access/image/public/passkey-client.js',import.meta.url));return route.fulfill({body,contentType:'text/javascript'})}
   if(!path||path.includes('..'))throw Error('UNEXPECTED_PATH');
   return route.fulfill({body:await readFile(new URL(path,frontend)),contentType:type(path)});
