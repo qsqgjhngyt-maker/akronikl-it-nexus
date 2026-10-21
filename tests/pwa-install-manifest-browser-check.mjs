@@ -10,7 +10,7 @@ const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE)
 const source=fileURLToPath(new URL('../',import.meta.url)),frontend=process.env.NEXUS_FRONTEND_DIR;
 const html=await readFile(process.env.NEXUS_ENTRY_HTML||path.join(source,'server-access/public/entry.html'));
 const manifest=await readFile(path.join(frontend,'manifest.webmanifest')),icons=[],requests=[];
-const mime=n=>n.endsWith('.js')?'text/javascript':n.endsWith('.css')?'text/css':n.endsWith('.json')?'application/json':n.endsWith('.webmanifest')?'application/manifest+json':n.endsWith('.png')?'image/png':n.endsWith('.svg')?'image/svg+xml':n.endsWith('.md')?'text/markdown':'text/html';
+const mime=n=>n.endsWith('.js')?'text/javascript':n.endsWith('.css')?'text/css':n.endsWith('.json')?'application/json':n.endsWith('.webmanifest')?'application/manifest+json':n.endsWith('.png')?'image/png':n.endsWith('.webp')?'image/webp':n.endsWith('.svg')?'image/svg+xml':n.endsWith('.md')?'text/markdown':'text/html';
 const server=http.createServer(async(req,res)=>{try{
  const name=new URL(req.url,'http://local.invalid').pathname;requests.push(name);
  if(name==='/'||name==='/account/entry/'){res.writeHead(200,{'content-type':'text/html','cache-control':'no-store',vary:'*'});return res.end(html)}

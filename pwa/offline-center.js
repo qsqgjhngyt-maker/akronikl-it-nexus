@@ -47,7 +47,8 @@ export async function bindOfflineCenter(){
     const p=item.data;
     if(item.action==='patch')patchProject(item.id,{title:p.title,description:p.description,workspace:p.workspace,progress:p.progress,checkpoints:p.checkpoints,origin:{...listProjects().find(x=>x.id===item.id)?.origin,offlineImport:item.marker}});
     else {
-     const created=createProject({title:p.title+' · офлайн-копия',languageId:p.languageId,files:p.workspace.files,entryFile:p.workspace.entryFile,activeFile:p.workspace.activeFile,origin:{kind:'offline-copy',offlineImport:item.marker}});
+     const origin=p.origin?.kind==='graphics-lab'?{kind:'graphics-lab',template:['nexus','sphere','orbit','system','blank'].includes(p.origin.template)?p.origin.template:'blank',offlineImport:item.marker}:{kind:'offline-copy',offlineImport:item.marker};
+     const created=createProject({title:p.title+' · офлайн-копия',languageId:p.languageId,files:p.workspace.files,entryFile:p.workspace.entryFile,activeFile:p.workspace.activeFile,origin});
      patchProject(created.id,{workspace:p.workspace,progress:p.progress,checkpoints:p.checkpoints});
     }
    }

@@ -15,7 +15,7 @@ const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json
 const safeSW=await readFile(path.join(frontend,'service-worker.js'),'utf8');
 const legacySW=await readFile(path.join(legacySource,'service-worker.js'),'utf8');
 let mode='legacy',badAsset=null,context,server,transportOffline=false;
-const mime=file=>file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.md')?'text/markdown':'text/html';
+const mime=file=>file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.md')?'text/markdown':'text/html';
 const fixture='<!doctype html><meta charset="utf-8"><title>Synthetic PWA regression</title><body>Synthetic fixture only</body>';
 server=http.createServer(async(req,res)=>{
  if(transportOffline){req.socket.destroy();return}
@@ -112,7 +112,11 @@ try{
   await assert.rejects(runCompiler(page,'cold-offline'));assert.equal((await status(page,true)).runtimeReady,false);
   await context.setOffline(false);
  });
- await check('actual Clang/WASI graph passes SHA/MIME gates and compiles STL from network',async()=>{
+ await check('explicit preparation verifies actual Clang/WASI graph before compiling multi-file STL',async()=>{
+  // Реальный пользователь сначала готовит ~106 МБ. Сетевое ожидание подготовки
+  // не подменяется увеличением тайм-аута собственно компиляции.
+  await page.evaluate(async generation=>{const {runtimeReadiness}=await import('/releases/'+generation+'/pwa/runtime-prepare.js');await runtimeReadiness({prepare:true})},generation);
+  assert.equal((await status(page,true)).runtimeReady,true);
   networkCompiler=await runCompiler(page,'verified-network');assert.match(networkCompiler.stdout,/NEXUS_CLOSURE 10 MULTI 42/);assert.equal(networkCompiler.exitCode,0);assert.equal(networkCompiler.translationUnits.length,2);
   assert.equal((await status(page,true)).runtimeReady,true);
  });
@@ -172,7 +176,7 @@ try{
  await check('browser process restart restores committed runtime and compiles without network',async()=>{
   transportOffline=true;await context.setOffline(true);const p=await context.newPage();
   // Самостоятельная публичная оболочка открывается без создания Account proof.
-  await p.goto(origin+'/');await waitGeneration(p,generation);await p.getByRole('heading',{name:'Академия · офлайн'}).waitFor();
+  await p.goto(origin+'/');await waitGeneration(p,generation);await p.getByRole('heading',{name:'Академия',exact:true}).waitFor();
   assert.equal(await p.evaluate(async generation=>(await import('/releases/'+generation+'/core/account-storage.js')).verifiedAccount(),generation),null);
   offlineCompiler=await runCompiler(p,'verified-IDB-after-browser-restart');
   assert.match(offlineCompiler.stdout,/NEXUS_CLOSURE 10/);assert.equal(offlineCompiler.exitCode,0);assert.deepEqual(await preserved(p),original);

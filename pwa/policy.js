@@ -33,6 +33,10 @@ export async function verifyResponse(record,response){
  const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength}
  await verifyBytes(record,bytes);return bytes.buffer;
 }
+export const GRAPHICS_FRAME_CSP="sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; worker-src blob:; style-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; form-action 'none'";
 export function assetResponse(record,bytes){
- return new Response(bytes,{headers:{'content-type':record.mime,'cache-control':'no-store','x-content-type-options':'nosniff','access-control-allow-origin':'*','x-nexus-verified-sha256':record.sha256}});
+ const headers={'content-type':record.mime,'cache-control':'no-store','x-content-type-options':'nosniff','access-control-allow-origin':'*','x-nexus-verified-sha256':record.sha256};
+ // Sandbox задаётся HTTP policy: навигация остаётся SW-eligible, результат opaque.
+ if(/^\/releases\/ui1a-[a-z0-9-]+\/pwa\/graphics-frame\.html$/.test(record.url)&&record.mime==='text/html')headers['content-security-policy']=GRAPHICS_FRAME_CSP;
+ return new Response(bytes,{headers});
 }

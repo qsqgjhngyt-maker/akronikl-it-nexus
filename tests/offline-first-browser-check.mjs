@@ -12,7 +12,7 @@ const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json
 const phrase='SYNTHETIC local copy phrase only 2026',checks=[],failures=[],requests=[],pageErrors=[];
 let context,offline=false,vaultId,branchId;
 const source='#include <iostream>\n#include <vector>\n#include "calc.hpp"\nint main(){std::vector<int> v{2,3,5};int n=0;for(int x:v)n+=x;std::cout<<"NEXUS_OFFLINE "<<n<<" "<<calc()<<"\\n";}';
-const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.md')?'text/markdown':'text/html';
+const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.webp')?'image/webp':f.endsWith('.md')?'text/markdown':'text/html';
 const server=http.createServer(async(req,res)=>{
  if(offline){req.socket.destroy();return}
  try{
@@ -26,7 +26,7 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='h
 async function launch(dead=false){
  context=await chromium.launchPersistentContext(profile,{headless:true,executablePath:process.env.NEXUS_CHROME_PATH,...(dead?{proxy:{server:'http://127.0.0.1:9'}}:{}),serviceWorkers:'allow',args:['--disable-background-networking','--disable-component-update','--disable-sync','--no-first-run']});
  context.on('page',p=>p.on('pageerror',e=>pageErrors.push(e.message)));
- context.on('request',r=>{const u=new URL(r.url());requests.push({origin:u.origin,path:u.pathname,method:r.method()})});
+ context.on('request',r=>{const u=new URL(r.url());requests.push({scheme:u.protocol,origin:u.origin,path:u.pathname,method:r.method()})});
  return context.newPage();
 }
 async function check(name,fn){const started=performance.now();await fn();checks.push({name,status:'PASS',durationMs:Math.round(performance.now()-started)});console.log('PASS '+name)}
@@ -36,7 +36,7 @@ async function unlock(page,id=vaultId){
 async function saved(page){await page.waitForFunction(()=>/Сохранено на устройстве|Прогресс сохранён/.test(document.querySelector('#saveStatus')?.textContent||''));await page.waitForTimeout(350)}
 let page;
 try{
- page=await launch();page.setDefaultTimeout(30000);await page.goto(origin+'/offline.html#view=academy');await page.getByRole('heading',{name:'Академия · офлайн'}).waitFor();
+ page=await launch();page.setDefaultTimeout(30000);await page.goto(origin+'/offline.html#view=academy&focus=cpp');await page.getByRole('heading',{name:'Академия',exact:true}).waitFor();
  await check('online preparation commits public Academy resources and an encrypted own-account local copy',async()=>{
   vaultId=await page.evaluate(async({generation,phrase,source})=>{
    const {createVaultStore}=await import('/releases/'+generation+'/pwa/local-vault.js'),{makeLocalPayload}=await import('/releases/'+generation+'/pwa/offline-transfer.js');
@@ -59,9 +59,9 @@ try{
   await page.waitForFunction(()=>document.querySelector('#runtimeStatus')?.textContent.includes('полностью проверен и готов'),{},{timeout:300000});
  });
  await check('close complete browser then cold offline PWA restart opens Academy, own projects and previous progress',async()=>{
-  await context.close();offline=true;page=await launch(true);page.setDefaultTimeout(30000);await page.goto(origin+'/');await page.getByRole('heading',{name:'Академия · офлайн'}).waitFor();
+  await context.close();offline=true;page=await launch(true);page.setDefaultTimeout(30000);await page.goto(origin+'/');await page.getByRole('heading',{name:'Академия',exact:true}).waitFor();
   assert.equal(await page.locator('a[href^="#lesson="]').count(),40);
-  await unlock(page);await page.locator('a[href="#view=academy"]').click();await page.waitForFunction(()=>document.querySelector('#offlineApp')?.textContent.includes('✓'));
+  await unlock(page);await page.goto(origin+'/offline.html#view=academy&focus=cpp');await page.waitForFunction(()=>document.querySelector('#offlineApp')?.textContent.includes('✓'));
   await page.goto(origin+'/offline.html#project=synthetic-project');await page.locator('#editor').waitFor();assert.match(await page.locator('#editor').inputValue(),/NEXUS_OFFLINE/);
  });
  await check('offline editor saves edits, file switching, checkpoint and learning progress durably',async()=>{
@@ -102,11 +102,11 @@ try{
   },{generation,phrase});assert.deepEqual(result,{wrong:true,quota:true,tampered:true});
  });
  await check('prepared Academy lessons, exercises, English benchmark and interactive learning models remain available offline',async()=>{
-  await page.goto(origin+'/offline.html#view=academy');assert.equal(await page.locator('a[href^="#lesson="]').count(),40);assert.equal(await page.locator('a[href^="#practicum="]').count(),6);assert.equal(await page.locator('a[href^="#exercise="]').count(),7);
+  await page.goto(origin+'/offline.html#view=academy&focus=cpp');assert.equal(await page.locator('a[href^="#lesson="]').count(),40);assert.equal(await page.locator('a[href^="#practicum="]').count(),6);assert.equal(await page.locator('a[href^="#exercise="]').count(),7);
   await page.goto(origin+'/offline.html#lesson=cpp.pointers-references-addresses');await page.locator('#memoryLab').waitFor();const before=await page.locator('#memoryStepIndex').textContent();await page.locator('#memoryNext').click();assert.notEqual(await page.locator('#memoryStepIndex').textContent(),before);
   await page.locator('#materialLocale').selectOption('en');await page.waitForFunction(()=>document.querySelector('#materialLocale')?.value==='en');assert.ok((await page.locator('#offlineApp').textContent()).length>500);
   await page.goto(origin+'/offline.html#lesson=cpp.oop-principles');await page.locator('#oopLab').waitFor();await page.locator('#oopNext').click();
-  await page.goto(origin+'/offline.html#view=computer-graphics');await page.locator('[data-graphics-stage]').waitFor();await page.waitForFunction(()=>document.querySelector('[data-graphics-stage]')?.dataset.graphicsRenderer);await page.locator('[data-graphics-preset="minimal"]').click();assert.equal(await page.locator('[data-graphics-setting="planets"]').inputValue(),'3');
+  await page.bringToFront();await page.goto(origin+'/offline.html#view=computer-graphics');await page.locator('[data-graphics-stage][data-graphics-runtime-state="ready"]').waitFor();await page.locator('[data-graphics-template="sphere"]').click();await page.locator('[data-graphics-stage][data-graphics-runtime-state="ready"]').waitFor();assert.equal(await page.locator('[data-graphics-setting="planets"]').inputValue(),'1');
   const download=page.waitForEvent('download');await page.locator('[data-graphics-download]').click();assert.equal((await download).suggestedFilename(),'nexus-my-universe.html');
  });
  await check('practicum tasks, working code and course project templates survive a cold offline restart',async()=>{
@@ -134,7 +134,8 @@ try{
   assert.equal(await page.evaluate(()=>document.querySelector('#editor').__nexusCodeStudio.getFiles()['calc.cpp'].includes('return 43')),true);
  });
  assert.deepEqual(pageErrors,[]);
- const foreign=requests.filter(r=>r.origin!==origin&&r.origin!=='https://cdn.jsdelivr.net');assert.deepEqual(foreign,[]);
+ // Оpaque sandbox создаёт локальные blob:null worker URL; это не сетевая отправка.
+ const foreign=requests.filter(r=>r.origin!==origin&&r.origin!=='https://cdn.jsdelivr.net'&&!(r.scheme==='blob:'&&r.origin==='null'&&/^null\/[0-9a-f-]{36}$/.test(r.path)));assert.deepEqual(foreign,[]);
 }catch(error){failures.push({message:error.message,stack:error.stack,ui:await page?.evaluate(()=>document.querySelector('#runtimeStatus')?.textContent||null).catch(()=>null)});await page?.screenshot({path:path.join(out,'FAILURE.png'),fullPage:true}).catch(()=>{});console.error(error.stack)}
 finally{
  try{await context?.close()}catch{}await new Promise(resolve=>server.close(resolve));

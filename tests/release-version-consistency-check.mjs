@@ -6,6 +6,7 @@ const index=fs.readFileSync(new URL('index.html',root),'utf8');
 const shell=fs.readFileSync(new URL('nexus-shell.html',root),'utf8');
 const candidate=JSON.parse(fs.readFileSync(new URL('release-candidate.json',root),'utf8'));
 const app=fs.readFileSync(new URL('core/app.js',root),'utf8');
+const sharedShell=fs.readFileSync(new URL('core/shell-presentation.js',root),'utf8');
 const sw=fs.readFileSync(new URL('service-worker.js',root),'utf8');
 const expected='0.1.7-alpha.2.4.6-ui1a.10.1';
 const assert=(v,m)=>{if(!v)throw new Error(m)};
@@ -18,8 +19,8 @@ assert(!shell.includes('src="./releases/'+candidate.assetGeneration+'/core/app.j
 assert(shell.includes(`Platform Shell v${expected}`),'boot screen version mismatch');
 assert(index.includes('./entry-assets/'+candidate.assetGeneration+'/entry.js'),'public entry generation mismatch');
 assert(!index.includes('core/app.js')&&!index.includes('core/bootstrap.js'),'public landing must not load private app');
-assert(app.includes(`v${expected}`),'topbar candidate identity mismatch');
-assert(app.includes(`Platform Shell v${expected}`),'footer version mismatch');
+assert(app.includes('nexusShellMarkup(body,active,')&&sharedShell.includes(`v${expected}`),'topbar candidate identity mismatch');
+assert(app.includes('nexusShellMarkup(body,active,')&&sharedShell.includes(`Platform Shell v${expected}`),'footer version mismatch');
 // Legacy source сохраняется для сравнения и не включается в build. Новая cache policy не утверждена.
 assert(sw.includes('nexus-verified-public-v1')&&sw.includes(candidate.assetGeneration),'generated verified worker/generation missing');
 assert(candidate.ownerPublicationAuthorized===false,'candidate cannot authorize its own publication');

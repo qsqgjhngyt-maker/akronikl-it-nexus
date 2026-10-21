@@ -1,4 +1,5 @@
 import {initGalaxy} from './galaxy.js';
+import {bindInstallButton} from '../../pwa/install.js';
 import {bindProviderButtons} from './oauth-client.js';
 import {ensureSafeController} from '../../pwa/client.js';
 export const ENTRY_ORIGIN='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net';
@@ -127,4 +128,7 @@ export function bindEntry({loadPasskeyClient=()=>import('/account/access/passkey
  addEventListener('pageshow',event=>{if(event.persisted){pageHidden=false;if(!busy)update()}});
  return update();
 }
-if(typeof document!=='undefined')ensureSafeController({onWaiting:message=>{const status=document.querySelector('[data-status]');if(status)status.textContent=message}}).then(()=>bindEntry()).catch(()=>{const status=document.querySelector('[data-status]');if(status)status.textContent='Не удалось безопасно обновить офлайн-защиту. Восстановите подключение и откройте Nexus снова.'});
+if(typeof document!=='undefined'){
+ bindInstallButton();
+ ensureSafeController({onWaiting:message=>{const status=document.querySelector('[data-status]');if(status)status.textContent=message}}).then(()=>bindEntry()).catch(()=>{const status=document.querySelector('[data-status]');if(status)status.textContent='Не удалось безопасно обновить офлайн-защиту. Восстановите подключение и откройте Nexus снова.'});
+}

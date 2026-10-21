@@ -10,7 +10,7 @@ const frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR),resultPath=path.reso
 const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),generation=manifest.assetGeneration;
 const profile=await mkdtemp(path.join(tmpdir(),'nx-nav-')),checks=[],failures=[];
 let context,offline=false;
-const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.md')?'text/markdown':'text/html';
+const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.webp')?'image/webp':f.endsWith('.md')?'text/markdown':'text/html';
 const server=http.createServer(async(req,res)=>{
  if(offline){req.socket.destroy();return}
  try{
@@ -25,7 +25,14 @@ const server=http.createServer(async(req,res)=>{
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
 const launch=()=>chromium.launchPersistentContext(profile,{headless:true,executablePath:process.env.NEXUS_CHROME_PATH,serviceWorkers:'allow',...(offline?{proxy:{server:'http://127.0.0.1:9'}}:{}),args:['--disable-background-networking','--disable-component-update','--disable-sync','--no-first-run']});
 async function check(name,fn){const started=performance.now();try{await fn();checks.push({name,status:'PASS',durationMs:Math.round(performance.now()-started)});console.log('PASS '+name)}catch(error){failures.push({name,message:error.message});console.error('FAIL '+name+': '+error.message)}}
-async function openAcademy(page,url){await page.goto(origin+url);await page.getByRole('heading',{name:'Академия · офлайн'}).waitFor();assert.equal(await page.locator('a[href^="#lesson="]').count(),40)}
+async function openAcademy(page,url){
+ await page.goto(origin+url);await page.locator('.visual-academy').waitFor();
+ if(await page.locator('[data-visual-academy]').count()){
+  const cpp=page.locator('a[href="#course=cpp"]');assert.ok(await cpp.count()>0);await cpp.first().click();
+ }
+ await page.getByRole('heading',{name:'Академия',exact:true}).waitFor();
+ assert.equal(await page.locator('a[href^="#lesson="]').count(),40);
+}
 try{
  context=await launch();let page=await context.newPage();page.setDefaultTimeout(15000);await page.goto(origin+'/fixture.html');
  await check('online preparation commits the exact public generation',async()=>{
