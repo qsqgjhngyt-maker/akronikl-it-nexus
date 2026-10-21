@@ -1,5 +1,6 @@
 import {verifiedAccount} from './account-storage.js';
 import {SERVER_ACCOUNT_ORIGIN} from './server-account-origin.js';
+import {hasVaryWildcard} from './private-response-policy.js';
 const messages={
  ADMIN_REQUIRED:'Управление пользователями доступно только администратору.',
  ADMIN_FRESH_PASSKEY_REQUIRED:'Подтвердите вход ключом доступа, затем повторите действие.',
@@ -33,7 +34,7 @@ export async function accountControlRequest(path,{method='GET',body,accountId=ve
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
  try{
   const response=await fetchImpl(path,{method,credentials:'same-origin',cache:'no-store',redirect:'error',signal:signal?AbortSignal.any([signal,controller.signal]):controller.signal,headers:{accept:'application/json','x-nexus-account-expectation':accountId,...(method==='POST'?{'content-type':'application/json','x-nexus-account-control':'1'}:{})},...(method==='POST'?{body:JSON.stringify(body)}:{})});
-  if(!response.headers.get('content-type')?.toLowerCase().startsWith('application/json')||response.headers.get('cache-control')!=='no-store'||response.headers.get('vary')!=='*')throw Error('CONTROL_UNAVAILABLE');
+  if(!response.headers.get('content-type')?.toLowerCase().startsWith('application/json')||response.headers.get('cache-control')!=='no-store'||!hasVaryWildcard(response.headers.get('vary')))throw Error('CONTROL_UNAVAILABLE');
   const text=await response.text();if(text.length>262144)throw Error('CONTROL_UNAVAILABLE');
   const data=JSON.parse(text);
   if(verifiedAccount()?.accountId!==accountId)throw Error('ACCOUNT_SESSION_CHANGED');

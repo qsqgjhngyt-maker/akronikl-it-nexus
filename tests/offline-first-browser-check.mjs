@@ -5,6 +5,7 @@ import path from 'node:path';
 import {tmpdir} from 'node:os';
 import {readFile,writeFile,mkdir,mkdtemp} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
+import {bindRuntimeTransport} from './helpers/runtime-transport.mjs';
 const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
 const frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR),out=path.resolve(process.env.NEXUS_OFFLINE_EVIDENCE);
 await mkdir(out,{recursive:false});
@@ -25,6 +26,7 @@ const server=http.createServer(async(req,res)=>{
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
 async function launch(dead=false){
  context=await chromium.launchPersistentContext(profile,{headless:true,executablePath:process.env.NEXUS_CHROME_PATH,...(dead?{proxy:{server:'http://127.0.0.1:9'}}:{}),serviceWorkers:'allow',args:['--disable-background-networking','--disable-component-update','--disable-sync','--no-first-run']});
+ if(!dead)await bindRuntimeTransport(context,{offline:()=>offline});
  context.on('page',p=>p.on('pageerror',e=>pageErrors.push(e.message)));
  context.on('request',r=>{const u=new URL(r.url());requests.push({scheme:u.protocol,origin:u.origin,path:u.pathname,method:r.method()})});
  return context.newPage();

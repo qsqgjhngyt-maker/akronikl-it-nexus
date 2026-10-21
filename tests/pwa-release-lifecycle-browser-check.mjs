@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import path from 'node:path';
 import {RUNTIME_RESOURCES} from '../pwa/runtime-manifest.js';
+import {bindRuntimeTransport} from './helpers/runtime-transport.mjs';
 const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
 const root=fileURLToPath(new URL('../',import.meta.url)),out=path.resolve(process.env.NEXUS_PWA_EVIDENCE),frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR);
 const legacySource=path.resolve(process.env.NEXUS_LEGACY_SOURCE||path.resolve(root,'../nexus-alpha10-closure-evidence-2026-10-21/baseline-source'));
@@ -14,7 +15,8 @@ const profile=await mkdtemp(path.join(tmpdir(),'nx-closure-')),checks=[],request
 const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),generation=manifest.assetGeneration;
 const safeSW=await readFile(path.join(frontend,'service-worker.js'),'utf8');
 const legacySW=await readFile(path.join(legacySource,'service-worker.js'),'utf8');
-let mode='legacy',badAsset=null,context,server,transportOffline=false;
+let mode='legacy',badAsset=null,context,server,transportOffline=false,runtimeOffline=false;
+const setOffline=async value=>{runtimeOffline=value;await context.setOffline(value)};
 const mime=file=>file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.md')?'text/markdown':'text/html';
 const fixture='<!doctype html><meta charset="utf-8"><title>Synthetic PWA regression</title><body>Synthetic fixture only</body>';
 server=http.createServer(async(req,res)=>{
@@ -38,13 +40,28 @@ server=http.createServer(async(req,res)=>{
  }catch{console.log('LOCAL_MISSING '+req.url);res.writeHead(404,{'cache-control':'no-store'});res.end()}
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
-const launch=(offline=false)=>chromium.launchPersistentContext(profile,{headless:true,executablePath:process.env.NEXUS_CHROME_PATH,...(offline?{proxy:{server:'http://127.0.0.1:9'}}:{}),args:['--disable-background-networking','--disable-component-update','--disable-sync','--no-first-run'],serviceWorkers:'allow'});
+const launch=async(offline=false)=>{const ctx=await chromium.launchPersistentContext(profile,{headless:true,executablePath:process.env.NEXUS_CHROME_PATH,...(offline?{proxy:{server:'http://127.0.0.1:9'}}:{}),args:['--disable-background-networking','--disable-component-update','--disable-sync','--no-first-run'],serviceWorkers:'allow'});if(!offline)await bindRuntimeTransport(ctx,{offline:()=>runtimeOffline});return ctx};
 async function check(name,fn){const started=performance.now();await fn();const row={name,status:'PASS',durationMs:Math.round(performance.now()-started)};checks.push(row);console.log(JSON.stringify(row))}
 async function status(page,includeRuntime=false){return page.evaluate(async includeRuntime=>{
  return new Promise((resolve,reject)=>{const c=new MessageChannel(),timer=setTimeout(()=>{c.port1.close();reject(Error('STATUS_TIMEOUT'))},includeRuntime?60000:15000);c.port1.onmessage=e=>{clearTimeout(timer);c.port1.close();resolve(e.data)};navigator.serviceWorker.controller.postMessage({type:'nexus-pwa-status',includeRuntime},[c.port2])});
 },includeRuntime)}
 async function waitGeneration(page,expected){const deadline=Date.now()+30000;let last;
  while(Date.now()<deadline){try{last=await status(page);if(last.generation===expected&&last.publicReady)return last}catch{}await page.waitForTimeout(150)}throw Error('GENERATION_WAIT '+JSON.stringify(last))}
+async function rejectedUpdate(page){
+ // update() может завершиться до updatefound. Следим за конкретным installing worker,
+ // иначе следующий режим fixture может ошибочно завершить ещё идущую установку.
+ const state=await page.evaluate(async()=>{
+  const registration=await navigator.serviceWorker.getRegistration();
+  return new Promise((resolve,reject)=>{
+   let worker;const timer=setTimeout(()=>finish(Error('REJECTED_INSTALL_NOT_SETTLED')),60000);
+   const finish=value=>{clearTimeout(timer);registration.removeEventListener('updatefound',found);worker?.removeEventListener('statechange',changed);value instanceof Error?reject(value):resolve(value)};
+   const changed=()=>{if(['redundant','activated'].includes(worker.state))finish(worker.state)};
+   const found=()=>{worker=registration.installing;if(!worker)return finish(Error('INSTALLING_WORKER_MISSING'));worker.addEventListener('statechange',changed);changed()};
+   registration.addEventListener('updatefound',found,{once:true});registration.update().catch(finish);
+  });
+ });
+ assert.equal(state,'redundant','повреждённая установка должна реально завершиться отказом до следующего режима');
+}
 async function preserved(page){return page.evaluate(async()=>{
  const projects=localStorage.getItem('synthetic-projects'),progress=localStorage.getItem('synthetic-progress');
  const db=await new Promise((resolve,reject)=>{const r=indexedDB.open('synthetic-user-projects',1);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});
@@ -78,11 +95,11 @@ try{
   await new Promise((resolve,reject)=>{const t=db.transaction('projects','readwrite',{durability:'strict'});t.objectStore('projects').put({files:{'main.cpp':'SYNTHETIC_PROJECT_CODE'},progress:42},'preserved');t.oncomplete=resolve;t.onabort=()=>reject(t.error)});db.close();
   const cache=await caches.open('akronikl-it-nexus-v0.1.7-alpha.2.4.5');await cache.put('/api/v2/account',new Response('SYNTHETIC_PRIVATE_CACHE_CANARY'));await cache.put('/unapproved-private.json',new Response('SYNTHETIC_PRIVATE_OTHER_CANARY'));
  });
- original=await preserved(page);await context.setOffline(true);
+ original=await preserved(page);await setOffline(true);
  beforeReplay=await page.evaluate(()=>fetch('/api/v2/account').then(r=>r.text()));
  assert.equal(beforeReplay,'SYNTHETIC_PRIVATE_CACHE_CANARY');
  await writeFile(path.join(out,'BEFORE_LEGACY_REPLAY_EXPECTED_FAIL.json'),JSON.stringify({status:'EXPECTED_SECURITY_FAIL_REPRODUCED',body:'synthetic private canary replayed',controller:'/service-worker.js',credentials:false},null,2));
- await context.setOffline(false);const second=await context.newPage();await second.goto(origin+'/_fixture.html');original=await preserved(page);
+ await setOffline(false);const second=await context.newPage();await second.goto(origin+'/_fixture.html');original=await preserved(page);
  await check('atomic safe migration claims two tabs without reload or user storage/cache deletion',async()=>{
   const counters=await Promise.all([page,second].map(p=>p.evaluate(()=>{window.syntheticDocumentId=crypto.randomUUID();return window.syntheticDocumentId})));
   mode='safe';await page.evaluate(async()=>{await (await navigator.serviceWorker.getRegistration()).update()});
@@ -91,7 +108,7 @@ try{
   assert.deepEqual(await Promise.all([page,second].map(p=>p.evaluate(()=>window.syntheticDocumentId))),counters);
  });
  await check('offline private/API requests never replay any historical cache or HTML fallback',async()=>{
-  await context.setOffline(true);
+  await setOffline(true);
   for(const target of ['/api/v2/account','/api/v2/cloud/projects','/account/entry/','/nexus-shell.html','/unapproved-private.json']){
    const result=await page.evaluate(async path=>{try{return {ok:true,text:await (await fetch(path)).text()}}catch{return{ok:false}}},target);
    assert.equal(result.ok,false,target);
@@ -99,18 +116,18 @@ try{
   assert.deepEqual(await preserved(page),original);
  });
  await check('private Vary-star response cannot be stored and mutable root metadata has no public cache authority',async()=>{
-  await context.setOffline(false);
+  await setOffline(false);
   const result=await page.evaluate(async generation=>{
    const response=await fetch('/api/v2/account');let rejected=false;
    try{await(await caches.open('akronikl-it-nexus-v0.1.7-alpha.2.4.5')).put('/synthetic-rejected-private-write',response.clone())}catch(e){rejected=e.name==='TypeError'}
    const root=await fetch('/version.json'),pinned=await fetch('/releases/'+generation+'/version.json');
    return {rejected,noStore:response.headers.get('cache-control'),vary:response.headers.get('vary'),rootVerified:root.headers.has('x-nexus-verified-sha256'),pinnedVerified:pinned.headers.has('x-nexus-verified-sha256')};
   },generation);
-  assert.deepEqual(result,{rejected:true,noStore:'no-store',vary:'*',rootVerified:false,pinnedVerified:true});assert.deepEqual(await preserved(page),original);await context.setOffline(true);
+  assert.deepEqual(result,{rejected:true,noStore:'no-store',vary:'*',rootVerified:false,pinnedVerified:true});assert.deepEqual(await preserved(page),original);await setOffline(true);
  });
  await check('cold offline runtime fails honestly before an unverified module can execute',async()=>{
   await assert.rejects(runCompiler(page,'cold-offline'));assert.equal((await status(page,true)).runtimeReady,false);
-  await context.setOffline(false);
+  await setOffline(false);
  });
  await check('explicit preparation verifies actual Clang/WASI graph before compiling multi-file STL',async()=>{
   // Реальный пользователь сначала готовит ~106 МБ. Сетевое ожидание подготовки
@@ -122,17 +139,13 @@ try{
  });
  await check('interrupted generation install preserves the active generation and every user byte',async()=>{
   mode='broken';badAsset=manifest.files.find(r=>r.file.endsWith('/core/app.js')).file;
-  await page.evaluate(async()=>{await (await navigator.serviceWorker.getRegistration()).update()});
-  // Не запускать следующий update, пока отрицательная установка ещё выполняется.
-  // Фиксированная пауза ошибочно смешивала два install на нагруженном хосте.
-  await page.waitForFunction(async()=>{const r=await navigator.serviceWorker.getRegistration();return r?.active?.state==='activated'&&!r.installing&&!r.waiting},{},{timeout:60000});
+  await rejectedUpdate(page);
   assert.equal((await status(page)).generation,generation);assert.deepEqual(await preserved(page),original);
  });
  await check('incorrect producer Markdown MIME rejects the entire update and preserves the active generation and user data',async()=>{
   const markdownFiles=manifest.files.filter(row=>row.file.endsWith('.md'));
   assert.ok(markdownFiles.length>0);assert.equal(safeSW.split('mime: "text/markdown"').length-1,markdownFiles.length);
-  mode='mime-broken';await page.evaluate(async()=>{await(await navigator.serviceWorker.getRegistration()).update()});
-  await page.waitForFunction(async()=>{const r=await navigator.serviceWorker.getRegistration();return r?.active?.state==='activated'&&!r.installing&&!r.waiting},{},{timeout:60000});
+  mode='mime-broken';await rejectedUpdate(page);
   assert.equal((await status(page)).generation,generation);assert.equal((await status(second)).generation,generation);assert.deepEqual(await preserved(page),original);
  });
  await check('valid update then safe rollback retain both generations and do not reload tabs',async()=>{
@@ -174,7 +187,7 @@ try{
  });
  await context.close();context=await launch(true);
  await check('browser process restart restores committed runtime and compiles without network',async()=>{
-  transportOffline=true;await context.setOffline(true);const p=await context.newPage();
+  transportOffline=true;await setOffline(true);const p=await context.newPage();
   // Самостоятельная публичная оболочка открывается без создания Account proof.
   await p.goto(origin+'/');await waitGeneration(p,generation);await p.getByRole('heading',{name:'Академия',exact:true}).waitFor();
   assert.equal(await p.evaluate(async generation=>(await import('/releases/'+generation+'/core/account-storage.js')).verifiedAccount(),generation),null);
