@@ -1,5 +1,6 @@
 import {GATEWAY_ORIGIN,WORKER_ORIGIN} from './account-read.mjs';
 import {HOME_SLOTS} from '../../core/content-contract.js';
+import {hasVaryWildcard} from '../../core/private-response-policy.js';
 const PATH='/api/v2/content/feed';
 export function createContentHandler({env={},fetchImpl=fetch}={}){
  return async(req,res)=>{
@@ -11,7 +12,7 @@ export function createContentHandler({env={},fetchImpl=fetch}={}){
    if(req.method!=='GET'||url.pathname!==PATH||req.url.split('?')[0]!==PATH||req.headers.host!==new URL(GATEWAY_ORIGIN).host)return reply(404,{error:{code:'NOT_FOUND'}});
    if([...url.searchParams.keys()].some(k=>k!=='slug')||url.searchParams.getAll('slug').length>1)return reply(400,{error:{code:'INVALID_INPUT'}});
    const response=await fetchImpl(WORKER_ORIGIN+req.url,{method:'GET',credentials:'omit',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(5000),headers:{accept:'application/json'}});
-   if(!response.headers.get('content-type')?.startsWith('application/json')||response.headers.has('set-cookie')||response.headers.get('cache-control')!=='no-store'||response.headers.get('vary')!=='*')throw Error();
+   if(!response.headers.get('content-type')?.startsWith('application/json')||response.headers.has('set-cookie')||response.headers.get('cache-control')!=='no-store'||!hasVaryWildcard(response.headers.get('vary')))throw Error();
    const reader=response.body.getReader(),chunks=[];let length=0;
    try{while(true){const {done,value}=await reader.read();if(done)break;length+=value.length;if(length>131072)throw Error();chunks.push(value)}}finally{await reader.cancel().catch(()=>{});reader.releaseLock()}
    const data=JSON.parse(Buffer.concat(chunks).toString('utf8'));

@@ -1,5 +1,6 @@
 import {sanitizeAvatar,AvatarError} from '../avatar-codec.mjs';
 import {HOME_SLOTS} from '../../core/content-contract.js';
+import {hasVaryWildcard} from '../../core/private-response-policy.js';
 import {createHash,createHmac,randomBytes} from 'node:crypto';
 import {GATEWAY_ORIGIN,WORKER_ORIGIN} from './account-read.mjs';
 import {readV2CookieContext} from './gateway-cookie-context.mjs';
@@ -58,7 +59,7 @@ async function service(env,fetchImpl,envelope){
  const body=JSON.stringify(envelope),timestamp=String(Date.now()),nonce=randomBytes(16).toString('hex');
    const signature=createHmac('sha256',env.ADMIN_SERVICE_KEY).update(['v1','POST',INTERNAL,timestamp,nonce,sha(body)].join('\n')).digest('hex');
    const upstream=await fetchImpl(WORKER_ORIGIN+INTERNAL,{method:'POST',credentials:'omit',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(12000),headers:{accept:'application/json','content-type':'application/json','x-nexus-service-timestamp':timestamp,'x-nexus-service-nonce':nonce,'x-nexus-service-signature':signature},body});
-   if(upstream.redirected||!/^application\/json(?:\s*;|$)/i.test(upstream.headers.get('content-type')||'')||upstream.headers.has('set-cookie')||upstream.headers.get('cache-control')!=='no-store'||upstream.headers.get('vary')!=='*'){await upstream.body?.cancel();fail('CONTROL_UNAVAILABLE',502)}
+   if(upstream.redirected||!/^application\/json(?:\s*;|$)/i.test(upstream.headers.get('content-type')||'')||upstream.headers.has('set-cookie')||upstream.headers.get('cache-control')!=='no-store'||!hasVaryWildcard(upstream.headers.get('vary'))){await upstream.body?.cancel();fail('CONTROL_UNAVAILABLE',502)}
  const data=await bounded(upstream.body);
  if(upstream.status!==200)fail(safeCodes.has(data.error?.code)?data.error.code:'CONTROL_UNAVAILABLE',[400,401,403,404,409,413,429,503].includes(upstream.status)?upstream.status:502);
  return data;

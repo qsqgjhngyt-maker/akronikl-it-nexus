@@ -2474,6 +2474,13 @@ var HOME_SLOTS = {
   journeyTitle: { label: "\u0413\u043B\u0430\u0432\u043D\u0430\u044F: \u0437\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A \u043A\u0430\u0440\u0442\u044B \u043E\u0431\u0443\u0447\u0435\u043D\u0438\u044F", selector: "#visualJourneyTitle", max: 160 }
 };
 
+// core/private-response-policy.js
+function hasVaryWildcard(value) {
+  if (typeof value !== "string" || value.length > 4096) return false;
+  const fields = value.split(",").map((field) => field.trim());
+  return fields.length <= 64 && fields.includes("*") && fields.every((field) => /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(field));
+}
+
 // server-access/bff/content.mjs
 var PATH = "/api/v2/content/feed";
 function createContentHandler({ env = {}, fetchImpl = fetch } = {}) {
@@ -2491,7 +2498,7 @@ function createContentHandler({ env = {}, fetchImpl = fetch } = {}) {
       if (req.method !== "GET" || url.pathname !== PATH || req.url.split("?")[0] !== PATH || req.headers.host !== new URL(GATEWAY_ORIGIN).host) return reply8(404, { error: { code: "NOT_FOUND" } });
       if ([...url.searchParams.keys()].some((k) => k !== "slug") || url.searchParams.getAll("slug").length > 1) return reply8(400, { error: { code: "INVALID_INPUT" } });
       const response = await fetchImpl(WORKER_ORIGIN + req.url, { method: "GET", credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(5e3), headers: { accept: "application/json" } });
-      if (!response.headers.get("content-type")?.startsWith("application/json") || response.headers.has("set-cookie") || response.headers.get("cache-control") !== "no-store" || response.headers.get("vary") !== "*") throw Error();
+      if (!response.headers.get("content-type")?.startsWith("application/json") || response.headers.has("set-cookie") || response.headers.get("cache-control") !== "no-store" || !hasVaryWildcard(response.headers.get("vary"))) throw Error();
       const reader = response.body.getReader(), chunks = [];
       let length = 0;
       try {
@@ -3821,7 +3828,7 @@ async function service2(env, fetchImpl, envelope) {
   const body = JSON.stringify(envelope), timestamp = String(Date.now()), nonce = randomBytes8(16).toString("hex");
   const signature = createHmac7("sha256", env.ADMIN_SERVICE_KEY).update(["v1", "POST", INTERNAL5, timestamp, nonce, sha2(body)].join("\n")).digest("hex");
   const upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL5, { method: "POST", credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(12e3), headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": timestamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": signature }, body });
-  if (upstream.redirected || !/^application\/json(?:\s*;|$)/i.test(upstream.headers.get("content-type") || "") || upstream.headers.has("set-cookie") || upstream.headers.get("cache-control") !== "no-store" || upstream.headers.get("vary") !== "*") {
+  if (upstream.redirected || !/^application\/json(?:\s*;|$)/i.test(upstream.headers.get("content-type") || "") || upstream.headers.has("set-cookie") || upstream.headers.get("cache-control") !== "no-store" || !hasVaryWildcard(upstream.headers.get("vary"))) {
     await upstream.body?.cancel();
     fail("CONTROL_UNAVAILABLE", 502);
   }
