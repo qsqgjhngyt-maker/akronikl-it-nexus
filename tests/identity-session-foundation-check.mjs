@@ -8,7 +8,7 @@ const sw=fs.readFileSync(new URL('../service-worker.js',import.meta.url),'utf8')
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 
 const checks=[
-  ['release version',version.version==='0.1.7-alpha.2.4.6-ui1a.3'],
+  ['release version',version.version===JSON.parse(fs.readFileSync(new URL('../release-candidate.json',import.meta.url),'utf8')).version],
   ['worker session version',worker.includes("0.1.7-alpha.2.4.5-first-party-cookie-foundation")],
   ['account_devices migration',migration.includes('CREATE TABLE IF NOT EXISTS account_devices')],
   ['account_sessions migration',migration.includes('CREATE TABLE IF NOT EXISTS account_sessions')],
@@ -29,7 +29,7 @@ const checks=[
   ['disabled auth remains authoritative',worker.indexOf("mode === 'disabled'")<worker.indexOf('sessionMatch')],
   ['identity client supports capability endpoint',client.includes('/api/v2/auth/capabilities')],
   ['account shell exposes server status',account.includes('identityServerFoundation')&&account.includes('identitySessionFoundation')],
-  ['service worker caches identity client',sw.includes('./sync/identity-v2-client.js')]
+  ['service worker caches identity client',sw.includes('/sync/identity-v2-client.js')]
 ];
 
 let failed=0;

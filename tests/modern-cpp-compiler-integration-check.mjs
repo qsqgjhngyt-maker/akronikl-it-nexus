@@ -19,6 +19,11 @@ class Printer final : public Device { public: std::string name() const override 
 int main(){ std::vector<std::unique_ptr<Device>> devices; devices.push_back(std::make_unique<Printer>()); std::cout << devices[0]->name() << '\\n'; }`;
 
 const realWorker=globalThis.Worker;
+const savedNavigator=Object.getOwnPropertyDescriptor(globalThis,'navigator'),savedLocation=globalThis.location;
+const {RUNTIME_GRAPH_ID}=await import('../pwa/runtime-manifest.js');
+const trusted={postMessage(message,ports){ports[0].postMessage({protocol:'nexus-verified-public-v1',graphId:RUNTIME_GRAPH_ID,publicReady:true})}};
+Object.defineProperty(globalThis,'navigator',{configurable:true,value:{serviceWorker:{controller:trusted,register:async()=>({update:async()=>{}})}}});
+globalThis.location={hostname:'synthetic.invalid'};
 class FakeWorker{
   constructor(){this.onmessage=null;this.onerror=null;this.terminated=false}
   postMessage(message){
@@ -61,4 +66,6 @@ assert(networkDiag.providerLimit===true,'toolchain network failure must be an en
 assert(networkDiag.line===null,'environment limitation must not mark learner source line');
 
 if(realWorker===undefined)delete globalThis.Worker;else globalThis.Worker=realWorker;
+if(savedNavigator)Object.defineProperty(globalThis,'navigator',savedNavigator);else delete globalThis.navigator;
+if(savedLocation===undefined)delete globalThis.location;else globalThis.location=savedLocation;
 console.log('MODERN_CPP_COMPILER_INTEGRATION_PASS',route.provider.id,result.stdout.trim());

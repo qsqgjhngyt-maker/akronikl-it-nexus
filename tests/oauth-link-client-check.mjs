@@ -93,10 +93,10 @@ try{
   const pending=[];let releases=0;
   const f=install({startImpl:(path,options)=>new Promise((resolve,reject)=>pending.push({resolve,reject,signal:options.signal}))});
   await bindProviderButtons(f.container,{onStatus:f.onStatus,release:()=>releases++});
-  const button=f.container.children[0],old=button.click();assert.equal(pending.length,1);
+  const button=f.container.children[0],old=button.click();await Promise.resolve();assert.equal(pending.length,1);
   f.events.get('pagehide')?.({persisted:true});f.events.get('pageshow')({persisted:true});
   assert.equal(releases,1);assert.equal(button.disabled,false);
-  const newer=button.click();assert.equal(pending.length,2);assert.equal(button.disabled,true);
+  const newer=button.click();await Promise.resolve();assert.equal(pending.length,2);assert.equal(button.disabled,true);
   const statusCount=f.statuses.length,releaseCount=releases;
   const finishOld=async()=>{if(staleResult==='success')pending[0].resolve(Response.json({authorizationURL:'https://oauth.yandex.ru/authorize?attempt=old'}));else pending[0].reject(Error('ACCOUNT_SESSION_CHANGED'));await old};
   const finishNew=async()=>{pending[1].resolve(Response.json({authorizationURL:'https://oauth.yandex.ru/authorize?attempt=new'}));await newer};
@@ -109,7 +109,7 @@ try{
   const f=install({startImpl:(path,options)=>{signal=options.signal;return new Promise(r=>{resolve=r})}});
   await bindProviderButtons(f.container,{onStatus:f.onStatus,release:()=>releases++});
   const button=f.container.children[0],pending=button.click(),statusCount=f.statuses.length;
-  f.events.get('pagehide')?.({persisted:true});assert.equal(signal.aborted,true);
+  await Promise.resolve();f.events.get('pagehide')?.({persisted:true});assert.equal(signal.aborted,true);
   resolve(Response.json({authorizationURL:'https://oauth.yandex.ru/authorize'}));await pending;
   assert.equal(f.redirects.length,0);assert.equal(f.statuses.length,statusCount);assert.equal(releases,0);assert.equal(button.disabled,true);
   f.events.get('pageshow')({persisted:true});assert.equal(releases,1);assert.equal(button.disabled,false);assert.match(f.statuses.at(-1),/повторите|снова/i);

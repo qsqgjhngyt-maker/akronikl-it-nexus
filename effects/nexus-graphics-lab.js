@@ -81,7 +81,7 @@ export async function graphicsSceneDocument(settings,motion){
   return `<!doctype html>\n<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My Nexus Universe</title><style>html,body{margin:0;min-height:100%;background:#091727;color:#eaf6ff;font-family:system-ui}main{height:100dvh;position:relative;overflow:hidden;touch-action:none;outline-offset:-6px;cursor:grab}main.dragging{cursor:grabbing}canvas{width:100%;height:100%;position:absolute;pointer-events:none}p{position:absolute;bottom:18px;left:20px;right:20px;text-align:center;font-size:12px;color:#b6cedf;pointer-events:none}</style><main tabindex="0" role="group" aria-label="Drag or use arrow keys to rotate; scroll to zoom; Home resets the camera"><canvas aria-hidden="true"></canvas><p>Drag / arrows — rotate · wheel / + / − — zoom · Home — reset</p></main><script type="module">\n${script}\n</script></html>`;
 }
 
-export function bindGraphicsLab(t,quality=()=> 'auto'){
+export function bindGraphicsLab(t,quality=()=> 'auto',observerRoot=document.querySelector('#app')){
   const mount=document.querySelector('[data-graphics-lab]');if(!mount)return;
   const settings={...defaults},bindings=new AbortController(),options={signal:bindings.signal};let preset='system',downloading=false;
   const pause=mount.querySelector('[data-graphics-pause]'),status=mount.querySelector('[data-graphics-download-status]');
@@ -105,5 +105,5 @@ export function bindGraphicsLab(t,quality=()=> 'auto'){
     finally{downloading=false;button.disabled=false;button.removeAttribute('aria-busy')}
   },options);
   document.addEventListener('nexus-appearance-change',sync,options);document.querySelector('#effectsQuality')?.addEventListener('change',()=>queueMicrotask(sync),options);
-  const mutation=new MutationObserver(()=>{if(mount.isConnected)return;scene.destroy();bindings.abort();mutation.disconnect()});mutation.observe(document.querySelector('#app'),{childList:true});sync();
+  const mutation=new MutationObserver(()=>{if(mount.isConnected)return;scene.destroy();bindings.abort();mutation.disconnect()});mutation.observe(observerRoot||mount.parentElement,{childList:true});sync();
 }

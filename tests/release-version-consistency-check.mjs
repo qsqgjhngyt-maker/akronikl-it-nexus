@@ -7,7 +7,7 @@ const shell=fs.readFileSync(new URL('nexus-shell.html',root),'utf8');
 const candidate=JSON.parse(fs.readFileSync(new URL('release-candidate.json',root),'utf8'));
 const app=fs.readFileSync(new URL('core/app.js',root),'utf8');
 const sw=fs.readFileSync(new URL('service-worker.js',root),'utf8');
-const expected='0.1.7-alpha.2.4.6-ui1a.10';
+const expected='0.1.7-alpha.2.4.6-ui1a.10.1';
 const assert=(v,m)=>{if(!v)throw new Error(m)};
 assert(version===expected,`version.json mismatch: ${version}`);
 assert(projectVersion===expected,`project.json mismatch: ${projectVersion}`);
@@ -21,5 +21,6 @@ assert(!index.includes('core/app.js')&&!index.includes('core/bootstrap.js'),'pub
 assert(app.includes(`v${expected}`),'topbar candidate identity mismatch');
 assert(app.includes(`Platform Shell v${expected}`),'footer version mismatch');
 // Legacy source сохраняется для сравнения и не включается в build. Новая cache policy не утверждена.
-assert(sw.includes('akronikl-it-nexus-v0.1.7-alpha.2.4.5'),'historical service worker baseline changed');
+assert(sw.includes('nexus-verified-public-v1')&&sw.includes(candidate.assetGeneration),'generated verified worker/generation missing');
+assert(candidate.ownerPublicationAuthorized===false,'candidate cannot authorize its own publication');
 console.log('RELEASE_VERSION_CONSISTENCY_PASS',version);

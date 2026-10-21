@@ -159,21 +159,21 @@ async function authenticatedRequest(path,{method='GET',body=null,allowLegacyFall
     // A stale/expired server session may safely fall back to the legacy
     // account credential during migration. Never fall back for arbitrary
     // authorization failures.
-    const mayFallback=
+    const expiredServerCredential=
       ['nexus-cookie','nexus-session'].includes(candidate.mode) &&
+      response.status===401 && ['INVALID_SESSION','UNAUTHORIZED'].includes(code);
+    // Retire an explicitly rejected candidate even when no legacy fallback exists.
+    // A marker is never session proof; retaining it must not create a sticky UI state.
+    if(expiredServerCredential){
+      if(candidate.mode==='nexus-cookie')clearIdentityV2CookieSessionMarker();
+      else clearIdentityV2SessionCredential();
+    }
+    const mayFallback=expiredServerCredential &&
       allowLegacyFallback &&
       Boolean(candidates[i+1]) &&
-      response.status===401 &&
-      ['INVALID_SESSION','UNAUTHORIZED'].includes(code);
+      response.status===401;
 
-    if(mayFallback){
-      if(candidate.mode==='nexus-cookie'){
-        clearIdentityV2CookieSessionMarker();
-      }else{
-        clearIdentityV2SessionCredential();
-      }
-      continue;
-    }
+    if(mayFallback)continue;
 
     throw new IdentityV2ClientError(
       payload?.error?.message||`Identity v2 request failed (${code}).`,

@@ -1,16 +1,15 @@
-import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {readFile,mkdtemp} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
+import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const sw=fs.readFileSync(path.join(root,'service-worker.js'),'utf8');
-const assert=(v,m)=>{if(!v)throw new Error(m)};
-assert(sw.includes("akronikl-it-nexus-v0.1.7-alpha.2.4.5"),'service worker cache version mismatch');
-const match=sw.match(/const CORE=(\[[^;]+\]);/s);assert(match,'CORE asset list not found');
-const assets=JSON.parse(match[1]);
-for(const asset of assets){
-  if(asset==='./')continue;
-  const file=path.join(root,asset.replace(/^\.\//,''));
-  assert(fs.existsSync(file),`missing service worker asset ${asset}`);
-}
-for(const required of ['./core/view-resume.js','./sandbox/code-studio.js','./sandbox/code-workspace.js','./sandbox/provider-contract.js','./sandbox/languages.js','./sandbox/runtime-assets.js','./sandbox/runtime-router.js','./sandbox/workers/wasm-runtime-worker.js','./courses/programming/languages.json','./project-studio/project-store.js','./project-studio/project-templates.js','./project-studio/project-studio.js','./project-studio/project-build.js','./sandbox/virtual-files.js'])assert(assets.includes(required),`new runtime asset not cached: ${required}`);
-console.log('SERVICE_WORKER_ASSETS_PASS',assets.length);
+const root=fileURLToPath(new URL('../',import.meta.url)),tmp=await mkdtemp(path.join(tmpdir(),'nx-assets-')),out=path.join(tmp,'public');
+const run=spawnSync(process.execPath,[path.join(root,'tools/build-ui1a-release.mjs'),'--out',out],{encoding:'utf8'});assert.equal(run.status,0,run.stderr);
+const sw=await readFile(path.join(out,'service-worker.js'),'utf8'),checked=await readFile(path.join(root,'service-worker.js'),'utf8');assert.equal(checked,sw,'Delivered root worker must equal the current build');
+const manifest=JSON.parse(await readFile(path.join(out,'BUILD_MANIFEST.json')));
+for(const row of manifest.files.filter(r=>!['index.html','nexus-shell.html','service-worker.js','version.json'].includes(r.file))){assert.ok(sw.includes('url: "'+row.file+'"'),row.file);assert.ok(sw.includes(row.sha256),row.file)}
+assert.equal(manifest.publicAssets,manifest.files.length-4);
+assert.ok(sw.includes('nexus-verified-public-v1'));assert.ok(!sw.includes('caches.match('));assert.ok(!sw.includes('caches.delete('));assert.ok(!sw.includes('deleteDatabase('));
+assert.ok(!sw.includes('url: "nexus-shell.html"'));assert.ok(!sw.includes('url: "index.html"'));assert.ok(!sw.includes('url: "version.json"'));
+console.log('SERVICE_WORKER_ASSETS_PASS',manifest.publicAssets,'exact pinned public files; no legacy private fallback or storage deletion');

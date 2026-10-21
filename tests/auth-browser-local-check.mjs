@@ -8,8 +8,8 @@ const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE)
 const frontend=pathToFileURL(process.env.NEXUS_FRONTEND_DIR.replace(/[\\/]?$/,'/'));
 const generation=JSON.parse(await readFile(new URL('version.json',frontend))).releaseCandidate.assetGeneration;
 const f=await fixture(frontend),origin='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net';
-const browser=await chromium.launch({executablePath:process.env.NEXUS_CHROME_PATH,headless:true,args:['--disable-background-networking','--disable-component-update']});
-const context=await browser.newContext(),page=await context.newPage(),errors=[],blocked=[],timings=[];
+const browser=await chromium.launch({executablePath:process.env.NEXUS_CHROME_PATH,headless:true,proxy:{server:'http://127.0.0.1:9'},args:['--disable-background-networking','--disable-component-update']});
+const context=await browser.newContext({serviceWorkers:'block'}),page=await context.newPage(),errors=[],blocked=[],timings=[];
 page.setDefaultTimeout(15000);page.setDefaultNavigationTimeout(15000);
 let documentStart=0;
 page.on('request',request=>{if(request.isNavigationRequest())documentStart=performance.now()});

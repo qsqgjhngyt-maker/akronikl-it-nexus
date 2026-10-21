@@ -7,7 +7,10 @@ import {controlFixture} from '../tests/helpers/control-fixture.mjs';
 import jpeg from 'jpeg-js';
 import {sanitizeAvatar} from './avatar-codec.mjs';
 const f=await controlFixture(),checks=[];let outbound=0,phase='start',failure,migrationFile;
-const compatibilityDate=process.env.NEXUS_COMPATIBILITY_DATE||'2026-07-30';
+const compatibilityDate=process.env.NEXUS_COMPATIBILITY_DATE||'2026-09-23';
+if(compatibilityDate!=='2026-09-23')throw Error('PRODUCTION_COMPATIBILITY_DATE_REQUIRED');
+const resultFile=process.env.NEXUS_WORKERD_RESULT||process.argv[2];
+if(!resultFile)throw Error('WORKERD_RESULT_PATH_REQUIRED');
 const mf=new Miniflare({modules:true,scriptPath:fileURLToPath(new URL('worker-bundle/entry.mjs',import.meta.url)),compatibilityDate,compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'synthetic-control-d1'},bindings:{PUBLIC_PASSKEY_REGISTRATION_ENABLED:'true',COMMUNITY_ENABLED:'true',CONTENT_ENABLED:'true',FEEDBACK_ENABLED:'true',FEEDBACK_SERVICE_KEY:'SYNTHETIC_WORKERD_FEEDBACK_SERVICE_KEY_ONLY',ADMIN_CONTROL_ENABLED:'true',ALPHA_ADMISSION_ENABLED:'true',ADMIN_PURGE_ENABLED:'true',ADMIN_SERVICE_KEY:f.env.ADMIN_SERVICE_KEY,PASSKEY_ENABLED:'true',PASSKEY_SERVICE_KEY:'SYNTHETIC_WORKERD_PASSKEY_SERVICE_KEY_ONLY',PASSKEY_ORIGIN:'https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net',PASSKEY_RP_ID:'d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net'},outboundService:()=>{outbound++;return new Response('OUTBOUND_FORBIDDEN',{status:503})}});
 const check=async(name,fn)=>{phase=name;const start=performance.now();await fn();checks.push({name,status:'PASS',durationMs:Math.round(performance.now()-start)});console.log('PASS '+name)};
 async function call(path,options={}){
@@ -134,7 +137,7 @@ try{
 finally{
  await mf.dispose();f.close();
  const result={status:failure?'FAIL':'PASS',checks,failure,outboundRequests:outbound,cloudResourcesCreated:0,realCredentials:false,runtime:'local Cloudflare workerd / D1',compatibilityDate,tables};
- await writeFile(process.env.NEXUS_WORKERD_RESULT,JSON.stringify(result,null,2)+'\n',{flag:'wx'});
+ await writeFile(resultFile,JSON.stringify(result,null,2)+'\n',{flag:'wx'});
  if(failure)process.exitCode=1;
 }
 function assertArray(value,length){if(!Array.isArray(value)||value.length!==length)throw Error('WRONG_LIST')}

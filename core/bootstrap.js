@@ -1,5 +1,6 @@
 import {initializeAccountStorage,lockAccountStorage,verifiedAccount} from './account-storage.js';
 import {SERVER_ACCOUNT_ORIGIN} from './server-account-origin.js';
+import {ensureSafeController} from '../pwa/client.js';
 
 export const ENTRY_URL=SERVER_ACCOUNT_ORIGIN+'/account/entry/';
 const exact=(value,keys)=>!!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===[...keys].sort().join(',');
@@ -24,7 +25,7 @@ export function validAccount(body){
 export function createNexusBootstrap({
  fetchImpl=globalThis.fetch,locationImpl=globalThis.location,documentImpl=globalThis.document,windowImpl=globalThis.window,
  storage={initializeAccountStorage,lockAccountStorage,verifiedAccount},
- importApp=()=>import('./app.js'),
+ importApp=()=>import('./app.js'),prepareTransport=()=>ensureSafeController(),
  // Window timers требуют native receiver: вызов через plain DI object иначе даёт Illegal invocation.
  timers={setTimeout:(...args)=>globalThis.setTimeout(...args),clearTimeout:(...args)=>globalThis.clearTimeout(...args),setInterval:(...args)=>globalThis.setInterval(...args),clearInterval:(...args)=>globalThis.clearInterval(...args)}
 }={}){
@@ -108,6 +109,8 @@ export function createNexusBootstrap({
    if(!canonical())return leave();
    phase='starting';installGuards();
    try{
+    await prepareTransport();
+    if(leaving||phase!=='starting')return false;
     const session=await readSession();
     if(leaving||phase!=='starting')return false;
     if(!session)return leave();

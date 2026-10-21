@@ -9,14 +9,14 @@ const frontend=pathToFileURL(process.env.NEXUS_FRONTEND_DIR.replace(/[\\/]?$/,'/
 const generation=JSON.parse(await readFile(new URL('version.json',frontend))).releaseCandidate.assetGeneration;
 const origin='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net';
 const f=await fixture(frontend,{oauth:true}),results=[],boundaries=[],providerRequests=[],pageErrors=[],navigations=[];
-const browser=await chromium.launch({executablePath:process.env.NEXUS_CHROME_PATH,headless:true,args:['--disable-background-networking','--disable-component-update']});
-const context=await browser.newContext(),page=await context.newPage();
+const browser=await chromium.launch({executablePath:process.env.NEXUS_CHROME_PATH,headless:true,proxy:{server:'http://127.0.0.1:9'},args:['--disable-background-networking','--disable-component-update']});
+const context=await browser.newContext({serviceWorkers:'block'}),page=await context.newPage();
 page.setDefaultTimeout(4000);
 page.on('pageerror',()=>pageErrors.push('page-error'));
 const clockStart=performance.now();
 page.on('framenavigated',frame=>{if(frame===page.mainFrame()){const u=new URL(frame.url());navigations.push({path:u.pathname,hash:u.hash.startsWith('#view=')?u.hash:'',atMs:Math.round(performance.now()-clockStart)})}});
 const type=p=>p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.json')?'application/json':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.png')?'image/png':'text/html';
-let unauthorizedNetwork=0,strictReturnRequests=0;
+let unauthorizedNetwork=0,strictReturnRequests=0,pendingStrictReturn=false,forcedStrictReturns=0;
 await context.route('**/*',async route=>{
  const req=route.request(),url=new URL(req.url());
  try{
@@ -29,11 +29,24 @@ await context.route('**/*',async route=>{
   }
   if(url.origin!==origin){unauthorizedNetwork++;return route.abort()}
   const headers=await req.allHeaders();
+  // Deterministic Strict-cookie navigation boundary, independent of Chromium version
+  // and the synthetic consent page's route.fulfill redirect classification.
+  // Browser HttpOnly cookies remain intact; subsequent same-origin fetch sends them.
+  if(url.pathname==='/'&&pendingStrictReturn){delete headers.cookie;pendingStrictReturn=false;forcedStrictReturns++}
   if(req.isNavigationRequest()&&url.pathname==='/'&&!headers.cookie?.includes('__Host-nexus_session='))strictReturnRequests++;
   const result=await f.dispatch(url.href,{method:req.method(),headers,body:req.postData()});
   if(result){
+   if(url.pathname==='/api/v2/account/oauth/yandex/callback'&&result.status===303)pendingStrictReturn=true;
    boundaries.push({path:url.pathname,status:result.status,durationMs:f.metrics.at(-1).durationMs});
    const h={};for(const[k,v]of Object.entries(result.headers))h[k]=Array.isArray(v)?v.join('\n'):String(v);
+   // Playwright does not route a redirect chain's subsequent network hop. Keep the
+   // real BFF 303/Set-Cookie assertion, then deliver its fixed public destination
+   // as a new explicit navigation. A dead proxy denies every unhandled request.
+   if(result.status===303){
+    const destination=new URL(h.location);assert.equal(destination.origin,origin);assert.equal(destination.pathname,'/');assert.equal(destination.search,'');
+    delete h.location;delete h['content-length'];h['content-type']='text/html';
+    return route.fulfill({status:200,headers:h,body:'<!doctype html><script>location.replace('+JSON.stringify(destination.href)+')</script>'});
+   }
    return route.fulfill({status:result.status,headers:h,body:result.body});
   }
   let path=url.pathname.slice(1);
@@ -58,11 +71,14 @@ try{
   assert.equal(count('nexus_oauth_transactions'),before+1);assert.equal(providerRequests.at(-1).pkce,true);assert.equal(providerRequests.at(-1).forceConfirm,true);
  });
  await check('link callback returns automatically to built Security through Strict-cookie server proof',async()=>{
-  await page.locator('#confirm').click();await app();
+  await page.locator('#confirm').click();
+  // An account element from a departing document is not proof of a completed return.
+  const deadline=Date.now()+4000;while(!forcedStrictReturns&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,25));
+  await page.waitForURL(url=>url.origin===origin&&url.pathname==='/index.html'&&url.hash==='#view=account&tab=security');await app();
   assert.equal(new URL(page.url()).hash,'#view=account&tab=security');
   assert.equal(count('oauth_identities'),1);assert.equal(count('account_subjects'),1);
   assert.equal(f.db.prepare('SELECT account_id FROM oauth_identities').get().account_id,'synthetic-owner');
-  assert.ok(strictReturnRequests>=2);
+  assert.equal(forcedStrictReturns,1);assert.ok(strictReturnRequests>=1);
  });
  // Allow later checks to execute on the broken baseline while retaining the preceding failure.
  await page.goto(origin+'/index.html#view=account');await app();
@@ -99,7 +115,7 @@ try{
   assert.equal(new URL(page.url()).hash,'#view=account&tab=security');
  });
  assert.equal(unauthorizedNetwork,0);
- const result={status:results.every(x=>x.status==='PASS')?'PASS':'FAIL',checks:results,boundaries,providerRequests,strictReturnRequests,externalRequests:0,realAccounts:false,pageErrors,navigations};
+ const result={status:results.every(x=>x.status==='PASS')?'PASS':'FAIL',checks:results,boundaries,providerRequests,strictReturnRequests,forcedStrictReturns,externalRequests:0,realAccounts:false,pageErrors,navigations};
  await writeFile(process.env.NEXUS_BROWSER_RESULT,JSON.stringify(result,null,2)+'\n',{flag:'wx'});
  if(result.status!=='PASS')process.exitCode=1;
 }catch(error){

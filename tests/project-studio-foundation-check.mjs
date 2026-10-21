@@ -1,3 +1,5 @@
+import {accountClientFixture} from './helpers/account-client-fixture.mjs';
+import {accountLocalStorage} from '../core/account-storage.js';
 import fs from 'node:fs';
 import {createProject,ensureTemplateProject,getProject,createCheckpoint,restoreCheckpoint,toggleProjectMilestone,listProjects,projectStorageKey} from '../project-studio/project-store.js';
 import {cppCourseProjectTemplate,blankCppProjectTemplate} from '../project-studio/project-templates.js';
@@ -8,7 +10,7 @@ import {browserRuntimeProvider} from '../sandbox/providers/browser-runtime.js';
 import {wasmRuntimeProvider} from '../sandbox/providers/wasm-runtime.js';
 
 const assert=(value,message)=>{if(!value)throw new Error(message)};
-const mem=new Map();globalThis.localStorage={getItem:key=>mem.has(key)?mem.get(key):null,setItem:(key,value)=>mem.set(key,String(value)),removeItem:key=>mem.delete(key),clear:()=>mem.clear()};
+const f=accountClientFixture('synthetic-foundation-account');f.verify();const mem=f.local.data;
 assert(projectStorageKey()==='akronikl:it-nexus:projects:v1','Project store key changed unexpectedly');
 
 const courseDef={id:'finance',title:'Домашняя бухгалтерия',pitch:'Учёт операций',starter:'#include <iostream>\nint main(){std::cout<<"Finance\\n";return 0;}\n',milestones:[{t:'1. Модель',d:'Описание'},{t:'2. Ядро',d:'Код'}],features:[],result:'Рабочая программа'};

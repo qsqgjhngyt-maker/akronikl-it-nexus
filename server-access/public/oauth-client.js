@@ -1,6 +1,8 @@
+import {ensureSafeController} from '../../pwa/client.js';
 const ORIGIN='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net';
 const providers=new Map([['google',{label:'Google',host:'accounts.google.com'}],['yandex',{label:'Яндекс',host:'oauth.yandex.ru'}],['vk',{label:'VK ID',host:'id.vk.ru'}]]);
 async function request(path,options={}){
+ await ensureSafeController();
  if(location.origin!==ORIGIN)throw Error('FIRST_PARTY_REQUIRED');
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
  const signal=options.signal,abort=()=>controller.abort();
