@@ -7,7 +7,7 @@ const origin='https://synthetic.invalid';let checks=0;
 const check=async(name,fn)=>{await fn();checks++;console.log('PASS '+name)};
 await check('only exact producer record is public',async()=>{
  assert.equal(publicRecord(new Request(origin+record.url),origin,[record],'v1'),record);
- for(const path of ['/api/v2/account','/account/entry/','/nexus-shell.html','/','/index.html','/API/v2/cloud/projects','/%61pi/v2/account',record.url+'?account=other',record.url+'?v=other','/unapproved.js'])assert.equal(publicRecord(new Request(origin+path),origin,[record],'v1'),null);
+ for(const path of ['/api/v2/account','/account/entry/','/nexus-shell.html','/','/index.html','/API/v2/cloud/projects','/%61pi/v2/account',record.url+'?account=other',record.url+'?v=other',record.url+'#copy=synthetic','/api/v2/account#copy=synthetic','/unapproved.js'])assert.equal(publicRecord(new Request(origin+path),origin,[record],'v1'),null);
  assert.equal(publicRecord(new Request(origin+record.url,{method:'POST',body:'synthetic'}),origin,[record],'v1'),null);
  assert.equal(publicRecord(new Request('https://foreign.invalid'+record.url),origin,[record],'v1'),null);
  assert.equal(publicRecord(new Request(origin+record.url+'?v=v1'),origin,[record],'v1'),record);
