@@ -31,7 +31,7 @@ const key='SYNTHETIC_OFFLINE_CLOUD_HMAC_KEY_ONLY_2026';
 const env={DB,CLOUD_SESSION_ENABLED:'true',CLOUD_SERVICE_KEY:key,AUTH_MODE:'nexus-token',ALPHA_ADMISSION_ENABLED:'true'};
 let cloudCalls=0,offline=false,context,vaultId,projectId;
 const cloud=createCloudSessionHandler({env:{CLOUD_SESSION_PROXY_ENABLED:'true',PRIVATE_GATEWAY_CONFIRMED:'true',CLOUD_SERVICE_KEY:key},fetchImpl:async(url,options)=>{assert.equal(url,WORKER_ORIGIN+'/api/v2/cloud/internal');return worker.fetch(new Request(url,options),env,{})}});
-const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':'text/html';
+const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.md')?'text/markdown':'text/html';
 const checks=[],failures=[],requests=[],errors=[],deniedInfrastructure=[],appRequests=[];
 const runtimeNames=['clang-bundle.js','runno-entry.js','llvm.core.wasm','llvm.core2.wasm','llvm.core3.wasm','llvm.core4.wasm','llvm-resources.tar'];
 const server=https.createServer({key:await readFile(path.join(tls,'key.pem')),cert:await readFile(path.join(tls,'cert.pem'))},async(req,res)=>{

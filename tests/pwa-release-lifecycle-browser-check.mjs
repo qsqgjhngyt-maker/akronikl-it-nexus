@@ -15,7 +15,7 @@ const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json
 const safeSW=await readFile(path.join(frontend,'service-worker.js'),'utf8');
 const legacySW=await readFile(path.join(legacySource,'service-worker.js'),'utf8');
 let mode='legacy',badAsset=null,context,server,transportOffline=false;
-const mime=file=>file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.svg')?'image/svg+xml':'text/html';
+const mime=file=>file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.md')?'text/markdown':'text/html';
 const fixture='<!doctype html><meta charset="utf-8"><title>Synthetic PWA regression</title><body>Synthetic fixture only</body>';
 server=http.createServer(async(req,res)=>{
  if(transportOffline){req.socket.destroy();return}
@@ -24,7 +24,7 @@ server=http.createServer(async(req,res)=>{
   if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);return res.end()}
   if(url.pathname==='/service-worker.js'){
    const changed=id=>safeSW.replace('generation: "'+generation+'"','generation: "'+id+'"');
-   const body=mode==='legacy'?legacySW:mode==='update2'?changed(generation+'-update2'):mode==='broken'?changed(generation+'-interrupted'):safeSW;
+   const body=mode==='legacy'?legacySW:mode==='update2'?changed(generation+'-update2'):mode==='broken'?changed(generation+'-interrupted'):mode==='mime-broken'?changed(generation+'-mime-rejected').replaceAll('mime: \"text/markdown\"','mime: \"text/html\"'):safeSW;
    res.writeHead(200,{'content-type':'text/javascript','cache-control':'no-store','service-worker-allowed':'/'});return res.end(body);
   }
   if(url.pathname.startsWith('/api/')||url.pathname==='/nexus-shell.html'){
@@ -123,6 +123,12 @@ try{
   // Фиксированная пауза ошибочно смешивала два install на нагруженном хосте.
   await page.waitForFunction(async()=>{const r=await navigator.serviceWorker.getRegistration();return r?.active?.state==='activated'&&!r.installing&&!r.waiting},{},{timeout:60000});
   assert.equal((await status(page)).generation,generation);assert.deepEqual(await preserved(page),original);
+ });
+ await check('incorrect producer Markdown MIME rejects the entire update and preserves the active generation and user data',async()=>{
+  assert.equal(safeSW.split('mime: "text/markdown"').length-1,6);
+  mode='mime-broken';await page.evaluate(async()=>{await(await navigator.serviceWorker.getRegistration()).update()});
+  await page.waitForFunction(async()=>{const r=await navigator.serviceWorker.getRegistration();return r?.active?.state==='activated'&&!r.installing&&!r.waiting},{},{timeout:60000});
+  assert.equal((await status(page)).generation,generation);assert.equal((await status(second)).generation,generation);assert.deepEqual(await preserved(page),original);
  });
  await check('valid update then safe rollback retain both generations and do not reload tabs',async()=>{
   mode='update2';await page.evaluate(async()=>{await (await navigator.serviceWorker.getRegistration()).update()});await waitGeneration(page,generation+'-update2');await waitGeneration(second,generation+'-update2');

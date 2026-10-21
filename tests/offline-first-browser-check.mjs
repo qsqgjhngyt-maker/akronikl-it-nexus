@@ -12,7 +12,7 @@ const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json
 const phrase='SYNTHETIC local copy phrase only 2026',checks=[],failures=[],requests=[],pageErrors=[];
 let context,offline=false,vaultId,branchId;
 const source='#include <iostream>\n#include <vector>\n#include "calc.hpp"\nint main(){std::vector<int> v{2,3,5};int n=0;for(int x:v)n+=x;std::cout<<"NEXUS_OFFLINE "<<n<<" "<<calc()<<"\\n";}';
-const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':'text/html';
+const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.md')?'text/markdown':'text/html';
 const server=http.createServer(async(req,res)=>{
  if(offline){req.socket.destroy();return}
  try{
