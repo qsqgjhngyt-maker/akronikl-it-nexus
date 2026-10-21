@@ -30,4 +30,13 @@ await check('complete declared Clang/WASI browser graph is pinned and bounded',a
  for(const r of RUNTIME_RESOURCES){assert.match(r.sha256,/^[a-f0-9]{64}$/);assert.ok(r.bytes>0&&r.bytes<160*1024*1024);assert.ok(r.url.startsWith('https://cdn.jsdelivr.net/npm/'));assert.ok(!new URL(r.url).search);for(const dependency of r.dependencies)assert.ok(urls.has(dependency))}
  assert.equal(RUNTIME_RESOURCES[0].dependencies.length,5);assert.equal(RUNTIME_RESOURCES.reduce((n,r)=>n+r.bytes,0),105558342);
 });
+await check('Markdown requires the exact producer MIME; HTML substitution, private headers and altered bytes remain rejected',async()=>{
+ const body=new TextEncoder().encode('# Synthetic public Markdown\n'),md={url:'/releases/synthetic/courses/README.md',mime:'text/markdown',bytes:body.length,sha256:await sha256(body)};
+ const response=()=>new Response(body,{headers:{'content-type':'text/markdown; charset=utf-8'}});
+ await assert.rejects(verifyResponse({...md,mime:'text/html'},response()),{code:'ASSET_MIME_REJECTED'});
+ assert.deepEqual(new Uint8Array(await verifyResponse(md,response())),body);
+ await assert.rejects(verifyResponse(md,new Response(body,{headers:{'content-type':'text/html'}})),{code:'ASSET_MIME_REJECTED'});
+ await assert.rejects(verifyResponse(md,new Response(body,{headers:{'content-type':'text/markdown',vary:'Accept-Encoding, *'}})),{code:'ASSET_PRIVATE_RESPONSE_REJECTED'});
+ await assert.rejects(verifyResponse(md,new Response(new Uint8Array(body.length),{headers:{'content-type':'text/markdown'}})),{code:'ASSET_INTEGRITY_MISMATCH'});
+});
 console.log(JSON.stringify({status:'PASS',checks,cloudWrites:0,realCredentials:false}));

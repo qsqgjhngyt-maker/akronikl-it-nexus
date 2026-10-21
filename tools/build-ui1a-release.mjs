@@ -45,7 +45,7 @@ for(const generation of config.retainedPublicGenerations||[]){
 for(const file of ['assets/icons/icon-192.png','assets/icons/icon-512.png','assets/icons/apple-touch-icon.png'])await output(file,await readFile(path.join(source,file)),file);
 const offline=renderHTML(await readFile(path.join(source,'offline.html'),'utf8')).replaceAll('./pwa/','./'+prefix+'pwa/');
 await output('offline.html',Buffer.from(offline),'offline.html: independent public educational shell; local vault unlock required');
-const mime=file=>file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.svg')?'image/svg+xml':'text/html';
+const mime=file=>file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.md')?'text/markdown':'text/html';
 const approved=records.filter(r=>!['index.html','nexus-shell.html','version.json'].includes(r.file)).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file),...(r.version?{version:r.version}:{})}));
 const pwaConfig={generation:config.assetGeneration,version:config.version,assets:approved};
 const sw=(await build({absWorkingDir:source,entryPoints:[path.join(source,'pwa/service-worker.js')],bundle:true,platform:'browser',format:'iife',target:'es2022',write:false,define:{__NEXUS_PWA_CONFIG__:JSON.stringify(pwaConfig)},logLevel:'warning'})).outputFiles[0].contents;

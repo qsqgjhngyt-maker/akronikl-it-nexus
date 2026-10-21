@@ -8,7 +8,7 @@ const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE)
 const current=path.resolve(process.env.NEXUS_FRONTEND_DIR),rollback=path.resolve(process.env.NEXUS_ROLLBACK_DIR),resultFile=process.env.NEXUS_BROWSER_RESULT;
 const a=JSON.parse(await readFile(path.join(current,'BUILD_MANIFEST.json'))),b=JSON.parse(await readFile(path.join(rollback,'BUILD_MANIFEST.json')));
 let mode='candidate',browser,context,failure,offline=false;const checks=[],workerErrors=[],expectedOfflineFailures=[];
-const mime=n=>n.endsWith('.js')?'text/javascript':n.endsWith('.css')?'text/css':n.endsWith('.json')?'application/json':n.endsWith('.webmanifest')?'application/manifest+json':n.endsWith('.png')?'image/png':n.endsWith('.svg')?'image/svg+xml':'text/html';
+const mime=n=>n.endsWith('.js')?'text/javascript':n.endsWith('.css')?'text/css':n.endsWith('.json')?'application/json':n.endsWith('.webmanifest')?'application/manifest+json':n.endsWith('.png')?'image/png':n.endsWith('.svg')?'image/svg+xml':n.endsWith('.md')?'text/markdown':'text/html';
 const server=http.createServer(async(req,res)=>{try{
  if(offline){req.socket.destroy();return}
  const n=decodeURIComponent(new URL(req.url,'http://local.invalid').pathname).slice(1);
