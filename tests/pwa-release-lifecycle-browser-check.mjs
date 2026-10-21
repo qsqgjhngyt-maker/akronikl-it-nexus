@@ -125,7 +125,8 @@ try{
   assert.equal((await status(page)).generation,generation);assert.deepEqual(await preserved(page),original);
  });
  await check('incorrect producer Markdown MIME rejects the entire update and preserves the active generation and user data',async()=>{
-  assert.equal(safeSW.split('mime: "text/markdown"').length-1,6);
+  const markdownFiles=manifest.files.filter(row=>row.file.endsWith('.md'));
+  assert.ok(markdownFiles.length>0);assert.equal(safeSW.split('mime: "text/markdown"').length-1,markdownFiles.length);
   mode='mime-broken';await page.evaluate(async()=>{await(await navigator.serviceWorker.getRegistration()).update()});
   await page.waitForFunction(async()=>{const r=await navigator.serviceWorker.getRegistration();return r?.active?.state==='activated'&&!r.installing&&!r.waiting},{},{timeout:60000});
   assert.equal((await status(page)).generation,generation);assert.equal((await status(second)).generation,generation);assert.deepEqual(await preserved(page),original);

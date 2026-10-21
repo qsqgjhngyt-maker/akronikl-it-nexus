@@ -33,7 +33,9 @@ async function networkOnly(request){
  catch(error){
   // Самостоятельная публичная оболочка; внутри нет Account proof или данных.
   const u=new URL(request.url);
-  if(request.mode==='navigate'&&u.origin===origin&&[base,base+'index.html'].includes(u.pathname)&&!u.search){
+  // Fragment выбирает локальный экран и не расширяет public asset authority.
+  // Прямая ссылка из offline-center должна переживать холодный запуск без сети.
+  if(request.method==='GET'&&request.mode==='navigate'&&u.origin===origin&&!u.username&&!u.password&&[base,base+'index.html',base+'offline.html'].includes(u.pathname)&&!u.search){
    const offline=publicAssets.find(r=>r.url===base+'offline.html');if(offline)return verified(offline);
   }
   throw error;
