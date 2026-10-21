@@ -25,7 +25,7 @@ function fakeTimers(){
   tick(){for(const value of [...intervals])value.callback()},expire(){for(const value of [...timeouts])value.callback()}
  };
 }
-function fixture({hash='#view=home',origin=SERVER_ACCOUNT_ORIGIN,fetcher,importer,useDefaultTimers=false}={}){
+function fixture({hash='#view=home',origin=SERVER_ACCOUNT_ORIGIN,fetcher,importer,prepareTransport,useDefaultTimers=false}={}){
  const log=[],calls=[],navigation=[],timers=fakeTimers(),windowImpl=new EventTarget(),documentImpl=new EventTarget();
  windowImpl.Event=Event;documentImpl.hidden=false;
  let clears=0,captured=null;
@@ -39,7 +39,7 @@ function fixture({hash='#view=home',origin=SERVER_ACCOUNT_ORIGIN,fetcher,importe
   assert.equal(options.credentials,'same-origin');assert.equal(options.cache,'no-store');assert.equal(options.redirect,'error');assert.deepEqual(options.headers,{accept:'application/json'});assert.ok(options.signal instanceof AbortSignal);
   return fetcher?fetcher(url,options):next();
  };
- const bootstrap=createNexusBootstrap({fetchImpl,locationImpl,documentImpl,windowImpl,storage,...(useDefaultTimers?{}:{timers}),importApp:async()=>{
+ const bootstrap=createNexusBootstrap({fetchImpl,locationImpl,documentImpl,windowImpl,storage,...(prepareTransport?{prepareTransport}:{}),...(useDefaultTimers?{}:{timers}),importApp:async()=>{
   log.push('app:import');assert.equal(controller.verifiedAccount()?.accountId,A);captured=controller.accountLocalStorage();captured.setItem(KEY,'synthetic-preserved-progress');if(importer)await importer();
  }});
  return{bootstrap,log,calls,navigation,timers,windowImpl,documentImpl,locationImpl,controller,local,
@@ -65,6 +65,7 @@ await check('чужой origin: ноль requests/private reads/app imports, п�
 });
 await check('server proof завершается до любых private reads и app import; start однократен',async()=>{
  const pending=deferred(),f=fixture({fetcher:()=>pending.promise});const start=f.bootstrap.startNexus();
+ await Promise.resolve();
  assert.deepEqual(f.log,['fetch:request']);assert.equal(f.local.data.size,0);assert.equal(f.timers.timeouts.size,1);
  pending.resolve(json());assert.equal(await start,true);
  assert.ok(f.log.indexOf('storage:initialize')>f.log.indexOf('fetch:request'));assert.ok(f.log.indexOf('app:import')>f.log.indexOf('storage:initialize'));
@@ -129,8 +130,15 @@ await check('pagehide сразу блокирует stale facade; BFCache pagesh
  f.dispatch(f.windowImpl,'pageshow',{persisted:true});assertLocked(f);assert.deepEqual(f.navigation,[ENTRY_URL+f.locationImpl.hash]);assert.equal(f.calls.length,1);
 });
 await check('pagehide во время initial fetch aborts и запрещает поздний import',async()=>{
- const pending=deferred(),f=fixture({fetcher:()=>pending.promise});const start=f.bootstrap.startNexus();f.dispatch(f.windowImpl,'pagehide');assert.equal(f.calls[0].options.signal.aborted,true);pending.resolve(json());assert.equal(await start,false);assert.equal(f.log.includes('storage:initialize'),false);assert.equal(f.log.includes('app:import'),false);assertLocked(f);
+ const pending=deferred(),f=fixture({fetcher:()=>pending.promise});const start=f.bootstrap.startNexus();await Promise.resolve();f.dispatch(f.windowImpl,'pagehide');assert.equal(f.calls[0].options.signal.aborted,true);pending.resolve(json());assert.equal(await start,false);assert.equal(f.log.includes('storage:initialize'),false);assert.equal(f.log.includes('app:import'),false);assertLocked(f);
  f.dispatch(f.windowImpl,'pageshow',{persisted:true});assert.equal(f.navigation.length,1);
+});
+await check('migration failure and pagehide during transport preparation never start session reads',async()=>{
+ for(const cancel of [false,true]){
+  const pending=deferred(),f=fixture({prepareTransport:()=>pending.promise});const start=f.bootstrap.startNexus();
+  assert.equal(f.calls.length,0);if(cancel){f.dispatch(f.windowImpl,'pagehide');pending.resolve()}else pending.reject(Error('SYNTHETIC_MIGRATION_FAILURE'));
+  assert.equal(await start,false);assert.equal(f.calls.length,0);assert.equal(f.log.includes('app:import'),false);assertLocked(f);
+ }
 });
 await check('pagehide при import и session-ended при recheck не возрождают storage',async()=>{
  const imported=deferred(),f=fixture({importer:()=>imported.promise});const start=f.bootstrap.startNexus();

@@ -1,5 +1,6 @@
 import {normalizeRuntimeRequest,runtimeResult,runtimeProjectFileCount,runtimeProjectSource,RUNTIME_SUPPORT} from '../provider-contract.js';
 import {MODERN_CPP_LIMITS,modernCppToolchainLabel} from '../runtime-assets.js';
+import {ensureVerifiedRuntime} from '../../pwa/client.js';
 
 const CPP_EXCEPTION_SYNTAX=/\b(?:try|catch|throw)\b/;
 
@@ -125,7 +126,8 @@ function ensureWorker(){
   return worker;
 }
 
-function requestWorker(type,payload,capability){
+async function requestWorker(type,payload,capability){
+  await ensureVerifiedRuntime();
   const requestId=`wasm-${Date.now()}-${++sequence}`;
   const runtimeWorker=ensureWorker();
   return new Promise((resolve,reject)=>{

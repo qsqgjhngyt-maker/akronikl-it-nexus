@@ -15,6 +15,6 @@ const checks=[
   ['keyboard support',select.includes("ev.key==='ArrowDown'")&&select.includes("ev.key===ESCAPE")],
   ['outside click closes',select.includes("document.addEventListener('pointerdown'")],
   ['glass dropdown styles',css.includes('Nexus Glass Dropdown hotfix')&&css.includes('.nexus-select-menu')],
-  ['historical selector cache source preserved, candidate registration disabled',sw.includes('./core/glass-select.js')&&sw.includes('akronikl-it-nexus-v0.1.7-alpha.2.4.5')&&RELEASE_CONTRACTS.pwa===false]
+  ['selector included in verified public generation',sw.includes('/core/glass-select.js')&&sw.includes('nexus-verified-public-v1')&&RELEASE_CONTRACTS.pwa===true]
 ];
 for(const [name,ok] of checks){console.log(`${ok?'PASS':'FAIL'} ${name}`);if(!ok)process.exitCode=1}

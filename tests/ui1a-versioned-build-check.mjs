@@ -11,8 +11,10 @@ const index=await readFile(path.join(out,'index.html'),'utf8'),manifest=JSON.par
 assert.ok(index.includes('./entry-assets/'+config.assetGeneration+'/entry.js'));assert.ok(!index.includes('core/app.js'));assert.ok(!index.includes('?v=0.1.7-alpha.2.4.5'));
 const shell=await readFile(path.join(out,'nexus-shell.html'),'utf8');assert.ok(shell.includes('./releases/'+config.assetGeneration+'/core/bootstrap.js?v='+config.version));assert.ok(shell.includes('./releases/'+config.assetGeneration+'/styles/app.css?v='+config.version));
 assert.deepEqual(await readFile(path.join(out,'manifest.webmanifest')),sourceManifest,'PWA identity bytes changed');assert.equal(manifest.legacyWorkerIncluded,false);
-assert.ok(!manifest.files.some(r=>r.file.endsWith('/service-worker.js')||r.file==='service-worker.js'));
+assert.equal(manifest.verifiedWorkerIncluded,true);assert.ok(manifest.files.some(r=>r.file==='service-worker.js'));
+const sw=await readFile(path.join(out,'service-worker.js'),'utf8');assert.ok(sw.includes('nexus-verified-public-v1'));assert.ok(!sw.includes('caches.match('));assert.ok(!sw.includes('caches.delete('));
+assert.ok(!sw.includes('url: "nexus-shell.html"'));assert.ok(!sw.includes('url: "index.html"'));
 const hash=b=>createHash('sha256').update(b).digest('hex');for(const r of manifest.files)assert.equal(hash(await readFile(path.join(out,r.file))),r.sha256,r.file);
 for(const path of ['core/app.js','core/i18n.js','sandbox/workers/wasm-runtime-worker.js','project-studio/project-studio.js','courses/cpp/curriculum.json','styles/app.css'])assert.ok(manifest.files.some(r=>r.file==='releases/'+config.assetGeneration+'/'+path),path);
-const app=await readFile(path.join(root,'core/app.js'),'utf8');assert.ok(app.includes("PROJECT_STUDIO_VERSION='"+config.version+"'"));assert.ok(app.includes('if(RELEASE_CONTRACTS.pwa&&'));
-console.log('UI1A_VERSIONED_BUILD_PASS',manifest.files.length,'assets; PWA identity preserved; migration BLOCKED');
+const app=await readFile(path.join(root,'core/app.js'),'utf8');assert.ok(app.includes("PROJECT_STUDIO_VERSION='"+config.version+"'"));assert.ok(!app.includes('serviceWorker.register('));
+console.log('UI1A_VERSIONED_BUILD_PASS',manifest.files.length,'assets; PWA identity preserved; verified worker, no private authority');

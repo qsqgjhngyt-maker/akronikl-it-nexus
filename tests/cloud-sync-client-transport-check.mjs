@@ -1,32 +1,32 @@
-import {cloudflareSyncStorageKey} from '../sync/cloudflare-config.js';
-import {bootstrapCloudAccount,listCloudProjects,enableProjectCloud,pullProjectNow} from '../sync/cloud-sync.js';
+// The old bootstrap/token fixture predates verified account storage. Test the current contract.
+import assert from 'node:assert/strict';
+import {accountClientFixture} from './helpers/account-client-fixture.mjs';
+import {listCloudProjects,enableProjectCloud,pullProjectNow,bootstrapCloudAccount} from '../sync/cloud-sync.js';
 import {createProject,getProject,projectStorageKey} from '../project-studio/project-store.js';
-import {identityStorageKey} from '../core/identity.js';
-const assert=(v,m)=>{if(!v)throw new Error(m)};
-const mem=new Map();globalThis.localStorage={getItem:k=>mem.has(k)?mem.get(k):null,setItem:(k,v)=>mem.set(k,String(v)),removeItem:k=>mem.delete(k),clear:()=>mem.clear()};
-let remote=null,revision=0;
+import {accountLocalStorage} from '../core/account-storage.js';
+const f=accountClientFixture('synthetic-cloud-transport'),calls=[];let remote=null,revision=0;
 globalThis.fetch=async(url,options={})=>{
-  const path=new URL(url).pathname;
-  if(path==='/api/v1/health')return Response.json({ok:true,version:'0.1.7-alpha.2.2.1-d1',authMode:'nexus-token',bootstrapOpen:true});
-  if(path==='/api/v1/bootstrap')return Response.json({ok:true,subject:{id:'user-cloud-1',displayName:'Akronikl'},token:'nxk_test_token_abcdefghijklmnopqrstuvwxyz'}, {status:201});
-  if(path==='/api/v1/me')return Response.json({subject:{id:'user-cloud-1',displayName:'Akronikl'},authMode:'nexus-token'});
-  if(path==='/api/v1/projects'&&(!options.method||options.method==='GET'))return Response.json({projects:remote?[{id:remote.id,title:remote.title,languageId:remote.languageId,revision,updatedAt:'2026-09-22T00:00:00Z'}]:[]});
-  const match=/\/api\/v1\/projects\/([^/]+)$/.exec(path);
-  if(match&&options.method==='PUT'){const body=JSON.parse(options.body);remote=body.project;revision+=1;return Response.json({ok:true,projectId:remote.id,revision,updatedAt:'2026-09-22T00:00:00Z'});}
-  if(match&&(!options.method||options.method==='GET'))return Response.json({project:remote,meta:{id:remote.id,revision,updatedAt:'2026-09-22T00:00:00Z'}});
-  return Response.json({error:{message:'not found'}},{status:404});
+ calls.push({path:String(url),method:options.method});
+ assert.equal(options.credentials,'same-origin');assert.equal(options.cache,'no-store');assert.equal(options.redirect,'error');
+ assert.equal(options.headers['x-nexus-cloud-account'],f.accountId);
+ assert.equal(options.headers.authorization,undefined);assert.equal(options.headers.cookie,undefined);
+ if(url==='/api/v2/cloud/projects')return Response.json({projects:remote?[{id:remote.id,title:remote.title,revision}]:[]});
+ if(url==='/api/v2/cloud/projects/cloud-transport-test'&&options.method==='PUT'){
+  remote=JSON.parse(options.body).project;return Response.json({ok:true,projectId:remote.id,revision:++revision});
+ }
+ if(url==='/api/v2/cloud/projects/cloud-transport-test')return Response.json({project:remote,meta:{id:remote.id,revision}});
+ throw Error('UNEXPECTED_REQUEST');
 };
-const linked=await bootstrapCloudAccount({baseUrl:'https://sync.example',bootstrapSecret:'secret',displayName:'Akronikl'});
-assert(linked.config.subjectId==='user-cloud-1','cloud account subject was not saved');
-assert(JSON.parse(mem.get(identityStorageKey())).accountSubjectId==='user-cloud-1','local identity was not linked');
-assert(mem.has(cloudflareSyncStorageKey()),'cloud config not persisted');
+await assert.rejects(listCloudProjects(),{code:'VERIFIED_ACCOUNT_REQUIRED'});assert.equal(calls.length,0);
+f.verify();
+await assert.rejects(bootstrapCloudAccount({baseUrl:'https://synthetic.invalid',bootstrapSecret:'SYNTHETIC'}),/текущий вход/);
 const project=createProject({id:'cloud-transport-test',title:'Cloud Transport',files:[{path:'src/main.cpp',content:'int main(){return 0;}\n',languageId:'cpp'}]});
 await enableProjectCloud(project.id);let local=getProject(project.id);
-assert(local.sync.mode==='cloud'&&local.sync.provider==='cloudflare'&&local.sync.status==='synced','project did not enter synced cloud mode');
-assert(local.sync.serverRevision===1&&remote?.access?.ownerId==='user-cloud-1','first cloud push/owner link failed');
-const projects=await listCloudProjects();assert(projects.length===1&&projects[0].id===project.id,'cloud project listing failed');
-remote={...remote,title:'Changed in cloud',manifest:{...remote.manifest,title:'Changed in cloud'}};revision=2;
+assert.equal(local.sync.status,'synced');assert.equal(local.sync.serverRevision,1);assert.equal(remote.access.ownerId,f.accountId);
+assert.equal((await listCloudProjects())[0].id,project.id);
+remote={...remote,title:'Changed in synthetic Cloud',manifest:{...remote.manifest,title:'Changed in synthetic Cloud'}};revision=2;
 await pullProjectNow(project.id);local=getProject(project.id);
-assert(local.title==='Changed in cloud'&&local.sync.serverRevision===2&&local.sync.status==='synced','cloud pull/apply failed');
-assert(mem.has(projectStorageKey()),'project storage namespace changed unexpectedly');
-console.log('CLOUD_SYNC_CLIENT_TRANSPORT_PASS');
+assert.equal(local.title,remote.title);assert.equal(local.sync.serverRevision,2);assert.equal(local.sync.status,'synced');
+assert.ok(accountLocalStorage().getItem(projectStorageKey()));assert.equal(f.local.getItem(projectStorageKey()),null);
+assert.equal(calls.length,3);
+console.log('CLOUD_SYNC_CLIENT_TRANSPORT_PASS: verified account, first-party cookie, push/list/pull; unverified bootstrap rejected');

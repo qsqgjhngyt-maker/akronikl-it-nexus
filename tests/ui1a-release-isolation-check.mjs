@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {RELEASE_CONTRACTS} from '../core/ui1a-release-contracts.js';
 import {fetchPublicJSON} from '../core/offline-assets.js';
 import {feedbackApi} from '../feedback/client.js';
-assert.deepEqual(RELEASE_CONTRACTS,{pwa:false,serverPasskeyAccess:false,serverFeedback:false});
+assert.deepEqual(RELEASE_CONTRACTS,{pwa:true,serverPasskeyAccess:false,serverFeedback:false});
 let network=0,cacheReads=0;
 const oldFetch=globalThis.fetch,oldCaches=globalThis.caches;
 globalThis.caches={match(){cacheReads++;return new Response('private canary',{headers:{'content-type':'application/json'}})}};

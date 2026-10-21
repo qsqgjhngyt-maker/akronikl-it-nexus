@@ -12,6 +12,6 @@ try{
  await import('../server-access/image/bff/server.mjs');if(!server.listening)await once(server,'listening');
  const response=await new Promise((resolve,reject)=>http.get({hostname:'127.0.0.1',port:server.address().port,path:'/account/access/passkey-client.js',headers:{host:new URL(process.env.PASSKEY_ORIGIN).host}},resolve).once('error',reject));
  assert.equal(response.statusCode,200);assert.equal(response.headers['cache-control'],'no-store');assert.equal(response.headers.vary,'*');
- const chunks=[];for await(const chunk of response)chunks.push(chunk);assert.deepEqual(Buffer.concat(chunks),await readFile(new URL('../server-access/public/passkey-client.js',import.meta.url)));
+ const chunks=[];for await(const chunk of response)chunks.push(chunk);assert.deepEqual(Buffer.concat(chunks),await readFile(new URL('../server-access/image/public/passkey-client.js',import.meta.url)));
  console.log('PASS rebuilt BFF bundle imports, starts and serves exact new client over loopback HTTP');
 }finally{http.createServer=original;if(server){server.closeAllConnections();await new Promise(resolve=>server.close(resolve))}for(const k of Object.keys(process.env))if(!(k in saved))delete process.env[k];Object.assign(process.env,saved)}

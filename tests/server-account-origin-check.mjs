@@ -11,7 +11,7 @@ try{
  }
  globalThis.location={origin:SERVER_ACCOUNT_ORIGIN};
  const c=await import('../core/ui1a-release-contracts.js?origin=server');
- assert.equal(c.RELEASE_CONTRACTS.serverPasskeyAccess,true);assert.equal(c.RELEASE_CONTRACTS.serverFeedback,true);assert.equal(c.RELEASE_CONTRACTS.pwa,false);
+ assert.equal(c.RELEASE_CONTRACTS.serverPasskeyAccess,true);assert.equal(c.RELEASE_CONTRACTS.serverFeedback,true);assert.equal(c.RELEASE_CONTRACTS.pwa,true);
  for(const view of ['account','feedback','reviews','feedback-admin','access'])assert.equal(new URL(serverAccountURL(view)).origin,SERVER_ACCOUNT_ORIGIN);
  for(const view of ['https://foreign.invalid','javascript:alert(1)','../api/v2/account'])assert.throws(()=>serverAccountURL(view),TypeError);
  console.log('SERVER_ACCOUNT_ORIGIN_PASS: foreign/static origins cannot enable credential transports; fixed same-origin destinations');

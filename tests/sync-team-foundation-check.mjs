@@ -1,3 +1,5 @@
+import {accountClientFixture} from './helpers/account-client-fixture.mjs';
+import {accountLocalStorage} from '../core/account-storage.js';
 import fs from 'node:fs';
 import {loadLocalIdentity,identityStorageKey} from '../core/identity.js';
 import {createPrivateAccessModel,evaluateProjectAccess,accessSummary} from '../collaboration/access-control.js';
@@ -8,7 +10,7 @@ import {createProject,patchProject,createCheckpoint,renameProject,getProject,loa
 import {projectStudioDashboardMarkup,projectStudioViewMarkup} from '../project-studio/project-studio.js';
 
 const assert=(value,message)=>{if(!value)throw new Error(message)};
-const mem=new Map();globalThis.localStorage={getItem:key=>mem.has(key)?mem.get(key):null,setItem:(key,value)=>mem.set(key,String(value)),removeItem:key=>mem.delete(key),clear:()=>mem.clear()};
+const f=accountClientFixture('synthetic-foundation-account');f.verify();const mem=f.local.data;
 
 assert(identityStorageKey()==='akronikl:it-nexus:identity:v1','identity key changed unexpectedly');
 assert(auditStorageKey()==='akronikl:it-nexus:audit:v1','audit key changed unexpectedly');
@@ -21,7 +23,7 @@ assert(identity1.deviceId===identity2.deviceId,'device identity must be persiste
 assert(identity1.localPrincipalId===identity2.localPrincipalId,'local principal must be persistent');
 
 const project=createProject({id:'team-foundation',title:'Team Foundation',languageId:'cpp',files:[{path:'src/main.cpp',content:'int main(){return 0;}\n',languageId:'cpp'},{path:'docs/architecture.md',content:'# Architecture\n',languageId:'markdown'}]});
-assert(project.access.ownerId===identity1.localPrincipalId,'new local project owner mismatch');
+assert(project.access.ownerId===f.accountId,'new local project owner mismatch');
 assert(project.access.workspaceId===identity1.personalWorkspaceId,'personal workspace id mismatch');
 assert(project.access.visibility==='private','new project must be private');
 assert(project.sync.strategy==='local-first','local-first sync strategy missing');
@@ -57,8 +59,9 @@ const detailEn=projectStudioViewMarkup({project:getProject(project.id),coursePro
 for(const token of ['Project access','Cloud and synchronization','Project history','explicit DENY'])assert(detailEn.includes(token),`English project detail missing sync/team feature: ${token}`);
 
 // Backward migration: old schema-v1 project must receive access + sync v1 without changing storage namespace.
-mem.clear();
-mem.set(projectStorageKey(),JSON.stringify({schemaVersion:1,projects:{legacy:{id:'legacy',title:'Legacy',languageId:'cpp',manifest:{entryFile:'src/main.cpp'},workspace:{files:[{path:'src/main.cpp',content:'int main(){}',languageId:'cpp'}]},sync:{revision:7}}}}));
+// Preserve all other synthetic account keys. Replace only this test project record.
+
+accountLocalStorage().setItem(projectStorageKey(),JSON.stringify({schemaVersion:1,projects:{legacy:{id:'legacy',title:'Legacy',languageId:'cpp',manifest:{entryFile:'src/main.cpp'},workspace:{files:[{path:'src/main.cpp',content:'int main(){}',languageId:'cpp'}]},sync:{revision:7}}}}));
 const migrated=loadProjectDb().projects.legacy;
 assert(migrated.schemaVersion===2,'legacy project schema migration failed');
 assert(migrated.access?.ownerId&&migrated.access?.workspaceId,'legacy project did not receive private access model');

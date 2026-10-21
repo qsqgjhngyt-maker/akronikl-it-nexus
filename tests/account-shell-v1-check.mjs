@@ -7,13 +7,13 @@ const sw=fs.readFileSync(new URL('../service-worker.js',import.meta.url),'utf8')
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 
 const checks=[
-  ['release version',version.version==='0.1.7-alpha.2.4.6-ui1a.3'],
+  ['release version',version.version===JSON.parse(fs.readFileSync(new URL('../release-candidate.json',import.meta.url),'utf8')).version],
   ['account module imported',app.includes("from './account-shell.js'")],
   ['global account chip rendered',app.includes('accountChipMarkup(prefs.uiLocale)')],
   ['home account card rendered',app.includes('accountHomeCardMarkup(prefs.uiLocale)')],
   ['account route rendered',app.includes("r.view==='account'")&&app.includes('accountPageMarkup')],
   ['account shell binding active',app.includes('bindAccountShell')],
-  ['service worker caches account module',sw.includes('./core/account-shell.js')],
+  ['service worker caches account module',sw.includes('/core/account-shell.js')],
   ['cloud identity summary used',account.includes('cloudflareSyncSummary')],
   ['local identity used',account.includes('loadLocalIdentity')],
   ['token value never read by account shell',!account.includes('.token')&&!account.includes("['token']")],

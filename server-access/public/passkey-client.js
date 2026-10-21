@@ -1,7 +1,9 @@
+import {ensureSafeController} from '../../pwa/client.js';
 const API='/api/v2/account/passkey';
 const bytes=value=>Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')),x=>x.charCodeAt(0));
 const b64=value=>btoa(String.fromCharCode(...new Uint8Array(value))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 export async function request(path,input,{signal}={}){
+ await ensureSafeController();
  // One attempt only: a lost verify response may follow an already committed session.
  const requestSignal=signal?AbortSignal.any([signal,AbortSignal.timeout(15000)]):AbortSignal.timeout(15000);requestSignal.throwIfAborted();
  const r=await fetch(API+path,{method:input===undefined?'GET':'POST',credentials:'same-origin',cache:'no-store',redirect:'error',signal:requestSignal,headers:input===undefined?{}:{'content-type':'application/json','x-nexus-passkey-write':'1'},...(input===undefined?{}:{body:JSON.stringify(input)})});
