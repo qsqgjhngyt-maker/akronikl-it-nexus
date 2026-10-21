@@ -31,7 +31,7 @@ const key='SYNTHETIC_OFFLINE_CLOUD_HMAC_KEY_ONLY_2026';
 const env={DB,CLOUD_SESSION_ENABLED:'true',CLOUD_SERVICE_KEY:key,AUTH_MODE:'nexus-token',ALPHA_ADMISSION_ENABLED:'true'};
 let cloudCalls=0,offline=false,context,vaultId,projectId;
 const cloud=createCloudSessionHandler({env:{CLOUD_SESSION_PROXY_ENABLED:'true',PRIVATE_GATEWAY_CONFIRMED:'true',CLOUD_SERVICE_KEY:key},fetchImpl:async(url,options)=>{assert.equal(url,WORKER_ORIGIN+'/api/v2/cloud/internal');return worker.fetch(new Request(url,options),env,{})}});
-const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.md')?'text/markdown':'text/html';
+const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.webp')?'image/webp':f.endsWith('.md')?'text/markdown':'text/html';
 const checks=[],failures=[],requests=[],errors=[],deniedInfrastructure=[],appRequests=[];
 const runtimeNames=['clang-bundle.js','runno-entry.js','llvm.core.wasm','llvm.core2.wasm','llvm.core3.wasm','llvm.core4.wasm','llvm-resources.tar'];
 const server=https.createServer({key:await readFile(path.join(tls,'key.pem')),cert:await readFile(path.join(tls,'cert.pem'))},async(req,res)=>{
@@ -86,7 +86,7 @@ try{
   const href=await page.locator('[data-open-local]').getAttribute('href');vaultId=new URLSearchParams(href.split('#')[1]).get('copy');assert.ok(vaultId);assert.equal(cloudCalls,0);
  });
  await check('complete close and offline restart use public shell; editing never grants a verified server context',async()=>{
-  await context.close();offline=true;page=await launch();page.setDefaultTimeout(30000);await page.goto(origin+'/');await page.getByRole('heading',{name:'Академия · офлайн'}).waitFor();
+  await context.close();offline=true;page=await launch();page.setDefaultTimeout(30000);await page.goto(origin+'/');await page.getByRole('heading',{name:'Академия',exact:true}).waitFor();
   await page.goto(origin+'/#copy='+vaultId);await page.locator('#localPhrase').fill(phrase);await page.locator('#unlockLocal button').click();await page.locator('#newProject').waitFor();
   await page.goto(origin+'/#project='+encodeURIComponent(projectId));await page.locator('#editor').fill('#include <iostream>\nint main(){std::cout<<"OFFLINE_CLOUD_EDIT\\n";}');
   await page.waitForFunction(()=>document.querySelector('#saveStatus')?.textContent.includes('Сохранено на устройстве'));await page.waitForTimeout(400);

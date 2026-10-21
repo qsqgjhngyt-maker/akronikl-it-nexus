@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {publicRecord,sha256,verifyResponse,verifyBytes} from '../pwa/policy.js';
+import {publicRecord,sha256,verifyResponse,verifyBytes,assetResponse,GRAPHICS_FRAME_CSP} from '../pwa/policy.js';
 import {RUNTIME_RESOURCES} from '../pwa/runtime-manifest.js';
 const bytes=new TextEncoder().encode('public synthetic module');
 const record={url:'/releases/closure/public.js',bytes:bytes.length,sha256:await sha256(bytes),mime:'text/javascript'};
@@ -38,5 +38,12 @@ await check('Markdown requires the exact producer MIME; HTML substitution, priva
  await assert.rejects(verifyResponse(md,new Response(body,{headers:{'content-type':'text/html'}})),{code:'ASSET_MIME_REJECTED'});
  await assert.rejects(verifyResponse(md,new Response(body,{headers:{'content-type':'text/markdown',vary:'Accept-Encoding, *'}})),{code:'ASSET_PRIVATE_RESPONSE_REJECTED'});
  await assert.rejects(verifyResponse(md,new Response(new Uint8Array(body.length),{headers:{'content-type':'text/markdown'}})),{code:'ASSET_INTEGRITY_MISMATCH'});
+});
+await check('only the exact public scene loader receives a restrictive HTTP sandbox; no private authority expands',async()=>{
+ const frame={...record,url:'/releases/ui1a-synthetic/pwa/graphics-frame.html',mime:'text/html'};
+ const response=assetResponse(frame,bytes);assert.equal(response.headers.get('content-security-policy'),GRAPHICS_FRAME_CSP);assert.match(GRAPHICS_FRAME_CSP,/sandbox allow-scripts;/);assert.ok(!GRAPHICS_FRAME_CSP.includes('allow-same-origin'));assert.ok(GRAPHICS_FRAME_CSP.includes("connect-src 'none'"));
+ for(const url of ['/api/graphics-frame.html','/account/graphics-frame.html','/releases/ui1a-synthetic/pwa/other.html'])assert.equal(assetResponse({...frame,url},bytes).headers.get('content-security-policy'),null);
+ assert.equal(publicRecord(new Request(origin+'/api/graphics-frame.html'),origin,[frame],'v1'),null);
+ assert.equal(response.headers.get('cache-control'),'no-store');assert.equal(response.headers.get('x-nexus-verified-sha256'),record.sha256);
 });
 console.log(JSON.stringify({status:'PASS',checks,cloudWrites:0,realCredentials:false}));

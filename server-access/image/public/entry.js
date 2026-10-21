@@ -166,6 +166,82 @@ function initGalaxy(canvas, { onMotionChange = () => {
   } };
 }
 
+// pwa/install.js
+function bindInstallButton({ windowRef = globalThis.window, documentRef = globalThis.document, navigatorRef = globalThis.navigator } = {}) {
+  if (!windowRef || !documentRef) return;
+  const mount = documentRef.querySelector("[data-install-mount]") || documentRef.querySelector(".access-card");
+  if (!mount) return;
+  if (mount.querySelector(".nexus-install")) return;
+  let promptEvent = null, busy = false, disposed = false, confirmedInstalled = false;
+  const mode = windowRef.matchMedia("(display-mode: standalone)"), controller = new AbortController(), options = { signal: controller.signal };
+  const installed = () => confirmedInstalled || mode.matches || navigatorRef?.standalone === true;
+  const apple = /iPhone|iPad|iPod/.test(navigatorRef?.userAgent || "") || navigatorRef?.platform === "MacIntel" && navigatorRef?.maxTouchPoints > 1;
+  const block = documentRef.createElement("div");
+  block.className = "nexus-install";
+  const button = documentRef.createElement("button");
+  button.type = "button";
+  button.className = "install-button";
+  button.textContent = "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C Nexus";
+  button.dataset.install = "";
+  const note = documentRef.createElement("p");
+  note.className = "install-note";
+  note.setAttribute("role", "status");
+  note.setAttribute("aria-live", "polite");
+  block.append(button, note);
+  mount.append(block);
+  const update = () => {
+    if (disposed) return;
+    block.hidden = installed();
+    button.disabled = busy;
+    button.textContent = busy ? "\u041E\u0442\u043A\u0440\u044B\u0432\u0430\u0435\u043C \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0443\u2026" : "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C Nexus";
+  };
+  const instructions = () => apple ? "\u041D\u0430 iPhone \u0438\u043B\u0438 iPad \u043E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u043C\u0435\u043D\u044E \xAB\u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F\xBB \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430 (Safari \u0438\u043B\u0438 \u042F\u043D\u0434\u0435\u043A\u0441), \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \xAB\u041D\u0430 \u044D\u043A\u0440\u0430\u043D \u201C\u0414\u043E\u043C\u043E\u0439\u201D\xBB \u0438 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0434\u0438\u0442\u0435 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0435." : "\u041E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u043C\u0435\u043D\u044E \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430 \u2192 \xAB\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435\xBB. \u0412 \u042F\u043D\u0434\u0435\u043A\u0441 \u0411\u0440\u0430\u0443\u0437\u0435\u0440\u0435 \u043F\u0443\u043D\u043A\u0442 \u043C\u043E\u0436\u0435\u0442 \u043D\u0430\u0437\u044B\u0432\u0430\u0442\u044C\u0441\u044F \xAB\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043D\u0430 \u0433\u043B\u0430\u0432\u043D\u044B\u0439 \u044D\u043A\u0440\u0430\u043D\xBB. \u0415\u0441\u043B\u0438 \u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D \u0442\u043E\u043B\u044C\u043A\u043E \u044F\u0440\u043B\u044B\u043A, \u0441\u0438\u0441\u0442\u0435\u043C\u043D\u0430\u044F \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430 \u043F\u043E\u043A\u0430 \u043D\u0435 \u043F\u0440\u0435\u0434\u043B\u043E\u0436\u0435\u043D\u0430: \u043F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u0438 \u043E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 Nexus \u0432 \u043E\u0431\u044B\u0447\u043D\u043E\u0439 \u0432\u043A\u043B\u0430\u0434\u043A\u0435 Chrome, Samsung Internet \u0438\u043B\u0438 \u042F\u043D\u0434\u0435\u043A\u0441.";
+  windowRef.addEventListener("beforeinstallprompt", (event) => {
+    if (typeof event.prompt !== "function") return;
+    event.preventDefault();
+    promptEvent = event;
+    note.textContent = "";
+    update();
+  }, options);
+  windowRef.addEventListener("appinstalled", () => {
+    confirmedInstalled = true;
+    promptEvent = null;
+    note.textContent = "Nexus \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D.";
+    update();
+  }, options);
+  mode.addEventListener?.("change", update, options);
+  button.addEventListener("click", async () => {
+    if (busy || installed()) return;
+    if (!promptEvent) {
+      note.textContent = instructions();
+      return;
+    }
+    const event = promptEvent;
+    promptEvent = null;
+    busy = true;
+    note.textContent = "";
+    update();
+    try {
+      const result = event.prompt();
+      await result;
+      const choice = await event.userChoice;
+      if (!disposed) note.textContent = choice?.outcome === "accepted" ? "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0430. \u0417\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0438\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u044F\u0435\u0442 \u0431\u0440\u0430\u0443\u0437\u0435\u0440." : "\u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430 \u043E\u0442\u043C\u0435\u043D\u0435\u043D\u0430. \u0415\u0451 \u043C\u043E\u0436\u043D\u043E \u0441\u043D\u043E\u0432\u0430 \u0432\u044B\u0431\u0440\u0430\u0442\u044C \u0432 \u043C\u0435\u043D\u044E \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430.";
+    } catch {
+      if (!disposed) note.textContent = "\u0414\u0438\u0430\u043B\u043E\u0433 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0438 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D. " + instructions();
+    } finally {
+      busy = false;
+      update();
+    }
+  }, options);
+  update();
+  return () => {
+    disposed = true;
+    controller.abort();
+    block.remove();
+    promptEvent = null;
+  };
+}
+
 // pwa/runtime-manifest.js
 var RUNTIME_GRAPH_ID = "3eb53dcb260f33d040d58e304ae5922c5d842ef3164e3e4a63bae940d3a1efe0";
 var RUNTIME_RESOURCES = Object.freeze([
@@ -672,13 +748,16 @@ function bindEntry({ loadPasskeyClient = () => import("/account/access/passkey-c
   });
   return update();
 }
-if (typeof document !== "undefined") ensureSafeController({ onWaiting: (message) => {
-  const status2 = document.querySelector("[data-status]");
-  if (status2) status2.textContent = message;
-} }).then(() => bindEntry()).catch(() => {
-  const status2 = document.querySelector("[data-status]");
-  if (status2) status2.textContent = "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u043E\u0444\u043B\u0430\u0439\u043D-\u0437\u0430\u0449\u0438\u0442\u0443. \u0412\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u0435 \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u0438 \u043E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 Nexus \u0441\u043D\u043E\u0432\u0430.";
-});
+if (typeof document !== "undefined") {
+  bindInstallButton();
+  ensureSafeController({ onWaiting: (message) => {
+    const status2 = document.querySelector("[data-status]");
+    if (status2) status2.textContent = message;
+  } }).then(() => bindEntry()).catch(() => {
+    const status2 = document.querySelector("[data-status]");
+    if (status2) status2.textContent = "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u043E\u0444\u043B\u0430\u0439\u043D-\u0437\u0430\u0449\u0438\u0442\u0443. \u0412\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u0435 \u043F\u043E\u0434\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u0438 \u043E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 Nexus \u0441\u043D\u043E\u0432\u0430.";
+  });
+}
 export {
   ENTRY_ORIGIN,
   ENTRY_URL,

@@ -15,7 +15,7 @@ page.setDefaultTimeout(4000);
 page.on('pageerror',()=>pageErrors.push('page-error'));
 const clockStart=performance.now();
 page.on('framenavigated',frame=>{if(frame===page.mainFrame()){const u=new URL(frame.url());navigations.push({path:u.pathname,hash:u.hash.startsWith('#view=')?u.hash:'',atMs:Math.round(performance.now()-clockStart)})}});
-const type=p=>p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.json')?'application/json':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.png')?'image/png':'text/html';
+const type=p=>p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.json')?'application/json':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.png')?'image/png':p.endsWith('.webp')?'image/webp':'text/html';
 let unauthorizedNetwork=0,strictReturnRequests=0,pendingStrictReturn=false,forcedStrictReturns=0;
 await context.route('**/*',async route=>{
  const req=route.request(),url=new URL(req.url());

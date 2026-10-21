@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {localGraphicsAdapter} from '../pwa/offline-graphics.js';
+import {makeLocalPayload,transferPlan} from '../pwa/offline-transfer.js';
+const owner={accountId:'synthetic-graphics-a',displayName:'Synthetic',status:'active'};
+let value=makeLocalPayload({account:owner,state:{},projects:[],isOwner:()=>true}),commits=0,fail=false;
+const adapter=localGraphicsAdapter({read:()=>value,save:async()=>{if(fail)throw Error('SYNTHETIC_QUOTA');commits++},settled:async()=>{},root:{}});
+const document={name:'Synthetic scene',code:'return {bodies:[]};',settings:{},template:'blank'};
+await adapter.writeGraphicsDraft('draft:synthetic',document);assert.equal(commits,1);assert.equal(adapter.readGraphicsDrafts().active,'draft:synthetic');
+const id=await adapter.saveGraphicsProject(document);assert.equal(adapter.ownGraphicsProjects().length,1);assert.equal(adapter.graphicsProjectDocument(id).name,document.name);
+const exported=makeLocalPayload({account:owner,state:{},projects:[{...value.projects[id],access:{ownerId:owner.accountId,workspaceKind:'personal'},origin:{kind:'graphics-lab',template:'nexus',credentials:'MUST_NOT_COPY'}}],isOwner:a=>a.ownerId===owner.accountId});
+assert.deepEqual(exported.projects[id].origin,{kind:'graphics-lab',template:'nexus'});assert.ok(!JSON.stringify(exported).includes('MUST_NOT_COPY'));
+assert.throws(()=>transferPlan(exported,{...owner,accountId:'synthetic-b'},{},[],{vaultId:'synthetic-vault',revision:1}),/OFFLINE_ACCOUNT_MISMATCH/);
+fail=true;await assert.rejects(adapter.saveGraphicsProject({...document,projectId:id,name:'RAM edits survive failed commit'}),/SYNTHETIC_QUOTA/);assert.ok(value.projects[id]);assert.equal(value.projects[id].title,'RAM edits survive failed commit');
+fail=false;await adapter.saveGraphicsProject({...document,projectId:id});assert.equal(adapter.ownGraphicsProjects().length,1);
+const old=value;value=structuredClone(value);assert.equal(adapter.active(),false);assert.throws(()=>adapter.ownGraphicsProjects(),/закрыта или изменена/);await assert.rejects(adapter.saveGraphicsProject(document),/закрыта или изменена/);assert.equal(Object.keys(old.projects).length,1);assert.equal(Object.keys(value.projects).length,1);
+console.log('PASS: encrypted-local graphics ports, awaited commit/fault recovery, safe origin export, wrong-account transfer denial, closed/switched copy binding');

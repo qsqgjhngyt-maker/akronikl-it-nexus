@@ -9,7 +9,7 @@ const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.u
 const checks=[
   ['release version',version.version===JSON.parse(fs.readFileSync(new URL('../release-candidate.json',import.meta.url),'utf8')).version],
   ['account module imported',app.includes("from './account-shell.js'")],
-  ['global account chip rendered',app.includes('accountChipMarkup(prefs.uiLocale)')],
+  ['global account chip rendered',app.includes('nexusShellMarkup(body,active,{prefs,t,route,langSelect,fxSelect,accountChipMarkup,visualIcon})')&&fs.readFileSync(new URL('../core/shell-presentation.js',import.meta.url),'utf8').includes('accountChipMarkup(prefs.uiLocale)')],
   ['home account card rendered',app.includes('accountHomeCardMarkup(prefs.uiLocale)')],
   ['account route rendered',app.includes("r.view==='account'")&&app.includes('accountPageMarkup')],
   ['account shell binding active',app.includes('bindAccountShell')],

@@ -6,7 +6,7 @@ const particles=fs.readFileSync(new URL('../effects/particles.js',import.meta.ur
 const checks=[
   ['global menu desktop toggle',app.includes('setSidebarCollapsed(!prefs.sidebarCollapsed)')],
   ['mobile menu drawer toggle',app.includes("sidebar?.classList.toggle('open',open)")],
-  ['menu aria controls',app.includes('aria-controls="sidebar"')],
+  ['menu aria controls',app.includes('nexusShellMarkup(body,active,')&&fs.readFileSync(new URL('../core/shell-presentation.js',import.meta.url),'utf8').includes('aria-controls="sidebar"')],
   ['right rail preference',storage.includes('rightRailCollapsed:false')],
   ['right rail toggle',app.includes("#rightRailToggle")&&app.includes('setRightRailCollapsed')],
   ['rail collapsed css',css.includes('.lesson-grid.rail-collapsed')],

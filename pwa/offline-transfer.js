@@ -1,7 +1,7 @@
 // Только учебные данные и личные проекты; ни identity, ни Cookie/session/config.
 const clone=value=>structuredClone(value),canonical=value=>JSON.stringify(value??null);
 const editable=p=>p?{title:p.title,description:p.description||'',workspace:p.workspace,progress:p.progress,checkpoints:p.checkpoints||[]}:null;
-const safeProject=p=>({id:p.id,languageId:p.languageId||'cpp',...clone(editable(p)),...(p.origin?.kind==='course-project'&&p.origin.courseId==='cpp'?{origin:{kind:'course-project',courseId:'cpp',projectId:String(p.origin.projectId||'')}}:{})});
+const safeProject=p=>({id:p.id,languageId:p.languageId||'cpp',...clone(editable(p)),...(p.origin?.kind==='course-project'&&p.origin.courseId==='cpp'?{origin:{kind:'course-project',courseId:'cpp',projectId:String(p.origin.projectId||'')}}:p.origin?.kind==='graphics-lab'?{origin:{kind:'graphics-lab',template:['nexus','sphere','orbit','system','blank'].includes(p.origin.template)?p.origin.template:'blank'}}:{})});
 export function makeLocalPayload({account,state,projects,isOwner}){
  if(!account?.accountId||account.status!=='active')throw Error('VERIFIED_ACCOUNT_REQUIRED');
  const personal=projects.filter(p=>p.access?.workspaceKind==='personal'&&isOwner(p.access));

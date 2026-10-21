@@ -12,7 +12,7 @@ const generation=JSON.parse(await readFile(new URL('version.json',frontend))).re
 const origin='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net',f=await fixture(frontend,{control:true});
 const browser=await chromium.launch({executablePath:process.env.NEXUS_CHROME_PATH,headless:true,proxy:{server:'http://127.0.0.1:9'},args:['--disable-background-networking','--disable-component-update']});
 const contexts=[],checks=[],boundaries=[],errors=[];let external=0,unknown=[];
-const contentType=p=>p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.json')?'application/json':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.png')?'image/png':'text/html';
+const contentType=p=>p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.json')?'application/json':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.png')?'image/png':p.endsWith('.webp')?'image/webp':'text/html';
 async function profile(){
  const context=await browser.newContext({serviceWorkers:'block'});contexts.push(context);
  await context.route('**/*',async route=>{
