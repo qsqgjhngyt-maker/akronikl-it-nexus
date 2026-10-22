@@ -48,7 +48,7 @@ for(const token of ['NEXUS PROJECT STUDIO','МОИ ПРОЕКТЫ','Nexus Sync &
 const detail=projectStudioViewMarkup({project:getProject(project.id),courseProject:courseDef,locale:'ru'});
 for(const token of ['Файлы и сборка','CHECKPOINTS','id="psCheckpoint"','id="runCode"','src/main.cpp'])assert(detail.includes(token),`Project Studio detail missing ${token}`);
 
-const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8');
+const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8')+fs.readFileSync(new URL('../core/learning-views.js',import.meta.url),'utf8');
 for(const token of ['programmingHub()','practicumView(id)','projectStudioDashboard()','projectStudioProject(projectId)','bindProjectStudio','ensurePracticeWorkingCopy',"t('learningUi.solve')","t('learningUi.projectOpen')"])assert(app.includes(token),`App integration missing ${token}`);
 for(const [locale,solve,open] of [['ru','Решить в Code Studio','Открыть в Project Studio'],['en','Solve in Code Studio','Open in Project Studio']]){
   const labels=JSON.parse(fs.readFileSync(new URL(`../locales/${locale}/ui.json`,import.meta.url),'utf8'));

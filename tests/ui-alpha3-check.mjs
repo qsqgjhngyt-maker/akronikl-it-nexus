@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-const app=fs.readFileSync(new URL('../core/app.js', import.meta.url),'utf8');
+const app=fs.readFileSync(new URL('../core/app.js', import.meta.url),'utf8')+fs.readFileSync(new URL('../core/learning-views.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('../styles/app.css', import.meta.url),'utf8');
 const storage=fs.readFileSync(new URL('../core/storage.js', import.meta.url),'utf8');
 const mustApp=['sidebarCollapse','focusMode','termDrawer','termSearch','effectsQuality','createSandboxController','startParticleField','project-studio-teaser'];

@@ -6,7 +6,7 @@ export const sha=value=>createHash('sha256').update(value).digest('hex');
 export async function controlFixture(){
  const db=new DatabaseSync(':memory:');db.exec('PRAGMA foreign_keys=ON');
  const files=['0001_sync_team_foundation','0002_nexus_account_tokens','0003_d1_only_project_snapshots','0004_identity_v2_session_foundation'].map(x=>'cloudflare/nexus-sync-worker/migrations/'+x+'.sql');
- files.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content'].map(x=>'server-access/migrations/'+x+'.sql'));
+ files.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content','0015_blog_media'].map(x=>'server-access/migrations/'+x+'.sql'));
  for(const file of files)db.exec(await readFile(new URL('../../'+file,import.meta.url),'utf8'));
  const statement=(sql,args=[])=>{
   const s=db.prepare(sql);

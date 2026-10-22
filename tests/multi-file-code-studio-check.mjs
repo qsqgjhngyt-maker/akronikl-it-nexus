@@ -40,7 +40,7 @@ const worker=fs.readFileSync(new URL('../sandbox/workers/wasm-runtime-worker.js'
 for(const token of ['collectTranslationUnits','...translationUnits','translationUnits:compiled.translationUnits'])assert(worker.includes(token),`WASM Worker multi-file marker missing: ${token}`);
 const studio=fs.readFileSync(new URL('../sandbox/code-studio.js',import.meta.url),'utf8');
 for(const token of ['code-file-tree','code-file-tab','workspace.addFile','workspace.renameFile','workspace.removeFile','runtimeRequest:stdin=>workspace.runtimeRequest'])assert(studio.includes(token),`Code Studio multi-file capability missing: ${token}`);
-const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8');
+const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8')+fs.readFileSync(new URL('../core/learning-views.js',import.meta.url),'utf8');
 for(const token of ['savedWorkspace','workspaceFiles','onWorkspaceChange','studio?.setWorkspace'])assert(app.includes(token),`Lesson persistence integration missing: ${token}`);
 
 console.log('MULTI_FILE_CODE_STUDIO_PASS',workspace.listFiles().map(x=>x.path).join(','));

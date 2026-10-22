@@ -86,12 +86,12 @@ try{
   const href=await page.locator('[data-open-local]').getAttribute('href');vaultId=new URLSearchParams(href.split('#')[1]).get('copy');assert.ok(vaultId);assert.equal(cloudCalls,0);
  });
  await check('complete close and offline restart use public shell; editing never grants a verified server context',async()=>{
-  await context.close();offline=true;page=await launch();page.setDefaultTimeout(30000);await page.goto(origin+'/');await page.getByRole('heading',{name:'Академия',exact:true}).waitFor();
-  await page.goto(origin+'/#copy='+vaultId);await page.locator('#localPhrase').fill(phrase);await page.locator('#unlockLocal button').click();await page.locator('#newProject').waitFor();
+  await context.close();offline=true;page=await launch();page.setDefaultTimeout(30000);await page.goto(origin+'/');await page.locator('[data-cpp-learning-path]').waitFor();
+  await page.goto(origin+'/#copy='+vaultId);await page.locator('#localPhrase').fill(phrase);await page.locator('#unlockLocal button').click();await page.locator('#psNewProject').waitFor();
   await page.goto(origin+'/#project='+encodeURIComponent(projectId));await page.locator('#editor').fill('#include <iostream>\nint main(){std::cout<<"OFFLINE_CLOUD_EDIT\\n";}');
   await page.waitForFunction(()=>document.querySelector('#saveStatus')?.textContent.includes('Сохранено на устройстве'));await page.waitForTimeout(400);
   const verified=await page.evaluate(async generation=>(await import('/releases/'+generation+'/core/account-storage.js')).verifiedAccount(),generation);assert.equal(verified,null);assert.equal(cloudCalls,0);
-  await context.close();page=await launch();await page.goto(origin+'/#copy='+vaultId);await page.locator('#localPhrase').fill(phrase);await page.locator('#unlockLocal button').click();await page.locator('#newProject').waitFor();await page.goto(origin+'/#project='+encodeURIComponent(projectId));await page.locator('#editor').waitFor();assert.match(await page.locator('#editor').inputValue(),/OFFLINE_CLOUD_EDIT/);
+  await context.close();page=await launch();await page.goto(origin+'/#copy='+vaultId);await page.locator('#localPhrase').fill(phrase);await page.locator('#unlockLocal button').click();await page.locator('#psNewProject').waitFor();await page.goto(origin+'/#project='+encodeURIComponent(projectId));await page.locator('#editor').waitFor();assert.match(await page.locator('#editor').inputValue(),/OFFLINE_CLOUD_EDIT/);
  });
  await check('network return preserves offline edits; explicit same-account UI import updates local project without Cloud traffic',async()=>{
   offline=false;await page.goto(origin+'/index.html#view=offline');await page.locator('[data-local-import]').waitFor();

@@ -1,3 +1,5 @@
+import {sanitizeBlogImage} from '../blog-image-codec.mjs';
+import {decodeBlogLayout,compatibleArticle} from '../../core/blog-layout.js';
 import {sanitizeAvatar,AvatarError} from '../avatar-codec.mjs';
 import {HOME_SLOTS} from '../../core/content-contract.js';
 import {hasVaryWildcard} from '../../core/private-response-policy.js';
@@ -16,7 +18,7 @@ const fail=(code,status)=>{throw new Rejected(code,status)};
 const exact=(o,keys)=>!!o&&typeof o==='object'&&!Array.isArray(o)&&Object.keys(o).sort().join(',')===[...keys].sort().join(',');
 const id=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value);
 const safeText=(value,max)=>typeof value==='string'&&value.length<=max&&!/[\u0000-\u001f\u007f]/.test(value);
-const safeCodes=new Set(['SESSION_REQUIRED','ACCOUNT_SESSION_CHANGED','ADMIN_REQUIRED','ADMIN_FRESH_PASSKEY_REQUIRED','ADMIN_ACCOUNT_PROTECTED','INVALID_INPUT','INVALID_STATE','RESTORE_WITHOUT_LOGIN_METHOD','NOT_FOUND','CONTROL_CONFLICT','CONTROL_WRITE_UNCONFIRMED','CONTROL_UNAVAILABLE','ALPHA_CONTROL_UNAVAILABLE','ALPHA_ACCESS_CLOSED','ALPHA_CAPACITY_REACHED','ALPHA_LIMIT_BELOW_OCCUPIED','REMOVE_BEFORE_PURGE','PURGE_NOT_ENABLED','PURGE_SCHEMA_REVIEW_REQUIRED','SHARED_PROJECT_TRANSFER_REQUIRED','PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED','PURGE_APPROVAL_REJECTED','PURGE_CONFIRMATION_REQUIRED','AVATAR_INVALID','AVATAR_DIMENSIONS','AVATAR_TOO_LARGE','USERNAME_UNAVAILABLE','RATE_LIMITED']);
+const safeCodes=new Set(['SESSION_REQUIRED','ACCOUNT_SESSION_CHANGED','ADMIN_REQUIRED','ADMIN_FRESH_PASSKEY_REQUIRED','ADMIN_ACCOUNT_PROTECTED','INVALID_INPUT','INVALID_STATE','RESTORE_WITHOUT_LOGIN_METHOD','NOT_FOUND','CONTROL_CONFLICT','CONTROL_WRITE_UNCONFIRMED','CONTROL_UNAVAILABLE','ALPHA_CONTROL_UNAVAILABLE','ALPHA_ACCESS_CLOSED','ALPHA_CAPACITY_REACHED','ALPHA_LIMIT_BELOW_OCCUPIED','REMOVE_BEFORE_PURGE','PURGE_NOT_ENABLED','PURGE_SCHEMA_REVIEW_REQUIRED','SHARED_PROJECT_TRANSFER_REQUIRED','PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED','PURGE_APPROVAL_REJECTED','PURGE_CONFIRMATION_REQUIRED','AVATAR_INVALID','AVATAR_DIMENSIONS','AVATAR_TOO_LARGE','USERNAME_UNAVAILABLE','RATE_LIMITED','BLOG_IMAGE_INVALID','CONTENT_MEDIA_UNAVAILABLE','CONTENT_MEDIA_QUOTA','CONTENT_EDITOR_UPDATE_REQUIRED']);
 const reply=(res,status,body)=>{const data=JSON.stringify(body);res.writeHead(status,{'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(data),'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer'});res.end(data);return true};
 async function bounded(stream){
  const chunks=[];let size=0;
@@ -34,10 +36,14 @@ function validateDTO(data,path,expected){
  }else if(path.startsWith(BASE+'/users?')||path===BASE+'/users'){
   if(!exact(data,['users','total','offset','settings','counts'])||!Array.isArray(data.users)||data.users.length>50||!Number.isInteger(data.total)||!Number.isInteger(data.offset)||!exact(data.settings,['registrationMode','maxTesters','limitEnabled','version'])||!exact(data.counts,['active','occupied','reserved'])||typeof data.settings.limitEnabled!=='boolean'||!['open','invite_only'].includes(data.settings.registrationMode)||!Number.isInteger(data.settings.maxTesters)||data.settings.maxTesters<1||data.settings.maxTesters>10000||!Number.isInteger(data.settings.version)||data.settings.version<1||Object.values(data.counts).some(v=>!Number.isInteger(v)||v<0))valid();
   for(const u of data.users)if(!exact(u,['accountId','username','displayName','state','version','createdAt','lastLoginAt','activeSessions','reason','protected'])||!id(u.accountId)||!safeText(u.displayName,512)||u.username!==null&&!safeText(u.username,32)||!['active','blocked','removed','invited','unadmitted','administrator'].includes(u.state)||!Number.isInteger(u.version)||!Number.isInteger(u.activeSessions)||typeof u.protected!=='boolean'||!safeText(u.reason,200))valid();
+ }else if(path===BASE+'/content?mediaStatus=1'){
+  if(!exact(data,['mediaAvailability'])||!exact(data.mediaAvailability,['enabled','maxBytes','maxDimension'])||typeof data.mediaAvailability.enabled!=='boolean'||data.mediaAvailability.maxBytes!==98304||data.mediaAvailability.maxDimension!==1600)valid();
+ }else if(path.startsWith(BASE+'/content?media=')||path===BASE+'/content'&&exact(data,['ok','media'])){
+  const m=data.media,read=path.includes('?');if(!exact(data,read?['media']:['ok','media'])||!read&&data.ok!==true||!exact(m,read?['id','mime','data','width','height']:['id','mime','width','height'])||!/^[a-f0-9]{64}$/.test(m.id)||m.mime!=='image/jpeg'||![m.width,m.height].every(n=>Number.isInteger(n)&&n>=1&&n<=1600)||read&&(m.id!==new URL(path,GATEWAY_ORIGIN).searchParams.get('media')||typeof m.data!=='string'||m.data.length>131072||!/^[A-Za-z0-9+/]+={0,2}$/.test(m.data)))valid();
  }else if(path===BASE+'/content'&&!exact(data,['ok'])){
   if(!exact(data,['posts','home'])||!Array.isArray(data.posts)||data.posts.length>100||!exact(data.home,['draft','published','version']))valid();
   const bounded=(v,max)=>typeof v==='string'&&v.length<=max&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v);
-  const article=v=>exact(v,['title','summary','body'])&&bounded(v.title,160)&&bounded(v.summary,500)&&bounded(v.body,20000);
+  const article=v=>{if(!exact(v,['title','summary','body'])||!bounded(v.title,160)||!bounded(v.summary,500)||!bounded(v.body,20000))return false;try{decodeBlogLayout(v.body);return true}catch{return false}};
   for(const key of ['draft','published'])if(!data.home[key]||typeof data.home[key]!=='object'||Array.isArray(data.home[key])||Object.entries(data.home[key]).some(([k,v])=>!Object.hasOwn(HOME_SLOTS,k)||!bounded(v,HOME_SLOTS[k].max)))valid();
   if(!Number.isInteger(data.home.version)||data.home.version<1)valid();
   for(const post of data.posts)if(!exact(post,['id','slug','draft','published','state','version','publishedAt'])||!id(post.id)||!safeText(post.slug,80)||!['draft','published','archived'].includes(post.state)||!Number.isInteger(post.version)||!article(post.draft)||post.published!==null&&!article(post.published)||post.publishedAt!==null&&!safeText(post.publishedAt,64))valid();
@@ -90,12 +96,14 @@ export function createAccountControlHandler({env={},fetchImpl=fetch}={}){
     try{prepared={...payload,jpegBase64:sanitizeAvatar(payload.jpegBase64)}}
     catch(error){if(error instanceof AvatarError)fail(error.code,error.status);throw error}
    }
+   if(path===BASE+'/content'&&req.method==='POST'&&payload?.target==='media'){try{if(!exact(payload.content,['jpegBase64']))fail('INVALID_INPUT');prepared={...payload,content:sanitizeBlogImage(payload.content.jpegBase64)}}catch{fail('BLOG_IMAGE_INVALID')}}
    const data=await service(env,fetchImpl,{path:req.url,method:req.method,payload:prepared,sessionHash:sha(session),expectedAccountId:expected});
    const dto=validateDTO(data,req.url,expected);
    if(path===BASE+'/providers'){
     const configured=new Set(configuredOAuthProviders(env).map(p=>p.id));
     return reply(res,200,{providers:[['yandex','Яндекс ID',['YANDEX_CLIENT_ID','YANDEX_CLIENT_SECRET']],['google','Google',['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET']],['vk','VK ID',['VK_CLIENT_ID']]].map(([id,label,names])=>({id,label,configured:configured.has(id),missing:names.filter(n=>typeof env[n]!=='string'||!env[n]||/[\x00-\x20\x7f]/.test(env[n])),callbackURL:oauthCallbackURL(id)}))});
    }
+   if(path===BASE+'/content'&&req.method==='GET'&&Array.isArray(dto.posts))return reply(res,200,{...dto,posts:dto.posts.map(p=>({...p,draft:compatibleArticle(p.draft,{editor:true}),published:p.published?compatibleArticle(p.published,{editor:true}):null}))});
    return reply(res,200,dto);
   }catch(error){return reply(res,error instanceof Rejected?error.status:error.message==='INGRESS_REJECTED'?401:502,{error:{code:error instanceof Rejected?error.code:error.message==='INGRESS_REJECTED'?'INGRESS_REJECTED':'CONTROL_UNAVAILABLE'}})}
  };

@@ -52,7 +52,7 @@ try{
  await check('normalized proxy Vary: all three existing drafts and separate Publish are visible',async()=>{
   await owner.page.goto(origin+'/index.html#view=admin&tab=content');await ready();assert.equal(await owner.page.locator('[data-content-list] button').count(),3);
   await owner.page.locator('.blog-seed-list summary').click();await owner.page.locator('[data-content-seeds] button').first().click();
-  assert.equal(await owner.page.locator('[data-content-editor] h2').innerText(),'Статья блога');assert.equal(await form().locator('[data-publish]').count(),1);assert.equal(writes(),0);
+  assert.equal(await owner.page.locator('[data-content-editor] > h2').innerText(),'Статья блога');assert.equal(await form().locator('[data-publish]').count(),1);assert.equal(writes(),0);
   if(process.env.NEXUS_SCREENSHOT_DIR)await owner.page.screenshot({path:process.env.NEXUS_SCREENSHOT_DIR+'/cms-fixed.png',fullPage:true});
  });
  await check('publish cancellation writes nothing; explicit publication exposes the saved version',async()=>{

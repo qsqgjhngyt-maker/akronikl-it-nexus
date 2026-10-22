@@ -1,4 +1,4 @@
 // Реальный ESM graph import. Browser entry проверяется нативными browser suites.
-for(const file of ['core/shell-presentation.js','core/lesson-presentation.js','core/academy-catalog.js','core/code-hub-presentation.js','core/blog-presentation.js','core/blog-seeds.js','pwa/offline-presentation.js','pwa/offline-graphics.js','pwa/install.js']){
+for(const file of ['core/account-home-presentation.js','core/controls-presentation.js','core/learning-views.js','core/learning-path-controls.js','core/blog-layout.js','core/blog-layout-editor.js','project-studio/project-presentation.js','pwa/local-editor.js','pwa/verified-frame.js','pwa/interface-update.js','core/shell-presentation.js','core/lesson-presentation.js','core/academy-catalog.js','core/code-hub-presentation.js','core/blog-presentation.js','core/blog-seeds.js','pwa/offline-presentation.js','pwa/offline-graphics.js','pwa/install.js']){
  const module=await import(new URL('../'+file,import.meta.url));if(!Object.keys(module).length)throw Error('Empty ESM export: '+file);console.log('PASS ESM import '+file)
 }

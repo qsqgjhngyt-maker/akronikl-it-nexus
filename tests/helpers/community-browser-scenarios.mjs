@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 export async function communityBrowserScenarios({owner,tester,testerId,f,origin,check}){
+ async function articleBody(form,text){while(await form.locator('[data-block-id] [data-remove]').count())await form.locator('[data-block-id] [data-remove]').first().click();await form.locator('[data-add=text]').click();await form.locator('[data-text]').fill(text)}
  const queue=id=>owner.page.locator('[data-conversation="'+id+'"]').locator('..').locator('..');
  async function submit(kind,body){
   await tester.page.goto(origin+'/#view=feedback');await tester.page.locator('[data-feedback-mine]').waitFor();
@@ -72,7 +73,7 @@ export async function communityBrowserScenarios({owner,tester,testerId,f,origin,
   await form.locator('[name=slug]').fill('synthetic-browser-story');
   await form.locator('[name=title]').fill('Синтетическая заметка');
   await form.locator('[name=summary]').fill('Новый блог Nexus');
-  await form.locator('[name=body]').fill('<img src=x onerror="window.UNSAFE_CONTENT=true">\nСинтетическая статья');
+  await articleBody(form,'<img src=x onerror="window.UNSAFE_CONTENT=true">\nСинтетическая статья');
   await form.locator('[data-preview]').click();
   assert.equal(await owner.page.locator('[data-content-preview] img').count(),0);
   assert.equal(await owner.page.evaluate(()=>window.UNSAFE_CONTENT),undefined);
@@ -98,12 +99,12 @@ export async function communityBrowserScenarios({owner,tester,testerId,f,origin,
   const form=owner.page.locator('[data-content-editor] form');
   assert.equal(await form.locator('[name=slug]').inputValue(),'dobro-pozhalovat-v-nexus');
   assert.equal(f.db.prepare("SELECT count(*) n FROM nexus_content_posts WHERE slug='dobro-pozhalovat-v-nexus'").get().n,0);
-  await form.locator('[name=body]').fill('SYNTHETIC_CUSTOM_DRAFT_MUST_NOT_BE_REPLACED');
+  await articleBody(form,'SYNTHETIC_CUSTOM_DRAFT_MUST_NOT_BE_REPLACED');
   await form.locator('button[type=submit]').click();
   await owner.page.locator('[data-content-editor] [data-publish]').waitFor();
   await owner.page.locator('[data-content-seeds] button').first().click();
   await owner.page.getByText('Статья с этим адресом уже есть. Открыта её текущая версия.',{exact:true}).waitFor();
-  assert.equal(await owner.page.locator('[data-content-editor] [name=body]').inputValue(),'SYNTHETIC_CUSTOM_DRAFT_MUST_NOT_BE_REPLACED');
+  assert.equal(await owner.page.locator('[data-content-editor] [data-text]').inputValue(),'SYNTHETIC_CUSTOM_DRAFT_MUST_NOT_BE_REPLACED');
   await tester.page.goto(origin+'/#view=blog&article=dobro-pozhalovat-v-nexus');await tester.page.getByText('Статья не опубликована или снята с публикации.',{exact:true}).waitFor();
  });
  await check('homepage text has independent draft/publication; ordinary user cannot enter content editor',async()=>{

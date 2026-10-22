@@ -5,13 +5,15 @@ import {fileURLToPath} from 'node:url';
 import {createHmac,randomBytes,createHash} from 'node:crypto';
 import {controlFixture} from '../tests/helpers/control-fixture.mjs';
 import jpeg from 'jpeg-js';
+import {sanitizeBlogImage} from './blog-image-codec.mjs';
+import {encodeBlogLayout} from '../core/blog-layout.js';
 import {sanitizeAvatar} from './avatar-codec.mjs';
 const f=await controlFixture(),checks=[];let outbound=0,phase='start',failure,migrationFile;
 const compatibilityDate=process.env.NEXUS_COMPATIBILITY_DATE||'2026-09-23';
 if(compatibilityDate!=='2026-09-23')throw Error('PRODUCTION_COMPATIBILITY_DATE_REQUIRED');
 const resultFile=process.env.NEXUS_WORKERD_RESULT||process.argv[2];
 if(!resultFile)throw Error('WORKERD_RESULT_PATH_REQUIRED');
-const mf=new Miniflare({modules:true,scriptPath:fileURLToPath(new URL('worker-bundle/entry.mjs',import.meta.url)),compatibilityDate,compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'synthetic-control-d1'},bindings:{PUBLIC_PASSKEY_REGISTRATION_ENABLED:'true',COMMUNITY_ENABLED:'true',CONTENT_ENABLED:'true',FEEDBACK_ENABLED:'true',FEEDBACK_SERVICE_KEY:'SYNTHETIC_WORKERD_FEEDBACK_SERVICE_KEY_ONLY',ADMIN_CONTROL_ENABLED:'true',ALPHA_ADMISSION_ENABLED:'true',ADMIN_PURGE_ENABLED:'true',ADMIN_SERVICE_KEY:f.env.ADMIN_SERVICE_KEY,PASSKEY_ENABLED:'true',PASSKEY_SERVICE_KEY:'SYNTHETIC_WORKERD_PASSKEY_SERVICE_KEY_ONLY',PASSKEY_ORIGIN:'https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net',PASSKEY_RP_ID:'d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net'},outboundService:()=>{outbound++;return new Response('OUTBOUND_FORBIDDEN',{status:503})}});
+const mf=new Miniflare({modules:true,scriptPath:fileURLToPath(new URL('worker-bundle/entry.mjs',import.meta.url)),compatibilityDate,compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'synthetic-control-d1'},bindings:{PUBLIC_PASSKEY_REGISTRATION_ENABLED:'true',COMMUNITY_ENABLED:'true',CONTENT_ENABLED:'true',CONTENT_MEDIA_ENABLED:'true',CONTENT_MEDIA_UPLOAD_ENABLED:'true',FEEDBACK_ENABLED:'true',FEEDBACK_SERVICE_KEY:'SYNTHETIC_WORKERD_FEEDBACK_SERVICE_KEY_ONLY',ADMIN_CONTROL_ENABLED:'true',ALPHA_ADMISSION_ENABLED:'true',ADMIN_PURGE_ENABLED:'true',ADMIN_SERVICE_KEY:f.env.ADMIN_SERVICE_KEY,PASSKEY_ENABLED:'true',PASSKEY_SERVICE_KEY:'SYNTHETIC_WORKERD_PASSKEY_SERVICE_KEY_ONLY',PASSKEY_ORIGIN:'https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net',PASSKEY_RP_ID:'d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net'},outboundService:()=>{outbound++;return new Response('OUTBOUND_FORBIDDEN',{status:503})}});
 const check=async(name,fn)=>{phase=name;const start=performance.now();await fn();checks.push({name,status:'PASS',durationMs:Math.round(performance.now()-start)});console.log('PASS '+name)};
 async function call(path,options={}){
  const req=f.signed(path,options),response=await mf.dispatchFetch(req.url,{method:'POST',headers:req.headers,body:await req.text()});
@@ -27,7 +29,7 @@ async function passkey(op,input={},flowHash='c'.repeat(64)){
 try{
  db=await mf.getD1Database('DB');
  const migrations=['0001_sync_team_foundation','0002_nexus_account_tokens','0003_d1_only_project_snapshots','0004_identity_v2_session_foundation'].map(n=>'../cloudflare/nexus-sync-worker/migrations/'+n+'.sql');
- migrations.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content'].map(n=>'migrations/'+n+'.sql'));
+ migrations.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content','0015_blog_media'].map(n=>'migrations/'+n+'.sql'));
  await check('actual D1 applies all additive candidate migrations locally',async()=>{
   // D1Database.exec splits on newlines; preserve SQL statements/triggers in one source-only line.
   for(const name of migrations){
@@ -115,6 +117,20 @@ try{
   if(published.status!==200)throw Object.assign(Error(),{code:published.body.error?.code});
   response=await mf.dispatchFetch('https://synthetic.invalid/api/v2/content/feed?slug=workerd-local');
   if((await response.json()).posts[0]?.body!=='SYNTHETIC_POST_ONLY')throw Error('PUBLICATION_MISSING');
+ });
+ await check('actual workerd/D1 stores sanitized photos and publishes only referenced saved layout',async()=>{
+  const media=sanitizeBlogImage(Buffer.from(jpeg.encode({width:16,height:16,data:Buffer.alloc(16*16*4,180)},75).data).toString('base64'));
+  const upload={requestId:crypto.randomUUID(),target:'media',id:crypto.randomUUID(),slug:'',version:0,action:'upload',content:media};
+  const uploaded=await call('/api/v2/account/control/content',{method:'POST',payload:upload});
+  if(uploaded.status!==200)throw Object.assign(Error(),{code:uploaded.body.error?.code});
+  if((await call('/api/v2/account/control/content',{method:'POST',payload:upload})).status!==409)throw Error('MEDIA_REPLAY');
+  if((await mf.dispatchFetch('https://synthetic.invalid/api/v2/content/feed?media='+media.id)).status!==404)throw Error('DRAFT_MEDIA_DISCLOSURE');
+  const image={mediaId:media.id,alt:'Synthetic workerd',caption:'Фото',focusX:50,focusY:50},id=crypto.randomUUID();
+  const post={requestId:crypto.randomUUID(),target:'post',id,slug:'workerd-photo',version:0,action:'save',content:{title:'Фото workerd',summary:'',body:encodeBlogLayout({schemaVersion:1,cover:image,blocks:[]})}};
+  if((await call('/api/v2/account/control/content',{method:'POST',payload:post})).status!==200)throw Error('MEDIA_POST_SAVE');
+  if((await call('/api/v2/account/control/content',{method:'POST',payload:{...post,requestId:crypto.randomUUID(),version:1,action:'publish',content:{layoutVersion:1}}})).status!==200)throw Error('MEDIA_POST_PUBLISH');
+  const response=await mf.dispatchFetch('https://synthetic.invalid/api/v2/content/feed?media='+media.id),body=await response.json();
+  if(response.status!==200||body.media.id!==media.id||response.headers.get('cache-control')!=='no-store'||response.headers.has('set-cookie'))throw Error('PUBLIC_MEDIA_BOUNDARY');
  });
  await check('actual workerd/D1 delivers a private team answer and erases the thread on author deletion',async()=>{
   async function feedback(path,method='GET',payload=null){

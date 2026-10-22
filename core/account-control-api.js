@@ -1,7 +1,10 @@
 import {verifiedAccount} from './account-storage.js';
 import {SERVER_ACCOUNT_ORIGIN} from './server-account-origin.js';
 import {hasVaryWildcard} from './private-response-policy.js';
-const messages={
+const messages={CONTENT_EDITOR_UPDATE_REQUIRED:'Обновите интерфейс Nexus перед редактированием или публикацией статьи с новой вёрсткой. Сохранённые данные не изменены.',
+ BLOG_IMAGE_INVALID:'Не удалось подготовить фото. Выберите JPEG, PNG или WebP меньшего размера.',
+ CONTENT_MEDIA_UNAVAILABLE:'Хранилище фото пока не включено. Сохраните текст статьи и дождитесь подключения.',
+ CONTENT_MEDIA_QUOTA:'Хранилище фотографий заполнено. Статья и прежние фотографии сохранены; новая загрузка не выполняется.',
  ADMIN_REQUIRED:'Управление пользователями доступно только администратору.',
  ADMIN_FRESH_PASSKEY_REQUIRED:'Подтвердите вход ключом доступа, затем повторите действие.',
  ADMIN_ACCOUNT_PROTECTED:'Аккаунт администратора защищён от блокировки и удаления.',

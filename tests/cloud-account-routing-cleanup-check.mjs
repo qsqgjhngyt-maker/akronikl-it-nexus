@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-const project=fs.readFileSync(new URL('../project-studio/project-studio.js',import.meta.url),'utf8');
+const project=fs.readFileSync(new URL('../project-studio/project-studio.js',import.meta.url),'utf8')+fs.readFileSync(new URL('../project-studio/project-presentation.js',import.meta.url),'utf8');
 const account=fs.readFileSync(new URL('../core/account-shell.js',import.meta.url),'utf8');
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 const checks=[
