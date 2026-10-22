@@ -41,7 +41,7 @@ var __toESM = (mod, isNodeMode, target2) => (target2 = mod != null ? __create(__
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// server-access/node_modules/tslib/tslib.es6.mjs
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tslib/tslib.es6.mjs
 var tslib_es6_exports = {};
 __export(tslib_es6_exports, {
   __addDisposableResource: () => __addDisposableResource,
@@ -480,7 +480,7 @@ function __rewriteRelativeImportExtension(path, preserveJsx) {
 }
 var extendStatics, __assign, __createBinding, __setModuleDefault, ownKeys, _SuppressedError, tslib_es6_default;
 var init_tslib_es6 = __esm({
-  "server-access/node_modules/tslib/tslib.es6.mjs"() {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tslib/tslib.es6.mjs"() {
     extendStatics = function(d, b) {
       extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
         d2.__proto__ = b2;
@@ -566,9 +566,9 @@ var init_tslib_es6 = __esm({
   }
 });
 
-// server-access/node_modules/pvtsutils/build/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/pvtsutils/build/index.js
 var require_build = __commonJS({
-  "server-access/node_modules/pvtsutils/build/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/pvtsutils/build/index.js"(exports) {
     "use strict";
     var ARRAY_BUFFER_NAME = "[object ArrayBuffer]";
     var BufferSourceConverter = class _BufferSourceConverter {
@@ -930,9 +930,9 @@ var require_build = __commonJS({
   }
 });
 
-// server-access/node_modules/pvutils/build/utils.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/pvutils/build/utils.js
 var require_utils = __commonJS({
-  "server-access/node_modules/pvutils/build/utils.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/pvutils/build/utils.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function getUTCDate(date) {
@@ -1283,9 +1283,9 @@ var require_utils = __commonJS({
   }
 });
 
-// server-access/node_modules/asn1js/build/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/asn1js/build/index.js
 var require_build2 = __commonJS({
-  "server-access/node_modules/asn1js/build/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/asn1js/build/index.js"(exports) {
     "use strict";
     var pvtsutils = require_build();
     var pvutils = require_utils();
@@ -4398,9 +4398,9 @@ ${values.join("\n")}` : `${blockName} :`;
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/bytes/buffer-source.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/buffer-source.js
 var require_buffer_source = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/bytes/buffer-source.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/buffer-source.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isArrayBuffer = isArrayBuffer;
@@ -4517,9 +4517,9 @@ var require_buffer_source = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/bytes/concat.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/concat.js
 var require_concat = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/bytes/concat.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/concat.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.concatToUint8Array = concatToUint8Array;
@@ -4562,9 +4562,9 @@ var require_concat = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/bytes/equal.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/equal.js
 var require_equal = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/bytes/equal.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/equal.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.equal = equal;
@@ -4585,9 +4585,9 @@ var require_equal = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/bytes/sequence.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/sequence.js
 var require_sequence = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/bytes/sequence.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/sequence.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.indexOf = indexOf;
@@ -4752,9 +4752,9 @@ var require_sequence = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/bytes/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/index.js
 var require_bytes = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/bytes/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.tail = exports.startsWith = exports.slice = exports.lastIndexOf = exports.indexOf = exports.includes = exports.endsWith = exports.copy = exports.compare = exports.equal = exports.concatToUint8Array = exports.concat = exports.toViewCopy = exports.toView = exports.toUint8ArrayCopy = exports.toUint8Array = exports.toArrayBufferLike = exports.toArrayBuffer = exports.isSharedArrayBuffer = exports.isBufferSource = exports.isArrayBufferView = exports.isArrayBufferLike = exports.isArrayBuffer = exports.assertBufferSource = void 0;
@@ -4837,9 +4837,9 @@ var require_bytes = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/encoding/binary.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/binary.js
 var require_binary = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/binary.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/binary.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.binary = void 0;
@@ -4869,9 +4869,9 @@ var require_binary = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/encoding/hex.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/hex.js
 var require_hex = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/hex.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/hex.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.hex = exports.formats = void 0;
@@ -5102,9 +5102,9 @@ var require_hex = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf8.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf8.js
 var require_utf8 = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf8.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf8.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.utf8 = void 0;
@@ -5121,9 +5121,9 @@ var require_utf8 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf16.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf16.js
 var require_utf16 = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf16.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf16.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.utf16 = void 0;
@@ -5151,9 +5151,9 @@ var require_utf16 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64.js
 var require_base64 = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.base64 = void 0;
@@ -5205,9 +5205,9 @@ var require_base64 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64url.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64url.js
 var require_base64url = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64url.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64url.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.base64url = void 0;
@@ -5237,9 +5237,9 @@ var require_base64url = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/encoding/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/index.js
 var require_encoding = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.base64url = exports.base64 = exports.utf16 = exports.utf8 = exports.hex = exports.binary = void 0;
@@ -5253,9 +5253,9 @@ var require_encoding = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/pem/pem.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/pem/pem.js
 var require_pem = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/pem/pem.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/pem/pem.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.pemConverter = exports.pem = void 0;
@@ -5397,9 +5397,9 @@ var require_pem = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/pem/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/pem/index.js
 var require_pem2 = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/pem/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/pem/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.pemConverter = exports.pem = exports.parse = exports.format = exports.findAll = exports.find = exports.encodeMany = exports.encode = exports.decodeFirst = exports.decode = void 0;
@@ -5437,9 +5437,9 @@ var require_pem2 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/converters/registry.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/registry.js
 var require_registry = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/converters/registry.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/registry.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.createConverterRegistry = createConverterRegistry;
@@ -5625,9 +5625,9 @@ var require_registry = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/converters/defaults.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/defaults.js
 var require_defaults = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/converters/defaults.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/defaults.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.defaultConverterRegistry = exports.defaultConverters = exports.utf16leConverter = exports.utf16beConverter = exports.utf8Converter = exports.base64urlConverter = exports.base64Converter = exports.hexConverter = exports.binaryConverter = exports.pemConverter = void 0;
@@ -5705,9 +5705,9 @@ var require_defaults = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/converters/convert.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/convert.js
 var require_convert = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/converters/convert.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/convert.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.convert = void 0;
@@ -5785,9 +5785,9 @@ var require_convert = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/converters/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/index.js
 var require_converters = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/converters/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.convert = exports.utf8Converter = exports.utf16leConverter = exports.utf16beConverter = exports.pemConverter = exports.hexConverter = exports.defaultConverters = exports.defaultConverterRegistry = exports.binaryConverter = exports.base64urlConverter = exports.base64Converter = exports.createConverterRegistry = void 0;
@@ -5833,9 +5833,9 @@ var require_converters = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/legacy/buffer-source-converter.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/buffer-source-converter.js
 var require_buffer_source_converter = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/legacy/buffer-source-converter.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/buffer-source-converter.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.BufferSourceConverter = void 0;
@@ -5874,9 +5874,9 @@ var require_buffer_source_converter = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/legacy/convert.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/convert.js
 var require_convert2 = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/legacy/convert.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/convert.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Convert = void 0;
@@ -5952,9 +5952,9 @@ var require_convert2 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/legacy/functions.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/functions.js
 var require_functions = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/legacy/functions.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/functions.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.assign = assign;
@@ -5981,9 +5981,9 @@ var require_functions = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/legacy/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/index.js
 var require_legacy = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/legacy/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isEqual = exports.combine = exports.assign = exports.Convert = exports.BufferSourceConverter = void 0;
@@ -6008,9 +6008,9 @@ var require_legacy = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/utils/build/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/index.js
 var require_cjs = __commonJS({
-  "server-access/node_modules/@peculiar/utils/build/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.bytes = void 0;
@@ -6024,9 +6024,9 @@ var require_cjs = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/enums.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/enums.js
 var require_enums = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/enums.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/enums.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnPropTypes = exports.AsnTypeTypes = void 0;
@@ -6070,9 +6070,9 @@ var require_enums = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/bit_string.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/bit_string.js
 var require_bit_string = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/bit_string.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/bit_string.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.BitString = void 0;
@@ -6141,9 +6141,9 @@ var require_bit_string = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/octet_string.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/octet_string.js
 var require_octet_string = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/octet_string.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/octet_string.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.OctetString = void 0;
@@ -6189,9 +6189,9 @@ var require_octet_string = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/index.js
 var require_types = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -6200,9 +6200,9 @@ var require_types = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/converters.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/converters.js
 var require_converters2 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/converters.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/converters.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnNullConverter = exports.AsnGeneralizedTimeConverter = exports.AsnUTCTimeConverter = exports.AsnCharacterStringConverter = exports.AsnGeneralStringConverter = exports.AsnVisibleStringConverter = exports.AsnGraphicStringConverter = exports.AsnIA5StringConverter = exports.AsnVideotexStringConverter = exports.AsnTeletexStringConverter = exports.AsnPrintableStringConverter = exports.AsnNumericStringConverter = exports.AsnUniversalStringConverter = exports.AsnBmpStringConverter = exports.AsnUtf8StringConverter = exports.AsnConstructedOctetStringConverter = exports.AsnOctetStringConverter = exports.AsnBooleanConverter = exports.AsnRelativeObjectIdentifierConverter = exports.AsnObjectIdentifierConverter = exports.AsnBitStringConverter = exports.AsnIntegerBigIntConverter = exports.AsnIntegerArrayBufferConverter = exports.AsnEnumeratedConverter = exports.AsnIntegerConverter = exports.AsnAnyConverter = void 0;
@@ -6352,9 +6352,9 @@ var require_converters2 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/helper.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/helper.js
 var require_helper = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/helper.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/helper.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isConvertible = isConvertible;
@@ -6400,9 +6400,9 @@ var require_helper = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/schema.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/schema.js
 var require_schema = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/schema.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/schema.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnSchemaStorage = void 0;
@@ -6564,9 +6564,9 @@ var require_schema = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/storage.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/storage.js
 var require_storage = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/storage.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/storage.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.schemaStorage = void 0;
@@ -6575,9 +6575,9 @@ var require_storage = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/decorators.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/decorators.js
 var require_decorators = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/decorators.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/decorators.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnProp = exports.AsnSequenceType = exports.AsnSetType = exports.AsnChoiceType = exports.AsnType = void 0;
@@ -6631,9 +6631,9 @@ var require_decorators = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/schema_validation.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/schema_validation.js
 var require_schema_validation = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/schema_validation.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/schema_validation.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnSchemaValidationError = void 0;
@@ -6644,9 +6644,9 @@ var require_schema_validation = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/index.js
 var require_errors = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -6654,9 +6654,9 @@ var require_errors = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/parser.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/parser.js
 var require_parser = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/parser.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/parser.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnParser = void 0;
@@ -6947,9 +6947,9 @@ var require_parser = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/serializer.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/serializer.js
 var require_serializer = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/serializer.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/serializer.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnSerializer = void 0;
@@ -7092,9 +7092,9 @@ var require_serializer = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/objects.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/objects.js
 var require_objects = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/objects.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/objects.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnArray = void 0;
@@ -7114,9 +7114,9 @@ var require_objects = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/convert.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/convert.js
 var require_convert3 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/convert.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/convert.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnConvert = void 0;
@@ -7145,9 +7145,9 @@ var require_convert3 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-schema/build/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/index.js
 var require_cjs2 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnSerializer = exports.AsnParser = exports.AsnPropTypes = exports.AsnTypeTypes = exports.AsnSetType = exports.AsnSequenceType = exports.AsnChoiceType = exports.AsnType = exports.AsnProp = void 0;
@@ -7191,9 +7191,9 @@ var require_cjs2 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/ip_converter.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/ip_converter.js
 var require_ip_converter = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/ip_converter.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/ip_converter.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IpConverter = void 0;
@@ -7367,9 +7367,9 @@ var require_ip_converter = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/name.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/name.js
 var require_name = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/name.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/name.js"(exports) {
     "use strict";
     var RelativeDistinguishedName_1;
     var RDNSequence_1;
@@ -7485,9 +7485,9 @@ var require_name = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_name.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_name.js
 var require_general_name = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_name.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_name.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.GeneralName = exports.EDIPartyName = exports.OtherName = exports.AsnIpConverter = void 0;
@@ -7623,9 +7623,9 @@ var require_general_name = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/object_identifiers.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/object_identifiers.js
 var require_object_identifiers = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/object_identifiers.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/object_identifiers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_alg_unsigned = exports.id_ce = exports.id_ad_caRepository = exports.id_ad_timeStamping = exports.id_ad_caIssuers = exports.id_ad_ocsp = exports.id_qt_unotice = exports.id_qt_csp = exports.id_ad = exports.id_kp = exports.id_qt = exports.id_pe = exports.id_pkix = void 0;
@@ -7645,9 +7645,9 @@ var require_object_identifiers = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_information_access.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_information_access.js
 var require_authority_information_access = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_information_access.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_information_access.js"(exports) {
     "use strict";
     var AuthorityInfoAccessSyntax_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7687,9 +7687,9 @@ var require_authority_information_access = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_key_identifier.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_key_identifier.js
 var require_authority_key_identifier = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_key_identifier.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_key_identifier.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AuthorityKeyIdentifier = exports.KeyIdentifier = exports.id_ce_authorityKeyIdentifier = void 0;
@@ -7741,9 +7741,9 @@ var require_authority_key_identifier = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/basic_constraints.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/basic_constraints.js
 var require_basic_constraints = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/basic_constraints.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/basic_constraints.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.BasicConstraints = exports.id_ce_basicConstraints = void 0;
@@ -7774,9 +7774,9 @@ var require_basic_constraints = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_names.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_names.js
 var require_general_names = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_names.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_names.js"(exports) {
     "use strict";
     var GeneralNames_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7800,9 +7800,9 @@ var require_general_names = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_issuer.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_issuer.js
 var require_certificate_issuer = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_issuer.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_issuer.js"(exports) {
     "use strict";
     var CertificateIssuer_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7825,9 +7825,9 @@ var require_certificate_issuer = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_policies.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_policies.js
 var require_certificate_policies = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_policies.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_policies.js"(exports) {
     "use strict";
     var CertificatePolicies_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7967,9 +7967,9 @@ var require_certificate_policies = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_number.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_number.js
 var require_crl_number = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_number.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_number.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CRLNumber = exports.id_ce_cRLNumber = void 0;
@@ -7993,9 +7993,9 @@ var require_crl_number = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_delta_indicator.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_delta_indicator.js
 var require_crl_delta_indicator = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_delta_indicator.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_delta_indicator.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.BaseCRLNumber = exports.id_ce_deltaCRLIndicator = void 0;
@@ -8013,9 +8013,9 @@ var require_crl_delta_indicator = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_distribution_points.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_distribution_points.js
 var require_crl_distribution_points = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_distribution_points.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_distribution_points.js"(exports) {
     "use strict";
     var CRLDistributionPoints_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8151,9 +8151,9 @@ var require_crl_distribution_points = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_freshest.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_freshest.js
 var require_crl_freshest = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_freshest.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_freshest.js"(exports) {
     "use strict";
     var FreshestCRL_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8179,9 +8179,9 @@ var require_crl_freshest = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_issuing_distribution_point.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_issuing_distribution_point.js
 var require_crl_issuing_distribution_point = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_issuing_distribution_point.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_issuing_distribution_point.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IssuingDistributionPoint = exports.id_ce_issuingDistributionPoint = void 0;
@@ -8253,9 +8253,9 @@ var require_crl_issuing_distribution_point = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_reason.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_reason.js
 var require_crl_reason = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_reason.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_reason.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CRLReason = exports.CRLReasons = exports.id_ce_cRLReasons = void 0;
@@ -8298,9 +8298,9 @@ var require_crl_reason = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/extended_key_usage.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/extended_key_usage.js
 var require_extended_key_usage = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/extended_key_usage.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/extended_key_usage.js"(exports) {
     "use strict";
     var ExtendedKeyUsage_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8332,9 +8332,9 @@ var require_extended_key_usage = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/inhibit_any_policy.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/inhibit_any_policy.js
 var require_inhibit_any_policy = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/inhibit_any_policy.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/inhibit_any_policy.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.InhibitAnyPolicy = exports.id_ce_inhibitAnyPolicy = void 0;
@@ -8361,9 +8361,9 @@ var require_inhibit_any_policy = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/invalidity_date.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/invalidity_date.js
 var require_invalidity_date = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/invalidity_date.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/invalidity_date.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.InvalidityDate = exports.id_ce_invalidityDate = void 0;
@@ -8389,9 +8389,9 @@ var require_invalidity_date = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/issuer_alternative_name.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/issuer_alternative_name.js
 var require_issuer_alternative_name = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/issuer_alternative_name.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/issuer_alternative_name.js"(exports) {
     "use strict";
     var IssueAlternativeName_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8414,9 +8414,9 @@ var require_issuer_alternative_name = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/key_usage.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/key_usage.js
 var require_key_usage = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/key_usage.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/key_usage.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.KeyUsage = exports.KeyUsageFlags = exports.id_ce_keyUsage = void 0;
@@ -8476,9 +8476,9 @@ var require_key_usage = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/name_constraints.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/name_constraints.js
 var require_name_constraints = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/name_constraints.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/name_constraints.js"(exports) {
     "use strict";
     var GeneralSubtrees_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8556,9 +8556,9 @@ var require_name_constraints = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_constraints.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_constraints.js
 var require_policy_constraints = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_constraints.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_constraints.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PolicyConstraints = exports.id_ce_policyConstraints = void 0;
@@ -8595,9 +8595,9 @@ var require_policy_constraints = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_mappings.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_mappings.js
 var require_policy_mappings = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_mappings.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_mappings.js"(exports) {
     "use strict";
     var PolicyMappings_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8636,9 +8636,9 @@ var require_policy_mappings = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_alternative_name.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_alternative_name.js
 var require_subject_alternative_name = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_alternative_name.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_alternative_name.js"(exports) {
     "use strict";
     var SubjectAlternativeName_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8661,9 +8661,9 @@ var require_subject_alternative_name = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/attribute.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/attribute.js
 var require_attribute = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/attribute.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/attribute.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Attribute = void 0;
@@ -8689,9 +8689,9 @@ var require_attribute = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_directory_attributes.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_directory_attributes.js
 var require_subject_directory_attributes = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_directory_attributes.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_directory_attributes.js"(exports) {
     "use strict";
     var SubjectDirectoryAttributes_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8717,9 +8717,9 @@ var require_subject_directory_attributes = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_key_identifier.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_key_identifier.js
 var require_subject_key_identifier = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_key_identifier.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_key_identifier.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SubjectKeyIdentifier = exports.id_ce_subjectKeyIdentifier = void 0;
@@ -8732,9 +8732,9 @@ var require_subject_key_identifier = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/private_key_usage_period.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/private_key_usage_period.js
 var require_private_key_usage_period = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/private_key_usage_period.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/private_key_usage_period.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PrivateKeyUsagePeriod = exports.id_ce_privateKeyUsagePeriod = void 0;
@@ -8769,9 +8769,9 @@ var require_private_key_usage_period = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/entrust_version_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/entrust_version_info.js
 var require_entrust_version_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/entrust_version_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/entrust_version_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.EntrustVersionInfo = exports.EntrustInfo = exports.EntrustInfoFlags = exports.id_entrust_entrustVersInfo = void 0;
@@ -8821,9 +8821,9 @@ var require_entrust_version_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_info_access.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_info_access.js
 var require_subject_info_access = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_info_access.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_info_access.js"(exports) {
     "use strict";
     var SubjectInfoAccessSyntax_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8849,9 +8849,9 @@ var require_subject_info_access = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/index.js
 var require_extensions = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -8883,9 +8883,9 @@ var require_extensions = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/algorithm_identifier.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/algorithm_identifier.js
 var require_algorithm_identifier = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/algorithm_identifier.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/algorithm_identifier.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AlgorithmIdentifier = void 0;
@@ -8915,9 +8915,9 @@ var require_algorithm_identifier = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/subject_public_key_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/subject_public_key_info.js
 var require_subject_public_key_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/subject_public_key_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/subject_public_key_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SubjectPublicKeyInfo = void 0;
@@ -8941,9 +8941,9 @@ var require_subject_public_key_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/time.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/time.js
 var require_time = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/time.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/time.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Time = void 0;
@@ -8988,9 +8988,9 @@ var require_time = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/validity.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/validity.js
 var require_validity = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/validity.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/validity.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Validity = void 0;
@@ -9017,9 +9017,9 @@ var require_validity = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extension.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extension.js
 var require_extension = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extension.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extension.js"(exports) {
     "use strict";
     var Extensions_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -9064,9 +9064,9 @@ var require_extension = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/types.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/types.js
 var require_types2 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/types.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/types.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Version = void 0;
@@ -9079,9 +9079,9 @@ var require_types2 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_certificate.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_certificate.js
 var require_tbs_certificate = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_certificate.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_certificate.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.TBSCertificate = void 0;
@@ -9163,9 +9163,9 @@ var require_tbs_certificate = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate.js
 var require_certificate = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Certificate = void 0;
@@ -9198,9 +9198,9 @@ var require_certificate = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_cert_list.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_cert_list.js
 var require_tbs_cert_list = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_cert_list.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_cert_list.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.TBSCertList = exports.RevokedCertificate = void 0;
@@ -9287,9 +9287,9 @@ var require_tbs_cert_list = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate_list.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate_list.js
 var require_certificate_list = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate_list.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate_list.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CertificateList = void 0;
@@ -9322,9 +9322,9 @@ var require_certificate_list = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509/build/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/index.js
 var require_cjs3 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -9347,9 +9347,9 @@ var require_cjs3 = __commonJS({
   }
 });
 
-// server-access/node_modules/reflect-metadata/Reflect.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/reflect-metadata/Reflect.js
 var require_Reflect = __commonJS({
-  "server-access/node_modules/reflect-metadata/Reflect.js"() {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/reflect-metadata/Reflect.js"() {
     var Reflect2;
     (function(Reflect3) {
       (function(factory) {
@@ -10432,9 +10432,9 @@ var require_Reflect = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/issuer_and_serial_number.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/issuer_and_serial_number.js
 var require_issuer_and_serial_number = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/issuer_and_serial_number.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/issuer_and_serial_number.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IssuerAndSerialNumber = void 0;
@@ -10461,9 +10461,9 @@ var require_issuer_and_serial_number = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_identifier.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_identifier.js
 var require_signer_identifier = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_identifier.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_identifier.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SignerIdentifier = void 0;
@@ -10495,9 +10495,9 @@ var require_signer_identifier = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/types.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/types.js
 var require_types3 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/types.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/types.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.KeyDerivationAlgorithmIdentifier = exports.MessageAuthenticationCodeAlgorithm = exports.ContentEncryptionAlgorithmIdentifier = exports.KeyEncryptionAlgorithmIdentifier = exports.SignatureAlgorithmIdentifier = exports.DigestAlgorithmIdentifier = exports.CMSVersion = void 0;
@@ -10552,9 +10552,9 @@ var require_types3 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/attribute.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attribute.js
 var require_attribute2 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/attribute.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attribute.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Attribute = void 0;
@@ -10580,9 +10580,9 @@ var require_attribute2 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_info.js
 var require_signer_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_info.js"(exports) {
     "use strict";
     var SignerInfos_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -10656,9 +10656,9 @@ var require_signer_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/counter_signature.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/counter_signature.js
 var require_counter_signature = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/counter_signature.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/counter_signature.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CounterSignature = exports.id_counterSignature = void 0;
@@ -10675,9 +10675,9 @@ var require_counter_signature = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/message_digest.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/message_digest.js
 var require_message_digest = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/message_digest.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/message_digest.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.MessageDigest = exports.id_messageDigest = void 0;
@@ -10689,9 +10689,9 @@ var require_message_digest = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/signing_time.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/signing_time.js
 var require_signing_time = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/signing_time.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/signing_time.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SigningTime = exports.id_signingTime = void 0;
@@ -10708,9 +10708,9 @@ var require_signing_time = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/index.js
 var require_attributes = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_contentType = void 0;
@@ -10722,9 +10722,9 @@ var require_attributes = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_clear_attrs.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_clear_attrs.js
 var require_aa_clear_attrs = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_clear_attrs.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_clear_attrs.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ACClearAttrs = void 0;
@@ -10755,9 +10755,9 @@ var require_aa_clear_attrs = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_spec.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_spec.js
 var require_attr_spec = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_spec.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_spec.js"(exports) {
     "use strict";
     var AttrSpec_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -10780,9 +10780,9 @@ var require_attr_spec = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_controls.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_controls.js
 var require_aa_controls = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_controls.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_controls.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AAControls = void 0;
@@ -10830,9 +10830,9 @@ var require_aa_controls = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/issuer_serial.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/issuer_serial.js
 var require_issuer_serial = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/issuer_serial.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/issuer_serial.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IssuerSerial = void 0;
@@ -10866,9 +10866,9 @@ var require_issuer_serial = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_digest_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_digest_info.js
 var require_object_digest_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_digest_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_digest_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ObjectDigestInfo = exports.DigestedObjectType = void 0;
@@ -10909,9 +10909,9 @@ var require_object_digest_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/v2_form.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/v2_form.js
 var require_v2_form = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/v2_form.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/v2_form.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.V2Form = void 0;
@@ -10954,9 +10954,9 @@ var require_v2_form = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_issuer.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_issuer.js
 var require_attr_cert_issuer = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_issuer.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_issuer.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AttCertIssuer = void 0;
@@ -10991,9 +10991,9 @@ var require_attr_cert_issuer = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_validity_period.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_validity_period.js
 var require_attr_cert_validity_period = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_validity_period.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_validity_period.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AttCertValidityPeriod = void 0;
@@ -11016,9 +11016,9 @@ var require_attr_cert_validity_period = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/holder.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/holder.js
 var require_holder = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/holder.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/holder.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Holder = void 0;
@@ -11063,9 +11063,9 @@ var require_holder = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate_info.js
 var require_attribute_certificate_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AttributeCertificateInfo = exports.AttCertVersion = void 0;
@@ -11136,9 +11136,9 @@ var require_attribute_certificate_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate.js
 var require_attribute_certificate = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AttributeCertificate = void 0;
@@ -11167,9 +11167,9 @@ var require_attribute_certificate = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/class_list.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/class_list.js
 var require_class_list = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/class_list.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/class_list.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ClassList = exports.ClassListFlags = void 0;
@@ -11189,9 +11189,9 @@ var require_class_list = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/security_category.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/security_category.js
 var require_security_category = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/security_category.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/security_category.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SecurityCategory = void 0;
@@ -11222,9 +11222,9 @@ var require_security_category = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/clearance.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/clearance.js
 var require_clearance = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/clearance.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/clearance.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Clearance = void 0;
@@ -11259,9 +11259,9 @@ var require_clearance = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/ietf_attr_syntax.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/ietf_attr_syntax.js
 var require_ietf_attr_syntax = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/ietf_attr_syntax.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/ietf_attr_syntax.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IetfAttrSyntax = exports.IetfAttrSyntaxValueChoices = void 0;
@@ -11311,9 +11311,9 @@ var require_ietf_attr_syntax = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_identifiers.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_identifiers.js
 var require_object_identifiers2 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_identifiers.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_identifiers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_at_clearance = exports.id_at_role = exports.id_at = exports.id_aca_encAttrs = exports.id_aca_group = exports.id_aca_chargingIdentity = exports.id_aca_accessIdentity = exports.id_aca_authenticationInfo = exports.id_aca = exports.id_ce_targetInformation = exports.id_pe_ac_proxying = exports.id_pe_aaControls = exports.id_pe_ac_auditIdentity = void 0;
@@ -11334,9 +11334,9 @@ var require_object_identifiers2 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/target.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/target.js
 var require_target = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/target.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/target.js"(exports) {
     "use strict";
     var Targets_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -11419,9 +11419,9 @@ var require_target = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/proxy_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/proxy_info.js
 var require_proxy_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/proxy_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/proxy_info.js"(exports) {
     "use strict";
     var ProxyInfo_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -11445,9 +11445,9 @@ var require_proxy_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/role_syntax.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/role_syntax.js
 var require_role_syntax = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/role_syntax.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/role_syntax.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RoleSyntax = void 0;
@@ -11480,9 +11480,9 @@ var require_role_syntax = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/svce_auth_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/svce_auth_info.js
 var require_svce_auth_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/svce_auth_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/svce_auth_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SvceAuthInfo = void 0;
@@ -11513,9 +11513,9 @@ var require_svce_auth_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/index.js
 var require_cjs4 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -11542,9 +11542,9 @@ var require_cjs4 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/certificate_choices.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/certificate_choices.js
 var require_certificate_choices = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/certificate_choices.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/certificate_choices.js"(exports) {
     "use strict";
     var CertificateSet_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -11612,9 +11612,9 @@ var require_certificate_choices = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/content_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/content_info.js
 var require_content_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/content_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/content_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ContentInfo = void 0;
@@ -11640,9 +11640,9 @@ var require_content_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/encapsulated_content_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/encapsulated_content_info.js
 var require_encapsulated_content_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/encapsulated_content_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/encapsulated_content_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.EncapsulatedContentInfo = exports.EncapsulatedContent = void 0;
@@ -11686,9 +11686,9 @@ var require_encapsulated_content_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/encrypted_content_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/encrypted_content_info.js
 var require_encrypted_content_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/encrypted_content_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/encrypted_content_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.EncryptedContentInfo = exports.EncryptedContent = void 0;
@@ -11748,9 +11748,9 @@ var require_encrypted_content_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/other_key_attribute.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/other_key_attribute.js
 var require_other_key_attribute = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/other_key_attribute.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/other_key_attribute.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.OtherKeyAttribute = void 0;
@@ -11776,9 +11776,9 @@ var require_other_key_attribute = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_agree_recipient_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_agree_recipient_info.js
 var require_key_agree_recipient_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_agree_recipient_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_agree_recipient_info.js"(exports) {
     "use strict";
     var RecipientEncryptedKeys_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -11949,9 +11949,9 @@ var require_key_agree_recipient_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_trans_recipient_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_trans_recipient_info.js
 var require_key_trans_recipient_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_trans_recipient_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_trans_recipient_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.KeyTransRecipientInfo = exports.RecipientIdentifier = void 0;
@@ -12006,9 +12006,9 @@ var require_key_trans_recipient_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/kek_recipient_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/kek_recipient_info.js
 var require_kek_recipient_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/kek_recipient_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/kek_recipient_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.KEKRecipientInfo = exports.KEKIdentifier = void 0;
@@ -12065,9 +12065,9 @@ var require_kek_recipient_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/password_recipient_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/password_recipient_info.js
 var require_password_recipient_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/password_recipient_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/password_recipient_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PasswordRecipientInfo = void 0;
@@ -12103,9 +12103,9 @@ var require_password_recipient_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_info.js
 var require_recipient_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RecipientInfo = exports.OtherRecipientInfo = void 0;
@@ -12184,9 +12184,9 @@ var require_recipient_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_infos.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_infos.js
 var require_recipient_infos = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_infos.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_infos.js"(exports) {
     "use strict";
     var RecipientInfos_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -12210,9 +12210,9 @@ var require_recipient_infos = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/revocation_info_choice.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/revocation_info_choice.js
 var require_revocation_info_choice = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/revocation_info_choice.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/revocation_info_choice.js"(exports) {
     "use strict";
     var RevocationInfoChoices_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -12270,9 +12270,9 @@ var require_revocation_info_choice = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/originator_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/originator_info.js
 var require_originator_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/originator_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/originator_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.OriginatorInfo = void 0;
@@ -12307,9 +12307,9 @@ var require_originator_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/enveloped_data.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/enveloped_data.js
 var require_enveloped_data = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/enveloped_data.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/enveloped_data.js"(exports) {
     "use strict";
     var UnprotectedAttributes_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -12373,9 +12373,9 @@ var require_enveloped_data = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/object_identifiers.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/object_identifiers.js
 var require_object_identifiers3 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/object_identifiers.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/object_identifiers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_authData = exports.id_encryptedData = exports.id_digestedData = exports.id_envelopedData = exports.id_signedData = exports.id_data = exports.id_ct_contentInfo = void 0;
@@ -12389,9 +12389,9 @@ var require_object_identifiers3 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/signed_data.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/signed_data.js
 var require_signed_data = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/signed_data.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/signed_data.js"(exports) {
     "use strict";
     var DigestAlgorithmIdentifiers_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -12459,9 +12459,9 @@ var require_signed_data = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-cms/build/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/index.js
 var require_cjs5 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -12489,9 +12489,9 @@ var require_cjs5 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/object_identifiers.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/object_identifiers.js
 var require_object_identifiers4 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/object_identifiers.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/object_identifiers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_sect571r1 = exports.id_sect571k1 = exports.id_secp521r1 = exports.id_sect409r1 = exports.id_sect409k1 = exports.id_secp384r1 = exports.id_sect283r1 = exports.id_sect283k1 = exports.id_secp256r1 = exports.id_sect233r1 = exports.id_sect233k1 = exports.id_secp224r1 = exports.id_sect163r2 = exports.id_sect163k1 = exports.id_secp192r1 = exports.id_ecdsaWithSHA512 = exports.id_ecdsaWithSHA384 = exports.id_ecdsaWithSHA256 = exports.id_ecdsaWithSHA224 = exports.id_ecdsaWithSHA1 = exports.id_ecMQV = exports.id_ecDH = exports.id_ecPublicKey = void 0;
@@ -12521,9 +12521,9 @@ var require_object_identifiers4 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/algorithms.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/algorithms.js
 var require_algorithms = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/algorithms.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/algorithms.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ecdsaWithSHA512 = exports.ecdsaWithSHA384 = exports.ecdsaWithSHA256 = exports.ecdsaWithSHA224 = exports.ecdsaWithSHA1 = void 0;
@@ -12541,9 +12541,9 @@ var require_algorithms = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/rfc3279.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/rfc3279.js
 var require_rfc3279 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/rfc3279.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/rfc3279.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SpecifiedECDomain = exports.ECPVer = exports.Curve = exports.FieldElement = exports.ECPoint = exports.FieldID = void 0;
@@ -12642,9 +12642,9 @@ var require_rfc3279 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_parameters.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_parameters.js
 var require_ec_parameters = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_parameters.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_parameters.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ECParameters = void 0;
@@ -12675,9 +12675,9 @@ var require_ec_parameters = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_private_key.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_private_key.js
 var require_ec_private_key = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_private_key.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_private_key.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ECPrivateKey = void 0;
@@ -12717,9 +12717,9 @@ var require_ec_private_key = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_signature_value.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_signature_value.js
 var require_ec_signature_value = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_signature_value.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_signature_value.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ECDSASigValue = void 0;
@@ -12748,9 +12748,9 @@ var require_ec_signature_value = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/index.js
 var require_cjs6 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -12763,9 +12763,9 @@ var require_cjs6 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/object_identifiers.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/object_identifiers.js
 var require_object_identifiers5 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/object_identifiers.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/object_identifiers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_mgf1 = exports.id_md5 = exports.id_md2 = exports.id_sha512_256 = exports.id_sha512_224 = exports.id_sha512 = exports.id_sha384 = exports.id_sha256 = exports.id_sha224 = exports.id_sha1 = exports.id_sha512_256WithRSAEncryption = exports.id_sha512_224WithRSAEncryption = exports.id_sha512WithRSAEncryption = exports.id_sha384WithRSAEncryption = exports.id_sha256WithRSAEncryption = exports.id_ssha224WithRSAEncryption = exports.id_sha224WithRSAEncryption = exports.id_sha1WithRSAEncryption = exports.id_md5WithRSAEncryption = exports.id_md2WithRSAEncryption = exports.id_RSASSA_PSS = exports.id_pSpecified = exports.id_RSAES_OAEP = exports.id_rsaEncryption = exports.id_pkcs_1 = void 0;
@@ -12797,9 +12797,9 @@ var require_object_identifiers5 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/algorithms.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/algorithms.js
 var require_algorithms2 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/algorithms.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/algorithms.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.sha512_256WithRSAEncryption = exports.sha512_224WithRSAEncryption = exports.sha512WithRSAEncryption = exports.sha384WithRSAEncryption = exports.sha256WithRSAEncryption = exports.sha224WithRSAEncryption = exports.sha1WithRSAEncryption = exports.md5WithRSAEncryption = exports.md2WithRSAEncryption = exports.rsaEncryption = exports.pSpecifiedEmpty = exports.mgf1SHA1 = exports.sha512_256 = exports.sha512_224 = exports.sha512 = exports.sha384 = exports.sha256 = exports.sha224 = exports.sha1 = exports.md4 = exports.md2 = void 0;
@@ -12843,9 +12843,9 @@ var require_algorithms2 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsaes_oaep.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsaes_oaep.js
 var require_rsaes_oaep = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsaes_oaep.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsaes_oaep.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RSAES_OAEP = exports.RsaEsOaepParams = void 0;
@@ -12894,9 +12894,9 @@ var require_rsaes_oaep = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pss.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pss.js
 var require_rsassa_pss = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pss.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pss.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RSASSA_PSS = exports.RsaSaPssParams = void 0;
@@ -12953,9 +12953,9 @@ var require_rsassa_pss = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pkcs1_v1_5.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pkcs1_v1_5.js
 var require_rsassa_pkcs1_v1_5 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pkcs1_v1_5.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pkcs1_v1_5.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.DigestInfo = void 0;
@@ -12979,9 +12979,9 @@ var require_rsassa_pkcs1_v1_5 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/index.js
 var require_parameters = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -12991,9 +12991,9 @@ var require_parameters = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/other_prime_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/other_prime_info.js
 var require_other_prime_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/other_prime_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/other_prime_info.js"(exports) {
     "use strict";
     var OtherPrimeInfos_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -13043,9 +13043,9 @@ var require_other_prime_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_private_key.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_private_key.js
 var require_rsa_private_key = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_private_key.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_private_key.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RSAPrivateKey = void 0;
@@ -13128,9 +13128,9 @@ var require_rsa_private_key = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_public_key.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_public_key.js
 var require_rsa_public_key = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_public_key.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_public_key.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RSAPublicKey = void 0;
@@ -13159,9 +13159,9 @@ var require_rsa_public_key = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/index.js
 var require_cjs7 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -13174,7 +13174,7 @@ var require_cjs7 = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/node_modules/tslib/tslib.es6.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/node_modules/tslib/tslib.es6.js
 var tslib_es6_exports2 = {};
 __export(tslib_es6_exports2, {
   __assign: () => __assign2,
@@ -13479,7 +13479,7 @@ function __classPrivateFieldSet2(receiver, privateMap, value) {
 }
 var extendStatics2, __assign2;
 var init_tslib_es62 = __esm({
-  "server-access/node_modules/tsyringe/node_modules/tslib/tslib.es6.js"() {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/node_modules/tslib/tslib.es6.js"() {
     extendStatics2 = function(d, b) {
       extendStatics2 = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
         d2.__proto__ = b2;
@@ -13501,9 +13501,9 @@ var init_tslib_es62 = __esm({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/types/lifecycle.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/types/lifecycle.js
 var require_lifecycle = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/types/lifecycle.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/types/lifecycle.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Lifecycle;
@@ -13517,9 +13517,9 @@ var require_lifecycle = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/types/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/types/index.js
 var require_types4 = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/types/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/types/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var lifecycle_1 = require_lifecycle();
@@ -13529,9 +13529,9 @@ var require_types4 = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/reflection-helpers.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/reflection-helpers.js
 var require_reflection_helpers = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/reflection-helpers.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/reflection-helpers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.defineInjectionTokenMetadata = exports.getParamInfo = exports.INJECTION_TOKEN_METADATA_KEY = void 0;
@@ -13560,9 +13560,9 @@ var require_reflection_helpers = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/providers/class-provider.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/class-provider.js
 var require_class_provider = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/providers/class-provider.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/class-provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isClassProvider = void 0;
@@ -13573,9 +13573,9 @@ var require_class_provider = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/providers/factory-provider.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/factory-provider.js
 var require_factory_provider = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/providers/factory-provider.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/factory-provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isFactoryProvider = void 0;
@@ -13586,9 +13586,9 @@ var require_factory_provider = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/lazy-helpers.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/lazy-helpers.js
 var require_lazy_helpers = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/lazy-helpers.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/lazy-helpers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.delay = exports.DelayedConstructor = void 0;
@@ -13646,9 +13646,9 @@ var require_lazy_helpers = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/providers/injection-token.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/injection-token.js
 var require_injection_token = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/providers/injection-token.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/injection-token.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isConstructorToken = exports.isTransformDescriptor = exports.isTokenDescriptor = exports.isNormalToken = void 0;
@@ -13672,9 +13672,9 @@ var require_injection_token = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/providers/token-provider.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/token-provider.js
 var require_token_provider = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/providers/token-provider.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/token-provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isTokenProvider = void 0;
@@ -13685,9 +13685,9 @@ var require_token_provider = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/providers/value-provider.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/value-provider.js
 var require_value_provider = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/providers/value-provider.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/value-provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isValueProvider = void 0;
@@ -13698,9 +13698,9 @@ var require_value_provider = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/providers/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/index.js
 var require_providers = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/providers/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var class_provider_1 = require_class_provider();
@@ -13726,9 +13726,9 @@ var require_providers = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/providers/provider.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/provider.js
 var require_provider = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/providers/provider.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isProvider = void 0;
@@ -13743,9 +13743,9 @@ var require_provider = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/registry-base.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/registry-base.js
 var require_registry_base = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/registry-base.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/registry-base.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var RegistryBase = class {
@@ -13788,9 +13788,9 @@ var require_registry_base = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/registry.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/registry.js
 var require_registry2 = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/registry.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/registry.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var registry_base_1 = require_registry_base();
@@ -13800,9 +13800,9 @@ var require_registry2 = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/resolution-context.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/resolution-context.js
 var require_resolution_context = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/resolution-context.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/resolution-context.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var ResolutionContext = class {
@@ -13814,9 +13814,9 @@ var require_resolution_context = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/error-helpers.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/error-helpers.js
 var require_error_helpers = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/error-helpers.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/error-helpers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.formatErrorCtor = void 0;
@@ -13839,9 +13839,9 @@ var require_error_helpers = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/types/disposable.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/types/disposable.js
 var require_disposable = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/types/disposable.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/types/disposable.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isDisposable = void 0;
@@ -13858,9 +13858,9 @@ var require_disposable = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/interceptors.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/interceptors.js
 var require_interceptors = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/interceptors.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/interceptors.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PostResolutionInterceptors = exports.PreResolutionInterceptors = void 0;
@@ -13881,9 +13881,9 @@ var require_interceptors = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/dependency-container.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/dependency-container.js
 var require_dependency_container = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/dependency-container.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/dependency-container.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.instance = exports.typeInfo = void 0;
@@ -14199,9 +14199,9 @@ var require_dependency_container = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/decorators/auto-injectable.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/auto-injectable.js
 var require_auto_injectable = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/decorators/auto-injectable.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/auto-injectable.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var reflection_helpers_1 = require_reflection_helpers();
@@ -14238,9 +14238,9 @@ var require_auto_injectable = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/decorators/inject.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject.js
 var require_inject = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/decorators/inject.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var reflection_helpers_1 = require_reflection_helpers();
@@ -14256,9 +14256,9 @@ var require_inject = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/decorators/injectable.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/injectable.js
 var require_injectable = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/decorators/injectable.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/injectable.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var reflection_helpers_1 = require_reflection_helpers();
@@ -14282,9 +14282,9 @@ var require_injectable = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/decorators/registry.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/registry.js
 var require_registry3 = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/decorators/registry.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/registry.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es62(), __toCommonJS(tslib_es6_exports2));
@@ -14302,9 +14302,9 @@ var require_registry3 = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/decorators/singleton.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/singleton.js
 var require_singleton = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/decorators/singleton.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/singleton.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var injectable_1 = require_injectable();
@@ -14319,9 +14319,9 @@ var require_singleton = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all.js
 var require_inject_all = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var reflection_helpers_1 = require_reflection_helpers();
@@ -14337,9 +14337,9 @@ var require_inject_all = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all-with-transform.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all-with-transform.js
 var require_inject_all_with_transform = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all-with-transform.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all-with-transform.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var reflection_helpers_1 = require_reflection_helpers();
@@ -14356,9 +14356,9 @@ var require_inject_all_with_transform = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/decorators/inject-with-transform.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject-with-transform.js
 var require_inject_with_transform = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/decorators/inject-with-transform.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject-with-transform.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var reflection_helpers_1 = require_reflection_helpers();
@@ -14372,9 +14372,9 @@ var require_inject_with_transform = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/decorators/scoped.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/scoped.js
 var require_scoped = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/decorators/scoped.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/scoped.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var injectable_1 = require_injectable();
@@ -14391,9 +14391,9 @@ var require_scoped = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/decorators/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/index.js
 var require_decorators2 = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/decorators/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var auto_injectable_1 = require_auto_injectable();
@@ -14435,9 +14435,9 @@ var require_decorators2 = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/factories/instance-caching-factory.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/instance-caching-factory.js
 var require_instance_caching_factory = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/factories/instance-caching-factory.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/instance-caching-factory.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function instanceCachingFactory(factoryFunc) {
@@ -14453,9 +14453,9 @@ var require_instance_caching_factory = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/factories/instance-per-container-caching-factory.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/instance-per-container-caching-factory.js
 var require_instance_per_container_caching_factory = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/factories/instance-per-container-caching-factory.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/instance-per-container-caching-factory.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function instancePerContainerCachingFactory(factoryFunc) {
@@ -14473,9 +14473,9 @@ var require_instance_per_container_caching_factory = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/factories/predicate-aware-class-factory.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/predicate-aware-class-factory.js
 var require_predicate_aware_class_factory = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/factories/predicate-aware-class-factory.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/predicate-aware-class-factory.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function predicateAwareClassFactory(predicate, trueConstructor, falseConstructor, useCaching = true) {
@@ -14497,9 +14497,9 @@ var require_predicate_aware_class_factory = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/factories/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/index.js
 var require_factories = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/factories/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var instance_caching_factory_1 = require_instance_caching_factory();
@@ -14517,9 +14517,9 @@ var require_factories = __commonJS({
   }
 });
 
-// server-access/node_modules/tsyringe/dist/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/index.js
 var require_cjs8 = __commonJS({
-  "server-access/node_modules/tsyringe/dist/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es62(), __toCommonJS(tslib_es6_exports2));
@@ -14544,9 +14544,9 @@ var require_cjs8 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/attribute.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/attribute.js
 var require_attribute3 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/attribute.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/attribute.js"(exports) {
     "use strict";
     var PKCS12AttrSet_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -14586,9 +14586,9 @@ var require_attribute3 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/authenticated_safe.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/authenticated_safe.js
 var require_authenticated_safe = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/authenticated_safe.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/authenticated_safe.js"(exports) {
     "use strict";
     var AuthenticatedSafe_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -14612,9 +14612,9 @@ var require_authenticated_safe = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/object_identifiers.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/object_identifiers.js
 var require_object_identifiers6 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/object_identifiers.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/object_identifiers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_bagtypes = exports.id_pbewithSHAAnd40BitRC2_CBC = exports.id_pbeWithSHAAnd128BitRC2_CBC = exports.id_pbeWithSHAAnd2_KeyTripleDES_CBC = exports.id_pbeWithSHAAnd3_KeyTripleDES_CBC = exports.id_pbeWithSHAAnd40BitRC4 = exports.id_pbeWithSHAAnd128BitRC4 = exports.id_pkcs_12PbeIds = exports.id_pkcs_12 = exports.id_pkcs = exports.id_rsadsi = void 0;
@@ -14632,9 +14632,9 @@ var require_object_identifiers6 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/types.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/types.js
 var require_types5 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/types.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/types.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_pkcs_9 = exports.id_SafeContents = exports.id_SecretBag = exports.id_CRLBag = exports.id_certBag = exports.id_pkcs8ShroudedKeyBag = exports.id_keyBag = void 0;
@@ -14649,9 +14649,9 @@ var require_types5 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/cert_bag.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/cert_bag.js
 var require_cert_bag = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/cert_bag.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/cert_bag.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_sdsiCertificate = exports.id_x509Certificate = exports.id_certTypes = exports.CertBag = void 0;
@@ -14681,9 +14681,9 @@ var require_cert_bag = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/crl_bag.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/crl_bag.js
 var require_crl_bag = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/crl_bag.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/crl_bag.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_x509CRL = exports.id_crlTypes = exports.CRLBag = void 0;
@@ -14712,9 +14712,9 @@ var require_crl_bag = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/encrypted_private_key_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/encrypted_private_key_info.js
 var require_encrypted_private_key_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/encrypted_private_key_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/encrypted_private_key_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.EncryptedPrivateKeyInfo = exports.EncryptedData = void 0;
@@ -14741,9 +14741,9 @@ var require_encrypted_private_key_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/private_key_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/private_key_info.js
 var require_private_key_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/private_key_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/private_key_info.js"(exports) {
     "use strict";
     var Attributes_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -14801,9 +14801,9 @@ var require_private_key_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/index.js
 var require_cjs9 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -14812,9 +14812,9 @@ var require_cjs9 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/key_bag.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/key_bag.js
 var require_key_bag = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/key_bag.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/key_bag.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.KeyBag = void 0;
@@ -14830,9 +14830,9 @@ var require_key_bag = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/pkcs8_shrouded_key_bag.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/pkcs8_shrouded_key_bag.js
 var require_pkcs8_shrouded_key_bag = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/pkcs8_shrouded_key_bag.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/pkcs8_shrouded_key_bag.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PKCS8ShroudedKeyBag = void 0;
@@ -14848,9 +14848,9 @@ var require_pkcs8_shrouded_key_bag = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/secret_bag.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/secret_bag.js
 var require_secret_bag = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/secret_bag.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/secret_bag.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SecretBag = void 0;
@@ -14876,9 +14876,9 @@ var require_secret_bag = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/index.js
 var require_bags = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -14891,9 +14891,9 @@ var require_bags = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/mac_data.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/mac_data.js
 var require_mac_data = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/mac_data.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/mac_data.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.MacData = void 0;
@@ -14924,9 +14924,9 @@ var require_mac_data = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/pfx.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/pfx.js
 var require_pfx = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/pfx.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/pfx.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PFX = void 0;
@@ -14958,9 +14958,9 @@ var require_pfx = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/safe_bag.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/safe_bag.js
 var require_safe_bag = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/safe_bag.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/safe_bag.js"(exports) {
     "use strict";
     var SafeContents_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -15009,9 +15009,9 @@ var require_safe_bag = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/index.js
 var require_cjs10 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -15025,9 +15025,9 @@ var require_cjs10 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-pkcs9/build/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs9/build/cjs/index.js
 var require_cjs11 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-pkcs9/build/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs9/build/cjs/index.js"(exports) {
     "use strict";
     var ExtensionRequest_1;
     var ExtendedCertificateAttributes_1;
@@ -15334,9 +15334,9 @@ var require_cjs11 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-csr/build/cjs/attributes.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/attributes.js
 var require_attributes2 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-csr/build/cjs/attributes.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/attributes.js"(exports) {
     "use strict";
     var Attributes_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -15360,9 +15360,9 @@ var require_attributes2 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request_info.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request_info.js
 var require_certification_request_info = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request_info.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CertificationRequestInfo = void 0;
@@ -15400,9 +15400,9 @@ var require_certification_request_info = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request.js
 var require_certification_request = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CertificationRequest = void 0;
@@ -15435,9 +15435,9 @@ var require_certification_request = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-csr/build/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/index.js
 var require_cjs12 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-csr/build/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -15447,9 +15447,9 @@ var require_cjs12 = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/x509/build/x509.cjs.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/x509/build/x509.cjs.js
 var require_x509_cjs = __commonJS({
-  "server-access/node_modules/@peculiar/x509/build/x509.cjs.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/x509/build/x509.cjs.js"(exports) {
     "use strict";
     require_Reflect();
     var asn1Schema = require_cjs2();
@@ -18726,9 +18726,9 @@ var require_x509_cjs = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-android/build/cjs/key_description.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/key_description.js
 var require_key_description = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-android/build/cjs/key_description.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/key_description.js"(exports) {
     "use strict";
     var IntegerSet_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -19251,9 +19251,9 @@ var require_key_description = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-android/build/cjs/nonstandard.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/nonstandard.js
 var require_nonstandard = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-android/build/cjs/nonstandard.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/nonstandard.js"(exports) {
     "use strict";
     var NonStandardAuthorizationList_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -19364,9 +19364,9 @@ var require_nonstandard = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-android/build/cjs/attestation.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/attestation.js
 var require_attestation = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-android/build/cjs/attestation.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/attestation.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AttestationApplicationId = exports.AttestationPackageInfo = void 0;
@@ -19409,9 +19409,9 @@ var require_attestation = __commonJS({
   }
 });
 
-// server-access/node_modules/@peculiar/asn1-android/build/cjs/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/index.js
 var require_cjs13 = __commonJS({
-  "server-access/node_modules/@peculiar/asn1-android/build/cjs/index.js"(exports) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -21554,10 +21554,10 @@ function blogMediaIds(layout) {
 }
 
 // server-access/worker/blog-media.mjs
-import { Buffer as Buffer4 } from "node:buffer";
+import { Buffer as Buffer5 } from "node:buffer";
 
 // server-access/worker/admin-service.mjs
-import { Buffer as Buffer3 } from "node:buffer";
+import { Buffer as Buffer4 } from "node:buffer";
 
 // server-access/worker/alpha-admission.mjs
 var query = (db, sql2, ...args) => db.prepare(sql2).bind(...args);
@@ -21610,14 +21610,18 @@ async function managedInvitation(env, tokenHash) {
 }
 
 // server-access/worker/admin-purge.mjs
-var KNOWN = new Set("workspaces workspace_members projects project_members project_access_policies project_revisions project_checkpoints project_invites audit_events project_snapshots account_subjects account_tokens account_devices account_sessions identity_security_events login_methods oauth_identities session_login_methods account_service_nonces nexus_passkey_users nexus_passkey_invites nexus_passkey_challenges nexus_passkey_credentials nexus_passkey_audit nexus_passkey_receipts nexus_passkey_service_nonces nexus_passkey_rate_limits feedback_permissions feedback_items feedback_revisions feedback_events feedback_rate_limits feedback_service_nonces nexus_oauth_service_nonces nexus_oauth_rate_limits nexus_oauth_transactions nexus_oauth_account_policies nexus_oauth_allowed_emails nexus_oauth_receipts nexus_oauth_verified_emails nexus_admin_grants nexus_alpha_settings nexus_alpha_members nexus_account_profiles nexus_admin_invites nexus_invite_enrollments nexus_admin_nonces nexus_admin_rate_limits nexus_admin_write_guards nexus_admin_audit nexus_admin_purge_approvals nexus_account_avatars nexus_admin_purge_links nexus_community_write_guards nexus_community_audit feedback_deleted_items feedback_replies nexus_content_posts nexus_content_home nexus_content_audit nexus_content_media nexus_content_media_audit".split(" "));
+var KNOWN = new Set("workspaces workspace_members projects project_members project_access_policies project_revisions project_checkpoints project_invites audit_events project_snapshots account_subjects account_tokens account_devices account_sessions identity_security_events login_methods oauth_identities session_login_methods account_service_nonces nexus_passkey_users nexus_passkey_invites nexus_passkey_challenges nexus_passkey_credentials nexus_passkey_audit nexus_passkey_receipts nexus_passkey_service_nonces nexus_passkey_rate_limits feedback_permissions feedback_items feedback_revisions feedback_events feedback_rate_limits feedback_service_nonces nexus_oauth_service_nonces nexus_oauth_rate_limits nexus_oauth_transactions nexus_oauth_account_policies nexus_oauth_allowed_emails nexus_oauth_receipts nexus_oauth_verified_emails nexus_admin_grants nexus_alpha_settings nexus_alpha_members nexus_account_profiles nexus_admin_invites nexus_invite_enrollments nexus_admin_nonces nexus_admin_rate_limits nexus_admin_write_guards nexus_admin_audit nexus_admin_purge_approvals nexus_account_avatars nexus_admin_purge_links nexus_community_write_guards nexus_community_audit feedback_deleted_items feedback_replies nexus_content_posts nexus_content_home nexus_content_audit nexus_content_media nexus_content_media_audit nexus_content_media_uploads nexus_content_media_parts".split(" "));
 var PROJECTS = "SELECT id FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1)";
 var SCOPE = "SELECT json_object('schema',COALESCE((SELECT group_concat(v,'|') FROM(SELECT name||':'||COALESCE(sql,'') v FROM sqlite_master WHERE type IN('table','trigger','view') AND name NOT LIKE 'sqlite_%' ORDER BY type,name)),''),'memberVersion',(SELECT version FROM nexus_alpha_members WHERE account_id=?1),'accountUpdated',(SELECT updated_at FROM account_subjects WHERE id=?1),'projects',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||current_revision||':'||updated_at v FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1) ORDER BY id)),''),'feedback',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM feedback_items WHERE author_id=?1 ORDER BY id)),''),'feedbackReplies',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM feedback_replies WHERE author_id=?1 OR item_id IN(SELECT id FROM feedback_items WHERE author_id=?1) ORDER BY id)),''),'workspaces',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||updated_at v FROM workspaces WHERE owner_subject_id=?1 ORDER BY id)),''),'sharedRows',(SELECT count(*) FROM workspace_members WHERE workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1) AND subject_id<>?1)+(SELECT count(*) FROM project_members WHERE project_id IN(SELECT id FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1)) AND subject_id<>?1),'keys',(SELECT count(*) FROM nexus_passkey_credentials WHERE account_id=?1),'identities',(SELECT count(*) FROM oauth_identities WHERE account_id=?1),'sessions',(SELECT count(*) FROM account_sessions WHERE subject_id=?1),'avatarVersion',COALESCE((SELECT version FROM nexus_account_avatars WHERE account_id=?1),0)) AS value";
 async function scope(env, id3) {
   const tables = await rows(query2(env.DB, "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT IN('d1_migrations','_cf_KV','_cf_METADATA')"));
   if (tables.some((t) => !KNOWN.has(t.name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
   const hasMedia = tables.some((t) => t.name === "nexus_content_media");
-  const scopeSQL = hasMedia ? SCOPE.replace("'avatarVersion'", "'blogMediaReferences',(SELECT count(*) FROM nexus_content_media WHERE created_by=?1)+(SELECT count(*) FROM nexus_content_media_audit WHERE actor_id=?1),'avatarVersion'") : SCOPE;
+  let scopeSQL = hasMedia ? SCOPE.replace("'avatarVersion'", "'blogMediaReferences',(SELECT count(*) FROM nexus_content_media WHERE created_by=?1)+(SELECT count(*) FROM nexus_content_media_audit WHERE actor_id=?1),'avatarVersion'") : SCOPE;
+  if (tables.some((t) => t.name === "nexus_content_media_uploads")) {
+    if ((await first(env.DB, "SELECT COUNT(*) n FROM nexus_content_media_uploads WHERE account_id=?1", id3)).n) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
+    scopeSQL = scopeSQL.replace("'avatarVersion'", "'mediaUploadReferences',(SELECT COUNT(*) FROM nexus_content_media_uploads WHERE account_id=?1),'avatarVersion'");
+  }
   if (hasMedia && (await first(env.DB, "SELECT (SELECT count(*) FROM nexus_content_media WHERE created_by=?1)+(SELECT count(*) FROM nexus_content_media_audit WHERE actor_id=?1) n", id3)).n) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
   const shared = await first(env.DB, "SELECT (SELECT count(*) FROM workspace_members WHERE workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1) AND subject_id<>?1)+(SELECT count(*) FROM project_members WHERE project_id IN(" + PROJECTS + ") AND subject_id<>?1)+(SELECT count(*) FROM projects WHERE workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1) AND owner_subject_id<>?1) n", id3);
   if (shared.n) deny("SHARED_PROJECT_TRANSFER_REQUIRED", 409);
@@ -21831,16 +21835,141 @@ async function communityOperation(env, value) {
   return { ok: true };
 }
 
+// server-access/worker/media-parts.mjs
+import { Buffer as Buffer3 } from "node:buffer";
+
+// server-access/media-parts-contract.mjs
+var MEDIA_PARTS_PATH = "/api/v2/account/control/content/media-parts";
+var PUBLIC_MEDIA_PARTS_PATH = "/api/v2/content/internal/media-parts";
+var PART_CHARS = 8192;
+var MAX_PARTS = 16;
+var MAX_ENVELOPE = 12e3;
+var MAX_BYTES = 98304;
+var UPLOAD_TTL_MS = 3e5;
+var exact4 = (v, keys2) => !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === [...keys2].sort().join(",");
+var digestId = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+var uuid2 = (v) => typeof v === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(v);
+var dimension = (v) => Number.isInteger(v) && v >= 1 && v <= 1600;
+var partCount = (length) => Math.ceil(length / PART_CHARS);
+var partLength = (length, index) => Math.min(PART_CHARS, length - index * PART_CHARS);
+var validMeta = (m) => exact4(m, ["id", "mime", "encodedLength", "bytes", "width", "height", "totalParts"]) && digestId(m.id) && m.mime === "image/jpeg" && Number.isInteger(m.bytes) && m.bytes >= 4 && m.bytes <= MAX_BYTES && m.encodedLength === 4 * Math.ceil(m.bytes / 3) && m.totalParts === partCount(m.encodedLength) && m.totalParts >= 1 && m.totalParts <= MAX_PARTS && dimension(m.width) && dimension(m.height);
+var metaOf = (m) => ({ id: m.id, mime: m.mime, encodedLength: m.data.length, bytes: Math.floor(m.data.length / 4) * 3 - (m.data.endsWith("==") ? 2 : m.data.endsWith("=") ? 1 : 0), width: m.width, height: m.height, totalParts: partCount(m.data.length) });
+function jpegSizeMatches(bytes, width, height) {
+  if (bytes.length < 4 || bytes[0] !== 255 || bytes[1] !== 216 || bytes.at(-2) !== 255 || bytes.at(-1) !== 217) return false;
+  let i = 2;
+  while (i + 3 < bytes.length) {
+    if (bytes[i++] !== 255) return false;
+    while (bytes[i] === 255) i++;
+    const marker = bytes[i++];
+    if (marker === 218 || marker === 217) return false;
+    const n = bytes[i] << 8 | bytes[i + 1];
+    if (n < 2 || i + n > bytes.length) return false;
+    if ([192, 193, 194].includes(marker)) return n >= 8 && bytes[i + 2] === 8 && (bytes[i + 3] << 8 | bytes[i + 4]) === height && (bytes[i + 5] << 8 | bytes[i + 6]) === width;
+    i += n;
+  }
+  return false;
+}
+
+// server-access/worker/media-parts.mjs
+var now2 = () => (/* @__PURE__ */ new Date()).toISOString();
+var enabled = (env) => {
+  if (env.CONTENT_ENABLED !== "true" || env.CONTENT_MEDIA_ENABLED !== "true" || env.CONTENT_MEDIA_PARTS_ENABLED !== "true") deny("CONTENT_MEDIA_PARTS_UNAVAILABLE", 503);
+};
+var PARTS_AUTH_SQL = "EXISTS(SELECT 1 FROM account_sessions s JOIN account_subjects a ON a.id=s.subject_id AND a.status='active' JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active' JOIN nexus_admin_grants g ON g.account_id=a.id AND g.status='active' JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active' AND lm.kind='passkey' JOIN nexus_passkey_credentials pk ON pk.login_method_id=lm.id AND pk.account_id=a.id WHERE s.id=?3 AND a.id=?4 AND s.secret_hash=?5 AND s.status='active' AND s.auth_strength='account-method-v1' AND s.revoked_at IS NULL AND s.created_at<=?6 AND s.created_at>?7 AND s.idle_expires_at>?6 AND s.absolute_expires_at>?6 AND s.created_at>strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 minutes') AND s.idle_expires_at>strftime('%Y-%m-%dT%H:%M:%fZ','now') AND s.absolute_expires_at>strftime('%Y-%m-%dT%H:%M:%fZ','now') AND NOT EXISTS(SELECT 1 FROM nexus_alpha_members m WHERE m.account_id=a.id AND m.state IN('blocked','removed')))";
+var authority = (env, v) => guard(env.DB, v.payload.requestId, "before", PARTS_AUTH_SQL, [v.actor.session_id, v.actor.account_id, v.sessionHash, now2(), new Date(Date.now() - 3e5).toISOString()]);
+async function cleanup(env) {
+  await query2(env.DB, "DELETE FROM nexus_content_media_uploads WHERE upload_id IN(SELECT upload_id FROM nexus_content_media_uploads WHERE expires_at<=?1 ORDER BY expires_at LIMIT 16)", now2()).run();
+}
+var meta = (r) => ({ id: r.media_id, mime: "image/jpeg", encodedLength: r.encoded_length, bytes: r.bytes, width: r.width, height: r.height, totalParts: r.total_parts });
+var receipt = (r) => ({ ok: true, uploadId: r.upload_id, meta: meta(r) });
+function sameOwner(r, v) {
+  if (!r || r.account_id !== v.actor.account_id || r.session_id !== v.actor.session_id || r.expires_at <= now2()) deny("CONTENT_MEDIA_PARTS_CONFLICT", 409);
+}
+var pending = (r) => {
+  if (r.state !== "pending") deny("CONTENT_MEDIA_PARTS_CONFLICT", 409);
+};
+var liveCondition = "EXISTS(SELECT 1 FROM nexus_content_media_uploads WHERE upload_id=?3 AND account_id=?4 AND session_id=?5 AND state='pending' AND expires_at>?6 AND expires_at>strftime('%Y-%m-%dT%H:%M:%fZ','now'))";
+var liveGuard = (env, v, extra = "", args = []) => guard(env.DB, v.payload.requestId, "after", liveCondition + extra, [v.payload.uploadId, v.actor.account_id, v.actor.session_id, now2(), ...args]);
+async function mediaPartsOperation(env, v, { publishedOnly = false } = {}) {
+  enabled(env);
+  const p = v.payload;
+  if (!p || !uuid2(p.requestId) || v.method !== "POST") deny("INVALID_INPUT");
+  if (p.phase === "read") {
+    if (!exact4(p, ["requestId", "phase", "mediaId", "index"]) || !digestId(p.mediaId) || !Number.isInteger(p.index) || p.index < 0 || p.index > 15) deny("INVALID_INPUT");
+    const { media } = await mediaDTO(env, p.mediaId, { publishedOnly }), m = metaOf(media);
+    if (p.index >= m.totalParts) deny("INVALID_INPUT");
+    const data = media.data.slice(p.index * PART_CHARS, (p.index + 1) * PART_CHARS);
+    return { part: { meta: m, index: p.index, data, sha256: await sha(data) } };
+  }
+  if (publishedOnly) deny("INVALID_INPUT");
+  if (env.CONTENT_MEDIA_UPLOAD_ENABLED !== "true") deny("CONTENT_MEDIA_UNAVAILABLE", 503);
+  await cleanup(env);
+  if (p.phase === "begin") {
+    if (!exact4(p, ["requestId", "phase", "uploadId", "originalRequestId", "externalId", "meta"]) || !uuid2(p.uploadId) || !uuid2(p.originalRequestId) || !uuid2(p.externalId) || !validMeta(p.meta)) deny("INVALID_INPUT");
+    let r2 = await first(env.DB, "SELECT * FROM nexus_content_media_uploads WHERE upload_id=?1", p.uploadId);
+    if (r2) {
+      sameOwner(r2, v);
+      if (r2.request_id !== p.originalRequestId || r2.external_id !== p.externalId || JSON.stringify(meta(r2)) !== JSON.stringify(p.meta)) deny("CONTENT_MEDIA_PARTS_CONFLICT", 409);
+      pending(r2);
+      return receipt(r2);
+    }
+    const m = p.meta, stamp2 = now2(), expires = new Date(Date.now() + UPLOAD_TTL_MS).toISOString();
+    const capacity = "NOT EXISTS(SELECT 1 FROM nexus_content_media_uploads WHERE account_id=?3 AND state='pending' AND expires_at>?4) AND (SELECT COUNT(*) FROM nexus_content_media_uploads WHERE expires_at>?4)<16 AND (EXISTS(SELECT 1 FROM nexus_content_media WHERE id=?5) OR ((SELECT COUNT(*) FROM nexus_content_media)+(SELECT COUNT(*) FROM nexus_content_media_uploads WHERE state='pending' AND expires_at>?4)<1000 AND (SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media)+(SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media_uploads WHERE state='pending' AND expires_at>?4)+?6<=67108864))";
+    await atomic(env, [
+      authority(env, v),
+      guard(env.DB, p.requestId, "after", capacity, [v.actor.account_id, stamp2, m.id, m.bytes]),
+      query2(env.DB, "INSERT INTO nexus_content_media_uploads(upload_id,account_id,session_id,request_id,external_id,media_id,encoded_length,bytes,width,height,total_parts,state,created_at,expires_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,'pending',?12,?13)", p.uploadId, v.actor.account_id, v.actor.session_id, p.originalRequestId, p.externalId, m.id, m.encodedLength, m.bytes, m.width, m.height, m.totalParts, stamp2, expires)
+    ]);
+    r2 = await first(env.DB, "SELECT * FROM nexus_content_media_uploads WHERE upload_id=?1", p.uploadId);
+    return receipt(r2);
+  }
+  if (!uuid2(p.uploadId)) deny("INVALID_INPUT");
+  const r = await first(env.DB, "SELECT * FROM nexus_content_media_uploads WHERE upload_id=?1", p.uploadId);
+  sameOwner(r, v);
+  if (p.phase === "abort") {
+    if (!exact4(p, ["requestId", "phase", "uploadId"])) deny("INVALID_INPUT");
+    pending(r);
+    await atomic(env, [authority(env, v), liveGuard(env, v), query2(env.DB, "UPDATE nexus_content_media_uploads SET state='aborted' WHERE upload_id=?1", p.uploadId), query2(env.DB, "DELETE FROM nexus_content_media_parts WHERE upload_id=?1", p.uploadId)]);
+    return { ok: true, uploadId: p.uploadId };
+  }
+  if (p.phase === "part") {
+    pending(r);
+    if (!exact4(p, ["requestId", "phase", "uploadId", "index", "data", "sha256"]) || !Number.isInteger(p.index) || p.index < 0 || p.index >= r.total_parts || typeof p.data !== "string" || p.data.length !== partLength(r.encoded_length, p.index) || !/^[A-Za-z0-9+/]+={0,2}$/.test(p.data) || p.index < r.total_parts - 1 && p.data.includes("=") || Buffer3.from(p.data, "base64").toString("base64") !== p.data || !digestId(p.sha256) || await sha(p.data) !== p.sha256) deny("INVALID_INPUT");
+    await atomic(env, [
+      authority(env, v),
+      liveGuard(env, v, " AND NOT EXISTS(SELECT 1 FROM nexus_content_media_parts WHERE upload_id=?3 AND part_index=?7 AND (data<>?8 OR part_sha256<>?9))", [p.index, p.data, p.sha256]),
+      query2(env.DB, "INSERT OR IGNORE INTO nexus_content_media_parts(upload_id,part_index,data,part_sha256) VALUES(?1,?2,?3,?4)", p.uploadId, p.index, p.data, p.sha256)
+    ]);
+    return { ok: true, uploadId: p.uploadId, index: p.index, sha256: p.sha256 };
+  }
+  if (p.phase === "commit") {
+    if (!exact4(p, ["requestId", "phase", "uploadId", "sha256"]) || p.sha256 !== r.media_id) deny("INVALID_INPUT");
+    if (r.state === "committed") return { ok: true, media: { id: r.media_id, mime: "image/jpeg", width: r.width, height: r.height } };
+    pending(r);
+    const parts = await rows(query2(env.DB, "SELECT part_index,data,part_sha256 FROM nexus_content_media_parts WHERE upload_id=?1 ORDER BY part_index", p.uploadId));
+    if (parts.length !== r.total_parts) deny("CONTENT_MEDIA_PARTS_INCOMPLETE", 409);
+    for (let i = 0; i < parts.length; i++) if (parts[i].part_index !== i || parts[i].data.length !== partLength(r.encoded_length, i) || await sha(parts[i].data) !== parts[i].part_sha256) deny("CONTENT_MEDIA_PARTS_CONFLICT", 409);
+    const data = parts.map((x) => x.data).join(""), bytes = Buffer3.from(data, "base64");
+    if (data.length !== r.encoded_length || bytes.length !== r.bytes || bytes.toString("base64") !== data || !jpegSizeMatches(bytes, r.width, r.height) || Buffer3.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex") !== r.media_id) deny("CONTENT_MEDIA_PARTS_CONFLICT", 409);
+    const original = { ...v, payload: { requestId: r.request_id, target: "media", id: r.external_id, slug: "", version: 0, action: "upload", content: { id: r.media_id, mime: "image/jpeg", data, width: r.width, height: r.height } } };
+    return uploadMedia(env, original, { reservationId: p.uploadId, before: [authority(env, v), liveGuard(env, v)], after: [
+      query2(env.DB, "UPDATE nexus_content_media_uploads SET state='committed' WHERE upload_id=?1", p.uploadId),
+      query2(env.DB, "DELETE FROM nexus_content_media_parts WHERE upload_id=?1", p.uploadId)
+    ] });
+  }
+  deny("INVALID_INPUT");
+}
+
 // server-access/worker/admin-service.mjs
 var INTERNAL = "/api/v2/account/internal/control";
 var BASE = "/api/v2/account/control";
 var encoder = new TextEncoder();
-var now2 = () => (/* @__PURE__ */ new Date()).toISOString();
+var now3 = () => (/* @__PURE__ */ new Date()).toISOString();
 var query2 = (db, sql2, ...args) => db.prepare(sql2).bind(...args);
 var first = (db, sql2, ...args) => query2(db, sql2, ...args).first();
 var rows = async (statement2) => (await statement2.all()).results || [];
-var sha = async (value) => Buffer3.from(await crypto.subtle.digest("SHA-256", encoder.encode(value))).toString("hex");
-var random = () => Buffer3.from(crypto.getRandomValues(new Uint8Array(32))).toString("base64url");
+var sha = async (value) => Buffer4.from(await crypto.subtle.digest("SHA-256", encoder.encode(value))).toString("hex");
+var random = () => Buffer4.from(crypto.getRandomValues(new Uint8Array(32))).toString("base64url");
 var deny = (code, status = 400) => {
   throw new AlphaError(code, status);
 };
@@ -21849,7 +21978,7 @@ var validId = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:
 var validRequestId = (value) => typeof value === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value);
 var reply = (body, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer" } });
 async function controlActor(env, sessionHash) {
-  return first(env.DB, "SELECT s.id session_id,s.subject_id account_id,s.created_at,lm.kind FROM account_sessions s JOIN account_subjects a ON a.id=s.subject_id AND a.status='active' JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active' JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active' WHERE s.secret_hash=?1 AND s.status='active' AND s.auth_strength='account-method-v1' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2", sessionHash, now2());
+  return first(env.DB, "SELECT s.id session_id,s.subject_id account_id,s.created_at,lm.kind FROM account_sessions s JOIN account_subjects a ON a.id=s.subject_id AND a.status='active' JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active' JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active' WHERE s.secret_hash=?1 AND s.status='active' AND s.auth_strength='account-method-v1' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2", sessionHash, now3());
 }
 var fresh = (actor) => actor?.kind === "passkey" && Number.isFinite(Date.parse(actor.created_at)) && Date.now() - Date.parse(actor.created_at) >= 0 && Date.now() - Date.parse(actor.created_at) < 3e5;
 async function envelope(request, env) {
@@ -21875,20 +22004,38 @@ async function envelope(request, env) {
     });
     reader.releaseLock();
   }
-  const bytes = Buffer3.concat(parts, size), body = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-  const digest2 = Buffer3.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex");
+  const bytes = Buffer4.concat(parts, size), body = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  const digest2 = Buffer4.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex");
   const canonical = ["v1", "POST", INTERNAL, stamp2, nonce, digest2].join("\n");
   const key = await crypto.subtle.importKey("raw", encoder.encode(env.ADMIN_SERVICE_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
-  if (!await crypto.subtle.verify("HMAC", key, Buffer3.from(signature, "hex"), encoder.encode(canonical))) deny("SERVICE_DENIED", 401);
+  if (!await crypto.subtle.verify("HMAC", key, Buffer4.from(signature, "hex"), encoder.encode(canonical))) deny("SERVICE_DENIED", 401);
   let data;
   try {
     data = JSON.parse(body);
   } catch {
     deny("INVALID_INPUT");
   }
-  if (!exact2(data, ["path", "method", "payload", "sessionHash", "expectedAccountId"]) || !["GET", "POST"].includes(data.method) || typeof data.path !== "string" || data.path.length > 512 || !/^\/api\/v2\/account\/(?:control(?:\/|$)|profile(?:\/|$))/.test(data.path) || !validId(data.expectedAccountId) || !/^[a-f0-9]{64}$/.test(data.sessionHash || "")) deny("INVALID_INPUT");
-  const inserted = await query2(env.DB, "INSERT OR IGNORE INTO nexus_admin_nonces(nonce,expires_at) VALUES(?1,?2)", nonce, new Date(Number(stamp2) + 3e4).toISOString()).run();
+  if (!exact2(data, ["path", "method", "payload", "sessionHash", "expectedAccountId"])) deny("INVALID_INPUT");
+  const publicParts = data.path === PUBLIC_MEDIA_PARTS_PATH;
+  if (publicParts) {
+    if (env.CONTENT_MEDIA_PARTS_ENABLED !== "true") deny("CONTENT_MEDIA_PARTS_UNAVAILABLE", 503);
+    if (size > MAX_ENVELOPE || data.method !== "POST" || data.sessionHash !== null || data.expectedAccountId !== null || !exact2(data.payload, ["requestId", "phase", "mediaId", "index"]) || data.payload.phase !== "read") deny("INVALID_INPUT");
+  } else if (!["GET", "POST"].includes(data.method) || typeof data.path !== "string" || data.path.length > 512 || !/^\/api\/v2\/account\/(?:control(?:\/|$)|profile(?:\/|$))/.test(data.path) || !validId(data.expectedAccountId) || !/^[a-f0-9]{64}$/.test(data.sessionHash || "")) deny("INVALID_INPUT");
+  if (data.path === MEDIA_PARTS_PATH && size > MAX_ENVELOPE) deny("INPUT_TOO_LARGE", 413);
+  if ((publicParts || data.path === MEDIA_PARTS_PATH) && body !== JSON.stringify(data)) deny("INVALID_INPUT");
+  const partsRPC = publicParts || data.path === MEDIA_PARTS_PATH;
+  if (partsRPC) {
+    if (Math.abs(Date.now() - Number(stamp2)) > 3e4) deny("SERVICE_DENIED", 401);
+    if (publicParts) {
+      const allowed = await query2(env.DB, "INSERT INTO nexus_admin_rate_limits(scope,bucket,used) VALUES(?1,?2,1) ON CONFLICT(scope,bucket) DO UPDATE SET used=used+1 WHERE used<120 RETURNING used", "!media-public-v1:" + nonce[0], Math.floor(Date.now() / 6e4)).first();
+      if (!allowed) deny("RATE_LIMITED", 429);
+      await query2(env.DB, "DELETE FROM nexus_admin_rate_limits WHERE (scope,bucket) IN(SELECT scope,bucket FROM nexus_admin_rate_limits WHERE scope GLOB '!media-public-v1:[0-9a-f]' AND bucket<?1 LIMIT 32)", Math.floor(Date.now() / 6e4) - 1).run();
+    }
+    await query2(env.DB, "DELETE FROM nexus_admin_nonces WHERE nonce IN(SELECT nonce FROM nexus_admin_nonces WHERE nonce LIKE 'mp1:%' AND expires_at<?1 LIMIT 128)", new Date(Date.now() - 6e4).toISOString()).run();
+  }
+  const inserted = await query2(env.DB, "INSERT OR IGNORE INTO nexus_admin_nonces(nonce,expires_at) VALUES(?1,?2)", partsRPC ? "mp1:" + nonce : nonce, new Date(Number(stamp2) + 3e4).toISOString()).run();
   if (!inserted.success || inserted.meta.changes !== 1) deny("SERVICE_DENIED", 401);
+  if (publicParts) return data;
   const actor = await controlActor(env, data.sessionHash);
   if (!actor) deny("SESSION_REQUIRED", 401);
   if (actor.account_id !== data.expectedAccountId) deny("ACCOUNT_SESSION_CHANGED", 401);
@@ -21939,6 +22086,7 @@ function validMutation(input, keys2) {
 }
 async function operation(env, value) {
   const { actor, method, payload } = value, url = new URL(value.path, "https://nexus.invalid"), path = url.pathname;
+  if (path === PUBLIC_MEDIA_PARTS_PATH) return mediaPartsOperation(env, value, { publishedOnly: true });
   if (path.startsWith("/api/v2/account/profile")) return profileOperation(env, value);
   if (!await alphaSettings(env)) deny("ALPHA_CONTROL_UNAVAILABLE", 503);
   if (path === BASE + "/capabilities" && method === "GET" && !url.search) {
@@ -21946,6 +22094,11 @@ async function operation(env, value) {
     return { canManage, canModerate: await teamPermission(env.DB, actor.account_id, env), canPurge: canManage && env.ADMIN_PURGE_ENABLED === "true", freshPasskey: canManage && fresh(actor) };
   }
   await requireAdmin(env, actor, method === "POST");
+  if (path === MEDIA_PARTS_PATH) {
+    if (url.search || method !== "POST") deny("INVALID_INPUT");
+    if (await first(env.DB, "SELECT 1 FROM nexus_alpha_members WHERE account_id=?1 AND state IN('blocked','removed')", actor.account_id)) deny("ADMIN_REQUIRED", 403);
+    return mediaPartsOperation(env, value);
+  }
   if (path === BASE + "/content") return contentOperation(env, value);
   if (path === BASE + "/providers" && method === "GET" && !url.search) return { authorized: true };
   if (path === BASE + "/users" && method === "GET") {
@@ -21955,7 +22108,7 @@ async function operation(env, value) {
     const filter = " WHERE (?1='all' OR COALESCE(m.state,'unadmitted')=?1)";
     const from = " FROM account_subjects a LEFT JOIN nexus_alpha_members m ON m.account_id=a.id LEFT JOIN nexus_account_profiles p ON p.account_id=a.id";
     const total = await first(env.DB, "SELECT count(*) n" + from + filter, state);
-    const list = await rows(query2(env.DB, "SELECT a.id,a.display_name,a.status,a.created_at,p.username,m.state,m.version,m.reason,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active') administrator,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id) protected_account,(SELECT max(created_at) FROM account_sessions s WHERE s.subject_id=a.id) last_login,(SELECT count(*) FROM account_sessions s WHERE s.subject_id=a.id AND s.status='active' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2) active_sessions" + from + filter + " ORDER BY a.created_at DESC,a.id LIMIT 50 OFFSET ?3", state, now2(), offset));
+    const list = await rows(query2(env.DB, "SELECT a.id,a.display_name,a.status,a.created_at,p.username,m.state,m.version,m.reason,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active') administrator,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id) protected_account,(SELECT max(created_at) FROM account_sessions s WHERE s.subject_id=a.id) last_login,(SELECT count(*) FROM account_sessions s WHERE s.subject_id=a.id AND s.status='active' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2) active_sessions" + from + filter + " ORDER BY a.created_at DESC,a.id LIMIT 50 OFFSET ?3", state, now3(), offset));
     const settings = await first(env.DB, "SELECT registration_mode,max_testers,limit_enabled,version FROM nexus_alpha_settings WHERE id=1"), occupied = await first(env.DB, "SELECT count(*) n FROM nexus_alpha_occupied"), active = await first(env.DB, "SELECT count(*) n FROM nexus_alpha_members WHERE state='active' AND account_id NOT IN(SELECT account_id FROM nexus_admin_grants WHERE status='active')");
     return { users: list.map((r) => ({ accountId: r.id, username: r.username || null, displayName: r.display_name, state: r.administrator ? "administrator" : r.state || "unadmitted", version: r.version || 0, createdAt: r.created_at, lastLoginAt: r.last_login || null, activeSessions: r.active_sessions, reason: r.reason || "", protected: !!r.protected_account })), total: total.n, offset, settings: { registrationMode: settings.registration_mode, maxTesters: settings.max_testers, limitEnabled: settings.limit_enabled === 1, version: settings.version }, counts: { active: active.n, occupied: occupied.n, reserved: occupied.n - active.n } };
   }
@@ -21964,14 +22117,14 @@ async function operation(env, value) {
   if (path === BASE + "/settings") {
     validMutation(payload, ["version", "maxTesters", "limitEnabled", "registrationMode"]);
     if (typeof payload.limitEnabled !== "boolean" || !Number.isInteger(payload.version) || payload.version < 1 || !Number.isInteger(payload.maxTesters) || payload.maxTesters < 1 || payload.maxTesters > 1e4 || !["open", "invite_only"].includes(payload.registrationMode)) deny("INVALID_INPUT");
-    const stamp2 = now2();
+    const stamp2 = now3();
     await atomic(env, [guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_settings WHERE id=1 AND version=?3)", [payload.version]), query2(env.DB, "UPDATE nexus_alpha_settings SET registration_mode=?1,max_testers=?2,limit_enabled=?4,version=version+1 WHERE id=1 AND version=?3", payload.registrationMode, payload.maxTesters, payload.version, payload.limitEnabled ? 1 : 0), audit(env.DB, actor, payload.requestId, "settings", null, stamp2)]);
     return { ok: true };
   }
   if (path === BASE + "/invites") {
     validMutation(payload, ["ttlMinutes"]);
     if (!Number.isInteger(payload.ttlMinutes) || payload.ttlMinutes < 10 || payload.ttlMinutes > 10080) deny("INVALID_INPUT");
-    const secret = "npi_" + random(), hash3 = await sha(secret), id4 = crypto.randomUUID(), stamp2 = now2(), expiresAt = new Date(Date.now() + payload.ttlMinutes * 6e4).toISOString();
+    const secret = "npi_" + random(), hash3 = await sha(secret), id4 = crypto.randomUUID(), stamp2 = now3(), expiresAt = new Date(Date.now() + payload.ttlMinutes * 6e4).toISOString();
     await atomic(env, [guard(env.DB, payload.requestId, "before", "1"), query2(env.DB, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,'\u041D\u043E\u0432\u044B\u0439 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A','active',?2,?2)", id4, stamp2), query2(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at) VALUES(?1,'invited',?2,?3,?3)", id4, expiresAt, stamp2), query2(env.DB, "INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)", hash3, id4, expiresAt), query2(env.DB, "INSERT INTO nexus_admin_invites(token_hash,account_id,created_by,state,created_at) VALUES(?1,?2,?3,'ready',?4)", hash3, id4, actor.account_id, stamp2), audit(env.DB, actor, payload.requestId, "invite", id4, stamp2)]);
     return { ok: true, accountId: id4, invitationToken: secret, expiresAt };
   }
@@ -21984,7 +22137,7 @@ async function operation(env, value) {
     const member = await target(env, actor, id3, payload.version);
     if (payload.action === "admit" && member.state !== "unadmitted" || payload.action === "restore" && !["removed", "blocked"].includes(member.state) || payload.action === "revoke-invite" && member.state !== "invited") deny("INVALID_STATE", 409);
     if (payload.action === "restore" && !await first(env.DB, "SELECT 1 ok FROM login_methods WHERE account_id=?1 AND status='active'", id3)) deny("RESTORE_WITHOUT_LOGIN_METHOD", 409);
-    const state = ["restore", "admit"].includes(payload.action) ? "active" : payload.action === "block" ? "blocked" : "removed", stamp2 = now2();
+    const state = ["restore", "admit"].includes(payload.action) ? "active" : payload.action === "block" ? "blocked" : "removed", stamp2 = now3();
     const condition = member.state === "unadmitted" ? "EXISTS(SELECT 1 FROM account_subjects WHERE id=?3) AND NOT EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3)" : "EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3 AND version=?4) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3)";
     const change = member.state === "unadmitted" ? query2(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,reason,created_at,updated_at) VALUES(?1,?2,?3,?4,?4)", id3, state, payload.action, stamp2) : query2(env.DB, "UPDATE nexus_alpha_members SET state=?1,version=version+1,reason=?2,updated_at=?3 WHERE account_id=?4 AND version=?5", state, payload.action, stamp2, id3, payload.version);
     await atomic(env, [guard(env.DB, payload.requestId, "before", condition, member.state === "unadmitted" ? [id3] : [id3, payload.version]), change, audit(env.DB, actor, payload.requestId, payload.action, id3, stamp2)]);
@@ -22027,23 +22180,27 @@ async function mediaDTO(env, id3, { publishedOnly = false } = {}) {
   }
   const row = await first(env.DB, "SELECT id,jpeg_base64,width,height FROM nexus_content_media WHERE id=?1", id3);
   if (!row) deny("NOT_FOUND", 404);
-  const bytes = Buffer4.from(row.jpeg_base64, "base64");
-  if (bytes.length > 98304 || bytes.toString("base64") !== row.jpeg_base64 || Buffer4.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex") !== id3) deny("CONTENT_MEDIA_UNAVAILABLE", 503);
+  const bytes = Buffer5.from(row.jpeg_base64, "base64");
+  if (bytes.length > 98304 || bytes.toString("base64") !== row.jpeg_base64 || Buffer5.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex") !== id3) deny("CONTENT_MEDIA_UNAVAILABLE", 503);
   return { media: { id: row.id, mime: "image/jpeg", data: row.jpeg_base64, width: row.width, height: row.height } };
 }
-async function uploadMedia(env, value) {
+async function uploadMedia(env, value, { reservationId = null, before = [], after: after2 = [] } = {}) {
   if (env.CONTENT_MEDIA_ENABLED !== "true" || env.CONTENT_MEDIA_UPLOAD_ENABLED !== "true") deny("CONTENT_MEDIA_UNAVAILABLE", 503);
   const p = value.payload, m = p.content;
   if (!exact2(p, ["requestId", "target", "id", "slug", "version", "action", "content"]) || !validRequestId(p.requestId) || p.target !== "media" || p.action !== "upload" || p.slug !== "" || p.version !== 0 || !/^[a-f0-9-]{36}$/.test(p.id) || !exact2(m, ["id", "mime", "data", "width", "height"]) || !validMediaId(m.id) || m.mime !== "image/jpeg" || typeof m.data !== "string" || m.data.length > 131072 || !/^[A-Za-z0-9+/]+={0,2}$/.test(m.data) || ![m.width, m.height].every((n) => Number.isInteger(n) && n >= 1 && n <= 1600)) deny("INVALID_INPUT");
-  const bytes = Buffer4.from(m.data, "base64");
-  if (bytes.toString("base64") !== m.data || !bytes.length || bytes.length > 98304 || bytes[0] !== 255 || bytes[1] !== 216 || bytes.at(-2) !== 255 || bytes.at(-1) !== 217 || Buffer4.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex") !== m.id) deny("INVALID_INPUT");
+  const bytes = Buffer5.from(m.data, "base64");
+  if (bytes.toString("base64") !== m.data || !bytes.length || bytes.length > 98304 || bytes[0] !== 255 || bytes[1] !== 216 || bytes.at(-2) !== 255 || bytes.at(-1) !== 217 || Buffer5.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex") !== m.id) deny("INVALID_INPUT");
   const stamp2 = (/* @__PURE__ */ new Date()).toISOString();
   const existing = await first(env.DB, "SELECT id FROM nexus_content_media WHERE id=?1", m.id), usage = await first(env.DB, "SELECT COUNT(*) count,COALESCE(SUM(bytes),0) bytes FROM nexus_content_media");
   if (!existing && (usage.count >= 1e3 || usage.bytes + bytes.length > 67108864)) deny("CONTENT_MEDIA_QUOTA", 409);
+  const reserve = reservationId !== null;
+  const quota = reserve ? "EXISTS(SELECT 1 FROM nexus_content_media WHERE id=?3) OR ((SELECT COUNT(*) FROM nexus_content_media)+(SELECT COUNT(*) FROM nexus_content_media_uploads WHERE state='pending' AND expires_at>?6 AND upload_id<>?5)<1000 AND (SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media)+(SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media_uploads WHERE state='pending' AND expires_at>?6 AND upload_id<>?5)+?4<=67108864)" : "EXISTS(SELECT 1 FROM nexus_content_media WHERE id=?3) OR ((SELECT COUNT(*) FROM nexus_content_media)<1000 AND (SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media)+?4<=67108864)";
   const commands = [
-    guard(env.DB, p.requestId, "before", "EXISTS(SELECT 1 FROM nexus_content_media WHERE id=?3) OR ((SELECT COUNT(*) FROM nexus_content_media)<1000 AND (SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media)+?4<=67108864)", [m.id, bytes.length]),
+    ...before,
+    guard(env.DB, p.requestId, "before", quota, [m.id, bytes.length, ...reserve ? [reservationId, stamp2] : []]),
     query2(env.DB, "INSERT OR IGNORE INTO nexus_content_media(id,jpeg_base64,width,height,bytes,created_by,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7)", m.id, m.data, m.width, m.height, bytes.length, value.actor.account_id, stamp2),
-    query2(env.DB, "INSERT INTO nexus_content_media_audit(id,actor_id,session_id,target_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)", p.requestId, value.actor.account_id, value.actor.session_id, m.id, "upload", stamp2)
+    query2(env.DB, "INSERT INTO nexus_content_media_audit(id,actor_id,session_id,target_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)", p.requestId, value.actor.account_id, value.actor.session_id, m.id, "upload", stamp2),
+    ...after2
   ];
   await atomic(env, commands);
   return { ok: true, media: { id: m.id, mime: m.mime, width: m.width, height: m.height } };
@@ -22071,9 +22228,13 @@ async function contentOperation(env, value) {
   }
   if (operationURL.search) {
     if (method !== "GET" || [...operationURL.searchParams.keys()].join(",") !== "media" || operationURL.searchParams.getAll("media").length !== 1) deny("INVALID_INPUT");
+    if (env.CONTENT_MEDIA_PARTS_ENABLED === "true") deny("CONTENT_MEDIA_PARTS_REQUIRED", 503);
     return mediaDTO(env, operationURL.searchParams.get("media"));
   }
-  if (method === "POST" && p?.target === "media") return uploadMedia(env, value);
+  if (method === "POST" && p?.target === "media") {
+    if (env.CONTENT_MEDIA_PARTS_ENABLED === "true") deny("CONTENT_MEDIA_PARTS_REQUIRED", 503);
+    return uploadMedia(env, value);
+  }
   if (method === "GET") {
     const home2 = await first(db, "SELECT * FROM nexus_content_home WHERE id=1");
     return { posts: (await rows(query2(db, "SELECT * FROM nexus_content_posts ORDER BY updated_at DESC LIMIT 100"))).map(postDto), home: { draft: JSON.parse(home2.draft_json), published: JSON.parse(home2.published_json), version: home2.version } };
@@ -22128,6 +22289,7 @@ async function publicContent(request, env) {
     if ([...url.searchParams.keys()].some((k) => !["slug", "media"].includes(k)) || [...url.searchParams.keys()].length > 1 || url.searchParams.getAll("slug").length > 1 || url.searchParams.getAll("media").length > 1) return Response.json({ error: { code: "INVALID_INPUT" } }, { status: 400, headers });
     if (url.searchParams.has("media")) {
       try {
+        if (env.CONTENT_MEDIA_PARTS_ENABLED === "true") deny("CONTENT_MEDIA_PARTS_REQUIRED", 503);
         return Response.json(await mediaDTO(env, url.searchParams.get("media"), { publishedOnly: true }), { headers });
       } catch (e) {
         return Response.json({ error: { code: e.code || "CONTENT_UNAVAILABLE" } }, { status: [400, 404, 503].includes(e.status) ? e.status : 503, headers });
@@ -22147,7 +22309,7 @@ async function publicContent(request, env) {
 }
 
 // server-access/worker/passkey-service.mjs
-import { Buffer as Buffer5 } from "node:buffer";
+import { Buffer as Buffer6 } from "node:buffer";
 
 // server-access/worker/public-registration.mjs
 var q2 = (env, text3, ...args) => env.DB.prepare(text3).bind(...args);
@@ -22249,8 +22411,8 @@ async function reservePublicRegistration(env, { networkHash, inviteHash }) {
   await collectExpired(env, stamp2);
   const policy = await registrationPolicy(env);
   if (!policy.available) throw new AlphaError(policy.reason === "capacity" ? "ALPHA_CAPACITY_REACHED" : "REGISTRATION_CLOSED", policy.reason === "capacity" ? 409 : 403);
-  const pending = await q2(env, "SELECT count(*) n FROM nexus_admin_invites i JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash WHERE i.kind='public' AND i.state='ready' AND p.expires_at>?1", stamp2).first();
-  if (pending.n >= 200) throw new AlphaError("RATE_LIMITED", 429);
+  const pending2 = await q2(env, "SELECT count(*) n FROM nexus_admin_invites i JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash WHERE i.kind='public' AND i.state='ready' AND p.expires_at>?1", stamp2).first();
+  if (pending2.n >= 200) throw new AlphaError("RATE_LIMITED", 429);
   const accountId = crypto.randomUUID(), expiresAt = new Date(Date.now() + 12e4).toISOString();
   try {
     const result = await env.DB.batch([
@@ -22269,7 +22431,7 @@ async function reservePublicRegistration(env, { networkHash, inviteHash }) {
   return inviteHash;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoBase64URL.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoBase64URL.js
 var isoBase64URL_exports = {};
 __export(isoBase64URL_exports, {
   fromBuffer: () => fromBuffer,
@@ -22282,7 +22444,7 @@ __export(isoBase64URL_exports, {
   trimPadding: () => trimPadding
 });
 
-// server-access/node_modules/@hexagon/base64/src/base64.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@hexagon/base64/src/base64.js
 var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 var charsUrl = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 var genLookup = (target2) => {
@@ -22356,7 +22518,7 @@ base64.validate = (encoded, urlMode) => {
 base64.base64 = base64;
 var base64_default = base64;
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoBase64URL.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoBase64URL.js
 function toBuffer(base64urlString, from = "base64url") {
   const _buffer = base64_default.toArrayBuffer(base64urlString, from === "base64url");
   return new Uint8Array(_buffer);
@@ -22387,14 +22549,14 @@ function trimPadding(input) {
   return input.replace(/=/g, "");
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCBOR.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCBOR.js
 var isoCBOR_exports = {};
 __export(isoCBOR_exports, {
   decodeFirst: () => decodeFirst,
   encode: () => encode
 });
 
-// server-access/node_modules/@levischuck/tiny-cbor/esm/cbor/cbor_internal.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@levischuck/tiny-cbor/esm/cbor/cbor_internal.js
 function decodeLength(data, argument, index) {
   if (argument < 24) {
     return [argument, 1];
@@ -22493,7 +22655,7 @@ function encodeLength(major, argument) {
   }
 }
 
-// server-access/node_modules/@levischuck/tiny-cbor/esm/cbor/cbor.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@levischuck/tiny-cbor/esm/cbor/cbor.js
 var CBORTag = class {
   /**
    * Wrap a value with a tag number.
@@ -22820,7 +22982,7 @@ function encodeCBOR(data) {
   return output;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCBOR.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCBOR.js
 function decodeFirst(input) {
   const _input = new Uint8Array(input);
   const decoded = decodePartialCBOR(_input, 0);
@@ -22831,7 +22993,7 @@ function encode(input) {
   return encodeCBOR(input);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/index.js
 var isoCrypto_exports = {};
 __export(isoCrypto_exports, {
   digest: () => digest,
@@ -22839,7 +23001,7 @@ __export(isoCrypto_exports, {
   verify: () => verify
 });
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/cose.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/cose.js
 function isCOSEPublicKeyOKP(cosePublicKey) {
   const kty = cosePublicKey.get(COSEKEYS.kty);
   return isCOSEKty(kty) && kty === COSEKTY.OKP;
@@ -22910,7 +23072,7 @@ function isCOSEAlg(alg) {
   return Object.values(COSEALG).indexOf(alg) >= 0;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/mapCoseAlgToWebCryptoHashAlgName.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/mapCoseAlgToWebCryptoHashAlgName.js
 function mapCoseAlgToWebCryptoHashAlgName(alg) {
   if ([COSEALG.RS1].indexOf(alg) >= 0) {
     return "SHA-1";
@@ -22924,7 +23086,7 @@ function mapCoseAlgToWebCryptoHashAlgName(alg) {
   throw new Error(`Could not map COSE alg value of ${alg} to a WebCrypto hash alg name`);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/getWebCrypto.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/getWebCrypto.js
 var webCrypto = void 0;
 function getWebCrypto() {
   const toResolve = new Promise((resolve, reject2) => {
@@ -22955,7 +23117,7 @@ var _getWebCryptoInternals = {
   }
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/digest.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/digest.js
 async function digest(data, algorithm) {
   const WebCrypto = await getWebCrypto();
   const subtleAlgorithm = mapCoseAlgToWebCryptoHashAlgName(algorithm);
@@ -22963,14 +23125,14 @@ async function digest(data, algorithm) {
   return new Uint8Array(hashed);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/getRandomValues.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/getRandomValues.js
 async function getRandomValues(array) {
   const WebCrypto = await getWebCrypto();
   WebCrypto.getRandomValues(array);
   return array;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/convertAAGUIDToString.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/convertAAGUIDToString.js
 function convertAAGUIDToString(aaguid) {
   const hex3 = isoUint8Array_exports.toHex(aaguid);
   const segments = [
@@ -22988,7 +23150,7 @@ function convertAAGUIDToString(aaguid) {
   return segments.join("-");
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/convertCOSEtoPKCS.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/convertCOSEtoPKCS.js
 function convertCOSEtoPKCS(cosePublicKey) {
   const struct = isoCBOR_exports.decodeFirst(cosePublicKey);
   const tag = Uint8Array.from([4]);
@@ -23003,7 +23165,7 @@ function convertCOSEtoPKCS(cosePublicKey) {
   return isoUint8Array_exports.concat([tag, x]);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeAttestationObject.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeAttestationObject.js
 function decodeAttestationObject(attestationObject) {
   return _decodeAttestationObjectInternals.stubThis(isoCBOR_exports.decodeFirst(attestationObject));
 }
@@ -23011,7 +23173,7 @@ var _decodeAttestationObjectInternals = {
   stubThis: (value) => value
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeClientDataJSON.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeClientDataJSON.js
 function decodeClientDataJSON(data) {
   const toString = isoBase64URL_exports.toUTF8String(data);
   const clientData = JSON.parse(toString);
@@ -23021,7 +23183,7 @@ var _decodeClientDataJSONInternals = {
   stubThis: (value) => value
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeCredentialPublicKey.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeCredentialPublicKey.js
 function decodeCredentialPublicKey(publicKey) {
   return _decodeCredentialPublicKeyInternals.stubThis(isoCBOR_exports.decodeFirst(publicKey));
 }
@@ -23029,7 +23191,7 @@ var _decodeCredentialPublicKeyInternals = {
   stubThis: (value) => value
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/generateChallenge.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/generateChallenge.js
 async function generateChallenge() {
   const challenge = new Uint8Array(32);
   await isoCrypto_exports.getRandomValues(challenge);
@@ -23039,7 +23201,7 @@ var _generateChallengeInternals = {
   stubThis: (value) => value
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/generateUserID.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/generateUserID.js
 async function generateUserID() {
   const newUserID = new Uint8Array(32);
   await isoCrypto_exports.getRandomValues(newUserID);
@@ -23049,7 +23211,7 @@ var _generateUserIDInternals = {
   stubThis: (value) => value
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/getCertificateInfo.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/getCertificateInfo.js
 var import_asn1_schema = __toESM(require_cjs2(), 1);
 var import_asn1_x509 = __toESM(require_cjs3(), 1);
 var issuerSubjectIDKey = {
@@ -23113,10 +23275,10 @@ function issuerSubjectToString(input) {
   return parts.join(" : ");
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/isCertRevoked.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/isCertRevoked.js
 var import_x509 = __toESM(require_x509_cjs(), 1);
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/fetch.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/fetch.js
 function fetch(url) {
   return _fetchInternals.stubThis(url);
 }
@@ -23124,7 +23286,7 @@ var _fetchInternals = {
   stubThis: (url) => globalThis.fetch(url)
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/isCertRevoked.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/isCertRevoked.js
 var cacheRevokedCerts = {};
 async function isCertRevoked(cert) {
   const { extensions } = cert;
@@ -23152,8 +23314,8 @@ async function isCertRevoked(cert) {
   if (keyIdentifier) {
     const cached = cacheRevokedCerts[keyIdentifier];
     if (cached) {
-      const now4 = /* @__PURE__ */ new Date();
-      if (!cached.nextUpdate || cached.nextUpdate > now4) {
+      const now5 = /* @__PURE__ */ new Date();
+      if (!cached.nextUpdate || cached.nextUpdate > now5) {
         return cached.revokedCerts.indexOf(cert.serialNumber) >= 0;
       }
     }
@@ -23196,7 +23358,7 @@ async function isCertRevoked(cert) {
   return false;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeAuthenticatorExtensions.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeAuthenticatorExtensions.js
 function decodeAuthenticatorExtensions(extensionData) {
   let toCBOR;
   try {
@@ -23219,7 +23381,7 @@ function convertMapToObjectDeep(input) {
   return mapped;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/parseAuthenticatorData.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/parseAuthenticatorData.js
 function parseAuthenticatorData(authData) {
   if (authData.byteLength < 37) {
     throw new Error(`Authenticator data was ${authData.byteLength} bytes, expected at least 37 bytes`);
@@ -23308,7 +23470,7 @@ var _parseAuthenticatorDataInternals = {
   stubThis: (value) => value
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/toHash.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/toHash.js
 function toHash(data, algorithm = -7) {
   if (typeof data === "string") {
     data = isoUint8Array_exports.fromUTF8String(data);
@@ -23317,7 +23479,7 @@ function toHash(data, algorithm = -7) {
   return digest2;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/validateCertificatePath.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/validateCertificatePath.js
 var import_x5092 = __toESM(require_x509_cjs(), 1);
 async function validateCertificatePath(x5cCertsPEM, trustAnchorsPEM = []) {
   if (trustAnchorsPEM.length === 0) {
@@ -23414,8 +23576,8 @@ async function assertCertNotRevoked(certificate) {
   }
 }
 function assertCertIsWithinValidTimeWindow(certNotBefore, certNotAfter) {
-  const now4 = new Date(Date.now());
-  if (certNotBefore > now4 || certNotAfter < now4) {
+  const now5 = new Date(Date.now());
+  if (certNotBefore > now5 || certNotAfter < now5) {
     throw new Error("Certificate is not yet valid or expired");
   }
 }
@@ -23427,13 +23589,13 @@ var InvalidCertificatePath = class extends Error {
   }
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/convertX509PublicKeyToCOSE.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/convertX509PublicKeyToCOSE.js
 var import_asn1_schema2 = __toESM(require_cjs2(), 1);
 var import_asn1_x5092 = __toESM(require_cjs3(), 1);
 var import_asn1_ecc = __toESM(require_cjs6(), 1);
 var import_asn1_rsa = __toESM(require_cjs7(), 1);
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/mapX509SignatureAlgToCOSEAlg.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/mapX509SignatureAlgToCOSEAlg.js
 function mapX509SignatureAlgToCOSEAlg(signatureAlgorithm) {
   let alg;
   if (signatureAlgorithm === "1.2.840.10045.4.3.2") {
@@ -23456,7 +23618,7 @@ function mapX509SignatureAlgToCOSEAlg(signatureAlgorithm) {
   return alg;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/convertX509PublicKeyToCOSE.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/convertX509PublicKeyToCOSE.js
 function convertX509PublicKeyToCOSE(x509Certificate) {
   let cosePublicKey = /* @__PURE__ */ new Map();
   const x509 = import_asn1_schema2.AsnParser.parse(x509Certificate, import_asn1_x5092.Certificate);
@@ -23510,7 +23672,7 @@ function convertX509PublicKeyToCOSE(x509Certificate) {
   return cosePublicKey;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/verifySignature.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/verifySignature.js
 function verifySignature(opts) {
   const { signature, data, credentialPublicKey, x509Certificate, hashAlgorithm } = opts;
   if (!x509Certificate && !credentialPublicKey) {
@@ -23536,7 +23698,7 @@ var _verifySignatureInternals = {
   stubThis: (value) => value
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/metadata/parseJWT.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/metadata/parseJWT.js
 function parseJWT(jwt) {
   const parts = jwt.split(".");
   return [
@@ -23546,7 +23708,7 @@ function parseJWT(jwt) {
   ];
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/mapJWSAlgToCOSEAlg.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/mapJWSAlgToCOSEAlg.js
 function mapJWSAlgToCOSEAlg(alg) {
   let algCOSE;
   if (alg === "ES256") {
@@ -23567,14 +23729,14 @@ function mapJWSAlgToCOSEAlg(alg) {
   return algCOSE;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/importJWKKey.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/importJWKKey.js
 async function importJWKKey(opts) {
   const WebCrypto = await getWebCrypto();
   const { keyData, algorithm } = opts;
   return WebCrypto.subtle.importKey("jwk", keyData, algorithm, false, ["verify"]);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyEC2.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyEC2.js
 async function verifyEC2(opts) {
   const { cosePublicKey, signature, data, shaHashOverride } = opts;
   const WebCrypto = await getWebCrypto();
@@ -23633,7 +23795,7 @@ async function verifyEC2(opts) {
   return WebCrypto.subtle.verify(verifyAlgorithm, key, signature, data);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/mapCoseAlgToWebCryptoKeyAlgName.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/mapCoseAlgToWebCryptoKeyAlgName.js
 function mapCoseAlgToWebCryptoKeyAlgName(alg) {
   if ([COSEALG.EdDSA].indexOf(alg) >= 0) {
     return "Ed25519";
@@ -23653,7 +23815,7 @@ function mapCoseAlgToWebCryptoKeyAlgName(alg) {
   throw new Error(`Could not map COSE alg value of ${alg} to a WebCrypto key alg name`);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyRSA.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyRSA.js
 async function verifyRSA(opts) {
   const { cosePublicKey, signature, data, shaHashOverride } = opts;
   const WebCrypto = await getWebCrypto();
@@ -23719,7 +23881,7 @@ async function verifyRSA(opts) {
   return WebCrypto.subtle.verify(verifyAlgorithm, key, signature, data);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/metadata/verifyJWT.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/metadata/verifyJWT.js
 function verifyJWT(jwt, leafCert) {
   const [header, payload, signature] = jwt.split(".");
   const certCOSE = convertX509PublicKeyToCOSE(leafCert);
@@ -23746,13 +23908,13 @@ function verifyJWT(jwt, leafCert) {
   throw new Error(`JWT verification with public key of kty ${kty} is not supported by this method`);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/convertPEMToBytes.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/convertPEMToBytes.js
 function convertPEMToBytes(pem) {
   const certBase64 = pem.replace("-----BEGIN CERTIFICATE-----", "").replace("-----END CERTIFICATE-----", "").replace(/[\n ]/g, "");
   return isoBase64URL_exports.toBuffer(certBase64, "base64");
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/metadata/verifyMDSBlob.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/metadata/verifyMDSBlob.js
 async function verifyMDSBlob(blob) {
   const parsedJWT = parseJWT(blob);
   const header = parsedJWT[0];
@@ -23792,7 +23954,7 @@ async function verifyMDSBlob(blob) {
   };
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyAKP.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyAKP.js
 async function verifyAKP(opts) {
   const { cosePublicKey, signature, data } = opts;
   const WebCrypto = await getWebCrypto();
@@ -23828,7 +23990,7 @@ async function verifyAKP(opts) {
   return WebCrypto.subtle.verify(webCryptoAlg, key, signature, data);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyOKP.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyOKP.js
 async function verifyOKP(opts) {
   const { cosePublicKey, signature, data } = opts;
   const WebCrypto = await getWebCrypto();
@@ -23871,7 +24033,7 @@ async function verifyOKP(opts) {
   return WebCrypto.subtle.verify(verifyAlgorithm, key, signature, data);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/unwrapEC2Signature.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/unwrapEC2Signature.js
 var import_asn1_schema3 = __toESM(require_cjs2(), 1);
 var import_asn1_ecc2 = __toESM(require_cjs6(), 1);
 function unwrapEC2Signature(signature, crv) {
@@ -23914,7 +24076,7 @@ function toNormalizedBytes(bytes, componentLength) {
   return normalizedBytes;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verify.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verify.js
 function verify(opts) {
   const { cosePublicKey, signature, data, shaHashOverride } = opts;
   if (isCOSEPublicKeyEC2(cosePublicKey)) {
@@ -23940,7 +24102,7 @@ function verify(opts) {
   throw new Error(`Signature verification with public key of kty ${kty} is not supported by this method`);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoUint8Array.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoUint8Array.js
 var isoUint8Array_exports = {};
 __export(isoUint8Array_exports, {
   areEqual: () => areEqual,
@@ -23998,7 +24160,7 @@ function toDataView(array) {
   return new DataView(array.buffer, array.byteOffset, array.length);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/convertCertBufferToPEM.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/convertCertBufferToPEM.js
 function convertCertBufferToPEM(certBuffer) {
   let b64cert;
   if (typeof certBuffer === "string") {
@@ -24024,7 +24186,7 @@ ${PEMKey}-----END CERTIFICATE-----
   return PEMKey;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/runtimeSupportsWebCryptoKeyAlg.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/runtimeSupportsWebCryptoKeyAlg.js
 function runtimeSupportsWebCryptoKeyAlg(alg) {
   const globalSubtleCrypto = globalThis.SubtleCrypto;
   if (typeof globalSubtleCrypto.supports !== "function") {
@@ -24037,7 +24199,7 @@ function runtimeSupportsWebCryptoKeyAlg(alg) {
   }
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/android-safetynet.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/android-safetynet.js
 var GlobalSign_Root_CA = `-----BEGIN CERTIFICATE-----
 MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkG
 A1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNVBAsTB1Jv
@@ -24061,7 +24223,7 @@ HMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
 -----END CERTIFICATE-----
 `;
 
-// server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/android-key.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/android-key.js
 var Google_Hardware_Attestation_Root_1 = `-----BEGIN CERTIFICATE-----
 MIIFYDCCA0igAwIBAgIJAOj6GWMU0voYMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNV
 BAUTEGY5MjAwOWU4NTNiNmIwNDUwHhcNMTYwNTI2MTYyODUyWhcNMjYwNTI0MTYy
@@ -24190,7 +24352,7 @@ w1IdYIg2Wxg7yHcQZemFQg==
 -----END CERTIFICATE-----
 `;
 
-// server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/apple.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/apple.js
 var Apple_WebAuthn_Root_CA = `-----BEGIN CERTIFICATE-----
 MIICEjCCAZmgAwIBAgIQaB0BbHo84wIlpQGUKEdXcTAKBggqhkjOPQQDAzBLMR8w
 HQYDVQQDDBZBcHBsZSBXZWJBdXRobiBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJ
@@ -24207,7 +24369,7 @@ jAGGiQIwHFj+dJZYUJR786osByBelJYsVZd2GbHQu209b5RCmGQ21gpSAk9QZW4B
 -----END CERTIFICATE-----
 `;
 
-// server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/mds.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/mds.js
 var GlobalSign_Root_CA_R3 = `-----BEGIN CERTIFICATE-----
 MIIDXzCCAkegAwIBAgILBAAAAAABIVhTCKIwDQYJKoZIhvcNAQELBQAwTDEgMB4G
 A1UECxMXR2xvYmFsU2lnbiBSb290IENBIC0gUjMxEzARBgNVBAoTCkdsb2JhbFNp
@@ -24263,7 +24425,7 @@ vouXsXgxT7PntgMTzlSdriVZzH81Xwj3QEUxeCp6
 -----END CERTIFICATE-----
 `;
 
-// server-access/node_modules/@simplewebauthn/server/esm/services/settingsService.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/services/settingsService.js
 var BaseSettingsService = class {
   constructor() {
     Object.defineProperty(this, "pemCertificates", {
@@ -24327,7 +24489,7 @@ SettingsService.setRootCertificates({
   ]
 });
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/generateRegistrationOptions.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/generateRegistrationOptions.js
 var defaultAuthenticatorSelection = {
   residentKey: "preferred",
   userVerification: "preferred"
@@ -24411,7 +24573,7 @@ async function generateRegistrationOptions(options) {
   };
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/parseBackupFlags.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/parseBackupFlags.js
 function parseBackupFlags({ be, bs }) {
   const credentialBackedUp = bs;
   let credentialDeviceType = "singleDevice";
@@ -24430,7 +24592,7 @@ var InvalidBackupFlags = class extends Error {
   }
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/matchExpectedRPID.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/matchExpectedRPID.js
 async function matchExpectedRPID(rpIDHash, expectedRPIDs) {
   try {
     const matchedRPID = await Promise.any(expectedRPIDs.map((expected) => {
@@ -24461,7 +24623,7 @@ var UnexpectedRPIDHash = class extends Error {
   }
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationFIDOU2F.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationFIDOU2F.js
 async function verifyAttestationFIDOU2F(options) {
   const { attStmt, clientDataHash, rpIdHash, credentialID, credentialPublicKey, aaguid, rootCertificates } = options;
   const reservedByte = Uint8Array.from([0]);
@@ -24499,7 +24661,7 @@ async function verifyAttestationFIDOU2F(options) {
   });
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/validateExtFIDOGenCEAAGUID.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/validateExtFIDOGenCEAAGUID.js
 var import_asn1_schema4 = __toESM(require_cjs2(), 1);
 var id_fido_gen_ce_aaguid = "1.3.6.1.4.1.45724.1.1.4";
 function validateExtFIDOGenCEAAGUID(certExtensions, aaguid) {
@@ -24521,7 +24683,7 @@ function validateExtFIDOGenCEAAGUID(certExtensions, aaguid) {
   return true;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/helpers/logging.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/logging.js
 var DefaultNoopLogger = {
   debug() {
   },
@@ -24549,7 +24711,7 @@ function buildLoggerAllMethods(logger) {
   return toReturn;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/services/metadataService.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/services/metadataService.js
 var NonRefreshingMDS = {
   url: "",
   no: 0,
@@ -24663,8 +24825,8 @@ var BaseMetadataService = class {
     }
     if (cachedStatement.url) {
       const mds = this.mdsCache[cachedStatement.url];
-      const now4 = /* @__PURE__ */ new Date();
-      if (now4 > mds.nextUpdate) {
+      const now5 = /* @__PURE__ */ new Date();
+      if (now5 > mds.nextUpdate) {
         try {
           this.setState(SERVICE_STATE.REFRESHING);
           const blob = await this.downloadBlob(mds);
@@ -24762,7 +24924,7 @@ var BaseMetadataService = class {
 };
 var MetadataService = new BaseMetadataService();
 
-// server-access/node_modules/@simplewebauthn/server/esm/metadata/verifyAttestationWithMetadata.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/metadata/verifyAttestationWithMetadata.js
 async function verifyAttestationWithMetadata({ statement: statement2, credentialPublicKey, x5c, attestationStatementAlg }) {
   const { authenticationAlgorithms, authenticatorGetInfo, attestationRootCertificates } = statement2;
   const keypairCOSEAlgs = /* @__PURE__ */ new Set();
@@ -24858,7 +25020,7 @@ function stringifyCOSEInfo(info) {
   return toReturn;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationPacked.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationPacked.js
 async function verifyAttestationPacked(options) {
   const { attStmt, clientDataHash, authData, credentialPublicKey, aaguid, rootCertificates } = options;
   const sig = attStmt.get("sig");
@@ -24896,12 +25058,12 @@ async function verifyAttestationPacked(options) {
     if (version !== 2) {
       throw new Error("Certificate version was not `3` (ASN.1 value of 2) (Packed|Full)");
     }
-    let now4 = /* @__PURE__ */ new Date();
-    if (notBefore > now4) {
+    let now5 = /* @__PURE__ */ new Date();
+    if (notBefore > now5) {
       throw new Error(`Certificate not good before "${notBefore.toString()}" (Packed|Full)`);
     }
-    now4 = /* @__PURE__ */ new Date();
-    if (notAfter < now4) {
+    now5 = /* @__PURE__ */ new Date();
+    if (notAfter < now5) {
       throw new Error(`Certificate not good after "${notAfter.toString()}" (Packed|Full)`);
     }
     try {
@@ -24951,7 +25113,7 @@ async function verifyAttestationPacked(options) {
   return verified;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationAndroidSafetyNet.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationAndroidSafetyNet.js
 async function verifyAttestationAndroidSafetyNet(options) {
   const { attStmt, clientDataHash, authData, aaguid, rootCertificates, verifyTimestampMS = true, credentialPublicKey, attestationSafetyNetEnforceCTSCheck } = options;
   const alg = attStmt.get("alg");
@@ -24970,13 +25132,13 @@ async function verifyAttestationAndroidSafetyNet(options) {
   const SIGNATURE = jwtParts[2];
   const { nonce, ctsProfileMatch, timestampMs } = PAYLOAD;
   if (verifyTimestampMS) {
-    let now4 = Date.now();
+    let now5 = Date.now();
     if (timestampMs > Date.now()) {
-      throw new Error(`Payload timestamp "${timestampMs}" was later than "${now4}" (SafetyNet)`);
+      throw new Error(`Payload timestamp "${timestampMs}" was later than "${now5}" (SafetyNet)`);
     }
     const timestampPlusDelay = timestampMs + 60 * 1e3;
-    now4 = Date.now();
-    if (timestampPlusDelay < now4) {
+    now5 = Date.now();
+    if (timestampPlusDelay < now5) {
       throw new Error(`Payload timestamp "${timestampPlusDelay}" has expired (SafetyNet)`);
     }
   }
@@ -25027,11 +25189,11 @@ async function verifyAttestationAndroidSafetyNet(options) {
   return verified;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/verifyAttestationTPM.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/verifyAttestationTPM.js
 var import_asn1_schema5 = __toESM(require_cjs2(), 1);
 var import_asn1_x5093 = __toESM(require_cjs3(), 1);
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/constants.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/constants.js
 var TPM_ST = {
   196: "TPM_ST_RSP_COMMAND",
   32768: "TPM_ST_NULL",
@@ -25148,7 +25310,7 @@ var TPM_ECC_CURVE_COSE_CRV_MAP = {
   // p256
 };
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/parseCertInfo.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/parseCertInfo.js
 function parseCertInfo(certInfo) {
   let pointer = 0;
   const dataView = isoUint8Array_exports.toDataView(certInfo);
@@ -25195,7 +25357,7 @@ function parseCertInfo(certInfo) {
   };
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/parsePubArea.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/parsePubArea.js
 function parsePubArea(pubArea) {
   let pointer = 0;
   const dataView = isoUint8Array_exports.toDataView(pubArea);
@@ -25266,13 +25428,13 @@ function parsePubArea(pubArea) {
   };
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/isValidTPMManufacturerID.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/isValidTPMManufacturerID.js
 function getTPMManufacturerInfo(id3) {
   const _normalized = `id:${id3.substring(3).toUpperCase()}`;
   return TPM_MANUFACTURERS[_normalized];
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/verifyAttestationTPM.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/verifyAttestationTPM.js
 async function verifyAttestationTPM(options) {
   const { aaguid, attStmt, authData, credentialPublicKey, clientDataHash, rootCertificates } = options;
   const ver = attStmt.get("ver");
@@ -25394,12 +25556,12 @@ async function verifyAttestationTPM(options) {
   if (subject.combined.length > 0) {
     throw new Error("Certificate subject was not empty (TPM)");
   }
-  let now4 = /* @__PURE__ */ new Date();
-  if (notBefore > now4) {
+  let now5 = /* @__PURE__ */ new Date();
+  if (notBefore > now5) {
     throw new Error(`Certificate not good before "${notBefore.toString()}" (TPM)`);
   }
-  now4 = /* @__PURE__ */ new Date();
-  if (notAfter < now4) {
+  now5 = /* @__PURE__ */ new Date();
+  if (notAfter < now5) {
     throw new Error(`Certificate not good after "${notAfter.toString()}" (TPM)`);
   }
   const parsedCert = import_asn1_schema5.AsnParser.parse(x5c[0], import_asn1_x5093.Certificate);
@@ -25503,7 +25665,7 @@ function attestedNameAlgToCOSEAlg(alg) {
   throw new Error(`Unexpected TPM attested name alg ${alg}`);
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationAndroidKey.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationAndroidKey.js
 var import_asn1_schema6 = __toESM(require_cjs2(), 1);
 var import_asn1_x5094 = __toESM(require_cjs3(), 1);
 var import_asn1_android = __toESM(require_cjs13(), 1);
@@ -25580,7 +25742,7 @@ async function verifyAttestationAndroidKey(options) {
   });
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationApple.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationApple.js
 var import_asn1_schema7 = __toESM(require_cjs2(), 1);
 var import_asn1_x5095 = __toESM(require_cjs3(), 1);
 async function verifyAttestationApple(options) {
@@ -25618,7 +25780,7 @@ async function verifyAttestationApple(options) {
   return true;
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/registration/verifyRegistrationResponse.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifyRegistrationResponse.js
 async function verifyRegistrationResponse(options) {
   const { response: response4, expectedChallenge, expectedOrigin, expectedRPID, expectedType, requireUserPresence = true, requireUserVerification = true, supportedAlgorithmIDs = defaultSupportedAlgorithmIDs, attestationSafetyNetEnforceCTSCheck = true } = options;
   const { id: id3, rawId, type: credentialType, response: attestationResponse } = response4;
@@ -25773,7 +25935,7 @@ async function verifyRegistrationResponse(options) {
   };
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/authentication/generateAuthenticationOptions.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/authentication/generateAuthenticationOptions.js
 async function generateAuthenticationOptions(options) {
   const { allowCredentials, challenge = await generateChallenge(), timeout = 6e4, userVerification = "preferred", extensions, rpID } = options;
   let _challenge = challenge;
@@ -25799,7 +25961,7 @@ async function generateAuthenticationOptions(options) {
   };
 }
 
-// server-access/node_modules/@simplewebauthn/server/esm/authentication/verifyAuthenticationResponse.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/authentication/verifyAuthenticationResponse.js
 async function verifyAuthenticationResponse(options) {
   const { response: response4, expectedChallenge, expectedOrigin, expectedRPID, expectedType, expectedTopOrigin, credential, requireUserVerification = true, advancedFIDOConfig } = options;
   const { id: id3, rawId, type: credentialType, response: assertionResponse } = response4;
@@ -25943,7 +26105,7 @@ async function verifyAuthenticationResponse(options) {
 // server-access/worker/passkey-service.mjs
 var INTERNAL2 = "/api/v2/account/internal/passkey";
 var encoder2 = new TextEncoder();
-var b64 = (bytes) => Buffer5.from(bytes).toString("base64url");
+var b64 = (bytes) => Buffer6.from(bytes).toString("base64url");
 var random2 = () => b64(crypto.getRandomValues(new Uint8Array(32)));
 var id2 = () => crypto.randomUUID();
 var stamp = () => (/* @__PURE__ */ new Date()).toISOString();
@@ -26090,7 +26252,7 @@ async function registerOptions(env, settings, payload) {
   const user = await first2(env.DB, "SELECT user_id FROM nexus_passkey_users WHERE account_id=?1", account.id);
   const existing = await all2(env.DB, `SELECT k.id,k.transports_json FROM nexus_passkey_credentials k JOIN login_methods lm ON lm.id=k.login_method_id WHERE k.account_id=?1 AND lm.status='active'`, account.id);
   if (existing.length >= 10) reject("KEY_LIMIT", 409);
-  const options = await generateRegistrationOptions({ rpName: "AKRONIKL IT NEXUS", rpID: settings.rpID, userID: Buffer5.from(user.user_id, "base64url"), userName: enrollment?.username || account.display_name, userDisplayName: account.display_name, attestationType: "none", supportedAlgorithmIDs: [-7, -257], timeout: 12e4, authenticatorSelection: { residentKey: "required", userVerification: "required" }, excludeCredentials: existing.map((k) => ({ id: k.id, transports: JSON.parse(k.transports_json) })) });
+  const options = await generateRegistrationOptions({ rpName: "AKRONIKL IT NEXUS", rpID: settings.rpID, userID: Buffer6.from(user.user_id, "base64url"), userName: enrollment?.username || account.display_name, userDisplayName: account.display_name, attestationType: "none", supportedAlgorithmIDs: [-7, -257], timeout: 12e4, authenticatorSelection: { residentKey: "required", userVerification: "required" }, excludeCredentials: existing.map((k) => ({ id: k.id, transports: JSON.parse(k.transports_json) })) });
   const challengeId = id2();
   await sql(env.DB, `INSERT INTO nexus_passkey_challenges(id,purpose,challenge,flow_hash,account_id,invite_hash,authorized_session_id,expires_at) VALUES(?1,'register',?2,?3,?4,?5,?6,?7)`, challengeId, options.challenge, flowHash, account.id, inviteHash, authorizedSessionId, after(12e4)).run();
   if (enrollment) await sql(env.DB, "INSERT INTO nexus_invite_enrollments(challenge_id,token_hash,username,display_name,created_at) VALUES(?1,?2,?3,?4,?5)", challengeId, inviteHash, enrollment.username, enrollment.displayName, stamp()).run();
@@ -26120,7 +26282,7 @@ async function verifyAndIssue(env, settings, payload, action) {
   try {
     const raw = input.response.response?.clientDataJSON;
     if (typeof raw !== "string" || raw.length > 16384 || !/^[A-Za-z0-9_-]+$/.test(raw)) reject("PASSKEY_REJECTED", 401);
-    clientData = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer5.from(raw, "base64url")));
+    clientData = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer6.from(raw, "base64url")));
   } catch {
     reject("PASSKEY_REJECTED", 401);
   }
@@ -26151,7 +26313,7 @@ async function verifyAndIssue(env, settings, payload, action) {
     if (!await alphaAccess(env, row.account_id)) reject("ALPHA_ACCESS_CLOSED", 403);
     let verified;
     try {
-      verified = await verifyAuthenticationResponse({ response: input.response, expectedChallenge: challenge.challenge, expectedOrigin: settings.origin, expectedRPID: settings.rpID, requireUserVerification: true, credential: { id: row.id, publicKey: Buffer5.from(row.public_key, "base64url"), counter: row.counter, transports: JSON.parse(row.transports_json) } });
+      verified = await verifyAuthenticationResponse({ response: input.response, expectedChallenge: challenge.challenge, expectedOrigin: settings.origin, expectedRPID: settings.rpID, requireUserVerification: true, credential: { id: row.id, publicKey: Buffer6.from(row.public_key, "base64url"), counter: row.counter, transports: JSON.parse(row.transports_json) } });
     } catch {
       reject("PASSKEY_REJECTED", 401);
     }
@@ -26161,38 +26323,38 @@ async function verifyAndIssue(env, settings, payload, action) {
     oldVersion = row.counter_version;
     credential = { id: row.id, counter: verified.authenticationInfo.newCounter, backedUp: verified.authenticationInfo.credentialBackedUp };
   }
-  const now4 = stamp(), commitId = id2(), sessionId = action === "authenticate" ? id2() : null, deviceId = action === "authenticate" ? id2() : null, secret = action === "authenticate" ? "nxs_" + random2() : null, secretHash = secret ? await sha2(secret) : null;
-  const commands = [sql(env.DB, "UPDATE nexus_passkey_challenges SET consumed_at=?1,commit_id=?2 WHERE id=?3 AND purpose=?4 AND flow_hash=?5 AND consumed_at IS NULL AND expires_at>?1", now4, commitId, challenge.id, action, flowHash)];
+  const now5 = stamp(), commitId = id2(), sessionId = action === "authenticate" ? id2() : null, deviceId = action === "authenticate" ? id2() : null, secret = action === "authenticate" ? "nxs_" + random2() : null, secretHash = secret ? await sha2(secret) : null;
+  const commands = [sql(env.DB, "UPDATE nexus_passkey_challenges SET consumed_at=?1,commit_id=?2 WHERE id=?3 AND purpose=?4 AND flow_hash=?5 AND consumed_at IS NULL AND expires_at>?1", now5, commitId, challenge.id, action, flowHash)];
   if (action === "register") {
     if (challenge.invite_hash && env.ALPHA_ADMISSION_ENABLED === "true") {
       await managedInvitation(env, challenge.invite_hash);
       const chosen = await first2(env.DB, "SELECT username,display_name FROM nexus_invite_enrollments WHERE challenge_id=?1 AND token_hash=?2", challenge.id, challenge.invite_hash);
       if (!chosen || !validUsername(chosen.username) || !validDisplayName(chosen.display_name)) reject("PROFILE_INPUT_REQUIRED", 400);
-      commands.push(sql(env.DB, "INSERT INTO nexus_account_profiles(account_id,username,created_at) VALUES(?1,?2,?3)", accountId, chosen.username, now4));
-      commands.push(sql(env.DB, "UPDATE account_subjects SET display_name=?1,updated_at=?2 WHERE id=?3", chosen.display_name, now4, accountId));
-      commands.push(sql(env.DB, "UPDATE nexus_alpha_members SET state='active',reserved_until=NULL,version=version+1,updated_at=?1 WHERE account_id=?2 AND state='invited' AND reserved_until>?1", now4, accountId));
+      commands.push(sql(env.DB, "INSERT INTO nexus_account_profiles(account_id,username,created_at) VALUES(?1,?2,?3)", accountId, chosen.username, now5));
+      commands.push(sql(env.DB, "UPDATE account_subjects SET display_name=?1,updated_at=?2 WHERE id=?3", chosen.display_name, now5, accountId));
+      commands.push(sql(env.DB, "UPDATE nexus_alpha_members SET state='active',reserved_until=NULL,version=version+1,updated_at=?1 WHERE account_id=?2 AND state='invited' AND reserved_until>?1", now5, accountId));
       commands.push(sql(env.DB, "UPDATE nexus_admin_invites SET state='accepted' WHERE token_hash=?1 AND state='ready'", challenge.invite_hash));
     }
     if (challenge.invite_hash) {
-      const invitation = await first2(env.DB, "SELECT purpose FROM nexus_passkey_invites WHERE token_hash=?1 AND account_id=?2 AND consumed_at IS NULL AND expires_at>?3", challenge.invite_hash, accountId, now4);
+      const invitation = await first2(env.DB, "SELECT purpose FROM nexus_passkey_invites WHERE token_hash=?1 AND account_id=?2 AND consumed_at IS NULL AND expires_at>?3", challenge.invite_hash, accountId, now5);
       if (!invitation) reject("CHALLENGE_REJECTED", 401);
       if (invitation.purpose === "recovery") {
-        commands.push(sql(env.DB, "UPDATE login_methods SET status='disabled',disabled_at=?1,version=version+1 WHERE account_id=?2 AND kind='passkey' AND status<>'disabled'", now4, accountId));
-        commands.push(sql(env.DB, "UPDATE account_sessions SET status='revoked',revoked_at=?1,revoked_reason='passkey-recovery' WHERE subject_id=?2 AND status='active'", now4, accountId));
+        commands.push(sql(env.DB, "UPDATE login_methods SET status='disabled',disabled_at=?1,version=version+1 WHERE account_id=?2 AND kind='passkey' AND status<>'disabled'", now5, accountId));
+        commands.push(sql(env.DB, "UPDATE account_sessions SET status='revoked',revoked_at=?1,revoked_reason='passkey-recovery' WHERE subject_id=?2 AND status='active'", now5, accountId));
         commands.push(sql(env.DB, "UPDATE account_tokens SET status='revoked' WHERE subject_id=?1 AND status='active'", accountId));
       }
     }
-    if (challenge.invite_hash) commands.push(sql(env.DB, "UPDATE nexus_passkey_invites SET consumed_at=?1,commit_id=?2 WHERE token_hash=?3 AND account_id=?4 AND consumed_at IS NULL AND expires_at>?1", now4, commitId, challenge.invite_hash, accountId));
-    commands.push(sql(env.DB, "INSERT INTO login_methods(id,account_id,kind,status,created_at) VALUES(?1,?2,'passkey','active',?3)", methodId, accountId, now4));
-    commands.push(sql(env.DB, `INSERT INTO nexus_passkey_credentials(id,account_id,login_method_id,public_key,counter,device_type,backed_up,transports_json,last_commit_id,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)`, credential.id, accountId, methodId, b64(credential.publicKey), credential.counter, credential.deviceType, credential.backedUp ? 1 : 0, JSON.stringify(credential.transports || []), commitId, now4));
+    if (challenge.invite_hash) commands.push(sql(env.DB, "UPDATE nexus_passkey_invites SET consumed_at=?1,commit_id=?2 WHERE token_hash=?3 AND account_id=?4 AND consumed_at IS NULL AND expires_at>?1", now5, commitId, challenge.invite_hash, accountId));
+    commands.push(sql(env.DB, "INSERT INTO login_methods(id,account_id,kind,status,created_at) VALUES(?1,?2,'passkey','active',?3)", methodId, accountId, now5));
+    commands.push(sql(env.DB, `INSERT INTO nexus_passkey_credentials(id,account_id,login_method_id,public_key,counter,device_type,backed_up,transports_json,last_commit_id,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)`, credential.id, accountId, methodId, b64(credential.publicKey), credential.counter, credential.deviceType, credential.backedUp ? 1 : 0, JSON.stringify(credential.transports || []), commitId, now5));
   } else commands.push(sql(env.DB, "UPDATE nexus_passkey_credentials SET counter=?1,counter_version=counter_version+1,backed_up=?2,last_commit_id=?3 WHERE id=?4 AND counter_version=?5", credential.counter, credential.backedUp ? 1 : 0, commitId, credential.id, oldVersion));
   if (action === "authenticate") {
-    commands.push(sql(env.DB, "INSERT INTO account_devices(id,subject_id,label,status,first_seen_at,last_seen_at) VALUES(?1,?2,'Passkey browser','active',?3,?3)", deviceId, accountId, now4));
-    commands.push(sql(env.DB, "INSERT INTO account_sessions(id,subject_id,device_id,secret_hash,status,auth_strength,created_at,last_seen_at,idle_expires_at,absolute_expires_at) VALUES(?1,?2,?3,?4,'active','account-method-v1',?5,?5,?6,?7)", sessionId, accountId, deviceId, secretHash, now4, after(18e5), after(432e5)));
-    commands.push(sql(env.DB, "INSERT INTO session_login_methods(session_id,login_method_id,account_id,created_at) VALUES(?1,?2,?3,?4)", sessionId, methodId, accountId, now4));
+    commands.push(sql(env.DB, "INSERT INTO account_devices(id,subject_id,label,status,first_seen_at,last_seen_at) VALUES(?1,?2,'Passkey browser','active',?3,?3)", deviceId, accountId, now5));
+    commands.push(sql(env.DB, "INSERT INTO account_sessions(id,subject_id,device_id,secret_hash,status,auth_strength,created_at,last_seen_at,idle_expires_at,absolute_expires_at) VALUES(?1,?2,?3,?4,'active','account-method-v1',?5,?5,?6,?7)", sessionId, accountId, deviceId, secretHash, now5, after(18e5), after(432e5)));
+    commands.push(sql(env.DB, "INSERT INTO session_login_methods(session_id,login_method_id,account_id,created_at) VALUES(?1,?2,?3,?4)", sessionId, methodId, accountId, now5));
   }
-  commands.push(sql(env.DB, "INSERT INTO nexus_passkey_audit(id,account_id,login_method_id,session_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)", commitId, accountId, methodId, sessionId, action, now4));
-  commands.push(sql(env.DB, "INSERT INTO nexus_passkey_receipts(id,challenge_id,credential_id,account_id,login_method_id,session_id,device_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)", commitId, challenge.id, credential.id, accountId, methodId, sessionId, deviceId, action, now4));
+  commands.push(sql(env.DB, "INSERT INTO nexus_passkey_audit(id,account_id,login_method_id,session_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)", commitId, accountId, methodId, sessionId, action, now5));
+  commands.push(sql(env.DB, "INSERT INTO nexus_passkey_receipts(id,challenge_id,credential_id,account_id,login_method_id,session_id,device_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)", commitId, challenge.id, credential.id, accountId, methodId, sessionId, deviceId, action, now5));
   try {
     const committed = await env.DB.batch(commands);
     if (committed.length !== commands.length || committed.some((x) => !x.success)) reject("ISSUANCE_UNCONFIRMED", 503);
@@ -26249,16 +26411,16 @@ async function handlePasskeyService(request, env) {
 }
 
 // server-access/worker/oauth-service.mjs
-import { Buffer as Buffer6 } from "node:buffer";
+import { Buffer as Buffer7 } from "node:buffer";
 var INTERNAL3 = "/api/v2/account/internal/oauth";
 var ISSUERS = Object.freeze({ google: "https://accounts.google.com", yandex: "https://login.yandex.ru", vk: "https://id.vk.ru", mailru: "https://oauth.mail.ru" });
 var encoder3 = new TextEncoder();
 var hex2 = (bytes) => Array.from(new Uint8Array(bytes), (x) => x.toString(16).padStart(2, "0")).join("");
 var sha3 = async (text3) => hex2(await crypto.subtle.digest("SHA-256", encoder3.encode(text3)));
-var uuid2 = () => crypto.randomUUID();
-var now3 = () => (/* @__PURE__ */ new Date()).toISOString();
+var uuid3 = () => crypto.randomUUID();
+var now4 = () => (/* @__PURE__ */ new Date()).toISOString();
 var hash2 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
-var exact4 = (value, keys2) => !!value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join(",") === [...keys2].sort().join(",");
+var exact5 = (value, keys2) => !!value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join(",") === [...keys2].sort().join(",");
 var statement = (db, sql2, ...args) => db.prepare(sql2).bind(...args);
 var first3 = (db, sql2, ...args) => statement(db, sql2, ...args).first();
 var Rejected2 = class extends Error {
@@ -26296,7 +26458,7 @@ async function ingress2(request, env) {
     });
     reader.releaseLock();
   }
-  const bytes = Buffer6.concat(chunks, length), digest2 = hex2(await crypto.subtle.digest("SHA-256", bytes));
+  const bytes = Buffer7.concat(chunks, length), digest2 = hex2(await crypto.subtle.digest("SHA-256", bytes));
   const canonical = `v1
 POST
 ${INTERNAL3}
@@ -26321,7 +26483,7 @@ ${digest2}`;
     const scoped = await first3(env.DB, "INSERT INTO nexus_oauth_rate_limits(scope_hash,bucket,used) VALUES(?1,?2,1) ON CONFLICT(scope_hash,bucket) DO UPDATE SET used=used+1 WHERE used<10 RETURNING used", await sha3("oauth:" + data.op + ":" + data.flowHash), bucket);
     if (!scoped) deny4("RATE_LIMITED", 429);
   }
-  await statement(env.DB, "UPDATE nexus_oauth_transactions SET code_verifier=NULL,nonce=NULL WHERE expires_at<=?1 AND (code_verifier IS NOT NULL OR nonce IS NOT NULL)", now3()).run();
+  await statement(env.DB, "UPDATE nexus_oauth_transactions SET code_verifier=NULL,nonce=NULL WHERE expires_at<=?1 AND (code_verifier IS NOT NULL OR nonce IS NOT NULL)", now4()).run();
   return data;
 }
 async function freshPasskey(db, { sessionHash, sessionId, accountId } = {}) {
@@ -26333,21 +26495,21 @@ async function freshPasskey(db, { sessionHash, sessionId, accountId } = {}) {
  JOIN nexus_passkey_credentials pk ON pk.login_method_id=lm.id AND pk.account_id=a.id
  WHERE ((?1 IS NOT NULL AND s.secret_hash=?1) OR (?2 IS NOT NULL AND s.id=?2))
  AND (?3 IS NULL OR a.id=?3) AND s.status='active' AND s.auth_strength='account-method-v1'
- AND s.revoked_at IS NULL AND s.idle_expires_at>?4 AND s.absolute_expires_at>?4`, sessionHash || null, sessionId || null, accountId || null, now3());
+ AND s.revoked_at IS NULL AND s.idle_expires_at>?4 AND s.absolute_expires_at>?4`, sessionHash || null, sessionId || null, accountId || null, now4());
   const age = row ? Date.now() - Date.parse(row.created_at) : NaN;
   return Number.isFinite(age) && age >= 0 && age < 3e5 ? row : null;
 }
 async function begin(env, data) {
   const names = ["op", "provider", "intent", "stateHash", "flowHash", "codeVerifier", "nonce"];
   if (data.intent === "link") names.push("sessionHash", "expectedAccountId");
-  if (!exact4(data, names) || !providerAllowed(env, data.provider) || !["login", "link"].includes(data.intent) || !hash2(data.stateHash) || !hash2(data.flowHash) || typeof data.codeVerifier !== "string" || !/^[A-Za-z0-9._~-]{43,128}$/.test(data.codeVerifier) || typeof data.nonce !== "string" || !/^[A-Za-z0-9_-]{22,128}$/.test(data.nonce) || data.intent === "link" && (!hash2(data.sessionHash) || typeof data.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(data.expectedAccountId))) deny4("INVALID_INPUT");
+  if (!exact5(data, names) || !providerAllowed(env, data.provider) || !["login", "link"].includes(data.intent) || !hash2(data.stateHash) || !hash2(data.flowHash) || typeof data.codeVerifier !== "string" || !/^[A-Za-z0-9._~-]{43,128}$/.test(data.codeVerifier) || typeof data.nonce !== "string" || !/^[A-Za-z0-9_-]{22,128}$/.test(data.nonce) || data.intent === "link" && (!hash2(data.sessionHash) || typeof data.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(data.expectedAccountId))) deny4("INVALID_INPUT");
   let account = null;
   if (data.intent === "link") {
     account = await freshPasskey(env.DB, { sessionHash: data.sessionHash });
     if (!account) deny4("FRESH_PASSKEY_REQUIRED", 401);
     if (account.subject_id !== data.expectedAccountId) deny4("ACCOUNT_SESSION_CHANGED", 401);
   }
-  const txId = uuid2(), created = now3(), expiresAt = new Date(Date.now() + 6e5).toISOString();
+  const txId = uuid3(), created = now4(), expiresAt = new Date(Date.now() + 6e5).toISOString();
   try {
     const saved = await statement(env.DB, `INSERT INTO nexus_oauth_transactions(id,state_hash,flow_hash,provider,intent,code_verifier,nonce,authorized_account_id,authorized_session_id,created_at,expires_at)
  VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)`, txId, data.stateHash, data.flowHash, data.provider, data.intent, data.codeVerifier, data.nonce, account?.subject_id || null, account?.id || null, created, expiresAt).run();
@@ -26358,8 +26520,8 @@ async function begin(env, data) {
   return { ok: true, txId, expiresAt };
 }
 async function claim(env, data) {
-  if (!exact4(data, ["op", "provider", "stateHash", "flowHash"]) || !providerAllowed(env, data.provider) || !hash2(data.stateHash) || !hash2(data.flowHash)) deny4("INVALID_INPUT");
-  const claimId = uuid2(), created = now3();
+  if (!exact5(data, ["op", "provider", "stateHash", "flowHash"]) || !providerAllowed(env, data.provider) || !hash2(data.stateHash) || !hash2(data.flowHash)) deny4("INVALID_INPUT");
+  const claimId = uuid3(), created = now4();
   const commands = [
     statement(env.DB, `UPDATE nexus_oauth_transactions SET claimed_at=?1,claim_id=?2
    WHERE state_hash=?3 AND flow_hash=?4 AND provider=?5 AND claimed_at IS NULL AND completed_at IS NULL
@@ -26374,7 +26536,7 @@ async function claim(env, data) {
   return { ok: true, txId: row.id, codeVerifier: row.code_verifier, nonce: row.nonce, intent: row.intent };
 }
 function profileFor(provider, profile) {
-  if (!exact4(profile, ["issuer", "subject", "email", "emailVerified", "displayName"]) || profile.issuer !== ISSUERS[provider] || typeof profile.subject !== "string" || !profile.subject.length || profile.subject.length > 512 || profile.subject !== profile.subject.trim() || /[\x00-\x1f\x7f]/.test(profile.subject) || typeof profile.emailVerified !== "boolean" || typeof profile.displayName !== "string" || !profile.displayName.trim() || profile.displayName.length > 512 || /[\x00-\x1f\x7f]/.test(profile.displayName)) deny4("PROFILE_REJECTED", 401);
+  if (!exact5(profile, ["issuer", "subject", "email", "emailVerified", "displayName"]) || profile.issuer !== ISSUERS[provider] || typeof profile.subject !== "string" || !profile.subject.length || profile.subject.length > 512 || profile.subject !== profile.subject.trim() || /[\x00-\x1f\x7f]/.test(profile.subject) || typeof profile.emailVerified !== "boolean" || typeof profile.displayName !== "string" || !profile.displayName.trim() || profile.displayName.length > 512 || /[\x00-\x1f\x7f]/.test(profile.displayName)) deny4("PROFILE_REJECTED", 401);
   let email = null;
   if (profile.email !== null) {
     if (typeof profile.email !== "string" || profile.email.length > 320 || !/^\S+@\S+\.\S+$/.test(profile.email) || /[\x00-\x1f\x7f]/.test(profile.email)) deny4("PROFILE_REJECTED", 401);
@@ -26384,8 +26546,8 @@ function profileFor(provider, profile) {
   return { ...profile, email, displayName: profile.displayName.trim() };
 }
 async function complete(env, data) {
-  if (!exact4(data, ["op", "txId", "flowHash", "profile"]) || typeof data.txId !== "string" || data.txId.length > 80 || !hash2(data.flowHash)) deny4("INVALID_INPUT");
-  const tx = await first3(env.DB, "SELECT * FROM nexus_oauth_transactions WHERE id=?1 AND flow_hash=?2 AND claimed_at IS NOT NULL AND completed_at IS NULL AND expires_at>?3", data.txId, data.flowHash, now3());
+  if (!exact5(data, ["op", "txId", "flowHash", "profile"]) || typeof data.txId !== "string" || data.txId.length > 80 || !hash2(data.flowHash)) deny4("INVALID_INPUT");
+  const tx = await first3(env.DB, "SELECT * FROM nexus_oauth_transactions WHERE id=?1 AND flow_hash=?2 AND claimed_at IS NOT NULL AND completed_at IS NULL AND expires_at>?3", data.txId, data.flowHash, now4());
   if (!tx || !providerAllowed(env, tx.provider)) deny4("TRANSACTION_REJECTED", 401);
   const profile = profileFor(tx.provider, data.profile), emailHash = profile.email ? await sha3(profile.email) : null;
   let identity = await first3(env.DB, `SELECT oi.account_id,oi.login_method_id,a.status AS account_status,lm.status AS method_status,lm.kind
@@ -26398,7 +26560,7 @@ async function complete(env, data) {
     accountId = authorized.subject_id;
     if (identity && identity.account_id !== accountId) deny4("IDENTITY_ALREADY_LINKED", 409);
     if (identity && (identity.account_status !== "active" || identity.method_status !== "active" || identity.kind !== "oauth")) deny4("IDENTITY_REJECTED", 403);
-    methodId = identity?.login_method_id || uuid2();
+    methodId = identity?.login_method_id || uuid3();
     isNewIdentity = !identity;
   } else if (identity) {
     if (identity.account_status !== "active" || identity.method_status !== "active" || identity.kind !== "oauth") deny4("IDENTITY_REJECTED", 403);
@@ -26406,15 +26568,15 @@ async function complete(env, data) {
     methodId = identity.login_method_id;
   } else {
     if (emailHash && await first3(env.DB, "SELECT account_id FROM nexus_oauth_allowed_emails WHERE email_hash=?1 LIMIT 1", emailHash)) deny4("EXPLICIT_LINK_REQUIRED", 403);
-    accountId = uuid2();
-    methodId = uuid2();
+    accountId = uuid3();
+    methodId = uuid3();
     isNewAccount = true;
     isNewIdentity = true;
   }
   const policy = await first3(env.DB, "SELECT status FROM nexus_oauth_account_policies WHERE account_id=?1", accountId);
   if (policy && (!profile.emailVerified || !emailHash || !await first3(env.DB, "SELECT account_id FROM nexus_oauth_allowed_emails WHERE account_id=?1 AND email_hash=?2", accountId, emailHash))) deny4("OWNER_EMAIL_REQUIRED", 403);
-  const created = now3(), commitId = uuid2(), sessionId = uuid2(), deviceId = uuid2();
-  const secret = "nxs_" + Buffer6.from(crypto.getRandomValues(new Uint8Array(32))).toString("base64url"), secretHash = await sha3(secret);
+  const created = now4(), commitId = uuid3(), sessionId = uuid3(), deviceId = uuid3();
+  const secret = "nxs_" + Buffer7.from(crypto.getRandomValues(new Uint8Array(32))).toString("base64url"), secretHash = await sha3(secret);
   const commands = [statement(env.DB, `UPDATE nexus_oauth_transactions SET completed_at=?1,commit_id=?2
   WHERE id=?3 AND flow_hash=?4 AND claimed_at IS NOT NULL AND completed_at IS NULL AND expires_at>?1`, created, commitId, tx.id, data.flowHash)];
   if (isNewAccount) commands.push(statement(env.DB, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,?2,'active',?3,?3)", accountId, profile.displayName, created));
@@ -26434,8 +26596,8 @@ async function complete(env, data) {
   try {
     const committed = await env.DB.batch(commands);
     if (committed.length !== commands.length || committed.some((x) => !x.success)) deny4("ISSUANCE_UNCONFIRMED", 503);
-    const receipt = await first3(env.DB, "SELECT session_id FROM nexus_oauth_receipts WHERE id=?1 AND tx_id=?2 AND account_id=?3", commitId, tx.id, accountId);
-    if (receipt?.session_id !== sessionId) deny4("ISSUANCE_UNCONFIRMED", 503);
+    const receipt2 = await first3(env.DB, "SELECT session_id FROM nexus_oauth_receipts WHERE id=?1 AND tx_id=?2 AND account_id=?3", commitId, tx.id, accountId);
+    if (receipt2?.session_id !== sessionId) deny4("ISSUANCE_UNCONFIRMED", 503);
   } catch (error) {
     const message = String(error?.message || "");
     if (message.includes("ALPHA_CAPACITY_REACHED")) deny4("ALPHA_CAPACITY_REACHED", 409);

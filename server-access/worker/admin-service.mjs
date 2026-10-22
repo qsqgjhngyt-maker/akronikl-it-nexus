@@ -5,6 +5,8 @@ import {preparePurge,executePurge} from './admin-purge.mjs';
 import {profileOperation} from './profile-service.mjs';
 import {teamPermission} from './community-service.mjs';
 import {contentOperation} from './content-service.mjs';
+import {mediaPartsOperation} from './media-parts.mjs';
+import {MEDIA_PARTS_PATH,PUBLIC_MEDIA_PARTS_PATH,MAX_ENVELOPE} from '../media-parts-contract.mjs';
 const INTERNAL='/api/v2/account/internal/control',BASE='/api/v2/account/control';
 const encoder=new TextEncoder(),now=()=>new Date().toISOString();
 export const query=(db,sql,...args)=>db.prepare(sql).bind(...args);
@@ -35,9 +37,32 @@ async function envelope(request,env){
  const key=await crypto.subtle.importKey('raw',encoder.encode(env.ADMIN_SERVICE_KEY),{name:'HMAC',hash:'SHA-256'},false,['verify']);
  if(!await crypto.subtle.verify('HMAC',key,Buffer.from(signature,'hex'),encoder.encode(canonical)))deny('SERVICE_DENIED',401);
  let data;try{data=JSON.parse(body)}catch{deny('INVALID_INPUT')}
- if(!exact(data,['path','method','payload','sessionHash','expectedAccountId'])||!['GET','POST'].includes(data.method)||typeof data.path!=='string'||data.path.length>512||!/^\/api\/v2\/account\/(?:control(?:\/|$)|profile(?:\/|$))/.test(data.path)||!validId(data.expectedAccountId)||!/^[a-f0-9]{64}$/.test(data.sessionHash||''))deny('INVALID_INPUT');
- const inserted=await query(env.DB,'INSERT OR IGNORE INTO nexus_admin_nonces(nonce,expires_at) VALUES(?1,?2)',nonce,new Date(Number(stamp)+30000).toISOString()).run();
+ if(!exact(data,['path','method','payload','sessionHash','expectedAccountId']))deny('INVALID_INPUT');
+ const publicParts=data.path===PUBLIC_MEDIA_PARTS_PATH;
+ if(publicParts){
+  // Только authenticated service -> published-only read. Не создаёт Account actor/grant.
+  if(env.CONTENT_MEDIA_PARTS_ENABLED!=='true')deny('CONTENT_MEDIA_PARTS_UNAVAILABLE',503);
+  if(size>MAX_ENVELOPE||data.method!=='POST'||data.sessionHash!==null||data.expectedAccountId!==null||!exact(data.payload,['requestId','phase','mediaId','index'])||data.payload.phase!=='read')deny('INVALID_INPUT');
+ }else if(!['GET','POST'].includes(data.method)||typeof data.path!=='string'||data.path.length>512||!/^\/api\/v2\/account\/(?:control(?:\/|$)|profile(?:\/|$))/.test(data.path)||!validId(data.expectedAccountId)||!/^[a-f0-9]{64}$/.test(data.sessionHash||''))deny('INVALID_INPUT');
+ if(data.path===MEDIA_PARTS_PATH&&size>MAX_ENVELOPE)deny('INPUT_TOO_LARGE',413);
+ if((publicParts||data.path===MEDIA_PARTS_PATH)&&body!==JSON.stringify(data))deny('INVALID_INPUT');
+ const partsRPC=publicParts||data.path===MEDIA_PARTS_PATH;
+ if(partsRPC){
+  // Повторная проверка после чтения тела; старый nonce нельзя оживить медленной передачей.
+  if(Math.abs(Date.now()-Number(stamp))>30000)deny('SERVICE_DENIED',401);
+  if(publicParts){
+   // 16 независимых buckets по случайному service nonce: <=1920 RPC/min глобально.
+   // Scope начинается с ! и не может совпасть с допустимым Account ID.
+   const allowed=await query(env.DB,'INSERT INTO nexus_admin_rate_limits(scope,bucket,used) VALUES(?1,?2,1) ON CONFLICT(scope,bucket) DO UPDATE SET used=used+1 WHERE used<120 RETURNING used','!media-public-v1:'+nonce[0],Math.floor(Date.now()/60000)).first();
+   if(!allowed)deny('RATE_LIMITED',429);
+   await query(env.DB,"DELETE FROM nexus_admin_rate_limits WHERE (scope,bucket) IN(SELECT scope,bucket FROM nexus_admin_rate_limits WHERE scope GLOB '!media-public-v1:[0-9a-f]' AND bucket<?1 LIMIT 32)",Math.floor(Date.now()/60000)-1).run();
+  }
+  // Отдельное namespace: legacy nonces не удаляются и не меняют replay-политику.
+  await query(env.DB,"DELETE FROM nexus_admin_nonces WHERE nonce IN(SELECT nonce FROM nexus_admin_nonces WHERE nonce LIKE 'mp1:%' AND expires_at<?1 LIMIT 128)",new Date(Date.now()-60000).toISOString()).run();
+ }
+ const inserted=await query(env.DB,'INSERT OR IGNORE INTO nexus_admin_nonces(nonce,expires_at) VALUES(?1,?2)',partsRPC?'mp1:'+nonce:nonce,new Date(Number(stamp)+30000).toISOString()).run();
  if(!inserted.success||inserted.meta.changes!==1)deny('SERVICE_DENIED',401);
+ if(publicParts)return data;
  const actor=await controlActor(env,data.sessionHash);if(!actor)deny('SESSION_REQUIRED',401);
  if(actor.account_id!==data.expectedAccountId)deny('ACCOUNT_SESSION_CHANGED',401);
  const rate=await query(env.DB,'INSERT INTO nexus_admin_rate_limits(scope,bucket,used) VALUES(?1,?2,1) ON CONFLICT(scope,bucket) DO UPDATE SET used=used+1 WHERE used<120 RETURNING used',actor.account_id,Math.floor(Date.now()/60000)).first();
@@ -81,6 +106,7 @@ async function target(env,actor,id,version){
 function validMutation(input,keys){if(!exact(input,['requestId',...keys])||!validRequestId(input.requestId))deny('INVALID_INPUT')}
 async function operation(env,value){
  const {actor,method,payload}=value,url=new URL(value.path,'https://nexus.invalid'),path=url.pathname;
+ if(path===PUBLIC_MEDIA_PARTS_PATH)return mediaPartsOperation(env,value,{publishedOnly:true});
  if(path.startsWith('/api/v2/account/profile'))return profileOperation(env,value);
  if(!await alphaSettings(env))deny('ALPHA_CONTROL_UNAVAILABLE',503);
  if(path===BASE+'/capabilities'&&method==='GET'&&!url.search){
@@ -88,6 +114,11 @@ async function operation(env,value){
   return {canManage,canModerate:await teamPermission(env.DB,actor.account_id,env),canPurge:canManage&&env.ADMIN_PURGE_ENABLED==='true',freshPasskey:canManage&&fresh(actor)};
  }
  await requireAdmin(env,actor,method==='POST');
+ if(path===MEDIA_PARTS_PATH){
+  if(url.search||method!=='POST')deny('INVALID_INPUT');
+  if(await first(env.DB,"SELECT 1 FROM nexus_alpha_members WHERE account_id=?1 AND state IN('blocked','removed')",actor.account_id))deny('ADMIN_REQUIRED',403);
+  return mediaPartsOperation(env,value);
+ }
  if(path===BASE+'/content')return contentOperation(env,value);
  if(path===BASE+'/providers'&&method==='GET'&&!url.search)return {authorized:true};
  if(path===BASE+'/users'&&method==='GET'){

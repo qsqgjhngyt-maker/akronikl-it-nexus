@@ -13,15 +13,17 @@ export function workerStatus(worker,{timeout=20000}={}){
 export function currentInterfaceGeneration(url=import.meta.url){return new URL(url).pathname.match(/\/releases\/(ui1a-[a-z0-9-]+)\//)?.[1]||'local-source'}
 export function mountInterfaceUpdate({fetchImpl=globalThis.fetch,navigatorImpl=globalThis.navigator,documentImpl=globalThis.document,locationImpl=globalThis.location,generation=currentInterfaceGeneration(),reload=()=>locationImpl.reload()}={}){
  if(mounted?.isConnected)return mounted;
- const root=documentImpl.createElement('aside');root.className='nexus-interface-update glass-panel';root.setAttribute('aria-label','Версия и обновление Nexus');
- const toggle=documentImpl.createElement('button');toggle.className='btn';toggle.textContent='Обновления Nexus';toggle.type='button';toggle.setAttribute('aria-expanded','false');
+ const root=documentImpl.createElement('aside');root.className='nexus-interface-update glass-panel';root.setAttribute('aria-label','Версия и обновление Nexus');root.hidden=true;
+ const toggle=documentImpl.createElement('button');toggle.className='btn';toggle.textContent='Доступно обновление';toggle.type='button';toggle.setAttribute('aria-expanded','false');
  const panel=documentImpl.createElement('div');panel.hidden=true;
  const current=documentImpl.createElement('details'),caption=documentImpl.createElement('summary'),technical=documentImpl.createElement('small');caption.textContent='Сведения об установленном интерфейсе';technical.textContent=generation;current.append(caption,technical);
  const status=documentImpl.createElement('p');status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.textContent='Проверка не очищает проекты, кеши или базы.';
  const check=documentImpl.createElement('button');check.className='btn';check.type='button';check.textContent='Проверить обновление';
  const apply=documentImpl.createElement('button');apply.className='btn primary';apply.type='button';apply.textContent='Сохранить работу и обновить';apply.hidden=true;
- panel.append(current,status,check,apply);root.append(toggle,panel);documentImpl.body.append(root);mounted=root;
- let busy=false,target=null,ready=false,queued=false,disposed=false,controller=new AbortController();
+ const close=documentImpl.createElement('button');close.className='btn';close.type='button';close.textContent='Закрыть';close.dataset.interfaceUpdateClose='';
+ panel.append(current,status,check,apply,close);root.append(toggle,panel);documentImpl.body.append(root);mounted=root;
+ let busy=false,target=null,ready=false,queued=false,disposed=false,manualOpen=false,hasUpdate=false,controller=new AbortController();
+ const visibility=()=>{root.hidden=!manualOpen&&!hasUpdate};
  const tell=text=>{status.textContent=text};
  const examine=async()=>{
   if(disposed)return;if(busy){queued=true;return}busy=true;check.disabled=true;apply.hidden=true;ready=false;
@@ -34,14 +36,17 @@ export function mountInterfaceUpdate({fetchImpl=globalThis.fetch,navigatorImpl=g
    const reg=await navigatorImpl.serviceWorker?.getRegistration();if(!reg)throw Error('Защищённая офлайн-версия ещё не установлена. Откройте подготовку офлайна.');
    await reg.update();const proof=await workerStatus(reg.active);
    if(proof.protocol!=='nexus-verified-public-v1')throw Error('Офлайн-защита не подтвердила версию.');
+   hasUpdate=target.assetGeneration!==generation;visibility();
    ready=proof.publicReady===true&&proof.generation===target.assetGeneration&&reg.active?.state==='activated'&&!reg.installing&&!reg.waiting;
-   if(target.assetGeneration===generation&&ready)tell('Используется актуальная версия '+target.version+'.');
+   if(target.assetGeneration===generation&&ready){toggle.textContent='Проверка обновления';tell('Используется актуальная версия '+target.version+'.')}
    else if(ready){tell('Версия '+target.version+' полностью проверена и готова. Обновление выполняется только по вашей кнопке.');apply.hidden=false;toggle.textContent='Доступно обновление';panel.hidden=false;toggle.setAttribute('aria-expanded','true')}
-   else tell('Новая версия загружается и проверяется. Текущая продолжает работать; повторите проверку после завершения загрузки.');
+   else{toggle.textContent=hasUpdate?'Загружается обновление':'Проверка обновления';tell('Новая версия загружается и проверяется. Текущая продолжает работать; повторите проверку после завершения загрузки.')}
   }catch(error){tell(error.name==='AbortError'?'Сеть не ответила. Текущая версия и ваши данные сохранены.':error.message)}
   finally{clearTimeout(timer);busy=false;check.disabled=false;if(queued&&!disposed){queued=false;queueMicrotask(()=>void examine())}}
  };
- toggle.onclick=()=>{panel.hidden=!panel.hidden;toggle.setAttribute('aria-expanded',String(!panel.hidden))};check.onclick=()=>void examine();
+ toggle.onclick=()=>{panel.hidden=!panel.hidden;toggle.setAttribute('aria-expanded',String(!panel.hidden));if(panel.hidden){manualOpen=false;visibility()}};check.onclick=()=>void examine();
+ close.onclick=()=>{manualOpen=false;panel.hidden=true;toggle.setAttribute('aria-expanded','false');visibility()};
+ documentImpl.addEventListener('click',event=>{if(!event.target?.closest?.('[data-interface-update-check]'))return;event.preventDefault();manualOpen=true;root.hidden=false;panel.hidden=false;toggle.textContent=hasUpdate?'Доступно обновление':'Проверка обновления';toggle.setAttribute('aria-expanded','true');void examine()},{signal:controller.signal});
  apply.onclick=async()=>{if(busy||!ready||!target)return;busy=true;apply.disabled=true;
   try{await flushBeforeInterfaceUpdate();const reg=await navigatorImpl.serviceWorker.getRegistration(),worker=reg?.active,p=await workerStatus(worker);if(p.protocol!=='nexus-verified-public-v1'||p.generation!==target.assetGeneration||p.publicReady!==true||reg.active?.state!=='activated'||reg.installing||reg.waiting)throw Error('Установка ещё не завершена. Повторите проверку.');
    // Во время проверки SW пользователь мог продолжить редактирование.

@@ -1,0 +1,40 @@
+// Синтетические counters, stream и HMAC. Реальная сеть и аккаунты не используются.
+import assert from 'node:assert/strict';
+import {Readable} from 'node:stream';
+import {parseOwnTCPRow,socketProgress,wireHeaders,WIRE_FIELDS} from '../server-access/bff/socket-progress.mjs';
+import {createAccountControlHandler} from '../server-access/bff/account-control.mjs';
+import {GATEWAY_ORIGIN} from '../server-access/bff/account-read.mjs';
+import {readFile} from 'node:fs/promises';
+const rows=[],check=async(name,fn)=>{await fn();rows.push(name);console.log('PASS '+name)};
+const row='  0: 0100007F:C350 0100007F:01BB 01 00000020:00000010 01:00000000 00000002 1000 0 123 1';
+const valid={v:1,tcp:1,tls:1,finished:1,written:123,read:30,writeq:0,h2q:0,kernel:1,ktx:32,krx:16,kstate:1,retrans:2};
+await check('parse only unique own connection and numeric kernel counters',()=>assert.deepEqual(parseOwnTCPRow(row,50000),{kernel:1,ktx:32,krx:16,kstate:1,retrans:2}));
+await check('foreign local or remote port cannot match',()=>{assert.equal(parseOwnTCPRow(row,50001),null);assert.equal(parseOwnTCPRow(row,50000,80),null)});
+await check('ambiguous connection returns unknown',()=>assert.equal(parseOwnTCPRow(row+'\n'+row,50000),null));
+await check('bounded malformed proc input returns unknown',()=>{for(const text of [null,'x'.repeat(65537),row.replace('00000020','000000XX'),row.replace(' 01 ',' ZZ '),row.replace('00000002','INVALID_')])assert.equal(parseOwnTCPRow(text,50000),null);for(const port of [0,-1,65536,1.5,NaN])assert.equal(parseOwnTCPRow(row,port),null)});
+await check('snapshot is immutable and contains no addresses or payload',()=>{const s=socketProgress({bytesWritten:123,bytesRead:30,writableLength:0,remoteAddress:'MUST_NOT_ESCAPE',localPort:undefined},{tcp:true,tls:true,finished:true},{state:{outboundQueueSize:0}},{writableLength:0});assert.equal(Object.isFrozen(s),true);assert.deepEqual(Object.keys(s),WIRE_FIELDS);assert.equal(JSON.stringify(s).includes('MUST_NOT_ESCAPE'),false);assert.equal(s.kernel,0)});
+await check('invalid socket counters fail to zero without reflection',()=>{const s=socketProgress({bytesWritten:'SECRET',bytesRead:Infinity,writableLength:-1},{});assert.equal(s.written,0);assert.equal(s.read,0);assert.equal(s.writeq,0)});
+await check('wire header DTO is fixed and numeric only',()=>{const h=wireHeaders(valid);assert.equal(Object.keys(h).length,WIRE_FIELDS.length);assert.ok(Object.values(h).every(v=>/^\d+$/.test(v)));assert.equal(h['x-nexus-wire-ktx'],'32')});
+await check('wire header DTO rejects secrets, missing keys, unknown keys and flags',()=>{for(const value of [null,{...valid,written:'SECRET'},{...valid,read:Infinity},{...valid,writeq:-1},{...valid,h2q:2**32},{...valid,cookie:'SECRET'},{...valid,kernel:2},{...valid,kstate:256},{...valid,v:2},Object.fromEntries(Object.entries(valid).filter(([k])=>k!=='read'))])assert.deepEqual(wireHeaders(value),{})});
+const fixture=process.env.NEXUS_WIRE_PHOTO;
+assert.ok(fixture,'EXPLICIT_SYNTHETIC_PHOTO_REQUIRED');const image=(await readFile(fixture)).toString('base64');
+const env={ACCOUNT_CONTROL_PROXY_ENABLED:'true',PRIVATE_GATEWAY_CONFIRMED:'true',ADMIN_SERVICE_KEY:'synthetic-only-key-'.repeat(3),COOKIE_INGRESS_V3_ENABLED:'true'};
+async function invoke({synthetic=true,account=synthetic?'synthetic-photo-transport-no-account':'synthetic-owner',session=synthetic?'nxs_SYNTHETIC_NOT_A_SESSION_'+'a'.repeat(32):'nxs_'+'b'.repeat(43),origin=GATEWAY_ORIGIN,context=true,broken=false,meta=valid}={}){
+ const headers={host:new URL(GATEWAY_ORIGIN).host,origin,'content-type':'application/json','x-nexus-account-control':'1','x-nexus-account-expectation':account,cookie:'__Host-nexus_session='+session};
+ if(context)headers['x-yc-apigateway-operation-context']=Buffer.from('{"accountControlContract":"v3"}').toString('base64');
+ const payload={requestId:'00000000-0000-4000-8000-000000000001',target:'media',id:'00000000-0000-4000-8000-000000000002',slug:'',version:0,action:'upload',content:{jpegBase64:broken?'invalid':image}};
+ let calls=0,captured=false,status,raw,outHeaders;
+ const fetchImpl=async(_url,options)=>{calls++;captured=options.captureWire===true;assert.equal(options.signal.aborted,false);assert.equal(options.headers.cookie,undefined);throw Object.assign(Error('SECRET_MESSAGE'),{nexusPhase:'response',nexusWire:meta})};
+ const req=Object.assign(Readable.from([JSON.stringify(payload)]),{url:'/api/v2/account/control/content',method:'POST',headers,rawHeaders:Object.entries(headers).flat()});
+ await createAccountControlHandler({env,fetchImpl})(req,{writeHead(s,h){status=s;outHeaders=h},end(b){raw=b}});
+ assert.equal(outHeaders['cache-control'],'no-store');assert.equal(outHeaders.vary,'*');assert.equal(outHeaders['set-cookie'],undefined);assert.ok(!JSON.stringify({outHeaders,raw}).includes('SECRET'));
+ return {status,body:JSON.parse(raw),outHeaders,calls,captured};
+}
+await check('synthetic selector attaches own validated numeric counters after network failure',async()=>{const r=await invoke();assert.equal(r.status,502);assert.equal(r.calls,1);assert.equal(r.captured,true);assert.equal(r.body.error.code,'BLOG_MEDIA_UPSTREAM_NETWORK_FAILED');assert.equal(r.outHeaders['x-nexus-wire-ktx'],'32')});
+await check('ordinary owner requests never enable or receive wire counters',async()=>{const r=await invoke({synthetic:false});assert.equal(r.captured,false);assert.equal(Object.keys(r.outHeaders).some(k=>k.startsWith('x-nexus-wire-')),false)});
+await check('both synthetic selectors are required',async()=>{for(const change of [{account:'synthetic-owner'},{session:'nxs_'+'b'.repeat(43)}]){const r=await invoke(change);assert.equal(r.captured,false);assert.equal(r.outHeaders['x-nexus-wire-v'],undefined)}});
+await check('invalid diagnostic metadata cannot disclose credentials',async()=>{const r=await invoke({meta:{...valid,cookie:'SECRET'}});assert.equal(r.outHeaders['x-nexus-wire-v'],undefined);assert.equal(r.status,502)});
+await check('missing operation context denies before network without counters',async()=>{const r=await invoke({context:false});assert.equal(r.status,401);assert.equal(r.calls,0);assert.equal(r.outHeaders['x-nexus-wire-v'],undefined)});
+await check('foreign origin denies before network without counters',async()=>{const r=await invoke({origin:'https://synthetic.invalid'});assert.equal(r.status,403);assert.equal(r.calls,0);assert.equal(r.outHeaders['x-nexus-wire-v'],undefined)});
+await check('invalid image sentinel never reaches network or exposes counters',async()=>{const r=await invoke({broken:true});assert.equal(r.status,400);assert.equal(r.body.error.code,'BLOG_IMAGE_INVALID');assert.equal(r.calls,0);assert.equal(r.outHeaders['x-nexus-wire-v'],undefined)});
+console.log(JSON.stringify({status:'PASS',checks:rows.length,cloudWrites:0}));

@@ -15,7 +15,7 @@ export async function mediaDTO(env,id,{publishedOnly=false}={}){
  const bytes=Buffer.from(row.jpeg_base64,'base64');if(bytes.length>98304||bytes.toString('base64')!==row.jpeg_base64||Buffer.from(await crypto.subtle.digest('SHA-256',bytes)).toString('hex')!==id)deny('CONTENT_MEDIA_UNAVAILABLE',503);
  return {media:{id:row.id,mime:'image/jpeg',data:row.jpeg_base64,width:row.width,height:row.height}};
 }
-export async function uploadMedia(env,value){
+export async function uploadMedia(env,value,{reservationId=null,before=[],after=[]}={}){
  if(env.CONTENT_MEDIA_ENABLED!=='true'||env.CONTENT_MEDIA_UPLOAD_ENABLED!=='true')deny('CONTENT_MEDIA_UNAVAILABLE',503);
  const p=value.payload,m=p.content;
  if(!exact(p,['requestId','target','id','slug','version','action','content'])||!validRequestId(p.requestId)||p.target!=='media'||p.action!=='upload'||p.slug!==''||p.version!==0||!/^[a-f0-9-]{36}$/.test(p.id)||!exact(m,['id','mime','data','width','height'])||!validMediaId(m.id)||m.mime!=='image/jpeg'||typeof m.data!=='string'||m.data.length>131072||!/^[A-Za-z0-9+/]+={0,2}$/.test(m.data)||![m.width,m.height].every(n=>Number.isInteger(n)&&n>=1&&n<=1600))deny('INVALID_INPUT');
@@ -23,8 +23,10 @@ export async function uploadMedia(env,value){
  const stamp=new Date().toISOString();
  const existing=await first(env.DB,'SELECT id FROM nexus_content_media WHERE id=?1',m.id),usage=await first(env.DB,'SELECT COUNT(*) count,COALESCE(SUM(bytes),0) bytes FROM nexus_content_media');
  if(!existing&&(usage.count>=1000||usage.bytes+bytes.length>67108864))deny('CONTENT_MEDIA_QUOTA',409);
- const commands=[guard(env.DB,p.requestId,'before','EXISTS(SELECT 1 FROM nexus_content_media WHERE id=?3) OR ((SELECT COUNT(*) FROM nexus_content_media)<1000 AND (SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media)+?4<=67108864)',[m.id,bytes.length]),
+ const reserve=reservationId!==null;
+ const quota=reserve?"EXISTS(SELECT 1 FROM nexus_content_media WHERE id=?3) OR ((SELECT COUNT(*) FROM nexus_content_media)+(SELECT COUNT(*) FROM nexus_content_media_uploads WHERE state='pending' AND expires_at>?6 AND upload_id<>?5)<1000 AND (SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media)+(SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media_uploads WHERE state='pending' AND expires_at>?6 AND upload_id<>?5)+?4<=67108864)":'EXISTS(SELECT 1 FROM nexus_content_media WHERE id=?3) OR ((SELECT COUNT(*) FROM nexus_content_media)<1000 AND (SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media)+?4<=67108864)';
+ const commands=[...before,guard(env.DB,p.requestId,'before',quota,[m.id,bytes.length,...(reserve?[reservationId,stamp]:[])]),
  query(env.DB,'INSERT OR IGNORE INTO nexus_content_media(id,jpeg_base64,width,height,bytes,created_by,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7)',m.id,m.data,m.width,m.height,bytes.length,value.actor.account_id,stamp),
- query(env.DB,'INSERT INTO nexus_content_media_audit(id,actor_id,session_id,target_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)',p.requestId,value.actor.account_id,value.actor.session_id,m.id,'upload',stamp)];
+ query(env.DB,'INSERT INTO nexus_content_media_audit(id,actor_id,session_id,target_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)',p.requestId,value.actor.account_id,value.actor.session_id,m.id,'upload',stamp),...after];
  await atomic(env,commands);return {ok:true,media:{id:m.id,mime:m.mime,width:m.width,height:m.height}};
 }

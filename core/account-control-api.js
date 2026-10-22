@@ -1,7 +1,7 @@
 import {verifiedAccount} from './account-storage.js';
 import {SERVER_ACCOUNT_ORIGIN} from './server-account-origin.js';
 import {hasVaryWildcard} from './private-response-policy.js';
-const messages={CONTENT_EDITOR_UPDATE_REQUIRED:'Обновите интерфейс Nexus перед редактированием или публикацией статьи с новой вёрсткой. Сохранённые данные не изменены.',
+const messages={BLOG_MEDIA_UPSTREAM_NETWORK_FAILED:'Сервер не смог связаться с хранилищем фото. Загрузка не подтверждена. Код: PHOTO_NETWORK.',BLOG_MEDIA_UPSTREAM_REDIRECT_REJECTED:'Хранилище фото вернуло перенаправление. Загрузка остановлена защитой. Код: PHOTO_REDIRECT.',BLOG_MEDIA_UPSTREAM_MIME_REJECTED:'Хранилище фото вернуло неожиданный ответ. Код: PHOTO_RESPONSE.',BLOG_MEDIA_UPSTREAM_COOKIE_REJECTED:'Ответ хранилища фото отклонён защитой. Код: PHOTO_COOKIE.',BLOG_MEDIA_UPSTREAM_CACHE_REJECTED:'Ответ хранилища фото отклонён защитой кеширования. Код: PHOTO_CACHE.',BLOG_MEDIA_UPSTREAM_VARY_REJECTED:'Ответ хранилища фото не подтвердил защиту от кеширования. Код: PHOTO_VARY.',BLOG_MEDIA_UPSTREAM_DTO_REJECTED:'Хранилище фото не подтвердило корректное сохранение. Код: PHOTO_CONFIRMATION.',INGRESS_REJECTED:'Сервер отклонил защищённую передачу Cookie. Действие не выполнено. Войдите снова.',ORIGIN_REJECTED:'Сервер отклонил адрес источника запроса. Откройте Nexus по его основному адресу.',WRITE_ORIGIN_REQUIRED:'Сервер отклонил подтверждение запроса. Действие не выполнено.',INVALID_INPUT:'Сервер отклонил формат запроса. Черновик оставлен в редакторе.',INPUT_TOO_LARGE:'Размер запроса превышает допустимый. Выберите фото меньшего размера.',CONTENT_EDITOR_UPDATE_REQUIRED:'Обновите интерфейс Nexus перед редактированием или публикацией статьи с новой вёрсткой. Сохранённые данные не изменены.',
  BLOG_IMAGE_INVALID:'Не удалось подготовить фото. Выберите JPEG, PNG или WebP меньшего размера.',
  CONTENT_MEDIA_UNAVAILABLE:'Хранилище фото пока не включено. Сохраните текст статьи и дождитесь подключения.',
  CONTENT_MEDIA_QUOTA:'Хранилище фотографий заполнено. Статья и прежние фотографии сохранены; новая загрузка не выполняется.',
@@ -44,7 +44,7 @@ export async function accountControlRequest(path,{method='GET',body,accountId=ve
   if(!response.ok){
    const code=Object.hasOwn(messages,data?.error?.code)?data.error.code:'CONTROL_UNAVAILABLE';
    if(['SESSION_REQUIRED','ACCOUNT_SESSION_CHANGED'].includes(code))globalThis.window?.dispatchEvent(new Event('nexus:session-ended'));
-   throw Object.assign(Error(code),{code});
+   throw Object.assign(Error(code),{code,status:response.status});
   }
   return data;
  }finally{clearTimeout(timer)}

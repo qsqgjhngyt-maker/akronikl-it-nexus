@@ -119,7 +119,7 @@ try{
   if((await response.json()).posts[0]?.body!=='SYNTHETIC_POST_ONLY')throw Error('PUBLICATION_MISSING');
  });
  await check('actual workerd/D1 stores sanitized photos and publishes only referenced saved layout',async()=>{
-  const media=sanitizeBlogImage(Buffer.from(jpeg.encode({width:16,height:16,data:Buffer.alloc(16*16*4,180)},75).data).toString('base64'));
+  const media=sanitizeBlogImage(process.env.NEXUS_LARGE_PHOTO_PATH?(await readFile(process.env.NEXUS_LARGE_PHOTO_PATH)).toString('base64'):Buffer.from(jpeg.encode({width:16,height:16,data:Buffer.alloc(16*16*4,180)},75).data).toString('base64'));
   const upload={requestId:crypto.randomUUID(),target:'media',id:crypto.randomUUID(),slug:'',version:0,action:'upload',content:media};
   const uploaded=await call('/api/v2/account/control/content',{method:'POST',payload:upload});
   if(uploaded.status!==200)throw Object.assign(Error(),{code:uploaded.body.error?.code});

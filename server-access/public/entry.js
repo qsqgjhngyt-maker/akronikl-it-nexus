@@ -5,7 +5,7 @@ import {ensureSafeController} from '../../pwa/client.js';
 export const ENTRY_ORIGIN='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net';
 export const ENTRY_URL=ENTRY_ORIGIN+'/account/entry/';
 const accessURL=ENTRY_ORIGIN+'/account/access/';
-const allowedViews=new Set(['home','academy','skills','akronikl','programming','labs','practices','projects','project-studio','account','feedback','reviews','feedback-admin','computer-graphics','admin','blog']);
+const allowedViews=new Set(['home','academy','skills','akronikl','programming','labs','practices','projects','project-studio','code-studio','account','feedback','reviews','feedback-admin','computer-graphics','admin','blog']);
 // Маркер перехода — только UX-подсказка; решение принимает /api/v2/account.
 export function isOAuthReturnHint(hash=''){return new URLSearchParams(String(hash).replace(/^#/, '')).get('nexusLogin')==='oauth'}
 export function destinationFor(hash=''){

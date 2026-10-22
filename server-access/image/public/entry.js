@@ -477,7 +477,7 @@ async function bindProviderButtons(container, { intent = "login", expectedAccoun
 var ENTRY_ORIGIN = "https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net";
 var ENTRY_URL = ENTRY_ORIGIN + "/account/entry/";
 var accessURL = ENTRY_ORIGIN + "/account/access/";
-var allowedViews = /* @__PURE__ */ new Set(["home", "academy", "skills", "akronikl", "programming", "labs", "practices", "projects", "project-studio", "account", "feedback", "reviews", "feedback-admin", "computer-graphics", "admin", "blog"]);
+var allowedViews = /* @__PURE__ */ new Set(["home", "academy", "skills", "akronikl", "programming", "labs", "practices", "projects", "project-studio", "code-studio", "account", "feedback", "reviews", "feedback-admin", "computer-graphics", "admin", "blog"]);
 function isOAuthReturnHint(hash = "") {
   return new URLSearchParams(String(hash).replace(/^#/, "")).get("nexusLogin") === "oauth";
 }
