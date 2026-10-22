@@ -4,10 +4,14 @@ import {sanitizeAvatar,AvatarError} from '../avatar-codec.mjs';
 import {HOME_SLOTS} from '../../core/content-contract.js';
 import {hasVaryWildcard} from '../../core/private-response-policy.js';
 import {createHash,createHmac,randomBytes} from 'node:crypto';
+import {Agent} from 'undici';
 import {GATEWAY_ORIGIN,WORKER_ORIGIN} from './account-read.mjs';
 import {readV2CookieContext} from './gateway-cookie-context.mjs';
 import {configuredOAuthProviders,oauthCallbackURL} from './oauth-providers.mjs';
 const INTERNAL='/api/v2/account/internal/control',BASE='/api/v2/account/control';
+// Для media используется IPv4 через DNS: короткие dual-stack попытки Node 22
+// могут прерывать рабочее IPv4-соединение при недоступном IPv6. TLS и общий deadline сохраняются.
+const mediaDispatcher=new Agent({connect:{family:4,autoSelectFamily:false}});
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const count=(req,name)=>{
  if(!Array.isArray(req.rawHeaders)||req.rawHeaders.length%2)return-1;
@@ -61,11 +65,12 @@ function validateDTO(data,path,expected){
  }else if(!exact(data,['ok'])||data.ok!==true)valid();
  return data;
 }
-async function service(env,fetchImpl,envelope){
+async function service(env,fetchImpl,envelope,{mediaDiagnostics=false}={}){
  const body=JSON.stringify(envelope),timestamp=String(Date.now()),nonce=randomBytes(16).toString('hex');
    const signature=createHmac('sha256',env.ADMIN_SERVICE_KEY).update(['v1','POST',INTERNAL,timestamp,nonce,sha(body)].join('\n')).digest('hex');
-   const upstream=await fetchImpl(WORKER_ORIGIN+INTERNAL,{method:'POST',credentials:'omit',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(12000),headers:{accept:'application/json','content-type':'application/json','x-nexus-service-timestamp':timestamp,'x-nexus-service-nonce':nonce,'x-nexus-service-signature':signature},body});
-   if(upstream.redirected||!/^application\/json(?:\s*;|$)/i.test(upstream.headers.get('content-type')||'')||upstream.headers.has('set-cookie')||upstream.headers.get('cache-control')!=='no-store'||!hasVaryWildcard(upstream.headers.get('vary'))){await upstream.body?.cancel();fail('CONTROL_UNAVAILABLE',502)}
+   let upstream;try{upstream=await fetchImpl(WORKER_ORIGIN+INTERNAL,{method:'POST',credentials:'omit',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(12000),headers:{accept:'application/json','content-type':'application/json','x-nexus-service-timestamp':timestamp,'x-nexus-service-nonce':nonce,'x-nexus-service-signature':signature},body,...(mediaDiagnostics?{dispatcher:mediaDispatcher}:{})})}catch(error){if(mediaDiagnostics)fail('BLOG_MEDIA_UPSTREAM_NETWORK_FAILED',502);throw error}
+   const rejected=upstream.redirected||upstream.status>=300&&upstream.status<400?'REDIRECT':!/^application\/json(?:\s*;|$)/i.test(upstream.headers.get('content-type')||'')?'MIME':upstream.headers.has('set-cookie')?'COOKIE':upstream.headers.get('cache-control')!=='no-store'?'CACHE':!hasVaryWildcard(upstream.headers.get('vary'))?'VARY':null;
+   if(rejected){await upstream.body?.cancel().catch(()=>{});fail(mediaDiagnostics?'BLOG_MEDIA_UPSTREAM_'+rejected+'_REJECTED':'CONTROL_UNAVAILABLE',502)}
  const data=await bounded(upstream.body);
  if(upstream.status!==200)fail(safeCodes.has(data.error?.code)?data.error.code:'CONTROL_UNAVAILABLE',[400,401,403,404,409,413,429,503].includes(upstream.status)?upstream.status:502);
  return data;
@@ -97,8 +102,9 @@ export function createAccountControlHandler({env={},fetchImpl=fetch}={}){
     catch(error){if(error instanceof AvatarError)fail(error.code,error.status);throw error}
    }
    if(path===BASE+'/content'&&req.method==='POST'&&payload?.target==='media'){try{if(!exact(payload.content,['jpegBase64']))fail('INVALID_INPUT');prepared={...payload,content:sanitizeBlogImage(payload.content.jpegBase64)}}catch{fail('BLOG_IMAGE_INVALID')}}
-   const data=await service(env,fetchImpl,{path:req.url,method:req.method,payload:prepared,sessionHash:sha(session),expectedAccountId:expected});
-   const dto=validateDTO(data,req.url,expected);
+   const mediaDiagnostics=path===BASE+'/content'&&req.method==='POST'&&prepared?.target==='media';
+   const data=await service(env,fetchImpl,{path:req.url,method:req.method,payload:prepared,sessionHash:sha(session),expectedAccountId:expected},{mediaDiagnostics});
+   let dto;try{dto=validateDTO(data,req.url,expected)}catch(error){if(mediaDiagnostics&&error instanceof Rejected&&error.code==='CONTROL_UNAVAILABLE')fail('BLOG_MEDIA_UPSTREAM_DTO_REJECTED',502);throw error}
    if(path===BASE+'/providers'){
     const configured=new Set(configuredOAuthProviders(env).map(p=>p.id));
     return reply(res,200,{providers:[['yandex','Яндекс ID',['YANDEX_CLIENT_ID','YANDEX_CLIENT_SECRET']],['google','Google',['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET']],['vk','VK ID',['VK_CLIENT_ID']]].map(([id,label,names])=>({id,label,configured:configured.has(id),missing:names.filter(n=>typeof env[n]!=='string'||!env[n]||/[\x00-\x20\x7f]/.test(env[n])),callbackURL:oauthCallbackURL(id)}))});
