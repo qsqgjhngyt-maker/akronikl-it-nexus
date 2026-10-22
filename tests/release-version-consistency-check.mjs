@@ -8,7 +8,7 @@ const candidate=JSON.parse(fs.readFileSync(new URL('release-candidate.json',root
 const app=fs.readFileSync(new URL('core/app.js',root),'utf8');
 const sharedShell=fs.readFileSync(new URL('core/shell-presentation.js',root),'utf8');
 const sw=fs.readFileSync(new URL('service-worker.js',root),'utf8');
-const expected='0.1.7-alpha.2.4.6-ui1a.10.2';
+const expected='0.1.7-alpha.2.4.6-ui1a.10.2.1';
 const assert=(v,m)=>{if(!v)throw new Error(m)};
 assert(version===expected,`version.json mismatch: ${version}`);
 assert(projectVersion===expected,`project.json mismatch: ${projectVersion}`);

@@ -1,3 +1,27 @@
+/*! undici 7.29.1
+MIT License
+
+Copyright (c) Matteo Collina and Undici contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
+import {createRequire as __nexusRequireFactory} from 'node:module'; const require=__nexusRequireFactory(import.meta.url);
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -28,9 +52,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// server-access/node_modules/jpeg-js/lib/encoder.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/lib/encoder.js
 var require_encoder = __commonJS({
-  "server-access/node_modules/jpeg-js/lib/encoder.js"(exports, module) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/lib/encoder.js"(exports, module) {
     var btoa = btoa || function(buf) {
       return Buffer.from(buf).toString("base64");
     };
@@ -1105,9 +1129,9 @@ var require_encoder = __commonJS({
   }
 });
 
-// server-access/node_modules/jpeg-js/lib/decoder.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/lib/decoder.js
 var require_decoder = __commonJS({
-  "server-access/node_modules/jpeg-js/lib/decoder.js"(exports, module) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/lib/decoder.js"(exports, module) {
     var JpegImage = (function jpegImage() {
       "use strict";
       var dctZigZag = new Int32Array([
@@ -1611,9 +1635,9 @@ var require_decoder = __commonJS({
         return a < 0 ? 0 : a > 255 ? 255 : a;
       }
       constructor.prototype = {
-        load: function load(path) {
+        load: function load(path2) {
           var xhr = new XMLHttpRequest();
-          xhr.open("GET", path, true);
+          xhr.open("GET", path2, true);
           xhr.responseType = "arraybuffer";
           xhr.onload = (function() {
             var data = new Uint8Array(xhr.response || xhr.mozResponseArrayBuffer);
@@ -2167,9 +2191,9 @@ var require_decoder = __commonJS({
   }
 });
 
-// server-access/node_modules/jpeg-js/index.js
+// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/index.js
 var require_jpeg_js = __commonJS({
-  "server-access/node_modules/jpeg-js/index.js"(exports, module) {
+  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/index.js"(exports, module) {
     var encode = require_encoder();
     var decode = require_decoder();
     module.exports = {
@@ -2433,7 +2457,7 @@ function text2(value, max) {
   if (typeof value !== "string" || value.length > max) throw new Error("\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 DTO");
   return value;
 }
-function safeDto(body, path) {
+function safeDto(body, path2) {
   if (body?.enrollmentAvailable !== false || !Array.isArray(body.loginMethods) || body.loginMethods.length > 100) throw new Error("\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 DTO");
   const loginMethods = body.loginMethods.map((method) => {
     if (!["oauth", "password", "passkey"].includes(method.kind) || !["pending", "active", "disabled"].includes(method.status)) throw new Error("\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 DTO");
@@ -2446,7 +2470,7 @@ function safeDto(body, path) {
     };
   });
   const dto = { loginMethods, enrollmentAvailable: false };
-  if (path === "/api/v2/account") {
+  if (path2 === "/api/v2/account") {
     if (body.account?.status !== "active") throw new Error("\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 DTO");
     dto.account = {
       accountId: text2(body.account.accountId, 256),
@@ -2527,9 +2551,863 @@ function hasVaryWildcard(value) {
   return fields.length <= 64 && fields.includes("*") && fields.every((field) => /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(field));
 }
 
+// server-access/bff/media-parts.mjs
+import { createHash as createHash2, randomUUID } from "node:crypto";
+
+// server-access/media-parts-contract.mjs
+var MEDIA_PARTS_PATH = "/api/v2/account/control/content/media-parts";
+var PUBLIC_MEDIA_PARTS_PATH = "/api/v2/content/internal/media-parts";
+var PART_CHARS = 8192;
+var MAX_PARTS = 16;
+var MAX_ENVELOPE = 12e3;
+var MAX_BYTES = 98304;
+var exact2 = (v, keys) => !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === [...keys].sort().join(",");
+var digestId = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+var uuid = (v) => typeof v === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(v);
+var dimension = (v) => Number.isInteger(v) && v >= 1 && v <= 1600;
+var partCount = (length) => Math.ceil(length / PART_CHARS);
+var partLength = (length, index) => Math.min(PART_CHARS, length - index * PART_CHARS);
+var validMeta = (m) => exact2(m, ["id", "mime", "encodedLength", "bytes", "width", "height", "totalParts"]) && digestId(m.id) && m.mime === "image/jpeg" && Number.isInteger(m.bytes) && m.bytes >= 4 && m.bytes <= MAX_BYTES && m.encodedLength === 4 * Math.ceil(m.bytes / 3) && m.totalParts === partCount(m.encodedLength) && m.totalParts >= 1 && m.totalParts <= MAX_PARTS && dimension(m.width) && dimension(m.height);
+var metaOf = (m) => ({ id: m.id, mime: m.mime, encodedLength: m.data.length, bytes: Math.floor(m.data.length / 4) * 3 - (m.data.endsWith("==") ? 2 : m.data.endsWith("=") ? 1 : 0), width: m.width, height: m.height, totalParts: partCount(m.data.length) });
+function jpegSizeMatches(bytes, width, height) {
+  if (bytes.length < 4 || bytes[0] !== 255 || bytes[1] !== 216 || bytes.at(-2) !== 255 || bytes.at(-1) !== 217) return false;
+  let i = 2;
+  while (i + 3 < bytes.length) {
+    if (bytes[i++] !== 255) return false;
+    while (bytes[i] === 255) i++;
+    const marker = bytes[i++];
+    if (marker === 218 || marker === 217) return false;
+    const n = bytes[i] << 8 | bytes[i + 1];
+    if (n < 2 || i + n > bytes.length) return false;
+    if ([192, 193, 194].includes(marker)) return n >= 8 && bytes[i + 2] === 8 && (bytes[i + 3] << 8 | bytes[i + 4]) === height && (bytes[i + 5] << 8 | bytes[i + 6]) === width;
+    i += n;
+  }
+  return false;
+}
+
+// server-access/bff/media-parts.mjs
+var sha = (v) => createHash2("sha256").update(v).digest("hex");
+var MediaPartsError = class extends Error {
+  constructor(code = "CONTENT_MEDIA_PARTS_REJECTED", status = 502) {
+    super(code);
+    this.name = "MediaPartsError";
+    this.code = code;
+    this.status = status;
+  }
+};
+var reject2 = () => {
+  throw new MediaPartsError();
+};
+function scope(envelope, rpc, signal) {
+  const controller = new AbortController(), combined = AbortSignal.any([signal || AbortSignal.timeout(12e3), controller.signal]);
+  return { signal: combined, async call(payload, path2 = MEDIA_PARTS_PATH) {
+    combined.throwIfAborted();
+    const result = await rpc({ ...envelope, path: path2, method: "POST", payload }, { signal: combined, limit: MAX_ENVELOPE });
+    combined.throwIfAborted();
+    return result;
+  }, async pool(indices, fn) {
+    let next = 0, firstError;
+    const run = async () => {
+      try {
+        while (next < indices.length) {
+          combined.throwIfAborted();
+          const i = indices[next++];
+          await fn(i);
+        }
+      } catch (e) {
+        firstError ??= e;
+        controller.abort();
+        throw e;
+      }
+    };
+    await Promise.allSettled(Array.from({ length: Math.min(2, indices.length) }, run));
+    if (firstError) throw firstError;
+  } };
+}
+async function uploadPhotoParts(envelope, rpc, { signal } = {}) {
+  const p = envelope.payload, m = p?.content;
+  if (!exact2(p, ["requestId", "target", "id", "slug", "version", "action", "content"]) || !uuid(p.requestId) || !uuid(p.id) || p.target !== "media" || p.action !== "upload" || p.slug !== "" || p.version !== 0 || !exact2(m, ["id", "mime", "data", "width", "height"]) || typeof m.data !== "string") throw new MediaPartsError("INVALID_INPUT", 400);
+  const meta = metaOf(m);
+  if (!validMeta(meta) || Buffer.from(m.data, "base64").toString("base64") !== m.data || sha(Buffer.from(m.data, "base64")) !== m.id) throw new MediaPartsError("INVALID_INPUT", 400);
+  const s = scope(envelope, rpc, signal), uploadId = randomUUID();
+  const begin = await s.call({ requestId: randomUUID(), phase: "begin", uploadId, originalRequestId: p.requestId, externalId: p.id, meta });
+  if (!exact2(begin, ["ok", "uploadId", "meta"]) || begin.ok !== true || begin.uploadId !== uploadId || !sameMeta(begin.meta, meta)) reject2();
+  await s.pool(Array.from({ length: meta.totalParts }, (_, i) => i), async (index) => {
+    const data = m.data.slice(index * PART_CHARS, (index + 1) * PART_CHARS), digest3 = sha(data);
+    const r = await s.call({ requestId: randomUUID(), phase: "part", uploadId, index, data, sha256: digest3 });
+    if (!exact2(r, ["ok", "uploadId", "index", "sha256"]) || r.ok !== true || r.uploadId !== uploadId || r.index !== index || r.sha256 !== digest3) reject2();
+  });
+  const result = await s.call({ requestId: randomUUID(), phase: "commit", uploadId, sha256: m.id });
+  if (!exact2(result, ["ok", "media"]) || result.ok !== true || !exact2(result.media, ["id", "mime", "width", "height"]) || result.media.id !== m.id || result.media.mime !== m.mime || result.media.width !== m.width || result.media.height !== m.height) reject2();
+  return result;
+}
+var sameMeta = (a, b) => validMeta(a) && Object.keys(b).every((k) => a[k] === b[k]);
+async function readPhotoParts(envelope, mediaId, rpc, { publishedOnly = false, signal } = {}) {
+  if (!digestId(mediaId)) throw new MediaPartsError("INVALID_INPUT", 400);
+  const s = scope(envelope, rpc, signal), path2 = publishedOnly ? PUBLIC_MEDIA_PARTS_PATH : MEDIA_PARTS_PATH, parts = [];
+  let meta;
+  const read = async (index) => {
+    const result = await s.call({ requestId: randomUUID(), phase: "read", mediaId, index }, path2), p = result?.part;
+    if (!exact2(result, ["part"]) || !exact2(p, ["meta", "index", "data", "sha256"]) || !validMeta(p.meta) || p.meta.id !== mediaId || p.index !== index || typeof p.data !== "string" || p.data.length !== partLength(p.meta.encodedLength, index) || !digestId(p.sha256) || sha(p.data) !== p.sha256 || Buffer.from(p.data, "base64").toString("base64") !== p.data || index < p.meta.totalParts - 1 && p.data.includes("=")) reject2();
+    if (meta && !sameMeta(p.meta, meta)) reject2();
+    meta ??= p.meta;
+    parts[index] = p.data;
+  };
+  await read(0);
+  await s.pool(Array.from({ length: meta.totalParts - 1 }, (_, i) => i + 1), read);
+  const data = parts.join(""), bytes = Buffer.from(data, "base64");
+  if (data.length !== meta.encodedLength || bytes.length !== meta.bytes || bytes.toString("base64") !== data || sha(bytes) !== mediaId || !jpegSizeMatches(bytes, meta.width, meta.height)) reject2();
+  return { media: { id: mediaId, mime: meta.mime, data, width: meta.width, height: meta.height } };
+}
+
+// server-access/blog-image-codec.mjs
+var import_jpeg_js = __toESM(require_jpeg_js(), 1);
+import { Buffer as Buffer2 } from "node:buffer";
+import { createHash as createHash3 } from "node:crypto";
+var fail = () => {
+  throw Object.assign(Error("BLOG_IMAGE_INVALID"), { code: "BLOG_IMAGE_INVALID" });
+};
+function sanitizeBlogImage(value) {
+  if (typeof value !== "string" || value.length > 131072 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) fail();
+  const bytes = Buffer2.from(value, "base64");
+  if (bytes.toString("base64") !== value || bytes.length > 98304 || bytes[0] !== 255 || bytes[1] !== 216) fail();
+  let n = 2, width, height;
+  while (n < bytes.length) {
+    if (bytes[n++] !== 255) fail();
+    while (bytes[n] === 255) n++;
+    const marker = bytes[n++];
+    if (marker === 218) break;
+    if (marker === 217 || marker === 0 || marker === 216 || marker >= 208 && marker <= 215 || n + 2 > bytes.length) fail();
+    const size = bytes.readUInt16BE(n);
+    if (size < 2 || n + size > bytes.length) fail();
+    if ([192, 193, 194].includes(marker)) {
+      if (width || size < 8 || bytes[n + 2] !== 8) fail();
+      height = bytes.readUInt16BE(n + 3);
+      width = bytes.readUInt16BE(n + 5);
+      if (!width || !height || width > 1600 || height > 1600) fail();
+    }
+    n += size;
+  }
+  if (!width || !height) fail();
+  try {
+    const decoded = import_jpeg_js.default.decode(bytes, { useTArray: true, formatAsRGBA: true, tolerantDecoding: false, maxResolutionInMP: 3, maxMemoryUsageInMB: 64 });
+    if (decoded.width !== width || decoded.height !== height) fail();
+    for (const quality of [80, 65, 50, 35]) {
+      const out = Buffer2.from(import_jpeg_js.default.encode({ data: decoded.data, width, height }, quality).data);
+      if (out.length <= 98304) return { id: createHash3("sha256").update(out).digest("hex"), mime: "image/jpeg", data: out.toString("base64"), width, height };
+    }
+  } catch {
+    fail();
+  }
+  fail();
+}
+
+// server-access/avatar-codec.mjs
+var import_jpeg_js2 = __toESM(require_jpeg_js(), 1);
+import { Buffer as Buffer3 } from "node:buffer";
+var AvatarError = class extends Error {
+  constructor(code, status = 400) {
+    super(code);
+    this.code = code;
+    this.status = status;
+  }
+};
+var deny = (code, status) => {
+  throw new AvatarError(code, status);
+};
+var MAX_JPEG = 98304;
+function sanitizeAvatar(value) {
+  if (typeof value !== "string" || value.length > MAX_JPEG * 4 / 3 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) deny("AVATAR_INVALID");
+  const input = Buffer3.from(value, "base64");
+  if (input.toString("base64") !== value || input.length > MAX_JPEG || input[0] !== 255 || input[1] !== 216) deny("AVATAR_INVALID");
+  let offset = 2, dimensions;
+  while (offset < input.length) {
+    if (input[offset++] !== 255) deny("AVATAR_INVALID");
+    while (input[offset] === 255) offset++;
+    const marker = input[offset++];
+    if (marker === 218) break;
+    if (marker === 217 || marker === 0 || marker === 216 || marker >= 208 && marker <= 215 || offset + 2 > input.length) deny("AVATAR_INVALID");
+    const length = input.readUInt16BE(offset);
+    if (length < 2 || offset + length > input.length) deny("AVATAR_INVALID");
+    if ([192, 193, 194].includes(marker)) {
+      if (dimensions || length < 8 || input[offset + 2] !== 8) deny("AVATAR_INVALID");
+      dimensions = { height: input.readUInt16BE(offset + 3), width: input.readUInt16BE(offset + 5) };
+    }
+    offset += length;
+  }
+  if (!dimensions || dimensions.width !== dimensions.height || ![128, 192, 256].includes(dimensions.width)) deny("AVATAR_DIMENSIONS");
+  let decoded, encoded;
+  try {
+    decoded = import_jpeg_js2.default.decode(input, { useTArray: true, formatAsRGBA: true, tolerantDecoding: false, maxResolutionInMP: 1, maxMemoryUsageInMB: 32 });
+    if (decoded.width !== dimensions.width || decoded.height !== dimensions.height) deny("AVATAR_INVALID");
+    encoded = import_jpeg_js2.default.encode({ data: decoded.data, width: decoded.width, height: decoded.height }, 80).data;
+  } catch (error2) {
+    if (error2 instanceof AvatarError) throw error2;
+    deny("AVATAR_INVALID");
+  }
+  if (encoded.length > MAX_JPEG) deny("AVATAR_TOO_LARGE", 413);
+  return Buffer3.from(encoded).toString("base64");
+}
+
+// server-access/bff/account-control.mjs
+import { createHash as createHash5, createHmac as createHmac2, randomBytes as randomBytes2 } from "node:crypto";
+
+// server-access/bff/media-http2.mjs
+import http2 from "node:http2";
+import tls from "node:tls";
+
+// server-access/bff/socket-progress.mjs
+import { openSync, readSync, closeSync } from "node:fs";
+var number = (value) => Number.isSafeInteger(value) && value >= 0 && value <= 4294967295 ? value : 0;
+var WIRE_FIELDS = Object.freeze(["v", "tcp", "tls", "finished", "written", "read", "writeq", "h2q", "kernel", "ktx", "krx", "kstate", "retrans"]);
+function parseOwnTCPRow(text5, port, remotePort = 443) {
+  if (typeof text5 !== "string" || text5.length > 65536 || !Number.isInteger(port) || port < 1 || port > 65535 || !Number.isInteger(remotePort) || remotePort < 1 || remotePort > 65535) return null;
+  const suffix = ":" + port.toString(16).padStart(4, "0").toUpperCase();
+  const remoteSuffix = ":" + remotePort.toString(16).padStart(4, "0").toUpperCase();
+  const matches = text5.split("\n").map((v) => v.trim().split(/\s+/)).filter((v) => v[1]?.endsWith(suffix) && v[2]?.endsWith(remoteSuffix));
+  if (matches.length !== 1) return null;
+  const row = matches[0];
+  if (!/^[0-9A-F]{2}$/i.test(row[3]) || !/^([0-9A-F]{8}):([0-9A-F]{8})$/i.test(row[4]) || !/^[0-9A-F]{8}$/i.test(row[6])) return null;
+  const [tx, rx] = row[4].split(":").map((v) => parseInt(v, 16));
+  return { kernel: 1, ktx: tx, krx: rx, kstate: parseInt(row[3], 16), retrans: parseInt(row[6], 16) };
+}
+function socketProgress(socket, state, session, stream) {
+  const out = { v: 1, tcp: state?.tcp === true ? 1 : 0, tls: state?.tls === true ? 1 : 0, finished: state?.finished === true ? 1 : 0, written: 0, read: 0, writeq: 0, h2q: 0, kernel: 0, ktx: 0, krx: 0, kstate: 0, retrans: 0 };
+  try {
+    out.written = number(socket?.bytesWritten);
+    out.read = number(socket?.bytesRead);
+    out.writeq = number(socket?.writableLength);
+    out.h2q = number(session?.state?.outboundQueueSize) + number(stream?.writableLength);
+  } catch {
+  }
+  try {
+    if (process.platform === "linux" && Number.isInteger(socket?.remotePort) && Number.isInteger(socket.localPort)) {
+      let fd;
+      try {
+        fd = openSync("/proc/net/tcp", "r");
+        const bytes = Buffer.alloc(65536), size = readSync(fd, bytes, 0, bytes.length, null);
+        if (size < bytes.length) {
+          const row = parseOwnTCPRow(bytes.subarray(0, size).toString("ascii"), socket.localPort, socket.remotePort);
+          if (row) Object.assign(out, row);
+        }
+      } catch {
+      } finally {
+        if (fd !== void 0) try {
+          closeSync(fd);
+        } catch {
+        }
+      }
+    }
+  } catch {
+  }
+  return Object.freeze(out);
+}
+function wireHeaders(value) {
+  if (!value || value.v !== 1 || Object.keys(value).some((key) => !WIRE_FIELDS.includes(key)) || !WIRE_FIELDS.every((key) => Number.isSafeInteger(value[key]) && value[key] >= 0 && value[key] <= 4294967295)) return {};
+  if (["tcp", "tls", "finished", "kernel"].some((key) => value[key] > 1) || value.kstate > 255) return {};
+  return Object.fromEntries(WIRE_FIELDS.map((key) => ["x-nexus-wire-" + key, String(value[key])]));
+}
+
+// server-access/bff/media-http2.mjs
+var path = "/api/v2/account/internal/control";
+var hostname = new URL(WORKER_ORIGIN).hostname;
+var inputError = () => Object.assign(Error("MEDIA_TRANSPORT_INPUT"), { code: "NEXUS_MEDIA_INPUT" });
+var networkCodes = /* @__PURE__ */ new Set(["ENOTFOUND", "EAI_AGAIN", "ECONNRESET", "EPIPE", "ENETUNREACH", "EHOSTUNREACH", "ECONNREFUSED", "ETIMEDOUT", "ABORT_ERR", "DEPTH_ZERO_SELF_SIGNED_CERT", "SELF_SIGNED_CERT_IN_CHAIN", "UNABLE_TO_VERIFY_LEAF_SIGNATURE", "UNABLE_TO_GET_ISSUER_CERT_LOCALLY", "ERR_TLS_CERT_ALTNAME_INVALID", "CERT_HAS_EXPIRED", "NEXUS_MEDIA_H2_REQUIRED", "ERR_HTTP2_SESSION_ERROR", "ERR_HTTP2_STREAM_ERROR", "ERR_HTTP2_GOAWAY_SESSION"]);
+var failed = (error2, state) => Object.assign(Error("MEDIA_TRANSPORT_FAILED", { cause: { code: networkCodes.has(error2?.code) ? error2.code : "NEXUS_NATIVE_NETWORK" } }), { nexusPhase: !state.tcp ? state.lookup ? "tcp" : "dns" : !state.tls ? "tls" : !state.finished ? "upload" : "response" });
+function requestMediaHTTP2(url, options) {
+  if (url !== WORKER_ORIGIN + path || options?.method !== "POST" || options.credentials !== "omit" || options.cache !== "no-store" || options.redirect !== "error" || typeof options.body !== "string" || !(options.signal instanceof AbortSignal)) return Promise.reject(inputError());
+  const body = Buffer.from(options.body), headers = options.headers;
+  if (!body.length || body.length > 262144 || !headers || Object.keys(headers).sort().join(",") !== ["accept", "content-type", "x-nexus-service-nonce", "x-nexus-service-signature", "x-nexus-service-timestamp"].sort().join(",") || headers.accept !== "application/json" || headers["content-type"] !== "application/json" || !/^\d{13}$/.test(headers["x-nexus-service-timestamp"]) || !/^[a-f0-9]{32}$/.test(headers["x-nexus-service-nonce"]) || !/^[a-f0-9]{64}$/.test(headers["x-nexus-service-signature"])) return Promise.reject(inputError());
+  const state = { lookup: false, tcp: false, tls: false, finished: false };
+  return new Promise((resolve, reject3) => {
+    let session, socket, stream, sendTimer, resolved = false, stopped = false, trailer = false, lastWire;
+    const capture = () => {
+      if (options.captureWire === true) lastWire = socketProgress(socket, state, session, stream);
+      return lastWire;
+    };
+    const destroy = () => {
+      if (stopped) return;
+      stopped = true;
+      clearTimeout(sendTimer);
+      options.signal.removeEventListener("abort", onAbort);
+      stream?.destroy();
+      session?.destroy();
+      socket?.destroy();
+    };
+    const stop = (error2) => {
+      const safe = failed(error2, state);
+      if (options.captureWire === true) safe.nexusWire = capture();
+      if (!resolved) {
+        reject3(safe);
+        destroy();
+      } else stream?.destroy(safe);
+    };
+    const onAbort = () => stop(Object.assign(Error("MEDIA_ABORTED"), { code: "ABORT_ERR" }));
+    options.signal.addEventListener("abort", onAbort, { once: true });
+    if (options.signal.aborted) {
+      onAbort();
+      return;
+    }
+    try {
+      session = http2.connect(WORKER_ORIGIN, { maxHeaderListPairs: 32, maxSessionMemory: 16, settings: { enablePush: false, maxHeaderListSize: 16384 }, createConnection: () => {
+        socket = tls.connect({ host: hostname, port: 443, servername: hostname, ALPNProtocols: ["h2"], rejectUnauthorized: true, family: 4, autoSelectFamily: false });
+        socket.once("lookup", (error2) => {
+          if (!error2) state.lookup = true;
+        });
+        socket.once("connect", () => {
+          state.tcp = true;
+        });
+        socket.once("secureConnect", () => {
+          state.tls = true;
+          if (!socket.authorized || socket.alpnProtocol !== "h2") stop(Object.assign(Error("MEDIA_H2_REQUIRED"), { code: "NEXUS_MEDIA_H2_REQUIRED" }));
+          else if (!socket.setMaxSendFragment(1024)) stop(inputError());
+        });
+        socket.on("error", stop);
+        return socket;
+      } });
+      session.on("error", stop);
+      session.on("stream", (pushed) => {
+        pushed.on("error", () => {
+        });
+        pushed.destroy();
+        stop(Object.assign(Error("MEDIA_PUSH_REJECTED"), { code: "NEXUS_MEDIA_H2_REQUIRED" }));
+      });
+      session.on("goaway", (code, lastStreamId) => {
+        if (code !== http2.constants.NGHTTP2_NO_ERROR || !stream || lastStreamId < stream.id) stop(Object.assign(Error("MEDIA_GOAWAY"), { code: "ERR_HTTP2_GOAWAY_SESSION" }));
+      });
+      session.once("close", () => {
+        if (!resolved && !stopped) stop(Object.assign(Error("MEDIA_SESSION_CLOSED"), { code: "ECONNRESET" }));
+      });
+      session.once("connect", () => {
+        if (stopped) return;
+        if (!state.tls || !socket.authorized || socket.alpnProtocol !== "h2") {
+          stop(Object.assign(Error("MEDIA_H2_REQUIRED"), { code: "NEXUS_MEDIA_H2_REQUIRED" }));
+          return;
+        }
+        try {
+          stream = session.request({ ":method": "POST", ":scheme": "https", ":authority": hostname, ":path": path, ...headers, "content-length": String(body.length), "accept-encoding": "identity", [http2.sensitiveHeaders]: ["x-nexus-service-signature", "x-nexus-service-nonce"] }, { endStream: false });
+          stream.on("error", stop);
+          stream.once("close", () => {
+            if (!resolved && !stopped) stop(Object.assign(Error("MEDIA_STREAM_CLOSED"), { code: "ECONNRESET" }));
+          });
+          stream.once("finish", () => {
+            state.finished = true;
+          });
+          stream.on("headers", () => stop(Error("MEDIA_INFORMATIONAL_HEADERS_REJECTED")));
+          stream.on("trailers", () => {
+            trailer = true;
+            stream.destroy(Object.assign(Error("MEDIA_TRAILERS_REJECTED"), { code: "NEXUS_MEDIA_TRAILERS" }));
+          });
+          stream.once("response", (incoming, _flags, raw) => {
+            try {
+              if (!Number.isInteger(incoming[":status"]) || incoming[":status"] < 200 || incoming[":status"] > 599) throw inputError();
+              if (!Array.isArray(raw) || raw.length % 2 || raw.length > 64) throw inputError();
+              const counts = /* @__PURE__ */ new Map();
+              for (let i = 0; i < raw.length; i += 2) {
+                if (typeof raw[i] !== "string" || typeof raw[i + 1] !== "string") throw inputError();
+                const name = raw[i].toLowerCase();
+                counts.set(name, (counts.get(name) || 0) + 1);
+              }
+              if (counts.get(":status") !== 1 || ["content-type", "cache-control", "content-length"].some((name) => (counts.get(name) || 0) > 1)) throw inputError();
+              const forwarded = new Headers();
+              for (const [name, value] of Object.entries(incoming)) {
+                if (name === ":status") continue;
+                if (name.startsWith(":")) throw inputError();
+                for (const item of Array.isArray(value) ? value : [value]) {
+                  if (typeof item !== "string") throw inputError();
+                  forwarded.append(name, item);
+                }
+              }
+              const iterator = stream[Symbol.asyncIterator]();
+              let cancelled = false;
+              const web = new ReadableStream({
+                async pull(controller) {
+                  try {
+                    const part = await iterator.next();
+                    if (cancelled) return;
+                    if (part.done) {
+                      if (trailer) throw Error("MEDIA_TRAILERS_REJECTED");
+                      controller.close();
+                      destroy();
+                    } else controller.enqueue(part.value);
+                  } catch (error2) {
+                    if (!cancelled) controller.error(failed(error2, state));
+                    destroy();
+                  }
+                },
+                cancel() {
+                  cancelled = true;
+                  destroy();
+                  void iterator.return?.().catch(() => {
+                  });
+                }
+              });
+              capture();
+              resolved = true;
+              resolve({ status: incoming[":status"], redirected: false, headers: forwarded, body: web, nativeEncodingRejected: forwarded.has("content-encoding") && forwarded.get("content-encoding") !== "identity", get nexusWire() {
+                return lastWire;
+              } });
+            } catch (error2) {
+              stop(error2);
+            }
+          });
+          let offset = 0;
+          const send = () => {
+            if (stopped || stream.destroyed || options.signal.aborted) return;
+            if (offset === body.length) {
+              stream.end();
+              return;
+            }
+            const end = Math.min(offset + 1024, body.length), chunk = body.subarray(offset, end);
+            offset = end;
+            stream.write(chunk, (error2) => {
+              if (error2) {
+                stop(error2);
+                return;
+              }
+              if (!stopped && !stream.destroyed && !options.signal.aborted) sendTimer = setTimeout(send, 2);
+            });
+          };
+          send();
+        } catch (error2) {
+          stop(error2);
+        }
+      });
+    } catch (error2) {
+      stop(error2);
+    }
+  });
+}
+
+// server-access/bff/oauth-providers.mjs
+import { createHash as createHash4, createPublicKey, verify, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+var PROVIDERS = Object.freeze({
+  google: { label: "Google", prefix: "GOOGLE", authorize: "https://accounts.google.com/o/oauth2/v2/auth", token: "https://oauth2.googleapis.com/token" },
+  yandex: { label: "\u042F\u043D\u0434\u0435\u043A\u0441 ID", prefix: "YANDEX", authorize: "https://oauth.yandex.ru/authorize", token: "https://oauth.yandex.ru/token" },
+  vk: { label: "VK ID", prefix: "VK", authorize: "https://id.vk.ru/authorize", token: "https://id.vk.ru/oauth2/auth" }
+});
+var ENDPOINTS = /* @__PURE__ */ new Set(["https://oauth2.googleapis.com/token", "https://www.googleapis.com/oauth2/v3/certs", "https://oauth.yandex.ru/token", "https://login.yandex.ru/info", "https://id.vk.ru/oauth2/auth", "https://id.vk.ru/oauth2/user_info"]);
+var requireThat = (value) => {
+  if (!value) throw Error("PROVIDER_REJECTED");
+};
+var safeSecret = (value) => typeof value === "string" && value.length > 0 && value.length <= 2048 && !/[\x00-\x20\x7f]/.test(value);
+var equal = (a, b) => typeof a === "string" && typeof b === "string" && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual3(Buffer.from(a), Buffer.from(b));
+var plain = (value) => !!value && typeof value === "object" && !Array.isArray(value);
+var text3 = (value, max) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\x00-\x1f\x7f]/.test(value);
+var email = (value) => value === void 0 || value === null || value === "" ? null : (requireThat(text3(value, 320) && /^\S+@\S+\.\S+$/.test(value)), value.trim().toLowerCase());
+var display = (value, fallback) => text3(value, 512) && value.trim() ? value.trim() : fallback;
+var subject = (value) => {
+  requireThat(text3(value, 512) && value === value.trim());
+  return value;
+};
+var digest = (value) => createHash4("sha256").update(value).digest();
+function authoritativeYandexEmail(user, address) {
+  return typeof user.login === "string" && /^[a-z][a-z0-9.-]{0,63}$/.test(user.login) && address === user.login + "@yandex.ru";
+}
+var oauthCallbackURL = (provider) => {
+  requireThat(Object.hasOwn(PROVIDERS, provider));
+  return GATEWAY_ORIGIN + "/api/v2/account/oauth/" + provider + "/callback";
+};
+function configuration(env, provider) {
+  const definition = PROVIDERS[provider];
+  if (!definition) return null;
+  const clientId = env[definition.prefix + "_CLIENT_ID"], clientSecret = env[definition.prefix + "_CLIENT_SECRET"];
+  if (!safeSecret(clientId) || provider !== "vk" && !safeSecret(clientSecret)) return null;
+  return { ...definition, clientId, clientSecret: provider === "vk" ? void 0 : clientSecret };
+}
+function configuredOAuthProviders(env = {}) {
+  return Object.keys(PROVIDERS).filter((id2) => configuration(env, id2)).map((id2) => ({ id: id2, label: PROVIDERS[id2].label }));
+}
+function oauthAuthorizationURL({ provider, env, state, codeVerifier, nonce }) {
+  const config = configuration(env, provider);
+  requireThat(config);
+  const url = new URL(config.authorize);
+  url.search = new URLSearchParams({
+    client_id: config.clientId,
+    response_type: "code",
+    redirect_uri: oauthCallbackURL(provider),
+    state,
+    code_challenge: digest(codeVerifier).toString("base64url"),
+    code_challenge_method: provider === "vk" ? "s256" : "S256",
+    scope: provider === "google" ? "openid email profile" : provider === "yandex" ? "login:info login:email" : "email",
+    // Яндекс иначе может использовать прежнее согласие без выбора аккаунта.
+    ...provider === "google" ? { nonce, prompt: "select_account" } : provider === "yandex" ? { force_confirm: "yes" } : {}
+  }).toString();
+  return url.href;
+}
+async function json(fetchImpl, url, options = {}) {
+  const target = new URL(url);
+  requireThat(target.protocol === "https:" && !target.username && !target.password && !target.hash && ENDPOINTS.has(target.origin + target.pathname));
+  const response = await fetchImpl(target.href, { ...options, credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(3e3) });
+  if (response.status !== 200 || response.redirected || !/^application\/json(?:\s*;|$)/i.test(response.headers.get("content-type") || "")) {
+    await response.body?.cancel();
+    throw Error("PROVIDER_REJECTED");
+  }
+  const reader = response.body?.getReader();
+  requireThat(reader);
+  const parts = [];
+  let length = 0;
+  try {
+    while (true) {
+      const { done, value: value2 } = await reader.read();
+      if (done) break;
+      length += value2.length;
+      requireThat(length <= 65536);
+      parts.push(value2);
+    }
+    const value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts, length)));
+    requireThat(plain(value) && !Object.hasOwn(value, "error"));
+    return value;
+  } finally {
+    await reader.cancel().catch(() => {
+    });
+    reader.releaseLock();
+  }
+}
+var formHeaders = { accept: "application/json", "content-type": "application/x-www-form-urlencoded" };
+function validateToken(token) {
+  requireThat(plain(token) && typeof token.access_token === "string" && token.access_token.length > 0 && token.access_token.length <= 8192 && !/[\x00-\x20\x7f]/.test(token.access_token) && typeof token.token_type === "string" && token.token_type.toLowerCase() === "bearer" && Number.isFinite(token.expires_in) && token.expires_in > 0);
+}
+function jwtJSON(segment) {
+  requireThat(typeof segment === "string" && segment.length > 0 && /^[A-Za-z0-9_-]+$/.test(segment));
+  const bytes = Buffer.from(segment, "base64url");
+  requireThat(bytes.toString("base64url") === segment);
+  const value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  requireThat(plain(value));
+  return value;
+}
+async function googleProfile(token, config, nonce, fetchImpl) {
+  requireThat(typeof token.id_token === "string" && token.id_token.length <= 16384);
+  const pieces = token.id_token.split(".");
+  requireThat(pieces.length === 3);
+  const header = jwtJSON(pieces[0]), claims = jwtJSON(pieces[1]);
+  requireThat(header.alg === "RS256" && text3(header.kid, 128) && Object.keys(header).every((key2) => ["alg", "kid", "typ"].includes(key2)) && (header.typ === void 0 || header.typ === "JWT"));
+  requireThat(/^[A-Za-z0-9_-]+$/.test(pieces[2]));
+  const signature = Buffer.from(pieces[2], "base64url");
+  requireThat(signature.toString("base64url") === pieces[2]);
+  const jwks = await json(fetchImpl, "https://www.googleapis.com/oauth2/v3/certs", { method: "GET", headers: { accept: "application/json" } });
+  requireThat(Array.isArray(jwks.keys) && jwks.keys.length > 0 && jwks.keys.length <= 20);
+  const candidates = jwks.keys.filter((key2) => key2?.kid === header.kid);
+  requireThat(candidates.length === 1);
+  const jwk = candidates[0];
+  requireThat(jwk.kty === "RSA" && (jwk.use === void 0 || jwk.use === "sig") && (jwk.alg === void 0 || jwk.alg === "RS256") && text3(jwk.n, 2048) && text3(jwk.e, 16) && !Object.hasOwn(jwk, "d"));
+  const key = createPublicKey({ key: jwk, format: "jwk" }), bits = key.asymmetricKeyDetails?.modulusLength;
+  requireThat(bits >= 2048 && bits <= 8192);
+  requireThat(verify("RSA-SHA256", Buffer.from(pieces[0] + "." + pieces[1]), key, signature));
+  const current = Math.floor(Date.now() / 1e3), aud = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+  requireThat(["https://accounts.google.com", "accounts.google.com"].includes(claims.iss) && aud.length > 0 && aud.length <= 8 && aud.every((x) => typeof x === "string") && aud.includes(config.clientId));
+  requireThat((claims.azp === void 0 || claims.azp === config.clientId) && (aud.length === 1 || claims.azp === config.clientId));
+  requireThat(Number.isInteger(claims.exp) && claims.exp > current && Number.isInteger(claims.iat) && claims.iat <= current + 60 && claims.iat >= current - 600 && claims.exp > claims.iat && claims.exp - claims.iat <= 7200);
+  requireThat(claims.nbf === void 0 || Number.isInteger(claims.nbf) && claims.nbf <= current + 60);
+  requireThat(equal(claims.nonce, nonce) && typeof claims.sub === "string" && /^[\x21-\x7e]{1,255}$/.test(claims.sub));
+  if (claims.at_hash !== void 0) requireThat(equal(claims.at_hash, digest(token.access_token).subarray(0, 16).toString("base64url")));
+  const address = email(claims.email), domain = address?.split("@").at(-1);
+  const authoritative = domain === "gmail.com" || text3(claims.hd, 253) && claims.hd.toLowerCase() === domain;
+  return { issuer: "https://accounts.google.com", subject: claims.sub, email: address, emailVerified: claims.email_verified === true && !!address && !!authoritative, displayName: display(claims.name, "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C Google") };
+}
+async function exchangeOAuthProfile({ provider, env, code, state, deviceId, codeVerifier, nonce, fetchImpl = fetch }) {
+  const config = configuration(env, provider);
+  requireThat(config);
+  requireThat(text3(code, 4096) && text3(state, 128) && /^[A-Za-z0-9._~-]{43,128}$/.test(codeVerifier) && text3(nonce, 128));
+  const body = new URLSearchParams({ grant_type: "authorization_code", code, client_id: config.clientId, redirect_uri: oauthCallbackURL(provider), code_verifier: codeVerifier, ...config.clientSecret ? { client_secret: config.clientSecret } : {} });
+  let token;
+  if (provider === "vk") {
+    requireThat(text3(deviceId, 512));
+    const target = new URL(config.token);
+    target.search = new URLSearchParams({ grant_type: "authorization_code", redirect_uri: oauthCallbackURL(provider), client_id: config.clientId, code_verifier: codeVerifier, state, device_id: deviceId }).toString();
+    token = await json(fetchImpl, target.href, { method: "POST", headers: formHeaders, body: new URLSearchParams({ code }).toString() });
+  } else token = await json(fetchImpl, config.token, { method: "POST", headers: formHeaders, body: body.toString() });
+  validateToken(token);
+  if (provider === "google") return googleProfile(token, config, nonce, fetchImpl);
+  if (provider === "yandex") {
+    const user = await json(fetchImpl, "https://login.yandex.ru/info?format=json", { method: "GET", headers: { accept: "application/json", authorization: "OAuth " + token.access_token } });
+    requireThat(user.client_id === config.clientId);
+    const address = email(user.default_email);
+    return { issuer: "https://login.yandex.ru", subject: subject(user.id), email: address, emailVerified: authoritativeYandexEmail(user, address), displayName: display(user.real_name || user.display_name || user.login, "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u042F\u043D\u0434\u0435\u043A\u0441") };
+  }
+  requireThat(equal(token.state, state));
+  const tokenSubject = typeof token.user_id === "number" && Number.isSafeInteger(token.user_id) && token.user_id > 0 ? String(token.user_id) : subject(token.user_id);
+  const userInfoURL = new URL("https://id.vk.ru/oauth2/user_info");
+  userInfoURL.search = new URLSearchParams({ client_id: config.clientId }).toString();
+  const data = await json(fetchImpl, userInfoURL.href, { method: "POST", headers: formHeaders, body: new URLSearchParams({ access_token: token.access_token }).toString() });
+  requireThat(plain(data.user) && subject(data.user.user_id) === tokenSubject);
+  return { issuer: "https://id.vk.ru", subject: tokenSubject, email: email(data.user.email), emailVerified: false, displayName: display([data.user.first_name, data.user.last_name].filter((x) => typeof x === "string").join(" "), "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C VK") };
+}
+
+// server-access/bff/account-control.mjs
+var INTERNAL = "/api/v2/account/internal/control";
+var BASE = "/api/v2/account/control";
+var sha2 = (value) => createHash5("sha256").update(value).digest("hex");
+var count2 = (req, name) => {
+  if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2) return -1;
+  let n = 0;
+  for (let i = 0; i < req.rawHeaders.length; i += 2) {
+    if (typeof req.rawHeaders[i] !== "string" || typeof req.rawHeaders[i + 1] !== "string") return -1;
+    if (req.rawHeaders[i].toLowerCase() === name) n++;
+  }
+  return n;
+};
+var Rejected = class extends Error {
+  constructor(code, status = 400) {
+    super(code);
+    this.code = code;
+    this.status = status;
+  }
+};
+var fail2 = (code, status) => {
+  throw new Rejected(code, status);
+};
+var exact3 = (o, keys) => !!o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).sort().join(",") === [...keys].sort().join(",");
+var id = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value);
+var safeText = (value, max) => typeof value === "string" && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value);
+var safeCodes = /* @__PURE__ */ new Set(["SESSION_REQUIRED", "ACCOUNT_SESSION_CHANGED", "ADMIN_REQUIRED", "ADMIN_FRESH_PASSKEY_REQUIRED", "ADMIN_ACCOUNT_PROTECTED", "INVALID_INPUT", "INVALID_STATE", "RESTORE_WITHOUT_LOGIN_METHOD", "NOT_FOUND", "CONTROL_CONFLICT", "CONTROL_WRITE_UNCONFIRMED", "CONTROL_UNAVAILABLE", "ALPHA_CONTROL_UNAVAILABLE", "ALPHA_ACCESS_CLOSED", "ALPHA_CAPACITY_REACHED", "ALPHA_LIMIT_BELOW_OCCUPIED", "REMOVE_BEFORE_PURGE", "PURGE_NOT_ENABLED", "PURGE_SCHEMA_REVIEW_REQUIRED", "SHARED_PROJECT_TRANSFER_REQUIRED", "PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED", "PURGE_APPROVAL_REJECTED", "PURGE_CONFIRMATION_REQUIRED", "AVATAR_INVALID", "AVATAR_DIMENSIONS", "AVATAR_TOO_LARGE", "USERNAME_UNAVAILABLE", "RATE_LIMITED", "BLOG_IMAGE_INVALID", "CONTENT_MEDIA_UNAVAILABLE", "CONTENT_MEDIA_QUOTA", "CONTENT_EDITOR_UPDATE_REQUIRED", "CONTENT_MEDIA_PARTS_UNAVAILABLE", "CONTENT_MEDIA_PARTS_REQUIRED", "CONTENT_MEDIA_PARTS_CONFLICT", "CONTENT_MEDIA_PARTS_INCOMPLETE"]);
+var reply2 = (res, status, body, extra = {}) => {
+  const data = JSON.stringify(body);
+  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(data), "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", ...extra });
+  res.end(data);
+  return true;
+};
+async function bounded(stream) {
+  const chunks = [];
+  let size = 0;
+  for await (const b of stream) {
+    const bytes = Buffer.from(b);
+    size += bytes.length;
+    if (size > 262144) fail2("INPUT_TOO_LARGE", 413);
+    chunks.push(bytes);
+  }
+  return parsedBody(chunks, size);
+}
+function parsedBody(chunks, size) {
+  let text5, value;
+  try {
+    text5 = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks, size));
+    value = JSON.parse(text5);
+  } catch {
+    fail2("INVALID_INPUT");
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value) || text5 !== JSON.stringify(value)) fail2("INVALID_INPUT");
+  return value;
+}
+async function boundedMediaResponse(stream, signal, limit = 262144) {
+  const reader = stream.getReader(), chunks = [];
+  let size = 0, done = false, cancelled = false, onAbort;
+  const cancel = () => {
+    if (!cancelled) {
+      cancelled = true;
+      void reader.cancel().catch(() => {
+      });
+    }
+  };
+  const stopped = new Promise((_resolve, reject3) => {
+    onAbort = () => {
+      reject3(signal.reason);
+      cancel();
+    };
+  });
+  signal.addEventListener("abort", onAbort, { once: true });
+  const read = async () => {
+    while (true) {
+      const part = await reader.read();
+      signal.throwIfAborted();
+      if (part.done) {
+        done = true;
+        break;
+      }
+      const bytes = Buffer.from(part.value);
+      size += bytes.length;
+      if (size > limit) fail2("INPUT_TOO_LARGE", 413);
+      chunks.push(bytes);
+    }
+    return parsedBody(chunks, size);
+  };
+  try {
+    if (signal.aborted) onAbort();
+    return await Promise.race([read(), stopped]);
+  } finally {
+    signal.removeEventListener("abort", onAbort);
+    if (!done) cancel();
+    reader.releaseLock();
+  }
+}
+function validateDTO(data, path2, expected) {
+  const valid = () => fail2("CONTROL_UNAVAILABLE", 502);
+  if (path2 === "/api/v2/account/profile" || path2.startsWith("/api/v2/account/profile/avatar")) {
+    if (!exact3(data, ["accountId", "username", "displayName", "avatar", "avatarVersion"]) || data.accountId !== expected || !safeText(data.displayName, 512) || data.username !== null && !/^[a-z][a-z0-9._-]{2,31}$/.test(data.username) || !Number.isInteger(data.avatarVersion) || data.avatarVersion < 0 || data.avatar !== null && (typeof data.avatar !== "string" || data.avatar.length > 131100 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data.avatar))) valid();
+  } else if (path2 === BASE + "/capabilities") {
+    if (!exact3(data, ["canManage", "canModerate", "canPurge", "freshPasskey"]) || Object.values(data).some((v) => typeof v !== "boolean")) valid();
+  } else if (path2.startsWith(BASE + "/users?") || path2 === BASE + "/users") {
+    if (!exact3(data, ["users", "total", "offset", "settings", "counts"]) || !Array.isArray(data.users) || data.users.length > 50 || !Number.isInteger(data.total) || !Number.isInteger(data.offset) || !exact3(data.settings, ["registrationMode", "maxTesters", "limitEnabled", "version"]) || !exact3(data.counts, ["active", "occupied", "reserved"]) || typeof data.settings.limitEnabled !== "boolean" || !["open", "invite_only"].includes(data.settings.registrationMode) || !Number.isInteger(data.settings.maxTesters) || data.settings.maxTesters < 1 || data.settings.maxTesters > 1e4 || !Number.isInteger(data.settings.version) || data.settings.version < 1 || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
+    for (const u of data.users) if (!exact3(u, ["accountId", "username", "displayName", "state", "version", "createdAt", "lastLoginAt", "activeSessions", "reason", "protected"]) || !id(u.accountId) || !safeText(u.displayName, 512) || u.username !== null && !safeText(u.username, 32) || !["active", "blocked", "removed", "invited", "unadmitted", "administrator"].includes(u.state) || !Number.isInteger(u.version) || !Number.isInteger(u.activeSessions) || typeof u.protected !== "boolean" || !safeText(u.reason, 200)) valid();
+  } else if (path2 === BASE + "/content?mediaStatus=1") {
+    if (!exact3(data, ["mediaAvailability"]) || !exact3(data.mediaAvailability, ["enabled", "maxBytes", "maxDimension"]) || typeof data.mediaAvailability.enabled !== "boolean" || data.mediaAvailability.maxBytes !== 98304 || data.mediaAvailability.maxDimension !== 1600) valid();
+  } else if (path2.startsWith(BASE + "/content?media=") || path2 === BASE + "/content" && exact3(data, ["ok", "media"])) {
+    const m = data.media, read = path2.includes("?");
+    if (!exact3(data, read ? ["media"] : ["ok", "media"]) || !read && data.ok !== true || !exact3(m, read ? ["id", "mime", "data", "width", "height"] : ["id", "mime", "width", "height"]) || !/^[a-f0-9]{64}$/.test(m.id) || m.mime !== "image/jpeg" || ![m.width, m.height].every((n) => Number.isInteger(n) && n >= 1 && n <= 1600) || read && (m.id !== new URL(path2, GATEWAY_ORIGIN).searchParams.get("media") || typeof m.data !== "string" || m.data.length > 131072 || !/^[A-Za-z0-9+/]+={0,2}$/.test(m.data))) valid();
+  } else if (path2 === BASE + "/content" && !exact3(data, ["ok"])) {
+    if (!exact3(data, ["posts", "home"]) || !Array.isArray(data.posts) || data.posts.length > 100 || !exact3(data.home, ["draft", "published", "version"])) valid();
+    const bounded2 = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v);
+    const article = (v) => {
+      if (!exact3(v, ["title", "summary", "body"]) || !bounded2(v.title, 160) || !bounded2(v.summary, 500) || !bounded2(v.body, 2e4)) return false;
+      try {
+        decodeBlogLayout(v.body);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    for (const key of ["draft", "published"]) if (!data.home[key] || typeof data.home[key] !== "object" || Array.isArray(data.home[key]) || Object.entries(data.home[key]).some(([k, v]) => !Object.hasOwn(HOME_SLOTS, k) || !bounded2(v, HOME_SLOTS[k].max))) valid();
+    if (!Number.isInteger(data.home.version) || data.home.version < 1) valid();
+    for (const post of data.posts) if (!exact3(post, ["id", "slug", "draft", "published", "state", "version", "publishedAt"]) || !id(post.id) || !safeText(post.slug, 80) || !["draft", "published", "archived"].includes(post.state) || !Number.isInteger(post.version) || !article(post.draft) || post.published !== null && !article(post.published) || post.publishedAt !== null && !safeText(post.publishedAt, 64)) valid();
+  } else if (path2 === BASE + "/audit") {
+    if (!exact3(data, ["events"]) || !Array.isArray(data.events) || data.events.length > 100) valid();
+    for (const e of data.events) if (!exact3(e, ["action", "targetId", "createdAt"]) || !safeText(e.action, 32) || e.targetId !== null && !id(e.targetId) || !safeText(e.createdAt, 64)) valid();
+  } else if (path2 === BASE + "/invites") {
+    if (!exact3(data, ["ok", "accountId", "invitationToken", "expiresAt"]) || data.ok !== true || !id(data.accountId) || !/^npi_[A-Za-z0-9_-]{43}$/.test(data.invitationToken) || !safeText(data.expiresAt, 64)) valid();
+  } else if (path2.endsWith("/purge-preview")) {
+    if (!exact3(data, ["approvalToken", "expiresAt", "counts", "confirmation", "serverDataOnly"]) || !/^npa_[A-Za-z0-9_-]{43}$/.test(data.approvalToken) || !safeText(data.expiresAt, 64) || !safeText(data.confirmation, 180) || data.serverDataOnly !== true || !exact3(data.counts, ["projects", "workspaces", "feedback", "keys", "providers"]) || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
+  } else if (path2.endsWith("/purge")) {
+    if (!exact3(data, ["ok", "deletedServerData", "localCopiesRemotelyErased"]) || data.ok !== true || data.deletedServerData !== true || data.localCopiesRemotelyErased !== false) valid();
+  } else if (path2 === BASE + "/providers") {
+    if (!exact3(data, ["authorized"]) || data.authorized !== true) valid();
+  } else if (!exact3(data, ["ok"]) || data.ok !== true) valid();
+  return data;
+}
+function mediaTransportCode(error2, signal, phase) {
+  if (signal.aborted) {
+    if (phase === "body") return "BLOG_MEDIA_UPSTREAM_BODY_TIMEOUT";
+    const nativePhases = { dns: "BLOG_MEDIA_UPSTREAM_DNS_TIMEOUT", tcp: "BLOG_MEDIA_UPSTREAM_CONNECT_TIMEOUT", tls: "BLOG_MEDIA_UPSTREAM_TLS_TIMEOUT", upload: "BLOG_MEDIA_UPSTREAM_UPLOAD_TIMEOUT", response: "BLOG_MEDIA_UPSTREAM_RESPONSE_TIMEOUT" };
+    return nativePhases[error2?.nexusPhase] || "BLOG_MEDIA_UPSTREAM_REQUEST_TIMEOUT";
+  }
+  const code = error2?.cause?.code || error2?.code;
+  if (["UND_ERR_SOCKET", "ECONNRESET", "EPIPE"].includes(code)) return phase === "body" ? "BLOG_MEDIA_UPSTREAM_BODY_SOCKET_CLOSED" : "BLOG_MEDIA_UPSTREAM_SOCKET_CLOSED";
+  if (phase === "body") return "BLOG_MEDIA_UPSTREAM_BODY_READ_FAILED";
+  if (["ENOTFOUND", "EAI_AGAIN"].includes(code)) return "BLOG_MEDIA_UPSTREAM_DNS_FAILED";
+  if (["DEPTH_ZERO_SELF_SIGNED_CERT", "SELF_SIGNED_CERT_IN_CHAIN", "UNABLE_TO_VERIFY_LEAF_SIGNATURE", "UNABLE_TO_GET_ISSUER_CERT_LOCALLY", "ERR_TLS_CERT_ALTNAME_INVALID", "CERT_HAS_EXPIRED"].includes(code)) return "BLOG_MEDIA_UPSTREAM_TLS_REJECTED";
+  if (code === "UND_ERR_CONNECT_TIMEOUT") return "BLOG_MEDIA_UPSTREAM_CONNECT_TIMEOUT";
+  if (["ENETUNREACH", "EHOSTUNREACH", "ECONNREFUSED", "ETIMEDOUT"].includes(code)) return "BLOG_MEDIA_UPSTREAM_CONNECT_FAILED";
+  return "BLOG_MEDIA_UPSTREAM_NETWORK_FAILED";
+}
+async function controlService(env, fetchImpl, envelope, { mediaDiagnostics = false, mediaFetchImpl = fetchImpl, captureWire = false, signal: sharedSignal, limit = 262144 } = {}) {
+  const failWire = (code, status, meta) => {
+    const error2 = new Rejected(code, status);
+    if (captureWire) error2.nexusWire = wireHeaders(meta);
+    throw error2;
+  };
+  const body = JSON.stringify(envelope), timestamp = String(Date.now()), nonce = randomBytes2(16).toString("hex");
+  const signature = createHmac2("sha256", env.ADMIN_SERVICE_KEY).update(["v1", "POST", INTERNAL, timestamp, nonce, sha2(body)].join("\n")).digest("hex");
+  if (Buffer.byteLength(body) > limit) fail2("INPUT_TOO_LARGE", 413);
+  const signal = sharedSignal || AbortSignal.timeout(12e3);
+  signal.throwIfAborted();
+  let upstream;
+  try {
+    upstream = await (mediaDiagnostics ? mediaFetchImpl : fetchImpl)(WORKER_ORIGIN + INTERNAL, { method: "POST", credentials: "omit", cache: "no-store", redirect: "error", signal, headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": timestamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": signature }, body, ...captureWire ? { captureWire: true } : {} });
+  } catch (error2) {
+    if (mediaDiagnostics) failWire(mediaTransportCode(error2, signal, "headers"), 502, error2.nexusWire);
+    throw error2;
+  }
+  if (upstream.nativeEncodingRejected) {
+    await upstream.body?.cancel().catch(() => {
+    });
+    fail2("BLOG_MEDIA_UPSTREAM_ENCODING_REJECTED", 502);
+  }
+  const rejected = upstream.redirected || upstream.status >= 300 && upstream.status < 400 ? "REDIRECT" : !/^application\/json(?:\s*;|$)/i.test(upstream.headers.get("content-type") || "") ? "MIME" : upstream.headers.has("set-cookie") ? "COOKIE" : upstream.headers.get("cache-control") !== "no-store" ? "CACHE" : !hasVaryWildcard(upstream.headers.get("vary")) ? "VARY" : null;
+  if (rejected) {
+    await upstream.body?.cancel().catch(() => {
+    });
+    fail2(mediaDiagnostics ? "BLOG_MEDIA_UPSTREAM_" + rejected + "_REJECTED" : "CONTROL_UNAVAILABLE", 502);
+  }
+  let data;
+  try {
+    data = await (mediaDiagnostics ? boundedMediaResponse(upstream.body, signal, limit) : bounded(upstream.body));
+  } catch (error2) {
+    if (mediaDiagnostics && limit === 12e3 && error2 instanceof Rejected && error2.code === "INPUT_TOO_LARGE") fail2("BLOG_MEDIA_UPSTREAM_DTO_REJECTED", 502);
+    if (mediaDiagnostics && !(error2 instanceof Rejected)) fail2(mediaTransportCode(error2, signal, "body"), 502);
+    throw error2;
+  }
+  if (upstream.status !== 200) {
+    const code = safeCodes.has(data.error?.code) ? data.error.code : "CONTROL_UNAVAILABLE", status = [400, 401, 403, 404, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502;
+    if (mediaDiagnostics && code === "CONTROL_UNAVAILABLE" && upstream.status >= 500) fail2("BLOG_MEDIA_UPSTREAM_HTTP_" + ([500, 502, 503, 504].includes(upstream.status) ? upstream.status : "5XX"), status);
+    failWire(code, status, upstream.nexusWire);
+  }
+  return data;
+}
+var service = controlService;
+function createAccountControlHandler({ env = {}, fetchImpl = fetch, mediaFetchImpl = fetchImpl === fetch ? requestMediaHTTP2 : fetchImpl } = {}) {
+  return async (req, res) => {
+    if (typeof req.url !== "string" || !/^\/api\/v2\/account\/(?:control(?:\/|\?|$)|profile(?:\/|\?|$))/.test(req.url)) return false;
+    let diagnostic = false;
+    try {
+      if (env.ACCOUNT_CONTROL_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.ADMIN_SERVICE_KEY !== "string" || env.ADMIN_SERVICE_KEY.length < 32) fail2("CONTROL_UNAVAILABLE", 503);
+      if (req.url.length > 512) fail2("INVALID_INPUT");
+      const url = new URL(req.url, GATEWAY_ORIGIN), path2 = url.pathname;
+      if (path2 === BASE + "/content/media-parts") fail2("NOT_FOUND", 404);
+      if (url.hash || req.url.split("?")[0] !== path2 || !["GET", "POST"].includes(req.method) || path2.startsWith("/api/v2/account/profile") && url.search) fail2("INVALID_INPUT");
+      if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || count2(req, "host") !== 1 || count2(req, "authorization") !== 0 || req.headers.origin !== void 0 && req.headers.origin !== GATEWAY_ORIGIN || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") fail2("ORIGIN_REJECTED", 403);
+      const expected = req.headers["x-nexus-account-expectation"];
+      if (count2(req, "x-nexus-account-expectation") !== 1 || !id(expected)) fail2("ACCOUNT_EXPECTATION_REQUIRED", 400);
+      if (req.method === "POST" && (req.headers.origin !== GATEWAY_ORIGIN || count2(req, "origin") !== 1 || req.headers["content-type"] !== "application/json" || count2(req, "content-type") !== 1 || req.headers["x-nexus-account-control"] !== "1" || count2(req, "x-nexus-account-control") !== 1)) fail2("WRITE_ORIGIN_REQUIRED", 403);
+      const cookies2 = readV2CookieContext(req, "accountControlContract", { env });
+      if (!cookies2) fail2("INGRESS_REJECTED", 401);
+      const session = cookies2.get("__Host-nexus_session");
+      if (!session) fail2("SESSION_REQUIRED", 401);
+      if (!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail2("INGRESS_REJECTED", 401);
+      const partsSignal = env.BFF_CONTENT_MEDIA_PARTS_ENABLED === "true" ? AbortSignal.timeout(12e3) : void 0;
+      const payload = req.method === "POST" ? await bounded(req) : null;
+      let prepared = payload;
+      if (path2 === "/api/v2/account/profile/avatar" && req.method === "POST") {
+        if (!exact3(payload, ["requestId", "version", "jpegBase64"])) fail2("INVALID_INPUT");
+        const before = await service(env, fetchImpl, { path: "/api/v2/account/profile", method: "GET", payload: null, sessionHash: sha2(session), expectedAccountId: expected });
+        validateDTO(before, "/api/v2/account/profile", expected);
+        if (before.avatarVersion !== payload.version) fail2("CONTROL_CONFLICT", 409);
+        try {
+          prepared = { ...payload, jpegBase64: sanitizeAvatar(payload.jpegBase64) };
+        } catch (error2) {
+          if (error2 instanceof AvatarError) fail2(error2.code, error2.status);
+          throw error2;
+        }
+      }
+      if (path2 === BASE + "/content" && req.method === "POST" && payload?.target === "media") {
+        try {
+          if (!exact3(payload.content, ["jpegBase64"])) fail2("INVALID_INPUT");
+          prepared = { ...payload, content: sanitizeBlogImage(payload.content.jpegBase64) };
+        } catch {
+          fail2("BLOG_IMAGE_INVALID");
+        }
+      }
+      const mediaDiagnostics = path2 === BASE + "/content" && req.method === "POST" && prepared?.target === "media";
+      diagnostic = mediaDiagnostics && expected === "synthetic-photo-transport-no-account" && session.startsWith("nxs_SYNTHETIC_NOT_A_SESSION_");
+      const envelope = { path: req.url, method: req.method, payload: prepared, sessionHash: sha2(session), expectedAccountId: expected };
+      const parts = env.BFF_CONTENT_MEDIA_PARTS_ENABLED === "true";
+      const rpc = (value, options) => service(env, fetchImpl, value, { mediaDiagnostics: true, mediaFetchImpl, ...options });
+      let data;
+      if (parts && mediaDiagnostics) data = await uploadPhotoParts(envelope, rpc, { signal: partsSignal });
+      else if (parts && path2 === BASE + "/content" && req.method === "GET" && url.searchParams.has("media")) {
+        if ([...url.searchParams.keys()].join(",") !== "media" || url.searchParams.getAll("media").length !== 1) fail2("INVALID_INPUT");
+        data = await readPhotoParts(envelope, url.searchParams.get("media"), rpc, { signal: partsSignal });
+      } else data = await service(env, fetchImpl, envelope, { mediaDiagnostics, mediaFetchImpl, captureWire: diagnostic });
+      let dto;
+      try {
+        dto = validateDTO(data, req.url, expected);
+      } catch (error2) {
+        if (mediaDiagnostics && error2 instanceof Rejected && error2.code === "CONTROL_UNAVAILABLE") fail2("BLOG_MEDIA_UPSTREAM_DTO_REJECTED", 502);
+        throw error2;
+      }
+      if (path2 === BASE + "/providers") {
+        const configured = new Set(configuredOAuthProviders(env).map((p) => p.id));
+        return reply2(res, 200, { providers: [["yandex", "\u042F\u043D\u0434\u0435\u043A\u0441 ID", ["YANDEX_CLIENT_ID", "YANDEX_CLIENT_SECRET"]], ["google", "Google", ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]], ["vk", "VK ID", ["VK_CLIENT_ID"]]].map(([id2, label, names]) => ({ id: id2, label, configured: configured.has(id2), missing: names.filter((n) => typeof env[n] !== "string" || !env[n] || /[\x00-\x20\x7f]/.test(env[n])), callbackURL: oauthCallbackURL(id2) })) });
+      }
+      if (path2 === BASE + "/content" && req.method === "GET" && Array.isArray(dto.posts)) return reply2(res, 200, { ...dto, posts: dto.posts.map((p) => ({ ...p, draft: compatibleArticle(p.draft, { editor: true }), published: p.published ? compatibleArticle(p.published, { editor: true }) : null })) });
+      return reply2(res, 200, dto);
+    } catch (error2) {
+      return reply2(res, error2 instanceof Rejected ? error2.status : error2.name === "MediaPartsError" ? error2.status : error2.message === "INGRESS_REJECTED" ? 401 : 502, { error: { code: error2 instanceof Rejected || error2.name === "MediaPartsError" ? error2.code : error2.message === "INGRESS_REJECTED" ? "INGRESS_REJECTED" : "CONTROL_UNAVAILABLE" } }, diagnostic && error2 instanceof Rejected ? error2.nexusWire || {} : {});
+    }
+  };
+}
+
 // server-access/bff/content.mjs
 var PATH = "/api/v2/content/feed";
-function createContentHandler({ env = {}, fetchImpl = fetch } = {}) {
+function createContentHandler({ env = {}, fetchImpl = fetch, mediaFetchImpl = fetchImpl === fetch ? requestMediaHTTP2 : fetchImpl } = {}) {
   return async (req, res) => {
     if (!req.url?.startsWith("/api/v2/content/")) return false;
     const reply8 = (status, data) => {
@@ -2546,6 +3424,11 @@ function createContentHandler({ env = {}, fetchImpl = fetch } = {}) {
       if (url.searchParams.has("media") && !/^[a-f0-9]{64}$/.test(url.searchParams.get("media"))) return reply8(400, { error: { code: "INVALID_INPUT" } });
       if (req.method !== "GET" || url.pathname !== PATH || req.url.split("?")[0] !== PATH || req.headers.host !== new URL(GATEWAY_ORIGIN).host) return reply8(404, { error: { code: "NOT_FOUND" } });
       if ([...url.searchParams.keys()].some((k) => !["slug", "media"].includes(k)) || url.searchParams.getAll("slug").length > 1 || url.searchParams.getAll("media").length > 1 || [...url.searchParams.keys()].length > 1) return reply8(400, { error: { code: "INVALID_INPUT" } });
+      if (url.searchParams.has("media") && env.BFF_CONTENT_MEDIA_PARTS_ENABLED === "true") {
+        if (typeof env.ADMIN_SERVICE_KEY !== "string" || env.ADMIN_SERVICE_KEY.length < 32) throw Error();
+        const rpc = (value, options) => controlService(env, fetchImpl, value, { mediaDiagnostics: true, mediaFetchImpl, ...options });
+        return reply8(200, await readPhotoParts({ sessionHash: null, expectedAccountId: null }, url.searchParams.get("media"), rpc, { publishedOnly: true }));
+      }
       const response = await fetchImpl(WORKER_ORIGIN + req.url, { method: "GET", credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(5e3), headers: { accept: "application/json" } });
       if (!response.headers.get("content-type")?.startsWith("application/json") || response.headers.has("set-cookie") || response.headers.get("cache-control") !== "no-store" || !hasVaryWildcard(response.headers.get("vary"))) throw Error();
       const reader = response.body.getReader(), chunks = [];
@@ -2575,8 +3458,8 @@ function createContentHandler({ env = {}, fetchImpl = fetch } = {}) {
       for (const p of data.posts) if (!keys(p, [...url.searchParams.has("slug") ? ["slug", "title", "summary", "body", "publishedAt"] : ["slug", "title", "summary", "publishedAt"], ...p.cover !== void 0 ? ["cover"] : []]) || typeof p.slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p.slug) || typeof p.title !== "string" || p.title.length > 160 || typeof p.summary !== "string" || p.summary.length > 500 || typeof p.publishedAt !== "string" || p.publishedAt.length > 64 || p.body !== void 0 && (typeof p.body !== "string" || p.body.length > 2e4) || p.cover !== void 0 && !validLayoutImage(p.cover)) throw Error();
       for (const p of data.posts) if (p.body !== void 0) decodeBlogLayout(p.body);
       return reply8(200, { ...data, posts: data.posts.map((p) => p.body === void 0 ? p : compatibleArticle(p)) });
-    } catch {
-      return reply8(502, { error: { code: "CONTENT_UNAVAILABLE" } });
+    } catch (error2) {
+      return reply8([400, 404, 429, 503].includes(error2?.status) ? error2.status : 502, { error: { code: "CONTENT_UNAVAILABLE" } });
     }
   };
 }
@@ -2585,9 +3468,9 @@ function createContentHandler({ env = {}, fetchImpl = fetch } = {}) {
 import { readFileSync } from "node:fs";
 
 // server-access/bff/passkey.mjs
-import { createHash as createHash2, createHmac as createHmac2, randomBytes as randomBytes2 } from "node:crypto";
+import { createHash as createHash6, createHmac as createHmac3, randomBytes as randomBytes3 } from "node:crypto";
 import { isIP } from "node:net";
-var INTERNAL = "/api/v2/account/internal/passkey";
+var INTERNAL2 = "/api/v2/account/internal/passkey";
 var routes = /* @__PURE__ */ new Map([
   ["/api/v2/account/passkey/registration", ["GET", "registration-policy"]],
   ["/api/v2/account/passkey/register/cancel", ["POST", "cancel-public-registration"]],
@@ -2600,13 +3483,13 @@ var routes = /* @__PURE__ */ new Map([
   ["/api/v2/account/passkey/revoke", ["POST", "revoke"]],
   ["/api/v2/account/passkey/logout", ["POST", "logout"]]
 ]);
-var digest = (value) => createHash2("sha256").update(value).digest("hex");
-var reply2 = (res, status, body, cookies2 = []) => {
+var digest2 = (value) => createHash6("sha256").update(value).digest("hex");
+var reply3 = (res, status, body, cookies2 = []) => {
   const data = JSON.stringify(body);
   res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "content-length": Buffer.byteLength(data), ...cookies2.length ? { "set-cookie": cookies2 } : {} });
   res.end(data);
 };
-var count2 = (req, name) => {
+var count3 = (req, name) => {
   let value = 0;
   for (let i = 0; i < (req.rawHeaders || []).length; i += 2) if (req.rawHeaders[i].toLowerCase() === name) value++;
   return value;
@@ -2619,7 +3502,7 @@ function context(req, env) {
     if (flow2 !== null && !/^npf_[A-Za-z0-9_-]{43}$/.test(flow2) || session2 !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session2)) throw Error("INGRESS_REJECTED");
     return { flow: flow2, session: session2 };
   }
-  if (count2(req, "x-yc-apigateway-operation-context") !== 1) throw Error("INGRESS_REJECTED");
+  if (count3(req, "x-yc-apigateway-operation-context") !== 1) throw Error("INGRESS_REJECTED");
   const value = req.headers["x-yc-apigateway-operation-context"];
   if (typeof value !== "string" || value.length > 4096 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) throw Error("INGRESS_REJECTED");
   const bytes = Buffer.from(value, "base64");
@@ -2630,7 +3513,7 @@ function context(req, env) {
   const flow = optional(data.flowCookie), session = optional(data.sessionCookie);
   if (flow && !/^npf_[A-Za-z0-9_-]{43}$/.test(flow) || session && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) throw Error("INGRESS_REJECTED");
   if (req.headers.cookie !== void 0) {
-    if (count2(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) throw Error("INGRESS_REJECTED");
+    if (count3(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) throw Error("INGRESS_REJECTED");
     const found = {};
     for (const part of req.headers.cookie.split(";")) {
       const p = part.trim(), at = p.indexOf("=");
@@ -2679,24 +3562,24 @@ async function upstreamJSON(response) {
 function createPasskeyHandler({ env, fetchImpl = fetch }) {
   return async (req, res) => {
     const route = routes.get(req.url);
-    if (!route) return reply2(res, 404, { error: { code: "NOT_FOUND" } });
-    if (env.PASSKEY_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.PASSKEY_SERVICE_KEY !== "string" || env.PASSKEY_SERVICE_KEY.length < 32) return reply2(res, 503, { error: { code: "PASSKEY_UNAVAILABLE" } });
+    if (!route) return reply3(res, 404, { error: { code: "NOT_FOUND" } });
+    if (env.PASSKEY_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.PASSKEY_SERVICE_KEY !== "string" || env.PASSKEY_SERVICE_KEY.length < 32) return reply3(res, 503, { error: { code: "PASSKEY_UNAVAILABLE" } });
     let origin, worker;
     try {
       origin = new URL(env.PASSKEY_ORIGIN);
       worker = new URL(env.PASSKEY_WORKER_ORIGIN);
     } catch {
-      return reply2(res, 503, { error: { code: "PASSKEY_UNAVAILABLE" } });
+      return reply3(res, 503, { error: { code: "PASSKEY_UNAVAILABLE" } });
     }
-    if (origin.origin !== env.PASSKEY_ORIGIN || worker.origin !== env.PASSKEY_WORKER_ORIGIN || worker.protocol !== "https:") return reply2(res, 503, { error: { code: "PASSKEY_UNAVAILABLE" } });
+    if (origin.origin !== env.PASSKEY_ORIGIN || worker.origin !== env.PASSKEY_WORKER_ORIGIN || worker.protocol !== "https:") return reply3(res, 503, { error: { code: "PASSKEY_UNAVAILABLE" } });
     const [method, op] = route;
-    if (req.method !== method) return reply2(res, 405, { error: { code: "METHOD_NOT_ALLOWED" } });
-    if (req.headers.host !== origin.host || count2(req, "host") !== 1 || req.headers.authorization || req.headers.origin && req.headers.origin !== origin.origin || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin") return reply2(res, 403, { error: { code: "ORIGIN_REJECTED" } });
-    if (method === "POST" && (req.headers.origin !== origin.origin || count2(req, "origin") !== 1 || req.headers["x-nexus-passkey-write"] !== "1" || req.headers["content-type"] !== "application/json")) return reply2(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
+    if (req.method !== method) return reply3(res, 405, { error: { code: "METHOD_NOT_ALLOWED" } });
+    if (req.headers.host !== origin.host || count3(req, "host") !== 1 || req.headers.authorization || req.headers.origin && req.headers.origin !== origin.origin || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin") return reply3(res, 403, { error: { code: "ORIGIN_REJECTED" } });
+    if (method === "POST" && (req.headers.origin !== origin.origin || count3(req, "origin") !== 1 || req.headers["x-nexus-passkey-write"] !== "1" || req.headers["content-type"] !== "application/json")) return reply3(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
     try {
       const ingress2 = context(req, env), isOptions = op.endsWith("-options");
-      const flow = isOptions || !op.endsWith("-verify") && op !== "cancel-public-registration" ? "npf_" + randomBytes2(32).toString("base64url") : ingress2.flow;
-      if (!flow) return reply2(res, 401, { error: { code: "FLOW_REQUIRED" } });
+      const flow = isOptions || !op.endsWith("-verify") && op !== "cancel-public-registration" ? "npf_" + randomBytes3(32).toString("base64url") : ingress2.flow;
+      if (!flow) return reply3(res, 401, { error: { code: "FLOW_REQUIRED" } });
       const input = method === "GET" ? {} : await readJSON(req, 65536);
       if (!input || typeof input !== "object" || Array.isArray(input)) throw Error("INVALID_INPUT");
       let mapped = input;
@@ -2707,72 +3590,72 @@ function createPasskeyHandler({ env, fetchImpl = fetch }) {
           mapped = { registration: "open", username: input.username, displayName: input.displayName };
         } else if (input.invitationToken !== void 0) {
           if (typeof input.invitationToken !== "string" || !/^npi_[A-Za-z0-9_-]{43}$/.test(input.invitationToken)) throw Error("INVALID_INPUT");
-          mapped = { inviteHash: digest(input.invitationToken), ...input.username !== void 0 ? { username: input.username } : {}, ...input.displayName !== void 0 ? { displayName: input.displayName } : {} };
+          mapped = { inviteHash: digest2(input.invitationToken), ...input.username !== void 0 ? { username: input.username } : {}, ...input.displayName !== void 0 ? { displayName: input.displayName } : {} };
         } else {
           if (input.username !== void 0 || input.displayName !== void 0) throw Error("INVALID_INPUT");
           mapped = {};
         }
       }
-      const sessionHash = ingress2.session ? digest(ingress2.session) : null;
+      const sessionHash = ingress2.session ? digest2(ingress2.session) : null;
       const forwarded = String(req.headers["x-forwarded-for"] || "").split(",").at(-1).trim();
-      const networkHash = createHmac2("sha256", env.PASSKEY_SERVICE_KEY).update(isIP(forwarded) ? forwarded : String(req.socket?.remoteAddress || "unknown")).digest("hex");
-      const body = JSON.stringify({ op, input: mapped, flowHash: digest(flow), sessionHash, networkHash }), timestamp = String(Date.now()), nonce = randomBytes2(16).toString("hex");
+      const networkHash = createHmac3("sha256", env.PASSKEY_SERVICE_KEY).update(isIP(forwarded) ? forwarded : String(req.socket?.remoteAddress || "unknown")).digest("hex");
+      const body = JSON.stringify({ op, input: mapped, flowHash: digest2(flow), sessionHash, networkHash }), timestamp = String(Date.now()), nonce = randomBytes3(16).toString("hex");
       const canonical = `v1
 POST
-${INTERNAL}
+${INTERNAL2}
 ${timestamp}
 ${nonce}
-${digest(body)}`;
-      const upstream = await fetchImpl(worker.origin + INTERNAL, { method: "POST", body, redirect: "error", signal: AbortSignal.timeout(12e3), headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": timestamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": createHmac2("sha256", env.PASSKEY_SERVICE_KEY).update(canonical).digest("hex") } });
+${digest2(body)}`;
+      const upstream = await fetchImpl(worker.origin + INTERNAL2, { method: "POST", body, redirect: "error", signal: AbortSignal.timeout(12e3), headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": timestamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": createHmac3("sha256", env.PASSKEY_SERVICE_KEY).update(canonical).digest("hex") } });
       if (!upstream.headers.get("content-type")?.startsWith("application/json")) throw Error("UPSTREAM_INVALID");
       const data = await upstreamJSON(upstream);
       const safeCodes2 = ["REGISTRATION_CLOSED", "REGISTRATION_UNAVAILABLE", "ALREADY_SIGNED_IN", "ALPHA_CAPACITY_REACHED", "USERNAME_UNAVAILABLE", "PROFILE_INPUT_REQUIRED", "ALPHA_ACCESS_CLOSED", "ALPHA_CONTROL_UNAVAILABLE", "PASSKEY_UNAVAILABLE", "INVALID_INPUT", "INPUT_TOO_LARGE", "RATE_LIMITED", "ENROLLMENT_REQUIRED", "FRESH_LOGIN_REQUIRED", "KEY_LIMIT", "PASSKEY_REJECTED", "CHALLENGE_REJECTED", "SESSION_REQUIRED", "LAST_KEY_OR_NOT_FOUND", "ISSUANCE_UNCONFIRMED"];
-      if (!upstream.ok) return reply2(res, [400, 401, 403, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502, { error: { code: safeCodes2.includes(data?.error?.code) ? data.error.code : "PASSKEY_UNAVAILABLE" } });
+      if (!upstream.ok) return reply3(res, [400, 401, 403, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502, { error: { code: safeCodes2.includes(data?.error?.code) ? data.error.code : "PASSKEY_UNAVAILABLE" } });
       if (op === "registration-policy") {
         if (Object.keys(data).sort().join(",") !== "available,reason" || typeof data.available !== "boolean" || !["open", "invitation", "capacity"].includes(data.reason) || data.available !== (data.reason === "open")) throw Error("UPSTREAM_INVALID");
-        return reply2(res, 200, { available: data.available, reason: data.reason });
+        return reply3(res, 200, { available: data.available, reason: data.reason });
       }
       if (op === "cancel-public-registration") {
         if (Object.keys(data).join(",") !== "ok" || data.ok !== true) throw Error("UPSTREAM_INVALID");
-        return reply2(res, 200, { ok: true }, [cookies("__Host-nexus_passkey_flow", "", 0)]);
+        return reply3(res, 200, { ok: true }, [cookies("__Host-nexus_passkey_flow", "", 0)]);
       }
       if (isOptions) {
         if (typeof data.challengeId !== "string" || !data.options) throw Error("UPSTREAM_INVALID");
-        return reply2(res, 200, { challengeId: data.challengeId, options: data.options }, [cookies("__Host-nexus_passkey_flow", flow, 120)]);
+        return reply3(res, 200, { challengeId: data.challengeId, options: data.options }, [cookies("__Host-nexus_passkey_flow", flow, 120)]);
       }
       if (op === "register-verify") {
         if (data.ok !== true || "sessionSecret" in data) throw Error("UPSTREAM_INVALID");
-        return reply2(res, 200, { ok: true }, [cookies("__Host-nexus_passkey_flow", "", 0)]);
+        return reply3(res, 200, { ok: true }, [cookies("__Host-nexus_passkey_flow", "", 0)]);
       }
       if (op === "authenticate-verify") {
         if (data.ok !== true || !/^nxs_[A-Za-z0-9_-]{43}$/.test(data.sessionSecret || "")) throw Error("UPSTREAM_INVALID");
-        return reply2(res, 200, { ok: true }, [cookies("__Host-nexus_session", data.sessionSecret, 43200), cookies("__Host-nexus_passkey_flow", "", 0)]);
+        return reply3(res, 200, { ok: true }, [cookies("__Host-nexus_session", data.sessionSecret, 43200), cookies("__Host-nexus_passkey_flow", "", 0)]);
       }
       if (op === "logout") {
         if (data.ok !== true || data.clearSession !== true) throw Error("UPSTREAM_INVALID");
-        return reply2(res, 200, { ok: true }, [cookies("__Host-nexus_session", "", 0), cookies("__Host-nexus_passkey_flow", "", 0)]);
+        return reply3(res, 200, { ok: true }, [cookies("__Host-nexus_session", "", 0), cookies("__Host-nexus_passkey_flow", "", 0)]);
       }
       if (op === "keys") {
         if (!Array.isArray(data.keys) || data.keys.length > 10) throw Error("UPSTREAM_INVALID");
-        return reply2(res, 200, { keys: data.keys.map((k) => ({ id: k.id, status: k.status, createdAt: k.createdAt, deviceType: k.deviceType })) });
+        return reply3(res, 200, { keys: data.keys.map((k) => ({ id: k.id, status: k.status, createdAt: k.createdAt, deviceType: k.deviceType })) });
       }
       if (op === "invitation-info") {
         if (typeof data.profileRequired !== "boolean" || typeof data.expiresAt !== "string" || data.expiresAt.length > 64) throw Error("UPSTREAM_INVALID");
-        return reply2(res, 200, { profileRequired: data.profileRequired, expiresAt: data.expiresAt });
+        return reply3(res, 200, { profileRequired: data.profileRequired, expiresAt: data.expiresAt });
       }
-      if (op === "revoke" && data.ok === true) return reply2(res, 200, { ok: true });
+      if (op === "revoke" && data.ok === true) return reply3(res, 200, { ok: true });
       throw Error("UPSTREAM_INVALID");
     } catch (error2) {
       const code = ["INPUT_TOO_LARGE", "INVALID_INPUT", "INGRESS_REJECTED"].includes(error2.message) ? error2.message : error2 instanceof SyntaxError ? "INVALID_INPUT" : "PASSKEY_UNAVAILABLE";
-      return reply2(res, code === "INPUT_TOO_LARGE" ? 413 : code === "INGRESS_REJECTED" ? 401 : code === "INVALID_INPUT" ? 400 : 502, { error: { code } });
+      return reply3(res, code === "INPUT_TOO_LARGE" ? 413 : code === "INGRESS_REJECTED" ? 401 : code === "INVALID_INPUT" ? 400 : 502, { error: { code } });
     }
   };
 }
 
 // server-access/bff/feedback.mjs
-import { createHash as createHash3, createHmac as createHmac3, randomBytes as randomBytes3 } from "node:crypto";
-var INTERNAL2 = "/api/v2/feedback/internal";
-var reply3 = (res, status, body) => {
+import { createHash as createHash7, createHmac as createHmac4, randomBytes as randomBytes4 } from "node:crypto";
+var INTERNAL3 = "/api/v2/feedback/internal";
+var reply4 = (res, status, body) => {
   const data = JSON.stringify(body);
   res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "content-length": Buffer.byteLength(data) });
   res.end(data);
@@ -2809,56 +3692,56 @@ async function readResponse(response) {
 }
 function createFeedbackHandler({ env = {}, fetchImpl = fetch } = {}) {
   return async (req, res) => {
-    if (env.FEEDBACK_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true") return reply3(res, 503, { error: { code: "FEEDBACK_UNAVAILABLE" } });
+    if (env.FEEDBACK_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true") return reply4(res, 503, { error: { code: "FEEDBACK_UNAVAILABLE" } });
     const origin = env.FEEDBACK_GATEWAY_ORIGIN || GATEWAY_ORIGIN, host = new URL(origin).host;
-    if (req.headers.host !== host || req.headers.origin && req.headers.origin !== origin || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin" || req.headers.authorization) return reply3(res, 403, { error: { code: "ORIGIN_REJECTED" } });
-    if (!["GET", "POST", "PATCH"].includes(req.method)) return reply3(res, 405, { error: { code: "METHOD_NOT_ALLOWED" } });
-    const path = new URL(req.url, origin);
-    if (path.pathname.includes("%") || !/^\/api\/v2\/feedback\/(reviews|me|items|moderation|items\/[a-zA-Z0-9-]+(?:\/(withdraw|moderate|events|delete|conversation|replies(?:\/[a-zA-Z0-9-]+\/delete)?))?)$/.test(path.pathname) || path.pathname !== req.url.split("?")[0]) return reply3(res, 404, { error: { code: "NOT_FOUND" } });
-    if (req.method !== "GET" && (req.headers.origin !== origin || req.headers["x-nexus-feedback-write"] !== "1" || req.headers["content-type"] !== "application/json" || path.search)) return reply3(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
-    const isPublic = path.pathname === "/api/v2/feedback/reviews" && req.method === "GET";
+    if (req.headers.host !== host || req.headers.origin && req.headers.origin !== origin || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin" || req.headers.authorization) return reply4(res, 403, { error: { code: "ORIGIN_REJECTED" } });
+    if (!["GET", "POST", "PATCH"].includes(req.method)) return reply4(res, 405, { error: { code: "METHOD_NOT_ALLOWED" } });
+    const path2 = new URL(req.url, origin);
+    if (path2.pathname.includes("%") || !/^\/api\/v2\/feedback\/(reviews|me|items|moderation|items\/[a-zA-Z0-9-]+(?:\/(withdraw|moderate|events|delete|conversation|replies(?:\/[a-zA-Z0-9-]+\/delete)?))?)$/.test(path2.pathname) || path2.pathname !== req.url.split("?")[0]) return reply4(res, 404, { error: { code: "NOT_FOUND" } });
+    if (req.method !== "GET" && (req.headers.origin !== origin || req.headers["x-nexus-feedback-write"] !== "1" || req.headers["content-type"] !== "application/json" || path2.search)) return reply4(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
+    const isPublic = path2.pathname === "/api/v2/feedback/reviews" && req.method === "GET";
     let session = null;
     if (!isPublic) {
       try {
         const v2 = readV2CookieContext(req, "accountReadContract", { env });
         session = v2 === void 0 ? sessionFromIngress(req, { env }) : v2.get("__Host-nexus_session") ?? null;
       } catch {
-        return reply3(res, 401, { error: { code: "SESSION_REQUIRED" } });
+        return reply4(res, 401, { error: { code: "SESSION_REQUIRED" } });
       }
-      if (typeof session !== "string" || !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) return reply3(res, 401, { error: { code: "SESSION_REQUIRED" } });
+      if (typeof session !== "string" || !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) return reply4(res, 401, { error: { code: "SESSION_REQUIRED" } });
     }
     const expectedAccountId = isPublic ? null : req.headers["x-nexus-feedback-account"];
     const expectationHeaders = Array.isArray(req.rawHeaders) ? req.rawHeaders.filter((name, index) => index % 2 === 0 && typeof name === "string" && name.toLowerCase() === "x-nexus-feedback-account").length : 0;
     const hasExpectation = !isPublic && (expectedAccountId !== void 0 || expectationHeaders > 0);
-    if (!isPublic && (hasExpectation || env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED === "true") && (expectationHeaders !== 1 || typeof expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(expectedAccountId))) return reply3(res, 401, { error: { code: "SESSION_REQUIRED" } });
+    if (!isPublic && (hasExpectation || env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED === "true") && (expectationHeaders !== 1 || typeof expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(expectedAccountId))) return reply4(res, 401, { error: { code: "SESSION_REQUIRED" } });
     try {
       let upstream;
       if (isPublic) {
         upstream = await fetchImpl(WORKER_ORIGIN + req.url, { method: "GET", redirect: "error", signal: AbortSignal.timeout(5e3), headers: { accept: "application/json" } });
       } else {
-        if (typeof env.FEEDBACK_SERVICE_KEY !== "string" || env.FEEDBACK_SERVICE_KEY.length < 32) return reply3(res, 503, { error: { code: "FEEDBACK_UNAVAILABLE" } });
-        const payload = req.method === "GET" ? null : await readBody(req, 2e4), body = JSON.stringify({ method: req.method, path: req.url, payload, sessionHash: createHash3("sha256").update(session).digest("hex"), ...hasExpectation ? { expectedAccountId } : {} });
-        const stamp = String(Date.now()), nonce = randomBytes3(16).toString("hex"), digest3 = createHash3("sha256").update(body).digest("hex"), canonical = `v1
+        if (typeof env.FEEDBACK_SERVICE_KEY !== "string" || env.FEEDBACK_SERVICE_KEY.length < 32) return reply4(res, 503, { error: { code: "FEEDBACK_UNAVAILABLE" } });
+        const payload = req.method === "GET" ? null : await readBody(req, 2e4), body = JSON.stringify({ method: req.method, path: req.url, payload, sessionHash: createHash7("sha256").update(session).digest("hex"), ...hasExpectation ? { expectedAccountId } : {} });
+        const stamp = String(Date.now()), nonce = randomBytes4(16).toString("hex"), digest3 = createHash7("sha256").update(body).digest("hex"), canonical = `v1
 POST
-${INTERNAL2}
+${INTERNAL3}
 ${stamp}
 ${nonce}
 ${digest3}`;
-        upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL2, { method: "POST", body, redirect: "error", signal: AbortSignal.timeout(5e3), headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": stamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": createHmac3("sha256", env.FEEDBACK_SERVICE_KEY).update(canonical).digest("hex") } });
+        upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL3, { method: "POST", body, redirect: "error", signal: AbortSignal.timeout(5e3), headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": stamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": createHmac4("sha256", env.FEEDBACK_SERVICE_KEY).update(canonical).digest("hex") } });
       }
       if (!upstream.headers.get("content-type")?.startsWith("application/json")) throw Error("UPSTREAM_INVALID");
       const data = await readResponse(upstream);
       const allowedCodes = ["INVALID_INPUT", "INVALID_CONTEXT", "INPUT_TOO_LARGE", "RATE_LIMITED", "STALE_VERSION", "STALE_REVISION", "REQUEST_CONFLICT", "ITEM_DELETED", "INVALID_TRANSITION", "NOT_FOUND", "MODERATOR_REQUIRED", "SESSION_REQUIRED", "FEEDBACK_UNAVAILABLE"];
-      if (!upstream.ok) return reply3(res, [400, 401, 403, 404, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502, { error: { code: allowedCodes.includes(data?.error?.code) ? data.error.code : "FEEDBACK_UNAVAILABLE" } });
-      return reply3(res, 200, data);
+      if (!upstream.ok) return reply4(res, [400, 401, 403, 404, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502, { error: { code: allowedCodes.includes(data?.error?.code) ? data.error.code : "FEEDBACK_UNAVAILABLE" } });
+      return reply4(res, 200, data);
     } catch (error2) {
-      return reply3(res, error2.message === "BODY_TOO_LARGE" ? 413 : error2 instanceof SyntaxError ? 400 : 502, { error: { code: error2.message === "BODY_TOO_LARGE" ? "INPUT_TOO_LARGE" : error2 instanceof SyntaxError ? "INVALID_INPUT" : "FEEDBACK_UNAVAILABLE" } });
+      return reply4(res, error2.message === "BODY_TOO_LARGE" ? 413 : error2 instanceof SyntaxError ? 400 : 502, { error: { code: error2.message === "BODY_TOO_LARGE" ? "INPUT_TOO_LARGE" : error2 instanceof SyntaxError ? "INVALID_INPUT" : "FEEDBACK_UNAVAILABLE" } });
     }
   };
 }
 
 // server-access/bff/yc6-probe-handler.mjs
-import { createHash as createHash4, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+import { createHash as createHash8, randomBytes as randomBytes5, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 var PROBE_COOKIE_NAME = "__Host-nexus_probe";
 var PROBE_MAX_AGE_SECONDS = 300;
 function sendJson(res, status, body, extraHeaders = {}) {
@@ -2873,8 +3756,8 @@ function sendJson(res, status, body, extraHeaders = {}) {
   res.end(payload);
 }
 function createProbeValue() {
-  const nonce = randomBytes4(24).toString("base64url");
-  const checksum = createHash4("sha256").update(`yc6:${nonce}`).digest("base64url").slice(0, 24);
+  const nonce = randomBytes5(24).toString("base64url");
+  const checksum = createHash8("sha256").update(`yc6:${nonce}`).digest("base64url").slice(0, 24);
   return `v1.${nonce}.${checksum}`;
 }
 function validateProbeValue(value) {
@@ -2889,7 +3772,7 @@ function validateProbeValue(value) {
   if (!nonce || !checksum) {
     return false;
   }
-  const expectedChecksum = createHash4("sha256").update(`yc6:${nonce}`).digest("base64url").slice(0, 24);
+  const expectedChecksum = createHash8("sha256").update(`yc6:${nonce}`).digest("base64url").slice(0, 24);
   return checksum === expectedChecksum;
 }
 function decodeGatewayOperationContext(req) {
@@ -2928,7 +3811,7 @@ function matchesGatewayContext(raw, context2) {
   if (typeof raw !== "string" || typeof context2 !== "string" || raw.length > 128 || context2.length > 128) return false;
   const actual = Buffer.from(raw);
   const expected = Buffer.from(context2);
-  return actual.length === expected.length && timingSafeEqual3(actual, expected);
+  return actual.length === expected.length && timingSafeEqual4(actual, expected);
 }
 function probeCookieHeader(value) {
   return [
@@ -3044,7 +3927,7 @@ function createCombinedHandler(options) {
 }
 
 // server-access/bff/entry-gate.mjs
-import { createHash as createHash5, createHmac as createHmac4, randomBytes as randomBytes5 } from "node:crypto";
+import { createHash as createHash9, createHmac as createHmac5, randomBytes as randomBytes6 } from "node:crypto";
 var ENTRY_SHELL_URL = "https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/nexus-shell.html";
 var PATHS2 = /* @__PURE__ */ new Set(["/", "/index.html", "/nexus-shell.html"]);
 var INTERNAL_PATH2 = "/api/v2/account/internal/read";
@@ -3059,7 +3942,7 @@ function headerCount2(req, name) {
   }
   return count5;
 }
-function reply4(req, res, status, body, contentType = "application/json; charset=utf-8", extra = {}) {
+function reply5(req, res, status, body, contentType = "application/json; charset=utf-8", extra = {}) {
   const data = Buffer.isBuffer(body) ? body : Buffer.from(JSON.stringify(body));
   res.writeHead(status, {
     "Content-Type": contentType,
@@ -3073,7 +3956,7 @@ function reply4(req, res, status, body, contentType = "application/json; charset
   return true;
 }
 function error(req, res, status, code, extra) {
-  return reply4(req, res, status, { error: { code } }, void 0, extra);
+  return reply5(req, res, status, { error: { code } }, void 0, extra);
 }
 async function boundedBytes(response, max, type) {
   if (response.redirected || !type.test(response.headers.get("content-type") || "")) {
@@ -3111,15 +3994,15 @@ async function boundedBytes(response, max, type) {
 function exactKeys(value, names) {
   return value !== null && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join(",") === [...names].sort().join(",");
 }
-function text3(value, max, nonempty = false) {
+function text4(value, max, nonempty = false) {
   return typeof value === "string" && value.length <= max && (!nonempty || value.length > 0);
 }
 function isActiveAccountDTO(body) {
-  if (!exactKeys(body, ["account", "loginMethods", "enrollmentAvailable"]) || body.enrollmentAvailable !== false || !exactKeys(body.account, ["accountId", "displayName", "status"]) || body.account.status !== "active" || !text3(body.account.accountId, 256, true) || !text3(body.account.displayName, 512) || !Array.isArray(body.loginMethods) || body.loginMethods.length === 0 || body.loginMethods.length > 100) return false;
+  if (!exactKeys(body, ["account", "loginMethods", "enrollmentAvailable"]) || body.enrollmentAvailable !== false || !exactKeys(body.account, ["accountId", "displayName", "status"]) || body.account.status !== "active" || !text4(body.account.accountId, 256, true) || !text4(body.account.displayName, 512) || !Array.isArray(body.loginMethods) || body.loginMethods.length === 0 || body.loginMethods.length > 100) return false;
   const ids = /* @__PURE__ */ new Set();
   let active = false;
   for (const method of body.loginMethods) {
-    if (!exactKeys(method, ["id", "kind", "status", "createdAt", "disabledAt"]) || !text3(method.id, 256, true) || ids.has(method.id) || !["oauth", "password", "passkey"].includes(method.kind) || !["pending", "active", "disabled"].includes(method.status) || !text3(method.createdAt, 64, true) || !(method.disabledAt === null || text3(method.disabledAt, 64, true))) return false;
+    if (!exactKeys(method, ["id", "kind", "status", "createdAt", "disabledAt"]) || !text4(method.id, 256, true) || ids.has(method.id) || !["oauth", "password", "passkey"].includes(method.kind) || !["pending", "active", "disabled"].includes(method.status) || !text4(method.createdAt, 64, true) || !(method.disabledAt === null || text4(method.disabledAt, 64, true))) return false;
     ids.add(method.id);
     if (method.status === "active" && method.disabledAt === null) active = true;
   }
@@ -3129,9 +4012,9 @@ function createEntryGateHandler({ env = {}, fetchImpl = fetch, landingBody: land
   const landing = Buffer.isBuffer(landingBody2) ? Buffer.from(landingBody2) : null;
   return async (req, res) => {
     if (env.NEXUS_ENTRY_GATE_ENABLED !== "true" || typeof req.url !== "string") return false;
-    const path = req.url.split("?")[0];
-    if (!PATHS2.has(path)) return false;
-    if (req.url !== path) return error(req, res, 400, "ENTRY_TARGET_REJECTED");
+    const path2 = req.url.split("?")[0];
+    if (!PATHS2.has(path2)) return false;
+    if (req.url !== path2) return error(req, res, 400, "ENTRY_TARGET_REJECTED");
     if (!["GET", "HEAD"].includes(req.method)) {
       return error(req, res, 405, "METHOD_NOT_ALLOWED", { Allow: "GET, HEAD" });
     }
@@ -3144,15 +4027,15 @@ function createEntryGateHandler({ env = {}, fetchImpl = fetch, landingBody: land
     if (env.PRIVATE_GATEWAY_CONFIRMED !== "true" || env.ACCOUNT_READ_ENABLED !== "true" || typeof env.ACCOUNT_SERVICE_KEY !== "string" || env.ACCOUNT_SERVICE_KEY.length < 32 || !landing || !landing.length || landing.length > MAX_HTML_BYTES) {
       return error(req, res, 503, "ENTRY_GATE_UNAVAILABLE");
     }
-    const publicOrDenied = (status, code) => path === "/nexus-shell.html" ? error(req, res, status, code) : reply4(req, res, 200, landing, "text/html; charset=utf-8");
+    const publicOrDenied = (status, code) => path2 === "/nexus-shell.html" ? error(req, res, status, code) : reply5(req, res, 200, landing, "text/html; charset=utf-8");
     const session = sessionFromIngress(req, { env });
     if (!session) return publicOrDenied(401, "AUTHENTICATION_REQUIRED");
     try {
-      const body = JSON.stringify({ path: "/api/v2/account", sessionHash: createHash5("sha256").update(session).digest("hex") });
+      const body = JSON.stringify({ path: "/api/v2/account", sessionHash: createHash9("sha256").update(session).digest("hex") });
       const stamp = String(Date.now());
-      const nonce = randomBytes5(16).toString("hex");
-      const hash = createHash5("sha256").update(body).digest("hex");
-      const signature = createHmac4("sha256", env.ACCOUNT_SERVICE_KEY).update(`v1
+      const nonce = randomBytes6(16).toString("hex");
+      const hash = createHash9("sha256").update(body).digest("hex");
+      const signature = createHmac5("sha256", env.ACCOUNT_SERVICE_KEY).update(`v1
 POST
 ${INTERNAL_PATH2}
 ${stamp}
@@ -3197,7 +4080,7 @@ ${hash}`).digest("hex");
         return error(req, res, 502, "ENTRY_SHELL_UNAVAILABLE");
       }
       const html = await boundedBytes(shell, MAX_HTML_BYTES, /^text\/html(?:\s*;|$)/i);
-      return reply4(req, res, 200, html, "text/html; charset=utf-8");
+      return reply5(req, res, 200, html, "text/html; charset=utf-8");
     } catch {
       return error(req, res, 502, "ENTRY_UPSTREAM_UNAVAILABLE");
     }
@@ -3205,12 +4088,12 @@ ${hash}`).digest("hex");
 }
 
 // server-access/bff/cloud-session.mjs
-import { createHash as createHash6, createHmac as createHmac5, randomBytes as randomBytes6 } from "node:crypto";
-var BASE = "/api/v2/cloud";
-var INTERNAL3 = BASE + "/internal";
+import { createHash as createHash10, createHmac as createHmac6, randomBytes as randomBytes7 } from "node:crypto";
+var BASE2 = "/api/v2/cloud";
+var INTERNAL4 = BASE2 + "/internal";
 var MAX_REQUEST = 155e4;
 var MAX_RESPONSE = 21e5;
-var reply5 = (res, status, body) => {
+var reply6 = (res, status, body) => {
   const data = JSON.stringify(body);
   res.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
@@ -3222,9 +4105,9 @@ var reply5 = (res, status, body) => {
   res.end(data);
   return true;
 };
-function legacyPath(method, path) {
-  if (typeof path !== "string" || path.length > 2048 || !path.startsWith(BASE + "/") || /[?#\\]/.test(path)) return null;
-  const rest = path.slice(BASE.length);
+function legacyPath(method, path2) {
+  if (typeof path2 !== "string" || path2.length > 2048 || !path2.startsWith(BASE2 + "/") || /[?#\\]/.test(path2)) return null;
+  const rest = path2.slice(BASE2.length);
   if (method === "GET" && (rest === "/me" || rest === "/projects")) return "/api/v1" + rest;
   const match = /^\/projects\/([^/]+)(\/audit)?$/.exec(rest);
   if (!match || !["GET", "PUT"].includes(method) || match[2] && method !== "GET") return null;
@@ -3272,35 +4155,35 @@ async function readResponse2(response) {
 }
 function createCloudSessionHandler({ env = {}, fetchImpl = fetch } = {}) {
   return async (req, res) => {
-    if (typeof req.url !== "string" || !req.url.startsWith(BASE + "/")) return false;
+    if (typeof req.url !== "string" || !req.url.startsWith(BASE2 + "/")) return false;
     if (env.CLOUD_SESSION_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.CLOUD_SERVICE_KEY !== "string" || env.CLOUD_SERVICE_KEY.length < 32)
-      return reply5(res, 503, { error: { code: "CLOUD_UNAVAILABLE" } });
+      return reply6(res, 503, { error: { code: "CLOUD_UNAVAILABLE" } });
     if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || req.headers.origin && req.headers.origin !== GATEWAY_ORIGIN || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin" || req.headers.authorization)
-      return reply5(res, 403, { error: { code: "ORIGIN_REJECTED" } });
-    if (!["GET", "PUT"].includes(req.method)) return reply5(res, 405, { error: { code: "METHOD_NOT_ALLOWED" } });
-    const path = legacyPath(req.method, req.url);
-    if (!path) return reply5(res, 404, { error: { code: "NOT_FOUND" } });
+      return reply6(res, 403, { error: { code: "ORIGIN_REJECTED" } });
+    if (!["GET", "PUT"].includes(req.method)) return reply6(res, 405, { error: { code: "METHOD_NOT_ALLOWED" } });
+    const path2 = legacyPath(req.method, req.url);
+    if (!path2) return reply6(res, 404, { error: { code: "NOT_FOUND" } });
     if (req.method === "PUT" && (req.headers.origin !== GATEWAY_ORIGIN || req.headers["x-nexus-cloud-request"] !== "1" || req.headers["content-type"] !== "application/json"))
-      return reply5(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
+      return reply6(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
     const sessionCookie2 = sessionFromIngress(req, { env });
-    if (!sessionCookie2) return reply5(res, 401, { error: { code: "SESSION_REQUIRED" } });
+    if (!sessionCookie2) return reply6(res, 401, { error: { code: "SESSION_REQUIRED" } });
     const expectedAccountId = req.headers["x-nexus-cloud-account"];
     if (typeof expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(expectedAccountId))
-      return reply5(res, 400, { error: { code: "ACCOUNT_EXPECTATION_REQUIRED" } });
+      return reply6(res, 400, { error: { code: "ACCOUNT_EXPECTATION_REQUIRED" } });
     try {
       const payload = req.method === "GET" ? null : await readNodeBody(req, MAX_REQUEST);
       if (req.method === "PUT" && (!payload || typeof payload !== "object" || Array.isArray(payload)))
-        return reply5(res, 400, { error: { code: "INVALID_INPUT" } });
-      const body = JSON.stringify({ method: req.method, path, payload, sessionCookie: sessionCookie2, expectedAccountId });
-      const stamp = String(Date.now()), nonce = randomBytes6(16).toString("hex");
-      const digest3 = createHash6("sha256").update(body).digest("hex");
+        return reply6(res, 400, { error: { code: "INVALID_INPUT" } });
+      const body = JSON.stringify({ method: req.method, path: path2, payload, sessionCookie: sessionCookie2, expectedAccountId });
+      const stamp = String(Date.now()), nonce = randomBytes7(16).toString("hex");
+      const digest3 = createHash10("sha256").update(body).digest("hex");
       const canonical = `v1
 POST
-${INTERNAL3}
+${INTERNAL4}
 ${stamp}
 ${nonce}
 ${digest3}`;
-      const upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL3, {
+      const upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL4, {
         method: "POST",
         body,
         redirect: "error",
@@ -3312,7 +4195,7 @@ ${digest3}`;
           "content-type": "application/json",
           "x-nexus-service-timestamp": stamp,
           "x-nexus-service-nonce": nonce,
-          "x-nexus-service-signature": createHmac5("sha256", env.CLOUD_SERVICE_KEY).update(canonical).digest("hex")
+          "x-nexus-service-signature": createHmac6("sha256", env.CLOUD_SERVICE_KEY).update(canonical).digest("hex")
         }
       });
       if (!upstream.headers.get("content-type")?.toLowerCase().startsWith("application/json")) throw Error();
@@ -3321,7 +4204,7 @@ ${digest3}`;
       const data = JSON.parse(raw);
       if (!upstream.ok) {
         const code = data?.error?.code;
-        return reply5(
+        return reply6(
           res,
           [400, 401, 403, 404, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502,
           { error: {
@@ -3330,178 +4213,21 @@ ${digest3}`;
           } }
         );
       }
-      return reply5(res, 200, data);
+      return reply6(res, 200, data);
     } catch (error2) {
       const status = error2?.message === "INPUT_TOO_LARGE" ? 413 : error2?.message === "INVALID_INPUT" ? 400 : 502;
-      return reply5(res, status, { error: { code: status === 413 ? "INPUT_TOO_LARGE" : status === 400 ? "INVALID_INPUT" : "CLOUD_UNAVAILABLE" } });
+      return reply6(res, status, { error: { code: status === 413 ? "INPUT_TOO_LARGE" : status === 400 ? "INVALID_INPUT" : "CLOUD_UNAVAILABLE" } });
     }
   };
 }
 
 // server-access/bff/oauth.mjs
-import { createHash as createHash8, createHmac as createHmac6, randomBytes as randomBytes7, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
-
-// server-access/bff/oauth-providers.mjs
-import { createHash as createHash7, createPublicKey, verify, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
-var PROVIDERS = Object.freeze({
-  google: { label: "Google", prefix: "GOOGLE", authorize: "https://accounts.google.com/o/oauth2/v2/auth", token: "https://oauth2.googleapis.com/token" },
-  yandex: { label: "\u042F\u043D\u0434\u0435\u043A\u0441 ID", prefix: "YANDEX", authorize: "https://oauth.yandex.ru/authorize", token: "https://oauth.yandex.ru/token" },
-  vk: { label: "VK ID", prefix: "VK", authorize: "https://id.vk.ru/authorize", token: "https://id.vk.ru/oauth2/auth" }
-});
-var ENDPOINTS = /* @__PURE__ */ new Set(["https://oauth2.googleapis.com/token", "https://www.googleapis.com/oauth2/v3/certs", "https://oauth.yandex.ru/token", "https://login.yandex.ru/info", "https://id.vk.ru/oauth2/auth", "https://id.vk.ru/oauth2/user_info"]);
-var requireThat = (value) => {
-  if (!value) throw Error("PROVIDER_REJECTED");
-};
-var safeSecret = (value) => typeof value === "string" && value.length > 0 && value.length <= 2048 && !/[\x00-\x20\x7f]/.test(value);
-var equal = (a, b) => typeof a === "string" && typeof b === "string" && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual4(Buffer.from(a), Buffer.from(b));
-var plain = (value) => !!value && typeof value === "object" && !Array.isArray(value);
-var text4 = (value, max) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\x00-\x1f\x7f]/.test(value);
-var email = (value) => value === void 0 || value === null || value === "" ? null : (requireThat(text4(value, 320) && /^\S+@\S+\.\S+$/.test(value)), value.trim().toLowerCase());
-var display = (value, fallback) => text4(value, 512) && value.trim() ? value.trim() : fallback;
-var subject = (value) => {
-  requireThat(text4(value, 512) && value === value.trim());
-  return value;
-};
-var digest2 = (value) => createHash7("sha256").update(value).digest();
-function authoritativeYandexEmail(user, address) {
-  return typeof user.login === "string" && /^[a-z][a-z0-9.-]{0,63}$/.test(user.login) && address === user.login + "@yandex.ru";
-}
-var oauthCallbackURL = (provider) => {
-  requireThat(Object.hasOwn(PROVIDERS, provider));
-  return GATEWAY_ORIGIN + "/api/v2/account/oauth/" + provider + "/callback";
-};
-function configuration(env, provider) {
-  const definition = PROVIDERS[provider];
-  if (!definition) return null;
-  const clientId = env[definition.prefix + "_CLIENT_ID"], clientSecret = env[definition.prefix + "_CLIENT_SECRET"];
-  if (!safeSecret(clientId) || provider !== "vk" && !safeSecret(clientSecret)) return null;
-  return { ...definition, clientId, clientSecret: provider === "vk" ? void 0 : clientSecret };
-}
-function configuredOAuthProviders(env = {}) {
-  return Object.keys(PROVIDERS).filter((id2) => configuration(env, id2)).map((id2) => ({ id: id2, label: PROVIDERS[id2].label }));
-}
-function oauthAuthorizationURL({ provider, env, state, codeVerifier, nonce }) {
-  const config = configuration(env, provider);
-  requireThat(config);
-  const url = new URL(config.authorize);
-  url.search = new URLSearchParams({
-    client_id: config.clientId,
-    response_type: "code",
-    redirect_uri: oauthCallbackURL(provider),
-    state,
-    code_challenge: digest2(codeVerifier).toString("base64url"),
-    code_challenge_method: provider === "vk" ? "s256" : "S256",
-    scope: provider === "google" ? "openid email profile" : provider === "yandex" ? "login:info login:email" : "email",
-    // Яндекс иначе может использовать прежнее согласие без выбора аккаунта.
-    ...provider === "google" ? { nonce, prompt: "select_account" } : provider === "yandex" ? { force_confirm: "yes" } : {}
-  }).toString();
-  return url.href;
-}
-async function json(fetchImpl, url, options = {}) {
-  const target = new URL(url);
-  requireThat(target.protocol === "https:" && !target.username && !target.password && !target.hash && ENDPOINTS.has(target.origin + target.pathname));
-  const response = await fetchImpl(target.href, { ...options, credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(3e3) });
-  if (response.status !== 200 || response.redirected || !/^application\/json(?:\s*;|$)/i.test(response.headers.get("content-type") || "")) {
-    await response.body?.cancel();
-    throw Error("PROVIDER_REJECTED");
-  }
-  const reader = response.body?.getReader();
-  requireThat(reader);
-  const parts = [];
-  let length = 0;
-  try {
-    while (true) {
-      const { done, value: value2 } = await reader.read();
-      if (done) break;
-      length += value2.length;
-      requireThat(length <= 65536);
-      parts.push(value2);
-    }
-    const value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts, length)));
-    requireThat(plain(value) && !Object.hasOwn(value, "error"));
-    return value;
-  } finally {
-    await reader.cancel().catch(() => {
-    });
-    reader.releaseLock();
-  }
-}
-var formHeaders = { accept: "application/json", "content-type": "application/x-www-form-urlencoded" };
-function validateToken(token) {
-  requireThat(plain(token) && typeof token.access_token === "string" && token.access_token.length > 0 && token.access_token.length <= 8192 && !/[\x00-\x20\x7f]/.test(token.access_token) && typeof token.token_type === "string" && token.token_type.toLowerCase() === "bearer" && Number.isFinite(token.expires_in) && token.expires_in > 0);
-}
-function jwtJSON(segment) {
-  requireThat(typeof segment === "string" && segment.length > 0 && /^[A-Za-z0-9_-]+$/.test(segment));
-  const bytes = Buffer.from(segment, "base64url");
-  requireThat(bytes.toString("base64url") === segment);
-  const value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
-  requireThat(plain(value));
-  return value;
-}
-async function googleProfile(token, config, nonce, fetchImpl) {
-  requireThat(typeof token.id_token === "string" && token.id_token.length <= 16384);
-  const pieces = token.id_token.split(".");
-  requireThat(pieces.length === 3);
-  const header = jwtJSON(pieces[0]), claims = jwtJSON(pieces[1]);
-  requireThat(header.alg === "RS256" && text4(header.kid, 128) && Object.keys(header).every((key2) => ["alg", "kid", "typ"].includes(key2)) && (header.typ === void 0 || header.typ === "JWT"));
-  requireThat(/^[A-Za-z0-9_-]+$/.test(pieces[2]));
-  const signature = Buffer.from(pieces[2], "base64url");
-  requireThat(signature.toString("base64url") === pieces[2]);
-  const jwks = await json(fetchImpl, "https://www.googleapis.com/oauth2/v3/certs", { method: "GET", headers: { accept: "application/json" } });
-  requireThat(Array.isArray(jwks.keys) && jwks.keys.length > 0 && jwks.keys.length <= 20);
-  const candidates = jwks.keys.filter((key2) => key2?.kid === header.kid);
-  requireThat(candidates.length === 1);
-  const jwk = candidates[0];
-  requireThat(jwk.kty === "RSA" && (jwk.use === void 0 || jwk.use === "sig") && (jwk.alg === void 0 || jwk.alg === "RS256") && text4(jwk.n, 2048) && text4(jwk.e, 16) && !Object.hasOwn(jwk, "d"));
-  const key = createPublicKey({ key: jwk, format: "jwk" }), bits = key.asymmetricKeyDetails?.modulusLength;
-  requireThat(bits >= 2048 && bits <= 8192);
-  requireThat(verify("RSA-SHA256", Buffer.from(pieces[0] + "." + pieces[1]), key, signature));
-  const current = Math.floor(Date.now() / 1e3), aud = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
-  requireThat(["https://accounts.google.com", "accounts.google.com"].includes(claims.iss) && aud.length > 0 && aud.length <= 8 && aud.every((x) => typeof x === "string") && aud.includes(config.clientId));
-  requireThat((claims.azp === void 0 || claims.azp === config.clientId) && (aud.length === 1 || claims.azp === config.clientId));
-  requireThat(Number.isInteger(claims.exp) && claims.exp > current && Number.isInteger(claims.iat) && claims.iat <= current + 60 && claims.iat >= current - 600 && claims.exp > claims.iat && claims.exp - claims.iat <= 7200);
-  requireThat(claims.nbf === void 0 || Number.isInteger(claims.nbf) && claims.nbf <= current + 60);
-  requireThat(equal(claims.nonce, nonce) && typeof claims.sub === "string" && /^[\x21-\x7e]{1,255}$/.test(claims.sub));
-  if (claims.at_hash !== void 0) requireThat(equal(claims.at_hash, digest2(token.access_token).subarray(0, 16).toString("base64url")));
-  const address = email(claims.email), domain = address?.split("@").at(-1);
-  const authoritative = domain === "gmail.com" || text4(claims.hd, 253) && claims.hd.toLowerCase() === domain;
-  return { issuer: "https://accounts.google.com", subject: claims.sub, email: address, emailVerified: claims.email_verified === true && !!address && !!authoritative, displayName: display(claims.name, "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C Google") };
-}
-async function exchangeOAuthProfile({ provider, env, code, state, deviceId, codeVerifier, nonce, fetchImpl = fetch }) {
-  const config = configuration(env, provider);
-  requireThat(config);
-  requireThat(text4(code, 4096) && text4(state, 128) && /^[A-Za-z0-9._~-]{43,128}$/.test(codeVerifier) && text4(nonce, 128));
-  const body = new URLSearchParams({ grant_type: "authorization_code", code, client_id: config.clientId, redirect_uri: oauthCallbackURL(provider), code_verifier: codeVerifier, ...config.clientSecret ? { client_secret: config.clientSecret } : {} });
-  let token;
-  if (provider === "vk") {
-    requireThat(text4(deviceId, 512));
-    const target = new URL(config.token);
-    target.search = new URLSearchParams({ grant_type: "authorization_code", redirect_uri: oauthCallbackURL(provider), client_id: config.clientId, code_verifier: codeVerifier, state, device_id: deviceId }).toString();
-    token = await json(fetchImpl, target.href, { method: "POST", headers: formHeaders, body: new URLSearchParams({ code }).toString() });
-  } else token = await json(fetchImpl, config.token, { method: "POST", headers: formHeaders, body: body.toString() });
-  validateToken(token);
-  if (provider === "google") return googleProfile(token, config, nonce, fetchImpl);
-  if (provider === "yandex") {
-    const user = await json(fetchImpl, "https://login.yandex.ru/info?format=json", { method: "GET", headers: { accept: "application/json", authorization: "OAuth " + token.access_token } });
-    requireThat(user.client_id === config.clientId);
-    const address = email(user.default_email);
-    return { issuer: "https://login.yandex.ru", subject: subject(user.id), email: address, emailVerified: authoritativeYandexEmail(user, address), displayName: display(user.real_name || user.display_name || user.login, "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C \u042F\u043D\u0434\u0435\u043A\u0441") };
-  }
-  requireThat(equal(token.state, state));
-  const tokenSubject = typeof token.user_id === "number" && Number.isSafeInteger(token.user_id) && token.user_id > 0 ? String(token.user_id) : subject(token.user_id);
-  const userInfoURL = new URL("https://id.vk.ru/oauth2/user_info");
-  userInfoURL.search = new URLSearchParams({ client_id: config.clientId }).toString();
-  const data = await json(fetchImpl, userInfoURL.href, { method: "POST", headers: formHeaders, body: new URLSearchParams({ access_token: token.access_token }).toString() });
-  requireThat(plain(data.user) && subject(data.user.user_id) === tokenSubject);
-  return { issuer: "https://id.vk.ru", subject: tokenSubject, email: email(data.user.email), emailVerified: false, displayName: display([data.user.first_name, data.user.last_name].filter((x) => typeof x === "string").join(" "), "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C VK") };
-}
-
-// server-access/bff/oauth.mjs
+import { createHash as createHash11, createHmac as createHmac7, randomBytes as randomBytes8, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
 var PREFIX = "/api/v2/account/oauth/";
-var INTERNAL4 = "/api/v2/account/internal/oauth";
-var sha = (value) => createHash8("sha256").update(value).digest("hex");
-var random = () => randomBytes7(32).toString("base64url");
-var count3 = (req, name) => {
+var INTERNAL5 = "/api/v2/account/internal/oauth";
+var sha3 = (value) => createHash11("sha256").update(value).digest("hex");
+var random = () => randomBytes8(32).toString("base64url");
+var count4 = (req, name) => {
   if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2 !== 0) return -1;
   let total = 0;
   for (let i = 0; i < req.rawHeaders.length; i += 2) {
@@ -3513,7 +4239,7 @@ var count3 = (req, name) => {
 var same = (a, b) => typeof a === "string" && typeof b === "string" && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual5(Buffer.from(a), Buffer.from(b));
 var flowCookie = (value, age) => `__Host-nexus_oauth_flow=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${age}`;
 var sessionCookie = (value) => `__Host-nexus_session=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=43200`;
-var reply6 = (res, status, body, cookies2 = [], extra = {}) => {
+var reply7 = (res, status, body, cookies2 = [], extra = {}) => {
   const data = body === null ? "" : JSON.stringify(body);
   res.writeHead(status, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(data), "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", ...cookies2.length ? { "set-cookie": cookies2 } : {}, ...extra });
   res.end(data);
@@ -3534,15 +4260,15 @@ function htmlCallbackError(req, res, status, code, cookies2) {
   res.end(data);
   return true;
 }
-var Rejected = class extends Error {
+var Rejected2 = class extends Error {
   constructor(code, status = 400) {
     super(code);
     this.code = code;
     this.status = status;
   }
 };
-var deny = (code, status) => {
-  throw new Rejected(code, status);
+var deny2 = (code, status) => {
+  throw new Rejected2(code, status);
 };
 var INGRESS_PROBE_REASONS = /* @__PURE__ */ new Set([
   "context_count",
@@ -3583,17 +4309,17 @@ var SYNTHETIC_COOKIE_PAIRS = /* @__PURE__ */ new Set([
   "__Host-nexus_passkey_flow=npf_" + "C".repeat(43)
 ]);
 function syntheticIngressProbe(req) {
-  if (count3(req, "x-nexus-transport-probe") !== 1 || req.headers["x-nexus-transport-probe"] !== "cookie-shape-v1" || typeof req.headers.cookie !== "string" || !req.headers.cookie || req.headers.cookie.length > 512) return false;
+  if (count4(req, "x-nexus-transport-probe") !== 1 || req.headers["x-nexus-transport-probe"] !== "cookie-shape-v1" || typeof req.headers.cookie !== "string" || !req.headers.cookie || req.headers.cookie.length > 512) return false;
   const pairs = req.headers.cookie.split(";").map((value) => value.trim());
   return pairs.length > 0 && pairs.length <= 3 && new Set(pairs).size === pairs.length && pairs.every((value) => SYNTHETIC_COOKIE_PAIRS.has(value));
 }
 function ingress(req, env) {
   const fail3 = (reason) => {
-    const error2 = new Rejected("INGRESS_REJECTED", 401);
+    const error2 = new Rejected2("INGRESS_REJECTED", 401);
     error2.probeReason = reason;
     throw error2;
   };
-  if (count3(req, "x-yc-apigateway-operation-context") !== 1) fail3("context_count");
+  if (count4(req, "x-yc-apigateway-operation-context") !== 1) fail3("context_count");
   const raw = req.headers["x-yc-apigateway-operation-context"];
   if (typeof raw !== "string" || raw.length > 8192 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) fail3("base64");
   const bytes = Buffer.from(raw, "base64");
@@ -3616,7 +4342,7 @@ function ingress(req, env) {
     } catch (error2) {
       fail3(INGRESS_PROBE_REASONS.has(error2.cookieContextReason) ? error2.cookieContextReason : "v2_rejected");
     }
-    if (v2 === void 0) deny("INGRESS_REJECTED", 401);
+    if (v2 === void 0) deny2("INGRESS_REJECTED", 401);
     const session2 = v2.get("__Host-nexus_session") ?? null, flow2 = v2.get("__Host-nexus_oauth_flow") ?? null;
     if (session2 !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session2)) fail3("session_format");
     if (flow2 !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow2)) fail3("flow_format");
@@ -3629,7 +4355,7 @@ function ingress(req, env) {
   if (session !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail3("session_format");
   if (flow !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow)) fail3("flow_format");
   if (req.headers.cookie !== void 0) {
-    if (count3(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) fail3("cookie_count");
+    if (count4(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) fail3("cookie_count");
     const found = {};
     for (const part of req.headers.cookie.split(";")) {
       const pair = part.trim(), at = pair.indexOf("=");
@@ -3644,7 +4370,7 @@ function ingress(req, env) {
     const fromCookie = found["__Host-nexus_session"] ?? null, fromFlow = found["__Host-nexus_oauth_flow"] ?? null;
     if (!(fromCookie === null && session === null) && !same(fromCookie, session)) fail3("session_mismatch");
     if (!(fromFlow === null && flow === null) && !same(fromFlow, flow)) fail3("flow_mismatch");
-  } else if (count3(req, "cookie") !== 0) fail3("cookie_count");
+  } else if (count4(req, "cookie") !== 0) fail3("cookie_count");
   return { session, flow };
 }
 async function boundedJSON(source, max, flatIntent = false) {
@@ -3653,39 +4379,39 @@ async function boundedJSON(source, max, flatIntent = false) {
   for await (const part of source) {
     const bytes = Buffer.from(part);
     length += bytes.length;
-    if (length > max) deny("INPUT_TOO_LARGE", 413);
+    if (length > max) deny2("INPUT_TOO_LARGE", 413);
     parts.push(bytes);
   }
   let value;
   try {
     const text5 = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts, length));
     value = JSON.parse(text5);
-    if (flatIntent && text5.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 2) deny("INVALID_INPUT");
+    if (flatIntent && text5.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 2) deny2("INVALID_INPUT");
   } catch {
-    deny("INVALID_INPUT");
+    deny2("INVALID_INPUT");
   }
-  if (!value || typeof value !== "object" || Array.isArray(value)) deny("INVALID_INPUT");
+  if (!value || typeof value !== "object" || Array.isArray(value)) deny2("INVALID_INPUT");
   return value;
 }
-async function service(env, fetchImpl, payload) {
-  const body = JSON.stringify(payload), timestamp = String(Date.now()), nonce = randomBytes7(16).toString("hex");
-  const signature = createHmac6("sha256", env.OAUTH_SERVICE_KEY).update(`v1
+async function service2(env, fetchImpl, payload) {
+  const body = JSON.stringify(payload), timestamp = String(Date.now()), nonce = randomBytes8(16).toString("hex");
+  const signature = createHmac7("sha256", env.OAUTH_SERVICE_KEY).update(`v1
 POST
-${INTERNAL4}
+${INTERNAL5}
 ${timestamp}
 ${nonce}
-${sha(body)}`).digest("hex");
-  const upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL4, { method: "POST", credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(2500), body, headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": timestamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": signature } });
+${sha3(body)}`).digest("hex");
+  const upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL5, { method: "POST", credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(2500), body, headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": timestamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": signature } });
   if (upstream.redirected || !/^application\/json(?:\s*;|$)/i.test(upstream.headers.get("content-type") || "")) {
     await upstream.body?.cancel();
-    deny("OAUTH_UNAVAILABLE", 502);
+    deny2("OAUTH_UNAVAILABLE", 502);
   }
   const data = await boundedJSON(upstream.body, 16384);
   if (upstream.status !== 200) {
     const safe = ["ALPHA_INVITATION_REQUIRED", "ALPHA_ACCESS_CLOSED", "ALPHA_CAPACITY_REACHED", "ALPHA_CONTROL_UNAVAILABLE", "ACCOUNT_SESSION_CHANGED", "FRESH_PASSKEY_REQUIRED", "EXPLICIT_LINK_REQUIRED", "OWNER_EMAIL_REQUIRED", "IDENTITY_ALREADY_LINKED", "IDENTITY_REJECTED", "TRANSACTION_REJECTED", "RATE_LIMITED"];
-    deny(safe.includes(data.error?.code) ? data.error.code : "OAUTH_UNAVAILABLE", [400, 401, 403, 409, 429, 503].includes(upstream.status) ? upstream.status : 502);
+    deny2(safe.includes(data.error?.code) ? data.error.code : "OAUTH_UNAVAILABLE", [400, 401, 403, 409, 429, 503].includes(upstream.status) ? upstream.status : 502);
   }
-  if (data.ok !== true) deny("OAUTH_UNAVAILABLE", 502);
+  if (data.ok !== true) deny2("OAUTH_UNAVAILABLE", 502);
   return data;
 }
 function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
@@ -3693,308 +4419,58 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
     if (typeof req.url !== "string" || !req.url.startsWith(PREFIX)) return false;
     let callback = false;
     try {
-      if (req.url.length > 8192) deny("INVALID_INPUT");
+      if (req.url.length > 8192) deny2("INVALID_INPUT");
       const url = new URL(req.url, GATEWAY_ORIGIN), route = url.pathname.slice(PREFIX.length).split("/");
       callback = route.length === 2 && route[1] === "callback";
-      if (req.url.split("?")[0] !== url.pathname || url.hash) deny("INVALID_INPUT");
-      if (env.OAUTH_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.OAUTH_SERVICE_KEY !== "string" || env.OAUTH_SERVICE_KEY.length < 32) deny("OAUTH_UNAVAILABLE", 503);
-      if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || count3(req, "host") !== 1 || req.headers.authorization !== void 0 || count3(req, "authorization") > 0 || req.headers.origin !== void 0 && req.headers.origin !== GATEWAY_ORIGIN) deny("ORIGIN_REJECTED", 403);
+      if (req.url.split("?")[0] !== url.pathname || url.hash) deny2("INVALID_INPUT");
+      if (env.OAUTH_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.OAUTH_SERVICE_KEY !== "string" || env.OAUTH_SERVICE_KEY.length < 32) deny2("OAUTH_UNAVAILABLE", 503);
+      if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || count4(req, "host") !== 1 || req.headers.authorization !== void 0 || count4(req, "authorization") > 0 || req.headers.origin !== void 0 && req.headers.origin !== GATEWAY_ORIGIN) deny2("ORIGIN_REJECTED", 403);
       const providers = configuredOAuthProviders(env);
       if (req.url === PREFIX + "providers") {
-        if (req.method !== "GET") deny("METHOD_NOT_ALLOWED", 405);
-        return reply6(res, 200, { providers });
+        if (req.method !== "GET") deny2("METHOD_NOT_ALLOWED", 405);
+        return reply7(res, 200, { providers });
       }
       const [provider, action] = route;
-      if (route.length !== 2 || !["start", "callback"].includes(action)) deny("NOT_FOUND", 404);
-      if (!providers.some((item) => item.id === provider)) deny("OAUTH_PROVIDER_UNAVAILABLE", 503);
-      if (req.method !== (action === "start" ? "POST" : "GET")) deny("METHOD_NOT_ALLOWED", 405);
+      if (route.length !== 2 || !["start", "callback"].includes(action)) deny2("NOT_FOUND", 404);
+      if (!providers.some((item) => item.id === provider)) deny2("OAUTH_PROVIDER_UNAVAILABLE", 503);
+      if (req.method !== (action === "start" ? "POST" : "GET")) deny2("METHOD_NOT_ALLOWED", 405);
       const context2 = ingress(req, env);
       if (action === "start") {
-        if (url.search || req.url !== url.pathname) deny("INVALID_INPUT");
-        if (req.headers.origin !== GATEWAY_ORIGIN || count3(req, "origin") !== 1 || req.headers["x-nexus-oauth-request"] !== "1" || count3(req, "x-nexus-oauth-request") !== 1 || req.headers["content-type"] !== "application/json" || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") deny("WRITE_ORIGIN_REQUIRED", 403);
+        if (url.search || req.url !== url.pathname) deny2("INVALID_INPUT");
+        if (req.headers.origin !== GATEWAY_ORIGIN || count4(req, "origin") !== 1 || req.headers["x-nexus-oauth-request"] !== "1" || count4(req, "x-nexus-oauth-request") !== 1 || req.headers["content-type"] !== "application/json" || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") deny2("WRITE_ORIGIN_REQUIRED", 403);
         const input = await boundedJSON(req, 1024, true);
-        if (Object.keys(input).join(",") !== "intent" || !["login", "link"].includes(input.intent)) deny("INVALID_INPUT");
-        const expectedAccountId = req.headers["x-nexus-oauth-account"], expectationHeaders = count3(req, "x-nexus-oauth-account");
+        if (Object.keys(input).join(",") !== "intent" || !["login", "link"].includes(input.intent)) deny2("INVALID_INPUT");
+        const expectedAccountId = req.headers["x-nexus-oauth-account"], expectationHeaders = count4(req, "x-nexus-oauth-account");
         if (input.intent === "link") {
-          if (expectationHeaders !== 1 || typeof expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(expectedAccountId)) deny("ACCOUNT_EXPECTATION_REQUIRED");
-        } else if (expectedAccountId !== void 0 || expectationHeaders !== 0) deny("INVALID_INPUT");
-        if (input.intent === "link" && !context2.session) deny("FRESH_PASSKEY_REQUIRED", 401);
+          if (expectationHeaders !== 1 || typeof expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(expectedAccountId)) deny2("ACCOUNT_EXPECTATION_REQUIRED");
+        } else if (expectedAccountId !== void 0 || expectationHeaders !== 0) deny2("INVALID_INPUT");
+        if (input.intent === "link" && !context2.session) deny2("FRESH_PASSKEY_REQUIRED", 401);
         const state2 = random(), codeVerifier = random(), nonce = random(), flow = "nof_" + random();
-        const result = await service(env, fetchImpl, { op: "begin", provider, intent: input.intent, stateHash: sha(state2), flowHash: sha(flow), codeVerifier, nonce, ...input.intent === "link" ? { sessionHash: sha(context2.session), expectedAccountId } : {} });
-        if (typeof result.txId !== "string" || result.txId.length > 80 || typeof result.expiresAt !== "string") deny("OAUTH_UNAVAILABLE", 502);
-        return reply6(res, 200, { authorizationURL: oauthAuthorizationURL({ provider, env, state: state2, codeVerifier, nonce }) }, [flowCookie(flow, 600)]);
+        const result = await service2(env, fetchImpl, { op: "begin", provider, intent: input.intent, stateHash: sha3(state2), flowHash: sha3(flow), codeVerifier, nonce, ...input.intent === "link" ? { sessionHash: sha3(context2.session), expectedAccountId } : {} });
+        if (typeof result.txId !== "string" || result.txId.length > 80 || typeof result.expiresAt !== "string") deny2("OAUTH_UNAVAILABLE", 502);
+        return reply7(res, 200, { authorizationURL: oauthAuthorizationURL({ provider, env, state: state2, codeVerifier, nonce }) }, [flowCookie(flow, 600)]);
       }
-      if (!context2.flow) deny("FLOW_REQUIRED", 401);
+      if (!context2.flow) deny2("FLOW_REQUIRED", 401);
       const params = url.searchParams;
-      if ([...params.keys()].some((name) => params.getAll(name).length !== 1)) deny("INVALID_INPUT");
+      if ([...params.keys()].some((name) => params.getAll(name).length !== 1)) deny2("INVALID_INPUT");
       const metadata = provider === "google" ? ["scope", "authuser", "prompt", "iss"] : provider === "vk" ? ["type", "expires_in"] : provider === "yandex" ? ["cid"] : [];
-      if ([...params.keys()].some((name) => !["code", "state", ...provider === "vk" ? ["device_id"] : [], ...metadata].includes(name))) deny("INVALID_INPUT");
-      if (params.has("cid") && !/^[A-Za-z0-9_-]{1,256}$/.test(params.get("cid") || "")) deny("INVALID_INPUT");
+      if ([...params.keys()].some((name) => !["code", "state", ...provider === "vk" ? ["device_id"] : [], ...metadata].includes(name))) deny2("INVALID_INPUT");
+      if (params.has("cid") && !/^[A-Za-z0-9_-]{1,256}$/.test(params.get("cid") || "")) deny2("INVALID_INPUT");
       const code = params.get("code"), state = params.get("state"), deviceId = params.get("device_id");
-      if (typeof code !== "string" || !code.length || code.length > 4096 || /[\x00-\x20\x7f]/.test(code) || !/^[A-Za-z0-9_-]{43}$/.test(state || "") || provider === "vk" && (typeof deviceId !== "string" || !deviceId.length || deviceId.length > 512 || /[\x00-\x20\x7f]/.test(deviceId))) deny("INVALID_INPUT");
-      if (params.has("iss") && !["https://accounts.google.com", "accounts.google.com"].includes(params.get("iss"))) deny("PROVIDER_REJECTED", 401);
-      const claim = await service(env, fetchImpl, { op: "claim", provider, stateHash: sha(state), flowHash: sha(context2.flow) });
-      if (typeof claim.txId !== "string" || claim.txId.length > 80 || !["login", "link"].includes(claim.intent) || typeof claim.codeVerifier !== "string" || !/^[A-Za-z0-9._~-]{43,128}$/.test(claim.codeVerifier) || typeof claim.nonce !== "string" || !/^[A-Za-z0-9_-]{22,128}$/.test(claim.nonce)) deny("OAUTH_UNAVAILABLE", 502);
+      if (typeof code !== "string" || !code.length || code.length > 4096 || /[\x00-\x20\x7f]/.test(code) || !/^[A-Za-z0-9_-]{43}$/.test(state || "") || provider === "vk" && (typeof deviceId !== "string" || !deviceId.length || deviceId.length > 512 || /[\x00-\x20\x7f]/.test(deviceId))) deny2("INVALID_INPUT");
+      if (params.has("iss") && !["https://accounts.google.com", "accounts.google.com"].includes(params.get("iss"))) deny2("PROVIDER_REJECTED", 401);
+      const claim = await service2(env, fetchImpl, { op: "claim", provider, stateHash: sha3(state), flowHash: sha3(context2.flow) });
+      if (typeof claim.txId !== "string" || claim.txId.length > 80 || !["login", "link"].includes(claim.intent) || typeof claim.codeVerifier !== "string" || !/^[A-Za-z0-9._~-]{43,128}$/.test(claim.codeVerifier) || typeof claim.nonce !== "string" || !/^[A-Za-z0-9_-]{22,128}$/.test(claim.nonce)) deny2("OAUTH_UNAVAILABLE", 502);
       const profile = await exchangeOAuthProfile({ provider, env, code, state, deviceId, codeVerifier: claim.codeVerifier, nonce: claim.nonce, fetchImpl });
-      const completed = await service(env, fetchImpl, { op: "complete", txId: claim.txId, flowHash: sha(context2.flow), profile });
-      if (!/^nxs_[A-Za-z0-9_-]{43}$/.test(completed.sessionSecret || "")) deny("OAUTH_UNAVAILABLE", 502);
-      return reply6(res, 303, null, [sessionCookie(completed.sessionSecret), flowCookie("", 0)], { location: GATEWAY_ORIGIN + (claim.intent === "link" ? "/#nexusLogin=oauth&view=account&tab=security" : "/#nexusLogin=oauth") });
+      const completed = await service2(env, fetchImpl, { op: "complete", txId: claim.txId, flowHash: sha3(context2.flow), profile });
+      if (!/^nxs_[A-Za-z0-9_-]{43}$/.test(completed.sessionSecret || "")) deny2("OAUTH_UNAVAILABLE", 502);
+      return reply7(res, 303, null, [sessionCookie(completed.sessionSecret), flowCookie("", 0)], { location: GATEWAY_ORIGIN + (claim.intent === "link" ? "/#nexusLogin=oauth&view=account&tab=security" : "/#nexusLogin=oauth") });
     } catch (error2) {
-      const known = error2 instanceof Rejected;
+      const known = error2 instanceof Rejected2;
       const probeReason = known && error2.code === "INGRESS_REJECTED" && INGRESS_PROBE_REASONS.has(error2.probeReason) && syntheticIngressProbe(req) ? error2.probeReason : null;
       const status = known ? error2.status : error2.message === "PROVIDER_REJECTED" ? 401 : 502, code = known ? error2.code : error2.message === "PROVIDER_REJECTED" ? "PROVIDER_REJECTED" : "OAUTH_UNAVAILABLE", cookies2 = callback ? [flowCookie("", 0)] : [];
       if (callback && htmlCallbackError(req, res, status, code, cookies2)) return true;
-      return reply6(res, status, { error: { code, ...probeReason ? { probeReason } : {} } }, cookies2);
-    }
-  };
-}
-
-// server-access/blog-image-codec.mjs
-var import_jpeg_js = __toESM(require_jpeg_js(), 1);
-import { Buffer as Buffer2 } from "node:buffer";
-import { createHash as createHash9 } from "node:crypto";
-var fail = () => {
-  throw Object.assign(Error("BLOG_IMAGE_INVALID"), { code: "BLOG_IMAGE_INVALID" });
-};
-function sanitizeBlogImage(value) {
-  if (typeof value !== "string" || value.length > 131072 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) fail();
-  const bytes = Buffer2.from(value, "base64");
-  if (bytes.toString("base64") !== value || bytes.length > 98304 || bytes[0] !== 255 || bytes[1] !== 216) fail();
-  let n = 2, width, height;
-  while (n < bytes.length) {
-    if (bytes[n++] !== 255) fail();
-    while (bytes[n] === 255) n++;
-    const marker = bytes[n++];
-    if (marker === 218) break;
-    if (marker === 217 || marker === 0 || marker === 216 || marker >= 208 && marker <= 215 || n + 2 > bytes.length) fail();
-    const size = bytes.readUInt16BE(n);
-    if (size < 2 || n + size > bytes.length) fail();
-    if ([192, 193, 194].includes(marker)) {
-      if (width || size < 8 || bytes[n + 2] !== 8) fail();
-      height = bytes.readUInt16BE(n + 3);
-      width = bytes.readUInt16BE(n + 5);
-      if (!width || !height || width > 1600 || height > 1600) fail();
-    }
-    n += size;
-  }
-  if (!width || !height) fail();
-  try {
-    const decoded = import_jpeg_js.default.decode(bytes, { useTArray: true, formatAsRGBA: true, tolerantDecoding: false, maxResolutionInMP: 3, maxMemoryUsageInMB: 64 });
-    if (decoded.width !== width || decoded.height !== height) fail();
-    for (const quality of [80, 65, 50, 35]) {
-      const out = Buffer2.from(import_jpeg_js.default.encode({ data: decoded.data, width, height }, quality).data);
-      if (out.length <= 98304) return { id: createHash9("sha256").update(out).digest("hex"), mime: "image/jpeg", data: out.toString("base64"), width, height };
-    }
-  } catch {
-    fail();
-  }
-  fail();
-}
-
-// server-access/avatar-codec.mjs
-var import_jpeg_js2 = __toESM(require_jpeg_js(), 1);
-import { Buffer as Buffer3 } from "node:buffer";
-var AvatarError = class extends Error {
-  constructor(code, status = 400) {
-    super(code);
-    this.code = code;
-    this.status = status;
-  }
-};
-var deny2 = (code, status) => {
-  throw new AvatarError(code, status);
-};
-var MAX_JPEG = 98304;
-function sanitizeAvatar(value) {
-  if (typeof value !== "string" || value.length > MAX_JPEG * 4 / 3 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) deny2("AVATAR_INVALID");
-  const input = Buffer3.from(value, "base64");
-  if (input.toString("base64") !== value || input.length > MAX_JPEG || input[0] !== 255 || input[1] !== 216) deny2("AVATAR_INVALID");
-  let offset = 2, dimensions;
-  while (offset < input.length) {
-    if (input[offset++] !== 255) deny2("AVATAR_INVALID");
-    while (input[offset] === 255) offset++;
-    const marker = input[offset++];
-    if (marker === 218) break;
-    if (marker === 217 || marker === 0 || marker === 216 || marker >= 208 && marker <= 215 || offset + 2 > input.length) deny2("AVATAR_INVALID");
-    const length = input.readUInt16BE(offset);
-    if (length < 2 || offset + length > input.length) deny2("AVATAR_INVALID");
-    if ([192, 193, 194].includes(marker)) {
-      if (dimensions || length < 8 || input[offset + 2] !== 8) deny2("AVATAR_INVALID");
-      dimensions = { height: input.readUInt16BE(offset + 3), width: input.readUInt16BE(offset + 5) };
-    }
-    offset += length;
-  }
-  if (!dimensions || dimensions.width !== dimensions.height || ![128, 192, 256].includes(dimensions.width)) deny2("AVATAR_DIMENSIONS");
-  let decoded, encoded;
-  try {
-    decoded = import_jpeg_js2.default.decode(input, { useTArray: true, formatAsRGBA: true, tolerantDecoding: false, maxResolutionInMP: 1, maxMemoryUsageInMB: 32 });
-    if (decoded.width !== dimensions.width || decoded.height !== dimensions.height) deny2("AVATAR_INVALID");
-    encoded = import_jpeg_js2.default.encode({ data: decoded.data, width: decoded.width, height: decoded.height }, 80).data;
-  } catch (error2) {
-    if (error2 instanceof AvatarError) throw error2;
-    deny2("AVATAR_INVALID");
-  }
-  if (encoded.length > MAX_JPEG) deny2("AVATAR_TOO_LARGE", 413);
-  return Buffer3.from(encoded).toString("base64");
-}
-
-// server-access/bff/account-control.mjs
-import { createHash as createHash10, createHmac as createHmac7, randomBytes as randomBytes8 } from "node:crypto";
-var INTERNAL5 = "/api/v2/account/internal/control";
-var BASE2 = "/api/v2/account/control";
-var sha2 = (value) => createHash10("sha256").update(value).digest("hex");
-var count4 = (req, name) => {
-  if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2) return -1;
-  let n = 0;
-  for (let i = 0; i < req.rawHeaders.length; i += 2) {
-    if (typeof req.rawHeaders[i] !== "string" || typeof req.rawHeaders[i + 1] !== "string") return -1;
-    if (req.rawHeaders[i].toLowerCase() === name) n++;
-  }
-  return n;
-};
-var Rejected2 = class extends Error {
-  constructor(code, status = 400) {
-    super(code);
-    this.code = code;
-    this.status = status;
-  }
-};
-var fail2 = (code, status) => {
-  throw new Rejected2(code, status);
-};
-var exact2 = (o, keys) => !!o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).sort().join(",") === [...keys].sort().join(",");
-var id = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value);
-var safeText = (value, max) => typeof value === "string" && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value);
-var safeCodes = /* @__PURE__ */ new Set(["SESSION_REQUIRED", "ACCOUNT_SESSION_CHANGED", "ADMIN_REQUIRED", "ADMIN_FRESH_PASSKEY_REQUIRED", "ADMIN_ACCOUNT_PROTECTED", "INVALID_INPUT", "INVALID_STATE", "RESTORE_WITHOUT_LOGIN_METHOD", "NOT_FOUND", "CONTROL_CONFLICT", "CONTROL_WRITE_UNCONFIRMED", "CONTROL_UNAVAILABLE", "ALPHA_CONTROL_UNAVAILABLE", "ALPHA_ACCESS_CLOSED", "ALPHA_CAPACITY_REACHED", "ALPHA_LIMIT_BELOW_OCCUPIED", "REMOVE_BEFORE_PURGE", "PURGE_NOT_ENABLED", "PURGE_SCHEMA_REVIEW_REQUIRED", "SHARED_PROJECT_TRANSFER_REQUIRED", "PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED", "PURGE_APPROVAL_REJECTED", "PURGE_CONFIRMATION_REQUIRED", "AVATAR_INVALID", "AVATAR_DIMENSIONS", "AVATAR_TOO_LARGE", "USERNAME_UNAVAILABLE", "RATE_LIMITED", "BLOG_IMAGE_INVALID", "CONTENT_MEDIA_UNAVAILABLE", "CONTENT_MEDIA_QUOTA", "CONTENT_EDITOR_UPDATE_REQUIRED"]);
-var reply7 = (res, status, body) => {
-  const data = JSON.stringify(body);
-  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(data), "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer" });
-  res.end(data);
-  return true;
-};
-async function bounded(stream) {
-  const chunks = [];
-  let size = 0;
-  for await (const b of stream) {
-    const bytes = Buffer.from(b);
-    size += bytes.length;
-    if (size > 262144) fail2("INPUT_TOO_LARGE", 413);
-    chunks.push(bytes);
-  }
-  let text5, value;
-  try {
-    text5 = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks, size));
-    value = JSON.parse(text5);
-  } catch {
-    fail2("INVALID_INPUT");
-  }
-  if (!value || typeof value !== "object" || Array.isArray(value) || text5 !== JSON.stringify(value)) fail2("INVALID_INPUT");
-  return value;
-}
-function validateDTO(data, path, expected) {
-  const valid = () => fail2("CONTROL_UNAVAILABLE", 502);
-  if (path === "/api/v2/account/profile" || path.startsWith("/api/v2/account/profile/avatar")) {
-    if (!exact2(data, ["accountId", "username", "displayName", "avatar", "avatarVersion"]) || data.accountId !== expected || !safeText(data.displayName, 512) || data.username !== null && !/^[a-z][a-z0-9._-]{2,31}$/.test(data.username) || !Number.isInteger(data.avatarVersion) || data.avatarVersion < 0 || data.avatar !== null && (typeof data.avatar !== "string" || data.avatar.length > 131100 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data.avatar))) valid();
-  } else if (path === BASE2 + "/capabilities") {
-    if (!exact2(data, ["canManage", "canModerate", "canPurge", "freshPasskey"]) || Object.values(data).some((v) => typeof v !== "boolean")) valid();
-  } else if (path.startsWith(BASE2 + "/users?") || path === BASE2 + "/users") {
-    if (!exact2(data, ["users", "total", "offset", "settings", "counts"]) || !Array.isArray(data.users) || data.users.length > 50 || !Number.isInteger(data.total) || !Number.isInteger(data.offset) || !exact2(data.settings, ["registrationMode", "maxTesters", "limitEnabled", "version"]) || !exact2(data.counts, ["active", "occupied", "reserved"]) || typeof data.settings.limitEnabled !== "boolean" || !["open", "invite_only"].includes(data.settings.registrationMode) || !Number.isInteger(data.settings.maxTesters) || data.settings.maxTesters < 1 || data.settings.maxTesters > 1e4 || !Number.isInteger(data.settings.version) || data.settings.version < 1 || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
-    for (const u of data.users) if (!exact2(u, ["accountId", "username", "displayName", "state", "version", "createdAt", "lastLoginAt", "activeSessions", "reason", "protected"]) || !id(u.accountId) || !safeText(u.displayName, 512) || u.username !== null && !safeText(u.username, 32) || !["active", "blocked", "removed", "invited", "unadmitted", "administrator"].includes(u.state) || !Number.isInteger(u.version) || !Number.isInteger(u.activeSessions) || typeof u.protected !== "boolean" || !safeText(u.reason, 200)) valid();
-  } else if (path === BASE2 + "/content?mediaStatus=1") {
-    if (!exact2(data, ["mediaAvailability"]) || !exact2(data.mediaAvailability, ["enabled", "maxBytes", "maxDimension"]) || typeof data.mediaAvailability.enabled !== "boolean" || data.mediaAvailability.maxBytes !== 98304 || data.mediaAvailability.maxDimension !== 1600) valid();
-  } else if (path.startsWith(BASE2 + "/content?media=") || path === BASE2 + "/content" && exact2(data, ["ok", "media"])) {
-    const m = data.media, read = path.includes("?");
-    if (!exact2(data, read ? ["media"] : ["ok", "media"]) || !read && data.ok !== true || !exact2(m, read ? ["id", "mime", "data", "width", "height"] : ["id", "mime", "width", "height"]) || !/^[a-f0-9]{64}$/.test(m.id) || m.mime !== "image/jpeg" || ![m.width, m.height].every((n) => Number.isInteger(n) && n >= 1 && n <= 1600) || read && (m.id !== new URL(path, GATEWAY_ORIGIN).searchParams.get("media") || typeof m.data !== "string" || m.data.length > 131072 || !/^[A-Za-z0-9+/]+={0,2}$/.test(m.data))) valid();
-  } else if (path === BASE2 + "/content" && !exact2(data, ["ok"])) {
-    if (!exact2(data, ["posts", "home"]) || !Array.isArray(data.posts) || data.posts.length > 100 || !exact2(data.home, ["draft", "published", "version"])) valid();
-    const bounded2 = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v);
-    const article = (v) => {
-      if (!exact2(v, ["title", "summary", "body"]) || !bounded2(v.title, 160) || !bounded2(v.summary, 500) || !bounded2(v.body, 2e4)) return false;
-      try {
-        decodeBlogLayout(v.body);
-        return true;
-      } catch {
-        return false;
-      }
-    };
-    for (const key of ["draft", "published"]) if (!data.home[key] || typeof data.home[key] !== "object" || Array.isArray(data.home[key]) || Object.entries(data.home[key]).some(([k, v]) => !Object.hasOwn(HOME_SLOTS, k) || !bounded2(v, HOME_SLOTS[k].max))) valid();
-    if (!Number.isInteger(data.home.version) || data.home.version < 1) valid();
-    for (const post of data.posts) if (!exact2(post, ["id", "slug", "draft", "published", "state", "version", "publishedAt"]) || !id(post.id) || !safeText(post.slug, 80) || !["draft", "published", "archived"].includes(post.state) || !Number.isInteger(post.version) || !article(post.draft) || post.published !== null && !article(post.published) || post.publishedAt !== null && !safeText(post.publishedAt, 64)) valid();
-  } else if (path === BASE2 + "/audit") {
-    if (!exact2(data, ["events"]) || !Array.isArray(data.events) || data.events.length > 100) valid();
-    for (const e of data.events) if (!exact2(e, ["action", "targetId", "createdAt"]) || !safeText(e.action, 32) || e.targetId !== null && !id(e.targetId) || !safeText(e.createdAt, 64)) valid();
-  } else if (path === BASE2 + "/invites") {
-    if (!exact2(data, ["ok", "accountId", "invitationToken", "expiresAt"]) || data.ok !== true || !id(data.accountId) || !/^npi_[A-Za-z0-9_-]{43}$/.test(data.invitationToken) || !safeText(data.expiresAt, 64)) valid();
-  } else if (path.endsWith("/purge-preview")) {
-    if (!exact2(data, ["approvalToken", "expiresAt", "counts", "confirmation", "serverDataOnly"]) || !/^npa_[A-Za-z0-9_-]{43}$/.test(data.approvalToken) || !safeText(data.expiresAt, 64) || !safeText(data.confirmation, 180) || data.serverDataOnly !== true || !exact2(data.counts, ["projects", "workspaces", "feedback", "keys", "providers"]) || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
-  } else if (path.endsWith("/purge")) {
-    if (!exact2(data, ["ok", "deletedServerData", "localCopiesRemotelyErased"]) || data.ok !== true || data.deletedServerData !== true || data.localCopiesRemotelyErased !== false) valid();
-  } else if (path === BASE2 + "/providers") {
-    if (!exact2(data, ["authorized"]) || data.authorized !== true) valid();
-  } else if (!exact2(data, ["ok"]) || data.ok !== true) valid();
-  return data;
-}
-async function service2(env, fetchImpl, envelope) {
-  const body = JSON.stringify(envelope), timestamp = String(Date.now()), nonce = randomBytes8(16).toString("hex");
-  const signature = createHmac7("sha256", env.ADMIN_SERVICE_KEY).update(["v1", "POST", INTERNAL5, timestamp, nonce, sha2(body)].join("\n")).digest("hex");
-  const upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL5, { method: "POST", credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(12e3), headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": timestamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": signature }, body });
-  if (upstream.redirected || !/^application\/json(?:\s*;|$)/i.test(upstream.headers.get("content-type") || "") || upstream.headers.has("set-cookie") || upstream.headers.get("cache-control") !== "no-store" || !hasVaryWildcard(upstream.headers.get("vary"))) {
-    await upstream.body?.cancel();
-    fail2("CONTROL_UNAVAILABLE", 502);
-  }
-  const data = await bounded(upstream.body);
-  if (upstream.status !== 200) fail2(safeCodes.has(data.error?.code) ? data.error.code : "CONTROL_UNAVAILABLE", [400, 401, 403, 404, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502);
-  return data;
-}
-function createAccountControlHandler({ env = {}, fetchImpl = fetch } = {}) {
-  return async (req, res) => {
-    if (typeof req.url !== "string" || !/^\/api\/v2\/account\/(?:control(?:\/|\?|$)|profile(?:\/|\?|$))/.test(req.url)) return false;
-    try {
-      if (env.ACCOUNT_CONTROL_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.ADMIN_SERVICE_KEY !== "string" || env.ADMIN_SERVICE_KEY.length < 32) fail2("CONTROL_UNAVAILABLE", 503);
-      if (req.url.length > 512) fail2("INVALID_INPUT");
-      const url = new URL(req.url, GATEWAY_ORIGIN), path = url.pathname;
-      if (url.hash || req.url.split("?")[0] !== path || !["GET", "POST"].includes(req.method) || path.startsWith("/api/v2/account/profile") && url.search) fail2("INVALID_INPUT");
-      if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || count4(req, "host") !== 1 || count4(req, "authorization") !== 0 || req.headers.origin !== void 0 && req.headers.origin !== GATEWAY_ORIGIN || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") fail2("ORIGIN_REJECTED", 403);
-      const expected = req.headers["x-nexus-account-expectation"];
-      if (count4(req, "x-nexus-account-expectation") !== 1 || !id(expected)) fail2("ACCOUNT_EXPECTATION_REQUIRED", 400);
-      if (req.method === "POST" && (req.headers.origin !== GATEWAY_ORIGIN || count4(req, "origin") !== 1 || req.headers["content-type"] !== "application/json" || count4(req, "content-type") !== 1 || req.headers["x-nexus-account-control"] !== "1" || count4(req, "x-nexus-account-control") !== 1)) fail2("WRITE_ORIGIN_REQUIRED", 403);
-      const cookies2 = readV2CookieContext(req, "accountControlContract", { env });
-      if (!cookies2) fail2("INGRESS_REJECTED", 401);
-      const session = cookies2.get("__Host-nexus_session");
-      if (!session) fail2("SESSION_REQUIRED", 401);
-      if (!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail2("INGRESS_REJECTED", 401);
-      const payload = req.method === "POST" ? await bounded(req) : null;
-      let prepared = payload;
-      if (path === "/api/v2/account/profile/avatar" && req.method === "POST") {
-        if (!exact2(payload, ["requestId", "version", "jpegBase64"])) fail2("INVALID_INPUT");
-        const before = await service2(env, fetchImpl, { path: "/api/v2/account/profile", method: "GET", payload: null, sessionHash: sha2(session), expectedAccountId: expected });
-        validateDTO(before, "/api/v2/account/profile", expected);
-        if (before.avatarVersion !== payload.version) fail2("CONTROL_CONFLICT", 409);
-        try {
-          prepared = { ...payload, jpegBase64: sanitizeAvatar(payload.jpegBase64) };
-        } catch (error2) {
-          if (error2 instanceof AvatarError) fail2(error2.code, error2.status);
-          throw error2;
-        }
-      }
-      if (path === BASE2 + "/content" && req.method === "POST" && payload?.target === "media") {
-        try {
-          if (!exact2(payload.content, ["jpegBase64"])) fail2("INVALID_INPUT");
-          prepared = { ...payload, content: sanitizeBlogImage(payload.content.jpegBase64) };
-        } catch {
-          fail2("BLOG_IMAGE_INVALID");
-        }
-      }
-      const data = await service2(env, fetchImpl, { path: req.url, method: req.method, payload: prepared, sessionHash: sha2(session), expectedAccountId: expected });
-      const dto = validateDTO(data, req.url, expected);
-      if (path === BASE2 + "/providers") {
-        const configured = new Set(configuredOAuthProviders(env).map((p) => p.id));
-        return reply7(res, 200, { providers: [["yandex", "\u042F\u043D\u0434\u0435\u043A\u0441 ID", ["YANDEX_CLIENT_ID", "YANDEX_CLIENT_SECRET"]], ["google", "Google", ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]], ["vk", "VK ID", ["VK_CLIENT_ID"]]].map(([id2, label, names]) => ({ id: id2, label, configured: configured.has(id2), missing: names.filter((n) => typeof env[n] !== "string" || !env[n] || /[\x00-\x20\x7f]/.test(env[n])), callbackURL: oauthCallbackURL(id2) })) });
-      }
-      if (path === BASE2 + "/content" && req.method === "GET" && Array.isArray(dto.posts)) return reply7(res, 200, { ...dto, posts: dto.posts.map((p) => ({ ...p, draft: compatibleArticle(p.draft, { editor: true }), published: p.published ? compatibleArticle(p.published, { editor: true }) : null })) });
-      return reply7(res, 200, dto);
-    } catch (error2) {
-      return reply7(res, error2 instanceof Rejected2 ? error2.status : error2.message === "INGRESS_REJECTED" ? 401 : 502, { error: { code: error2 instanceof Rejected2 ? error2.code : error2.message === "INGRESS_REJECTED" ? "INGRESS_REJECTED" : "CONTROL_UNAVAILABLE" } });
+      return reply7(res, status, { error: { code, ...probeReason ? { probeReason } : {} } }, cookies2);
     }
   };
 }

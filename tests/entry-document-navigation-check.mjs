@@ -35,6 +35,9 @@ try{
    assert.equal(safeParams(target.hash).get('course'),safeParams(hash).get('course'));assert.equal(safeParams(target.hash).get('project'),safeParams(hash).get('project'));
   }
  });
+ await check('Code Studio deep link keeps project after proof; unsafe destination fields are discarded',async()=>{
+  const hash='#view=code-studio&project=synthetic-studio&next=https://attacker.invalid&token=synthetic';const f=fixture({hash});await f.bind();await f.nodes.get('[data-login]').click();const target=new URL(f.navigations[0].target);assert.equal(target.hash,'#view=code-studio&project=synthetic-studio');assert.equal(target.origin,ENTRY_ORIGIN);assert.equal(target.search,'');
+ });
  await check('signed-in Continue с /#view=home вызывает полный GET через /index.html',async()=>{
   const f=fixture();await f.bind();const login=f.nodes.get('[data-login]');assert.equal(f.nodes.get('[data-login-label]').textContent,'Продолжить в Nexus');assert.equal(login.href,ENTRY_ORIGIN+'/index.html#view=home');
   assert.equal(await login.click(),true);assert.deepEqual(f.navigations,[{target:ENTRY_ORIGIN+'/index.html#view=home',sameDocument:false}]);assert.equal(f.passkeyLoads,0);assert.equal(f.logins,0);

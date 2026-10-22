@@ -9,8 +9,8 @@ export async function contentOperation(env,value){
  const {DB:db}=env,{payload:p,actor,method}=value;
  const operationURL=new URL(value.path||'/api/v2/account/control/content','https://synthetic.invalid');
  if(method==='GET'&&operationURL.search==='?mediaStatus=1'){const exists=env.CONTENT_MEDIA_ENABLED==='true'&&!!await first(db,"SELECT name FROM sqlite_master WHERE type='table' AND name='nexus_content_media'");return {mediaAvailability:{enabled:!!exists&&env.CONTENT_MEDIA_UPLOAD_ENABLED==='true',maxBytes:98304,maxDimension:1600}}}
- if(operationURL.search){if(method!=='GET'||[...operationURL.searchParams.keys()].join(',')!=='media'||operationURL.searchParams.getAll('media').length!==1)deny('INVALID_INPUT');return mediaDTO(env,operationURL.searchParams.get('media'))}
- if(method==='POST'&&p?.target==='media')return uploadMedia(env,value);
+ if(operationURL.search){if(method!=='GET'||[...operationURL.searchParams.keys()].join(',')!=='media'||operationURL.searchParams.getAll('media').length!==1)deny('INVALID_INPUT');if(env.CONTENT_MEDIA_PARTS_ENABLED==='true')deny('CONTENT_MEDIA_PARTS_REQUIRED',503);return mediaDTO(env,operationURL.searchParams.get('media'))}
+ if(method==='POST'&&p?.target==='media'){if(env.CONTENT_MEDIA_PARTS_ENABLED==='true')deny('CONTENT_MEDIA_PARTS_REQUIRED',503);return uploadMedia(env,value)}
  if(method==='GET'){
   const home=await first(db,'SELECT * FROM nexus_content_home WHERE id=1');
   return {posts:(await rows(query(db,'SELECT * FROM nexus_content_posts ORDER BY updated_at DESC LIMIT 100'))).map(postDto),home:{draft:JSON.parse(home.draft_json),published:JSON.parse(home.published_json),version:home.version}};
@@ -51,7 +51,7 @@ export async function publicContent(request,env){
   const url=new URL(request.url);
   if(url.hash)return Response.json({error:{code:'INVALID_INPUT'}},{status:400,headers});
   if([...url.searchParams.keys()].some(k=>!['slug','media'].includes(k))||[...url.searchParams.keys()].length>1||url.searchParams.getAll('slug').length>1||url.searchParams.getAll('media').length>1)return Response.json({error:{code:'INVALID_INPUT'}},{status:400,headers});
-  if(url.searchParams.has('media')){try{return Response.json(await mediaDTO(env,url.searchParams.get('media'),{publishedOnly:true}),{headers})}catch(e){return Response.json({error:{code:e.code||'CONTENT_UNAVAILABLE'}},{status:[400,404,503].includes(e.status)?e.status:503,headers})}}
+  if(url.searchParams.has('media')){try{if(env.CONTENT_MEDIA_PARTS_ENABLED==='true')deny('CONTENT_MEDIA_PARTS_REQUIRED',503);return Response.json(await mediaDTO(env,url.searchParams.get('media'),{publishedOnly:true}),{headers})}catch(e){return Response.json({error:{code:e.code||'CONTENT_UNAVAILABLE'}},{status:[400,404,503].includes(e.status)?e.status:503,headers})}}
   const slug=url.searchParams.get('slug');
   if(slug&&(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||slug.length>80))return Response.json({error:{code:'INVALID_INPUT'}},{status:400,headers});
   const home=await first(env.DB,'SELECT published_json FROM nexus_content_home WHERE id=1');

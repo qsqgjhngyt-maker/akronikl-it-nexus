@@ -12,9 +12,15 @@ export async function bindContentEditor(root){
  const accountId=verifiedAccount()?.accountId;
  const status=root.querySelector('[data-content-status]'),host=root.querySelector('[data-content-editor]'),list=root.querySelector('[data-content-list]'),refresh=root.querySelector('[data-content-refresh]');
  const request=async(options={})=>{const {path='/api/v2/account/control/content',...rest}=options;const data=await accountControlRequest(path,{accountId,...rest});if(Array.isArray(data.posts))data.posts=data.posts.map(p=>({...p,draft:restoreLayoutArticle(p.draft),published:p.published?restoreLayoutArticle(p.published):null}));return data};
- let layoutEditor,unregisterUpdate,data,current,busy=false,loading=null,ready=false,conflict=false,awaitingRead=null;
+ let layoutEditor,unregisterUpdate,data,current,busy=false,loading=null,ready=false,conflict=false,awaitingRead=null,keyConfirmation=null;
  const valid=()=>root.isConnected&&verifiedAccount()?.accountId===accountId;
  const message=(text,state)=>{if(valid()){status.textContent=text;root.dataset.contentState=state}};
+ function confirmKey(){
+  if(keyConfirmation)return keyConfirmation;
+  if(busy||loading||!ready||conflict||!valid())return Promise.reject(Error('Сначала дождитесь загрузки списка статей.'));
+  const button=root.querySelector('[data-content-key]');button.disabled=true;
+  keyConfirmation=(async()=>{try{await(await import('/account/access/passkey-client.js')).login();if(!valid())throw Object.assign(Error('ACCOUNT_SESSION_CHANGED'),{code:'ACCOUNT_SESSION_CHANGED'})}catch(error){throw Object.assign(Error(controlMessage(error)),{code:error.code||'',name:error.name})}finally{keyConfirmation=null;if(valid())button.disabled=false}})();return keyConfirmation;
+ }
  function controls(){
   const locked=busy||!!loading;
   for(const button of root.querySelectorAll('[data-content-home],[data-content-new],[data-content-seeds] button,[data-content-list] button'))button.disabled=locked||!ready;
@@ -83,9 +89,10 @@ export async function bindContentEditor(root){
   const form=host.querySelector('form'),values=()=>({title:form.elements.title.value.trim(),summary:form.elements.summary.value.trim(),body:layoutEditor.body()});
   let dirty=false;
   layoutEditor=bindBlogLayoutEditor({host:host.querySelector('[data-blog-layout]'),body:current.draft.body,isCurrent:()=>valid()&&current===selected,
+   confirmPhotoAccess:confirmKey,
    getMediaAvailability:async()=>{const data=await request({path:'/api/v2/account/control/content?mediaStatus=1'});return data.mediaAvailability},
    privateRead:path=>request({method:'GET',path}),
-   uploadPhoto:async jpegBase64=>{if(busy||loading||!ready||conflict||!valid())throw Error('Сначала дождитесь загрузки списка статей.');try{return await request({method:'POST',body:{requestId:crypto.randomUUID(),target:'media',id:crypto.randomUUID(),slug:'',version:0,action:'upload',content:{jpegBase64}}})}catch(error){throw Error(controlMessage(error))}},
+   uploadPhoto:async jpegBase64=>{if(busy||loading||!ready||conflict||!valid())throw Error('Сначала дождитесь загрузки списка статей.');try{return await request({method:'POST',body:{requestId:crypto.randomUUID(),target:'media',id:crypto.randomUUID(),slug:'',version:0,action:'upload',content:{jpegBase64}}})}catch(error){throw Object.assign(Error(controlMessage(error)),{code:error.code||error.message,status:error.status})}},
    onChange:()=>{dirty=true},onStatus:text=>message(text,'ready')});
   // GET photos uses the same server-checked Account expectation and never a public draft URL.
   form.addEventListener('input',()=>{dirty=true});
@@ -98,7 +105,7 @@ export async function bindContentEditor(root){
  root.querySelector('[data-content-home]').onclick=()=>{if(!busy&&!loading&&ready&&valid())home()};root.querySelector('[data-content-new]').onclick=()=>{if(!busy&&!loading&&ready&&valid())post()};
  for(const draft of BLOG_DRAFTS){const button=document.createElement('button');button.type='button';button.className='btn';button.textContent=draft.title;button.onclick=()=>{if(busy||loading||!ready||!valid())return;const existing=data.posts.find(p=>p.slug===draft.slug);if(existing){post(existing);message('Статья с этим адресом уже есть. Открыта её текущая версия.','ready');return}if(host.querySelector('form')&&!confirm('Открыть подготовленную статью? Несохранённые поля текущего редактора не будут перенесены.'))return;post(null,draft);message('Подготовленный текст открыт. Проверьте предпросмотр, сохраните черновик и опубликуйте отдельным действием.','ready')};root.querySelector('[data-content-seeds]').append(button)}
  refresh.onclick=async()=>{if(busy||loading||!valid())return;const pending=awaitingRead;if(await load()){if(pending)selectSaved();else{if(!host.querySelector('form'))home();message('Список обновлён. Выберите нужную сохранённую статью. Поля редактора оставлены.','ready')}}};
- root.querySelector('[data-content-key]').onclick=async event=>{if(busy||loading)return;event.target.disabled=true;try{await(await import('/account/access/passkey-client.js')).login();if(valid())message('Вход подтверждён. Повторите выбранное действие.','ready')}catch{if(valid())message('Подтверждение не завершено. Изменений нет.','write-error')}finally{event.target.disabled=false}};
+ root.querySelector('[data-content-key]').onclick=async event=>{if(busy||loading)return;event.target.disabled=true;try{await confirmKey();if(valid())message('Вход подтверждён. Повторите выбранное действие.','ready')}catch(error){if(valid())message(error.message,'write-error')}finally{event.target.disabled=false}};
  controls();if(await load()){home();message('Редактор готов. Изменения публикуются отдельным действием.','ready')}
 }
 export function contentEditorMarkup(){

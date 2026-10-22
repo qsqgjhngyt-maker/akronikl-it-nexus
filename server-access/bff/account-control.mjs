@@ -4,6 +4,9 @@ import {sanitizeAvatar,AvatarError} from '../avatar-codec.mjs';
 import {HOME_SLOTS} from '../../core/content-contract.js';
 import {hasVaryWildcard} from '../../core/private-response-policy.js';
 import {createHash,createHmac,randomBytes} from 'node:crypto';
+import {requestMediaHTTP2} from './media-http2.mjs';
+import {wireHeaders} from './socket-progress.mjs';
+import {uploadPhotoParts,readPhotoParts} from './media-parts.mjs';
 import {GATEWAY_ORIGIN,WORKER_ORIGIN} from './account-read.mjs';
 import {readV2CookieContext} from './gateway-cookie-context.mjs';
 import {configuredOAuthProviders,oauthCallbackURL} from './oauth-providers.mjs';
@@ -18,14 +21,27 @@ const fail=(code,status)=>{throw new Rejected(code,status)};
 const exact=(o,keys)=>!!o&&typeof o==='object'&&!Array.isArray(o)&&Object.keys(o).sort().join(',')===[...keys].sort().join(',');
 const id=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value);
 const safeText=(value,max)=>typeof value==='string'&&value.length<=max&&!/[\u0000-\u001f\u007f]/.test(value);
-const safeCodes=new Set(['SESSION_REQUIRED','ACCOUNT_SESSION_CHANGED','ADMIN_REQUIRED','ADMIN_FRESH_PASSKEY_REQUIRED','ADMIN_ACCOUNT_PROTECTED','INVALID_INPUT','INVALID_STATE','RESTORE_WITHOUT_LOGIN_METHOD','NOT_FOUND','CONTROL_CONFLICT','CONTROL_WRITE_UNCONFIRMED','CONTROL_UNAVAILABLE','ALPHA_CONTROL_UNAVAILABLE','ALPHA_ACCESS_CLOSED','ALPHA_CAPACITY_REACHED','ALPHA_LIMIT_BELOW_OCCUPIED','REMOVE_BEFORE_PURGE','PURGE_NOT_ENABLED','PURGE_SCHEMA_REVIEW_REQUIRED','SHARED_PROJECT_TRANSFER_REQUIRED','PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED','PURGE_APPROVAL_REJECTED','PURGE_CONFIRMATION_REQUIRED','AVATAR_INVALID','AVATAR_DIMENSIONS','AVATAR_TOO_LARGE','USERNAME_UNAVAILABLE','RATE_LIMITED','BLOG_IMAGE_INVALID','CONTENT_MEDIA_UNAVAILABLE','CONTENT_MEDIA_QUOTA','CONTENT_EDITOR_UPDATE_REQUIRED']);
-const reply=(res,status,body)=>{const data=JSON.stringify(body);res.writeHead(status,{'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(data),'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer'});res.end(data);return true};
+const safeCodes=new Set(['SESSION_REQUIRED','ACCOUNT_SESSION_CHANGED','ADMIN_REQUIRED','ADMIN_FRESH_PASSKEY_REQUIRED','ADMIN_ACCOUNT_PROTECTED','INVALID_INPUT','INVALID_STATE','RESTORE_WITHOUT_LOGIN_METHOD','NOT_FOUND','CONTROL_CONFLICT','CONTROL_WRITE_UNCONFIRMED','CONTROL_UNAVAILABLE','ALPHA_CONTROL_UNAVAILABLE','ALPHA_ACCESS_CLOSED','ALPHA_CAPACITY_REACHED','ALPHA_LIMIT_BELOW_OCCUPIED','REMOVE_BEFORE_PURGE','PURGE_NOT_ENABLED','PURGE_SCHEMA_REVIEW_REQUIRED','SHARED_PROJECT_TRANSFER_REQUIRED','PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED','PURGE_APPROVAL_REJECTED','PURGE_CONFIRMATION_REQUIRED','AVATAR_INVALID','AVATAR_DIMENSIONS','AVATAR_TOO_LARGE','USERNAME_UNAVAILABLE','RATE_LIMITED','BLOG_IMAGE_INVALID','CONTENT_MEDIA_UNAVAILABLE','CONTENT_MEDIA_QUOTA','CONTENT_EDITOR_UPDATE_REQUIRED','CONTENT_MEDIA_PARTS_UNAVAILABLE','CONTENT_MEDIA_PARTS_REQUIRED','CONTENT_MEDIA_PARTS_CONFLICT','CONTENT_MEDIA_PARTS_INCOMPLETE']);
+const reply=(res,status,body,extra={})=>{const data=JSON.stringify(body);res.writeHead(status,{'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(data),'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer',...extra});res.end(data);return true};
 async function bounded(stream){
  const chunks=[];let size=0;
  for await(const b of stream){const bytes=Buffer.from(b);size+=bytes.length;if(size>262144)fail('INPUT_TOO_LARGE',413);chunks.push(bytes)}
+ return parsedBody(chunks,size);
+}
+function parsedBody(chunks,size){
  let text,value;try{text=new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks,size));value=JSON.parse(text)}catch{fail('INVALID_INPUT')}
  if(!value||typeof value!=='object'||Array.isArray(value)||text!==JSON.stringify(value))fail('INVALID_INPUT');
  return value;
+}
+async function boundedMediaResponse(stream,signal,limit=262144){
+ // Deadline принадлежит BFF и чтению тела, даже если transport не завершил reader после abort.
+ const reader=stream.getReader(),chunks=[];let size=0,done=false,cancelled=false,onAbort;
+ const cancel=()=>{if(!cancelled){cancelled=true;void reader.cancel().catch(()=>{})}};
+ const stopped=new Promise((_resolve,reject)=>{onAbort=()=>{reject(signal.reason);cancel()}});
+ signal.addEventListener('abort',onAbort,{once:true});
+ const read=async()=>{while(true){const part=await reader.read();signal.throwIfAborted();if(part.done){done=true;break}const bytes=Buffer.from(part.value);size+=bytes.length;if(size>limit)fail('INPUT_TOO_LARGE',413);chunks.push(bytes)}return parsedBody(chunks,size)};
+ try{if(signal.aborted)onAbort();return await Promise.race([read(),stopped])}
+ finally{signal.removeEventListener('abort',onAbort);if(!done)cancel();reader.releaseLock()}
 }
 function validateDTO(data,path,expected){
  const valid=()=>fail('CONTROL_UNAVAILABLE',502);
@@ -61,21 +77,50 @@ function validateDTO(data,path,expected){
  }else if(!exact(data,['ok'])||data.ok!==true)valid();
  return data;
 }
-async function service(env,fetchImpl,envelope){
+function mediaTransportCode(error,signal,phase){
+ // Только фиксированные коды этапов. Сообщения, URL и содержимое cause не отражаются в ответе.
+ if(signal.aborted){
+  if(phase==='body')return 'BLOG_MEDIA_UPSTREAM_BODY_TIMEOUT';
+  const nativePhases={dns:'BLOG_MEDIA_UPSTREAM_DNS_TIMEOUT',tcp:'BLOG_MEDIA_UPSTREAM_CONNECT_TIMEOUT',tls:'BLOG_MEDIA_UPSTREAM_TLS_TIMEOUT',upload:'BLOG_MEDIA_UPSTREAM_UPLOAD_TIMEOUT',response:'BLOG_MEDIA_UPSTREAM_RESPONSE_TIMEOUT'};
+  return nativePhases[error?.nexusPhase]||'BLOG_MEDIA_UPSTREAM_REQUEST_TIMEOUT';
+ }
+ const code=error?.cause?.code||error?.code;
+ if(['UND_ERR_SOCKET','ECONNRESET','EPIPE'].includes(code))return phase==='body'?'BLOG_MEDIA_UPSTREAM_BODY_SOCKET_CLOSED':'BLOG_MEDIA_UPSTREAM_SOCKET_CLOSED';
+ if(phase==='body')return 'BLOG_MEDIA_UPSTREAM_BODY_READ_FAILED';
+ if(['ENOTFOUND','EAI_AGAIN'].includes(code))return 'BLOG_MEDIA_UPSTREAM_DNS_FAILED';
+ if(['DEPTH_ZERO_SELF_SIGNED_CERT','SELF_SIGNED_CERT_IN_CHAIN','UNABLE_TO_VERIFY_LEAF_SIGNATURE','UNABLE_TO_GET_ISSUER_CERT_LOCALLY','ERR_TLS_CERT_ALTNAME_INVALID','CERT_HAS_EXPIRED'].includes(code))return 'BLOG_MEDIA_UPSTREAM_TLS_REJECTED';
+ if(code==='UND_ERR_CONNECT_TIMEOUT')return 'BLOG_MEDIA_UPSTREAM_CONNECT_TIMEOUT';
+ if(['ENETUNREACH','EHOSTUNREACH','ECONNREFUSED','ETIMEDOUT'].includes(code))return 'BLOG_MEDIA_UPSTREAM_CONNECT_FAILED';
+ return 'BLOG_MEDIA_UPSTREAM_NETWORK_FAILED';
+}
+export async function controlService(env,fetchImpl,envelope,{mediaDiagnostics=false,mediaFetchImpl=fetchImpl,captureWire=false,signal:sharedSignal,limit=262144}={}){
+ const failWire=(code,status,meta)=>{const error=new Rejected(code,status);if(captureWire)error.nexusWire=wireHeaders(meta);throw error};
  const body=JSON.stringify(envelope),timestamp=String(Date.now()),nonce=randomBytes(16).toString('hex');
    const signature=createHmac('sha256',env.ADMIN_SERVICE_KEY).update(['v1','POST',INTERNAL,timestamp,nonce,sha(body)].join('\n')).digest('hex');
-   const upstream=await fetchImpl(WORKER_ORIGIN+INTERNAL,{method:'POST',credentials:'omit',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(12000),headers:{accept:'application/json','content-type':'application/json','x-nexus-service-timestamp':timestamp,'x-nexus-service-nonce':nonce,'x-nexus-service-signature':signature},body});
-   if(upstream.redirected||!/^application\/json(?:\s*;|$)/i.test(upstream.headers.get('content-type')||'')||upstream.headers.has('set-cookie')||upstream.headers.get('cache-control')!=='no-store'||!hasVaryWildcard(upstream.headers.get('vary'))){await upstream.body?.cancel();fail('CONTROL_UNAVAILABLE',502)}
- const data=await bounded(upstream.body);
- if(upstream.status!==200)fail(safeCodes.has(data.error?.code)?data.error.code:'CONTROL_UNAVAILABLE',[400,401,403,404,409,413,429,503].includes(upstream.status)?upstream.status:502);
+   if(Buffer.byteLength(body)>limit)fail('INPUT_TOO_LARGE',413);
+   const signal=sharedSignal||AbortSignal.timeout(12000);
+   signal.throwIfAborted();
+   let upstream;try{upstream=await (mediaDiagnostics?mediaFetchImpl:fetchImpl)(WORKER_ORIGIN+INTERNAL,{method:'POST',credentials:'omit',cache:'no-store',redirect:'error',signal,headers:{accept:'application/json','content-type':'application/json','x-nexus-service-timestamp':timestamp,'x-nexus-service-nonce':nonce,'x-nexus-service-signature':signature},body,...(captureWire?{captureWire:true}:{})})}catch(error){if(mediaDiagnostics)failWire(mediaTransportCode(error,signal,'headers'),502,error.nexusWire);throw error}
+   if(upstream.nativeEncodingRejected){await upstream.body?.cancel().catch(()=>{});fail('BLOG_MEDIA_UPSTREAM_ENCODING_REJECTED',502)}
+   const rejected=upstream.redirected||upstream.status>=300&&upstream.status<400?'REDIRECT':!/^application\/json(?:\s*;|$)/i.test(upstream.headers.get('content-type')||'')?'MIME':upstream.headers.has('set-cookie')?'COOKIE':upstream.headers.get('cache-control')!=='no-store'?'CACHE':!hasVaryWildcard(upstream.headers.get('vary'))?'VARY':null;
+   if(rejected){await upstream.body?.cancel().catch(()=>{});fail(mediaDiagnostics?'BLOG_MEDIA_UPSTREAM_'+rejected+'_REJECTED':'CONTROL_UNAVAILABLE',502)}
+ let data;try{data=await (mediaDiagnostics?boundedMediaResponse(upstream.body,signal,limit):bounded(upstream.body))}catch(error){if(mediaDiagnostics&&limit===12000&&error instanceof Rejected&&error.code==='INPUT_TOO_LARGE')fail('BLOG_MEDIA_UPSTREAM_DTO_REJECTED',502);if(mediaDiagnostics&&!(error instanceof Rejected))fail(mediaTransportCode(error,signal,'body'),502);throw error}
+ if(upstream.status!==200){
+  const code=safeCodes.has(data.error?.code)?data.error.code:'CONTROL_UNAVAILABLE',status=[400,401,403,404,409,413,429,503].includes(upstream.status)?upstream.status:502;
+  if(mediaDiagnostics&&code==='CONTROL_UNAVAILABLE'&&upstream.status>=500)fail('BLOG_MEDIA_UPSTREAM_HTTP_'+([500,502,503,504].includes(upstream.status)?upstream.status:'5XX'),status);
+  failWire(code,status,upstream.nexusWire);
+ }
  return data;
 }
-export function createAccountControlHandler({env={},fetchImpl=fetch}={}){
+const service=controlService;
+export function createAccountControlHandler({env={},fetchImpl=fetch,mediaFetchImpl=fetchImpl===fetch?requestMediaHTTP2:fetchImpl}={}){
  return async(req,res)=>{
   if(typeof req.url!=='string'||!/^\/api\/v2\/account\/(?:control(?:\/|\?|$)|profile(?:\/|\?|$))/.test(req.url))return false;
+  let diagnostic=false;
   try{
    if(env.ACCOUNT_CONTROL_PROXY_ENABLED!=='true'||env.PRIVATE_GATEWAY_CONFIRMED!=='true'||typeof env.ADMIN_SERVICE_KEY!=='string'||env.ADMIN_SERVICE_KEY.length<32)fail('CONTROL_UNAVAILABLE',503);
    if(req.url.length>512)fail('INVALID_INPUT');const url=new URL(req.url,GATEWAY_ORIGIN),path=url.pathname;
+   if(path===BASE+'/content/media-parts')fail('NOT_FOUND',404);
    if(url.hash||req.url.split('?')[0]!==path||!['GET','POST'].includes(req.method)||path.startsWith('/api/v2/account/profile')&&url.search)fail('INVALID_INPUT');
    if(req.headers.host!==new URL(GATEWAY_ORIGIN).host||count(req,'host')!==1||count(req,'authorization')!==0||req.headers.origin!==undefined&&req.headers.origin!==GATEWAY_ORIGIN||req.headers['sec-fetch-site']!==undefined&&req.headers['sec-fetch-site']!=='same-origin')fail('ORIGIN_REJECTED',403);
    const expected=req.headers['x-nexus-account-expectation'];
@@ -86,6 +131,7 @@ export function createAccountControlHandler({env={},fetchImpl=fetch}={}){
    const session=cookies.get('__Host-nexus_session');
    if(!session)fail('SESSION_REQUIRED',401);
    if(!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session))fail('INGRESS_REJECTED',401);
+   const partsSignal=env.BFF_CONTENT_MEDIA_PARTS_ENABLED==='true'?AbortSignal.timeout(12000):undefined;
    const payload=req.method==='POST'?await bounded(req):null;
    let prepared=payload;
    if(path==='/api/v2/account/profile/avatar'&&req.method==='POST'){
@@ -97,14 +143,25 @@ export function createAccountControlHandler({env={},fetchImpl=fetch}={}){
     catch(error){if(error instanceof AvatarError)fail(error.code,error.status);throw error}
    }
    if(path===BASE+'/content'&&req.method==='POST'&&payload?.target==='media'){try{if(!exact(payload.content,['jpegBase64']))fail('INVALID_INPUT');prepared={...payload,content:sanitizeBlogImage(payload.content.jpegBase64)}}catch{fail('BLOG_IMAGE_INVALID')}}
-   const data=await service(env,fetchImpl,{path:req.url,method:req.method,payload:prepared,sessionHash:sha(session),expectedAccountId:expected});
-   const dto=validateDTO(data,req.url,expected);
+   const mediaDiagnostics=path===BASE+'/content'&&req.method==='POST'&&prepared?.target==='media';
+   // Это селектор технических счётчиков, не доказательство аккаунта или новый grant.
+   diagnostic=mediaDiagnostics&&expected==='synthetic-photo-transport-no-account'&&session.startsWith('nxs_SYNTHETIC_NOT_A_SESSION_');
+   const envelope={path:req.url,method:req.method,payload:prepared,sessionHash:sha(session),expectedAccountId:expected};
+   const parts=env.BFF_CONTENT_MEDIA_PARTS_ENABLED==='true';
+   const rpc=(value,options)=>service(env,fetchImpl,value,{mediaDiagnostics:true,mediaFetchImpl,...options});
+   let data;
+   if(parts&&mediaDiagnostics)data=await uploadPhotoParts(envelope,rpc,{signal:partsSignal});
+   else if(parts&&path===BASE+'/content'&&req.method==='GET'&&url.searchParams.has('media')){
+    if([...url.searchParams.keys()].join(',')!=='media'||url.searchParams.getAll('media').length!==1)fail('INVALID_INPUT');
+    data=await readPhotoParts(envelope,url.searchParams.get('media'),rpc,{signal:partsSignal});
+   }else data=await service(env,fetchImpl,envelope,{mediaDiagnostics,mediaFetchImpl,captureWire:diagnostic});
+   let dto;try{dto=validateDTO(data,req.url,expected)}catch(error){if(mediaDiagnostics&&error instanceof Rejected&&error.code==='CONTROL_UNAVAILABLE')fail('BLOG_MEDIA_UPSTREAM_DTO_REJECTED',502);throw error}
    if(path===BASE+'/providers'){
     const configured=new Set(configuredOAuthProviders(env).map(p=>p.id));
     return reply(res,200,{providers:[['yandex','Яндекс ID',['YANDEX_CLIENT_ID','YANDEX_CLIENT_SECRET']],['google','Google',['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET']],['vk','VK ID',['VK_CLIENT_ID']]].map(([id,label,names])=>({id,label,configured:configured.has(id),missing:names.filter(n=>typeof env[n]!=='string'||!env[n]||/[\x00-\x20\x7f]/.test(env[n])),callbackURL:oauthCallbackURL(id)}))});
    }
    if(path===BASE+'/content'&&req.method==='GET'&&Array.isArray(dto.posts))return reply(res,200,{...dto,posts:dto.posts.map(p=>({...p,draft:compatibleArticle(p.draft,{editor:true}),published:p.published?compatibleArticle(p.published,{editor:true}):null}))});
    return reply(res,200,dto);
-  }catch(error){return reply(res,error instanceof Rejected?error.status:error.message==='INGRESS_REJECTED'?401:502,{error:{code:error instanceof Rejected?error.code:error.message==='INGRESS_REJECTED'?'INGRESS_REJECTED':'CONTROL_UNAVAILABLE'}})}
+  }catch(error){return reply(res,error instanceof Rejected?error.status:error.name==='MediaPartsError'?error.status:error.message==='INGRESS_REJECTED'?401:502,{error:{code:error instanceof Rejected||error.name==='MediaPartsError'?error.code:error.message==='INGRESS_REJECTED'?'INGRESS_REJECTED':'CONTROL_UNAVAILABLE'}},diagnostic&&error instanceof Rejected?error.nexusWire||{}:{})}
  };
 }

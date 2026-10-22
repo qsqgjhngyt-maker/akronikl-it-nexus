@@ -1,6 +1,6 @@
 const normalize=value=>String(value||'').trim().replace(/\\/g,'/').replace(/^\/+/, '').replace(/\/+$/,'');
 const isSource=(path,languageId='cpp')=>String(languageId).toLowerCase()==='c'?/\.c$/i.test(path):/\.(?:cc|cpp|cxx|c\+\+)$/i.test(path);
-const underRoot=(path,root)=>{const p=normalize(path),r=normalize(root);return !!r&&(p===r||p.startsWith(`${r}/`))};
+const underRoot=(path,root)=>{const p=normalize(path),r=normalize(root);return !!r&&(r==='.'||p===r||p.startsWith(`${r}/`))};
 const unique=values=>[...new Set(values.filter(Boolean))];
 
 export function createProjectBuildPlan(project={},mode='run'){

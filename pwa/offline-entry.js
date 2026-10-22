@@ -1,3 +1,4 @@
+import {codeStudioHomeMarkup,bindCodeStudioHome} from '../project-studio/code-studio-home.js';
 import {accountHomePresentation} from '../core/account-home-presentation.js';
 import {blankCppProjectTemplate} from '../project-studio/project-templates.js';
 import {blogPreviewMarkup} from '../core/content-public.js';
@@ -82,11 +83,11 @@ function save(){
 async function settled(){while(true){const observed=queue;await observed;if(observed===queue&&pending===0)break}if(saveFailed)throw Error('Сначала сохраните изменения.')}
 function needLocal(){if(data)return true;root.innerHTML=lockedMarkup();return false}
 async function unlockView(){
- const rows=await store.list(),requested=new URLSearchParams(location.hash.slice(1)).get('copy');
+ const rows=await store.list(),unlockRoute=new URLSearchParams(location.hash.slice(1)),requested=unlockRoute.get('copy'),returnToStudio=unlockRoute.get('return')==='code-studio';
  root.innerHTML=unlockMarkup(rows,requested);
  root.querySelector('form').onsubmit=async event=>{
   event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;
-  try{session=await store.unlock(root.querySelector('#localCopy').value,root.querySelector('#localPhrase').value);data=session.read();saved.textContent='Открыта локальная копия · '+data.owner.displayName+'. Облачный вход не подтверждён.';document.querySelector('#lockLocal').hidden=false;document.querySelector('[data-local-name]').textContent=data.owner.displayName;document.querySelector('[data-local-avatar]').textContent=data.owner.displayName.slice(0,1).toLocaleUpperCase();location.hash='#view=projects'}
+  try{session=await store.unlock(root.querySelector('#localCopy').value,root.querySelector('#localPhrase').value);data=session.read();saved.textContent='Открыта локальная копия · '+data.owner.displayName+'. Облачный вход не подтверждён.';document.querySelector('#lockLocal').hidden=false;document.querySelector('[data-local-name]').textContent=data.owner.displayName;document.querySelector('[data-local-avatar]').textContent=data.owner.displayName.slice(0,1).toLocaleUpperCase();location.hash=returnToStudio?'#view=code-studio':'#view=projects'}
   catch{root.querySelector('#unlockStatus').textContent='Копия не открыта. Проверьте фразу; данные не изменены.'}
   finally{const input=root.querySelector('#localPhrase');if(input)input.value='';button.disabled=false}
  };
@@ -99,11 +100,21 @@ function views(){
 }
 function lessons(){const tab=new URLSearchParams(location.hash.slice(1)).get('tab');return tab==='practicums'?views().practicums():tab==='projects'?views().projectsView():views().overview()}
 
-function projectTemplate(title,source,id=crypto.randomUUID()){
- const template=blankCppProjectTemplate(title),stamp=new Date().toISOString();
+function projectTemplate(title,source,id=crypto.randomUUID(),provided=null){
+ const template=provided||blankCppProjectTemplate(title),stamp=new Date().toISOString();
  if(source!==undefined)template.files[0].content=source;
- return {id,title,description:template.description,languageId:'cpp',createdAt:stamp,updatedAt:stamp,origin:template.origin,workspace:{languageId:'cpp',entryFile:template.entryFile,activeFile:template.entryFile,revision:0,files:template.files},progress:{},checkpoints:[]};
+ return {id,title,description:template.description,languageId:'cpp',createdAt:stamp,updatedAt:stamp,origin:template.origin,manifest:{schemaVersion:1,entryFile:template.entryFile,sourceRoots:template.sourceRoots||['src'],includeRoots:template.includeRoots||['include'],testRoots:template.testRoots||['tests'],build:{profile:'wasm-debug',standard:'c++20',runtime:'auto'}},workspace:{languageId:'cpp',entryFile:template.entryFile,activeFile:template.activeFile||template.entryFile,revision:0,files:template.files},progress:{},checkpoints:[]};
 }
+
+function standaloneStudio(){
+ const unlocked=data,boundSession=session;
+ const assertLocal=()=>{if(!unlocked||data!==unlocked||session!==boundSession)throw Error('LOCAL_COPY_LOCKED')};
+ root.innerHTML=codeStudioHomeMarkup({projects:Object.values(data?.projects||{}),recentIds:data?.state.codeStudioRecent||[],t,localMode:true,locked:!data});
+ bindCodeStudioHome({mount:root,t,localMode:true,locked:!data,findProject:id=>data?.projects[id],
+  onCreate:async input=>{assertLocal();const p=projectTemplate(input.title,undefined,crypto.randomUUID(),input);data.projects[p.id]=p;await save();return p},
+  onOpen:async id=>{assertLocal();if(!data.projects[id])throw Error('PROJECT_NOT_FOUND');data.state.codeStudioRecent=[id,...(data.state.codeStudioRecent||[]).filter(v=>v!==id)].slice(0,10);await save();await settled();assertLocal();location.hash='#view=code-studio&project='+encodeURIComponent(id)}});
+}
+
 function projectList(){
  if(!needLocal())return;
  root.innerHTML='<div class="nexus-project-studio" data-nexus-project-studio>'+projectStudioDashboardMarkup({projects:Object.values(data.projects),courseProjects:course.projectsRu.projects,locale:prefs.uiLocale,localMode:true})+'</div>';
@@ -114,10 +125,10 @@ async function editor(p){
  if(!needLocal())return;if(!p){root.innerHTML='<h1>Проект не найден в этой копии</h1>';return}
  const project={...p,manifest:{...p.manifest,entryFile:p.workspace.entryFile||p.workspace.files[0]?.path}};
  const definition=course.projectsRu.projects.find(x=>x.id===p.origin?.projectId);
- root.innerHTML='<div class="nexus-project-studio" data-nexus-project-studio>'+projectStudioViewMarkup({project,courseProject:definition,locale:prefs.uiLocale,localMode:true,audit:p.audit||[]})+'</div>';
+ root.innerHTML='<div class="nexus-project-studio" data-nexus-project-studio>'+projectStudioViewMarkup({project,courseProject:definition,locale:prefs.uiLocale,localMode:true,audit:p.audit||[],...(new URLSearchParams(location.hash.slice(1)).get('view')==='code-studio'?{backHref:'#view=code-studio',backLabel:'Code Studio'}:{})})+'</div>';
  bindEditor(p);
 }
-function bindEditor(p,starter){studio=bindLocalEditor({root,project:p,data,save,settled,render,starter,locale:prefs.uiLocale,onDelete:()=>{location.hash='#view=project-studio'}});bindNexusStudioUi(prefs.uiLocale)}
+function bindEditor(p,starter){studio=bindLocalEditor({root,project:p,data,save,settled,render,starter,locale:prefs.uiLocale,onDelete:()=>{location.hash=new URLSearchParams(location.hash.slice(1)).get('view')==='code-studio'?'#view=code-studio':'#view=project-studio'}});bindNexusStudioUi(prefs.uiLocale)}
 async function compiler(){
  root.innerHTML='<section class="ps-hero glass-panel"><div><span class="eyebrow">NEXUS RUNTIME</span><h1>Компилятор C++</h1><p>Подготовка загружает около 106 МБ, проверяет SHA256 всех 7 файлов и сохраняет их в IndexedDB. Готовность проверяется заново после запуска. Браузер может освободить хранилище; проекты при этом не удаляются.</p></div><span class="visual-cpp-symbol">C++</span></section><section class="block glass-panel"><h2>Подготовка к работе без сети</h2><button class="btn primary" id="prepareCompiler">Подготовить компилятор при наличии сети</button><p id="runtimeStatus" role="status">Проверяем сохранённые файлы…</p></section>';
  const status=root.querySelector('#runtimeStatus'),button=root.querySelector('button');button.disabled=true;
@@ -145,6 +156,7 @@ async function render(){
   if(!needLocal())return;
   root.innerHTML=graphicsWorkshopMarkup(t);graphics=bindGraphicsWorkshop(t,()=>prefs.effectsQuality||'auto',localGraphicsAdapter({read:()=>data,save,settled,root}));return;
  }
+ if(route.get('view')==='code-studio'&&!route.has('project'))return standaloneStudio();
  if(route.get('template')){if(!needLocal())return;const [kind,id]=route.get('template').split(':');const item=kind==='cpp'&&course.projectsRu.projects.find(p=>p.id===id);if(item){const p=exerciseCopy(data,'exercise',item);await save();location.hash='#view=project-studio&project='+encodeURIComponent(p.id);return}}
  if(route.has('project'))return editor(data?.projects[route.get('project')]);
  if(['projects','project-studio'].includes(route.get('view')))return projectList();
@@ -175,7 +187,7 @@ function bindSearch(inputSelector,rowSelector,statusSelector){
  input.oninput=()=>{const query=input.value.trim().toLocaleLowerCase('ru'),rows=[...root.querySelectorAll(rowSelector)];let visible=0;for(const row of rows){row.hidden=!row.textContent.toLocaleLowerCase('ru').includes(query);if(!row.hidden)visible++}root.querySelector(statusSelector).textContent=query?'Найдено: '+visible+' из '+rows.length:''};
 }
 function updateChrome(route){
- const view=route.get('view'),active=view==='home'?'home':view==='projects'||route.has('project')?'projects':view==='offline'||view==='compiler'||view==='unlock'||route.has('copy')?'offline':['blog','akronikl','skills'].includes(view)?view:'academy';
+ const view=route.get('view'),active=view==='code-studio'?'code-studio':view==='home'?'home':view==='projects'||route.has('project')?'projects':view==='offline'||view==='compiler'||view==='unlock'||route.has('copy')?'offline':['blog','akronikl','skills'].includes(view)?view:'academy';
  document.querySelectorAll('.side-nav a').forEach(a=>{const current=new URLSearchParams(a.hash.slice(1)).get('view')===active;a.classList.toggle('active',current);current?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current')});
  document.querySelector('.top-title strong').textContent=t('nav.'+active);document.querySelector('#appShell').dataset.nexusRoute=location.hash;closeMobile();
 }
