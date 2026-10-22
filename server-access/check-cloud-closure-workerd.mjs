@@ -27,7 +27,7 @@ try{
  db=await mf.getD1Database('DB');
  await check('reproducible production compatibility date applies exact SQL in actual local D1',async()=>{
   const migrations=['0001_sync_team_foundation','0002_nexus_account_tokens','0003_d1_only_project_snapshots','0004_identity_v2_session_foundation'].map(n=>'../cloudflare/nexus-sync-worker/migrations/'+n+'.sql');
-  migrations.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content'].map(n=>'migrations/'+n+'.sql'));
+  migrations.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content','0015_blog_media'].map(n=>'migrations/'+n+'.sql'));
   for(const name of migrations)await db.exec((await readFile(new URL(name,import.meta.url),'utf8')).split(/\r?\n/).filter(l=>!l.trimStart().startsWith('--')).join(' '));
   for(const table of ['account_subjects','login_methods','nexus_passkey_users','nexus_passkey_credentials','account_devices','account_sessions','session_login_methods','nexus_admin_grants','nexus_alpha_members'])for(const row of f.db.prepare('SELECT * FROM '+table).all()){
    const columns=Object.keys(row);await db.prepare('INSERT INTO '+table+'('+columns.join(',')+') VALUES('+columns.map(()=>'?').join(',')+')').bind(...Object.values(row)).run();

@@ -1,3 +1,4 @@
+import {accountHomePresentation} from './account-home-presentation.js';
 import {loadLocalIdentity} from './identity.js';
 import {verifiedAccount} from './account-storage.js';
 import {unifiedAccountMarkup,bindUnifiedAccount} from './account-unified.js';
@@ -160,30 +161,7 @@ export function accountChipMarkup(locale='ru'){
   </div>`;
 }
 
-export function accountHomeCardMarkup(locale='ru'){
-  const en=locale==='en';
-  const a=accountSnapshot(locale);
-  return `<section class="account-home-card glass-panel">
-    <div class="account-home-icon"><span class="account-avatar large">${esc(a.avatar)}</span></div>
-    <div class="account-home-main">
-      <span class="eyebrow">NEXUS ACCOUNT · FOUNDATION</span>
-      <h2>${a.connected
-        ? `${en?'Signed in as':'Вы авторизованы как'} ${esc(a.displayName)}`
-        : (en?'Your Nexus identity starts here':'Ваш Nexus Account начинается здесь')}</h2>
-      <p>${a.connected
-        ? (en?'This device is linked to the current Nexus Cloud account. Project Sync can use the same account identity.':'Это устройство связано с текущим Nexus Cloud аккаунтом. Project Sync использует ту же учётную запись.')
-        : (en?'Learning and projects continue locally. Connect Nexus Cloud today; federated sign-in and passkeys are the next Identity v2 layer.':'Обучение и проекты продолжают работать локально. Сейчас можно подключить Nexus Cloud; федеративный вход и passkeys будут следующим слоем Identity v2.')}</p>
-      <div class="account-home-meta">
-        <span class="${a.connected?'ok':''}">● ${esc(a.status)}</span>
-        ${a.connected?`<span>${esc(a.host)}</span>`:''}
-      </div>
-    </div>
-    <div class="account-home-actions">
-      <a class="btn primary" href="#view=account">${en?'Open account':'Открыть аккаунт'}</a>
-      ${a.connected?'':`<a class="btn" href="#view=account&tab=cloud">${en?'Connect Cloud':'Подключить Cloud'}</a>`}
-    </div>
-  </section>`;
-}
+export function accountHomeCardMarkup(locale='ru'){return accountHomePresentation(accountSnapshot(locale),locale)}
 
 const tabLink=(id,label,current)=>`<a href="#view=account&tab=${encodeURIComponent(id)}" class="${current===id?'active':''}" aria-current="${current===id?'page':'false'}">${esc(label)}</a>`;
 

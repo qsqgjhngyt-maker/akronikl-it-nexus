@@ -26,12 +26,12 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='h
 const launch=()=>chromium.launchPersistentContext(profile,{headless:true,executablePath:process.env.NEXUS_CHROME_PATH,serviceWorkers:'allow',...(offline?{proxy:{server:'http://127.0.0.1:9'}}:{}),args:['--disable-background-networking','--disable-component-update','--disable-sync','--no-first-run']});
 async function check(name,fn){const started=performance.now();try{await fn();checks.push({name,status:'PASS',durationMs:Math.round(performance.now()-started)});console.log('PASS '+name)}catch(error){failures.push({name,message:error.message});console.error('FAIL '+name+': '+error.message)}}
 async function openAcademy(page,url){
- await page.goto(origin+url);await page.locator('.visual-academy').waitFor();
+ await page.goto(origin+url);await page.locator('.visual-academy,[data-cpp-learning-path]').first().waitFor();
  if(await page.locator('[data-visual-academy]').count()){
   const cpp=page.locator('a[href="#course=cpp"]');assert.ok(await cpp.count()>0);await cpp.first().click();
  }
- await page.getByRole('heading',{name:'Академия',exact:true}).waitFor();
- assert.equal(await page.locator('a[href^="#lesson="]').count(),40);
+ await page.locator('[data-cpp-learning-path]').waitFor();
+ assert.equal(await page.locator('#cppPathPanel-topics .topic a').count(),40);
 }
 try{
  context=await launch();let page=await context.newPage();page.setDefaultTimeout(15000);await page.goto(origin+'/fixture.html');

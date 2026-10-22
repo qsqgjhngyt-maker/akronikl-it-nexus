@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 const js=fs.readFileSync(new URL('../core/memory-lab.js',import.meta.url),'utf8');
-const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8');
+const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8')+fs.readFileSync(new URL('../core/learning-views.js',import.meta.url),'utf8');
 const presentation=fs.readFileSync(new URL('../core/lesson-presentation.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('../styles/app.css',import.meta.url),'utf8');
 function assert(v,m){if(!v)throw new Error(m)}

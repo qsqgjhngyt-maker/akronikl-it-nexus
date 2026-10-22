@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {loadVerifiedGraphicsFrame} from '../pwa/verified-frame.js';
+import {GRAPHICS_FRAME_CSP} from '../pwa/policy.js';
+const windowImpl=new EventTarget(),sent=[],navigations=[];
+const child={postMessage:data=>sent.push(data)},parent={insertBefore(){}};
+const iframe={getAttribute:()=> 'allow-scripts',setAttribute(){},removeAttribute(){},remove(){},parentNode:parent,nextSibling:null,contentWindow:child,set src(value){navigations.push(value)},get src(){return navigations.at(-1)}};
+const reply=(source,data)=>{const e=new Event('message');Object.defineProperties(e,{source:{value:source},data:{value:data}});windowImpl.dispatchEvent(e)};
+const response=()=>new Response('SYNTHETIC_LOADER',{headers:{'content-security-policy':GRAPHICS_FRAME_CSP,'x-nexus-verified-sha256':'a'.repeat(64)}});
+let calls=0,firstSignal;
+const fetchImpl=async(url,options)=>{calls++;assert.equal(options.credentials,'omit');assert.equal(options.redirect,'error');if(calls===1){firstSignal=options.signal;await new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>reject(Error('cancelled')),{once:true}))}return response()};
+const old=loadVerifiedGraphicsFrame(iframe,'<h1>old</h1>',{windowImpl,fetchImpl}).then(()=>null,e=>e.message);
+const next=loadVerifiedGraphicsFrame(iframe,'<h1>new</h1>',{windowImpl,fetchImpl});assert.equal(firstSignal.aborted,true);assert.match(await old,/заменён/);
+await new Promise(resolve=>setTimeout(resolve,0));assert.equal(navigations.length,1);const nonce=new URL(iframe.src).hash.slice(1);assert.ok(nonce);
+let done=false;next.then(()=>{done=true});
+reply({}, {type:'nexus-scene-loader-ready',nonce});reply(child,{type:'nexus-scene-loader-ready',nonce:'wrong'});reply(child,{type:'nexus-scene-document-accepted',nonce});await Promise.resolve();assert.equal(done,false);assert.equal(sent.length,0);
+// Stale DOM load events have no effect; only the current frame/source+nonce handshake counts.
+reply(child,{type:'nexus-scene-loader-ready',nonce});assert.equal(sent.length,1);assert.equal(sent[0].html,'<h1>new</h1>');
+reply(child,{type:'nexus-scene-document-accepted',nonce:'old'});await Promise.resolve();assert.equal(done,false);
+reply(child,{type:'nexus-scene-document-accepted',nonce});await next;assert.equal(done,true);
+await assert.rejects(loadVerifiedGraphicsFrame(iframe,'<p>x</p>',{windowImpl,fetchImpl:async()=>new Response('unprotected')}),/Изоляция/);
+console.log('PASS cancelled preflight cannot navigate; stale/wrong source/nonce/early ack ignored; exactly one accepted current document; unprotected frame rejected');

@@ -2182,6 +2182,52 @@ var require_jpeg_js = __commonJS({
 // server-access/bff/server.mjs
 import http from "node:http";
 
+// core/blog-layout.js
+var LAYOUT_PREFIX = "NEXUS_LAYOUT_V1\n";
+var BODY_LIMIT = 2e4;
+var exact = (v, keys) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === [...keys].sort().join(",");
+var text = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(v);
+var bad = () => {
+  throw Object.assign(Error("\u041D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u0430\u044F \u0441\u0442\u0440\u0443\u043A\u0442\u0443\u0440\u0430 \u043E\u0444\u043E\u0440\u043C\u043B\u0435\u043D\u0438\u044F \u0441\u0442\u0430\u0442\u044C\u0438."), { code: "INVALID_INPUT" });
+};
+function validLayoutImage(v) {
+  return exact(v, ["mediaId", "alt", "caption", "focusX", "focusY"]) && /^[a-f0-9]{64}$/.test(v.mediaId) && text(v.alt, 300) && text(v.caption, 500) && Number.isInteger(v.focusX) && v.focusX >= 0 && v.focusX <= 100 && Number.isInteger(v.focusY) && v.focusY >= 0 && v.focusY <= 100;
+}
+function validateBlogLayout(value) {
+  if (!exact(value, ["schemaVersion", "cover", "blocks"]) || value.schemaVersion !== 1 || value.cover !== null && !validLayoutImage(value.cover) || !Array.isArray(value.blocks) || value.blocks.length > 32) bad();
+  const ids = /* @__PURE__ */ new Set();
+  let mediaCount = value.cover ? 1 : 0;
+  for (const b of value.blocks) {
+    if (!exact(b, ["id", "kind", "text", "width", "align", "ratio", "columns", "surface", "images"]) || !/^[a-f0-9-]{36}$/.test(b.id) || ids.has(b.id) || !["text", "heading", "quote", "image", "gallery"].includes(b.kind) || !text(b.text, 12e3) || ![25, 33, 50, 66, 75, 100].includes(b.width) || !["left", "center", "right"].includes(b.align) || !["auto", "square", "landscape", "portrait"].includes(b.ratio) || ![1, 2, 3].includes(b.columns) || !["plain", "panel", "accent"].includes(b.surface) || !Array.isArray(b.images) || b.images.some((i) => !validLayoutImage(i))) bad();
+    ids.add(b.id);
+    if (["image", "gallery"].includes(b.kind)) {
+      if (b.text !== "" || b.images.length < (b.kind === "image" ? 1 : 2) || b.images.length > (b.kind === "image" ? 1 : 6)) bad();
+    } else if (b.images.length) bad();
+    mediaCount += b.images.length;
+  }
+  if (mediaCount > 20 || JSON.stringify(value).length + LAYOUT_PREFIX.length > BODY_LIMIT) bad();
+  return structuredClone(value);
+}
+function decodeBlogLayout(body) {
+  if (typeof body !== "string" || !body.startsWith(LAYOUT_PREFIX)) return null;
+  try {
+    const raw = body.slice(LAYOUT_PREFIX.length), value = JSON.parse(raw);
+    if (JSON.stringify(value) !== raw) bad();
+    return validateBlogLayout(value);
+  } catch {
+    bad();
+  }
+}
+function layoutText(layout) {
+  return layout.blocks.map((b) => b.text || b.images.map((i) => i.caption).join(" ")).join("\n\n");
+}
+function compatibleArticle(article, { editor = false } = {}) {
+  const layout = decodeBlogLayout(article.body);
+  if (!layout) return article;
+  const plain2 = layoutText(layout);
+  return { ...article, body: editor ? "\u041E\u0431\u043D\u043E\u0432\u0438\u0442\u0435 Nexus \u0434\u043B\u044F \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u043D\u043E\u0432\u043E\u0439 \u0432\u0451\u0440\u0441\u0442\u043A\u0438.\n\n" + plain2.slice(0, 512) : plain2, layout: article.body };
+}
+
 // server-access/bff/account-read.mjs
 import { createHash, createHmac, randomBytes, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
 
@@ -2227,16 +2273,16 @@ function readV2CookieContext(req, marker, { env = {} } = {}) {
   if (count(req, CONTEXT_HEADER) !== 1) return reject("v2_context_count");
   const raw = req.headers?.[CONTEXT_HEADER];
   if (typeof raw !== "string" || !raw.length || raw.length > 8192 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) return reject("v2_context_base64");
-  let text4, data;
+  let text5, data;
   const bytes = Buffer.from(raw, "base64");
   if (bytes.length > 6144 || bytes.toString("base64") !== raw) return reject("v2_context_base64");
   try {
-    text4 = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+    text5 = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
   } catch {
     return reject("v2_context_utf8");
   }
   try {
-    data = JSON.parse(text4);
+    data = JSON.parse(text5);
   } catch {
     return reject("v2_context_json");
   }
@@ -2244,7 +2290,7 @@ function readV2CookieContext(req, marker, { env = {} } = {}) {
   if (data[marker] === "v1") return void 0;
   if (data[marker] === "v3") {
     if (env.COOKIE_INGRESS_V3_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true") return reject("v3_disabled");
-    if (Object.keys(data).length !== 1 || !Object.hasOwn(data, marker) || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 2) return reject("v3_context_shape");
+    if (Object.keys(data).length !== 1 || !Object.hasOwn(data, marker) || text5.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 2) return reject("v3_context_shape");
     const rawContext = req.rawHeaders.filter((_, i) => i % 2 === 1 && req.rawHeaders[i - 1].toLowerCase() === CONTEXT_HEADER);
     if (rawContext[0] !== raw) return reject("v3_header_inconsistent");
     const actual2 = req.headers?.cookie, present2 = actual2 !== void 0, cookieCount2 = count(req, "cookie");
@@ -2258,7 +2304,7 @@ function readV2CookieContext(req, marker, { env = {} } = {}) {
     if (!/^[\x20-\x7e]+$/.test(actual2)) return reject("v3_raw_cookie_syntax");
     return parseCookies(actual2, "v3_raw_cookie_syntax", "v3_protected_duplicate").values;
   }
-  if (data[marker] !== "v2" || Object.keys(data).sort().join(",") !== [marker, "cookieHeader"].sort().join(",") || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 4 || typeof data.cookieHeader !== "string") return reject("v2_context_shape");
+  if (data[marker] !== "v2" || Object.keys(data).sort().join(",") !== [marker, "cookieHeader"].sort().join(",") || text5.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 4 || typeof data.cookieHeader !== "string") return reject("v2_context_shape");
   const actual = req.headers?.cookie, present = actual !== void 0, cookieCount = count(req, "cookie");
   if (!present && cookieCount !== 0 || present && (cookieCount !== 1 || typeof actual !== "string")) return reject("v2_cookie_header_count");
   if (data.cookieHeader === "-") {
@@ -2383,7 +2429,7 @@ async function boundedJson(response) {
     reader.releaseLock();
   }
 }
-function text(value, max) {
+function text2(value, max) {
   if (typeof value !== "string" || value.length > max) throw new Error("\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 DTO");
   return value;
 }
@@ -2392,19 +2438,19 @@ function safeDto(body, path) {
   const loginMethods = body.loginMethods.map((method) => {
     if (!["oauth", "password", "passkey"].includes(method.kind) || !["pending", "active", "disabled"].includes(method.status)) throw new Error("\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 DTO");
     return {
-      id: text(method.id, 256),
+      id: text2(method.id, 256),
       kind: method.kind,
       status: method.status,
-      createdAt: text(method.createdAt, 64),
-      disabledAt: method.disabledAt === null ? null : text(method.disabledAt, 64)
+      createdAt: text2(method.createdAt, 64),
+      disabledAt: method.disabledAt === null ? null : text2(method.disabledAt, 64)
     };
   });
   const dto = { loginMethods, enrollmentAvailable: false };
   if (path === "/api/v2/account") {
     if (body.account?.status !== "active") throw new Error("\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 DTO");
     dto.account = {
-      accountId: text(body.account.accountId, 256),
-      displayName: text(body.account.displayName, 512),
+      accountId: text2(body.account.accountId, 256),
+      displayName: text2(body.account.displayName, 512),
       status: "active"
     };
   }
@@ -2494,9 +2540,12 @@ function createContentHandler({ env = {}, fetchImpl = fetch } = {}) {
     };
     try {
       if (env.CONTENT_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true") return reply8(503, { error: { code: "CONTENT_UNAVAILABLE" } });
+      if (req.url.length > 512) return reply8(400, { error: { code: "INVALID_INPUT" } });
       const url = new URL(req.url, GATEWAY_ORIGIN);
+      if (url.hash) return reply8(400, { error: { code: "INVALID_INPUT" } });
+      if (url.searchParams.has("media") && !/^[a-f0-9]{64}$/.test(url.searchParams.get("media"))) return reply8(400, { error: { code: "INVALID_INPUT" } });
       if (req.method !== "GET" || url.pathname !== PATH || req.url.split("?")[0] !== PATH || req.headers.host !== new URL(GATEWAY_ORIGIN).host) return reply8(404, { error: { code: "NOT_FOUND" } });
-      if ([...url.searchParams.keys()].some((k) => k !== "slug") || url.searchParams.getAll("slug").length > 1) return reply8(400, { error: { code: "INVALID_INPUT" } });
+      if ([...url.searchParams.keys()].some((k) => !["slug", "media"].includes(k)) || url.searchParams.getAll("slug").length > 1 || url.searchParams.getAll("media").length > 1 || [...url.searchParams.keys()].length > 1) return reply8(400, { error: { code: "INVALID_INPUT" } });
       const response = await fetchImpl(WORKER_ORIGIN + req.url, { method: "GET", credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(5e3), headers: { accept: "application/json" } });
       if (!response.headers.get("content-type")?.startsWith("application/json") || response.headers.has("set-cookie") || response.headers.get("cache-control") !== "no-store" || !hasVaryWildcard(response.headers.get("vary"))) throw Error();
       const reader = response.body.getReader(), chunks = [];
@@ -2506,7 +2555,7 @@ function createContentHandler({ env = {}, fetchImpl = fetch } = {}) {
           const { done, value } = await reader.read();
           if (done) break;
           length += value.length;
-          if (length > 131072) throw Error();
+          if (length > (url.searchParams.has("media") ? 15e4 : 131072)) throw Error();
           chunks.push(value);
         }
       } finally {
@@ -2517,9 +2566,15 @@ function createContentHandler({ env = {}, fetchImpl = fetch } = {}) {
       const data = JSON.parse(Buffer.concat(chunks).toString("utf8"));
       if (response.status !== 200) return reply8([400, 404, 503].includes(response.status) ? response.status : 502, { error: { code: "CONTENT_UNAVAILABLE" } });
       const keys = (o, list) => o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).sort().join(",") === list.sort().join(",");
+      if (url.searchParams.has("media")) {
+        const m = data?.media;
+        if (!keys(data, ["media"]) || !keys(m, ["id", "mime", "data", "width", "height"]) || m.id !== url.searchParams.get("media") || !/^[a-f0-9]{64}$/.test(m.id) || m.mime !== "image/jpeg" || typeof m.data !== "string" || m.data.length > 131072 || !/^[A-Za-z0-9+/]+={0,2}$/.test(m.data) || ![m.width, m.height].every((n) => Number.isInteger(n) && n >= 1 && n <= 1600)) throw Error();
+        return reply8(200, data);
+      }
       if (!keys(data, ["home", "posts"]) || !data.home || typeof data.home !== "object" || Array.isArray(data.home) || Object.entries(data.home).some(([k, v]) => !Object.hasOwn(HOME_SLOTS, k) || typeof v !== "string" || v.length > HOME_SLOTS[k].max) || !Array.isArray(data.posts) || data.posts.length > 20) throw Error();
-      for (const p of data.posts) if (!keys(p, url.searchParams.has("slug") ? ["slug", "title", "summary", "body", "publishedAt"] : ["slug", "title", "summary", "publishedAt"]) || typeof p.slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p.slug) || typeof p.title !== "string" || p.title.length > 160 || typeof p.summary !== "string" || p.summary.length > 500 || typeof p.publishedAt !== "string" || p.publishedAt.length > 64 || p.body !== void 0 && (typeof p.body !== "string" || p.body.length > 2e4)) throw Error();
-      return reply8(200, data);
+      for (const p of data.posts) if (!keys(p, [...url.searchParams.has("slug") ? ["slug", "title", "summary", "body", "publishedAt"] : ["slug", "title", "summary", "publishedAt"], ...p.cover !== void 0 ? ["cover"] : []]) || typeof p.slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p.slug) || typeof p.title !== "string" || p.title.length > 160 || typeof p.summary !== "string" || p.summary.length > 500 || typeof p.publishedAt !== "string" || p.publishedAt.length > 64 || p.body !== void 0 && (typeof p.body !== "string" || p.body.length > 2e4) || p.cover !== void 0 && !validLayoutImage(p.cover)) throw Error();
+      for (const p of data.posts) if (p.body !== void 0) decodeBlogLayout(p.body);
+      return reply8(200, { ...data, posts: data.posts.map((p) => p.body === void 0 ? p : compatibleArticle(p)) });
     } catch {
       return reply8(502, { error: { code: "CONTENT_UNAVAILABLE" } });
     }
@@ -2569,8 +2624,8 @@ function context(req, env) {
   if (typeof value !== "string" || value.length > 4096 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) throw Error("INGRESS_REJECTED");
   const bytes = Buffer.from(value, "base64");
   if (bytes.toString("base64") !== value) throw Error("INGRESS_REJECTED");
-  const text4 = new TextDecoder("utf-8", { fatal: true }).decode(bytes), data = JSON.parse(text4);
-  if (!data || Object.keys(data).sort().join(",") !== "flowCookie,passkeyIngressContract,sessionCookie" || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.passkeyIngressContract !== "v1" || typeof data.flowCookie !== "string" || typeof data.sessionCookie !== "string") throw Error("INGRESS_REJECTED");
+  const text5 = new TextDecoder("utf-8", { fatal: true }).decode(bytes), data = JSON.parse(text5);
+  if (!data || Object.keys(data).sort().join(",") !== "flowCookie,passkeyIngressContract,sessionCookie" || text5.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.passkeyIngressContract !== "v1" || typeof data.flowCookie !== "string" || typeof data.sessionCookie !== "string") throw Error("INGRESS_REJECTED");
   const optional = (value2) => ["", "-"].includes(value2) ? null : value2;
   const flow = optional(data.flowCookie), session = optional(data.sessionCookie);
   if (flow && !/^npf_[A-Za-z0-9_-]{43}$/.test(flow) || session && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) throw Error("INGRESS_REJECTED");
@@ -3056,15 +3111,15 @@ async function boundedBytes(response, max, type) {
 function exactKeys(value, names) {
   return value !== null && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join(",") === [...names].sort().join(",");
 }
-function text2(value, max, nonempty = false) {
+function text3(value, max, nonempty = false) {
   return typeof value === "string" && value.length <= max && (!nonempty || value.length > 0);
 }
 function isActiveAccountDTO(body) {
-  if (!exactKeys(body, ["account", "loginMethods", "enrollmentAvailable"]) || body.enrollmentAvailable !== false || !exactKeys(body.account, ["accountId", "displayName", "status"]) || body.account.status !== "active" || !text2(body.account.accountId, 256, true) || !text2(body.account.displayName, 512) || !Array.isArray(body.loginMethods) || body.loginMethods.length === 0 || body.loginMethods.length > 100) return false;
+  if (!exactKeys(body, ["account", "loginMethods", "enrollmentAvailable"]) || body.enrollmentAvailable !== false || !exactKeys(body.account, ["accountId", "displayName", "status"]) || body.account.status !== "active" || !text3(body.account.accountId, 256, true) || !text3(body.account.displayName, 512) || !Array.isArray(body.loginMethods) || body.loginMethods.length === 0 || body.loginMethods.length > 100) return false;
   const ids = /* @__PURE__ */ new Set();
   let active = false;
   for (const method of body.loginMethods) {
-    if (!exactKeys(method, ["id", "kind", "status", "createdAt", "disabledAt"]) || !text2(method.id, 256, true) || ids.has(method.id) || !["oauth", "password", "passkey"].includes(method.kind) || !["pending", "active", "disabled"].includes(method.status) || !text2(method.createdAt, 64, true) || !(method.disabledAt === null || text2(method.disabledAt, 64, true))) return false;
+    if (!exactKeys(method, ["id", "kind", "status", "createdAt", "disabledAt"]) || !text3(method.id, 256, true) || ids.has(method.id) || !["oauth", "password", "passkey"].includes(method.kind) || !["pending", "active", "disabled"].includes(method.status) || !text3(method.createdAt, 64, true) || !(method.disabledAt === null || text3(method.disabledAt, 64, true))) return false;
     ids.add(method.id);
     if (method.status === "active" && method.disabledAt === null) active = true;
   }
@@ -3300,11 +3355,11 @@ var requireThat = (value) => {
 var safeSecret = (value) => typeof value === "string" && value.length > 0 && value.length <= 2048 && !/[\x00-\x20\x7f]/.test(value);
 var equal = (a, b) => typeof a === "string" && typeof b === "string" && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual4(Buffer.from(a), Buffer.from(b));
 var plain = (value) => !!value && typeof value === "object" && !Array.isArray(value);
-var text3 = (value, max) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\x00-\x1f\x7f]/.test(value);
-var email = (value) => value === void 0 || value === null || value === "" ? null : (requireThat(text3(value, 320) && /^\S+@\S+\.\S+$/.test(value)), value.trim().toLowerCase());
-var display = (value, fallback) => text3(value, 512) && value.trim() ? value.trim() : fallback;
+var text4 = (value, max) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\x00-\x1f\x7f]/.test(value);
+var email = (value) => value === void 0 || value === null || value === "" ? null : (requireThat(text4(value, 320) && /^\S+@\S+\.\S+$/.test(value)), value.trim().toLowerCase());
+var display = (value, fallback) => text4(value, 512) && value.trim() ? value.trim() : fallback;
 var subject = (value) => {
-  requireThat(text3(value, 512) && value === value.trim());
+  requireThat(text4(value, 512) && value === value.trim());
   return value;
 };
 var digest2 = (value) => createHash7("sha256").update(value).digest();
@@ -3388,7 +3443,7 @@ async function googleProfile(token, config, nonce, fetchImpl) {
   const pieces = token.id_token.split(".");
   requireThat(pieces.length === 3);
   const header = jwtJSON(pieces[0]), claims = jwtJSON(pieces[1]);
-  requireThat(header.alg === "RS256" && text3(header.kid, 128) && Object.keys(header).every((key2) => ["alg", "kid", "typ"].includes(key2)) && (header.typ === void 0 || header.typ === "JWT"));
+  requireThat(header.alg === "RS256" && text4(header.kid, 128) && Object.keys(header).every((key2) => ["alg", "kid", "typ"].includes(key2)) && (header.typ === void 0 || header.typ === "JWT"));
   requireThat(/^[A-Za-z0-9_-]+$/.test(pieces[2]));
   const signature = Buffer.from(pieces[2], "base64url");
   requireThat(signature.toString("base64url") === pieces[2]);
@@ -3397,7 +3452,7 @@ async function googleProfile(token, config, nonce, fetchImpl) {
   const candidates = jwks.keys.filter((key2) => key2?.kid === header.kid);
   requireThat(candidates.length === 1);
   const jwk = candidates[0];
-  requireThat(jwk.kty === "RSA" && (jwk.use === void 0 || jwk.use === "sig") && (jwk.alg === void 0 || jwk.alg === "RS256") && text3(jwk.n, 2048) && text3(jwk.e, 16) && !Object.hasOwn(jwk, "d"));
+  requireThat(jwk.kty === "RSA" && (jwk.use === void 0 || jwk.use === "sig") && (jwk.alg === void 0 || jwk.alg === "RS256") && text4(jwk.n, 2048) && text4(jwk.e, 16) && !Object.hasOwn(jwk, "d"));
   const key = createPublicKey({ key: jwk, format: "jwk" }), bits = key.asymmetricKeyDetails?.modulusLength;
   requireThat(bits >= 2048 && bits <= 8192);
   requireThat(verify("RSA-SHA256", Buffer.from(pieces[0] + "." + pieces[1]), key, signature));
@@ -3409,17 +3464,17 @@ async function googleProfile(token, config, nonce, fetchImpl) {
   requireThat(equal(claims.nonce, nonce) && typeof claims.sub === "string" && /^[\x21-\x7e]{1,255}$/.test(claims.sub));
   if (claims.at_hash !== void 0) requireThat(equal(claims.at_hash, digest2(token.access_token).subarray(0, 16).toString("base64url")));
   const address = email(claims.email), domain = address?.split("@").at(-1);
-  const authoritative = domain === "gmail.com" || text3(claims.hd, 253) && claims.hd.toLowerCase() === domain;
+  const authoritative = domain === "gmail.com" || text4(claims.hd, 253) && claims.hd.toLowerCase() === domain;
   return { issuer: "https://accounts.google.com", subject: claims.sub, email: address, emailVerified: claims.email_verified === true && !!address && !!authoritative, displayName: display(claims.name, "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C Google") };
 }
 async function exchangeOAuthProfile({ provider, env, code, state, deviceId, codeVerifier, nonce, fetchImpl = fetch }) {
   const config = configuration(env, provider);
   requireThat(config);
-  requireThat(text3(code, 4096) && text3(state, 128) && /^[A-Za-z0-9._~-]{43,128}$/.test(codeVerifier) && text3(nonce, 128));
+  requireThat(text4(code, 4096) && text4(state, 128) && /^[A-Za-z0-9._~-]{43,128}$/.test(codeVerifier) && text4(nonce, 128));
   const body = new URLSearchParams({ grant_type: "authorization_code", code, client_id: config.clientId, redirect_uri: oauthCallbackURL(provider), code_verifier: codeVerifier, ...config.clientSecret ? { client_secret: config.clientSecret } : {} });
   let token;
   if (provider === "vk") {
-    requireThat(text3(deviceId, 512));
+    requireThat(text4(deviceId, 512));
     const target = new URL(config.token);
     target.search = new URLSearchParams({ grant_type: "authorization_code", redirect_uri: oauthCallbackURL(provider), client_id: config.clientId, code_verifier: codeVerifier, state, device_id: deviceId }).toString();
     token = await json(fetchImpl, target.href, { method: "POST", headers: formHeaders, body: new URLSearchParams({ code }).toString() });
@@ -3533,63 +3588,63 @@ function syntheticIngressProbe(req) {
   return pairs.length > 0 && pairs.length <= 3 && new Set(pairs).size === pairs.length && pairs.every((value) => SYNTHETIC_COOKIE_PAIRS.has(value));
 }
 function ingress(req, env) {
-  const fail2 = (reason) => {
+  const fail3 = (reason) => {
     const error2 = new Rejected("INGRESS_REJECTED", 401);
     error2.probeReason = reason;
     throw error2;
   };
-  if (count3(req, "x-yc-apigateway-operation-context") !== 1) fail2("context_count");
+  if (count3(req, "x-yc-apigateway-operation-context") !== 1) fail3("context_count");
   const raw = req.headers["x-yc-apigateway-operation-context"];
-  if (typeof raw !== "string" || raw.length > 8192 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) fail2("base64");
+  if (typeof raw !== "string" || raw.length > 8192 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) fail3("base64");
   const bytes = Buffer.from(raw, "base64");
-  if (bytes.toString("base64") !== raw) fail2("base64");
-  let text4, data;
+  if (bytes.toString("base64") !== raw) fail3("base64");
+  let text5, data;
   try {
-    text4 = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    text5 = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
-    fail2("utf8");
+    fail3("utf8");
   }
   try {
-    data = JSON.parse(text4);
+    data = JSON.parse(text5);
   } catch {
-    fail2("json");
+    fail3("json");
   }
   if (data?.oauthIngressContract === "v2" || data?.oauthIngressContract === "v3") {
     let v2;
     try {
       v2 = readV2CookieContext(req, "oauthIngressContract", { env });
     } catch (error2) {
-      fail2(INGRESS_PROBE_REASONS.has(error2.cookieContextReason) ? error2.cookieContextReason : "v2_rejected");
+      fail3(INGRESS_PROBE_REASONS.has(error2.cookieContextReason) ? error2.cookieContextReason : "v2_rejected");
     }
     if (v2 === void 0) deny("INGRESS_REJECTED", 401);
     const session2 = v2.get("__Host-nexus_session") ?? null, flow2 = v2.get("__Host-nexus_oauth_flow") ?? null;
-    if (session2 !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session2)) fail2("session_format");
-    if (flow2 !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow2)) fail2("flow_format");
+    if (session2 !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session2)) fail3("session_format");
+    if (flow2 !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow2)) fail3("flow_format");
     return { session: session2, flow: flow2 };
   }
-  if (raw.length > 4096) fail2("base64");
-  if (!data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).sort().join(",") !== "oauthFlowCookie,oauthIngressContract,sessionCookie" || text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.oauthIngressContract !== "v1" || typeof data.sessionCookie !== "string" || typeof data.oauthFlowCookie !== "string") fail2(data?.oauthIngressContract === "v1" ? "shape" : "shape_other");
+  if (raw.length > 4096) fail3("base64");
+  if (!data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).sort().join(",") !== "oauthFlowCookie,oauthIngressContract,sessionCookie" || text5.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.oauthIngressContract !== "v1" || typeof data.sessionCookie !== "string" || typeof data.oauthFlowCookie !== "string") fail3(data?.oauthIngressContract === "v1" ? "shape" : "shape_other");
   const optional = (value) => value === "-" ? null : value;
   const session = optional(data.sessionCookie), flow = optional(data.oauthFlowCookie);
-  if (session !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail2("session_format");
-  if (flow !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow)) fail2("flow_format");
+  if (session !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail3("session_format");
+  if (flow !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow)) fail3("flow_format");
   if (req.headers.cookie !== void 0) {
-    if (count3(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) fail2("cookie_count");
+    if (count3(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) fail3("cookie_count");
     const found = {};
     for (const part of req.headers.cookie.split(";")) {
       const pair = part.trim(), at = pair.indexOf("=");
-      if (at < 1) fail2("syntax");
+      if (at < 1) fail3("syntax");
       const name = pair.slice(0, at), value = pair.slice(at + 1);
-      if (!/^[!#$%&'*+.^_`|~A-Za-z0-9-]+$/.test(name) || !/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value)) fail2("syntax");
+      if (!/^[!#$%&'*+.^_`|~A-Za-z0-9-]+$/.test(name) || !/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value)) fail3("syntax");
       if (["__Host-nexus_session", "__Host-nexus_oauth_flow"].includes(name)) {
-        if (Object.hasOwn(found, name)) fail2("syntax");
+        if (Object.hasOwn(found, name)) fail3("syntax");
         found[name] = value;
       }
     }
     const fromCookie = found["__Host-nexus_session"] ?? null, fromFlow = found["__Host-nexus_oauth_flow"] ?? null;
-    if (!(fromCookie === null && session === null) && !same(fromCookie, session)) fail2("session_mismatch");
-    if (!(fromFlow === null && flow === null) && !same(fromFlow, flow)) fail2("flow_mismatch");
-  } else if (count3(req, "cookie") !== 0) fail2("cookie_count");
+    if (!(fromCookie === null && session === null) && !same(fromCookie, session)) fail3("session_mismatch");
+    if (!(fromFlow === null && flow === null) && !same(fromFlow, flow)) fail3("flow_mismatch");
+  } else if (count3(req, "cookie") !== 0) fail3("cookie_count");
   return { session, flow };
 }
 async function boundedJSON(source, max, flatIntent = false) {
@@ -3603,9 +3658,9 @@ async function boundedJSON(source, max, flatIntent = false) {
   }
   let value;
   try {
-    const text4 = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts, length));
-    value = JSON.parse(text4);
-    if (flatIntent && text4.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 2) deny("INVALID_INPUT");
+    const text5 = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts, length));
+    value = JSON.parse(text5);
+    if (flatIntent && text5.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 2) deny("INVALID_INPUT");
   } catch {
     deny("INVALID_INPUT");
   }
@@ -3694,9 +3749,51 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
   };
 }
 
-// server-access/avatar-codec.mjs
+// server-access/blog-image-codec.mjs
 var import_jpeg_js = __toESM(require_jpeg_js(), 1);
 import { Buffer as Buffer2 } from "node:buffer";
+import { createHash as createHash9 } from "node:crypto";
+var fail = () => {
+  throw Object.assign(Error("BLOG_IMAGE_INVALID"), { code: "BLOG_IMAGE_INVALID" });
+};
+function sanitizeBlogImage(value) {
+  if (typeof value !== "string" || value.length > 131072 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) fail();
+  const bytes = Buffer2.from(value, "base64");
+  if (bytes.toString("base64") !== value || bytes.length > 98304 || bytes[0] !== 255 || bytes[1] !== 216) fail();
+  let n = 2, width, height;
+  while (n < bytes.length) {
+    if (bytes[n++] !== 255) fail();
+    while (bytes[n] === 255) n++;
+    const marker = bytes[n++];
+    if (marker === 218) break;
+    if (marker === 217 || marker === 0 || marker === 216 || marker >= 208 && marker <= 215 || n + 2 > bytes.length) fail();
+    const size = bytes.readUInt16BE(n);
+    if (size < 2 || n + size > bytes.length) fail();
+    if ([192, 193, 194].includes(marker)) {
+      if (width || size < 8 || bytes[n + 2] !== 8) fail();
+      height = bytes.readUInt16BE(n + 3);
+      width = bytes.readUInt16BE(n + 5);
+      if (!width || !height || width > 1600 || height > 1600) fail();
+    }
+    n += size;
+  }
+  if (!width || !height) fail();
+  try {
+    const decoded = import_jpeg_js.default.decode(bytes, { useTArray: true, formatAsRGBA: true, tolerantDecoding: false, maxResolutionInMP: 3, maxMemoryUsageInMB: 64 });
+    if (decoded.width !== width || decoded.height !== height) fail();
+    for (const quality of [80, 65, 50, 35]) {
+      const out = Buffer2.from(import_jpeg_js.default.encode({ data: decoded.data, width, height }, quality).data);
+      if (out.length <= 98304) return { id: createHash9("sha256").update(out).digest("hex"), mime: "image/jpeg", data: out.toString("base64"), width, height };
+    }
+  } catch {
+    fail();
+  }
+  fail();
+}
+
+// server-access/avatar-codec.mjs
+var import_jpeg_js2 = __toESM(require_jpeg_js(), 1);
+import { Buffer as Buffer3 } from "node:buffer";
 var AvatarError = class extends Error {
   constructor(code, status = 400) {
     super(code);
@@ -3710,7 +3807,7 @@ var deny2 = (code, status) => {
 var MAX_JPEG = 98304;
 function sanitizeAvatar(value) {
   if (typeof value !== "string" || value.length > MAX_JPEG * 4 / 3 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) deny2("AVATAR_INVALID");
-  const input = Buffer2.from(value, "base64");
+  const input = Buffer3.from(value, "base64");
   if (input.toString("base64") !== value || input.length > MAX_JPEG || input[0] !== 255 || input[1] !== 216) deny2("AVATAR_INVALID");
   let offset = 2, dimensions;
   while (offset < input.length) {
@@ -3730,22 +3827,22 @@ function sanitizeAvatar(value) {
   if (!dimensions || dimensions.width !== dimensions.height || ![128, 192, 256].includes(dimensions.width)) deny2("AVATAR_DIMENSIONS");
   let decoded, encoded;
   try {
-    decoded = import_jpeg_js.default.decode(input, { useTArray: true, formatAsRGBA: true, tolerantDecoding: false, maxResolutionInMP: 1, maxMemoryUsageInMB: 32 });
+    decoded = import_jpeg_js2.default.decode(input, { useTArray: true, formatAsRGBA: true, tolerantDecoding: false, maxResolutionInMP: 1, maxMemoryUsageInMB: 32 });
     if (decoded.width !== dimensions.width || decoded.height !== dimensions.height) deny2("AVATAR_INVALID");
-    encoded = import_jpeg_js.default.encode({ data: decoded.data, width: decoded.width, height: decoded.height }, 80).data;
+    encoded = import_jpeg_js2.default.encode({ data: decoded.data, width: decoded.width, height: decoded.height }, 80).data;
   } catch (error2) {
     if (error2 instanceof AvatarError) throw error2;
     deny2("AVATAR_INVALID");
   }
   if (encoded.length > MAX_JPEG) deny2("AVATAR_TOO_LARGE", 413);
-  return Buffer2.from(encoded).toString("base64");
+  return Buffer3.from(encoded).toString("base64");
 }
 
 // server-access/bff/account-control.mjs
-import { createHash as createHash9, createHmac as createHmac7, randomBytes as randomBytes8 } from "node:crypto";
+import { createHash as createHash10, createHmac as createHmac7, randomBytes as randomBytes8 } from "node:crypto";
 var INTERNAL5 = "/api/v2/account/internal/control";
 var BASE2 = "/api/v2/account/control";
-var sha2 = (value) => createHash9("sha256").update(value).digest("hex");
+var sha2 = (value) => createHash10("sha256").update(value).digest("hex");
 var count4 = (req, name) => {
   if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2) return -1;
   let n = 0;
@@ -3762,13 +3859,13 @@ var Rejected2 = class extends Error {
     this.status = status;
   }
 };
-var fail = (code, status) => {
+var fail2 = (code, status) => {
   throw new Rejected2(code, status);
 };
-var exact = (o, keys) => !!o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).sort().join(",") === [...keys].sort().join(",");
+var exact2 = (o, keys) => !!o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).sort().join(",") === [...keys].sort().join(",");
 var id = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value);
 var safeText = (value, max) => typeof value === "string" && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value);
-var safeCodes = /* @__PURE__ */ new Set(["SESSION_REQUIRED", "ACCOUNT_SESSION_CHANGED", "ADMIN_REQUIRED", "ADMIN_FRESH_PASSKEY_REQUIRED", "ADMIN_ACCOUNT_PROTECTED", "INVALID_INPUT", "INVALID_STATE", "RESTORE_WITHOUT_LOGIN_METHOD", "NOT_FOUND", "CONTROL_CONFLICT", "CONTROL_WRITE_UNCONFIRMED", "CONTROL_UNAVAILABLE", "ALPHA_CONTROL_UNAVAILABLE", "ALPHA_ACCESS_CLOSED", "ALPHA_CAPACITY_REACHED", "ALPHA_LIMIT_BELOW_OCCUPIED", "REMOVE_BEFORE_PURGE", "PURGE_NOT_ENABLED", "PURGE_SCHEMA_REVIEW_REQUIRED", "SHARED_PROJECT_TRANSFER_REQUIRED", "PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED", "PURGE_APPROVAL_REJECTED", "PURGE_CONFIRMATION_REQUIRED", "AVATAR_INVALID", "AVATAR_DIMENSIONS", "AVATAR_TOO_LARGE", "USERNAME_UNAVAILABLE", "RATE_LIMITED"]);
+var safeCodes = /* @__PURE__ */ new Set(["SESSION_REQUIRED", "ACCOUNT_SESSION_CHANGED", "ADMIN_REQUIRED", "ADMIN_FRESH_PASSKEY_REQUIRED", "ADMIN_ACCOUNT_PROTECTED", "INVALID_INPUT", "INVALID_STATE", "RESTORE_WITHOUT_LOGIN_METHOD", "NOT_FOUND", "CONTROL_CONFLICT", "CONTROL_WRITE_UNCONFIRMED", "CONTROL_UNAVAILABLE", "ALPHA_CONTROL_UNAVAILABLE", "ALPHA_ACCESS_CLOSED", "ALPHA_CAPACITY_REACHED", "ALPHA_LIMIT_BELOW_OCCUPIED", "REMOVE_BEFORE_PURGE", "PURGE_NOT_ENABLED", "PURGE_SCHEMA_REVIEW_REQUIRED", "SHARED_PROJECT_TRANSFER_REQUIRED", "PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED", "PURGE_APPROVAL_REJECTED", "PURGE_CONFIRMATION_REQUIRED", "AVATAR_INVALID", "AVATAR_DIMENSIONS", "AVATAR_TOO_LARGE", "USERNAME_UNAVAILABLE", "RATE_LIMITED", "BLOG_IMAGE_INVALID", "CONTENT_MEDIA_UNAVAILABLE", "CONTENT_MEDIA_QUOTA", "CONTENT_EDITOR_UPDATE_REQUIRED"]);
 var reply7 = (res, status, body) => {
   const data = JSON.stringify(body);
   res.writeHead(status, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(data), "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer" });
@@ -3781,47 +3878,60 @@ async function bounded(stream) {
   for await (const b of stream) {
     const bytes = Buffer.from(b);
     size += bytes.length;
-    if (size > 262144) fail("INPUT_TOO_LARGE", 413);
+    if (size > 262144) fail2("INPUT_TOO_LARGE", 413);
     chunks.push(bytes);
   }
-  let text4, value;
+  let text5, value;
   try {
-    text4 = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks, size));
-    value = JSON.parse(text4);
+    text5 = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks, size));
+    value = JSON.parse(text5);
   } catch {
-    fail("INVALID_INPUT");
+    fail2("INVALID_INPUT");
   }
-  if (!value || typeof value !== "object" || Array.isArray(value) || text4 !== JSON.stringify(value)) fail("INVALID_INPUT");
+  if (!value || typeof value !== "object" || Array.isArray(value) || text5 !== JSON.stringify(value)) fail2("INVALID_INPUT");
   return value;
 }
 function validateDTO(data, path, expected) {
-  const valid = () => fail("CONTROL_UNAVAILABLE", 502);
+  const valid = () => fail2("CONTROL_UNAVAILABLE", 502);
   if (path === "/api/v2/account/profile" || path.startsWith("/api/v2/account/profile/avatar")) {
-    if (!exact(data, ["accountId", "username", "displayName", "avatar", "avatarVersion"]) || data.accountId !== expected || !safeText(data.displayName, 512) || data.username !== null && !/^[a-z][a-z0-9._-]{2,31}$/.test(data.username) || !Number.isInteger(data.avatarVersion) || data.avatarVersion < 0 || data.avatar !== null && (typeof data.avatar !== "string" || data.avatar.length > 131100 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data.avatar))) valid();
+    if (!exact2(data, ["accountId", "username", "displayName", "avatar", "avatarVersion"]) || data.accountId !== expected || !safeText(data.displayName, 512) || data.username !== null && !/^[a-z][a-z0-9._-]{2,31}$/.test(data.username) || !Number.isInteger(data.avatarVersion) || data.avatarVersion < 0 || data.avatar !== null && (typeof data.avatar !== "string" || data.avatar.length > 131100 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data.avatar))) valid();
   } else if (path === BASE2 + "/capabilities") {
-    if (!exact(data, ["canManage", "canModerate", "canPurge", "freshPasskey"]) || Object.values(data).some((v) => typeof v !== "boolean")) valid();
+    if (!exact2(data, ["canManage", "canModerate", "canPurge", "freshPasskey"]) || Object.values(data).some((v) => typeof v !== "boolean")) valid();
   } else if (path.startsWith(BASE2 + "/users?") || path === BASE2 + "/users") {
-    if (!exact(data, ["users", "total", "offset", "settings", "counts"]) || !Array.isArray(data.users) || data.users.length > 50 || !Number.isInteger(data.total) || !Number.isInteger(data.offset) || !exact(data.settings, ["registrationMode", "maxTesters", "limitEnabled", "version"]) || !exact(data.counts, ["active", "occupied", "reserved"]) || typeof data.settings.limitEnabled !== "boolean" || !["open", "invite_only"].includes(data.settings.registrationMode) || !Number.isInteger(data.settings.maxTesters) || data.settings.maxTesters < 1 || data.settings.maxTesters > 1e4 || !Number.isInteger(data.settings.version) || data.settings.version < 1 || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
-    for (const u of data.users) if (!exact(u, ["accountId", "username", "displayName", "state", "version", "createdAt", "lastLoginAt", "activeSessions", "reason", "protected"]) || !id(u.accountId) || !safeText(u.displayName, 512) || u.username !== null && !safeText(u.username, 32) || !["active", "blocked", "removed", "invited", "unadmitted", "administrator"].includes(u.state) || !Number.isInteger(u.version) || !Number.isInteger(u.activeSessions) || typeof u.protected !== "boolean" || !safeText(u.reason, 200)) valid();
-  } else if (path === BASE2 + "/content" && !exact(data, ["ok"])) {
-    if (!exact(data, ["posts", "home"]) || !Array.isArray(data.posts) || data.posts.length > 100 || !exact(data.home, ["draft", "published", "version"])) valid();
+    if (!exact2(data, ["users", "total", "offset", "settings", "counts"]) || !Array.isArray(data.users) || data.users.length > 50 || !Number.isInteger(data.total) || !Number.isInteger(data.offset) || !exact2(data.settings, ["registrationMode", "maxTesters", "limitEnabled", "version"]) || !exact2(data.counts, ["active", "occupied", "reserved"]) || typeof data.settings.limitEnabled !== "boolean" || !["open", "invite_only"].includes(data.settings.registrationMode) || !Number.isInteger(data.settings.maxTesters) || data.settings.maxTesters < 1 || data.settings.maxTesters > 1e4 || !Number.isInteger(data.settings.version) || data.settings.version < 1 || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
+    for (const u of data.users) if (!exact2(u, ["accountId", "username", "displayName", "state", "version", "createdAt", "lastLoginAt", "activeSessions", "reason", "protected"]) || !id(u.accountId) || !safeText(u.displayName, 512) || u.username !== null && !safeText(u.username, 32) || !["active", "blocked", "removed", "invited", "unadmitted", "administrator"].includes(u.state) || !Number.isInteger(u.version) || !Number.isInteger(u.activeSessions) || typeof u.protected !== "boolean" || !safeText(u.reason, 200)) valid();
+  } else if (path === BASE2 + "/content?mediaStatus=1") {
+    if (!exact2(data, ["mediaAvailability"]) || !exact2(data.mediaAvailability, ["enabled", "maxBytes", "maxDimension"]) || typeof data.mediaAvailability.enabled !== "boolean" || data.mediaAvailability.maxBytes !== 98304 || data.mediaAvailability.maxDimension !== 1600) valid();
+  } else if (path.startsWith(BASE2 + "/content?media=") || path === BASE2 + "/content" && exact2(data, ["ok", "media"])) {
+    const m = data.media, read = path.includes("?");
+    if (!exact2(data, read ? ["media"] : ["ok", "media"]) || !read && data.ok !== true || !exact2(m, read ? ["id", "mime", "data", "width", "height"] : ["id", "mime", "width", "height"]) || !/^[a-f0-9]{64}$/.test(m.id) || m.mime !== "image/jpeg" || ![m.width, m.height].every((n) => Number.isInteger(n) && n >= 1 && n <= 1600) || read && (m.id !== new URL(path, GATEWAY_ORIGIN).searchParams.get("media") || typeof m.data !== "string" || m.data.length > 131072 || !/^[A-Za-z0-9+/]+={0,2}$/.test(m.data))) valid();
+  } else if (path === BASE2 + "/content" && !exact2(data, ["ok"])) {
+    if (!exact2(data, ["posts", "home"]) || !Array.isArray(data.posts) || data.posts.length > 100 || !exact2(data.home, ["draft", "published", "version"])) valid();
     const bounded2 = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v);
-    const article = (v) => exact(v, ["title", "summary", "body"]) && bounded2(v.title, 160) && bounded2(v.summary, 500) && bounded2(v.body, 2e4);
+    const article = (v) => {
+      if (!exact2(v, ["title", "summary", "body"]) || !bounded2(v.title, 160) || !bounded2(v.summary, 500) || !bounded2(v.body, 2e4)) return false;
+      try {
+        decodeBlogLayout(v.body);
+        return true;
+      } catch {
+        return false;
+      }
+    };
     for (const key of ["draft", "published"]) if (!data.home[key] || typeof data.home[key] !== "object" || Array.isArray(data.home[key]) || Object.entries(data.home[key]).some(([k, v]) => !Object.hasOwn(HOME_SLOTS, k) || !bounded2(v, HOME_SLOTS[k].max))) valid();
     if (!Number.isInteger(data.home.version) || data.home.version < 1) valid();
-    for (const post of data.posts) if (!exact(post, ["id", "slug", "draft", "published", "state", "version", "publishedAt"]) || !id(post.id) || !safeText(post.slug, 80) || !["draft", "published", "archived"].includes(post.state) || !Number.isInteger(post.version) || !article(post.draft) || post.published !== null && !article(post.published) || post.publishedAt !== null && !safeText(post.publishedAt, 64)) valid();
+    for (const post of data.posts) if (!exact2(post, ["id", "slug", "draft", "published", "state", "version", "publishedAt"]) || !id(post.id) || !safeText(post.slug, 80) || !["draft", "published", "archived"].includes(post.state) || !Number.isInteger(post.version) || !article(post.draft) || post.published !== null && !article(post.published) || post.publishedAt !== null && !safeText(post.publishedAt, 64)) valid();
   } else if (path === BASE2 + "/audit") {
-    if (!exact(data, ["events"]) || !Array.isArray(data.events) || data.events.length > 100) valid();
-    for (const e of data.events) if (!exact(e, ["action", "targetId", "createdAt"]) || !safeText(e.action, 32) || e.targetId !== null && !id(e.targetId) || !safeText(e.createdAt, 64)) valid();
+    if (!exact2(data, ["events"]) || !Array.isArray(data.events) || data.events.length > 100) valid();
+    for (const e of data.events) if (!exact2(e, ["action", "targetId", "createdAt"]) || !safeText(e.action, 32) || e.targetId !== null && !id(e.targetId) || !safeText(e.createdAt, 64)) valid();
   } else if (path === BASE2 + "/invites") {
-    if (!exact(data, ["ok", "accountId", "invitationToken", "expiresAt"]) || data.ok !== true || !id(data.accountId) || !/^npi_[A-Za-z0-9_-]{43}$/.test(data.invitationToken) || !safeText(data.expiresAt, 64)) valid();
+    if (!exact2(data, ["ok", "accountId", "invitationToken", "expiresAt"]) || data.ok !== true || !id(data.accountId) || !/^npi_[A-Za-z0-9_-]{43}$/.test(data.invitationToken) || !safeText(data.expiresAt, 64)) valid();
   } else if (path.endsWith("/purge-preview")) {
-    if (!exact(data, ["approvalToken", "expiresAt", "counts", "confirmation", "serverDataOnly"]) || !/^npa_[A-Za-z0-9_-]{43}$/.test(data.approvalToken) || !safeText(data.expiresAt, 64) || !safeText(data.confirmation, 180) || data.serverDataOnly !== true || !exact(data.counts, ["projects", "workspaces", "feedback", "keys", "providers"]) || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
+    if (!exact2(data, ["approvalToken", "expiresAt", "counts", "confirmation", "serverDataOnly"]) || !/^npa_[A-Za-z0-9_-]{43}$/.test(data.approvalToken) || !safeText(data.expiresAt, 64) || !safeText(data.confirmation, 180) || data.serverDataOnly !== true || !exact2(data.counts, ["projects", "workspaces", "feedback", "keys", "providers"]) || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
   } else if (path.endsWith("/purge")) {
-    if (!exact(data, ["ok", "deletedServerData", "localCopiesRemotelyErased"]) || data.ok !== true || data.deletedServerData !== true || data.localCopiesRemotelyErased !== false) valid();
+    if (!exact2(data, ["ok", "deletedServerData", "localCopiesRemotelyErased"]) || data.ok !== true || data.deletedServerData !== true || data.localCopiesRemotelyErased !== false) valid();
   } else if (path === BASE2 + "/providers") {
-    if (!exact(data, ["authorized"]) || data.authorized !== true) valid();
-  } else if (!exact(data, ["ok"]) || data.ok !== true) valid();
+    if (!exact2(data, ["authorized"]) || data.authorized !== true) valid();
+  } else if (!exact2(data, ["ok"]) || data.ok !== true) valid();
   return data;
 }
 async function service2(env, fetchImpl, envelope) {
@@ -3830,41 +3940,49 @@ async function service2(env, fetchImpl, envelope) {
   const upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL5, { method: "POST", credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(12e3), headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": timestamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": signature }, body });
   if (upstream.redirected || !/^application\/json(?:\s*;|$)/i.test(upstream.headers.get("content-type") || "") || upstream.headers.has("set-cookie") || upstream.headers.get("cache-control") !== "no-store" || !hasVaryWildcard(upstream.headers.get("vary"))) {
     await upstream.body?.cancel();
-    fail("CONTROL_UNAVAILABLE", 502);
+    fail2("CONTROL_UNAVAILABLE", 502);
   }
   const data = await bounded(upstream.body);
-  if (upstream.status !== 200) fail(safeCodes.has(data.error?.code) ? data.error.code : "CONTROL_UNAVAILABLE", [400, 401, 403, 404, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502);
+  if (upstream.status !== 200) fail2(safeCodes.has(data.error?.code) ? data.error.code : "CONTROL_UNAVAILABLE", [400, 401, 403, 404, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502);
   return data;
 }
 function createAccountControlHandler({ env = {}, fetchImpl = fetch } = {}) {
   return async (req, res) => {
     if (typeof req.url !== "string" || !/^\/api\/v2\/account\/(?:control(?:\/|\?|$)|profile(?:\/|\?|$))/.test(req.url)) return false;
     try {
-      if (env.ACCOUNT_CONTROL_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.ADMIN_SERVICE_KEY !== "string" || env.ADMIN_SERVICE_KEY.length < 32) fail("CONTROL_UNAVAILABLE", 503);
-      if (req.url.length > 512) fail("INVALID_INPUT");
+      if (env.ACCOUNT_CONTROL_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.ADMIN_SERVICE_KEY !== "string" || env.ADMIN_SERVICE_KEY.length < 32) fail2("CONTROL_UNAVAILABLE", 503);
+      if (req.url.length > 512) fail2("INVALID_INPUT");
       const url = new URL(req.url, GATEWAY_ORIGIN), path = url.pathname;
-      if (url.hash || req.url.split("?")[0] !== path || !["GET", "POST"].includes(req.method) || path.startsWith("/api/v2/account/profile") && url.search) fail("INVALID_INPUT");
-      if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || count4(req, "host") !== 1 || count4(req, "authorization") !== 0 || req.headers.origin !== void 0 && req.headers.origin !== GATEWAY_ORIGIN || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") fail("ORIGIN_REJECTED", 403);
+      if (url.hash || req.url.split("?")[0] !== path || !["GET", "POST"].includes(req.method) || path.startsWith("/api/v2/account/profile") && url.search) fail2("INVALID_INPUT");
+      if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || count4(req, "host") !== 1 || count4(req, "authorization") !== 0 || req.headers.origin !== void 0 && req.headers.origin !== GATEWAY_ORIGIN || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") fail2("ORIGIN_REJECTED", 403);
       const expected = req.headers["x-nexus-account-expectation"];
-      if (count4(req, "x-nexus-account-expectation") !== 1 || !id(expected)) fail("ACCOUNT_EXPECTATION_REQUIRED", 400);
-      if (req.method === "POST" && (req.headers.origin !== GATEWAY_ORIGIN || count4(req, "origin") !== 1 || req.headers["content-type"] !== "application/json" || count4(req, "content-type") !== 1 || req.headers["x-nexus-account-control"] !== "1" || count4(req, "x-nexus-account-control") !== 1)) fail("WRITE_ORIGIN_REQUIRED", 403);
+      if (count4(req, "x-nexus-account-expectation") !== 1 || !id(expected)) fail2("ACCOUNT_EXPECTATION_REQUIRED", 400);
+      if (req.method === "POST" && (req.headers.origin !== GATEWAY_ORIGIN || count4(req, "origin") !== 1 || req.headers["content-type"] !== "application/json" || count4(req, "content-type") !== 1 || req.headers["x-nexus-account-control"] !== "1" || count4(req, "x-nexus-account-control") !== 1)) fail2("WRITE_ORIGIN_REQUIRED", 403);
       const cookies2 = readV2CookieContext(req, "accountControlContract", { env });
-      if (!cookies2) fail("INGRESS_REJECTED", 401);
+      if (!cookies2) fail2("INGRESS_REJECTED", 401);
       const session = cookies2.get("__Host-nexus_session");
-      if (!session) fail("SESSION_REQUIRED", 401);
-      if (!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail("INGRESS_REJECTED", 401);
+      if (!session) fail2("SESSION_REQUIRED", 401);
+      if (!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail2("INGRESS_REJECTED", 401);
       const payload = req.method === "POST" ? await bounded(req) : null;
       let prepared = payload;
       if (path === "/api/v2/account/profile/avatar" && req.method === "POST") {
-        if (!exact(payload, ["requestId", "version", "jpegBase64"])) fail("INVALID_INPUT");
+        if (!exact2(payload, ["requestId", "version", "jpegBase64"])) fail2("INVALID_INPUT");
         const before = await service2(env, fetchImpl, { path: "/api/v2/account/profile", method: "GET", payload: null, sessionHash: sha2(session), expectedAccountId: expected });
         validateDTO(before, "/api/v2/account/profile", expected);
-        if (before.avatarVersion !== payload.version) fail("CONTROL_CONFLICT", 409);
+        if (before.avatarVersion !== payload.version) fail2("CONTROL_CONFLICT", 409);
         try {
           prepared = { ...payload, jpegBase64: sanitizeAvatar(payload.jpegBase64) };
         } catch (error2) {
-          if (error2 instanceof AvatarError) fail(error2.code, error2.status);
+          if (error2 instanceof AvatarError) fail2(error2.code, error2.status);
           throw error2;
+        }
+      }
+      if (path === BASE2 + "/content" && req.method === "POST" && payload?.target === "media") {
+        try {
+          if (!exact2(payload.content, ["jpegBase64"])) fail2("INVALID_INPUT");
+          prepared = { ...payload, content: sanitizeBlogImage(payload.content.jpegBase64) };
+        } catch {
+          fail2("BLOG_IMAGE_INVALID");
         }
       }
       const data = await service2(env, fetchImpl, { path: req.url, method: req.method, payload: prepared, sessionHash: sha2(session), expectedAccountId: expected });
@@ -3873,6 +3991,7 @@ function createAccountControlHandler({ env = {}, fetchImpl = fetch } = {}) {
         const configured = new Set(configuredOAuthProviders(env).map((p) => p.id));
         return reply7(res, 200, { providers: [["yandex", "\u042F\u043D\u0434\u0435\u043A\u0441 ID", ["YANDEX_CLIENT_ID", "YANDEX_CLIENT_SECRET"]], ["google", "Google", ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]], ["vk", "VK ID", ["VK_CLIENT_ID"]]].map(([id2, label, names]) => ({ id: id2, label, configured: configured.has(id2), missing: names.filter((n) => typeof env[n] !== "string" || !env[n] || /[\x00-\x20\x7f]/.test(env[n])), callbackURL: oauthCallbackURL(id2) })) });
       }
+      if (path === BASE2 + "/content" && req.method === "GET" && Array.isArray(dto.posts)) return reply7(res, 200, { ...dto, posts: dto.posts.map((p) => ({ ...p, draft: compatibleArticle(p.draft, { editor: true }), published: p.published ? compatibleArticle(p.published, { editor: true }) : null })) });
       return reply7(res, 200, dto);
     } catch (error2) {
       return reply7(res, error2 instanceof Rejected2 ? error2.status : error2.message === "INGRESS_REJECTED" ? 401 : 502, { error: { code: error2 instanceof Rejected2 ? error2.code : error2.message === "INGRESS_REJECTED" ? "INGRESS_REJECTED" : "CONTROL_UNAVAILABLE" } });

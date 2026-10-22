@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import {RELEASE_CONTRACTS} from '../core/ui1a-release-contracts.js';
-const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8');
+const app=fs.readFileSync(new URL('../core/app.js',import.meta.url),'utf8')+fs.readFileSync(new URL('../core/controls-presentation.js',import.meta.url),'utf8');
 const select=fs.readFileSync(new URL('../core/glass-select.js',import.meta.url),'utf8');
 const css=fs.readFileSync(new URL('../styles/app.css',import.meta.url),'utf8');
 const sw=fs.readFileSync(new URL('../service-worker.js',import.meta.url),'utf8');

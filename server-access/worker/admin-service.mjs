@@ -88,7 +88,7 @@ async function operation(env,value){
   return {canManage,canModerate:await teamPermission(env.DB,actor.account_id,env),canPurge:canManage&&env.ADMIN_PURGE_ENABLED==='true',freshPasskey:canManage&&fresh(actor)};
  }
  await requireAdmin(env,actor,method==='POST');
- if(path===BASE+'/content'&&!url.search)return contentOperation(env,value);
+ if(path===BASE+'/content')return contentOperation(env,value);
  if(path===BASE+'/providers'&&method==='GET'&&!url.search)return {authorized:true};
  if(path===BASE+'/users'&&method==='GET'){
   if([...url.searchParams.keys()].some(k=>!['state','offset'].includes(k))||[...url.searchParams.keys()].some(k=>url.searchParams.getAll(k).length!==1))deny('INVALID_INPUT');

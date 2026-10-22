@@ -1,8 +1,7 @@
 import {normalizeGraphicsDocument,resolveGraphicsDocument} from '../effects/nexus-graphics-projects.js';
 import {bindProjectControls} from '../project-studio/project-controls.js';
-import {GRAPHICS_FRAME_CSP} from './policy.js';
+import {loadVerifiedGraphicsFrame} from './verified-frame.js';
 const clone=v=>structuredClone(v);
-const frameLoads=new WeakMap();
 // Все чтения — из уже открытой копии; запись подтверждается зашифрованным commit.
 export function localGraphicsAdapter({read,save,settled,root}){
  const bound=read();
@@ -28,18 +27,7 @@ export function localGraphicsAdapter({read,save,settled,root}){
   async saveGraphicsProject(value){const d=resolveGraphicsDocument(value),id=d.projectId||crypto.randomUUID();if(d.projectId)project(id);const old=data().projects[id];const p={...old,id,title:d.name,description:old?.description||'Nexus · 3D',languageId:'javascript',origin:{kind:'graphics-lab',template:d.template},workspace:{languageId:'javascript',entryFile:'scene.js',activeFile:d.activeFile,files:d.files},progress:old?.progress||{},checkpoints:old?.checkpoints||[]};data().projects[id]=p;audit(p,'Сохранение 3D-проекта');await save();return id},
   async removeGraphicsDraft(key){const db=drafts();delete db.drafts[key];if(db.active===key)db.active=null;await save()},
   bindProjectControls:options=>bindProjectControls({...options,store}),
-  async loadFrame(iframe,html){
-   if(!['allow-scripts','allow-scripts allow-same-origin'].includes(iframe.getAttribute('sandbox')))throw Error('Небезопасный sandbox.');
-   frameLoads.get(iframe)?.();
-   const nonce=crypto.randomUUID(),url=new URL('./graphics-frame.html',import.meta.url);
-   const response=await fetch(url,{credentials:'omit',cache:'no-store',redirect:'error'});
-   if(!response.ok||response.headers.get('content-security-policy')!==GRAPHICS_FRAME_CSP||!/^[a-f0-9]{64}$/.test(response.headers.get('x-nexus-verified-sha256')||''))throw Error('Изоляция сцены не подтверждена.');
-   await response.body?.cancel();
-   // Opaque origin обеспечивает более строгий sandbox заголовка. Без него loader
-   // откажется принимать документ: self.origin должен быть ровно "null".
-   iframe.setAttribute('sandbox','allow-scripts allow-same-origin');
-   return new Promise((resolve,reject)=>{const controller=new AbortController(),finish=error=>{clearTimeout(timer);controller.abort();if(frameLoads.get(iframe)===cancel)frameLoads.delete(iframe);error?reject(error):resolve()},cancel=()=>finish(Error('Запуск сцены заменён новым.')),timer=setTimeout(()=>finish(Error('Не удалось открыть изолированную сцену.')),10000);frameLoads.set(iframe,cancel);window.addEventListener('message',event=>{if(event.source!==iframe.contentWindow||event.data?.type!=='nexus-scene-document-accepted'||event.data.nonce!==nonce)return;finish()},{signal:controller.signal});iframe.addEventListener('load',()=>iframe.contentWindow?.postMessage({type:'nexus-scene-document',nonce,html},'*'),{once:true,signal:controller.signal});iframe.removeAttribute('srcdoc');iframe.src=url.href})
-  },
+  loadFrame:loadVerifiedGraphicsFrame,
   settled
  };
 }

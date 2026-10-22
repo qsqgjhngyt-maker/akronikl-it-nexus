@@ -189,7 +189,7 @@ try{
  await check('browser process restart restores committed runtime and compiles without network',async()=>{
   transportOffline=true;await setOffline(true);const p=await context.newPage();
   // Самостоятельная публичная оболочка открывается без создания Account proof.
-  await p.goto(origin+'/');await waitGeneration(p,generation);await p.getByRole('heading',{name:'Академия',exact:true}).waitFor();
+  await p.goto(origin+'/');await waitGeneration(p,generation);await p.locator('[data-cpp-learning-path]').waitFor();
   assert.equal(await p.evaluate(async generation=>(await import('/releases/'+generation+'/core/account-storage.js')).verifiedAccount(),generation),null);
   offlineCompiler=await runCompiler(p,'verified-IDB-after-browser-restart');
   assert.match(offlineCompiler.stdout,/NEXUS_CLOSURE 10/);assert.equal(offlineCompiler.exitCode,0);assert.deepEqual(await preserved(p),original);

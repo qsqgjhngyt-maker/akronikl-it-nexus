@@ -7,9 +7,12 @@ export function privateTarget(url){
 }
 export function publicRecord(request,origin,records,version){
  const u=new URL(request.url);
- if(request.method!=='GET'||u.username||u.password||u.hash||privateTarget(u))return null;
+ if(request.method!=='GET'||u.username||u.password||privateTarget(u))return null;
  const key=u.origin===origin?u.pathname:u.href;
  const record=records.find(r=>r.url===key);
+ // Fragment идентифицирует одноразовую навигацию opaque 3D loader. Authority всё ещё
+ // только exact manifest record с прежними bytes/SHA256/CSP; другие hash URL запрещены.
+ if(u.hash&&!(record&&u.origin===origin&&request.mode==='navigate'&&record.mime==='text/html'&&/^\/releases\/ui1a-[a-z0-9-]+\/pwa\/graphics-frame\.html$/.test(u.pathname)&&/^#[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(u.hash)))return null;
  if(u.search&&!(u.origin===origin&&u.search==='?v='+(record?.version||version)))return null;
  return record||null;
 }

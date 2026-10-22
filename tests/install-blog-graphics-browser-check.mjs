@@ -25,7 +25,7 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='h
 async function launch(dead=false){context=await chromium.launchPersistentContext(profile,{headless:true,executablePath:process.env.NEXUS_CHROME_PATH,...(dead?{proxy:{server:'http://127.0.0.1:9'}}:{}),args:['--disable-background-networking','--disable-sync','--no-first-run']});context.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));context.on('request',r=>requests.push({path:new URL(r.url()).pathname,origin:new URL(r.url()).origin,method:r.method()}));page=await context.newPage();page.setDefaultTimeout(30000)}
 async function check(name,fn){const start=performance.now();await fn();checks.push({name,status:'PASS',durationMs:Math.round(performance.now()-start)});console.log('PASS '+name)}
 async function shot(name){await page.screenshot({path:path.join(out,name+'.png'),fullPage:true})}
-async function unlock(){await page.goto(origin+'/offline.html#copy='+id);await page.locator('#localPhrase').fill(phrase);await page.locator('#unlockLocal button').click();await page.locator('#newProject').waitFor()}
+async function unlock(){await page.goto(origin+'/offline.html#copy='+id);await page.locator('#localPhrase').fill(phrase);await page.locator('#unlockLocal button').click();await page.locator('#psNewProject').waitFor()}
 async function installFixture(){await page.goto(origin+'/install-fixture.html');await page.waitForFunction(()=>window.fixtureReady)}
 try{
  await launch();

@@ -26,11 +26,13 @@ globalThis.location={hash:'#view=academy'};
 for(const collapsed of [false,true])for(const active of ['home','academy','projects','labs','practices','offline']){
  const ctx={prefs:{sidebarCollapsed:collapsed,focusReading:false,uiLocale:'ru'},t:k=>k,route:()=>({view:active}),langSelect:(...v)=>v.join(' / '),fxSelect:()=>'<b>FX</b>',accountChipMarkup:()=>'<span>SYNTHETIC_VERIFIED_ACCOUNT_CHIP</span>',visualIcon:v=>v};
  const keys=Object.keys(ctx),baseline=new Function(...keys,'location','e',before.slice(shellStart,shellEnd)+';return visualShell')(...keys.map(k=>ctx[k]),location,e);
- assert.equal(nexusShellMarkup('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active,ctx),baseline('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active));
+ // Сравнение со старым renderer допускает только объявленную смену номера выпуска.
+ const version=JSON.parse(await readFile(new URL('../version.json',import.meta.url))).version;
+ assert.equal(nexusShellMarkup('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active,ctx),baseline('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active).replaceAll('0.1.7-alpha.2.4.6-ui1a.10.1',version));
 }
 const app=await readFile(new URL('../core/app.js',import.meta.url),'utf8');
 assert.ok(app.includes('nexusShellMarkup(body,active,{prefs,t,route,langSelect,fxSelect,accountChipMarkup,visualIcon})'));
-assert.ok(app.includes('benchmarkMarkup(l,{uiLocale:prefs.uiLocale,locale:prefs.courseLocale})'));
+assert.ok((await readFile(new URL('../core/learning-views.js',import.meta.url),'utf8')).includes('benchmarkMarkup(l,{uiLocale:prefs.uiLocale,locale:prefs.courseLocale})'));
 console.log('PASS: shared online/offline shell byte-equivalent for 12 states; '+lessons+' lesson renderers byte-equivalent; online account callback retained');
 const json=async file=>JSON.parse(await readFile(new URL('../'+file,import.meta.url),'utf8'));
 const cpp={manifest:await json('courses/cpp/manifest.json'),curriculum:await json('courses/cpp/curriculum.json'),practicumsRu:await json('courses/cpp/data/practicums.ru.json'),projectsRu:await json('courses/cpp/data/projects.ru.json')},catalog=await json('courses/catalog.json'),programming=await json('courses/programming/languages.json');
