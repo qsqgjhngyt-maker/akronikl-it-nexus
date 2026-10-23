@@ -84,13 +84,15 @@ export function bindAcademyGold(root=document,gold){
     const parsed=gold?.lessonId===v?.dataset.goldLesson?gold.visualization:null;
     if(!parsed)continue;
     let steps=[],index=0;
+    const centerActive=()=>{const active=graphic.querySelector('.gold-node.active');if(active){const box=active.getBBox();graphic.scrollLeft=Math.max(0,box.x+box.width/2-graphic.clientWidth/2);}};
+    if(typeof ResizeObserver!=='undefined'){const observer=new ResizeObserver(()=>{if(!card.isConnected){observer.disconnect();return}centerActive();});observer.observe(graphic);}
     const update=()=>{
       const values=Object.fromEntries(fields.map(f=>[f.dataset.goldVar,f.value]));
       try{
         steps=goldVisualizationSteps(parsed,values,english?'en':'ru');index=Math.max(0,Math.min(index,steps.length-1));
         err.hidden=true;err.textContent='';
         graphic.innerHTML=visualSvg(steps,index,english?'en':'ru',kind);
-        const active=graphic.querySelector('.gold-node.active');if(active){const box=active.getBBox();graphic.scrollLeft=Math.max(0,box.x+box.width/2-graphic.clientWidth/2);}
+        centerActive();
         indexEl.textContent=(index+1)+' / '+steps.length;
         exp.textContent=steps[index]?.description||'';
         prev.disabled=index===0;next.disabled=index===steps.length-1;
@@ -105,7 +107,18 @@ export function bindAcademyGold(root=document,gold){
     update();
   }
 }
+let stylesReady;
 export function ensureGoldStyles(){
-  if(typeof document==='undefined'||document.querySelector('link[data-academy-gold-css]'))return;
-  const link=document.createElement('link');link.rel='stylesheet';link.dataset.academyGoldCss='';link.href=new URL('../styles/academy-gold.css',import.meta.url).href;document.head.appendChild(link);
+  if(typeof document==='undefined')return Promise.resolve();
+  if(stylesReady)return stylesReady;
+  let link=document.querySelector('link[data-academy-gold-css]');
+  if(link?.sheet)return Promise.resolve();
+  stylesReady=new Promise((resolve,reject)=>{
+    const fresh=!link;
+    if(fresh){link=document.createElement('link');link.rel='stylesheet';link.dataset.academyGoldCss='';link.href=new URL('../styles/academy-gold.css',import.meta.url).href;}
+    link.addEventListener('load',()=>resolve(),{once:true});
+    link.addEventListener('error',()=>{link.remove();stylesReady=null;reject(Error('GOLD_STYLES_UNAVAILABLE'));},{once:true});
+    if(fresh)document.head.appendChild(link);
+  });
+  return stylesReady;
 }
