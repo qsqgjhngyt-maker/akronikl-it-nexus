@@ -94,7 +94,7 @@ export async function bindBlogMedia(root,{fetchImpl=globalThis.fetch,privateRead
  const show=img=>{
   if(!live()||!img.isConnected)return Promise.resolve();
   const id=img.dataset.blogMedia;if(!/^[a-f0-9]{64}$/.test(id))return Promise.resolve();
-  if(localImages.has(id)){clearRetry(img);img.src=localImages.get(id);return Promise.resolve()}
+  if(localImages.has(id)){clearRetry(img);img.src=localImages.get(id);img.removeAttribute('aria-busy');return Promise.resolve()}
   img.setAttribute('aria-busy','true');
   return load(id).then(src=>{if(live()&&img.isConnected){localImages.set(id,src);
    // Одна удачная проверка того же mediaId восстанавливает все видимые копии.
