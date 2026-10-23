@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {validateContentContract,validateSchema,canonicalSkillCode,skillIdForCode,exerciseIdFor} from '../tools/content-contract-lib.mjs';
 
 const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
@@ -47,7 +50,7 @@ test('generic schema allows future lifecycle states while CP-1.1 candidate stays
 });
 
 test('CP-1.1 semantic validator protects production compatibility',()=>{
-  const result=validateContentContract(new URL('../',import.meta.url).pathname);
+  const result=validateContentContract(fileURLToPath(new URL('../',import.meta.url)));
   assert.equal(result.ok,true,result.errors.join('\n'));
   assert.deepEqual(result.stats,{modules:6,topics:40,skills:15,exercises:40,practices:6,projects:7,mappedTopics:3,pendingTopics:37});
   for(const required of ['production-cpp-id-compatibility','progress-localstorage-compatibility','runtime-additive-only','future-foundation-only','skill-alias-normalization'])assert.ok(result.passes.includes(required),required);
@@ -66,4 +69,64 @@ test('future learning layers are explicitly not implemented',()=>{
   assert.deepEqual(contract.futureExtensions,{skillGraph:'not-implemented',learningEvents:'not-implemented',masteryModel:'not-implemented'});
   assert.equal(contract.runtimeCompatibility.runtimeConsumption,'none-cp1.1');
   assert.equal(contract.runtimeCompatibility.offlinePolicy,'no-runtime-change-cp1.1');
+});
+
+
+const trackedFixtureFiles=[
+  'content/schemas/content-package-v1.schema.json',
+  'courses/cpp/content-package.json',
+  'courses/catalog.json',
+  'courses/cpp/manifest.json',
+  'courses/cpp/curriculum.json',
+  'courses/cpp/data/lessons.ru.json',
+  'courses/cpp/data/practicums.ru.json',
+  'courses/cpp/data/projects.ru.json',
+  'courses/cpp/PROVENANCE.md',
+  'core/storage.js',
+  'core/migrations/cpp-v7.js',
+  'core/course-registry.js'
+];
+function withMutatedCandidate(mutate){
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'cp11-кириллица path-'));
+  const source=fileURLToPath(new URL('../',import.meta.url));
+  try{
+    for(const rel of trackedFixtureFiles){
+      const dst=path.join(root,rel);
+      fs.mkdirSync(path.dirname(dst),{recursive:true});
+      fs.copyFileSync(path.join(source,rel),dst);
+    }
+    const file=path.join(root,'courses/cpp/content-package.json');
+    const contract=JSON.parse(fs.readFileSync(file,'utf8'));
+    mutate(contract);
+    fs.writeFileSync(file,JSON.stringify(contract,null,2));
+    return validateContentContract(root);
+  }finally{
+    fs.rmSync(root,{recursive:true,force:true});
+  }
+}
+
+test('semantic gate rejects incorrect content reference and duplicate IDs',()=>{
+  const broken=withMutatedCandidate(c=>{c.topics[0].moduleId='missing.module'});
+  assert.equal(broken.ok,false);
+  assert.ok(broken.errors.some(x=>x.includes('topic module missing')||x.includes('drifted')));
+  const duplicate=withMutatedCandidate(c=>{c.exercises[1].exerciseId=c.exercises[0].exerciseId});
+  assert.equal(duplicate.ok,false);
+  assert.ok(duplicate.errors.some(x=>x.includes('globally unique')));
+});
+
+test('semantic gate rejects premature Learning Events and source redirect',()=>{
+  const premature=withMutatedCandidate(c=>{c.futureExtensions.learningEvents='implemented'});
+  assert.equal(premature.ok,false);
+  assert.ok(premature.errors.some(x=>x.includes('future layers must remain not-implemented')));
+  const redirected=withMutatedCandidate(c=>{c.sourceCompatibility.manifestPath='../../private-data.json'});
+  assert.equal(redirected.ok,false);
+  assert.ok(redirected.errors.some(x=>x.includes('drifted')));
+  assert.ok(!redirected.errors.some(x=>x.includes('ENOENT')||x.includes('private-data.json')));
+});
+
+test('validator rejects unsupported schema keywords instead of silently passing',()=>{
+  const schema=json('content/schemas/content-package-v1.schema.json');
+  const bad=structuredClone(schema);
+  bad.properties.courseId.oneOf=[{type:'string'}];
+  assert.ok(validateSchema(bad,json('courses/cpp/content-package.json')).some(x=>x.includes('unsupported JSON Schema keyword oneOf')));
 });

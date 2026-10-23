@@ -12,6 +12,28 @@ const json=(root,p)=>JSON.parse(read(root,p));
 const uniq=a=>new Set(a).size===a.length;
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const assert=(c,m,errors)=>{if(!c)errors.push(m)};
+// Only the explicitly audited JSON Schema vocabulary is supported by this dependency-free validator.
+// Reject unknown validation keywords instead of silently accepting a schema we cannot enforce.
+const SUPPORTED_SCHEMA_KEYWORDS=new Set([
+  '$schema','$id','$defs','$ref','title','description','type','required',
+  'properties','additionalProperties','const','enum','minLength','pattern',
+  'minimum','minItems','uniqueItems','items','minProperties'
+]);
+function checkSchemaVocabulary(rule,where,errors){
+  if(!rule||typeof rule!=='object'||Array.isArray(rule)){
+    errors.push(where+': invalid schema rule');return;
+  }
+  for(const [keyword,value]of Object.entries(rule)){
+    if(!SUPPORTED_SCHEMA_KEYWORDS.has(keyword))errors.push(where+': unsupported JSON Schema keyword '+keyword);
+    if(keyword==='$defs'||keyword==='properties'){
+      if(!value||typeof value!=='object'||Array.isArray(value)){
+        errors.push(where+'.'+keyword+': invalid schema map');continue;
+      }
+      for(const [name,definition]of Object.entries(value))checkSchemaVocabulary(definition,where+'.'+keyword+'.'+name,errors);
+    }
+    if((keyword==='items'||keyword==='additionalProperties')&&value&&typeof value==='object')checkSchemaVocabulary(value,where+'.'+keyword,errors);
+  }
+}
 
 function resolveRef(rootSchema,ref){
   if(!ref.startsWith('#/'))throw new Error('Only local JSON Schema refs are supported: '+ref);
@@ -26,6 +48,8 @@ function typeOk(type,v){
 }
 export function validateSchema(schema,value){
   const errors=[];
+  checkSchemaVocabulary(schema,'$schema',errors);
+  if(errors.length)return errors;
   function walk(rule,v,p){
     if(rule.$ref)return walk(resolveRef(schema,rule.$ref),v,p);
     if('const' in rule&&v!==rule.const)errors.push(p+': expected const '+JSON.stringify(rule.const));
@@ -99,13 +123,15 @@ export function validateContentContract(root='.'){
   try{
     schema=json(root,'content/schemas/content-package-v1.schema.json');
     contract=json(root,'courses/cpp/content-package.json');
-    catalog=json(root,contract.sourceCompatibility.catalogPath);
-    manifest=json(root,contract.sourceCompatibility.manifestPath);
-    curriculum=json(root,contract.sourceCompatibility.curriculumPath);
-    lessons=json(root,contract.sourceCompatibility.contentPaths.lessons);
-    practices=json(root,contract.sourceCompatibility.contentPaths.practices);
-    projects=json(root,contract.sourceCompatibility.contentPaths.projects);
-    read(root,contract.sourceCompatibility.provenancePath);
+    // Read only established C++ production paths. Candidate-supplied sourceCompatibility
+    // is checked against expectedContract later; it must not redirect filesystem reads.
+    catalog=json(root,'courses/catalog.json');
+    manifest=json(root,'courses/cpp/manifest.json');
+    curriculum=json(root,'courses/cpp/curriculum.json');
+    lessons=json(root,'courses/cpp/data/lessons.ru.json');
+    practices=json(root,'courses/cpp/data/practicums.ru.json');
+    projects=json(root,'courses/cpp/data/projects.ru.json');
+    read(root,'courses/cpp/PROVENANCE.md');
   }catch(e){return{ok:false,errors:['read/parse: '+e.message],warnings,passes,stats:{}}}
 
   const schemaErrors=validateSchema(schema,contract);

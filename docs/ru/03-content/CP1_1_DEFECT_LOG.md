@@ -28,3 +28,22 @@
 **Проблема:** benchmark sources содержат `cpp.const-correctness` и `cpp.const.correctness`.  
 **Решение:** adapter normalization `cpp.const-correctness → cpp.const.correctness`, source payload не изменяется; оба значения сохраняются в `sourceCodes`.  
 **Результат:** единый canonical ID `skill.cpp.const.correctness` с traceability к двум source spellings.
+
+
+## D-05 — локальный путь Windows с кириллицей
+
+**Проблема:** тест использовал `new URL(...).pathname` для корня репозитория; на Windows и при пробелах/Unicode URL path не равен файловому пути.  
+**Решение:** `fileURLToPath(new URL(...))` и negative fixtures в каталоге `cp11-кириллица path-`.  
+**Regression:** CP-1.1 Node contract test + CI.
+
+## D-06 — схема молча игнорирует неизвестный validation keyword
+
+**Проблема:** dependency-free validator поддерживает поднабор JSON Schema, но неизвестные новые constraints могли пройти без применения.  
+**Решение:** fail-closed vocabulary audit; неизвестные ключевые слова приводят к FAIL.  
+**Ограничение:** полная совместимость с Draft 2020-12 вне текущего поднабора ещё не реализована.
+
+## D-07 — redirect в sourceCompatibility / отсутствие post-merge CI
+
+**Проблема:** validator читал файловые пути, предоставленные содержимым candidate; post-merge `push` в `main` не запускал CP-1.1 gate.  
+**Решение:** C++ validator читает только существующие canonical files, а candidate paths сравниваются с эталоном. Добавлен `push: main` CI trigger.  
+**Regression:** negative source redirect test, автоматический post-merge CI после разрешённого merge.

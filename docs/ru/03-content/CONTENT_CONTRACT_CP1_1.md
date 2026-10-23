@@ -121,3 +121,14 @@ Semantic validator дополнительно проверяет production C++ 
 - существующие Academy/progress/legacy identifiers.
 
 Таким образом будущая эволюция формата не позволяет текущему milestone преждевременно заявить реализованными последующие CP-этапы.
+
+
+## Проверка схемы и совместимость Windows
+
+`tools/content-contract-lib.mjs` поддерживает проверенный поднабор JSON Schema Draft 2020-12 (keywords из текущей схемы). Незнакомые validation keywords теперь **отклоняются**, а не игнорируются молча. Это не замена общего standards-compliant JSON Schema engine для будущих схем; при расширении vocabularies требуется отдельное архитектурное решение.
+
+C++ semantic validator читает только фиксированные исходные пути `courses/cpp`; указанные внутри контракта пути проверяются как metadata, но не используются для обращения к произвольным файлам.
+
+Node tests используют `fileURLToPath`, что сохраняет корректные пути в Windows и каталогах с пробелами/кириллицей.
+
+После merge workflow `CP-1.1 Content Contract` автоматически запускается также на `push` в `main`, если затронуты файлы CP-1.1. Это отдельное post-merge evidence, не заменяющее PR CI.
