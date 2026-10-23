@@ -31,7 +31,7 @@ export function createNexusBootstrap({
  // Window timers требуют native receiver: вызов через plain DI object иначе даёт Illegal invocation.
  timers={setTimeout:(...args)=>globalThis.setTimeout(...args),clearTimeout:(...args)=>globalThis.clearTimeout(...args),setInterval:(...args)=>globalThis.setInterval(...args),clearInterval:(...args)=>globalThis.clearInterval(...args)}
 }={}){
- let phase='idle',startPromise=null,inFlight=null,interval=null,leaving=false,pendingRoute=false,verifiedAccountId=null;
+ let phase='idle',startPromise=null,inFlight=null,interval=null,leaving=false,pendingRoute=false,verifiedAccountId=null,recoveryTimer=null,recoveryAttempts=0;
  const readers=new Set(),listeners=[],releasedHashEvents=new WeakSet();
  const canonical=()=>locationImpl?.origin===SERVER_ACCOUNT_ORIGIN;
  const visible=()=>documentImpl?.hidden!==true;
@@ -43,12 +43,23 @@ export function createNexusBootstrap({
  const removeListeners=()=>{while(listeners.length)listeners.pop()()};
  const entry=()=>ENTRY_URL+(typeof locationImpl?.hash==='string'?locationImpl.hash:'');
  const lock=()=>{storage.lockAccountStorage();abortReaders();stopInterval()};
+ // Проверка после временного сетевого сбоя автоматически возобновляется с backoff.
+ // Не держать фоновый polling на скрытой вкладке; нет доступа к private data.
+ const stopRecovery=()=>{if(recoveryTimer!==null){timers.clearTimeout(recoveryTimer);recoveryTimer=null}};
+ const scheduleRecovery=()=>{
+  if(recoveryTimer!==null||leaving||phase!=='suspended'||!visible())return;
+  const delay=Math.min(60000,10000*2**Math.min(recoveryAttempts++,3));
+  recoveryTimer=timers.setTimeout(()=>{
+   const old=recoveryTimer;recoveryTimer=null;timers.clearTimeout(old);
+   if(!leaving&&phase==='suspended'&&visible())void recheck();
+  },delay);recoveryTimer?.unref?.();
+ };
  // Продолжать работу со старым facade после pagehide запрещено: нужна новая
  // загрузка документа и новая проверка серверной сессии, а не переход к входу.
  const reloadDocument=()=>{
   if(leaving||phase==='disposed')return false;
   if(!canonical())return leave();
-  phase='reloading';pendingRoute=false;abortReaders();stopInterval();
+  phase='reloading';pendingRoute=false;stopRecovery();abortReaders();stopInterval();
   if(typeof locationImpl?.reload==='function'){locationImpl.reload();return false}
   // Только same-origin путь текущего документа, не сторонний redirect.
   if(typeof locationImpl?.pathname==='string'&&locationImpl.pathname.startsWith('/')&&!locationImpl.pathname.startsWith('//')){
@@ -60,7 +71,7 @@ export function createNexusBootstrap({
  // устаревшему приложению не оставляем доступ к приватному хранилищу.
  const suspend=()=>{
   if(leaving||phase==='disposed'||phase==='hidden-locked')return false;
-  if(phase==='suspended')return false;
+  if(phase==='suspended'){scheduleRecovery();return false;}
   verifiedAccountId??=storage.verifiedAccount()?.accountId||null;
   phase='suspended';pendingRoute=false;lock();
   const host=documentImpl?.querySelector('#app');host?.replaceChildren();
@@ -71,11 +82,11 @@ export function createNexusBootstrap({
    const retry=documentImpl.createElement('button');retry.type='button';retry.className='btn primary';retry.textContent='Повторить проверку';
    retry.addEventListener('click',()=>{void recheck()});section.append(title,message,retry);host.append(section);
   }
-  return false;
+  scheduleRecovery();return false;
  };
  const leave=()=>{
   if(leaving)return false;leaving=true;phase='leaving';pendingRoute=false;
-  lock();removeListeners();
+  stopRecovery();lock();removeListeners();
   try{documentImpl?.querySelector('#app')?.replaceChildren()}finally{locationImpl?.replace(entry())}
   return false;
  };
@@ -139,7 +150,7 @@ export function createNexusBootstrap({
   },true);
   listen(windowImpl,'pageshow',event=>{if(event.persisted||phase==='hidden-locked')reloadDocument()});
   // Даже сохранённый ранее facade не сможет сделать autosave после pagehide.
-  listen(windowImpl,'pagehide',()=>{if(!leaving){phase='hidden-locked';pendingRoute=false;lock()}},{once:true});
+  listen(windowImpl,'pagehide',()=>{if(!leaving){phase='hidden-locked';pendingRoute=false;stopRecovery();lock()}},{once:true});
   listen(windowImpl,'online',()=>{if(phase==='suspended'&&visible())void recheck()});
   listen(windowImpl,'nexus:session-ended',leave,{once:true});
  }
@@ -169,7 +180,7 @@ export function createNexusBootstrap({
   })();return startPromise;
  }
  return Object.freeze({startNexus:start,readVerifiedSession:readSession,recheck,
-  dispose(){if(phase==='disposed')return;phase='disposed';leaving=true;pendingRoute=false;lock();removeListeners()}
+  dispose(){if(phase==='disposed')return;phase='disposed';leaving=true;pendingRoute=false;stopRecovery();lock();removeListeners()}
  });
 }
 

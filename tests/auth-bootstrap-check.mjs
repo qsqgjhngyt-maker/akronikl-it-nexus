@@ -192,4 +192,18 @@ await check('hidden suspended UI performs no background private reads until visi
  assert.equal(f.reloads,1);assert.equal(f.calls.length,3);
 });
 
+await check('transient 503 автоматически повторяется без нажатия на вход',async()=>{
+ const f=fixture();f.setNext(()=>json({},503));await f.bootstrap.startNexus();
+ assert.equal(f.navigation.length,0);assert.equal(f.timers.timeouts.size,1);
+ assert.equal([...f.timers.timeouts][0].ms,10000);
+ f.setNext(()=>json());f.timers.expire();await f.bootstrap.recheck();
+ assert.equal(f.reloads,1);assert.equal(f.navigation.length,0);assertLocked(f);
+ assert.equal(f.timers.timeouts.size,0);
+});
+await check('автоматическое восстановление не читает hidden-вкладку и очищается при dispose',async()=>{
+ const f=fixture();f.setNext(()=>json({},503));await f.bootstrap.startNexus();
+ f.documentImpl.hidden=true;f.timers.expire();await Promise.resolve();
+ assert.equal(f.calls.length,1);assert.equal(f.reloads,0);
+ f.bootstrap.dispose();assert.equal(f.timers.timeouts.size,0);
+});
 console.log(JSON.stringify({status:'PASS',tests,networkRequests:0,realPrivateStorageReads:0,appImports:0,serversStarted:0,browsersStarted:0,syntheticStorageController:true}));
