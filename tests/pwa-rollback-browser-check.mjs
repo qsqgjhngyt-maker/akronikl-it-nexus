@@ -30,7 +30,7 @@ try{
   assert.equal(await page.evaluate(async()=>await(await(await caches.open('synthetic-preserved')).match('/private-canary')).text()),'SYNTHETIC_NOT_FOR_REPLAY');
   const local=await context.newPage();offline=true;await local.goto(origin+'/#copy='+vaultId);await local.locator('#localPhrase').fill('SYNTHETIC rollback local phrase');await local.locator('#unlockLocal button').click();await local.locator('#newProject,#psNewProject').waitFor();
   const marker=await local.evaluate(async({generation,vaultId})=>{const {createVaultStore}=await import('/releases/'+generation+'/pwa/local-vault.js'),s=await createVaultStore().unlock(vaultId,'SYNTHETIC rollback local phrase'),v=s.read().state.skills.marker;await s.lock();return v},{generation:a.assetGeneration,vaultId});assert.equal(marker,'SYNTHETIC_DURABLE');await local.close();offline=false;
-  checks.push({name:target==='rollback'?'compatible Alpha10.1 rollback + safe worker installed over candidate':'candidate safely restored after compatible rollback',status:'PASS'});
+  checks.push({name:target==='rollback'?'compatible '+b.version+' rollback + safe worker installed over candidate':'candidate safely restored after compatible rollback',status:'PASS'});
  }
  assert.deepEqual(workerErrors,[]);
 }catch(e){failure={message:e.message,stack:String(e.stack).slice(0,2000)};console.error(e)}
