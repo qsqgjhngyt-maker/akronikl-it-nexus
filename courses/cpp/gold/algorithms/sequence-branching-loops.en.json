@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "lessonId": "cpp.sequence-branching-loops",
+  "moduleId": "cpp.section.algorithms",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "sourceRefs": [
+    "CS2023-SDF",
+    "ISO-CPP"
+  ],
+  "locale": "en",
+  "title": "Control flow: sequence, decisions and iteration",
+  "lead": "An algorithm follows a definite route: statements run in sequence, branches choose paths and loops repeat operations.",
+  "why": "Reading and debugging C++ requires tracing changing variables, not merely looking at a final output.",
+  "objectives": [
+    "Distinguish sequencing, branching and loops.",
+    "Trace a loop's variables.",
+    "Explain continuation versus termination.",
+    "Test boundary values."
+  ],
+  "prerequisites": [
+    "Basic integer arithmetic.",
+    "Reading conditions and state tables."
+  ],
+  "concepts": [
+    {
+      "term": "Branch",
+      "definition": "An alternative control path chosen by a condition."
+    },
+    {
+      "term": "Iteration",
+      "definition": "One execution of a loop body."
+    },
+    {
+      "term": "Counter",
+      "definition": "A variable recording a step."
+    },
+    {
+      "term": "Sum invariant",
+      "definition": "After k steps, sum includes exactly the processed even values."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Sequencing is ordered execution",
+      "paragraphs": [
+        "In a simple program, reading input comes before computation and printing. Reordering these steps may use an uninitialized or outdated result.",
+        "Record the values that exist after each statement to reason about execution precisely."
+      ]
+    },
+    {
+      "title": "Conditions select an alternative",
+      "paragraphs": [
+        "if executes its body when its condition is true; else handles the alternative. n%2==0 tests whether an integer is even.",
+        "Test both outcomes. Inclusive and exclusive comparisons behave differently at the boundary."
+      ]
+    },
+    {
+      "title": "Loops describe repeated operations",
+      "paragraphs": [
+        "To sum even values from 1 to n, we visit each k and add it to sum only if it is even. A loop avoids manually repeating similar statements.",
+        "for groups initialization, continuation and update. With while, updating the counter normally belongs in the loop body."
+      ]
+    },
+    {
+      "title": "A trace reveals state",
+      "paragraphs": [
+        "At n=5, k visits 1 through 5. The sum changes at k=2 and k=4, reaching 6.",
+        "Write (k,sum) after each iteration. The invariant says that sum contains precisely the processed even integers."
+      ]
+    },
+    {
+      "title": "Termination and input bounds",
+      "paragraphs": [
+        "Without advancing k, a loop guarded by k<=n may not terminate. Huge inputs can also consume time or overflow an integer.",
+        "Our exercise limits n to 0..10000, where the sum fits a 32-bit int. Broader programs must choose appropriate bounds and types."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "title": "Parity branch",
+      "purpose": "Exercise both alternatives of a condition.",
+      "code": "#include <iostream>\nint main() {\n    int n;\n    std::cin >> n;\n    if (n % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
+      "stdin": "8\n",
+      "expectedStdout": "even\n",
+      "steps": [
+        "8 has zero remainder modulo 2.",
+        "The even branch runs.",
+        "Input 9 reaches odd."
+      ]
+    },
+    {
+      "title": "Even-number sum",
+      "purpose": "Trace accumulation in a loop.",
+      "code": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+      "stdin": "5\n",
+      "expectedStdout": "6\n",
+      "steps": [
+        "sum begins at zero.",
+        "k=2 adds 2.",
+        "k=4 adds 4.",
+        "The loop exits once k becomes 6."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Zero iterations",
+      "action": "Try n=0.",
+      "prediction": "The loop body never runs; stdout is 0.",
+      "verification": "Explain why the initial condition is false."
+    },
+    {
+      "title": "Off-by-one defect",
+      "action": "Replace k<=n with k<n for n=6.",
+      "prediction": "The value 6 is omitted; the result becomes 6 instead of 12.",
+      "verification": "Compare n=5 and n=6."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "The sum remains zero",
+      "cause": "Parity checking or accumulation is wrong.",
+      "fix": "Trace k=2, where sum must change."
+    },
+    {
+      "symptom": "The program loops endlessly",
+      "cause": "The counter is not updated.",
+      "fix": "Increment k and recheck the exit guard."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Make a state table for n=6.",
+      "criteria": "Even steps result in 2,6,12.",
+      "hint": "Record sum after each step."
+    },
+    {
+      "level": "applied",
+      "task": "Rewrite the even sum using while.",
+      "criteria": "The output matches the for version.",
+      "hint": "Update k explicitly."
+    },
+    {
+      "level": "transfer",
+      "task": "Count odd integers from 1 to n.",
+      "criteria": "For n=5 the result is 3, and you state an invariant.",
+      "hint": "Identify guard, update and count."
+    }
+  ],
+  "laboratory": {
+    "title": "Lab: trace the sum of even integers",
+    "challenge": "Read an integer n from 0 to 10000 and print the sum of even values 1..n; print invalid otherwise.",
+    "starterCode": "// Read n, check its range and accumulate even values.\n",
+    "referenceCode": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+    "cases": [
+      {
+        "stdin": "0\n",
+        "stdout": "0\n"
+      },
+      {
+        "stdin": "5\n",
+        "stdout": "6\n"
+      },
+      {
+        "stdin": "6\n",
+        "stdout": "12\n"
+      },
+      {
+        "stdin": "-1\n",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Predict sums for 5 and 6 on paper.",
+      "Trace k and sum after each iteration.",
+      "Implement the loop in Code Studio.",
+      "Test boundary, normal and invalid inputs."
+    ],
+    "rubric": [
+      "Zero iterations are handled correctly.",
+      "The guards match the specified domain.",
+      "All four tests match the expected results.",
+      "Submit a trace table and source."
+    ],
+    "artifact": "source-code-and-trace",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Which construct repeats operations?",
+      "answers": [
+        "if",
+        "for or while",
+        "return"
+      ],
+      "correctIndex": 1,
+      "explanation": "A loop repeats while its guard holds."
+    },
+    {
+      "question": "What is the sum of even values from 1 to 5?",
+      "answers": [
+        "6",
+        "9",
+        "15"
+      ],
+      "correctIndex": 0,
+      "explanation": "2+4=6."
+    },
+    {
+      "question": "How often does for(k=1;k<=0;++k) execute?",
+      "answers": [
+        "Zero times",
+        "Once",
+        "Forever"
+      ],
+      "correctIndex": 0,
+      "explanation": "The initial guard is false."
+    }
+  ],
+  "reflection": [
+    "How does the invariant explain sum?",
+    "Why must n have explicit bounds?"
+  ],
+  "bridge": "Next, explore compilation, execution and debugging.",
+  "visualization": {
+    "kind": "control-flow",
+    "steps": []
+  }
+}
