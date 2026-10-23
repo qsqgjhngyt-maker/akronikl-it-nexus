@@ -1,0 +1,391 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://akronikl.dev/schemas/content-package-v1.schema.json",
+  "title": "AKRONIKL IT NEXUS Content Package Contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "courseId",
+    "status",
+    "sourceCompatibility",
+    "runtimeCompatibility",
+    "modules",
+    "topics",
+    "skills",
+    "exercises",
+    "practices",
+    "projects",
+    "futureExtensions"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "contractVersion": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+\\.[0-9]+$"
+    },
+    "courseId": {
+      "$ref": "#/$defs/stableId"
+    },
+    "status": {
+      "enum": [
+        "reference-contract",
+        "draft-contract",
+        "pilot-contract"
+      ]
+    },
+    "sourceCompatibility": {
+      "$ref": "#/$defs/sourceCompatibility"
+    },
+    "runtimeCompatibility": {
+      "$ref": "#/$defs/runtimeCompatibility"
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/module"
+      }
+    },
+    "topics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/topic"
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/skill"
+      }
+    },
+    "exercises": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/exercise"
+      }
+    },
+    "practices": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/practice"
+      }
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/project"
+      }
+    },
+    "futureExtensions": {
+      "$ref": "#/$defs/futureExtensions"
+    }
+  },
+  "$defs": {
+    "stableId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stringArray": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/stableId"
+      },
+      "uniqueItems": true
+    },
+    "sourceCompatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "catalogPath",
+        "manifestPath",
+        "curriculumPath",
+        "lessonsPath",
+        "practicesPath",
+        "projectsPath"
+      ],
+      "properties": {
+        "catalogPath": {
+          "$ref": "#/$defs/path"
+        },
+        "manifestPath": {
+          "$ref": "#/$defs/path"
+        },
+        "curriculumPath": {
+          "$ref": "#/$defs/path"
+        },
+        "lessonsPath": {
+          "$ref": "#/$defs/path"
+        },
+        "practicesPath": {
+          "$ref": "#/$defs/path"
+        },
+        "projectsPath": {
+          "$ref": "#/$defs/path"
+        }
+      }
+    },
+    "runtimeCompatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "academyRoute",
+        "progressStateKey",
+        "legacyProgressKey",
+        "projectStorageKey",
+        "runtimeConsumption",
+        "offlinePolicy"
+      ],
+      "properties": {
+        "academyRoute": {
+          "const": "#course=cpp"
+        },
+        "progressStateKey": {
+          "const": "akronikl:it-nexus:state:v1"
+        },
+        "legacyProgressKey": {
+          "const": "cpp_programming_pdf_course_v1"
+        },
+        "projectStorageKey": {
+          "const": "akronikl:it-nexus:projects:v1"
+        },
+        "runtimeConsumption": {
+          "const": "none-cp1.1"
+        },
+        "offlinePolicy": {
+          "const": "no-runtime-change-cp1.1"
+        }
+      }
+    },
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "moduleId",
+        "sourceId",
+        "order",
+        "topicIds"
+      ],
+      "properties": {
+        "moduleId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "topicIds": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    },
+    "topic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "topicId",
+        "sourceId",
+        "moduleId",
+        "order",
+        "skillIds",
+        "exerciseIds"
+      ],
+      "properties": {
+        "topicId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "moduleId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "skillIds": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "exerciseIds": {
+          "$ref": "#/$defs/stringArray"
+        }
+      }
+    },
+    "skill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skillId",
+        "code",
+        "topicIds",
+        "status"
+      ],
+      "properties": {
+        "skillId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "code": {
+          "$ref": "#/$defs/stableId"
+        },
+        "topicIds": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "status": {
+          "const": "foundation"
+        }
+      }
+    },
+    "exercise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exerciseId",
+        "sourceId",
+        "topicId",
+        "skillIds",
+        "kind",
+        "activityType",
+        "sourceLocale",
+        "sourceFields"
+      ],
+      "properties": {
+        "exerciseId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "topicId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "skillIds": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "kind": {
+          "const": "exercise"
+        },
+        "activityType": {
+          "const": "code.exercise"
+        },
+        "sourceLocale": {
+          "const": "ru"
+        },
+        "sourceFields": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "task",
+            "hint",
+            "solution",
+            "requirements"
+          ],
+          "properties": {
+            "task": {
+              "const": "task"
+            },
+            "hint": {
+              "const": "hint"
+            },
+            "solution": {
+              "const": "solution"
+            },
+            "requirements": {
+              "const": "requirements"
+            }
+          }
+        }
+      }
+    },
+    "practice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "practiceId",
+        "sourceId",
+        "moduleId",
+        "kind",
+        "activityType",
+        "sourceLocale"
+      ],
+      "properties": {
+        "practiceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "moduleId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "kind": {
+          "const": "practice"
+        },
+        "activityType": {
+          "const": "code.practice"
+        },
+        "sourceLocale": {
+          "const": "ru"
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projectId",
+        "sourceId",
+        "kind",
+        "activityType",
+        "sourceLocale"
+      ],
+      "properties": {
+        "projectId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "kind": {
+          "const": "project"
+        },
+        "activityType": {
+          "const": "code.project"
+        },
+        "sourceLocale": {
+          "const": "ru"
+        }
+      }
+    },
+    "futureExtensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skillGraph",
+        "learningEvents",
+        "masteryModel"
+      ],
+      "properties": {
+        "skillGraph": {
+          "const": "not-implemented"
+        },
+        "learningEvents": {
+          "const": "not-implemented"
+        },
+        "masteryModel": {
+          "const": "not-implemented"
+        }
+      }
+    }
+  }
+}
