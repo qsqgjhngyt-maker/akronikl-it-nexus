@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 1,
+  "lessonId": "cpp.languages-compilation-debugging",
+  "moduleId": "cpp.section.algorithms",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "sourceRefs": [
+    "ISO-CPP",
+    "CPP-GUIDELINES"
+  ],
+  "locale": "en",
+  "title": "From C++ source to execution: compilation, linking and debugging",
+  "lead": "A source file is not executed directly. It goes through build stages, after which the program processes actual input.",
+  "why": "When code fails to build or produces an incorrect result, identifying the stage of the problem is more effective than random edits.",
+  "objectives": [
+    "Distinguish source, compilation, linking and execution.",
+    "Read essential diagnostics.",
+    "Differentiate syntax, runtime and logic defects.",
+    "Support a fix with reproducible tests."
+  ],
+  "prerequisites": [
+    "Basic conditions and input/output.",
+    "Algorithm, input and test case."
+  ],
+  "concepts": [
+    {
+      "term": "Compilation",
+      "definition": "Checking and translating C++ source into object representation."
+    },
+    {
+      "term": "Linking",
+      "definition": "Resolving cross-module symbols and dependencies into an executable."
+    },
+    {
+      "term": "Runtime",
+      "definition": "The environment where a built program reads inputs and produces results."
+    },
+    {
+      "term": "Debugging",
+      "definition": "Reproducing, locating, fixing and retesting a defect."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Source files and builds",
+      "paragraphs": [
+        "C++ is written in text files. A compiler handles source using selected language options, and diagnostic wording varies among tools.",
+        "Code Studio's actual capabilities depend on its runtime provider. Do not assume complete C++23 support merely from the tool name."
+      ]
+    },
+    {
+      "title": "Preprocessing, compilation and linking",
+      "paragraphs": [
+        "Preprocessing handles directives such as #include. Compilation checks language constructs and translates code; linking resolves required symbols and libraries.",
+        "A missing semicolon typically causes a compilation error; a declared but undefined external function may cause a linker error."
+      ]
+    },
+    {
+      "title": "A program can fail after a successful build",
+      "paragraphs": [
+        "Execution can encounter invalid input, forbidden operations and incorrect decisions. Integer division by zero must be prevented.",
+        "With two int operands, 10/3 is 3 rather than 3.333. This is the defined integer operation, not a compiler defect."
+      ]
+    },
+    {
+      "title": "Debugging starts with reproduction",
+      "paragraphs": [
+        "Record the command, input, expected output, actual output and first relevant diagnostic. Classify the phase of failure before editing.",
+        "Make one motivated correction and rerun both the failing case and earlier successful cases."
+      ]
+    },
+    {
+      "title": "Standards and portability",
+      "paragraphs": [
+        "Published C++23 is the normative language reference for this curriculum. In October 2026, C++26 remains under development and should not be assumed universally implemented.",
+        "The introductory course uses portable fundamentals. STL, exceptions, RAII and build systems require later targeted study and provider verification."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "title": "Minimal runnable program",
+      "purpose": "Connect C++ source to visible output.",
+      "code": "#include <iostream>\nint main() {\n    std::cout << \"Nexus C++\\n\";\n}",
+      "stdin": "",
+      "expectedStdout": "Nexus C++\n",
+      "steps": [
+        "iostream provides stream output.",
+        "main starts the user-written part.",
+        "std::cout writes the message.",
+        "\\n ends the line."
+      ]
+    },
+    {
+      "title": "Check input extraction",
+      "purpose": "Invalid data must not become an arbitrary result.",
+      "code": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a + b << '\\n';\n}",
+      "stdin": "10 2\n",
+      "expectedStdout": "12\n",
+      "steps": [
+        "std::cin attempts to read two values.",
+        "Invalid input leads to invalid.",
+        "Otherwise print the sum.",
+        "Test nonnumeric input separately."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "A syntax defect",
+      "action": "Remove ; from a separate copy of the sample.",
+      "prediction": "Compilation should fail; exact wording varies by provider.",
+      "verification": "Record the diagnostic and restore the semicolon."
+    },
+    {
+      "title": "Integer division",
+      "action": "Run the safe divider with 10 3 and 10 0.",
+      "prediction": "The first result is 3; the second is invalid.",
+      "verification": "Predict before executing."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "The compiler expects ;",
+      "cause": "The statement terminator is missing or the adjacent syntax is malformed.",
+      "fix": "Inspect the reported location and repair the punctuation."
+    },
+    {
+      "symptom": "The program runs but the result is surprising",
+      "cause": "The domain formula or integer-division semantics are misunderstood.",
+      "fix": "Compare operator semantics and hand calculations."
+    },
+    {
+      "symptom": "Division by zero is attempted",
+      "cause": "The divisor was not checked.",
+      "fix": "Reject b==0 before dividing."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Classify syntax, linking, runtime and logic failures.",
+      "criteria": "Give an example and a diagnosis for each.",
+      "hint": "Compilable does not mean correct."
+    },
+    {
+      "level": "applied",
+      "task": "Protect integer division against zero.",
+      "criteria": "10 3 → 3, 10 0 → invalid.",
+      "hint": "Check b before division."
+    },
+    {
+      "level": "transfer",
+      "task": "Document a diagnosis of an incorrect order total.",
+      "criteria": "Include input, expectation, observation, hypothesis and regression evidence.",
+      "hint": "Change one cause at a time."
+    }
+  ],
+  "laboratory": {
+    "title": "Lab: safe integer division",
+    "challenge": "Read two integers; for invalid extraction or a zero divisor print invalid, otherwise print the integer quotient according to C++ semantics.",
+    "starterCode": "// Read a,b and check the input and b!=0 before dividing.\n",
+    "referenceCode": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+    "cases": [
+      {
+        "stdin": "10 3\n",
+        "stdout": "3\n"
+      },
+      {
+        "stdin": "10 0\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "-8 3\n",
+        "stdout": "-2\n"
+      }
+    ],
+    "steps": [
+      "Predict 10/3.",
+      "Check the divisor before division.",
+      "Run the three Code Studio cases.",
+      "Explain integer truncation and rejection of zero division."
+    ],
+    "rubric": [
+      "No division by zero occurs.",
+      "Invalid extraction is handled.",
+      "All three outputs match.",
+      "Submit source and a short test report."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "When is a missing semicolon generally detected?",
+      "answers": [
+        "Compilation",
+        "After process exit",
+        "In graphic design"
+      ],
+      "correctIndex": 0,
+      "explanation": "It is a syntax issue."
+    },
+    {
+      "question": "What is 10/3 when both values have type int?",
+      "answers": [
+        "3",
+        "3.333",
+        "4"
+      ],
+      "correctIndex": 0,
+      "explanation": "Integer division discards the fraction."
+    },
+    {
+      "question": "What must be true before dividing a by b?",
+      "answers": [
+        "b!=0",
+        "The UI is colorful",
+        "a>0"
+      ],
+      "correctIndex": 0,
+      "explanation": "Zero division is invalid."
+    }
+  ],
+  "reflection": [
+    "Why is successful compilation insufficient evidence of domain correctness?",
+    "What belongs in a useful defect report?"
+  ],
+  "bridge": "You are ready for systematic study of modern C++ syntax, types and engineering practices.",
+  "visualization": {
+    "kind": "toolchain",
+    "steps": [
+      {
+        "title": "Source",
+        "description": "Author main.cpp."
+      },
+      {
+        "title": "Preprocessing",
+        "description": "Process directives and headers."
+      },
+      {
+        "title": "Compilation",
+        "description": "Check and translate C++ constructs."
+      },
+      {
+        "title": "Linking",
+        "description": "Resolve symbols and dependencies."
+      },
+      {
+        "title": "Execution",
+        "description": "Run the program with concrete input."
+      },
+      {
+        "title": "Diagnosis",
+        "description": "Compare outputs and investigate discrepancies."
+      }
+    ]
+  }
+}
