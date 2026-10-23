@@ -1,4 +1,5 @@
 import {fetchPublicJSON} from './offline-assets.js';
+import {goldLessonPath} from './academy-gold-catalog.js';
 let catalogCache; let cppCache; let programmingCache;
 async function getJson(url){const r=await fetchPublicJSON(url);if(!r.ok)throw new Error(`${url}: HTTP ${r.status}`);return r.json();}
 export async function getCatalog(){if(!catalogCache)catalogCache=await getJson('./courses/catalog.json');return catalogCache;}
@@ -12,3 +13,18 @@ export async function getCppCourse(){if(!cppCache){const [manifest,curriculum,le
  cppCache={manifest,curriculum,lessonsRu,lessonsEn,practicumsRu,projectsRu};}return cppCache;}
 
 export async function getProgrammingLanguages(){if(!programmingCache)programmingCache=await getJson('./courses/programming/languages.json');return programmingCache;}
+
+const goldCache=new Map();
+export async function getCppGoldLesson(id,locale='ru'){
+ const path=goldLessonPath(id,locale);
+ if(!path)return null;
+ const key=id+':'+locale;
+ if(!goldCache.has(key)){
+  const promise=getJson('./'+path).then(data=>{
+   if(data.lessonId!==id||data.locale!==locale||data.moduleId!=='cpp.section.algorithms'||data.standardVersion!=='academy-gold-1.1')throw Error('GOLD_CONTENT_CONTRACT_MISMATCH');
+   return data;
+  }).catch(error=>{goldCache.delete(key);throw error});
+  goldCache.set(key,promise);
+ }
+ return goldCache.get(key);
+}
