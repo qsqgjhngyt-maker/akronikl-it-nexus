@@ -91,7 +91,7 @@ export async function bindContentEditor(root){
   layoutEditor=bindBlogLayoutEditor({host:host.querySelector('[data-blog-layout]'),body:current.draft.body,isCurrent:()=>valid()&&current===selected,
    confirmPhotoAccess:confirmKey,
    getMediaAvailability:async()=>{const data=await request({path:'/api/v2/account/control/content?mediaStatus=1'});return data.mediaAvailability},
-   privateRead:path=>request({method:'GET',path}),
+   privateRead:(path,{signal}={})=>request({method:'GET',path,signal}),
    uploadPhoto:async jpegBase64=>{if(busy||loading||!ready||conflict||!valid())throw Error('Сначала дождитесь загрузки списка статей.');try{return await request({method:'POST',body:{requestId:crypto.randomUUID(),target:'media',id:crypto.randomUUID(),slug:'',version:0,action:'upload',content:{jpegBase64}}})}catch(error){throw Object.assign(Error(controlMessage(error)),{code:error.code||error.message,status:error.status})}},
    onChange:()=>{dirty=true},onStatus:text=>message(text,'ready')});
   // GET photos uses the same server-checked Account expectation and never a public draft URL.

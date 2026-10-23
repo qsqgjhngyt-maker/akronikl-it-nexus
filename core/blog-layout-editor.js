@@ -1,4 +1,4 @@
-import {decodeBlogLayout,encodeBlogLayout,plainTextLayout,blogLayoutMarkup,layoutImageMarkup,bindBlogMedia} from './blog-layout.js';
+import {decodeBlogLayout,encodeBlogLayout,plainTextLayout,blogLayoutMarkup,layoutImageMarkup,bindBlogMedia,createBlogMediaLoader} from './blog-layout.js';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const option=(values,current)=>values.map(([v,label])=>`<option value="${v}" ${String(v)===String(current)?'selected':''}>${label}</option>`).join('');
 const widths=[[25,'¼ строки'],[33,'⅓ строки'],[50,'½ строки'],[66,'⅔ строки'],[75,'¾ строки'],[100,'Вся строка']];
@@ -16,8 +16,9 @@ export async function prepareBlogPhoto(file){
 export function bindBlogLayoutEditor({host,body,uploadPhoto,privateRead,confirmPhotoAccess,getMediaAvailability=async()=>({enabled:false}),isCurrent=()=>host.isConnected,onChange=()=>{},onStatus=()=>{}}){
  let layout=decodeBlogLayout(body)||plainTextLayout(body),busy=false,dragged=null,disposed=false,mediaReady=false,previewSize='desktop',externalLocked=false;
  let photoFeedback={state:'idle',message:'Проверяем доступность загрузки фотографий…',code:''};
- const localImages=new Map();host.className='blog-layout-editor';host.dataset.updateProtect='';
+ host.className='blog-layout-editor';host.dataset.updateProtect='';
  const current=()=>!disposed&&isCurrent()&&host.isConnected;
+ const mediaLoader=createBlogMediaLoader({privateRead,isCurrent:current});
  const dirty=()=>{onChange();host.dataset.unsaved='true'};
  const freshBlock=kind=>({id:crypto.randomUUID(),kind,text:kind==='heading'?'Новый раздел':kind==='quote'?'Цитата':'Новый абзац',width:100,align:'left',ratio:'auto',columns:kind==='gallery'?2:1,surface:'plain',images:[]});
  const changed=()=>{dirty();preview()};
@@ -31,7 +32,7 @@ export function bindBlogLayoutEditor({host,body,uploadPhoto,privateRead,confirmP
   catch(error){if(current())photoStatus(error.message,'error',error.name==='NotAllowedError'?'ADMIN_FRESH_PASSKEY_REQUIRED':error.code||'')}
   finally{busy=false;if(current())render()}
  }
- function preview(){const p=host.querySelector('[data-layout-canvas]');if(!p)return;try{p.innerHTML=blogLayoutMarkup(layout);void bindBlogMedia(p,{privateRead,isCurrent:current,localImages});
+ function preview(){const p=host.querySelector('[data-layout-canvas]');if(!p)return;try{p.innerHTML=blogLayoutMarkup(layout);void bindBlogMedia(p,{privateRead,isCurrent:current,mediaLoader});
   for(const block of p.querySelectorAll('[data-blog-block]')){
    const b=layout.blocks.find(x=>x.id===block.dataset.blogBlock);block.draggable=true;block.tabIndex=0;
    const tools=document.createElement('div');tools.className='blog-canvas-tools';
@@ -62,7 +63,7 @@ export function bindBlogLayoutEditor({host,body,uploadPhoto,privateRead,confirmP
   if(!current())return;
   host.innerHTML='<header class="blog-editor-heading"><div><span class="eyebrow">ОФОРМЛЕНИЕ СТАТЬИ</span><h3>Соберите свою историю</h3><p>Перемещайте блоки, меняйте ширину и кадрирование. На телефоне колонки складываются в одну.</p></div></header><div class="blog-editor-toolbar"><button type="button" class="btn" data-add="text">＋ Текст</button><button type="button" class="btn" data-add="heading">＋ Заголовок</button><button type="button" class="btn" data-add="quote">＋ Цитата</button><button type="button" class="btn" data-add-photo>＋ Фото</button><button type="button" class="btn" data-add-gallery>＋ Галерея</button><button type="button" class="btn" data-add-cover>Обложка</button><input type="file" accept="image/jpeg,image/png,image/webp" data-photo-file hidden multiple><input type="file" accept="image/jpeg,image/png,image/webp" data-cover-file hidden><label>Предпросмотр<select data-preview-width><option value="desktop">Компьютер</option><option value="tablet">Планшет</option><option value="phone">Телефон</option></select></label></div><p class="blog-editor-upload-status" role="status" aria-live="polite" data-state="'+photoFeedback.state+'">'+esc(photoFeedback.message)+'</p><div data-photo-feedback-actions></div><p class="blog-editor-upload-hint">JPEG, PNG, WebP до 6 МБ. При подготовке фото уменьшаются; сервер удаляет метаданные.</p><div class="blog-editor-cover" data-editor-cover></div><div class="blog-editor-workspace"><div class="blog-editor-block-list" data-block-list></div><section class="blog-editor-preview"><h4>Так выглядит статья</h4><div data-layout-canvas class="blog-prose"></div></section></div>';
   const actions=host.querySelector('[data-photo-feedback-actions]');if(photoFeedback.code==='ADMIN_FRESH_PASSKEY_REQUIRED'&&typeof confirmPhotoAccess==='function'){const button=document.createElement('button');button.type='button';button.className='btn';button.dataset.photoConfirm='';button.textContent='Подтвердить ключом';button.onclick=()=>void confirmPhoto();actions.append(button)}
-  const cover=host.querySelector('[data-editor-cover]');if(layout.cover){cover.innerHTML='<strong>Обложка</strong>'+layoutImageMarkup(layout.cover,'landscape')+'<button type="button" class="btn" data-remove-cover>Убрать обложку</button>';cover.querySelector('[data-remove-cover]').onclick=()=>{layout.cover=null;dirty();render()};imageFields(cover,layout.cover);void bindBlogMedia(cover,{privateRead,isCurrent:current})}
+  const cover=host.querySelector('[data-editor-cover]');if(layout.cover){cover.innerHTML='<strong>Обложка</strong>'+layoutImageMarkup(layout.cover,'landscape')+'<button type="button" class="btn" data-remove-cover>Убрать обложку</button>';cover.querySelector('[data-remove-cover]').onclick=()=>{layout.cover=null;dirty();render()};imageFields(cover,layout.cover);void bindBlogMedia(cover,{privateRead,isCurrent:current,mediaLoader})}
   const list=host.querySelector('[data-block-list]');
   for(const b of layout.blocks){
    const card=document.createElement('section');card.className='blog-editor-block glass-panel';card.dataset.blockId=b.id;card.draggable=true;
@@ -82,10 +83,10 @@ export function bindBlogLayoutEditor({host,body,uploadPhoto,privateRead,confirmP
   host.querySelector('[data-preview-width]').onchange=e=>{previewSize=e.target.value;const frame=host.querySelector('.blog-editor-preview');frame.dataset.previewSize=previewSize;preview()};
   for(const control of host.querySelectorAll('button,input,select,textarea'))control.disabled=busy;
   for(const control of host.querySelectorAll('[data-add-photo],[data-add-gallery],[data-add-cover],input[type=file]'))control.disabled=busy||!mediaReady;
-  preview();void bindBlogMedia(list,{privateRead,isCurrent:current,localImages});
+  preview();void bindBlogMedia(list,{privateRead,isCurrent:current,mediaLoader});
   const fieldset=document.createElement('fieldset');fieldset.dataset.layoutFieldset='';while(host.firstChild)fieldset.append(host.firstChild);host.append(fieldset);fieldset.disabled=externalLocked;
  }
  function imageFields(parent,image){const fields=document.createElement('div');fields.className='blog-editor-controls';fields.innerHTML='<label>Описание для доступности<input data-image-text="alt" maxlength="300" value="'+esc(image.alt)+'"></label><label>Подпись<input data-image-text="caption" maxlength="500" value="'+esc(image.caption)+'"></label><label>Кадр по горизонтали<input type="range" min="0" max="100" value="'+image.focusX+'" data-focus="focusX"></label><label>Кадр по вертикали<input type="range" min="0" max="100" value="'+image.focusY+'" data-focus="focusY"></label>';parent.append(fields);for(const input of fields.querySelectorAll('[data-image-text]'))input.oninput=()=>{image[input.dataset.imageText]=input.value;changed()};for(const input of fields.querySelectorAll('[data-focus]'))input.oninput=()=>{image[input.dataset.focus]=Number(input.value);parent.querySelector('img').style.objectPosition=image.focusX+'% '+image.focusY+'%';changed()}}
  render();void getMediaAvailability().then(value=>{if(!current())return;mediaReady=value?.enabled===true;for(const b of host.querySelectorAll('[data-add-photo],[data-add-gallery],[data-add-cover],input[type=file]'))b.disabled=busy||!mediaReady;if(photoFeedback.state==='idle')photoStatus(mediaReady?'Фотографии доступны. Подготовленные JPEG, PNG или WebP станут публичными после публикации статьи.':'Загрузка фотографий на сервере пока не включена. Оформление текста доступно.','idle','',false)}).catch(()=>{if(current()&&photoFeedback.state==='idle')photoStatus('Не удалось подтвердить доступность загрузки фотографий. Текст и оформление сохранены в редакторе.','error','',false)});
- return {body:()=>{if(busy)throw Error('Дождитесь загрузки фотографий.');return encodeBlogLayout(layout)},isBusy:()=>busy,setLocked:value=>{externalLocked=!!value;const f=host.querySelector('[data-layout-fieldset]');if(f)f.disabled=externalLocked},markSaved:()=>{delete host.dataset.unsaved},dispose:()=>{disposed=true;localImages.clear()}};
+ return {body:()=>{if(busy)throw Error('Дождитесь загрузки фотографий.');return encodeBlogLayout(layout)},isBusy:()=>busy,setLocked:value=>{externalLocked=!!value;const f=host.querySelector('[data-layout-fieldset]');if(f)f.disabled=externalLocked},markSaved:()=>{delete host.dataset.unsaved},dispose:()=>{disposed=true;mediaLoader.dispose()}};
 }
