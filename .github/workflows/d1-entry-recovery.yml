@@ -1,0 +1,32 @@
+name: Вход Nexus — регрессия расхода D1
+on:
+  push:
+    branches: [hotfix/d1-read-quota-entry-20261024]
+  pull_request:
+    paths:
+      - 'server-access/migrations/0017_media_rpc_cleanup_indexes.sql'
+      - 'tests/d1-media-cleanup-indexes-check.mjs'
+      - '.github/workflows/d1-entry-recovery.yml'
+permissions:
+  contents: read
+jobs:
+  d1-index-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Установить зафиксированные зависимости
+        run: npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+      - name: Измерить чтения и проверить ограничения на настоящем локальном D1
+        env:
+          NEXUS_D1_INDEX_EVIDENCE: d1-index-regression.json
+        run: node tests/d1-media-cleanup-indexes-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d1-entry-recovery-${{ github.sha }}
+          path: d1-index-regression.json
+          if-no-files-found: error
