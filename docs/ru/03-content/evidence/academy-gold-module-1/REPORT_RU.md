@@ -8,7 +8,7 @@
 - AUTOMATED PASS: 31 локальная группа Content/Studio/Offline/PWA/Cloud/Identity regression, включая Content Contract и новые Gold проверки. Подробности: REGRESSION_LOCAL.json.
 - AUTOMATED PASS: Chrome, настоящие online bootstrap и независимый cold offline entry; 8 уроков × RU/EN × 2 входа; 7 сценариев. Mobile — browser viewport 360 и 390 px, без физических телефонов. Подробности: BROWSER_LOCAL.json.
 - AUTOMATED PASS: исходный GitHub CI для 26db360a6bf0775b8177811408d7dc9389bc2210: [run 39998104609](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/actions/runs/39998104609). В нём реальный g++ C++20 + UBSan: 20 уникальных программ, 166 исполнений RU/EN, точное сравнение stdout, нулевой exit code и отсутствие stderr. Это реальное исполнение, не FakeWorker.
-- После исходного CI улучшены ожидание загрузки CSS и центрирование активного узла при resize. Они проверены локальным браузером; полный CI повторяется для нового feature HEAD. Окончательное доказательство для конкретного HEAD — его собственный workflow run и artifact, а не run предыдущего SHA.
+- После исходного CI улучшены ожидание загрузки CSS и центрирование активного узла при resize; старый вопрос полностью локализован на EN без изменения индексов сохранённых ответов. Они проверены локальным браузером; полный CI повторяется для нового feature HEAD. Окончательное доказательство для конкретного HEAD — его собственный workflow run и artifact, а не run предыдущего SHA.
 
 Компиляция: -std=c++20 -O0 -g -Wall -Wextra -Werror -pedantic-errors -fsanitize=undefined -fno-sanitize-recover=undefined. Отдельно компилируется каждый уникальный исходник; каждый пример и каждый лабораторный случай обеих локализаций исполняется. Среди случаев: пустой/нечисловой ввод, нулевые и верхние границы, 0,0 для НОД, обратный порядок аргументов, границы тарифа, ограничение денежной арифметики, отрицательное деление и потенциальное переполнение частного.
 
@@ -29,7 +29,7 @@
 
 ## Совместимость и производительность
 
-Сравнение с bad182cc020e51dcfd0b36a7b0127c637c8f79ee подтверждает неизменность curriculum, content-package, baseline lessons, storage/migration, Identity, Cloud, sandbox, Project Studio, local-vault, offline-learning и runtime/service-worker contracts. В браузере сохранены completed, quiz, stdin, main.cpp и notes.hpp. Нет мутаций Cloud, offline verifiedAccount() остаётся null.
+Сравнение с bad182cc020e51dcfd0b36a7b0127c637c8f79ee подтверждает неизменность curriculum, content-package, baseline lessons, storage/migration, Identity, Cloud, sandbox, Project Studio, local-vault, offline-learning и runtime/service-worker contracts. В браузере сохранены completed, quiz, stdin, main.cpp и notes.hpp. Старые вопросы RU/EN сохраняют число, порядок вариантов и correctIndex; английский материал не использует русский fallback. Нет мутаций Cloud, offline verifiedAccount() остаётся null.
 
 В запросах Home нет Gold JSON, presentation/model или CSS. Это узкая проверка ленивой загрузки, не полный benchmark NEXUS-PERF-01. Service Worker тестовой сборки проверяет включённые публичные файлы; production generation, main и release artefacts не изменяются.
 
@@ -51,5 +51,7 @@
 FULL LIVE PASS не заявляется. Не выполнены: физические Android/iPhone/PWA, проверка production с настоящим аккаунтом, независимый Gate 05, независимая методическая оценка и эксперимент усвоения.
 
 При закрытии проверенного feature-кандидата передать 00 итог и приоритет; 05 — точный HEAD, workflow/artifact и хеши; 07 — mobile/keyboard и отсутствие eager Gold загрузки, полный NEXUS-PERF-01 остаётся у 07; 04 — решение, альтернативы, эксперимент и ограничения. Контракты 01/02 не изменены, их regression выполнена. Новый Research этап не внедряется автоматически.
+
+На момент проверки текущий main — 0a134bbb496efae19df373bddff9a00dae9ff3dc, а историческая база feature — bad182cc020e51dcfd0b36a7b0127c637c8f79ee. Feature не перебазировалась и не сливалась с ним. Совместимость с новым main этим gate не заявляется; перед публикацией нужен отдельный integration gate.
 
 MASTER HANDOFF под sources/ не изменяется. Его каноническое обновление требуется в 00 после принятия milestone. Основной стандарт и аудит программы: ../../ACADEMY_GOLD_CPP_MODULE_1.md.

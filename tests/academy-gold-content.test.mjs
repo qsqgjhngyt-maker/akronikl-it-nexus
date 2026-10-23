@@ -17,6 +17,9 @@ test('16 полноценных RU/EN объектов; существующие
  assert.deepEqual(new Set(curriculum.lessons.filter(l=>l.sectionId===section.id).map(l=>l.id)),new Set(GOLD_ALGORITHM_LESSONS));
  for(const g of lessons){
   assert.ok(baseline.lessons.some(l=>l.id===g.lessonId));
+  const legacy=baseline.lessons.find(l=>l.id===g.lessonId).quiz;
+  assert.equal(g.legacyQuiz.correctIndex,legacy.correctIndex);assert.equal(g.legacyQuiz.answers.length,legacy.answers.length);
+  if(g.locale==='ru')assert.deepEqual(g.legacyQuiz,legacy);else assert.ok(!/[А-Яа-яЁё]/.test(JSON.stringify(g.legacyQuiz)));
   assert.equal(g.moduleId,section.id);assert.equal(g.standardVersion,'academy-gold-1.1');
   for(const k of ['title','lead','why','bridge'])assert.ok(typeof g[k]==='string'&&g[k].trim());
   for(const k of ['objectives','prerequisites','concepts','sections','workedExamples','experiments','diagnostics','practice','assessment','reflection','sourceRefs'])assert.ok(Array.isArray(g[k])&&g[k].length>=2,k);

@@ -49,7 +49,7 @@ try{
    assert.equal(await local.locator('.academy-gold').textContent(),await online.locator('.academy-gold').textContent());
    assert.equal(await local.locator('[data-gold-question]').count(),3);
    const next=local.locator('[data-gold-next]'),index=local.locator('[data-gold-index]');await next.click();assert.match(await index.textContent(),/^2 \/ /);
-   if(locale==='en')assert.ok(!/[А-Яа-яЁё]/.test(await local.locator('[data-gold-viz] [data-gold-explanation]').textContent()));
+   if(locale==='en'){assert.ok(!/[А-Яа-яЁё]/.test(await local.locator('[data-gold-viz] [data-gold-explanation]').textContent()));assert.ok(!/[А-Яа-яЁё]/.test(await local.locator('.answers').textContent()));}
   }
  });
  await check('Стабильный ID сохраняет завершение, старый quiz, stdin и два личных файла',async()=>{

@@ -86,7 +86,7 @@ function lessonData(id){
       analogy:gold.bridge,commonMistake:gold.diagnostics?.[0]?.cause||'',
       code:gold.workedExamples[0].code,task:gold.laboratory.challenge,
       hint:gold.practice[0].hint,solution:gold.laboratory.referenceCode,requirements:[],
-      stdin:gold.workedExamples[0].stdin,benchmark:null,quiz:baseline.quiz,terms:gold.concepts.map(x=>[x.term,x.definition]),gold};
+      stdin:gold.workedExamples[0].stdin,benchmark:null,quiz:gold.legacyQuiz||baseline.quiz,terms:gold.concepts.map(x=>[x.term,x.definition]),gold};
   }
   if(prefs.courseLocale==='en'){
     const localized=cpp.lessonsEn?.lessons?.find(x=>x.id===id);
