@@ -167,6 +167,37 @@ await check('initial transient 503/network stays locked and offers server-verifi
   assert.equal(f.reloads,1);assert.equal(f.navigation.length,0);assertLocked(f);
  }
 });
+await check('network failure while reading response body suspends initial/resumed session without false logout',async()=>{
+ const broken=()=>new Response(new ReadableStream({pull(controller){controller.error(new TypeError('synthetic response stream disconnected'))}}),{headers:{'content-type':'application/json','cache-control':'no-store',vary:'*'}});
+ for(const initial of [true,false]){
+  const f=fixture();if(!initial)await f.bootstrap.startNexus();f.setNext(broken);
+  assert.equal(await(initial?f.bootstrap.startNexus():f.bootstrap.recheck()),false);
+  assertLocked(f);assert.equal(f.navigation.length,0);assert.equal(f.reloads,0);
+  assert.equal(f.recoveryButton?.textContent,'Повторить проверку');
+  f.setNext(()=>json());await f.bootstrap.recheck();
+  assert.equal(f.reloads,1);assert.equal(f.navigation.length,0);assertLocked(f);
+ }
+});
+await check('response-body timeout remains transient after headers were received',async()=>{
+ const reading=deferred();
+ const f=fixture({fetcher:(_url,{signal})=>new Response(new ReadableStream({
+  start(controller){signal.addEventListener('abort',()=>controller.error(new DOMException('synthetic response-body timeout','AbortError')),{once:true})},
+  pull(){reading.resolve()}
+ },{highWaterMark:0}),{headers:{'content-type':'application/json','cache-control':'no-store',vary:'*'}})});
+ const start=f.bootstrap.startNexus();await reading.promise;f.timers.expire();
+ assert.equal(await start,false);assertLocked(f);assert.equal(f.navigation.length,0);
+ assert.equal(f.recoveryButton?.textContent,'Повторить проверку');f.bootstrap.dispose();
+});
+await check('errored body cancellation preserves HTTP classification; malformed JSON still rejects session',async()=>{
+ for(const status of [503,401]){
+  const f=fixture({fetcher:()=>new Response(new ReadableStream({start(controller){controller.error(new TypeError('synthetic broken error body'))}}),{status})});
+  assert.equal(await f.bootstrap.startNexus(),false);assertLocked(f);
+  assert.equal(f.navigation.length,status===503?0:1);f.bootstrap.dispose();
+ }
+ const f=fixture({fetcher:()=>new Response('{"account":',{headers:{'content-type':'application/json','cache-control':'no-store',vary:'*'}})});
+ assert.equal(await f.bootstrap.startNexus(),false);assertLocked(f);assert.equal(f.navigation.length,1);
+ assert.equal(f.recoveryButton,undefined);
+});
 await check('background network failure suspends Account, successful check reloads original document',async()=>{
  const f=fixture();await f.bootstrap.startNexus();const key=[...f.local.data.keys()].find(x=>x.endsWith(KEY));
  assert.equal(f.local.data.get(key),'synthetic-preserved-progress');f.setNext(()=>json({},502));

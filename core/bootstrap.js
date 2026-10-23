@@ -7,6 +7,8 @@ const exact=(value,keys)=>!!value&&typeof value==='object'&&!Array.isArray(value
 const text=(value,max)=>typeof value==='string'&&value.length>0&&value.length<=max;
 const transient=()=>Object.assign(Error('SESSION_TRANSIENT'),{code:'SESSION_TRANSIENT'});
 const transientHTTP=new Set([408,429,500,502,503,504]);
+// Отмена уже повреждённого потока не должна менять классификацию HTTP-ответа.
+const discardBody=async response=>{try{await response.body?.cancel()}catch{}};
 export function validAccount(body){
  if(!exact(body,['account','loginMethods','enrollmentAvailable'])||body.enrollmentAvailable!==false||
   !exact(body.account,['accountId','displayName','status'])||body.account.status!=='active'||
@@ -99,17 +101,23 @@ export function createNexusBootstrap({
    let response;
    try{response=await fetchImpl('/api/v2/account',{credentials:'same-origin',cache:'no-store',redirect:'error',signal:controller.signal,headers:{accept:'application/json'}})}
    catch{throw transient()}
-   if(transientHTTP.has(response.status)){await response.body?.cancel();throw transient()}
+   if(transientHTTP.has(response.status)){await discardBody(response);throw transient()}
    if(controller.signal.aborted||!canonical())throw Error('SESSION_UNAVAILABLE');
-   if(response.status===401||response.status===403){await response.body?.cancel();return null}
+   if(response.status===401||response.status===403){await discardBody(response);return null}
    if(response.status!==200||response.redirected||!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')||'')||
     !response.headers.get('cache-control')?.split(',').some(value=>value.trim().toLowerCase()==='no-store')||!response.headers.get('vary')?.split(',').some(value=>value.trim()==='*')){
-    await response.body?.cancel();throw Error('SESSION_UNAVAILABLE');
+    await discardBody(response);throw Error('SESSION_UNAVAILABLE');
    }
    const reader=response.body?.getReader();if(!reader)throw Error('SESSION_INVALID');
    const chunks=[];let size=0;
    try{
-    while(true){const{done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>65536||controller.signal.aborted)throw Error('SESSION_INVALID');chunks.push(value)}
+    while(true){
+     // fetch() завершается на заголовках: последующий обрыв/timeout body тоже
+     // временная ошибка транспорта. Некорректный JSON/DTO ниже остаётся отказом.
+     let chunk;try{chunk=await reader.read()}catch{throw transient()}
+     const{done,value}=chunk;if(done)break;
+     size+=value.byteLength;if(size>65536||controller.signal.aborted)throw Error('SESSION_INVALID');chunks.push(value);
+    }
    }catch(error){await reader.cancel().catch(()=>{});throw error}finally{reader.releaseLock()}
    if(controller.signal.aborted||!canonical())throw Error('SESSION_UNAVAILABLE');
    const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength}

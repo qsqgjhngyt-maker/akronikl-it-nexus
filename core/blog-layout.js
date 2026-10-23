@@ -46,24 +46,30 @@ export function layoutImageMarkup(image,ratio='auto'){
  if(!validLayoutImage(image)||!['auto','square','landscape','portrait'].includes(ratio))bad();return `<figure class="blog-layout-photo blog-ratio-${ratio}"><img src="${BLOG_MEDIA_PLACEHOLDER}" data-blog-media="${image.mediaId}" aria-busy="true" alt="${esc(image.alt)}" style="object-position:${image.focusX}% ${image.focusY}%" decoding="async" loading="lazy"><figcaption>${esc(image.caption)}</figcaption></figure>`;
 }
 export function blogLayoutMarkup(value){const v=validateBlogLayout(value);return '<div class="blog-layout-grid">'+v.blocks.map((b,i)=>`<section class="blog-layout-block blog-width-${b.width} blog-align-${b.align} blog-surface-${b.surface}" data-blog-block="${b.id}">${b.kind==='heading'?`<h2 id="blog-section-${i}">${esc(b.text)}</h2>`:b.kind==='quote'?`<blockquote><p>${esc(b.text).replaceAll('\n','<br>')}</p></blockquote>`:b.kind==='text'?`<p>${esc(b.text).replaceAll('\n','<br>')}</p>`:`<div class="blog-layout-gallery blog-columns-${b.columns}">${b.images.map(img=>layoutImageMarkup(img,b.ratio)).join('')}</div>`}</section>`).join('')+'</div>'}
-// Запросы на медиа намеренно ограничены текущим показом: новые посещения
-// всегда проходят серверную проверку публикации; нет persistent Cache API.
-export async function bindBlogMedia(root,{fetchImpl=globalThis.fetch,privateRead=false,isCurrent=()=>root.isConnected,localImages=new Map(),signal}={}){
- const images=[...root.querySelectorAll('[data-blog-media]')];if(!images.length)return;
- const jobs=new Map(),queue=[];let running=0,observer=null;
- const live=()=>!signal?.aborted&&root.isConnected&&isCurrent();
+// Один loader принадлежит одному показу или одному живому редактору. Обложка,
+// список и макет редактора делят проверенные bytes, очередь и in-flight запросы.
+// Между аккаунтами/редакторами кеш не переносится; Cache API не используется.
+export function createBlogMediaLoader({fetchImpl=globalThis.fetch,privateRead=false,isCurrent=()=>true,localImages=new Map(),signal}={}){
+ const jobs=new Map(),queue=[],controller=new AbortController();let running=0,disposed=false;
+ const cancelled=()=>Object.assign(Error('Запрос отменён'),{name:'AbortError'});
+ const live=()=>{if(disposed||controller.signal.aborted)return false;if(!isCurrent()){dispose();return false}return true};
+ const dispose=()=>{
+  if(disposed)return;disposed=true;controller.abort();signal?.removeEventListener('abort',dispose);
+  localImages.clear();for(const item of jobs.values())item.reject(cancelled());jobs.clear();queue.length=0;
+ };
  const read=async id=>{
   const path=(privateRead?'/api/v2/account/control/content?media=':'/api/v2/content/feed?media=')+id;
   let data;
-  if(typeof privateRead==='function')data=await privateRead(path);
+  if(typeof privateRead==='function')data=await privateRead(path,{signal:controller.signal});
   else{
-   const controller=new AbortController(),abort=()=>controller.abort(),timer=setTimeout(abort,10000);
-   if(signal?.aborted)abort();signal?.addEventListener('abort',abort,{once:true});
-   try{const r=await fetchImpl(path,{credentials:'omit',cache:'no-store',redirect:'error',signal:controller.signal});
+   const requestController=new AbortController(),abort=()=>requestController.abort(),timer=setTimeout(abort,10000);
+   if(controller.signal.aborted)abort();controller.signal.addEventListener('abort',abort,{once:true});
+   try{const r=await fetchImpl(path,{credentials:'omit',cache:'no-store',redirect:'error',signal:requestController.signal});
     if(!r.ok||r.redirected||!r.headers.get('content-type')?.startsWith('application/json'))throw Error('Фото недоступно');
     const raw=await r.text();if(raw.length>150000)throw Error('Фото слишком большое');data=JSON.parse(raw);
-   }finally{clearTimeout(timer);signal?.removeEventListener('abort',abort)}
+   }finally{clearTimeout(timer);controller.signal.removeEventListener('abort',abort)}
   }
+  if(!live())throw cancelled();
   const m=data?.media;
   if(m?.id!==id||m.mime!=='image/jpeg'||typeof m.data!=='string'||m.data.length>131072||!/^[A-Za-z0-9+/]+={0,2}$/.test(m.data)||!Number.isInteger(m.width)||m.width<1||m.width>1600||!Number.isInteger(m.height)||m.height<1||m.height>1600)throw Error('Фото не прошло проверку');
   const bytes=Uint8Array.from(atob(m.data),c=>c.charCodeAt(0));
@@ -71,14 +77,31 @@ export async function bindBlogMedia(root,{fetchImpl=globalThis.fetch,privateRead
   if(hash!==id)throw Error('Контрольная сумма фото не совпала');
   return 'data:image/jpeg;base64,'+m.data;
  };
- const pump=()=>{while(running<3&&queue.length){const item=queue.shift();if(!live()){item.reject(Error('Запрос отменён'));continue}
-  running++;void read(item.id).then(item.resolve,item.reject).finally(()=>{running--;pump()});
+ const pump=()=>{while(running<3&&queue.length){if(!live()){dispose();return}const item=queue.shift();
+  running++;void read(item.id).then(src=>{
+   if(!live()){dispose();return}
+   localImages.set(item.id,src);jobs.delete(item.id);item.resolve(src);
+  },error=>{jobs.delete(item.id);item.reject(error)}).finally(()=>{running--;pump()});
  }};
  const load=id=>{
-  if(jobs.has(id))return jobs.get(id);
-  const original=new Promise((resolve,reject)=>{queue.push({id,resolve,reject});pump()});
-  const promise=original.catch(error=>{jobs.delete(id);throw error});jobs.set(id,promise);return promise;
+  if(!live()){dispose();return Promise.reject(cancelled())}
+  if(!/^[a-f0-9]{64}$/.test(id))return Promise.reject(Error('Фото не прошло проверку'));
+  if(localImages.has(id))return Promise.resolve(localImages.get(id));
+  if(jobs.has(id))return jobs.get(id).promise;
+  const item={id};item.promise=new Promise((resolve,reject)=>{item.resolve=resolve;item.reject=reject});
+  jobs.set(id,item);queue.push(item);pump();return item.promise;
  };
+ if(signal?.aborted)dispose();else signal?.addEventListener('abort',dispose,{once:true});
+ return Object.freeze({load,peek:id=>live()?localImages.get(id):undefined,isActive:live,dispose});
+}
+// Публичный показ всегда создаёт новый loader и проверяет публикацию на сервере.
+// В редакторе общий loader живёт дольше отдельных DOM-bind; отмена одного bind
+// не прерывает запрос другого, но dispose редактора отменяет всю очередь.
+export async function bindBlogMedia(root,{fetchImpl=globalThis.fetch,privateRead=false,isCurrent=()=>root.isConnected,localImages=new Map(),signal,mediaLoader}={}){
+ const images=[...root.querySelectorAll('[data-blog-media]')];if(!images.length)return;
+ const viewCurrent=()=>!signal?.aborted&&root.isConnected&&isCurrent();
+ const loader=mediaLoader||createBlogMediaLoader({fetchImpl,privateRead,isCurrent:viewCurrent,localImages,signal});
+ const live=()=>viewCurrent()&&loader.isActive();let observer=null;
  const clearRetry=img=>{img.classList.remove('blog-media-unavailable');img.parentElement?.querySelector('[data-blog-media-retry]')?.remove();img.closest('.blog-card')?.querySelector('.blog-card-copy [data-blog-media-retry]')?.remove();};
  const retry=img=>{
   if(!live()||!img.isConnected)return;
@@ -94,9 +117,9 @@ export async function bindBlogMedia(root,{fetchImpl=globalThis.fetch,privateRead
  const show=img=>{
   if(!live()||!img.isConnected)return Promise.resolve();
   const id=img.dataset.blogMedia;if(!/^[a-f0-9]{64}$/.test(id))return Promise.resolve();
-  if(localImages.has(id)){clearRetry(img);img.src=localImages.get(id);img.removeAttribute('aria-busy');return Promise.resolve()}
+  const cached=loader.peek(id);if(cached!==undefined){clearRetry(img);img.src=cached;img.removeAttribute('aria-busy');return Promise.resolve()}
   img.setAttribute('aria-busy','true');
-  return load(id).then(src=>{if(live()&&img.isConnected){localImages.set(id,src);
+  return loader.load(id).then(src=>{if(live()&&img.isConnected){
    // Одна удачная проверка того же mediaId восстанавливает все видимые копии.
    for(const other of images){if(other.dataset.blogMedia!==id||!other.isConnected)continue;
     if(other===img||other.classList.contains('blog-media-unavailable')){clearRetry(other);other.src=src;other.removeAttribute('aria-busy')}}
@@ -107,9 +130,9 @@ export async function bindBlogMedia(root,{fetchImpl=globalThis.fetch,privateRead
  }
  const immediate=[];
  for(const img of images){const id=img.dataset.blogMedia;if(!/^[a-f0-9]{64}$/.test(id))continue;
-  if(localImages.has(id)||img.dataset.blogPriority==='high'||!observer)immediate.push(show(img));
+  if(loader.peek(id)!==undefined||img.dataset.blogPriority==='high'||!observer)immediate.push(show(img));
   else observer.observe(img);
  }
- signal?.addEventListener('abort',()=>{observer?.disconnect();for(const item of queue.splice(0))item.reject(Error('Запрос отменён'))},{once:true});
+ signal?.addEventListener('abort',()=>observer?.disconnect(),{once:true});
  await Promise.allSettled(immediate);
 }

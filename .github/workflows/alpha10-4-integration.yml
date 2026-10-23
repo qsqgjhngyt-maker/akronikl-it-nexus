@@ -34,7 +34,7 @@ jobs:
       - name: Проверить frontend, авторизацию и сохранность данных
         run: |
           set -euo pipefail
-          node --test tests/platform-startup-load.test.mjs tests/platform-lazy-imports.test.mjs
+          node --test tests/platform-startup-load.test.mjs tests/platform-lazy-imports.test.mjs tests/blog-media-perf-guard.test.mjs
           node tests/auth-bootstrap-check.mjs
           node tests/session-only-resume-check.mjs
           node tests/account-storage-isolation-check.mjs
@@ -72,8 +72,7 @@ jobs:
       - name: Подготовить побайтовый rollback build от прежнего main
         run: |
           set -euo pipefail
-          npm ci --prefix .qa-old-source/server-access --no-audit --no-fund
-          node .qa-old-source/tools/build-ui1a-release.mjs --source .qa-old-source --out "$RUNNER_TEMP/nexus-alpha10-4-rollback"
+          node tools/snapshot-published-build.mjs --source .qa-old-source --out "$RUNNER_TEMP/nexus-alpha10-4-rollback" --expected-commit bad182cc020e51dcfd0b36a7b0127c637c8f79ee
       - name: Chromium — реальная установка PWA и отзыв приватного кеша
         env:
           NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
@@ -103,6 +102,13 @@ jobs:
           NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-public
           NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-alpha10-4-evidence/browser-blog-cms
         run: node tests/blog-layout-browser-check.mjs
+      - name: Chromium — одна загрузка фото для обложки, макета и списка
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-public
+          NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-alpha10-4-evidence/browser-media-editor
+        run: node tests/blog-media-editor-browser-check.mjs
       - name: Независимая проверка integrity, PWA ID и старой генерации
         env:
           BUILD_DIR: ${{ runner.temp }}/nexus-alpha10-4-public
@@ -129,16 +135,30 @@ jobs:
             f=out/obj['file'];b=f.read_bytes()
             assert len(b)==obj['bytes'],obj['file']
             assert hashlib.sha256(b).hexdigest()==obj['sha256'],obj['file']
+            # GitHub Pages publishes the repository root directly. A successful
+            # out-of-tree build alone must not authorize a source-only release.
+            published=pathlib.Path(obj['file'])
+            assert published.is_file(), 'Publication file missing: '+obj['file']
+            assert published.read_bytes()==b, 'Publication bytes differ: '+obj['file']
             items.append(obj['file'])
           assert len(items)==len(set(items))
+          assert pathlib.Path('BUILD_MANIFEST.json').read_bytes()==(out/'BUILD_MANIFEST.json').read_bytes()
+          for generation in json.loads(pathlib.Path('release-candidate.json').read_text())['retainedPublicGenerations']:
+            for folder in ['releases','entry-assets']:
+              historical=pathlib.Path('.qa-old-source')/folder/generation
+              current=pathlib.Path(folder)/generation
+              assert sorted(p.relative_to(historical) for p in historical.rglob('*') if p.is_file())==sorted(p.relative_to(current) for p in current.rglob('*') if p.is_file())
+              for p in historical.rglob('*'):
+                if p.is_file(): assert p.read_bytes()==(current/p.relative_to(historical)).read_bytes(), str(p)
           assert not any('/api/v2/' in p or 'server-access/' in p for p in items), 'Private/API asset in public generation'
-          status={'version':manifest['version'],'assetGeneration':expected,'files_verified':len(items),'pwa_id_stable':True,'old_generation_retained':True,'public_integrity':'PASS','releaseGate':'LOCAL BUILD ONLY; NO LIVE/PRODUCTION AUTHORIZATION'}
+          status={'version':manifest['version'],'assetGeneration':expected,'files_verified':len(items),'pwa_id_stable':True,'old_generation_retained':True,'old_generations_byte_exact':True,'publication_tree_byte_exact':True,'public_integrity':'PASS','releaseGate':'AUTOMATED CHECKS ONLY; PUBLICATION AUTHORITY IS EXTERNAL TO THIS MANIFEST'}
           (qa/'VERIFICATION.json').write_text(json.dumps(status,indent=2,ensure_ascii=False)+'\n')
           print(json.dumps(status,ensure_ascii=False))
           PY
       - name: Упаковать официальный build в артефакт без секретов
         env:
           BUILD_DIR: ${{ runner.temp }}/nexus-alpha10-4-public
+          ROLLBACK_DIR: ${{ runner.temp }}/nexus-alpha10-4-rollback
           QA_DIR: ${{ runner.temp }}/nexus-alpha10-4-evidence
         run: |
           set -euo pipefail
@@ -149,8 +169,12 @@ jobs:
           out=qa/'ALPHA10_4_OFFICIAL_BUILD.zip'
           shutil.make_archive(str(out.with_suffix('')),'zip',root_dir=path)
           print('Official build ZIP bytes:',out.stat().st_size)
+          rollback=qa/'ALPHA10_3_1_SHIPPED_ROLLBACK.zip'
+          shutil.make_archive(str(rollback.with_suffix('')),'zip',root_dir=os.environ['ROLLBACK_DIR'])
+          print('Exact shipped rollback ZIP bytes:',rollback.stat().st_size)
           PY
           sha256sum "$QA_DIR/ALPHA10_4_OFFICIAL_BUILD.zip" > "$QA_DIR/ALPHA10_4_OFFICIAL_BUILD.zip.sha256"
+          sha256sum "$QA_DIR/ALPHA10_3_1_SHIPPED_ROLLBACK.zip" > "$QA_DIR/ALPHA10_3_1_SHIPPED_ROLLBACK.zip.sha256"
       - name: Сохранить независимые доказательства без развёртывания
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
