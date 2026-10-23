@@ -28,9 +28,16 @@ function fakeTimers(){
 function fixture({hash='#view=home',origin=SERVER_ACCOUNT_ORIGIN,fetcher,importer,prepareTransport,useDefaultTimers=false}={}){
  const log=[],calls=[],navigation=[],timers=fakeTimers(),windowImpl=new EventTarget(),documentImpl=new EventTarget();
  windowImpl.Event=Event;documentImpl.hidden=false;
- let clears=0,captured=null;
- documentImpl.querySelector=selector=>{assert.equal(selector,'#app');return{replaceChildren(){clears++;log.push('ui:clear')}}};
- const locationImpl={origin,hash,replace(url){navigation.push(url);log.push('navigate')}};
+ let clears=0,captured=null,reloads=0;
+ const element=tag=>{const e=new EventTarget();e.tagName=tag.toUpperCase();e.children=[];
+  e.attributes=new Map();e.setAttribute=(key,value)=>e.attributes.set(key,value);
+  e.append=(...nodes)=>e.children.push(...nodes);e.replaceChildren=(...nodes)=>{e.children=[...nodes]};
+  e.textContent='';return e;
+ };
+ const appElement=element('main');appElement.replaceChildren=(...nodes)=>{clears++;log.push('ui:clear');appElement.children=[...nodes]};
+ documentImpl.createElement=element;
+ documentImpl.querySelector=selector=>{assert.equal(selector,'#app');return appElement};
+ const locationImpl={origin,hash,pathname:'/',search:'',replace(url){navigation.push(url);log.push('navigate')},reload(){reloads++;log.push('reload')}};
  const local=new MemoryStorage(log),session=new MemoryStorage(log),controller=createAccountStorageController({localStorage:local,sessionStorage:session,legacyOwnerAccountId:'synthetic-unused-owner'});
  const storage={initializeAccountStorage(proof){log.push('storage:initialize');controller.initializeAccountStorage(proof)},lockAccountStorage(){log.push('storage:lock');controller.lockAccountStorage()},verifiedAccount:()=>controller.verifiedAccount()};
  let next=()=>json();
@@ -43,7 +50,7 @@ function fixture({hash='#view=home',origin=SERVER_ACCOUNT_ORIGIN,fetcher,importe
   log.push('app:import');assert.equal(controller.verifiedAccount()?.accountId,A);captured=controller.accountLocalStorage();captured.setItem(KEY,'synthetic-preserved-progress');if(importer)await importer();
  }});
  return{bootstrap,log,calls,navigation,timers,windowImpl,documentImpl,locationImpl,controller,local,
-  get captured(){return captured},get clears(){return clears},setNext(value){next=typeof value==='function'?value:()=>value},
+  get captured(){return captured},get clears(){return clears},get reloads(){return reloads},get recoveryButton(){return appElement.children[0]?.children?.find(e=>e.tagName==='BUTTON')},setNext(value){next=typeof value==='function'?value:()=>value},
   dispatch(target,type,extra={}){const event=new Event(type);for(const[key,value]of Object.entries(extra))Object.defineProperty(event,key,{value});target.dispatchEvent(event);return event}
  };
 }
@@ -91,8 +98,8 @@ await check('production default timers сохраняют Window receiver до f
   f?.bootstrap.dispose();for(const name of names)globalThis[name]=originals[name];
  }
 });
-await check('invalid/expired/revoked/error initial session никогда не открывает storage/app',async()=>{
- for(const next of [()=>json({},401),()=>json({},403),()=>json({},503),()=>json({...dto(),loginMethods:[]}),()=>new Response('<html>bad</html>',{headers:{'content-type':'text/html'}}),()=>{throw Error('synthetic network failure')},()=>json(dto(),200,{vary:'accept-encoding'}),()=>new Response('x'.repeat(65537),{headers:{'content-type':'application/json','cache-control':'no-store',vary:'*'}})]){
+await check('invalid/expired/revoked initial session никогда не открывает storage/app',async()=>{
+ for(const next of [()=>json({},401),()=>json({},403),()=>json({...dto(),loginMethods:[]}),()=>new Response('<html>bad</html>',{headers:{'content-type':'text/html'}}),()=>json(dto(),200,{vary:'accept-encoding'}),()=>new Response('x'.repeat(65537),{headers:{'content-type':'application/json','cache-control':'no-store',vary:'*'}})]){
   const f=fixture({fetcher:next});assert.equal(await f.bootstrap.startNexus(),false);assert.equal(f.log.includes('app:import'),false);assert.equal(f.log.includes('storage:read'),false);assert.equal(f.navigation.length,1);assertLocked(f);
  }
 });
@@ -101,8 +108,8 @@ await check('все начальные hash routes требуют server proof �
   const f=fixture({hash,fetcher:()=>json({},401)});assert.equal(await f.bootstrap.startNexus(),false);assert.equal(f.log.includes('app:import'),false);assert.deepEqual(f.navigation,[ENTRY_URL+hash]);
  }
 });
-await check('focus/visibility account switch, revoke и server error lock captured facade + navigation',async()=>{
- for(const trigger of ['focus','visibility'])for(const next of [()=>json(dto(B)),()=>json({},401),()=>json({},403),()=>json({},503)]){
+await check('focus/visibility account switch, revoke и server 401/403 lock captured facade + navigation',async()=>{
+ for(const trigger of ['focus','visibility'])for(const next of [()=>json(dto(B)),()=>json({},401),()=>json({},403)]){
   const f=fixture();await f.bootstrap.startNexus();f.setNext(next);
   if(trigger==='focus')f.dispatch(f.windowImpl,'focus');else{f.documentImpl.hidden=false;f.dispatch(f.documentImpl,'visibilitychange')}
   await f.bootstrap.recheck();assertLocked(f);assert.equal(f.navigation.length,1);assert.equal(f.clears,1);assert.equal(f.timers.intervals.size,0);assert.equal(f.log.filter(x=>x==='app:import').length,1);
@@ -127,11 +134,11 @@ await check('visible interval expiry locks captured autosave и уводит н�
 });
 await check('pagehide сразу блокирует stale facade; BFCache pageshow требует full navigation',async()=>{
  const f=fixture();await f.bootstrap.startNexus();f.dispatch(f.windowImpl,'pagehide');assertLocked(f);assert.equal(f.navigation.length,0);assert.equal(f.timers.intervals.size,0);
- f.dispatch(f.windowImpl,'pageshow',{persisted:true});assertLocked(f);assert.deepEqual(f.navigation,[ENTRY_URL+f.locationImpl.hash]);assert.equal(f.calls.length,1);
+ f.dispatch(f.windowImpl,'pageshow',{persisted:true});assertLocked(f);assert.deepEqual(f.navigation,[]);assert.equal(f.reloads,1);assert.equal(f.calls.length,1);
 });
 await check('pagehide во время initial fetch aborts и запрещает поздний import',async()=>{
  const pending=deferred(),f=fixture({fetcher:()=>pending.promise});const start=f.bootstrap.startNexus();await Promise.resolve();f.dispatch(f.windowImpl,'pagehide');assert.equal(f.calls[0].options.signal.aborted,true);pending.resolve(json());assert.equal(await start,false);assert.equal(f.log.includes('storage:initialize'),false);assert.equal(f.log.includes('app:import'),false);assertLocked(f);
- f.dispatch(f.windowImpl,'pageshow',{persisted:true});assert.equal(f.navigation.length,1);
+ f.dispatch(f.windowImpl,'pageshow',{persisted:true});assert.equal(f.reloads,1);assert.equal(f.navigation.length,0);
 });
 await check('migration failure and pagehide during transport preparation never start session reads',async()=>{
  for(const cancel of [false,true]){
@@ -149,4 +156,40 @@ await check('pagehide при import и session-ended при recheck не воз�
 await check('dispose очищает listeners/timers и не позволяет повторную app загрузку',async()=>{
  const f=fixture();await f.bootstrap.startNexus();f.bootstrap.dispose();f.dispatch(f.windowImpl,'focus');f.dispatch(f.windowImpl,'hashchange');f.dispatch(f.documentImpl,'visibilitychange');f.timers.tick();assert.equal(f.calls.length,1);assert.equal(f.timers.intervals.size,0);assertLocked(f);
 });
+
+await check('initial transient 503/network stays locked and offers server-verified retry without passkey navigation',async()=>{
+ for(const next of [()=>json({},503),()=>{throw Error('synthetic network timeout')}]){
+  const f=fixture();f.setNext(next);assert.equal(await f.bootstrap.startNexus(),false);
+  assertLocked(f);assert.equal(f.calls.length,1);assert.equal(f.navigation.length,0);assert.equal(f.reloads,0);
+  assert.equal(f.log.includes('app:import'),false);assert.equal(f.log.includes('storage:read'),false);
+  assert.equal(f.recoveryButton?.textContent,'Повторить проверку');
+  f.setNext(()=>json());f.recoveryButton.dispatchEvent(new Event('click'));await f.bootstrap.recheck();
+  assert.equal(f.reloads,1);assert.equal(f.navigation.length,0);assertLocked(f);
+ }
+});
+await check('background network failure suspends Account, successful check reloads original document',async()=>{
+ const f=fixture();await f.bootstrap.startNexus();const key=[...f.local.data.keys()].find(x=>x.endsWith(KEY));
+ assert.equal(f.local.data.get(key),'synthetic-preserved-progress');f.setNext(()=>json({},502));
+ f.dispatch(f.windowImpl,'focus');await f.bootstrap.recheck();
+ assertLocked(f);assert.equal(f.navigation.length,0);assert.equal(f.reloads,0);assert.equal(f.clears,1);
+ assert.equal(f.local.data.get(key),'synthetic-preserved-progress');
+ f.setNext(()=>json());f.dispatch(f.windowImpl,'online');await f.bootstrap.recheck();
+ assert.equal(f.reloads,1);assert.deepEqual(f.navigation,[]);assertLocked(f);
+});
+await check('temporary error does not mask revoke/account-switch and does not unlock old facade',async()=>{
+ for(const next of [()=>json({},401),()=>json({},403),()=>json(dto(B))]){
+  const f=fixture();await f.bootstrap.startNexus();f.setNext(()=>json({},503));
+  assert.equal(await f.bootstrap.recheck(),false);assertLocked(f);assert.equal(f.navigation.length,0);
+  f.setNext(next);assert.equal(await f.bootstrap.recheck(),false);
+  assert.deepEqual(f.navigation,[ENTRY_URL+f.locationImpl.hash]);assert.equal(f.reloads,0);assertLocked(f);
+ }
+});
+await check('hidden suspended UI performs no background private reads until visible',async()=>{
+ const f=fixture();await f.bootstrap.startNexus();f.setNext(()=>json({},503));await f.bootstrap.recheck();
+ f.documentImpl.hidden=true;f.dispatch(f.windowImpl,'visibilitychange');f.dispatch(f.windowImpl,'focus');
+ f.dispatch(f.windowImpl,'online');assert.equal(await f.bootstrap.recheck(),false);assert.equal(f.calls.length,2);
+ f.documentImpl.hidden=false;f.setNext(()=>json());f.dispatch(f.documentImpl,'visibilitychange');await f.bootstrap.recheck();
+ assert.equal(f.reloads,1);assert.equal(f.calls.length,3);
+});
+
 console.log(JSON.stringify({status:'PASS',tests,networkRequests:0,realPrivateStorageReads:0,appImports:0,serversStarted:0,browsersStarted:0,syntheticStorageController:true}));

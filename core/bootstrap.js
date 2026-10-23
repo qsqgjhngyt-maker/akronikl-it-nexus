@@ -5,6 +5,8 @@ import {ensureSafeController} from '../pwa/client.js';
 export const ENTRY_URL=SERVER_ACCOUNT_ORIGIN+'/account/entry/';
 const exact=(value,keys)=>!!value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===[...keys].sort().join(',');
 const text=(value,max)=>typeof value==='string'&&value.length>0&&value.length<=max;
+const transient=()=>Object.assign(Error('SESSION_TRANSIENT'),{code:'SESSION_TRANSIENT'});
+const transientHTTP=new Set([408,429,500,502,503,504]);
 export function validAccount(body){
  if(!exact(body,['account','loginMethods','enrollmentAvailable'])||body.enrollmentAvailable!==false||
   !exact(body.account,['accountId','displayName','status'])||body.account.status!=='active'||
@@ -29,7 +31,7 @@ export function createNexusBootstrap({
  // Window timers требуют native receiver: вызов через plain DI object иначе даёт Illegal invocation.
  timers={setTimeout:(...args)=>globalThis.setTimeout(...args),clearTimeout:(...args)=>globalThis.clearTimeout(...args),setInterval:(...args)=>globalThis.setInterval(...args),clearInterval:(...args)=>globalThis.clearInterval(...args)}
 }={}){
- let phase='idle',startPromise=null,inFlight=null,interval=null,leaving=false,pendingRoute=false;
+ let phase='idle',startPromise=null,inFlight=null,interval=null,leaving=false,pendingRoute=false,verifiedAccountId=null;
  const readers=new Set(),listeners=[],releasedHashEvents=new WeakSet();
  const canonical=()=>locationImpl?.origin===SERVER_ACCOUNT_ORIGIN;
  const visible=()=>documentImpl?.hidden!==true;
@@ -41,6 +43,36 @@ export function createNexusBootstrap({
  const removeListeners=()=>{while(listeners.length)listeners.pop()()};
  const entry=()=>ENTRY_URL+(typeof locationImpl?.hash==='string'?locationImpl.hash:'');
  const lock=()=>{storage.lockAccountStorage();abortReaders();stopInterval()};
+ // Продолжать работу со старым facade после pagehide запрещено: нужна новая
+ // загрузка документа и новая проверка серверной сессии, а не переход к входу.
+ const reloadDocument=()=>{
+  if(leaving||phase==='disposed')return false;
+  if(!canonical())return leave();
+  phase='reloading';pendingRoute=false;abortReaders();stopInterval();
+  if(typeof locationImpl?.reload==='function'){locationImpl.reload();return false}
+  // Только same-origin путь текущего документа, не сторонний redirect.
+  if(typeof locationImpl?.pathname==='string'&&locationImpl.pathname.startsWith('/')&&!locationImpl.pathname.startsWith('//')){
+   locationImpl?.replace(locationImpl.pathname+(locationImpl.search||'')+(locationImpl.hash||''));return false;
+  }
+  return leave();
+ };
+ // Временный сбой сети НЕ является доказательством logout. В то же время
+ // устаревшему приложению не оставляем доступ к приватному хранилищу.
+ const suspend=()=>{
+  if(leaving||phase==='disposed'||phase==='hidden-locked')return false;
+  if(phase==='suspended')return false;
+  verifiedAccountId??=storage.verifiedAccount()?.accountId||null;
+  phase='suspended';pendingRoute=false;lock();
+  const host=documentImpl?.querySelector('#app');host?.replaceChildren();
+  if(host&&typeof documentImpl?.createElement==='function'){
+   const section=documentImpl.createElement('section');section.className='placeholder glass-panel nexus-session-recovery';section.setAttribute('role','status');
+   const title=documentImpl.createElement('h1');title.textContent='Проверка соединения с Nexus';
+   const message=documentImpl.createElement('p');message.textContent='Сессию пока не удалось проверить. Данные скрыты до подтверждения сервером. Повторный вход не требуется, если сессия ещё действует.';
+   const retry=documentImpl.createElement('button');retry.type='button';retry.className='btn primary';retry.textContent='Повторить проверку';
+   retry.addEventListener('click',()=>{void recheck()});section.append(title,message,retry);host.append(section);
+  }
+  return false;
+ };
  const leave=()=>{
   if(leaving)return false;leaving=true;phase='leaving';pendingRoute=false;
   lock();removeListeners();
@@ -53,7 +85,10 @@ export function createNexusBootstrap({
   const controller=new AbortController();readers.add(controller);
   const timer=timers.setTimeout(()=>controller.abort(),15000);timer?.unref?.();
   try{
-   const response=await fetchImpl('/api/v2/account',{credentials:'same-origin',cache:'no-store',redirect:'error',signal:controller.signal,headers:{accept:'application/json'}});
+   let response;
+   try{response=await fetchImpl('/api/v2/account',{credentials:'same-origin',cache:'no-store',redirect:'error',signal:controller.signal,headers:{accept:'application/json'}})}
+   catch{throw transient()}
+   if(transientHTTP.has(response.status)){await response.body?.cancel();throw transient()}
    if(controller.signal.aborted||!canonical())throw Error('SESSION_UNAVAILABLE');
    if(response.status===401||response.status===403){await response.body?.cancel();return null}
    if(response.status!==200||response.redirected||!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type')||'')||
@@ -78,15 +113,19 @@ export function createNexusBootstrap({
   const event=new EventType('hashchange');releasedHashEvents.add(event);windowImpl.dispatchEvent(event);
  }
  function recheck(){
-  if(leaving||phase!=='ready'||!visible())return Promise.resolve(false);
+  if(leaving||!['ready','suspended'].includes(phase)||!visible())return Promise.resolve(false);
   if(inFlight)return inFlight;
   inFlight=(async()=>{
    try{
     const next=await readSession();
-    if(leaving||phase!=='ready')return false;
-    if(!next||next.account.accountId!==storage.verifiedAccount()?.accountId)return leave();
+    if(leaving||!['ready','suspended'].includes(phase))return false;
+    if(!next||next.account.accountId!==(phase==='ready'?storage.verifiedAccount()?.accountId:verifiedAccountId??next.account.accountId))return leave();
+    if(phase==='suspended')return reloadDocument();
     releaseRoute();return true;
-   }catch{return leaving||phase!=='ready'?false:leave()}
+   }catch(error){
+    if(leaving||!['ready','suspended'].includes(phase))return false;
+    return error?.code==='SESSION_TRANSIENT'?suspend():leave();
+   }
    finally{inFlight=null}
   })();return inFlight;
  }
@@ -98,9 +137,10 @@ export function createNexusBootstrap({
    event.stopImmediatePropagation();pendingRoute=true;
    if(phase==='ready'&&visible())void recheck();
   },true);
-  listen(windowImpl,'pageshow',event=>{if(event.persisted||phase==='hidden-locked')leave()});
+  listen(windowImpl,'pageshow',event=>{if(event.persisted||phase==='hidden-locked')reloadDocument()});
   // Даже сохранённый ранее facade не сможет сделать autosave после pagehide.
   listen(windowImpl,'pagehide',()=>{if(!leaving){phase='hidden-locked';pendingRoute=false;lock()}},{once:true});
+  listen(windowImpl,'online',()=>{if(phase==='suspended'&&visible())void recheck()});
   listen(windowImpl,'nexus:session-ended',leave,{once:true});
  }
  function start(){
@@ -114,6 +154,7 @@ export function createNexusBootstrap({
     const session=await readSession();
     if(leaving||phase!=='starting')return false;
     if(!session)return leave();
+    verifiedAccountId=session.account.accountId;
     // До этой точки не читается private storage и не импортируется приложение.
     storage.initializeAccountStorage(session);
     if(leaving||phase!=='starting')return false;
@@ -124,7 +165,7 @@ export function createNexusBootstrap({
     // Deep links и hash, изменённый во время начальной проверки, проходят тот же gate.
     if(pendingRoute)await recheck();
     return !leaving&&phase==='ready';
-   }catch{return phase==='hidden-locked'||leaving?false:leave()}
+   }catch(error){return phase==='hidden-locked'||leaving?false:error?.code==='SESSION_TRANSIENT'?suspend():leave()}
   })();return startPromise;
  }
  return Object.freeze({startNexus:start,readVerifiedSession:readSession,recheck,
