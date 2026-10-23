@@ -52,9 +52,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/lib/encoder.js
+// server-access/node_modules/jpeg-js/lib/encoder.js
 var require_encoder = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/lib/encoder.js"(exports, module) {
+  "server-access/node_modules/jpeg-js/lib/encoder.js"(exports, module) {
     var btoa = btoa || function(buf) {
       return Buffer.from(buf).toString("base64");
     };
@@ -1129,9 +1129,9 @@ var require_encoder = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/lib/decoder.js
+// server-access/node_modules/jpeg-js/lib/decoder.js
 var require_decoder = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/lib/decoder.js"(exports, module) {
+  "server-access/node_modules/jpeg-js/lib/decoder.js"(exports, module) {
     var JpegImage = (function jpegImage() {
       "use strict";
       var dctZigZag = new Int32Array([
@@ -2191,9 +2191,9 @@ var require_decoder = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/index.js
+// server-access/node_modules/jpeg-js/index.js
 var require_jpeg_js = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/index.js"(exports, module) {
+  "server-access/node_modules/jpeg-js/index.js"(exports, module) {
     var encode = require_encoder();
     var decode = require_decoder();
     module.exports = {
@@ -2598,7 +2598,7 @@ var MediaPartsError = class extends Error {
 var reject2 = () => {
   throw new MediaPartsError();
 };
-function scope(envelope, rpc, signal) {
+function scope(envelope, rpc, signal, concurrency = 2) {
   const controller = new AbortController(), combined = AbortSignal.any([signal || AbortSignal.timeout(12e3), controller.signal]);
   return { signal: combined, async call(payload, path2 = MEDIA_PARTS_PATH) {
     combined.throwIfAborted();
@@ -2620,7 +2620,7 @@ function scope(envelope, rpc, signal) {
         throw e;
       }
     };
-    await Promise.allSettled(Array.from({ length: Math.min(2, indices.length) }, run));
+    await Promise.allSettled(Array.from({ length: Math.min(concurrency, indices.length) }, run));
     if (firstError) throw firstError;
   } };
 }
@@ -2644,7 +2644,7 @@ async function uploadPhotoParts(envelope, rpc, { signal } = {}) {
 var sameMeta = (a, b) => validMeta(a) && Object.keys(b).every((k) => a[k] === b[k]);
 async function readPhotoParts(envelope, mediaId, rpc, { publishedOnly = false, signal } = {}) {
   if (!digestId(mediaId)) throw new MediaPartsError("INVALID_INPUT", 400);
-  const s = scope(envelope, rpc, signal), path2 = publishedOnly ? PUBLIC_MEDIA_PARTS_PATH : MEDIA_PARTS_PATH, parts = [];
+  const s = scope(envelope, rpc, signal, 4), path2 = publishedOnly ? PUBLIC_MEDIA_PARTS_PATH : MEDIA_PARTS_PATH, parts = [];
   let meta;
   const read = async (index) => {
     const result = await s.call({ requestId: randomUUID(), phase: "read", mediaId, index }, path2), p = result?.part;
@@ -2814,89 +2814,126 @@ var hostname = new URL(WORKER_ORIGIN).hostname;
 var inputError = () => Object.assign(Error("MEDIA_TRANSPORT_INPUT"), { code: "NEXUS_MEDIA_INPUT" });
 var networkCodes = /* @__PURE__ */ new Set(["ENOTFOUND", "EAI_AGAIN", "ECONNRESET", "EPIPE", "ENETUNREACH", "EHOSTUNREACH", "ECONNREFUSED", "ETIMEDOUT", "ABORT_ERR", "DEPTH_ZERO_SELF_SIGNED_CERT", "SELF_SIGNED_CERT_IN_CHAIN", "UNABLE_TO_VERIFY_LEAF_SIGNATURE", "UNABLE_TO_GET_ISSUER_CERT_LOCALLY", "ERR_TLS_CERT_ALTNAME_INVALID", "CERT_HAS_EXPIRED", "NEXUS_MEDIA_H2_REQUIRED", "ERR_HTTP2_SESSION_ERROR", "ERR_HTTP2_STREAM_ERROR", "ERR_HTTP2_GOAWAY_SESSION"]);
 var failed = (error2, state) => Object.assign(Error("MEDIA_TRANSPORT_FAILED", { cause: { code: networkCodes.has(error2?.code) ? error2.code : "NEXUS_NATIVE_NETWORK" } }), { nexusPhase: !state.tcp ? state.lookup ? "tcp" : "dns" : !state.tls ? "tls" : !state.finished ? "upload" : "response" });
-function requestMediaHTTP2(url, options) {
-  if (url !== WORKER_ORIGIN + path || options?.method !== "POST" || options.credentials !== "omit" || options.cache !== "no-store" || options.redirect !== "error" || typeof options.body !== "string" || !(options.signal instanceof AbortSignal)) return Promise.reject(inputError());
+var disconnected = () => Object.assign(Error("MEDIA_SESSION_CLOSED"), { code: "ECONNRESET" });
+function validate(url, options) {
+  if (url !== WORKER_ORIGIN + path || options?.method !== "POST" || options.credentials !== "omit" || options.cache !== "no-store" || options.redirect !== "error" || typeof options.body !== "string" || !(options.signal instanceof AbortSignal)) throw inputError();
   const body = Buffer.from(options.body), headers = options.headers;
-  if (!body.length || body.length > 262144 || !headers || Object.keys(headers).sort().join(",") !== ["accept", "content-type", "x-nexus-service-nonce", "x-nexus-service-signature", "x-nexus-service-timestamp"].sort().join(",") || headers.accept !== "application/json" || headers["content-type"] !== "application/json" || !/^\d{13}$/.test(headers["x-nexus-service-timestamp"]) || !/^[a-f0-9]{32}$/.test(headers["x-nexus-service-nonce"]) || !/^[a-f0-9]{64}$/.test(headers["x-nexus-service-signature"])) return Promise.reject(inputError());
-  const state = { lookup: false, tcp: false, tls: false, finished: false };
-  return new Promise((resolve, reject3) => {
-    let session, socket, stream, sendTimer, resolved = false, stopped = false, trailer = false, lastWire;
-    const capture = () => {
-      if (options.captureWire === true) lastWire = socketProgress(socket, state, session, stream);
-      return lastWire;
-    };
-    const destroy = () => {
-      if (stopped) return;
-      stopped = true;
-      clearTimeout(sendTimer);
-      options.signal.removeEventListener("abort", onAbort);
-      stream?.destroy();
-      session?.destroy();
-      socket?.destroy();
-    };
-    const stop = (error2) => {
-      const safe = failed(error2, state);
-      if (options.captureWire === true) safe.nexusWire = capture();
-      if (!resolved) {
-        reject3(safe);
-        destroy();
-      } else stream?.destroy(safe);
-    };
-    const onAbort = () => stop(Object.assign(Error("MEDIA_ABORTED"), { code: "ABORT_ERR" }));
-    options.signal.addEventListener("abort", onAbort, { once: true });
-    if (options.signal.aborted) {
-      onAbort();
-      return;
-    }
+  if (!body.length || body.length > 262144 || !headers || Object.keys(headers).sort().join(",") !== ["accept", "content-type", "x-nexus-service-nonce", "x-nexus-service-signature", "x-nexus-service-timestamp"].sort().join(",") || headers.accept !== "application/json" || headers["content-type"] !== "application/json" || !/^\d{13}$/.test(headers["x-nexus-service-timestamp"]) || !/^[a-f0-9]{32}$/.test(headers["x-nexus-service-nonce"]) || !/^[a-f0-9]{64}$/.test(headers["x-nexus-service-signature"])) throw inputError();
+  return { body, headers };
+}
+function transport({ singleUse = false } = {}) {
+  const connection = { lookup: false, tcp: false, tls: false }, requests = /* @__PURE__ */ new Set();
+  let session, socket, ready = false, closed = false, draining = false;
+  const close = (error2 = disconnected()) => {
+    if (closed) return;
+    closed = true;
+    for (const request2 of [...requests]) request2.stop(error2);
+    if (session) session.destroy();
+    else socket?.destroy();
+  };
+  const connect = () => {
+    if (session || closed) return;
     try {
       session = http2.connect(WORKER_ORIGIN, { maxHeaderListPairs: 32, maxSessionMemory: 16, settings: { enablePush: false, maxHeaderListSize: 16384 }, createConnection: () => {
         socket = tls.connect({ host: hostname, port: 443, servername: hostname, ALPNProtocols: ["h2"], rejectUnauthorized: true, family: 4, autoSelectFamily: false });
         socket.once("lookup", (error2) => {
-          if (!error2) state.lookup = true;
+          if (!error2) connection.lookup = true;
         });
         socket.once("connect", () => {
-          state.tcp = true;
+          connection.tcp = true;
         });
         socket.once("secureConnect", () => {
-          state.tls = true;
-          if (!socket.authorized || socket.alpnProtocol !== "h2") stop(Object.assign(Error("MEDIA_H2_REQUIRED"), { code: "NEXUS_MEDIA_H2_REQUIRED" }));
-          else if (!socket.setMaxSendFragment(1024)) stop(inputError());
+          connection.tls = true;
+          if (!socket.authorized || socket.alpnProtocol !== "h2") close(Object.assign(Error("MEDIA_H2_REQUIRED"), { code: "NEXUS_MEDIA_H2_REQUIRED" }));
+          else if (!socket.setMaxSendFragment(1024)) close(inputError());
         });
-        socket.on("error", stop);
+        socket.on("error", close);
         return socket;
       } });
-      session.on("error", stop);
+      session.on("error", close);
       session.on("stream", (pushed) => {
         pushed.on("error", () => {
         });
         pushed.destroy();
-        stop(Object.assign(Error("MEDIA_PUSH_REJECTED"), { code: "NEXUS_MEDIA_H2_REQUIRED" }));
+        close(Object.assign(Error("MEDIA_PUSH_REJECTED"), { code: "NEXUS_MEDIA_H2_REQUIRED" }));
       });
       session.on("goaway", (code, lastStreamId) => {
-        if (code !== http2.constants.NGHTTP2_NO_ERROR || !stream || lastStreamId < stream.id) stop(Object.assign(Error("MEDIA_GOAWAY"), { code: "ERR_HTTP2_GOAWAY_SESSION" }));
+        draining = true;
+        if (code !== http2.constants.NGHTTP2_NO_ERROR || [...requests].some((request2) => !request2.streamId() || request2.streamId() > lastStreamId)) close(Object.assign(Error("MEDIA_GOAWAY"), { code: "ERR_HTTP2_GOAWAY_SESSION" }));
       });
       session.once("close", () => {
-        if (!resolved && !stopped) stop(Object.assign(Error("MEDIA_SESSION_CLOSED"), { code: "ECONNRESET" }));
+        if (!closed) close(disconnected());
       });
       session.once("connect", () => {
+        if (closed) return;
+        if (!connection.tls || !socket.authorized || socket.alpnProtocol !== "h2") {
+          close(Object.assign(Error("MEDIA_H2_REQUIRED"), { code: "NEXUS_MEDIA_H2_REQUIRED" }));
+          return;
+        }
+        ready = true;
+        for (const request2 of [...requests]) request2.start();
+      });
+    } catch (error2) {
+      close(error2);
+    }
+  };
+  const request = (url, options) => {
+    let body, headers;
+    try {
+      ({ body, headers } = validate(url, options));
+    } catch (error2) {
+      return Promise.reject(error2);
+    }
+    if (closed || draining) return Promise.reject(failed(disconnected(), connection));
+    return new Promise((resolve, reject3) => {
+      let stream, sendTimer, resolved = false, stopped = false, trailer = false, lastWire, webController, finished = false;
+      const state = () => ({ ...connection, finished });
+      const capture = () => {
+        if (options.captureWire === true) lastWire = socketProgress(socket, state(), session, stream);
+        return lastWire;
+      };
+      const destroy = () => {
         if (stopped) return;
-        if (!state.tls || !socket.authorized || socket.alpnProtocol !== "h2") {
-          stop(Object.assign(Error("MEDIA_H2_REQUIRED"), { code: "NEXUS_MEDIA_H2_REQUIRED" }));
+        stopped = true;
+        clearTimeout(sendTimer);
+        options.signal.removeEventListener("abort", onAbort);
+        requests.delete(entry);
+        stream?.destroy();
+        if (singleUse) close();
+      };
+      const stop = (error2) => {
+        if (stopped) return;
+        const safe = failed(error2, state());
+        if (options.captureWire === true) safe.nexusWire = capture();
+        if (!resolved) reject3(safe);
+        else {
+          try {
+            webController?.error(safe);
+          } catch {
+          }
+        }
+        destroy();
+      };
+      const onAbort = () => stop(Object.assign(Error("MEDIA_ABORTED"), { code: "ABORT_ERR" }));
+      const start = () => {
+        if (stopped || closed || stream) return;
+        if (draining) {
+          stop(Object.assign(Error("MEDIA_GOAWAY"), { code: "ERR_HTTP2_GOAWAY_SESSION" }));
           return;
         }
         try {
           stream = session.request({ ":method": "POST", ":scheme": "https", ":authority": hostname, ":path": path, ...headers, "content-length": String(body.length), "accept-encoding": "identity", [http2.sensitiveHeaders]: ["x-nexus-service-signature", "x-nexus-service-nonce"] }, { endStream: false });
           stream.on("error", stop);
           stream.once("close", () => {
-            if (!resolved && !stopped) stop(Object.assign(Error("MEDIA_STREAM_CLOSED"), { code: "ECONNRESET" }));
+            if (!resolved && !stopped) stop(disconnected());
           });
           stream.once("finish", () => {
-            state.finished = true;
+            finished = true;
           });
           stream.on("headers", () => stop(Error("MEDIA_INFORMATIONAL_HEADERS_REJECTED")));
           stream.on("trailers", () => {
             trailer = true;
-            stream.destroy(Object.assign(Error("MEDIA_TRAILERS_REJECTED"), { code: "NEXUS_MEDIA_TRAILERS" }));
+            stop(Object.assign(Error("MEDIA_TRAILERS_REJECTED"), { code: "NEXUS_MEDIA_TRAILERS" }));
           });
           stream.once("response", (incoming, _flags, raw) => {
             try {
@@ -2921,18 +2958,20 @@ function requestMediaHTTP2(url, options) {
               const iterator = stream[Symbol.asyncIterator]();
               let cancelled = false;
               const web = new ReadableStream({
+                start(controller) {
+                  webController = controller;
+                },
                 async pull(controller) {
                   try {
                     const part = await iterator.next();
-                    if (cancelled) return;
+                    if (cancelled || stopped) return;
                     if (part.done) {
                       if (trailer) throw Error("MEDIA_TRAILERS_REJECTED");
                       controller.close();
                       destroy();
                     } else controller.enqueue(part.value);
                   } catch (error2) {
-                    if (!cancelled) controller.error(failed(error2, state));
-                    destroy();
+                    if (!cancelled) stop(error2);
                   }
                 },
                 cancel() {
@@ -2972,12 +3011,22 @@ function requestMediaHTTP2(url, options) {
         } catch (error2) {
           stop(error2);
         }
-      });
-    } catch (error2) {
-      stop(error2);
-    }
-  });
+      };
+      const entry = { start, stop, streamId: () => stream?.id };
+      requests.add(entry);
+      options.signal.addEventListener("abort", onAbort, { once: true });
+      if (options.signal.aborted) {
+        onAbort();
+        return;
+      }
+      connect();
+      if (ready) start();
+    });
+  };
+  return Object.freeze({ request, close });
 }
+var createMediaHTTP2Session = () => transport();
+var requestMediaHTTP2 = (url, options) => transport({ singleUse: true }).request(url, options);
 
 // server-access/bff/oauth-providers.mjs
 import { createHash as createHash4, createPublicKey, verify, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
@@ -3384,7 +3433,18 @@ function createAccountControlHandler({ env = {}, fetchImpl = fetch, mediaFetchIm
       if (parts && mediaDiagnostics) data = await uploadPhotoParts(envelope, rpc, { signal: partsSignal });
       else if (parts && path2 === BASE + "/content" && req.method === "GET" && url.searchParams.has("media")) {
         if ([...url.searchParams.keys()].join(",") !== "media" || url.searchParams.getAll("media").length !== 1) fail2("INVALID_INPUT");
-        data = await readPhotoParts(envelope, url.searchParams.get("media"), rpc, { signal: partsSignal });
+        const transport2 = mediaFetchImpl === requestMediaHTTP2 ? createMediaHTTP2Session() : null, controller = new AbortController(), abort = () => controller.abort();
+        req.once?.("aborted", abort);
+        res.once?.("close", abort);
+        if (req.aborted) abort();
+        const readRPC = (value, options) => service(env, fetchImpl, value, { mediaDiagnostics: true, mediaFetchImpl: transport2?.request || mediaFetchImpl, ...options });
+        try {
+          data = await readPhotoParts(envelope, url.searchParams.get("media"), readRPC, { signal: AbortSignal.any([partsSignal, controller.signal]) });
+        } finally {
+          req.removeListener?.("aborted", abort);
+          res.removeListener?.("close", abort);
+          transport2?.close();
+        }
       } else data = await service(env, fetchImpl, envelope, { mediaDiagnostics, mediaFetchImpl, captureWire: diagnostic });
       let dto;
       try {
@@ -3426,8 +3486,18 @@ function createContentHandler({ env = {}, fetchImpl = fetch, mediaFetchImpl = fe
       if ([...url.searchParams.keys()].some((k) => !["slug", "media"].includes(k)) || url.searchParams.getAll("slug").length > 1 || url.searchParams.getAll("media").length > 1 || [...url.searchParams.keys()].length > 1) return reply8(400, { error: { code: "INVALID_INPUT" } });
       if (url.searchParams.has("media") && env.BFF_CONTENT_MEDIA_PARTS_ENABLED === "true") {
         if (typeof env.ADMIN_SERVICE_KEY !== "string" || env.ADMIN_SERVICE_KEY.length < 32) throw Error();
-        const rpc = (value, options) => controlService(env, fetchImpl, value, { mediaDiagnostics: true, mediaFetchImpl, ...options });
-        return reply8(200, await readPhotoParts({ sessionHash: null, expectedAccountId: null }, url.searchParams.get("media"), rpc, { publishedOnly: true }));
+        const transport2 = mediaFetchImpl === requestMediaHTTP2 ? createMediaHTTP2Session() : null, controller = new AbortController(), abort = () => controller.abort();
+        req.once?.("aborted", abort);
+        res.once?.("close", abort);
+        if (req.aborted) abort();
+        const rpc = (value, options) => controlService(env, fetchImpl, value, { mediaDiagnostics: true, mediaFetchImpl: transport2?.request || mediaFetchImpl, ...options });
+        try {
+          return reply8(200, await readPhotoParts({ sessionHash: null, expectedAccountId: null }, url.searchParams.get("media"), rpc, { publishedOnly: true, signal: AbortSignal.any([AbortSignal.timeout(12e3), controller.signal]) }));
+        } finally {
+          req.removeListener?.("aborted", abort);
+          res.removeListener?.("close", abort);
+          transport2?.close();
+        }
       }
       const response = await fetchImpl(WORKER_ORIGIN + req.url, { method: "GET", credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(5e3), headers: { accept: "application/json" } });
       if (!response.headers.get("content-type")?.startsWith("application/json") || response.headers.has("set-cookie") || response.headers.get("cache-control") !== "no-store" || !hasVaryWildcard(response.headers.get("vary"))) throw Error();

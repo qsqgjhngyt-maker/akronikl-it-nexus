@@ -4,7 +4,7 @@ import {sanitizeAvatar,AvatarError} from '../avatar-codec.mjs';
 import {HOME_SLOTS} from '../../core/content-contract.js';
 import {hasVaryWildcard} from '../../core/private-response-policy.js';
 import {createHash,createHmac,randomBytes} from 'node:crypto';
-import {requestMediaHTTP2} from './media-http2.mjs';
+import {requestMediaHTTP2,createMediaHTTP2Session} from './media-http2.mjs';
 import {wireHeaders} from './socket-progress.mjs';
 import {uploadPhotoParts,readPhotoParts} from './media-parts.mjs';
 import {GATEWAY_ORIGIN,WORKER_ORIGIN} from './account-read.mjs';
@@ -153,7 +153,11 @@ export function createAccountControlHandler({env={},fetchImpl=fetch,mediaFetchIm
    if(parts&&mediaDiagnostics)data=await uploadPhotoParts(envelope,rpc,{signal:partsSignal});
    else if(parts&&path===BASE+'/content'&&req.method==='GET'&&url.searchParams.has('media')){
     if([...url.searchParams.keys()].join(',')!=='media'||url.searchParams.getAll('media').length!==1)fail('INVALID_INPUT');
-    data=await readPhotoParts(envelope,url.searchParams.get('media'),rpc,{signal:partsSignal});
+    const transport=mediaFetchImpl===requestMediaHTTP2?createMediaHTTP2Session():null,controller=new AbortController(),abort=()=>controller.abort();
+    req.once?.('aborted',abort);res.once?.('close',abort);if(req.aborted)abort();
+    const readRPC=(value,options)=>service(env,fetchImpl,value,{mediaDiagnostics:true,mediaFetchImpl:transport?.request||mediaFetchImpl,...options});
+    try{data=await readPhotoParts(envelope,url.searchParams.get('media'),readRPC,{signal:AbortSignal.any([partsSignal,controller.signal])})}
+    finally{req.removeListener?.('aborted',abort);res.removeListener?.('close',abort);transport?.close()}
    }else data=await service(env,fetchImpl,envelope,{mediaDiagnostics,mediaFetchImpl,captureWire:diagnostic});
    let dto;try{dto=validateDTO(data,req.url,expected)}catch(error){if(mediaDiagnostics&&error instanceof Rejected&&error.code==='CONTROL_UNAVAILABLE')fail('BLOG_MEDIA_UPSTREAM_DTO_REJECTED',502);throw error}
    if(path===BASE+'/providers'){
