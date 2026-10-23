@@ -18,6 +18,12 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
+      - name: Получить точную предыдущую генерацию без затрагивания current
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: bad182cc020e51dcfd0b36a7b0127c637c8f79ee
+          path: .qa-old-source
+          persist-credentials: false
       - name: Проверить runtime Node.js
         run: |
           node --version
@@ -58,6 +64,45 @@ jobs:
           mkdir -p "$RUNNER_TEMP/nexus-alpha10-4-evidence"
           node tools/build-ui1a-release.mjs --out "$RUNNER_TEMP/nexus-alpha10-4-public" | tee "$RUNNER_TEMP/nexus-alpha10-4-evidence/build.log"
           node tests/ui1a-versioned-build-check.mjs | tee "$RUNNER_TEMP/nexus-alpha10-4-evidence/repro.log"
+      - name: Установить закреплённый Playwright для изолированных браузерных проверок
+        run: |
+          set -euo pipefail
+          npm ci --prefix tools/qa-browser-driver --no-audit --no-fund
+          test -x /usr/bin/google-chrome
+      - name: Подготовить побайтовый rollback build от прежнего main
+        run: |
+          set -euo pipefail
+          npm ci --prefix .qa-old-source/server-access --no-audit --no-fund
+          node .qa-old-source/tools/build-ui1a-release.mjs --source .qa-old-source --out "$RUNNER_TEMP/nexus-alpha10-4-rollback"
+      - name: Chromium — реальная установка PWA и отзыв приватного кеша
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-public
+          NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-alpha10-4-evidence/browser-public-install
+        run: node tests/pwa-public-install-browser-check.mjs
+      - name: Chromium — обновление, обратный откат и сохранность данных
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-public
+          NEXUS_ROLLBACK_DIR: ${{ runner.temp }}/nexus-alpha10-4-rollback
+          NEXUS_BROWSER_RESULT: ${{ runner.temp }}/nexus-alpha10-4-evidence/BROWSER_ROLLBACK.json
+        run: node tests/pwa-rollback-browser-check.mjs
+      - name: Chromium — Auth, HttpOnly Cookie и возврат пользователя
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-public
+          NEXUS_BROWSER_RESULT: ${{ runner.temp }}/nexus-alpha10-4-evidence/BROWSER_AUTH.json
+        run: node tests/auth-browser-local-check.mjs
+      - name: Chromium — Блог, редактор CMS, публикация и защита фотографий
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-public
+          NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-alpha10-4-evidence/browser-blog-cms
+        run: node tests/blog-layout-browser-check.mjs
       - name: Независимая проверка integrity, PWA ID и старой генерации
         env:
           BUILD_DIR: ${{ runner.temp }}/nexus-alpha10-4-public
