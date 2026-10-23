@@ -1,0 +1,503 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/qsqgjhngyt-maker/akronikl-it-nexus/main/content/schemas/content-package-v1.schema.json",
+  "title": "AKRONIKL IT NEXUS Content Package Contract v1",
+  "description": "Универсальный контракт пакета курса. C++-специфичные инварианты проверяются semantic validator, а не в общей JSON Schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "contractVersion",
+    "contentVersion",
+    "courseId",
+    "status",
+    "primaryLocale",
+    "availableLocales",
+    "sourceCompatibility",
+    "runtimeCompatibility",
+    "modules",
+    "topics",
+    "skills",
+    "exercises",
+    "practices",
+    "projects",
+    "futureExtensions"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "contractVersion": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+\\.[0-9]+$"
+    },
+    "contentVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "courseId": {
+      "$ref": "#/$defs/stableId"
+    },
+    "status": {
+      "enum": [
+        "reference-contract",
+        "draft-contract",
+        "pilot-contract",
+        "production-contract"
+      ]
+    },
+    "primaryLocale": {
+      "$ref": "#/$defs/locale"
+    },
+    "availableLocales": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/locale"
+      }
+    },
+    "sourceCompatibility": {
+      "$ref": "#/$defs/sourceCompatibility"
+    },
+    "runtimeCompatibility": {
+      "$ref": "#/$defs/runtimeCompatibility"
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/module"
+      }
+    },
+    "topics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/topic"
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/skill"
+      }
+    },
+    "exercises": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/exercise"
+      }
+    },
+    "practices": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/practice"
+      }
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/project"
+      }
+    },
+    "futureExtensions": {
+      "$ref": "#/$defs/futureExtensions"
+    }
+  },
+  "$defs": {
+    "stableId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "locale": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(?:-[A-Z]{2})?$"
+    },
+    "idArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/stableId"
+      }
+    },
+    "mappingStatus": {
+      "enum": [
+        "declared-reference",
+        "pending-cp3",
+        "mapped",
+        "not-applicable"
+      ]
+    },
+    "scope": {
+      "enum": [
+        "topic",
+        "module",
+        "course"
+      ]
+    },
+    "sourceCompatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "catalogPath",
+        "manifestPath",
+        "curriculumPath",
+        "provenancePath",
+        "contentPaths"
+      ],
+      "properties": {
+        "catalogPath": {
+          "$ref": "#/$defs/path"
+        },
+        "manifestPath": {
+          "$ref": "#/$defs/path"
+        },
+        "curriculumPath": {
+          "$ref": "#/$defs/path"
+        },
+        "provenancePath": {
+          "$ref": "#/$defs/path"
+        },
+        "contentPaths": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/path"
+          }
+        }
+      }
+    },
+    "runtimeCompatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "academyRoute",
+        "progressStateKey",
+        "projectStorageKey",
+        "runtimeConsumption",
+        "offlinePolicy"
+      ],
+      "properties": {
+        "academyRoute": {
+          "type": "string",
+          "minLength": 1
+        },
+        "progressStateKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "legacyProgressKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "projectStorageKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtimeConsumption": {
+          "enum": [
+            "none-cp1.1",
+            "metadata-only",
+            "runtime-integrated"
+          ]
+        },
+        "offlinePolicy": {
+          "enum": [
+            "no-runtime-change-cp1.1",
+            "package-cache",
+            "network-required"
+          ]
+        }
+      }
+    },
+    "module": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "moduleId",
+        "sourceId",
+        "order",
+        "topicIds"
+      ],
+      "properties": {
+        "moduleId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "topicIds": {
+          "$ref": "#/$defs/idArray"
+        }
+      }
+    },
+    "topic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "topicId",
+        "sourceId",
+        "moduleId",
+        "order",
+        "skillIds",
+        "skillMappingStatus"
+      ],
+      "properties": {
+        "topicId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "moduleId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "skillIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "skillMappingStatus": {
+          "$ref": "#/$defs/mappingStatus"
+        }
+      }
+    },
+    "skill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skillId",
+        "code",
+        "sourceCodes",
+        "topicIds",
+        "status"
+      ],
+      "properties": {
+        "skillId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "code": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceCodes": {
+          "$ref": "#/$defs/idArray"
+        },
+        "topicIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "status": {
+          "enum": [
+            "declared-reference",
+            "active",
+            "deprecated"
+          ]
+        }
+      }
+    },
+    "sourceMapping": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "exercise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exerciseId",
+        "sourceId",
+        "scope",
+        "moduleIds",
+        "topicIds",
+        "skillIds",
+        "skillMappingStatus",
+        "kind",
+        "activityType",
+        "sourceLocale",
+        "sourceMapping"
+      ],
+      "properties": {
+        "exerciseId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "moduleIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "topicIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "skillIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "skillMappingStatus": {
+          "$ref": "#/$defs/mappingStatus"
+        },
+        "kind": {
+          "const": "exercise"
+        },
+        "activityType": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceLocale": {
+          "$ref": "#/$defs/locale"
+        },
+        "sourceMapping": {
+          "$ref": "#/$defs/sourceMapping"
+        }
+      }
+    },
+    "practice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "practiceId",
+        "sourceId",
+        "scope",
+        "moduleIds",
+        "topicIds",
+        "skillIds",
+        "skillMappingStatus",
+        "kind",
+        "activityType",
+        "sourceLocale",
+        "sourceMapping"
+      ],
+      "properties": {
+        "practiceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "moduleIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "topicIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "skillIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "skillMappingStatus": {
+          "$ref": "#/$defs/mappingStatus"
+        },
+        "kind": {
+          "const": "practice"
+        },
+        "activityType": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceLocale": {
+          "$ref": "#/$defs/locale"
+        },
+        "sourceMapping": {
+          "$ref": "#/$defs/sourceMapping"
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projectId",
+        "sourceId",
+        "scope",
+        "moduleIds",
+        "topicIds",
+        "skillIds",
+        "skillMappingStatus",
+        "kind",
+        "activityType",
+        "sourceLocale",
+        "sourceMapping"
+      ],
+      "properties": {
+        "projectId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "scope": {
+          "$ref": "#/$defs/scope"
+        },
+        "moduleIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "topicIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "skillIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "skillMappingStatus": {
+          "$ref": "#/$defs/mappingStatus"
+        },
+        "kind": {
+          "const": "project"
+        },
+        "activityType": {
+          "$ref": "#/$defs/stableId"
+        },
+        "sourceLocale": {
+          "$ref": "#/$defs/locale"
+        },
+        "sourceMapping": {
+          "$ref": "#/$defs/sourceMapping"
+        }
+      }
+    },
+    "futureExtensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skillGraph",
+        "learningEvents",
+        "masteryModel"
+      ],
+      "properties": {
+        "skillGraph": {
+          "enum": [
+            "not-implemented",
+            "planned",
+            "implemented"
+          ]
+        },
+        "learningEvents": {
+          "enum": [
+            "not-implemented",
+            "planned",
+            "implemented"
+          ]
+        },
+        "masteryModel": {
+          "enum": [
+            "not-implemented",
+            "planned",
+            "implemented"
+          ]
+        }
+      }
+    }
+  }
+}
