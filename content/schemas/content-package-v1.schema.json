@@ -2,13 +2,17 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://akronikl.dev/schemas/content-package-v1.schema.json",
   "title": "AKRONIKL IT NEXUS Content Package Contract v1",
+  "description": "Универсальный контракт пакета курса. C++-специфичные инварианты проверяются semantic validator, а не в общей JSON Schema.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schemaVersion",
     "contractVersion",
+    "contentVersion",
     "courseId",
     "status",
+    "primaryLocale",
+    "availableLocales",
     "sourceCompatibility",
     "runtimeCompatibility",
     "modules",
@@ -27,6 +31,10 @@
       "type": "string",
       "pattern": "^1\\.[0-9]+\\.[0-9]+$"
     },
+    "contentVersion": {
+      "type": "string",
+      "minLength": 1
+    },
     "courseId": {
       "$ref": "#/$defs/stableId"
     },
@@ -34,8 +42,20 @@
       "enum": [
         "reference-contract",
         "draft-contract",
-        "pilot-contract"
+        "pilot-contract",
+        "production-contract"
       ]
+    },
+    "primaryLocale": {
+      "$ref": "#/$defs/locale"
+    },
+    "availableLocales": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/locale"
+      }
     },
     "sourceCompatibility": {
       "$ref": "#/$defs/sourceCompatibility"
@@ -93,12 +113,29 @@
       "type": "string",
       "minLength": 1
     },
-    "stringArray": {
+    "locale": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(?:-[A-Z]{2})?$"
+    },
+    "idArray": {
       "type": "array",
+      "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/stableId"
-      },
-      "uniqueItems": true
+      }
+    },
+    "mappingStatus": {
+      "enum": [
+        "declared-reference",
+        "pending-cp3"
+      ]
+    },
+    "scope": {
+      "enum": [
+        "topic",
+        "module",
+        "course"
+      ]
     },
     "sourceCompatibility": {
       "type": "object",
@@ -107,9 +144,8 @@
         "catalogPath",
         "manifestPath",
         "curriculumPath",
-        "lessonsPath",
-        "practicesPath",
-        "projectsPath"
+        "provenancePath",
+        "contentPaths"
       ],
       "properties": {
         "catalogPath": {
@@ -121,14 +157,15 @@
         "curriculumPath": {
           "$ref": "#/$defs/path"
         },
-        "lessonsPath": {
+        "provenancePath": {
           "$ref": "#/$defs/path"
         },
-        "practicesPath": {
-          "$ref": "#/$defs/path"
-        },
-        "projectsPath": {
-          "$ref": "#/$defs/path"
+        "contentPaths": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/path"
+          }
         }
       }
     },
@@ -138,29 +175,40 @@
       "required": [
         "academyRoute",
         "progressStateKey",
-        "legacyProgressKey",
         "projectStorageKey",
         "runtimeConsumption",
         "offlinePolicy"
       ],
       "properties": {
         "academyRoute": {
-          "const": "#course=cpp"
+          "type": "string",
+          "minLength": 1
         },
         "progressStateKey": {
-          "const": "akronikl:it-nexus:state:v1"
+          "type": "string",
+          "minLength": 1
         },
         "legacyProgressKey": {
-          "const": "cpp_programming_pdf_course_v1"
+          "type": "string",
+          "minLength": 1
         },
         "projectStorageKey": {
-          "const": "akronikl:it-nexus:projects:v1"
+          "type": "string",
+          "minLength": 1
         },
         "runtimeConsumption": {
-          "const": "none-cp1.1"
+          "enum": [
+            "none-cp1.1",
+            "metadata-only",
+            "runtime-integrated"
+          ]
         },
         "offlinePolicy": {
-          "const": "no-runtime-change-cp1.1"
+          "enum": [
+            "no-runtime-change-cp1.1",
+            "package-cache",
+            "network-required"
+          ]
         }
       }
     },
@@ -185,7 +233,7 @@
           "minimum": 1
         },
         "topicIds": {
-          "$ref": "#/$defs/stringArray"
+          "$ref": "#/$defs/idArray"
         }
       }
     },
@@ -198,7 +246,7 @@
         "moduleId",
         "order",
         "skillIds",
-        "exerciseIds"
+        "skillMappingStatus"
       ],
       "properties": {
         "topicId": {
@@ -215,10 +263,10 @@
           "minimum": 1
         },
         "skillIds": {
-          "$ref": "#/$defs/stringArray"
+          "$ref": "#/$defs/idArray"
         },
-        "exerciseIds": {
-          "$ref": "#/$defs/stringArray"
+        "skillMappingStatus": {
+          "$ref": "#/$defs/mappingStatus"
         }
       }
     },
@@ -228,6 +276,7 @@
       "required": [
         "skillId",
         "code",
+        "sourceCodes",
         "topicIds",
         "status"
       ],
@@ -238,12 +287,22 @@
         "code": {
           "$ref": "#/$defs/stableId"
         },
+        "sourceCodes": {
+          "$ref": "#/$defs/idArray"
+        },
         "topicIds": {
-          "$ref": "#/$defs/stringArray"
+          "$ref": "#/$defs/idArray"
         },
         "status": {
-          "const": "foundation"
+          "const": "declared-reference"
         }
+      }
+    },
+    "sourceMapping": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
       }
     },
     "exercise": {
@@ -252,12 +311,15 @@
       "required": [
         "exerciseId",
         "sourceId",
-        "topicId",
+        "scope",
+        "moduleIds",
+        "topicIds",
         "skillIds",
+        "skillMappingStatus",
         "kind",
         "activityType",
         "sourceLocale",
-        "sourceFields"
+        "sourceMapping"
       ],
       "properties": {
         "exerciseId": {
@@ -266,44 +328,32 @@
         "sourceId": {
           "$ref": "#/$defs/stableId"
         },
-        "topicId": {
-          "$ref": "#/$defs/stableId"
+        "scope": {
+          "const": "topic"
+        },
+        "moduleIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "topicIds": {
+          "$ref": "#/$defs/idArray"
         },
         "skillIds": {
-          "$ref": "#/$defs/stringArray"
+          "$ref": "#/$defs/idArray"
+        },
+        "skillMappingStatus": {
+          "$ref": "#/$defs/mappingStatus"
         },
         "kind": {
           "const": "exercise"
         },
         "activityType": {
-          "const": "code.exercise"
+          "$ref": "#/$defs/stableId"
         },
         "sourceLocale": {
-          "const": "ru"
+          "$ref": "#/$defs/locale"
         },
-        "sourceFields": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "task",
-            "hint",
-            "solution",
-            "requirements"
-          ],
-          "properties": {
-            "task": {
-              "const": "task"
-            },
-            "hint": {
-              "const": "hint"
-            },
-            "solution": {
-              "const": "solution"
-            },
-            "requirements": {
-              "const": "requirements"
-            }
-          }
+        "sourceMapping": {
+          "$ref": "#/$defs/sourceMapping"
         }
       }
     },
@@ -313,10 +363,15 @@
       "required": [
         "practiceId",
         "sourceId",
-        "moduleId",
+        "scope",
+        "moduleIds",
+        "topicIds",
+        "skillIds",
+        "skillMappingStatus",
         "kind",
         "activityType",
-        "sourceLocale"
+        "sourceLocale",
+        "sourceMapping"
       ],
       "properties": {
         "practiceId": {
@@ -325,17 +380,32 @@
         "sourceId": {
           "$ref": "#/$defs/stableId"
         },
-        "moduleId": {
-          "$ref": "#/$defs/stableId"
+        "scope": {
+          "const": "module"
+        },
+        "moduleIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "topicIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "skillIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "skillMappingStatus": {
+          "$ref": "#/$defs/mappingStatus"
         },
         "kind": {
           "const": "practice"
         },
         "activityType": {
-          "const": "code.practice"
+          "$ref": "#/$defs/stableId"
         },
         "sourceLocale": {
-          "const": "ru"
+          "$ref": "#/$defs/locale"
+        },
+        "sourceMapping": {
+          "$ref": "#/$defs/sourceMapping"
         }
       }
     },
@@ -345,9 +415,15 @@
       "required": [
         "projectId",
         "sourceId",
+        "scope",
+        "moduleIds",
+        "topicIds",
+        "skillIds",
+        "skillMappingStatus",
         "kind",
         "activityType",
-        "sourceLocale"
+        "sourceLocale",
+        "sourceMapping"
       ],
       "properties": {
         "projectId": {
@@ -356,14 +432,32 @@
         "sourceId": {
           "$ref": "#/$defs/stableId"
         },
+        "scope": {
+          "const": "course"
+        },
+        "moduleIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "topicIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "skillIds": {
+          "$ref": "#/$defs/idArray"
+        },
+        "skillMappingStatus": {
+          "$ref": "#/$defs/mappingStatus"
+        },
         "kind": {
           "const": "project"
         },
         "activityType": {
-          "const": "code.project"
+          "$ref": "#/$defs/stableId"
         },
         "sourceLocale": {
-          "const": "ru"
+          "$ref": "#/$defs/locale"
+        },
+        "sourceMapping": {
+          "$ref": "#/$defs/sourceMapping"
         }
       }
     },

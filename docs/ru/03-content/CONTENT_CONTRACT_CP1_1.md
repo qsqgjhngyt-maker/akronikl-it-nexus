@@ -7,94 +7,103 @@
 
 CP-1.1 вводит единый versioned Content Package Contract поверх существующего production-root `courses/`.
 
-Выбрана additive-only схема:
-
 ```text
 courses/
   cpp/
     manifest.json
     curriculum.json
     data/...
-    content-package.json   ← новый contract index
+    content-package.json
 
 content/
   schemas/
     content-package-v1.schema.json
 ```
 
-Учебные тексты, практикумы и проекты не копируются в `content/`. Это исключает появление двух источников истины.
+Учебные тексты, практикумы и проекты не копируются в `content/`. Это исключает два источника истины.
 
-## Модель данных
+## Универсальная модель
 
 ```text
 Course
  └─ Module
      └─ Topic
-         ├─ Skill
+         ├─ Skill reference
          └─ Exercise
-Course/Module
+Course / Module
  ├─ Practice
  └─ Project
 ```
 
-Для C++ CP-1.1 создаёт:
+Каждая Activity имеет стабильный ID, `scope`, ссылки на module/topic/skill, `activityType`, locale и source mapping. Общая schema не фиксирует C++-типы и допускает будущие graphics/simulation/data activities.
+
+## C++ reference mapping
+
+Contract фиксирует:
 
 - 6 Module;
 - 40 Topic;
-- 40 foundation Skill;
-- 40 Exercise mappings;
-- 6 Practice mappings;
-- 7 Project mappings.
+- 40 Exercise;
+- 6 Practice;
+- 7 Project;
+- 15 canonical foundation Skill references из трёх уже утверждённых benchmark-уроков.
 
-Стабильные production C++ IDs остаются неизменными. Новые skill/exercise IDs детерминированы и versioned contract-ом.
+У 37 остальных тем skill mapping честно помечен `pending-cp3`. Это намеренно: CP-1.1 не должен превращать Topic в Skill и тем самым предрешать будущий Skill Graph.
 
-## Почему не переносим C++ в новый каталог
+### Legacy skill alias
 
-Рассматривалась альтернатива `content/courses/cpp`. Она отклонена, потому что привела бы к двум canonical деревьям рядом с уже работающим `courses/cpp`, усложнила бы Offline-First, прогресс и Academy routing.
+В исходном benchmark content обнаружены два написания одной концепции:
+
+- `cpp.const-correctness`;
+- `cpp.const.correctness`.
+
+Content adapter нормализует первое в `cpp.const.correctness`; исходные lesson payloads не меняются. Canonical stable ID: `skill.cpp.const.correctness`. В `sourceCodes` сохраняются оба исходных значения для traceability.
+
+## Versioning
+
+Разделены:
+
+- `schemaVersion` — версия структуры JSON;
+- `contractVersion` — версия CP contract;
+- `contentVersion` — версия course package из C++ manifest;
+- application/release version — вне Content Package.
+
+## Почему не переносим C++ в content/courses
+
+Полная миграция отклонена: она дала бы риск regressions для Academy, progress и Offline-First. `courses/` остаётся production root, `content/` — shared schemas/contracts.
 
 ## Runtime boundary
 
-CP-1.1 специально **не подключает** `content-package.json` к `core/course-registry.js`.
-
-Причина: сначала нужен формальный контракт и доказанная совместимость. Runtime integration — отдельный bounded milestone после MASTER review.
+CP-1.1 специально не подключает `content-package.json` к `core/course-registry.js`. Runtime integration — следующий отдельный bounded milestone после доказательства contract stability.
 
 ## Progress / Offline
 
-Сохраняются:
+Не меняются:
 
 - `akronikl:it-nexus:state:v1`;
 - `courses.cpp.lessons[lessonId]`;
 - `courses.cpp.practicums[practicumId]`;
-- legacy `cpp_programming_pdf_course_v1`;
+- `cpp_programming_pdf_course_v1`;
+- Project DB key;
 - current PWA/service-worker generation.
 
-Новые contract-файлы не участвуют в offline runtime в CP-1.1, поэтому текущий verified offline graph не меняется.
+## Будущая ВКР / Learning Events
 
-## Будущие слои
-
-Контракт резервирует границы для:
-
-- Skill Graph;
-- Learning Events;
-- Mastery Model.
-
-Их статус в эталонном C++ package прямо фиксируется как `not-implemented`. CP-1.1 не создаёт граф prerequisite edges, не пишет учебные события и не пересчитывает mastery.
-
-Для будущей ВКР важна стабильная identity chain:
+CP-1.1 создаёт стабильные join keys:
 
 ```text
-courseId → moduleId → topicId → skillId → exerciseId/practiceId/projectId
+courseId → moduleId → topicId → skillId? → exerciseId / practiceId / projectId
 ```
 
-Она позволит позднее связывать учебные события с навыками без переименования существующего C++ content.
+Знак `?` принципиален: skill mapping может быть `pending-cp3` и не подделывается ради полноты.
 
-## Проверка
+Будущий Learning Event сможет ссылаться на эти identifiers без хранения полного текста урока или исходного кода в event payload. Skill Graph edges, event collection и Mastery Model в CP-1.1 имеют статус `not-implemented`.
 
-Основной gate:
+## Validation gates
 
 ```bash
 node tools/validate-content.mjs
 node --test tests/content-contract.test.mjs
 ```
 
-Дополнительно CI запускает C++ benchmark, Lesson Standard, Academy/programming catalog, shared learning views, Code/Project Studio и Offline/PWA regressions.
+Semantic validator дополнительно проверяет production C++ IDs, legacy indexes, broken refs, orphan skills, progress/localStorage keys, Academy route и отсутствие runtime consumption CP-1.1.

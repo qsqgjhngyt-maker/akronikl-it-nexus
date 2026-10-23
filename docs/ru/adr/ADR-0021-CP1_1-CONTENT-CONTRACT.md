@@ -4,37 +4,42 @@
 
 ## Context
 
-На Alpha10.3.1 уже существует рабочий `courses/cpp`, стабильный прогресс, Academy, Code Studio, Project Studio и Offline-First. Старый план отдельного `content/courses` создавал риск двух источников истины.
+На Alpha10.3.1 уже существуют рабочие `courses/cpp`, Academy, Code Studio, Project Studio, стабильный local progress и Offline-First. Нужен единый Content Foundation без миграции рабочего курса и без преждевременного Skill Graph.
 
 ## Decision
 
 1. `courses/` остаётся canonical production root для course packages.
-2. `content/schemas/` хранит формальные versioned schemas.
-3. Каждый курс может добавить `content-package.json` как contract index.
-4. CP-1.1 не изменяет runtime consumption.
-5. Stable IDs обязательны.
-6. Skill Graph / Learning Events / Mastery не считаются реализованными.
+2. `content/schemas/` хранит общие versioned schemas.
+3. Курс добавляет `content-package.json` как contract index, не копируя учебные payloads.
+4. Общая schema course-generic: тип активности — stable `activityType`, а C++ invariants находятся в semantic validator.
+5. Stable IDs обязательны для Course/Module/Topic/Skill/Exercise/Practice/Project.
+6. Skill identities берутся только из уже существующих явно объявленных benchmark mappings; правило `Topic = Skill` запрещено.
+7. Неполный mapping фиксируется явно как `pending-cp3`.
+8. Skill Graph edges, Learning Events и Mastery остаются `not-implemented`.
+9. CP-1.1 не подключается к runtime до отдельного integration milestone.
 
 ## Alternatives
 
-### Полная миграция courses/ → content/courses/
+### Миграция courses/ → content/courses/
 
-Отклонена: риск progress/offline/runtime regression и ненужная миграция рабочего C++.
+Отклонена: риск progress/offline/runtime regression и второй источник истины.
 
-### Дублирование данных
+### Один synthetic Skill на Topic
 
-Отклонено: создаёт две версии истины.
+Отклонено после self-review: тема может обучать нескольким навыкам, а benchmark content уже это доказывает.
 
-### Немедленное подключение contract к runtime
+### Немедленное заполнение полного Skill Graph
 
-Отложено: сначала schema/validator/regression evidence.
+Отклонено: это scope CP-3; без методического mapping это создало бы ложные данные для будущей ML-оценки.
 
-## Consequences
+### C++-specific JSON Schema
 
-Плюсы: additive-only, стабильные IDs, машинная валидация, безопасная подготовка Skill/Learning layers.
+Отклонено после первого automated PASS: schema обязана валидировать будущие графические/симуляционные курсы; C++-специфичные правила вынесены в semantic validator.
 
-Минус: до отдельного integration milestone contract index остаётся metadata-only.
+## Compatibility / rollback
+
+Изменения additive-only. Existing runtime files не изменяются. Rollback — удалить новые CP-1.1 files/branch; пользовательский прогресс и production runtime не затрагиваются.
 
 ## Security / Cloud impact
 
-Нет изменений Identity, OAuth, Cloud Sync, Worker/D1 и credential flows.
+Нет изменений Identity, OAuth, sessions, Cloud Sync, Worker/D1 или credential flows.
