@@ -15,3 +15,12 @@
 - `.github/workflows/cp11-content-contract.yml`.
 
 Не изменены production runtime/data contracts: C++ content payloads, progress/localStorage, Code Studio, Project Studio, PWA/service worker, Identity, Cloud Sync.
+
+
+## Failed experiment / regression gate
+
+Первый CI run `39895851099` остановился на legacy `tools/verify-v011.mjs`: скрипт требовал удалённый ранее `id="boot-status"`.
+Проверка исходного Alpha10.3.1 SHA `0f71bb9f8752a34040ccb007acb2efcb89d8e36a` подтвердила, что `index.html` уже не содержит этот marker.
+CP-1.1 schema/semantic validation и 4 contract tests в этом run прошли PASS.
+
+Решение: CP-1.1 gate использует актуальный `tests/production-entry-syntax-check.mjs` вместо устаревшего v0.1.1 probe. Production-файл `tools/verify-v011.mjs` не изменяется.
