@@ -13,6 +13,11 @@ const legacySource=path.resolve(process.env.NEXUS_LEGACY_SOURCE||path.resolve(ro
 await mkdir(out,{recursive:false});
 const profile=await mkdtemp(path.join(tmpdir(),'nx-closure-')),checks=[],requests=[],failures=[],workerErrors=[];
 const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),generation=manifest.assetGeneration;
+const interruptedRecord=manifest.files.find(r=>r.file.endsWith('/core/app.js'));
+const markdownRecord=manifest.files.find(r=>r.file.endsWith('.md'));
+// Новый SHA моделирует действительно новые bytes обновления: уже проверенный
+// объект прежнего поколения закономерно не требует повторного HTTP-запроса.
+const uncached=(body,record)=>body.replaceAll('sha256: "'+record.sha256+'"','sha256: "'+'0'.repeat(64)+'"');
 const safeSW=await readFile(path.join(frontend,'service-worker.js'),'utf8');
 const legacySW=await readFile(path.join(legacySource,'service-worker.js'),'utf8');
 let mode='legacy',badAsset=null,context,server,transportOffline=false,runtimeOffline=false;
@@ -26,7 +31,7 @@ server=http.createServer(async(req,res)=>{
   if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);return res.end()}
   if(url.pathname==='/service-worker.js'){
    const changed=id=>safeSW.replace('generation: "'+generation+'"','generation: "'+id+'"');
-   const body=mode==='legacy'?legacySW:mode==='update2'?changed(generation+'-update2'):mode==='broken'?changed(generation+'-interrupted'):mode==='mime-broken'?changed(generation+'-mime-rejected').replaceAll('mime: \"text/markdown\"','mime: \"text/html\"'):safeSW;
+   const body=mode==='legacy'?legacySW:mode==='update2'?changed(generation+'-update2'):mode==='broken'?uncached(changed(generation+'-interrupted'),interruptedRecord):mode==='mime-broken'?uncached(changed(generation+'-mime-rejected'),markdownRecord).replaceAll('mime: \"text/markdown\"','mime: \"text/html\"'):safeSW;
    res.writeHead(200,{'content-type':'text/javascript','cache-control':'no-store','service-worker-allowed':'/'});return res.end(body);
   }
   if(url.pathname.startsWith('/api/')||url.pathname==='/nexus-shell.html'){

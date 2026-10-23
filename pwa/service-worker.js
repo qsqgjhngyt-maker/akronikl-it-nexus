@@ -1,4 +1,5 @@
 import {createAssetStore} from './durable-store.js';
+import {stagePublicGeneration} from './public-install.js';
 import {publicRecord,verifyResponse,assetResponse,failure} from './policy.js';
 import {RUNTIME_GRAPH_ID,RUNTIME_RESOURCES} from './runtime-manifest.js';
 const config=__NEXUS_PWA_CONFIG__,store=createAssetStore(),origin=self.location.origin;
@@ -7,15 +8,18 @@ const publicAssets=config.assets.map(r=>({...r,url:new URL(r.url,self.registrati
 let publicCheck;
 const checkPublic=()=>publicCheck??=(store.ready(config.generation,publicAssets).finally(()=>{publicCheck=null}));
 const resolveURL=record=>new URL(record.url,origin).href;
-async function acquire(record){
- const response=await fetch(resolveURL(record),{credentials:'omit',mode:'cors',cache:'no-store',redirect:'error',signal:AbortSignal.timeout(240000)});
- return verifyResponse(record,response);
+async function acquire(record,{signal}={}){
+ const controller=new AbortController(),abort=()=>controller.abort(signal.reason);
+ if(signal?.aborted)abort();else signal?.addEventListener('abort',abort,{once:true});
+ const timer=setTimeout(()=>controller.abort(new DOMException('Public resource timeout','TimeoutError')),240000);
+ try{
+  const response=await fetch(resolveURL(record),{credentials:'omit',mode:'cors',cache:'no-store',redirect:'error',signal:controller.signal});
+  return await verifyResponse(record,response);
+ }finally{clearTimeout(timer);signal?.removeEventListener('abort',abort)}
 }
 self.addEventListener('install',event=>event.waitUntil((async()=>{
- const buffers=new Map();
- // No control record is published until the complete public generation commits.
- for(const record of publicAssets)buffers.set(record.url,await acquire(record));
- await store.stage(config.generation,publicAssets,buffers);await self.skipWaiting();
+ await stagePublicGeneration({generation:config.generation,records:publicAssets,store,acquire});
+ await self.skipWaiting();
 })()));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
  if(!await store.ready(config.generation,publicAssets))throw failure('PUBLIC_GENERATION_INCOMPLETE');
