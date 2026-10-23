@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {bindBlogMedia,createBlogMediaLoader} from '../core/blog-layout.js';
+import {bindBlogMedia,createBlogMediaLoader,validateBlogLayout} from '../core/blog-layout.js';
 
 const deferred=()=>{let resolve;const promise=new Promise(yes=>{resolve=yes});return{promise,resolve}};
 const photo=(label='synthetic editor photo')=>{
@@ -17,6 +17,54 @@ const imageRoot=ids=>{
   });
   return{images,isConnected:true,querySelectorAll:()=>images};
 };
+
+test('Все пять публичных фото начинают GET до первого ответа и без прокрутки',async()=>{
+  const photos=Array.from({length:5},(_,i)=>photo('public eager photo '+i)),byId=new Map(photos.map(p=>[p.id,p])),gate=deferred();
+  const root=imageRoot(photos.map(p=>p.id));root.images[0].dataset.blogPriority='high';
+  const previous=Object.getOwnPropertyDescriptor(globalThis,'IntersectionObserver');
+  // Дальние изображения ни разу не пересекают viewport.
+  globalThis.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};
+  let requests=0,pending;
+  try{
+    pending=bindBlogMedia(root,{fetchImpl:async(path,options)=>{
+      requests++;assert.equal(options.credentials,'omit');assert.equal(options.cache,'no-store');
+      await gate.promise;return Response.json(byId.get(path.split('=')[1]).dto);
+    }});
+    assert.equal(requests,5,'Every photo in the current public view must start before any response');
+    gate.resolve();await pending;
+    for(const img of root.images)assert.equal(img.src,byId.get(img.dataset.blogMedia).src);
+  }finally{
+    gate.resolve();await pending;
+    if(previous)Object.defineProperty(globalThis,'IntersectionObserver',previous);else delete globalThis.IntersectionObserver;
+  }
+});
+
+test('Лимит публичной статьи включает обложку: 20 фото допустимы, 21 отклоняется',()=>{
+  const image={mediaId:photo().id,alt:'Фото',caption:'',focusX:50,focusY:50};
+  const layout=count=>({schemaVersion:1,cover:image,blocks:Array.from({length:count-1},(_,i)=>({
+    id:'00000000-0000-4000-8000-'+String(i).padStart(12,'0'),kind:'image',text:'',width:100,align:'left',ratio:'auto',columns:1,surface:'plain',images:[image]
+  }))});
+  assert.equal(validateBlogLayout(layout(20)).blocks.length,19);
+  assert.throws(()=>validateBlogLayout(layout(21)),{code:'INVALID_INPUT'});
+});
+
+test('Отмена публичного scope закрывает активные GET и очередь без позднего восстановления bytes',async()=>{
+  const photos=Array.from({length:21},(_,i)=>photo('public cancelled photo '+i)),byId=new Map(photos.map(p=>[p.id,p]));
+  const gate=deferred(),cancel=new AbortController(),signals=[],localImages=new Map();let requests=0;
+  const loader=createBlogMediaLoader({signal:cancel.signal,localImages,fetchImpl:async(path,{signal})=>{
+    requests++;signals.push(signal);await gate.promise;return Response.json(byId.get(path.split('=')[1]).dto);
+  }});
+  const pending=Promise.allSettled(photos.map(p=>loader.load(p.id)));
+  try{
+    assert.equal(requests,20,'The loader bounds reads by the maximum public view, with excess work queued');
+    cancel.abort();const settled=await pending;
+    assert.ok(settled.every(r=>r.status==='rejected'&&r.reason.name==='AbortError'));
+    assert.equal(signals.length,20);assert.ok(signals.every(signal=>signal.aborted));
+    gate.resolve();await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(requests,20,'Cancelled queued work must never start');assert.equal(localImages.size,0);
+    assert.equal(loader.peek(photos[0].id),undefined);await assert.rejects(loader.load(photos[0].id),{name:'AbortError'});
+  }finally{cancel.abort();gate.resolve();await pending}
+});
 
 test('Повторно проверенное фото снимает aria-busy без сетевого запроса', async () => {
   const bytes = Buffer.from('NEXUS verified public image fixture');
