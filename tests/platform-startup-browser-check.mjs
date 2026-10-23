@@ -61,6 +61,7 @@ async function session({width=1366}={}){
    if(url.pathname==='/api/v2/account')body=account;
    else if(url.pathname==='/api/v2/account/profile')body={...account.account,username:null,avatar:null,avatarVersion:0};
    else if(url.pathname==='/api/v2/account/oauth/providers')body={providers:[]};
+   else if(url.pathname==='/api/v2/account/control/capabilities')body={canManage:false,canModerate:false,canPurge:false,freshPasskey:false};
    else if(url.pathname==='/api/v2/content/feed')body={posts:url.searchParams.has('slug')?[post]:[{...post,body:undefined}],home:{}};
    else if(url.pathname==='/api/v2/feedback/reviews')body={reviews:[],ratings:0,average:0,total:0};
    else{status=403;body={error:{code:'SYNTHETIC_DENIED'}}}

@@ -1,0 +1,224 @@
+name: Alpha10.4.2 — Администрирование, роли и безопасное обновление
+on:
+  push:
+    branches:
+      - hotfix/alpha10-4-2-admin-nav-20261023
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integrated-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      NODE_ENV: test
+      LC_ALL: C.UTF-8
+    steps:
+      - name: Получить точные исходники feature-ветки
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Получить точную предыдущую генерацию без затрагивания current
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 2e806214f71cacc70ba73300cf35603e4028c039
+          path: .qa-old-source
+          persist-credentials: false
+      - name: Получить точные bytes установленной Alpha10.4 для проверки её профилей
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 863915e2184ca221a4acecc07dec898c82a5241f
+          path: .qa-alpha10-4-source
+          persist-credentials: false
+      - name: Проверить runtime Node.js
+        run: |
+          node --version
+          npm --version
+          git rev-parse HEAD
+      - name: Установить закреплённые зависимости только для проверки
+        run: npm ci --prefix server-access --no-audit --no-fund
+      - name: Проверить frontend, авторизацию и сохранность данных
+        run: |
+          set -euo pipefail
+          node --test tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/platform-lazy-imports.test.mjs tests/blog-media-perf-guard.test.mjs
+          node tests/shared-learning-views-check.mjs
+          node tests/auth-bootstrap-check.mjs
+          node tests/session-only-resume-check.mjs
+          node tests/account-storage-isolation-check.mjs
+          node tests/first-party-cookie-client-check.mjs
+          node tests/account-control-transport-check.mjs
+          node tests/entry-document-navigation-check.mjs
+          node tests/oauth-link-client-check.mjs
+          node tests/pwa-controller-check.mjs
+          node tests/pwa-policy-check.mjs
+          node tests/pwa-public-install-check.mjs
+      - name: Проверить Блог, CMS, Академию, Studio и Cloud Sync
+        run: |
+          set -euo pipefail
+          node tests/blog-layout-security-check.mjs
+          node tests/blog-presentation-security-check.mjs
+          node tests/blog-legacy-compat-check.mjs
+          node tests/public-content-check.mjs
+          node tests/benchmark-content-check.mjs
+          node tests/code-studio-foundation-check.mjs
+          node tests/project-studio-foundation-check.mjs
+          node tests/cloud-sync-client-transport-check.mjs
+          node tests/cloud-unified-client-check.mjs
+          node --test tests/content-contract.test.mjs
+      - name: Официальная сборка неизменённым производственным сборщиком
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/nexus-alpha10-4-2-evidence"
+          node tools/build-ui1a-release.mjs --out "$RUNNER_TEMP/nexus-alpha10-4-2-public" | tee "$RUNNER_TEMP/nexus-alpha10-4-2-evidence/build.log"
+          node tests/ui1a-versioned-build-check.mjs | tee "$RUNNER_TEMP/nexus-alpha10-4-2-evidence/repro.log"
+      - name: Установить закреплённый Playwright для изолированных браузерных проверок
+        run: |
+          set -euo pipefail
+          npm ci --prefix tools/qa-browser-driver --no-audit --no-fund
+          test -x /usr/bin/google-chrome
+      - name: Подготовить побайтовый rollback build от прежнего main
+        run: |
+          set -euo pipefail
+          node tools/snapshot-published-build.mjs --source .qa-old-source --out "$RUNNER_TEMP/nexus-alpha10-4-2-rollback" --expected-commit 2e806214f71cacc70ba73300cf35603e4028c039
+      - name: Подготовить точный снимок установленной Alpha10.4 без пересборки
+        run: node tools/snapshot-published-build.mjs --source .qa-alpha10-4-source --out "$RUNNER_TEMP/nexus-alpha10-4-2-installed-10-4" --expected-commit 863915e2184ca221a4acecc07dec898c82a5241f
+      - name: Chromium — настоящий вход, Главная, Академия и холодные переходы меню
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
+          NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-alpha10-4-2-evidence/browser-startup
+        run: node tests/platform-startup-browser-check.mjs
+      - name: Chromium — Администрирование после холодного входа и проверка ролей
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
+          NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-alpha10-4-2-evidence/browser-admin
+        run: node tests/platform-admin-browser-check.mjs
+      - name: Chromium — реальная установка PWA и отзыв приватного кеша
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
+          NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-alpha10-4-2-evidence/browser-public-install
+        run: node tests/pwa-public-install-browser-check.mjs
+      - name: Chromium — обновление, обратный откат и сохранность данных
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
+          NEXUS_ROLLBACK_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-rollback
+          NEXUS_BROWSER_RESULT: ${{ runner.temp }}/nexus-alpha10-4-2-evidence/BROWSER_ROLLBACK.json
+        run: node tests/pwa-rollback-browser-check.mjs
+      - name: Chromium — сохранность профиля ранее установленной Alpha10.4 при обновлении
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
+          NEXUS_ROLLBACK_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-installed-10-4
+          NEXUS_BROWSER_RESULT: ${{ runner.temp }}/nexus-alpha10-4-2-evidence/BROWSER_FROM_ALPHA10_4.json
+        run: node tests/pwa-rollback-browser-check.mjs
+      - name: Chromium — Auth, HttpOnly Cookie и возврат пользователя
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
+          NEXUS_BROWSER_RESULT: ${{ runner.temp }}/nexus-alpha10-4-2-evidence/BROWSER_AUTH.json
+        run: node tests/auth-browser-local-check.mjs
+      - name: Chromium — Блог, редактор CMS, публикация и защита фотографий
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
+          NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-alpha10-4-2-evidence/browser-blog-cms
+        run: node tests/blog-layout-browser-check.mjs
+      - name: Chromium — одна загрузка фото для обложки, макета и списка
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
+          NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-alpha10-4-2-evidence/browser-media-editor
+        run: node tests/blog-media-editor-browser-check.mjs
+      - name: Независимая проверка integrity, PWA ID и старой генерации
+        env:
+          BUILD_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
+          QA_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-evidence
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,hashlib,os,pathlib
+          out=pathlib.Path(os.environ['BUILD_DIR']);qa=pathlib.Path(os.environ['QA_DIR'])
+          manifest=json.loads((out/'BUILD_MANIFEST.json').read_text())
+          expected='ui1a-alpha10-4-2-admin-nav-20261023'
+          assert manifest['assetGeneration']==expected
+          assert manifest['version']=='0.1.7-alpha.2.4.6-ui1a.10.4.2'
+          assert manifest['verifiedWorkerIncluded'] is True and manifest['legacyWorkerIncluded'] is False
+          assert manifest['publicAuthority'].startswith('EXACT PUBLIC STATIC')
+          assert manifest['manifestIdentity']==json.loads(pathlib.Path('manifest.webmanifest').read_text())
+          import re
+          shell=(out/'nexus-shell.html').read_text()
+          landing=(out/'index.html').read_text()
+          assert all(v==manifest['version'] for v in re.findall(r'[?&]v=([^\"\'<>\s]+)',shell)), 'Stale shell query version'
+          assert f"releases/{expected}/core/bootstrap.js?v={manifest['version']}" in shell
+          assert f"entry-assets/{expected}/entry.js" in landing and f"entry-assets/{expected}/entry.css" in landing
+          app=(out/f'releases/{expected}/core/app.js').read_text()
+          assert f"PROJECT_STUDIO_VERSION='{manifest['version']}'" in app, 'Stale dynamic import version'
+          assert (out/'service-worker.js').exists()
+          assert expected in (out/'service-worker.js').read_text()
+          old='releases/ui1a-alpha10-public-install-20261023/core/bootstrap.js'
+          assert any(x['file']==old for x in manifest['files']), 'Existing installed PWA generation lost'
+          assert any(x['file']==f'releases/{expected}/core/bootstrap.js' for x in manifest['files'])
+          items=[]
+          for obj in manifest['files']:
+            f=out/obj['file'];b=f.read_bytes()
+            assert len(b)==obj['bytes'],obj['file']
+            assert hashlib.sha256(b).hexdigest()==obj['sha256'],obj['file']
+            # GitHub Pages publishes the repository root directly. A successful
+            # out-of-tree build alone must not authorize a source-only release.
+            published=pathlib.Path(obj['file'])
+            assert published.is_file(), 'Publication file missing: '+obj['file']
+            assert published.read_bytes()==b, 'Publication bytes differ: '+obj['file']
+            items.append(obj['file'])
+          assert len(items)==len(set(items))
+          assert pathlib.Path('BUILD_MANIFEST.json').read_bytes()==(out/'BUILD_MANIFEST.json').read_bytes()
+          for generation in json.loads(pathlib.Path('release-candidate.json').read_text())['retainedPublicGenerations']:
+            for folder in ['releases','entry-assets']:
+              historical=pathlib.Path('.qa-old-source')/folder/generation
+              current=pathlib.Path(folder)/generation
+              assert sorted(p.relative_to(historical) for p in historical.rglob('*') if p.is_file())==sorted(p.relative_to(current) for p in current.rglob('*') if p.is_file())
+              for p in historical.rglob('*'):
+                if p.is_file(): assert p.read_bytes()==(current/p.relative_to(historical)).read_bytes(), str(p)
+          assert not any('/api/v2/' in p or 'server-access/' in p for p in items), 'Private/API asset in public generation'
+          status={'version':manifest['version'],'assetGeneration':expected,'files_verified':len(items),'pwa_id_stable':True,'old_generation_retained':True,'old_generations_byte_exact':True,'publication_tree_byte_exact':True,'public_integrity':'PASS','releaseGate':'AUTOMATED CHECKS ONLY; PUBLICATION AUTHORITY IS EXTERNAL TO THIS MANIFEST'}
+          (qa/'VERIFICATION.json').write_text(json.dumps(status,indent=2,ensure_ascii=False)+'\n')
+          print(json.dumps(status,ensure_ascii=False))
+          PY
+      - name: Упаковать официальный build в артефакт без секретов
+        env:
+          BUILD_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
+          ROLLBACK_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-rollback
+          QA_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-evidence
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,shutil,pathlib
+          path=pathlib.Path(os.environ['BUILD_DIR'])
+          qa=pathlib.Path(os.environ['QA_DIR'])
+          out=qa/'ALPHA10_4_2_OFFICIAL_BUILD.zip'
+          shutil.make_archive(str(out.with_suffix('')),'zip',root_dir=path)
+          print('Official build ZIP bytes:',out.stat().st_size)
+          rollback=qa/'ALPHA10_4_1_SHIPPED_ROLLBACK.zip'
+          shutil.make_archive(str(rollback.with_suffix('')),'zip',root_dir=os.environ['ROLLBACK_DIR'])
+          print('Exact shipped rollback ZIP bytes:',rollback.stat().st_size)
+          PY
+          sha256sum "$QA_DIR/ALPHA10_4_2_OFFICIAL_BUILD.zip" > "$QA_DIR/ALPHA10_4_2_OFFICIAL_BUILD.zip.sha256"
+          sha256sum "$QA_DIR/ALPHA10_4_1_SHIPPED_ROLLBACK.zip" > "$QA_DIR/ALPHA10_4_1_SHIPPED_ROLLBACK.zip.sha256"
+      - name: Сохранить независимые доказательства без развёртывания
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nexus-alpha10-4-2-integration-${{ github.sha }}
+          path: ${{ runner.temp }}/nexus-alpha10-4-2-evidence/
+          if-no-files-found: warn
+          retention-days: 7
