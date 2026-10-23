@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
-      QA_DIR: ${{ runner.temp }}/nexus-blog-media-transport
       IMAGE_NAME: nexus-access-bff:${{ github.sha }}
     steps:
       - name: Получить точные исходники кандидата
@@ -21,6 +20,8 @@ jobs:
       - name: Установить закреплённые зависимости и проверить воспроизводимость BFF
         run: |
           set -euo pipefail
+          export QA_DIR="$RUNNER_TEMP/nexus-blog-media-transport"
+          printf 'QA_DIR=%s\n' "$QA_DIR" >> "$GITHUB_ENV"
           mkdir -p "$QA_DIR"
           npm ci --prefix server-access --no-audit --no-fund
           node server-access/build-bff.mjs
