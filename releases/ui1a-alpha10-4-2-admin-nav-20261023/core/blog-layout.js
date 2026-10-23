@@ -50,6 +50,9 @@ export function blogLayoutMarkup(value){const v=validateBlogLayout(value);return
 // список и макет редактора делят проверенные bytes, очередь и in-flight запросы.
 // Между аккаунтами/редакторами кеш не переносится; Cache API не используется.
 export function createBlogMediaLoader({fetchImpl=globalThis.fetch,privateRead=false,isCurrent=()=>true,localImages=new Map(),signal}={}){
+ // Публичная статья/лента допускает до 20 фото: начинаем весь текущий показ
+ // сразу, как в 10.3.1. Общая очередь живого редактора сохраняет предел 3.
+ const concurrency=privateRead?3:20;
  const jobs=new Map(),queue=[],controller=new AbortController();let running=0,disposed=false;
  const cancelled=()=>Object.assign(Error('Запрос отменён'),{name:'AbortError'});
  const live=()=>{if(disposed||controller.signal.aborted)return false;if(!isCurrent()){dispose();return false}return true};
@@ -77,7 +80,7 @@ export function createBlogMediaLoader({fetchImpl=globalThis.fetch,privateRead=fa
   if(hash!==id)throw Error('Контрольная сумма фото не совпала');
   return 'data:image/jpeg;base64,'+m.data;
  };
- const pump=()=>{while(running<3&&queue.length){if(!live()){dispose();return}const item=queue.shift();
+ const pump=()=>{while(running<concurrency&&queue.length){if(!live()){dispose();return}const item=queue.shift();
   running++;void read(item.id).then(src=>{
    if(!live()){dispose();return}
    localImages.set(item.id,src);jobs.delete(item.id);item.resolve(src);
@@ -101,7 +104,7 @@ export async function bindBlogMedia(root,{fetchImpl=globalThis.fetch,privateRead
  const images=[...root.querySelectorAll('[data-blog-media]')];if(!images.length)return;
  const viewCurrent=()=>!signal?.aborted&&root.isConnected&&isCurrent();
  const loader=mediaLoader||createBlogMediaLoader({fetchImpl,privateRead,isCurrent:viewCurrent,localImages,signal});
- const live=()=>viewCurrent()&&loader.isActive();let observer=null;
+ const live=()=>viewCurrent()&&loader.isActive();
  const clearRetry=img=>{img.classList.remove('blog-media-unavailable');img.parentElement?.querySelector('[data-blog-media-retry]')?.remove();img.closest('.blog-card')?.querySelector('.blog-card-copy [data-blog-media-retry]')?.remove();};
  const retry=img=>{
   if(!live()||!img.isConnected)return;
@@ -117,6 +120,8 @@ export async function bindBlogMedia(root,{fetchImpl=globalThis.fetch,privateRead
  const show=img=>{
   if(!live()||!img.isConnected)return Promise.resolve();
   const id=img.dataset.blogMedia;if(!/^[a-f0-9]{64}$/.test(id))return Promise.resolve();
+  // Нативная lazy-загрузка также не должна откладывать готовый JPEG до scroll.
+  if(!privateRead)img.loading='eager';
   const cached=loader.peek(id);if(cached!==undefined){clearRetry(img);img.src=cached;img.removeAttribute('aria-busy');return Promise.resolve()}
   img.setAttribute('aria-busy','true');
   return loader.load(id).then(src=>{if(live()&&img.isConnected){
@@ -125,14 +130,5 @@ export async function bindBlogMedia(root,{fetchImpl=globalThis.fetch,privateRead
     if(other===img||other.classList.contains('blog-media-unavailable')){clearRetry(other);other.src=src;other.removeAttribute('aria-busy')}}
   }},()=>{if(live()&&img.isConnected)retry(img)});
  };
- if(!privateRead&&typeof globalThis.IntersectionObserver==='function'){
-  observer=new IntersectionObserver(entries=>{for(const entry of entries){if(!entry.isIntersecting)continue;observer.unobserve(entry.target);void show(entry.target)}},{rootMargin:'240px 0px'});
- }
- const immediate=[];
- for(const img of images){const id=img.dataset.blogMedia;if(!/^[a-f0-9]{64}$/.test(id))continue;
-  if(loader.peek(id)!==undefined||img.dataset.blogPriority==='high'||!observer)immediate.push(show(img));
-  else observer.observe(img);
- }
- signal?.addEventListener('abort',()=>observer?.disconnect(),{once:true});
- await Promise.allSettled(immediate);
+ await Promise.allSettled(images.map(show));
 }

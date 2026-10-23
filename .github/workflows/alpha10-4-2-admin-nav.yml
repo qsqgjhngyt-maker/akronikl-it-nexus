@@ -1,4 +1,4 @@
-name: Alpha10.4.2 — Администрирование, роли и безопасное обновление
+name: Alpha10.4.2 — Администрирование, фотографии и безопасное обновление
 on:
   push:
     branches:
@@ -140,6 +140,13 @@ jobs:
           NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
           NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-alpha10-4-2-evidence/browser-media-editor
         run: node tests/blog-media-editor-browser-check.mjs
+      - name: Chromium — фотографии статьи загружаются до прокрутки, как в 10.3.1
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_FRONTEND_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
+          NEXUS_NATIVE_EVIDENCE: ${{ runner.temp }}/nexus-alpha10-4-2-evidence/browser-public-media
+        run: node tests/blog-media-public-browser-check.mjs
       - name: Независимая проверка integrity, PWA ID и старой генерации
         env:
           BUILD_DIR: ${{ runner.temp }}/nexus-alpha10-4-2-public
