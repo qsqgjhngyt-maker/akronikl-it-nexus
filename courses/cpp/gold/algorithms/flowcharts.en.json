@@ -71,13 +71,26 @@
         "A diagram's labels must match the conditions in the executable code. On small screens, the same transitions need an accessible textual explanation.",
         "An interactive diagram is still a model rather than a compiler result. Compare it against actual outputs in Code Studio."
       ]
+    },
+    {
+      "title": "Two tariffs, two distinct contracts",
+      "paragraphs": [
+        "The interactive model uses an order-amount threshold; the laboratory uses distance. Do not carry x≥1000 into the kilometre program. Distances 1..5 cost 100, 6 costs 120, and 8 costs 160. The laboratory flow is input → valid distance? → distance>5? → extra charge → output. Label both yes and no exits at each decision."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "The laboratory accepts distance from 1 to 1000000; other values produce invalid.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
     }
   ],
   "workedExamples": [
     {
       "title": "Free shipping threshold",
       "purpose": "A validation gate followed by a boundary condition.",
-      "code": "#include <iostream>\nint main() {\n    int total;\n    std::cin >> total;\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
+      "code": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
       "stdin": "1000\n",
       "expectedStdout": "free\n",
       "steps": [
@@ -90,7 +103,7 @@
     {
       "title": "Examination score",
       "purpose": "Reject invalid scores before deciding pass/fail.",
-      "code": "#include <iostream>\nint main() {\n    int score;\n    std::cin >> score;\n    if (score < 0 || score > 100) std::cout << \"invalid\\n\";\n    else if (score >= 60) std::cout << \"pass\\n\";\n    else std::cout << \"retry\\n\";\n}",
+      "code": "#include <iostream>\nint main() {\n    int score;\n    if (!(std::cin >> score)) { std::cout << \"invalid\\n\"; return 0; }\n    if (score < 0 || score > 100) std::cout << \"invalid\\n\";\n    else if (score >= 60) std::cout << \"pass\\n\";\n    else std::cout << \"retry\\n\";\n}",
       "stdin": "60\n",
       "expectedStdout": "pass\n",
       "steps": [
@@ -149,9 +162,9 @@
   ],
   "laboratory": {
     "title": "Lab: a delivery fare flowchart",
-    "challenge": "Read whole kilometers. For distance<=0, print invalid. First five kilometers cost 100; every subsequent kilometer adds 20.",
+    "challenge": "Read whole kilometers. For distance<=0, print invalid. First five kilometers cost 100; every subsequent kilometer adds 20. The laboratory accepts distance from 1 to 1000000; other values produce invalid.",
     "starterCode": "// Validate distance>0; implement the threshold and fare.\n",
-    "referenceCode": "#include <iostream>\nint main() {\n    int distance;\n    std::cin >> distance;\n    if (distance <= 0) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+    "referenceCode": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
     "cases": [
       {
         "stdin": "0\n",
@@ -164,6 +177,30 @@
       {
         "stdin": "8\n",
         "stdout": "160\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1\n",
+        "stdout": "100\n"
+      },
+      {
+        "stdin": "6\n",
+        "stdout": "120\n"
+      },
+      {
+        "stdin": "1000000\n",
+        "stdout": "20000000\n"
+      },
+      {
+        "stdin": "1000001\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
       }
     ],
     "steps": [
@@ -195,21 +232,21 @@
     {
       "question": "What does testing 999 and 1000 reveal?",
       "answers": [
-        "An inclusive/exclusive boundary defect",
         "A linker error",
+        "An inclusive/exclusive boundary defect",
         "A memory leak"
       ],
-      "correctIndex": 0,
+      "correctIndex": 1,
       "explanation": "It distinguishes > from >=."
     },
     {
       "question": "What happens with a negative order total?",
       "answers": [
         "Calculate delivery price",
-        "Reject it before price checks",
-        "Print free"
+        "Print free",
+        "Reject it before price checks"
       ],
-      "correctIndex": 1,
+      "correctIndex": 2,
       "explanation": "Input validation precedes the threshold decision."
     }
   ],

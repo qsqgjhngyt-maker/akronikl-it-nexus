@@ -25,7 +25,7 @@ import {bindNexusShell} from '../core/nexus-shell.js';
 import {configureNexusAppearance,bindNexusAppearance} from '../effects/nexus-appearance.js';
 import {startParticleField,updateParticleQuality} from '../effects/particles.js';
 import {bindNexusStudioUi} from '../core/nexus-studio-ui.js';
-import {getCppCourse,getCatalog,getProgrammingLanguages} from '../core/course-registry.js';
+import {getCppCourse,getCatalog,getProgrammingLanguages,prepareCppGoldLesson} from '../core/course-registry.js';
 import {codeStudioMarkup,bindCodeStudio} from '../sandbox/code-studio.js';
 import {wasmRuntimeProvider} from '../sandbox/providers/wasm-runtime.js';
 import {createVaultStore} from './local-vault.js';
@@ -68,7 +68,7 @@ document.querySelector('.side-nav').addEventListener('click',closeMobile);
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=v=>structuredClone(v),label=v=>typeof v==='string'?v:v?.ru||v?.en||'';
-let session=null,data=null,course=null,catalog=null,programming=null,studio=null,graphics=null,queue=Promise.resolve(),pending=0,saveFailed=false,renderSequence=0,cppLearningFilter='topics',locale=prefs.courseLocale;
+let goldPresentation=null,session=null,data=null,course=null,catalog=null,programming=null,studio=null,graphics=null,queue=Promise.resolve(),pending=0,saveFailed=false,renderSequence=0,cppLearningFilter='topics',locale=prefs.courseLocale;
 function save(){
  if(!session)return Promise.reject(Error('Откройте локальную копию.'));
  pending++;saveFailed=false;saved.textContent='Сохраняем изменения на устройстве…';
@@ -94,7 +94,7 @@ async function unlockView(){
 }
 function views(){
  const state=()=>data?.state||{courses:{},skills:{}},lessons=()=>state().courses?.cpp?.lessons||{},resume=createLearningResume({storage:{getItem:()=>JSON.stringify(data?.state.localResume||null)},principal:()=>data?.owner.accountId||'public-offline'});
- return createLearningViews({prefs,t,cpp:course,catalog,programming,cppLearningFilter,loadState:state,lessonState:id=>lessons()[id]||{},visualIcon,
+ return createLearningViews({academyGoldMarkup:goldPresentation?.academyGoldMarkup,prefs,t,cpp:course,catalog,programming,cppLearningFilter,loadState:state,lessonState:id=>lessons()[id]||{},visualIcon,
   progress:()=>{const done=Object.values(lessons()).filter(x=>x?.completed).length;return {done,total:40,pct:Math.round(done/40*100)}},
   cppContinuation:()=>resume.continuation(course,lessons()),accountHomeCardMarkup:()=>accountHomePresentation({displayName:data?.owner.displayName,avatar:data?.owner.displayName?.slice(0,1).toLocaleUpperCase(),status:data?'Копия открыта · облачный вход не подтверждён':'Личная копия закрыта'},prefs.uiLocale,{localCopy:true,locked:!data}),shell:body=>'<div class="nexus-learning" data-nexus-learning>'+body+'</div>'});
 }
@@ -161,15 +161,16 @@ async function render(){
  if(route.has('project'))return editor(data?.projects[route.get('project')]);
  if(['projects','project-studio'].includes(route.get('view')))return projectList();
  const kind=route.has('lesson')?'lesson':route.has('practicum')?'practicum':'exercise';
- const lessonId=route.get('lesson'),ru=course.lessonsRu.lessons.find(l=>l.id===lessonId);
- const item=route.has('lesson')?(locale==='en'?course.lessonsEn.lessons.find(l=>l.id===lessonId)||ru:ru):route.has('practicum')?course.practicumsRu.practicums.find(p=>p.id===route.get('practicum')):route.has('exercise')?course.projectsRu.projects.find(p=>p.id===route.get('exercise')):null;
+ const lessonId=route.get('lesson');
+ if(lessonId){const gold=await prepareCppGoldLesson(course,lessonId,locale);if(seq!==renderSequence)return;if(gold){goldPresentation??=await import('../core/academy-gold-presentation.js');await goldPresentation.ensureGoldStyles();if(seq!==renderSequence)return;}}
+ const item=route.has('lesson')?views().lessonData(lessonId):route.has('practicum')?course.practicumsRu.practicums.find(p=>p.id===route.get('practicum')):route.has('exercise')?course.projectsRu.projects.find(p=>p.id===route.get('exercise')):null;
  if(seq!==renderSequence)return;
  if(!item){root.innerHTML=lessons();bindNexusLearningUi(t);bindLearningDiscovery(t);bindReadOnlyLearning();return}
  if(kind==='exercise'){if(!needLocal())return;const p=exerciseCopy(data,kind,item);await save();return editor(p)}
  const state=data?learningState(data,kind,item.id):{},exercise=data?exerciseCopy(data,kind,item):null;
  root.innerHTML=kind==='lesson'?views().lessonView(item.id):views().practicumView(item.id);
  if(exercise)bindEditor(exercise,item.code||item.starter);else for(const node of root.querySelectorAll('#editor,#stdin,#runCode,#testRuntime,#resetCode,#completeLesson,[data-task]'))node.disabled=true;
- bindKnowledge(item,state);bindMemoryLab(item.benchmark?.interactiveMemory,locale);bindOopLab(item.benchmark?.interactiveOop,locale);
+ bindKnowledge(item,state);if(item.gold)goldPresentation.bindAcademyGold(root,item.gold);bindMemoryLab(item.benchmark?.interactiveMemory,locale);bindOopLab(item.benchmark?.interactiveOop,locale);
  const mark=root.querySelector('#completeLesson');if(mark&&data)mark.onclick=async()=>{state.completed=!state.completed;await save();await render()};
  for(const input of root.querySelectorAll('[data-task]'))input.onchange=()=>{if(!data)return;markTask(data,kind,item,Number(input.dataset.task),input.checked);void save().catch(()=>{})};
  bindNexusLearningUi(t);bindReadOnlyLearning();

@@ -75,13 +75,26 @@
         "Without advancing k, a loop guarded by k<=n may not terminate. Huge inputs can also consume time or overflow an integer.",
         "Our exercise limits n to 0..10000, where the sum fits a 32-bit int. Broader programs must choose appropriate bounds and types."
       ]
+    },
+    {
+      "title": "Zero iterations and the loop boundary",
+      "paragraphs": [
+        "In for (int k=1; k<=n; ++k), initialization happens once, the condition is checked before each iteration, and ++k runs after the body. For n=0, the condition is false immediately and the sum stays 0. For n=6, 6 is included: 2+4+6=12. Replacing <= with < loses the last item when it is even. The parity check inside the body does not replace the loop condition."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "Integer inputs must fit the Code Studio int type. Failed extraction (text instead of a number or end of input) produces invalid; no further calculation is performed.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
     }
   ],
   "workedExamples": [
     {
       "title": "Parity branch",
       "purpose": "Exercise both alternatives of a condition.",
-      "code": "#include <iostream>\nint main() {\n    int n;\n    std::cin >> n;\n    if (n % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
+      "code": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n)) { std::cout << \"invalid\\n\"; return 0; }\n    if (n % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
       "stdin": "8\n",
       "expectedStdout": "even\n",
       "steps": [
@@ -152,7 +165,7 @@
   ],
   "laboratory": {
     "title": "Lab: trace the sum of even integers",
-    "challenge": "Read an integer n from 0 to 10000 and print the sum of even values 1..n; print invalid otherwise.",
+    "challenge": "Read an integer n from 0 to 10000 and print the sum of even values 1..n; print invalid otherwise. Integer inputs must fit the Code Studio int type. Failed extraction (text instead of a number or end of input) produces invalid; no further calculation is performed.",
     "starterCode": "// Read n, check its range and accumulate even values.\n",
     "referenceCode": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
     "cases": [
@@ -170,6 +183,22 @@
       },
       {
         "stdin": "-1\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "10000\n",
+        "stdout": "25005000\n"
+      },
+      {
+        "stdin": "10001\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
         "stdout": "invalid\n"
       }
     ],
@@ -192,31 +221,31 @@
     {
       "question": "Which construct repeats operations?",
       "answers": [
-        "if",
         "for or while",
+        "if",
         "return"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "A loop repeats while its guard holds."
     },
     {
       "question": "What is the sum of even values from 1 to 5?",
       "answers": [
-        "6",
         "9",
+        "6",
         "15"
       ],
-      "correctIndex": 0,
+      "correctIndex": 1,
       "explanation": "2+4=6."
     },
     {
       "question": "How often does for(k=1;k<=0;++k) execute?",
       "answers": [
-        "Zero times",
         "Once",
-        "Forever"
+        "Forever",
+        "Zero times"
       ],
-      "correctIndex": 0,
+      "correctIndex": 2,
       "explanation": "The initial guard is false."
     }
   ],

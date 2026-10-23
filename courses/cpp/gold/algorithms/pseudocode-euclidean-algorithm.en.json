@@ -71,6 +71,19 @@
         "Read and validate inputs before the loop. We accept nonnegative values within int range, excluding (0,0). Production-grade code also needs bounds and input-failure handling.",
         "To debug, compare the full trace, not only the last output. Calculate the remainder before overwriting the previous pair."
       ]
+    },
+    {
+      "title": "Why the pair replacement preserves the GCD",
+      "paragraphs": [
+        "If a = q·b + r, every common divisor of a and b divides r = a − q·b. Conversely, a common divisor of b and r divides a. Thus the common divisors are unchanged. With b>0, 0≤r<b, so the second value strictly decreases to zero. These arguments establish answer preservation and termination separately. For (18,48), the first remainder is 18; reversed inputs still work."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "Laboratory inputs are a,b from 0 to 100000, excluding (0,0). These bounds match the interactive model.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
     }
   ],
   "workedExamples": [
@@ -90,7 +103,7 @@
     {
       "title": "Complete Euclid algorithm",
       "purpose": "A loop with explicit input validation.",
-      "code": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < 0 || b < 0 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n}",
+      "code": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n}",
       "stdin": "48 18\n",
       "expectedStdout": "6\n",
       "steps": [
@@ -149,9 +162,9 @@
   ],
   "laboratory": {
     "title": "Lab: GCD and transition count",
-    "challenge": "Read two nonnegative integers excluding (0,0). Print the GCD and number of iterations, or invalid for forbidden inputs.",
+    "challenge": "Read two nonnegative integers excluding (0,0). Print the GCD and number of iterations, or invalid for forbidden inputs. Laboratory inputs are a,b from 0 to 100000, excluding (0,0). These bounds match the interactive model.",
     "starterCode": "// Read a,b, validate the input and implement Euclid with steps.\n",
-    "referenceCode": "#include <iostream>\nint main() {\n    int a, b;\n    std::cin >> a >> b;\n    if (a < 0 || b < 0 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+    "referenceCode": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
     "cases": [
       {
         "stdin": "48 18\n",
@@ -163,6 +176,34 @@
       },
       {
         "stdin": "0 0\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 18\n",
+        "stdout": "18 1\n"
+      },
+      {
+        "stdin": "18 0\n",
+        "stdout": "18 0\n"
+      },
+      {
+        "stdin": "18 48\n",
+        "stdout": "6 4\n"
+      },
+      {
+        "stdin": "100001 1\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "-1 1\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
         "stdout": "invalid\n"
       }
     ],

@@ -71,13 +71,26 @@
         "If a total is wrong, check input validation, intermediate subtotal and discount calculation in sequence. Each boundary has observable values.",
         "For teaching we use int; professional monetary systems need explicit units, overflow policies and rounding conventions. Those are later topics in the curriculum."
       ]
+    },
+    {
+      "title": "Reading a function call",
+      "paragraphs": [
+        "bool valid(...) declares a check returning true or false. Parameters receive argument values on a call; return supplies a result to the caller. In discountPrice(subtotal(price, qty), discount), the subtotal is needed first: 100 and 3 give 300, then a 10 percent discount gives 300 − 30 = 270. This data dependency does not require compressing all work into one line. Store the subtotal in a named variable while debugging."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "Price and quantity are integers 0..1000; discount is 0..100. Round the saving down to whole units: total = subtotal − (subtotal·discount)/100. The bounds keep intermediate products within a 32-bit int.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
     }
   ],
   "workedExamples": [
     {
       "title": "Validation versus computation",
       "purpose": "valid and subtotal have distinct jobs.",
-      "code": "#include <iostream>\nbool valid(int price, int qty) {\n    return price >= 0 && qty >= 0;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint main() {\n    int price, qty;\n    std::cin >> price >> qty;\n    if (!valid(price, qty)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << subtotal(price, qty) << '\\n';\n}",
+      "code": "#include <iostream>\nbool valid(int price, int qty) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint main() {\n    int price, qty;\n    if (!(std::cin >> price >> qty)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << subtotal(price, qty) << '\\n';\n}",
       "stdin": "120 3\n",
       "expectedStdout": "360\n",
       "steps": [
@@ -90,7 +103,7 @@
     {
       "title": "Add a separate discount function",
       "purpose": "Extend behavior without changing subtotal.",
-      "code": "#include <iostream>\nbool valid(int price, int qty, int discount) {\n    return price >= 0 && qty >= 0 && discount >= 0 && discount <= 100;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint discountPrice(int amount, int percent) {\n    return amount - amount * percent / 100;\n}\nint main() {\n    int price, qty, discount;\n    std::cin >> price >> qty >> discount;\n    if (!valid(price, qty, discount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << discountPrice(subtotal(price, qty), discount) << '\\n';\n}",
+      "code": "#include <iostream>\nbool valid(int price, int qty, int discount) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000 && discount >= 0 && discount <= 100;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint discountPrice(int amount, int percent) {\n    return amount - amount * percent / 100;\n}\nint main() {\n    int price, qty, discount;\n    if (!(std::cin >> price >> qty >> discount)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty, discount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << discountPrice(subtotal(price, qty), discount) << '\\n';\n}",
       "stdin": "100 3 10\n",
       "expectedStdout": "270\n",
       "steps": [
@@ -149,9 +162,9 @@
   ],
   "laboratory": {
     "title": "Lab: modular order calculation",
-    "challenge": "Implement valid, subtotal and discountPrice as separate functions, with main responsible for input and output.",
+    "challenge": "Implement valid, subtotal and discountPrice as separate functions, with main responsible for input and output. Price and quantity are integers 0..1000; discount is 0..100. Round the saving down to whole units: total = subtotal − (subtotal·discount)/100. The bounds keep intermediate products within a 32-bit int.",
     "starterCode": "// Declare valid, subtotal, discountPrice.\n// In main, read input, validate, compute and print.\n",
-    "referenceCode": "#include <iostream>\nbool valid(int price, int qty, int discount) {\n    return price >= 0 && qty >= 0 && discount >= 0 && discount <= 100;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint discountPrice(int amount, int percent) {\n    return amount - amount * percent / 100;\n}\nint main() {\n    int price, qty, discount;\n    std::cin >> price >> qty >> discount;\n    if (!valid(price, qty, discount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << discountPrice(subtotal(price, qty), discount) << '\\n';\n}",
+    "referenceCode": "#include <iostream>\nbool valid(int price, int qty, int discount) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000 && discount >= 0 && discount <= 100;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint discountPrice(int amount, int percent) {\n    return amount - amount * percent / 100;\n}\nint main() {\n    int price, qty, discount;\n    if (!(std::cin >> price >> qty >> discount)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty, discount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << discountPrice(subtotal(price, qty), discount) << '\\n';\n}",
     "cases": [
       {
         "stdin": "100 3 10\n",
@@ -163,6 +176,26 @@
       },
       {
         "stdin": "50 2 101\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1 1\n",
+        "stdout": "1\n"
+      },
+      {
+        "stdin": "1000 1000 100\n",
+        "stdout": "0\n"
+      },
+      {
+        "stdin": "1001 1 0\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
         "stdout": "invalid\n"
       }
     ],

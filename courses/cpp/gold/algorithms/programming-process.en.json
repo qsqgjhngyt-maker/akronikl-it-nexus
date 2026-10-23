@@ -71,6 +71,20 @@
         "Clarify the problem, model the data, design an algorithm, implement it, run checks, explain results and refine. This ordering reduces random code changes.",
         "Document the accepted inputs, error policy and outputs in words another person can understand. These notes are part of an engineering deliverable."
       ]
+    },
+    {
+      "title": "Reading your first C++ program",
+      "paragraphs": [
+        "#include <iostream> makes stream declarations available. int main() is the entry point; braces enclose its body. int price = 120 creates an integer variable with an initial value. The = operator assigns a value; it does not test equality. A simple statement ends with a semicolon.",
+        "std::cin >> price >> count reads two whitespace-separated integers. std::cout << total prints the result; \\n ends the line. If the stream cannot read a number, !(std::cin >> ...) is true and the program prints invalid. The || operator means logical OR: one failed boundary condition is enough to reject the input."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "Price and quantity are integers 0..1000; discount is 0..100. Round the saving down to whole units: total = subtotal − (subtotal·discount)/100. The bounds keep intermediate products within a 32-bit int.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
     }
   ],
   "workedExamples": [
@@ -90,7 +104,7 @@
     {
       "title": "Input validation",
       "purpose": "Separate invalid data from the actual calculation.",
-      "code": "#include <iostream>\nint main() {\n    int price, count;\n    std::cin >> price >> count;\n    if (price < 0 || count < 0) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << price * count << '\\n';\n}",
+      "code": "#include <iostream>\nint main() {\n    int price, count;\n    if (!(std::cin >> price >> count)) { std::cout << \"invalid\\n\"; return 0; }\n    if (price < 0 || price > 1000 || count < 0 || count > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << price * count << '\\n';\n}",
       "stdin": "120 3\n",
       "expectedStdout": "360\n",
       "steps": [
@@ -149,9 +163,9 @@
   ],
   "laboratory": {
     "title": "Mini-project: verified order total",
-    "challenge": "Read price, quantity and an integer discount percentage (0..100). Reject invalid values with invalid.",
+    "challenge": "Read price, quantity and an integer discount percentage (0..100). Reject invalid values with invalid. Price and quantity are integers 0..1000; discount is 0..100. Round the saving down to whole units: total = subtotal − (subtotal·discount)/100. The bounds keep intermediate products within a 32-bit int.",
     "starterCode": "// Read price, amount and discount.\n// Validate the inputs, compute the discounted total.\n",
-    "referenceCode": "#include <iostream>\nint main() {\n    int price, amount, discount;\n    std::cin >> price >> amount >> discount;\n    if (price < 0 || amount < 0 || discount < 0 || discount > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int subtotal = price * amount;\n    int saving = subtotal * discount / 100;\n    std::cout << subtotal - saving << '\\n';\n}",
+    "referenceCode": "#include <iostream>\nint main() {\n    int price, amount, discount;\n    if (!(std::cin >> price >> amount >> discount)) { std::cout << \"invalid\\n\"; return 0; }\n    if (price < 0 || price > 1000 || amount < 0 || amount > 1000 || discount < 0 || discount > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int subtotal = price * amount;\n    int saving = subtotal * discount / 100;\n    std::cout << subtotal - saving << '\\n';\n}",
     "cases": [
       {
         "stdin": "100 3 10\n",
@@ -163,6 +177,30 @@
       },
       {
         "stdin": "20 2 -1\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 0 0\n",
+        "stdout": "0\n"
+      },
+      {
+        "stdin": "1 1 1\n",
+        "stdout": "1\n"
+      },
+      {
+        "stdin": "1000 1000 100\n",
+        "stdout": "0\n"
+      },
+      {
+        "stdin": "1001 1 0\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
         "stdout": "invalid\n"
       }
     ],
@@ -184,11 +222,11 @@
     {
       "question": "Why does a successful compilation not prove correctness?",
       "answers": [
-        "The compiler already knows user requirements",
         "A logic defect may be valid C++",
+        "The compiler already knows user requirements",
         "Executable programs cannot have defects"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "Compilation cannot validate your domain requirement."
     },
     {
@@ -205,10 +243,10 @@
       "question": "What should precede a focused defect fix?",
       "answers": [
         "Randomly edit several unrelated lines",
-        "Reproduce the wrong result on a known case",
-        "Remove all tests"
+        "Remove all tests",
+        "Reproduce the wrong result on a known case"
       ],
-      "correctIndex": 1,
+      "correctIndex": 2,
       "explanation": "A reproducible failure is the starting point for diagnosis."
     }
   ],

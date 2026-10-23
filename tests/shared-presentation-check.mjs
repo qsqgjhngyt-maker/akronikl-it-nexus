@@ -26,9 +26,13 @@ globalThis.location={hash:'#view=academy'};
 for(const collapsed of [false,true])for(const active of ['home','academy','projects','labs','practices','offline']){
  const ctx={prefs:{sidebarCollapsed:collapsed,focusReading:false,uiLocale:'ru'},t:k=>k,route:()=>({view:active}),langSelect:(...v)=>v.join(' / '),fxSelect:()=>'<b>FX</b>',accountChipMarkup:()=>'<span>SYNTHETIC_VERIFIED_ACCOUNT_CHIP</span>',visualIcon:v=>v};
  const keys=Object.keys(ctx),baseline=new Function(...keys,'location','e',before.slice(shellStart,shellEnd)+';return visualShell')(...keys.map(k=>ctx[k]),location,e);
- // Сравнение со старым renderer допускает только объявленную смену номера выпуска.
+ // Старый snapshot предшествует уже опубликованной навигации Code Studio.
+ // Проверяем добавленные инструменты отдельно, остальная оболочка должна совпадать.
  const version=JSON.parse(await readFile(new URL('../version.json',import.meta.url))).version;
- assert.equal(nexusShellMarkup('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active,ctx),baseline('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active).replaceAll('0.1.7-alpha.2.4.6-ui1a.10.1',version));
+ const current=nexusShellMarkup('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active,ctx);
+ const tools=current.match(/<span class="side-nav-label">[\s\S]*?<\/button>(?=<\/nav>)/)?.[0];
+ assert.ok(tools?.includes('href="#view=code-studio"')&&tools.includes('data-interface-update-check'));
+ assert.equal(current.replace(tools,''),baseline('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active).replaceAll('0.1.7-alpha.2.4.6-ui1a.10.1',version));
 }
 const app=await readFile(new URL('../core/app.js',import.meta.url),'utf8');
 assert.ok(app.includes('nexusShellMarkup(body,active,{prefs,t,route,langSelect,fxSelect,accountChipMarkup,visualIcon})'));

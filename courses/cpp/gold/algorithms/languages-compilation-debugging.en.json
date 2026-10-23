@@ -75,6 +75,19 @@
         "Published C++23 is the normative language reference for this curriculum. In October 2026, C++26 remains under development and should not be assumed universally implemented.",
         "The introductory course uses portable fundamentals. STL, exceptions, RAII and build systems require later targeted study and provider verification."
       ]
+    },
+    {
+      "title": "A minimal reproducible example",
+      "paragraphs": [
+        "A syntax defect prevents a build, for example a missing semicolon. An execution defect or wrong result appears when running: division by zero is invalid, while integer 10/3 yields 3 rather than 3.333. For negative integers, C++ truncates the quotient toward zero: -8/3 is -2. Save source, input, expected and actual output; fix one cause and rerun earlier tests."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "For the laboratory, a and b are limited to -1000000..1000000 and b must be nonzero. This also excludes quotient overflow.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
     }
   ],
   "workedExamples": [
@@ -158,9 +171,9 @@
   ],
   "laboratory": {
     "title": "Lab: safe integer division",
-    "challenge": "Read two integers; for invalid extraction or a zero divisor print invalid, otherwise print the integer quotient according to C++ semantics.",
+    "challenge": "Read two integers; for invalid extraction or a zero divisor print invalid, otherwise print the integer quotient according to C++ semantics. For the laboratory, a and b are limited to -1000000..1000000 and b must be nonzero. This also excludes quotient overflow.",
     "starterCode": "// Read a,b and check the input and b!=0 before dividing.\n",
-    "referenceCode": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+    "referenceCode": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
     "cases": [
       {
         "stdin": "10 3\n",
@@ -173,6 +186,26 @@
       {
         "stdin": "-8 3\n",
         "stdout": "-2\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "-2147483648 -1\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1000000 -1000000\n",
+        "stdout": "-1\n"
+      },
+      {
+        "stdin": "1000001 1\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
       }
     ],
     "steps": [
@@ -204,21 +237,21 @@
     {
       "question": "What is 10/3 when both values have type int?",
       "answers": [
-        "3",
         "3.333",
+        "3",
         "4"
       ],
-      "correctIndex": 0,
+      "correctIndex": 1,
       "explanation": "Integer division discards the fraction."
     },
     {
       "question": "What must be true before dividing a by b?",
       "answers": [
-        "b!=0",
         "The UI is colorful",
-        "a>0"
+        "a>0",
+        "b!=0"
       ],
-      "correctIndex": 0,
+      "correctIndex": 2,
       "explanation": "Zero division is invalid."
     }
   ],

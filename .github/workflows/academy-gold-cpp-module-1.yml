@@ -1,0 +1,65 @@
+name: Академия C++ Gold — модуль 1
+on:
+  push:
+    branches: [feature/academy-gold-standard-cpp-module-1]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'courses/cpp/gold/**'
+      - 'core/academy-gold-*.js'
+      - 'core/app.js'
+      - 'core/course-registry.js'
+      - 'core/learning-views.js'
+      - 'core/offline-assets.js'
+      - 'pwa/offline-entry.js'
+      - 'styles/academy-gold.css'
+      - 'tests/academy-gold-*'
+      - 'tools/check-academy-gold-*'
+      - '.github/workflows/academy-gold-cpp-module-1.yml'
+permissions:
+  contents: read
+jobs:
+  gold-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Зафиксированные зависимости проверок
+        run: npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+      - name: Неизменность ID, прогресса, Identity, Cloud и runtime
+        run: |
+          git diff --exit-code bad182cc020e51dcfd0b36a7b0127c637c8f79ee HEAD -- courses/cpp/curriculum.json courses/cpp/content-package.json courses/cpp/data core/storage.js core/account-storage.js core/identity.js core/migrations sync sandbox project-studio server-access pwa/local-vault.js pwa/offline-learning.js pwa/runtime-manifest.js pwa/service-worker.js
+      - name: Content Quality Gate и совместимость
+        run: node tools/check-academy-gold-regression.mjs
+      - name: Реальное выполнение C++20 с проверкой undefined behavior
+        run: node tools/check-academy-gold-cpp.mjs
+      - name: Подготовить браузерную проверку
+        run: |
+          npm install --prefix /tmp/nexus-gold-browser --no-save playwright@1.56.1
+          /tmp/nexus-gold-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --generation ui1a-academy-gold-ci --version 0.1.7-alpha.2.4.6-ui1a.10.3.1 --out /tmp/nexus-gold-build
+      - name: Настоящие online и холодный Offline entry points
+        env:
+          NEXUS_FRONTEND_DIR: /tmp/nexus-gold-build
+          NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-gold-browser/node_modules/playwright/index.mjs
+          NEXUS_NATIVE_EVIDENCE: academy-gold-evidence/browser
+        run: node tests/academy-gold-browser-check.mjs
+      - name: Хеши и контекст evidence
+        if: always()
+        run: |
+          mkdir -p academy-gold-evidence
+          git rev-parse HEAD > academy-gold-evidence/HEAD.txt
+          git diff --stat bad182cc020e51dcfd0b36a7b0127c637c8f79ee HEAD > academy-gold-evidence/DIFF.txt
+          find courses/cpp/gold core -type f \( -path 'courses/cpp/gold/*' -o -name 'academy-gold-*.js' \) -print0 | sort -z | xargs -0 sha256sum > academy-gold-evidence/SHA256SUMS.txt
+      - name: Сохранить доказательства
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-module-1-${{ github.sha }}
+          path: academy-gold-evidence/
+          retention-days: 30

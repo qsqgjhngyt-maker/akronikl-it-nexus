@@ -71,13 +71,26 @@
         "Compare each pseudocode condition with the corresponding C++ branch. The remainder operator % is commonly used to test parity through x%2==0.",
         "Check x=-5, x=0 and x=7. Equal observed results across these examples support consistency, though finite tests do not prove all possible cases."
       ]
+    },
+    {
+      "title": "From the decision table to code",
+      "paragraphs": [
+        "The sign table has three rows: x<0 → negative; x=0 → zero; x>0 → positive. They are mutually exclusive and cover the allowed integers. C++ uses == for equality and = for assignment. An if / else if / else chain selects one branch. Three independent if statements need a separate condition audit and are not always equivalent."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "Integer inputs must fit the Code Studio int type. Failed extraction (text instead of a number or end of input) produces invalid; no further calculation is performed.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
     }
   ],
   "workedExamples": [
     {
       "title": "Parity",
       "purpose": "Connect a mathematical rule to a real C++ branch.",
-      "code": "#include <iostream>\nint main() {\n    int x;\n    std::cin >> x;\n    if (x % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
+      "code": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
       "stdin": "8\n",
       "expectedStdout": "even\n",
       "steps": [
@@ -90,7 +103,7 @@
     {
       "title": "Sign classification",
       "purpose": "A three-row decision table becomes an ordered set of conditions.",
-      "code": "#include <iostream>\nint main() {\n    int x;\n    std::cin >> x;\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+      "code": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
       "stdin": "0\n",
       "expectedStdout": "zero\n",
       "steps": [
@@ -149,9 +162,9 @@
   ],
   "laboratory": {
     "title": "Lab: three representations of a classifier",
-    "challenge": "Express integer sign classification in a decision table, pseudocode and flowchart, then implement and verify the C++ program.",
+    "challenge": "Express integer sign classification in a decision table, pseudocode and flowchart, then implement and verify the C++ program. Integer inputs must fit the Code Studio int type. Failed extraction (text instead of a number or end of input) produces invalid; no further calculation is performed.",
     "starterCode": "// Read x and print negative, zero or positive.\n",
-    "referenceCode": "#include <iostream>\nint main() {\n    int x;\n    std::cin >> x;\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+    "referenceCode": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
     "cases": [
       {
         "stdin": "-5\n",
@@ -164,6 +177,22 @@
       {
         "stdin": "7\n",
         "stdout": "positive\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "-1\n",
+        "stdout": "negative\n"
+      },
+      {
+        "stdin": "1\n",
+        "stdout": "positive\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
       }
     ],
     "steps": [
@@ -184,31 +213,31 @@
     {
       "question": "What does a decision table help reveal?",
       "answers": [
-        "It compiles the program",
         "Missing combinations of conditions",
+        "It compiles the program",
         "It translates the text to C++"
       ],
-      "correctIndex": 1,
+      "correctIndex": 0,
       "explanation": "It exposes omitted or contradictory cases."
     },
     {
       "question": "What shape commonly represents a condition in a flowchart?",
       "answers": [
-        "Diamond",
         "Rectangle",
+        "Diamond",
         "Comment"
       ],
-      "correctIndex": 0,
+      "correctIndex": 1,
       "explanation": "A diamond denotes a decision and its alternative paths."
     },
     {
       "question": "Can a C++ compiler execute pseudocode unchanged?",
       "answers": [
         "Yes",
-        "No, it needs a concrete implementation",
-        "Only in an HTML file"
+        "Only in an HTML file",
+        "No, it needs a concrete implementation"
       ],
-      "correctIndex": 1,
+      "correctIndex": 2,
       "explanation": "Pseudocode is a description rather than valid C++ source."
     }
   ],

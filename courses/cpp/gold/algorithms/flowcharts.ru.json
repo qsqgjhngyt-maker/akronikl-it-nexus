@@ -71,13 +71,26 @@
         "Подписи условий должны совпадать с кодом, а примеры — с фактическими ветвями. На телефоне схема должна позволять прочесть текст без угадывания мелких символов и иметь текстовое описание переходов.",
         "Даже если диаграмма интерактивна, она не является доказательством правильности C++ исполнения. Сверьте её с выводом Code Studio и граничными тестами."
       ]
+    },
+    {
+      "title": "Два тарифа — два разных контракта",
+      "paragraphs": [
+        "Интерактив показывает порог бесплатной доставки по сумме заказа, а лаборатория — тариф по расстоянию. Не переносите условие x≥1000 в программу для километров. Для расстояния 1..5 цена 100; для 6 — 120; для 8 — 160. Схема лаборатории: ввод → distance допустимо? → distance>5? → дополнительная стоимость → вывод. Подпишите «да» и «нет» у обоих ромбов."
+      ]
+    },
+    {
+      "title": "Правила ввода и пределы исполнения",
+      "paragraphs": [
+        "В лаборатории допустимо distance от 1 до 1000000; остальные значения дают invalid.",
+        "Подавайте указанное число целых значений через пробелы. Лишние значения не входят в этот небольшой контракт ввода. Сохраняйте исходник, точный stdin, прогноз и фактический вывод. Эти примеры знакомят с логикой; следующие модули подробно разбирают типы, потоки и функции C++."
+      ]
     }
   ],
   "workedExamples": [
     {
       "title": "Бесплатная доставка",
       "purpose": "Три ветви и одна граничная проверка.",
-      "code": "#include <iostream>\nint main() {\n    int total;\n    std::cin >> total;\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
+      "code": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
       "stdin": "1000\n",
       "expectedStdout": "free\n",
       "steps": [
@@ -90,7 +103,7 @@
     {
       "title": "Оценка экзамена",
       "purpose": "Проверьте, что диапазон балла валиден до сравнения с проходным.",
-      "code": "#include <iostream>\nint main() {\n    int score;\n    std::cin >> score;\n    if (score < 0 || score > 100) std::cout << \"invalid\\n\";\n    else if (score >= 60) std::cout << \"pass\\n\";\n    else std::cout << \"retry\\n\";\n}",
+      "code": "#include <iostream>\nint main() {\n    int score;\n    if (!(std::cin >> score)) { std::cout << \"invalid\\n\"; return 0; }\n    if (score < 0 || score > 100) std::cout << \"invalid\\n\";\n    else if (score >= 60) std::cout << \"pass\\n\";\n    else std::cout << \"retry\\n\";\n}",
       "stdin": "60\n",
       "expectedStdout": "pass\n",
       "steps": [
@@ -149,9 +162,9 @@
   ],
   "laboratory": {
     "title": "Лаборатория: схема тарифа доставки",
-    "challenge": "Вход — целое число километров. Для distance<=0 выводите invalid. Первые 5 км стоят 100; каждый следующий км добавляет 20.",
+    "challenge": "Вход — целое число километров. Для distance<=0 выводите invalid. Первые 5 км стоят 100; каждый следующий км добавляет 20. В лаборатории допустимо distance от 1 до 1000000; остальные значения дают invalid.",
     "starterCode": "// Проверьте distance>0; реализуйте ветвление и расчёт тарифа.\n",
-    "referenceCode": "#include <iostream>\nint main() {\n    int distance;\n    std::cin >> distance;\n    if (distance <= 0) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+    "referenceCode": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
     "cases": [
       {
         "stdin": "0\n",
@@ -164,6 +177,30 @@
       {
         "stdin": "8\n",
         "stdout": "160\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1\n",
+        "stdout": "100\n"
+      },
+      {
+        "stdin": "6\n",
+        "stdout": "120\n"
+      },
+      {
+        "stdin": "1000000\n",
+        "stdout": "20000000\n"
+      },
+      {
+        "stdin": "1000001\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
       }
     ],
     "steps": [
@@ -195,21 +232,21 @@
     {
       "question": "Что обнаруживает пара тестов 999 и 1000?",
       "answers": [
-        "Ошибка на пороге включения значения",
         "Ошибку компоновщика",
+        "Ошибка на пороге включения значения",
         "Утечку памяти"
       ],
-      "correctIndex": 0,
+      "correctIndex": 1,
       "explanation": "Важна разница между > и >=."
     },
     {
       "question": "Что должно произойти с отрицательной суммой заказа?",
       "answers": [
         "Расчёт доставки",
-        "Немедленное отклонение по предусловию",
-        "Вывод free"
+        "Вывод free",
+        "Немедленное отклонение по предусловию"
       ],
-      "correctIndex": 1,
+      "correctIndex": 2,
       "explanation": "Проверка допустимости выполняется до ценового условия."
     }
   ],

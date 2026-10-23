@@ -15,6 +15,11 @@ export async function getCppCourse(){if(!cppCache){const [manifest,curriculum,le
 export async function getProgrammingLanguages(){if(!programmingCache)programmingCache=await getJson('./courses/programming/languages.json');return programmingCache;}
 
 const goldCache=new Map();
+export async function prepareCppGoldLesson(course,id,locale='ru'){
+ const gold=await getCppGoldLesson(id,locale);
+ if(gold){course.goldLessons??={};course.goldLessons[locale]??={};course.goldLessons[locale][id]=gold;}
+ return gold;
+}
 export async function getCppGoldLesson(id,locale='ru'){
  const path=goldLessonPath(id,locale);
  if(!path)return null;
