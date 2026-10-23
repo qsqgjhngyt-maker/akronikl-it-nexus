@@ -43,3 +43,8 @@
 ## Security / Cloud impact
 
 Нет изменений Identity, OAuth, sessions, Cloud Sync, Worker/D1 или credential flows.
+
+
+## Schema / semantic validator boundary
+
+JSON Schema определяет переносимый формат и поэтому не содержит C++ route, legacy storage key или фиксированный `code.*` activity type. Milestone-specific ограничения Alpha10.3.1 проверяет semantic validator. Это позволяет развивать тот же формат для графики, симуляций и последующих Skill/Learning слоёв без ослабления CP-1.1 gate.

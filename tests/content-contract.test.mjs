@@ -28,13 +28,22 @@ test('CP-1.1 schema is course-generic and accepts a non-code activity type',()=>
   assert.deepEqual(validateSchema(schema,sample),[]);
 });
 
-test('schema rejects invalid IDs and premature future-layer claims',()=>{
+test('generic schema has no C++ runtime constants and still rejects invalid stable IDs',()=>{
   const schema=json('content/schemas/content-package-v1.schema.json');
+  const raw=JSON.stringify(schema);
+  for(const forbidden of ['#course=cpp','cpp_programming_pdf_course_v1','code.exercise'])assert.equal(raw.includes(forbidden),false,forbidden);
   const contract=json('courses/cpp/content-package.json');
   const badId=structuredClone(contract);badId.courseId='C++ BAD';
   assert.ok(validateSchema(schema,badId).some(x=>x.includes('pattern mismatch')));
-  const premature=structuredClone(contract);premature.futureExtensions.skillGraph='implemented';
-  assert.ok(validateSchema(schema,premature).some(x=>x.includes('expected const')));
+});
+
+test('generic schema allows future lifecycle states while CP-1.1 candidate stays not-implemented',()=>{
+  const schema=json('content/schemas/content-package-v1.schema.json');
+  const future=structuredClone(json('courses/cpp/content-package.json'));
+  future.futureExtensions.skillGraph='planned';
+  future.skills[0].status='active';
+  future.exercises[0].scope='module';
+  assert.deepEqual(validateSchema(schema,future),[]);
 });
 
 test('CP-1.1 semantic validator protects production compatibility',()=>{

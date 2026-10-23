@@ -107,3 +107,17 @@ node --test tests/content-contract.test.mjs
 ```
 
 Semantic validator дополнительно проверяет production C++ IDs, legacy indexes, broken refs, orphan skills, progress/localStorage keys, Academy route и отсутствие runtime consumption CP-1.1.
+
+
+## Generic schema vs milestone invariants
+
+Общая JSON Schema не кодирует C++-константы и допускает будущие lifecycle states (`planned/implemented`), разные activity scopes и active/deprecated skills. Это необходимо для расширяемости.
+
+При этом semantic validator CP-1.1 жёстко требует от текущего C++ candidate:
+
+- `runtimeConsumption = none-cp1.1`;
+- Offline policy без runtime change;
+- Skill Graph / Learning Events / Mastery = `not-implemented`;
+- существующие Academy/progress/legacy identifiers.
+
+Таким образом будущая эволюция формата не позволяет текущему milestone преждевременно заявить реализованными последующие CP-этапы.
