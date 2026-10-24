@@ -46,7 +46,7 @@ const loadGraphicsWorkshop=async()=>graphicsWorkshopModule??=await import('../ef
 const loadAdministration=async()=>administrationModule??=await import('./administration.js');
 const viewResume=createViewResume(),learningResume=createLearningResume();
 let cppLearningFilter='topics',renderSequence=0,goldPresentation=null,disposeOrbit=null;
-function replaceRoute(page){disposeOrbit?.();disposeOrbit=null;root.innerHTML=page}
+function replaceRoute(page){disposeOrbit?.();disposeOrbit=null;document.onkeydown=null;root.innerHTML=page}
 const academyViewFilter={category:'all',availability:'all',query:''};
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const route=()=>{const p=new URLSearchParams(location.hash.replace(/^#/,''));return{view:p.get('view')||'home',course:p.get('course'),lesson:p.get('lesson'),tab:p.get('tab')||'overview',practicum:p.get('practicum'),project:p.get('project'),template:p.get('template'),focus:p.get('focus')}};

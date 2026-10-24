@@ -148,10 +148,15 @@ try{
  });
  await check('Home освобождает сцену, observers, диалог и flight при навигации и удалении владельца',async()=>{
   const home=async()=>{await online.evaluate(()=>{location.hash='#view=home'});await online.locator('.visual-home').waitFor();};
+  const cdp=await context.newCDPSession(online),memory=[];
   for(let i=0;i<20;i++){
    await home();await lessonRoute(online,GOLD_ALGORITHM_LESSONS[7],'ru');
    assert.equal(await online.evaluate(()=>__solarAudit.filter(r=>!r.disconnects).length),1,'Одна активная сцена на текущий shell');
+   if(i===0||i===19){await cdp.send('HeapProfiler.collectGarbage');await online.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));await cdp.send('HeapProfiler.collectGarbage');memory.push(await cdp.send('Memory.getDOMCounters'));}
   }
+  assert.ok(memory[1].nodes<=memory[0].nodes+300,JSON.stringify(memory));
+  assert.ok(memory[1].jsEventListeners<=memory[0].jsEventListeners+30,JSON.stringify(memory));
+  await writeFile(path.join(f.out,'LIFECYCLE_MEMORY.json'),JSON.stringify({cycles:20,memory,scope:'Изолированный Chrome, граница regression этого fixture; не production-бюджет'},null,2));
   for(const remove of ['.visual-home','#appShell']){
    await home();await online.locator('[data-orbit-open]').click();await online.locator('dialog.nexus-system[open]').waitFor();
    await online.locator('.ns-field').focus();await online.keyboard.press('w');
