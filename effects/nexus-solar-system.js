@@ -17,7 +17,7 @@ export function bindNexusOrbit({catalog,locale,translate:t,languageCatalog,langu
   const homePresentation=mount?.closest('.visual-home-hero')?.querySelectorAll(':scope > .visual-home-copy,:scope > .ns-graphics-invite')||[];
   // Presentation follows the existing expanded dialog, including its flight mode.
   const syncHomePresentation=()=>{for(const block of homePresentation)block.inert=Boolean(dialog?.open)};
-  let dialog=null,field=null,sceneRenderer=null,sceneResize=null,heroRenderer=null,heroVisible=Boolean(mount),heroTarget=[0,0],frame=0,last=0,lastDraw=0,simTime=0,dustTime=0,disposed=false,drag=null,closing=false,entryAnimation=null,priorOverflow='',returnFocus=null,tracks=[],selectionVersion=0,selected=null,focus={kind:'system'},positionMap=new Map(),labelElements=[],screenBodies=[],parked=new Map();
+  let dialog=null,field=null,sceneRenderer=null,sceneResize=null,heroRenderer=null,heroVisible=Boolean(mount),heroTarget=[0,0],frame=0,last=0,lastDraw=0,simTime=0,dustTime=0,disposed=false,drag=null,closing=false,entryAnimation=null,exitAnimation=null,priorOverflow='',returnFocus=null,tracks=[],selectionVersion=0,selected=null,focus={kind:'system'},positionMap=new Map(),labelElements=[],screenBodies=[],parked=new Map();
   const viewState={...defaultCamera,target:[0,0,0],zoom:1,vx:0,vy:0},flight=createSolarFlight();let flightFallback=false,pointerReleasedAt=0,flightTouchClickUntil=0;
   const touchFlight=()=>matchMedia('(pointer:coarse), (max-width:760px)').matches;
   // Touch and keyboard share the existing controller; each input owns only its held keys.
@@ -120,7 +120,7 @@ export function bindNexusOrbit({catalog,locale,translate:t,languageCatalog,langu
     dialog.querySelectorAll('[data-halo]').forEach(halo=>{const p=projectPoint(positionMap.get(halo.dataset.halo)||[0,0,0],view,width,height);halo.hidden=!p.visible;halo.style.left=p.x+'px';halo.style.top=p.y+'px';halo.style.width=Math.max(20,p.scale*(halo.dataset.halo==='nexus'?.95:.28))+'px'});
   };
   const draw=time=>{
-    frame=0;if(disposed)return;if(document.hidden||(!heroVisible&&!dialog?.open)){last=0;return}
+    frame=0;if(disposed)return;if(!lifetime.isConnected){dispose();return}if(document.hidden||(!heroVisible&&!dialog?.open)){last=0;return}
     const dt=Math.min(.05,last?(time-last)/1000:.016);last=time;if(motion())simTime+=dt*getNexusAppearance().orbitalSpeed;if(dustMotion())dustTime+=dt*getNexusAppearance().particleSpeed;
     const {bodies,orbits}=model();let settling=false;
     if(dialog?.open&&flight.state.active){settling=flight.step(dt,bodies)}
@@ -131,16 +131,16 @@ export function bindNexusOrbit({catalog,locale,translate:t,languageCatalog,langu
     if(time-lastDraw>28||!lastDraw||!(motion()||dustMotion())){
       lastDraw=time;
       if(dialog?.open){const view=pose(field.clientWidth,field.clientHeight);sceneRenderer.draw(bodies,orbits,view,density(),simTime,quality()==='off'?0:getNexusAppearance().particles,dustTime);screenBodies=bodies.map(body=>({...body,screen:projectPoint(body.position,view,field.clientWidth,field.clientHeight)}));layOutLabels(view);dialog.dataset.solarTime=simTime.toFixed(3);dialog.dataset.solarFocus=focus.kind+':'+(focus.id||'academy');dialog.dataset.solarNavigation=flight.state.active?'flight':'orbit';dialog.dataset.solarCamera=JSON.stringify(flight.state.active?{eye:flight.state.eye,yaw:flight.state.yaw,pitch:flight.state.pitch}:{target:viewState.target,yaw:viewState.yaw,pitch:viewState.pitch,distance:viewState.distance})}
-      else if(mount&&heroVisible){settling=fitHeroCamera(bodies,mount.clientWidth,mount.clientHeight,dt);const view=pose(mount.clientWidth,mount.clientHeight,true);heroRenderer.draw(bodies,orbits,view,density(),simTime,quality()==='off'?0:getNexusAppearance().particles,dustTime);mount.querySelectorAll('[data-hero-planet]').forEach(label=>{const p=projectPoint(positionMap.get('category:'+label.dataset.heroPlanet),view,mount.clientWidth,mount.clientHeight);label.style.left=Math.max(45,Math.min(mount.clientWidth-45,p.x))+'px';label.style.top=Math.max(24,Math.min(mount.clientHeight-48,p.y))+'px'});mount.dataset.solarTime=simTime.toFixed(3)}
+      else if(mount&&heroVisible&&mount.clientWidth>0&&mount.clientHeight>0){settling=fitHeroCamera(bodies,mount.clientWidth,mount.clientHeight,dt);const view=pose(mount.clientWidth,mount.clientHeight,true);heroRenderer.draw(bodies,orbits,view,density(),simTime,quality()==='off'?0:getNexusAppearance().particles,dustTime);mount.querySelectorAll('[data-hero-planet]').forEach(label=>{const p=projectPoint(positionMap.get('category:'+label.dataset.heroPlanet),view,mount.clientWidth,mount.clientHeight);label.style.left=Math.max(45,Math.min(mount.clientWidth-45,p.x))+'px';label.style.top=Math.max(24,Math.min(mount.clientHeight-48,p.y))+'px'});mount.dataset.solarTime=simTime.toFixed(3)}
     }
     if(motion()||dustMotion()||drag||settling)frame=requestAnimationFrame(draw);
   };
   const close=(immediate=false)=>{
     if(!dialog?.open||(closing&&!immediate))return;stopFlight();closing=true;selectionVersion++;entryAnimation?.cancel();
-    const finish=()=>{if(!dialog?.open)return;dialog.close();syncHomePresentation();document.body.style.overflow=priorOverflow;mount?.classList.remove('ns-expanded-source');drag=null;closing=false;returnFocus?.isConnected&&returnFocus.focus();schedule()};
+    const finish=()=>{if(!dialog?.open)return;dialog.close();syncHomePresentation();document.body.style.overflow=priorOverflow;mount?.classList.remove('ns-expanded-source');drag=null;closing=false;if(!disposed&&returnFocus?.isConnected)returnFocus.focus();schedule()};
     if(immediate||matchMedia('(prefers-reduced-motion:reduce)').matches){finish();return}
     const source=mount?.getBoundingClientRect(),tx=source?source.left+source.width/2-innerWidth/2:0,ty=source?source.top+source.height/2-innerHeight/2:0,scale=source?source.height/innerHeight:.93;
-    const animation=field.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${tx}px,${ty}px) scale(${scale})`,opacity:.1}],{duration:420,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});animation.finished.then(()=>{animation.cancel();finish()},finish);
+    const animation=exitAnimation=field.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${tx}px,${ty}px) scale(${scale})`,opacity:.1}],{duration:420,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});animation.finished.then(()=>{animation.cancel();exitAnimation=null;finish()},finish);
   };
   const createDialog=()=>{
     dialog=document.createElement('dialog');dialog.className='nexus-system';dialog.setAttribute('aria-labelledby','nexusSystemTitle');
@@ -217,6 +217,7 @@ export function bindNexusOrbit({catalog,locale,translate:t,languageCatalog,langu
   };
   const appearanceChanged=()=>{if(dialog){const button=dialog.querySelector('[data-solar-pause]');button.textContent=t(motion()?'solar.pause':'solar.resume');button.setAttribute('aria-pressed',String(!motion()));dialog.classList.toggle('ns-still',!motion())}schedule()};
   const open=trigger=>{
+    if(disposed)return;
     if(!dialog)createDialog();if(dialog.open||closing)return;selectionVersion++;focus={kind:'system'};selected=null;Object.assign(viewState,{...defaultCamera,yaw:heroYaw+heroTarget[0],pitch:heroPitch+heroTarget[1],target:[0,0,0],zoom:1,vx:0,vy:0});dialog.querySelector('[data-solar-zoom]').value='100';dialog.querySelector('.ns-settings').hidden=true;dialog.querySelector('[data-solar-settings]').setAttribute('aria-expanded','false');refreshLabels();updateInspector();returnFocus=trigger;priorOverflow=document.body.style.overflow;document.body.style.overflow='hidden';dialog.showModal();syncHomePresentation();mount?.classList.add('ns-expanded-source');appearanceChanged();dialog.querySelector('[data-solar-close]').focus();
     if(!matchMedia('(prefers-reduced-motion:reduce)').matches){const source=mount?.getBoundingClientRect(),tx=source?source.left+source.width/2-innerWidth/2:0,ty=source?source.top+source.height/2-innerHeight/2:0,scale=source?source.height/innerHeight:.88;entryAnimation=field.animate([{transform:`translate(${tx}px,${ty}px) scale(${scale})`,opacity:.35},{transform:'translate(0,0) scale(1)',opacity:1}],{duration:760,easing:'cubic-bezier(.16,.84,.22,1)',fill:'both'});entryAnimation.finished.then(()=>{entryAnimation?.cancel();entryAnimation=null},()=>{})}schedule();
   };
@@ -235,5 +236,18 @@ export function bindNexusOrbit({catalog,locale,translate:t,languageCatalog,langu
   const visibility=new IntersectionObserver(entries=>{heroVisible=entries[0].isIntersecting;schedule()});if(mount)visibility.observe(mount);
   const resize=new ResizeObserver(schedule);if(mount)resize.observe(mount);document.addEventListener('visibilitychange',()=>{last=0;if(document.hidden)clearFlightInput();schedule()},options);document.addEventListener('nexus-appearance-change',appearanceChanged,options);document.querySelector('#effectsQuality')?.addEventListener('change',()=>queueMicrotask(appearanceChanged),options);
   const lifetime=mount?.closest('.visual-home')||shell;
-  const mutation=new MutationObserver(()=>{if(lifetime.isConnected)return;close(true);disposed=true;cancelAnimationFrame(frame);entryAnimation?.cancel();controller.abort();visibility.disconnect();resize.disconnect();sceneResize?.disconnect();mutation.disconnect();heroRenderer?.destroy();sceneRenderer?.destroy();dialog?.remove()});mutation.observe(lifetime.parentNode,{childList:true});schedule();
+  const dispose=()=>{
+    if(disposed)return;disposed=true;selectionVersion++;controller.abort();
+    close(true);clearFlightInput();flight.stop();
+    if(document.pointerLockElement===field&&field)document.exitPointerLock();
+    if(heroDrag&&heroControl?.hasPointerCapture(heroDrag.id))heroControl.releasePointerCapture(heroDrag.id);
+    heroDrag=null;drag=null;cancelAnimationFrame(frame);frame=0;entryAnimation?.cancel();exitAnimation?.cancel();
+    visibility.disconnect();resize.disconnect();sceneResize?.disconnect();mutation.disconnect();
+    heroRenderer?.destroy();sceneRenderer?.destroy();dialog?.remove();
+  };
+  const mutation=new MutationObserver(()=>{if(!lifetime.isConnected)dispose()});
+  // Наблюдаем цепочку владельцев до host: удаление всего shell тоже должно
+  // освобождать сцену. subtree не нужен для изменений текста редактора.
+  for(let owner=lifetime.parentNode;owner;owner=owner.parentNode){mutation.observe(owner,{childList:true});if(owner===shell.parentNode)break}
+  schedule();return dispose;
 }

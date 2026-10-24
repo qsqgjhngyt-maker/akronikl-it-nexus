@@ -34,3 +34,31 @@ export async function getCppCourse(){
 }
 
 export async function getProgrammingLanguages(){if(!programmingCache)programmingCache=await getJson('./courses/programming/languages.json');return programmingCache;}
+
+const goldCache=new Map();
+export async function prepareCppGoldLesson(course,id,locale='ru',preparePresentation=()=>{}){
+ // Курс, JSON и представление независимы. Представление разрешено только
+ // после проверки точного allowlist; Home и обычные уроки его не загружают.
+ const [target,gold]=await Promise.all([course,(async()=>{
+  const {goldLessonPath}=await import('./academy-gold-catalog.js');
+  if(!goldLessonPath(id,locale))return null;
+  const [lesson]=await Promise.all([getCppGoldLesson(id,locale),preparePresentation()]);
+  return lesson;
+ })()]);
+ if(gold){target.goldLessons??={};target.goldLessons[locale]??={};target.goldLessons[locale][id]=gold;}
+ return gold;
+}
+export async function getCppGoldLesson(id,locale='ru'){
+ const {goldLessonPath}=await import('./academy-gold-catalog.js');
+ const path=goldLessonPath(id,locale);
+ if(!path)return null;
+ const key=id+':'+locale;
+ if(!goldCache.has(key)){
+  const promise=getJson('./'+path).then(data=>{
+   if(data.lessonId!==id||data.locale!==locale||data.moduleId!=='cpp.section.algorithms'||data.standardVersion!=='academy-gold-1.1')throw Error('GOLD_CONTENT_CONTRACT_MISMATCH');
+   return data;
+  }).catch(error=>{goldCache.delete(key);throw error});
+  goldCache.set(key,promise);
+ }
+ return goldCache.get(key);
+}

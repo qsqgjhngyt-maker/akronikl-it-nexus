@@ -16,7 +16,7 @@ import {academyCatalogMarkup,bindAcademyCatalog} from '../core/academy-catalog.j
 import {programmingHubMarkup} from '../core/code-hub-presentation.js';
 import {bindLanguageJourneys} from '../core/nexus-language-journey.js';
 import {bindLearningDiscovery,discoveryPageMarkup} from '../core/nexus-learning-discovery.js';
-import {bindNexusLearningUi} from '../core/nexus-learning-ui.js';
+import {bindNexusLearningUi,bindGlossaryDrawer} from '../core/nexus-learning-ui.js';
 import {shellMarkup,lockedMarkup,unlockMarkup,homeMarkup,academyMarkup,projectsMarkup,lessonMarkup,editorMarkup,visualIcon} from './offline-presentation.js';
 import {blogPageMarkup,blogIndexMarkup,blogArticleMarkup,bindBlogSections} from '../core/blog-presentation.js';
 import {BLOG_DRAFTS} from '../core/blog-seeds.js';
@@ -25,7 +25,7 @@ import {bindNexusShell} from '../core/nexus-shell.js';
 import {configureNexusAppearance,bindNexusAppearance} from '../effects/nexus-appearance.js';
 import {startParticleField,updateParticleQuality} from '../effects/particles.js';
 import {bindNexusStudioUi} from '../core/nexus-studio-ui.js';
-import {getCppCourse,getCatalog,getProgrammingLanguages} from '../core/course-registry.js';
+import {getCppCourse,getCatalog,getProgrammingLanguages,prepareCppGoldLesson} from '../core/course-registry.js';
 import {codeStudioMarkup,bindCodeStudio} from '../sandbox/code-studio.js';
 import {wasmRuntimeProvider} from '../sandbox/providers/wasm-runtime.js';
 import {createVaultStore} from './local-vault.js';
@@ -68,7 +68,7 @@ document.querySelector('.side-nav').addEventListener('click',closeMobile);
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=v=>structuredClone(v),label=v=>typeof v==='string'?v:v?.ru||v?.en||'';
-let session=null,data=null,course=null,catalog=null,programming=null,studio=null,graphics=null,queue=Promise.resolve(),pending=0,saveFailed=false,renderSequence=0,cppLearningFilter='topics',locale=prefs.courseLocale;
+let disposeTerms=null,disposeOrbit=null,goldPresentation=null,session=null,data=null,course=null,catalog=null,programming=null,studio=null,graphics=null,queue=Promise.resolve(),pending=0,saveFailed=false,renderSequence=0,cppLearningFilter='topics',locale=prefs.courseLocale;
 function save(){
  if(!session)return Promise.reject(Error('Откройте локальную копию.'));
  pending++;saveFailed=false;saved.textContent='Сохраняем изменения на устройстве…';
@@ -94,7 +94,7 @@ async function unlockView(){
 }
 function views(){
  const state=()=>data?.state||{courses:{},skills:{}},lessons=()=>state().courses?.cpp?.lessons||{},resume=createLearningResume({storage:{getItem:()=>JSON.stringify(data?.state.localResume||null)},principal:()=>data?.owner.accountId||'public-offline'});
- return createLearningViews({prefs,t,cpp:course,catalog,programming,cppLearningFilter,loadState:state,lessonState:id=>lessons()[id]||{},visualIcon,
+ return createLearningViews({academyGoldMarkup:goldPresentation?.academyGoldMarkup,prefs,t,cpp:course,catalog,programming,cppLearningFilter,loadState:state,lessonState:id=>lessons()[id]||{},visualIcon,
   progress:()=>{const done=Object.values(lessons()).filter(x=>x?.completed).length;return {done,total:40,pct:Math.round(done/40*100)}},
   cppContinuation:()=>resume.continuation(course,lessons()),accountHomeCardMarkup:()=>accountHomePresentation({displayName:data?.owner.displayName,avatar:data?.owner.displayName?.slice(0,1).toLocaleUpperCase(),status:data?'Копия открыта · облачный вход не подтверждён':'Личная копия закрыта'},prefs.uiLocale,{localCopy:true,locked:!data}),shell:body=>'<div class="nexus-learning" data-nexus-learning>'+body+'</div>'});
 }
@@ -139,6 +139,7 @@ async function compiler(){
 }
 async function render(){
  const seq=++renderSequence;await graphics?.flush();graphics=null;await settled();if(seq!==renderSequence)return;studio=null;const route=new URLSearchParams(location.hash.slice(1));
+ disposeTerms?.();disposeTerms=null;disposeOrbit?.();disposeOrbit=null;
  updateChrome(route);
  if(['labs','practices'].includes(route.get('view'))){root.innerHTML=discoveryPageMarkup({kind:route.get('view'),course,contentFor:id=>(locale==='en'?course.lessonsEn:course.lessonsRu).lessons.find(l=>l.id===id),projects:Object.values(data?.projects||{}),state:data?.state.courses?.cpp||{},t,locale:prefs.uiLocale,materialLocale:locale});bindLearningDiscovery(t);return}
  if(route.get('view')==='programming'){
@@ -146,7 +147,7 @@ async function render(){
   bindLanguageJourneys({tracks:programming.tracks,course,t,locale:prefs.uiLocale});const recent=root.querySelector('[data-recent-list]');if(recent){recent.removeAttribute('role');recent.innerHTML=recentProjectListMarkup(Object.values(data?.projects||{}).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||''))).slice(0,3),t,prefs.uiLocale)}bindLearningDiscovery(t);bindNexusLearningUi(t);return;
  }
  if(route.get('view')==='academy'&&!route.has('focus')&&!route.has('tab')){const academyViewFilter={category:'all',availability:'all',query:''};root.innerHTML=academyCatalogMarkup({catalog,cpp:course,prefs,t,academyViewFilter,visualIcon});bindAcademyCatalog({prefs,t,academyViewFilter});return}
- if(route.get('view')==='home'){root.innerHTML=views().home();const section=document.createElement('section');section.className='visual-section blog-preview';section.dataset.blogPreview='';section.innerHTML=blogPreviewMarkup(BLOG_DRAFTS);root.querySelector('.visual-account-area')?.before(section);bindNexusOrbit({catalog,locale:prefs.uiLocale,translate:t,languageCatalog:getProgrammingLanguages,languageName:id=>languageLabel(id,prefs.uiLocale),quality:()=>prefs.effectsQuality,openCategory:()=>{location.hash='#view=academy'}});return}
+ if(route.get('view')==='home'){root.innerHTML=views().home();const section=document.createElement('section');section.className='visual-section blog-preview';section.dataset.blogPreview='';section.innerHTML=blogPreviewMarkup(BLOG_DRAFTS);root.querySelector('.visual-account-area')?.before(section);disposeOrbit=bindNexusOrbit({catalog,locale:prefs.uiLocale,translate:t,languageCatalog:getProgrammingLanguages,languageName:id=>languageLabel(id,prefs.uiLocale),quality:()=>prefs.effectsQuality,openCategory:()=>{location.hash='#view=academy'}});return}
  if(route.get('view')==='blog'){root.innerHTML=blogPageMarkup({article:route.has('article')});const feed=root.querySelector('[data-blog-feed]'),slug=route.get('article'),post=BLOG_DRAFTS.find(p=>p.slug===slug);feed.innerHTML=slug?(post?blogArticleMarkup(post,{snapshot:true}):'<p>Статья не входит в подготовленные публичные материалы.</p>'):blogIndexMarkup(BLOG_DRAFTS,{snapshot:true});bindBlogSections(feed);return}
  if(['account','feedback','admin','akronikl'].includes(route.get('view'))){root.innerHTML=serverView(route.get('view'));return}
  if(route.get('view')==='offline'){root.innerHTML='<section class="ps-hero glass-panel"><div><span class="eyebrow">NEXUS · БЕЗ ИНТЕРНЕТА</span><h1>Всё для вашей работы</h1><p>Академия, редактор и личные проекты доступны на устройстве. Возвращение сети не меняет ваши файлы автоматически.</p><div class="hero-actions"><a class="btn primary" href="#view=unlock">Личная копия</a><a class="btn" href="#view=compiler">Компилятор C++</a><a class="btn" href="/account/entry/#view=offline">Подготовка и перенос в аккаунт</a></div></div></section>';return}
@@ -161,15 +162,16 @@ async function render(){
  if(route.has('project'))return editor(data?.projects[route.get('project')]);
  if(['projects','project-studio'].includes(route.get('view')))return projectList();
  const kind=route.has('lesson')?'lesson':route.has('practicum')?'practicum':'exercise';
- const lessonId=route.get('lesson'),ru=course.lessonsRu.lessons.find(l=>l.id===lessonId);
- const item=route.has('lesson')?(locale==='en'?course.lessonsEn.lessons.find(l=>l.id===lessonId)||ru:ru):route.has('practicum')?course.practicumsRu.practicums.find(p=>p.id===route.get('practicum')):route.has('exercise')?course.projectsRu.projects.find(p=>p.id===route.get('exercise')):null;
+ const lessonId=route.get('lesson');
+ if(lessonId){await prepareCppGoldLesson(course,lessonId,locale,async()=>{goldPresentation??=await import('../core/academy-gold-presentation.js');await goldPresentation.ensureGoldStyles()});if(seq!==renderSequence)return;}
+ const item=route.has('lesson')?views().lessonData(lessonId):route.has('practicum')?course.practicumsRu.practicums.find(p=>p.id===route.get('practicum')):route.has('exercise')?course.projectsRu.projects.find(p=>p.id===route.get('exercise')):null;
  if(seq!==renderSequence)return;
  if(!item){root.innerHTML=lessons();bindNexusLearningUi(t);bindLearningDiscovery(t);bindReadOnlyLearning();return}
  if(kind==='exercise'){if(!needLocal())return;const p=exerciseCopy(data,kind,item);await save();return editor(p)}
  const state=data?learningState(data,kind,item.id):{},exercise=data?exerciseCopy(data,kind,item):null;
  root.innerHTML=kind==='lesson'?views().lessonView(item.id):views().practicumView(item.id);
  if(exercise)bindEditor(exercise,item.code||item.starter);else for(const node of root.querySelectorAll('#editor,#stdin,#runCode,#testRuntime,#resetCode,#completeLesson,[data-task]'))node.disabled=true;
- bindKnowledge(item,state);bindMemoryLab(item.benchmark?.interactiveMemory,locale);bindOopLab(item.benchmark?.interactiveOop,locale);
+ bindKnowledge(item,state);if(item.gold)goldPresentation.bindAcademyGold(root,item.gold);bindMemoryLab(item.benchmark?.interactiveMemory,locale);bindOopLab(item.benchmark?.interactiveOop,locale);
  const mark=root.querySelector('#completeLesson');if(mark&&data)mark.onclick=async()=>{state.completed=!state.completed;await save();await render()};
  for(const input of root.querySelectorAll('[data-task]'))input.onchange=()=>{if(!data)return;markTask(data,kind,item,Number(input.dataset.task),input.checked);void save().catch(()=>{})};
  bindNexusLearningUi(t);bindReadOnlyLearning();
@@ -179,8 +181,7 @@ async function render(){
 function bindReadOnlyLearning(){
  bindCppLearningPath({root,onSelect:value=>{cppLearningFilter=value}});
  for(const input of root.querySelectorAll('[data-practicum][data-task]')){input.disabled=!data;if(data)input.onchange=()=>{const p=course.practicumsRu.practicums.find(x=>x.id===input.dataset.practicum);if(p){markTask(data,'practicum',p,Number(input.dataset.task),input.checked);void save().catch(()=>{})}}}
- for(const b of root.querySelectorAll('#openTerms,[data-open-terms]'))b.onclick=()=>{root.querySelector('#termDrawer')?.classList.add('open');root.querySelector('#termDrawer')?.setAttribute('aria-hidden','false');root.querySelector('#termBackdrop')?.classList.add('show');root.querySelector('#termSearch')?.focus()};
- for(const b of root.querySelectorAll('#closeTerms,#termBackdrop'))b.onclick=()=>{root.querySelector('#termDrawer')?.classList.remove('open');root.querySelector('#termDrawer')?.setAttribute('aria-hidden','true');root.querySelector('#termBackdrop')?.classList.remove('show')};
+ disposeTerms=bindGlossaryDrawer(root);
 }
 function bindSearch(inputSelector,rowSelector,statusSelector){
  const input=root.querySelector(inputSelector);if(!input)return;
@@ -196,10 +197,8 @@ function serverView(view){
  return '<section class="ps-hero glass-panel"><div><span class="eyebrow">NEXUS</span><h1>'+name+'</h1><p>'+(view==='akronikl'?'AI-помощник пока не реализован. Локальный помощник также не подключён. Учебные подсказки доступны в уроках.':'Этот раздел требует подключения и проверки серверного доступа. Ваши локальные проекты и Академия доступны независимо от него.')+'</p><div class="hero-actions"><a class="btn primary" href="#view=academy&focus=cpp">Академия</a><a class="btn" href="/account/entry/">Открыть обычный Nexus</a></div></div></section>';
 }
 function bindKnowledge(item,state){
- const termSearch=root.querySelector('#termSearch');if(termSearch)termSearch.oninput=()=>{const q=termSearch.value.toLocaleLowerCase();for(const c of root.querySelectorAll('[data-term-card]'))c.hidden=!c.textContent.toLocaleLowerCase().includes(q)};
  const check=root.querySelector('#checkQuiz,#checkAnswer');if(check)check.onclick=()=>{const chosen=root.querySelector('input[name="quiz"]:checked'),fb=root.querySelector('#quizFeedback');if(!chosen){fb.textContent='Выберите вариант.';return}const value=Number(chosen.value),ok=value===item.quiz.correctIndex;fb.className='quiz-feedback '+(ok?'ok':'bad');fb.textContent=ok?'Верно. Основная идея понята.':'Пока нет. Вернитесь к объяснению и попробуйте ещё раз.';if(data){state.quiz=value;void save().catch(()=>{})}};
  root.querySelectorAll('.benchmark-check').forEach(button=>button.onclick=()=>{const card=button.closest('.knowledge-card'),picked=card.querySelector('input:checked'),fb=card.querySelector('.knowledge-feedback');if(!picked){fb.textContent='Выберите вариант.';return}const ok=Number(picked.value)===Number(button.dataset.answer);fb.className='knowledge-feedback '+(ok?'ok':'bad');fb.textContent=(ok?'Верно. ':'Пока нет. ')+(button.dataset.explain||'')});
- root.querySelectorAll('[data-term]').forEach(button=>button.onclick=()=>{root.querySelector('#openTerms')?.click();if(termSearch){termSearch.value=button.dataset.term;termSearch.dispatchEvent(new Event('input'))}});
 }
 
 document.querySelector('#lockLocal').onclick=async()=>{await graphics?.flush();graphics=null;await settled();await session?.lock();session=null;data=null;saved.textContent='Локальная копия закрыта.';document.querySelector('#lockLocal').hidden=true;document.querySelector('[data-local-name]').textContent='Открыть личную копию';document.querySelector('[data-local-avatar]').textContent='А';location.hash='#view=unlock'};
@@ -207,7 +206,7 @@ function connection(){document.querySelector('#connection').textContent=navigato
 addEventListener('online',connection);addEventListener('offline',connection);connection();
 addEventListener('hashchange',()=>{void render().catch(error=>{saved.textContent=error.message})});
 addEventListener('beforeunload',event=>{if(pending||saveFailed){event.preventDefault();event.returnValue=''}});
-addEventListener('pagehide',()=>{document.querySelector('[data-local-name]').textContent='Открыть личную копию';document.querySelector('[data-local-avatar]').textContent='А';root.replaceChildren();data=null;void session?.lock();session=null});
+addEventListener('pagehide',()=>{disposeTerms?.();disposeTerms=null;document.querySelector('[data-local-name]').textContent='Открыть личную копию';document.querySelector('[data-local-avatar]').textContent='А';root.replaceChildren();data=null;void session?.lock();session=null});
 addEventListener('pageshow',event=>{if(event.persisted)location.reload()});
 registerUpdateParticipant({isDirty:()=>saveFailed,isPending:()=>pending>0,flush:async()=>{await graphics?.flush();await settled()}});
 mountInterfaceUpdate();

@@ -81,7 +81,7 @@ test('APP route wiring uses lazy course path without weakening C++ full routes',
  const app=await fs.readFile(fileURLToPath(new URL('../core/app.js',import.meta.url)),'utf8');
  assert.match(app,/r\.view==='home'\|\|r\.view==='academy'\)\{if\(!cpp\)cppLanding\?\?=await getCppOutline\(\)/);
  assert.match(app,/cppContinuation\(\)\{return learningResume\.continuation\(cpp\|\|cppLanding,/);
- assert.match(app,/r\.course==='cpp'\)\{cpp\?\?=await getCppCourse\(\)/);
+ assert.match(app,/r\.course==='cpp'\)\{const courseReady=cpp\|\|getCppCourse\(\)/);
  assert.match(app,/r\.view==='programming'\)\{programming\?\?=await getProgrammingLanguages\(\);cpp\?\?=await getCppCourse\(\)/);
  // Static Academy rendering uses the public catalog, not lesson body content.
  assert.equal(app.includes("else if(r.view==='home'||r.view==='academy'){cpp??=await getCppCourse()"),false);

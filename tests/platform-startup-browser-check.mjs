@@ -28,7 +28,7 @@ async function evidenceScreenshot(target,name){
  await mkdir(process.env.NEXUS_NATIVE_EVIDENCE,{recursive:true});
  await target.screenshot({path:path.join(process.env.NEXUS_NATIVE_EVIDENCE,name),fullPage:true,animations:'disabled'});
 }
-const cppPaths=session=>session.assets.filter(file=>/^courses\/cpp\/.*\.json$/.test(file));
+const cppPaths=session=>session.assets.filter(file=>/^courses\/cpp\/(?:data\/.*|manifest|curriculum)\.json$/.test(file));
 const assertOutline=session=>assert.deepEqual(cppPaths(session).sort(),['courses/cpp/curriculum.json','courses/cpp/manifest.json']);
 const assertFull=session=>assert.deepEqual(cppPaths(session).sort(),['courses/cpp/curriculum.json','courses/cpp/data/lessons.en.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/practicums.ru.json','courses/cpp/data/projects.ru.json','courses/cpp/manifest.json']);
 async function ready(target,selector){
@@ -116,6 +116,8 @@ try{
   await primary.page.locator('.topic a').first().click();await ready(primary.page,'.lesson');
   await primary.page.waitForFunction(()=>Boolean(document.querySelector('#editor')?.__nexusCodeStudio));
   assert.equal(primary.record.assets.filter(file=>file==='sandbox/sandbox.js').length,1);assertFull(primary.record);
+  assert.deepEqual(primary.record.assets.filter(file=>file.startsWith('courses/cpp/gold/')),['courses/cpp/gold/algorithms/programming-process.ru.json']);
+  assert.equal(await primary.page.locator('[data-gold-lesson="cpp.programming-process"]').count(),1);
   await navigation(primary.page,'#view=home','.visual-home');assertFull(primary.record);
  });
  await check('Code Studio, projects, Academy graphics, labs and practices remain navigable',async()=>{

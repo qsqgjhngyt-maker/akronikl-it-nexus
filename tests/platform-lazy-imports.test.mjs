@@ -32,7 +32,8 @@ test('Large tools no longer belong to the critical Home static import graph',asy
  }
 });
 test('Heavy routes load dependencies before render/bind',()=>{
- assert.match(app,/if\(r\.lesson\|\|r\.practicum\)await loadSandboxRuntime\(\)/);
+ assert.match(app,/const runtimeReady=r\.lesson\|\|r\.practicum\?loadSandboxRuntime\(\):null/);
+ assert.match(app,/await Promise\.all\(\[courseReady,runtimeReady,r\.lesson\?prepareCppGoldLesson/);
  assert.match(app,/\(await loadGraphicsWorkshop\(\)\)\.graphicsWorkshopMarkup\(t\)/);
  assert.match(app,/\(await loadAdministration\(\)\)\.administrationMarkup\(r\.tab\)/);
 });
