@@ -5,6 +5,9 @@ const out=path.resolve(process.env.NEXUS_GOLD_EVIDENCE||'academy-gold-evidence')
 const checks=[
  ['Контент CP-1.1',['tools/validate-content.mjs']],
  ['Content Quality Gate',['--test','tests/academy-gold-content.test.mjs','tests/content-contract.test.mjs']],
+ ['Маршрутизация стандартного C++',['--test','tests/cpp-stream-state-routing.test.mjs']],
+ ['Совместимость Browser runtime',['tests/runtime-capability-check.mjs']],
+ ['Совместимость маршрутизатора языков',['tests/polyglot-runtime-check.mjs']],
  ...[
  'production-entry-syntax','benchmark-content','lesson-standard-freeze','programming-language-catalog','public-content','shared-learning-views','shared-presentation',
  'module-import-smoke','code-studio-foundation','project-studio-foundation','multi-file-code-studio','workspace-persistence-resume',

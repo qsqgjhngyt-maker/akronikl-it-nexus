@@ -21,6 +21,10 @@ on:
       - 'tests/platform-lazy-imports.test.mjs'
       - 'tests/platform-startup-load.test.mjs'
       - 'tests/academy-gold-*'
+      - 'sandbox/providers/browser-runtime.js'
+      - 'tests/cpp-stream-state-routing.test.mjs'
+      - 'tests/helpers/online-runtime-fixture.mjs'
+      - 'tools/prepare-academy-gold-runtime-fixture.mjs'
       - 'tests/platform-startup-browser-check.mjs'
       - 'tests/identity-session-foundation-check.mjs'
       - 'tests/shared-presentation-check.mjs'
@@ -36,7 +40,7 @@ permissions:
 jobs:
   gold-gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,9 +50,9 @@ jobs:
           node-version: '22'
       - name: Зафиксированные зависимости проверок
         run: npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
-      - name: Неизменность ID, прогресса, Identity, Cloud и runtime
+      - name: Неизменность ID, прогресса, Identity, Cloud; только согласованный runtime patch
         run: |
-          git diff --exit-code bad182cc020e51dcfd0b36a7b0127c637c8f79ee HEAD -- courses/cpp/curriculum.json courses/cpp/content-package.json courses/cpp/data core/storage.js core/account-storage.js core/identity.js core/migrations sync sandbox project-studio server-access pwa/local-vault.js pwa/offline-learning.js pwa/runtime-manifest.js pwa/service-worker.js
+          git diff --exit-code bad182cc020e51dcfd0b36a7b0127c637c8f79ee HEAD -- courses/cpp/curriculum.json courses/cpp/content-package.json courses/cpp/data core/storage.js core/account-storage.js core/identity.js core/migrations sync sandbox project-studio server-access pwa/local-vault.js pwa/offline-learning.js pwa/runtime-manifest.js pwa/service-worker.js ':(exclude)sandbox/providers/browser-runtime.js'
       - name: Content Quality Gate и совместимость
         run: node tools/check-academy-gold-regression.mjs
       - name: Интеграция с подтверждённым main и сохранность rollback
@@ -62,8 +66,18 @@ jobs:
           npm install --prefix /tmp/nexus-gold-browser --no-save playwright@1.56.1
           /tmp/nexus-gold-browser/node_modules/.bin/playwright install --with-deps chromium
           node tools/build-ui1a-release.mjs --out /tmp/nexus-gold-build
-          git worktree add --detach /tmp/nexus-gold-rollback-source 0a134bbb496efae19df373bddff9a00dae9ff3dc
-          node tools/snapshot-published-build.mjs --source /tmp/nexus-gold-rollback-source --out /tmp/nexus-gold-rollback --expected-commit 0a134bbb496efae19df373bddff9a00dae9ff3dc
+          git worktree add --detach /tmp/nexus-gold-rollback-source 02369149b465a98c0f3ff780b8c59add36e52e1b
+          node tools/snapshot-published-build.mjs --source /tmp/nexus-gold-rollback-source --out /tmp/nexus-gold-rollback --expected-commit 02369149b465a98c0f3ff780b8c59add36e52e1b
+      - name: Настоящие браузерные C++ runtime — все Gold программы и случаи ввода
+        env:
+          NEXUS_FRONTEND_DIR: /tmp/nexus-gold-build
+          NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-gold-browser/node_modules/playwright/index.mjs
+          NEXUS_NATIVE_EVIDENCE: academy-gold-evidence/runtime-browser
+          NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-gold-runtime
+          NEXUS_JSCPP_FIXTURE: /tmp/nexus-gold-runtime/jscpp.js
+        run: |
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+          node tests/academy-gold-runtime-browser-check.mjs
       - name: Настоящие online и холодный Offline entry points
         env:
           NEXUS_FRONTEND_DIR: /tmp/nexus-gold-build

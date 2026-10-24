@@ -2,13 +2,13 @@
 import {spawnSync} from 'node:child_process';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import path from 'node:path';
-const main='0a134bbb496efae19df373bddff9a00dae9ff3dc';
+const main='02369149b465a98c0f3ff780b8c59add36e52e1b';
 const out=path.resolve(process.env.NEXUS_GOLD_EVIDENCE||'academy-gold-evidence','integration');
 await mkdir(out,{recursive:true});
-const publication=JSON.parse(await readFile(new URL('../release-candidate.json',import.meta.url),'utf8')).publication?.sourceCommit==='32c54ebe8c28a91b9c82170ae5eb14b546c6bc4c';
+const publication=JSON.parse(await readFile(new URL('../release-candidate.json',import.meta.url),'utf8')).publication?.sourceCommit===main;
 const checks=[
  publication?['Новая тестовая публикация, точные исходники и сохранённый rollback',process.execPath,['tools/check-academy-gold-publication.mjs']]:['Сохранены опубликованные файлы и кандидаты main','git',['diff','--exit-code',main,'--','index.html','nexus-shell.html','offline.html','version.json','service-worker.js','BUILD_MANIFEST.json','release-candidate.json','project.json','releases','entry-assets']],
- ['Сохранены Identity, Cloud, state и runtime main','git',['diff','--exit-code',main,'--','core/storage.js','core/account-storage.js','core/identity.js','core/migrations','sync','sandbox','project-studio','server-access','cloudflare','pwa/local-vault.js','pwa/offline-learning.js','pwa/runtime-manifest.js','pwa/service-worker.js']],
+ ['Сохранены Identity, Cloud, state; runtime patch ограничен одним файлом','git',['diff','--exit-code',main,'--','core/storage.js','core/account-storage.js','core/identity.js','core/migrations','sync','sandbox','project-studio','server-access','cloudflare','pwa/local-vault.js','pwa/offline-learning.js','pwa/runtime-manifest.js','pwa/service-worker.js',':(exclude)sandbox/providers/browser-runtime.js']],
  ['Сохранены ID и базовые учебные объекты main','git',['diff','--exit-code',main,'--','courses/cpp/curriculum.json','courses/cpp/content-package.json','courses/cpp/data','courses/cpp/manifest.json']],
  ['Загрузка, представления, отложенные импорты и media',process.execPath,['--test','tests/platform-startup-load.test.mjs','tests/platform-startup-views.test.mjs','tests/platform-lazy-imports.test.mjs','tests/blog-media-perf-guard.test.mjs']],
  ...['auth-bootstrap','account-control-transport','entry-document-navigation','oauth-link-client','pwa-public-install','blog-layout-security','blog-presentation-security','blog-legacy-compat','ui1a-versioned-build'].map(name=>[name,process.execPath,['tests/'+name+'-check.mjs']])
