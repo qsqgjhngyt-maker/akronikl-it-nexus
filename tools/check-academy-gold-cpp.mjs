@@ -12,7 +12,8 @@ const version=spawnSync(cxx,['--version'],{encoding:'utf8',timeout:10000});asser
 const dir=await mkdtemp(path.join(tmpdir(),'nexus-gold-cpp-')),compiled=new Map(),results=[];
 for(const id of GOLD_ALGORITHM_LESSONS)for(const locale of ['ru','en']){
  const g=JSON.parse(await readFile(new URL('../'+goldLessonPath(id,locale),import.meta.url),'utf8'));
- const programs=[...g.workedExamples.map((e,i)=>({name:'example-'+(i+1),code:e.code,cases:[{stdin:e.stdin,stdout:e.expectedStdout}]})),{name:'laboratory',code:g.laboratory.referenceCode,cases:g.laboratory.cases}];
+ const programs=[...g.workedExamples.map((e,i)=>({name:'example-'+(i+1),code:e.code,cases:[{stdin:e.stdin,stdout:e.expectedStdout},...(e.cases||[])]})),{name:'laboratory',code:g.laboratory.referenceCode,cases:g.laboratory.cases}];
+ if(g.modulePracticum)programs.push({name:'module-practicum',code:g.modulePracticum.referenceCode,cases:g.modulePracticum.cases},{name:'module-practicum-starter',code:g.modulePracticum.starterCode,cases:[{stdin:'',stdout:'todo\n'}]});
  for(const p of programs){
   const hash=createHash('sha256').update(p.code).digest('hex');let exe=compiled.get(hash);
   if(!exe){

@@ -70,3 +70,31 @@ test('Gold registry: отложенная загрузка, дедупликац
   const course={};await prepareCppGoldLesson(course,id,'en');assert.equal(course.goldLessons.en[id].locale,'en');assert.equal(requests.length,3);
  }finally{globalThis.fetch=original;}
 });
+
+test('Итоговый практикум связывает все 8 прежних ID, имеет одинаковые исполняемые контракты RU/EN',()=>{
+ const end=GOLD_ALGORITHM_LESSONS.at(-1),a=lessons.find(x=>x.lessonId===end&&x.locale==='ru').modulePracticum,b=lessons.find(x=>x.lessonId===end&&x.locale==='en').modulePracticum;
+ assert.equal(lessons.filter(x=>x.modulePracticum).length,2);
+ for(const project of [a,b]){
+  assert.deepEqual(project.skills.map(s=>s.lessonId),GOLD_ALGORITHM_LESSONS);
+  assert.equal(project.verification,'manual-output-comparison');
+  assert.equal(project.rubric.reduce((n,r)=>n+r.points,0),10);
+  assert.ok(project.rubric.every(r=>r.criterion&&r.complete&&r.partial&&r.missing));
+  assert.ok(project.requirements.length>=4&&project.milestones.length>=4&&project.artifacts.length>=4);
+  assert.ok(project.cases.some(c=>c.stdin==='0 0\n'&&c.stdout==='0 0 0\n'));
+  assert.ok(project.cases.some(c=>c.stdin.includes('2.5')&&c.stdout==='invalid\n'));
+  assert.ok(project.cases.some(c=>c.stdin==='0 0 99\n'&&c.stdout==='invalid\n'));
+  assert.ok(project.cases.some(c=>c.stdout==='99 9 90\n'));
+ }
+ assert.deepEqual(a.cases.map(({stdin,stdout})=>({stdin,stdout})),b.cases.map(({stdin,stdout})=>({stdin,stdout})));
+ assert.equal(a.referenceCode,b.referenceCode);assert.equal(a.starterCode,b.starterCode);
+ assert.ok(!/[А-Яа-яЁё]/.test(JSON.stringify(b)));
+});
+
+test('Дополнительные тесты примеров RU/EN совпадают; итоговый практикум экранирует текст',()=>{
+ for(const g of lessons){const peer=lessons.find(x=>x.lessonId===g.lessonId&&x.locale!==g.locale);
+  for(const [i,e] of g.workedExamples.entries()){assert.deepEqual(e.cases,peer.workedExamples[i].cases);assert.ok((e.cases||[]).every(c=>typeof c.stdin==='string'&&c.stdout.endsWith('\n')));}
+ }
+ const g=structuredClone(lessons.find(x=>x.modulePracticum));g.modulePracticum.title='<script>alert(1)</script>';
+ g.modulePracticum.skills[0].title='<img src=x onerror=alert(1)>';
+ const markup=academyGoldMarkup(g);assert.ok(markup.includes('data-gold-practicum'));assert.ok(!markup.includes('<script>'));assert.ok(!markup.includes('<img'));assert.ok(markup.includes('&lt;script&gt;'));
+});

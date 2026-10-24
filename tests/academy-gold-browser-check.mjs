@@ -64,6 +64,22 @@ try{
   await local.setViewportSize({width:1366,height:900});await local.screenshot({path:path.join(f.out,'desktop-flowchart.png'),fullPage:true});await local.locator('[data-gold-viz]').screenshot({path:path.join(f.out,'model-desktop.png')});
  });
  await check('Контрольный вопрос Gold показывает объяснение без автоматической оценки проекта',async()=>{const q=local.locator('[data-gold-question]').first();await q.locator('input[value="0"]').check();await q.locator('[data-gold-check]').click();assert.equal(await q.locator('[data-gold-feedback]').getAttribute('data-result'),'correct');assert.ok((await q.locator('[data-gold-feedback]').textContent()).length>15);});
+ await check('Итоговый практикум RU/EN online и offline: рубрика, скрытый эталон и неизменный редактор',async()=>{
+  for(const locale of ['ru','en'])for(const p of [online,local]){
+   await lessonRoute(p,'cpp.languages-compilation-debugging',locale);
+   const project=p.locator('[data-gold-practicum]'),editorBefore=await p.locator('#editor').inputValue();
+   assert.equal(await project.count(),1);assert.equal(await project.locator('a[href^="#course=cpp"]').count(),8);
+   assert.equal(await project.locator('.gold-project-rubric>li').count(),5);assert.ok(await project.locator('tbody tr').count()>=21);
+   const reference=project.locator('details').last();assert.equal(await reference.locator('pre').isVisible(),false);
+   await reference.locator('summary').focus();await p.keyboard.press('Enter');assert.ok(await reference.locator('pre').isVisible());
+   assert.ok((await reference.locator('pre code').textContent()).includes('std::cin.eof()'));
+   assert.equal(await p.locator('#editor').inputValue(),editorBefore);
+   if(locale==='en')assert.ok(!/[А-Яа-яЁё]/.test(await project.textContent()));
+  }
+  await local.setViewportSize({width:360,height:844});assert.ok(await local.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  await local.locator('[data-gold-practicum]').screenshot({path:path.join(f.out,'practicum-360.png')});
+  await local.setViewportSize({width:1366,height:900});
+ });
  await check('Синтетические сценарии не отправляют мутации Cloud и не выдают offline Account proof',async()=>{assert.equal(requests.filter(r=>r.path.startsWith('/api/')&&r.method!=='GET').length,0);assert.equal(await local.evaluate(async prefix=>(await import(prefix+'/core/account-storage.js')).verifiedAccount(),prefix),null);assert.deepEqual(errors,[]);assert.deepEqual(f.errors,[]);});
 }catch(error){process.exitCode=1;checks.push({name:error.message,status:'FAIL',stack:error.stack});console.error(error.stack);await local?.screenshot({path:path.join(f.out,'FAILURE.png'),fullPage:true}).catch(()=>{});}
 finally{await browser?.close();await f.finish({status:process.exitCode?'FAIL':'PASS',checks,onlineErrors:errors,realLive:false,physicalDevice:false,cppExecution:false,onlineRequests:requests});}
