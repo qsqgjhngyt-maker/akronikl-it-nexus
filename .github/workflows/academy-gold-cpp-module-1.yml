@@ -1,7 +1,7 @@
 name: Академия C++ Gold — модуль 1
 on:
   push:
-    branches: [feature/academy-gold-standard-cpp-module-1]
+    branches: [feature/academy-gold-standard-cpp-module-1, main]
   pull_request:
     branches: [main]
     paths:
@@ -27,6 +27,9 @@ on:
       - 'tests/ui1a-versioned-build-check.mjs'
       - 'tools/build-ui1a-release.mjs'
       - 'tools/check-academy-gold-*'
+      - 'release-candidate.json'
+      - 'version.json'
+      - 'BUILD_MANIFEST.json'
       - '.github/workflows/academy-gold-cpp-module-1.yml'
 permissions:
   contents: read
@@ -58,7 +61,9 @@ jobs:
         run: |
           npm install --prefix /tmp/nexus-gold-browser --no-save playwright@1.56.1
           /tmp/nexus-gold-browser/node_modules/.bin/playwright install --with-deps chromium
-          node tools/build-ui1a-release.mjs --generation ui1a-academy-gold-ci --version 0.1.7-alpha.2.4.6-ui1a.10.3.1 --out /tmp/nexus-gold-build
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-gold-build
+          git worktree add --detach /tmp/nexus-gold-rollback-source 0a134bbb496efae19df373bddff9a00dae9ff3dc
+          node tools/snapshot-published-build.mjs --source /tmp/nexus-gold-rollback-source --out /tmp/nexus-gold-rollback --expected-commit 0a134bbb496efae19df373bddff9a00dae9ff3dc
       - name: Настоящие online и холодный Offline entry points
         env:
           NEXUS_FRONTEND_DIR: /tmp/nexus-gold-build
@@ -73,6 +78,13 @@ jobs:
           NEXUS_NATIVE_EVIDENCE=academy-gold-evidence/startup node tests/platform-startup-browser-check.mjs
           NEXUS_NATIVE_EVIDENCE=academy-gold-evidence/administration node tests/platform-admin-browser-check.mjs
           NEXUS_NATIVE_EVIDENCE=academy-gold-evidence/public-media node tests/blog-media-public-browser-check.mjs
+      - name: Реальная PWA — обновление, точный откат и сохранение учебных данных
+        env:
+          NEXUS_FRONTEND_DIR: /tmp/nexus-gold-build
+          NEXUS_ROLLBACK_DIR: /tmp/nexus-gold-rollback
+          NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-gold-browser/node_modules/playwright/index.mjs
+          NEXUS_BROWSER_RESULT: academy-gold-evidence/PWA_ROLLBACK.json
+        run: node tests/pwa-rollback-browser-check.mjs
       - name: Хеши и контекст evidence
         if: always()
         run: |
