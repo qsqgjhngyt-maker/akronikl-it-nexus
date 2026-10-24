@@ -41,7 +41,7 @@ export function goldVisualizationMarkup(gold){
 const sourceLink=(id,lang)=>{const s=links[id];return s?'<li><a href="'+E(s.url)+'" target="_blank" rel="noopener noreferrer">'+E(lang==='en'&&id==='ISO-CPP'?'ISO C++ — standard status':s.label)+'</a></li>':''};
 function goldCasesMarkup(cases,lang){
  const purpose=cases.some(c=>c.purpose);
- return '<table class="gold-reference-cases"><thead><tr><th scope="col">stdin</th><th scope="col">stdout</th>'+(purpose?'<th scope="col">'+E(label(lang,'Что проверяем','Purpose'))+'</th>':'')+'</tr></thead><tbody>'+cases.map(c=>'<tr><td><code>'+E(JSON.stringify(c.stdin))+'</code></td><td><code>'+E(JSON.stringify(c.stdout))+'</code></td>'+(purpose?'<td>'+E(c.purpose)+'</td>':'')+'</tr>').join('')+'</tbody></table>';
+ return '<div class="gold-cases-scroll" tabindex="0" role="region" aria-label="'+E(label(lang,'Контрольные случаи: таблица с горизонтальной прокруткой','Reference cases: horizontally scrollable table'))+'"><table class="gold-reference-cases"><thead><tr><th scope="col">stdin</th><th scope="col">stdout</th>'+(purpose?'<th scope="col">'+E(label(lang,'Что проверяем','Purpose'))+'</th>':'')+'</tr></thead><tbody>'+cases.map(c=>'<tr><td><code>'+E(JSON.stringify(c.stdin))+'</code></td><td><code>'+E(JSON.stringify(c.stdout))+'</code></td>'+(purpose?'<td>'+E(c.purpose)+'</td>':'')+'</tr>').join('')+'</tbody></table></div>';
 }
 function modulePracticumMarkup(project,lang){
  if(!project)return '';

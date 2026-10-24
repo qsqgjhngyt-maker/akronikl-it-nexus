@@ -77,6 +77,10 @@ try{
    if(locale==='en')assert.ok(!/[А-Яа-яЁё]/.test(await project.textContent()));
   }
   await local.setViewportSize({width:360,height:844});assert.ok(await local.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  const cases=local.locator('[data-gold-practicum] .gold-cases-scroll');await cases.focus();assert.equal(await cases.getAttribute('tabindex'),'0');
+  assert.ok(await cases.evaluate(n=>n.scrollWidth>n.clientWidth));
+  await local.keyboard.press('ArrowRight');await local.waitForFunction(()=>document.querySelector('[data-gold-practicum] .gold-cases-scroll').scrollLeft>0);
+  await cases.screenshot({path:path.join(f.out,'practicum-cases-360.png')});
   await local.locator('[data-gold-practicum]').screenshot({path:path.join(f.out,'practicum-360.png')});
   await local.setViewportSize({width:1366,height:900});
  });
