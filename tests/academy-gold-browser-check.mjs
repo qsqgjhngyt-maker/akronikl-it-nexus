@@ -4,6 +4,7 @@ import path from 'node:path';
 import {readFile,writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {nativeOfflineFixture} from './helpers/native-offline-fixture.mjs';
+import {checkGlossaryDrawer} from './helpers/glossary-drawer-checks.mjs';
 import {GATEWAY_ORIGIN} from '../server-access/bff/account-read.mjs';
 import {GOLD_ALGORITHM_LESSONS} from '../core/academy-gold-catalog.js';
 const f=await nativeOfflineFixture('academy-gold'),frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR),prefix='/releases/'+f.generation;
@@ -174,6 +175,22 @@ try{
    await local.evaluate(()=>{location.hash='#view=home'});await local.locator('.visual-home').waitFor();
    await lessonRoute(local,GOLD_ALGORITHM_LESSONS[0],'ru');
   }
+ });
+ await check('Словарь RU/EN online/offline: hidden/inert, AX name, keyboard, search, возврат focus и route cleanup',async()=>{
+  const evidence=[];
+  for(const [kind,p]of [['online',online],['offline',local]]){
+   const cdp=await p.context().newCDPSession(p);
+   for(const locale of ['ru','en']){
+    await lessonRoute(p,GOLD_ALGORITHM_LESSONS[0],locale);await p.setViewportSize({width:390,height:844});
+    evidence.push({kind,locale,...await checkGlossaryDrawer(p,{cdp,probeTree:true})});
+    await p.locator('#openTerms').click();await p.evaluate(()=>{location.hash='#view=home'});await p.locator('.visual-home').waitFor();
+    assert.equal(await p.locator('#termDrawer:modal').count(),0);
+    assert.equal(await p.evaluate(()=>getComputedStyle(document.documentElement).overflow==='hidden'),false);
+    await p.locator('#visualSettings summary').click();await p.keyboard.press('Escape');
+   }
+   await cdp.detach();await p.setViewportSize({width:1366,height:900});
+  }
+  await writeFile(path.join(f.out,'GLOSSARY_ACCESSIBILITY.json'),JSON.stringify({status:'PASS',evidence,physical:false,production:false},null,2));
  });
  await check('Синтетические сценарии не отправляют мутации Cloud и не выдают offline Account proof',async()=>{assert.equal(requests.filter(r=>r.path.startsWith('/api/')&&r.method!=='GET').length,0);assert.equal(await local.evaluate(async prefix=>(await import(prefix+'/core/account-storage.js')).verifiedAccount(),prefix),null);assert.deepEqual(errors,[]);assert.deepEqual(f.errors,[]);});
 }catch(error){

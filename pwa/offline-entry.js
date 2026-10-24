@@ -16,7 +16,7 @@ import {academyCatalogMarkup,bindAcademyCatalog} from '../core/academy-catalog.j
 import {programmingHubMarkup} from '../core/code-hub-presentation.js';
 import {bindLanguageJourneys} from '../core/nexus-language-journey.js';
 import {bindLearningDiscovery,discoveryPageMarkup} from '../core/nexus-learning-discovery.js';
-import {bindNexusLearningUi} from '../core/nexus-learning-ui.js';
+import {bindNexusLearningUi,bindGlossaryDrawer} from '../core/nexus-learning-ui.js';
 import {shellMarkup,lockedMarkup,unlockMarkup,homeMarkup,academyMarkup,projectsMarkup,lessonMarkup,editorMarkup,visualIcon} from './offline-presentation.js';
 import {blogPageMarkup,blogIndexMarkup,blogArticleMarkup,bindBlogSections} from '../core/blog-presentation.js';
 import {BLOG_DRAFTS} from '../core/blog-seeds.js';
@@ -68,7 +68,7 @@ document.querySelector('.side-nav').addEventListener('click',closeMobile);
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=v=>structuredClone(v),label=v=>typeof v==='string'?v:v?.ru||v?.en||'';
-let disposeOrbit=null,goldPresentation=null,session=null,data=null,course=null,catalog=null,programming=null,studio=null,graphics=null,queue=Promise.resolve(),pending=0,saveFailed=false,renderSequence=0,cppLearningFilter='topics',locale=prefs.courseLocale;
+let disposeTerms=null,disposeOrbit=null,goldPresentation=null,session=null,data=null,course=null,catalog=null,programming=null,studio=null,graphics=null,queue=Promise.resolve(),pending=0,saveFailed=false,renderSequence=0,cppLearningFilter='topics',locale=prefs.courseLocale;
 function save(){
  if(!session)return Promise.reject(Error('Откройте локальную копию.'));
  pending++;saveFailed=false;saved.textContent='Сохраняем изменения на устройстве…';
@@ -139,7 +139,7 @@ async function compiler(){
 }
 async function render(){
  const seq=++renderSequence;await graphics?.flush();graphics=null;await settled();if(seq!==renderSequence)return;studio=null;const route=new URLSearchParams(location.hash.slice(1));
- disposeOrbit?.();disposeOrbit=null;
+ disposeTerms?.();disposeTerms=null;disposeOrbit?.();disposeOrbit=null;
  updateChrome(route);
  if(['labs','practices'].includes(route.get('view'))){root.innerHTML=discoveryPageMarkup({kind:route.get('view'),course,contentFor:id=>(locale==='en'?course.lessonsEn:course.lessonsRu).lessons.find(l=>l.id===id),projects:Object.values(data?.projects||{}),state:data?.state.courses?.cpp||{},t,locale:prefs.uiLocale,materialLocale:locale});bindLearningDiscovery(t);return}
  if(route.get('view')==='programming'){
@@ -181,8 +181,7 @@ async function render(){
 function bindReadOnlyLearning(){
  bindCppLearningPath({root,onSelect:value=>{cppLearningFilter=value}});
  for(const input of root.querySelectorAll('[data-practicum][data-task]')){input.disabled=!data;if(data)input.onchange=()=>{const p=course.practicumsRu.practicums.find(x=>x.id===input.dataset.practicum);if(p){markTask(data,'practicum',p,Number(input.dataset.task),input.checked);void save().catch(()=>{})}}}
- for(const b of root.querySelectorAll('#openTerms,[data-open-terms]'))b.onclick=()=>{root.querySelector('#termDrawer')?.classList.add('open');root.querySelector('#termDrawer')?.setAttribute('aria-hidden','false');root.querySelector('#termBackdrop')?.classList.add('show');root.querySelector('#termSearch')?.focus()};
- for(const b of root.querySelectorAll('#closeTerms,#termBackdrop'))b.onclick=()=>{root.querySelector('#termDrawer')?.classList.remove('open');root.querySelector('#termDrawer')?.setAttribute('aria-hidden','true');root.querySelector('#termBackdrop')?.classList.remove('show')};
+ disposeTerms=bindGlossaryDrawer(root);
 }
 function bindSearch(inputSelector,rowSelector,statusSelector){
  const input=root.querySelector(inputSelector);if(!input)return;
@@ -198,10 +197,8 @@ function serverView(view){
  return '<section class="ps-hero glass-panel"><div><span class="eyebrow">NEXUS</span><h1>'+name+'</h1><p>'+(view==='akronikl'?'AI-помощник пока не реализован. Локальный помощник также не подключён. Учебные подсказки доступны в уроках.':'Этот раздел требует подключения и проверки серверного доступа. Ваши локальные проекты и Академия доступны независимо от него.')+'</p><div class="hero-actions"><a class="btn primary" href="#view=academy&focus=cpp">Академия</a><a class="btn" href="/account/entry/">Открыть обычный Nexus</a></div></div></section>';
 }
 function bindKnowledge(item,state){
- const termSearch=root.querySelector('#termSearch');if(termSearch)termSearch.oninput=()=>{const q=termSearch.value.toLocaleLowerCase();for(const c of root.querySelectorAll('[data-term-card]'))c.hidden=!c.textContent.toLocaleLowerCase().includes(q)};
  const check=root.querySelector('#checkQuiz,#checkAnswer');if(check)check.onclick=()=>{const chosen=root.querySelector('input[name="quiz"]:checked'),fb=root.querySelector('#quizFeedback');if(!chosen){fb.textContent='Выберите вариант.';return}const value=Number(chosen.value),ok=value===item.quiz.correctIndex;fb.className='quiz-feedback '+(ok?'ok':'bad');fb.textContent=ok?'Верно. Основная идея понята.':'Пока нет. Вернитесь к объяснению и попробуйте ещё раз.';if(data){state.quiz=value;void save().catch(()=>{})}};
  root.querySelectorAll('.benchmark-check').forEach(button=>button.onclick=()=>{const card=button.closest('.knowledge-card'),picked=card.querySelector('input:checked'),fb=card.querySelector('.knowledge-feedback');if(!picked){fb.textContent='Выберите вариант.';return}const ok=Number(picked.value)===Number(button.dataset.answer);fb.className='knowledge-feedback '+(ok?'ok':'bad');fb.textContent=(ok?'Верно. ':'Пока нет. ')+(button.dataset.explain||'')});
- root.querySelectorAll('[data-term]').forEach(button=>button.onclick=()=>{root.querySelector('#openTerms')?.click();if(termSearch){termSearch.value=button.dataset.term;termSearch.dispatchEvent(new Event('input'))}});
 }
 
 document.querySelector('#lockLocal').onclick=async()=>{await graphics?.flush();graphics=null;await settled();await session?.lock();session=null;data=null;saved.textContent='Локальная копия закрыта.';document.querySelector('#lockLocal').hidden=true;document.querySelector('[data-local-name]').textContent='Открыть личную копию';document.querySelector('[data-local-avatar]').textContent='А';location.hash='#view=unlock'};
@@ -209,7 +206,7 @@ function connection(){document.querySelector('#connection').textContent=navigato
 addEventListener('online',connection);addEventListener('offline',connection);connection();
 addEventListener('hashchange',()=>{void render().catch(error=>{saved.textContent=error.message})});
 addEventListener('beforeunload',event=>{if(pending||saveFailed){event.preventDefault();event.returnValue=''}});
-addEventListener('pagehide',()=>{document.querySelector('[data-local-name]').textContent='Открыть личную копию';document.querySelector('[data-local-avatar]').textContent='А';root.replaceChildren();data=null;void session?.lock();session=null});
+addEventListener('pagehide',()=>{disposeTerms?.();disposeTerms=null;document.querySelector('[data-local-name]').textContent='Открыть личную копию';document.querySelector('[data-local-avatar]').textContent='А';root.replaceChildren();data=null;void session?.lock();session=null});
 addEventListener('pageshow',event=>{if(event.persisted)location.reload()});
 registerUpdateParticipant({isDirty:()=>saveFailed,isPending:()=>pending>0,flush:async()=>{await graphics?.flush();await settled()}});
 mountInterfaceUpdate();
