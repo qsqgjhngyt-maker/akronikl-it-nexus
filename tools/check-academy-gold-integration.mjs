@@ -10,7 +10,7 @@ const checks=[
  ['Сохранены Identity, Cloud, state и runtime main','git',['diff','--exit-code',main,'--','core/storage.js','core/account-storage.js','core/identity.js','core/migrations','sync','sandbox','project-studio','server-access','cloudflare','pwa/local-vault.js','pwa/offline-learning.js','pwa/runtime-manifest.js','pwa/service-worker.js']],
  ['Сохранены ID и базовые учебные объекты main','git',['diff','--exit-code',main,'--','courses/cpp/curriculum.json','courses/cpp/content-package.json','courses/cpp/data','courses/cpp/manifest.json']],
  ['Загрузка, представления, отложенные импорты и media',process.execPath,['--test','tests/platform-startup-load.test.mjs','tests/platform-startup-views.test.mjs','tests/platform-lazy-imports.test.mjs','tests/blog-media-perf-guard.test.mjs']],
- ...['auth-bootstrap','account-control-transport','entry-document-navigation','oauth-link-client','pwa-public-install','blog-layout-security','blog-presentation-security','blog-legacy-compat'].map(name=>[name,process.execPath,['tests/'+name+'-check.mjs']])
+ ...['auth-bootstrap','account-control-transport','entry-document-navigation','oauth-link-client','pwa-public-install','blog-layout-security','blog-presentation-security','blog-legacy-compat','ui1a-versioned-build'].map(name=>[name,process.execPath,['tests/'+name+'-check.mjs']])
 ];
 const results=[];
 for(const [name,command,args] of checks){

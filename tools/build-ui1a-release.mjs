@@ -13,7 +13,14 @@ const files=[];async function walk(dir,prefix=''){for(const e of await readdir(p
 const manifest=await readFile(path.join(source,'manifest.webmanifest')),prefix='releases/'+config.assetGeneration+'/',records=[],hash=b=>createHash('sha256').update(b).digest('hex');
 async function output(file,b,origin){const target=path.join(out,file);await mkdir(path.dirname(target),{recursive:true});await writeFile(target,b);records.push({file,bytes:b.length,sha256:hash(b),source:origin})}
 for(const file of files){const b=await readFile(path.join(source,file));await output(prefix+file,b,file)}
-const renderHTML=html=>{let result=html.replaceAll(/\.\/releases\/ui1a-[a-z0-9-]+\//g,'./');for(const ref of ['styles/app.css','core/app.js','core/bootstrap.js','assets/icons/apple-touch-icon.png'])result=result.replaceAll('./'+ref,'./'+prefix+ref);return result};
+// После rollback корневые документы могут ссылаться на старое поколение.
+// Перепривязываются только выходные документы сборки; immutable source bytes
+// и активные root-файлы никогда не перезаписываются этим преобразованием.
+const renderHTML=html=>{
+ let result=html.replaceAll(/\.\/releases\/ui1a-[a-z0-9-]+\//g,'./').replaceAll(/\.\/entry-assets\/ui1a-[a-z0-9-]+\//g,'./entry-assets/'+config.assetGeneration+'/');
+ for(const ref of ['styles/app.css','core/app.js','core/bootstrap.js','assets/icons/apple-touch-icon.png'])result=result.replaceAll('./'+ref,'./'+prefix+ref);
+ return result.replaceAll(/(\.\/releases\/ui1a-[a-z0-9-]+\/(?:core\/(?:app|bootstrap)\.js|styles\/app\.css))\?v=[^"'<>\s]+/g,'$1?v='+config.version);
+};
 let index=renderHTML(await readFile(path.join(source,'index.html'),'utf8'));
 index=index.replace('href="./manifest.webmanifest"','href="./manifest.webmanifest?v='+config.version+'"');
 await output('index.html',Buffer.from(index),'index.html: generation path rendering');await output('manifest.webmanifest',manifest,'manifest.webmanifest: identity preserved');await output('version.json',await readFile(path.join(source,'version.json')),'version.json');

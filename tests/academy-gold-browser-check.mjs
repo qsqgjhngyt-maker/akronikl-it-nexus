@@ -1,7 +1,7 @@
 // Нативный браузер, настоящие entry points, синтетический аккаунт и холодный Offline.
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import {readFile} from 'node:fs/promises';
+import {readFile,writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {nativeOfflineFixture} from './helpers/native-offline-fixture.mjs';
 import {GATEWAY_ORIGIN} from '../server-access/bff/account-read.mjs';
@@ -15,8 +15,15 @@ const check=async(name,fn)=>{const start=performance.now();await fn();checks.pus
 const mime=p=>p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.json')?'application/json':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.png')?'image/png':p.endsWith('.webp')?'image/webp':'text/html';
 const lessonRoute=async(p,id,locale)=>{
  if(await p.locator('#courseLocale').getAttribute('data-value')!==locale){
+  await p.evaluate(()=>scrollTo({top:0,left:0,behavior:'instant'}));
+  await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const settings=p.locator('#visualSettings');if(await settings.getAttribute('open')===null)await settings.locator('summary').click();
+  // Сначала заканчиваем прокрутку от длинного практикума: глобальный scroll
+  // закрывает popup. Открывать его во время автопрокрутки focus нельзя.
+  await p.locator('#courseLocale').scrollIntoViewIfNeeded();
+  await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   await p.locator('#courseLocale').focus();await p.keyboard.press('ArrowDown');await p.keyboard.press(locale==='ru'?'Home':'End');await p.keyboard.press('Enter');
+  assert.equal(await p.locator('#courseLocale').getAttribute('data-value'),locale,'Keyboard locale selection');
   if(await settings.getAttribute('open')!==null)await settings.locator('summary').click();
  }
  await p.evaluate(id=>{location.hash='#course=cpp&lesson='+id},id);
@@ -108,5 +115,12 @@ try{
   await local.setViewportSize({width:1366,height:900});
  });
  await check('Синтетические сценарии не отправляют мутации Cloud и не выдают offline Account proof',async()=>{assert.equal(requests.filter(r=>r.path.startsWith('/api/')&&r.method!=='GET').length,0);assert.equal(await local.evaluate(async prefix=>(await import(prefix+'/core/account-storage.js')).verifiedAccount(),prefix),null);assert.deepEqual(errors,[]);assert.deepEqual(f.errors,[]);});
-}catch(error){process.exitCode=1;checks.push({name:error.message,status:'FAIL',stack:error.stack});console.error(error.stack);await local?.screenshot({path:path.join(f.out,'FAILURE.png'),fullPage:true}).catch(()=>{});}
+}catch(error){
+ process.exitCode=1;checks.push({name:error.message,status:'FAIL',stack:error.stack});console.error(error.stack);
+ for(const [name,p]of [['online',online],['offline',local]])if(p&&!p.isClosed()){
+  const state=await p.evaluate(()=>({route:location.hash,locale:document.querySelector('#courseLocale')?.dataset.value,gold:[...document.querySelectorAll('[data-gold-lesson]')].map(x=>({id:x.dataset.goldLesson,lang:x.lang})),focus:document.activeElement?.outerHTML?.slice(0,1500),error:document.querySelector('.route-error-detail,.boot-error')?.textContent})).catch(e=>({error:e.message}));
+  await writeFile(path.join(f.out,'FAILURE-'+name+'.json'),JSON.stringify(state,null,2)+'\n');
+  await p.screenshot({path:path.join(f.out,'FAILURE-'+name+'.png'),fullPage:true}).catch(()=>{});
+ }
+}
 finally{heldGold?.release.resolve();await browser?.close();await f.finish({status:process.exitCode?'FAIL':'PASS',checks,onlineErrors:errors,realLive:false,physicalDevice:false,cppExecution:false,onlineRequests:requests});}
