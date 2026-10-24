@@ -1,0 +1,112 @@
+name: Фото блога — проверка транспорта и образ BFF без развёртывания
+on:
+  push:
+    branches:
+      - perf/blog-media-read-transport-20261023
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-and-package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      IMAGE_NAME: nexus-access-bff:${{ github.sha }}
+    steps:
+      - name: Получить точные исходники кандидата
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Установить закреплённые зависимости и проверить воспроизводимость BFF
+        run: |
+          set -euo pipefail
+          export QA_DIR="$RUNNER_TEMP/nexus-blog-media-transport"
+          printf 'QA_DIR=%s\n' "$QA_DIR" >> "$GITHUB_ENV"
+          mkdir -p "$QA_DIR"
+          npm ci --prefix server-access --no-audit --no-fund
+          node server-access/build-bff.mjs
+          git diff --exit-code -- server-access/image
+          sha256sum server-access/image/bff/server.mjs > "$QA_DIR/bff-bundle.sha256"
+          git rev-parse HEAD > "$QA_DIR/source-commit.txt"
+          git rev-parse HEAD^{tree} > "$QA_DIR/source-tree.txt"
+      - name: Собрать точный закреплённый production образ
+        run: |
+          set -euo pipefail
+          docker build --platform linux/amd64 -t "$IMAGE_NAME" server-access/image
+          docker image inspect "$IMAGE_NAME" > "$QA_DIR/image-inspect.json"
+          docker run --rm --network none "$IMAGE_NAME" node -e 'const assert=require("node:assert/strict");assert.equal(process.version,"v22.23.3");assert.equal(process.arch,"x64");assert.equal(process.platform,"linux");console.log(JSON.stringify({node:process.version,arch:process.arch,platform:process.platform,versions:process.versions}))' > "$QA_DIR/runtime.json"
+      - name: Подготовить только синтетические TLS и JPEG для loopback
+        run: |
+          set -euo pipefail
+          mkdir -p "$QA_DIR/fixtures"
+          openssl req -x509 -newkey rsa:2048 -nodes -sha256 -days 1 -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost' -keyout "$QA_DIR/fixtures/key.pem" -out "$QA_DIR/fixtures/cert.pem" 2>/dev/null
+          chmod 644 "$QA_DIR/fixtures/key.pem" "$QA_DIR/fixtures/cert.pem"
+          node --input-type=module <<'JS'
+          import {createRequire} from 'node:module';
+          import {writeFile,copyFile} from 'node:fs/promises';
+          const jpeg=createRequire(new URL('./server-access/package.json',`file://${process.cwd()}/`))('jpeg-js');
+          for(const size of [16,256]){
+            const data=Buffer.alloc(size*size*4);
+            for(let i=0;i<size*size;i++){data[4*i]=i%256;data[4*i+1]=Math.floor(i/size)%256;data[4*i+2]=180;data[4*i+3]=255}
+            await writeFile(`${process.env.QA_DIR}/fixtures/synthetic-${size}.jpg`,jpeg.encode({data,width:size,height:size},75).data);
+          }
+          await copyFile('tests/fixtures/synthetic-media-1280.jpg',`${process.env.QA_DIR}/fixtures/synthetic-1280.jpg`);
+          JS
+          chmod 777 "$QA_DIR"
+      - name: Проверить права, публикацию, части фото и сохранность загрузок на production Node
+        run: |
+          set -euo pipefail
+          for check in blog-media-parts-bff-check blog-media-parts-worker-check blog-media-control-check; do
+            docker run --rm --network none -v "$PWD:/work:ro" -w /work "$IMAGE_NAME" node "tests/$check.mjs" | tee "$QA_DIR/$check.log"
+          done
+      - name: Проверить совместимость прежнего native HTTP2 транспорта и загрузки фото
+        run: |
+          set -euo pipefail
+          docker run --rm --network none -v "$PWD:/work:ro" -v "$QA_DIR:/qa" -w /work \
+            -e NEXUS_H2_TLS_CERT=/qa/fixtures/cert.pem -e NEXUS_H2_TLS_KEY=/qa/fixtures/key.pem \
+            -e NEXUS_H2_PHOTO_DIR=/qa/fixtures -e NEXUS_H2_RESULT=/qa/legacy-http2.json \
+            "$IMAGE_NAME" node tests/blog-media-http2-transport-check.mjs | tee "$QA_DIR/legacy-http2.log"
+      - name: Проверить чтение фото, отмену, отзыв прав и завершение 40 соединений
+        run: |
+          set -euo pipefail
+          docker run --rm --network none -v "$PWD:/work:ro" -v "$QA_DIR:/qa" -w /work \
+            -e NEXUS_H2_TLS_CERT=/qa/fixtures/cert.pem -e NEXUS_H2_TLS_KEY=/qa/fixtures/key.pem \
+            -e NEXUS_MEDIA_READ_RESULT=/qa/media-read.json -e NEXUS_MEDIA_READ_STRESS=40 \
+            "$IMAGE_NAME" node tests/blog-media-read-transport-check.mjs | tee "$QA_DIR/media-read.log"
+      - name: Проверить прежнюю границу приватного кеша в браузере
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+          CACHE_BOUNDARY_EVIDENCE: ${{ runner.temp }}/nexus-blog-media-transport/cache-boundary.json
+        run: node server-access/check-legacy-cache-boundary.mjs
+      - name: Проверить результат и упаковать образ без публикации в облако
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,pathlib,json,hashlib
+          qa=pathlib.Path(os.environ['QA_DIR'])
+          for name,count in [('legacy-http2.json',47),('media-read.json',11)]:
+            result=json.loads((qa/name).read_text())
+            assert result['status']=='PASS',name
+            assert result['runtime']=='v22.23.3',name
+            assert len(result['records'])==count,name
+          read=json.loads((qa/'media-read.json').read_text())
+          assert read['stressIterations']==40
+          for file,digest in read['sourceSha256'].items():
+            assert hashlib.sha256((pathlib.Path('server-access/bff')/file).read_bytes()).hexdigest()==digest,file
+          print('Exact production runtime, source bytes and all native checks: PASS')
+          PY
+          docker save "$IMAGE_NAME" -o "$QA_DIR/nexus-access-bff.tar"
+          sha256sum "$QA_DIR/nexus-access-bff.tar" > "$QA_DIR/nexus-access-bff.tar.sha256"
+      - name: Сохранить проверяемый образ и доказательства
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nexus-blog-media-transport-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/nexus-blog-media-transport/*.json
+            ${{ runner.temp }}/nexus-blog-media-transport/*.log
+            ${{ runner.temp }}/nexus-blog-media-transport/*.txt
+            ${{ runner.temp }}/nexus-blog-media-transport/*.sha256
+            ${{ runner.temp }}/nexus-blog-media-transport/*.tar
+          if-no-files-found: error
+          retention-days: 7

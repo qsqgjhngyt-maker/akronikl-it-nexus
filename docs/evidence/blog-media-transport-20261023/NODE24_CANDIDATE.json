@@ -1,0 +1,89 @@
+{
+  "status": "PASS",
+  "phase": "candidate",
+  "records": [
+    {
+      "name": "Native full public photo read: signed RPC count, bounded parallelism, TLS connection count",
+      "status": "PASS",
+      "elapsedMs": 655,
+      "mediaReadMs": 649,
+      "tlsConnections": 1,
+      "rpcCount": 16,
+      "peakRPC": 4,
+      "jpegBytes": 93146
+    },
+    {
+      "name": "Concurrent public/private photo reads have separate sessions and freshly signed parts",
+      "status": "PASS",
+      "elapsedMs": 640,
+      "tlsConnections": 2,
+      "rpcCount": 32,
+      "sessionCount": 2
+    },
+    {
+      "name": "Publication revoked between parts yields 404 and no partial photo",
+      "status": "PASS",
+      "elapsedMs": 325
+    },
+    {
+      "name": "Admin grant revoked between parts yields 403 and no partial private photo",
+      "status": "PASS",
+      "elapsedMs": 325
+    },
+    {
+      "name": "Public response close cancels peer streams and closes the scope without retry",
+      "status": "PASS",
+      "elapsedMs": 250
+    },
+    {
+      "name": "Private request abort cancels peer streams and closes the scope without retry",
+      "status": "PASS",
+      "elapsedMs": 255
+    },
+    {
+      "name": "Aborting one public photo does not cancel a concurrent private photo scope",
+      "status": "PASS",
+      "elapsedMs": 730
+    },
+    {
+      "name": "HTTP2 stream reset cancels remaining parts without retry or partial result",
+      "status": "PASS",
+      "elapsedMs": 327
+    },
+    {
+      "name": "Valid individual part digests cannot bypass the final whole-photo SHA256",
+      "status": "PASS",
+      "elapsedMs": 640
+    },
+    {
+      "name": "Repeated multiplexed revoke/abort/reset scopes close without native failure",
+      "status": "PASS",
+      "elapsedMs": 12002,
+      "iterations": 40
+    },
+    {
+      "name": "A stalled native response body is cancelled by the unchanged 12-second deadline",
+      "status": "PASS",
+      "elapsedMs": 12007,
+      "mediaReadMs": 12002
+    }
+  ],
+  "sourceSha256": {
+    "media-http2.mjs": "10ff8e319658bd1f3a49362a5b94979a3cd8f590c452e18655dd9abce98146c0",
+    "media-parts.mjs": "fbb3de8fe0ae55d95e1979379b89e27974ce69f65707417f7222c0131c190267",
+    "content.mjs": "895178be569dd73f2603bc2a9b762c2cc8f631be7e36235dc87bb7bc5a5dc769",
+    "account-control.mjs": "d31e866df4b009f74d71b2f3768b2984d1b301d137143b48f6117ec75a6ca7fc"
+  },
+  "syntheticOnly": true,
+  "realCredentials": false,
+  "cloudWrites": 0,
+  "externalNetwork": false,
+  "nativeTLSHTTP2": true,
+  "model": {
+    "connectionDelayMs": 100,
+    "rpcDelayMs": 80,
+    "partCount": 16
+  },
+  "runtime": "v24.22.1",
+  "stressIterations": 40
+}

@@ -3,7 +3,7 @@ import {MEDIA_PARTS_PATH,PUBLIC_MEDIA_PARTS_PATH,PART_CHARS,MAX_ENVELOPE,exact,u
 const sha=v=>createHash('sha256').update(v).digest('hex');
 export class MediaPartsError extends Error{constructor(code='CONTENT_MEDIA_PARTS_REJECTED',status=502){super(code);this.name='MediaPartsError';this.code=code;this.status=status}}
 const reject=()=>{throw new MediaPartsError()};
-function scope(envelope,rpc,signal){
+function scope(envelope,rpc,signal,concurrency=2){
  const controller=new AbortController(),combined=AbortSignal.any([signal||AbortSignal.timeout(12000),controller.signal]);
  return {signal:combined,async call(payload,path=MEDIA_PARTS_PATH){
   combined.throwIfAborted();
@@ -12,7 +12,7 @@ function scope(envelope,rpc,signal){
  },async pool(indices,fn){
   let next=0,firstError;
   const run=async()=>{try{while(next<indices.length){combined.throwIfAborted();const i=indices[next++];await fn(i)}}catch(e){firstError??=e;controller.abort();throw e}};
-  await Promise.allSettled(Array.from({length:Math.min(2,indices.length)},run));
+  await Promise.allSettled(Array.from({length:Math.min(concurrency,indices.length)},run));
   if(firstError)throw firstError;
  }};
 }
@@ -36,7 +36,8 @@ export async function uploadPhotoParts(envelope,rpc,{signal}={}){
 const sameMeta=(a,b)=>validMeta(a)&&Object.keys(b).every(k=>a[k]===b[k]);
 export async function readPhotoParts(envelope,mediaId,rpc,{publishedOnly=false,signal}={}){
  if(!digestId(mediaId))throw new MediaPartsError('INVALID_INPUT',400);
- const s=scope(envelope,rpc,signal),path=publishedOnly?PUBLIC_MEDIA_PARTS_PATH:MEDIA_PARTS_PATH,parts=[];
+ // Reads multiplex at most four independently authorized parts. Upload stays at two.
+ const s=scope(envelope,rpc,signal,4),path=publishedOnly?PUBLIC_MEDIA_PARTS_PATH:MEDIA_PARTS_PATH,parts=[];
  let meta;
  const read=async index=>{
   const result=await s.call({requestId:randomUUID(),phase:'read',mediaId,index},path),p=result?.part;
