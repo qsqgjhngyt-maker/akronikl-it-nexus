@@ -14,7 +14,12 @@ const personal='// SYNTHETIC learner source\nint main(){return 0;}';
 const check=async(name,fn)=>{const start=performance.now();await fn();checks.push({name,status:'PASS',durationMs:Math.round(performance.now()-start)});console.log('PASS '+name);};
 const mime=p=>p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.json')?'application/json':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.png')?'image/png':p.endsWith('.webp')?'image/webp':'text/html';
 const lessonRoute=async(p,id,locale)=>{
+ await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
  if(await p.locator('#courseLocale').getAttribute('data-value')!==locale){
+  // Язык меняем на короткой Главной: восстановление позиции длинного
+  // практикума не должно закрывать popup между клавишами проверки.
+  await p.evaluate(()=>{location.hash='#view=home'});await p.locator('.visual-home').waitFor();
+  await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   await p.evaluate(()=>scrollTo({top:0,left:0,behavior:'instant'}));
   await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const settings=p.locator('#visualSettings');if(await settings.getAttribute('open')===null)await settings.locator('summary').click();
@@ -22,16 +27,28 @@ const lessonRoute=async(p,id,locale)=>{
   // закрывает popup. Открывать его во время автопрокрутки focus нельзя.
   await p.locator('#courseLocale').scrollIntoViewIfNeeded();
   await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-  await p.locator('#courseLocale').focus();await p.keyboard.press('ArrowDown');await p.keyboard.press(locale==='ru'?'Home':'End');await p.keyboard.press('Enter');
-  assert.equal(await p.locator('#courseLocale').getAttribute('data-value'),locale,'Keyboard locale selection');
+  await p.locator('#courseLocale').focus();
+  await p.evaluate(()=>scrollTo({top:0,left:0,behavior:'instant'}));
+  await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  await p.keyboard.press('ArrowDown');await p.keyboard.press(locale==='ru'?'Home':'End');await p.keyboard.press('Enter');
+  await p.waitForFunction(locale=>document.querySelector('#courseLocale')?.dataset.value===locale,locale);
   if(await settings.getAttribute('open')!==null)await settings.locator('summary').click();
  }
  await p.evaluate(id=>{location.hash='#course=cpp&lesson='+id},id);
  await p.locator('[data-gold-lesson="'+id+'"][lang="'+locale+'"]').waitFor();
+ await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
 };
 try{
  browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH});
- const context=await browser.newContext({serviceWorkers:'block',viewport:{width:1366,height:900}});online=await context.newPage();online.on('pageerror',e=>errors.push(e.message));
+ const context=await browser.newContext({serviceWorkers:'block',viewport:{width:1366,height:900}});
+ await context.addInitScript(()=>{
+  const Native=MutationObserver;globalThis.__solarAudit=[];
+  globalThis.MutationObserver=class extends Native{
+   constructor(callback){const record={disconnects:0,solar:new Error().stack.includes('nexus-solar-system.js')};super(callback);this.record=record;if(record.solar)globalThis.__solarAudit.push(record)}
+   disconnect(){this.record.disconnects++;return super.disconnect()}
+  };
+ });
+ online=await context.newPage();online.on('pageerror',e=>errors.push(e.message));
  await context.route('**/*',async route=>{
   const req=route.request(),u=new URL(req.url());requests.push({path:u.pathname,method:req.method()});
   if(u.origin!==GATEWAY_ORIGIN)return route.abort();
@@ -52,6 +69,10 @@ try{
    heldGold={path:prefix+'/courses/cpp/gold/algorithms/'+lessonId.slice(4)+'.ru.json',fail,arrival:Promise.withResolvers(),release:Promise.withResolvers()};
    await online.evaluate(id=>{location.hash='#course=cpp&lesson='+id},lessonId);
    await heldGold.arrival.promise;
+   if(!fail){
+    // JSON удерживается: CSS и Sandbox обязаны подготовиться независимо.
+    await online.waitForFunction(()=>performance.getEntriesByType('resource').some(r=>r.name.includes('/styles/academy-gold.css'))&&performance.getEntriesByType('resource').some(r=>r.name.includes('/sandbox/sandbox.js')));
+   }
    await online.evaluate(()=>{location.hash='#view=home'});
    await online.locator('[data-nexus-route="#view=home"] .visual-home').waitFor();
    heldGold.release.resolve();
@@ -94,6 +115,17 @@ try{
   await local.setViewportSize({width:1366,height:900});await local.screenshot({path:path.join(f.out,'desktop-flowchart.png'),fullPage:true});await local.locator('[data-gold-viz]').screenshot({path:path.join(f.out,'model-desktop.png')});
  });
  await check('Контрольный вопрос Gold показывает объяснение без автоматической оценки проекта',async()=>{const q=local.locator('[data-gold-question]').first();await q.locator('input[value="0"]').check();await q.locator('[data-gold-check]').click();assert.equal(await q.locator('[data-gold-feedback]').getAttribute('data-result'),'correct');assert.ok((await q.locator('[data-gold-feedback]').textContent()).length>15);});
+ await check('Открытые примеры всех 8 RU/EN уроков сохраняют ширину 320–1440px online и offline',async()=>{
+  for(const p of [online,local])for(const locale of ['ru','en'])for(const lessonId of GOLD_ALGORITHM_LESSONS){
+   await lessonRoute(p,lessonId,locale);
+   await p.locator('.academy-gold details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));
+   for(const width of [320,360,390,768,1024,1440]){
+    await p.setViewportSize({width,height:900});
+    assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${locale} ${lessonId} ${width}`);
+   }
+  }
+  for(const p of [online,local])await p.setViewportSize({width:1366,height:900});
+ });
  await check('Итоговый практикум RU/EN online и offline: рубрика, скрытый эталон и неизменный редактор',async()=>{
   for(const locale of ['ru','en'])for(const p of [online,local]){
    await lessonRoute(p,'cpp.languages-compilation-debugging',locale);
@@ -113,6 +145,30 @@ try{
   await cases.screenshot({path:path.join(f.out,'practicum-cases-360.png')});
   await local.locator('[data-gold-practicum]').screenshot({path:path.join(f.out,'practicum-360.png')});
   await local.setViewportSize({width:1366,height:900});
+ });
+ await check('Home освобождает сцену, observers, диалог и flight при навигации и удалении владельца',async()=>{
+  const home=async()=>{await online.evaluate(()=>{location.hash='#view=home'});await online.locator('.visual-home').waitFor();};
+  for(let i=0;i<20;i++){
+   await home();await lessonRoute(online,GOLD_ALGORITHM_LESSONS[7],'ru');
+   assert.equal(await online.evaluate(()=>__solarAudit.filter(r=>!r.disconnects).length),1,'Одна активная сцена на текущий shell');
+  }
+  for(const remove of ['.visual-home','#appShell']){
+   await home();await online.locator('[data-orbit-open]').click();await online.locator('dialog.nexus-system[open]').waitFor();
+   await online.locator('.ns-field').focus();await online.keyboard.press('w');
+   await online.locator(remove).evaluate(n=>n.remove());
+   await online.waitForFunction(()=>!document.querySelector('dialog.nexus-system')&&__solarAudit.every(r=>r.disconnects));
+   assert.equal(await online.evaluate(()=>document.body.style.overflow),'');
+   await online.evaluate(id=>{location.hash='#course=cpp&lesson='+id},GOLD_ALGORITHM_LESSONS[7]);
+   await online.locator('[data-gold-lesson="'+GOLD_ALGORITHM_LESSONS[7]+'"][lang="ru"]').waitFor();
+  }
+  await home();await online.locator('[data-orbit-open]').click();await online.locator('[data-solar-close]').click();
+  await lessonRoute(online,GOLD_ALGORITHM_LESSONS[7],'ru');
+  assert.equal(await online.locator('dialog.nexus-system').count(),0);
+  // Offline сохраняет shell, но заменяет его Home: тот же lifecycle contract.
+  for(let i=0;i<5;i++){
+   await local.evaluate(()=>{location.hash='#view=home'});await local.locator('.visual-home').waitFor();
+   await lessonRoute(local,GOLD_ALGORITHM_LESSONS[0],'ru');
+  }
  });
  await check('Синтетические сценарии не отправляют мутации Cloud и не выдают offline Account proof',async()=>{assert.equal(requests.filter(r=>r.path.startsWith('/api/')&&r.method!=='GET').length,0);assert.equal(await local.evaluate(async prefix=>(await import(prefix+'/core/account-storage.js')).verifiedAccount(),prefix),null);assert.deepEqual(errors,[]);assert.deepEqual(f.errors,[]);});
 }catch(error){

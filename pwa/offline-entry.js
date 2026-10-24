@@ -68,7 +68,7 @@ document.querySelector('.side-nav').addEventListener('click',closeMobile);
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=v=>structuredClone(v),label=v=>typeof v==='string'?v:v?.ru||v?.en||'';
-let goldPresentation=null,session=null,data=null,course=null,catalog=null,programming=null,studio=null,graphics=null,queue=Promise.resolve(),pending=0,saveFailed=false,renderSequence=0,cppLearningFilter='topics',locale=prefs.courseLocale;
+let disposeOrbit=null,goldPresentation=null,session=null,data=null,course=null,catalog=null,programming=null,studio=null,graphics=null,queue=Promise.resolve(),pending=0,saveFailed=false,renderSequence=0,cppLearningFilter='topics',locale=prefs.courseLocale;
 function save(){
  if(!session)return Promise.reject(Error('Откройте локальную копию.'));
  pending++;saveFailed=false;saved.textContent='Сохраняем изменения на устройстве…';
@@ -139,6 +139,7 @@ async function compiler(){
 }
 async function render(){
  const seq=++renderSequence;await graphics?.flush();graphics=null;await settled();if(seq!==renderSequence)return;studio=null;const route=new URLSearchParams(location.hash.slice(1));
+ disposeOrbit?.();disposeOrbit=null;
  updateChrome(route);
  if(['labs','practices'].includes(route.get('view'))){root.innerHTML=discoveryPageMarkup({kind:route.get('view'),course,contentFor:id=>(locale==='en'?course.lessonsEn:course.lessonsRu).lessons.find(l=>l.id===id),projects:Object.values(data?.projects||{}),state:data?.state.courses?.cpp||{},t,locale:prefs.uiLocale,materialLocale:locale});bindLearningDiscovery(t);return}
  if(route.get('view')==='programming'){
@@ -146,7 +147,7 @@ async function render(){
   bindLanguageJourneys({tracks:programming.tracks,course,t,locale:prefs.uiLocale});const recent=root.querySelector('[data-recent-list]');if(recent){recent.removeAttribute('role');recent.innerHTML=recentProjectListMarkup(Object.values(data?.projects||{}).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||''))).slice(0,3),t,prefs.uiLocale)}bindLearningDiscovery(t);bindNexusLearningUi(t);return;
  }
  if(route.get('view')==='academy'&&!route.has('focus')&&!route.has('tab')){const academyViewFilter={category:'all',availability:'all',query:''};root.innerHTML=academyCatalogMarkup({catalog,cpp:course,prefs,t,academyViewFilter,visualIcon});bindAcademyCatalog({prefs,t,academyViewFilter});return}
- if(route.get('view')==='home'){root.innerHTML=views().home();const section=document.createElement('section');section.className='visual-section blog-preview';section.dataset.blogPreview='';section.innerHTML=blogPreviewMarkup(BLOG_DRAFTS);root.querySelector('.visual-account-area')?.before(section);bindNexusOrbit({catalog,locale:prefs.uiLocale,translate:t,languageCatalog:getProgrammingLanguages,languageName:id=>languageLabel(id,prefs.uiLocale),quality:()=>prefs.effectsQuality,openCategory:()=>{location.hash='#view=academy'}});return}
+ if(route.get('view')==='home'){root.innerHTML=views().home();const section=document.createElement('section');section.className='visual-section blog-preview';section.dataset.blogPreview='';section.innerHTML=blogPreviewMarkup(BLOG_DRAFTS);root.querySelector('.visual-account-area')?.before(section);disposeOrbit=bindNexusOrbit({catalog,locale:prefs.uiLocale,translate:t,languageCatalog:getProgrammingLanguages,languageName:id=>languageLabel(id,prefs.uiLocale),quality:()=>prefs.effectsQuality,openCategory:()=>{location.hash='#view=academy'}});return}
  if(route.get('view')==='blog'){root.innerHTML=blogPageMarkup({article:route.has('article')});const feed=root.querySelector('[data-blog-feed]'),slug=route.get('article'),post=BLOG_DRAFTS.find(p=>p.slug===slug);feed.innerHTML=slug?(post?blogArticleMarkup(post,{snapshot:true}):'<p>Статья не входит в подготовленные публичные материалы.</p>'):blogIndexMarkup(BLOG_DRAFTS,{snapshot:true});bindBlogSections(feed);return}
  if(['account','feedback','admin','akronikl'].includes(route.get('view'))){root.innerHTML=serverView(route.get('view'));return}
  if(route.get('view')==='offline'){root.innerHTML='<section class="ps-hero glass-panel"><div><span class="eyebrow">NEXUS · БЕЗ ИНТЕРНЕТА</span><h1>Всё для вашей работы</h1><p>Академия, редактор и личные проекты доступны на устройстве. Возвращение сети не меняет ваши файлы автоматически.</p><div class="hero-actions"><a class="btn primary" href="#view=unlock">Личная копия</a><a class="btn" href="#view=compiler">Компилятор C++</a><a class="btn" href="/account/entry/#view=offline">Подготовка и перенос в аккаунт</a></div></div></section>';return}
@@ -162,7 +163,7 @@ async function render(){
  if(['projects','project-studio'].includes(route.get('view')))return projectList();
  const kind=route.has('lesson')?'lesson':route.has('practicum')?'practicum':'exercise';
  const lessonId=route.get('lesson');
- if(lessonId){const gold=await prepareCppGoldLesson(course,lessonId,locale);if(seq!==renderSequence)return;if(gold){goldPresentation??=await import('../core/academy-gold-presentation.js');await goldPresentation.ensureGoldStyles();if(seq!==renderSequence)return;}}
+ if(lessonId){await prepareCppGoldLesson(course,lessonId,locale,async()=>{goldPresentation??=await import('../core/academy-gold-presentation.js');await goldPresentation.ensureGoldStyles()});if(seq!==renderSequence)return;}
  const item=route.has('lesson')?views().lessonData(lessonId):route.has('practicum')?course.practicumsRu.practicums.find(p=>p.id===route.get('practicum')):route.has('exercise')?course.projectsRu.projects.find(p=>p.id===route.get('exercise')):null;
  if(seq!==renderSequence)return;
  if(!item){root.innerHTML=lessons();bindNexusLearningUi(t);bindLearningDiscovery(t);bindReadOnlyLearning();return}

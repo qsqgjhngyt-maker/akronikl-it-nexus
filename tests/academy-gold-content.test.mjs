@@ -68,6 +68,15 @@ test('Gold registry: отложенная загрузка, дедупликац
   assert.equal(await getCppGoldLesson('../secret'),null);assert.equal(requests.length,1);
   fail=true;await assert.rejects(getCppGoldLesson(id,'en'));fail=false;
   const course={};await prepareCppGoldLesson(course,id,'en');assert.equal(course.goldLessons.en[id].locale,'en');assert.equal(requests.length,3);
+  let prepared=0;
+  assert.equal(await prepareCppGoldLesson(course,'../secret','ru',()=>prepared++),null);assert.equal(prepared,0);
+  assert.equal(await prepareCppGoldLesson(course,id,'de',()=>prepared++),null);assert.equal(prepared,0);
+  const ready=Promise.withResolvers(),presentation=Promise.withResolvers();
+  const pending=prepareCppGoldLesson(ready.promise,id,'ru',()=>{prepared++;return presentation.promise});
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(prepared,1,'Представление запускается до готовности курса');
+  presentation.resolve();ready.resolve(course);await pending;assert.equal(course.goldLessons.ru[id],a);
+  await assert.rejects(prepareCppGoldLesson(course,id,'ru',()=>Promise.reject(Error('SYNTHETIC_CSS_FAILURE'))),/SYNTHETIC_CSS_FAILURE/);
+  await prepareCppGoldLesson(course,id,'ru',()=>{});
  }finally{globalThis.fetch=original;}
 });
 
