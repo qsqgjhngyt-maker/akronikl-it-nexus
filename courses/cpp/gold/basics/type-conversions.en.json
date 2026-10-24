@@ -1,0 +1,468 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.cpp-basics",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.type-conversions",
+  "sessions": 2,
+  "prerequisiteIds": [
+    "cpp.arithmetic-assignment",
+    "cpp.data-types"
+  ],
+  "sourceRefs": [
+    "CPP20-CONVERSIONS",
+    "CPP20-ARITH-CONV",
+    "CPP20-INTEGRAL-CONV",
+    "CPP20-STATIC-CAST",
+    "CPP20-INIT",
+    "CPP-GUIDELINES"
+  ],
+  "title": "Type conversions: intent, information loss, and range checks",
+  "lead": "Identify an operation’s type before it runs and use static_cast only with a justified intention.",
+  "why": "An explicit cast can look convincing while neither checking bounds nor restoring a lost fraction. We examine repairs that must occur earlier and warnings that require reasoning.",
+  "objectives": [
+    "Distinguish implicit conversion, promotion, and explicit static_cast.",
+    "Obtain fractional division by converting an operand before /.",
+    "Explain the selected mixed-sign example and unsigned modulo.",
+    "Check valid ranges before a potentially lossy conversion.",
+    "Use narrowing diagnostics as useful evidence."
+  ],
+  "prerequisites": [
+    "Integer division, ranges, long long, and intermediate values.",
+    "bool and simple comparisons from the laboratory; a protective if is scaffolded."
+  ],
+  "concepts": [
+    {
+      "term": "Implicit conversion",
+      "definition": "Conversion to a required type without an explicit cast in source."
+    },
+    {
+      "term": "Integral promotion",
+      "definition": "Promotion of a small integer type to int or unsigned int according to representability."
+    },
+    {
+      "term": "static_cast<T>(value)",
+      "definition": "An explicit permitted conversion to T, not a universal safety check."
+    },
+    {
+      "term": "Narrowing",
+      "definition": "A conversion risking range or precision loss; list initialization rejects specified cases."
+    },
+    {
+      "term": "Unsigned modulo",
+      "definition": "Unsigned-value behavior modulo two raised to the type’s width."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Session 1. The common type is chosen before the operation",
+      "paragraphs": [
+        "With two ints, total / count performs integer division. Storing the result in double afterward cannot restore the fraction. static_cast<double>(total / count) first obtains integer 3 and then double 3.0; static_cast<double>(total) / count converts an operand first and gives 3.5 for 7 and 2.",
+        "In static_cast<double>(total), static_cast selects an explicit conversion, <double> specifies the destination type, and parentheses contain the expression. It is a language operator rather than a function we authored. Use it to state justified intent; unnecessary casts can obscure meaning."
+      ]
+    },
+    {
+      "title": "Promotions and usual arithmetic conversions",
+      "paragraphs": [
+        "Before many integer operations, bool, char, and short undergo integral promotions: to int when it represents all source values, otherwise to unsigned int. Thus adding two chars does not necessarily yield char. Type rules, not the length of the printed number, determine the result.",
+        "After promotions, arithmetic operators choose a common type. In our double-and-int examples the integer operand converts to double. Same-sign integer types convert toward the greater rank; mixed signs need additional rules. Rank is a language ordering rather than merely sizeof. Do not replace the rules with “the larger size always wins.”"
+      ]
+    },
+    {
+      "title": "Why −1 < 1u can be false",
+      "paragraphs": [
+        "In this example debt is int and credit is unsigned int. Their ranks correspond, so int converts to unsigned int before comparison. −1 becomes the maximum unsigned int value and comparison with 1 is false. This follows defined conversion rules rather than a compiler defect.",
+        "Unsigned integer conversion is congruent modulo 2^N, where N is the destination width. We do not assume N=32 universally. The example compares with numeric_limits<unsigned int>::max() instead of demanding one numeric maximum. Repairing a domain comparison requires valid signs and ranges rather than blindly casting both sides to unsigned."
+      ]
+    },
+    {
+      "title": "Session 2. static_cast is not a validator",
+      "paragraphs": [
+        "Converting double 3.75 to int gives 3, and −3.75 gives −3: the fraction is discarded toward zero rather than rounded to the nearest integer. We execute only values whose truncated result is representable. Out-of-range floating-to-integer conversion is not a safe experiment.",
+        "Before narrowing, establish the destination range and domain rules. If a value must be a whole count, losing a fraction can be wrong even within range. static_cast does not automatically reject that domain error. int count{2.5}; usefully detects specified narrowing during the build; do not add a cast merely to silence it."
+      ]
+    },
+    {
+      "title": "Change the type before information is lost",
+      "paragraphs": [
+        "Widening before multiplication and converting before division solve the same design problem: choosing operation semantics before execution. Casting an already-overflowed or truncated result cannot repair the past.",
+        "Keep exact totals in integer minor units and calculate an approximate average separately. This distinguishes exact stored quantities from derived approximations. If every cent matters, formatting and rounding must be explicit contract rules rather than accidental cast consequences."
+      ]
+    },
+    {
+      "title": "Verification and practicum B",
+      "paragraphs": [
+        "For the average, test 7/2, 0/2, 10/4, and rejection of zero count. The first and third expose premature integer division; zero alone cannot. Write expected values 3.5, 0, and 2.5 before running.",
+        "Practicum B combines named stages, integer-product bounds, and a floating-point average. Reference values allow simple output; full formatting is introduced in lesson 12. The diagram compares two specific division paths rather than executing arbitrary C++ conversions."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "early-late",
+      "title": "Conversion before and after division",
+      "purpose": "Locate the loss of the fractional part.",
+      "code": "#include <iostream>\n\nint main() {\n    int total{7};\n    int count{2};\n    double late = static_cast<double>(total / count);\n    double early = static_cast<double>(total) / count;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "3 3.5\n",
+      "steps": [
+        "First derive integer 7/2=3 for late.",
+        "For early, double is introduced before /.",
+        "Compare 3 and 3.5 without expecting a cast to restore lost information."
+      ]
+    },
+    {
+      "id": "mixed-sign",
+      "title": "Mixed signs without assuming a width",
+      "purpose": "Check the rule using portable properties.",
+      "code": "#include <iostream>\n#include <limits>\n\nint main() {\n    int debt{-1};\n    unsigned int credit{1};\n    std::cout << (debt < credit) << '\\n';\n    std::cout << (static_cast<unsigned int>(debt) == std::numeric_limits<unsigned int>::max()) << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "0\n1\n",
+      "steps": [
+        "Locate int and unsigned int before comparison.",
+        "Trace −1 converting to the unsigned maximum.",
+        "The second one checks max() without assuming a bit count."
+      ]
+    },
+    {
+      "id": "bounded-truncation",
+      "title": "Representable truncation from double",
+      "purpose": "Distinguish truncation toward zero from rounding.",
+      "code": "#include <iostream>\n\nint main() {\n    double positive{3.75};\n    double negative{-3.75};\n    std::cout << static_cast<int>(positive) << ' ' << static_cast<int>(negative) << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "3 -3\n",
+      "steps": [
+        "Both truncated values fit int.",
+        "The fractional part is discarded while the sign is retained.",
+        "Do not extend this experiment to out-of-range values."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "A false repair",
+      "action": "In the average starter, cast only the complete totalPoints / participantCount expression.",
+      "prediction": "average=3 remains because division already happened as integer arithmetic.",
+      "verification": "Move the cast to the first operand and obtain 3.5."
+    },
+    {
+      "title": "A convenient case does not expose the error",
+      "action": "Compare integer and corrected versions for totalPoints=8 and participantCount=2, then for 7 and 2.",
+      "prediction": "8/2 hides the defect while 7/2 distinguishes the variants.",
+      "verification": "Explain why a nonmultiple is necessary."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "An average lost its fraction",
+      "cause": "Two integers were divided before converting the result.",
+      "fix": "Convert an operand before / and repeat a nonmultiple case."
+    },
+    {
+      "symptom": "A negative value became very large",
+      "cause": "Conversion to unsigned occurred.",
+      "fix": "Inspect the common type and domain range rather than hiding a warning with a guessed cast."
+    },
+    {
+      "symptom": "Narrowing diagnostic vanished but meaning was lost",
+      "cause": "An explicit cast was added without deciding whether fraction loss was valid.",
+      "fix": "Establish the contract and bounds before converting."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "narrowing-fraction",
+      "title": "Intentional: prohibited narrowing",
+      "code": "#include <iostream>\n\nint main() {\n    int count{3.5};\n    std::cout << count << '\\n';\n}\n",
+      "expectation": "compile-error",
+      "explanation": "Do not bypass the rejection without explaining required precision."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Predict 9/2, static_cast<double>(9/2), and static_cast<double>(9)/2.",
+      "criteria": "Values are 4, 4, and 4.5 with the conversion point identified.",
+      "hint": "A destination type does not determine a prior division type."
+    },
+    {
+      "level": "applied",
+      "task": "Repair the average of total 10 and count 4 without changing the original integer data.",
+      "criteria": "The result is 2.5 and zero count is rejected before /.",
+      "hint": "Retain exact inputs and convert only an average operand."
+    },
+    {
+      "level": "transfer",
+      "task": "Propose exact storage for money totals and a separate approximate average.",
+      "criteria": "Specify range and rounding policy as separate requirements.",
+      "hint": "A static_cast does not make double exact money."
+    }
+  ],
+  "laboratory": {
+    "title": "An average without premature truncation",
+    "challenge": "Repair the starter without changing source data types. Add the explained range check of 0…1000 for total and 1…1000 for count.",
+    "starterCode": "#include <iostream>\n\nint main() {\n    int totalPoints{7};\n    int participantCount{2};\n    double average = totalPoints / participantCount;\n    std::cout << \"average=\" << average << '\\n';\n    return 0;\n}\n",
+    "starterExpectedStdout": "average=3\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    int totalPoints{7};\n    int participantCount{2};\n    // Protective scaffold: domain checks precede the division.\n    if (totalPoints < 0 || totalPoints > 1000 || participantCount < 1 || participantCount > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    double average = static_cast<double>(totalPoints) / participantCount;\n    std::cout << \"average=\" << average << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "average=3.5\n"
+      }
+    ],
+    "steps": [
+      "Record the original incorrect result 3.",
+      "Identify the division type before repair.",
+      "Move conversion to an operand.",
+      "Test a multiple, nonmultiple, zero total, and zero count."
+    ],
+    "rubric": [
+      "Source values remain exact integers.",
+      "Division follows count validation.",
+      "Identify where double is introduced.",
+      "Record actual before/after results."
+    ],
+    "verificationVariants": [
+      {
+        "id": "zero-total",
+        "replace": [
+          {
+            "from": "int totalPoints{7};",
+            "to": "int totalPoints{0};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "average=0\n"
+      },
+      {
+        "id": "ten-four",
+        "replace": [
+          {
+            "from": "int totalPoints{7};",
+            "to": "int totalPoints{10};"
+          },
+          {
+            "from": "int participantCount{2};",
+            "to": "int participantCount{4};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "average=2.5\n"
+      },
+      {
+        "id": "invalid-count",
+        "replace": [
+          {
+            "from": "int participantCount{2};",
+            "to": "int participantCount{0};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "blockPracticum": {
+    "title": "Practicum B: safe expressions and conversions",
+    "label": "CUMULATIVE PRACTICUM B",
+    "starterLabel": "Starter: make your own attempt",
+    "challenge": "Report goods, shipping, and average cost per item. Keep the total exact in cents and the average separately floating-point.",
+    "readiness": "Lessons 5–8: state, intermediate names, integer bounds, and conversion before division.",
+    "skills": [
+      {
+        "lessonId": "cpp.variables-scope",
+        "title": "Related skill: variables-scope"
+      },
+      {
+        "lessonId": "cpp.expressions-operators-blocks",
+        "title": "Related skill: expressions-operators-blocks"
+      },
+      {
+        "lessonId": "cpp.arithmetic-assignment",
+        "title": "Related skill: arithmetic-assignment"
+      },
+      {
+        "lessonId": "cpp.type-conversions",
+        "title": "Related skill: type-conversions"
+      }
+    ],
+    "requirements": [
+      "1…1000 items; price and shipping 0…100000 cents.",
+      "Use long long before multiplying; maximum total is 100100000.",
+      "Calculate goods, one-time shipping, then an average with early double.",
+      "Invalid fixed parameters produce invalid before calculation."
+    ],
+    "milestones": [
+      "Write the formula and bounds.",
+      "Separate named stages.",
+      "Check three valid and one invalid variant.",
+      "Preserve the trace and conversion explanation."
+    ],
+    "walkthrough": [
+      "3 × 125 + 50 gives 425 cents; default average output is 141.667. This is an approximate display rather than a monetary rounding contract.",
+      "Variants with 2 and 1 items give simple averages of 150 and 175, providing independent formula checks."
+    ],
+    "starterCode": "#include <iostream>\n\nint main() {\n    const long long itemCount{3};\n    const long long unitPriceCents{125};\n    const long long deliveryCents{50};\n    long long totalCents = itemCount * unitPriceCents + deliveryCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+    "starterExpectedStdout": "total_cents=425\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    const long long itemCount{3};\n    const long long unitPriceCents{125};\n    const long long deliveryCents{50};\n    if (itemCount < 1 || itemCount > 1000 || unitPriceCents < 0 || unitPriceCents > 100000 || deliveryCents < 0 || deliveryCents > 100000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long goodsCents = itemCount * unitPriceCents;\n    long long totalCents = goodsCents + deliveryCents;\n    double averageCents = static_cast<double>(totalCents) / itemCount;\n    std::cout << \"goods_cents=\" << goodsCents << '\\n';\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    std::cout << \"average_cents=\" << averageCents << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "goods_cents=375\ntotal_cents=425\naverage_cents=141.667\n"
+      }
+    ],
+    "verificationVariants": [
+      {
+        "id": "two-items",
+        "replace": [
+          {
+            "from": "const long long itemCount{3};",
+            "to": "const long long itemCount{2};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "goods_cents=250\ntotal_cents=300\naverage_cents=150\n"
+      },
+      {
+        "id": "one-item",
+        "replace": [
+          {
+            "from": "const long long itemCount{3};",
+            "to": "const long long itemCount{1};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "goods_cents=125\ntotal_cents=175\naverage_cents=175\n"
+      },
+      {
+        "id": "none-rejected",
+        "replace": [
+          {
+            "from": "const long long itemCount{3};",
+            "to": "const long long itemCount{0};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "artifacts": [
+      "Source and unit contract.",
+      "Intermediate types and bounds table.",
+      "Four actual runs.",
+      "One explained and repaired defect."
+    ],
+    "rubric": [
+      {
+        "criterion": "Formula correctness",
+        "complete": "Shipping is added once.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "State and names",
+        "complete": "Stages have meaningful names.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Safety",
+        "complete": "Validation precedes operations and long long is chosen early.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Conversion",
+        "complete": "The average gets double before division.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Checks",
+        "complete": "All four runs and expectations are preserved.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      }
+    ],
+    "completionRule": "Self-check: at least 8/10 with no zero for correctness, safety, or checks. This is a manual rubric rather than an automatic grade or next-lesson gate.",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "How can total=7 and count=2 produce 3.5?",
+      "answers": [
+        "static_cast<double>(total / count)",
+        "static_cast<double>(total) / count",
+        "total / count"
+      ],
+      "correctIndex": 1,
+      "explanation": "An operand must become double before integer division."
+    },
+    {
+      "question": "Does static_cast<int>(3.75) round to nearest?",
+      "answers": [
+        "Yes, 4",
+        "No, truncation toward zero gives 3",
+        "Always a build error"
+      ],
+      "correctIndex": 1,
+      "explanation": "For a representable result the fraction is discarded."
+    },
+    {
+      "question": "What should precede narrowing?",
+      "answers": [
+        "Establish range and acceptable precision loss",
+        "Only remove warnings",
+        "Check syntax color"
+      ],
+      "correctIndex": 0,
+      "explanation": "A cast expresses intent but does not validate the domain contract."
+    }
+  ],
+  "reflection": [
+    "Why is 8/2 a weak average-defect test?",
+    "Where does the practicum retain exact versus approximate values?"
+  ],
+  "bridge": "Next examine comparisons, logical operators, and protecting a dangerous right operand through short-circuit evaluation.",
+  "visualization": {
+    "kind": "toolchain",
+    "title": "Two paths for 7 / 2",
+    "description": "A fixed model of two explained expressions, not a universal conversion engine.",
+    "steps": [
+      {
+        "title": "int / int",
+        "description": "7 / 2 first gives integer 3."
+      },
+      {
+        "title": "Too late",
+        "description": "Converting 3 to double cannot recover 0.5."
+      },
+      {
+        "title": "double / int",
+        "description": "Converting 7 before division gives floating-point 3.5."
+      },
+      {
+        "title": "Check",
+        "description": "Check a nonmultiple and reject a zero divisor before operation."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "When must int be converted to double for fractional division?",
+    "answers": [
+      "After division",
+      "Before division",
+      "Never"
+    ],
+    "correctIndex": 1
+  }
+}
