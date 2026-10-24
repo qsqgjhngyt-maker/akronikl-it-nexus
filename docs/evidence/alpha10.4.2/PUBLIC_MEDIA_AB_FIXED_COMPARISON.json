@@ -1,0 +1,214 @@
+{
+  "status": "PASS",
+  "conclusion": "The fixed official build restores ready-before-scroll behavior for all four lower gallery JPEGs under the identical five-photo 1200ms-response scenario.",
+  "sourceResultReferences": {
+    "before": {
+      "path": "/workspace/scratch/d8507a6c1aec/qa/blog-frontend-ab/RESULT.json",
+      "sha256": "c4e54b17d9d8be221d0c84350e55c85405ea5caa1a498d551d57058d32147ea4"
+    },
+    "after": {
+      "path": "/workspace/scratch/d8507a6c1aec/qa/blog-frontend-fixed-ab/RESULT.json",
+      "sha256": "2c496c5e046fde2caa23600d64595695261d19c862ec3889e04a3b9c259fef97"
+    },
+    "gate": {
+      "path": "/workspace/scratch/d8507a6c1aec/qa/photo-eager-official-final/RESULT.json",
+      "sha256": "18fb43bcc2c59676c7840b72f40f5369dbad850e904c8df8a8c20470525e5932"
+    },
+    "negative": {
+      "path": "/workspace/scratch/d8507a6c1aec/qa/photo-eager-before-final/RESULT.json",
+      "sha256": "7185f800a006ebbc6be29da5af2a6d047d2b920b3addb1ea9213b64ca9606022"
+    }
+  },
+  "measurements": [
+    {
+      "version": "10.3.1",
+      "repeat": 1,
+      "phaseTimings": [
+        {
+          "phase": "blog-index",
+          "coverReadyMs": 1455
+        },
+        {
+          "phase": "article",
+          "coverReadyMs": 1417,
+          "galleryReadyAfterScrollMs": 40,
+          "galleryJpegReadyBeforeScroll": 4,
+          "mediaGetCountBeforeScroll": 5
+        },
+        {
+          "phase": "blog-back",
+          "coverReadyMs": 1339
+        },
+        {
+          "phase": "blog-refresh",
+          "coverReadyMs": 1533
+        }
+      ]
+    },
+    {
+      "version": "10.4.2",
+      "repeat": 1,
+      "phaseTimings": [
+        {
+          "phase": "blog-index",
+          "coverReadyMs": 1424
+        },
+        {
+          "phase": "article",
+          "coverReadyMs": 1397,
+          "galleryReadyAfterScrollMs": 2462,
+          "galleryJpegReadyBeforeScroll": 0,
+          "mediaGetCountBeforeScroll": 1
+        },
+        {
+          "phase": "blog-back",
+          "coverReadyMs": 1313
+        },
+        {
+          "phase": "blog-refresh",
+          "coverReadyMs": 1467
+        }
+      ]
+    },
+    {
+      "version": "10.4.2",
+      "repeat": 2,
+      "phaseTimings": [
+        {
+          "phase": "blog-index",
+          "coverReadyMs": 1430
+        },
+        {
+          "phase": "article",
+          "coverReadyMs": 1414,
+          "galleryReadyAfterScrollMs": 2448,
+          "galleryJpegReadyBeforeScroll": 0,
+          "mediaGetCountBeforeScroll": 1
+        },
+        {
+          "phase": "blog-back",
+          "coverReadyMs": 1311
+        },
+        {
+          "phase": "blog-refresh",
+          "coverReadyMs": 1450
+        }
+      ]
+    },
+    {
+      "version": "10.3.1",
+      "repeat": 2,
+      "phaseTimings": [
+        {
+          "phase": "blog-index",
+          "coverReadyMs": 1423
+        },
+        {
+          "phase": "article",
+          "coverReadyMs": 1433,
+          "galleryReadyAfterScrollMs": 27,
+          "galleryJpegReadyBeforeScroll": 4,
+          "mediaGetCountBeforeScroll": 5
+        },
+        {
+          "phase": "blog-back",
+          "coverReadyMs": 1326
+        },
+        {
+          "phase": "blog-refresh",
+          "coverReadyMs": 1460
+        }
+      ]
+    },
+    {
+      "version": "10.4.2-fixed",
+      "repeat": 1,
+      "phaseTimings": [
+        {
+          "phase": "blog-index",
+          "coverReadyMs": 1442
+        },
+        {
+          "phase": "article",
+          "coverReadyMs": 1418,
+          "galleryReadyAfterScrollMs": 21,
+          "galleryJpegReadyBeforeScroll": 4,
+          "mediaGetCountBeforeScroll": 5
+        },
+        {
+          "phase": "blog-back",
+          "coverReadyMs": 1325
+        },
+        {
+          "phase": "blog-refresh",
+          "coverReadyMs": 1572
+        }
+      ]
+    }
+  ],
+  "finalGateChecks": [
+    {
+      "name": "Real entry -> Blog -> Article starts all five GET before any response and loads every JPEG without scrolling",
+      "status": "PASS",
+      "durationMs": 1479,
+      "getsBeforeFirstResponse": 5,
+      "jpegReadyWithoutScroll": 5,
+      "galleryTopBeforeScroll": 2486.1875,
+      "scrollY": 0
+    },
+    {
+      "name": "Back and refresh revalidate all public photos instead of reusing another route cache",
+      "status": "PASS",
+      "durationMs": 430,
+      "backGets": 5,
+      "refreshGets": 5
+    },
+    {
+      "name": "Revoked public media cannot reuse old verified bytes; explicit retry rechecks the server",
+      "status": "PASS",
+      "durationMs": 224,
+      "deniedFreshGets": 5,
+      "explicitRetryGets": 1,
+      "oldBytesExposed": 0
+    },
+    {
+      "name": "Leaving the real route aborts all pending public media and rejects late DOM writes",
+      "status": "PASS",
+      "durationMs": 564,
+      "abortedGets": 5,
+      "lateDomWrites": 0
+    }
+  ],
+  "negativeCause": {
+    "status": "FAIL",
+    "articleMediaRequests": 1,
+    "expected": 5
+  },
+  "moduleSha256": {
+    "core/bootstrap.js": "c33f9834885fdf755d9203836844e1deff463c4fc756d8ec3871af72cc2cfd1a",
+    "core/app.js": "da03e9cee06c70a0593a8d587b181f4329e6f26f37bb8e3ca9c31780046c9a89",
+    "core/content-public.js": "79a833951d58fa3197caa2c25420565ae48e8c96e13d665b90b603451d1df12c",
+    "core/blog-layout.js": "088ba1dca1e4322fa70e4b9021ad397d1a9bb6f7103888aaef06caca6fe71ea6",
+    "core/blog-presentation.js": "32a55c5fa2b22410f1971e9952672a7feff85190a2df7f5a84e5d4f7b13fbd80"
+  },
+  "methodology": {
+    "fixedRuns": 1,
+    "baselineRuns": 2,
+    "brokenRuns": 2,
+    "mediaDelayMs": 1200,
+    "feedDelayMs": 80,
+    "viewport": {
+      "width": 1366,
+      "height": 900
+    },
+    "serviceWorkers": "registration blocked to isolate frontend request scheduling",
+    "physical": false,
+    "productionWrites": 0,
+    "readiness": "Actual JPEG data URI and dimensions; not the 1x1 GIF. After-scroll duration is a DOM readiness check, not decode or paint time."
+  },
+  "limits": [
+    "Existing exact-baseline and broken-build runs were retained; only the fixed build was run again.",
+    "Synthetic responses isolate frontend scheduling; production backend latency and installed PWA/mobile are not measured.",
+    "The supplied load event collector remained empty and is not used for any metric."
+  ]
+}

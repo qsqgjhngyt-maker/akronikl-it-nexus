@@ -8,7 +8,9 @@ const sw=fs.readFileSync(new URL('../service-worker.js',import.meta.url),'utf8')
 const version=JSON.parse(fs.readFileSync(new URL('../version.json',import.meta.url),'utf8'));
 
 const checks=[
-  ['release version',version.version===JSON.parse(fs.readFileSync(new URL('../release-candidate.json',import.meta.url),'utf8')).version],
+  // Active frontend после отката определяется published manifest. Кандидат
+  // исходников может быть новее; security-проверки ниже от него не зависят.
+  ['active frontend version matches published manifest',version.version===JSON.parse(fs.readFileSync(new URL('../BUILD_MANIFEST.json',import.meta.url),'utf8')).version],
   ['worker session version',worker.includes("0.1.7-alpha.2.4.5-first-party-cookie-foundation")],
   ['account_devices migration',migration.includes('CREATE TABLE IF NOT EXISTS account_devices')],
   ['account_sessions migration',migration.includes('CREATE TABLE IF NOT EXISTS account_sessions')],

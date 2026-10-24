@@ -9,6 +9,7 @@ import {GOLD_ALGORITHM_LESSONS} from '../core/academy-gold-catalog.js';
 const f=await nativeOfflineFixture('academy-gold'),frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR),prefix='/releases/'+f.generation;
 const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
 const checks=[],errors=[],requests=[],phrase='SYNTHETIC Gold local copy 2026';let browser,online,local,id;
+let heldGold=null;
 const personal='// SYNTHETIC learner source\nint main(){return 0;}';
 const check=async(name,fn)=>{const start=performance.now();await fn();checks.push({name,status:'PASS',durationMs:Math.round(performance.now()-start)});console.log('PASS '+name);};
 const mime=p=>p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.json')?'application/json':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.png')?'image/png':p.endsWith('.webp')?'image/webp':'text/html';
@@ -27,6 +28,10 @@ try{
  await context.route('**/*',async route=>{
   const req=route.request(),u=new URL(req.url());requests.push({path:u.pathname,method:req.method()});
   if(u.origin!==GATEWAY_ORIGIN)return route.abort();
+  if(heldGold?.path===u.pathname){
+   const hold=heldGold;hold.arrival.resolve();await hold.release.promise;
+   if(hold.fail)return route.fulfill({status:503,body:'SYNTHETIC_DELAYED_FAILURE'});
+  }
   if(u.pathname.startsWith('/api/')){
    const body=u.pathname==='/api/v2/account'?{account:{accountId:'synthetic-gold-owner',displayName:'Synthetic Gold',status:'active'},loginMethods:[{id:'synthetic-key',kind:'passkey',status:'active',createdAt:'2026-10-24T00:00:00Z',disabledAt:null}],enrollmentAvailable:false}:null;
    return route.fulfill({status:body?200:403,headers:{'content-type':'application/json','cache-control':'no-store',vary:'*'},body:JSON.stringify(body||{error:{code:'SYNTHETIC_DENIED'}})});
@@ -35,6 +40,24 @@ try{
  });
  await online.goto(GATEWAY_ORIGIN+'/#view=home');await online.locator('.visual-home').waitFor();
  await check('Старт Home не загружает Gold JSON, визуализатор или CSS',async()=>{assert.equal(requests.filter(r=>/gold\//.test(r.path)||/academy-gold-(presentation|model)\.js|academy-gold\.css/.test(r.path)).length,0);});
+ await check('Поздний Gold ответ и ошибка после перехода Home не заменяют текущий экран',async()=>{
+  for(const [lessonId,fail] of [[GOLD_ALGORITHM_LESSONS[1],false],[GOLD_ALGORITHM_LESSONS[2],true]]){
+   heldGold={path:prefix+'/courses/cpp/gold/algorithms/'+lessonId.slice(4)+'.ru.json',fail,arrival:Promise.withResolvers(),release:Promise.withResolvers()};
+   await online.evaluate(id=>{location.hash='#course=cpp&lesson='+id},lessonId);
+   await heldGold.arrival.promise;
+   await online.evaluate(()=>{location.hash='#view=home'});
+   await online.locator('[data-nexus-route="#view=home"] .visual-home').waitFor();
+   heldGold.release.resolve();
+   await online.evaluate(async({prefix,id})=>{
+    const registry=await import(prefix+'/core/course-registry.js');
+    await registry.getCppGoldLesson(id,'ru').catch(()=>{});
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+   },{prefix,id:lessonId});
+   assert.equal(await online.locator('.visual-home').count(),1);
+   assert.equal(await online.locator('.route-error-detail,[data-gold-lesson],#editor').count(),0);
+   heldGold=null;
+  }
+ });
  const payload=await online.evaluate(async({prefix,personal,id})=>{
   const {patchLesson,loadState}=await import(prefix+'/core/storage.js'),{verifiedAccount}=await import(prefix+'/core/account-storage.js'),{makeLocalPayload}=await import(prefix+'/pwa/offline-transfer.js');
   patchLesson(id,{completed:true,quiz:2,code:personal,stdin:'7\n',workspace:{languageId:'cpp',entryFile:'main.cpp',activeFile:'main.cpp',revision:4,files:[{path:'main.cpp',content:personal,languageId:'cpp'},{path:'notes.hpp',content:'// SYNTHETIC header',languageId:'cpp'}]}});
@@ -86,4 +109,4 @@ try{
  });
  await check('Синтетические сценарии не отправляют мутации Cloud и не выдают offline Account proof',async()=>{assert.equal(requests.filter(r=>r.path.startsWith('/api/')&&r.method!=='GET').length,0);assert.equal(await local.evaluate(async prefix=>(await import(prefix+'/core/account-storage.js')).verifiedAccount(),prefix),null);assert.deepEqual(errors,[]);assert.deepEqual(f.errors,[]);});
 }catch(error){process.exitCode=1;checks.push({name:error.message,status:'FAIL',stack:error.stack});console.error(error.stack);await local?.screenshot({path:path.join(f.out,'FAILURE.png'),fullPage:true}).catch(()=>{});}
-finally{await browser?.close();await f.finish({status:process.exitCode?'FAIL':'PASS',checks,onlineErrors:errors,realLive:false,physicalDevice:false,cppExecution:false,onlineRequests:requests});}
+finally{heldGold?.release.resolve();await browser?.close();await f.finish({status:process.exitCode?'FAIL':'PASS',checks,onlineErrors:errors,realLive:false,physicalDevice:false,cppExecution:false,onlineRequests:requests});}

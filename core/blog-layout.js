@@ -1,6 +1,9 @@
 // Версионированные блоки внутри существующего body. Старые текстовые статьи сохраняются.
 export const LAYOUT_PREFIX='NEXUS_LAYOUT_V1\n';
 export const BODY_LIMIT=20000;
+// Прозрачный локальный pixel удерживает место под изображение до проверки SHA256.
+// Отсутствие src в ссылке браузер показывал как alt/broken-image placeholder.
+export const BLOG_MEDIA_PLACEHOLDER='data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
 const exact=(v,keys)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).sort().join(',')===[...keys].sort().join(',');
 const text=(v,max)=>typeof v==='string'&&v.length<=max&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(v);
 const bad=()=>{throw Object.assign(Error('Некорректная структура оформления статьи.'),{code:'INVALID_INPUT'})};
@@ -40,20 +43,92 @@ export function plainTextLayout(body=''){
 }
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function layoutImageMarkup(image,ratio='auto'){
- if(!validLayoutImage(image)||!['auto','square','landscape','portrait'].includes(ratio))bad();return `<figure class="blog-layout-photo blog-ratio-${ratio}"><img data-blog-media="${image.mediaId}" alt="${esc(image.alt)}" style="object-position:${image.focusX}% ${image.focusY}%" decoding="async"><figcaption>${esc(image.caption)}</figcaption></figure>`;
+ if(!validLayoutImage(image)||!['auto','square','landscape','portrait'].includes(ratio))bad();return `<figure class="blog-layout-photo blog-ratio-${ratio}"><img src="${BLOG_MEDIA_PLACEHOLDER}" data-blog-media="${image.mediaId}" aria-busy="true" alt="${esc(image.alt)}" style="object-position:${image.focusX}% ${image.focusY}%" decoding="async" loading="lazy"><figcaption>${esc(image.caption)}</figcaption></figure>`;
 }
 export function blogLayoutMarkup(value){const v=validateBlogLayout(value);return '<div class="blog-layout-grid">'+v.blocks.map((b,i)=>`<section class="blog-layout-block blog-width-${b.width} blog-align-${b.align} blog-surface-${b.surface}" data-blog-block="${b.id}">${b.kind==='heading'?`<h2 id="blog-section-${i}">${esc(b.text)}</h2>`:b.kind==='quote'?`<blockquote><p>${esc(b.text).replaceAll('\n','<br>')}</p></blockquote>`:b.kind==='text'?`<p>${esc(b.text).replaceAll('\n','<br>')}</p>`:`<div class="blog-layout-gallery blog-columns-${b.columns}">${b.images.map(img=>layoutImageMarkup(img,b.ratio)).join('')}</div>`}</section>`).join('')+'</div>'}
-export async function bindBlogMedia(root,{fetchImpl=globalThis.fetch,privateRead=false,isCurrent=()=>root.isConnected,localImages=new Map()}={}){
- const jobs=new Map();for(const img of root.querySelectorAll('[data-blog-media]')){
-  const id=img.dataset.blogMedia;if(!/^[a-f0-9]{64}$/.test(id))continue;
-  if(localImages.has(id)){img.src=localImages.get(id);continue}
-  if(!jobs.has(id))jobs.set(id,(async()=>{
-   const path=(privateRead?'/api/v2/account/control/content?media=':'/api/v2/content/feed?media=')+id;
-   let data;if(typeof privateRead==='function')data=await privateRead(path);else{const c=new AbortController(),t=setTimeout(()=>c.abort(),10000);try{const r=await fetchImpl(path,{credentials:'omit',cache:'no-store',redirect:'error',signal:c.signal});if(!r.ok||r.redirected||!r.headers.get('content-type')?.startsWith('application/json'))throw Error('Фото недоступно');const raw=await r.text();if(raw.length>150000)throw Error('Фото слишком большое');data=JSON.parse(raw)}finally{clearTimeout(t)}}
-   const m=data.media;if(m?.id!==id||m.mime!=='image/jpeg'||typeof m.data!=='string'||m.data.length>131072||!/^[A-Za-z0-9+/]+={0,2}$/.test(m.data)||!Number.isInteger(m.width)||m.width<1||m.width>1600||!Number.isInteger(m.height)||m.height<1||m.height>1600)throw Error('Фото не прошло проверку');
-   const bytes=Uint8Array.from(atob(m.data),c=>c.charCodeAt(0)),hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');if(hash!==id)throw Error('Контрольная сумма фото не совпала');return 'data:image/jpeg;base64,'+m.data;
-  })());
-  void jobs.get(id).then(src=>{if(isCurrent()&&img.isConnected){localImages.set(id,src);img.src=src}}).catch(()=>{if(isCurrent()&&img.isConnected){img.classList.add('blog-media-unavailable');img.alt+=' · Фото недоступно'}});
- }
- await Promise.allSettled(jobs.values());
+// Один loader принадлежит одному показу или одному живому редактору. Обложка,
+// список и макет редактора делят проверенные bytes, очередь и in-flight запросы.
+// Между аккаунтами/редакторами кеш не переносится; Cache API не используется.
+export function createBlogMediaLoader({fetchImpl=globalThis.fetch,privateRead=false,isCurrent=()=>true,localImages=new Map(),signal}={}){
+ // Публичная статья/лента допускает до 20 фото: начинаем весь текущий показ
+ // сразу, как в 10.3.1. Общая очередь живого редактора сохраняет предел 3.
+ const concurrency=privateRead?3:20;
+ const jobs=new Map(),queue=[],controller=new AbortController();let running=0,disposed=false;
+ const cancelled=()=>Object.assign(Error('Запрос отменён'),{name:'AbortError'});
+ const live=()=>{if(disposed||controller.signal.aborted)return false;if(!isCurrent()){dispose();return false}return true};
+ const dispose=()=>{
+  if(disposed)return;disposed=true;controller.abort();signal?.removeEventListener('abort',dispose);
+  localImages.clear();for(const item of jobs.values())item.reject(cancelled());jobs.clear();queue.length=0;
+ };
+ const read=async id=>{
+  const path=(privateRead?'/api/v2/account/control/content?media=':'/api/v2/content/feed?media=')+id;
+  let data;
+  if(typeof privateRead==='function')data=await privateRead(path,{signal:controller.signal});
+  else{
+   const requestController=new AbortController(),abort=()=>requestController.abort(),timer=setTimeout(abort,10000);
+   if(controller.signal.aborted)abort();controller.signal.addEventListener('abort',abort,{once:true});
+   try{const r=await fetchImpl(path,{credentials:'omit',cache:'no-store',redirect:'error',signal:requestController.signal});
+    if(!r.ok||r.redirected||!r.headers.get('content-type')?.startsWith('application/json'))throw Error('Фото недоступно');
+    const raw=await r.text();if(raw.length>150000)throw Error('Фото слишком большое');data=JSON.parse(raw);
+   }finally{clearTimeout(timer);controller.signal.removeEventListener('abort',abort)}
+  }
+  if(!live())throw cancelled();
+  const m=data?.media;
+  if(m?.id!==id||m.mime!=='image/jpeg'||typeof m.data!=='string'||m.data.length>131072||!/^[A-Za-z0-9+/]+={0,2}$/.test(m.data)||!Number.isInteger(m.width)||m.width<1||m.width>1600||!Number.isInteger(m.height)||m.height<1||m.height>1600)throw Error('Фото не прошло проверку');
+  const bytes=Uint8Array.from(atob(m.data),c=>c.charCodeAt(0));
+  const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
+  if(hash!==id)throw Error('Контрольная сумма фото не совпала');
+  return 'data:image/jpeg;base64,'+m.data;
+ };
+ const pump=()=>{while(running<concurrency&&queue.length){if(!live()){dispose();return}const item=queue.shift();
+  running++;void read(item.id).then(src=>{
+   if(!live()){dispose();return}
+   localImages.set(item.id,src);jobs.delete(item.id);item.resolve(src);
+  },error=>{jobs.delete(item.id);item.reject(error)}).finally(()=>{running--;pump()});
+ }};
+ const load=id=>{
+  if(!live()){dispose();return Promise.reject(cancelled())}
+  if(!/^[a-f0-9]{64}$/.test(id))return Promise.reject(Error('Фото не прошло проверку'));
+  if(localImages.has(id))return Promise.resolve(localImages.get(id));
+  if(jobs.has(id))return jobs.get(id).promise;
+  const item={id};item.promise=new Promise((resolve,reject)=>{item.resolve=resolve;item.reject=reject});
+  jobs.set(id,item);queue.push(item);pump();return item.promise;
+ };
+ if(signal?.aborted)dispose();else signal?.addEventListener('abort',dispose,{once:true});
+ return Object.freeze({load,peek:id=>live()?localImages.get(id):undefined,isActive:live,dispose});
+}
+// Публичный показ всегда создаёт новый loader и проверяет публикацию на сервере.
+// В редакторе общий loader живёт дольше отдельных DOM-bind; отмена одного bind
+// не прерывает запрос другого, но dispose редактора отменяет всю очередь.
+export async function bindBlogMedia(root,{fetchImpl=globalThis.fetch,privateRead=false,isCurrent=()=>root.isConnected,localImages=new Map(),signal,mediaLoader}={}){
+ const images=[...root.querySelectorAll('[data-blog-media]')];if(!images.length)return;
+ const viewCurrent=()=>!signal?.aborted&&root.isConnected&&isCurrent();
+ const loader=mediaLoader||createBlogMediaLoader({fetchImpl,privateRead,isCurrent:viewCurrent,localImages,signal});
+ const live=()=>viewCurrent()&&loader.isActive();
+ const clearRetry=img=>{img.classList.remove('blog-media-unavailable');img.parentElement?.querySelector('[data-blog-media-retry]')?.remove();img.closest('.blog-card')?.querySelector('.blog-card-copy [data-blog-media-retry]')?.remove();};
+ const retry=img=>{
+  if(!live()||!img.isConnected)return;
+  img.classList.add('blog-media-unavailable');img.removeAttribute('aria-busy');
+  if(img.parentElement?.querySelector('[data-blog-media-retry]'))return;
+  const button=document.createElement('button');button.type='button';button.className='btn blog-media-retry';button.dataset.blogMediaRetry='';button.textContent='Повторить загрузку фото';button.setAttribute('aria-label','Повторить загрузку фото: '+(img.alt||'изображение'));
+  // Не вставляем дополнительный grid-item между обложкой и текстом карточки.
+  // Кнопка остаётся доступным sibling, а не вложенной в ссылку.
+  const anchor=img.closest('a'),cardCopy=anchor?.closest('.blog-card')?.querySelector('.blog-card-copy');
+  if(cardCopy)cardCopy.prepend(button);else if(anchor)anchor.after(button);else img.after(button);
+  button.addEventListener('click',()=>{if(!live())return;button.remove();void show(img)});
+ };
+ const show=img=>{
+  if(!live()||!img.isConnected)return Promise.resolve();
+  const id=img.dataset.blogMedia;if(!/^[a-f0-9]{64}$/.test(id))return Promise.resolve();
+  // Нативная lazy-загрузка также не должна откладывать готовый JPEG до scroll.
+  if(!privateRead)img.loading='eager';
+  const cached=loader.peek(id);if(cached!==undefined){clearRetry(img);img.src=cached;img.removeAttribute('aria-busy');return Promise.resolve()}
+  img.setAttribute('aria-busy','true');
+  return loader.load(id).then(src=>{if(live()&&img.isConnected){
+   // Одна удачная проверка того же mediaId восстанавливает все видимые копии.
+   for(const other of images){if(other.dataset.blogMedia!==id||!other.isConnected)continue;
+    if(other===img||other.classList.contains('blog-media-unavailable')){clearRetry(other);other.src=src;other.removeAttribute('aria-busy')}}
+  }},()=>{if(live()&&img.isConnected)retry(img)});
+ };
+ await Promise.allSettled(images.map(show));
 }

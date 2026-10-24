@@ -36,6 +36,10 @@ jobs:
           git diff --exit-code bad182cc020e51dcfd0b36a7b0127c637c8f79ee HEAD -- courses/cpp/curriculum.json courses/cpp/content-package.json courses/cpp/data core/storage.js core/account-storage.js core/identity.js core/migrations sync sandbox project-studio server-access pwa/local-vault.js pwa/offline-learning.js pwa/runtime-manifest.js pwa/service-worker.js
       - name: Content Quality Gate и совместимость
         run: node tools/check-academy-gold-regression.mjs
+      - name: Интеграция с подтверждённым main и сохранность rollback
+        run: |
+          git merge-base --is-ancestor 0a134bbb496efae19df373bddff9a00dae9ff3dc HEAD
+          node tools/check-academy-gold-integration.mjs
       - name: Реальное выполнение C++20 с проверкой undefined behavior
         run: node tools/check-academy-gold-cpp.mjs
       - name: Подготовить браузерную проверку
@@ -49,6 +53,14 @@ jobs:
           NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-gold-browser/node_modules/playwright/index.mjs
           NEXUS_NATIVE_EVIDENCE: academy-gold-evidence/browser
         run: node tests/academy-gold-browser-check.mjs
+      - name: Браузерная интеграция Home, меню, Account и media
+        env:
+          NEXUS_FRONTEND_DIR: /tmp/nexus-gold-build
+          NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-gold-browser/node_modules/playwright/index.mjs
+        run: |
+          NEXUS_NATIVE_EVIDENCE=academy-gold-evidence/startup node tests/platform-startup-browser-check.mjs
+          NEXUS_NATIVE_EVIDENCE=academy-gold-evidence/administration node tests/platform-admin-browser-check.mjs
+          NEXUS_NATIVE_EVIDENCE=academy-gold-evidence/public-media node tests/blog-media-public-browser-check.mjs
       - name: Хеши и контекст evidence
         if: always()
         run: |
