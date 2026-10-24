@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "stage": "M2-0",
+  "date": "2026-10-24",
+  "status": "REVIEWED — authoring requirements, not implemented learner gating",
+  "baseCommit": "d9249b2e977483718cd67a151f62552296dd51e4",
+  "moduleId": "cpp.section.cpp-basics",
+  "target": "C++20",
+  "lessons": [
+    {
+      "id": "cpp.first-cpp-program", "order": 9, "legacyIndex": 8, "sessions": 2,
+      "prerequisites": ["cpp.languages-compilation-debugging"],
+      "introduceBeforeUse": ["#include как подключение объявлений", "main как готовая точка входа, без требования писать собственные функции", "std::cout, ::, << как вывод в поток, строка и \\n", "скобки, ;, исходник → компиляция → stdout, явный и неявный return 0"],
+      "scaffoldOnly": ["именованная int-величина в первом примере: кратко объяснить объявление, не требовать мастерства области видимости", "stdin до последней темы: только объяснённая заготовка Module 1"],
+      "doNotRequire": ["самостоятельные функции", "циклы", "составной ввод", "ссылки"],
+      "runtimeProbes": ["first-output", "implicit-main-return"]
+    },
+    {
+      "id": "cpp.tokens-identifiers-keywords", "order": 10, "legacyIndex": 9, "sessions": 1,
+      "prerequisites": ["cpp.first-cpp-program"],
+      "introduceBeforeUse": ["токен и роль пробела", "регистр имён", "ключевое слово и пользовательское имя", "ASCII-имена как учебное соглашение, а не запрет Unicode языком"],
+      "scaffoldOnly": ["типы и объявления берутся из первой заготовки"],
+      "doNotRequire": ["реализация лексера", "новые функции"],
+      "runtimeProbes": ["tokens-names", "invalid-keyword-name"]
+    },
+    {
+      "id": "cpp.comments-constants-literals", "order": 11, "legacyIndex": 10, "sessions": 1,
+      "prerequisites": ["cpp.tokens-identifiers-keywords"],
+      "introduceBeforeUse": ["комментарий объясняет причину", "литерал, символ, строка и escape", "const на простой int-величине", "constexpr на фиксированном вычислении", "разделители цифр и единицы измерения"],
+      "scaffoldOnly": ["подробные правила выбора типа идут следующим уроком; здесь int объяснён минимально"],
+      "doNotRequire": ["шаблоны", "метапрограммирование", "макросы"],
+      "runtimeProbes": ["const-literals", "constexpr", "binary-separated-literals", "invalid-const-write"]
+    },
+    {
+      "id": "cpp.data-types", "order": 12, "legacyIndex": 11, "sessions": 2,
+      "prerequisites": ["cpp.comments-constants-literals"],
+      "introduceBeforeUse": ["инициализация, bool, char, целые и вещественные типы", "приближённость вещественных чисел", "auto и brace-init в простом случае", "sizeof(type) вводится здесь; unevaluated operand — в теме 10", "numeric_limits<T>::max(), digits, is_signed как рецепт чтения библиотеки, с объяснением <T> и :: до запуска", "размеры — наблюдение target; char signedness, CHAR_BIT и размер адреса не универсальны"],
+      "scaffoldOnly": ["вызов max() объяснить как получение свойства, не как самостоятельное написание функций"],
+      "doNotRequire": ["написание шаблонов", "полная теория IEEE-754", "чтение неинициализированной памяти"],
+      "runtimeProbes": ["fundamental-types", "uniform-auto-init", "numeric-limits", "type-layout", "floating-tolerance"]
+    },
+    {
+      "id": "cpp.variables-scope", "order": 13, "legacyIndex": 12, "sessions": 2,
+      "prerequisites": ["cpp.data-types"],
+      "introduceBeforeUse": ["объявление и инициализация против присваивания", "копия значения", "вложенные блоки и shadowing", "область видимости против времени жизни объекта"],
+      "scaffoldOnly": ["условные блоки из Module 1 при необходимости снабдить объяснённой заготовкой"],
+      "doNotRequire": ["аппаратная модель стека как гарантия", "динамическая память", "чтение после конца времени жизни"],
+      "runtimeProbes": ["scope-shadow-copy"]
+    },
+    {
+      "id": "cpp.expressions-operators-blocks", "order": 14, "legacyIndex": 13, "sessions": 1,
+      "prerequisites": ["cpp.variables-scope"],
+      "introduceBeforeUse": ["операнд и значение выражения", "приоритет и скобки", "приоритет не задаёт общий порядок вычисления", "блок и промежуточная именованная величина"],
+      "scaffoldOnly": ["сначала чистые выражения без нескольких изменений одной величины"],
+      "doNotRequire": ["value categories", "перегрузка операторов", "неупорядоченные побочные эффекты"],
+      "runtimeProbes": ["precedence-block"]
+    },
+    {
+      "id": "cpp.arithmetic-assignment", "order": 15, "legacyIndex": 14, "sessions": 2,
+      "prerequisites": ["cpp.expressions-operators-blocks", "cpp.data-types"],
+      "introduceBeforeUse": ["/ и % для отрицательных целых: усечение к нулю", "нулевой делитель: запрет выполнения опасного пути", "составное присваивание", "тип промежуточного произведения: LL/long long до первого умножения", "границы расчёта доказываются до запуска"],
+      "scaffoldOnly": ["простая проверка диапазона из Module 1; причины promotions подробнее в следующем уроке"],
+      "doNotRequire": ["эксперимент с signed overflow", "циклы", "числа за пределами выбранного типа"],
+      "runtimeProbes": ["division-remainder", "compound-assignment", "widen-before-multiply"]
+    },
+    {
+      "id": "cpp.type-conversions", "order": 16, "legacyIndex": 15, "sessions": 2,
+      "prerequisites": ["cpp.arithmetic-assignment", "cpp.data-types"],
+      "introduceBeforeUse": ["promotions и общий тип смешанного выражения", "signed/unsigned и unsigned modulo", "static_cast не проверяет диапазон", "целое деление до преобразования", "brace-init narrowing как ожидаемая ошибка компиляции", "вещественное сравнение с допуском"],
+      "scaffoldOnly": ["небольшие граничные значения и предварительная проверка диапазона"],
+      "doNotRequire": ["float → int вне диапазона", "исправление раннего overflow поздним cast", "обязательное unsafe выполнение"],
+      "runtimeProbes": ["static-cast", "integer-floating-division", "mixed-signed-unsigned", "unsigned-modulo", "floating-tolerance", "invalid-list-narrowing"]
+    },
+    {
+      "id": "cpp.relations-logic", "order": 17, "legacyIndex": 16, "sessions": 1,
+      "prerequisites": ["cpp.type-conversions"],
+      "introduceBeforeUse": ["сравнение и bool", "&&/||/! и short-circuit", "защита делителя слева от &&", "таблица истинности с отмеченными невыполненными операндами"],
+      "scaffoldOnly": ["базовый if объяснён в Module 1; повторить локально при необходимости"],
+      "doNotRequire": ["подмена &&/|| на &/|", "полный if/else/switch и циклы Module 3"],
+      "runtimeProbes": ["short-circuit"]
+    },
+    {
+      "id": "cpp.increment-decrement-sizeof-conditional", "order": 18, "legacyIndex": 17, "sessions": 1,
+      "prerequisites": ["cpp.relations-logic", "cpp.variables-scope", "cpp.data-types"],
+      "introduceBeforeUse": ["отдельные шаги prefix и postfix", "sizeof(++n) не выполняет ++n в данном простом случае", "?: с совместимыми простыми ветвями", "размер из темы 4 против вычисления выражения"],
+      "scaffoldOnly": ["одно изменение величины в полном выражении"],
+      "doNotRequire": ["i++ + ++i", "адресная арифметика", "сложные conditional conversions"],
+      "runtimeProbes": ["prefix-postfix", "sizeof-unevaluated", "conditional-expression"]
+    },
+    {
+      "id": "cpp.pointers-references-addresses", "order": 19, "legacyIndex": 18, "sessions": 2,
+      "prerequisites": ["cpp.variables-scope", "cpp.data-types", "cpp.increment-decrement-sizeof-conditional"],
+      "introduceBeforeUse": ["объект, копия и alias", "T& и T* как новый смысл знакомых символов", "адрес и разыменование живого объекта", "nullptr и безопасная проверка перед доступом", "const int* и время жизни; адреса схемы символические"],
+      "scaffoldOnly": ["численный адрес не участвует в сравнении stdout и не объявляется постоянным"],
+      "doNotRequire": ["new/delete", "pointer arithmetic", "разыменование null/dangling", "полный RAII"],
+      "runtimeProbes": ["pointer-reference-alias", "nullptr-const-pointer"]
+    },
+    {
+      "id": "cpp.standard-io", "order": 20, "legacyIndex": 19, "sessions": 2,
+      "prerequisites": ["cpp.first-cpp-program", "cpp.variables-scope", "cpp.arithmetic-assignment", "cpp.type-conversions", "cpp.relations-logic", "cpp.pointers-references-addresses"],
+      "introduceBeforeUse": ["std::cin >> value и проверка результата", "пустой/нечисловой/слишком большой ввод", "std::string минимально: тип текста до отдельной темы строк", "getline и оставшийся разделитель", "std::ws убирает все начальные whitespace, включая пустые строки", "поле stdin Nexus — конечный буфер; Enter в терминале не равен EOF", "eof() и проверка лишнего ввода после ws", "fixed/setprecision и <iomanip> объяснить до примера", "целые MiB и kbit/s, overhead, округление вверх без float"],
+      "scaffoldOnly": ["эталон итогового проекта содержит только ранее объяснённые средства; автопроверка ученика не заявляется"],
+      "doNotRequire": ["from_chars", "файлы", "собственные функции", "цикл очистки потока", "исключения"],
+      "runtimeProbes": ["input-basic", "input-state", "getline-after-token", "getline-ws", "fixed-precision", "transfer-capstone"]
+    }
+  ],
+  "integrationRequirements": [
+    {"id":"M2-INT-01","status":"PLANNED","requirement":"Расширить точный Gold catalog и проверку moduleId в registry: сейчас разрешён только cpp.section.algorithms. Не активировать новые пути до 24 полных RU/EN объектов."},
+    {"id":"M2-INT-02","status":"PLANNED","requirement":"Новые модели типов/преобразований/alias не поддержаны model.js. Определить pure model contract и текстовую альтернативу; новый интерактивный вид требует 03→07 routing."},
+    {"id":"M2-INT-03","status":"PLANNED","requirement":"Module 1 CQG содержит специфические алгоритмические сценарии и 16 объектов. Сделать отдельный M2 gate без ослабления M1/CP-1.1."},
+    {"id":"M2-INT-04","status":"PLANNED","requirement":"Sources map presentation содержит 4 M1 ключа. Проверить новые первичные ссылки до внедрения, не показывать неизвестные ключи пользователю."},
+    {"id":"M2-INT-05","status":"PLANNED","requirement":"Продолжить lazy lesson/presentation и exact public PWA manifest; не грузить M2 или компилятор на Home, не менять saved quiz/code/stdin/projects, Cloud/Identity contracts."}
+  ],
+  "moduleReadiness": "PARTIAL — runtime routing defects remain open; no Gold M2 lessons authored",
+  "masterySkillGraphOrAutogradingImplemented": false
+}

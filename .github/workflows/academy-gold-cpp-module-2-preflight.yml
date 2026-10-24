@@ -1,0 +1,54 @@
+name: Академия C++ Gold — M2-0 runtime и зависимости
+on:
+  push:
+    branches: [feature/academy-gold-standard-cpp-module-2]
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXUS_M2_EVIDENCE: academy-gold-m2-evidence
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Проверить изоляцию от принятого main
+        run: |
+          test "${GITHUB_REF_NAME}" = feature/academy-gold-standard-cpp-module-2
+          git merge-base --is-ancestor d9249b2e977483718cd67a151f62552296dd51e4 HEAD
+          git diff --exit-code d9249b2e977483718cd67a151f62552296dd51e4 HEAD -- core courses pwa sandbox project-studio sync server-access release-candidate.json version.json releases entry-assets index.html nexus-shell.html offline.html manifest.webmanifest service-worker.js
+      - name: Учебные зависимости, stable IDs и NEXUS-PERF-01
+        run: |
+          node tools/check-academy-gold-module2-dependencies.mjs
+          node --test tests/platform-lazy-imports.test.mjs tests/platform-startup-load.test.mjs
+      - name: Реальный host C++20 и UBSan
+        run: node tools/check-academy-gold-module2-cpp.mjs
+      - name: Подготовить отдельную локальную сборку и настоящие runtime bytes
+        env:
+          NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m2-runtime
+          NEXUS_GOLD_EVIDENCE: academy-gold-m2-evidence
+        run: |
+          npm ci --prefix server-access
+          npm install --prefix /tmp/nexus-m2-browser --no-save playwright@1.56.1
+          /tmp/nexus-m2-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m2-build --generation ui1a-m2-preflight-20261024 --version 0.1.7-alpha.2.4.6-ui1a.10.5-test.2
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+      - name: Строгий допуск runtime Module 2 — реальные router, Worker, Clang и JSCPP
+        env:
+          NEXUS_FRONTEND_DIR: /tmp/nexus-m2-build
+          NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m2-browser/node_modules/playwright/index.mjs
+          NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m2-runtime
+          NEXUS_JSCPP_FIXTURE: /tmp/nexus-m2-runtime/jscpp.js
+        run: node tests/academy-gold-module2-preflight.mjs
+      - name: Сохранить фактический результат, включая FAIL
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m2-0-${{ github.sha }}
+          path: academy-gold-m2-evidence/
+          retention-days: 30
