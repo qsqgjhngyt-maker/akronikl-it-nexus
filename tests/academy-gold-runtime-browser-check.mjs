@@ -51,9 +51,9 @@ try{
   page=localPage;
  }
  const localPage=page;page=online.page;await page.setViewportSize({width:1366,height:900});
- // Контроль быстрого пути: настоящий JSCPP с явным return продолжает работать.
+ // Простой ввод с явным return также использует стандартный compiler.
  const fast=await page.evaluate(async prefix=>{const {pickProvider}=await import(prefix+'/sandbox/sandbox.js'),request={languageId:'cpp',source:'#include <iostream>\nint main(){int n;std::cin>>n;std::cout<<n;return 0;}',stdin:'8\n'},route=await pickProvider(request);return{...await route.provider.run(request),provider:route.provider.id};},prefix);
- assert.equal(fast.provider,'browser-jscpp');assert.equal(fast.stdout,'8');assert.equal(fast.exitCode,0);
+ assert.equal(fast.provider,'wasm-cpp');assert.equal(fast.stdout,'8');assert.equal(fast.exitCode,0);
  for(const [key,row]of unique){
   currentCase={id:row.id,program:row.program,index:row.index,stdin:row.stdin};
   const result=await page.evaluate(async({prefix,source,stdin})=>{
@@ -75,5 +75,5 @@ finally{
  if(online)await writeFile(path.join(f.out,'ONLINE_CONTEXT.json'),JSON.stringify({errors:online.errors,requests:online.requests},null,2)+'\n');
  await online?.close();
  await writeFile(path.join(f.out,'RUNTIME_CASES.json'),JSON.stringify({records,programs:new Set(all.map(r=>r.sourceSha256)).size,caseRecords:all.length,uniqueCases:unique.size,realRuns:executed.size},null,2)+'\n');
- await f.finish({status:failure?'FAIL':'PASS',failure,ui,errors,caseRecords:all.length,uniqueCases:unique.size,realRuns:executed.size,programs:new Set(all.map(r=>r.sourceSha256)).size,method:'Actual application pickProvider/run, production JSCPP and pinned Clang/WASI; identical source+stdin aliases execute once and retain all RU/EN records; no mocked Worker/compiler/stdout',coldOffline:!failure});if(failure)process.exitCode=1;
+  await f.finish({status:failure?'FAIL':'PASS',failure,ui,errors,caseRecords:all.length,uniqueCases:unique.size,realRuns:executed.size,programs:new Set(all.map(r=>r.sourceSha256)).size,method:'Actual application pickProvider/run and pinned Clang/WASI; identical source+stdin aliases execute once and retain all RU/EN records; no mocked Worker/compiler/stdout',coldOffline:!failure});if(failure)process.exitCode=1;
 }

@@ -21,11 +21,12 @@ jobs:
         run: |
           test "${GITHUB_REF_NAME}" = feature/academy-gold-standard-cpp-module-2
           git merge-base --is-ancestor d9249b2e977483718cd67a151f62552296dd51e4 HEAD
-          git diff --exit-code d9249b2e977483718cd67a151f62552296dd51e4 HEAD -- core courses pwa sandbox project-studio sync server-access release-candidate.json version.json releases entry-assets index.html nexus-shell.html offline.html manifest.webmanifest service-worker.js
+          git diff --exit-code d9249b2e977483718cd67a151f62552296dd51e4 HEAD -- core courses pwa sandbox project-studio sync server-access release-candidate.json version.json releases entry-assets index.html nexus-shell.html offline.html manifest.webmanifest service-worker.js ':(exclude)sandbox/providers/browser-runtime.js' ':(exclude)sandbox/runtime-router.js'
       - name: Учебные зависимости, stable IDs и NEXUS-PERF-01
         run: |
           node tools/check-academy-gold-module2-dependencies.mjs
           node --test tests/platform-lazy-imports.test.mjs tests/platform-startup-load.test.mjs
+          node --test tests/cpp-stream-state-routing.test.mjs
       - name: Реальный host C++20 и UBSan
         run: node tools/check-academy-gold-module2-cpp.mjs
       - name: Подготовить отдельную локальную сборку и настоящие runtime bytes
@@ -36,9 +37,9 @@ jobs:
           npm ci --prefix server-access
           npm install --prefix /tmp/nexus-m2-browser --no-save playwright@1.56.1
           /tmp/nexus-m2-browser/node_modules/.bin/playwright install --with-deps chromium
-          node tools/build-ui1a-release.mjs --out /tmp/nexus-m2-build --generation ui1a-m2-preflight-20261024 --version 0.1.7-alpha.2.4.6-ui1a.10.5-test.2
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m2-build --generation ui1a-m2-runtime-fix-20261024 --version 0.1.7-alpha.2.4.6-ui1a.10.5-test.2
           node tools/prepare-academy-gold-runtime-fixture.mjs
-      - name: Строгий допуск runtime Module 2 — реальные router, Worker, Clang и JSCPP
+      - name: Строгий допуск runtime Module 2 и реальный Code Studio UI
         env:
           NEXUS_FRONTEND_DIR: /tmp/nexus-m2-build
           NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m2-browser/node_modules/playwright/index.mjs
@@ -51,4 +52,62 @@ jobs:
         with:
           name: academy-gold-m2-0-${{ github.sha }}
           path: academy-gold-m2-evidence/
+          retention-days: 30
+  module1-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NEXUS_GOLD_EVIDENCE: academy-gold-m1-regression
+      NEXUS_GOLD_INTEGRATION_BASE: d9249b2e977483718cd67a151f62552296dd51e4
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m1-browser/node_modules/playwright/index.mjs
+      NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m1-runtime
+      NEXUS_JSCPP_FIXTURE: /tmp/nexus-m1-runtime/jscpp.js
+      NEXUS_FRONTEND_DIR: /tmp/nexus-m1-build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Подготовить зависимости проверки
+        run: npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+      - name: Module 1 — Content Quality Gate и регрессия контрактов
+        run: node tools/check-academy-gold-regression.mjs
+      - name: Интеграция и неизменность опубликованного main
+        run: node tools/check-academy-gold-integration.mjs
+      - name: Module 1 — настоящие C++20 примеры и UBSan
+        run: node tools/check-academy-gold-cpp.mjs
+      - name: Подготовить браузерную сборку и точный rollback test.2
+        run: |
+          npm install --prefix /tmp/nexus-m1-browser --no-save playwright@1.56.1
+          /tmp/nexus-m1-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m1-build --generation ui1a-m2-runtime-fix-20261024 --version 0.1.7-alpha.2.4.6-ui1a.10.5-test.2
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+          git worktree add --detach /tmp/nexus-m1-rollback-source d9249b2e977483718cd67a151f62552296dd51e4
+          node tools/snapshot-published-build.mjs --source /tmp/nexus-m1-rollback-source --out /tmp/nexus-m1-rollback --expected-commit d9249b2e977483718cd67a151f62552296dd51e4
+      - name: Module 1 — полный настоящий runtime matrix, UI и холодный Offline
+        env:
+          NEXUS_NATIVE_EVIDENCE: academy-gold-m1-regression/runtime-browser
+        run: node tests/academy-gold-runtime-browser-check.mjs
+      - name: Module 1 — desktop, mobile, словарь, доступность и Offline
+        env:
+          NEXUS_NATIVE_EVIDENCE: academy-gold-m1-regression/browser
+        run: node tests/academy-gold-browser-check.mjs
+      - name: Home, Account, media и стартовая загрузка
+        run: |
+          NEXUS_NATIVE_EVIDENCE=academy-gold-m1-regression/startup node tests/platform-startup-browser-check.mjs
+          NEXUS_NATIVE_EVIDENCE=academy-gold-m1-regression/administration node tests/platform-admin-browser-check.mjs
+          NEXUS_NATIVE_EVIDENCE=academy-gold-m1-regression/public-media node tests/blog-media-public-browser-check.mjs
+      - name: Native PWA upgrade/rollback и сохранность синтетических работ/прогресса
+        env:
+          NEXUS_ROLLBACK_DIR: /tmp/nexus-m1-rollback
+          NEXUS_BROWSER_RESULT: academy-gold-m1-regression/PWA_ROLLBACK.json
+        run: node tests/pwa-rollback-browser-check.mjs
+      - name: Сохранить фактические результаты Module 1
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m1-regression-${{ github.sha }}
+          path: academy-gold-m1-regression/
           retention-days: 30

@@ -26,17 +26,19 @@ assert.equal(plan.lessons.filter(l=>ru.some(x=>x.id===l.id)).length,12);
 assert.equal(plan.lessons.filter(l=>en.some(x=>x.id===l.id)).length,2);
 assert.equal(GOLD_ALGORITHM_LESSONS.length,8);
 const untouched=['core','courses','pwa','sandbox','project-studio','sync','server-access','releases','entry-assets','styles','effects','locales','release-candidate.json','version.json','index.html','nexus-shell.html','offline.html','manifest.webmanifest','service-worker.js'];
-execFileSync('git',['diff','--exit-code',plan.baseCommit,'--',...untouched],{stdio:'pipe'});
+const authorizedRuntimePaths=['sandbox/providers/browser-runtime.js','sandbox/runtime-router.js'];
+execFileSync('git',['diff','--exit-code',plan.baseCommit,'--',...untouched,...authorizedRuntimePaths.map(p=>':(exclude)'+p)],{stdio:'pipe'});
 const snapshots=[];
 for(const file of ['courses/cpp/curriculum.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/lessons.en.json','core/course-registry.js','core/app.js','pwa/offline-entry.js','core/academy-gold-catalog.js','sandbox/providers/browser-runtime.js','sandbox/providers/wasm-runtime.js','sandbox/runtime-router.js','core/storage.js','core/account-storage.js','sync/cloud-sync.js','release-candidate.json','version.json']){
  const bytes=await readFile(new URL(file,root));
- const baseline=execFileSync('git',['show',plan.baseCommit+':'+file]);assert.ok(bytes.equals(baseline),file);
- snapshots.push({file,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')});
+ const baseline=execFileSync('git',['show',plan.baseCommit+':'+file]),unchanged=bytes.equals(baseline);
+ if(!authorizedRuntimePaths.includes(file))assert.ok(unchanged,file);
+ snapshots.push({file,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),unchanged,authorizedRuntimePatch:authorizedRuntimePaths.includes(file)});
 }
 const seen=new Set();
 async function walk(file){if(seen.has(file))return;seen.add(file);const code=await readFile(new URL(file,root),'utf8');for(const hit of code.matchAll(/(?:^|;|\n)\s*(?:import|export)\s+(?:[^;'"`]*?\s+from\s*)?["']([^"']+)["']/gm)){if(hit[1].startsWith('.'))await walk(path.posix.normalize(path.posix.join(path.posix.dirname(file),hit[1])));}}
 await walk('core/app.js');let bytes=0;for(const file of seen)bytes+=(await stat(new URL(file,root))).size;
 assert.ok(seen.size<=75&&bytes<=600000);
-const result={status:'PASS',scope:'Editorial review and source invariants; not learner mastery, runtime readiness or LIVE',baseCommit:plan.baseCommit,lessonIds:plan.lessons.map(l=>({id:l.id,order:l.order,legacyIndex:l.legacyIndex,prerequisites:l.prerequisites})),sessions:19,legacyRu:12,legacyEn:2,activeGoldM2:0,probes:M2_PROBES.length,cases:M2_PROBES.reduce((s,p)=>s+p.cases.length,0),snapshots,perf:{staticModules:seen.size,staticBytes:bytes,capModules:75,capBytes:600000,homeCourseJsonBytes:22135},applicationPathsUnchanged:true,productionWrites:0,mainWrites:0,releaseCreated:false};
+const result={status:'PASS',scope:'Editorial review and protected source invariants; two authorized runtime paths excepted; not learner mastery or LIVE',baseCommit:plan.baseCommit,lessonIds:plan.lessons.map(l=>({id:l.id,order:l.order,legacyIndex:l.legacyIndex,prerequisites:l.prerequisites})),sessions:19,legacyRu:12,legacyEn:2,activeGoldM2:0,probes:M2_PROBES.length,cases:M2_PROBES.reduce((s,p)=>s+p.cases.length,0),snapshots,perf:{staticModules:seen.size,staticBytes:bytes,capModules:75,capBytes:600000,homeCourseJsonBytes:22135},authorizedRuntimePaths,protectedApplicationPathsUnchanged:true,productionWrites:0,mainWrites:0,releaseCreated:false};
 const out=path.resolve(process.env.NEXUS_M2_EVIDENCE||'academy-gold-m2-evidence');await mkdir(out,{recursive:true});await writeFile(path.join(out,'DEPENDENCIES.json'),JSON.stringify(result,null,2)+'\n');
 console.log(JSON.stringify({status:result.status,lessons:12,sessions:19,probes:result.probes,cases:result.cases,perf:result.perf,scope:result.scope}));

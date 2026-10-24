@@ -51,7 +51,19 @@ std::cout<<seconds<<' '<<seconds/60<<' '<<seconds%60<<'\\n';`,null,'iostream',{c
  {stdin:'1000000 1 100',stdout:'16777216000 279620266 40\n'},
  ...['','1 1000','1.5 1000 0','1 0 0','-1 1000 0','1000001 1000 0','1 1000001 0','1 1000 -1','1 1000 101','1 1000 0 extra','1 1000 0.5','999999999999999999999999 1000 0'].map(stdin=>({stdin,stdout:'invalid\n'})),
  {stdin:'1 1000 25 \n\t',stdout:'11 0 11\n'}]})
-];
+ ];
+// Дополнительные формы тех же правил: политика не зависит от конкретных
+// чисел, имён, ключевых слов в комментариях или современного include-hint.
+M2_PROBES.push(
+ probe('division-variable-variant','arithmetic-assignment',"int dividend=-19,divisor=4; std::cout << dividend/divisor << ' ' << dividend%divisor << '\\n';",'-4 -3\n'),
+ probe('signed-unsigned-variant','type-conversions',"int debt=-2; unsigned int credit=10; std::cout << (debt<credit) << ' ' << (credit>debt) << '\\n';",'0 0\n'),
+ probe('sizeof-postfix-variant','increment-decrement-sizeof-conditional',"int count=9; auto bytes=sizeof(count++); std::cout << (bytes==sizeof(int)) << ' ' << count << '\\n';",'1 9\n'),
+ probe('literal-keyword-trivia','first-cpp-program','// throw constexpr template sizeof\nstd::cout << "try throw template\\n";','try throw template\n'),
+ probe('auto-only-variant','data-types',"auto count=6; std::cout << count << '\\n';",'6\n'),
+ probe('binary-only-variant','comments-constants-literals',"std::cout << 0b1010 << '\\n';",'10\n'),
+ probe('invalid-const-reference','pointers-references-addresses','const int count=2; int& alias=count; std::cout<<alias;','','iostream',{expectation:'compile-error'}),
+ probe('invalid-keyword-variant','tokens-identifiers-keywords','int return=2;','','iostream',{expectation:'compile-error'})
+);
 export function matchesOutput(probe,actual,testCase){
  if(probe.expectation==='layout'){
   const sizes=actual.trim().split(/\s+/).map(Number);
