@@ -52,7 +52,7 @@ try{
  }
  const localPage=page;page=online.page;await page.setViewportSize({width:1366,height:900});
  // Контроль быстрого пути: настоящий JSCPP с явным return продолжает работать.
- const fast=await page.evaluate(async prefix=>{const {pickProvider}=await import(prefix+'/sandbox/sandbox.js'),request={languageId:'cpp',source:'#include <iostream>\nint main(){int n;std::cin>>n;std::cout<<n;return 0;}',stdin:'8\n'},route=await pickProvider(request);return{provider:route.provider.id,...await route.provider.run(request)};},prefix);
+ const fast=await page.evaluate(async prefix=>{const {pickProvider}=await import(prefix+'/sandbox/sandbox.js'),request={languageId:'cpp',source:'#include <iostream>\nint main(){int n;std::cin>>n;std::cout<<n;return 0;}',stdin:'8\n'},route=await pickProvider(request);return{...await route.provider.run(request),provider:route.provider.id};},prefix);
  assert.equal(fast.provider,'browser-jscpp');assert.equal(fast.stdout,'8');assert.equal(fast.exitCode,0);
  for(const [key,row]of unique){
   currentCase={id:row.id,program:row.program,index:row.index,stdin:row.stdin};
