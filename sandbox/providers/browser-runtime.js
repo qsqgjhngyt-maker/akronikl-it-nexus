@@ -26,6 +26,24 @@ const EXTENDED_STDLIB_HEADERS=new Set([
 
 function sourceFrom(input){return normalizeRuntimeRequest(typeof input==='string'?{languageId:'cpp',source:input}:input).source}
 
+// JSCPP не реализует bool/operator! и состояние стандартных потоков.
+// Убираем только trivia для оценки возможностей; исходник ученика не меняется.
+function nativeCppRequirement(source=''){
+  const code=String(source).replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g,' ');
+  const stream=/\b(?:cin|wcin|cout|wcout|cerr|clog)\b/.test(code);
+  if(stream&&(/!(?!=)|&&|\|\||\b(?:cin|wcin|cout|wcout|cerr|clog)\s*\.|\b(?:std\s*::\s*)?ws\b/.test(code)
+    ||/\b(?:if|while|for)\s*\([^;{}]*\b(?:cin|wcin|cout|wcout|cerr|clog)\b/.test(code)
+    ||/\b(?:bool|static_cast\s*<\s*bool\s*>)\b[^;{}]*\b(?:cin|wcin|cout|wcout|cerr|clog)\b/.test(code)))return 'cpp.stream-state';
+  // По стандарту выход из main эквивалентен return 0; JSCPP требует return.
+  // Консервативно оставляем быстрый путь только с явным последним return.
+  const main=/\bint\s+main\s*\([^)]*\)\s*\{/.exec(code);
+  if(main){let depth=1,end=main.index+main[0].length;const start=end;
+    for(;end<code.length&&depth;end++){if(code[end]==='{')depth++;else if(code[end]==='}')depth--;}
+    if(!/\breturn\s+[^;{}]+;\s*$/.test(code.slice(start,end-1)))return 'cpp.main-return';
+  }
+  return null;
+}
+
 function detectFeatures(input=''){
   const code=sourceFrom(input);
   const features=FEATURE_RULES.filter(x=>x.pattern.test(code)).map(x=>({id:x.id,labelRu:x.labelRu,labelEn:x.labelEn,support:BEST_EFFORT.has(x.id)?RUNTIME_SUPPORT.BEST_EFFORT:RUNTIME_SUPPORT.GUARANTEED}));
@@ -75,6 +93,12 @@ export const browserRuntimeProvider={
     const request=normalizeRuntimeRequest(typeof input==='string'?{languageId:'cpp',source:input}:input);
     if(request.languageId!=='cpp')return{support:RUNTIME_SUPPORT.UNSUPPORTED,confidence:RUNTIME_SUPPORT.UNSUPPORTED,features:[],bestEffort:[],reasons:['language-not-supported']};
     if(runtimeProjectFileCount(request)>1)return{support:RUNTIME_SUPPORT.UNSUPPORTED,confidence:RUNTIME_SUPPORT.UNSUPPORTED,features:[],bestEffort:[],reasons:['multi-file-not-supported'],requires:['wasm-or-secure-build']};
+    const nativeFeature=nativeCppRequirement(request.source);
+    if(nativeFeature)return{
+      support:RUNTIME_SUPPORT.UNSUPPORTED,confidence:RUNTIME_SUPPORT.UNSUPPORTED,
+      features:[{id:nativeFeature,labelRu:nativeFeature==='cpp.stream-state'?'проверка состояния потоков':'неявное завершение main',labelEn:nativeFeature==='cpp.stream-state'?'stream state checks':'implicit main return',support:RUNTIME_SUPPORT.UNSUPPORTED}],
+      bestEffort:[],reasons:['standard-cpp-requires-native-runtime'],requires:['wasm-or-secure-build']
+    };
     const features=detectFeatures(request);
     const bestEffort=features.filter(x=>x.support===RUNTIME_SUPPORT.BEST_EFFORT);
     const support=bestEffort.length?RUNTIME_SUPPORT.BEST_EFFORT:RUNTIME_SUPPORT.GUARANTEED;
@@ -117,6 +141,11 @@ export const browserRuntimeProvider={
   async run(input,legacyStdin=''){
     const request=normalizeRuntimeRequest(typeof input==='string'?{languageId:'cpp',source:input,stdin:legacyStdin}:input);
     if(request.languageId!=='cpp')throw new Error(`Nexus Browser Runtime does not support ${request.languageId}.`);
+    if(nativeCppRequirement(request.source)){
+      const error=new Error('This standard C++ construct requires the native C++ provider; the teaching interpreter does not implement it.');
+      error.code='BROWSER_CPP_STANDARD_UNSUPPORTED';error.anxProvider=this;error.anxCapability=this.inspect(request);error.anxProviderLimit=true;
+      throw error;
+    }
     const runtime=await this.load();
     const normalized=this.normalize(request.source);
     try{
