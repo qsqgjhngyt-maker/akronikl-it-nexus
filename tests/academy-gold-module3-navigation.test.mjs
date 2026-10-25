@@ -6,6 +6,7 @@ import {createLearningViews} from '../core/learning-views.js';
 import {discoveryPageMarkup,orderedCppLessons,focusLearningSection} from '../core/nexus-learning-discovery.js';
 import {academyGoldMarkup} from '../core/academy-gold-presentation.js';
 import {translator} from '../core/i18n.js';
+import {createViewResume,VIEW_RESUME_KEY} from '../core/view-resume.js';
 const j=async p=>JSON.parse(await readFile(new URL('../'+p,import.meta.url),'utf8'));
 const index=await j('courses/cpp/data/gold-laboratories.json'),course={};
 for(const [key,file]of Object.entries({manifest:'manifest.json',curriculum:'curriculum.json',lessonsRu:'data/lessons.ru.json',lessonsEn:'data/lessons.en.json',practicumsRu:'data/practicums.ru.json',projectsRu:'data/projects.ru.json'}))course[key]=await j('courses/cpp/'+file);
@@ -45,4 +46,16 @@ test('Отложенный focus отменён после смены маршр
   focusLearningSection('lab');target.isConnected=false;flush();assert.equal(scrolls,0);
   target.isConnected=true;focusLearningSection('lab');flush();assert.equal(scrolls,1);assert.equal(focuses,1);assert.equal(target.tabIndex,-1);
  }finally{for(const [k,v]of Object.entries(saved))v===undefined?delete globalThis[k]:globalThis[k]=v;}
+});
+
+test('Прокрутка старого экрана и его таймер не создают bookmark ещё загружаемого урока',async()=>{
+ const memory=new Map(),listeners={},frames=[];let position={x:0,y:2500},applied;
+ const storage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v)};
+ const resume=createViewResume({storage,getPosition:()=>position,applyPosition:p=>{applied=p},scheduleFrame:f=>frames.push(f),addListener:(name,fn)=>listeners[name]=fn,removeListener:()=>{},historyObject:{scrollRestoration:'auto'},debounceMs:5});resume.install();
+ resume.begin('#view=labs');assert.equal(resume.restore(),false);listeners.scroll();
+ resume.begin('#course=cpp&lesson=cpp.data-types&focus=lab');listeners.scroll();await new Promise(r=>setTimeout(r,20));
+ listeners.pagehide();assert.equal(resume.read(resume.getCurrentKey()),null);assert.equal(resume.restore(),false,'Fresh lab must receive focus rather than a fake old-catalog position');
+ position={x:0,y:9000};listeners.scroll();await new Promise(r=>setTimeout(r,20));assert.equal(resume.read(resume.getCurrentKey()).y,9000,'A rendered page still persists normal scroll');
+ resume.begin('#view=labs');assert.equal(resume.restore(),true);resume.begin('#view=home');while(frames.length)frames.shift()();assert.equal(applied,undefined,'Stale scheduled restore must not scroll the new route');
+ assert.equal(JSON.parse(memory.get(VIEW_RESUME_KEY))['#view=labs'].y,2500);resume.destroy();
 });

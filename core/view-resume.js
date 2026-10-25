@@ -20,6 +20,7 @@ export function createViewResume({
   let currentKey=null;
   let timer=null;
   let installed=false;
+  let ready=true,revision=0;
 
   const loadMap=()=>{try{return safeParse(storage?.getItem?.(VIEW_RESUME_KEY),{})||{}}catch{return{}}};
   const saveMap=map=>{try{storage?.setItem?.(VIEW_RESUME_KEY,JSON.stringify(map))}catch{}};
@@ -32,20 +33,24 @@ export function createViewResume({
     saveMap(Object.fromEntries(entries));
     return map[routeKey(key)];
   };
-  const scheduleSave=()=>{if(!currentKey)return;clearTimeout(timer);timer=setTimeout(()=>save(),debounceMs)};
+  const scheduleSave=()=>{if(!currentKey||!ready)return;clearTimeout(timer);const key=currentKey,version=revision;timer=setTimeout(()=>{if(ready&&currentKey===key&&revision===version)save(key)},debounceMs)};
   const begin=(key)=>{
     const next=routeKey(key);
-    if(currentKey)save(currentKey);
+    clearTimeout(timer);timer=null;
+    if(currentKey&&ready)save(currentKey);
     currentKey=next;
+    ready=false;revision++;
     return currentKey;
   };
   const restore=(key=currentKey)=>{
-    const pos=read(key);if(!pos)return false;
-    scheduleFrame(()=>scheduleFrame(()=>applyPosition(pos)));
+    const pos=read(key);if(!pos){ready=true;return false;}
+    ready=false;
+    const version=revision;
+    scheduleFrame(()=>scheduleFrame(()=>{if(currentKey===routeKey(key)&&revision===version){applyPosition(pos);ready=true}}));
     return true;
   };
   const onScroll=()=>scheduleSave();
-  const onPageHide=()=>{clearTimeout(timer);save()};
+  const onPageHide=()=>{clearTimeout(timer);if(ready)save()};
   const install=()=>{
     if(installed)return;installed=true;
     try{if(historyObject&&'scrollRestoration'in historyObject)historyObject.scrollRestoration='manual'}catch{}
@@ -53,7 +58,7 @@ export function createViewResume({
     addListener?.('pagehide',onPageHide);
   };
   const destroy=()=>{
-    if(!installed)return;installed=false;clearTimeout(timer);
+    if(!installed)return;installed=false;clearTimeout(timer);ready=false;revision++;
     removeListener?.('scroll',onScroll);
     removeListener?.('pagehide',onPageHide);
   };

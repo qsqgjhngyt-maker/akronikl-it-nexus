@@ -12,7 +12,7 @@ export async function m3FixScope(){
  const navMap=new Map((navigation?.productPaths||[]).map(p=>[p.file,p]));
  if(navigation){
   assert.equal(navigation.baseCommit,'593fc844880b11a47e9960264cc83da7bf7d2ffc');assert.equal(navigation.stage,'M3-07');
-  const allowed=['core/course-registry.js','core/offline-assets.js','core/nexus-learning-discovery.js','core/learning-views.js','core/academy-gold-presentation.js','pwa/offline-entry.js','courses/cpp/data/gold-laboratories.json'];
+  const allowed=['core/course-registry.js','core/offline-assets.js','core/nexus-learning-discovery.js','core/learning-views.js','core/academy-gold-presentation.js','core/view-resume.js','pwa/offline-entry.js','courses/cpp/data/gold-laboratories.json'];
   assert.deepEqual([...navMap.keys()].sort(),allowed.sort());
   for(const item of navMap.values()){
    assert.equal(sha(await readFile(item.file)),item.sha256,item.file);
