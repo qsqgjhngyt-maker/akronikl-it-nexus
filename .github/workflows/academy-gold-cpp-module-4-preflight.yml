@@ -1,0 +1,108 @@
+name: Академия C++ Gold — M4-0, зависимости и runtime
+on:
+  push:
+    branches: [feature/academy-gold-standard-cpp-module-4]
+    paths:
+      - '.github/workflows/academy-gold-cpp-module-4-preflight.yml'
+      - 'tools/check-academy-gold-module4-*.mjs'
+      - 'tests/academy-gold-module4-*.mjs'
+      - 'tests/fixtures/cpp-module4-probes.mjs'
+      - 'docs/ru/03-content/CPP_MODULE4_DEPENDENCIES.json'
+permissions:
+  contents: read
+jobs:
+  invariants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXUS_M4_EVIDENCE: academy-gold-m4/invariants
+      NEXUS_M3_EVIDENCE: academy-gold-m4/module3
+      NEXUS_M2_EVIDENCE: academy-gold-m4/module2
+      NEXUS_GOLD_EVIDENCE: academy-gold-m4/regression
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Инструменты, без product deployment
+        run: npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+      - name: Учебный DAG, 45 прежних ID, 50 синтетических ID и NEXUS-PERF-01
+        run: |
+          node tools/check-academy-gold-module4-dependencies.mjs
+          node tests/academy-gold-module4-preservation.mjs
+      - name: Module 1–3, Identity, Cloud, Offline и существующие интеграции
+        run: |
+          node tools/check-academy-gold-module3-dependencies.mjs
+          node tools/check-academy-gold-module3-quality.mjs
+          node tests/academy-gold-module3-preservation.mjs
+          node tools/check-academy-gold-module2-dependencies.mjs
+          node tools/check-academy-gold-module2-quality.mjs
+          node tools/check-academy-gold-regression.mjs
+          node tools/check-academy-gold-integration.mjs
+          node --test tests/academy-gold-module3-navigation.test.mjs tests/runtime-files.test.mjs
+      - name: Сохранить исходные факты, включая FAIL
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m4-invariants-${{ github.sha }}
+          path: academy-gold-m4/
+          retention-days: 30
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXUS_M4_EVIDENCE: academy-gold-m4/native
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: g++ C++20 без EH, UBSan, те же source/files/cases M4
+        run: node tools/check-academy-gold-module4-native.mjs
+      - name: Сохранить настоящие native результаты
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m4-native-${{ github.sha }}
+          path: academy-gold-m4/
+          retention-days: 30
+  runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/nexus-m4-build
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m4-browser/node_modules/playwright/index.mjs
+      NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m4-runtime
+      NEXUS_JSCPP_FIXTURE: /tmp/nexus-m4-runtime/jscpp.js
+      NEXUS_M4_EVIDENCE: academy-gold-m4/runtime
+      NEXUS_GOLD_EVIDENCE: academy-gold-m4/fixture
+      NEXUS_NATIVE_EVIDENCE: academy-gold-m4/browser
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Изолированный Chromium, неизменённая сборка и pinned Clang/WASI
+        id: prepare
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/nexus-m4-browser --no-save playwright@1.56.1
+          /tmp/nexus-m4-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m4-build
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+      - name: Реальные router, Worker и Clang/WASI, без fallback в JSCPP
+        run: node tests/academy-gold-module4-preflight.mjs
+      - name: Три старых M4 темы, все 45 ID, проекты и настоящий Code Studio в cold Offline
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        run: node tests/academy-gold-module4-browser-check.mjs
+      - name: Сохранить runtime, browser и исходные FAIL
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m4-runtime-${{ github.sha }}
+          path: academy-gold-m4/
+          retention-days: 30
