@@ -8,6 +8,8 @@ import {M2_PROBES} from '../tests/fixtures/cpp-module2-probes.mjs';
 import {goldLessonPath,GOLD_ALGORITHM_LESSONS,GOLD_BASICS_LESSONS} from '../core/academy-gold-catalog.js';
 const root=new URL('../',import.meta.url),json=async p=>JSON.parse(await readFile(new URL(p,root),'utf8'));
 const plan=await json('docs/ru/03-content/CPP_MODULE2_DEPENDENCIES.json'),curriculum=await json('courses/cpp/curriculum.json');
+const publication=(await json('release-candidate.json')).publication?.sourceCommit==='e743bd537c09e8ae5bbf09d72cd5fc4980bc92dd';
+if(publication)execFileSync(process.execPath,['tools/check-academy-gold-module2-publication.mjs'],{stdio:'pipe'});
 const section=curriculum.sections.find(s=>s.id===plan.moduleId),lookup=new Map(curriculum.lessons.map(l=>[l.id,l]));
 assert.equal(plan.lessons.length,12);assert.equal(plan.lessons.reduce((s,l)=>s+l.sessions,0),19);
 assert.deepEqual(plan.lessons.map(l=>l.id),section.lessonIds);
@@ -28,14 +30,15 @@ assert.equal(GOLD_ALGORITHM_LESSONS.length,8);
 const untouched=['core','courses','pwa','sandbox','project-studio','sync','server-access','releases','entry-assets','styles','effects','locales','release-candidate.json','version.json','index.html','nexus-shell.html','offline.html','manifest.webmanifest','service-worker.js'];
 const authorizedRuntimePaths=['sandbox/providers/browser-runtime.js','sandbox/runtime-router.js'];
 const authorizedContentPaths=['core/academy-gold-catalog.js','core/academy-gold-presentation.js','core/course-registry.js','core/offline-assets.js',...GOLD_BASICS_LESSONS.flatMap(id=>['ru','en'].map(locale=>goldLessonPath(id,locale)))];
-execFileSync('git',['diff','--exit-code',plan.baseCommit,'--',...untouched,...[...authorizedRuntimePaths,...authorizedContentPaths].map(p=>':(exclude)'+p)],{stdio:'pipe'});
+const publicationPaths=publication?['core/app.js','core/shell-presentation.js','release-candidate.json','version.json','index.html','nexus-shell.html','offline.html','service-worker.js','releases/ui1a-cpp-gold-module2-test1-20261025','entry-assets/ui1a-cpp-gold-module2-test1-20261025']:[];
+execFileSync('git',['diff','--exit-code',plan.baseCommit,'--',...untouched,...[...authorizedRuntimePaths,...authorizedContentPaths,...publicationPaths].map(p=>':(exclude)'+p)],{stdio:'pipe'});
 // M2 authoring не меняет уже доказанное исправление runtime.
 execFileSync('git',['diff','--exit-code','1be795e391871561253afe4b201fbf1048aaaeb9','--','sandbox'],{stdio:'pipe'});
 const snapshots=[];
 for(const file of ['courses/cpp/curriculum.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/lessons.en.json','core/course-registry.js','core/app.js','pwa/offline-entry.js','core/academy-gold-catalog.js','sandbox/providers/browser-runtime.js','sandbox/providers/wasm-runtime.js','sandbox/runtime-router.js','core/storage.js','core/account-storage.js','sync/cloud-sync.js','release-candidate.json','version.json']){
  const bytes=await readFile(new URL(file,root));
  const baseline=execFileSync('git',['show',plan.baseCommit+':'+file]),unchanged=bytes.equals(baseline);
- if(![...authorizedRuntimePaths,...authorizedContentPaths].includes(file))assert.ok(unchanged,file);
+ if(![...authorizedRuntimePaths,...authorizedContentPaths,...publicationPaths].includes(file))assert.ok(unchanged,file);
  snapshots.push({file,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),unchanged,authorizedRuntimePatch:authorizedRuntimePaths.includes(file),authorizedContentIntegration:authorizedContentPaths.includes(file)});
 }
 const seen=new Set();
