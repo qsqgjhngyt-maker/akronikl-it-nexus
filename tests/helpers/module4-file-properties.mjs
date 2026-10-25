@@ -1,6 +1,7 @@
 // Только проверка evidence, без изменения runtime и без автогрейдинга ученика.
 export function filePropertiesMatch(properties={},files={}){
  try{for(const [name,p]of Object.entries(properties)){
+  if(p.kind==='absent'){if(Object.hasOwn(files,name)&&files[name]!==null)return false;continue;}
   if(!Object.hasOwn(files,name)||typeof files[name]!=='string')return false;
   const value=files[name];
   if(p.kind==='equal-file'){if(!Object.hasOwn(files,p.other)||value!==files[p.other])return false;}

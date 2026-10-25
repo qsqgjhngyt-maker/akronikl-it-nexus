@@ -314,24 +314,24 @@
     "description": "A textual step model of the concepts, not C++ execution or a performance measurement.",
     "steps": [
       {
-        "title": "Keys, mapped values and uniqueness",
-        "description": "A set stores keys; a map associates each key with a mapped value. In a frequency index, the word is the key and its occurrence count is the value. Repetition updates the count rather than adding a distinct key. Record-ID uniqueness is a separate domain rule: equal amounts may be allowed while duplicate IDs are not."
+        "title": "a b a",
+        "description": "The input contains three words and two distinct keys. Empty input is handled separately."
       },
       {
-        "title": "Ordered map and set",
-        "description": "std::map and std::set keep keys under their comparator’s order. Lookup, insertion and erasure have logarithmic guarantees under their contracts. Balanced trees are common implementations, but the public interface does not require knowing a particular balancing scheme. Ordered traversal is useful when the report actually needs it."
+        "title": "a → 1",
+        "description": "The first a is absent. Insertion creates a counter equal to 1."
       },
       {
-        "title": "Unordered containers: hash and equality",
-        "description": "unordered_map and unordered_set use hashing to organize lookup and equality to distinguish keys. Different keys can share a hash: a collision does not permit dropping one record. Many operations have constant-like average cost in element count under appropriate conditions; their worst case can be linear."
+        "title": "b → 1",
+        "description": "New b creates a second entry. A possible hash collision does not make a and b equivalent keys."
       },
       {
-        "title": "A read must not silently insert",
-        "description": "counts[word] inserts a missing key with a default-initialized mapped value. For int that is zero, making ++counts[word] useful for counting. But counts[\"missing\"]==0 mutates the container even though it looks like a read. Use find and compare with end when asking whether a key exists, preserving map size."
+        "title": "a → 2",
+        "description": "Repeated a increments the existing counter; distinct-entry count remains 2."
       },
       {
-        "title": "Invalidation is container-specific",
-        "description": "Do not transfer vector rules to unordered_map without checking its contract. Rehash reorganizes buckets and invalidates iterators, while references and pointers to surviving elements remain valid under that operation’s rules. Erasure invalidates access to the erased item. reserve can rehash, so an earlier iterator is not automatically safe afterward."
+        "title": "a 2; b 1",
+        "description": "For reporting, copy unordered_map pairs and sort by word: a 2, then b 1. Finding a missing word alone must not insert it."
       }
     ]
   },

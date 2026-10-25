@@ -313,39 +313,111 @@
       },
       {
         "stdin": "-1 0 0 1",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "129 0 0 1",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "1 -1 0 1",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "1 4294967296 0 1",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "1 0 2 1",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "1 0 -1001 0",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "1 0 0 1001",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "0 0 0 0 extra",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "x",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       }
     ],
     "steps": [
@@ -373,24 +445,24 @@
     "description": "Текстовая пошаговая модель понятий; не исполнение C++ и не измерение производительности.",
     "steps": [
       {
-        "title": "Детерминированная последовательность и состояние",
-        "description": "Псевдослучайный engine вычисляет следующее значение из своего состояния и обновляет состояние. При одинаковом начальном состоянии и одинаковой истории вызовов получится тот же поток. Он может выглядеть случайным, но это не физическая случайность. Дополнительный вызов, например ради отладочного вывода, сдвинет все последующие значения."
+        "title": "n,seed,lo,hi",
+        "description": "Проверьте n≤128, unsigned-область seed и −1000≤lo≤hi≤1000 до преобразований и генерации."
       },
       {
-        "title": "Конкретный engine и библиотечный выбор",
-        "description": "std::mt19937 имеет заданные стандартом параметры; C++20 задаёт проверочное 10000-е значение для default-constructed engine. Это позволяет выполнить точный межсредовой контроль его потока. default_random_engine, напротив, является выбором реализации, поэтому совпадение имени типа на двух платформах не доказывает один алгоритм."
+        "title": "Два engine",
+        "description": "Два mt19937 инициализируются одинаковым seed; каждая distribution получает одинаковые lo и hi."
       },
       {
-        "title": "Distribution задаёт закон и диапазон",
-        "description": "uniform_int_distribution<int>(lo,hi) предназначена для равномерных целых в замкнутом диапазоне, включая обе границы. Предусловие lo≤hi проверяется до создания объекта. В лабораторной lo и hi ограничены −1000…1000, чтобы контракт не зависел от крайних значений int. Случай lo==hi допустим: каждое значение равно единственному элементу диапазона."
+        "title": "Одна история",
+        "description": "В обеих ветвях выполняется ровно n одинаковых вызовов. Лишний вызов одной ветви меняет историю состояния."
       },
       {
-        "title": "Почему остаток может дать смещение",
-        "description": "Представьте равновероятный источник чисел 0…7 и желание получить 0…2. Остаток от деления на 3 даёт по три прообраза для 0 и 1, но только два для 2. Значит распределение результата уже неравномерно, хотя исходный источник был равномерным. Частота на маленькой выборке может случайно скрыть это структурное смещение."
+        "title": "Файлы",
+        "description": "Сохраните samples.txt и repeat.txt. Даже при n=0 нужны два существующих пустых файла."
       },
       {
-        "title": "Повторяемость — контролируемый опыт",
-        "description": "В лабораторной создаются два engine с одним seed и две distribution с одинаковыми параметрами; выполняется одинаковое число вызовов в одном порядке. Массивы должны совпасть внутри текущей реализации. Сохраните samples.txt и repeat.txt, а также compiler/runtime и параметры. Не проверяйте repeat только по красиво напечатанному слову yes: сравните сами файлы."
+        "title": "Свойства",
+        "description": "Проверьте n целых в границах и равенство файлов внутри запуска. Не требуйте одну distribution-последовательность во всех библиотеках."
       }
     ]
   },

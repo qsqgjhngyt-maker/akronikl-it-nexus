@@ -313,39 +313,111 @@
       },
       {
         "stdin": "-1 0 0 1",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "129 0 0 1",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "1 -1 0 1",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "1 4294967296 0 1",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "1 0 2 1",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "1 0 -1001 0",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "1 0 0 1001",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "0 0 0 0 extra",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       },
       {
         "stdin": "x",
-        "stdout": "invalid\n"
+        "stdout": "invalid\n",
+        "fileProperties": {
+          "samples.txt": {
+            "kind": "absent"
+          },
+          "repeat.txt": {
+            "kind": "absent"
+          }
+        }
       }
     ],
     "steps": [
@@ -373,24 +445,24 @@
     "description": "A textual step model of the concepts, not C++ execution or a performance measurement.",
     "steps": [
       {
-        "title": "A deterministic sequence and state",
-        "description": "A pseudorandom engine computes an output from its state and updates that state. Equal initial states and equal call histories produce equal streams. The output may look random without being physical randomness. An extra call, even for debugging output, shifts all later values."
+        "title": "n,seed,lo,hi",
+        "description": "Validate n≤128, the unsigned seed domain and −1000≤lo≤hi≤1000 before conversion or generation."
       },
       {
-        "title": "A named engine versus a library choice",
-        "description": "std::mt19937 has standard-specified parameters, and C++20 specifies a check value for its default-constructed engine’s 10000th output. This enables an exact cross-environment check of that stream. default_random_engine is an implementation choice, so sharing its type name does not prove two platforms use the same algorithm."
+        "title": "Two engines",
+        "description": "Two mt19937 engines receive the same seed; both distributions receive identical lo and hi."
       },
       {
-        "title": "A distribution specifies a law and range",
-        "description": "uniform_int_distribution<int>(lo,hi) produces uniform integers over a closed range, including both endpoints. Check lo≤hi before constructing it. The lab bounds endpoints to −1000…1000 to avoid relying on int extremes. lo==hi is valid: every result is the range’s single value."
+        "title": "Same history",
+        "description": "Both branches perform exactly n matching calls. An extra call on one branch changes its state history."
       },
       {
-        "title": "Why a remainder can introduce bias",
-        "description": "Imagine a uniform source over 0…7 and a desired output over 0…2. Remainder modulo three gives three preimages each for zero and one, but only two for two. The output is therefore biased despite the uniform source. A small sample can accidentally hide this structural bias."
+        "title": "Files",
+        "description": "Save samples.txt and repeat.txt. Even n=0 requires two existing empty files."
       },
       {
-        "title": "Replay is a controlled experiment",
-        "description": "The lab creates two engines with one seed and two distributions with matching parameters, then makes the same calls in the same order. The arrays must match within the current implementation. Save samples.txt, repeat.txt, compiler/runtime and parameters. Do not infer replay solely from a printed “yes”; compare the actual files."
+        "title": "Properties",
+        "description": "Check n bounded integers and file equality within the run. Do not demand one distribution sequence across all libraries."
       }
     ]
   },
