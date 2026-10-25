@@ -15,7 +15,7 @@ test('76 записей индекса согласованы с лаборат�
  assert.equal(index.schemaVersion,1);assert.deepEqual(Object.keys(index.lessons),GOLD_LESSONS);
  for(const id of GOLD_LESSONS)for(const locale of ['ru','en']){
   const g=await j(goldLessonPath(id,locale)),m=index.lessons[id][locale];
-  assert.deepEqual(m,{title:g.laboratory.title,goal:g.laboratory.challenge,stepCount:g.laboratory.steps.length,proof:g.laboratory.rubric[0]});
+  assert.deepEqual(m,{title:g.laboratory.title,goal:g.laboratory.catalogGoal||g.laboratory.challenge,stepCount:g.laboratory.steps.length,proof:g.laboratory.rubric[0]});
   assert.deepEqual(Object.keys(m).sort(),['goal','proof','stepCount','title']);
   if(locale==='en')assert.ok(!/[А-Яа-яЁё]/.test(JSON.stringify(m)));
  }
@@ -26,7 +26,7 @@ test('RU/EN: 39 C++ labs, все18 M3, учебный порядок, без з�
   const t=translator(await j('locales/'+locale+'/ui.json')),state={courses:{cpp:{lessons:{}}}},prefs={courseLocale:locale},views=createLearningViews({cpp:course,prefs,t,visualIcon:()=>'',loadState:()=>state,lessonState:()=>({}),progress:()=>({done:0,total:45,pct:0}),cppContinuation:()=>null});
   const render=()=>discoveryPageMarkup({kind:'labs',course,contentFor:views.lessonData,t,materialLocale:locale,locale});
   const before=render(),overview=views.overview();
-  assert.equal((before.match(/data-discovery-kind="lab"/g)||[]).length,39);
+  assert.equal((before.match(/data-discovery-kind="lab"/g)||[]).length,GOLD_LESSONS.length+1);
   for(const id of GOLD_STRUCTURED_LESSONS){assert.ok(before.includes('data-discovery-item="'+id+'"'));assert.ok(overview.includes('#course=cpp&amp;lesson='+id+'&amp;focus=lab')||overview.includes('#course=cpp&lesson='+id+'&focus=lab'));}
   const positions=orderedCppLessons(course).filter(l=>GOLD_LESSONS.includes(l.id)).map(l=>before.indexOf('data-discovery-item="'+l.id+'"'));assert.deepEqual([...positions].sort((a,b)=>a-b),positions);
   course.goldLessons??={};course.goldLessons[locale]={};for(const id of GOLD_LESSONS)course.goldLessons[locale][id]=await j(goldLessonPath(id,locale));

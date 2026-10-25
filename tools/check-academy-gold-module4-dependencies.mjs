@@ -8,6 +8,7 @@ import {CPP_LEGACY_LESSON_IDS} from '../core/storage.js';
 const json=async file=>JSON.parse(await readFile(file,'utf8'));
 const plan=await json('docs/ru/03-content/CPP_MODULE4_DEPENDENCIES.json'),curriculum=await json('courses/cpp/curriculum.json');
 assert.equal(plan.baseCommit,'03c8a7ba1306c59f35b83ea5650ae73b71988272');
+if(curriculum.programVersion==='cpp-gold-m4-v1'){await import('./check-academy-gold-module4-authoring.mjs')}else{
 assert.equal(curriculum.programVersion,plan.baseProgramVersion);assert.equal(curriculum.lessons.length,45);
 assert.equal(plan.topics.length,8);assert.equal(plan.targetLocaleObjects,16);assert.equal(plan.newProgressIdsAssigned,0);
 const old=plan.topics.filter(t=>t.stableId),additional=plan.topics.filter(t=>!t.stableId),section=curriculum.sections.find(s=>s.id===plan.moduleId);
@@ -38,3 +39,5 @@ await walk('core/app.js');let bytes=0;for(const f of seen)bytes+=(await stat(f))
 const probes=M4_PROBES.map(p=>({id:p.id,topics:p.topics,cases:p.cases.length,sourceSha256:createHash('sha256').update(p.source).digest('hex'),bundleSha256:createHash('sha256').update(JSON.stringify({source:p.source,files:p.files||{},metadata:p.metadata||{},cases:p.cases})).digest('hex')}));
 const result={status:'PASS',stage:'M4-0',baseCommit:plan.baseCommit,dagNodes:8,stableIds:3,proposedUnassigned:5,currentIds:45,legacyIds:40,newGoldObjects:0,probes:M4_PROBES.length,cases:M4_CASE_COUNT,prerequisiteAliasResolved:plan.prerequisiteResolution,snapshots,probeContracts:probes,perf:{status:'PASS',staticModules:seen.size,staticBytes:bytes,capModules:75,capBytes:600000,scope:'Статический NEXUS-PERF-01; runtime Home проверяется отдельно'},productUnchanged:true,mainWrites:0,productionWrites:0,officialRelease:false};
 const out=path.resolve(process.env.NEXUS_M4_EVIDENCE||'academy-gold-m4-evidence');await mkdir(out,{recursive:true});await writeFile(path.join(out,'DEPENDENCIES.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({...result,snapshots:undefined,probeContracts:undefined}));
+
+}

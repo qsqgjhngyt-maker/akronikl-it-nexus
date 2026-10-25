@@ -8,8 +8,8 @@ import {createLearningViews} from '../core/learning-views.js';
 class MemoryStorage{data=new Map();get length(){return this.data.size}key(i){return [...this.data.keys()][i]??null}getItem(k){return this.data.get(k)??null}setItem(k,v){this.data.set(k,String(v))}removeItem(k){this.data.delete(k)}}
 globalThis.localStorage=new MemoryStorage();globalThis.sessionStorage=new MemoryStorage();
 const account={accountId:'synthetic-m4-preservation',displayName:'SYNTHETIC',status:'active'};initializeAccountStorage({account,loginMethods:[],enrollmentAvailable:false});
-const curriculum=JSON.parse(await readFile('courses/cpp/curriculum.json')),ids=curriculum.lessons.map(l=>l.id),legacy=[...CPP_LEGACY_LESSON_IDS],newIds=Array.from({length:5},(_,i)=>'cpp.synthetic-m4-proposed-'+(i+1));
-const future={...curriculum,programVersion:'cpp-m4-synthetic-v1',lessons:[...curriculum.lessons,...newIds.map(id=>({id}))]};
+const curriculum=JSON.parse(await readFile('courses/cpp/curriculum.json')),ids=curriculum.lessons.slice(0,45).map(l=>l.id),legacy=[...CPP_LEGACY_LESSON_IDS],newIds=curriculum.lessons.slice(45).map(l=>l.id);
+const future=structuredClone(curriculum);curriculum.lessons=curriculum.lessons.slice(0,45);curriculum.programVersion='cpp-gold-m3-v1';
 const sample=id=>({completed:true,quiz:2,code:'// SYNTHETIC '+id,stdin:'17\n',note:'SYNTHETIC',workspace:{entryFile:'main.cpp',activeFile:'domain.hpp',files:[{path:'main.cpp',content:'// synthetic main'},{path:'domain.hpp',content:'// synthetic header'},{path:'data.txt',content:'1 2'}]},unknown:{preserve:true}});
 const checks=[],check=(name,fn)=>{fn();checks.push({name,status:'PASS'});console.log('PASS '+name)};
 for(const done of [0,23,40,45])check('Профиль '+done+'/45: хранение, patch и расчёт не теряют поля',()=>{
@@ -37,4 +37,4 @@ check('Конфликт и повторный перенос не перезап
 check('RU/EN показывают текущий denominator и legacy badge без 50/45',()=>{
  const progress=cppProgramProgress(payload.state,future);for(const locale of ['ru','en']){const views=createLearningViews({cpp:{manifest:{title:{ru:'C++',en:'C++'},description:{ru:'Курс',en:'Course'}},curriculum:future},prefs:{courseLocale:locale},t:k=>k,progress:()=>progress});const html=views.courseHead('overview');assert.ok(html.includes('50/50'));assert.ok(html.includes('40/40'));assert.ok(html.includes('aria-valuemax="50"'));}
 });
-const out=path.resolve(process.env.NEXUS_M4_EVIDENCE||'academy-gold-m4-evidence');await mkdir(out,{recursive:true});await writeFile(path.join(out,'PRESERVATION.json'),JSON.stringify({status:'PASS',checks,currentIds:45,legacyIds:40,syntheticFutureIds:50,newRegisteredIds:0,scope:'Синтетические production APIs, не личный LIVE; UI badge истории cpp-gold-m3-v1 отдельно не реализован',realUserStorageRead:false,networkRequests:0,cloudWrites:0},null,2)+'\n');
+const out=path.resolve(process.env.NEXUS_M4_EVIDENCE||'academy-gold-m4-evidence');await mkdir(out,{recursive:true});await writeFile(path.join(out,'PRESERVATION.json'),JSON.stringify({status:'PASS',checks,currentIds:45,legacyIds:40,syntheticFutureIds:50,newRegisteredIds:5,scope:'Синтетические production APIs, не личный LIVE; UI badge истории cpp-gold-m3-v1 отдельно не реализован',realUserStorageRead:false,networkRequests:0,cloudWrites:0},null,2)+'\n');

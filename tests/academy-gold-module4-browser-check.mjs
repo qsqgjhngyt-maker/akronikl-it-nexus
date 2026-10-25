@@ -28,7 +28,7 @@ try{
    await page.evaluate(id=>{location.hash='#course=cpp&lesson='+id},id);await page.waitForFunction(expected=>document.querySelector('#editor')?.value===expected,personal(id));
    assert.equal(await page.locator('#stdin').inputValue(),'17\n');assert.ok(await page.locator('input[name="quiz"][value="1"]').isChecked());assert.match(await page.locator('#completeLesson').textContent(),/✓/);
    const expected=files.map(file=>file.path==='main.cpp'?{...file,content:personal(id)}:file);assert.deepEqual(await page.locator('#editor').evaluate(n=>n.__nexusCodeStudio.getSnapshot().files.map(({path,content,languageId})=>({path,content,languageId}))),expected);
-  }return{lessons:3,entrypoints:2,cases:6,filesPerLesson:3};
+  }return{lessons:8,entrypoints:2,cases:16,filesPerLesson:3};
  });
  await check('Code Studio M4: настоящий Clang/WASM и три файла в cold Offline',async()=>{
   const id=ids[0];await local.evaluate(id=>{location.hash='#course=cpp&lesson='+id},id);await local.waitForFunction(expected=>document.querySelector('#editor')?.value===expected,personal(id));await local.locator('#runCode').click();
@@ -38,7 +38,7 @@ try{
  await check('45/45, исторические 40/40, проект и checkpoint сохранены',async()=>{
   const data=await local.evaluate(async({prefix,id,phrase})=>{const {createVaultStore}=await import(prefix+'/pwa/local-vault.js'),s=await createVaultStore().unlock(id,phrase),data=s.read();await s.lock();return data},{prefix,id:vaultId,phrase});
   assert.deepEqual(data.projects,payload.projects);for(const id of all)for(const key of ['completed','quiz','code','stdin','workspace','note'])assert.deepEqual(data.state.courses.cpp.lessons[id][key],payload.state.courses.cpp.lessons[id][key]);
-  const progress=await local.evaluate(async({prefix,state,curriculum})=>(await import(prefix+'/core/storage.js')).cppProgramProgress(state,curriculum),{prefix,state:data.state,curriculum});assert.deepEqual([progress.done,progress.total,progress.legacy.done],[45,45,40]);return{ids:45,completed:45,legacy:40,projects:1,checkpoints:1};
+  const progress=await local.evaluate(async({prefix,state,curriculum})=>(await import(prefix+'/core/storage.js')).cppProgramProgress(state,curriculum),{prefix,state:data.state,curriculum});assert.deepEqual([progress.done,progress.total,progress.legacy.done],[50,50,40]);return{ids:50,completed:50,legacy:40,projects:1,checkpoints:1};
  });
  await check('Изоляция реального аккаунта и Cloud; нет JS ошибок',async()=>{
   assert.equal(online.requests.filter(r=>r.path.startsWith('/api/')&&r.method!=='GET').length,0);assert.deepEqual(online.errors,[]);assert.deepEqual(f.errors,[]);assert.equal(await local.evaluate(async prefix=>(await import(prefix+'/core/account-storage.js')).verifiedAccount(),prefix),null);return{realCredentials:false,productionRequests:0,cloudWrites:0};

@@ -1,0 +1,434 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.classic-algorithms",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.iterators-algorithms-lambdas",
+  "sessions": 3,
+  "learningOrder": 3,
+  "prerequisiteIds": [
+    "cpp.sorting-basic",
+    "cpp.standard-sequences"
+  ],
+  "sourceRefs": [
+    "CPP20-ITERATORS",
+    "CPP20-SORT"
+  ],
+  "title": "Iterators, STL algorithms and lambdas",
+  "lead": "Compose small algorithms while specifying their ranges, destinations and callback behavior.",
+  "why": "A familiar loop can often be recognized as search, filtering, transformation or reduction. Standard algorithms express intent, but make range contracts and supplied functions part of correctness.",
+  "objectives": [
+    "Justify half-open range boundaries.",
+    "Choose an iterator category for an algorithm.",
+    "Write a strict comparator and a predicate.",
+    "Predict invalidation after vector growth.",
+    "Build a copy_if, sort, transform, accumulate pipeline without losing data."
+  ],
+  "prerequisites": [
+    "Modules 1–3: validated input, functions, vector, records, references and lifetimes.",
+    "Direct learning dependencies: cpp.sorting-basic, cpp.standard-sequences. New constructs are explained before the task."
+  ],
+  "concepts": [
+    {
+      "term": "Half-open range",
+      "definition": "Includes first and excludes last; empty when first==last."
+    },
+    {
+      "term": "Iterator",
+      "definition": "A navigation object with specified valid operations."
+    },
+    {
+      "term": "Random access",
+      "definition": "A category supporting constant-time offsets and distances."
+    },
+    {
+      "term": "Predicate",
+      "definition": "A callable whose result acts as a Boolean condition."
+    },
+    {
+      "term": "Comparator",
+      "definition": "A strict weak ordering defining which element precedes another."
+    },
+    {
+      "term": "Capture",
+      "definition": "Including external values or references in a lambda closure."
+    },
+    {
+      "term": "Invalidation",
+      "definition": "An iterator or view becoming invalid after an owner mutation."
+    },
+    {
+      "term": "Initial accumulator",
+      "definition": "The value and type from which accumulate begins a fold."
+    }
+  ],
+  "sections": [
+    {
+      "title": "A container and a traversal position",
+      "paragraphs": [
+        "A container owns and organizes elements; an iterator identifies a position in a sequence. A vector iterator resembles a pointer, but reason through its permitted operations: dereference, advance and comparison. *it is the element, while it is the access mechanism. Copying an iterator does not copy the container.",
+        "begin() identifies the first element when one exists; end() is the past-the-end position. An empty container has begin()==end(), a valid empty range. end is not the last element and must not be dereferenced. An algorithm stops before reading it, and a search result must be checked before accessing its element."
+      ]
+    },
+    {
+      "title": "Why ranges are half-open",
+      "paragraphs": [
+        "[first,last) includes first and excludes last. Adjacent ranges [a,b) and [b,c) join without duplicating b, and equal boundaries naturally express emptiness. last must be reachable from first through valid advances. Iterators from different vectors do not form a range even if their addresses happen to look nearby.",
+        "For a vector, last−first counts elements in a valid range. That does not mean every iterator pair supports subtraction. Name the category and establish that both positions belong to one range first. Diagnose boundary errors on paper and with safe checks rather than deliberately reading beyond end."
+      ]
+    },
+    {
+      "title": "Categories constrain algorithms and cost",
+      "paragraphs": [
+        "Input iterators support reading while advancing; forward iterators add multipass traversal, bidirectional iterators add backward steps, and random-access iterators add constant-time movement by an arbitrary distance. Contiguous iterators additionally describe contiguous storage. These are semantic and operational contracts, not identical container implementations.",
+        "Ordinary std::sort requires random-access iterators, so a vector fits while an arbitrary linked list does not. find scans forward and needs weaker capabilities. Later, binary search will show how few comparisons can coexist with many forward advances. Algorithm cost must include the cost of its iterator operations."
+      ]
+    },
+    {
+      "title": "Search and a predicate",
+      "paragraphs": [
+        "std::find(first,last,value) returns the first equal element or last. std::find_if uses a predicate, a callable bool rule for an element. The example finds the first even number. “First” follows the current range order, so sorting beforehand can change the selected record without changing whether a match exists.",
+        "Check it!=end before *it. A vector position can be obtained by subtracting begin only for compatible iterators. A position is not automatically a domain ID: rearrangement and erasure change it. A project’s stable ID belongs in the record; an iterator serves only the current access."
+      ]
+    },
+    {
+      "title": "Destination size is not capacity",
+      "paragraphs": [
+        "std::transform reads input and writes transformed elements to a destination. An empty vector has no writable elements at begin, even after reserve: capacity is allocated but size stays zero. Resize the destination or use back_inserter, which appends with push_back. The example chooses a separate output vector that grows through appending.",
+        "Do not append to the same vector whose range is being traversed: reallocation can invalidate input iterators. In-place algorithms have specific conditions too; the shown doubling transform writes each item to its existing position. If an operation changes length, define input/output ownership and overlap rules beforehand."
+      ]
+    },
+    {
+      "title": "Lambda syntax and capture lifetime",
+      "paragraphs": [
+        "[capture](parameters){body} creates a callable object. In [threshold](int x){return x>=threshold;}, threshold is copied at creation, x arrives at each invocation, and return gives the decision. Value capture keeps the original threshold even if the outer variable later changes. Empty brackets capture no local variables.",
+        "[&sum] accesses the original variable, which must remain alive during invocation. This can suit an immediate sequential algorithm, but returning such a lambda requires lifetime reasoning. A sorting predicate must not mutate keys or contradict itself. a>b gives a strict descending order; a>=b does not."
+      ]
+    },
+    {
+      "title": "Accumulation and result types",
+      "paragraphs": [
+        "std::accumulate from <numeric> updates an accumulator sequentially starting at init. init determines the accumulator type: 0 and 0LL are different contracts. The lab uses 0LL for up to 64 doubled values with magnitude at most 10000. Casting an already overflowed sum to long long afterward does not repair it.",
+        "An empty range returns init. Explain the arguments and side effects of any custom accumulation operation. Do not silently replace accumulate with a parallel reduction and assume identical ordering, especially for floating point. Here the contract uses sequential integer computation and exact stdout."
+      ]
+    },
+    {
+      "title": "A pipeline and its engineering checks",
+      "paragraphs": [
+        "The lab validates all input, filters x>=threshold, sorts descending, doubles and sums. State a contract after each stage: selected count is at most n, order follows a>b, and doubling preserves length. Empty output must yield a zero sum and an empty line, not an attempt to read a first item.",
+        "Compare the library pipeline with a simple manual implementation on small data. Explain reserve invalidation, index meaning after insertion and the use of separate buffers. Next, search a prepared range: its ordering becomes the following algorithm’s precondition rather than an accidental property of one test input."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "pipeline",
+      "title": "Algorithms as range contracts",
+      "purpose": "Read every argument and the accumulator type before comparing the results.",
+      "code": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <numeric>\n#include <iterator>\nint main(){std::vector<int>a{4,1,3,2},b;int offset=10;std::transform(a.begin(),a.end(),std::back_inserter(b),[offset](int x){return x+offset;});std::sort(b.begin(),b.end(),[](int a,int b){return a>b;});auto p=std::find_if(b.begin(),b.end(),[](int x){return x%2==0;});std::cout<<std::accumulate(b.begin(),b.end(),0)<<' '<<*p<<' '<<std::distance(b.begin(),p)<<'\\n';std::vector<int>empty;std::cout<<(std::find(empty.begin(),empty.end(),7)==empty.end())<<' '<<std::accumulate(empty.begin(),empty.end(),0)<<'\\n';}",
+      "stdin": "",
+      "expectedStdout": "50 14 0\n1 0\n",
+      "steps": [
+        "a.begin()/a.end() bound exactly four elements; end is not the last value.",
+        "back_inserter(b) appends using push_back, so an initially empty b is a valid destination.",
+        "[offset] copies 10 into the lambda object; (int x) is its call parameter and return supplies the transformed item.",
+        "a>b is a strict descending order. find_if returns the first even element, an iterator to 14.",
+        "A separate empty vector demonstrates find==end and a zero sum; end must never be dereferenced."
+      ],
+      "cases": []
+    },
+    {
+      "id": "invalidation",
+      "title": "Keep a position instead of an invalid iterator",
+      "purpose": "Check a safe vector-reallocation scenario without executing invalid access.",
+      "code": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main(){std::vector<int>a{1,2,3};auto pos=std::find(a.begin(),a.end(),2)-a.begin();a.reserve(a.capacity()+20);std::cout<<a[static_cast<std::size_t>(pos)]<<'\\n';}",
+      "stdin": "",
+      "expectedStdout": "2\n",
+      "steps": [
+        "Find 2 and establish from the input that the result is not end.",
+        "Subtracting iterators produces integer position 1 before the container changes.",
+        "reserve(capacity()+20) requests greater capacity; old iterators cannot be used after reallocation.",
+        "Apply the index to the current vector: values and order have not changed.",
+        "Insertion or erasure before that position changes its meaning; use a stable domain ID and search again in that scenario."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "List positions in [begin,end) for an empty vector.",
+      "action": "List positions in [begin,end) for an empty vector. Write a prediction first, then perform the safe check.",
+      "prediction": "Equal boundaries mean empty.",
+      "verification": "No end dereference."
+    },
+    {
+      "title": "Add a record-key projection without mutating the source vector.",
+      "action": "Add a record-key projection without mutating the source vector. Write a prediction first, then perform the safe check.",
+      "prediction": "copy_if needs space or an inserter.",
+      "verification": "Preserve the source and separate result; test duplicates."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Failure after push_back",
+      "cause": "An invalidated iterator was retained",
+      "fix": "Reacquire the position or separate reading and writing."
+    },
+    {
+      "symptom": "Equal items violate the sort contract",
+      "cause": "The comparator uses <=",
+      "fix": "Use a strict ordering."
+    },
+    {
+      "symptom": "Sum overflows unexpectedly",
+      "cause": "The initial accumulate type is int",
+      "fix": "Choose 0LL and bound the total."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "List positions in [begin,end) for an empty vector.",
+      "criteria": "No end dereference.",
+      "hint": "Equal boundaries mean empty."
+    },
+    {
+      "level": "basic",
+      "task": "Test comp(x,x) for x<=y.",
+      "criteria": "Identify the strictness violation.",
+      "hint": "A strict order returns false."
+    },
+    {
+      "level": "applied",
+      "task": "Implement filtering, descending sorting, doubling and summation.",
+      "criteria": "Intermediate collections match a manual trace.",
+      "hint": "Start summation with 0LL."
+    },
+    {
+      "level": "applied",
+      "task": "Change threshold capture from value to reference and modify it before invocation.",
+      "criteria": "Explain the difference without dangling references.",
+      "hint": "Keep the owner alive through all calls."
+    },
+    {
+      "level": "transfer",
+      "task": "Add a record-key projection without mutating the source vector.",
+      "criteria": "Preserve the source and separate result; test duplicates.",
+      "hint": "copy_if needs space or an inserter."
+    },
+    {
+      "level": "transfer",
+      "task": "Review appending while traversing a vector.",
+      "criteria": "Explain the unsafe version only; implement a separate output safely.",
+      "hint": "reserve does not remove every end rule."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Iterators, STL algorithms and lambdas",
+    "catalogGoal": "Compose small algorithms while specifying their ranges, destinations and callback behavior.",
+    "challenge": "Read n in 0…64, a threshold in −10000…10000 and n values in the same range. Keep values >= threshold, sort descending and double them. First line: count and sum separated by a space; second: resulting values separated by spaces, even for an empty result. Invalid or extra input gives invalid.",
+    "starterCode": "#include <iostream>\nint main(){ std::cout << \"pending\\n\"; }\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <iterator>\n#include <numeric>\nint main(){\n int n,threshold;\n if(!(std::cin>>n>>threshold)||n<0||n>64||threshold< -10000||threshold>10000){std::cout<<\"invalid\\n\";return 0;}\n std::vector<int>input;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -10000||x>10000){std::cout<<\"invalid\\n\";return 0;}input.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::vector<int>selected;\n std::copy_if(input.begin(),input.end(),std::back_inserter(selected),[threshold](int x){return x>=threshold;});\n std::sort(selected.begin(),selected.end(),[](int a,int b){return a>b;});\n std::transform(selected.begin(),selected.end(),selected.begin(),[](int x){return 2*x;});\n long long sum=std::accumulate(selected.begin(),selected.end(),0LL);\n std::cout<<selected.size()<<' '<<sum<<'\\n';\n for(std::size_t i=0;i<selected.size();++i){if(i)std::cout<<' ';std::cout<<selected[i];}\n std::cout<<'\\n';\n}",
+    "cases": [
+      {
+        "stdin": "0 0",
+        "stdout": "0 0\n\n"
+      },
+      {
+        "stdin": "4 2 1 3 2 -1",
+        "stdout": "2 10\n6 4\n"
+      },
+      {
+        "stdin": "3 -2 -3 -2 -1",
+        "stdout": "2 -6\n-2 -4\n"
+      },
+      {
+        "stdin": "3 2 2 2 2",
+        "stdout": "3 12\n4 4 4\n"
+      },
+      {
+        "stdin": "3 5 -1 0 1",
+        "stdout": "0 0\n\n"
+      },
+      {
+        "stdin": "3 -10000 10000 -10000 0",
+        "stdout": "3 0\n20000 0 -20000\n"
+      },
+      {
+        "stdin": "64 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000",
+        "stdout": "64 1280000\n20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000\n"
+      },
+      {
+        "stdin": "-1 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "65 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 10001",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 0 x",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 0 trailing",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Restate the input domain, format, bounds and rejection policy.",
+      "List positions in [begin,end) for an empty vector.",
+      "First implement complete input validation without partial results.",
+      "Implement filtering, descending sorting, doubling and summation.",
+      "Change threshold capture from value to reference and modify it before invocation.",
+      "Run all reference cases; for files check existence and content too.",
+      "Save the source, observed-results table and invariant explanation; add an independent case."
+    ],
+    "rubric": [
+      "Intermediate collections match a manual trace.",
+      "No end dereference.",
+      "Explain the difference without dangling references.",
+      "Preserve the source and separate result; test duplicates.",
+      "Preserve sources, inputs, actual outputs and rejection explanations."
+    ],
+    "artifact": "A personal project with source and a verification table.",
+    "verification": "manual-output-comparison"
+  },
+  "visualization": {
+    "kind": "journey",
+    "title": "Iterators, STL algorithms and lambdas",
+    "description": "A textual step model of the concepts, not C++ execution or a performance measurement.",
+    "steps": [
+      {
+        "title": "A container and a traversal position",
+        "description": "A container owns and organizes elements; an iterator identifies a position in a sequence. A vector iterator resembles a pointer, but reason through its permitted operations: dereference, advance and comparison. *it is the element, while it is the access mechanism. Copying an iterator does not copy the container."
+      },
+      {
+        "title": "Why ranges are half-open",
+        "description": "[first,last) includes first and excludes last. Adjacent ranges [a,b) and [b,c) join without duplicating b, and equal boundaries naturally express emptiness. last must be reachable from first through valid advances. Iterators from different vectors do not form a range even if their addresses happen to look nearby."
+      },
+      {
+        "title": "Categories constrain algorithms and cost",
+        "description": "Input iterators support reading while advancing; forward iterators add multipass traversal, bidirectional iterators add backward steps, and random-access iterators add constant-time movement by an arbitrary distance. Contiguous iterators additionally describe contiguous storage. These are semantic and operational contracts, not identical container implementations."
+      },
+      {
+        "title": "Search and a predicate",
+        "description": "std::find(first,last,value) returns the first equal element or last. std::find_if uses a predicate, a callable bool rule for an element. The example finds the first even number. “First” follows the current range order, so sorting beforehand can change the selected record without changing whether a match exists."
+      },
+      {
+        "title": "Destination size is not capacity",
+        "description": "std::transform reads input and writes transformed elements to a destination. An empty vector has no writable elements at begin, even after reserve: capacity is allocated but size stays zero. Resize the destination or use back_inserter, which appends with push_back. The example chooses a separate output vector that grows through appending."
+      }
+    ]
+  },
+  "assessment": [
+    {
+      "question": "May end be dereferenced? ",
+      "answers": [
+        "No",
+        "Always",
+        "Only in an empty vector"
+      ],
+      "correctIndex": 0,
+      "explanation": "end denotes the position past the last item."
+    },
+    {
+      "question": "std::sort requires…",
+      "answers": [
+        "Any input iterator",
+        "A random access iterator",
+        "Only int*"
+      ],
+      "correctIndex": 1,
+      "explanation": "The algorithm uses arbitrary offsets."
+    },
+    {
+      "question": "A strict descending comparator? ",
+      "answers": [
+        "a>=b",
+        "a==b",
+        "a>b"
+      ],
+      "correctIndex": 2,
+      "explanation": "Equality must not mean precedes."
+    },
+    {
+      "question": "Capture [limit] stores…",
+      "answers": [
+        "A copy at creation time",
+        "An automatic live connection",
+        "Lifetime extension for any reference"
+      ],
+      "correctIndex": 0,
+      "explanation": "Later external changes do not alter that copy."
+    },
+    {
+      "question": "Why use 0LL? ",
+      "answers": [
+        "To sort",
+        "To choose a long long accumulator",
+        "To grow the vector"
+      ],
+      "correctIndex": 1,
+      "explanation": "The initial value determines the accumulation type."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "What should follow a failed cin read?",
+      "answers": [
+        "Use the unread value",
+        "Handle failure before computation",
+        "Increase the index"
+      ],
+      "correctIndex": 1,
+      "explanation": "Read validation precedes data use."
+    },
+    {
+      "question": "Who owns the elements of a vector?",
+      "answers": [
+        "The vector itself",
+        "Any span referring to it",
+        "The end iterator"
+      ],
+      "correctIndex": 0,
+      "explanation": "A view does not extend its owner’s lifetime."
+    },
+    {
+      "question": "How should an application and test driver be built?",
+      "answers": [
+        "Link both main functions together",
+        "Include all .cpp files through a header",
+        "Build separately with the shared domain implementation"
+      ],
+      "correctIndex": 2,
+      "explanation": "Each executable has one entry point."
+    }
+  ],
+  "reflection": [
+    "Test comp(x,x) for x<=y.",
+    "Add a record-key projection without mutating the source vector.",
+    "Review appending while traversing a vector."
+  ],
+  "bridge": "Next: Linear and binary search: preconditions and boundaries. Save the lab and independent tests.",
+  "legacyQuiz": {
+    "question": "May end be dereferenced? ",
+    "answers": [
+      "No",
+      "Always",
+      "Only in an empty vector"
+    ],
+    "correctIndex": 0
+  },
+  "locale": "en"
+}

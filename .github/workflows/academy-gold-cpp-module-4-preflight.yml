@@ -1,4 +1,4 @@
-name: Академия C++ Gold — M4-0, зависимости и runtime
+name: Академия C++ Gold — M4-1, Gold-уроки и реальные C++
 on:
   push:
     branches: [feature/academy-gold-standard-cpp-module-4]
@@ -7,7 +7,10 @@ on:
       - 'tools/check-academy-gold-module4-*.mjs'
       - 'tests/academy-gold-module4-*.mjs'
       - 'tests/fixtures/cpp-module4-probes.mjs'
-      - 'docs/ru/03-content/CPP_MODULE4_DEPENDENCIES.json'
+      - 'docs/ru/03-content/CPP_MODULE4*.json'
+      - 'courses/cpp/**'
+      - 'core/academy-gold-*.js'
+      - 'tests/helpers/module4-*.mjs'
 permissions:
   contents: read
 jobs:
@@ -28,7 +31,7 @@ jobs:
           node-version: 22
       - name: Инструменты, без product deployment
         run: npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
-      - name: Учебный DAG, 45 прежних ID, 50 синтетических ID и NEXUS-PERF-01
+      - name: Учебный DAG, 45 прежних ID, 50 текущих ID и NEXUS-PERF-01
         run: |
           node tools/check-academy-gold-module4-dependencies.mjs
           node tests/academy-gold-module4-preservation.mjs
@@ -60,7 +63,9 @@ jobs:
         with:
           node-version: 22
       - name: g++ C++20 без EH, UBSan, те же source/files/cases M4
-        run: node tools/check-academy-gold-module4-native.mjs
+        run: |
+          node tools/check-academy-gold-module4-native.mjs
+          node tools/check-academy-gold-module4-examples.mjs
       - name: Сохранить настоящие native результаты
         if: always()
         uses: actions/upload-artifact@v4
@@ -70,7 +75,7 @@ jobs:
           retention-days: 30
   runtime:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
       NEXUS_FRONTEND_DIR: /tmp/nexus-m4-build
       NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m4-browser/node_modules/playwright/index.mjs
@@ -95,8 +100,10 @@ jobs:
           node tools/build-ui1a-release.mjs --out /tmp/nexus-m4-build
           node tools/prepare-academy-gold-runtime-fixture.mjs
       - name: Реальные router, Worker и Clang/WASI, без fallback в JSCPP
-        run: node tests/academy-gold-module4-preflight.mjs
-      - name: Три старых M4 темы, все 45 ID, проекты и настоящий Code Studio в cold Offline
+        run: |
+          node tests/academy-gold-module4-preflight.mjs
+          node tests/academy-gold-module4-examples-browser.mjs
+      - name: Восемь M4 тем, все 50 ID, проекты и настоящий Code Studio в cold Offline
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         run: node tests/academy-gold-module4-browser-check.mjs
       - name: Сохранить runtime, browser и исходные FAIL
