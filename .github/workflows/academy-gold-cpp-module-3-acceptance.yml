@@ -1,0 +1,51 @@
+name: Академия C++ Module 3 — приёмка загрузки и media
+on:
+  push:
+    branches: [feature/academy-gold-standard-cpp-module-3]
+    paths:
+      - '.github/workflows/academy-gold-cpp-module-3-acceptance.yml'
+      - 'tests/platform-startup-browser-check.mjs'
+      - 'tests/blog-media-public-browser-check.mjs'
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/nexus-m3-acceptance-build
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m3-acceptance-browser/node_modules/playwright/index.mjs
+      NEXUS_M3_EVIDENCE: academy-gold-m3-acceptance/static
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Подготовить изолированную QA сборку и Chromium
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/nexus-m3-acceptance-browser --no-save playwright@1.56.1
+          /tmp/nexus-m3-acceptance-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m3-acceptance-build --generation ui1a-m3-acceptance-ci-20261025 --version 0.1.7-alpha.2.4.6-ui1a.10.6-test.2
+      - name: Проверить учебный DAG, scope, startup budget и контракты media
+        run: |
+          node tools/check-academy-gold-module3-dependencies.mjs
+          node --test tests/platform-startup-load.test.mjs tests/blog-media-perf-guard.test.mjs
+      - name: Настоящий вход в синтетический shell и все стартовые маршруты
+        env:
+          NEXUS_NATIVE_EVIDENCE: academy-gold-m3-acceptance/startup
+        run: node tests/platform-startup-browser-check.mjs
+      - name: Свежесть public media, отмена и отсутствие поздних DOM изменений
+        if: ${{ !cancelled() }}
+        env:
+          NEXUS_NATIVE_EVIDENCE: academy-gold-m3-acceptance/media
+        run: node tests/blog-media-public-browser-check.mjs
+      - name: Сохранить факты приёмки, включая FAIL
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m3-acceptance-${{ github.sha }}
+          path: academy-gold-m3-acceptance/
+          retention-days: 30
