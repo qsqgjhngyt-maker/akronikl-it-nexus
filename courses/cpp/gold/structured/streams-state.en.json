@@ -1,0 +1,507 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.streams-state",
+  "sessions": 3,
+  "learningOrder": 13,
+  "prerequisiteIds": [
+    "cpp.formatted-io"
+  ],
+  "sourceRefs": [
+    "CPP20-STREAM-STATE",
+    "CPP20-STRING-IO"
+  ],
+  "title": "Stream states and reliable line parsing",
+  "lead": "Distinguish eof, fail, and bad, preserve record boundaries, and recover under an explicit policy.",
+  "why": "Retrying after failure without clearing state and making progress repeats the failure. A simple eof check can silently accept a malformed final token.",
+  "objectives": [
+    "Explain: Flags describe a past operation",
+    "Trace: Reset state and remove the cause",
+    "Justify: Remainders after operator>>",
+    "Implement and verify the lab against its exact contract.",
+    "Identify a common defect: Do not treat fail&&eof as a successful number. Do not discard blank records using ws."
+  ],
+  "prerequisites": [
+    "Modules 1–2: expressions, comparisons, types, references, and checked cin.",
+    "Follow the prerequisite links: cpp.formatted-io. New constructs are introduced before the assignment."
+  ],
+  "concepts": [
+    {
+      "term": "failbit",
+      "definition": "failure of formatted extraction or a similar operation."
+    },
+    {
+      "term": "Record boundary",
+      "definition": "the point where one logical record ends."
+    },
+    {
+      "term": "eofbit",
+      "definition": "a flag indicating an already encountered end."
+    },
+    {
+      "term": "badbit",
+      "definition": "a flag indicating a serious stream error."
+    },
+    {
+      "term": "clear",
+      "definition": "changing state flags without removing buffered input."
+    },
+    {
+      "term": "istringstream",
+      "definition": "an input stream over a separate string."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Flags describe a past operation",
+      "paragraphs": [
+        "good() means no error-state flags are set. eof() reports an encountered end, fail() tests failbit or badbit, and bad() reports a serious stream error. bool(stream) checks for absence of failbit and badbit; eofbit alone need not make it false.",
+        "Successfully extracting a final number without trailing whitespace can produce eof=true and fail=false. An oversized final numeric token may set both. eof alone therefore cannot distinguish success, empty exhaustion, and malformed input."
+      ]
+    },
+    {
+      "title": "Reset state and remove the cause",
+      "paragraphs": [
+        "clear() resets flags but does not remove an invalid buffered character. ignore(max,'\\n') can discard a damaged line; obtain max from numeric_limits<streamsize>::max(). Clear first and then consume input, otherwise ignore may not proceed.",
+        "Recovery is a format decision, not a universal patch. If each line is one record, skipping to the newline preserves the next record boundary. With multiline records, that strategy may destroy useful data and needs a different protocol."
+      ]
+    },
+    {
+      "title": "A line as the parsing unit",
+      "paragraphs": [
+        "getline obtains a line, then istringstream from <sstream> parses only that line. A local parser failure does not poison the main cin state. Count accepted and rejected records and continue with the next line.",
+        "After required fields, consume permitted whitespace and check the local line’s end. Under a strict contract, 12x is not the integer 12: numeric extraction may stop before x. Give empty lines an explicit policy; the lab rejects them."
+      ]
+    },
+    {
+      "title": "Remainders after operator>>",
+      "paragraphs": [
+        "After cin>>n, a newline commonly remains. The next getline receives the current line’s remainder, possibly empty. Preserve that remainder when significant. If the next record starts on another line, explicitly finish the current record under the format.",
+        "std::ws consumes all leading whitespace, including blank lines, not just one newline. Do not apply it before getline when blank lines or leading spaces matter. Decide which characters may be discarded before choosing an operation."
+      ]
+    },
+    {
+      "title": "Bounding the work",
+      "paragraphs": [
+        "Even valid streams need row-count and line-size limits. The lab permits at most 100 lines of at most 200 bytes, with one number from -1000 to 1000 per line. Resource-limit violations produce overall invalid; a malformed individual record increments rejected.",
+        "This distinction separates data errors from environmental failures. Nexus buffers finite stdin before running; a large network stream would need a streaming limit before accumulating a whole line. That larger scale is not claimed here."
+      ]
+    },
+    {
+      "title": "Recovery evidence",
+      "paragraphs": [
+        "Use valid, bad, valid and establish that the final record is processed. Add an empty line, a number without a final newline, an oversized numeric token, and an extra field. Check accepted count, rejection count, and sum separately.",
+        "Preserve each line boundary and the local parser flags. Next, turn these cases into repeatable unit and integration tests; a Run button by itself does not establish quality."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "flags",
+      "title": "Flags after the last extraction",
+      "purpose": "eof can accompany success or failure.",
+      "code": "#include <iostream>\nint main() {\n    int value{};\n    std::cin >> value;\n    std::cout << std::cin.fail() << ' ' << std::cin.eof() << ' ' << bool(std::cin) << '\\n';\n}\n",
+      "stdin": "8",
+      "expectedStdout": "0 1 1\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": [
+        {
+          "stdin": "8\n",
+          "stdout": "0 0 1\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "1 1 0\n"
+        },
+        {
+          "stdin": "bad",
+          "stdout": "1 0 0\n"
+        },
+        {
+          "stdin": "99999999999999999999999",
+          "stdout": "1 1 0\n"
+        }
+      ]
+    },
+    {
+      "id": "recover",
+      "title": "clear and progress",
+      "purpose": "After discarding a malformed line, the next line is read successfully.",
+      "code": "#include <iostream>\n#include <limits>\nint main() {\n    int value{};\n    if (!(std::cin >> value)) {\n        std::cin.clear();\n        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\\n');\n    }\n    if (std::cin >> value) { std::cout << value << '\\n'; }\n    else { std::cout << \"invalid\\n\"; }\n}\n",
+      "stdin": "bad\n7\n",
+      "expectedStdout": "7\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": [
+        {
+          "stdin": "bad",
+          "stdout": "invalid\n"
+        }
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Predict before running",
+      "action": "Trace the first worked example step by step, then run all of its cases.",
+      "prediction": "Resetting a flag and removing malformed input are different operations.",
+      "verification": "Compare every state transition and stdout; record a mismatch as a hypothesis rather than revising the expectation afterward."
+    },
+    {
+      "title": "A counterexample to a wrong rule",
+      "action": "Using the second example and theory, construct a minimal safe case for this defect: Do not treat fail&&eof as a successful number. Do not discard blank records using ws.",
+      "prediction": "The correct and incorrect models should make distinguishable predictions without executing undefined behaviour.",
+      "verification": "Preserve the prediction, actual output, and an explanation of the violated rule."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A boundary result differs",
+      "cause": "Do not treat fail&&eof as a successful number. Do not discard blank records using ws.",
+      "fix": "Resetting a flag and removing malformed input are different operations."
+    },
+    {
+      "symptom": "One case works and the next fails",
+      "cause": "The invariant or empty/malformed-input policy is unspecified.",
+      "fix": "Return to the lab contract and check every published case independently."
+    },
+    {
+      "symptom": "The environment rejected execution",
+      "cause": "Build failure, unsupported syntax, and quotas are different causes.",
+      "fix": "Keep the phase and diagnostic; exceptions are unsupported and environment limits are not learner knowledge failures."
+    }
+  ],
+  "diagnosticExamples": [],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Manually trace the first example and explain every expected output line.",
+      "criteria": "Resetting a flag and removing malformed input are different operations.",
+      "hint": "Identify input, state, and observable output first."
+    },
+    {
+      "level": "basic",
+      "task": "Choose the lab’s empty or minimum valid case and its nearest invalid counterpart.",
+      "criteria": "Derive both expectations before execution and connect each to a contract clause.",
+      "hint": "Do not treat fail&&eof as a successful number. Do not discard blank records using ws."
+    },
+    {
+      "level": "applied",
+      "task": "Process up to 100 lines of at most 200 bytes each. Each must contain exactly one integer in -1000…1000. Print accepted rejected sum; skip malformed lines and reject resource-limit excess as invalid.",
+      "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
+      "hint": "Resetting a flag and removing malformed input are different operations."
+    },
+    {
+      "level": "applied",
+      "task": "Compare the two worked examples: which assumptions differ and why can they not be silently transferred into the lab?",
+      "criteria": "State inputs, state, and at least one applicability boundary for each example.",
+      "hint": "Even valid streams need row-count and line-size limits. The lab permits at most 100 lines of at most 200 bytes, with one number from -1000 to 1000 per line. Resource-limit violations produce overall invalid; a malformed individual record increments rejected."
+    },
+    {
+      "level": "transfer",
+      "task": "Extend the format to id value and report rejected line numbers without losing the following record.",
+      "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour.",
+      "hint": "Use valid, bad, valid and establish that the final record is processed. Add an empty line, a number without a final newline, an oversized numeric token, and an extra field. Check accepted count, rejection count, and sum separately."
+    },
+    {
+      "level": "transfer",
+      "task": "Give a mini-defence: explain a bound, complexity, and a counterexample to a wrong implementation without running the reference.",
+      "criteria": "Connect the explanation to specific lines of your source and actual tests.",
+      "hint": "Resetting a flag and removing malformed input are different operations."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Stream states and reliable line parsing",
+    "challenge": "Process up to 100 lines of at most 200 bytes each. Each must contain exactly one integer in -1000…1000. Print accepted rejected sum; skip malformed lines and reject resource-limit excess as invalid.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <sstream>\n#include <string>\nbool parse(const std::string& line, int& value) {\n    std::istringstream input{line};\n    int candidate{};\n    if (!(input >> candidate) || candidate < -1000 || candidate > 1000) { return false; }\n    input >> std::ws;\n    if (!input.eof()) { return false; }\n    value = candidate;\n    return true;\n}\nint main() {\n    std::string line;\n    int lines{}, accepted{}, rejected{};\n    long long sum{};\n    while (std::getline(std::cin, line)) {\n        if (++lines > 100 || line.size() > 200) { std::cout << \"invalid\\n\"; return 0; }\n        int value{};\n        if (parse(line, value)) { ++accepted; sum += value; }\n        else { ++rejected; }\n    }\n    if (std::cin.bad()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << accepted << ' ' << rejected << ' ' << sum << '\\n';\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "0 0 0\n"
+      },
+      {
+        "stdin": "2\nbad\n3",
+        "stdout": "2 1 5\n"
+      },
+      {
+        "stdin": "\n",
+        "stdout": "0 1 0\n"
+      },
+      {
+        "stdin": "1 2\n4\n",
+        "stdout": "1 1 4\n"
+      },
+      {
+        "stdin": "999999999999999999999999",
+        "stdout": "0 1 0\n"
+      },
+      {
+        "stdin": "1001\n-1000\n",
+        "stdout": "1 1 -1000\n"
+      }
+    ],
+    "referenceFiles": {},
+    "starterFiles": {},
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: Resetting a flag and removing malformed input are different operations.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "Resetting a flag and removing malformed input are different operations.",
+      "Do not treat fail&&eof as a successful number. Do not discard blank records using ws.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Does clear() remove an invalid character?",
+      "answers": [
+        "Yes, all stdin",
+        "No; it resets flags",
+        "Only the final digit"
+      ],
+      "correctIndex": 1,
+      "explanation": "After clear, make a separate format-aware progress step."
+    },
+    {
+      "question": "Can eof be true after a successful number?",
+      "answers": [
+        "Yes",
+        "Only with bad",
+        "No"
+      ],
+      "correctIndex": 0,
+      "explanation": "Success depends on absence of fail/bad, not eof alone."
+    },
+    {
+      "question": "What does ws do to blank lines?",
+      "answers": [
+        "It converts them to zeros",
+        "It always preserves them",
+        "It may consume them"
+      ],
+      "correctIndex": 2,
+      "explanation": "ws skips leading whitespace."
+    },
+    {
+      "question": "How can one record error be isolated?",
+      "answers": [
+        "Retry without progress",
+        "Parse each line with a local istringstream",
+        "Treat every fail as success"
+      ],
+      "correctIndex": 1,
+      "explanation": "The local parser state does not poison the main line stream."
+    },
+    {
+      "question": "What is needed to accept this lab?",
+      "answers": [
+        "Source, actual results, original tests, and a contract explanation",
+        "Only a completed flag",
+        "Only a copied reference"
+      ],
+      "correctIndex": 0,
+      "explanation": "A progress flag is not evidence of independent mastery."
+    }
+  ],
+  "reflection": [
+    "Resetting a flag and removing malformed input are different operations.",
+    "Extend the format to id value and report rejected line numbers without losing the following record.",
+    "Which case refutes the wrong rule and what do your checks still not establish?"
+  ],
+  "bridge": "Next: Testing: contracts, defects, and regression. Preserve the lab and its verification table.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Stepwise map: Stream states and reliable line parsing",
+    "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+    "steps": [
+      {
+        "title": "Flags describe a past operation",
+        "description": "good() means no error-state flags are set. eof() reports an encountered end, fail() tests failbit or badbit, and bad() reports a serious stream error. bool(stream) checks for absence of failbit and badbit; eofbit alone need not make it false."
+      },
+      {
+        "title": "Reset state and remove the cause",
+        "description": "clear() resets flags but does not remove an invalid buffered character. ignore(max,'\\n') can discard a damaged line; obtain max from numeric_limits<streamsize>::max(). Clear first and then consume input, otherwise ignore may not proceed."
+      },
+      {
+        "title": "A line as the parsing unit",
+        "description": "getline obtains a line, then istringstream from <sstream> parses only that line. A local parser failure does not poison the main cin state. Count accepted and rejected records and continue with the next line."
+      },
+      {
+        "title": "Remainders after operator>>",
+        "description": "After cin>>n, a newline commonly remains. The next getline receives the current line’s remainder, possibly empty. Preserve that remainder when significant. If the next record starts on another line, explicitly finish the current record under the format."
+      },
+      {
+        "title": "Bounding the work",
+        "description": "Even valid streams need row-count and line-size limits. The lab permits at most 100 lines of at most 200 bytes, with one number from -1000 to 1000 per line. Resource-limit violations produce overall invalid; a malformed individual record increments rejected."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "What does while(stream>>value) check?",
+    "answers": [
+      "Success of the next extraction",
+      "Monitor size",
+      "Processor type"
+    ],
+    "correctIndex": 0
+  },
+  "blockPracticum": {
+    "title": "Cumulative practicum: Stream states and reliable line parsing",
+    "challenge": "Stock journal: start at stock=5. Up to 50 lines of 200 bytes contain add/remove and amount in 0…1000. Parse each line independently. Count accepted and rejected while keeping stock in 0…1000; print accepted rejected stock. Malformed lines do not prevent parsing the next line.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <sstream>\n#include <string>\nstruct Stock { int value{5}; };\nbool apply(Stock& stock, const std::string& kind, int amount) {\n    if (amount < 0 || amount > 1000) { return false; }\n    if (kind == \"add\" && amount <= 1000 - stock.value) { stock.value += amount; return true; }\n    if (kind == \"remove\" && amount <= stock.value) { stock.value -= amount; return true; }\n    return false;\n}\nint main() {\n    Stock stock;\n    std::string line;\n    int lines{}, accepted{}, rejected{};\n    while (std::getline(std::cin, line)) {\n        if (++lines > 50 || line.size() > 200) { std::cout << \"invalid\\n\"; return 0; }\n        std::istringstream parser{line};\n        std::string kind;\n        int amount{};\n        if (!(parser >> kind >> amount)) { ++rejected; continue; }\n        parser >> std::ws;\n        if (!parser.eof() || !apply(stock, kind, amount)) { ++rejected; continue; }\n        ++accepted;\n    }\n    if (std::cin.bad()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << accepted << ' ' << rejected << ' ' << stock.value << '\\n';\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "0 0 5\n"
+      },
+      {
+        "stdin": "add 3\nbad\nremove 8\n",
+        "stdout": "2 1 0\n"
+      },
+      {
+        "stdin": "remove 6\nadd 995\nadd 1\n",
+        "stdout": "1 2 1000\n"
+      },
+      {
+        "stdin": "add 2 x\nremove 0\n",
+        "stdout": "1 1 5\n"
+      },
+      {
+        "stdin": "\n",
+        "stdout": "0 1 5\n"
+      }
+    ],
+    "referenceFiles": {},
+    "starterFiles": {},
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: Resetting a flag and removing malformed input are different operations.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      {
+        "criterion": "Contract and bounds",
+        "points": 2,
+        "complete": "All requirements are supported by source and actual cases.",
+        "partial": "The main path is supported, but one significant case or argument is missing.",
+        "missing": "No verifiable result, or the core contract is violated."
+      },
+      {
+        "criterion": "Correctness and rejection without mutation",
+        "points": 2,
+        "complete": "All requirements are supported by source and actual cases.",
+        "partial": "The main path is supported, but one significant case or argument is missing.",
+        "missing": "No verifiable result, or the core contract is violated."
+      },
+      {
+        "criterion": "Tests and independent expectations",
+        "points": 2,
+        "complete": "All requirements are supported by source and actual cases.",
+        "partial": "The main path is supported, but one significant case or argument is missing.",
+        "missing": "No verifiable result, or the core contract is violated."
+      },
+      {
+        "criterion": "Structure and resources",
+        "points": 2,
+        "complete": "All requirements are supported by source and actual cases.",
+        "partial": "The main path is supported, but one significant case or argument is missing.",
+        "missing": "No verifiable result, or the core contract is violated."
+      },
+      {
+        "criterion": "Explanation and original extension",
+        "points": 2,
+        "complete": "All requirements are supported by source and actual cases.",
+        "partial": "The main path is supported, but one significant case or argument is missing.",
+        "missing": "No verifiable result, or the core contract is violated."
+      }
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison",
+    "label": "CUMULATIVE PRACTICUM",
+    "readiness": "Modules 1–2: expressions, comparisons, types, references, and checked cin. Follow the prerequisite links: cpp.formatted-io. New constructs are introduced before the assignment.",
+    "skills": [
+      {
+        "lessonId": "cpp.two-dimensional-arrays",
+        "title": "Matrices: shape, traversal, and linear storage"
+      },
+      {
+        "lessonId": "cpp.char-arrays-strings",
+        "title": "Strings: bytes, terminators, and safe views"
+      },
+      {
+        "lessonId": "cpp.structures",
+        "title": "Structures: records, invariants, and updates"
+      },
+      {
+        "lessonId": "cpp.unions-typedef-enums",
+        "title": "Enumerations, aliases, and variant data"
+      },
+      {
+        "lessonId": "cpp.lifetime-ownership",
+        "title": "Lifetime, RAII, and unique ownership"
+      },
+      {
+        "lessonId": "cpp.formatted-io",
+        "title": "Formatted output: values and representations"
+      },
+      {
+        "lessonId": "cpp.streams-state",
+        "title": "Stream states and reliable line parsing"
+      }
+    ],
+    "requirements": [
+      "Stock journal: start at stock=5. Up to 50 lines of 200 bytes contain add/remove and amount in 0…1000. Parse each line independently. Count accepted and rejected while keeping stock in 0…1000; print accepted rejected stock. Malformed lines do not prevent parsing the next line.",
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "Resetting a flag and removing malformed input are different operations."
+    ],
+    "milestones": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: Resetting a flag and removing malformed input are different operations.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "walkthrough": [
+      "Retrying after failure without clearing state and making progress repeats the failure. A simple eof check can silently accept a malformed final token.",
+      "Next: Testing: contracts, defects, and regression. Preserve the lab and its verification table."
+    ],
+    "artifacts": [
+      "All source files and the TU/includeRoots lists.",
+      "Contract, ownership model, and container-choice explanation.",
+      "Actual results for every case, eight unit checks, and two original counterexamples.",
+      "catalog-out.txt, explicit-save confirmation, and a fresh import."
+    ],
+    "completionRule": "Manual review at 8/10, every case and two original cases; explain connections to earlier lessons."
+  }
+}

@@ -1,3 +1,4 @@
+import {runtimeFilePath} from './runtime-files.js';
 export const RUNTIME_SUPPORT=Object.freeze({
   GUARANTEED:'guaranteed',
   BEST_EFFORT:'best-effort',
@@ -13,10 +14,9 @@ export const RUNTIME_AVAILABILITY=Object.freeze({
 const asArray=value=>Array.isArray(value)?value:[];
 const normalizeFileMap=value=>{
   if(!value||typeof value!=='object')return null;
-  const out={};
+  const out=Object.create(null);
   for(const [name,content] of Object.entries(value)){
-    const safe=String(name||'').trim().replace(/\\/g,'/').replace(/^\/+/, '');
-    if(!safe||safe.includes('../'))continue;
+    const safe=runtimeFilePath(name);
     if(typeof content==='string'||content instanceof Uint8Array)out[safe]=content;
   }
   return Object.keys(out).length?out:null;

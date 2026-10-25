@@ -24,9 +24,15 @@ export async function getCppCourse(){
    getJson('./courses/cpp/data/lessons.ru.json'),
    getJson('./courses/cpp/data/lessons.en.json'),
    getJson('./courses/cpp/data/practicums.ru.json'),
-   getJson('./courses/cpp/data/projects.ru.json')
-  ]).then(([outline,lessonsRu,lessonsEn,practicumsRu,projectsRu])=>{
-   cppCache={...outline,lessonsRu,lessonsEn,practicumsRu,projectsRu};
+   getJson('./courses/cpp/data/projects.ru.json'),
+   getJson('./courses/cpp/data/gold-laboratories.json')
+  ]).then(([outline,lessonsRu,lessonsEn,practicumsRu,projectsRu,index])=>{
+   if(index.schemaVersion!==1||!index.lessons||typeof index.lessons!=='object'||Array.isArray(index.lessons))throw Error('GOLD_LAB_INDEX_INVALID');
+   for(const [id,locales]of Object.entries(index.lessons)){
+    if(!outline.curriculum.lessons.some(l=>l.id===id))throw Error('GOLD_LAB_INDEX_UNKNOWN_LESSON');
+    for(const locale of ['ru','en']){const lab=locales?.[locale];if(!lab||!['title','goal','proof'].every(k=>typeof lab[k]==='string'&&lab[k].trim())||!Number.isSafeInteger(lab.stepCount)||lab.stepCount<1)throw Error('GOLD_LAB_INDEX_INVALID');}
+   }
+   cppCache={...outline,lessonsRu,lessonsEn,practicumsRu,projectsRu,goldLaboratories:index.lessons};
    return cppCache;
   }).catch(error=>{cppPromise=null;throw error;});
  }

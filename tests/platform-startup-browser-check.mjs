@@ -16,6 +16,8 @@ const metadata=JSON.parse(await readFile(path.join(frontend,official?'BUILD_MANI
 const generation=metadata.assetGeneration||metadata.releaseCandidate?.assetGeneration;
 assert.ok(generation,'The source/build must declare its asset generation');
 const prefix='/releases/'+generation+'/';
+const courseManifest=JSON.parse(await readFile(path.join(frontend,official?prefix.slice(1)+'courses/cpp/manifest.json':'courses/cpp/manifest.json'),'utf8'));
+assert.ok(Number.isSafeInteger(courseManifest.lessonCount)&&courseManifest.lessonCount>0,'The build must declare its C++ lesson count');
 const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
 const account={account:{accountId:'synthetic-startup',displayName:'Synthetic startup',status:'active'},loginMethods:[{id:'synthetic-passkey',kind:'passkey',status:'active',createdAt:'2026-10-23T00:00:00Z',disabledAt:null}],enrollmentAvailable:false};
 const post={slug:'dobro-pozhalovat-v-nexus',title:'Synthetic published article',summary:'Startup navigation fixture',body:'## Synthetic section\n\nA public article for real app navigation.',publishedAt:'2026-10-23T00:00:00Z'};
@@ -30,7 +32,7 @@ async function evidenceScreenshot(target,name){
 }
 const cppPaths=session=>session.assets.filter(file=>/^courses\/cpp\/(?:data\/.*|manifest|curriculum)\.json$/.test(file));
 const assertOutline=session=>assert.deepEqual(cppPaths(session).sort(),['courses/cpp/curriculum.json','courses/cpp/manifest.json']);
-const assertFull=session=>assert.deepEqual(cppPaths(session).sort(),['courses/cpp/curriculum.json','courses/cpp/data/lessons.en.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/practicums.ru.json','courses/cpp/data/projects.ru.json','courses/cpp/manifest.json']);
+const assertFull=session=>assert.deepEqual(cppPaths(session).sort(),['courses/cpp/curriculum.json','courses/cpp/data/gold-laboratories.json','courses/cpp/data/lessons.en.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/practicums.ru.json','courses/cpp/data/projects.ru.json','courses/cpp/manifest.json']);
 async function ready(target,selector){
  await target.waitForFunction(selector=>document.querySelector(selector)||document.querySelector('.nexus-route-message,.boot-error'),selector);
  const error=await target.locator('.route-error-detail,.boot-error').allTextContents();
@@ -98,8 +100,8 @@ try{
  const primary=await session();
  await check('Fresh entry Continue -> verified bootstrap -> Home renders without full C++ bodies',async()=>{
   await enter(primary.page,'#view=home','.visual-home');assertOutline(primary.record);
-  assert.equal(await primary.page.locator('.visual-facts strong').nth(2).textContent(),'40');
-  assert.equal(await primary.page.locator('.visual-facts strong').nth(3).textContent(),'7');
+  assert.equal(await primary.page.locator('.visual-facts strong').nth(2).textContent(),String(courseManifest.lessonCount));
+  assert.equal(await primary.page.locator('.visual-facts strong').nth(3).textContent(),String(courseManifest.projectCount));
   assert.deepEqual(primary.record.documents.slice(0,2),['/index.html','/']);
   await evidenceScreenshot(primary.page,'desktop-home.png');
   return{cppJsonRequests:cppPaths(primary.record).length};
@@ -112,7 +114,7 @@ try{
  await check('Academy -> complete C++ -> lesson loads each course payload once and binds the editor',async()=>{
   await navigation(primary.page,'#view=academy','[data-visual-academy]');
   await primary.page.locator('.academy-hub-reference').click();await ready(primary.page,'[data-cpp-learning-path]');
-  assert.equal(await primary.page.locator('.topic').count(),40);assertFull(primary.record);
+  assert.equal(await primary.page.locator('.topic').count(),courseManifest.lessonCount);assertFull(primary.record);
   await primary.page.locator('.topic a').first().click();await ready(primary.page,'.lesson');
   await primary.page.waitForFunction(()=>Boolean(document.querySelector('#editor')?.__nexusCodeStudio));
   assert.equal(primary.record.assets.filter(file=>file==='sandbox/sandbox.js').length,1);assertFull(primary.record);

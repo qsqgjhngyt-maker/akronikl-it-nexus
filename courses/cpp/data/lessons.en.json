@@ -1992,6 +1992,291 @@
         ],
         "historicalContext": "C++ object orientation grew from Simula-inspired ideas and early C with Classes. Modern C++ retains classes, inheritance, and virtual dispatch while combining them with value semantics, RAII, generic programming, and composition."
       }
+    },
+    {
+      "id": "cpp.functions-contracts",
+      "legacyIndex": null,
+      "order": 41,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "Functions: parameters, results, and contracts",
+      "description": "Separate validation, computation, and presentation so a small function can be checked without a console.",
+      "theory": [
+        "Separate validation, computation, and presentation so a small function can be checked without a console."
+      ],
+      "deep": "Duplicating code duplicates defects. A function names an operation and defines a responsibility boundary, but it helps only when inputs, outputs, and side effects are clear.",
+      "analogy": "Next: array, vector, and span: ownership and views. Preserve the lab and its verification table.",
+      "commonMistake": "Do not assign result before every check succeeds. Do not return a reference to a local variable.",
+      "code": "#include <iostream>\nint copied(int value) { ++value; return value; }\nvoid changed(int& value) { ++value; }\nint main() {\n    int original{4};\n    int result = copied(original);\n    std::cout << original << ' ' << result << '\\n';\n    changed(original);\n    std::cout << original << '\\n';\n}\n",
+      "task": "Implement bool checkedArea(int w,int h,int& result): dimensions are 0…1000 and rejection leaves result unchanged. main reads exactly two dimensions and prints the area or invalid.",
+      "hint": "Identify input, state, and observable output first.",
+      "solution": "#include <iostream>\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+      "quiz": {
+        "question": "What happens when an int is passed by value?",
+        "answers": [
+          "A reference to the original int is created",
+          "The parameter holds a separate value",
+          "The original int is deleted"
+        ],
+        "correctIndex": 1
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Contract",
+          "caller obligations and operation guarantees."
+        ],
+        [
+          "Side effect",
+          "an observable change beyond the return value."
+        ],
+        [
+          "Argument",
+          "an expression supplied in a function call."
+        ],
+        [
+          "Parameter",
+          "a local input name in a function declaration."
+        ],
+        [
+          "Precondition",
+          "an obligation before performing an operation."
+        ],
+        [
+          "Postcondition",
+          "a guarantee after an operation whose preconditions hold."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.standard-sequences",
+      "legacyIndex": null,
+      "order": 42,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "array, vector, and span: ownership and views",
+      "description": "Choose a container according to size requirements and pass its data to a function without losing bounds.",
+      "theory": [
+        "Choose a container according to size requirements and pass its data to a function without losing bounds."
+      ],
+      "deep": "A pointer alone does not carry a length, and manual allocation distracts from the algorithm. Standard containers provide an explicit size and lifetime foundation.",
+      "analogy": "Next: One-dimensional arrays: indexing, filtering, and search. Preserve the lab and its verification table.",
+      "commonMistake": "Do not use a span after vector reallocation; create it after filling the vector.",
+      "code": "#include <iostream>\n#include <array>\n#include <vector>\n#include <span>\nint sum(std::span<const int> values) {\n    int result{};\n    for (int value : values) { result += value; }\n    return result;\n}\nint main() {\n    std::array<int, 3> a{1, 2, 3};\n    std::vector<int> v{4, 5};\n    int raw[2]{6, 7};\n    std::cout << sum(a) << ' ' << sum(v) << ' ' << sum(raw) << ' ' << sum(std::span<const int>{}) << '\\n';\n}\n",
+      "task": "Read n in 0…100 and n values in -1000…1000 into a vector. A span<const int> function computes the sum; print size and sum. Reject extra input as invalid.",
+      "hint": "Identify input, state, and observable output first.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <span>\nlong long sum(std::span<const int> values) {\n    long long result{};\n    for (int value : values) { result += value; }\n    return result;\n}\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    std::vector<int> values;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        values.push_back(value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << values.size() << ' ' << sum(values) << '\\n';\n}\n",
+      "quiz": {
+        "question": "What does reserve(10) change for an empty vector?",
+        "answers": [
+          "Capacity, but not the element count",
+          "It makes v[9] valid",
+          "It creates ten ints"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Owner",
+          "an object managing the lifetime of stored elements."
+        ],
+        [
+          "View",
+          "access to another object’s elements under an explicit lifetime constraint."
+        ],
+        [
+          "size",
+          "the number of existing elements."
+        ],
+        [
+          "capacity",
+          "vector storage capacity before reallocation is needed."
+        ],
+        [
+          "reserve",
+          "increasing available capacity without creating elements."
+        ],
+        [
+          "Invalidation",
+          "loss of validity of an earlier address or view."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.lifetime-ownership",
+      "legacyIndex": null,
+      "order": 43,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "Lifetime, RAII, and unique ownership",
+      "description": "Trace resource creation and destruction and distinguish an owner from a short-lived observer.",
+      "theory": [
+        "Trace resource creation and destruction and distinguish an owner from a short-lived observer."
+      ],
+      "deep": "Linked structures need objects to outlive a single expression. Without an ownership model, leaks, double release, and dangling references are easy to create.",
+      "analogy": "Next: Formatted output: values and representations. Preserve the lab and its verification table.",
+      "commonMistake": "Do not generalize unique_ptr emptiness to all moved-from types. Never execute dangling access.",
+      "code": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    Trace first{1};\n    { Trace second{2}; }\n    std::cout << \"end\\n\";\n}\n",
+      "task": "Create an object with value in 0…1000 using make_unique, move its owner, increment value, and release it. Print create N, moved 1 1, value N+1, destroy N+1. Invalid input prints invalid.",
+      "hint": "Identify input, state, and observable output first.",
+      "solution": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    int value{};\n    if (!(std::cin >> value)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || value < 0 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n    auto owner = std::make_unique<Trace>(value);\n    auto next = std::move(owner);\n    std::cout << \"moved \" << (!owner) << ' ' << bool(next) << '\\n';\n    ++next->value;\n    std::cout << \"value \" << next->value << '\\n';\n    next.reset();\n}\n",
+      "quiz": {
+        "question": "What is guaranteed for unique_ptr p after q=std::move(p)?",
+        "answers": [
+          "p is empty and q owns the previous object",
+          "The object necessarily changes address",
+          "Both own the object"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "RAII",
+          "resource management through object initialization and destruction."
+        ],
+        [
+          "Dangling observer",
+          "an address or view whose object no longer exists."
+        ],
+        [
+          "unique_ptr",
+          "a movable but noncopyable unique object owner."
+        ],
+        [
+          "make_unique",
+          "creating an object together with its unique_ptr."
+        ],
+        [
+          "Destructor",
+          "a special function invoked at object lifetime end."
+        ],
+        [
+          "move",
+          "permitting a move operation rather than copying memory by itself."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.testing-diagnostics",
+      "legacyIndex": null,
+      "order": 44,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "Testing: contracts, defects, and regression",
+      "description": "Build a small test driver and distinguish a program defect from a build error or environment limitation.",
+      "theory": [
+        "Build a small test driver and distinguish a program defect from a build error or environment limitation."
+      ],
+      "deep": "One successful run does not check boundary behaviour. Repeatable tests turn a discovered defect into protection against its return.",
+      "analogy": "Next: Multifile builds: headers, translation units, and ODR. Preserve the lab and its verification table.",
+      "commonMistake": "Do not derive expected values by running the function under test. Do not classify provider limits as learner knowledge errors.",
+      "code": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 3> values{-2, 0, 4};\n    bool pass = countPositive(values) == 1;\n    std::cout << (pass ? \"PASS\\n\" : \"FAIL\\n\");\n    return pass ? 0 : 1;\n}\n",
+      "task": "Write countPositive(span<const int>) and a driver with five independent datasets including empty, zero, and mixed-sign cases. Print PASS 5 on success; on mismatch print FAIL and return a nonzero exit code.",
+      "hint": "Identify input, state, and observable output first.",
+      "solution": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 1> zero{0};\n    std::array<int, 1> negative{-1};\n    std::array<int, 3> mixed{-2, 0, 4};\n    std::array<int, 3> positive{1, 2, 3};\n    int failures{};\n    if (countPositive(std::span<const int>{}) != 0) { ++failures; }\n    if (countPositive(zero) != 0) { ++failures; }\n    if (countPositive(negative) != 0) { ++failures; }\n    if (countPositive(mixed) != 1) { ++failures; }\n    if (countPositive(positive) != 3) { ++failures; }\n    if (failures != 0) { std::cout << \"FAIL\\n\"; return 1; }\n    std::cout << \"PASS 5\\n\";\n}\n",
+      "quiz": {
+        "question": "Is assert sufficient to validate user input?",
+        "answers": [
+          "No; it may disappear with NDEBUG",
+          "Only for strings",
+          "Yes, in every build"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Regression",
+          "recurrence of a previously fixed defect."
+        ],
+        [
+          "Oracle",
+          "an independent rule determining the expected result."
+        ],
+        [
+          "Unit test",
+          "checking one operation through its interface."
+        ],
+        [
+          "Integration test",
+          "checking several parts working together."
+        ],
+        [
+          "Mutation",
+          "a safe implementation change used to assess test discrimination."
+        ],
+        [
+          "Exit code",
+          "the numeric status returned by a program."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.multifile-build",
+      "legacyIndex": null,
+      "order": 45,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "Multifile builds: headers, translation units, and ODR",
+      "description": "Separate interface and implementation, building the application and test driver as distinct programs.",
+      "theory": [
+        "Separate interface and implementation, building the application and test driver as distinct programs."
+      ],
+      "deep": "Copying functions between files does not scale. Correct declarations support separate compilation and identify failures at the right stage.",
+      "analogy": "Next: Files: formats, failures, and explicit saving. Preserve the lab and its verification table.",
+      "commonMistake": "Do not include .cpp files or link two mains together. A header guard is not a program-wide definition registry.",
+      "code": "#include <iostream>\nint twice(int);\nint main() { std::cout << twice(6) << '\\n'; }\nint twice(int value) { return 2 * value; }\n",
+      "task": "Split checkedArea across include/domain.hpp, src/domain.cpp, and main.cpp. Read two dimensions in 0…1000 and print the area or invalid. Build a separate test driver without linking two mains into the application.",
+      "hint": "Identify input, state, and observable output first.",
+      "solution": "#include <iostream>\n#include \"domain.hpp\"\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+      "quiz": {
+        "question": "Does a header guard prevent an ordinary function body appearing in two TUs?",
+        "answers": [
+          "Only on a phone",
+          "Yes, across the whole program",
+          "No; a guard works within one TU"
+        ],
+        "correctIndex": 2
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "TU",
+          "a source file after includes and directives are processed."
+        ],
+        [
+          "Linking",
+          "combining compiled parts and resolving external names."
+        ],
+        [
+          "Declaration",
+          "describing a name and type without necessarily supplying a body."
+        ],
+        [
+          "Definition",
+          "supplying an implementation or object under language rules."
+        ],
+        [
+          "Header guard",
+          "preventing repeated inclusion within one TU."
+        ],
+        [
+          "ODR",
+          "rules for definition uniqueness and consistency."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
     }
   ]
 }

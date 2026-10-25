@@ -17,6 +17,9 @@ export const MODERN_CPP_LIMITS=Object.freeze({
   maxTotalInputBytes:2*1024*1024,
   maxCompiledWasmBytes:32*1024*1024,
   maxOutputChars:1024*1024,
+  maxRuntimeFiles:128,
+  maxRuntimeFileBytes:512*1024,
+  maxRuntimeWriteBytes:2*1024*1024,
   toolchainTimeoutMs:240000,
   compileTimeoutMs:90000,
   executionTimeoutMs:8000

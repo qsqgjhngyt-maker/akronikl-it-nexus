@@ -1,3 +1,4 @@
+import {cppProgramProgress} from '../core/storage.js';
 import {codeStudioHomeMarkup,bindCodeStudioHome} from '../project-studio/code-studio-home.js';
 import {accountHomePresentation} from '../core/account-home-presentation.js';
 import {blankCppProjectTemplate} from '../project-studio/project-templates.js';
@@ -15,7 +16,7 @@ import {languageLabel} from '../sandbox/languages.js';
 import {academyCatalogMarkup,bindAcademyCatalog} from '../core/academy-catalog.js';
 import {programmingHubMarkup} from '../core/code-hub-presentation.js';
 import {bindLanguageJourneys} from '../core/nexus-language-journey.js';
-import {bindLearningDiscovery,discoveryPageMarkup} from '../core/nexus-learning-discovery.js';
+import {bindLearningDiscovery,discoveryPageMarkup,focusLearningSection} from '../core/nexus-learning-discovery.js';
 import {bindNexusLearningUi,bindGlossaryDrawer} from '../core/nexus-learning-ui.js';
 import {shellMarkup,lockedMarkup,unlockMarkup,homeMarkup,academyMarkup,projectsMarkup,lessonMarkup,editorMarkup,visualIcon} from './offline-presentation.js';
 import {blogPageMarkup,blogIndexMarkup,blogArticleMarkup,bindBlogSections} from '../core/blog-presentation.js';
@@ -95,7 +96,7 @@ async function unlockView(){
 function views(){
  const state=()=>data?.state||{courses:{},skills:{}},lessons=()=>state().courses?.cpp?.lessons||{},resume=createLearningResume({storage:{getItem:()=>JSON.stringify(data?.state.localResume||null)},principal:()=>data?.owner.accountId||'public-offline'});
  return createLearningViews({academyGoldMarkup:goldPresentation?.academyGoldMarkup,prefs,t,cpp:course,catalog,programming,cppLearningFilter,loadState:state,lessonState:id=>lessons()[id]||{},visualIcon,
-  progress:()=>{const done=Object.values(lessons()).filter(x=>x?.completed).length;return {done,total:40,pct:Math.round(done/40*100)}},
+  progress:()=>cppProgramProgress(state(),course?.curriculum),
   cppContinuation:()=>resume.continuation(course,lessons()),accountHomeCardMarkup:()=>accountHomePresentation({displayName:data?.owner.displayName,avatar:data?.owner.displayName?.slice(0,1).toLocaleUpperCase(),status:data?'Копия открыта · облачный вход не подтверждён':'Личная копия закрыта'},prefs.uiLocale,{localCopy:true,locked:!data}),shell:body=>'<div class="nexus-learning" data-nexus-learning>'+body+'</div>'});
 }
 function lessons(){const tab=new URLSearchParams(location.hash.slice(1)).get('tab');return tab==='practicums'?views().practicums():tab==='projects'?views().projectsView():views().overview()}
@@ -141,6 +142,9 @@ async function render(){
  const seq=++renderSequence;await graphics?.flush();graphics=null;await settled();if(seq!==renderSequence)return;studio=null;const route=new URLSearchParams(location.hash.slice(1));
  disposeTerms?.();disposeTerms=null;disposeOrbit?.();disposeOrbit=null;
  updateChrome(route);
+ // hashchange может прийти во время начальной загрузки метаданных. Bootstrap
+ // повторит render для текущего hash; локальную копию и её данные не изменяем.
+ if(!course){root.innerHTML='<p role="status">Подготавливаем учебные материалы…</p>';return}
  if(['labs','practices'].includes(route.get('view'))){root.innerHTML=discoveryPageMarkup({kind:route.get('view'),course,contentFor:id=>(locale==='en'?course.lessonsEn:course.lessonsRu).lessons.find(l=>l.id===id),projects:Object.values(data?.projects||{}),state:data?.state.courses?.cpp||{},t,locale:prefs.uiLocale,materialLocale:locale});bindLearningDiscovery(t);return}
  if(route.get('view')==='programming'){
   root.innerHTML=views().programmingHub();
@@ -175,6 +179,7 @@ async function render(){
  const mark=root.querySelector('#completeLesson');if(mark&&data)mark.onclick=async()=>{state.completed=!state.completed;await save();await render()};
  for(const input of root.querySelectorAll('[data-task]'))input.onchange=()=>{if(!data)return;markTask(data,kind,item,Number(input.dataset.task),input.checked);void save().catch(()=>{})};
  bindNexusLearningUi(t);bindReadOnlyLearning();
+ focusLearningSection(route.get('focus'));
 
 }
 

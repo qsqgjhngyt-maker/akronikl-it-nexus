@@ -1,0 +1,2282 @@
+{
+  "schemaVersion": 1,
+  "courseId": "cpp",
+  "locale": "en",
+  "status": "partial-benchmark-authoring",
+  "fallbackLocale": "ru",
+  "lessons": [
+    {
+      "id": "cpp.first-cpp-program",
+      "legacyIndex": 8,
+      "order": 9,
+      "sectionId": "cpp.section.cpp-basics",
+      "title": "Your First C++ Program",
+      "description": "Program structure, standard output, the build pipeline, and the path from a source file to execution inside Nexus.",
+      "theory": [
+        "Your first C++ program is not about memorizing “Hello, C++!”. It is a compact way to see several layers at once: source text, the standard library, main, standard output, the build pipeline, and execution.",
+        "C++ source code is not executed as plain text. Build tools parse and validate the program according to the language rules and prepare an executable representation. Diagnostics therefore usually belong to a specific stage of that path.",
+        "#include <iostream> makes stream I/O declarations available, std::cout names the standard output stream, and operator << inserts data into that stream. These are connected language/library concepts, not magic boilerplate.",
+        "Inside Nexus, beginner code runs in the integrated browser sandbox. You do not need to install a desktop IDE or separate compiler for the core exercises: editor, standard input, run controls, and output live in the lesson."
+      ],
+      "deep": "From the beginning, separate four concepts: the C++ language, the code editor, the compiler/runtime, and the operating system. An IDE may combine several tools in one window, but it is not the language itself. Nexus Sandbox plays the educational role of an integrated environment while remaining accessible through a browser on desktop and mobile devices.",
+      "analogy": "Think of a production line: the source file is the specification, preprocessing prepares the materials, the compiler validates and transforms parts, the linker assembles the product, the runtime prepares the work area, and main begins the user-written scenario.",
+      "commonMistake": "Memorizing the program shape as a ritual and assuming that Visual Studio, VS Code, or another IDE “runs C++” by itself. The language, editor, build tools, and execution environment are separate layers.",
+      "code": "#include <iostream>\n\nint main() {\n    std::cout << \"Hello, C++!\\n\";\n    return 0;\n}",
+      "task": "Modify the program to print three lines: your name, “I am learning C++”, and an IT field that interests you. Use std::cout and '\\n'.",
+      "hint": "Use three sequential output operations. Each line can use its own std::cout statement.",
+      "solution": "#include <iostream>\n\nint main() {\n    std::cout << \"Ivan\\n\";\n    std::cout << \"I am learning C++\\n\";\n    std::cout << \"Information Security\\n\";\n    return 0;\n}",
+      "quiz": {
+        "question": "Which statement best describes the role of main in a normal C++ program?",
+        "answers": [
+          "It is the source-code editor",
+          "It is the special function where the user-written part of execution begins",
+          "It is the name of the standard library"
+        ],
+        "correctIndex": 1
+      },
+      "requirements": [
+        "std::cout",
+        "\\n",
+        "return 0"
+      ],
+      "terms": [
+        [
+          "C++",
+          "a general-purpose programming language; the name is read “C plus plus” and is not an acronym"
+        ],
+        [
+          "main",
+          "the special function where the user-written part of a normal C++ program begins"
+        ],
+        [
+          "#include",
+          "a preprocessing directive that makes declarations from a header available"
+        ],
+        [
+          "iostream",
+          "the standard C++ header for stream input and output"
+        ],
+        [
+          "std",
+          "the namespace containing most of the C++ standard library"
+        ],
+        [
+          "std::cout",
+          "the standard output stream object"
+        ],
+        [
+          "::",
+          "the scope-resolution operator; in std::cout it selects cout from namespace std"
+        ],
+        [
+          "<<",
+          "in this context, the stream insertion operator"
+        ],
+        [
+          "\\n",
+          "the escape sequence for a newline"
+        ],
+        [
+          "toolchain",
+          "the build tools such as preprocessor, compiler, linker, and related components"
+        ]
+      ],
+      "visualization": "flow",
+      "benchmark": {
+        "standardVersion": "1.2",
+        "status": "benchmark-complete",
+        "whyItMatters": "This lesson defines the mental model used throughout the course. Instead of memorizing a Hello World template, we connect source text to the standard library, build tools, process execution, and the integrated Nexus environment. Compiler diagnostics, the sandbox, and later C++ topics then become parts of one system.",
+        "outcomes": [
+          "Read a minimal C++ program and explain every construct instead of reproducing it from memory.",
+          "Distinguish the C++ language, source files, an IDE, a compiler, a linker, a runtime, and an operating system.",
+          "Explain source file → preprocessor → compiler → object code → linker → process startup → main.",
+          "Explain #include <iostream>, std::cout, ::, <<, string literals, \\n, and return 0.",
+          "Classify common failures as preparation, compilation, linking, or runtime problems.",
+          "Run, modify, and validate code directly in Nexus Sandbox without requiring an external desktop IDE."
+        ],
+        "prerequisites": [
+          "It is enough to know that a program is a formal sequence of instructions.",
+          "No prior experience with Visual Studio, VS Code, terminals, or compiler internals is required.",
+          "A basic everyday distinction between text and numbers is helpful; data types are taught later.",
+          "All new terminology is expanded in this lesson glossary."
+        ],
+        "quickUnderstand": [
+          "C++ is the language. main.cpp is a text source file. An editor only helps you write that text.",
+          "#include <iostream> makes standard stream declarations available; it does not “insert a finished program”.",
+          "int main() defines the special main function. After startup work, normal user-written execution reaches it.",
+          "std::cout is standard output. std:: identifies the namespace and << inserts values into the stream.",
+          "\"Hello, C++!\\n\" is a string literal; \\n represents a newline.",
+          "A semicolon terminates a statement, braces delimit a block, and return 0 reports successful completion.",
+          "Nexus Sandbox combines editor, stdin, execution, and stdout in the browser, so beginner exercises do not require an external IDE."
+        ],
+        "fullTheory": {
+          "lead": "A minimal C++ program is tiny only in source-code size. Behind those lines are the language, standard library, preprocessing, compilation, linking, process startup, and function execution. This section follows the entire path and explains how Nexus reproduces the learning workflow inside the browser.",
+          "sections": [
+            {
+              "title": "1. Language, source code, and editor are different layers",
+              "paragraphs": [
+                "C++ is a programming language: rules of syntax and semantics. It is not a specific editor and not one compiler implementation.",
+                "Source code is text written according to those rules. A .cpp file is still an ordinary text file.",
+                "An editor or IDE helps create and manage that text. Visual Studio, VS Code, CLion, and Nexus are environments; none of them is the C++ language itself."
+              ]
+            },
+            {
+              "title": "2. The .cpp extension and translation units",
+              "paragraphs": [
+                "The .cpp extension conventionally marks C++ source files. Larger projects may contain many .cpp files plus .h or .hpp headers.",
+                "Each source file is usually processed as its own translation unit after preprocessing. The compiler analyzes that resulting unit.",
+                "This architecture allows large projects to be built in parts and later combined by the linker."
+              ]
+            },
+            {
+              "title": "3. The preprocessor and #include",
+              "paragraphs": [
+                "#include <iostream> is a preprocessing directive. The # at the beginning marks work that happens before the main C++ compilation phase.",
+                "A useful beginner model is that the preprocessor locates the requested header and makes its declarations visible in the translation unit.",
+                "Including a header does not run a library and does not execute code at runtime. It prepares information the compiler needs."
+              ]
+            },
+            {
+              "title": "4. iostream and the standard library",
+              "paragraphs": [
+                "iostream is a standard C++ header for stream I/O. I/O means Input/Output.",
+                "It provides declarations for stream objects and related operations such as std::cin, std::cout, and std::cerr.",
+                "The C++ standard library provides reusable types and facilities so programs do not need to reimplement strings, containers, streams, algorithms, and many other building blocks."
+              ]
+            },
+            {
+              "title": "5. Namespaces, std, and ::",
+              "paragraphs": [
+                "Large programs can contain identical short names from different components. Namespaces group names and help avoid collisions.",
+                "Most of the standard library lives in namespace std. std::cout means “cout from std”.",
+                "The double colon :: is the scope-resolution operator. Explicit qualification helps beginners see exactly where a name comes from."
+              ]
+            },
+            {
+              "title": "6. main and the beginning of user code",
+              "paragraphs": [
+                "A function is a named unit of executable logic. main has special status: in a normal OS-hosted program, user-written execution begins there after startup work.",
+                "int main() declares main as returning an int and taking no parameters in this form.",
+                "The operating system does not necessarily jump directly to main as the first machine instruction. Runtime startup code may execute before control reaches it."
+              ]
+            },
+            {
+              "title": "7. Blocks, statements, and semicolons",
+              "paragraphs": [
+                "Curly braces delimit a block. Here they define the body of main.",
+                "A statement is a complete instruction. Many C++ statements end with a semicolon, which is syntax rather than decoration.",
+                "Whitespace often does not change C++ meaning, but formatting strongly affects human readability."
+              ]
+            },
+            {
+              "title": "8. std::cout and operator <<",
+              "paragraphs": [
+                "std::cout is the object connected to standard output. In a terminal this usually appears as text; in Nexus it appears in the result panel.",
+                "In this context << is the stream insertion operator: std::cout << value sends a representation of value into the stream.",
+                "Insertions can be chained, for example std::cout << \"x=\" << x << \"\\n\";."
+              ]
+            },
+            {
+              "title": "9. String literals, escape sequences, and \\n",
+              "paragraphs": [
+                "Text inside double quotes is a string literal. The quote characters mark its boundaries.",
+                "Escape sequences encode special characters: \\n is newline, \\t is tab, and \\\" represents a quote inside a string.",
+                "The backslash indicates that the next character participates in a special notation, so \\n is not two ordinary printed characters."
+              ]
+            },
+            {
+              "title": "10. Buffering, \\n, and std::endl",
+              "paragraphs": [
+                "Output is often buffered so many small operations can be combined efficiently.",
+                "\\n inserts a newline but does not by itself require an immediate flush. std::endl inserts a newline and also flushes the stream.",
+                "Both may look identical in a tiny example, but unnecessary flushes can be costly, so Nexus uses \\n as the normal default."
+              ]
+            },
+            {
+              "title": "11. return 0 and process exit status",
+              "paragraphs": [
+                "return ends a function and sends a value back to its caller. In main, the returned integer becomes the process exit status.",
+                "By convention, zero indicates success while non-zero values often signal different failures.",
+                "For main specifically, reaching the closing brace without an explicit return is treated as return 0. We keep the explicit line in the first lesson for clarity."
+              ]
+            },
+            {
+              "title": "12. Syntax, semantics, and diagnostics",
+              "paragraphs": [
+                "Syntax asks whether code is written according to the grammar. Missing semicolons, quotes, or braces are common syntax problems.",
+                "Semantics concerns the meaning of recognized constructs: whether names exist, types match, and operations are valid.",
+                "Compiler diagnostics describe where the tool can no longer build a valid model. The real cause may be on the previous line."
+              ]
+            },
+            {
+              "title": "13. Compilation, object code, and linking",
+              "paragraphs": [
+                "A compiler translates a source unit into a lower-level representation and traditionally an object file.",
+                "The linker combines object files and required library definitions into the final program. A source unit can compile successfully and still fail at link time.",
+                "Distinguishing compile and link failures is essential because they require different fixes."
+              ]
+            },
+            {
+              "title": "14. Runtime, process, and standard streams",
+              "paragraphs": [
+                "When a program starts, the operating system creates a process with memory and other resources.",
+                "Runtime support prepares the environment used by user code. Some initialization may occur before main.",
+                "A process usually has stdin, stdout, and stderr. Nexus presents the relevant input and output streams in the lesson interface."
+              ]
+            },
+            {
+              "title": "15. IDE, compiler, and Nexus Sandbox",
+              "paragraphs": [
+                "IDE means Integrated Development Environment. It combines editing, navigation, running, debugging, and related tools, often by invoking a separate compiler toolchain.",
+                "VS Code is primarily an extensible editor/platform; native C++ usually requires an installed toolchain. That dependency is inconvenient for mobile-first education.",
+                "Nexus Sandbox provides an educational C++ runtime directly in the browser. Editor, stdin, run controls, output, and saved lesson state remain inside one learning environment."
+              ]
+            },
+            {
+              "title": "16. Cross-platform learning and sandbox boundaries",
+              "paragraphs": [
+                "Standard C++ aims for portability, but compilers, operating systems, and platform libraries can differ. Portable examples avoid unnecessary environment-specific extensions.",
+                "The current Nexus browser runtime targets educational C++ examples. It is ideal for syntax, algorithms, and core structures but is not a replacement for every capability of a production native toolchain.",
+                "As the platform grows, the same Sandbox UI can select different runtime providers while keeping the learner inside Nexus."
+              ]
+            }
+          ]
+        },
+        "glossary": [
+          {
+            "term": "C++",
+            "full": "C Plus Plus",
+            "definition": "A general-purpose programming language. The name references the ++ operator inherited from C culture; it is not a word acronym.",
+            "example": "main.cpp contains C++ source code."
+          },
+          {
+            "term": "IDE",
+            "full": "Integrated Development Environment",
+            "definition": "An application that combines editor, project navigation, run/debug controls, and other development tools.",
+            "example": "Visual Studio is an IDE."
+          },
+          {
+            "term": "CLI",
+            "full": "Command-Line Interface",
+            "definition": "A text-command interface used through a terminal or shell.",
+            "example": "A compiler can be invoked from a CLI."
+          },
+          {
+            "term": "I/O",
+            "full": "Input/Output",
+            "definition": "Data entering and leaving a program.",
+            "example": "iostream means stream input/output facilities."
+          },
+          {
+            "term": "source code",
+            "full": "source code",
+            "definition": "Human-readable program text written in a programming language.",
+            "example": "main.cpp is a source file."
+          },
+          {
+            "term": "preprocessor",
+            "full": "preprocessor",
+            "definition": "The stage that handles directives such as #include before core compilation.",
+            "example": "#include <iostream> is handled during preprocessing."
+          },
+          {
+            "term": "compiler",
+            "full": "compiler",
+            "definition": "A tool that parses source code, checks language rules, and translates it to a lower-level form.",
+            "example": "A syntax error is usually found during compilation."
+          },
+          {
+            "term": "linker",
+            "full": "linker",
+            "definition": "A tool that connects compiled units and library definitions into a final program.",
+            "example": "A missing function definition may cause a linker error."
+          },
+          {
+            "term": "toolchain",
+            "full": "build toolchain",
+            "definition": "The collection of preprocessor, compiler, linker, and related build tools.",
+            "example": "GCC and Clang are parts of common C/C++ toolchains."
+          },
+          {
+            "term": "header",
+            "full": "header",
+            "definition": "A file or standard header containing declarations needed by other code.",
+            "example": "iostream is a standard header."
+          },
+          {
+            "term": "translation unit",
+            "full": "translation unit",
+            "definition": "The result of preprocessing one source file that is analyzed by the compiler.",
+            "example": "Each .cpp usually produces its own translation unit."
+          },
+          {
+            "term": "namespace",
+            "full": "namespace",
+            "definition": "A mechanism for grouping names and avoiding collisions.",
+            "example": "cout is inside namespace std."
+          },
+          {
+            "term": "runtime",
+            "full": "runtime environment",
+            "definition": "Support state and components used while a program starts and runs.",
+            "example": "Runtime initialization can happen before main."
+          },
+          {
+            "term": "process",
+            "full": "process",
+            "definition": "A running instance of a program managed by the operating system.",
+            "example": "The same executable can be started as multiple processes."
+          },
+          {
+            "term": "OS",
+            "full": "Operating System",
+            "definition": "System software managing processes, memory, files, devices, and other resources.",
+            "example": "Windows, Linux, Android, and iOS are operating systems."
+          },
+          {
+            "term": "stdin",
+            "full": "standard input",
+            "definition": "The standard input stream of a process.",
+            "example": "Nexus exposes it in the input box below the editor."
+          },
+          {
+            "term": "stdout",
+            "full": "standard output",
+            "definition": "The main stream for normal textual program output.",
+            "example": "std::cout writes to stdout."
+          },
+          {
+            "term": "stderr",
+            "full": "standard error",
+            "definition": "A separate stream intended for diagnostics.",
+            "example": "Native applications can redirect stderr separately from stdout."
+          },
+          {
+            "term": "exit code",
+            "full": "process exit status",
+            "definition": "An integer reporting how a process finished.",
+            "example": "return 0 from main conventionally signals success."
+          },
+          {
+            "term": "flush",
+            "full": "buffer flush",
+            "definition": "Forcing buffered output to be forwarded immediately.",
+            "example": "std::endl inserts a newline and performs a flush."
+          }
+        ],
+        "inside": [
+          {
+            "title": "1. Source file",
+            "text": "You edit main.cpp, an ordinary text file containing C++ source code."
+          },
+          {
+            "title": "2. Preprocessor",
+            "text": "#include and other directives are handled to form the translation unit."
+          },
+          {
+            "title": "3. Compiler",
+            "text": "Syntax, names, and types are analyzed and an internal/lower-level representation is generated."
+          },
+          {
+            "title": "4. Object code",
+            "text": "A compiled unit becomes object code plus metadata needed for final assembly."
+          },
+          {
+            "title": "5. Linker",
+            "text": "Object modules and required library definitions are connected into the final program."
+          },
+          {
+            "title": "6. Loader / Runtime",
+            "text": "The system creates a process, loads the program, and prepares runtime state and standard streams."
+          },
+          {
+            "title": "7. main",
+            "text": "Control reaches main, where the user-written scenario begins."
+          },
+          {
+            "title": "8. Exit status",
+            "text": "The value returned from main becomes the process exit status; zero conventionally means success."
+          }
+        ],
+        "walkthrough": [
+          {
+            "line": "#include <iostream>",
+            "explanation": "A preprocessing directive that makes standard stream I/O declarations available."
+          },
+          {
+            "line": "",
+            "explanation": "A blank line is only for humans: it visually separates includes from the function definition."
+          },
+          {
+            "line": "int main() {",
+            "explanation": "Define the special main function returning int and open its body."
+          },
+          {
+            "line": "    std::cout << \"Hello, C++!\\n\";",
+            "explanation": "Select cout from std, insert a string literal into the output stream, and append a newline."
+          },
+          {
+            "line": "    return 0;",
+            "explanation": "Finish main and report successful process completion with exit status 0."
+          },
+          {
+            "line": "}",
+            "explanation": "Close the block that forms the body of main."
+          }
+        ],
+        "experiments": [
+          {
+            "title": "Remove #include <iostream>",
+            "change": "Delete the first line and run the code in Nexus Sandbox.",
+            "predict": "Decide whether the problem occurs before execution or during execution.",
+            "explanation": "The compiler no longer sees the required standard-output declarations, so main never starts."
+          },
+          {
+            "title": "Remove std::",
+            "change": "Keep cout but do not add using namespace std.",
+            "predict": "Which part of the full name is missing?",
+            "explanation": "cout is inside namespace std; std:: qualifies the name."
+          },
+          {
+            "title": "Remove the semicolon",
+            "change": "Delete ; after the output statement.",
+            "predict": "Which line might the diagnostic point to?",
+            "explanation": "The parser may only prove the previous construct is incomplete when it reads the next token."
+          },
+          {
+            "title": "Replace \\n with std::endl",
+            "change": "Compare the visible result.",
+            "predict": "Should the printed text change?",
+            "explanation": "The newline usually looks the same, but std::endl also flushes the stream."
+          },
+          {
+            "title": "Remove return 0",
+            "change": "Close main immediately after the output statement.",
+            "predict": "Will a valid program still compile?",
+            "explanation": "Yes. Reaching the end of main is treated as returning zero."
+          },
+          {
+            "title": "Add another output",
+            "change": "Print another line and an integer such as 2026.",
+            "predict": "Do you need another header just to print an int?",
+            "explanation": "std::cout already supports many fundamental types; a separate header is not needed for a basic int."
+          }
+        ],
+        "errors": [
+          {
+            "title": "cout is not declared",
+            "wrongCode": "#include <iostream>\nint main() {\n    cout << \"Hello\\n\";\n}",
+            "symptom": "The environment reports that cout cannot be found.",
+            "reason": "The code uses cout as a global name although it lives in namespace std.",
+            "fix": "Use std::cout."
+          },
+          {
+            "title": "Missing semicolon",
+            "wrongCode": "#include <iostream>\nint main() {\n    std::cout << \"Hello\\n\"\n    return 0;\n}",
+            "symptom": "The diagnostic may point at return or the next line.",
+            "reason": "The output statement is not terminated.",
+            "fix": "Add ; after the output expression."
+          },
+          {
+            "title": "Typographic quotes",
+            "wrongCode": "std::cout << “Hello, C++!”;",
+            "symptom": "Unexpected characters or invalid tokens are reported.",
+            "reason": "Smart quotes are not C++ string delimiters.",
+            "fix": "Use plain ASCII double quotes."
+          },
+          {
+            "title": "main has no return type",
+            "wrongCode": "main() {\n    return 0;\n}",
+            "symptom": "A modern compiler rejects the function definition.",
+            "reason": "C++ requires an explicit function return type.",
+            "fix": "Use int main()."
+          },
+          {
+            "title": "Unterminated string literal",
+            "wrongCode": "std::cout << \"Hello, C++!;",
+            "symptom": "The compiler reports an unterminated string or unexpected tokens.",
+            "reason": "The opening double quote has no matching closing quote.",
+            "fix": "Close the string literal before the semicolon."
+          },
+          {
+            "title": "Debugging the wrong stage",
+            "wrongCode": "// The program builds but prints the wrong text",
+            "symptom": "The learner keeps changing syntax although compilation already succeeds.",
+            "reason": "A compile error and a logical error are different categories.",
+            "fix": "First determine whether code fails to build, fails to start, or starts and produces the wrong result."
+          }
+        ],
+        "practice": [
+          {
+            "level": "Foundation",
+            "title": "Three lines",
+            "prompt": "Print your name, “I am learning C++”, and your chosen IT field.",
+            "hint": "Use three sequential std::cout operations."
+          },
+          {
+            "level": "Diagnostics",
+            "title": "Classify the failure",
+            "prompt": "Remove #include, std::, and ; one at a time. For each case write stage, symptom, cause, and fix.",
+            "hint": "All three prevent successful execution, but for different reasons."
+          },
+          {
+            "level": "System model",
+            "title": "IDE or compiler?",
+            "prompt": "Explain the difference between the C++ language, an editor/IDE, and a compiler. Give one example of each.",
+            "hint": "C++ defines rules; an IDE helps you work; a compiler validates/translates source code."
+          },
+          {
+            "level": "Transfer",
+            "title": "Mini profile",
+            "prompt": "Build a small text profile in Nexus Sandbox: heading, name, field, learning goal, and a separator. Design the expected output before coding.",
+            "hint": "Start from the desired screen output, then write the program."
+          }
+        ],
+        "lab": {
+          "title": "Lab: the lifecycle of your first program",
+          "goal": "Demonstrate understanding of the stages that connect source code to execution, not merely produce Hello World.",
+          "steps": [
+            "Use “Test runtime” in Nexus Sandbox and confirm that the embedded environment can execute a control program.",
+            "Run the reference example and record stdout.",
+            "Change the string literal and confirm that only user-visible output changes.",
+            "Create one syntax error, read the diagnostic, and explain why main never starts.",
+            "Remove std:: from cout and explain the namespace failure.",
+            "Remove return 0 and observe valid program behavior.",
+            "Without hints, explain source → preprocess → compile → link → runtime → main → exit code."
+          ],
+          "proof": "The lab is complete when the learner can run code inside Nexus without an external IDE, explain every line, and classify a typical failure stage."
+        },
+        "knowledgeCheck": [
+          {
+            "question": "Which item is a programming language rather than a development environment?",
+            "answers": [
+              "C++",
+              "Visual Studio",
+              "VS Code"
+            ],
+            "correctIndex": 0,
+            "explanation": "C++ defines the language rules. Visual Studio is an IDE and VS Code is an extensible editor/platform."
+          },
+          {
+            "question": "Why does std::cout require <iostream> declarations?",
+            "answers": [
+              "iostream makes the stream I/O declarations available",
+              "iostream starts the operating system",
+              "main does not exist without iostream"
+            ],
+            "correctIndex": 0,
+            "explanation": "The header provides declarations for standard stream interfaces."
+          },
+          {
+            "question": "What does :: mean in std::cout?",
+            "answers": [
+              "Comment marker",
+              "Scope-resolution operator",
+              "String marker"
+            ],
+            "correctIndex": 1,
+            "explanation": ":: selects cout from namespace std."
+          },
+          {
+            "question": "Compilation succeeds but a required function definition cannot be connected. Which stage fails?",
+            "answers": [
+              "Linking",
+              "Running main",
+              "stdin input"
+            ],
+            "correctIndex": 0,
+            "explanation": "The linker connects definitions from compiled units and libraries."
+          },
+          {
+            "question": "Why is \\n often preferred to std::endl for ordinary output?",
+            "answers": [
+              "std::endl is forbidden",
+              "\\n does not require an extra flush",
+              "\\n only works on Windows"
+            ],
+            "correctIndex": 1,
+            "explanation": "std::endl inserts a newline and also flushes the stream; that extra operation is not always needed."
+          },
+          {
+            "question": "What does Nexus Sandbox provide in this lesson?",
+            "answers": [
+              "It requires VS Code to be installed",
+              "Integrated editor, stdin, execution, and stdout in the browser",
+              "It only displays code without running it"
+            ],
+            "correctIndex": 1,
+            "explanation": "The core learning loop stays inside the platform."
+          }
+        ],
+        "sandboxModel": {
+          "title": "Nexus Sandbox — unified engineering environment",
+          "description": "Editor, input, execution, diagnostics, and assignment validation remain inside the lesson. The learner sees one Nexus interface while the platform selects the suitable runtime provider.",
+          "points": [
+            "Code and stdin are saved with lesson progress.",
+            "Live validation surfaces structural issues and assignment requirements before execution.",
+            "Browser Runtime handles fast educational tasks; a compatibility layer accepts standard forms such as std::cout.",
+            "Sandbox is already provider-oriented: browser, WASM, and secure cloud runners can share the same learner interface.",
+            "Phones and tablets do not require a separate desktop IDE to complete the course."
+          ],
+          "limit": "alpha.3 activates Browser Runtime. WASM and the secure build runner are defined as next providers for multi-file, system-level, and project workloads without changing the Nexus Sandbox interface."
+        },
+        "skillGraph": {
+          "strengthens": [
+            "cpp.syntax.program-structure",
+            "cpp.toolchain.translation-pipeline",
+            "cpp.standard-library.io",
+            "debugging.error-stage-classification",
+            "developer-tools.ide-vs-toolchain"
+          ],
+          "unlocks": [
+            "cpp.tokens-identifiers-keywords",
+            "cpp.comments-constants-literals",
+            "cpp.data-types"
+          ]
+        },
+        "summary": [
+          "I can distinguish C++, a source file, an IDE, a compiler, a linker, and a runtime.",
+          "I can explain every line of a minimal C++ program.",
+          "I understand #include, iostream, std::, std::cout, <<, \\n, ;, and return 0.",
+          "I can describe the path from main.cpp to a running process.",
+          "I can distinguish compilation, linking, and runtime problems.",
+          "I can complete a basic C++ exercise directly in Nexus Sandbox without switching to external software."
+        ],
+        "modernNotes": [
+          "Nexus uses explicit std::cout rather than a global using namespace std; in the reference example.",
+          "Ordinary line breaks use \\n; std::endl is reserved for cases that really need a flush.",
+          "The example is independent of IDE-specific precompiled-header mechanisms.",
+          "Practice remains inside Nexus Sandbox; a desktop IDE is optional rather than mandatory."
+        ],
+        "historicalContext": [
+          "Older environment-specific examples can still matter when reading legacy code, but they are not presented as the modern portable baseline.",
+          "Source provenance is maintained in internal project documentation instead of being mixed into the learner-facing lesson."
+        ]
+      },
+      "provenanceRef": "courses/cpp/PROVENANCE.md#cpp.first-cpp-program"
+    },
+    {
+      "id": "cpp.pointers-references-addresses",
+      "legacyIndex": 18,
+      "order": 19,
+      "sectionId": "cpp.section.cpp-basics",
+      "title": "Pointers, References, and Addresses",
+      "description": "The address model of memory: object, address, pointer, reference, lifetime, and safe access without mystique.",
+      "theory": [
+        "A variable has a value, but a live object also has a location in the program's address space. An address denotes that location; a pointer can store such an address as its own value.",
+        "The expression &value obtains the address of value. If p has type int*, p can store an address of an int. The expression *p dereferences p and accesses the int at the stored address.",
+        "The declaration int& ref = value creates a reference—an alias for the existing object. Writing through value, *p, or ref can modify the same object when they are all connected to value.",
+        "Address-based code must respect lifetime. A pointer may still contain a numeric address after the target object has died; dereferencing such a dangling pointer is undefined behavior. Modern C++ therefore prefers RAII, containers, and smart pointers for ownership."
+      ],
+      "deep": "Core model: value is one int object with a value and an address; p is a separate pointer object storing that address; *p accesses value through the address; ref is another name for value. They are related but not identical.",
+      "analogy": "A building has an address; a note containing that address is like a pointer; a second name for the same person is like a reference. The note is not the building, and the second name does not create a second person.",
+      "commonMistake": "Confusing p, &value, and *p. p is the stored address; &value obtains value's address; *p accesses the object through that address. The symbols * and & also have different meanings in declarations and expressions.",
+      "code": "#include <iostream>\n\nint main() {\n    int value = 10;\n    int* p = &value;\n    *p = 25;\n    std::cout << value << \"\\n\";\n    return 0;\n}",
+      "task": "Create n = 3, make ptr point to n, and use *ptr so the program prints 12. Then print n and *ptr separated by a space and verify that they match.",
+      "hint": "After int* ptr = &n;, the expression *ptr denotes the same object n through the stored address.",
+      "solution": "#include <iostream>\n\nint main() {\n    int n = 3;\n    int* ptr = &n;\n    *ptr *= 4;\n    std::cout << n << \" \" << *ptr << \"\\n\";\n    return 0;\n}",
+      "quiz": {
+        "question": "What does *p mean when p is a valid int*?",
+        "answers": [
+          "It obtains p's address",
+          "It accesses the int object at the address stored in p",
+          "It creates a new int"
+        ],
+        "correctIndex": 1
+      },
+      "requirements": [
+        "int* ptr",
+        "&n",
+        "*ptr"
+      ],
+      "terms": [
+        [
+          "address",
+          "a value denoting an object's location in the process address space"
+        ],
+        [
+          "pointer",
+          "an object whose value can represent another object's address or a null state"
+        ],
+        [
+          "dereference",
+          "accessing an object through a pointer"
+        ],
+        [
+          "reference",
+          "an alias—another name for an existing object"
+        ],
+        [
+          "nullptr",
+          "the type-safe null pointer literal in modern C++"
+        ],
+        [
+          "lifetime",
+          "the interval during which an object exists and may be accessed"
+        ]
+      ],
+      "visualization": "pointer",
+      "benchmark": {
+        "standardVersion": "1.2",
+        "interactiveModelVersion": "1.0",
+        "status": "benchmark-complete",
+        "labels": {
+          "insideTitle": "Связь объекта, адреса, указателя и ссылки",
+          "walkTitle": "Разбор адресного кода"
+        },
+        "whyItMatters": "Pointers are not mysterious C++ magic; they are an explicit way to work with the address model. This model underlies arrays, function interfaces, linked structures, polymorphism, resource management, and many libraries. The goal is to keep object, address, pointer, and alias conceptually separate—and then connect them safely.",
+        "outcomes": [
+          "Distinguish an object's value, its address, and a pointer's value.",
+          "Read int*, int&, &value, p, *p, and ref by context.",
+          "Explain nullptr, dangling pointers, lifetime, and undefined behavior.",
+          "Compare pass-by-value, pointer parameters, and reference parameters.",
+          "Understand basic const forms for pointers and references.",
+          "Use Nexus Sandbox and the interactive memory model to validate predictions."
+        ],
+        "prerequisites": [
+          "You only need basic variables, expressions, and functions.",
+          "No prior knowledge of stack/heap, new/delete, or machine addresses is required.",
+          "Addresses shown by Nexus are symbolic teaching addresses, not browser memory addresses."
+        ],
+        "quickUnderstand": [
+          "value is one int object with a value and an address while it is alive.",
+          "&value obtains value's address.",
+          "int* p declares a pointer to int; p is a separate object.",
+          "p = &value stores value's address in p.",
+          "*p dereferences the pointer and denotes the target object.",
+          "int& ref = value creates an alias for value rather than a second int.",
+          "nullptr means the pointer intentionally points to no object; it must not be dereferenced.",
+          "An address is usable only while the target object remains alive and the access is valid."
+        ],
+        "fullTheory": {
+          "lead": "Do not memorize punctuation first. Build one stable model: a live object, its address, a separate pointer storing that address, a reference aliasing the object, and lifetime rules governing valid access.",
+          "sections": [
+            {
+              "title": "1. Object, value, and storage",
+              "paragraphs": [
+                "int value = 10; creates an int object whose logical state is 10. During execution the implementation also needs storage for that state.",
+                "We model a live object as having an address in the process address space. The numeric address can change between runs and is rarely important by itself.",
+                "Keep language semantics separate from a literal memory diagram: C++ exposes address operations, but an optimizer may represent objects differently as long as observable behavior is preserved."
+              ]
+            },
+            {
+              "title": "2. Address-of operator &",
+              "paragraphs": [
+                "The expression &value means “obtain the address of value”. Here & is the unary address-of operator.",
+                "The result type is related to the target type: the address of an int has type int*.",
+                "The address is not a copy of value's number. It is a separate value that can later be used to access the object while lifetime rules remain satisfied."
+              ]
+            },
+            {
+              "title": "3. A pointer is its own object",
+              "paragraphs": [
+                "int* p; declares p as an object capable of holding the address of an int.",
+                "After int* p = &value;, p stores value's address. p and value remain two different objects.",
+                "Pointer size is platform/ABI-dependent and should not be confused with sizeof(int)."
+              ]
+            },
+            {
+              "title": "4. The two roles of *",
+              "paragraphs": [
+                "In int* p, * participates in the declaration and says p is a pointer to int.",
+                "In the expression *p, * is the dereference operator and denotes the object at p's stored address.",
+                "Therefore *p = 25; changes value when p points to value."
+              ]
+            },
+            {
+              "title": "5. A reference is an alias",
+              "paragraphs": [
+                "int& ref = value; binds ref to the existing object value.",
+                "ref = 30; changes value because ref is another name for that object.",
+                "Assigning ref = other later does not rebind an ordinary reference; it assigns other's value to the already-bound target."
+              ]
+            },
+            {
+              "title": "6. p, &value, *p, and ref",
+              "paragraphs": [
+                "value denotes the object in an ordinary expression; &value obtains its address; p stores an address; *p denotes the target; ref is an alias.",
+                "When p == &value and ref is bound to value, writes through value, *p, or ref are observable through the other access paths.",
+                "This is aliasing: multiple expressions may denote one object."
+              ]
+            },
+            {
+              "title": "7. nullptr and pointer checks",
+              "paragraphs": [
+                "nullptr is the modern C++ null pointer literal: it represents an intentional “points to no object” state.",
+                "Storing or comparing nullptr is valid; dereferencing it is not.",
+                "A non-null check does not prove that a pointer is otherwise valid or that the target is still alive."
+              ]
+            },
+            {
+              "title": "8. Lifetime and dangling pointers",
+              "paragraphs": [
+                "Lifetime is the interval during which an object exists according to the language rules.",
+                "If a pointer retains the address of a local object after that object dies, the pointer becomes dangling.",
+                "Dereferencing a dangling pointer causes undefined behavior even if the numeric address still looks plausible."
+              ]
+            },
+            {
+              "title": "9. Undefined behavior",
+              "paragraphs": [
+                "Undefined behavior (UB) means the C++ standard imposes no required behavior after certain rules are violated.",
+                "This is not the same as a normal exception or a guaranteed crash. Optimizers may rely on the assumption that valid programs do not execute UB.",
+                "Pointer safety requires reasoning about initialization, lifetime, type, and bounds—not merely syntax."
+              ]
+            },
+            {
+              "title": "10. Function parameters: value, pointer, reference",
+              "paragraphs": [
+                "int x receives a copy; changing x does not change the caller's object.",
+                "int* p receives a copy of an address and may modify *p after validating the pointer.",
+                "int& x is an alias for the caller's object. const int& provides non-copying read access while preventing mutation through that reference."
+              ]
+            },
+            {
+              "title": "11. const and access direction",
+              "paragraphs": [
+                "const int* p is a pointer to const int: p may be redirected, but *p may not be modified through p.",
+                "int* const p is a const pointer to int: p's stored address is fixed, but the target int may be modified.",
+                "const int* const p combines both restrictions; const int& is a common read-only reference form."
+              ]
+            },
+            {
+              "title": "12. Pointers and arrays",
+              "paragraphs": [
+                "An array and a pointer are not the same type, but array names convert to pointers to the first element in many expressions.",
+                "For a pointer into an array, p + 1 advances to the next element of the pointed-to type rather than one byte.",
+                "Pointer arithmetic is only valid within carefully defined bounds of the same array object."
+              ]
+            },
+            {
+              "title": "13. Dynamic storage and modern C++",
+              "paragraphs": [
+                "new can create an object with dynamic storage and returns a pointer; delete ends the corresponding lifetime and releases storage.",
+                "Manual new/delete is error-prone, so modern C++ usually prefers automatic objects, containers, and RAII.",
+                "std::unique_ptr expresses unique ownership; std::shared_ptr is reserved for genuine shared ownership. Raw pointers remain useful for non-owning observation and low-level interfaces."
+              ]
+            },
+            {
+              "title": "14. Stack and heap are implementation models",
+              "paragraphs": [
+                "Teaching often says locals live on the stack and new allocates on the heap. That can be a useful implementation model but is not the full language definition.",
+                "The standard talks about storage duration, lifetime, and observable behavior; optimizers may keep values in registers or eliminate objects entirely.",
+                "Nexus therefore uses symbolic addresses to teach relationships rather than claiming to display the browser's physical memory layout."
+              ]
+            },
+            {
+              "title": "15. Why this unlocks later topics",
+              "paragraphs": [
+                "References and pointers let functions work with existing objects without mandatory copies.",
+                "Linked structures represent connections between nodes; low-level implementations often use pointers or smart pointers.",
+                "Runtime polymorphism is commonly used through base-class references or pointers, making this lesson foundational for OOP."
+              ]
+            },
+            {
+              "title": "16. A practical safety checklist",
+              "paragraphs": [
+                "Before dereferencing, ask: is the pointer initialized, non-null, still pointing to a live object, and within valid type/bounds rules?",
+                "If you cannot justify those conditions, change the design or add the appropriate invariant/check rather than hoping for a crash you can catch later.",
+                "In modern application C++, prefer values, references, containers, and RAII by default; use raw pointers when their semantics are deliberate and clear."
+              ]
+            }
+          ]
+        },
+        "glossary": [
+          {
+            "term": "object",
+            "full": "object",
+            "definition": "A C++ entity with type, lifetime, and state.",
+            "example": "int value = 10; creates an int object."
+          },
+          {
+            "term": "address",
+            "full": "memory address",
+            "definition": "A value used to denote an object location in the process address space.",
+            "example": "&value obtains value's address."
+          },
+          {
+            "term": "pointer",
+            "full": "pointer",
+            "definition": "An object that can store a suitable object address or a null state.",
+            "example": "int* p = &value;"
+          },
+          {
+            "term": "dereference",
+            "full": "dereference",
+            "definition": "Accessing an object through a stored pointer address.",
+            "example": "*p = 25;"
+          },
+          {
+            "term": "reference",
+            "full": "reference",
+            "definition": "An alias—another name for an existing object.",
+            "example": "int& ref = value;"
+          },
+          {
+            "term": "alias",
+            "full": "alias",
+            "definition": "Another expression/name that denotes the same object.",
+            "example": "value, *p, and ref may alias one int."
+          },
+          {
+            "term": "nullptr",
+            "full": "null pointer literal",
+            "definition": "The type-safe modern C++ null pointer literal.",
+            "example": "int* p = nullptr;"
+          },
+          {
+            "term": "lifetime",
+            "full": "object lifetime",
+            "definition": "The interval during which an object exists and may be accessed according to language rules.",
+            "example": "A local object normally dies when its block ends."
+          },
+          {
+            "term": "dangling pointer",
+            "full": "dangling pointer",
+            "definition": "A pointer whose target object has died or whose address has been invalidated.",
+            "example": "Returning a pointer to a local object creates a dangling pointer."
+          },
+          {
+            "term": "UB",
+            "full": "Undefined Behavior",
+            "definition": "A situation for which the C++ standard imposes no required program behavior.",
+            "example": "Dereferencing a dangling pointer can cause UB."
+          },
+          {
+            "term": "RAII",
+            "full": "Resource Acquisition Is Initialization",
+            "definition": "The C++ idiom that binds resource ownership to object lifetime.",
+            "example": "std::vector releases its storage automatically."
+          },
+          {
+            "term": "raw pointer",
+            "full": "raw pointer",
+            "definition": "A plain T* that does not by itself express automatic ownership.",
+            "example": "int* p may be a non-owning observer."
+          },
+          {
+            "term": "smart pointer",
+            "full": "smart pointer",
+            "definition": "An RAII object that manages dynamic ownership.",
+            "example": "std::unique_ptr<T>."
+          },
+          {
+            "term": "const",
+            "full": "const qualification",
+            "definition": "A qualifier restricting modification through a given access path.",
+            "example": "const int& prevents modification through the reference."
+          },
+          {
+            "term": "stack",
+            "full": "call stack",
+            "definition": "A common implementation area for call frames/local state; not a mandatory physical model in the C++ standard.",
+            "example": "Local variables are often implemented in a stack frame."
+          },
+          {
+            "term": "heap",
+            "full": "dynamic storage / heap",
+            "definition": "A common implementation term for dynamic storage managed by an allocator.",
+            "example": "new typically acquires dynamic storage."
+          },
+          {
+            "term": "storage duration",
+            "full": "storage duration",
+            "definition": "The language category describing how long an object's storage exists.",
+            "example": "Many local objects have automatic storage duration."
+          },
+          {
+            "term": "pointer arithmetic",
+            "full": "pointer arithmetic",
+            "definition": "Moving a pointer among elements of the same array within valid bounds.",
+            "example": "p + 1 denotes the next T element."
+          },
+          {
+            "term": "ABI",
+            "full": "Application Binary Interface",
+            "definition": "Platform conventions for binary calls, data layout, sizes, and related details.",
+            "example": "Pointer size depends on the target ABI."
+          }
+        ],
+        "interactiveMemory": {
+          "title": "Interactive memory model",
+          "description": "Step through one object and observe access by name, pointer, and reference. Addresses are symbolic teaching values, not real browser addresses.",
+          "addressNote": "0x1000 and 0x2000 are Nexus teaching addresses, not browser memory addresses.",
+          "addresses": {
+            "value": "0x1000",
+            "pointer": "0x2000"
+          },
+          "steps": [
+            {
+              "title": "Create value",
+              "value": 10,
+              "pointerBound": false,
+              "referenceBound": false,
+              "explanation": "int value = 10; creates one int object with value 10."
+            },
+            {
+              "title": "Store the address",
+              "value": 10,
+              "pointerBound": true,
+              "referenceBound": false,
+              "explanation": "int* p = &value; creates a separate pointer p and stores value's address."
+            },
+            {
+              "title": "Bind a reference",
+              "value": 10,
+              "pointerBound": true,
+              "referenceBound": true,
+              "explanation": "int& ref = value; aliases the existing value object; no second int is created."
+            },
+            {
+              "title": "Write through *p",
+              "value": 25,
+              "pointerBound": true,
+              "referenceBound": true,
+              "explanation": "*p = 25; dereferences p and modifies the same value object."
+            },
+            {
+              "title": "Write through ref",
+              "value": 30,
+              "pointerBound": true,
+              "referenceBound": true,
+              "explanation": "ref += 5; modifies the aliased object, so value and *p are now also 30."
+            }
+          ]
+        },
+        "inside": [
+          {
+            "title": "value object",
+            "text": "One live int with a value and a symbolic address 0x1000."
+          },
+          {
+            "title": "&value",
+            "text": "Address-of produces an address value suitable for int*."
+          },
+          {
+            "title": "p",
+            "text": "A separate pointer object stores 0x1000; Nexus shows p itself at symbolic 0x2000."
+          },
+          {
+            "title": "*p",
+            "text": "Dereference follows the stored address and denotes value."
+          },
+          {
+            "title": "ref",
+            "text": "A reference aliases value and does not create a second int."
+          },
+          {
+            "title": "lifetime",
+            "text": "Every access path remains valid only while value is alive and the pointer is not invalidated."
+          }
+        ],
+        "walkthrough": [
+          {
+            "line": "int value = 10;",
+            "explanation": "Create one int object."
+          },
+          {
+            "line": "int* p = &value;",
+            "explanation": "Create a pointer and store value's address."
+          },
+          {
+            "line": "int& ref = value;",
+            "explanation": "Bind a reference alias to value."
+          },
+          {
+            "line": "*p = 25;",
+            "explanation": "Dereference p and modify value."
+          },
+          {
+            "line": "ref += 5;",
+            "explanation": "Modify the same object through the alias."
+          },
+          {
+            "line": "std::cout << value;",
+            "explanation": "Read the final state through the original name."
+          }
+        ],
+        "experiments": [
+          {
+            "title": "Compare p and &value",
+            "change": "Track p and &value in Nexus or a full compiler.",
+            "predict": "They denote the same target address when p points to value.",
+            "explanation": "p stores the result of &value."
+          },
+          {
+            "title": "Modify only through *p",
+            "change": "Run *p += 7 and print value.",
+            "predict": "value changes even though its name was not used in the assignment.",
+            "explanation": "Dereference denotes the target object."
+          },
+          {
+            "title": "Use nullptr safely",
+            "change": "Set int* p = nullptr; and guard dereference with if (p).",
+            "predict": "The dereference branch does not run.",
+            "explanation": "Null is a valid pointer state but not a dereferenceable object address."
+          },
+          {
+            "title": "Reference versus copy",
+            "change": "Create int copy = value; and int& ref = value;, then modify each.",
+            "predict": "copy changes independently; ref changes value.",
+            "explanation": "A copy is a new object; a reference is an alias."
+          }
+        ],
+        "errors": [
+          {
+            "title": "Dereferencing nullptr",
+            "wrongCode": "int* p = nullptr;\n*p = 7;",
+            "symptom": "Invalid access / possible crash.",
+            "reason": "nullptr does not designate a live int.",
+            "fix": "Do not dereference null; establish a valid target and guard optional pointers."
+          },
+          {
+            "title": "Uninitialized pointer",
+            "wrongCode": "int* p;\nstd::cout << *p;",
+            "symptom": "Unpredictable behavior.",
+            "reason": "p has no meaningful target address.",
+            "fix": "Initialize pointers immediately with a valid address or nullptr."
+          },
+          {
+            "title": "Dangling pointer",
+            "wrongCode": "int* p;\n{ int x=5; p=&x; }\nstd::cout << *p;",
+            "symptom": "May appear to work, crash, or vary across builds.",
+            "reason": "x's lifetime ended.",
+            "fix": "Do not keep an address beyond the target lifetime."
+          },
+          {
+            "title": "Confusing p with *p",
+            "wrongCode": "int value=10;\nint* p=&value;\np = 20;",
+            "symptom": "Type error.",
+            "reason": "p expects an address, while 20 is an int value.",
+            "fix": "Use *p = 20; to modify the pointed-to int."
+          }
+        ],
+        "practice": [
+          {
+            "level": "Foundation",
+            "title": "One object, three access paths",
+            "prompt": "Create value, p, and ref. Modify through value, *p, and ref and print value after each step.",
+            "hint": "All three paths should affect one object."
+          },
+          {
+            "level": "Intermediate",
+            "title": "Safe pointer parameter",
+            "prompt": "Write bool setPositive(int* target, int value): reject nullptr/non-positive values and otherwise write to *target.",
+            "hint": "Validate first; dereference only after validation."
+          },
+          {
+            "level": "Transfer",
+            "title": "Reference API",
+            "prompt": "Write swapValues(int& a, int& b) without std::swap and explain why caller objects change.",
+            "hint": "Reference parameters alias caller objects."
+          }
+        ],
+        "lab": {
+          "title": "Aliasing map for one object",
+          "goal": "Prove experimentally that value, *p, and ref can denote one object while copy is independent.",
+          "steps": [
+            "Create int value = 10;.",
+            "Create int* p = &value; and int& ref = value;.",
+            "Create int copy = value;.",
+            "Set *p = 20 and print value, *p, ref, copy.",
+            "Run ref += 5 and print again.",
+            "Set copy = 99 and verify that value remains unchanged.",
+            "Explain which expressions alias one object and why."
+          ],
+          "proof": "Before running, you can predict all four values after each step and explain them using object, pointer, dereference, reference, alias, and lifetime."
+        },
+        "knowledgeCheck": [
+          {
+            "question": "What does p store after int* p = &value;?",
+            "answers": [
+              "A copy of value",
+              "value's address",
+              "The ref reference"
+            ],
+            "correctIndex": 1,
+            "explanation": "p is a separate pointer object storing value's address."
+          },
+          {
+            "question": "What does *p = 42 change when p points to value?",
+            "answers": [
+              "The address inside p",
+              "The value object",
+              "The type of p"
+            ],
+            "correctIndex": 1,
+            "explanation": "*p denotes the target object."
+          },
+          {
+            "question": "How does int copy = value differ from int& ref = value?",
+            "answers": [
+              "No difference",
+              "copy creates a separate int; ref aliases value",
+              "ref copies and copy aliases"
+            ],
+            "correctIndex": 1,
+            "explanation": "A copy has independent state; a reference denotes the original object."
+          },
+          {
+            "question": "Is dereferencing nullptr safe?",
+            "answers": [
+              "Yes, it produces 0",
+              "No",
+              "Only for int*"
+            ],
+            "correctIndex": 1,
+            "explanation": "nullptr does not designate a live target object."
+          },
+          {
+            "question": "Why can a non-null pointer still be invalid?",
+            "answers": [
+              "Its target may have died, leaving a dangling pointer",
+              "All pointers are always invalid",
+              "int* cannot be compared"
+            ],
+            "correctIndex": 0,
+            "explanation": "A null check does not prove lifetime validity."
+          },
+          {
+            "question": "What does const int* p mean?",
+            "answers": [
+              "p cannot change but *p can",
+              "The target cannot be modified through p, while p may be redirected",
+              "Neither p nor the target can change"
+            ],
+            "correctIndex": 1,
+            "explanation": "const qualifies the pointed-to int in this form."
+          }
+        ],
+        "sandboxModel": {
+          "title": "Nexus Sandbox · Pointer Lab",
+          "description": "Use the browser runtime for pointer exercises while the interactive memory model explains references and lifetime independently of provider limitations.",
+          "points": [
+            "Editor and stdout stay inside Nexus.",
+            "Task checks validate pointer syntax requirements.",
+            "Pointer Lab connects runtime output with the address model.",
+            "Future WASM/secure build providers will support advanced projects in the same UI."
+          ],
+          "limit": "Browser Runtime is an educational provider; full modern C++ compatibility will come from extended providers without changing the Nexus Sandbox interface."
+        },
+        "skillGraph": {
+          "strengthens": [
+            "cpp.memory.address-model",
+            "cpp.pointers.dereference",
+            "cpp.references.aliasing",
+            "cpp.lifetime.safety",
+            "cpp.const-correctness"
+          ],
+          "unlocks": [
+            "cpp.arrays.pointer-relations",
+            "cpp.linked-structures",
+            "cpp.oop.polymorphism",
+            "cpp.raii.smart-pointers",
+            "cpp.project-studio.native-build"
+          ]
+        },
+        "summary": [
+          "I distinguish object, address, pointer, and reference.",
+          "I can explain &, *, int*, and int& by context.",
+          "I understand nullptr and do not dereference it.",
+          "I can explain dangling pointers through lifetime.",
+          "I distinguish a copy from an alias.",
+          "I understand basic const pointer/reference forms.",
+          "I know why modern C++ prefers RAII over manual ownership."
+        ],
+        "modernNotes": [
+          "Prefer values and RAII by default.",
+          "Use std::unique_ptr for unique dynamic ownership; use std::shared_ptr only for genuine shared ownership.",
+          "Treat raw T* as non-owning unless an API explicitly documents ownership.",
+          "Prefer nullptr over 0/NULL in modern C++."
+        ],
+        "historicalContext": "C and early C++ rely heavily on raw addresses and manual resource management. Modern C++ keeps pointers fundamental but layers types and idioms on top to reduce manual ownership and lifetime errors."
+      }
+    },
+    {
+      "id": "cpp.oop-principles",
+      "legacyIndex": 36,
+      "order": 37,
+      "sectionId": "cpp.section.oop",
+      "title": "OOP: Encapsulation, Inheritance, and Polymorphism",
+      "description": "Designing your own types: state, invariants, interface, inheritance, and dynamic polymorphism without magic.",
+      "theory": [
+        "Object-oriented programming (OOP) organizes parts of a program around types and objects that combine state with permitted operations. In C++, OOP complements algorithms rather than replacing them.",
+        "A class describes a type; an object is a concrete instance of that type at runtime. Data members hold state, member functions implement behavior, and the class contract defines which state transitions are valid.",
+        "Encapsulation is broader than the private keyword: it means preserving invariants through a controlled interface. Inheritance models specialization, while runtime polymorphism lets a common base interface dispatch to behavior of the actual derived object.",
+        "Modern C++ combines OOP with composition, RAII, generic programming, algorithms, and value semantics. Deep inheritance trees are not a goal; use inheritance only when it represents a stable type relationship."
+      ],
+      "deep": "The central OOP question is not “how do I write class?” but “who owns this state, who may change it, and what guarantee does the type make to the rest of the program?” A class with private fields can still be poorly encapsulated if its interface allows inconsistent states.",
+      "analogy": "A bank account stores a balance, but a client does not edit the database number directly. The client performs allowed operations such as deposit, withdraw, and query. The interface protects domain rules.",
+      "commonMistake": "Treating encapsulation, inheritance, and polymorphism as a checklist for every project. Good C++ uses classes when they simplify responsibility; composition often beats inheritance, and a public interface should remain small.",
+      "code": "#include <iostream>\n\nclass Counter {\nprivate:\n    int value;\npublic:\n    Counter(int start) : value(start) {}\n    void add(int delta) { value += delta; }\n    int get() const { return value; }\n};\n\nint main() {\n    Counter c(10);\n    c.add(5);\n    std::cout << c.get() << \"\\n\";\n    return 0;\n}",
+      "task": "Create a Wallet class with a private balance field. Its constructor accepts the initial balance, deposit(int amount) accepts only positive values, and getBalance() returns the current balance. Create Wallet(1000), deposit 250, and print 1250.",
+      "hint": "Keep balance private. In deposit, validate amount > 0 before changing balance. External code should use methods rather than writing the field directly.",
+      "solution": "#include <iostream>\n\nclass Wallet {\nprivate:\n    int balance;\npublic:\n    Wallet(int start) : balance(start >= 0 ? start : 0) {}\n    void deposit(int amount) { if (amount > 0) balance += amount; }\n    int getBalance() const { return balance; }\n};\n\nint main() {\n    Wallet w(1000);\n    w.deposit(250);\n    std::cout << w.getBalance() << \"\\n\";\n    return 0;\n}",
+      "quiz": {
+        "question": "What most accurately describes encapsulation?",
+        "answers": [
+          "Any use of private",
+          "Controlling object state through a stable interface while preserving invariants",
+          "Making every class inherit from another"
+        ],
+        "correctIndex": 1
+      },
+      "requirements": [
+        "class Wallet",
+        "private:",
+        "deposit",
+        "getBalance"
+      ],
+      "terms": [
+        [
+          "OOP",
+          "Object-Oriented Programming: organizing software around types, objects, and responsibility"
+        ],
+        [
+          "class",
+          "a user-defined type describing state, operations, and access rules"
+        ],
+        [
+          "object",
+          "a concrete runtime instance of a type"
+        ],
+        [
+          "encapsulation",
+          "protecting invariants and hiding implementation details behind a controlled interface"
+        ],
+        [
+          "inheritance",
+          "defining a specialized type from a base type"
+        ],
+        [
+          "polymorphism",
+          "using a common interface while concrete types provide different behavior"
+        ]
+      ],
+      "visualization": "oop",
+      "benchmark": {
+        "standardVersion": "1.2",
+        "interactiveModelVersion": "1.0",
+        "status": "benchmark-complete",
+        "labels": {
+          "insideTitle": "Class → object → interface → dispatch",
+          "walkTitle": "Reading object-oriented code"
+        },
+        "whyItMatters": "OOP becomes valuable when it creates clear responsibility boundaries, not merely when code contains the class keyword. A type can guarantee valid state, hide changeable implementation details, and provide a stable interface. These ideas underpin library APIs, GUI systems, games, services, domain models, and large C++ applications.",
+        "outcomes": [
+          "Distinguish class, object, state, behavior, and invariant.",
+          "Explain public/private/protected as access-control mechanisms rather than decoration.",
+          "Design a small class whose callers do not need direct access to internal state.",
+          "Distinguish composition from inheritance and use inheritance only for a stable is-a relationship.",
+          "Understand virtual, override, and dynamic dispatch through a base reference or pointer.",
+          "Explain object slicing and the role of a virtual destructor in a polymorphic base.",
+          "Use Nexus Sandbox and the interactive OOP model to test design reasoning."
+        ],
+        "prerequisites": [
+          "You already know functions, parameters, scope, and basic C++ types.",
+          "You understand a reference as an alias from the pointers/references lesson.",
+          "You do not need to know vtables or compiler internals in advance.",
+          "The Nexus model teaches language semantics; the concrete virtual-dispatch implementation depends on compiler and ABI."
+        ],
+        "quickUnderstand": [
+          "A class describes a type; an object is a concrete instance.",
+          "Object state lives in data members; methods define permitted operations.",
+          "private blocks ordinary external access and helps the class preserve invariants.",
+          "A public interface is a promise to callers and should usually remain small.",
+          "Public inheritance usually expresses “Derived is a kind of Base”; otherwise composition is often better.",
+          "virtual allows a call through a base reference/pointer to select an override based on the actual dynamic type.",
+          "override asks the compiler to verify that a derived method truly overrides a virtual base method.",
+          "OOP does not mean deep hierarchies: modern C++ combines values, composition, RAII, algorithms, and polymorphism where appropriate."
+        ],
+        "fullTheory": {
+          "lead": "Build one model in order: user-defined type → object state → invariant → public interface → composition → inheritance → virtual dispatch. Then the classic OOP terms become engineering tools instead of slogans.",
+          "sections": [
+            {
+              "title": "1. OOP as responsibility design",
+              "paragraphs": [
+                "Procedural thinking asks which steps to perform. Object design adds: which component owns this state and is responsible for keeping it valid? The approaches work together; a method still contains an algorithm.",
+                "The benefit appears at scale: local type rules reduce the number of places that can accidentally break state.",
+                "C++ is multiparadigm, so OOP is a tool rather than a mandatory religion."
+              ]
+            },
+            {
+              "title": "2. Class and object are different",
+              "paragraphs": [
+                "class Counter { ... }; describes a type. It does not create a particular counter object.",
+                "Counter c(10); creates a concrete Counter instance with its own value state.",
+                "Many objects may share one class definition while each object has its own identity, state, and lifetime."
+              ]
+            },
+            {
+              "title": "3. State, behavior, and invariant",
+              "paragraphs": [
+                "State is the current values of an object's data members; behavior is the set of operations offered by the type.",
+                "An invariant is a condition that must remain true for a valid object—for example, a balance may be required to stay non-negative.",
+                "A good class is built around invariants: construction creates a valid state and public operations do not let callers break it."
+              ]
+            },
+            {
+              "title": "4. private, public, and protected",
+              "paragraphs": [
+                "private members are inaccessible to ordinary external code and separate implementation details from the public contract.",
+                "public members form the external interface. The less callers know about internals, the easier implementation changes become.",
+                "protected exposes members to derived classes and should be used carefully because wide protected state tightly couples an inheritance hierarchy."
+              ]
+            },
+            {
+              "title": "5. Encapsulation is broader than private",
+              "paragraphs": [
+                "A class may have private fields and still be poorly encapsulated if it exposes trivial setters/getters that allow contradictory states.",
+                "Encapsulation is control: the object enforces its rules through meaningful operations such as deposit(), withdraw(), or rename().",
+                "The public API should express domain actions rather than mirror raw storage."
+              ]
+            },
+            {
+              "title": "6. Construction and valid initial state",
+              "paragraphs": [
+                "A constructor participates in object creation and should establish a coherent initial state.",
+                "Counter(int start) : value(start) {} initializes value before entering the constructor body.",
+                "Invalid inputs need an explicit contract: reject construction, normalize only when that behavior is intentional, or report failure appropriately."
+              ]
+            },
+            {
+              "title": "7. const member functions",
+              "paragraphs": [
+                "int get() const promises not to modify the object through the ordinary const contract.",
+                "This allows the method to be called on const objects and documents observation rather than mutation.",
+                "const-correctness is part of the type's interface: it communicates which operations are state-changing."
+              ]
+            },
+            {
+              "title": "8. Composition: objects containing objects",
+              "paragraphs": [
+                "Composition models has-a: Car has an Engine; Order has LineItems.",
+                "Composition is often simpler than inheritance because dependencies are explicit and reusable components do not claim a subtype relationship.",
+                "Start by considering values and composition; use inheritance when callers genuinely need a common type."
+              ]
+            },
+            {
+              "title": "9. Inheritance and is-a",
+              "paragraphs": [
+                "class BonusAccount : public Account defines a derived type. Public inheritance usually promises that BonusAccount can be used where Account is expected.",
+                "The derived class receives the accessible base interface and may add specialization; private base state does not become directly accessible derived state.",
+                "Inheritance only for code reuse creates brittle designs. Reuse and subtyping are different goals."
+              ]
+            },
+            {
+              "title": "10. virtual and dynamic type",
+              "paragraphs": [
+                "A non-virtual call is selected from static type information. A virtual call through a base interface may select an override based on the actual dynamic type.",
+                "If Account& view refers to BonusAccount and kind() is virtual, view.kind() can execute BonusAccount::kind().",
+                "The C++ standard specifies behavior but does not require a particular vtable layout. A virtual table is a common ABI technique, not a literal language object."
+              ]
+            },
+            {
+              "title": "11. override as intent checking",
+              "paragraphs": [
+                "override marks a derived member that is expected to override a virtual base member.",
+                "If the signature is accidentally different, the compiler reports the problem instead of silently creating an unrelated overload/member.",
+                "It is a low-cost automatic check of architectural intent."
+              ]
+            },
+            {
+              "title": "12. Base references and pointers",
+              "paragraphs": [
+                "Runtime polymorphism is commonly used through Base& or Base*. A reference fits a required object; a pointer can represent optionality/address semantics.",
+                "A base reference does not copy the derived object, so the dynamic type remains derived.",
+                "This is why pointers and references were a prerequisite for the OOP benchmark."
+              ]
+            },
+            {
+              "title": "13. Object slicing",
+              "paragraphs": [
+                "Copying a derived object by value into a base object discards the derived part because the destination is a separate Base object.",
+                "Polymorphic APIs therefore commonly take Base& or Base* rather than Base by value.",
+                "Slicing demonstrates how value semantics and object models interact in C++."
+              ]
+            },
+            {
+              "title": "14. Abstract classes and pure virtual functions",
+              "paragraphs": [
+                "virtual void draw() = 0; is pure virtual. A class with a pure virtual function is abstract and cannot be directly instantiated.",
+                "Such a type can express a common interface that concrete derived classes must implement.",
+                "Use abstract interfaces when the system genuinely needs interchangeable implementations under one contract."
+              ]
+            },
+            {
+              "title": "15. Virtual destructors in polymorphic bases",
+              "paragraphs": [
+                "If a derived object may be destroyed through a pointer to the base, the base destructor must be virtual as part of that design.",
+                "Otherwise deleting through Base* can cause undefined behavior and incomplete destruction of the derived object.",
+                "This applies to polymorphic bases intended for that ownership/deletion pattern."
+              ]
+            },
+            {
+              "title": "16. Practical modern C++ design",
+              "paragraphs": [
+                "Start with simple values, small types, and explicit invariants. Add inheritance/virtual only when a real common interface and substitutability are needed.",
+                "Prefer composition for implementation reuse and RAII for resource management.",
+                "A strong class reduces the number of invalid states callers must reason about and makes incorrect operations difficult or impossible."
+              ]
+            }
+          ]
+        },
+        "glossary": [
+          {
+            "term": "OOP",
+            "full": "Object-Oriented Programming",
+            "definition": "A programming paradigm that organizes software around types, objects, state, and responsibility.",
+            "example": "Wallet manages balance through its own operations."
+          },
+          {
+            "term": "class",
+            "full": "class",
+            "definition": "A user-defined type describing data, operations, and access rules.",
+            "example": "class Counter { ... };"
+          },
+          {
+            "term": "object",
+            "full": "object",
+            "definition": "A concrete runtime instance of a type with its own state and lifetime.",
+            "example": "Counter c(10);"
+          },
+          {
+            "term": "state",
+            "full": "object state",
+            "definition": "The current values of an object's data members.",
+            "example": "balance = 1250."
+          },
+          {
+            "term": "invariant",
+            "full": "class invariant",
+            "definition": "A condition that should remain true for every valid object state.",
+            "example": "balance >= 0 when overdraft is forbidden."
+          },
+          {
+            "term": "member",
+            "full": "class member",
+            "definition": "A data member, member function, nested type, or other entity declared in a class.",
+            "example": "value is a data member of Counter."
+          },
+          {
+            "term": "method",
+            "full": "member function",
+            "definition": "A function declared as a member of a class.",
+            "example": "c.add(5)."
+          },
+          {
+            "term": "constructor",
+            "full": "constructor",
+            "definition": "A special member involved in creating and initializing an object.",
+            "example": "Counter(int start) : value(start) {}"
+          },
+          {
+            "term": "destructor",
+            "full": "destructor",
+            "definition": "A special member executed as an object lifetime ends.",
+            "example": "virtual ~Base() {}"
+          },
+          {
+            "term": "encapsulation",
+            "full": "encapsulation",
+            "definition": "Controlling state and hiding implementation details behind a stable interface and invariants.",
+            "example": "balance is private and changes through deposit()."
+          },
+          {
+            "term": "access control",
+            "full": "access control",
+            "definition": "public/private/protected rules that restrict member access.",
+            "example": "main cannot directly assign a private field."
+          },
+          {
+            "term": "interface",
+            "full": "public interface",
+            "definition": "The operations and guarantees exposed to callers.",
+            "example": "deposit(), withdraw(), getBalance()."
+          },
+          {
+            "term": "composition",
+            "full": "composition",
+            "definition": "A has-a relationship where an object contains or uses other objects.",
+            "example": "Car has an Engine."
+          },
+          {
+            "term": "inheritance",
+            "full": "inheritance",
+            "definition": "Defining a specialized derived type from a base type.",
+            "example": "class BonusAccount : public Account."
+          },
+          {
+            "term": "base class",
+            "full": "base class",
+            "definition": "The class from which another class derives.",
+            "example": "Account is the base of BonusAccount."
+          },
+          {
+            "term": "derived class",
+            "full": "derived class",
+            "definition": "A class declared as inheriting from a base class.",
+            "example": "BonusAccount is derived."
+          },
+          {
+            "term": "virtual",
+            "full": "virtual function",
+            "definition": "A member for which a call through a base interface may select an override by dynamic type.",
+            "example": "virtual const char* kind() const."
+          },
+          {
+            "term": "override",
+            "full": "override specifier",
+            "definition": "A compiler-checked declaration that a derived member overrides a virtual base member.",
+            "example": "kind() const override."
+          },
+          {
+            "term": "dynamic dispatch",
+            "full": "dynamic dispatch",
+            "definition": "Runtime selection of a virtual override based on the actual object type.",
+            "example": "Account& view = bonus; view.kind() calls BonusAccount::kind()."
+          },
+          {
+            "term": "polymorphism",
+            "full": "runtime polymorphism",
+            "definition": "Using one base interface with objects of different concrete types.",
+            "example": "A function accepts Shape& and calls virtual draw()."
+          },
+          {
+            "term": "abstract class",
+            "full": "abstract class",
+            "definition": "A class that cannot be instantiated directly because it contains pure virtual members.",
+            "example": "class Shape { virtual void draw() = 0; };"
+          },
+          {
+            "term": "pure virtual",
+            "full": "pure virtual function",
+            "definition": "A virtual function declared with = 0 to define an interface requirement.",
+            "example": "virtual double area() const = 0;"
+          },
+          {
+            "term": "object slicing",
+            "full": "object slicing",
+            "definition": "Loss of the derived portion when a derived object is copied by value into a base object.",
+            "example": "Base b = derived;"
+          },
+          {
+            "term": "ABI",
+            "full": "Application Binary Interface",
+            "definition": "Platform conventions governing binary calls and object representation.",
+            "example": "A vtable is a common ABI implementation technique, not a C++ language requirement."
+          }
+        ],
+        "interactiveOop": {
+          "title": "Interactive object and polymorphism model",
+          "description": "Step through class definition, object state, encapsulated updates, inheritance, a base reference, and virtual dispatch.",
+          "steps": [
+            {
+              "title": "Define the base type",
+              "phase": "class",
+              "balance": 1000,
+              "bonusRate": 0,
+              "derived": false,
+              "baseRef": false,
+              "dispatch": "Account::kind()",
+              "explanation": "Account defines an interface and private balance state; this is a type model, not yet a particular object."
+            },
+            {
+              "title": "Create an object",
+              "phase": "object",
+              "balance": 1000,
+              "bonusRate": 0,
+              "derived": false,
+              "baseRef": false,
+              "dispatch": "Account::kind()",
+              "explanation": "Account wallet(1000) creates one object and construction establishes valid initial state."
+            },
+            {
+              "title": "Change state through the interface",
+              "phase": "encapsulation",
+              "balance": 1250,
+              "bonusRate": 0,
+              "derived": false,
+              "baseRef": false,
+              "dispatch": "Account::kind()",
+              "explanation": "wallet.deposit(250) updates private balance through a public operation rather than direct external field access."
+            },
+            {
+              "title": "Add a specialization",
+              "phase": "inheritance",
+              "balance": 1250,
+              "bonusRate": 5,
+              "derived": true,
+              "baseRef": false,
+              "dispatch": "BonusAccount::kind()",
+              "explanation": "BonusAccount publicly derives from Account and adds bonusRate while preserving the base contract."
+            },
+            {
+              "title": "Bind a base reference",
+              "phase": "base-ref",
+              "balance": 1250,
+              "bonusRate": 5,
+              "derived": true,
+              "baseRef": true,
+              "dispatch": "BonusAccount::kind()",
+              "explanation": "Account& view = bonus refers to the same BonusAccount object without copying it."
+            },
+            {
+              "title": "Virtual dispatch",
+              "phase": "dispatch",
+              "balance": 1250,
+              "bonusRate": 5,
+              "derived": true,
+              "baseRef": true,
+              "dispatch": "BonusAccount::kind()",
+              "explanation": "view.kind() selects the override using the dynamic type. This is runtime polymorphism."
+            }
+          ]
+        },
+        "inside": [
+          {
+            "title": "Type",
+            "text": "class defines structure, access rules, and operations; declaring a class does not instantiate an object."
+          },
+          {
+            "title": "Object",
+            "text": "Construction creates a concrete instance and should establish invariants."
+          },
+          {
+            "title": "Encapsulation",
+            "text": "Private state is changed through meaningful public operations rather than arbitrary external writes."
+          },
+          {
+            "title": "Inheritance",
+            "text": "Derived publicly inherits Base when it genuinely models a subtype that callers can use through the Base contract."
+          },
+          {
+            "title": "Base reference",
+            "text": "Base& can refer to a Derived object without copying and without slicing."
+          },
+          {
+            "title": "Virtual dispatch",
+            "text": "A virtual call through Base& selects an override according to the object's dynamic type at runtime."
+          }
+        ],
+        "walkthrough": [
+          {
+            "line": "class Counter {",
+            "explanation": "Begin the definition of a user-defined Counter type."
+          },
+          {
+            "line": "private: int value;",
+            "explanation": "value is private state and ordinary external code cannot access it directly."
+          },
+          {
+            "line": "Counter(int start) : value(start) {}",
+            "explanation": "Construction establishes initial state."
+          },
+          {
+            "line": "void add(int delta) { value += delta; }",
+            "explanation": "A public operation controls state mutation."
+          },
+          {
+            "line": "int get() const { return value; }",
+            "explanation": "A const observer exposes state without promising mutation."
+          },
+          {
+            "line": "Counter c(10);",
+            "explanation": "Create one concrete c object with its own value state."
+          },
+          {
+            "line": "c.add(5);",
+            "explanation": "Caller uses the public interface rather than touching private storage."
+          },
+          {
+            "line": "std::cout << c.get();",
+            "explanation": "Read through the interface while representation remains an implementation detail."
+          }
+        ],
+        "experiments": [
+          {
+            "title": "Attempt direct private access",
+            "change": "Add c.value = 100; in main.",
+            "predict": "The compiler should reject the access.",
+            "explanation": "Access control enforces the class boundary; state should change through allowed operations."
+          },
+          {
+            "title": "Create a second object",
+            "change": "Add Counter d(50); and modify only d.",
+            "predict": "c remains unchanged.",
+            "explanation": "Objects of the same class keep independent state."
+          },
+          {
+            "title": "Remove const from get()",
+            "change": "Remove the trailing const and consider const Counter x(5);.",
+            "predict": "x.get() is no longer callable.",
+            "explanation": "const member functions are part of the read-only contract."
+          },
+          {
+            "title": "Compare virtual and non-virtual",
+            "change": "In a full C++ provider, call similarly named virtual and non-virtual members through Base&.",
+            "predict": "Virtual selects the derived override; non-virtual follows static type resolution.",
+            "explanation": "Runtime polymorphism depends on a virtual contract."
+          }
+        ],
+        "errors": [
+          {
+            "title": "Public mutable state",
+            "wrongCode": "class Wallet { public: int balance; };",
+            "symptom": "Any caller may write inconsistent state.",
+            "reason": "The type does not protect its invariant and exposes storage details.",
+            "fix": "Keep state private and expose domain operations such as deposit/withdraw/query."
+          },
+          {
+            "title": "Inheritance only for reuse",
+            "wrongCode": "class Engine : public Car { /* need one method */ };",
+            "symptom": "The hierarchy is logically strange and brittle.",
+            "reason": "There is no is-a relationship; code reuse was confused with subtyping.",
+            "fix": "Prefer composition when the relationship is has-a or uses-a."
+          },
+          {
+            "title": "Missing override check",
+            "wrongCode": "struct D: B { void draw(int x) { } };",
+            "symptom": "A base call may use an unexpected implementation.",
+            "reason": "The derived signature does not match and the compiler was not asked to verify override intent.",
+            "fix": "Use override and correct the signature."
+          },
+          {
+            "title": "Object slicing",
+            "wrongCode": "Derived d;\nBase b = d;\nb.virtualMethod();",
+            "symptom": "Derived-specific state/behavior is lost in the copied Base object.",
+            "reason": "A separate Base object was created by value.",
+            "fix": "Use Base& or Base* for runtime polymorphism and manage lifetime explicitly."
+          }
+        ],
+        "practice": [
+          {
+            "level": "Foundation",
+            "title": "Protect an invariant",
+            "prompt": "Create Temperature with private value and setCelsius() accepting only -273..1000, plus getCelsius() const.",
+            "hint": "Do not let callers assign value directly."
+          },
+          {
+            "level": "Intermediate",
+            "title": "Composition instead of inheritance",
+            "prompt": "Design Order containing PaymentInfo as a member rather than inheriting from it. Explain the has-a relationship.",
+            "hint": "Ask whether “Order is a PaymentInfo” is actually true."
+          },
+          {
+            "level": "Transfer",
+            "title": "Polymorphic interface",
+            "prompt": "Define Shape with virtual area() const and derived Circle/Rectangle. printArea accepts const Shape&.",
+            "hint": "Do not copy a derived object into Shape by value."
+          }
+        ],
+        "lab": {
+          "title": "Design a safe Account",
+          "goal": "Combine invariants, interface, inheritance, and virtual dispatch without exposing state unnecessarily.",
+          "steps": [
+            "Create Account with private balance and a constructor.",
+            "Add deposit/withdraw so invalid amounts and overdraft are rejected.",
+            "Add getBalance() const.",
+            "Add virtual kind() const and a virtual base destructor.",
+            "Create BonusAccount : public Account with bonusRate and an override of kind().",
+            "Create BonusAccount bonus and Account& view = bonus.",
+            "Call view.kind() and explain why the derived implementation is selected.",
+            "Explain why direct external access to balance is not part of the public contract."
+          ],
+          "proof": "You can identify the actual object, its state, the operations preserving its invariant, why Base& does not copy it, and how a virtual call selects the override."
+        },
+        "knowledgeCheck": [
+          {
+            "question": "What is an object relative to a class?",
+            "answers": [
+              "A synonym for the class",
+              "A concrete instance of the type with its own state and lifetime",
+              "Only a class method"
+            ],
+            "correctIndex": 1,
+            "explanation": "A class describes a type; an object is a concrete instance."
+          },
+          {
+            "question": "Why does private alone not guarantee good encapsulation?",
+            "answers": [
+              "private is forbidden in C++",
+              "Trivial setters/getters may still expose all details and allow invalid states",
+              "private only works with inheritance"
+            ],
+            "correctIndex": 1,
+            "explanation": "Encapsulation is the design of stable operations and invariants, not merely access syntax."
+          },
+          {
+            "question": "When is public inheritance most appropriate?",
+            "answers": [
+              "For any code reuse",
+              "When Derived should be validly usable as a kind of Base",
+              "When a field must be hidden"
+            ],
+            "correctIndex": 1,
+            "explanation": "Public inheritance models a subtype/is-a contract."
+          },
+          {
+            "question": "What does override provide?",
+            "answers": [
+              "It makes a method virtual without a base",
+              "Compiler verification that a derived method overrides a virtual base member",
+              "It disables inheritance"
+            ],
+            "correctIndex": 1,
+            "explanation": "override catches accidental signature mismatches."
+          },
+          {
+            "question": "Why is Base b = derived; problematic for runtime polymorphism?",
+            "answers": [
+              "Object slicing occurs",
+              "Base is always abstract",
+              "Derived is deleted"
+            ],
+            "correctIndex": 0,
+            "explanation": "Copying by value creates a separate Base and discards the derived portion."
+          },
+          {
+            "question": "Why can a polymorphic base need a virtual destructor?",
+            "answers": [
+              "To destroy the real derived object correctly through Base*",
+              "To speed up construction",
+              "To make private public"
+            ],
+            "correctIndex": 0,
+            "explanation": "Deletion through a base pointer requires an appropriate virtual destructor when that ownership pattern is supported."
+          }
+        ],
+        "sandboxModel": {
+          "title": "Nexus Sandbox · OOP Lab",
+          "description": "Practice classes and methods inside Nexus while the interactive OOP model explains inheritance and dispatch independently of Browser Runtime limits.",
+          "points": [
+            "Editor and stdout remain inside Nexus.",
+            "Task validation checks class/private/method requirements.",
+            "The OOP model explains object state and virtual dispatch independent of the runtime provider.",
+            "Future WASM/secure build providers will support full modern C++ in the same UI."
+          ],
+          "limit": "Browser Runtime remains a fast educational provider; advanced hierarchies, full STL, and project builds move to extended providers without changing the Nexus Sandbox experience."
+        },
+        "skillGraph": {
+          "strengthens": [
+            "cpp.oop.class-object",
+            "cpp.oop.encapsulation",
+            "cpp.oop.invariants",
+            "cpp.oop.inheritance",
+            "cpp.oop.virtual-dispatch",
+            "cpp.const.correctness"
+          ],
+          "unlocks": [
+            "cpp.classes.state-control",
+            "cpp.constructors.destructors",
+            "cpp.raii.resource-owners",
+            "cpp.design.composition",
+            "cpp.project-studio.architecture"
+          ]
+        },
+        "summary": [
+          "I distinguish class from object.",
+          "I can state a class invariant and protect it with a public interface.",
+          "I understand that private is a means, not the end of encapsulation.",
+          "I distinguish has-a composition from is-a inheritance.",
+          "I understand Base&, dynamic type, virtual, and override.",
+          "I can explain object slicing.",
+          "I know when a polymorphic base needs a virtual destructor."
+        ],
+        "modernNotes": [
+          "Prefer small types with clear invariants.",
+          "Use composition by default for implementation reuse; inheritance for genuine subtyping/interfaces.",
+          "Mark overrides with override.",
+          "Polymorphic APIs commonly use references/pointers and must document ownership/lifetime.",
+          "RAII and value semantics remain foundational in modern C++ object design."
+        ],
+        "historicalContext": "C++ object orientation grew from Simula-inspired ideas and early C with Classes. Modern C++ retains classes, inheritance, and virtual dispatch while combining them with value semantics, RAII, generic programming, and composition."
+      }
+    },
+    {
+      "id": "cpp.functions-contracts",
+      "legacyIndex": null,
+      "order": 41,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "Functions: parameters, results, and contracts",
+      "description": "Separate validation, computation, and presentation so a small function can be checked without a console.",
+      "theory": [
+        "Separate validation, computation, and presentation so a small function can be checked without a console."
+      ],
+      "deep": "Duplicating code duplicates defects. A function names an operation and defines a responsibility boundary, but it helps only when inputs, outputs, and side effects are clear.",
+      "analogy": "Next: array, vector, and span: ownership and views. Preserve the lab and its verification table.",
+      "commonMistake": "Do not assign result before every check succeeds. Do not return a reference to a local variable.",
+      "code": "#include <iostream>\nint copied(int value) { ++value; return value; }\nvoid changed(int& value) { ++value; }\nint main() {\n    int original{4};\n    int result = copied(original);\n    std::cout << original << ' ' << result << '\\n';\n    changed(original);\n    std::cout << original << '\\n';\n}\n",
+      "task": "Implement bool checkedArea(int w,int h,int& result): dimensions are 0…1000 and rejection leaves result unchanged. main reads exactly two dimensions and prints the area or invalid.",
+      "hint": "Identify input, state, and observable output first.",
+      "solution": "#include <iostream>\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+      "quiz": {
+        "question": "What happens when an int is passed by value?",
+        "answers": [
+          "A reference to the original int is created",
+          "The parameter holds a separate value",
+          "The original int is deleted"
+        ],
+        "correctIndex": 1
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Contract",
+          "caller obligations and operation guarantees."
+        ],
+        [
+          "Side effect",
+          "an observable change beyond the return value."
+        ],
+        [
+          "Argument",
+          "an expression supplied in a function call."
+        ],
+        [
+          "Parameter",
+          "a local input name in a function declaration."
+        ],
+        [
+          "Precondition",
+          "an obligation before performing an operation."
+        ],
+        [
+          "Postcondition",
+          "a guarantee after an operation whose preconditions hold."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.standard-sequences",
+      "legacyIndex": null,
+      "order": 42,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "array, vector, and span: ownership and views",
+      "description": "Choose a container according to size requirements and pass its data to a function without losing bounds.",
+      "theory": [
+        "Choose a container according to size requirements and pass its data to a function without losing bounds."
+      ],
+      "deep": "A pointer alone does not carry a length, and manual allocation distracts from the algorithm. Standard containers provide an explicit size and lifetime foundation.",
+      "analogy": "Next: One-dimensional arrays: indexing, filtering, and search. Preserve the lab and its verification table.",
+      "commonMistake": "Do not use a span after vector reallocation; create it after filling the vector.",
+      "code": "#include <iostream>\n#include <array>\n#include <vector>\n#include <span>\nint sum(std::span<const int> values) {\n    int result{};\n    for (int value : values) { result += value; }\n    return result;\n}\nint main() {\n    std::array<int, 3> a{1, 2, 3};\n    std::vector<int> v{4, 5};\n    int raw[2]{6, 7};\n    std::cout << sum(a) << ' ' << sum(v) << ' ' << sum(raw) << ' ' << sum(std::span<const int>{}) << '\\n';\n}\n",
+      "task": "Read n in 0…100 and n values in -1000…1000 into a vector. A span<const int> function computes the sum; print size and sum. Reject extra input as invalid.",
+      "hint": "Identify input, state, and observable output first.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <span>\nlong long sum(std::span<const int> values) {\n    long long result{};\n    for (int value : values) { result += value; }\n    return result;\n}\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    std::vector<int> values;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        values.push_back(value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << values.size() << ' ' << sum(values) << '\\n';\n}\n",
+      "quiz": {
+        "question": "What does reserve(10) change for an empty vector?",
+        "answers": [
+          "Capacity, but not the element count",
+          "It makes v[9] valid",
+          "It creates ten ints"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Owner",
+          "an object managing the lifetime of stored elements."
+        ],
+        [
+          "View",
+          "access to another object’s elements under an explicit lifetime constraint."
+        ],
+        [
+          "size",
+          "the number of existing elements."
+        ],
+        [
+          "capacity",
+          "vector storage capacity before reallocation is needed."
+        ],
+        [
+          "reserve",
+          "increasing available capacity without creating elements."
+        ],
+        [
+          "Invalidation",
+          "loss of validity of an earlier address or view."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.lifetime-ownership",
+      "legacyIndex": null,
+      "order": 43,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "Lifetime, RAII, and unique ownership",
+      "description": "Trace resource creation and destruction and distinguish an owner from a short-lived observer.",
+      "theory": [
+        "Trace resource creation and destruction and distinguish an owner from a short-lived observer."
+      ],
+      "deep": "Linked structures need objects to outlive a single expression. Without an ownership model, leaks, double release, and dangling references are easy to create.",
+      "analogy": "Next: Formatted output: values and representations. Preserve the lab and its verification table.",
+      "commonMistake": "Do not generalize unique_ptr emptiness to all moved-from types. Never execute dangling access.",
+      "code": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    Trace first{1};\n    { Trace second{2}; }\n    std::cout << \"end\\n\";\n}\n",
+      "task": "Create an object with value in 0…1000 using make_unique, move its owner, increment value, and release it. Print create N, moved 1 1, value N+1, destroy N+1. Invalid input prints invalid.",
+      "hint": "Identify input, state, and observable output first.",
+      "solution": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    int value{};\n    if (!(std::cin >> value)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || value < 0 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n    auto owner = std::make_unique<Trace>(value);\n    auto next = std::move(owner);\n    std::cout << \"moved \" << (!owner) << ' ' << bool(next) << '\\n';\n    ++next->value;\n    std::cout << \"value \" << next->value << '\\n';\n    next.reset();\n}\n",
+      "quiz": {
+        "question": "What is guaranteed for unique_ptr p after q=std::move(p)?",
+        "answers": [
+          "p is empty and q owns the previous object",
+          "The object necessarily changes address",
+          "Both own the object"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "RAII",
+          "resource management through object initialization and destruction."
+        ],
+        [
+          "Dangling observer",
+          "an address or view whose object no longer exists."
+        ],
+        [
+          "unique_ptr",
+          "a movable but noncopyable unique object owner."
+        ],
+        [
+          "make_unique",
+          "creating an object together with its unique_ptr."
+        ],
+        [
+          "Destructor",
+          "a special function invoked at object lifetime end."
+        ],
+        [
+          "move",
+          "permitting a move operation rather than copying memory by itself."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.testing-diagnostics",
+      "legacyIndex": null,
+      "order": 44,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "Testing: contracts, defects, and regression",
+      "description": "Build a small test driver and distinguish a program defect from a build error or environment limitation.",
+      "theory": [
+        "Build a small test driver and distinguish a program defect from a build error or environment limitation."
+      ],
+      "deep": "One successful run does not check boundary behaviour. Repeatable tests turn a discovered defect into protection against its return.",
+      "analogy": "Next: Multifile builds: headers, translation units, and ODR. Preserve the lab and its verification table.",
+      "commonMistake": "Do not derive expected values by running the function under test. Do not classify provider limits as learner knowledge errors.",
+      "code": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 3> values{-2, 0, 4};\n    bool pass = countPositive(values) == 1;\n    std::cout << (pass ? \"PASS\\n\" : \"FAIL\\n\");\n    return pass ? 0 : 1;\n}\n",
+      "task": "Write countPositive(span<const int>) and a driver with five independent datasets including empty, zero, and mixed-sign cases. Print PASS 5 on success; on mismatch print FAIL and return a nonzero exit code.",
+      "hint": "Identify input, state, and observable output first.",
+      "solution": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 1> zero{0};\n    std::array<int, 1> negative{-1};\n    std::array<int, 3> mixed{-2, 0, 4};\n    std::array<int, 3> positive{1, 2, 3};\n    int failures{};\n    if (countPositive(std::span<const int>{}) != 0) { ++failures; }\n    if (countPositive(zero) != 0) { ++failures; }\n    if (countPositive(negative) != 0) { ++failures; }\n    if (countPositive(mixed) != 1) { ++failures; }\n    if (countPositive(positive) != 3) { ++failures; }\n    if (failures != 0) { std::cout << \"FAIL\\n\"; return 1; }\n    std::cout << \"PASS 5\\n\";\n}\n",
+      "quiz": {
+        "question": "Is assert sufficient to validate user input?",
+        "answers": [
+          "No; it may disappear with NDEBUG",
+          "Only for strings",
+          "Yes, in every build"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Regression",
+          "recurrence of a previously fixed defect."
+        ],
+        [
+          "Oracle",
+          "an independent rule determining the expected result."
+        ],
+        [
+          "Unit test",
+          "checking one operation through its interface."
+        ],
+        [
+          "Integration test",
+          "checking several parts working together."
+        ],
+        [
+          "Mutation",
+          "a safe implementation change used to assess test discrimination."
+        ],
+        [
+          "Exit code",
+          "the numeric status returned by a program."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.multifile-build",
+      "legacyIndex": null,
+      "order": 45,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "Multifile builds: headers, translation units, and ODR",
+      "description": "Separate interface and implementation, building the application and test driver as distinct programs.",
+      "theory": [
+        "Separate interface and implementation, building the application and test driver as distinct programs."
+      ],
+      "deep": "Copying functions between files does not scale. Correct declarations support separate compilation and identify failures at the right stage.",
+      "analogy": "Next: Files: formats, failures, and explicit saving. Preserve the lab and its verification table.",
+      "commonMistake": "Do not include .cpp files or link two mains together. A header guard is not a program-wide definition registry.",
+      "code": "#include <iostream>\nint twice(int);\nint main() { std::cout << twice(6) << '\\n'; }\nint twice(int value) { return 2 * value; }\n",
+      "task": "Split checkedArea across include/domain.hpp, src/domain.cpp, and main.cpp. Read two dimensions in 0…1000 and print the area or invalid. Build a separate test driver without linking two mains into the application.",
+      "hint": "Identify input, state, and observable output first.",
+      "solution": "#include <iostream>\n#include \"domain.hpp\"\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+      "quiz": {
+        "question": "Does a header guard prevent an ordinary function body appearing in two TUs?",
+        "answers": [
+          "Only on a phone",
+          "Yes, across the whole program",
+          "No; a guard works within one TU"
+        ],
+        "correctIndex": 2
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "TU",
+          "a source file after includes and directives are processed."
+        ],
+        [
+          "Linking",
+          "combining compiled parts and resolving external names."
+        ],
+        [
+          "Declaration",
+          "describing a name and type without necessarily supplying a body."
+        ],
+        [
+          "Definition",
+          "supplying an implementation or object under language rules."
+        ],
+        [
+          "Header guard",
+          "preventing repeated inclusion within one TU."
+        ],
+        [
+          "ODR",
+          "rules for definition uniqueness and consistency."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    }
+  ]
+}

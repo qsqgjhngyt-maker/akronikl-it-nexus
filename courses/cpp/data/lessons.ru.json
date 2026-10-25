@@ -4193,6 +4193,291 @@
         "Исходный раздел ориентирован на MS Visual C++ 2010 и Windows Forms: IDE, создание Windows-приложений, элементы управления и обработчики событий.",
         "PDF требует пошагово изучить руководства Microsoft и отмечает, что курсовые работы должны использовать Windows Forms. В v7 этот материал сохранён как исторический маршрут и дополнен современным принципом отделения GUI от бизнес-логики."
       ]
+    },
+    {
+      "id": "cpp.functions-contracts",
+      "legacyIndex": null,
+      "order": 41,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "Функции: параметры, результат и контракт",
+      "description": "Отделите проверку, вычисление и вывод, чтобы маленькую функцию можно было проверить без консоли.",
+      "theory": [
+        "Отделите проверку, вычисление и вывод, чтобы маленькую функцию можно было проверить без консоли."
+      ],
+      "deep": "Повторение фрагмента кода размножает ошибки. Функция задаёт именованную операцию и границу ответственности, но полезна лишь при понятных входах, выходах и побочных эффектах.",
+      "analogy": "Далее: array, vector и span: владелец и представление. Сохраните лабораторную и таблицу проверок.",
+      "commonMistake": "Не присваивайте result до завершения всех проверок. Не возвращайте ссылку на локальную переменную.",
+      "code": "#include <iostream>\nint copied(int value) { ++value; return value; }\nvoid changed(int& value) { ++value; }\nint main() {\n    int original{4};\n    int result = copied(original);\n    std::cout << original << ' ' << result << '\\n';\n    changed(original);\n    std::cout << original << '\\n';\n}\n",
+      "task": "Реализуйте bool checkedArea(int w,int h,int& result): размеры 0…1000, при отказе result неизменен. main читает ровно два размера и выводит площадь либо invalid.",
+      "hint": "Сначала выделите вход, состояние и наблюдаемый результат.",
+      "solution": "#include <iostream>\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+      "quiz": {
+        "question": "Что происходит при передаче int по значению?",
+        "answers": [
+          "Создаётся ссылка на исходный int",
+          "Параметр содержит отдельное значение",
+          "Исходный int удаляется"
+        ],
+        "correctIndex": 1
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Контракт",
+          "обязательства вызывающего кода и гарантии операции."
+        ],
+        [
+          "Побочный эффект",
+          "наблюдаемое изменение кроме возвращаемого значения."
+        ],
+        [
+          "Аргумент",
+          "выражение, переданное при вызове функции."
+        ],
+        [
+          "Параметр",
+          "локальное имя входа в объявлении функции."
+        ],
+        [
+          "Предусловие",
+          "обязательство перед выполнением операции."
+        ],
+        [
+          "Постусловие",
+          "гарантия после успешной операции при выполненных предусловиях."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.standard-sequences",
+      "legacyIndex": null,
+      "order": 42,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "array, vector и span: владелец и представление",
+      "description": "Выберите контейнер по размеру задачи и передайте его данные функции без потери границ.",
+      "theory": [
+        "Выберите контейнер по размеру задачи и передайте его данные функции без потери границ."
+      ],
+      "deep": "Указатель сам не сообщает длину, а ручное управление памятью отвлекает от алгоритма. Стандартные контейнеры позволяют начать с явного размера и времени жизни.",
+      "analogy": "Далее: Одномерные массивы: индексы, фильтрация и поиск. Сохраните лабораторную и таблицу проверок.",
+      "commonMistake": "Не используйте span после роста vector с перевыделением; создавайте его после заполнения.",
+      "code": "#include <iostream>\n#include <array>\n#include <vector>\n#include <span>\nint sum(std::span<const int> values) {\n    int result{};\n    for (int value : values) { result += value; }\n    return result;\n}\nint main() {\n    std::array<int, 3> a{1, 2, 3};\n    std::vector<int> v{4, 5};\n    int raw[2]{6, 7};\n    std::cout << sum(a) << ' ' << sum(v) << ' ' << sum(raw) << ' ' << sum(std::span<const int>{}) << '\\n';\n}\n",
+      "task": "Прочитайте n в 0…100 и n значений в -1000…1000 в vector. Функция со span<const int> считает сумму; выведите size и сумму. Лишний ввод — invalid.",
+      "hint": "Сначала выделите вход, состояние и наблюдаемый результат.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <span>\nlong long sum(std::span<const int> values) {\n    long long result{};\n    for (int value : values) { result += value; }\n    return result;\n}\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    std::vector<int> values;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        values.push_back(value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << values.size() << ' ' << sum(values) << '\\n';\n}\n",
+      "quiz": {
+        "question": "Что меняет reserve(10) у пустого vector?",
+        "answers": [
+          "Ёмкость, но не число элементов",
+          "Разрешает v[9]",
+          "Создаёт десять int"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Владелец",
+          "объект, управляющий временем жизни хранимых элементов."
+        ],
+        [
+          "Представление",
+          "доступ к чужим элементам с оговорённым временем жизни."
+        ],
+        [
+          "size",
+          "количество существующих элементов."
+        ],
+        [
+          "capacity",
+          "вместимость vector до необходимости перевыделения."
+        ],
+        [
+          "reserve",
+          "увеличение доступной ёмкости без создания элементов."
+        ],
+        [
+          "Инвалидирование",
+          "потеря допустимости ранее полученного адреса или вида."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.lifetime-ownership",
+      "legacyIndex": null,
+      "order": 43,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "Время жизни, RAII и единственное владение",
+      "description": "Проследите создание и разрушение ресурса и отделите владельца от краткоживущего наблюдателя.",
+      "theory": [
+        "Проследите создание и разрушение ресурса и отделите владельца от краткоживущего наблюдателя."
+      ],
+      "deep": "Связанные структуры требуют хранения объектов дольше одного выражения. Без модели владения легко получить утечку, двойное освобождение или висячую ссылку.",
+      "analogy": "Далее: Форматированный вывод: значение и представление. Сохраните лабораторную и таблицу проверок.",
+      "commonMistake": "Не переносите правило пустоты unique_ptr на все типы после move. Не запускайте dangling-доступ.",
+      "code": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    Trace first{1};\n    { Trace second{2}; }\n    std::cout << \"end\\n\";\n}\n",
+      "task": "Создайте через make_unique объект с value от 0 до 1000, перенесите владельца, увеличьте value на 1 и освободите. Выведите create N, moved 1 1, value N+1, destroy N+1. Неверный ввод — invalid.",
+      "hint": "Сначала выделите вход, состояние и наблюдаемый результат.",
+      "solution": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    int value{};\n    if (!(std::cin >> value)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || value < 0 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n    auto owner = std::make_unique<Trace>(value);\n    auto next = std::move(owner);\n    std::cout << \"moved \" << (!owner) << ' ' << bool(next) << '\\n';\n    ++next->value;\n    std::cout << \"value \" << next->value << '\\n';\n    next.reset();\n}\n",
+      "quiz": {
+        "question": "Что гарантировано для unique_ptr p после q=std::move(p)?",
+        "answers": [
+          "p пуст, q владеет прежним объектом",
+          "Объект обязательно меняет адрес",
+          "Оба владеют объектом"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "RAII",
+          "управление ресурсом через инициализацию и разрушение объекта."
+        ],
+        [
+          "Висячий наблюдатель",
+          "адрес или вид, чей объект уже не существует."
+        ],
+        [
+          "unique_ptr",
+          "перемещаемый, но не копируемый единственный владелец объекта."
+        ],
+        [
+          "make_unique",
+          "создание объекта вместе с его unique_ptr."
+        ],
+        [
+          "Деструктор",
+          "специальная функция при завершении жизни объекта."
+        ],
+        [
+          "move",
+          "разрешение операции перемещения, а не самостоятельное копирование памяти."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.testing-diagnostics",
+      "legacyIndex": null,
+      "order": 44,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "Тестирование: контракт, дефект и регрессия",
+      "description": "Постройте небольшой тестовый драйвер и отделите дефект программы от ошибки сборки и ограничения среды.",
+      "theory": [
+        "Постройте небольшой тестовый драйвер и отделите дефект программы от ошибки сборки и ограничения среды."
+      ],
+      "deep": "Показ одного удачного запуска не проверяет поведение на границах. Повторяемые тесты превращают обнаруженную ошибку в защиту от её возвращения.",
+      "analogy": "Далее: Многофайловая сборка: заголовки, TU и ODR. Сохраните лабораторную и таблицу проверок.",
+      "commonMistake": "Не получайте expected запуском проверяемой функции. Не считайте provider-limit ошибкой знания ученика.",
+      "code": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 3> values{-2, 0, 4};\n    bool pass = countPositive(values) == 1;\n    std::cout << (pass ? \"PASS\\n\" : \"FAIL\\n\");\n    return pass ? 0 : 1;\n}\n",
+      "task": "Напишите countPositive(span<const int>) и драйвер с пятью независимыми наборами, включая пустой, нули и смешанные знаки. Итог PASS 5; при любом несовпадении FAIL и ненулевой exit code.",
+      "hint": "Сначала выделите вход, состояние и наблюдаемый результат.",
+      "solution": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 1> zero{0};\n    std::array<int, 1> negative{-1};\n    std::array<int, 3> mixed{-2, 0, 4};\n    std::array<int, 3> positive{1, 2, 3};\n    int failures{};\n    if (countPositive(std::span<const int>{}) != 0) { ++failures; }\n    if (countPositive(zero) != 0) { ++failures; }\n    if (countPositive(negative) != 0) { ++failures; }\n    if (countPositive(mixed) != 1) { ++failures; }\n    if (countPositive(positive) != 3) { ++failures; }\n    if (failures != 0) { std::cout << \"FAIL\\n\"; return 1; }\n    std::cout << \"PASS 5\\n\";\n}\n",
+      "quiz": {
+        "question": "Достаточно ли assert для проверки пользовательского ввода?",
+        "answers": [
+          "Нет, при NDEBUG он может исчезнуть",
+          "Только для строк",
+          "Да, во всех сборках"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Регрессия",
+          "повторное появление ранее исправленного дефекта."
+        ],
+        [
+          "Oracle",
+          "независимое правило определения ожидаемого результата."
+        ],
+        [
+          "Unit-тест",
+          "проверка отдельной операции через её интерфейс."
+        ],
+        [
+          "Integration-тест",
+          "проверка совместной работы нескольких частей."
+        ],
+        [
+          "Mutation",
+          "безопасное изменение реализации для оценки различающей силы тестов."
+        ],
+        [
+          "Exit code",
+          "числовой статус завершения программы."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.multifile-build",
+      "legacyIndex": null,
+      "order": 45,
+      "sectionId": "cpp.section.structured-programming",
+      "title": "Многофайловая сборка: заголовки, TU и ODR",
+      "description": "Разделите интерфейс и реализацию и соберите приложение и тестовый драйвер как разные программы.",
+      "theory": [
+        "Разделите интерфейс и реализацию и соберите приложение и тестовый драйвер как разные программы."
+      ],
+      "deep": "Копирование функций между файлами не масштабируется. Правильные объявления позволяют независимо компилировать части программы и обнаруживать нарушения на верной фазе.",
+      "analogy": "Далее: Файлы: формат, ошибки и явное сохранение. Сохраните лабораторную и таблицу проверок.",
+      "commonMistake": "Не включайте .cpp и не собирайте два main вместе. Header guard не является программной базой определений.",
+      "code": "#include <iostream>\nint twice(int);\nint main() { std::cout << twice(6) << '\\n'; }\nint twice(int value) { return 2 * value; }\n",
+      "task": "Разделите checkedArea между include/domain.hpp, src/domain.cpp и main.cpp. Проверьте чтение двух размеров 0…1000 и итог area либо invalid. Соберите отдельный тестовый драйвер без второго main в приложении.",
+      "hint": "Сначала выделите вход, состояние и наблюдаемый результат.",
+      "solution": "#include <iostream>\n#include \"domain.hpp\"\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+      "quiz": {
+        "question": "Спасает ли header guard от обычного тела функции в двух TU?",
+        "answers": [
+          "Только на телефоне",
+          "Да, во всей программе",
+          "Нет, guard действует внутри одной TU"
+        ],
+        "correctIndex": 2
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "TU",
+          "исходный файл после обработки подключений и директив."
+        ],
+        [
+          "Линковка",
+          "объединение скомпилированных частей и разрешение внешних имён."
+        ],
+        [
+          "Объявление",
+          "описание имени и типа без обязательного тела реализации."
+        ],
+        [
+          "Определение",
+          "предоставление реализации или объекта согласно правилам языка."
+        ],
+        [
+          "Header guard",
+          "предотвращение повторного включения в одной TU."
+        ],
+        [
+          "ODR",
+          "правила единственности и согласованности определений."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
     }
   ]
 }

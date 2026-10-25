@@ -1,5 +1,7 @@
 // Проверка редакционного графа M2-0, stable IDs и неизменности контрактов.
 import assert from 'node:assert/strict';
+import {m3FixScope} from './academy-gold-module3-scope.mjs';
+const m3Scope=await m3FixScope(),m3Paths=m3Scope?.productPatchPaths||[];
 import {readFile,writeFile,mkdir,stat} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
@@ -32,20 +34,20 @@ const untouched=['core','courses','pwa','sandbox','project-studio','sync','serve
 const authorizedRuntimePaths=['sandbox/providers/browser-runtime.js','sandbox/runtime-router.js'];
 const authorizedContentPaths=['core/academy-gold-catalog.js','core/academy-gold-presentation.js','core/course-registry.js','core/offline-assets.js',...GOLD_BASICS_LESSONS.flatMap(id=>['ru','en'].map(locale=>goldLessonPath(id,locale)))];
 const publicationPaths=publication?['core/app.js','core/shell-presentation.js','release-candidate.json','version.json','index.html','nexus-shell.html','offline.html','service-worker.js','releases/ui1a-cpp-gold-module2-test1-20261025','entry-assets/ui1a-cpp-gold-module2-test1-20261025',...(labelPatch?['core/learning-views.js','styles/app.css','releases/ui1a-cpp-gold-module2-test2-labels-20261025','entry-assets/ui1a-cpp-gold-module2-test2-labels-20261025']:[])]:[];
-execFileSync('git',['diff','--exit-code',plan.baseCommit,'--',...untouched,...[...authorizedRuntimePaths,...authorizedContentPaths,...publicationPaths].map(p=>':(exclude)'+p)],{stdio:'pipe'});
+execFileSync('git',['diff','--exit-code',plan.baseCommit,'--',...untouched,...[...authorizedRuntimePaths,...authorizedContentPaths,...publicationPaths,...m3Paths].map(p=>':(exclude)'+p)],{stdio:'pipe'});
 // M2 authoring не меняет уже доказанное исправление runtime.
-execFileSync('git',['diff','--exit-code','1be795e391871561253afe4b201fbf1048aaaeb9','--','sandbox'],{stdio:'pipe'});
+execFileSync('git',['diff','--exit-code','1be795e391871561253afe4b201fbf1048aaaeb9','--','sandbox',...m3Paths.filter(f=>f.startsWith('sandbox/')).map(f=>':(exclude)'+f)],{stdio:'pipe'});
 const snapshots=[];
 for(const file of ['courses/cpp/curriculum.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/lessons.en.json','core/course-registry.js','core/app.js','pwa/offline-entry.js','core/academy-gold-catalog.js','sandbox/providers/browser-runtime.js','sandbox/providers/wasm-runtime.js','sandbox/runtime-router.js','core/storage.js','core/account-storage.js','sync/cloud-sync.js','release-candidate.json','version.json']){
  const bytes=await readFile(new URL(file,root));
  const baseline=execFileSync('git',['show',plan.baseCommit+':'+file]),unchanged=bytes.equals(baseline);
- if(![...authorizedRuntimePaths,...authorizedContentPaths,...publicationPaths].includes(file))assert.ok(unchanged,file);
- snapshots.push({file,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),unchanged,authorizedRuntimePatch:authorizedRuntimePaths.includes(file),authorizedContentIntegration:authorizedContentPaths.includes(file)});
+ if(![...authorizedRuntimePaths,...authorizedContentPaths,...publicationPaths,...m3Paths].includes(file))assert.ok(unchanged,file);
+ snapshots.push({file,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),unchanged,authorizedM3Patch:m3Paths.includes(file),authorizedRuntimePatch:authorizedRuntimePaths.includes(file),authorizedContentIntegration:authorizedContentPaths.includes(file)});
 }
 const seen=new Set();
 async function walk(file){if(seen.has(file))return;seen.add(file);const code=await readFile(new URL(file,root),'utf8');for(const hit of code.matchAll(/(?:^|;|\n)\s*(?:import|export)\s+(?:[^;'"`]*?\s+from\s*)?["']([^"']+)["']/gm)){if(hit[1].startsWith('.'))await walk(path.posix.normalize(path.posix.join(path.posix.dirname(file),hit[1])));}}
 await walk('core/app.js');let bytes=0;for(const file of seen)bytes+=(await stat(new URL(file,root))).size;
 assert.ok(seen.size<=75&&bytes<=600000);
-const result={status:'PASS',scope:'Editorial DAG and protected source invariants; 24 Gold bodies and four integration paths authorized; runtime unchanged since 1be795e; not learner mastery or LIVE',baseCommit:plan.baseCommit,lessonIds:plan.lessons.map(l=>({id:l.id,order:l.order,legacyIndex:l.legacyIndex,prerequisites:l.prerequisites})),sessions:19,legacyRu:12,legacyEn:2,activeGoldM2:12,probes:M2_PROBES.length,cases:M2_PROBES.reduce((s,p)=>s+p.cases.length,0),snapshots,perf:{staticModules:seen.size,staticBytes:bytes,capModules:75,capBytes:600000,homeCourseJsonBytes:22135},authorizedRuntimePaths,authorizedContentPaths,protectedApplicationPathsUnchanged:true,productionWrites:0,mainWrites:0,releaseCreated:false};
+const result={status:'PASS',scope:m3Scope?'M2 content and IDs unchanged; authorized M3 progress/runtime patch verified by SHA256; not LIVE':'Editorial DAG and protected source invariants; 24 Gold bodies and four integration paths authorized; runtime unchanged since 1be795e; not learner mastery or LIVE',baseCommit:plan.baseCommit,lessonIds:plan.lessons.map(l=>({id:l.id,order:l.order,legacyIndex:l.legacyIndex,prerequisites:l.prerequisites})),sessions:19,legacyRu:12,legacyEn:2,activeGoldM2:12,probes:M2_PROBES.length,cases:M2_PROBES.reduce((s,p)=>s+p.cases.length,0),snapshots,perf:{staticModules:seen.size,staticBytes:bytes,capModules:75,capBytes:600000,homeCourseJsonBytes:(await stat(new URL('courses/cpp/curriculum.json',root))).size+(await stat(new URL('courses/cpp/manifest.json',root))).size},authorizedRuntimePaths,authorizedContentPaths,protectedApplicationPathsUnchanged:true,productionWrites:0,mainWrites:0,releaseCreated:false};
 const out=path.resolve(process.env.NEXUS_M2_EVIDENCE||'academy-gold-m2-evidence');await mkdir(out,{recursive:true});await writeFile(path.join(out,'DEPENDENCIES.json'),JSON.stringify(result,null,2)+'\n');
 console.log(JSON.stringify({status:result.status,lessons:12,sessions:19,probes:result.probes,cases:result.cases,perf:result.perf,scope:result.scope}));
