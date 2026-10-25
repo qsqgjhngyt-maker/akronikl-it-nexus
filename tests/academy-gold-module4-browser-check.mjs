@@ -15,7 +15,7 @@ try{
  payload=await online.page.evaluate(async({prefix,all,files,main})=>{
   const {patchLesson,loadState}=await import(prefix+'/core/storage.js'),{verifiedAccount}=await import(prefix+'/core/account-storage.js'),{makeLocalPayload}=await import(prefix+'/pwa/offline-transfer.js');
   for(const id of all){const code='// SYNTHETIC '+id+'\n'+main;patchLesson(id,{completed:true,quiz:1,code,stdin:'17\n',note:'SYNTHETIC note',workspace:{languageId:'cpp',entryFile:'main.cpp',activeFile:'main.cpp',revision:7,files:files.map(f=>f.path==='main.cpp'?{...f,content:code}:f)}});}
-  const projects=[{id:'synthetic-m4-project',languageId:'cpp',title:'SYNTHETIC M4 project',workspace:{entryFile:'main.cpp',activeFile:'main.cpp',files},checkpoints:[{id:'synthetic-checkpoint',workspace:{files}}],access:{workspaceKind:'personal'}}];
+  const projects=[{id:'synthetic-m4-project',languageId:'cpp',title:'SYNTHETIC M4 project',workspace:{entryFile:'main.cpp',activeFile:'main.cpp',files},progress:{milestones:['synthetic-existing']},checkpoints:[{id:'synthetic-checkpoint',workspace:{files}}],access:{workspaceKind:'personal'}}];
   return makeLocalPayload({account:verifiedAccount(),state:loadState(),projects,isOwner:()=>true});
  },{prefix,all,files,main});
  local=await f.launch();await bindRuntimeTransport(f.context);await local.goto(f.origin+'/offline.html#view=home');await f.waitReady();
