@@ -1,3 +1,4 @@
+import {CPP_LEGACY_LESSON_IDS} from '../core/storage.js';
 // Существующие production APIs, только память с синтетическими данными.
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';import path from 'node:path';
@@ -10,7 +11,7 @@ import {makeLocalPayload,transferPlan} from '../pwa/offline-transfer.js';
 class MemoryStorage{data=new Map();get length(){return this.data.size}key(i){return [...this.data.keys()][i]??null}getItem(k){return this.data.get(k)??null}setItem(k,v){this.data.set(k,String(v))}removeItem(k){this.data.delete(k)}}
 globalThis.localStorage=new MemoryStorage();globalThis.sessionStorage=new MemoryStorage();
 const account={accountId:'synthetic-m3-preservation',displayName:'Synthetic M3',status:'active'};initializeAccountStorage({account,loginMethods:[],enrollmentAvailable:false});
-const curriculum=JSON.parse(await readFile('courses/cpp/curriculum.json')),ids=curriculum.lessons.map(l=>l.id),m3=curriculum.sections.find(s=>s.id==='cpp.section.structured-programming').lessonIds;
+const curriculum=JSON.parse(await readFile('courses/cpp/curriculum.json')),ids=[...CPP_LEGACY_LESSON_IDS],m3=curriculum.sections.find(s=>s.id==='cpp.section.structured-programming').lessonIds;
 const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex'),checks=[];
 const check=(name,fn)=>{fn();checks.push({name,status:'PASS'});console.log('PASS '+name)};
 const sample=id=>({completed:true,quiz:2,code:'// SYNTHETIC '+id+'\nint main(){return 17;}',stdin:'17\n',note:'SYNTHETIC note',workspace:{languageId:'cpp',entryFile:'main.cpp',activeFile:'notes.hpp',revision:7,files:[{path:'main.cpp',content:'int main(){return 17;}',languageId:'cpp'},{path:'notes.hpp',content:'// preserved header',languageId:'cpp'}]},unknownField:{preserve:true}});
@@ -34,7 +35,7 @@ saveState({courses:{cpp:{lessons:Object.fromEntries(ids.map(id=>[id,{completed:t
 for(let i=1;i<=5;i++)patchLesson('cpp.synthetic-proposed-'+i,{completed:true});
 const expanded=getCppProgress(),expansionReady=expanded.pct<=100&&expanded.done<=expanded.total&&historical.done===40;
 check('Незарегистрированные ID сохранены, но не увеличивают счётчик старой программы',()=>{assert.deepEqual(expanded,{done:40,total:40,pct:100});assert.ok(loadState().courses.cpp.lessons['cpp.synthetic-proposed-5'].completed)});
-const future={...curriculum,programVersion:'cpp-gold-m3-synthetic-v2',lessons:[...curriculum.lessons,...Array.from({length:5},(_,i)=>({id:'cpp.synthetic-proposed-'+(i+1)}))]};
+const future={...curriculum,programVersion:'cpp-gold-m3-synthetic-v2',lessons:[...curriculum.lessons.filter(l=>ids.includes(l.id)),...Array.from({length:5},(_,i)=>({id:'cpp.synthetic-proposed-'+(i+1)}))]};
 let registered;
 check('Новая версия: 40/45 и исторические 40/40; затем 45/45 без перезаписи state',()=>{
  const state=loadState();for(let i=1;i<=5;i++)state.courses.cpp.lessons['cpp.synthetic-proposed-'+i].completed=false;
@@ -47,8 +48,8 @@ check('Новая версия: 40/45 и исторические 40/40; зат�
 check('RU/EN представления используют активный denominator и показывают прежнее завершение',()=>{
  for(const locale of ['ru','en']){const views=createLearningViews({cpp:{manifest:{title:{ru:'C++',en:'C++'},description:{ru:'Курс',en:'Course'},practicumCount:0,projectCount:0},curriculum:future},prefs:{courseLocale:locale},t:k=>k,progress:()=>registered});const html=views.courseHead('overview');assert.ok(html.includes('45/45'));assert.ok(html.includes('data-legacy-completion'));assert.ok(html.includes('40/40'));assert.ok(html.includes('aria-valuemax="45"'))}
 });
-const observation={status:expansionReady?'PASS':'FAIL',historical,unregistered:expanded,registered,issue:'M3-P1-01',scope:'Синтетическая версия программы; реальные curriculum и ID остаются прежними.',requirement:'Версия программы определяет состав подсчёта. Исторические 40/40 выводятся отдельно; storage читается без миграции и перезаписи.'};
+const observation={status:expansionReady?'PASS':'FAIL',historical,unregistered:expanded,registered,issue:'M3-P1-01',scope:'Синтетическая следующая версия проверяется отдельно от реально зарегистрированной cpp-gold-m3-v1.',requirement:'Версия программы определяет состав подсчёта. Исторические 40/40 выводятся отдельно; storage читается без миграции и перезаписи.'};
 assert.deepEqual(historical,{done:40,total:40,pct:100});
-const result={status:'PASS',scope:'Сохранность существующих 40 ID и синтетический offline conflict roundtrip; не доказательство LIVE и не миграция 45/60 тем',checks,checksCount:checks.length,legacyIds:40,m3Ids:13,sourcePayloadSha256:hash(payload),expansionReadiness:observation,realUserStorageRead:false,networkRequests:0,cloudWrites:0};
+const result={status:'PASS',scope:'Сохранность существующих 40 ID и синтетический offline conflict roundtrip; не доказательство LIVE; расширение реальной версии проверено отдельным content gate',checks,checksCount:checks.length,legacyIds:40,m3Ids:13,sourcePayloadSha256:hash(payload),expansionReadiness:observation,realUserStorageRead:false,networkRequests:0,cloudWrites:0};
 const out=path.resolve(process.env.NEXUS_M3_EVIDENCE||'academy-gold-m3-evidence');await mkdir(out,{recursive:true});await writeFile(path.join(out,'PRESERVATION.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({status:result.status,checks:checks.length,expansionReadiness:observation}));
 if(process.argv.includes('--require-expansion-ready'))assert.equal(expansionReady,true,'M3-P1-01: расширение курса не готово');

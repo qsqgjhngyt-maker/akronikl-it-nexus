@@ -23,15 +23,24 @@ export const GOLD_BASICS_LESSONS=Object.freeze([
   'cpp.pointers-references-addresses',
   'cpp.standard-io'
 ]);
-export const GOLD_LESSONS=Object.freeze([...GOLD_ALGORITHM_LESSONS,...GOLD_BASICS_LESSONS]);
+export const GOLD_STRUCTURED_LESSONS=Object.freeze([
+  'cpp.if-else-switch','cpp.for-loop','cpp.while-do-while',
+  'cpp.functions-contracts','cpp.standard-sequences','cpp.one-dimensional-arrays',
+  'cpp.two-dimensional-arrays','cpp.char-arrays-strings','cpp.structures',
+  'cpp.unions-typedef-enums','cpp.lifetime-ownership','cpp.formatted-io',
+  'cpp.streams-state','cpp.testing-diagnostics','cpp.multifile-build',
+  'cpp.files','cpp.linked-lists','cpp.stacks-queues'
+]);
+export const GOLD_LESSONS=Object.freeze([...GOLD_ALGORITHM_LESSONS,...GOLD_BASICS_LESSONS,...GOLD_STRUCTURED_LESSONS]);
 const modules=new Map([
   ...GOLD_ALGORITHM_LESSONS.map(id=>[id,'cpp.section.algorithms']),
-  ...GOLD_BASICS_LESSONS.map(id=>[id,'cpp.section.cpp-basics'])
+  ...GOLD_BASICS_LESSONS.map(id=>[id,'cpp.section.cpp-basics']),
+  ...GOLD_STRUCTURED_LESSONS.map(id=>[id,'cpp.section.structured-programming'])
 ]);
 export function goldLessonModule(id){return modules.get(id)||null;}
 export function goldLessonPath(id,locale='ru'){
   const moduleId=goldLessonModule(id);
   if(!moduleId||!['ru','en'].includes(locale))return null;
-  const folder=moduleId==='cpp.section.algorithms'?'algorithms':'basics';
+  const folder=moduleId==='cpp.section.algorithms'?'algorithms':moduleId==='cpp.section.cpp-basics'?'basics':'structured';
   return 'courses/cpp/gold/'+folder+'/'+id.slice(4)+'.'+locale+'.json';
 }

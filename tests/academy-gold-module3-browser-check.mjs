@@ -1,10 +1,11 @@
+import {CPP_LEGACY_LESSON_IDS} from '../core/storage.js';
 // Синтетические 40/40, 13 старых M3 ID, online и реальный холодный Offline.
 import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
 import {onlineRuntimeFixture} from './helpers/online-runtime-fixture.mjs';
 import {nativeOfflineFixture} from './helpers/native-offline-fixture.mjs';
 import {bindRuntimeTransport} from './helpers/runtime-transport.mjs';
 const plan=JSON.parse(await readFile('docs/ru/03-content/CPP_MODULE3_DEPENDENCIES.json')),curriculum=JSON.parse(await readFile('courses/cpp/curriculum.json'));
-const ids=plan.topics.filter(t=>t.stableId).map(t=>t.stableId),all=curriculum.lessons.map(l=>l.id),f=await nativeOfflineFixture('m3-preservation'),online=await onlineRuntimeFixture(),prefix='/releases/'+f.generation;
+const ids=plan.topics.filter(t=>t.stableId).map(t=>t.stableId),all=[...CPP_LEGACY_LESSON_IDS],f=await nativeOfflineFixture('m3-preservation'),online=await onlineRuntimeFixture(),prefix='/releases/'+f.generation;
 const phrase='SYNTHETIC M3 fixture phrase',checks=[];let local,vaultId,payload,fatal;
 const main='#include <iostream>\n#include "domain.hpp"\nint main(){std::cout<<twice(6)<<"\\n";}';
 const files=[{path:'main.cpp',content:main,languageId:'cpp'},{path:'domain.hpp',content:'#ifndef DOMAIN_HPP\n#define DOMAIN_HPP\nint twice(int);\n#endif\n',languageId:'cpp'},{path:'domain.cpp',content:'#include "domain.hpp"\nint twice(int n){return n*2;}\n',languageId:'cpp'}];
@@ -34,6 +35,11 @@ try{
   await local.waitForFunction(()=>!document.querySelector('#runCode')?.disabled&&(/Код завершения: 0/.test(document.querySelector('#output')?.textContent||'')||document.querySelector('#output.error-output,#output.provider-limit-output')),{},{timeout:300000});
   const text=await local.locator('#output').textContent();assert.ok(text.startsWith('12\n'),text);assert.equal(await local.locator('#editor').inputValue(),main);
   return{stdout:'12\n',realCompiler:true,networkAvailable:false,sourceUnchanged:true};
+ });
+ await check('Новая Gold-тема: настоящая сборка span после полного закрытия браузера без сети',async()=>{
+  await local.evaluate(()=>{location.hash='#course=cpp&lesson=cpp.standard-sequences'});await local.locator('[data-gold-lesson="cpp.standard-sequences"]').waitFor();await local.locator('#runCode').click();
+  await local.waitForFunction(()=>!document.querySelector('#runCode')?.disabled&&(/Код завершения: 0/.test(document.querySelector('#output')?.textContent||'')||document.querySelector('#output.error-output,#output.provider-limit-output')),{},{timeout:300000});
+  const text=await local.locator('#output').textContent();assert.ok(text.startsWith('6 9 13 0\n'),text);return{lesson:'cpp.standard-sequences',stdout:'6 9 13 0\n',realCompiler:true,coldOffline:true};
  });
  await check('40/40, личный проект и checkpoint не изменились в зашифрованной копии',async()=>{
   const data=await local.evaluate(async({prefix,id,phrase})=>{const {createVaultStore}=await import(prefix+'/pwa/local-vault.js'),s=await createVaultStore().unlock(id,phrase),d=s.read();await s.lock();return d},{prefix,id:vaultId,phrase});

@@ -20,10 +20,10 @@ globalThis.fetch = async (url,opts={})=>{
 test('HOME obtains only minimal verified C++ outline',async()=>{
  const outline=await getCppOutline();
  assert.equal(outline.manifest.id,'cpp');
- assert.equal(outline.curriculum.lessons.length,40);
+ assert.equal(outline.curriculum.lessons.length,45);
  assert.deepEqual(new Set(requests),new Set(fixtures.slice(0,2)));
  assert.equal(requests.length,2);
- assert.equal(requests.reduce((s,p)=>s+fileSizes[p],0),22135);
+ assert.ok(requests.reduce((s,p)=>s+fileSizes[p],0)<=30000,'Outline including the versioned five-topic expansion must remain <=30KB');
 });
 
 test('Opening full C++ after HOME preserves all data, IDs and reuses verified outline',async()=>{
@@ -31,8 +31,8 @@ test('Opening full C++ after HOME preserves all data, IDs and reuses verified ou
  const full=await getCppCourse();
  assert.strictEqual(full.manifest,outline.manifest);
  assert.strictEqual(full.curriculum,outline.curriculum);
- assert.equal(full.lessonsRu.lessons.length,40);
- assert.equal(full.lessonsEn.lessons.length,3);
+ assert.equal(full.lessonsRu.lessons.length,45);
+ assert.equal(full.lessonsEn.lessons.length,8);
  assert.deepEqual(new Set(requests),new Set(fixtures));
  assert.equal(requests.length,6,'No duplicate metadata request');
  const lessonIds=outline.curriculum.lessons.map(x=>x.id);

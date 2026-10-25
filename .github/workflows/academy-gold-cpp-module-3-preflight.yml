@@ -1,4 +1,4 @@
-name: Академия C++ Gold — M3-0, честный допуск и сохранность
+name: Академия C++ Gold — M3-1, полные уроки и сохранность
 on:
   push:
     branches: [feature/academy-gold-standard-cpp-module-3]
@@ -12,6 +12,7 @@ on:
       - 'tools/academy-gold-module3-scope.mjs'
       - 'docs/ru/03-content/CPP_MODULE3_DEPENDENCIES.json'
       - 'docs/ru/03-content/CPP_MODULE3_FIX_SCOPE.json'
+      - 'docs/ru/03-content/CPP_MODULE3_AUTHORING*.json'
       - 'core/**'
       - 'courses/**'
       - 'sandbox/**'
@@ -42,6 +43,7 @@ jobs:
       - name: Учебный DAG, stable IDs, сохранность 40 ID и NEXUS-PERF-01
         run: |
           node tools/check-academy-gold-module3-dependencies.mjs
+          node tools/check-academy-gold-module3-quality.mjs
           node tests/academy-gold-module3-preservation.mjs
           node --test tests/runtime-files.test.mjs
           node tools/check-academy-gold-module2-dependencies.mjs
@@ -75,6 +77,8 @@ jobs:
           node-version: 22
       - name: Настоящий g++ C++20 и UBSan, те же 26 программ и 35 случаев
         run: node tools/check-academy-gold-module3-native.mjs
+      - name: Все полные Gold-примеры M3, лабораторные, практикумы, проект и отрицательные контроли
+        run: node tools/check-academy-gold-module3-examples.mjs
       - name: Все программы Module 1–2 и исходная матрица M2 — настоящий C++20 и UBSan
         run: |
           node tools/check-academy-gold-cpp.mjs
@@ -127,6 +131,41 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: academy-gold-m3-runtime-${{ github.sha }}
+          path: academy-gold-m3/
+          retention-days: 30
+  module3-gold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/nexus-m3-gold-build
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m3-gold-browser/node_modules/playwright/index.mjs
+      NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m3-gold-runtime
+      NEXUS_JSCPP_FIXTURE: /tmp/nexus-m3-gold-runtime/jscpp.js
+      NEXUS_M3_EVIDENCE: academy-gold-m3/gold-runtime
+      NEXUS_GOLD_EVIDENCE: academy-gold-m3/gold-fixture
+      NEXUS_NATIVE_EVIDENCE: academy-gold-m3/gold-ui-offline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Изолированная сборка feature и закреплённый Clang/WASI
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/nexus-m3-gold-browser --no-save playwright@1.56.1
+          /tmp/nexus-m3-gold-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m3-gold-build --generation ui1a-m3-gold-qa-20261025 --version 0.1.7-alpha.2.4.6-ui1a.10.6-test.2
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+      - name: Все C++ исходники и случаи из 36 объектов — реальные router, Worker и Clang/WASI
+        run: node tests/academy-gold-module3-examples-browser.mjs
+      - name: 36 RU/EN объектов, словарь, ширины 320–1440, 40/45 и прежние 40/40 в холодном Offline
+        if: ${{ !cancelled() }}
+        run: node tests/academy-gold-module3-gold-browser.mjs
+      - name: Сохранить факты M3 Gold, включая FAIL
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m3-gold-${{ github.sha }}
           path: academy-gold-m3/
           retention-days: 30
   module1-browser:

@@ -94,7 +94,7 @@ function skillRows(lessons){
 }
 function topicSkillIds(lesson){return [...new Set((lesson.benchmark?.skillGraph?.strengthens||[]).map(skillIdForCode))]}
 
-function expectedContract({manifest,curriculum,lessons,practices,projects}){
+export function expectedContract({manifest,curriculum,lessons,practices,projects}){
   const lessonMap=new Map(lessons.lessons.map(x=>[x.id,x]));
   const sectionMap=new Map(curriculum.sections.map(x=>[x.id,x]));
   const practiceModuleMap={alg:'cpp.section.algorithms',cpp:'cpp.section.cpp-basics',struct:'cpp.section.structured-programming',classic:'cpp.section.classic-algorithms',oop:'cpp.section.oop',gui:'cpp.section.visual-programming'};
@@ -149,7 +149,8 @@ export function validateContentContract(root='.'){
   assert(uniq(sectionIds)&&uniq(lessonIds)&&uniq(practiceIds)&&uniq(projectIds),'source IDs are not unique',errors);
   assert(same(lessonIds,lessonSourceIds),'curriculum lesson IDs differ from RU lesson IDs',errors);
   assert(manifest.lessonCount===lessonIds.length&&manifest.practicumCount===practiceIds.length&&manifest.projectCount===projectIds.length,'manifest counts mismatch',errors);
-  assert(curriculum.lessons.every((x,i)=>x.legacyIndex===i),'legacy lesson indexes changed',errors);
+  assert(curriculum.lessons.every((x,i)=>i<40?x.legacyIndex===i:x.legacyIndex===null),'legacy lesson indexes changed',errors);
+  if(curriculum.lessons.length!==40)assert(curriculum.programVersion==='cpp-gold-m3-v1'&&manifest.programVersion===curriculum.programVersion&&curriculum.lessons.length===45,'unversioned curriculum expansion',errors);
   const sectionSet=new Set(sectionIds);
   for(const l of curriculum.lessons)assert(sectionSet.has(l.sectionId),'missing section '+l.sectionId+' for '+l.id,errors);
   for(const s of curriculum.sections)for(const id of s.lessonIds)assert(lessonIds.includes(id),'section '+s.id+' references missing '+id,errors);
