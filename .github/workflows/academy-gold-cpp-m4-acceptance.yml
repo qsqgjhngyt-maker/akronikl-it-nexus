@@ -1,0 +1,72 @@
+name: Академия C++ Module 4 — приёмка 05/07 и NEXUS-PERF-01
+on:
+  push:
+    branches: [feature/academy-gold-standard-cpp-module-4]
+    paths:
+      - '.github/workflows/academy-gold-cpp-m4-acceptance.yml'
+      - 'tests/academy-gold-m4-*-acceptance*'
+      - 'tools/check-academy-gold-m4-acceptance.mjs'
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/nexus-m4-acceptance-build
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m4-acceptance-browser/node_modules/playwright/index.mjs
+      NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m4-acceptance-runtime
+      NEXUS_JSCPP_FIXTURE: /tmp/nexus-m4-acceptance-runtime/jscpp.js
+      NEXUS_GOLD_EVIDENCE: academy-gold-m4-acceptance/regression
+      NEXUS_M4_EVIDENCE: academy-gold-m4-acceptance/quality
+      NEXUS_M3_EVIDENCE: academy-gold-m4-acceptance/module3
+      NEXUS_M2_EVIDENCE: academy-gold-m4-acceptance/module2
+      NEXUS_M4_ACCEPTANCE_EVIDENCE: academy-gold-m4-acceptance/source
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Инструменты и изолированная QA сборка, без публикации
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/nexus-m4-acceptance-browser --no-save playwright@1.56.1
+          /tmp/nexus-m4-acceptance-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m4-acceptance-build
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+      - name: Точный продукт a3e3488, зависимости, прогресс и NEXUS-PERF-01
+        run: |
+          node tools/check-academy-gold-m4-acceptance.mjs
+          node tools/check-academy-gold-module4-dependencies.mjs
+          node tests/academy-gold-module4-preservation.mjs
+          node tools/check-academy-gold-module3-dependencies.mjs
+          node tools/check-academy-gold-module3-quality.mjs
+          node tests/academy-gold-module3-preservation.mjs
+          node tools/check-academy-gold-module2-dependencies.mjs
+          node tools/check-academy-gold-module2-quality.mjs
+      - name: Module 1, Identity, Cloud, Offline и загрузка без повторов
+        run: |
+          node tools/check-academy-gold-regression.mjs
+          node tools/check-academy-gold-integration.mjs
+          node --test tests/academy-gold-m4-loading-acceptance.test.mjs tests/academy-gold-module3-navigation.test.mjs tests/runtime-files.test.mjs
+      - name: Старт, меню и основные экраны на точной сборке
+        env:
+          NEXUS_NATIVE_EVIDENCE: academy-gold-m4-acceptance/startup
+        run: node tests/platform-startup-browser-check.mjs
+      - name: 184 перехода из каталога, RU/EN, online и холодная Offline копия
+        env:
+          NEXUS_NATIVE_EVIDENCE: academy-gold-m4-acceptance/navigation
+        run: node tests/academy-gold-m4-navigation-acceptance.mjs
+      - name: Восемь M4 уроков, 128 вопросов, словарь, клавиатура и шесть ширин
+        env:
+          NEXUS_NATIVE_EVIDENCE: academy-gold-m4-acceptance/ui
+        run: node tests/academy-gold-m4-ui-acceptance.mjs
+      - name: Сохранить факты приёмки, включая FAIL, без профилей и ключей
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m4-acceptance-${{ github.sha }}
+          path: academy-gold-m4-acceptance/
+          retention-days: 30
