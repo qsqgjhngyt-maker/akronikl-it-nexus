@@ -1,0 +1,522 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.cpp-basics",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.data-types",
+  "sessions": 2,
+  "prerequisiteIds": [
+    "cpp.comments-constants-literals"
+  ],
+  "sourceRefs": [
+    "CPP20-TYPES",
+    "CPP20-INIT",
+    "CPP20-LIMITS",
+    "CPP20-SIZEOF",
+    "CPP20-AUTO",
+    "CPP-GUIDELINES"
+  ],
+  "title": "Data types: choosing values, initialization, and measuring a target",
+  "lead": "Choose types by domain and range, initialize them, and record target properties without assuming that int always occupies four bytes.",
+  "why": "A type defines representable values and operations. A program working on one device does not establish an identical representation elsewhere. We separate portable rules from observations of Clang/WASM and a native compiler.",
+  "objectives": [
+    "Choose bool, char, integer, or floating-point types by domain meaning.",
+    "Explain initial values, simple brace initialization, and type deduction with auto.",
+    "Read sizeof(type), CHAR_BIT, and basic numeric_limits properties without writing templates.",
+    "Separate language guarantees, target observations, and example restrictions.",
+    "Check an approximate number with an explained tolerance and produce a type report."
+  ],
+  "prerequisites": [
+    "The previous three lessons: main scaffold, names, literals, const/constexpr, and output labels.",
+    "You can compare expected and actual output. Every new library notation used below is explained before use."
+  ],
+  "concepts": [
+    {
+      "term": "Type",
+      "definition": "Rules for an object’s values and operations; a type does not necessarily encode domain units."
+    },
+    {
+      "term": "Initialization",
+      "definition": "Providing an initial value when an object is created. Here every object is explicitly initialized."
+    },
+    {
+      "term": "Range",
+      "definition": "The set of representable values: a finite numeric type cannot hold every mathematical number."
+    },
+    {
+      "term": "Target environment",
+      "definition": "The environment for which a program is built, including type representation and library; browser Clang/WASM is one particular target."
+    },
+    {
+      "term": "sizeof",
+      "definition": "An operator reporting size in C++ bytes. sizeof(char) is 1; CHAR_BIT gives the number of bits in such a byte."
+    },
+    {
+      "term": "numeric_limits",
+      "definition": "A standard-library facility exposing arithmetic-type properties of the selected implementation."
+    },
+    {
+      "term": "Tolerance",
+      "definition": "An acceptable error chosen for a task, not a universal guarantee of double accuracy."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Session 1. Start with meaning and range",
+      "paragraphs": [
+        "A registration-open flag fits bool with true/false values. A small attendee count fits int when its range is bounded. char stores one code unit such as the label 'B', not an arbitrary string. double can represent an approximate length such as 2.5 meters. Begin with the possible values and intended operations.",
+        "A nonnegative count does not automatically require unsigned: subtraction and mixed-sign arithmetic have rules studied later. unsigned int demonstrates a nonnegative-valued type here rather than protection against all mistakes. signed int permits negatives and is the same type as int. Do not test boundaries by executing signed overflow; that operation is not valid."
+      ]
+    },
+    {
+      "title": "Initialize before reading",
+      "paragraphs": [
+        "int itemCount{12}; creates an object with value 12. These braces initialize one quantity rather than define the main body. int itemCount = 12; also supplies an initial value, while list initialization with { } rejects certain narrowing conversions. int count{2.5}; deliberately fails to build instead of silently discarding the fraction this way.",
+        "int itemCount; for an ordinary local object does not justify reading it as zero. Our normal examples never read such an object: initialize explicitly. int itemCount{}; gives zero for this scalar type and bool ready{}; gives false. Looking at an uninitialized value is not a safe way to discover a language rule."
+      ]
+    },
+    {
+      "title": "auto deduces a type from the initializer",
+      "paragraphs": [
+        "In auto itemCount = 12;, the compiler deduces int from the integer literal. auto length = 2.5; deduces double. This does not create a quantity that changes type on every assignment: the declared type is fixed. Our simple auto declarations require an initializer. We use the = form here and do not generalize deduction to every braced form.",
+        "auto reduces repetition but does not express units or domain limits by itself. lengthMeters communicates more than value. At first, record the type you expect from each literal and verify it by reasoning and diagnostics rather than guessing from the printed number."
+      ]
+    },
+    {
+      "title": "Floating-point values are an approximate model",
+      "paragraphs": [
+        "float, double, and long double have finite precision and range. Values such as 0.1 need not be represented exactly in the selected format. Thus 0.1 + 0.2 can differ from the stored value of 0.3 even when short printed output looks identical. One successful equality comparison cannot establish a general rule.",
+        "Our experiment compares absolute error with 0.000001. <cmath> supplies std::abs(...), returning the absolute difference for double; parentheses pass the value. <= means no greater than, producing bool, which std::cout prints here as 1 or 0. This is an explained library-call recipe, not a requirement to author functions. The tolerance fits these small values; financial amounts are better designed in integer minor units with a proven range."
+      ]
+    },
+    {
+      "title": "Session 2. Size is measured in implementation bytes",
+      "paragraphs": [
+        "sizeof(int) reports a type size in C++ bytes. Its parentheses contain a type name; no int object needs to be created. sizeof(char) is guaranteed to be 1, but CHAR_BIT from <climits> specifies bits per byte and is not universally required to be 8. Minimum-range guarantees do not imply identical byte counts everywhere.",
+        "The integer types include short, int, long, and long long. Their sizes are nondecreasing, but neighboring types can occupy equal space. long can occupy 4 bytes on one target and 8 on another without either being wrong. sizeof(void*) measures the size of a pointer type used for addresses; pointer operations come later and are not needed here. This size is not universal either."
+      ]
+    },
+    {
+      "title": "Reading numeric_limits as a library recipe",
+      "paragraphs": [
+        "Include <limits>. In std::numeric_limits<int>::max(), <int> selects properties for int, :: selects a member, and max() calls the ready-made library operation returning the maximum. lowest() returns the lowest finite value. For floating-point types, min() instead gives the smallest positive normalized value, so do not substitute it for lowest(). We use a library template without writing one.",
+        "is_signed reports whether an arithmetic type permits negative values; the answer for char depends on the implementation. digits counts significant radix digits excluding a sign digit; numeric_limits<T>::radix is the base, which is 2 for integers. Thus digits is not a count of decimal digits. int guarantees at least −32767…32767. Read actual limits rather than overflowing an object to find them."
+      ]
+    },
+    {
+      "title": "Portable checks and observations are different results",
+      "paragraphs": [
+        "The limits example prints four ones by checking type properties rather than demanding one exact size. >= means no less than, while == compares equality instead of assigning an initial value. These are explained property checks; a full treatment of logic comes later.",
+        "The type report prints actual sizes and limits. Its stdout is labeled as a pinned Clang/WASM sample, not an answer for every computer. Record the target and compiler version with the observation. A phone and PC can run the same WASM target; matching sizes therefore do not establish identical native device models or universal IEEE 754 support in C++."
+      ]
+    },
+    {
+      "title": "Independent type selection and practicum A",
+      "paragraphs": [
+        "The laboratory uses an attendee count, room code, registration flag, and table length. Explain meaning, unit, domain range, and type choice separately. The room label is one ASCII character; a full room name needs another representation. We bound small counts to 0…1000 and lengths to 0…100 meters as task constraints rather than int or double limits.",
+        "Practicum A combines the four lessons in a panel report. The supplied totalLengthCm / centimetersPerMeter line is an explained scaffold: centimetersPerMeter is double and makes the division floating-point. Conversion rules are studied later and need not be derived independently now. Preserve the project and a report of names, units, checks, and target properties. This candidate adds no automatic grading or prerequisite gating."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "field-types",
+      "title": "Four data meanings",
+      "purpose": "Match values to types without uninitialized objects.",
+      "code": "#include <iostream>\n\nint main() {\n    int itemCount{12};\n    unsigned int shelfCount{3};\n    double lengthMeters{2.5};\n    char category{'A'};\n    bool ready{true};\n    std::cout << itemCount << ' ' << shelfCount << ' ' << lengthMeters << '\\n';\n    std::cout << category << ' ' << ready << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "12 3 2.5\nA 1\n",
+      "steps": [
+        "Explain true as a flag and 'A' as a character label.",
+        "Read {12}, {3}, and {2.5} as initial values.",
+        "Observe that cout printed true as 1 rather than a word."
+      ]
+    },
+    {
+      "id": "portable-limits",
+      "title": "Range checks instead of a size assumption",
+      "purpose": "Check required type properties without substituting one target size.",
+      "code": "#include <iostream>\n#include <limits>\n\nint main() {\n    std::cout << std::numeric_limits<int>::is_signed << '\\n';\n    std::cout << (std::numeric_limits<int>::max() >= 32767) << '\\n';\n    std::cout << (std::numeric_limits<int>::lowest() <= -32767) << '\\n';\n    std::cout << (std::numeric_limits<unsigned int>::lowest() == 0) << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "1\n1\n1\n1\n",
+      "steps": [
+        "Follow the recipe <int> → member → max() or lowest().",
+        "Read >=, <=, and == as comparisons producing bool.",
+        "Each one denotes a true check, not a type size in bytes."
+      ]
+    },
+    {
+      "id": "target-passport",
+      "title": "Observing Clang/WASM: a target report",
+      "purpose": "Measure environment properties and distinguish them from language rules.",
+      "code": "#include <iostream>\n#include <climits>\n#include <limits>\n\nint main() {\n    std::cout << \"char_bytes=\" << sizeof(char) << '\\n';\n    std::cout << \"char_bits=\" << CHAR_BIT << '\\n';\n    std::cout << \"int_bytes=\" << sizeof(int) << '\\n';\n    std::cout << \"long_bytes=\" << sizeof(long) << '\\n';\n    std::cout << \"long_long_bytes=\" << sizeof(long long) << '\\n';\n    std::cout << \"pointer_bytes=\" << sizeof(void*) << '\\n';\n    std::cout << \"char_signed=\" << std::numeric_limits<char>::is_signed << '\\n';\n    std::cout << \"int_digits=\" << std::numeric_limits<int>::digits << '\\n';\n    std::cout << \"int_max=\" << std::numeric_limits<int>::max() << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "char_bytes=1\nchar_bits=8\nint_bytes=4\nlong_bytes=4\nlong_long_bytes=8\npointer_bytes=4\nchar_signed=1\nint_digits=31\nint_max=2147483647\n",
+      "steps": [
+        "Record the pinned browser Clang/WASM target; do not call this a measurement of the phone’s native processor.",
+        "Run and record the actual lines in a table; another target can differ from the sample.",
+        "Check char_bytes=1 and minimum ranges; a differing long_bytes is not itself a defect."
+      ],
+      "verification": {
+        "kind": "type-layout"
+      },
+      "outputNote": "Sample for pinned Clang/WASM. On another target compare properties rather than every number with this sample."
+    },
+    {
+      "id": "floating-error",
+      "title": "A small approximation with a declared tolerance",
+      "purpose": "Check calculation error without promising exact decimal equality.",
+      "code": "#include <iostream>\n#include <cmath>\n\nint main() {\n    double measured{0.1 + 0.2};\n    double target{0.3};\n    double error = std::abs(measured - target);\n    std::cout << (error <= 0.000001) << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "1\n",
+      "steps": [
+        "Calculate the mathematical expected sum 0.3.",
+        "std::abs removes the difference sign and <= checks tolerance 0.000001.",
+        "One confirms only this experiment’s tolerance; the exact target-dependent error can differ."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "auto does not mean an arbitrary changing type",
+      "action": "In the first example replace int itemCount{12}; with auto itemCount = 12;. Leave everything else unchanged.",
+      "prediction": "Output is preserved and the deduced type is int.",
+      "verification": "Identify the literal that supplies the type; the printed text 12 alone does not establish it."
+    },
+    {
+      "title": "Narrowing is rejected before execution",
+      "action": "Try int itemCount{2.5}; in a separate file, then restore an integer initializer.",
+      "prediction": "Expect a compilation error; there is no need to observe an accidental 2.",
+      "verification": "Record the phase and meaning of the diagnostic without requiring identical wording across compilers."
+    },
+    {
+      "title": "Compare two targets when available",
+      "action": "Run the report in Code Studio. If a native C++20 compiler is available, build the same source there and record its version.",
+      "prediction": "Some values may agree and others differ; if no second compiler is available, mark that part as unperformed.",
+      "verification": "Label each value as a guarantee or an observation. Do not invent the second column from phone specifications."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Expected true, saw 1",
+      "cause": "The default cout format for bool here is numeric.",
+      "fix": "Do not change the type to a string by guessing. Match expected output to the format."
+    },
+    {
+      "symptom": "long has a different size",
+      "cause": "Its size depends on the target data model.",
+      "fix": "Record the observation and check range guarantees instead of requiring long=4."
+    },
+    {
+      "symptom": "A decimal prints neatly but equality is unreliable",
+      "cause": "Short formatting hides details of approximate representation.",
+      "fix": "Compare absolute error with a tolerance chosen for the stated task."
+    },
+    {
+      "symptom": "int count{2.5}; fails to build",
+      "cause": "This list initialization requires a prohibited narrowing from double to int.",
+      "fix": "Clarify the meaning: either the count is whole or the data need a floating-point type. Conversion rules come later."
+    },
+    {
+      "symptom": "char is used as a Russian word",
+      "cause": "One code unit is not an arbitrary Unicode string.",
+      "fix": "Use the explained ASCII label here; strings and encodings receive separate treatment."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "list-narrowing",
+      "title": "Intentional: narrowing in braces",
+      "code": "#include <iostream>\n\nint main() {\n    int count{2.5};\n    std::cout << count << '\\n';\n}\n",
+      "expectation": "compile-error",
+      "explanation": "The build should reject narrowing; this is not a runtime error or successful rounding."
+    },
+    {
+      "id": "auto-no-initializer",
+      "title": "Intentional: auto without an initializer",
+      "code": "#include <iostream>\n\nint main() {\n    auto count;\n    std::cout << count << '\\n';\n}\n",
+      "expectation": "compile-error",
+      "explanation": "This declaration supplies no initializer from which to deduce the type."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Assign types to four fields: a whole attendee count, ASCII room code, registration flag, and approximate length.",
+      "criteria": "Each choice has a meaning, initializer, and task constraint.",
+      "hint": "List possible values before choosing the type."
+    },
+    {
+      "level": "applied",
+      "task": "Make a table of sizeof(char), CHAR_BIT, sizeof(int), max(int), and is_signed(char).",
+      "criteria": "Separate the sizeof(char)=1 guarantee from measured sizes and char signedness.",
+      "hint": "Use the report scaffold without writing templates."
+    },
+    {
+      "level": "transfer",
+      "task": "Propose representations for up to 1000 parts and lengths up to 100 meters. Explain why a type name or one run cannot prove every domain requirement.",
+      "criteria": "Distinguish type range, task range, unit, and precision.",
+      "hint": "A name does not automatically enforce the domain range."
+    }
+  ],
+  "laboratory": {
+    "title": "A data and type report",
+    "challenge": "Add registrationOpen=true and tableLengthMeters=2.5 to the starter. Print four labeled fields and attach a separate target report from the worked example.",
+    "starterCode": "#include <iostream>\n\nint main() {\n    int attendeeCount{12};\n    char roomCode{'B'};\n    std::cout << \"count=\" << attendeeCount << '\\n';\n    std::cout << \"room=\" << roomCode << '\\n';\n    return 0;\n}\n",
+    "starterExpectedStdout": "count=12\nroom=B\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    int attendeeCount{12};\n    char roomCode{'B'};\n    bool registrationOpen{true};\n    double tableLengthMeters{2.5};\n    std::cout << \"count=\" << attendeeCount << '\\n';\n    std::cout << \"room=\" << roomCode << '\\n';\n    std::cout << \"open=\" << registrationOpen << '\\n';\n    std::cout << \"table_m=\" << tableLengthMeters << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "count=12\nroom=B\nopen=1\ntable_m=2.5\n"
+      }
+    ],
+    "steps": [
+      "Describe meanings and permitted domain ranges for the four fields.",
+      "Initialize every object; do not read an unspecified initial value.",
+      "Compare baseline stdout with zero attendees and closed registration.",
+      "Run the target report separately and mark guarantees versus observations.",
+      "Save source, results, and a type-choice explanation."
+    ],
+    "rubric": [
+      "Every type is justified by meaning and every object is initialized.",
+      "Outputs match the baseline and changed scenario.",
+      "The report records an actual target, measurements, and limitations rather than a universal int=4 claim.",
+      "double is explained as approximate and a task-specific tolerance is not presented as a language guarantee."
+    ],
+    "verificationVariants": [
+      {
+        "id": "empty-closed",
+        "replace": [
+          {
+            "from": "int attendeeCount{12};",
+            "to": "int attendeeCount{0};"
+          },
+          {
+            "from": "bool registrationOpen{true};",
+            "to": "bool registrationOpen{false};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "count=0\nroom=B\nopen=0\ntable_m=2.5\n"
+      }
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "blockPracticum": {
+    "title": "Practicum A: a panel batch report",
+    "label": "FIRST-BLOCK PRACTICUM",
+    "starterLabel": "Starter with an explained unit conversion",
+    "challenge": "Build a reproducible report for 4 panels of 125 cm: category A, approved true, 500 cm, and 5 m. Preserve evidence for the four introductory skills.",
+    "readiness": "Begin when you can explain the main scaffold, choose unit-bearing names, distinguish const/constexpr, and initialize simple types. Division by the double factor is supplied as an explained scaffold before the conversions lesson.",
+    "skills": [
+      {
+        "lessonId": "cpp.first-cpp-program",
+        "title": "Build and output checks"
+      },
+      {
+        "lessonId": "cpp.tokens-identifiers-keywords",
+        "title": "Precise names with units"
+      },
+      {
+        "lessonId": "cpp.comments-constants-literals",
+        "title": "Constants and explanatory comments"
+      },
+      {
+        "lessonId": "cpp.data-types",
+        "title": "Types and initialization"
+      }
+    ],
+    "requirements": [
+      "stdin is empty: initial quantities are explicit and explained.",
+      "Five lines: category=A, approved=1, length_cm=500, length_m=5, cm_per_m=100.",
+      "panelCount is bounded to 0…100 and panelLengthCm to 0…1000: the product is at most 100000; long long covers this range. long long is a two-word integer type name; the rest of the declaration uses the same syntax.",
+      "The reference variants use whole meters: 0 panels and 8 panels of 125 cm. General rounding and full input parsing are outside this task."
+    ],
+    "milestones": [
+      "Write the contract and independent calculation before coding.",
+      "Add a character label, flag, reason comment, and missing output lines.",
+      "Check the main and two changed scenarios.",
+      "Attach a target report and rubric-based self-review."
+    ],
+    "walkthrough": [
+      "Count × centimeters per panel gives total centimeters. Division by the double factor produces a floating-point result. For our small values the conversion is exact; general rules follow later.",
+      "Choose long long for the product: its guaranteed range covers 100000. The minimum range of int alone does not promise this. Reason about bounds before running instead of experimenting with overflow.",
+      "constexpr double centimetersPerMeter{100.0}; stores the fixed factor as a floating-point value. It is used both in the calculation and in the report. Compared with the earlier constexpr int declaration, only the selected type and literal have changed."
+    ],
+    "starterCode": "#include <iostream>\n\nint main() {\n    constexpr double centimetersPerMeter{100.0};\n    const long long panelCount{4};\n    const long long panelLengthCm{125};\n    long long totalLengthCm = panelCount * panelLengthCm;\n    // Scaffold: the double factor makes the division floating-point.\n    double totalLengthMeters = totalLengthCm / centimetersPerMeter;\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    std::cout << \"length_m=\" << totalLengthMeters << '\\n';\n    return 0;\n}\n",
+    "starterExpectedStdout": "length_cm=500\nlength_m=5\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    // Each complete panel contributes the same whole-centimeter length.\n    constexpr double centimetersPerMeter{100.0};\n    const long long panelCount{4};\n    const long long panelLengthCm{125};\n    long long totalLengthCm = panelCount * panelLengthCm;\n    double totalLengthMeters = totalLengthCm / centimetersPerMeter;\n    char category{'A'};\n    bool approved{true};\n    std::cout << \"category=\" << category << '\\n';\n    std::cout << \"approved=\" << approved << '\\n';\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    std::cout << \"length_m=\" << totalLengthMeters << '\\n';\n    std::cout << \"cm_per_m=\" << centimetersPerMeter << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "category=A\napproved=1\nlength_cm=500\nlength_m=5\ncm_per_m=100\n"
+      }
+    ],
+    "verificationVariants": [
+      {
+        "id": "zero-panels",
+        "replace": [
+          {
+            "from": "const long long panelCount{4};",
+            "to": "const long long panelCount{0};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "category=A\napproved=1\nlength_cm=0\nlength_m=0\ncm_per_m=100\n"
+      },
+      {
+        "id": "eight-panels",
+        "replace": [
+          {
+            "from": "const long long panelCount{4};",
+            "to": "const long long panelCount{8};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "category=A\napproved=1\nlength_cm=1000\nlength_m=10\ncm_per_m=100\n"
+      }
+    ],
+    "artifacts": [
+      "main.cpp with meaningful names and one reason comment.",
+      "A table of expected and actual stdout for three scenarios.",
+      "A target report distinguishing guarantees from observations.",
+      "A self-review and one diagnosed defect with a repeat check."
+    ],
+    "rubric": [
+      {
+        "criterion": "Contract and build",
+        "points": 2,
+        "complete": "All five fields and a successful build",
+        "partial": "Partly satisfied, with incomplete evidence or explanation.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Names and units",
+        "points": 2,
+        "complete": "Roles and cm/m are consistent",
+        "partial": "Partly satisfied, with incomplete evidence or explanation.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Constants and comment",
+        "points": 2,
+        "complete": "The factor is explained and used in the calculation",
+        "partial": "Partly satisfied, with incomplete evidence or explanation.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Types and bounds",
+        "points": 2,
+        "complete": "Initial values and ranges are justified",
+        "partial": "Partly satisfied, with incomplete evidence or explanation.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Checks and target",
+        "points": 2,
+        "complete": "Three scenarios and an actual target report are attached",
+        "partial": "Partly satisfied, with incomplete evidence or explanation.",
+        "missing": "No verifiable result for this criterion."
+      }
+    ],
+    "completionRule": "Self-review: 8 of 10 with no zero for contract, types, or checks. This is an editorial rubric, not an automatic score, gate, or proof of mastery of all Module 2.",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Which statement is a portable guarantee?",
+      "answers": [
+        "sizeof(int) == 4",
+        "sizeof(char) == 1",
+        "sizeof(void*) == 8"
+      ],
+      "correctIndex": 1,
+      "explanation": "A C++ byte is defined through char; the other sizes depend on implementation. CHAR_BIT gives the bit count."
+    },
+    {
+      "question": "What type is deduced in auto length = 2.5;?",
+      "answers": [
+        "int",
+        "double",
+        "It changes on every run"
+      ],
+      "correctIndex": 1,
+      "explanation": "The unsuffixed 2.5 literal has type double; auto deduces a type rather than enabling dynamic type changes."
+    },
+    {
+      "question": "What does numeric_limits<int>::digits measure?",
+      "answers": [
+        "The number of decimal output digits",
+        "The number of significant binary digits excluding a sign digit",
+        "The size of main.cpp"
+      ],
+      "correctIndex": 1,
+      "explanation": "Integer radix is 2. Distinguish significant digits from sizeof and display formatting."
+    },
+    {
+      "question": "Why does min() not replace lowest() for double?",
+      "answers": [
+        "For floating-point types min() means the smallest positive normalized value",
+        "double has no negative values",
+        "They always return the same number"
+      ],
+      "correctIndex": 0,
+      "explanation": "lowest() gives the lowest finite bound; floating-point min() has a different contract."
+    },
+    {
+      "question": "What does stdout=1 in the tolerance example fail to prove?",
+      "answers": [
+        "That this check passed on this target",
+        "That every decimal fraction is represented exactly",
+        "That the comparison produced true"
+      ],
+      "correctIndex": 1,
+      "explanation": "A small error within this tolerance does not imply exact representation of all values."
+    }
+  ],
+  "reflection": [
+    "Why do matching browser sizes on a PC and phone not describe their native ABIs?",
+    "What domain information is needed before choosing a type for money, distance, or an identifier?"
+  ],
+  "bridge": "The first block ends with practicum A. Next come object lifetime and scope, followed by expressions and conversions. This work does not designate the remaining eight Module 2 topics as Gold.",
+  "visualization": {
+    "kind": "toolchain",
+    "title": "Type: a decision and a check",
+    "description": "A reasoning diagram, not a memory emulator. The C++ examples measure actual sizes and limits; this diagram does not compute them.",
+    "steps": [
+      {
+        "title": "Domain",
+        "description": "What does the value mean, what unit is used, and what domain range is allowed?"
+      },
+      {
+        "title": "Type",
+        "description": "Choose bool, char, integer, or floating-point and justify the choice."
+      },
+      {
+        "title": "Initialization",
+        "description": "Supply an initial value; do not read an ordinary uninitialized local int."
+      },
+      {
+        "title": "Measurement",
+        "description": "sizeof and numeric_limits expose properties of the particular target."
+      },
+      {
+        "title": "Conclusion",
+        "description": "Separate guarantees from observations and record the target and checked scenarios."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Which type best fits true/false?",
+    "answers": [
+      "double",
+      "bool",
+      "char[]"
+    ],
+    "correctIndex": 1
+  }
+}

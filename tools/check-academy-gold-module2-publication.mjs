@@ -5,6 +5,8 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
+const candidateMeta=JSON.parse(await readFile(new URL('../release-candidate.json',import.meta.url),'utf8'));
+if(candidateMeta.publication?.uiPatch==='remove-reference-topic-labels'){execFileSync(process.execPath,['tools/check-academy-gold-module2-label-publication.mjs'],{stdio:'inherit'});process.exit(0)}
 const root=path.resolve(import.meta.dirname,'..'),accepted='e743bd537c09e8ae5bbf09d72cd5fc4980bc92dd',main='d9249b2e977483718cd67a151f62552296dd51e4',version='0.1.7-alpha.2.4.6-ui1a.10.6-test.1',old='0.1.7-alpha.2.4.6-ui1a.10.5-test.2',generation='ui1a-cpp-gold-module2-test1-20261025';
 const git=(...a)=>execFileSync('git',a,{cwd:root,maxBuffer:64*1024*1024}),read=f=>readFile(path.join(root,f)),json=async f=>JSON.parse(await read(f)),hash=b=>createHash('sha256').update(b).digest('hex');
 const c=await json('release-candidate.json'),v=await json('version.json'),m=await json('BUILD_MANIFEST.json');
