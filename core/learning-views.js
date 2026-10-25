@@ -3,7 +3,7 @@ import {textFor} from './i18n.js';
 import {glossaryItems,richText,benchmarkMarkup} from './lesson-presentation.js';
 import {codeStudioMarkup} from '../sandbox/code-studio.js';
 import {languageLabel} from '../sandbox/languages.js';
-import {continuationNote,continuationCard,recentProjectsMarkup,orderedCppLessons} from './nexus-learning-discovery.js';
+import {continuationNote,continuationCard,recentProjectsMarkup,orderedCppLessons,learningLaboratory} from './nexus-learning-discovery.js';
 import {graphicsPromoMarkup} from '../effects/nexus-graphics-lab.js';
 import {learnerAcademyEntries} from './academy-presentation.js';
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -52,13 +52,14 @@ function overview(){
   const contentById=Object.fromEntries(cpp.curriculum.lessons.map(item=>[item.id,lessonData(item.id)]));
   const st=loadState().courses?.cpp?.lessons||{};
   const tasks=cpp.curriculum.lessons.filter(item=>typeof contentById[item.id]?.task==='string'&&contentById[item.id].task.trim());
-  const labs=cpp.curriculum.lessons.filter(item=>contentById[item.id]?.benchmark?.lab);
+  const labFor=id=>learningLaboratory(cpp,id,contentById[id],prefs.courseLocale);
+  const labs=orderedCppLessons(cpp).filter(item=>labFor(item.id));
   const authoredEnglish=new Set((cpp.lessonsEn?.lessons||[]).map(item=>item.id));
   const lessonHref=(id,focus='')=>`#course=cpp&lesson=${encodeURIComponent(id)}${focus?'&focus='+focus:''}`;
   const sections=cpp.curriculum.sections.map(sec=>{
     const completed=sec.lessonIds.filter(id=>st[id]?.completed).length;
     return `<section class="module" data-search-group><div class="module-head"><span>${String(sec.order).padStart(2,'0')}</span><div><h2>${e(textFor(sec.title,prefs.courseLocale))}</h2><small>${e(t('codeHub.topicCount',{count:sec.lessonIds.length}))}<span class="learning-module-progress">${e(t('learningPath.moduleProgress',{done:completed,total:sec.lessonIds.length}))}</span></small></div></div><ol>${sec.lessonIds.map(id=>{
-      const lesson=byId[id],hasLab=Boolean(contentById[id]?.benchmark?.lab);
+      const lesson=byId[id],hasLab=Boolean(labFor(id));
       return `<li data-search-item class="topic ${st[id]?.completed?'done':''}"><span class="topic-order">${String(lessonPositions.get(lesson.id)||lesson.order).padStart(2,'0')}</span><a href="${lessonHref(id)}"><strong>${e(textFor(lesson.title,prefs.courseLocale))}</strong><small>${e(t(hasLab?'learningPath.topicWithLab':'learningPath.topicMaterials'))}</small></a><span class="topic-state">${st[id]?.completed?'✓ '+e(t('course.completed')):'○'}</span></li>`;
     }).join('')}</ol></section>`;
   }).join('');
@@ -71,8 +72,8 @@ function overview(){
     }).join('')}</div></section>`;
   }).join('');
   const labCards=labs.map(lesson=>{
-    const lab=contentById[lesson.id].benchmark.lab;
-    return `<article class="learning-lab-card glass-panel" data-search-item><div class="learning-card-kicker"><span>${e(t('learningPath.topicNumber',{number:String(lessonPositions.get(lesson.id)||lesson.order).padStart(2,'0')}))}</span><span>${e(t('learningPath.stepsCount',{count:lab.steps.length}))}</span></div><h3>${e(lab.title)}</h3><p>${e(lab.goal)}</p><details><summary>${e(t('learningPath.proof'))}</summary><p>${e(lab.proof)}</p></details><a class="btn" href="${lessonHref(lesson.id,'lab')}">${e(t('learningPath.openLabTopic'))}<span aria-hidden="true">↗</span></a></article>`;
+    const lab=labFor(lesson.id);
+    return `<article class="learning-lab-card glass-panel" data-search-item><div class="learning-card-kicker"><span>${e(t('learningPath.topicNumber',{number:String(lessonPositions.get(lesson.id)||lesson.order).padStart(2,'0')}))}</span><span>${e(t('learningPath.stepsCount',{count:lab.stepCount??lab.steps.length}))}</span></div><h3>${e(lab.title)}</h3><p>${e(lab.goal)}</p><details><summary>${e(t('learningPath.proof'))}</summary><p>${e(lab.proof)}</p></details><a class="btn" href="${lessonHref(lesson.id,'lab')}">${e(t('learningPath.openLabTopic'))}<span aria-hidden="true">↗</span></a></article>`;
   }).join('');
   const filters=[['topics',cpp.curriculum.lessons.length,'codeHub.tab.topics'],['tasks',tasks.length,'learningPath.tasks'],['labs',labs.length,'learningPath.labs']];
   const tabs=filters.map(([id,count,label])=>`<button type="button" id="cppPathTab-${id}" role="tab" aria-selected="${cppLearningFilter===id}" aria-controls="cppPathPanel-${id}" tabindex="${cppLearningFilter===id?0:-1}" data-learning-filter="${id}">${e(t(label))}<span class="learning-tab-count">${count}</span></button>`).join('');

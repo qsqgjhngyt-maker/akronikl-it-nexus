@@ -32,7 +32,7 @@ async function evidenceScreenshot(target,name){
 }
 const cppPaths=session=>session.assets.filter(file=>/^courses\/cpp\/(?:data\/.*|manifest|curriculum)\.json$/.test(file));
 const assertOutline=session=>assert.deepEqual(cppPaths(session).sort(),['courses/cpp/curriculum.json','courses/cpp/manifest.json']);
-const assertFull=session=>assert.deepEqual(cppPaths(session).sort(),['courses/cpp/curriculum.json','courses/cpp/data/lessons.en.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/practicums.ru.json','courses/cpp/data/projects.ru.json','courses/cpp/manifest.json']);
+const assertFull=session=>assert.deepEqual(cppPaths(session).sort(),['courses/cpp/curriculum.json','courses/cpp/data/gold-laboratories.json','courses/cpp/data/lessons.en.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/practicums.ru.json','courses/cpp/data/projects.ru.json','courses/cpp/manifest.json']);
 async function ready(target,selector){
  await target.waitForFunction(selector=>document.querySelector(selector)||document.querySelector('.nexus-route-message,.boot-error'),selector);
  const error=await target.locator('.route-error-detail,.boot-error').allTextContents();

@@ -16,7 +16,7 @@ import {languageLabel} from '../sandbox/languages.js';
 import {academyCatalogMarkup,bindAcademyCatalog} from '../core/academy-catalog.js';
 import {programmingHubMarkup} from '../core/code-hub-presentation.js';
 import {bindLanguageJourneys} from '../core/nexus-language-journey.js';
-import {bindLearningDiscovery,discoveryPageMarkup} from '../core/nexus-learning-discovery.js';
+import {bindLearningDiscovery,discoveryPageMarkup,focusLearningSection} from '../core/nexus-learning-discovery.js';
 import {bindNexusLearningUi,bindGlossaryDrawer} from '../core/nexus-learning-ui.js';
 import {shellMarkup,lockedMarkup,unlockMarkup,homeMarkup,academyMarkup,projectsMarkup,lessonMarkup,editorMarkup,visualIcon} from './offline-presentation.js';
 import {blogPageMarkup,blogIndexMarkup,blogArticleMarkup,bindBlogSections} from '../core/blog-presentation.js';
@@ -179,6 +179,7 @@ async function render(){
  const mark=root.querySelector('#completeLesson');if(mark&&data)mark.onclick=async()=>{state.completed=!state.completed;await save();await render()};
  for(const input of root.querySelectorAll('[data-task]'))input.onchange=()=>{if(!data)return;markTask(data,kind,item,Number(input.dataset.task),input.checked);void save().catch(()=>{})};
  bindNexusLearningUi(t);bindReadOnlyLearning();
+ focusLearningSection(route.get('focus'));
 
 }
 

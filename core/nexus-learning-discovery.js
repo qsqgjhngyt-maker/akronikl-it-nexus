@@ -16,6 +16,11 @@ export function orderedCppLessons(course){
  return [...new Set([...ids,...source.map(lesson=>lesson.id)])].map(id=>byId.get(id)).filter(Boolean);
 }
 
+// Индекс не зависит от того, какие тела Gold уже открыты в этой вкладке.
+export function learningLaboratory(course,id,content,locale='ru'){
+ return course?.goldLaboratories?.[id]?.[locale]||content?.benchmark?.lab||null;
+}
+
 // A local navigation bookmark. This never writes course progress, workspaces or session credentials.
 export function createLearningResume({storage=accountLocalStorage(),principal=activePrincipalId,now=()=>new Date().toISOString()}={}){
  const key=()=> 'akronikl:it-nexus:learning-resume:v1:'+encodeURIComponent(principal());
@@ -67,12 +72,12 @@ export function bindRecentProjects({loadProjects,t,locale='ru'}={}){
 
 export function discoveryPageMarkup({kind,course,contentFor,state={},projects=[],t,locale='ru',materialLocale='ru'}={}){
  if(kind==='practices')return practicesPageMarkup({course,contentFor,state,projects,t,locale,materialLocale});
- const isLabs=kind==='labs',lessons=course.curriculum.lessons,practicums=course.practicumsRu.practicums;
+ const isLabs=kind==='labs',lessons=orderedCppLessons(course),practicums=course.practicumsRu.practicums;
  const items=[];
  for(const lesson of lessons){
-  const content=contentFor(lesson.id),lab=content?.benchmark?.lab;
+  const content=contentFor(lesson.id),lab=learningLaboratory(course,lesson.id,content,materialLocale);
   const section=course.curriculum.sections.find(s=>s.lessonIds.includes(lesson.id));
-  if(isLabs&&lab)items.push({id:lesson.id,kind:'lab',title:lab.title,text:lab.goal,href:lessonLink(lesson.id,'lab'),section:title(section?.title,materialLocale),steps:lab.steps?.length,proof:lab.proof});
+  if(isLabs&&lab)items.push({id:lesson.id,kind:'lab',title:lab.title,text:lab.goal,href:lessonLink(lesson.id,'lab'),section:title(section?.title,materialLocale),steps:lab.stepCount??lab.steps?.length,proof:lab.proof});
   else if(!isLabs&&content?.task)items.push({id:lesson.id,kind:'task',title:title(lesson.title,materialLocale),text:content.task,href:lessonLink(lesson.id,'task'),section:title(section?.title,materialLocale),completed:state.lessons?.[lesson.id]?.completed});
  }
  if(isLabs)items.unshift({id:'computer-graphics',kind:'graphics',title:t('discovery.graphics.title'),text:t('discovery.graphics.text'),href:'#view=computer-graphics',section:t('discovery.graphics.direction')});
@@ -95,5 +100,6 @@ export function bindLearningDiscovery(t){
 export function focusLearningSection(focus){
  const selector=focus==='task'?'#cppTask':focus==='lab'?'#memoryLab,#oopLab,#cppLab':null;
  const section=selector&&document.querySelector(selector);if(!section)return false;
- section.tabIndex=-1;requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!section.isConnected)return;section.scrollIntoView({block:'start',behavior:'auto'});section.focus({preventScroll:true})}));return true;
+ const hash=location.hash;
+ section.tabIndex=-1;requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!section.isConnected||location.hash!==hash)return;section.scrollIntoView({block:'start',behavior:'auto'});section.focus({preventScroll:true})}));return true;
 }

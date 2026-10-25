@@ -10,6 +10,8 @@ on:
       - 'tests/helpers/**'
       - 'tools/check-academy-gold-module3-*.mjs'
       - 'tools/academy-gold-module3-scope.mjs'
+      - 'tools/build-academy-gold-laboratories.mjs'
+      - 'docs/ru/03-content/CPP_MODULE3_NAVIGATION_SCOPE.json'
       - 'docs/ru/03-content/CPP_MODULE3_DEPENDENCIES.json'
       - 'docs/ru/03-content/CPP_MODULE3_FIX_SCOPE.json'
       - 'docs/ru/03-content/CPP_MODULE3_AUTHORING*.json'
@@ -44,6 +46,7 @@ jobs:
         run: |
           node tools/check-academy-gold-module3-dependencies.mjs
           node tools/check-academy-gold-module3-quality.mjs
+          node --test tests/academy-gold-module3-navigation.test.mjs
           node tests/academy-gold-module3-preservation.mjs
           node --test tests/runtime-files.test.mjs
           node tools/check-academy-gold-module2-dependencies.mjs
@@ -161,6 +164,11 @@ jobs:
       - name: 36 RU/EN объектов, словарь, ширины 320–1440, 40/45 и прежние 40/40 в холодном Offline
         if: ${{ !cancelled() }}
         run: node tests/academy-gold-module3-gold-browser.mjs
+      - name: Каталог лабораторных, прямые ссылки и сохранность RU/EN online и cold Offline
+        if: ${{ !cancelled() }}
+        env:
+          NEXUS_NATIVE_EVIDENCE: academy-gold-m3/navigation-ui-offline
+        run: node tests/academy-gold-module3-navigation-browser.mjs
       - name: Сохранить факты M3 Gold, включая FAIL
         if: always()
         uses: actions/upload-artifact@v4
