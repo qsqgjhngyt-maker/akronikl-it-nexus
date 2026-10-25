@@ -47,7 +47,8 @@ jobs:
           node tools/check-academy-gold-integration.mjs
           node --test tests/academy-gold-module2-content.test.mjs tests/ui1a-deterministic-public-manifest.test.mjs
       - name: Строгий допуск расширения прогресса — открытый P1 обязан оставить gate красным
-        run: node --input-type=module -e "import fs from 'node:fs';import assert from 'node:assert/strict';const r=JSON.parse(fs.readFileSync(process.env.NEXUS_M3_EVIDENCE+'/PRESERVATION.json'));assert.equal(r.expansionReadiness.status,'PASS','M3-P1-01: versioned completion ещё не реализован')"
+        run: |
+          node --input-type=module -e "import fs from 'node:fs';import assert from 'node:assert/strict';const r=JSON.parse(fs.readFileSync(process.env.NEXUS_M3_EVIDENCE+'/PRESERVATION.json'));assert.equal(r.expansionReadiness.status,'PASS','M3-P1-01: versioned completion ещё не реализован')"
       - name: Сохранить факты, включая FAIL
         if: always()
         uses: actions/upload-artifact@v4
