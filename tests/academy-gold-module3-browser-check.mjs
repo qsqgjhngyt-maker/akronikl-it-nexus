@@ -25,13 +25,13 @@ try{
  await f.closeBrowser();f.networkDown();local=await f.launch();await bindRuntimeTransport(f.context,{offline:true});await local.goto(f.origin+'/offline.html#copy='+vaultId);await local.locator('#localPhrase').fill(phrase);await local.locator('#unlockLocal button').click();await local.locator('#psNewProject').waitFor();
  await check('13 старых M3 тем: личный code/stdin/quiz/VFS и completed после холодного Offline',async()=>{
   for(const id of ids){for(const page of [online.page,local]){
-   await page.evaluate(id=>{location.hash='#course=cpp&lesson='+id},id);await page.locator('#editor').waitFor();
+   await page.evaluate(id=>{location.hash='#course=cpp&lesson='+id},id);await page.locator('[data-gold-lesson="'+id+'"]').waitFor();await page.locator('#editor').waitFor();
    assert.equal(await page.locator('#editor').inputValue(),main);assert.equal(await page.locator('#stdin').inputValue(),'17\n');assert.ok(await page.locator('input[name="quiz"][value="1"]').isChecked());assert.match(await page.locator('#completeLesson').textContent(),/✓/);
    assert.deepEqual(await page.locator('#editor').evaluate(n=>n.__nexusCodeStudio.getSnapshot().files.map(({path,content,languageId})=>({path,content,languageId}))),files);
   }}return{lessons:13,entrypoints:2,cases:26,filesPerLesson:3};
  });
  await check('Code Studio UI: настоящая многофайловая сборка в cold Offline',async()=>{
-  await local.evaluate(id=>{location.hash='#course=cpp&lesson='+id},ids[0]);await local.locator('#editor').waitFor();await local.locator('#runCode').click();
+  await local.evaluate(id=>{location.hash='#course=cpp&lesson='+id},ids[0]);await local.locator('[data-gold-lesson="'+ids[0]+'"]').waitFor();await local.locator('#editor').waitFor();await local.locator('#runCode').click();
   await local.waitForFunction(()=>!document.querySelector('#runCode')?.disabled&&(/Код завершения: 0/.test(document.querySelector('#output')?.textContent||'')||document.querySelector('#output.error-output,#output.provider-limit-output')),{},{timeout:300000});
   const text=await local.locator('#output').textContent();assert.ok(text.startsWith('12\n'),text);assert.equal(await local.locator('#editor').inputValue(),main);
   return{stdout:'12\n',realCompiler:true,networkAvailable:false,sourceUnchanged:true};
