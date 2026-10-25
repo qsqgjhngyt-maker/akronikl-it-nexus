@@ -14,14 +14,17 @@ assert(resolveLanguage('1c')?.id==='onec','1C alias resolution failed');
 assert(languageEntryFile('java')==='Main.java','Java entry file metadata failed');
 
 const router=new NexusRuntimeRouter([browserRuntimeProvider,wasmRuntimeProvider,cloudRuntimeProvider]);
+const savedWorker=globalThis.Worker;globalThis.Worker=class{};
 const simple=await router.route({languageId:'cpp',source:'#include <iostream>\nint main(){return 0;}'});
-assert(simple.provider.id==='browser-jscpp','simple C++ should stay on the fast Browser provider');
+assert(simple.provider.id==='wasm-cpp','simple C++ must use the real C++20 compiler');
 assert(simple.reason==='best-supported-ready-provider','simple C++ route reason mismatch');
 
 const modern=await router.route({languageId:'cpp',source:'#include <string>\n#include <vector>\nint main(){std::vector<int> x;return 0;}'});
-assert(modern.provider.id==='browser-jscpp','modern C++ must temporarily fall back to Browser while WASM compiler is unavailable');
-assert(modern.reason==='preferred-provider-unavailable-fallback','modern C++ must expose explicit preferred-provider fallback');
-assert(modern.preferredUnavailable?.provider?.id==='wasm-cpp','WASM must be the preferred future provider for modern C++');
+assert(modern.provider.id==='wasm-cpp','modern C++ must use the real compiler');
+assert(modern.reason==='best-supported-ready-provider','modern C++ route reason mismatch');
+if(savedWorker===undefined)delete globalThis.Worker;else globalThis.Worker=savedWorker;
+let unavailable;try{await new NexusRuntimeRouter([browserRuntimeProvider,{...wasmRuntimeProvider,available:async()=>false},cloudRuntimeProvider]).route({languageId:'cpp',source:'int main(){return 0;}'})}catch(e){unavailable=e;}
+assert(unavailable?.code==='WASM_ENVIRONMENT_UNAVAILABLE','C++ must fail closed without a compatible compiler');
 
 const pythonProvider={
   id:'test-python',label:'Test Python Runtime',tier:'browser',priority:1,languages:['python'],capabilities:{},

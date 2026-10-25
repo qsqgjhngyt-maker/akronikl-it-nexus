@@ -49,13 +49,13 @@ export async function prepareCppGoldLesson(course,id,locale='ru',preparePresenta
  return gold;
 }
 export async function getCppGoldLesson(id,locale='ru'){
- const {goldLessonPath}=await import('./academy-gold-catalog.js');
+ const {goldLessonPath,goldLessonModule}=await import('./academy-gold-catalog.js');
  const path=goldLessonPath(id,locale);
  if(!path)return null;
  const key=id+':'+locale;
  if(!goldCache.has(key)){
   const promise=getJson('./'+path).then(data=>{
-   if(data.lessonId!==id||data.locale!==locale||data.moduleId!=='cpp.section.algorithms'||data.standardVersion!=='academy-gold-1.1')throw Error('GOLD_CONTENT_CONTRACT_MISMATCH');
+   if(data.lessonId!==id||data.locale!==locale||data.moduleId!==goldLessonModule(id)||data.standardVersion!=='academy-gold-1.1')throw Error('GOLD_CONTENT_CONTRACT_MISMATCH');
    return data;
   }).catch(error=>{goldCache.delete(key);throw error});
   goldCache.set(key,promise);

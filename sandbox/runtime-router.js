@@ -41,6 +41,9 @@ export class NexusRuntimeRouter{
     const ready=availability.filter(item=>item.ready).sort((a,b)=>b.score-a.score);
     if(!ready.length){
       const err=new Error(`Nexus Runtime Router: compatible providers for ${request.languageId} are not available.`);
+      if(request.languageId==='cpp'){
+        err.code='WASM_ENVIRONMENT_UNAVAILABLE';err.anxProviderLimit=true;err.anxPhase='environment';
+      }
       err.anxRuntimeRoute={request,candidates:availability};
       throw err;
     }

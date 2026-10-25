@@ -1,5 +1,7 @@
 # Nexus Sandbox Runtime Capability Model
 
+Update, 2026-10-24: [ADR-0022 (RU)](../../ru/adr/ADR-0022-NATIVE_CPP_DEFAULT.md) supersedes the Browser fast path/fallback below in the Module 2 feature. Standard C++ uses pinned Clang/WASI; JSCPP is DEPRECATED, unsupported/unavailable, and both automatic and direct execution are disabled. An unavailable compiler produces a provider limitation. The following text is historical; production remains on accepted test.2 pending separate owner authorization.
+
 **Status:** architecture standard, v0.1.5-alpha.1
 **Normative language:** RU; this file is the required English mirror.
 
