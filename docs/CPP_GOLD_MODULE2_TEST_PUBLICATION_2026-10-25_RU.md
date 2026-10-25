@@ -1,5 +1,9 @@
 # C++ Gold Module 2 — тестовая публикация 1
 
+Уточнение после публикации 25.10.2026: main `8eca940ae0a94c31eeff36f92140d5a90e7ebdbe`, CI feature/PR 7/7 и main 4/4, Pages и scoped LIVE — PASS. Владелец подтвердил на ПК и телефоне работу и сохранность данных; test.1 принят в проверенном объёме. Приведённые ниже PLANNED/PENDING описывают историческую подготовку. Отдельное замечание о подписи «Эталонная тема» ведётся в `CPP_GOLD_MODULE2_TOPIC_LABELS_2026-10-25_RU.md`.
+
+Уточнение отката: рекомендован согласованный возврат source/config/CI/roots к Module 1 test.2 с сохранением всех 2977 immutable файлов main; локальные exact-tree, publication gate и integration13/13 — PASS. Описанный ниже six-root patch остаётся статическим proof и без возврата source/config несовместим с обычным строгим M2 publication gate. Remote rollback CI и настоящий production rollback не выполнялись. Инструкцию ниже не считать готовым самостоятельным PR/CI rollback.
+
 25.10.2026. Владелец прямо разрешил тестовую публикацию в main и production, подготовку сборки и точного отката, проверку входа, прогресса и проектов. Официальный Release и тег запрещены этим поручением.
 
 STATUS: IMPLEMENTED — подготовка публикации. CI нового пакета, deployment и LIVE ещё не считаются PASS.

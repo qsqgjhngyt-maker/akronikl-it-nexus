@@ -58,7 +58,7 @@ function overview(){
     const completed=sec.lessonIds.filter(id=>st[id]?.completed).length;
     return `<section class="module" data-search-group><div class="module-head"><span>${String(sec.order).padStart(2,'0')}</span><div><h2>${e(textFor(sec.title,prefs.courseLocale))}</h2><small>${e(t('codeHub.topicCount',{count:sec.lessonIds.length}))}<span class="learning-module-progress">${e(t('learningPath.moduleProgress',{done:completed,total:sec.lessonIds.length}))}</span></small></div></div><ol>${sec.lessonIds.map(id=>{
       const lesson=byId[id],hasLab=Boolean(contentById[id]?.benchmark?.lab);
-      return `<li data-search-item class="topic ${st[id]?.completed?'done':''}"><span class="topic-order">${String(lesson.order).padStart(2,'0')}</span><a href="${lessonHref(id)}"><strong>${e(textFor(lesson.title,prefs.courseLocale))}</strong><small>${e(t(hasLab?'learningPath.topicWithLab':'learningPath.topicMaterials'))}</small></a><em>${cpp.manifest.benchmarkLessons.includes(id)?e(t('learningPath.referenceTopic')):''}</em><span class="topic-state">${st[id]?.completed?'✓ '+e(t('course.completed')):'○'}</span></li>`;
+      return `<li data-search-item class="topic ${st[id]?.completed?'done':''}"><span class="topic-order">${String(lesson.order).padStart(2,'0')}</span><a href="${lessonHref(id)}"><strong>${e(textFor(lesson.title,prefs.courseLocale))}</strong><small>${e(t(hasLab?'learningPath.topicWithLab':'learningPath.topicMaterials'))}</small></a><span class="topic-state">${st[id]?.completed?'✓ '+e(t('course.completed')):'○'}</span></li>`;
     }).join('')}</ol></section>`;
   }).join('');
   const taskGroups=cpp.curriculum.sections.map(sec=>{

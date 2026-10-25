@@ -9,6 +9,7 @@ import {goldLessonPath,GOLD_ALGORITHM_LESSONS,GOLD_BASICS_LESSONS} from '../core
 const root=new URL('../',import.meta.url),json=async p=>JSON.parse(await readFile(new URL(p,root),'utf8'));
 const plan=await json('docs/ru/03-content/CPP_MODULE2_DEPENDENCIES.json'),curriculum=await json('courses/cpp/curriculum.json');
 const publication=(await json('release-candidate.json')).publication?.sourceCommit==='e743bd537c09e8ae5bbf09d72cd5fc4980bc92dd';
+const labelPatch=(await json('release-candidate.json')).publication?.uiPatch==='remove-reference-topic-labels';
 if(publication)execFileSync(process.execPath,['tools/check-academy-gold-module2-publication.mjs'],{stdio:'pipe'});
 const section=curriculum.sections.find(s=>s.id===plan.moduleId),lookup=new Map(curriculum.lessons.map(l=>[l.id,l]));
 assert.equal(plan.lessons.length,12);assert.equal(plan.lessons.reduce((s,l)=>s+l.sessions,0),19);
@@ -30,7 +31,7 @@ assert.equal(GOLD_ALGORITHM_LESSONS.length,8);
 const untouched=['core','courses','pwa','sandbox','project-studio','sync','server-access','releases','entry-assets','styles','effects','locales','release-candidate.json','version.json','index.html','nexus-shell.html','offline.html','manifest.webmanifest','service-worker.js'];
 const authorizedRuntimePaths=['sandbox/providers/browser-runtime.js','sandbox/runtime-router.js'];
 const authorizedContentPaths=['core/academy-gold-catalog.js','core/academy-gold-presentation.js','core/course-registry.js','core/offline-assets.js',...GOLD_BASICS_LESSONS.flatMap(id=>['ru','en'].map(locale=>goldLessonPath(id,locale)))];
-const publicationPaths=publication?['core/app.js','core/shell-presentation.js','release-candidate.json','version.json','index.html','nexus-shell.html','offline.html','service-worker.js','releases/ui1a-cpp-gold-module2-test1-20261025','entry-assets/ui1a-cpp-gold-module2-test1-20261025']:[];
+const publicationPaths=publication?['core/app.js','core/shell-presentation.js','release-candidate.json','version.json','index.html','nexus-shell.html','offline.html','service-worker.js','releases/ui1a-cpp-gold-module2-test1-20261025','entry-assets/ui1a-cpp-gold-module2-test1-20261025',...(labelPatch?['core/learning-views.js','styles/app.css','releases/ui1a-cpp-gold-module2-test2-labels-20261025','entry-assets/ui1a-cpp-gold-module2-test2-labels-20261025']:[])]:[];
 execFileSync('git',['diff','--exit-code',plan.baseCommit,'--',...untouched,...[...authorizedRuntimePaths,...authorizedContentPaths,...publicationPaths].map(p=>':(exclude)'+p)],{stdio:'pipe'});
 // M2 authoring не меняет уже доказанное исправление runtime.
 execFileSync('git',['diff','--exit-code','1be795e391871561253afe4b201fbf1048aaaeb9','--','sandbox'],{stdio:'pipe'});
