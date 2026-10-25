@@ -1,0 +1,53 @@
+// Реальные compiler/Worker/UI. API аккаунта синтетический, production недоступен.
+import assert from 'node:assert/strict';import {readFile,writeFile,mkdir} from 'node:fs/promises';import path from 'node:path';
+import {onlineRuntimeFixture} from './helpers/online-runtime-fixture.mjs';
+import {nativeOfflineFixture} from './helpers/native-offline-fixture.mjs';
+import {bindRuntimeTransport} from './helpers/runtime-transport.mjs';
+const out=path.resolve(process.env.NEXUS_M3_EVIDENCE||'academy-gold-m3-evidence');await mkdir(out,{recursive:true});
+const online=await onlineRuntimeFixture(),f=await nativeOfflineFixture('m3-files'),manifest=JSON.parse(await readFile(path.join(process.env.NEXUS_FRONTEND_DIR,'BUILD_MANIFEST.json'))),prefix='/releases/'+manifest.assetGeneration;
+const checks=[],results=[],id='synthetic-m3-files',phrase='SYNTHETIC M3 file roundtrip';let local,vaultId,fatal;
+const writer=add=>`#include <iostream>\n#include <fstream>\nint main(){std::ifstream in("data/records.txt");if(!in){std::cout<<"missing\\n";return 0;}int n,sum=0;while(in>>n)sum+=n;{std::ofstream out("report.txt");out<<sum+${add}<<"\\n";}std::cout<<"sum="<<sum+${add}<<"\\n";}`;
+const reader='#include <iostream>\n#include <fstream>\nint main(){std::ifstream in("report.txt");int n;if(in>>n)std::cout<<"saved="<<n<<"\\n";else std::cout<<"missing\\n";}';
+const check=async(name,fn)=>{const detail=await fn();checks.push({name,status:'PASS',detail});console.log('PASS '+name)};
+const runUi=async(page,expected)=>{await page.locator('#runCode').click();await page.waitForFunction(()=>!document.querySelector('#runCode')?.disabled&&(/Код завершения:/.test(document.querySelector('#output')?.textContent||'')||document.querySelector('#output.error-output,#output.provider-limit-output')),{},{timeout:300000});assert.ok((await page.locator('#output').textContent()).startsWith(expected),await page.locator('#output').textContent())};
+const change=async(page,code)=>{await page.locator('#editor').evaluate((e,code)=>e.__nexusCodeStudio.setValue(code),code)};
+const open=async(page)=>{await page.evaluate(id=>{location.hash='#view=code-studio&project='+id},id);await page.locator('#editor').waitFor()};
+const snapshot=async page=>page.locator('#editor').evaluate(e=>e.__nexusCodeStudio.getSnapshot());
+const execute=async(source,files={})=>online.page.evaluate(async({prefix,source,files})=>{const {pickProvider}=await import(prefix+'/sandbox/sandbox.js');const request={languageId:'cpp',source,files:{...files,'main.cpp':source},entryFile:'main.cpp'};try{const route=await pickProvider(request),r=await route.provider.run(request);return{ok:true,provider:route.provider.id,stdout:r.stdout,exitCode:r.exitCode,outputFiles:Object.fromEntries(Object.entries(r.outputFiles||{}).map(([p,v])=>[p,v instanceof Uint8Array?[...v]:v])),binaryPaths:Object.entries(r.outputFiles||{}).filter(([,v])=>v instanceof Uint8Array).map(([p])=>p)}}catch(e){return{ok:false,code:e.code,providerLimit:!!e.anxProviderLimit}}},{prefix,source,files});
+try{
+ await online.page.goto(online.origin+'/#view=home');await online.page.locator('.visual-home').waitFor();await online.waitReady();
+ await online.page.evaluate(async({prefix,id,code})=>{const {createProject,patchProject,createCheckpoint}=await import(prefix+'/project-studio/project-store.js');createProject({id,title:'SYNTHETIC M3 files',languageId:'cpp'});patchProject(id,{manifest:{schemaVersion:1,entryFile:'main.cpp',sourceRoots:['.'],includeRoots:[],testRoots:['tests']},workspace:{languageId:'cpp',entryFile:'main.cpp',activeFile:'main.cpp',revision:2,files:[{path:'main.cpp',content:code,languageId:'cpp'},{path:'data/records.txt',content:'1 2 3\n',languageId:'cpp'},{path:'keep.hpp',content:'// personal header',languageId:'cpp'}]}});createCheckpoint(id,'SYNTHETIC before files')},{prefix,id,code:writer(0)});
+ await open(online.page);
+ await check('Project Studio online: input file, output artifact, явное сохранение и повторный запуск',async()=>{
+  await runUi(online.page,'sum=6\n');assert.ok(!(await snapshot(online.page)).files.some(x=>x.path==='report.txt'));
+  await online.page.locator('[data-save-runtime-files]').click();assert.equal((await snapshot(online.page)).files.find(x=>x.path==='report.txt').content,'6\n');
+  assert.equal((await snapshot(online.page)).files.find(x=>x.path==='main.cpp').content,writer(0));await change(online.page,reader);await runUi(online.page,'saved=6\n');return{explicitSave:true,sourcePreserved:true,stdout:'saved=6\n'};
+ });
+ await check('Правки после запуска не затираются сохранением артефакта',async()=>{
+  await change(online.page,writer(2));await runUi(online.page,'sum=8\n');await online.page.locator('#editor').evaluate(e=>e.__nexusCodeStudio.workspace.updateFile('report.txt','personal edit\n'));
+  await online.page.locator('[data-save-runtime-files]').click();assert.match(await online.page.locator('[data-runtime-files] [role=status]').textContent(),/Файлы изменились/);assert.equal((await snapshot(online.page)).files.find(x=>x.path==='report.txt').content,'personal edit\n');
+  await online.page.locator('#editor').evaluate(e=>e.__nexusCodeStudio.workspace.updateFile('report.txt','6\n'));await change(online.page,reader);return{conflictRejected:true};
+ });
+ const payload=await online.page.evaluate(async({prefix,id})=>{const {getProject}=await import(prefix+'/project-studio/project-store.js'),{loadState}=await import(prefix+'/core/storage.js'),{verifiedAccount}=await import(prefix+'/core/account-storage.js'),{makeLocalPayload}=await import(prefix+'/pwa/offline-transfer.js');return makeLocalPayload({account:verifiedAccount(),state:loadState(),projects:[getProject(id)],isOwner:()=>true})},{prefix,id});
+ local=await f.launch();await bindRuntimeTransport(f.context);await local.goto(f.origin+'/offline.html#view=home');await f.waitReady();vaultId=await local.evaluate(async({prefix,payload,phrase})=>{const {createVaultStore}=await import(prefix+'/pwa/local-vault.js'),s=await createVaultStore().create(payload,phrase);await s.lock();return s.id},{prefix,payload,phrase});
+ const unlock=async()=>{await local.goto(f.origin+'/offline.html#copy='+vaultId);await local.locator('#localPhrase').fill(phrase);await local.locator('#unlockLocal button').click();await local.locator('#psNewProject').waitFor()};
+ await unlock();await local.evaluate(()=>{location.hash='#view=compiler'});await local.locator('#prepareCompiler').click();await local.waitForFunction(()=>/полностью проверен и готов/.test(document.querySelector('#runtimeStatus')?.textContent||''),{},{timeout:300000});
+ await f.closeBrowser();f.networkDown();local=await f.launch();await bindRuntimeTransport(f.context,{offline:true});await unlock();await open(local);
+ await check('Cold Offline Project Studio: файл сохранён между запусками и полными закрытиями браузера',async()=>{
+  await runUi(local,'saved=6\n');await change(local,writer(1));await runUi(local,'sum=7\n');assert.equal((await snapshot(local)).files.find(x=>x.path==='report.txt').content,'6\n');await local.locator('[data-save-runtime-files]').click();
+  await local.locator('#psSaveProject').click();await local.waitForFunction(()=>/Сохранено на устройстве/.test(document.querySelector('#psSaveStatus')?.textContent||''));
+  await f.closeBrowser();local=await f.launch();await bindRuntimeTransport(f.context,{offline:true});await unlock();await open(local);assert.equal((await snapshot(local)).files.find(x=>x.path==='report.txt').content,'7\n');assert.equal((await snapshot(local)).files.find(x=>x.path==='main.cpp').content,writer(1));
+  await change(local,reader);await runUi(local,'saved=7\n');
+  const data=await local.evaluate(async({prefix,vaultId,phrase})=>{const {createVaultStore}=await import(prefix+'/pwa/local-vault.js'),s=await createVaultStore().unlock(vaultId,phrase),d=s.read();await s.lock();return d},{prefix,vaultId,phrase});assert.deepEqual(data.projects[id].checkpoints,payload.projects[id].checkpoints);assert.equal(data.projects[id].workspace.files.find(x=>x.path==='keep.hpp').content,'// personal header');return{coldReopens:2,stdout:'saved=7\n',checkpointPreserved:true};
+ });
+ await check('Изоляция запусков: без явной передачи file отсутствует; binary bytes и лимиты настоящего WASI',async()=>{
+  const absent=await execute(reader);assert.equal(absent.stdout,'missing\n');results.push({name:'no-ambient-persistence',...absent});
+  const binary=await execute('#include <fstream>\nint main(){const char b[]{0,static_cast<char>(255),1};std::ofstream f("raw.bin",std::ios::binary);f.write(b,3);}');assert.deepEqual(binary.outputFiles['raw.bin'],[0,255,1]);assert.deepEqual(binary.binaryPaths,['raw.bin']);results.push({name:'binary',ok:binary.ok,bytes:[...binary.outputFiles['raw.bin']]});
+  const directory=await execute('#include <filesystem>\n#include <fstream>\nint main(){std::filesystem::create_directory("out");std::ofstream f("out/report.txt");f<<39;}');assert.equal(directory.outputFiles['out/report.txt'],'39');assert.ok(!Object.keys(directory.outputFiles).some(p=>p.endsWith('.runno')));results.push({name:'directory',...directory});
+  const traversal=await execute('#include <iostream>\n#include <fstream>\nint main(){std::ifstream f("../report.txt");std::cout<<(f?"bad":"blocked")<<"\\n";}');assert.equal(traversal.stdout,'blocked\n');results.push({name:'traversal-blocked',...traversal});
+  for(const [name,code]of [['size','#include <fstream>\nint main(){std::ofstream f("huge.txt");f.seekp(1073741824);f<<"x";}'],['count','#include <fstream>\n#include <string>\nint main(){for(int i=0;i<140;i++){std::ofstream f("file"+std::to_string(i)+".txt");f<<i;}}']]){const r=await execute(code);results.push({name,...r});assert.equal(r.ok,false);assert.equal(r.code,'WASM_FILE_QUOTA');assert.equal(r.providerLimit,true)}
+  const recovered=await execute('#include <iostream>\nint main(){std::cout<<"recovered\\n";}');assert.equal(recovered.stdout,'recovered\n');results.push({name:'recovery',...recovered});return{realRuns:7,noAmbientPersistence:true,quotaRecovery:true};
+ });
+ assert.deepEqual(online.errors,[]);assert.deepEqual(f.errors,[]);assert.equal(online.requests.filter(r=>r.path.startsWith('/api/')&&r.method!=='GET').length,0);
+}catch(e){fatal={message:e.message,stack:String(e.stack).slice(0,3500)};console.error(e);}
+finally{const result={status:fatal?'FAIL':'PASS',checks,results,fatal,realCompiler:true,realRouter:true,realWorker:true,realUserData:false,productionRequests:0,cloudWrites:0,physicalDevice:false};await writeFile(path.join(out,'FILES_UI.json'),JSON.stringify(result,null,2)+'\n');await online.close();await f.finish(result);if(fatal)process.exitCode=1;}

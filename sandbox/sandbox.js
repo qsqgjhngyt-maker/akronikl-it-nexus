@@ -5,6 +5,7 @@ import {NexusRuntimeRouter} from './runtime-router.js';
 import {normalizeRuntimeRequest} from './provider-contract.js';
 import {languageLabel} from './languages.js';
 import {analyzeSource,parseRuntimeError} from './diagnostics.js';
+import {showRuntimeFileResults} from './runtime-files.js';
 
 export const sandboxProviders=[browserRuntimeProvider,wasmRuntimeProvider,cloudRuntimeProvider];
 export const runtimeRouter=new NexusRuntimeRouter(sandboxProviders);
@@ -146,6 +147,7 @@ export function createSandboxController({editor,stdin,output,engine,status,route
       codeStudio?.clearRuntimeDiagnostics?.();
       output.className='output success-output';
       output.textContent=(result.stdout||(en?'(program produced no output)':'(программа ничего не вывела)'))+exit+adapter+routing+compiler+compilerDiagnostics+`\nNexus Sandbox · ${result.elapsedMs} ms`;
+      showRuntimeFileResults({output,result,request,studio:codeStudio,locale});
       return result;
     }catch(err){
       unsubscribeRuntime?.();unsubscribeRuntime=null;

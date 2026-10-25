@@ -86,6 +86,19 @@ export function createCodeWorkspace({languageId='cpp',entryFile='main.cpp',files
       const requested=normalizePath(activeFile);active=map.has(requested)?requested:safeEntry;
       emit('workspace-replaced',{activeFile:active});return api.snapshot();
     },
+    applyRuntimeFiles(files,base={}){
+      const entries=Object.entries(files||{});let total=0;
+      if(entries.length>128)throw Error('RUNTIME_FILE_QUOTA');
+      for(const [path,content]of entries){
+        if(!path||path.length>256||/[\\\x00-\x1f:]/.test(path)||path.startsWith('/')||path.split('/').some(p=>!p||['.','..','__proto__','constructor','prototype','.runno'].includes(p)))throw Error('RUNTIME_FILE_PATH_INVALID');
+        if(typeof content!=='string'||inferLanguageFromPath(path)||path===safeEntry||map.get(path)?.readOnly)throw Error('RUNTIME_FILE_PROTECTED');
+        const bytes=new TextEncoder().encode(content).length;total+=bytes;if(bytes>512*1024||total>2*1024*1024)throw Error('RUNTIME_FILE_QUOTA');
+        if(map.has(path)?!Object.hasOwn(base,path)||map.get(path).content!==base[path]:Object.hasOwn(base,path))throw Error('RUNTIME_FILE_CONFLICT');
+      }
+      for(const [path,content]of entries)map.set(path,{...(map.get(path)||{path,languageId,readOnly:false}),content});
+      if(entries.length)emit('runtime-files-applied',{paths:entries.map(([p])=>p)});
+      return api.snapshot();
+    },
     runtimeFiles(){return Object.fromEntries([...map.values()].map(file=>[file.path,file.content]))},
     runtimeRequest(stdin=''){const entry=map.get(safeEntry);return{languageId,source:String(entry?.content??''),stdin:String(stdin??''),files:api.runtimeFiles(),entryFile:safeEntry,metadata:{entryFile:safeEntry,activeFile:active,workspaceRevision:revision}}},
     subscribe(fn){if(typeof fn!=='function')return()=>{};listeners.add(fn);return()=>listeners.delete(fn)},

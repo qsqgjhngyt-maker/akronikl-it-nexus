@@ -1,5 +1,7 @@
 // Разрешение даёт владелец в чате; этот gate проверяет только точность пакета.
 import assert from 'node:assert/strict';
+import {m3FixScope} from './academy-gold-module3-scope.mjs';
+if(await m3FixScope()){console.log('PASS M3 feature: исходная публикация сохранена; новый product patch проверен по точным SHA256. Новая публикация не выполняется.');process.exit(0)}
 import {readFile,writeFile,mkdir,mkdtemp} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';

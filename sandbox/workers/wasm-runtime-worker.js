@@ -1,5 +1,6 @@
 import {MODERN_CPP_TOOLCHAIN,MODERN_CPP_LIMITS,modernCppToolchainLabel} from '../runtime-assets.js';
 import {flatFilesToVirtualTree} from '../virtual-files.js';
+import {runtimeFilePath,runtimeInputFiles,runtimeOutputFiles,guardRuntimeFileImports} from '../runtime-files.js';
 
 const FOUNDATION_VERSION='0.1.7-alpha.1.3.2';
 let compilerModulePromise=null;
@@ -79,8 +80,7 @@ function normalizedFiles(request,entryFile){
   const files={};
   if(request?.files&&typeof request.files==='object'){
     for(const [name,value] of Object.entries(request.files)){
-      const safe=String(name||'').replace(/\\/g,'/').replace(/^\/+/, '');
-      if(!safe||safe.includes('../'))continue;
+      const safe=runtimeFilePath(name);
       if(typeof value==='string'||value instanceof Uint8Array)files[safe]=value;
     }
   }
@@ -121,7 +121,7 @@ async function compile(requestId,request){
   const languageId=String(request?.languageId||'cpp').toLowerCase();
   const isC=languageId==='c';
   const defaultEntry=isC?'main.c':'main.cpp';
-  const entryFile=String(request?.entryFile||request?.metadata?.entryFile||defaultEntry).replace(/\\/g,'/').replace(/^\/+/, '')||defaultEntry;
+  const entryFile=runtimeFilePath(request?.entryFile||request?.metadata?.entryFile||defaultEntry);
   const compiler=isC?'clang':'clang++';
   const stdFlag=isC?'-std=c17':'-std=c++20';
   const outputFile='program.wasm';
@@ -132,6 +132,7 @@ async function compile(requestId,request){
   progress(requestId,'compile','compiling',{compiler,entryFile});
   try{
     const virtualFiles=normalizedFiles(request,entryFile);
+    if(Object.keys(virtualFiles).length>MODERN_CPP_LIMITS.maxRuntimeFiles)throw Object.assign(Error('Too many project files.'),{code:'WASM_FILE_QUOTA'});
     guardInputFootprint(virtualFiles);
     for(const [path,value] of Object.entries(virtualFiles)){
       if(byteLength(value)>MODERN_CPP_LIMITS.maxSourceBytes){
@@ -181,7 +182,8 @@ async function compile(requestId,request){
       compilerStdout:compilerOut.value(),
       compilerStderr:compilerErr.value(),
       compileMs:elapsed(started),
-      translationUnits
+      translationUnits,
+      virtualFiles
     };
   }catch(error){
     compilerOut.flush();compilerErr.flush();
@@ -217,14 +219,16 @@ async function execute(requestId,request,compiled){
     stdin:stdinCallback(request?.stdin||''),
     stdout:value=>append('stdout',value),
     stderr:value=>append('stderr',value),
-    fs:{}
+    fs:runtimeInputFiles(compiled.virtualFiles)
   });
   const started=now();
-  const instantiated=await WebAssembly.instantiate(compiled.wasm,{...wasi.getImportObject()});
+  const imports=wasi.getImportObject();let instantiated;
+  const guarded=guardRuntimeFileImports(imports.wasi_snapshot_preview1,()=>instantiated.instance.exports.memory,compiled.virtualFiles);
+  instantiated=await WebAssembly.instantiate(compiled.wasm,{wasi_snapshot_preview1:guarded});
   const startResult=await wasi.start(instantiated);
   const exitCode=Number.isFinite(startResult)?Number(startResult):(Number.isFinite(startResult?.exitCode)?Number(startResult.exitCode):0);
   if(outputTruncated)stderr+=(stderr?'\n':'')+'[Nexus: output truncated]';
-  return{stdout,stderr,exitCode,runMs:elapsed(started)};
+  return{stdout,stderr,exitCode,runMs:elapsed(started),outputFiles:runtimeOutputFiles(startResult?.fs,compiled.virtualFiles)};
 }
 
 function classifyFailure(error,phase='compile'){
@@ -252,6 +256,7 @@ async function handleRun(message){
         stdout:executed.stdout,
         stderr:executed.stderr,
         exitCode:executed.exitCode,
+        outputFiles:executed.outputFiles,
         elapsedMs:elapsed(totalStarted),
         compileMs:compiled.compileMs,
         runMs:executed.runMs,

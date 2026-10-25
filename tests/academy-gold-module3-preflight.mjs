@@ -7,7 +7,7 @@ import {onlineRuntimeFixture} from './helpers/online-runtime-fixture.mjs';
 import {M3_PROBES,M3_CASE_COUNT} from './fixtures/cpp-module3-probes.mjs';
 const out=path.resolve(process.env.NEXUS_M3_EVIDENCE||'academy-gold-m3-evidence');await mkdir(out,{recursive:true});
 const manifest=JSON.parse(await readFile(path.join(process.env.NEXUS_FRONTEND_DIR,'BUILD_MANIFEST.json'))),prefix='/releases/'+manifest.assetGeneration;
-const fixture=await onlineRuntimeFixture(),records=[],legacyRequests=[];let fatal,home;
+const fixture=await onlineRuntimeFixture(),records=[],legacyRequests=[];let fatal,home,acceptedArtifactFiles={};
 fixture.context.on('request',r=>{if(r.url().includes('felixhao28.github.io/JSCPP'))legacyRequests.push(r.url())});
 try{
  await fixture.page.goto(fixture.origin+'/#view=home');await fixture.page.locator('.visual-home').waitFor();await fixture.waitReady();
@@ -21,13 +21,14 @@ try{
     const original=JSON.stringify(request);let provider=null,assessment=null;
     try{const route=await pickProvider(request);provider=route.provider.id;assessment=route.assessment;const r=await route.provider.run(request);return{ok:true,provider,assessment,stdout:r.stdout,stderr:r.stderr,exitCode:r.exitCode,compileMs:r.compileMs,runMs:r.runMs,outputFiles:r.files||r.outputFiles||null,resultKeys:Object.keys(r),sourceUnchanged:original===JSON.stringify(request)}}
     catch(e){return{ok:false,provider,assessment,error:{code:e.code||null,message:String(e.message).slice(0,3000),phase:e.anxPhase||null,providerLimit:!!e.anxProviderLimit,compilerOutput:String(e.anxCompilerOutput||'').slice(0,3000)},sourceUnchanged:original===JSON.stringify(request)}}
-   },{prefix,p,c});
+   },{prefix,p:{...p,files:{...(p.files||{}),...(p.capability==='explicit-persistence'?acceptedArtifactFiles:{})}},c});
    const isNegative=p.expectation==='compile-error';
    const diagnostic=result.error?.compilerOutput||result.error?.message||'';
    const programPass=isNegative?!result.ok&&result.error.phase==='compile'&&diagnostic.toLowerCase().includes(c.diagnostic.toLowerCase()):result.ok&&result.exitCode===0&&result.stderr===''&&result.stdout===c.stdout;
    // stdout "written" не доказывает экспорт/сохранение файла в проекте.
    const artifactPass=!p.outputFiles||Object.entries(p.outputFiles).every(([name,value])=>result.outputFiles?.[name]===value);
    const pass=result.provider==='wasm-cpp'&&result.sourceUnchanged&&programPass&&artifactPass;
+   if(p.id==='file-export-write'&&pass)acceptedArtifactFiles=structuredClone(result.outputFiles); // Явное принятие артефакта вызывающей стороной, не ambient FS.
    records.push({probe:p.id,topics:p.topics,index,capability:p.capability||'standard-cpp',expectation:p.expectation||'stdout',expected:c.stdout||c.diagnostic,programPass,artifactPass,pass,...result});
    await writeFile(path.join(out,'RUNTIME_CASES.json'),JSON.stringify({programs:M3_PROBES.length,cases:M3_CASE_COUNT,records},null,2)+'\n');
   }

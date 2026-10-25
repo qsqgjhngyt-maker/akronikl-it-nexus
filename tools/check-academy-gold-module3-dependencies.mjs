@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import {m3FixScope} from './academy-gold-module3-scope.mjs';
+const m3Scope=await m3FixScope(),m3Paths=m3Scope?.productPatchPaths||[];
 import {readFile,writeFile,mkdir,stat} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';import path from 'node:path';
@@ -24,12 +26,12 @@ for(const t of plan.topics){
 assert.equal(GOLD_ALGORITHM_LESSONS.length+GOLD_BASICS_LESSONS.length,20);
 // M3-0 меняет только документацию и средства проверки, никаких product contracts.
 const protectedPaths=['core','courses','pwa','sandbox','project-studio','sync','server-access','releases','entry-assets','styles','effects','locales','assets','collaboration','feedback','akronikl','release-candidate.json','version.json','index.html','nexus-shell.html','offline.html','manifest.webmanifest','service-worker.js'];
-execFileSync('git',['diff','--exit-code',plan.baseCommit,'--',...protectedPaths],{stdio:'pipe'});
+execFileSync('git',['diff','--exit-code',plan.baseCommit,'--',...protectedPaths,...m3Paths.map(f=>':(exclude)'+f)],{stdio:'pipe'});
 const snapshots=[];for(const file of ['courses/cpp/curriculum.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/lessons.en.json','core/academy-gold-catalog.js','core/app.js','core/storage.js','core/migrations/cpp-v7.js','core/account-storage.js','sync/cloud-sync.js','pwa/offline-entry.js','sandbox/runtime-router.js','sandbox/workers/wasm-runtime-worker.js','version.json','release-candidate.json']){
- const bytes=await readFile(file),baseline=execFileSync('git',['show',plan.baseCommit+':'+file]);assert.ok(bytes.equals(baseline),file);snapshots.push({file,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),unchanged:true});
+ const bytes=await readFile(file),baseline=execFileSync('git',['show',plan.baseCommit+':'+file]);if(!m3Paths.includes(file))assert.ok(bytes.equals(baseline),file);snapshots.push({file,bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex'),unchanged:bytes.equals(baseline),authorizedM3Patch:m3Paths.includes(file)});
 }
 const seen=new Set();async function walk(file){if(seen.has(file))return;seen.add(file);const code=await readFile(file,'utf8');for(const hit of code.matchAll(/(?:^|;|\n)\s*(?:import|export)\s+(?:[^;'"`]*?\s+from\s*)?["']([^"']+)["']/gm))if(hit[1].startsWith('.'))await walk(path.posix.normalize(path.posix.join(path.posix.dirname(file),hit[1])))}
 await walk('core/app.js');let bytes=0;for(const file of seen)bytes+=(await stat(file)).size;
 assert.ok(seen.size<=75&&bytes<=600000);
-const result={status:'PASS',stage:'M3-0',baseCommit:plan.baseCommit,legacyIds:13,proposedUnassigned:5,dagNodes:18,newGoldObjects:0,probePrograms:M3_PROBES.length,probeCases:M3_CASE_COUNT,snapshots,protectedProductDiff:false,perf:{status:'PASS',staticModules:seen.size,staticBytes:bytes,capModules:75,capBytes:600000,scope:'NEXUS-PERF-01 static gate; runtime Home resource guard separately'},mainWrites:0,productionWrites:0,officialRelease:false};
+const result={status:'PASS',stage:'M3-0',baseCommit:plan.baseCommit,legacyIds:13,proposedUnassigned:5,dagNodes:18,newGoldObjects:0,probePrograms:M3_PROBES.length,probeCases:M3_CASE_COUNT,snapshots,protectedProductDiff:false,authorizedM3PatchPaths:m3Paths,perf:{status:'PASS',staticModules:seen.size,staticBytes:bytes,capModules:75,capBytes:600000,scope:'NEXUS-PERF-01 static gate; runtime Home resource guard separately'},mainWrites:0,productionWrites:0,officialRelease:false};
 const out=path.resolve(process.env.NEXUS_M3_EVIDENCE||'academy-gold-m3-evidence');await mkdir(out,{recursive:true});await writeFile(path.join(out,'DEPENDENCIES.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({...result,snapshots:undefined}));

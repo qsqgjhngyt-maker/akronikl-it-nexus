@@ -6,9 +6,12 @@ on:
       - '.github/workflows/academy-gold-cpp-module-3-preflight.yml'
       - 'tests/academy-gold-module3-*.mjs'
       - 'tests/fixtures/cpp-module3-probes.mjs'
+      - 'tests/runtime-files.test.mjs'
       - 'tests/helpers/**'
       - 'tools/check-academy-gold-module3-*.mjs'
+      - 'tools/academy-gold-module3-scope.mjs'
       - 'docs/ru/03-content/CPP_MODULE3_DEPENDENCIES.json'
+      - 'docs/ru/03-content/CPP_MODULE3_FIX_SCOPE.json'
       - 'core/**'
       - 'courses/**'
       - 'sandbox/**'
@@ -40,13 +43,15 @@ jobs:
         run: |
           node tools/check-academy-gold-module3-dependencies.mjs
           node tests/academy-gold-module3-preservation.mjs
+          node --test tests/runtime-files.test.mjs
           node tools/check-academy-gold-module2-dependencies.mjs
+          node tools/check-academy-gold-module2-quality.mjs
       - name: Регрессия Module 1–2, Identity, Cloud, Offline и интеграции
         run: |
           node tools/check-academy-gold-regression.mjs
           node tools/check-academy-gold-integration.mjs
           node --test tests/academy-gold-module2-content.test.mjs tests/ui1a-deterministic-public-manifest.test.mjs
-      - name: Строгий допуск расширения прогресса — открытый P1 обязан оставить gate красным
+      - name: Допуск расширения прогресса с сохранением прежних 40 тем
         run: |
           node --input-type=module -e "import fs from 'node:fs';import assert from 'node:assert/strict';const r=JSON.parse(fs.readFileSync(process.env.NEXUS_M3_EVIDENCE+'/PRESERVATION.json'));assert.equal(r.expansionReadiness.status,'PASS','M3-P1-01: versioned completion ещё не реализован')"
       - name: Сохранить факты, включая FAIL
@@ -58,9 +63,11 @@ jobs:
           retention-days: 30
   native:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
       NEXUS_M3_EVIDENCE: academy-gold-m3/native
+      NEXUS_GOLD_EVIDENCE: academy-gold-m3/module1-native
+      NEXUS_M2_EVIDENCE: academy-gold-m3/module2-native
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -68,6 +75,11 @@ jobs:
           node-version: 22
       - name: Настоящий g++ C++20 и UBSan, те же 26 программ и 35 случаев
         run: node tools/check-academy-gold-module3-native.mjs
+      - name: Все программы Module 1–2 и исходная матрица M2 — настоящий C++20 и UBSan
+        run: |
+          node tools/check-academy-gold-cpp.mjs
+          node tools/check-academy-gold-module2-cpp.mjs
+          node tools/check-academy-gold-module2-examples.mjs
       - name: Сохранить исходные факты native
         if: always()
         uses: actions/upload-artifact@v4
@@ -97,17 +109,100 @@ jobs:
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           npm install --prefix /tmp/nexus-m3-browser --no-save playwright@1.56.1
           /tmp/nexus-m3-browser/node_modules/.bin/playwright install --with-deps chromium
-          node tools/build-ui1a-release.mjs --out /tmp/nexus-m3-build
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m3-build --generation ui1a-m3-p1-qa-20261025 --version 0.1.7-alpha.2.4.6-ui1a.10.6-test.2
           node tools/prepare-academy-gold-runtime-fixture.mjs
       - name: Реальный router, Worker, Clang/WASI — открытые файловые gates не маскируются
         run: node tests/academy-gold-module3-preflight.mjs
       - name: 40/40, личный код, проекты и многофайловый Code Studio после холодного Offline
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         run: node tests/academy-gold-module3-browser-check.mjs
+      - name: Project Studio online/cold Offline, файлы, конфликты, бинарный результат и квоты
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        env:
+          NEXUS_M3_EVIDENCE: academy-gold-m3/files-ui
+          NEXUS_NATIVE_EVIDENCE: academy-gold-m3/files-offline
+        run: node tests/academy-gold-module3-files-browser.mjs
       - name: Сохранить безопасные факты runtime и browser
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: academy-gold-m3-runtime-${{ github.sha }}
+          path: academy-gold-m3/
+          retention-days: 30
+  module1-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/nexus-m3-m1-build
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m3-m1-browser/node_modules/playwright/index.mjs
+      NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m3-m1-runtime
+      NEXUS_JSCPP_FIXTURE: /tmp/nexus-m3-m1-runtime/jscpp.js
+      NEXUS_GOLD_EVIDENCE: academy-gold-m3/module1-browser
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Отдельная сборка feature и закреплённый compiler
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/nexus-m3-m1-browser --no-save playwright@1.56.1
+          /tmp/nexus-m3-m1-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m3-m1-build --generation ui1a-m3-p1-qa-20261025 --version 0.1.7-alpha.2.4.6-ui1a.10.6-test.2
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+      - name: Module 1 — полная runtime матрица, UI и холодный Offline
+        env:
+          NEXUS_NATIVE_EVIDENCE: academy-gold-m3/module1-runtime
+        run: node tests/academy-gold-runtime-browser-check.mjs
+      - name: Module 1 — desktop/mobile, словарь, доступность и Offline
+        env:
+          NEXUS_NATIVE_EVIDENCE: academy-gold-m3/module1-ui
+        run: node tests/academy-gold-browser-check.mjs
+      - name: Сохранить факты Module 1
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m3-module1-${{ github.sha }}
+          path: academy-gold-m3/
+          retention-days: 30
+  module2-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/nexus-m3-m2-build
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m3-m2-browser/node_modules/playwright/index.mjs
+      NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m3-m2-runtime
+      NEXUS_JSCPP_FIXTURE: /tmp/nexus-m3-m2-runtime/jscpp.js
+      NEXUS_M2_EVIDENCE: academy-gold-m3/module2-browser
+      NEXUS_GOLD_EVIDENCE: academy-gold-m3/module2-browser
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Отдельная сборка feature и закреплённый compiler
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/nexus-m3-m2-browser --no-save playwright@1.56.1
+          /tmp/nexus-m3-m2-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m3-m2-build --generation ui1a-m3-p1-qa-20261025 --version 0.1.7-alpha.2.4.6-ui1a.10.6-test.2
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+      - name: Module 2 — исходная runtime матрица и Code Studio UI
+        run: node tests/academy-gold-module2-preflight.mjs
+      - name: Module 2 — все полные программы RU/EN через настоящий router и Clang
+        run: node tests/academy-gold-module2-examples-browser.mjs
+      - name: Module 2 — 24 RU/EN объекта, desktop/mobile, словарь и холодный Offline
+        env:
+          NEXUS_NATIVE_EVIDENCE: academy-gold-m3/module2-ui
+        run: node tests/academy-gold-module2-browser-check.mjs
+      - name: Сохранить факты Module 2
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m3-module2-${{ github.sha }}
           path: academy-gold-m3/
           retention-days: 30

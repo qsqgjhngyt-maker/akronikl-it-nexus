@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {initializeAccountStorage,accountLocalStorage} from '../core/account-storage.js';
-import {loadState,saveState,patchLesson} from '../core/storage.js';
+import {loadState,saveState,patchLesson,cppProgramProgress} from '../core/storage.js';
+import {createLearningViews} from '../core/learning-views.js';
 import {importLegacyCppV7,getCppProgress,LEGACY_KEY} from '../core/migrations/cpp-v7.js';
 import {makeLocalPayload,transferPlan} from '../pwa/offline-transfer.js';
 class MemoryStorage{data=new Map();get length(){return this.data.size}key(i){return [...this.data.keys()][i]??null}getItem(k){return this.data.get(k)??null}setItem(k,v){this.data.set(k,String(v))}removeItem(k){this.data.delete(k)}}
@@ -32,7 +33,21 @@ check('Трёхстороннее сравнение: конфликт курс�
 saveState({courses:{cpp:{lessons:Object.fromEntries(ids.map(id=>[id,{completed:true}]))}}});const historical=getCppProgress();
 for(let i=1;i<=5;i++)patchLesson('cpp.synthetic-proposed-'+i,{completed:true});
 const expanded=getCppProgress(),expansionReady=expanded.pct<=100&&expanded.done<=expanded.total&&historical.done===40;
-const observation={status:expansionReady?'PASS':'FAIL',historical,expanded,issue:'M3-P1-01',scope:'Синтетические будущие ID. Нынешние 40 тем и пользовательское хранилище не изменялись.',requirement:'Versioned completion/исторические 40/40 до регистрации новых тем; не считать неизвестные ID завершениями текущей программы.'};
+check('Незарегистрированные ID сохранены, но не увеличивают счётчик старой программы',()=>{assert.deepEqual(expanded,{done:40,total:40,pct:100});assert.ok(loadState().courses.cpp.lessons['cpp.synthetic-proposed-5'].completed)});
+const future={...curriculum,programVersion:'cpp-gold-m3-synthetic-v2',lessons:[...curriculum.lessons,...Array.from({length:5},(_,i)=>({id:'cpp.synthetic-proposed-'+(i+1)}))]};
+let registered;
+check('Новая версия: 40/45 и исторические 40/40; затем 45/45 без перезаписи state',()=>{
+ const state=loadState();for(let i=1;i<=5;i++)state.courses.cpp.lessons['cpp.synthetic-proposed-'+i].completed=false;
+ const before=JSON.stringify(state),p=cppProgramProgress(state,future);assert.equal(p.done,40);assert.equal(p.total,45);assert.equal(p.pct,89);assert.deepEqual(p.legacy,{done:40,total:40,pct:100,programVersion:'cpp-v7'});assert.equal(JSON.stringify(state),before);
+ for(let i=1;i<=5;i++)state.courses.cpp.lessons['cpp.synthetic-proposed-'+i].completed=true;
+ registered=cppProgramProgress(state,future);assert.equal(registered.done,45);assert.equal(registered.total,45);assert.equal(registered.pct,100);
+ assert.throws(()=>cppProgramProgress(state,{...future,programVersion:undefined}),/CPP_PROGRAM_VERSION_REQUIRED/);
+ assert.throws(()=>cppProgramProgress(state,{...future,lessons:[...future.lessons,future.lessons[0]]}),/CPP_PROGRAM_IDS_INVALID/);
+});
+check('RU/EN представления используют активный denominator и показывают прежнее завершение',()=>{
+ for(const locale of ['ru','en']){const views=createLearningViews({cpp:{manifest:{title:{ru:'C++',en:'C++'},description:{ru:'Курс',en:'Course'},practicumCount:0,projectCount:0},curriculum:future},prefs:{courseLocale:locale},t:k=>k,progress:()=>registered});const html=views.courseHead('overview');assert.ok(html.includes('45/45'));assert.ok(html.includes('data-legacy-completion'));assert.ok(html.includes('40/40'));assert.ok(html.includes('aria-valuemax="45"'))}
+});
+const observation={status:expansionReady?'PASS':'FAIL',historical,unregistered:expanded,registered,issue:'M3-P1-01',scope:'Синтетическая версия программы; реальные curriculum и ID остаются прежними.',requirement:'Версия программы определяет состав подсчёта. Исторические 40/40 выводятся отдельно; storage читается без миграции и перезаписи.'};
 assert.deepEqual(historical,{done:40,total:40,pct:100});
 const result={status:'PASS',scope:'Сохранность существующих 40 ID и синтетический offline conflict roundtrip; не доказательство LIVE и не миграция 45/60 тем',checks,checksCount:checks.length,legacyIds:40,m3Ids:13,sourcePayloadSha256:hash(payload),expansionReadiness:observation,realUserStorageRead:false,networkRequests:0,cloudWrites:0};
 const out=path.resolve(process.env.NEXUS_M3_EVIDENCE||'academy-gold-m3-evidence');await mkdir(out,{recursive:true});await writeFile(path.join(out,'PRESERVATION.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({status:result.status,checks:checks.length,expansionReadiness:observation}));

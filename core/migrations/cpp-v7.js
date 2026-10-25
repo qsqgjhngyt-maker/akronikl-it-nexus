@@ -1,15 +1,10 @@
 import {accountLocalStorage} from '../account-storage.js';
-import { loadState, saveState } from '../storage.js';
+import { loadState, saveState, CPP_LEGACY_LESSON_IDS, cppProgramProgress } from '../storage.js';
 
 export const LEGACY_KEY = 'cpp_programming_pdf_course_v1';
 export const MIGRATION_ID = 'cpp-v7-to-anx-v1';
 
-const lessonIds = [
-  'cpp.programming-process','cpp.algorithm-definition-properties','cpp.algorithm-representations','cpp.pseudocode-euclidean-algorithm','cpp.flowcharts','cpp.top-down-design','cpp.sequence-branching-loops','cpp.languages-compilation-debugging',
-  'cpp.first-cpp-program','cpp.tokens-identifiers-keywords','cpp.comments-constants-literals','cpp.data-types','cpp.variables-scope','cpp.expressions-operators-blocks','cpp.arithmetic-assignment','cpp.type-conversions','cpp.relations-logic','cpp.increment-decrement-sizeof-conditional','cpp.pointers-references-addresses','cpp.standard-io',
-  'cpp.if-else-switch','cpp.for-loop','cpp.while-do-while','cpp.one-dimensional-arrays','cpp.two-dimensional-arrays','cpp.char-arrays-strings','cpp.structures','cpp.unions-typedef-enums','cpp.formatted-io','cpp.streams-state','cpp.files','cpp.linked-lists','cpp.stacks-queues',
-  'cpp.sorting-basic','cpp.search-linear-binary','cpp.pseudo-random-numbers','cpp.oop-principles','cpp.classes-objects-state-control','cpp.constructors-destructors','cpp.visual-event-model'
-];
+const lessonIds = CPP_LEGACY_LESSON_IDS;
 
 function parseLegacy() {
   try {
@@ -95,9 +90,7 @@ export function importLegacyCppV7() {
   return { ok: true, completedCount: state.migrations[MIGRATION_ID].completedCount };
 }
 
-export function getCppProgress() {
-  const course = loadState().courses?.cpp;
-  if (!course?.lessons) return { done: 0, total: 40, pct: 0 };
-  const done = Object.values(course.lessons).filter(x => x?.completed).length;
-  return { done, total: 40, pct: Math.round(done / 40 * 100) };
+export function getCppProgress(curriculum=null) {
+  const p=cppProgramProgress(loadState(),curriculum);
+  return curriculum?p:{done:p.done,total:p.total,pct:p.pct};
 }

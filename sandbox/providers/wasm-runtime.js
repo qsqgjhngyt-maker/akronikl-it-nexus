@@ -84,7 +84,7 @@ function ensureWorker(){
       if(!entry)return;
       clearTimeout(entry.timer);pending.delete(message.requestId);
       patchState({status:'ready',phase:null,percent:100,compilerReady:true,lastError:null});
-      entry.resolve(runtimeResult(wasmRuntimeProvider,message.result,{compiler:message.result?.compiler,target:message.result?.target,compileMs:message.result?.compileMs,runMs:message.result?.runMs,languageId:message.result?.languageId,compilerStdout:message.result?.compilerStdout,compilerStderr:message.result?.compilerStderr,entryFile:message.result?.entryFile,translationUnits:Array.isArray(message.result?.translationUnits)?message.result.translationUnits:[]}));
+      entry.resolve(runtimeResult(wasmRuntimeProvider,message.result,{outputFiles:message.result?.outputFiles||{},compiler:message.result?.compiler,target:message.result?.target,compileMs:message.result?.compileMs,runMs:message.result?.runMs,languageId:message.result?.languageId,compilerStdout:message.result?.compilerStdout,compilerStderr:message.result?.compilerStderr,entryFile:message.result?.entryFile,translationUnits:Array.isArray(message.result?.translationUnits)?message.result.translationUnits:[]}));
       return;
     }
     if(message.type==='runtime-error'){
@@ -97,7 +97,7 @@ function ensureWorker(){
       error.anxProvider=wasmRuntimeProvider;
       error.anxCapability=entry.capability;
       error.anxCompilerOutput=String(message.compilerOutput||message.raw||'');
-      error.anxProviderLimit=['WASM_TOOLCHAIN_UNAVAILABLE','WASM_ENVIRONMENT_UNAVAILABLE','WASM_COMPILER_TIMEOUT'].includes(error.code);
+      error.anxProviderLimit=['WASM_TOOLCHAIN_UNAVAILABLE','WASM_ENVIRONMENT_UNAVAILABLE','WASM_COMPILER_TIMEOUT','WASM_FILE_QUOTA','WASM_FILE_PATH_INVALID'].includes(error.code);
       patchState({status:message.state==='ready'?'ready':'error',phase:error.anxPhase,percent:null,compilerReady:Boolean(message.compilerReady),lastError:error.message});
       if(error.code==='WASM_TOOLCHAIN_UNAVAILABLE'){
         try{worker?.terminate()}catch{}
