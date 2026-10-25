@@ -1,0 +1,349 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.standard-sequences",
+  "sessions": 3,
+  "learningOrder": 5,
+  "prerequisiteIds": [
+    "cpp.functions-contracts"
+  ],
+  "sourceRefs": [
+    "CPP20-VECTOR",
+    "CPP20-SPAN"
+  ],
+  "title": "array, vector, and span: ownership and views",
+  "lead": "Choose a container according to size requirements and pass its data to a function without losing bounds.",
+  "why": "A pointer alone does not carry a length, and manual allocation distracts from the algorithm. Standard containers provide an explicit size and lifetime foundation.",
+  "objectives": [
+    "Explain: Why three types exist",
+    "Trace: Size is not capacity",
+    "Justify: span passes a range",
+    "Implement and verify the lab against its exact contract.",
+    "Identify a common defect: Do not use a span after vector reallocation; create it after filling the vector."
+  ],
+  "prerequisites": [
+    "Modules 1–2: expressions, comparisons, types, references, and checked cin.",
+    "Follow the prerequisite links: cpp.functions-contracts. New constructs are introduced before the assignment."
+  ],
+  "concepts": [
+    {
+      "term": "Owner",
+      "definition": "an object managing the lifetime of stored elements."
+    },
+    {
+      "term": "View",
+      "definition": "access to another object’s elements under an explicit lifetime constraint."
+    },
+    {
+      "term": "size",
+      "definition": "the number of existing elements."
+    },
+    {
+      "term": "capacity",
+      "definition": "vector storage capacity before reallocation is needed."
+    },
+    {
+      "term": "reserve",
+      "definition": "increasing available capacity without creating elements."
+    },
+    {
+      "term": "Invalidation",
+      "definition": "loss of validity of an earlier address or view."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Why three types exist",
+      "paragraphs": [
+        "std::array<int,3> is an object containing three ints with its size encoded in the type. std::vector<int> owns a sequence whose size can change. std::span<const int> is a non-owning view of existing ints and their count.",
+        "Angle brackets supply arguments to a library template: the element type and, for array, the extent. You do not need to author a template yet. Include <array>, <vector>, and <span> for their corresponding names."
+      ]
+    },
+    {
+      "title": "Size is not capacity",
+      "paragraphs": [
+        "vector.size() counts existing elements; capacity() counts how many can fit without reallocation. reserve(10) provides capacity but leaves size at zero. After reserve, v[0] is invalid until push_back or resize has created that element.",
+        "push_back(value) appends an element; empty() tests size()==0. Teaching programs bound the sequence to at most 100 values. In an exception-disabled environment, allocation failure is not promised to be catchable; do not use it as normal input validation."
+      ]
+    },
+    {
+      "title": "Traversal and auto",
+      "paragraphs": [
+        "for(int value : values) obtains a copy of each element. for(const auto& value : values) reads without copying; auto deduces a static type and is not dynamic typing. Mutating elements requires a non-const auto& reference.",
+        "Use an index when position matters. Compare it with size() and avoid subtracting one from a zero unsigned size. Prove !empty() before accessing the last element; front and back also require a nonempty container."
+      ]
+    },
+    {
+      "title": "span passes a range",
+      "paragraphs": [
+        "sum(std::span<const int> values) accepts a read-only range. Compatible arrays, vectors, and built-in arrays can supply it. Inside, size(), empty(), [], and range-for are available; the function does not own the elements’ memory.",
+        "An empty span is valid when the algorithm handles it. In C++20 these types’ operator[] is not input validation: the index must be below size(). Do not execute out-of-bounds accesses as demonstrations; identify the violated precondition on paper."
+      ]
+    },
+    {
+      "title": "View lifetime",
+      "paragraphs": [
+        "The owner must remain alive throughout span use. When a growing vector reallocates, pointers, references, and spans into the old buffer become invalid. reserve may reduce reallocations but cannot replace a lifetime argument.",
+        "Finish modifying a container before creating a short-lived span, then process it without resizing the owner. Do not retain a view into a local vector after its function returns. const in span<const int> restricts writes through the view but does not extend lifetime."
+      ]
+    },
+    {
+      "title": "Choice and evidence",
+      "paragraphs": [
+        "Use array for a small fixed set, vector for a dynamic count, and span for a viewing parameter. This separates storage from the algorithm. Linear summation needs O(n) time and O(1) additional memory regardless of the owner.",
+        "Test the same function with three owners and an empty view. Separately record size before and after reserve and push_back. Next, compare these abstractions with a traditional array while preserving identical boundary rules."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "owners",
+      "title": "One function, three owners",
+      "purpose": "span passes a range independently of its storage form.",
+      "code": "#include <iostream>\n#include <array>\n#include <vector>\n#include <span>\nint sum(std::span<const int> values) {\n    int result{};\n    for (int value : values) { result += value; }\n    return result;\n}\nint main() {\n    std::array<int, 3> a{1, 2, 3};\n    std::vector<int> v{4, 5};\n    int raw[2]{6, 7};\n    std::cout << sum(a) << ' ' << sum(v) << ' ' << sum(raw) << ' ' << sum(std::span<const int>{}) << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "6 9 13 0\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    },
+    {
+      "id": "size-capacity",
+      "title": "reserve does not create elements",
+      "purpose": "Observe size without assuming an exact capacity value.",
+      "code": "#include <iostream>\n#include <vector>\nint main() {\n    std::vector<int> values;\n    values.reserve(10);\n    std::cout << values.size() << ' ' << (values.capacity() >= 10) << '\\n';\n    values.push_back(7);\n    std::cout << values.size() << ' ' << values[0] << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "0 1\n1 7\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Predict before running",
+      "action": "Trace the first worked example step by step, then run all of its cases.",
+      "prediction": "A view carries bounds but neither owns elements nor extends their lifetime.",
+      "verification": "Compare every state transition and stdout; record a mismatch as a hypothesis rather than revising the expectation afterward."
+    },
+    {
+      "title": "A counterexample to a wrong rule",
+      "action": "Using the second example and theory, construct a minimal safe case for this defect: Do not use a span after vector reallocation; create it after filling the vector.",
+      "prediction": "The correct and incorrect models should make distinguishable predictions without executing undefined behaviour.",
+      "verification": "Preserve the prediction, actual output, and an explanation of the violated rule."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A boundary result differs",
+      "cause": "Do not use a span after vector reallocation; create it after filling the vector.",
+      "fix": "A view carries bounds but neither owns elements nor extends their lifetime."
+    },
+    {
+      "symptom": "One case works and the next fails",
+      "cause": "The invariant or empty/malformed-input policy is unspecified.",
+      "fix": "Return to the lab contract and check every published case independently."
+    },
+    {
+      "symptom": "The environment rejected execution",
+      "cause": "Build failure, unsupported syntax, and quotas are different causes.",
+      "fix": "Keep the phase and diagnostic; exceptions are unsupported and environment limits are not learner knowledge failures."
+    }
+  ],
+  "diagnosticExamples": [],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Manually trace the first example and explain every expected output line.",
+      "criteria": "A view carries bounds but neither owns elements nor extends their lifetime.",
+      "hint": "Identify input, state, and observable output first."
+    },
+    {
+      "level": "basic",
+      "task": "Choose the lab’s empty or minimum valid case and its nearest invalid counterpart.",
+      "criteria": "Derive both expectations before execution and connect each to a contract clause.",
+      "hint": "Do not use a span after vector reallocation; create it after filling the vector."
+    },
+    {
+      "level": "applied",
+      "task": "Read n in 0…100 and n values in -1000…1000 into a vector. A span<const int> function computes the sum; print size and sum. Reject extra input as invalid.",
+      "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
+      "hint": "A view carries bounds but neither owns elements nor extends their lifetime."
+    },
+    {
+      "level": "applied",
+      "task": "Compare the two worked examples: which assumptions differ and why can they not be silently transferred into the lab?",
+      "criteria": "State inputs, state, and at least one applicability boundary for each example.",
+      "hint": "The owner must remain alive throughout span use. When a growing vector reallocates, pointers, references, and spans into the old buffer become invalid. reserve may reduce reallocations but cannot replace a lifetime argument."
+    },
+    {
+      "level": "transfer",
+      "task": "Implement countAbove(span, threshold) and test the same function with array and vector without copying the container.",
+      "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour.",
+      "hint": "Use array for a small fixed set, vector for a dynamic count, and span for a viewing parameter. This separates storage from the algorithm. Linear summation needs O(n) time and O(1) additional memory regardless of the owner."
+    },
+    {
+      "level": "transfer",
+      "task": "Give a mini-defence: explain a bound, complexity, and a counterexample to a wrong implementation without running the reference.",
+      "criteria": "Connect the explanation to specific lines of your source and actual tests.",
+      "hint": "A view carries bounds but neither owns elements nor extends their lifetime."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: array, vector, and span: ownership and views",
+    "challenge": "Read n in 0…100 and n values in -1000…1000 into a vector. A span<const int> function computes the sum; print size and sum. Reject extra input as invalid.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <vector>\n#include <span>\nlong long sum(std::span<const int> values) {\n    long long result{};\n    for (int value : values) { result += value; }\n    return result;\n}\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    std::vector<int> values;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        values.push_back(value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << values.size() << ' ' << sum(values) << '\\n';\n}\n",
+    "cases": [
+      {
+        "stdin": "0",
+        "stdout": "0 0\n"
+      },
+      {
+        "stdin": "1 -5",
+        "stdout": "1 -5\n"
+      },
+      {
+        "stdin": "3 1 2 3",
+        "stdout": "3 6\n"
+      },
+      {
+        "stdin": "2 1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1001",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 extra",
+        "stdout": "invalid\n"
+      }
+    ],
+    "referenceFiles": {},
+    "starterFiles": {},
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: A view carries bounds but neither owns elements nor extends their lifetime.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "A view carries bounds but neither owns elements nor extends their lifetime.",
+      "Do not use a span after vector reallocation; create it after filling the vector.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What does reserve(10) change for an empty vector?",
+      "answers": [
+        "Capacity, but not the element count",
+        "It makes v[9] valid",
+        "It creates ten ints"
+      ],
+      "correctIndex": 0,
+      "explanation": "push_back or resize creates elements."
+    },
+    {
+      "question": "Who owns span data?",
+      "answers": [
+        "The compiler keeps them forever",
+        "Always the span itself",
+        "Another object"
+      ],
+      "correctIndex": 2,
+      "explanation": "A view does not extend its owner lifetime."
+    },
+    {
+      "question": "When is v[0] valid?",
+      "answers": [
+        "When capacity()>0",
+        "When size()>0",
+        "After declaring an empty vector"
+      ],
+      "correctIndex": 1,
+      "explanation": "Capacity does not imply an element exists."
+    },
+    {
+      "question": "What may happen to a span after vector reallocation?",
+      "answers": [
+        "It becomes invalid",
+        "It automatically updates its address",
+        "It copies the data itself"
+      ],
+      "correctIndex": 0,
+      "explanation": "Create the view after resizing the owner."
+    },
+    {
+      "question": "What is needed to accept this lab?",
+      "answers": [
+        "Only a completed flag",
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation"
+      ],
+      "correctIndex": 2,
+      "explanation": "A progress flag is not evidence of independent mastery."
+    }
+  ],
+  "reflection": [
+    "A view carries bounds but neither owns elements nor extends their lifetime.",
+    "Implement countAbove(span, threshold) and test the same function with array and vector without copying the container.",
+    "Which case refutes the wrong rule and what do your checks still not establish?"
+  ],
+  "bridge": "Next: One-dimensional arrays: indexing, filtering, and search. Preserve the lab and its verification table.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Stepwise map: array, vector, and span: ownership and views",
+    "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+    "steps": [
+      {
+        "title": "Why three types exist",
+        "description": "std::array<int,3> is an object containing three ints with its size encoded in the type. std::vector<int> owns a sequence whose size can change. std::span<const int> is a non-owning view of existing ints and their count."
+      },
+      {
+        "title": "Size is not capacity",
+        "description": "vector.size() counts existing elements; capacity() counts how many can fit without reallocation. reserve(10) provides capacity but leaves size at zero. After reserve, v[0] is invalid until push_back or resize has created that element."
+      },
+      {
+        "title": "Traversal and auto",
+        "description": "for(int value : values) obtains a copy of each element. for(const auto& value : values) reads without copying; auto deduces a static type and is not dynamic typing. Mutating elements requires a non-const auto& reference."
+      },
+      {
+        "title": "span passes a range",
+        "description": "sum(std::span<const int> values) accepts a read-only range. Compatible arrays, vectors, and built-in arrays can supply it. Inside, size(), empty(), [], and range-for are available; the function does not own the elements’ memory."
+      },
+      {
+        "title": "View lifetime",
+        "description": "The owner must remain alive throughout span use. When a growing vector reallocates, pointers, references, and spans into the old buffer become invalid. reserve may reduce reallocations but cannot replace a lifetime argument."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "What does reserve(10) change for an empty vector?",
+    "answers": [
+      "Capacity, but not the element count",
+      "It makes v[9] valid",
+      "It creates ten ints"
+    ],
+    "correctIndex": 0
+  }
+}

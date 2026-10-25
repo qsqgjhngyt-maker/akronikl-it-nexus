@@ -1,0 +1,77 @@
+name: C++ Module 3 — точная тестовая публикация и откат
+on:
+  push:
+    branches: [feature/academy-gold-standard-cpp-module-3, main]
+    paths:
+      - '.github/workflows/academy-gold-cpp-module-3-publication.yml'
+      - 'tools/academy-gold-module3-*.mjs'
+      - 'tools/check-academy-gold-module3-*.mjs'
+      - 'tests/release-version-consistency-check.mjs'
+      - 'release-candidate.json'
+      - 'version.json'
+      - 'BUILD_MANIFEST.json'
+      - 'core/**'
+      - 'courses/**'
+      - 'pwa/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/academy-gold-cpp-module-3-publication.yml'
+      - 'tools/academy-gold-module3-*.mjs'
+      - 'tools/check-academy-gold-module3-*.mjs'
+      - 'tests/release-version-consistency-check.mjs'
+      - 'release-candidate.json'
+      - 'version.json'
+      - 'BUILD_MANIFEST.json'
+      - 'core/**'
+      - 'courses/**'
+      - 'pwa/**'
+permissions:
+  contents: read
+jobs:
+  publication:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXUS_M3_EVIDENCE: academy-gold-m3-publication/static
+      NEXUS_FRONTEND_DIR: /tmp/nexus-m3-publication-build
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m3-publication-browser/node_modules/playwright/index.mjs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Проверить точный принятый source, все поколения и повторную сборку
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          node tools/check-academy-gold-module3-publication.mjs
+          node tests/release-version-consistency-check.mjs
+          node tools/check-academy-gold-module3-dependencies.mjs
+          node tools/check-academy-gold-module3-quality.mjs
+          node tests/academy-gold-module3-preservation.mjs
+          node --test tests/academy-gold-module3-navigation.test.mjs
+      - name: Подготовить текущий пакет и точные прежние опубликованные bytes
+        run: |
+          npm install --prefix /tmp/nexus-m3-publication-browser --no-save playwright@1.56.1
+          /tmp/nexus-m3-publication-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m3-publication-build
+          git worktree add --detach /tmp/nexus-m3-publication-rollback-source 98b884f70c53bac3502b209112d0d3f19e401699
+          node tools/snapshot-published-build.mjs --source /tmp/nexus-m3-publication-rollback-source --out /tmp/nexus-m3-publication-rollback --expected-commit 98b884f70c53bac3502b209112d0d3f19e401699
+      - name: Настоящий SW — upgrade, точный rollback и сохранность учебных данных
+        env:
+          NEXUS_ROLLBACK_DIR: /tmp/nexus-m3-publication-rollback
+          NEXUS_BROWSER_RESULT: academy-gold-m3-publication/PWA_ROLLBACK.json
+        run: node tests/pwa-rollback-browser-check.mjs
+      - name: Home, Account и media текущего пакета
+        run: |
+          NEXUS_NATIVE_EVIDENCE=academy-gold-m3-publication/startup node tests/platform-startup-browser-check.mjs
+          NEXUS_NATIVE_EVIDENCE=academy-gold-m3-publication/media node tests/blog-media-public-browser-check.mjs
+      - name: Сохранить фактические результаты, включая FAIL
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m3-publication-${{ github.sha }}
+          path: academy-gold-m3-publication/
+          retention-days: 30

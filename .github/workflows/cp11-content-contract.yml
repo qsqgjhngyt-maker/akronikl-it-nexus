@@ -51,6 +51,9 @@ jobs:
           set -euo pipefail
           mkdir -p cp11-evidence
           git diff --name-status "$BASE_SHA" "$HEAD_SHA" | tee cp11-evidence/00_DIFF_NAME_STATUS.txt
+          if node -e "process.exit(JSON.parse(require('fs').readFileSync('release-candidate.json')).publication?.module==='cpp-module-3'?0:1)"; then
+            NEXUS_M3_EVIDENCE=cp11-evidence node --input-type=module -e "const {verifyM3Publication}=await import('./tools/academy-gold-module3-publication.mjs');await verifyM3Publication();console.log('M3_EXACT_ACCEPTED_SOURCE_AND_PUBLICATION_PASS')"
+          else
           bad=0
           while IFS= read -r file; do
             case "$file" in
@@ -64,6 +67,7 @@ jobs:
           done < <(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
           test "$bad" -eq 0
           echo "CP11_ADDITIVE_ONLY_BOUNDARY_PASS"
+          fi
 
       - name: CP-1.1 schema and semantic validation
         run: |

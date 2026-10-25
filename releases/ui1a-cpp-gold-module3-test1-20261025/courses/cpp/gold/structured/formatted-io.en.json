@@ -1,0 +1,349 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.formatted-io",
+  "sessions": 2,
+  "learningOrder": 12,
+  "prerequisiteIds": [
+    "cpp.unions-typedef-enums"
+  ],
+  "sourceRefs": [
+    "CPP20-FORMAT",
+    "CPP20-STREAM-STATE"
+  ],
+  "title": "Formatted output: values and representations",
+  "lead": "Specify a reproducible textual report and explain which stream settings persist.",
+  "why": "Two numerically close results can violate an exact file or display contract. Formatting must be part of the interface rather than an incidental cout effect.",
+  "objectives": [
+    "Explain: A value is separate from its text",
+    "Trace: fixed and setprecision",
+    "Justify: State manipulators",
+    "Implement and verify the lab against its exact contract.",
+    "Identify a common defect: Do not confuse setprecision with storage precision. Do not expect setw to truncate long values."
+  ],
+  "prerequisites": [
+    "Modules 1–2: expressions, comparisons, types, references, and checked cin.",
+    "Follow the prerequisite links: cpp.unions-typedef-enums. New constructs are introduced before the assignment."
+  ],
+  "concepts": [
+    {
+      "term": "Manipulator",
+      "definition": "an operation changing stream formatting or state."
+    },
+    {
+      "term": "Minimum width",
+      "definition": "a field can grow and does not truncate the value."
+    },
+    {
+      "term": "fixed",
+      "definition": "floating formatting with a fixed number of fractional digits."
+    },
+    {
+      "term": "precision",
+      "definition": "significant or fractional digit count according to formatting mode."
+    },
+    {
+      "term": "fill",
+      "definition": "a persistent field-padding character."
+    },
+    {
+      "term": "Exact monetary unit",
+      "definition": "an integral minor-unit count instead of an approximate decimal fraction."
+    }
+  ],
+  "sections": [
+    {
+      "title": "A value is separate from its text",
+      "paragraphs": [
+        "double stores a binary value; fixed and setprecision choose textual representation without increasing calculation precision. Money can use integral minor units and print whole and fractional parts separately.",
+        "Specify units, permitted signs, rounding, and separators. The lab price is an integer number of cents in 0…100000, quantity is 0…1000, and total is at most 100000000 cents. Integer arithmetic avoids decimal representation error."
+      ]
+    },
+    {
+      "title": "fixed and setprecision",
+      "paragraphs": [
+        "With fixed, setprecision(2) from <iomanip> requests two digits after the decimal point. Without fixed, precision normally means significant digits. The setting affects subsequent insertions until changed.",
+        "std::defaultfloat restores general floating formatting but does not reset every stream flag. An independent report can use its own ostringstream with explicit settings. Here first trace cout’s state."
+      ]
+    },
+    {
+      "title": "Width, fill, and alignment",
+      "paragraphs": [
+        "setw(n) sets the minimum width of the next formatted field; longer values are not truncated. setfill('0') changes the fill character persistently. std::left and std::right also persist.",
+        "To print five cents, output 0, a dot, and the remainder with setw(2) and setfill('0'), yielding 0.05. Repeat setw for another field. Field width is a representation rule, not protection against oversized input."
+      ]
+    },
+    {
+      "title": "State manipulators",
+      "paragraphs": [
+        "boolalpha prints true/false rather than 1/0 until noboolalpha. hex selects hexadecimal integer output; dec restores decimal. Avoid leaving an unexpected mode for the next report section.",
+        "\\n adds a newline; endl additionally flushes the buffer. Repeated flushing is usually unnecessary in a batch sandbox. The environment’s overall output limit applies regardless of formatting."
+      ]
+    },
+    {
+      "title": "Locale and portability",
+      "paragraphs": [
+        "A text protocol should specify the decimal point and absence of grouping separators. Do not rely on incidental user locale. The examples explicitly form integer parts and a dot and use ASCII stdout.",
+        "Compare exact bytes separately from numeric closeness. 1.5 versus 1.50 may pass a numeric check while violating the interface. Approximate calculations need an explicit tolerance; setprecision does not repair the mathematics."
+      ]
+    },
+    {
+      "title": "Report checks",
+      "paragraphs": [
+        "Test zero, one minor unit, a whole amount, and the maximum amount. Preserve expected strings including spaces and newlines. For setw, include a value longer than the field to avoid treating width as a length limit.",
+        "Check persistent fill and reset width on the next field. Input states require the same discipline next: flags belong to a stream and affect later operations until explicitly handled."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "precision",
+      "title": "Output precision persists",
+      "purpose": "fixed specifies fractional digits for both following insertions.",
+      "code": "#include <iostream>\n#include <iomanip>\nint main() {\n    std::cout << std::fixed << std::setprecision(2) << 1.25 << ' ' << 2.0 << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "1.25 2.00\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    },
+    {
+      "id": "width",
+      "title": "Width resets while fill persists",
+      "purpose": "Only the next field receives the requested minimum width.",
+      "code": "#include <iostream>\n#include <iomanip>\nint main() {\n    std::cout << std::setfill('0') << std::setw(3) << 7 << '|' << 8 << '|' << std::setw(2) << 123 << '\\n';\n    std::cout << std::boolalpha << true << ' ' << std::noboolalpha << true << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "007|8|123\ntrue 1\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Predict before running",
+      "action": "Trace the first worked example step by step, then run all of its cases.",
+      "prediction": "Formatting changes representation, not value precision.",
+      "verification": "Compare every state transition and stdout; record a mismatch as a hypothesis rather than revising the expectation afterward."
+    },
+    {
+      "title": "A counterexample to a wrong rule",
+      "action": "Using the second example and theory, construct a minimal safe case for this defect: Do not confuse setprecision with storage precision. Do not expect setw to truncate long values.",
+      "prediction": "The correct and incorrect models should make distinguishable predictions without executing undefined behaviour.",
+      "verification": "Preserve the prediction, actual output, and an explanation of the violated rule."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A boundary result differs",
+      "cause": "Do not confuse setprecision with storage precision. Do not expect setw to truncate long values.",
+      "fix": "Formatting changes representation, not value precision."
+    },
+    {
+      "symptom": "One case works and the next fails",
+      "cause": "The invariant or empty/malformed-input policy is unspecified.",
+      "fix": "Return to the lab contract and check every published case independently."
+    },
+    {
+      "symptom": "The environment rejected execution",
+      "cause": "Build failure, unsupported syntax, and quotas are different causes.",
+      "fix": "Keep the phase and diagnostic; exceptions are unsupported and environment limits are not learner knowledge failures."
+    }
+  ],
+  "diagnosticExamples": [],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Manually trace the first example and explain every expected output line.",
+      "criteria": "Formatting changes representation, not value precision.",
+      "hint": "Identify input, state, and observable output first."
+    },
+    {
+      "level": "basic",
+      "task": "Choose the lab’s empty or minimum valid case and its nearest invalid counterpart.",
+      "criteria": "Derive both expectations before execution and connect each to a contract clause.",
+      "hint": "Do not confuse setprecision with storage precision. Do not expect setw to truncate long values."
+    },
+    {
+      "level": "applied",
+      "task": "Read a price in cents in 0…100000 and quantity in 0…1000; print total=X.YY. Require exactly two fields and reject extra input as invalid.",
+      "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
+      "hint": "Formatting changes representation, not value precision."
+    },
+    {
+      "level": "applied",
+      "task": "Compare the two worked examples: which assumptions differ and why can they not be silently transferred into the lab?",
+      "criteria": "State inputs, state, and at least one applicability boundary for each example.",
+      "hint": "A text protocol should specify the decimal point and absence of grouping separators. Do not rely on incidental user locale. The examples explicitly form integer parts and a dot and use ASCII stdout."
+    },
+    {
+      "level": "transfer",
+      "task": "Add price, quantity, and total columns with explicit rules; include values wider than a requested column.",
+      "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour.",
+      "hint": "Test zero, one minor unit, a whole amount, and the maximum amount. Preserve expected strings including spaces and newlines. For setw, include a value longer than the field to avoid treating width as a length limit."
+    },
+    {
+      "level": "transfer",
+      "task": "Give a mini-defence: explain a bound, complexity, and a counterexample to a wrong implementation without running the reference.",
+      "criteria": "Connect the explanation to specific lines of your source and actual tests.",
+      "hint": "Formatting changes representation, not value precision."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Formatted output: values and representations",
+    "challenge": "Read a price in cents in 0…100000 and quantity in 0…1000; print total=X.YY. Require exactly two fields and reject extra input as invalid.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <iomanip>\nint main() {\n    long long price{}, count{};\n    if (!(std::cin >> price >> count)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || price < 0 || price > 100000 || count < 0 || count > 1000) { std::cout << \"invalid\\n\"; return 0; }\n    long long total = price * count;\n    std::cout << \"total=\" << total / 100 << '.' << std::setfill('0') << std::setw(2) << total % 100 << '\\n';\n}\n",
+    "cases": [
+      {
+        "stdin": "5 1",
+        "stdout": "total=0.05\n"
+      },
+      {
+        "stdin": "0 1000",
+        "stdout": "total=0.00\n"
+      },
+      {
+        "stdin": "125 2",
+        "stdout": "total=2.50\n"
+      },
+      {
+        "stdin": "100000 1000",
+        "stdout": "total=1000000.00\n"
+      },
+      {
+        "stdin": "-1 2",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 2.5",
+        "stdout": "invalid\n"
+      }
+    ],
+    "referenceFiles": {},
+    "starterFiles": {},
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: Formatting changes representation, not value precision.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "Formatting changes representation, not value precision.",
+      "Do not confuse setprecision with storage precision. Do not expect setw to truncate long values.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "How long does setw(4) apply?",
+      "answers": [
+        "It changes the number itself",
+        "For every field until program end",
+        "For the next formatted field"
+      ],
+      "correctIndex": 2,
+      "explanation": "Unlike fill and several flags, width normally needs setting again."
+    },
+    {
+      "question": "Does fixed change double storage precision?",
+      "answers": [
+        "Yes",
+        "No",
+        "Only with setw"
+      ],
+      "correctIndex": 1,
+      "explanation": "It selects output representation."
+    },
+    {
+      "question": "Will setw(2) truncate 123?",
+      "answers": [
+        "No; the field grows",
+        "Yes, to 23",
+        "Yes, to 12"
+      ],
+      "correctIndex": 0,
+      "explanation": "Width is a minimum, not a maximum."
+    },
+    {
+      "question": "How many cents are in total=2.50?",
+      "answers": [
+        "2",
+        "25",
+        "250"
+      ],
+      "correctIndex": 2,
+      "explanation": "Units must be part of the contract."
+    },
+    {
+      "question": "What is needed to accept this lab?",
+      "answers": [
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation",
+        "Only a completed flag"
+      ],
+      "correctIndex": 1,
+      "explanation": "A progress flag is not evidence of independent mastery."
+    }
+  ],
+  "reflection": [
+    "Formatting changes representation, not value precision.",
+    "Add price, quantity, and total columns with explicit rules; include values wider than a requested column.",
+    "Which case refutes the wrong rule and what do your checks still not establish?"
+  ],
+  "bridge": "Next: Stream states and reliable line parsing. Preserve the lab and its verification table.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Stepwise map: Formatted output: values and representations",
+    "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+    "steps": [
+      {
+        "title": "A value is separate from its text",
+        "description": "double stores a binary value; fixed and setprecision choose textual representation without increasing calculation precision. Money can use integral minor units and print whole and fractional parts separately."
+      },
+      {
+        "title": "fixed and setprecision",
+        "description": "With fixed, setprecision(2) from <iomanip> requests two digits after the decimal point. Without fixed, precision normally means significant digits. The setting affects subsequent insertions until changed."
+      },
+      {
+        "title": "Width, fill, and alignment",
+        "description": "setw(n) sets the minimum width of the next formatted field; longer values are not truncated. setfill('0') changes the fill character persistently. std::left and std::right also persist."
+      },
+      {
+        "title": "State manipulators",
+        "description": "boolalpha prints true/false rather than 1/0 until noboolalpha. hex selects hexadecimal integer output; dec restores decimal. Avoid leaving an unexpected mode for the next report section."
+      },
+      {
+        "title": "Locale and portability",
+        "description": "A text protocol should specify the decimal point and absence of grouping separators. Do not rely on incidental user locale. The examples explicitly form integer parts and a dot and use ASCII stdout."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "What does setprecision do with fixed?",
+    "answers": [
+      "Controls digits after the decimal point",
+      "Creates an array",
+      "Opens a file"
+    ],
+    "correctIndex": 0
+  }
+}

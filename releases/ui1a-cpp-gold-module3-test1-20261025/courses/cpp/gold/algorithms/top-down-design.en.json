@@ -1,0 +1,352 @@
+{
+  "schemaVersion": 1,
+  "lessonId": "cpp.top-down-design",
+  "moduleId": "cpp.section.algorithms",
+  "locale": "en",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "title": "Top-down design: from requirements to functions",
+  "lead": "Complex software becomes easier to build and verify when decomposed into small operations with clear responsibilities.",
+  "why": "Decomposition supports large projects: define responsibilities first, implement and test each part, then verify the complete behavior.",
+  "objectives": [
+    "Decompose a requirement into cohesive functions.",
+    "Specify function inputs, outputs and constraints.",
+    "Separate input validation, computation and presentation.",
+    "Use unit-level and integration-level test cases."
+  ],
+  "prerequisites": [
+    "You can describe control flow in a diagram.",
+    "Arithmetic is enough; function syntax is explained through examples."
+  ],
+  "concepts": [
+    {
+      "term": "Decomposition",
+      "definition": "Breaking a large problem into smaller problems with explicit boundaries."
+    },
+    {
+      "term": "Function",
+      "definition": "A named operation that receives arguments and can return a result."
+    },
+    {
+      "term": "Function contract",
+      "definition": "The expected inputs, outputs and valid calling conditions."
+    },
+    {
+      "term": "Cohesion",
+      "definition": "How closely a component's responsibilities belong together."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Start with the result the user needs",
+      "paragraphs": [
+        "An order calculator can be described as: read input → validate → calculate → report. Instead of writing one long main, state the responsibility of each stage.",
+        "At a lower level, calculation splits into a subtotal and a discount operation. Validation enforces nonnegative values and a percentage between 0 and 100."
+      ]
+    },
+    {
+      "title": "Define contracts before implementation details",
+      "paragraphs": [
+        "subtotal(price,qty) computes a total under an explicit valid-input assumption. valid returns true or false for the specified bounds.",
+        "Choose names that express purpose: subtotal is more helpful than doStuff. A reporting function need not know the internals of the calculation."
+      ]
+    },
+    {
+      "title": "Separate calculation from interaction",
+      "paragraphs": [
+        "std::cin and std::cout belong at the application boundary. Computation functions should ideally not be tied to console interaction so the same logic can serve a UI or test.",
+        "valid and subtotal can then be examined independently. This reduces diagnostic complexity without replacing end-to-end tests."
+      ]
+    },
+    {
+      "title": "Manage dependencies",
+      "paragraphs": [
+        "Higher-level orchestration calls lower-level functions. When each component receives only necessary arguments, changes are more localized and tests become focused.",
+        "In the example, main handles user input but subtotal does not. This separation is a reusable architecture principle."
+      ]
+    },
+    {
+      "title": "Diagnose a multi-step calculation",
+      "paragraphs": [
+        "If a total is wrong, check input validation, intermediate subtotal and discount calculation in sequence. Each boundary has observable values.",
+        "For teaching we use int; professional monetary systems need explicit units, overflow policies and rounding conventions. Those are later topics in the curriculum."
+      ]
+    },
+    {
+      "title": "Reading a function call",
+      "paragraphs": [
+        "bool valid(...) declares a check returning true or false. Parameters receive argument values on a call; return supplies a result to the caller. In discountPrice(subtotal(price, qty), discount), the subtotal is needed first: 100 and 3 give 300, then a 10 percent discount gives 300 − 30 = 270. This data dependency does not require compressing all work into one line. Store the subtotal in a named variable while debugging."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "Price and quantity are integers 0..1000; discount is 0..100. Round the saving down to whole units: total = subtotal − (subtotal·discount)/100. The bounds keep intermediate products within a 32-bit int.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "title": "Validation versus computation",
+      "purpose": "valid and subtotal have distinct jobs.",
+      "code": "#include <iostream>\nbool valid(int price, int qty) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint main() {\n    int price, qty;\n    if (!(std::cin >> price >> qty)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << subtotal(price, qty) << '\\n';\n}",
+      "stdin": "120 3\n",
+      "expectedStdout": "360\n",
+      "steps": [
+        "valid checks whether the inputs are acceptable.",
+        "subtotal computes the product.",
+        "main coordinates the sequence.",
+        "Each function can be tested separately."
+      ],
+      "cases": [
+        {
+          "stdin": "0 1000\n",
+          "stdout": "0\n"
+        },
+        {
+          "stdin": "1000 1000\n",
+          "stdout": "1000000\n"
+        },
+        {
+          "stdin": "1001 1\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 -1\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "oops\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ]
+    },
+    {
+      "title": "Add a separate discount function",
+      "purpose": "Extend behavior without changing subtotal.",
+      "code": "#include <iostream>\nbool valid(int price, int qty, int discount) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000 && discount >= 0 && discount <= 100;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint discountPrice(int amount, int percent) {\n    return amount - amount * percent / 100;\n}\nint main() {\n    int price, qty, discount;\n    if (!(std::cin >> price >> qty >> discount)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty, discount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << discountPrice(subtotal(price, qty), discount) << '\\n';\n}",
+      "stdin": "100 3 10\n",
+      "expectedStdout": "270\n",
+      "steps": [
+        "Inputs pass validation.",
+        "subtotal returns 300.",
+        "discountPrice subtracts 10% using integer arithmetic.",
+        "main prints 270; invalid input prints invalid."
+      ],
+      "cases": [
+        {
+          "stdin": "99 1 10\n",
+          "stdout": "90\n"
+        },
+        {
+          "stdin": "1000 1000 100\n",
+          "stdout": "0\n"
+        },
+        {
+          "stdin": "1000 1000 0\n",
+          "stdout": "1000000\n"
+        },
+        {
+          "stdin": "1 1 101\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1001 1 10\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "oops\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Zero discount",
+      "action": "Try 100 3 0.",
+      "prediction": "The total remains 300.",
+      "verification": "Check that the discount function has no effect at 0%."
+    },
+    {
+      "title": "Invalid percentage",
+      "action": "Try a 101% discount.",
+      "prediction": "valid rejects it; output is invalid.",
+      "verification": "Do not mix validation and arithmetic."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A calculation function prints an error directly",
+      "cause": "Business logic and presentation have been coupled.",
+      "fix": "Return a value or status and print from main."
+    },
+    {
+      "symptom": "Applying discounts early changes the total",
+      "cause": "The order of operations and rounding policy are unclear.",
+      "fix": "Define the rounding rule before choosing an evaluation order."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Name the responsibilities validate, compute and report.",
+      "criteria": "Each has explicit inputs, outputs and one responsibility.",
+      "hint": "Keep I/O out of pure computations."
+    },
+    {
+      "level": "applied",
+      "task": "Refactor the order calculator into independent functions.",
+      "criteria": "Use valid, subtotal and discountPrice, preserving the output.",
+      "hint": "Start with input validation."
+    },
+    {
+      "level": "transfer",
+      "task": "Design a ride-fare calculator as a small call graph.",
+      "criteria": "Separate validation, fare calculation and output.",
+      "hint": "Write contracts before source code."
+    }
+  ],
+  "laboratory": {
+    "title": "Lab: modular order calculation",
+    "challenge": "Implement valid, subtotal and discountPrice as separate functions, with main responsible for input and output. Price and quantity are integers 0..1000; discount is 0..100. Round the saving down to whole units: total = subtotal − (subtotal·discount)/100. The bounds keep intermediate products within a 32-bit int.",
+    "starterCode": "// Declare valid, subtotal, discountPrice.\n// In main, read input, validate, compute and print.\n",
+    "referenceCode": "#include <iostream>\nbool valid(int price, int qty, int discount) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000 && discount >= 0 && discount <= 100;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint discountPrice(int amount, int percent) {\n    return amount - amount * percent / 100;\n}\nint main() {\n    int price, qty, discount;\n    if (!(std::cin >> price >> qty >> discount)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty, discount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << discountPrice(subtotal(price, qty), discount) << '\\n';\n}",
+    "cases": [
+      {
+        "stdin": "100 3 10\n",
+        "stdout": "270\n"
+      },
+      {
+        "stdin": "50 2 0\n",
+        "stdout": "100\n"
+      },
+      {
+        "stdin": "50 2 101\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1 1\n",
+        "stdout": "1\n"
+      },
+      {
+        "stdin": "1000 1000 100\n",
+        "stdout": "0\n"
+      },
+      {
+        "stdin": "1001 1 0\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Specify each function contract.",
+      "Implement and test valid.",
+      "Add subtotal and discountPrice.",
+      "Run all cases and explain intermediate totals."
+    ],
+    "rubric": [
+      "Computation functions do not read console input.",
+      "Validation and arithmetic are separated.",
+      "Outputs satisfy the cases.",
+      "Submit code and a call diagram."
+    ],
+    "artifact": "source-code-and-decomposition-diagram",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Why separate a pure calculation from I/O?",
+      "answers": [
+        "It becomes easier to test and reuse",
+        "It prevents a result",
+        "It hides it from the compiler"
+      ],
+      "correctIndex": 0,
+      "explanation": "Computation then remains independent of the user interface."
+    },
+    {
+      "question": "What does valid do?",
+      "answers": [
+        "Print a report",
+        "Enforce input bounds",
+        "Link the program"
+      ],
+      "correctIndex": 1,
+      "explanation": "Its contract is about valid arguments."
+    },
+    {
+      "question": "What is a useful decomposition?",
+      "answers": [
+        "One 500-line function",
+        "Functions with mixed responsibilities",
+        "Small functions with explicit roles and contracts"
+      ],
+      "correctIndex": 2,
+      "explanation": "Clear boundaries make maintenance easier."
+    }
+  ],
+  "reflection": [
+    "What changes if the input comes from a web form rather than a console?",
+    "How would you test discountPrice without running main?"
+  ],
+  "bridge": "Next, explore sequence, branching and iteration as control-flow building blocks.",
+  "visualization": {
+    "kind": "decomposition",
+    "steps": [
+      {
+        "title": "User task",
+        "description": "Compute an order total."
+      },
+      {
+        "title": "Input",
+        "description": "Read price, quantity and discount."
+      },
+      {
+        "title": "Validate",
+        "description": "valid checks input ranges."
+      },
+      {
+        "title": "Subtotal",
+        "description": "subtotal multiplies price and quantity."
+      },
+      {
+        "title": "Discount",
+        "description": "discountPrice computes the final amount."
+      },
+      {
+        "title": "Output",
+        "description": "main prints a total or invalid."
+      }
+    ]
+  },
+  "sourceRefs": [
+    "CS2023-SDF",
+    "CPP-GUIDELINES"
+  ],
+  "legacyQuiz": {
+    "question": "What does top-down design mean?",
+    "answers": [
+      "Starting with machine code",
+      "Dividing a problem into progressively simpler subproblems",
+      "Always writing at the top of a file"
+    ],
+    "correctIndex": 1
+  }
+}

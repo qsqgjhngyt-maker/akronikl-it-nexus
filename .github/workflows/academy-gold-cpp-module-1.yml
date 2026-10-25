@@ -52,7 +52,9 @@ jobs:
         run: npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
       - name: Неизменность ID, прогресса, Identity, Cloud; только согласованный runtime patch
         run: |
-          if node -e "process.exit(JSON.parse(require('fs').readFileSync('release-candidate.json')).publication?.sourceCommit==='e743bd537c09e8ae5bbf09d72cd5fc4980bc92dd'?0:1)"; then
+          if node -e "process.exit(JSON.parse(require('fs').readFileSync('release-candidate.json')).publication?.module==='cpp-module-3'?0:1)"; then
+            node tools/check-academy-gold-module3-publication.mjs
+          elif node -e "process.exit(JSON.parse(require('fs').readFileSync('release-candidate.json')).publication?.sourceCommit==='e743bd537c09e8ae5bbf09d72cd5fc4980bc92dd'?0:1)"; then
             node tools/check-academy-gold-module2-publication.mjs
           else
             git diff --exit-code bad182cc020e51dcfd0b36a7b0127c637c8f79ee HEAD -- courses/cpp/curriculum.json courses/cpp/content-package.json courses/cpp/data core/storage.js core/account-storage.js core/identity.js core/migrations sync sandbox project-studio server-access pwa/local-vault.js pwa/offline-learning.js pwa/runtime-manifest.js pwa/service-worker.js ':(exclude)sandbox/providers/browser-runtime.js'
