@@ -30,9 +30,11 @@ jobs:
           node-version: 22
       - name: Проверить изоляцию от принятого main
         run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           test "${GITHUB_REF_NAME}" = feature/academy-gold-standard-cpp-module-2 || test "${GITHUB_REF_NAME}" = main || test "${GITHUB_EVENT_NAME}" = pull_request
           git merge-base --is-ancestor d9249b2e977483718cd67a151f62552296dd51e4 HEAD
           node tools/check-academy-gold-module2-dependencies.mjs
+          node --test tests/ui1a-deterministic-public-manifest.test.mjs
       - name: Учебные зависимости, stable IDs и NEXUS-PERF-01
         run: |
           node --test tests/platform-lazy-imports.test.mjs tests/platform-startup-load.test.mjs
@@ -82,6 +84,7 @@ jobs:
           node-version: 22
       - name: 24 Gold объекта, локализация, учебные зависимости и сохранность state
         run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           node --test tests/academy-gold-content.test.mjs tests/academy-gold-module2-content.test.mjs
           node tools/check-academy-gold-module2-dependencies.mjs
           node tools/check-academy-gold-module2-quality.mjs

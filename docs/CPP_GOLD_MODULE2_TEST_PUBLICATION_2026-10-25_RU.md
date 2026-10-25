@@ -4,6 +4,8 @@
 
 STATUS: IMPLEMENTED — подготовка публикации. CI нового пакета, deployment и LIVE ещё не считаются PASS.
 
+Первый CI публикационного кандидата fd889b1 остановлен до main: в двух jobs зависимости builder устанавливались после первого вызова gate; в третьем строгая повторная сборка обнаружила разный SHA256 Service Worker на Windows/Linux при одинаковых остальных bytes. Причина второго отказа — неканонический порядок retained assets. Порядок установки исправлен, producer сортирует записи независимо от файловой системы/locale. Новый тест переставляет retained generations и сравнивает все 2071 файла. Authority set, URL/hash/size/version и PWA source policy не меняются; прежние поколения не пересобираются. Финальный exact-SHA CI ещё требуется.
+
 Принятые исходники: `e743bd537c09e8ae5bbf09d72cd5fc4980bc92dd`, feature/academy-gold-standard-cpp-module-2. Приёмка 05/07 и автоматическая регрессия NEXUS-PERF-01 пройдены на этом SHA; физическая и личная приёмка нового Module 2 не проводилась. Последний production/main: `d9249b2e977483718cd67a151f62552296dd51e4` (Module 1 test.2).
 
 Новый тестовый пакет: `0.1.7-alpha.2.4.6-ui1a.10.6-test.1`, generation `ui1a-cpp-gold-module2-test1-20261025`. Полные 12 тем RU/EN: 36 заданий, 12 лабораторных, A/B/C и проект. Gold source, stable IDs, legacy quiz и все storage/Identity/Cloud/Studio/PWA contracts сохраняются. Runtime побайтово соответствует принятому e743bd5; два ранее принятых изменения относительно main — deprecated JSCPP facade и маршрутизация C++ в закреплённый Clang/WASM. Публикация меняет номер в app/shell, metadata и создаёт новое immutable поколение.

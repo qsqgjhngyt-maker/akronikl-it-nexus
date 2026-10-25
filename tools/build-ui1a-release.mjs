@@ -39,7 +39,7 @@ for(const generation of config.retainedPublicGenerations||[]){
  if(generation===config.assetGeneration||!/^ui1a-[a-z0-9-]+$/.test(generation))throw Error('Invalid retained public generation');
  const version=JSON.parse(await readFile(path.join(source,'releases',generation,'version.json'))).version;
  async function retained(dir){
-  for(const entry of await readdir(path.join(source,dir),{withFileTypes:true})){
+  for(const entry of (await readdir(path.join(source,dir),{withFileTypes:true})).sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0)){
    const file=path.posix.join(dir,entry.name);
    if(entry.isDirectory())await retained(file);
    else if(entry.isFile()){await output(file,await readFile(path.join(source,file)),'Retained immutable public generation');records.at(-1).version=version}
@@ -53,9 +53,9 @@ for(const file of ['assets/icons/icon-192.png','assets/icons/icon-512.png','asse
 const offline=renderHTML(await readFile(path.join(source,'offline.html'),'utf8')).replaceAll('./pwa/','./'+prefix+'pwa/');
 await output('offline.html',Buffer.from(offline),'offline.html: independent public educational shell; local vault unlock required');
 const mime=file=>file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.md')?'text/markdown':'text/html';
-const approved=records.filter(r=>!['index.html','nexus-shell.html','version.json'].includes(r.file)).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file),...(r.version?{version:r.version}:{})}));
+const approved=records.filter(r=>!['index.html','nexus-shell.html','version.json'].includes(r.file)).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file),...(r.version?{version:r.version}:{})})).sort((a,b)=>a.url<b.url?-1:a.url>b.url?1:0);
 const pwaConfig={generation:config.assetGeneration,version:config.version,assets:approved};
 const sw=(await build({absWorkingDir:source,entryPoints:[path.join(source,'pwa/service-worker.js')],bundle:true,platform:'browser',format:'iife',target:'es2022',write:false,define:{__NEXUS_PWA_CONFIG__:JSON.stringify(pwaConfig)},logLevel:'warning'})).outputFiles[0].contents;
 await output('service-worker.js',Buffer.from(sw),'pwa/service-worker.js: exact public manifest bound');
-const bundle={version:config.version,assetGeneration:config.assetGeneration,prefix,files:records.sort((a,b)=>a.file.localeCompare(b.file)),publicAuthority:'EXACT PUBLIC STATIC FILES / CANDIDATE OWNER PUBLICATION APPROVAL REQUIRED',publicAssets:approved.length,legacyWorkerIncluded:false,verifiedWorkerIncluded:true,manifestIdentity:JSON.parse(manifest),rootHTMLURLReuse:'Network only; independent public offline shell grants no server proof; personal copies require local phrase'};
+const bundle={version:config.version,assetGeneration:config.assetGeneration,prefix,files:records.sort((a,b)=>a.file<b.file?-1:a.file>b.file?1:0),publicAuthority:'EXACT PUBLIC STATIC FILES / CANDIDATE OWNER PUBLICATION APPROVAL REQUIRED',publicAssets:approved.length,legacyWorkerIncluded:false,verifiedWorkerIncluded:true,manifestIdentity:JSON.parse(manifest),rootHTMLURLReuse:'Network only; independent public offline shell grants no server proof; personal copies require local phrase'};
 await writeFile(path.join(out,'BUILD_MANIFEST.json'),JSON.stringify(bundle,null,2)+'\n');console.log(JSON.stringify({out,files:records.length,version:config.version,prefix,serviceWorker:true}));
