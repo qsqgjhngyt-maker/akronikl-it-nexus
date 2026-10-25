@@ -142,6 +142,9 @@ async function render(){
  const seq=++renderSequence;await graphics?.flush();graphics=null;await settled();if(seq!==renderSequence)return;studio=null;const route=new URLSearchParams(location.hash.slice(1));
  disposeTerms?.();disposeTerms=null;disposeOrbit?.();disposeOrbit=null;
  updateChrome(route);
+ // hashchange может прийти во время начальной загрузки метаданных. Bootstrap
+ // повторит render для текущего hash; локальную копию и её данные не изменяем.
+ if(!course){root.innerHTML='<p role="status">Подготавливаем учебные материалы…</p>';return}
  if(['labs','practices'].includes(route.get('view'))){root.innerHTML=discoveryPageMarkup({kind:route.get('view'),course,contentFor:id=>(locale==='en'?course.lessonsEn:course.lessonsRu).lessons.find(l=>l.id===id),projects:Object.values(data?.projects||{}),state:data?.state.courses?.cpp||{},t,locale:prefs.uiLocale,materialLocale:locale});bindLearningDiscovery(t);return}
  if(route.get('view')==='programming'){
   root.innerHTML=views().programmingHub();
