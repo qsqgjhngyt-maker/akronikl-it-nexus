@@ -12,7 +12,7 @@ export async function m3FixScope(){
  const authored=authoring?.productPaths||[],authorMap=new Map(authored.map(p=>[p.file,p]));
  if(authoring){
   assert.equal(authoring.baseCommit,'cf5c0d8a93c14cc98b56aad3207f2793280a7a83');assert.equal(authoring.stage,'M3-1');
-  const allowed=['core/academy-gold-catalog.js','core/academy-gold-presentation.js','core/learning-views.js','courses/cpp/manifest.json','courses/cpp/curriculum.json','courses/cpp/content-package.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/lessons.en.json'];
+  const allowed=['core/academy-gold-catalog.js','core/academy-gold-presentation.js','core/learning-views.js','core/nexus-learning-discovery.js','courses/cpp/manifest.json','courses/cpp/curriculum.json','courses/cpp/content-package.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/lessons.en.json'];
   const spec=JSON.parse(await readFile('docs/ru/03-content/CPP_MODULE3_AUTHORING.json','utf8'));
   for(const l of spec.lessons)for(const locale of ['ru','en'])allowed.push('courses/cpp/gold/structured/'+l.id.slice(4)+'.'+locale+'.json');
   assert.equal(spec.lessons.length,18);assert.equal(spec.lessons.filter(l=>l.added).length,5);assert.equal(spec.programVersion,'cpp-gold-m3-v1');

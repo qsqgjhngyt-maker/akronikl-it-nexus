@@ -16,6 +16,8 @@ try{
  await check('Home: нет тел Gold и компилятора в ресурсах документа',async()=>{
   const resources=await online.page.evaluate(()=>performance.getEntriesByType('resource').map(r=>new URL(r.name).pathname));assert.ok(!resources.some(p=>/gold\/.*json|llvm|clang|runno|sandbox\/providers/.test(p)));return{resources,backgroundPrecacheExcluded:true};
  });
+ await online.page.evaluate(async prefix=>{const {patchLesson,CPP_LEGACY_LESSON_IDS}=await import(prefix+'/core/storage.js');for(const id of CPP_LEGACY_LESSON_IDS.slice(0,23))patchLesson(id,{completed:true})},prefix);
+ await online.page.reload();await online.page.locator('.visual-home').waitFor();await online.waitReady();assert.equal(await online.page.locator('[data-learning-continue]').first().getAttribute('href'),'#course=cpp&lesson=cpp.functions-contracts');
  const payload=await online.page.evaluate(async({prefix,ids})=>{
   const {patchLesson,loadState}=await import(prefix+'/core/storage.js'),{verifiedAccount}=await import(prefix+'/core/account-storage.js'),{makeLocalPayload}=await import(prefix+'/pwa/offline-transfer.js');
   const {CPP_LEGACY_LESSON_IDS}=await import(prefix+'/core/storage.js');for(const id of CPP_LEGACY_LESSON_IDS)patchLesson(id,{completed:true});
@@ -26,6 +28,9 @@ try{
  local=await f.launch();await local.goto(f.origin+'/offline.html#view=home');await f.waitReady();
  vaultId=await local.evaluate(async({prefix,payload,phrase})=>{const {createVaultStore}=await import(prefix+'/pwa/local-vault.js'),s=await createVaultStore().create(payload,phrase);await s.lock();return s.id;},{prefix,payload,phrase});
  await f.closeBrowser();f.networkDown();local=await f.launch();await local.goto(f.origin+'/offline.html#copy='+vaultId);await local.locator('#localPhrase').fill(phrase);await local.locator('#unlockLocal button').click();await local.locator('#psNewProject').waitFor();
+ await check('Продолжить не пропускает новые темы: online после 23 старых и cold Offline после 40 старых',async()=>{
+  await local.evaluate(()=>{location.hash='#view=home'});await local.locator('.visual-home').waitFor();assert.equal(await local.locator('[data-learning-continue]').first().getAttribute('href'),'#course=cpp&lesson=cpp.functions-contracts');return{onlineCompleted:23,offlineCompleted:40,next:'cpp.functions-contracts',bookmarkPreserved:true};
+ });
  await check('36 RU/EN урока одинаковы online и после полного закрытия браузера без сети',async()=>{
   for(const locale of ['ru','en'])for(const id of GOLD_STRUCTURED_LESSONS){
    const g=all.find(g=>g.lessonId===id&&g.locale===locale);

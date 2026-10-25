@@ -9,6 +9,13 @@ const title=(value,locale)=>typeof value==='string'?value:value?.[locale]||value
 const focusValue=value=>['task','lab'].includes(value)?value:'';
 const lessonLink=(id,focus='')=>`#course=cpp&lesson=${encodeURIComponent(id)}${focusValue(focus)?'&focus='+focus:''}`;
 
+// Учебный порядок задают модули; физический массив сохраняет старые migration indices.
+export function orderedCppLessons(course){
+ const source=course?.curriculum?.lessons||[],byId=new Map(source.map(lesson=>[lesson.id,lesson]));
+ const ids=course?.curriculum?.sections?.flatMap(section=>section.lessonIds||[])||[];
+ return [...new Set([...ids,...source.map(lesson=>lesson.id)])].map(id=>byId.get(id)).filter(Boolean);
+}
+
 // A local navigation bookmark. This never writes course progress, workspaces or session credentials.
 export function createLearningResume({storage=accountLocalStorage(),principal=activePrincipalId,now=()=>new Date().toISOString()}={}){
  const key=()=> 'akronikl:it-nexus:learning-resume:v1:'+encodeURIComponent(principal());
@@ -18,7 +25,7 @@ export function createLearningResume({storage=accountLocalStorage(),principal=ac
   try{const courses=read();courses.cpp={lessonId,focus:focusValue(focus),visitedAt:now()};storage?.setItem(key(),JSON.stringify({schemaVersion:1,courses}));return true}catch{return false}
  };
  const continuation=(course,state={})=>{
-  const lessons=course?.curriculum?.lessons||[],saved=read().cpp;
+  const lessons=orderedCppLessons(course),saved=read().cpp;
   const last=lessons.find(item=>item.id===saved?.lessonId);
   const next=lessons.find(item=>!state[item.id]?.completed);
   const lesson=last||next||lessons[0];

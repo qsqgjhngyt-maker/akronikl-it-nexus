@@ -3,6 +3,7 @@ import {module3GoldLessons,module3GoldPrograms,programFiles} from './helpers/mod
 import {GOLD_STRUCTURED_LESSONS,GOLD_LESSONS,goldLessonPath} from '../core/academy-gold-catalog.js';
 import {academyGoldMarkup} from '../core/academy-gold-presentation.js';import {goldVisualizationSteps} from '../core/academy-gold-model.js';
 import {CPP_LEGACY_LESSON_IDS,cppProgramProgress} from '../core/storage.js';import {createLearningViews} from '../core/learning-views.js';
+import {orderedCppLessons,createLearningResume} from '../core/nexus-learning-discovery.js';
 const j=async p=>JSON.parse(await readFile(new URL('../'+p,import.meta.url),'utf8'));
 const all=await module3GoldLessons(),spec=await j('docs/ru/03-content/CPP_MODULE3_AUTHORING.json'),curriculum=await j('courses/cpp/curriculum.json'),ru=await j('courses/cpp/data/lessons.ru.json'),en=await j('courses/cpp/data/lessons.en.json');
 test('M3-1: 36 полных объектов, шесть теоретических разделов, лабораторные, A/B/C и полный EN',async()=>{
@@ -41,6 +42,20 @@ test('Реальная версия 40/45 сохраняет прежние 40/4
  const state={courses:{cpp:{lessons:Object.fromEntries(CPP_LEGACY_LESSON_IDS.map(id=>[id,{completed:true,code:'personal',quiz:1}]))}}},before=JSON.stringify(state),p=cppProgramProgress(state,curriculum);
  assert.deepEqual({done:p.done,total:p.total,pct:p.pct},{done:40,total:45,pct:89});assert.equal(p.legacy.done,40);assert.equal(p.legacy.total,40);assert.equal(JSON.stringify(state),before);
  for(const locale of ['ru','en']){const views=createLearningViews({cpp:{manifest:{title:{ru:'C++',en:'C++'},description:{ru:'Курс',en:'Course'},practicumCount:6,projectCount:7},curriculum},prefs:{courseLocale:locale},progress:()=>p,t:k=>k});assert.ok(views.courseHead('overview').includes('40/45'));assert.ok(views.courseHead('overview').includes('40/40'));}
+});
+test('Продолжить следует учебному порядку 18 тем; bookmark и старые migration indices сохранены',()=>{
+ const course={manifest:{id:'cpp'},curriculum},expected=curriculum.sections.flatMap(s=>s.lessonIds),ordered=orderedCppLessons(course);assert.deepEqual(ordered.map(l=>l.id),expected);
+ const values=new Map(),storage={getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v)},resume=createLearningResume({storage,principal:()=> 'synthetic-m3-order',now:()=> '2026-10-25T00:00:00Z'}),state={};
+ for(const [i,id]of expected.entries()){assert.equal(resume.continuation(course,state).lesson.id,id,'Must not skip '+id);state[id]={completed:true,code:'personal '+i};}
+ assert.equal(resume.continuation(course,state).mode,'review');assert.equal(values.size,0,'Reading suggestions must not write bookmarks or progress');
+ const first23=Object.fromEntries(CPP_LEGACY_LESSON_IDS.slice(0,23).map(id=>[id,{completed:true}]));assert.equal(resume.continuation(course,first23).lesson.id,'cpp.functions-contracts');
+ assert.equal(resume.remember(course,'cpp.files','task'),true);const before=JSON.stringify(state);assert.equal(resume.continuation(course,first23).lesson.id,'cpp.files');assert.equal(resume.continuation(course,first23).focus,'task');assert.equal(JSON.stringify(state),before);
+ assert.deepEqual(orderedCppLessons({curriculum:{lessons:[{id:'cpp.a'},{id:'cpp.b'}],sections:[{lessonIds:['missing','cpp.b','cpp.b']}]}}).map(l=>l.id),['cpp.b','cpp.a']);
+ assert.deepEqual(curriculum.lessons.slice(0,40).map(l=>l.legacyIndex),Array.from({length:40},(_,i)=>i));
+ const views=createLearningViews({cpp:{...course,manifest:{id:'cpp',title:{en:'C++',ru:'C++'},description:{en:'Course',ru:'Курс'},practicumCount:6,projectCount:7},lessonsRu:ru,lessonsEn:en},prefs:{uiLocale:'en',courseLocale:'en'},t:k=>k,loadState:()=>({}),lessonState:()=>({}),cppContinuation:()=>null,progress:()=>cppProgramProgress({},curriculum),visualIcon:()=>''});
+ assert.ok(views.overview().includes('class="topic-order">24</span><a href="#course=cpp&lesson=cpp.functions-contracts"'));
+ assert.ok(views.lessonView('cpp.functions-contracts').includes('TOPIC 24'));
+ assert.equal(curriculum.lessons.find(l=>l.id==='cpp.functions-contracts').order,41,'Display order must not replace stored order');
 });
 test('Три разных накопительных практикума и многoфайловый проект с 18 навыками и драйвером',()=>{
  for(const locale of ['ru','en']){
