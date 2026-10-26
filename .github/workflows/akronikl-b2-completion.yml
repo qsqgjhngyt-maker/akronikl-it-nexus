@@ -37,7 +37,7 @@ jobs:
           git archive --format=zip HEAD > evidence-b2-final/source/source.zip
           (cd evidence-b2-final/source && sha256sum source.zip > SOURCE_SHA256.txt)
           git diff --name-only 59a5eb18d78f674cf72aa75937e4c693b4c4e228 HEAD > evidence-b2-final/source/CHANGED_FILES.txt
-          python3 -c "from pathlib import Path; p=Path('evidence-b2-final/source/CHANGED_FILES.txt'); assert all(x.startswith(('tests/','docs/ru/08-assistant/','.github/workflows/akronikl-b2-completion.yml')) for x in p.read_text().splitlines()), 'RUNTIME_CHANGE_REQUIRES_REGRESSION_REVIEW'"
+          python3 -c "from pathlib import Path; p=Path('evidence-b2-final/source/CHANGED_FILES.txt'); assert all(x=='core/bootstrap.js' or x.startswith(('tests/','docs/ru/08-assistant/','.github/workflows/akronikl-b2-completion.yml')) for x in p.read_text().splitlines()), 'RUNTIME_CHANGE_REQUIRES_REGRESSION_REVIEW'"
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           npm ci --prefix tools/qa-browser-driver --ignore-scripts --no-audit --no-fund
           python3 -c 'import cryptography'
@@ -50,6 +50,16 @@ jobs:
           node tools/build-ui1a-release.mjs --source qa-baseline --out "$NEXUS_BASELINE_DIR" --generation ui1a-akronikl-02-baseline-20261026 --version "$VERSION"
           cp "$NEXUS_FRONTEND_DIR/BUILD_MANIFEST.json" evidence-b2-final/source/CANDIDATE_MANIFEST.json
           cp "$NEXUS_BASELINE_DIR/BUILD_MANIFEST.json" evidence-b2-final/source/BASELINE_MANIFEST.json
+      - name: Затронутая регрессия запуска и границ аккаунта
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-b2-final/regression
+          node --test tests/akronikl-bootstrap-entry.test.mjs tests/akronikl-account-boundary.test.mjs tests/akronikl-ui.test.mjs tests/akronikl-ui-lifecycle.test.mjs tests/akronikl-ui-readiness.test.mjs | tee evidence-b2-final/regression/context.tap
+          node --test tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/platform-lazy-imports.test.mjs | tee evidence-b2-final/regression/startup.tap
+          node tests/auth-bootstrap-check.mjs | tee evidence-b2-final/regression/bootstrap.txt
+          node tests/first-party-cookie-client-check.mjs | tee evidence-b2-final/regression/cookie-client.txt
+          node tests/module-import-smoke-check.mjs | tee evidence-b2-final/regression/imports.txt
       - name: Настоящее приложение и backend-модули с виртуальным тестовым ключом
         env:
           NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-b2-final/auth
@@ -67,6 +77,23 @@ jobs:
           NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-b2-final/performance
           NEXUS_PERF_SAMPLES: '20'
         run: node tests/akronikl-performance-check.mjs
+      - name: Проверить точный откат после изменения входного модуля
+        if: ${{ success() }}
+        shell: bash
+        env:
+          NEXUS_FRONTEND_DIR: /tmp/ak02-b2-completion-retained
+          NEXUS_ROLLBACK_DIR: /tmp/ak02-b2-completion-rollback
+          NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-b2-final/rollback
+          NEXUS_BROWSER_RESULT: ${{ github.workspace }}/evidence-b2-final/rollback/PWA_ROLLBACK.json
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-b2-final/rollback
+          node tools/snapshot-published-build.mjs --source qa-baseline --out "$NEXUS_ROLLBACK_DIR" --expected-commit 065606a788198045cadf250fea663246ddbb2d56 | tee evidence-b2-final/rollback/snapshot.txt
+          node tools/prepare-akronikl-retained-check.mjs | tee evidence-b2-final/rollback/staging.txt
+          cp "$NEXUS_FRONTEND_DIR/BUILD_MANIFEST.json" evidence-b2-final/rollback/BUILD_MANIFEST.json
+          cp "$NEXUS_ROLLBACK_DIR/BUILD_MANIFEST.json" evidence-b2-final/rollback/ROLLBACK_MANIFEST.json
+          node tools/check-akronikl-built-candidate.mjs
+          node tests/pwa-rollback-browser-check.mjs
       - name: Сохранить только исходники и безопасные протоколы, без профилей/TLS/credentials
         if: always()
         uses: actions/upload-artifact@v4

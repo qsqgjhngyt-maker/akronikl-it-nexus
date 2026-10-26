@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {isBootstrapDocumentEntry} from '../core/bootstrap.js';
+const root='https://synthetic.example/releases/qa/core/bootstrap.js';
+const doc=urls=>({querySelectorAll(selector){assert.equal(selector,'script[type="module"][src]');return urls.map(src=>({src}))}});
+test('единственная точка входа с версией разрешает auto-start',()=>assert.equal(isBootstrapDocumentEntry(doc([root+'?v=test']),root+'?v=test'),true));
+test('импорт reader без query не запускает второй bootstrap',()=>assert.equal(isBootstrapDocumentEntry(doc([root+'?v=test']),root),false));
+test('прямой вход без query сохраняет прежнюю возможность старта',()=>assert.equal(isBootstrapDocumentEntry(doc([root]),root),true));
+test('другая версия, hash и другое поколение не считаются точкой входа',()=>{for(const url of [root+'?v=other',root+'#reader',root.replace('/qa/','/old/')])assert.equal(isBootstrapDocumentEntry(doc([root+'?v=test']),url),false)});
+test('отсутствующий или повреждённый document закрывает автоматический запуск',()=>{for(const document of [undefined,null,{}, {querySelectorAll(){throw Error('fixture')}}])assert.equal(isBootstrapDocumentEntry(document,root),false)});
