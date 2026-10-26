@@ -132,7 +132,7 @@ try{
    await lessonRoute(p,'cpp.languages-compilation-debugging',locale);
    const project=p.locator('[data-gold-practicum]'),editorBefore=await p.locator('#editor').inputValue();
    assert.equal(await project.count(),1);assert.equal(await project.locator('a[href^="#course=cpp"]').count(),8);
-   assert.equal(await project.locator('.gold-project-rubric>li').count(),5);assert.ok(await project.locator('.gold-case-list>li').count()>=21);
+   assert.equal(await project.locator('.gold-project-rubric>li').count(),5);assert.ok(await project.locator('tbody tr').count()>=21);
    const reference=project.locator('details').last();assert.equal(await reference.locator('pre').isVisible(),false);
    await reference.locator('summary').focus();await p.keyboard.press('Enter');assert.ok(await reference.locator('pre').isVisible());
    assert.ok((await reference.locator('pre code').textContent()).includes('std::cin.eof()'));
@@ -140,10 +140,9 @@ try{
    if(locale==='en')assert.ok(!/[А-Яа-яЁё]/.test(await project.textContent()));
   }
   await local.setViewportSize({width:360,height:844});assert.ok(await local.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-  const cases=local.locator('[data-gold-practicum] .gold-cases'),second=cases.locator('.gold-case').nth(1);
-  assert.ok(await cases.evaluate(n=>n.scrollWidth<=n.clientWidth+1));
-  assert.equal(await second.getAttribute('open'),null);await second.locator(':scope>summary').focus();await local.keyboard.press('Enter');assert.notEqual(await second.getAttribute('open'),null);
-  assert.ok(await second.locator('.gold-case-values').isVisible());
+  const cases=local.locator('[data-gold-practicum] .gold-cases-scroll');await cases.focus();assert.equal(await cases.getAttribute('tabindex'),'0');
+  assert.ok(await cases.evaluate(n=>n.scrollWidth>n.clientWidth));
+  await local.keyboard.press('ArrowRight');await local.waitForFunction(()=>document.querySelector('[data-gold-practicum] .gold-cases-scroll').scrollLeft>0);
   await cases.screenshot({path:path.join(f.out,'practicum-cases-360.png')});
   await local.locator('[data-gold-practicum]').screenshot({path:path.join(f.out,'practicum-360.png')});
   await local.setViewportSize({width:1366,height:900});

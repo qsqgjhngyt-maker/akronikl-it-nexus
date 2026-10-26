@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {readFile,writeFile} from 'node:fs/promises';
+import {writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {onlineRuntimeFixture} from './helpers/online-runtime-fixture.mjs';
 import {nativeOfflineFixture} from './helpers/native-offline-fixture.mjs';
@@ -8,7 +8,6 @@ import {goldLessonRoute} from './helpers/gold-lesson-route.mjs';
 import {checkGlossaryDrawer} from './helpers/glossary-drawer-checks.mjs';
 import {GOLD_STRUCTURED_LESSONS} from '../core/academy-gold-catalog.js';
 const f=await nativeOfflineFixture('module3-gold'),online=await onlineRuntimeFixture(),prefix='/releases/'+f.generation,all=await module3GoldLessons();
-const currentTotal=JSON.parse(await readFile(path.join(process.env.NEXUS_FRONTEND_DIR,'releases',f.generation,'courses/cpp/curriculum.json'))).lessons.length;
 const checks=[],widths=[320,360,390,768,1366,1440],phrase='SYNTHETIC module three local phrase';let local,vaultId,fatal;
 const check=async(name,action)=>{const start=performance.now();const detail=await action();checks.push({name,status:'PASS',ms:Math.round(performance.now()-start),detail});console.log('PASS '+name);};
 const personal=id=>'// SYNTHETIC personal '+id+'\nint main(){return 0;}';
@@ -59,9 +58,9 @@ try{
  });
  await check('Входной вопрос, ответ с объяснением и копирование сохраняют личный редактор и старый quiz',async()=>{
   await goldLessonRoute(local,GOLD_STRUCTURED_LESSONS[0],'ru');const q=local.locator('[data-gold-readiness] [data-gold-question]').first();await q.locator('input[value="1"]').check();await q.locator('[data-gold-check]').click();assert.equal(await q.locator('[data-gold-feedback]').getAttribute('data-result'),'correct');
-  const example=local.locator('.gold-example details').first();await example.locator(':scope > summary').click();await example.locator(':scope > [data-gold-copy]').click();assert.equal(await local.locator('#editor').inputValue(),personal(GOLD_STRUCTURED_LESSONS[0]));assert.ok(await local.locator('input[name="quiz"][value="2"]').isChecked());
+  const example=local.locator('.gold-example details').first();await example.locator('summary').click();await example.locator('[data-gold-copy]').click();assert.equal(await local.locator('#editor').inputValue(),personal(GOLD_STRUCTURED_LESSONS[0]));assert.ok(await local.locator('input[name="quiz"][value="2"]').isChecked());
  });
- await check('40/'+currentTotal+' и исторические 40/40 видны online и в холодной локальной копии',async()=>{for(const p of [online.page,local]){await p.evaluate(()=>{location.hash='#course=cpp'});await p.locator('[data-legacy-completion]').waitFor();assert.ok((await p.locator('[data-legacy-completion]').textContent()).includes('40/40'));assert.ok((await p.locator('body').textContent()).includes('40/'+currentTotal));}return{completed:40,total:currentTotal,legacy:'40/40'};});
+ await check('40/45 и исторические 40/40 видны online и в холодной локальной копии',async()=>{for(const p of [online.page,local]){await p.evaluate(()=>{location.hash='#course=cpp'});await p.locator('[data-legacy-completion]').waitFor();assert.ok((await p.locator('[data-legacy-completion]').textContent()).includes('40/40'));assert.ok((await p.locator('body').textContent()).includes('40/45'));}});
  await check('Синтетический проект и все 18 состояний сохранены в зашифрованной копии',async()=>{
   const data=await local.evaluate(async({prefix,id,phrase})=>{const {createVaultStore}=await import(prefix+'/pwa/local-vault.js'),s=await createVaultStore().unlock(id,phrase),data=s.read();await s.lock();return data;},{prefix,id:vaultId,phrase});
   assert.deepEqual(data.projects,payload.projects);

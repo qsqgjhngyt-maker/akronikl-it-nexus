@@ -1,18 +1,4 @@
-# MASTER HANDOFF: C++ Module 4 опубликован; замечания 07 в работе
-
-26.10.2026. STATUS: PARTIAL — функциональный LIVE test.1 и main CI PASS; замечания UX владельца остаются открытыми до новой проверки. Эта фиксация новее записей ниже; прежние ограничения на публикацию заменены явным разрешением владельца в чате.
-
-Опубликован main `3005c4319290b845339f03e8777584e8af88c8e8`, tree `7a5bd826275c4e1204b56575599e9fee0cbc1ac1`, PR29 merged. Версия …10.8-test.1, immutable generation ui1a-cpp-gold-module4-test1-20261026. Pages40258549046 SUCCESS; main CI40258549123/40258549113/40258549134/40258549196/40258549268 все SUCCESS. До публикации 13 jobs PASS, в том числе свежие native190 и WASM190 на эквивалентном продукте. 511 anonymous LIVE GET: 508 static readbacks совпали и три private API guards сохранены. В доступной вкладке настоящий C++ stdin4 дал linear4/pairs6, exit0; имя аккаунта и видимые счётчики сохранены. Эти проверки не читают сырые accountID, cookies или личные cloud-содержимое/работы.
-
-Владелец: «На ПК и телефоне работает», но указал большую таблицу контрольных случаев, скрытые столбцы и неудобный возврат от редактора к следующей работе. FULL LIVE PASS интерфейса не объявляется. Общие Gold-компоненты M1–4 дорабатываются в feature: компактные раскрывающиеся случаи, рабочее окно с заданием и единственным текущим редактором, мобильные вкладки, точный возврат к месту. Первый вариант с переходом вниз (58db507/PR30) отозван до deployment; main остаётся 3005c43 до завершения gates окончательной поправки. Подготовлен отдельный test.2, он ещё не опубликован. Учебные JSON/C++/IDs, auth/Cloud/storage/ProjectStore/runtime остаются прежними.
-
-NEXUS-PERF-01 test.1: 75 статических модулей/590301 B, Home outline2/27551 B; caps75/600000 и30000 сохранены, eager Gold/compiler на Home отсутствует. Для нового рабочего окна нужны отдельные final UI/Offline/CI/rollback и LIVE; выполненное для отозванного перехода не считается приёмкой окна.
-
-Rollback test.1→M3 подготовлен e1284a281df706e176d4841d78dc7822f919b210, tree15178e46d6247598c68f2b2418ba940f0beb3900, patch SHA256 dfa6c654bdfae5cb61afef9705b68f8674782c4ba705c7cfed72c2ac93863a41; production rollback не выполнялся. Для test.2 готовится возврат к main3005/test.1 с сохранением будущих immutable bytes. Официальный Release/тег, backend/Worker/BFF/D1 deployment и платежи не выполняются.
-
-ROUTING CHECK: 05 — публикация/CI/evidence и новый rollback; 07 — таблицы/рабочее окно/mobile/a11y; 00 — оставить UX PARTIAL до владельца; 02 — единственный editor DOM и отсутствие изменения ProjectStore/runtime, 01 — отсутствие auth/Cloud изменений, 04 — проверяемая воспроизводимость и контекстное практическое обучение. 06: отдельное исследование сейчас не требуется. Sources не изменяются. NEXT RECOMMENDED BRANCH: 07/05. RECOMMENDED MODE: высокий; publication/rollback — очень высокий.
-
-## Предыдущая фиксация: P2 закрыт до публикации
+# MASTER HANDOFF: C++ Module 4, P2 закрыт
 
 26.10.2026. STATUS: PASS — AUTOMATED PASS; M4-05-P2-01 CLOSED. Текущий product source 9d62de9b7a95da78733e354bdf2fe77a6ba1d724, feature/academy-gold-standard-cpp-module-4. Это более новая подтверждённая фиксация относительно акта a3e3488 с OPEN P2.
 

@@ -63,7 +63,7 @@ try{
  });
  await check('Входной вопрос, ответ с объяснением и копирование сохраняют личный редактор и старый quiz',async()=>{
   await goldLessonRoute(local,GOLD_CLASSIC_LESSONS[0],'ru');const q=local.locator('[data-gold-readiness] [data-gold-question]').first();await q.locator('input[value="1"]').check();await q.locator('[data-gold-check]').click();assert.equal(await q.locator('[data-gold-feedback]').getAttribute('data-result'),'correct');
-  const example=local.locator('.gold-example details').first();await example.locator(':scope > summary').click();await example.locator(':scope > [data-gold-copy]').click();assert.equal(await local.locator('#editor').inputValue(),personal(GOLD_CLASSIC_LESSONS[0]));assert.ok(await local.locator('input[name="quiz"][value="2"]').isChecked());
+  const example=local.locator('.gold-example details').first();await example.locator('summary').click();await example.locator('[data-gold-copy]').click();assert.equal(await local.locator('#editor').inputValue(),personal(GOLD_CLASSIC_LESSONS[0]));assert.ok(await local.locator('input[name="quiz"][value="2"]').isChecked());
  });
  await check('Все 128 вопросов RU/EN: неверный ответ, объяснение, верный ответ без изменения legacy quiz',async()=>{
   let questions=0;
