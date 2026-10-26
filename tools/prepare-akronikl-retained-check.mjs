@@ -1,0 +1,38 @@
+// QA staging с retained generations. Исходный checkout и release metadata не меняются.
+import assert from 'node:assert/strict';
+import {readFile,writeFile,mkdtemp,mkdir} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+const root=fileURLToPath(new URL('../',import.meta.url));
+const out=process.env.NEXUS_FRONTEND_DIR,evidence=process.env.NEXUS_AKRONIKL_EVIDENCE;
+if(!out||!evidence)throw Error('RETAINED_QA_ENV_REQUIRED');
+const generation='ui1a-akronikl-02-gate-b2-retained-20261026';
+const sha=b=>createHash('sha256').update(b).digest('hex');
+const original=await readFile(path.join(root,'release-candidate.json'));
+const version=await readFile(path.join(root,'version.json'));
+const expected=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
+if(process.env.NEXUS_SOURCE_COMMIT)assert.equal(expected,process.env.NEXUS_SOURCE_COMMIT);
+assert.equal(execFileSync('git',['status','--porcelain','--untracked-files=no'],{cwd:root,encoding:'utf8'}).trim(),'');
+const temporary=await mkdtemp(path.join(tmpdir(),'ak02-retained-source-'));
+const archive=path.join(temporary,'source.tar'),staging=path.join(temporary,'source');await mkdir(staging);
+execFileSync('git',['archive','--format=tar','--output='+archive,'HEAD'],{cwd:root});
+execFileSync('tar',['-xf',archive,'-C',staging]);
+const config=JSON.parse(original),previous=config.assetGeneration;
+assert.match(previous,/^ui1a-[a-z0-9-]+$/);
+const retained=[...new Set([...(config.retainedPublicGenerations||[]),previous])];
+assert.ok(!retained.includes(generation));
+// Меняется только отдельная копия для QA; артефакт не предназначен для deploy.
+config.assetGeneration=generation;config.retainedPublicGenerations=retained;
+await writeFile(path.join(staging,'release-candidate.json'),JSON.stringify(config,null,2)+'\n');
+execFileSync(process.execPath,[path.join(root,'tools/build-ui1a-release.mjs'),'--source',staging,'--out',out],{cwd:root,stdio:'inherit'});
+assert.deepEqual(await readFile(path.join(root,'release-candidate.json')),original);
+assert.deepEqual(await readFile(path.join(root,'version.json')),version);
+const build=JSON.parse(await readFile(path.join(out,'BUILD_MANIFEST.json')));
+assert.equal(build.assetGeneration,generation);
+for(const old of retained)assert.ok(build.files.some(f=>f.file==='releases/'+old+'/version.json'));
+await mkdir(evidence,{recursive:true});
+await writeFile(path.join(evidence,'STAGING_CONFIG.json'),JSON.stringify({status:'PASS',sourceCommit:expected,generation,previous,retained,files:build.files.length,sourceReleaseConfigSha256:sha(original),stagedReleaseConfigSha256:sha(await readFile(path.join(staging,'release-candidate.json'))),versionSha256:sha(version),sourceMetadataUnchanged:true,productionPublication:false},null,2)+'\n');
+console.log('PASS staging с '+retained.length+' прежними поколениями; исходные metadata сохранены');
