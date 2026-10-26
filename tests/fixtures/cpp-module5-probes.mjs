@@ -41,12 +41,38 @@ struct Base{virtual ~Base()=default;};struct Derived:Base{};
 int main(){Derived d;Base*p=&d;std::cout<<(typeid(*p)==typeid(Derived))<<'\n';}`,[{stdin:'',stdout:'1\n'}],{capability:'rtti'}),
  p('exception-unwind',['M5-A4'],io+cpp`#include <stdexcept>
 struct Guard{int&live;explicit Guard(int&n):live(n){++live;}~Guard(){--live;}};
-int main(){int live=0;try{Guard g(live);throw std::runtime_error("controlled");}catch(const std::exception&){std::cout<<"caught "<<live<<'\n';}}`,[{stdin:'',stdout:'caught 0\n'}],{capability:'exceptions',browserExpectation:'known-unsupported',expectedError:'WASM_CPP_EXCEPTIONS_UNSUPPORTED'}),
+int main(){int live=0;try{Guard g(live);throw std::runtime_error("controlled");}catch(const std::exception&){std::cout<<"caught "<<live<<'\n';}}`,[{stdin:'',stdout:'caught 0\n'}],{capability:'exceptions'}),
  p('exception-strong-guarantee',['M5-A4'],io+cpp`#include <vector>
 #include <stdexcept>
-int main(){int fail;if(!(std::cin>>fail))return 2;std::vector<int>values{1,2};try{auto next=values;next.push_back(3);if(fail)throw std::runtime_error("controlled");values.swap(next);}catch(const std::exception&){}for(int n:values)std::cout<<n<<' ';std::cout<<'\n';}`,[{stdin:'1',stdout:'1 2 \n'},{stdin:'0',stdout:'1 2 3 \n'}],{capability:'exceptions',browserExpectation:'known-unsupported',expectedError:'WASM_CPP_EXCEPTIONS_UNSUPPORTED'}),
+int main(){int fail;if(!(std::cin>>fail))return 2;std::vector<int>values{1,2};try{auto next=values;next.push_back(3);if(fail)throw std::runtime_error("controlled");values.swap(next);}catch(const std::exception&){}for(int n:values)std::cout<<n<<' ';std::cout<<'\n';}`,[{stdin:'1',stdout:'1 2 \n'},{stdin:'0',stdout:'1 2 3 \n'}],{capability:'exceptions'}),
  p('literal-exception-word',['M5-A4'],io+cpp`int main(){std::cout<<"throw catch try\n";}`,[{stdin:'',stdout:'throw catch try\n'}],{capability:'lexical-guard'}),
  p('raw-literal-exception-word',['M5-A4'],io+cpp`int main(){std::cout<<R"tag(" throw ")tag"<<'\n';}`,[{stdin:'',stdout:'" throw "\n'}],{capability:'lexical-guard'}),
+ p('raw-prefixes-comments',['M5-A4'],io+cpp`#include <string_view>
+int main(){auto text=R"custom(" // try
+/* catch */ throw ' \ ")custom";
+auto a=u8R"z(throw ")z";auto b=LR"z(catch //)z";auto c=uR"z(try /*)z";auto d=UR"z(throw //)z";
+std::cout<<(std::string_view(text).find("throw")!=std::string_view::npos)<<' '<<(a[0]==u8't'&&b[0]==L'c'&&c[0]==u't'&&d[0]==U't')<<'\n';}`,[{stdin:'',stdout:'1 1\n'}],{capability:'lexical-guard'}),
+ p('exception-constructor-cleanup',['M5-A4'],io+cpp`#include <stdexcept>
+struct Part{int id;explicit Part(int n):id(n){std::cout<<'+'<<id<<' ';if(id==2)throw std::runtime_error("constructor");}~Part(){std::cout<<'-'<<id<<' ';}};
+struct Whole{Part a{1},b{2};~Whole(){std::cout<<"whole ";}};
+int main(){try{Whole w;}catch(const std::exception&){std::cout<<"caught\n";}}`,[{stdin:'',stdout:'+1 +2 -1 caught\n'}],{capability:'exceptions'}),
+ p('exception-typed-rethrow',['M5-A4'],io+cpp`#include <stdexcept>
+struct Guard{char c;explicit Guard(char value):c(value){}~Guard(){std::cout<<c;}};
+void fail(){Guard inner('i');throw std::logic_error("domain");}
+void forward(){Guard outer('o');try{fail();}catch(const std::exception&){std::cout<<'r';throw;}}
+int main(){try{forward();}catch(const std::logic_error&e){std::cout<<' '<<e.what()<<'\n';}}`,[{stdin:'',stdout:'iro domain\n'}],{capability:'exceptions'}),
+ p('exception-stdlib-contract',['M5-A4'],io+cpp`#include <vector>
+#include <string>
+#include <optional>
+#include <stdexcept>
+int main(){try{std::vector<int>{7}.at(9);}catch(const std::out_of_range&){std::cout<<"range ";}try{std::stoi("bad");}catch(const std::invalid_argument&){std::cout<<"conversion ";}try{std::optional<int>{}.value();}catch(const std::bad_optional_access&){std::cout<<"optional\n";}}`,[{stdin:'',stdout:'range conversion optional\n'}],{capability:'exceptions'}),
+ p('exception-ptr-nested',['M5-A4'],io+cpp`#include <exception>
+#include <stdexcept>
+void nested(){try{throw std::logic_error("inner");}catch(...){std::throw_with_nested(std::runtime_error("outer"));}}
+int main(){std::exception_ptr p=std::make_exception_ptr(std::logic_error("saved"));try{std::rethrow_exception(p);}catch(const std::logic_error&e){std::cout<<e.what()<<' ';}try{nested();}catch(const std::exception&e){std::cout<<e.what()<<' ';try{std::rethrow_if_nested(e);}catch(const std::logic_error&x){std::cout<<x.what()<<'\n';}}}`, [{stdin:'',stdout:'saved outer inner\n'}],{capability:'exceptions'}),
+ p('exception-multi-tu',['M5-A4'],io+cpp`#include <stdexcept>
+#include "fail.hpp"
+int main(){try{fail();}catch(const std::runtime_error&e){std::cout<<e.what()<<'\n';}}`,[{stdin:'',stdout:'other TU\n'}],{capability:'exceptions',files:{'fail.hpp':'void fail();\n','fail.cpp':'#include <stdexcept>\n#include "fail.hpp"\nvoid fail(){throw std::runtime_error("other TU");}\n'},metadata:{translationUnits:['main.cpp','fail.cpp']}}),
  p('templates-concepts',['M5-A5'],io+cpp`#include <concepts>
 #include <array>
 template<std::integral T>T add(T a,T b){return a+b;}

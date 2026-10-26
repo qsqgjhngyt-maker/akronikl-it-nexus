@@ -10,12 +10,12 @@ const work=await mkdtemp(path.join(os.tmpdir(),'nexus-m5-native-')),records=[];
 for(const p of M5_PROBES){
  const dir=path.join(work,p.id);await mkdir(dir);const files={...(p.files||{}),'main.cpp':p.source};
  for(const [f,data]of Object.entries(files)){assert.ok(!path.isAbsolute(f)&&!f.split('/').includes('..'));await mkdir(path.dirname(path.join(dir,f)),{recursive:true});await writeFile(path.join(dir,f),data);}
- const args=['-std=c++20',...(p.capability==='exceptions'?[]:['-fno-exceptions']),'-O0','-g','-fsanitize=undefined','-fno-sanitize-recover=all',...(p.metadata?.includeRoots||[]).flatMap(f=>['-I',f]),...(p.metadata?.translationUnits||['main.cpp']),'-o','program'];
+ const args=['-std=c++20','-O0','-g','-fsanitize=undefined','-fno-sanitize-recover=all',...(p.metadata?.includeRoots||[]).flatMap(f=>['-I',f]),...(p.metadata?.translationUnits||['main.cpp']),'-o','program'];
  const build=spawnSync(compiler,args,{cwd:dir,encoding:'utf8',timeout:60000});
  for(const [index,c]of p.cases.entries()){
   let run,pass=false;if(p.expectation==='compile-error')pass=Number.isInteger(build.status)&&build.status!==0&&!!build.stderr?.toLowerCase().includes(c.diagnostic.toLowerCase());
   else if(build.status===0){run=spawnSync(path.join(dir,'program'),[],{cwd:dir,input:c.stdin,encoding:'utf8',timeout:5000});pass=run.status===0&&run.stderr===''&&run.stdout===c.stdout;for(const [f,data]of Object.entries(p.outputFiles||{}))pass&&=(await readFile(path.join(dir,f),'utf8'))===data;}
-  records.push({probe:p.id,index,pass,capability:p.capability||'standard-cpp',ehEnabled:p.capability==='exceptions',sourceSha256:createHash('sha256').update(p.source).digest('hex'),compileExit:build.status,compileStderr:build.stderr?.slice(0,2400),stdout:run?.stdout,stderr:run?.stderr,exitCode:run?.status});
+  records.push({probe:p.id,index,pass,capability:p.capability||'standard-cpp',ehEnabled:true,sourceSha256:createHash('sha256').update(p.source).digest('hex'),compileExit:build.status,compileStderr:build.stderr?.slice(0,2400),stdout:run?.stdout,stderr:run?.stderr,exitCode:run?.status});
  }
  console.log(JSON.stringify({probe:p.id,status:records.filter(r=>r.probe===p.id).every(r=>r.pass)?'PASS':'FAIL'}));
 }

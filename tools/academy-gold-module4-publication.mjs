@@ -17,7 +17,7 @@ export const M4_UX_PUBLICATION=Object.freeze({
  version:'0.1.7-alpha.2.4.6-ui1a.10.8-test.2',generation:'ui1a-cpp-gold-module4-test2-20261026',ux:true
 });
 const root=path.resolve(import.meta.dirname,'..');
-const git=(...a)=>execFileSync('git',a,{cwd:root,maxBuffer:64*1024*1024});
+const git=(...a)=>execFileSync('git',a,{cwd:root,maxBuffer:256*1024*1024});
 const read=f=>readFile(path.join(root,f)),json=async f=>JSON.parse(await read(f));
 const committed=(ref,file)=>JSON.parse(git('show',ref+':'+file));
 const hash=b=>createHash('sha256').update(b).digest('hex');
@@ -51,6 +51,10 @@ export function expectedM4PublicationMetadata(P=M4_PUBLICATION){
 }
 
 export async function verifyM4Publication({rebuild=false,writeEvidence=true}={}){
+ // Исторический M4 package продолжает проверяться по прежним bytes. Новый M5
+ // runtime отдельно ограничен точным allowlist/SHA256; опубликованным не считается.
+ const m5=await(await import('./academy-gold-module5-scope.mjs')).m5RuntimeScope(),runtimePaths=m5?.productPatchPaths||[],runtimeExcludes=runtimePaths.map(f=>':(exclude)'+f);
+ const preservedRead=f=>runtimePaths.includes(f)?git('show',m5.baseCommit+':'+f):read(f);
  const c=await json('release-candidate.json');assert.equal(c.publication?.module,'cpp-module-4');
  const P=c.assetGeneration===M4_UX_PUBLICATION.generation?M4_UX_PUBLICATION:M4_PUBLICATION;
  const expected=expectedM4PublicationMetadata(P),v=await json('version.json'),m=await json('BUILD_MANIFEST.json');
@@ -60,7 +64,7 @@ export async function verifyM4Publication({rebuild=false,writeEvidence=true}={})
  for(const file of ['index.html','nexus-shell.html','offline.html']){const original=git('show',P.base+':'+file).toString(),oldGeneration=committed(P.base,'release-candidate.json').assetGeneration;assert.equal((await read(file)).toString(),original.replaceAll(P.old,P.version).replaceAll(oldGeneration,P.generation),'Только версия/поколение в root HTML: '+file);}
  const priorCurriculum=committed(P.base,'courses/cpp/curriculum.json'),currentCurriculum=await json('courses/cpp/curriculum.json');assert.deepEqual(currentCurriculum.lessons.slice(0,priorCurriculum.lessons.length),priorCurriculum.lessons);
  for(const locale of ['ru','en']){const f='courses/cpp/data/lessons.'+locale+'.json',old=committed(P.base,f);assert.deepEqual((await json(f)).lessons.slice(0,old.lessons.length),old.lessons);}
- git('diff','--exit-code',P.base,'--','core/storage.js','core/account-storage.js','core/identity.js','core/migrations','sync','sandbox','project-studio','server-access','cloudflare','pwa');
+ git('diff','--exit-code',P.base,'--','core/storage.js','core/account-storage.js','core/identity.js','core/migrations','sync','sandbox','project-studio','server-access','cloudflare','pwa',...runtimeExcludes);
  const roots=['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa','server-access','cloudflare'];
  const source=tree(P.accepted,...roots),versionPaths=['core/app.js','core/shell-presentation.js'],acceptedVersion=committed(P.accepted,'version.json').version;
  const presentationPatchHashes=[];
@@ -71,20 +75,22 @@ export async function verifyM4Publication({rebuild=false,writeEvidence=true}={})
   for(const file of versionPaths)assert.deepEqual(git('show',P.accepted+':'+file),Buffer.from(git('show',P.base+':'+file).toString().replaceAll(P.old,acceptedVersion)),'Только версия в принятом app/shell: '+file);
   for(const file of patch)presentationPatchHashes.push({file,sha256:hash(git('show',P.accepted+':'+file))});
  }
- for(const item of source){const actual=await read(item.file);if(versionPaths.includes(item.file)){
+ for(const item of source){const actual=await preservedRead(item.file);if(versionPaths.includes(item.file)){
   const before=git('show',P.accepted+':'+item.file).toString();assert.ok(before.includes(acceptedVersion),item.file);assert.deepEqual(actual,Buffer.from(before.replaceAll(acceptedVersion,P.version)),item.file);
  }else assert.equal(blob(actual),item.sha,'Принятый source изменён: '+item.file);}
- git('diff','--exit-code',P.accepted,'--',...roots,...versionPaths.map(f=>':(exclude)'+f));
- assert.equal(git('ls-files','--others','--exclude-standard','--',...roots).toString().trim(),'','Новый source вне принятого SHA');
+ git('diff','--exit-code',P.accepted,'--',...roots,...versionPaths.map(f=>':(exclude)'+f),...runtimeExcludes);
+ const extra=git('ls-files','--others','--exclude-standard','--',...roots).toString().trim().split('\n').filter(Boolean);for(const f of extra)assert.ok(runtimePaths.includes(f),'Новый source вне принятого SHA: '+f);
  const historical=tree(P.base,'releases','entry-assets');for(const item of historical)assert.equal(blob(await read(item.file)),item.sha,'Изменено историческое поколение: '+item.file);
  const names=new Set();for(const record of m.files){assert.ok(!names.has(record.file),'Повтор manifest path');names.add(record.file);const bytes=await read(record.file);assert.equal(bytes.length,record.bytes,record.file);assert.equal(hash(bytes),record.sha256,record.file);}
  const payload=source.filter(x=>!x.file.startsWith('server-access/')&&!x.file.startsWith('cloudflare/')).map(x=>x.file).concat('version.json');
- for(const file of payload)assert.deepEqual(await read('releases/'+P.generation+'/'+file),await read(file),file);
+ for(const file of payload)assert.deepEqual(await read('releases/'+P.generation+'/'+file),await preservedRead(file),file);
  assert.equal((await json('courses/cpp/data/lessons.ru.json')).lessons.length,50);assert.equal((await json('courses/cpp/data/lessons.en.json')).lessons.length,13);
  const newFiles=git('ls-files','--others','--exclude-standard','--','releases','entry-assets').toString().trim().split('\n').filter(Boolean);
  const changed=git('diff','--name-only',P.base,'--','releases','entry-assets').toString().trim().split('\n').filter(Boolean);
  for(const file of [...newFiles,...changed])assert.ok(file.startsWith('releases/'+P.generation+'/')||file.startsWith('entry-assets/'+P.generation+'/'),'Неизвестное immutable поколение: '+file);
- if(rebuild){const temp=await mkdtemp(path.join(tmpdir(),'nexus-m3-publication-')),out=path.join(temp,'build');execFileSync(process.execPath,['tools/build-ui1a-release.mjs','--out',out],{cwd:root,stdio:'pipe'});
+ if(rebuild){const temp=await mkdtemp(path.join(tmpdir(),'nexus-m3-publication-')),out=path.join(temp,'build');let rebuildSource=root;
+  if(m5){rebuildSource=path.join(temp,'source');await mkdir(rebuildSource);const archive=git('archive','--format=tar',m5.baseCommit,...roots,'releases','entry-assets','index.html','nexus-shell.html','offline.html','version.json','release-candidate.json','manifest.webmanifest');execFileSync('tar',['-xf','-','-C',rebuildSource],{input:archive,stdio:['pipe','pipe','pipe']});}
+  execFileSync(process.execPath,['tools/build-ui1a-release.mjs','--source',rebuildSource,'--out',out],{cwd:root,stdio:'pipe'});
   assert.deepEqual(JSON.parse(await readFile(path.join(out,'BUILD_MANIFEST.json'))),m);for(const file of ['index.html','nexus-shell.html','offline.html','version.json','service-worker.js','BUILD_MANIFEST.json'])assert.deepEqual(await read(file),await readFile(path.join(out,file)),file);
  }
  const sourceChanged=git('diff','--name-only','98b884f70c53bac3502b209112d0d3f19e401699',P.accepted,'--',...roots).toString().trim().split('\n').filter(Boolean);
@@ -92,7 +98,9 @@ export async function verifyM4Publication({rebuild=false,writeEvidence=true}={})
  // Старые M2 gates сравнивают с более ранним main: исключения применяются только
  // после точной проверки всех сохранённых исторических bytes выше.
  for(const generation of c.retainedPublicGenerations)publicationPaths.push('releases/'+generation,'entry-assets/'+generation);
+ publicationPaths.push(...runtimePaths);
  const result={status:'PASS',stage:'M4-publication',publication:true,m4Publication:true,m4Authoring:true,m4Base:P.base,currentLessonCount:50,baseCommit:P.base,acceptedSource:P.accepted,checkedSource:P.checked,version:P.version,generation:P.generation,authoring:true,navigationFix:true,productPatchPaths:[...new Set([...sourceChanged,...publicationPaths])],sourceFilesChecked:source.length,sourceHashesVerified:true,historicalFilesPreserved:historical.length,historicalGenerationsUnchanged:true,publishedRootsAndGenerationsUnchanged:false,manifestFiles:m.files.length,sourcePayloads:payload.length,reproducibleRebuildChecked:rebuild,identityCloudProjectStoreUnchanged:true,legacyImporterBodyUnchanged:true,legacyRowsAndQuizUnchanged:true,curriculumExpanded:true,officialRelease:false,live:false,productionExecution:false,...(P.ux?{uiPresentationPatch:true,presentationPatchHashes,executableContractsUnchangedSince:P.base}:{} )};
+ if(m5){result.m5RuntimeScope=m5;result.featureRuntimeUnpublished=true;result.executableContractsUnchangedSince=null;result.historicalRebuildSource=m5.baseCommit;}
  if(writeEvidence){const out=path.resolve(process.env.NEXUS_M4_PUBLICATION_EVIDENCE||process.env.NEXUS_GOLD_EVIDENCE||'academy-gold-m3-evidence');await mkdir(out,{recursive:true});await writeFile(path.join(out,'M4_PUBLICATION_GATE.json'),JSON.stringify(result,null,2)+'\n');}
  return result;
 }

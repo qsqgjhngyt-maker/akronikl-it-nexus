@@ -8,6 +8,18 @@ on:
       - 'tests/academy-gold-module5-*.mjs'
       - 'tests/fixtures/cpp-module5-probes.mjs'
       - 'docs/ru/03-content/CPP_MODULE5_DEPENDENCIES.json'
+      - 'docs/ru/03-content/CPP_MODULE5_RUNTIME_SCOPE.json'
+      - 'sandbox/**'
+      - 'pwa/runtime-manifest.js'
+      - 'runtime-packs/**'
+      - 'tools/academy-gold-module5-scope.mjs'
+      - 'tools/academy-gold-module4-publication.mjs'
+      - 'tools/pack-wasi-cpp-exceptions.py'
+      - 'tests/cpp-exceptions.test.mjs'
+      - 'tests/modern-cpp-abi-alignment-check.mjs'
+      - 'tests/pwa-policy-check.mjs'
+      - 'tests/helpers/online-runtime-fixture.mjs'
+      - 'tests/helpers/runtime-transport.mjs'
 permissions:
   contents: read
 jobs:
@@ -38,7 +50,12 @@ jobs:
         run: |
           node tools/check-academy-gold-regression.mjs
           node tools/check-academy-gold-integration.mjs
-          node --test tests/runtime-files.test.mjs tests/academy-gold-module3-navigation.test.mjs
+          node tools/check-academy-gold-module2-dependencies.mjs
+          node tools/check-academy-gold-module3-dependencies.mjs
+          node tools/check-academy-gold-module4-dependencies.mjs
+          node tests/academy-gold-module3-preservation.mjs
+          node tests/academy-gold-module4-preservation.mjs
+          node --test tests/runtime-files.test.mjs tests/academy-gold-module3-navigation.test.mjs tests/cpp-exceptions.test.mjs tests/academy-gold-content.test.mjs tests/academy-gold-module2-content.test.mjs tests/academy-gold-module3-content.test.mjs tests/academy-gold-module4-content.test.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -55,7 +72,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: C++20 и UBSan, EH только для соответствующих host controls
+      - name: C++20 и UBSan, настоящие исключения, без подмены browser proof
         run: node tools/check-academy-gold-module5-native.mjs
       - uses: actions/upload-artifact@v4
         if: always()
@@ -90,6 +107,11 @@ jobs:
           node tools/prepare-academy-gold-runtime-fixture.mjs
       - name: Строгий runtime admission, unsupported и FAIL не объявляются PASS
         run: node tests/academy-gold-module5-preflight.mjs
+      - name: Контроль отсутствия EH feature, raw literals, макросы, C и восстановление Worker
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        env:
+          NEXUS_M5_EVIDENCE: /tmp/nexus-m5-browser-evidence/boundaries
+        run: node tests/academy-gold-module5-runtime-boundaries.mjs
       - name: Прежние M5 ID и реальная encrypted cold Offline копия
         if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         run: node tests/academy-gold-module5-browser-check.mjs
@@ -98,4 +120,49 @@ jobs:
         with:
           name: academy-gold-m5-browser-${{ github.sha }}
           path: /tmp/nexus-m5-browser-evidence/
+          retention-days: 30
+  gold-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: m1
+            command: tests/academy-gold-runtime-browser-check.mjs
+          - module: m2
+            command: tests/academy-gold-module2-examples-browser.mjs
+          - module: m3
+            command: tests/academy-gold-module3-examples-browser.mjs
+          - module: m4
+            command: tests/academy-gold-module4-examples-browser.mjs
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/nexus-m5-gold-build
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m5-gold-browser/node_modules/playwright/index.mjs
+      NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m5-gold-runtime
+      NEXUS_JSCPP_FIXTURE: /tmp/nexus-m5-gold-runtime/jscpp.js
+      NEXUS_NATIVE_EVIDENCE: /tmp/nexus-m5-gold-evidence/${{ matrix.module }}
+      NEXUS_M2_EVIDENCE: /tmp/nexus-m5-gold-evidence/${{ matrix.module }}
+      NEXUS_M3_EVIDENCE: /tmp/nexus-m5-gold-evidence/${{ matrix.module }}
+      NEXUS_M4_EVIDENCE: /tmp/nexus-m5-gold-evidence/${{ matrix.module }}
+      NEXUS_GOLD_EVIDENCE: /tmp/nexus-m5-gold-evidence/preparation
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Закреплённые инструменты, изолированный build и настоящие runtime bytes
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/nexus-m5-gold-browser --no-save playwright@1.56.1
+          /tmp/nexus-m5-gold-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m5-gold-build
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+      - name: Все Gold программы и контрольные случаи прежнего модуля через новый runtime
+        run: node ${{ matrix.command }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: academy-gold-m5-regression-${{ matrix.module }}-${{ github.sha }}
+          path: /tmp/nexus-m5-gold-evidence/
           retention-days: 30
