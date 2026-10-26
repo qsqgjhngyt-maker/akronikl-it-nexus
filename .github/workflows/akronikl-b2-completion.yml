@@ -54,8 +54,15 @@ jobs:
         env:
           NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-b2-final/auth
         run: node tests/akronikl-authorized-browser-check.mjs
+      - name: Сохранить сквозной протокол сразу после проверки
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akronikl-b2-auth
+          path: evidence-b2-final/auth
+          retention-days: 30
       - name: Baseline и кандидат в одинаковых условиях, холодный и повторный запуск
-        if: ${{ !cancelled() }}
+        if: ${{ success() }}
         env:
           NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-b2-final/performance
           NEXUS_PERF_SAMPLES: '20'

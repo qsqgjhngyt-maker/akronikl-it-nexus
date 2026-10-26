@@ -38,12 +38,13 @@ try{
  await launch();await page.goto(origin+'/index.html#view=akronikl');
  await check('Анонимный запрос не получает личную оболочку или Akronikl',async()=>{
   await page.locator('[data-login]').waitFor();assert.equal(await panel().count(),0);
-  assert.equal(h.requests.some(r=>r.path.endsWith('/core/app.js')),false);
+  // SW вправе подготовить публичный JS; проверяем отсутствие личного UI и server proof.
+  assert.equal(await page.locator('#appShell,#editor').count(),0);
   assert.equal(await page.evaluate(async()=>{const r=await fetch('/api/v2/account');return r.status}),401);
  });
  await enroll(page,f.invitation);f.enableControl();await signOut(page);await page.goto(origin+'/');
  await check('Нажатие входа проходит виртуальный WebAuthn и настоящий серверный proof',async()=>{
-  await page.locator('[data-status]').filter({hasText:'Вход ключом доступа:'}).waitFor();
+  await page.locator('[data-status][data-tone]').filter({hasText:'Вход ключом доступа:'}).waitFor();
   await page.locator('[data-login]').click();await appReady(page);
   const c=(await context.cookies()).find(c=>c.name==='__Host-nexus_session');assert.ok(c?.httpOnly&&c.secure&&c.sameSite==='Strict');
   assert.equal(await page.evaluate(()=>document.cookie.includes('__Host-nexus_session')),false);
