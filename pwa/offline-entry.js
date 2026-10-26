@@ -71,7 +71,7 @@ document.querySelector('.side-nav').addEventListener('click',closeMobile);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=v=>structuredClone(v),label=v=>typeof v==='string'?v:v?.ru||v?.en||'';
 let disposeTerms=null,disposeOrbit=null,goldPresentation=null,session=null,data=null,course=null,catalog=null,programming=null,studio=null,graphics=null,queue=Promise.resolve(),pending=0,saveFailed=false,renderSequence=0,cppLearningFilter='topics',locale=prefs.courseLocale;
-const assistantBridge=createLazyAssistantBridge({root,publicMode:true,readIdentity:()=>session,readRoute:()=>{const r=Object.fromEntries(new URLSearchParams(location.hash.slice(1)));if((r.lesson||r.practicum)&&!r.course)r.course='cpp';return r},readLocale:()=>prefs.mentorLocale||prefs.uiLocale,readCourseLocale:()=>locale,readEditor:()=>data?root.querySelector('#editor'):null});
+const assistantBridge=createLazyAssistantBridge({root,publicMode:true,readIdentity:()=>session,readReady:()=>root.dataset.akroniklRoute===location.hash,readRoute:()=>{const r=Object.fromEntries(new URLSearchParams(location.hash.slice(1)));if((r.lesson||r.practicum)&&!r.course)r.course='cpp';return r},readLocale:()=>prefs.mentorLocale||prefs.uiLocale,readCourseLocale:()=>locale,readEditor:()=>data?root.querySelector('#editor'):null});
 function save(){
  if(!session)return Promise.reject(Error('Откройте локальную копию.'));
  pending++;saveFailed=false;saved.textContent='Сохраняем изменения на устройстве…';
@@ -141,8 +141,12 @@ async function compiler(){
  button.disabled=false;
 }
 async function render(){
- assistantBridge.invalidate();
- const seq=++renderSequence;await graphics?.flush();graphics=null;await settled();if(seq!==renderSequence)return;studio=null;const route=new URLSearchParams(location.hash.slice(1));
+ const renderHash=location.hash,seq=++renderSequence;delete root.dataset.akroniklRoute;assistantBridge.invalidate();
+ await renderCurrent(seq);
+ if(seq===renderSequence&&renderHash===location.hash)root.dataset.akroniklRoute=renderHash;
+}
+async function renderCurrent(seq){
+ await graphics?.flush();graphics=null;await settled();if(seq!==renderSequence)return;studio=null;const route=new URLSearchParams(location.hash.slice(1));
  disposeTerms?.();disposeTerms=null;disposeOrbit?.();disposeOrbit=null;
  updateChrome(route);
  // hashchange может прийти во время начальной загрузки метаданных. Bootstrap
@@ -210,7 +214,7 @@ function bindKnowledge(item,state){
  root.querySelectorAll('.benchmark-check').forEach(button=>button.onclick=()=>{const card=button.closest('.knowledge-card'),picked=card.querySelector('input:checked'),fb=card.querySelector('.knowledge-feedback');if(!picked){fb.textContent='Выберите вариант.';return}const ok=Number(picked.value)===Number(button.dataset.answer);fb.className='knowledge-feedback '+(ok?'ok':'bad');fb.textContent=(ok?'Верно. ':'Пока нет. ')+(button.dataset.explain||'')});
 }
 
-document.querySelector('#lockLocal').onclick=async()=>{assistantBridge.invalidate();await graphics?.flush();graphics=null;await settled();await session?.lock();session=null;data=null;saved.textContent='Локальная копия закрыта.';document.querySelector('#lockLocal').hidden=true;document.querySelector('[data-local-name]').textContent='Открыть личную копию';document.querySelector('[data-local-avatar]').textContent='А';location.hash='#view=unlock'};
+document.querySelector('#lockLocal').onclick=async()=>{delete root.dataset.akroniklRoute;assistantBridge.invalidate();await graphics?.flush();graphics=null;await settled();await session?.lock();session=null;data=null;saved.textContent='Локальная копия закрыта.';document.querySelector('#lockLocal').hidden=true;document.querySelector('[data-local-name]').textContent='Открыть личную копию';document.querySelector('[data-local-avatar]').textContent='А';location.hash='#view=unlock'};
 function connection(){document.querySelector('#connection').textContent=navigator.onLine?'Сеть доступна. Перенос в аккаунт и Cloud выполняются только явно.':'Нет подключения. Академия и открытая локальная копия работают на устройстве.'}
 addEventListener('online',connection);addEventListener('offline',connection);connection();
 addEventListener('hashchange',()=>{void render().catch(error=>{saved.textContent=error.message})});

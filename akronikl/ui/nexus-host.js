@@ -3,8 +3,8 @@ import {createNexusContextAdapter, selectionFromCodeStudio} from '../core/index.
 // Только функции приложения являются источником identity/редактора. Ни URL,
 // ни текст запроса не дают полномочий. Нет чтения storage или Cloud.
 export function createUiHost({root, readIdentity, readRoute, readLocale,
-  readCourseLocale, readEditor = () => null, publicMode = false} = {}) {
-  for (const fn of [readIdentity, readRoute, readLocale, readCourseLocale, readEditor]) {
+  readCourseLocale, readEditor = () => null, readReady = () => true, publicMode = false} = {}) {
+  for (const fn of [readIdentity, readRoute, readLocale, readCourseLocale, readEditor, readReady]) {
     if (typeof fn !== 'function') throw Error('AKRONIKL_HOST_INVALID');
   }
   const identity = readIdentity();
@@ -17,7 +17,7 @@ export function createUiHost({root, readIdentity, readRoute, readLocale,
   const workspace = studio?.workspace;
   const revision = workspace?.revision, activeFile = workspace?.activeFile;
   function current() {
-    return alive && root.isConnected && readIdentity() === identity &&
+    return alive && readReady() === true && root.isConnected && readIdentity() === identity &&
       (publicMode || identity != null) && JSON.stringify(readRoute()) === routeKey &&
       readLocale() === uiLocale && readCourseLocale() === materialLocale &&
       readEditor() === editor && editor?.__nexusCodeStudio === studio &&
