@@ -1,0 +1,353 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.unions-typedef-enums",
+  "sessions": 2,
+  "learningOrder": 10,
+  "prerequisiteIds": [
+    "cpp.structures"
+  ],
+  "sourceRefs": [
+    "CPP20-ENUM",
+    "CPP20-VARIANT"
+  ],
+  "title": "Enumerations, aliases, and variant data",
+  "lead": "Model restricted choices and different command shapes while checking the active alternative.",
+  "why": "Arbitrary numeric codes blur states, while reading an inactive union member may violate language rules. An explicit data model makes selection errors visible.",
+  "objectives": [
+    "Explain: enum class scopes names",
+    "Trace: using and typedef name existing types",
+    "Justify: variant stores an alternative and its tag",
+    "Implement and verify the lab against its exact contract.",
+    "Identify a common defect: using does not create a strong type. Do not inspect bits by reading an inactive union member."
+  ],
+  "prerequisites": [
+    "Modules 1–2: expressions, comparisons, types, references, and checked cin.",
+    "Follow the prerequisite links: cpp.structures. New constructs are introduced before the assignment."
+  ],
+  "concepts": [
+    {
+      "term": "Alias",
+      "definition": "another name for an existing type."
+    },
+    {
+      "term": "Active alternative",
+      "definition": "the type of value currently held by a variant."
+    },
+    {
+      "term": "enum class",
+      "definition": "a distinct type with scoped enumerator names."
+    },
+    {
+      "term": "union",
+      "definition": "a type whose members share storage."
+    },
+    {
+      "term": "variant",
+      "definition": "a library type with one active alternative."
+    },
+    {
+      "term": "get_if",
+      "definition": "checked alternative access returning a pointer or nullptr."
+    }
+  ],
+  "sections": [
+    {
+      "title": "enum class scopes names",
+      "paragraphs": [
+        "enum class Mode { add, remove }; creates a distinct type. Values are written Mode::add and Mode::remove and do not implicitly become int. This prevents accidental mixing with another enumeration but does not validate an external numeric code.",
+        "Parse input with if or switch and explicitly map accepted tokens to enumeration values. static_cast<Mode>(number) does not establish membership in the domain set. In switch, list valid alternatives and define how unexpected states are handled."
+      ]
+    },
+    {
+      "title": "using and typedef name existing types",
+      "paragraphs": [
+        "using Count=int; and typedef int Count; create aliases for int. They improve readability, but Count and int remain interchangeable. An alias does not automatically prevent a negative count or mixing units.",
+        "Prefer using for simple new declarations because name=type reads clearly. A truly distinct domain type can use a struct with checked operations; Module 5 develops that approach further."
+      ]
+    },
+    {
+      "title": "Why union requires discipline",
+      "paragraphs": [
+        "Union members share storage. Writing one member does not make every other representation a valid value. Active-member and lifetime rules are more demanding than a shared address.",
+        "In a valid introductory example, assign and read the same active int member. Do not type-pun through an inactive double or label its possible output portable. Special language exceptions are unnecessary for this task."
+      ]
+    },
+    {
+      "title": "variant stores an alternative and its tag",
+      "paragraphs": [
+        "std::variant<Add,Remove> from <variant> stores one active alternative and identifies it. Define command structs first, then choose an alternative while parsing a token. Using a library template does not require authoring a template.",
+        "std::get_if<Add>(&command) returns a pointer to Add or nullptr. Check it before ->amount. A wrong-type std::get involves an exception, so it is not used here: the current Clang/WASI environment disables exception support."
+      ]
+    },
+    {
+      "title": "Dispatch and invariants",
+      "paragraphs": [
+        "Parsing and executing a command are different functions. The parser accepts only add and remove and checks amount. The executor examines the active alternative and then validates the stock update. Invalid input must not leave a half-prepared command.",
+        "A variant does not guarantee the domain validity of amount. With stock capped at 1000, check amount<=1000-stock before adding and amount<=stock before removing. These checks avoid calculating a known-invalid new state."
+      ]
+    },
+    {
+      "title": "Checking the choice",
+      "paragraphs": [
+        "Test both alternatives, an unknown command, zero amount, exceeding the stock cap, and insufficient stock. A get_if for the other type must return nullptr, which the program must not dereference.",
+        "Compare alias, enum class, union, and variant in a table covering distinct types, named values, active alternatives, and checked access. Next, move from choosing a representation to ownership: who releases a resource and who merely observes it."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "names",
+      "title": "Names and the active member",
+      "purpose": "The alias remains int; only the active union member is read.",
+      "code": "#include <iostream>\nusing Count = int;\nenum class State { idle, ready };\nunion Storage { int count; double weight; };\nint main() {\n    Count n{3};\n    State state{State::ready};\n    Storage storage{};\n    storage.count = n;\n    std::cout << (state == State::ready) << ' ' << storage.count << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "1 3\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    },
+    {
+      "id": "checked-alternative",
+      "title": "A checked alternative",
+      "purpose": "get_if for a different type returns nullptr without throwing.",
+      "code": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "1\n1 7\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Predict before running",
+      "action": "Trace the first worked example step by step, then run all of its cases.",
+      "prediction": "An alternative’s type does not eliminate validation of its data.",
+      "verification": "Compare every state transition and stdout; record a mismatch as a hypothesis rather than revising the expectation afterward."
+    },
+    {
+      "title": "A counterexample to a wrong rule",
+      "action": "Using the second example and theory, construct a minimal safe case for this defect: using does not create a strong type. Do not inspect bits by reading an inactive union member.",
+      "prediction": "The correct and incorrect models should make distinguishable predictions without executing undefined behaviour.",
+      "verification": "Preserve the prediction, actual output, and an explanation of the violated rule."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A boundary result differs",
+      "cause": "using does not create a strong type. Do not inspect bits by reading an inactive union member.",
+      "fix": "An alternative’s type does not eliminate validation of its data."
+    },
+    {
+      "symptom": "One case works and the next fails",
+      "cause": "The invariant or empty/malformed-input policy is unspecified.",
+      "fix": "Return to the lab contract and check every published case independently."
+    },
+    {
+      "symptom": "The environment rejected execution",
+      "cause": "Build failure, unsupported syntax, and quotas are different causes.",
+      "fix": "Keep the phase and diagnostic; exceptions are unsupported and environment limits are not learner knowledge failures."
+    }
+  ],
+  "diagnosticExamples": [],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Manually trace the first example and explain every expected output line.",
+      "criteria": "An alternative’s type does not eliminate validation of its data.",
+      "hint": "Identify input, state, and observable output first."
+    },
+    {
+      "level": "basic",
+      "task": "Choose the lab’s empty or minimum valid case and its nearest invalid counterpart.",
+      "criteria": "Derive both expectations before execution and connect each to a contract clause.",
+      "hint": "using does not create a strong type. Do not inspect bits by reading an inactive union member."
+    },
+    {
+      "level": "applied",
+      "task": "Read stock, add/remove, and amount in 0…1000. Store the command in variant<Add,Remove>; print rejected stock if it cannot apply, otherwise ok newStock. Malformed input is invalid.",
+      "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
+      "hint": "An alternative’s type does not eliminate validation of its data."
+    },
+    {
+      "level": "applied",
+      "task": "Compare the two worked examples: which assumptions differ and why can they not be silently transferred into the lab?",
+      "criteria": "State inputs, state, and at least one applicability boundary for each example.",
+      "hint": "Parsing and executing a command are different functions. The parser accepts only add and remove and checks amount. The executor examines the active alternative and then validates the stock update. Invalid input must not leave a half-prepared command."
+    },
+    {
+      "level": "transfer",
+      "task": "Add a SetLimit command as a separate struct; specify new rules and tests without exception-throwing std::get.",
+      "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour.",
+      "hint": "Test both alternatives, an unknown command, zero amount, exceeding the stock cap, and insufficient stock. A get_if for the other type must return nullptr, which the program must not dereference."
+    },
+    {
+      "level": "transfer",
+      "task": "Give a mini-defence: explain a bound, complexity, and a counterexample to a wrong implementation without running the reference.",
+      "criteria": "Connect the explanation to specific lines of your source and actual tests.",
+      "hint": "An alternative’s type does not eliminate validation of its data."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Enumerations, aliases, and variant data",
+    "challenge": "Read stock, add/remove, and amount in 0…1000. Store the command in variant<Add,Remove>; print rejected stock if it cannot apply, otherwise ok newStock. Malformed input is invalid.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    int stock{}, amount{};\n    std::string kind;\n    if (!(std::cin >> stock >> kind >> amount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || stock < 0 || stock > 1000 || amount < 0 || amount > 1000 || (kind != \"add\" && kind != \"remove\")) { std::cout << \"invalid\\n\"; return 0; }\n    Command value = Add{amount};\n    if (kind == \"remove\") { value = Remove{amount}; }\n    bool ok = executeStock(stock, value);\n    std::cout << (ok ? \"ok \" : \"rejected \") << stock << '\\n';\n}\n",
+    "cases": [
+      {
+        "stdin": "3 add 4",
+        "stdout": "ok 7\n"
+      },
+      {
+        "stdin": "3 remove 3",
+        "stdout": "ok 0\n"
+      },
+      {
+        "stdin": "3 remove 4",
+        "stdout": "rejected 3\n"
+      },
+      {
+        "stdin": "1000 add 1",
+        "stdout": "rejected 1000\n"
+      },
+      {
+        "stdin": "0 add 0",
+        "stdout": "ok 0\n"
+      },
+      {
+        "stdin": "3 other 1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "3 add -1",
+        "stdout": "invalid\n"
+      }
+    ],
+    "referenceFiles": {},
+    "starterFiles": {},
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: An alternative’s type does not eliminate validation of its data.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "An alternative’s type does not eliminate validation of its data.",
+      "using does not create a strong type. Do not inspect bits by reading an inactive union member.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What does get_if return for a different alternative?",
+      "answers": [
+        "A copy of the other type",
+        "nullptr",
+        "An arbitrary address"
+      ],
+      "correctIndex": 1,
+      "explanation": "Check the pointer before accessing fields."
+    },
+    {
+      "question": "Does using Count=int create a distinct type?",
+      "answers": [
+        "No",
+        "Only for negative numbers",
+        "Yes"
+      ],
+      "correctIndex": 0,
+      "explanation": "An alias names an existing type."
+    },
+    {
+      "question": "How should the teaching union be read safely?",
+      "answers": [
+        "All members simultaneously",
+        "Any member to inspect bits",
+        "Read the written active member"
+      ],
+      "correctIndex": 2,
+      "explanation": "Shared storage does not make every interpretation valid."
+    },
+    {
+      "question": "Why use get_if instead of a wrong-type get?",
+      "answers": [
+        "It ignores the type",
+        "It permits a nullptr check without an exception",
+        "It always copies"
+      ],
+      "correctIndex": 1,
+      "explanation": "The current runtime does not support exceptions."
+    },
+    {
+      "question": "What is needed to accept this lab?",
+      "answers": [
+        "Source, actual results, original tests, and a contract explanation",
+        "Only a completed flag",
+        "Only a copied reference"
+      ],
+      "correctIndex": 0,
+      "explanation": "A progress flag is not evidence of independent mastery."
+    }
+  ],
+  "reflection": [
+    "An alternative’s type does not eliminate validation of its data.",
+    "Add a SetLimit command as a separate struct; specify new rules and tests without exception-throwing std::get.",
+    "Which case refutes the wrong rule and what do your checks still not establish?"
+  ],
+  "bridge": "Next: Lifetime, RAII, and unique ownership. Preserve the lab and its verification table.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Stepwise map: Enumerations, aliases, and variant data",
+    "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+    "steps": [
+      {
+        "title": "enum class scopes names",
+        "description": "enum class Mode { add, remove }; creates a distinct type. Values are written Mode::add and Mode::remove and do not implicitly become int. This prevents accidental mixing with another enumeration but does not validate an external numeric code."
+      },
+      {
+        "title": "using and typedef name existing types",
+        "description": "using Count=int; and typedef int Count; create aliases for int. They improve readability, but Count and int remain interchangeable. An alias does not automatically prevent a negative count or mixing units."
+      },
+      {
+        "title": "Why union requires discipline",
+        "description": "Union members share storage. Writing one member does not make every other representation a valid value. Active-member and lifetime rules are more demanding than a shared address."
+      },
+      {
+        "title": "variant stores an alternative and its tag",
+        "description": "std::variant<Add,Remove> from <variant> stores one active alternative and identifies it. Define command structs first, then choose an alternative while parsing a token. Using a library template does not require authoring a template."
+      },
+      {
+        "title": "Dispatch and invariants",
+        "description": "Parsing and executing a command are different functions. The parser accepts only add and remove and checks amount. The executor examines the active alternative and then validates the stock update. Invalid input must not leave a half-prepared command."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "What suits a finite set of named states?",
+    "answers": [
+      "enum",
+      "while",
+      "sizeof"
+    ],
+    "correctIndex": 0
+  }
+}

@@ -52,7 +52,7 @@ try{
  });
  await check('Входной вопрос, ответ с объяснением и копирование сохраняют личный редактор и старый quiz',async()=>{
   await goldLessonRoute(local,GOLD_BASICS_LESSONS[0],'ru');const q=local.locator('[data-gold-readiness] [data-gold-question]').first();await q.locator('input[value="1"]').check();await q.locator('[data-gold-check]').click();assert.equal(await q.locator('[data-gold-feedback]').getAttribute('data-result'),'correct');
-  const example=local.locator('.gold-example details').first();await example.locator('summary').click();await example.locator('[data-gold-copy]').click();assert.equal(await local.locator('#editor').inputValue(),personal(GOLD_BASICS_LESSONS[0]));assert.ok(await local.locator('input[name="quiz"][value="2"]').isChecked());
+  const example=local.locator('.gold-example details').first();await example.locator(':scope > summary').click();await example.locator(':scope > [data-gold-copy]').click();assert.equal(await local.locator('#editor').inputValue(),personal(GOLD_BASICS_LESSONS[0]));assert.ok(await local.locator('input[name="quiz"][value="2"]').isChecked());
  });
  await check('Синтетический проект и все 12 прогрессов сохранены в зашифрованной копии',async()=>{
   const data=await local.evaluate(async({prefix,id,phrase})=>{const {createVaultStore}=await import(prefix+'/pwa/local-vault.js'),s=await createVaultStore().unlock(id,phrase),data=s.read();await s.lock();return data;},{prefix,id:vaultId,phrase});
