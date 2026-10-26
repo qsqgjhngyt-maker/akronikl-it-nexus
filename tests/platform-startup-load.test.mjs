@@ -20,7 +20,7 @@ globalThis.fetch = async (url,opts={})=>{
 test('HOME obtains only minimal verified C++ outline',async()=>{
  const outline=await getCppOutline();
  assert.equal(outline.manifest.id,'cpp');
- assert.equal(outline.curriculum.lessons.length,45);
+ assert.equal(outline.curriculum.lessons.length,50);
  assert.deepEqual(new Set(requests),new Set(fixtures.slice(0,2)));
  assert.equal(requests.length,2);
  assert.ok(requests.reduce((s,p)=>s+fileSizes[p],0)<=30000,'Outline including the versioned five-topic expansion must remain <=30KB');
@@ -31,8 +31,8 @@ test('Opening full C++ after HOME preserves all data, IDs and reuses verified ou
  const full=await getCppCourse();
  assert.strictEqual(full.manifest,outline.manifest);
  assert.strictEqual(full.curriculum,outline.curriculum);
- assert.equal(full.lessonsRu.lessons.length,45);
- assert.equal(full.lessonsEn.lessons.length,8);
+ assert.equal(full.lessonsRu.lessons.length,50);
+ assert.equal(full.lessonsEn.lessons.length,13);
  assert.deepEqual(new Set(requests),new Set(fixtures));
  assert.equal(requests.length,7,'No duplicate metadata request');
  const lessonIds=outline.curriculum.lessons.map(x=>x.id);
@@ -51,7 +51,7 @@ test('Gold metadata failure is retried without poisoning the outline or caching 
  globalThis.fetch=async url=>{const path=String(url).slice(projectRoot.href.length);calls.push(path);if(fail&&path==='courses/cpp/data/gold-laboratories.json'){fail=false;throw Error('synthetic metadata failure')}return{ok:true,json:async()=>JSON.parse(await fs.readFile(new URL(path,projectRoot),'utf8'))}};
  const other=await import('../core/course-registry.js?lab-index-retry');
  await assert.rejects(other.getCppCourse(),/synthetic metadata failure/);
- const full=await other.getCppCourse();assert.equal(Object.keys(full.goldLaboratories).length,38);
+ const full=await other.getCppCourse();assert.equal(Object.keys(full.goldLaboratories).length,46);
  assert.equal(calls.filter(p=>p==='courses/cpp/data/gold-laboratories.json').length,2);assert.equal(calls.filter(p=>p==='courses/cpp/manifest.json').length,1);
 });
 

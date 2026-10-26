@@ -2277,6 +2277,346 @@
       "visualization": null,
       "pdfPages": [],
       "pdfNotes": []
+    },
+    {
+      "id": "cpp.algorithm-complexity",
+      "legacyIndex": null,
+      "order": 46,
+      "sectionId": "cpp.section.classic-algorithms",
+      "title": "Complexity, invariants and correctness",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 1,
+      "description": "Separate a correct result, termination and the cost of processing a growing input.",
+      "theory": [
+        "Separate a correct result, termination and the cost of processing a growing input."
+      ],
+      "deep": "Two searches can return identical answers yet behave differently on a large log. An engineer must state a model, an input domain and the basis for a cost estimate, rather than select an algorithm from one fortunate run.",
+      "analogy": "Start with a contract and an operation model, then count, prove and run a bounded experiment.",
+      "commonMistake": "Sum n−1,n−2,…,0.",
+      "code": "#include <iostream>\nint main(){\n int n;\n if(!(std::cin>>n)||n<0||n>128){std::cout<<\"invalid\\n\";return 0;}\n std::cin >> std::ws; if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n long long linear=0,pairs=0;\n for(int i=0;i<n;++i) ++linear;\n for(int i=0;i<n;++i) for(int j=i+1;j<n;++j) ++pairs;\n std::cout<<\"linear \"<<linear<<\"\\npairs \"<<pairs<<'\\n';\n}",
+      "task": "Read exactly one integer n in 0…128. Print linear n and pairs n(n−1)/2 on separate lines, counting with loops. Empty, malformed, out-of-range input or extra tokens must produce only invalid.",
+      "hint": "Sum the inner loop lengths.",
+      "solution": "#include <iostream>\nint main(){\n int n;\n if(!(std::cin>>n)||n<0||n>128){std::cout<<\"invalid\\n\";return 0;}\n std::cin >> std::ws; if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n long long linear=0,pairs=0;\n for(int i=0;i<n;++i) ++linear;\n for(int i=0;i<n;++i) for(int j=i+1;j<n;++j) ++pairs;\n std::cout<<\"linear \"<<linear<<\"\\npairs \"<<pairs<<'\\n';\n}",
+      "quiz": {
+        "question": "What does the lab count for n=4?",
+        "answers": [
+          "6 unordered pairs of distinct indices",
+          "16 pairs with repetition",
+          "4 timer comparisons"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Input size",
+          "A parameter for resource analysis, such as record count n."
+        ],
+        [
+          "Cost model",
+          "Explicitly chosen operations and their relative costs, rather than CPU frequency."
+        ],
+        [
+          "O",
+          "An asymptotic upper bound up to a constant factor beyond some n."
+        ],
+        [
+          "Ω",
+          "An asymptotic lower bound for the same definition of cost."
+        ],
+        [
+          "Θ",
+          "Matching asymptotic upper and lower bounds."
+        ],
+        [
+          "Worst case",
+          "The maximum cost over valid inputs of a fixed size."
+        ],
+        [
+          "Amortization",
+          "A bound on a sequence of operations, rather than a random average input."
+        ],
+        [
+          "Auxiliary space",
+          "Working storage beyond the agreed input and output representation."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.iterators-algorithms-lambdas",
+      "legacyIndex": null,
+      "order": 47,
+      "sectionId": "cpp.section.classic-algorithms",
+      "title": "Iterators, STL algorithms and lambdas",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 3,
+      "description": "Compose small algorithms while specifying their ranges, destinations and callback behavior.",
+      "theory": [
+        "Compose small algorithms while specifying their ranges, destinations and callback behavior."
+      ],
+      "deep": "A familiar loop can often be recognized as search, filtering, transformation or reduction. Standard algorithms express intent, but make range contracts and supplied functions part of correctness.",
+      "analogy": "The range must be valid, the destination writable, and a lambda’s dependencies alive while it uses them.",
+      "commonMistake": "Reacquire the position or separate reading and writing.",
+      "code": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <numeric>\n#include <iterator>\nint main(){std::vector<int>a{4,1,3,2},b;int offset=10;std::transform(a.begin(),a.end(),std::back_inserter(b),[offset](int x){return x+offset;});std::sort(b.begin(),b.end(),[](int a,int b){return a>b;});auto p=std::find_if(b.begin(),b.end(),[](int x){return x%2==0;});std::cout<<std::accumulate(b.begin(),b.end(),0)<<' '<<*p<<' '<<std::distance(b.begin(),p)<<'\\n';std::vector<int>empty;std::cout<<(std::find(empty.begin(),empty.end(),7)==empty.end())<<' '<<std::accumulate(empty.begin(),empty.end(),0)<<'\\n';}",
+      "task": "Read n in 0…64, a threshold in −10000…10000 and n values in the same range. Keep values >= threshold, sort descending and double them. First line: count and sum separated by a space; second: resulting values separated by spaces, even for an empty result. Invalid or extra input gives invalid.",
+      "hint": "Start summation with 0LL.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <iterator>\n#include <numeric>\nint main(){\n int n,threshold;\n if(!(std::cin>>n>>threshold)||n<0||n>64||threshold< -10000||threshold>10000){std::cout<<\"invalid\\n\";return 0;}\n std::vector<int>input;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -10000||x>10000){std::cout<<\"invalid\\n\";return 0;}input.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::vector<int>selected;\n std::copy_if(input.begin(),input.end(),std::back_inserter(selected),[threshold](int x){return x>=threshold;});\n std::sort(selected.begin(),selected.end(),[](int a,int b){return a>b;});\n std::transform(selected.begin(),selected.end(),selected.begin(),[](int x){return 2*x;});\n long long sum=std::accumulate(selected.begin(),selected.end(),0LL);\n std::cout<<selected.size()<<' '<<sum<<'\\n';\n for(std::size_t i=0;i<selected.size();++i){if(i)std::cout<<' ';std::cout<<selected[i];}\n std::cout<<'\\n';\n}",
+      "quiz": {
+        "question": "May end be dereferenced? ",
+        "answers": [
+          "No",
+          "Always",
+          "Only in an empty vector"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Half-open range",
+          "Includes first and excludes last; empty when first==last."
+        ],
+        [
+          "Iterator",
+          "A navigation object with specified valid operations."
+        ],
+        [
+          "Random access",
+          "A category supporting constant-time offsets and distances."
+        ],
+        [
+          "Predicate",
+          "A callable whose result acts as a Boolean condition."
+        ],
+        [
+          "Comparator",
+          "A strict weak ordering defining which element precedes another."
+        ],
+        [
+          "Capture",
+          "Including external values or references in a lambda closure."
+        ],
+        [
+          "Invalidation",
+          "An iterator or view becoming invalid after an owner mutation."
+        ],
+        [
+          "Initial accumulator",
+          "The value and type from which accumulate begins a fold."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.recursion-divide-conquer",
+      "legacyIndex": null,
+      "order": 48,
+      "sectionId": "cpp.section.classic-algorithms",
+      "title": "Recursion and divide-and-conquer",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 5,
+      "description": "Prove the base case is reachable, trace returns and construct a stable merge over bounded input.",
+      "theory": [
+        "Prove the base case is reachable, trace returns and construct a stable merge over bounded input."
+      ],
+      "deep": "Recursion is useful when a problem splits into smaller problems of the same form. It does not automatically make code simple or fast: account for call state, combination cost and runtime limits.",
+      "analogy": "Every recursive path needs a base case and a strictly smaller subproblem; depth and total call count are different quantities.",
+      "commonMistake": "Prove decreasing length.",
+      "code": "#include <iostream>\n#include <cstdint>\nstd::uint64_t factorial(unsigned n){return n<2?1:n*factorial(n-1);}\nint main(){int n;if(!(std::cin>>n)||n<0||n>12){std::cout<<\"limit\\n\";return 0;}std::uint64_t iterative=1;for(int i=2;i<=n;++i)iterative*=static_cast<unsigned>(i);auto result=factorial(static_cast<unsigned>(n));if(result!=iterative)return 2;std::cout<<result<<'\\n';}",
+      "task": "Read n in 0…128 and n integers in −10000…10000 with no extra tokens. Sort using recursive merge sort. First line: space-separated values; second: max-depth D. Root depth is 1, with base n<2. Invalid input produces only invalid.",
+      "hint": "Take from the left on equality.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <algorithm>\nvoid merge_sort(std::vector<int>&a,std::size_t lo,std::size_t hi,int depth,int&maximum){\n maximum=std::max(maximum,depth);\n if(hi-lo<2)return;\n const auto mid=lo+(hi-lo)/2;\n merge_sort(a,lo,mid,depth+1,maximum);merge_sort(a,mid,hi,depth+1,maximum);\n std::vector<int>tmp;auto i=lo,j=mid;\n while(i<mid&&j<hi){if(a[j]<a[i])tmp.push_back(a[j++]);else tmp.push_back(a[i++]);}\n while(i<mid)tmp.push_back(a[i++]);while(j<hi)tmp.push_back(a[j++]);\n std::copy(tmp.begin(),tmp.end(),a.begin()+static_cast<std::ptrdiff_t>(lo));\n}\nint main(){int n;if(!(std::cin>>n)||n<0||n>128){std::cout<<\"invalid\\n\";return 0;}\n std::vector<int>a;for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -10000||x>10000){std::cout<<\"invalid\\n\";return 0;}a.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n int maximum=0;merge_sort(a,0,a.size(),1,maximum);\n for(std::size_t i=0;i<a.size();++i){if(i)std::cout<<' ';std::cout<<a[i];}std::cout<<\"\\nmax-depth \"<<maximum<<'\\n';\n}",
+      "quiz": {
+        "question": "Merge-sort base case? ",
+        "answers": [
+          "Length below 2",
+          "Only length 1",
+          "Only length 2"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Base case",
+          "A simple case that ends a branch without another call."
+        ],
+        [
+          "Measure",
+          "A nonnegative quantity decreasing strictly before a recursive step."
+        ],
+        [
+          "Call frame",
+          "Separate parameters and local objects for one invocation."
+        ],
+        [
+          "Depth",
+          "The maximum simultaneously active calls along one branch."
+        ],
+        [
+          "Divide",
+          "Splitting a problem into smaller subproblems."
+        ],
+        [
+          "Conquer",
+          "Solving subproblems under their contracts."
+        ],
+        [
+          "Merge",
+          "Combining two ordered ranges in linear work."
+        ],
+        [
+          "Recurrence",
+          "Relating problem cost to subproblem and combination costs."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.associative-containers",
+      "legacyIndex": null,
+      "order": 49,
+      "sectionId": "cpp.section.classic-algorithms",
+      "title": "Associative containers and data-structure choice",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 6,
+      "description": "Distinguish ordering, unique keys, average hash cost and access side effects.",
+      "theory": [
+        "Distinguish ordering, unique keys, average hash cost and access side effects."
+      ],
+      "deep": "A catalogue needs ID lookup, a log needs word frequencies, and a report needs reproducible order. One container rarely fits every operation. Choose from the contract rather than always reaching for vector or unordered_map.",
+      "analogy": "Define the key and operations first, then compare ordering, cost and invalidation guarantees.",
+      "commonMistake": "Use find to check absence.",
+      "code": "#include <iostream>\n#include <map>\n#include <set>\n#include <unordered_map>\n#include <unordered_set>\n#include <string>\nint main(){std::unordered_map<std::string,int>counts;std::unordered_set<std::string>seen;std::string word;while(std::cin>>word){++counts[word];seen.insert(word);}auto before=counts.size();bool missing=counts.find(\"absent\")==counts.end();if(counts.size()!=before||seen.size()!=counts.size())return 2;std::map<std::string,int>ordered(counts.begin(),counts.end());std::set<std::string>keys(seen.begin(),seen.end());for(const auto&[word,count]:ordered)std::cout<<word<<':'<<count<<' ';std::cout<<\"| \"<<keys.size()<<' '<<missing<<'\\n';}",
+      "task": "Read n in 0…64 and exactly n words containing a…z with length 1…12. Count frequencies and print word count on separate lines in lexical order. For n=0 print empty. Bounds violations, malformed or extra input produce only invalid.",
+      "hint": "Do not print unordered_map directly.",
+      "solution": "#include <iostream>\n#include <string>\n#include <vector>\n#include <unordered_map>\n#include <algorithm>\nbool valid(const std::string&s){if(s.empty()||s.size()>12)return false;for(char c:s)if(c<'a'||c>'z')return false;return true;}\nint main(){int n;if(!(std::cin>>n)||n<0||n>64){std::cout<<\"invalid\\n\";return 0;}\n std::unordered_map<std::string,int>counts;\n for(int i=0;i<n;++i){std::string word;if(!(std::cin>>word)||!valid(word)){std::cout<<\"invalid\\n\";return 0;}++counts[word];}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::vector<std::pair<std::string,int>>report(counts.begin(),counts.end());\n std::sort(report.begin(),report.end(),[](const auto&a,const auto&b){return a.first<b.first;});\n if(report.empty())std::cout<<\"empty\\n\";\n else for(const auto&entry:report)std::cout<<entry.first<<' '<<entry.second<<'\\n';\n}",
+      "quiz": {
+        "question": "How to look up without insertion? ",
+        "answers": [
+          "find",
+          "operator[]",
+          "clear"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Key",
+          "A value used to determine record identity."
+        ],
+        [
+          "map",
+          "An ordered collection of unique keys and mapped values."
+        ],
+        [
+          "set",
+          "An ordered collection of unique keys without a separate mapped value."
+        ],
+        [
+          "unordered_map",
+          "A hash container with unique keys and unspecified traversal order."
+        ],
+        [
+          "Collision",
+          "Distinct keys sharing a hash, resolved using equivalence checks."
+        ],
+        [
+          "find",
+          "Lookup returning an iterator or end without inserting a key."
+        ],
+        [
+          "operator[]",
+          "Access to a mapped value that may insert a missing key."
+        ],
+        [
+          "rehash",
+          "Rebuilding buckets, invalidating iterators but not references to retained elements."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.property-testing-benchmarks",
+      "legacyIndex": null,
+      "order": 50,
+      "sectionId": "cpp.section.classic-algorithms",
+      "title": "Property checking and honest experiments",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 8,
+      "description": "Combine an independent oracle, metamorphic properties, a safe mutation and a reproducible measurement log.",
+      "theory": [
+        "Combine an independent oracle, metamorphic properties, a safe mutation and a reproducible measurement log."
+      ],
+      "deep": "One successful stdout does not establish correctness for all inputs, and fewer nanoseconds do not establish a better algorithm. An engineering report separates its question, method, observations and conclusion while retaining inputs and limitations.",
+      "analogy": "Check the output contract first, then measure a named region; retain raw data and the limits of the conclusion.",
+      "commonMistake": "Add the minimal [1,3,2] counterexample.",
+      "code": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main(){std::vector<std::vector<int>>inputs{{},{7},{3,1,3,-2},{0,0,0},{9,7,5,3,1}};int checked=0;for(const auto&source:inputs){auto sorted=source;std::sort(sorted.begin(),sorted.end());auto twice=sorted;std::sort(twice.begin(),twice.end());auto reversed=source;std::reverse(reversed.begin(),reversed.end());std::sort(reversed.begin(),reversed.end());if(!std::is_sorted(sorted.begin(),sorted.end())||!std::is_permutation(source.begin(),source.end(),sorted.begin(),sorted.end())||twice!=sorted||reversed!=sorted)return 2;++checked;}std::cout<<checked<<\" properties\\n\";}",
+      "task": "Read n=0…128 and n integers in −10000…10000 with no extra tokens. Compare std::sort and insertion on independent copies: one unrecorded warmup and five measurements each, with copying and validation outside timing. timings.tsv has header algorithm<TAB>iteration<TAB>elapsed_ns followed by five std_sort and five insertion rows, iteration=0…4 and nonnegative integer ns. Check ordering, preservation, idempotence and detection of a safe mutation. stdout: contracts PASS, samples 10, mutation detected on separate lines. Invalid input gives invalid.",
+      "hint": "Zero ns is valid.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <chrono>\n#include <fstream>\nvoid insertion(std::vector<int>&a){for(std::size_t i=1;i<a.size();++i){int x=a[i];auto j=i;while(j>0&&x<a[j-1]){a[j]=a[j-1];--j;}a[j]=x;}}\nbool contract(const std::vector<int>&source,const std::vector<int>&result){return std::is_sorted(result.begin(),result.end())&&std::is_permutation(source.begin(),source.end(),result.begin(),result.end());}\nint main(){int n;if(!(std::cin>>n)||n<0||n>128){std::cout<<\"invalid\\n\";return 0;}\n std::vector<int>base;for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -10000||x>10000){std::cout<<\"invalid\\n\";return 0;}base.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n using Clock=std::chrono::steady_clock;\n std::ofstream out(\"timings.tsv\");if(!out){std::cout<<\"io-error\\n\";return 0;}out<<\"algorithm\\titeration\\telapsed_ns\\n\";\n for(int algorithm=0;algorithm<2;++algorithm){\n  auto warm=base;if(algorithm==0)std::sort(warm.begin(),warm.end());else insertion(warm);if(!contract(base,warm))return 2;\n  for(int iteration=0;iteration<5;++iteration){\n   auto values=base;const auto start=Clock::now();\n   if(algorithm==0)std::sort(values.begin(),values.end());else insertion(values);\n   const auto end=Clock::now();if(!contract(base,values))return 3;\n   const auto elapsed=std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count();if(elapsed<0)return 4;\n   out<<(algorithm==0?\"std_sort\":\"insertion\")<<'\\t'<<iteration<<'\\t'<<elapsed<<'\\n';\n  }\n }\n out.close();if(!out){std::cout<<\"io-error\\n\";return 0;}\n std::vector<int>counterexample{1,3,2},mutant=counterexample;\n for(std::size_t i=1;i+1<mutant.size();++i){int x=mutant[i];auto j=i;while(j>0&&x<mutant[j-1]){mutant[j]=mutant[j-1];--j;}mutant[j]=x;}\n if(contract(counterexample,mutant))return 5;\n std::cout<<\"contracts PASS\\nsamples 10\\nmutation detected\\n\";\n}",
+      "quiz": {
+        "question": "Is is_sorted sufficient for a correct sort? ",
+        "answers": [
+          "No, element preservation is also needed",
+          "Yes",
+          "Only on empty input"
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Property",
+          "A statement about a class of inputs, such as multiset preservation."
+        ],
+        [
+          "Oracle",
+          "An independent way to obtain the expected result."
+        ],
+        [
+          "Metamorphic relation",
+          "A relation between results on transformed inputs when the full answer is unknown."
+        ],
+        [
+          "Mutation",
+          "A controlled change to a correct program to evaluate tests."
+        ],
+        [
+          "steady_clock",
+          "A monotonic clock suitable for interval measurements."
+        ],
+        [
+          "Warmup",
+          "An unrecorded preliminary run under an explicit policy."
+        ],
+        [
+          "Sample",
+          "Individual observations retained before computing summaries."
+        ],
+        [
+          "Conclusion validity",
+          "Matching the scope of a claim to the experiment actually performed."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
     }
   ]
 }

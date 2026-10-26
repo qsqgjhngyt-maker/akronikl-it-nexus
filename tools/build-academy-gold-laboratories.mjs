@@ -6,7 +6,7 @@ for(const id of GOLD_LESSONS){
  lessons[id]={};
  for(const locale of ['ru','en']){
   const gold=JSON.parse(await readFile(goldLessonPath(id,locale),'utf8')),lab=gold.laboratory;
-  lessons[id][locale]={title:lab.title,goal:lab.challenge,stepCount:lab.steps.length,proof:lab.rubric[0]};
+  lessons[id][locale]={title:lab.title,goal:lab.catalogGoal||lab.challenge,stepCount:lab.steps.length,proof:lab.rubric[0]};
  }
 }
 const text=JSON.stringify({schemaVersion:1,lessons},null,2)+'\n';

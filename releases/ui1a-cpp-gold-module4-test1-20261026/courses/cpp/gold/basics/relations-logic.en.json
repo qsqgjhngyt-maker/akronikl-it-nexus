@@ -1,0 +1,375 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.cpp-basics",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.relations-logic",
+  "sessions": 1,
+  "prerequisiteIds": [
+    "cpp.type-conversions"
+  ],
+  "sourceRefs": [
+    "CPP20-RELATIONAL",
+    "CPP20-EQUALITY",
+    "CPP20-LOGIC",
+    "CPP20-BOOL",
+    "CPP-GUIDELINES"
+  ],
+  "title": "Comparisons and logic: conditions as testable contracts",
+  "lead": "Build conditions from clear parts and identify right operands that will not be evaluated.",
+  "why": "A condition can do more than answer yes or no: its order can protect an invalid operation. Short-circuiting follows exact built-in && and || rules rather than compiler intuition.",
+  "objectives": [
+    "Read <, <=, >, >=, ==, and != as bool-producing comparisons.",
+    "Express a range as two comparisons joined by &&.",
+    "Explain &&, ||, ! and selected truth tables.",
+    "Place a divisor guard before a dangerous expression."
+  ],
+  "prerequisites": [
+    "bool, arithmetic, and mixed signed/unsigned from the previous lessons.",
+    "Splitting a computation into named stages. A complete if/else or loops course is unnecessary here."
+  ],
+  "concepts": [
+    {
+      "term": "Predicate",
+      "definition": "Here, a bool expression describing a property to check."
+    },
+    {
+      "term": "Logical AND",
+      "definition": "Built-in && is true when both operands are true; the right operand is skipped when the left is false."
+    },
+    {
+      "term": "Logical OR",
+      "definition": "Built-in || is true when at least one operand is true; the right operand is skipped when the left is true."
+    },
+    {
+      "term": "Negation",
+      "definition": "! reverses true and false after converting the operand to bool."
+    },
+    {
+      "term": "Short-circuit evaluation",
+      "definition": "Skipping the right operand when the left already determines a built-in logical expression’s result."
+    }
+  ],
+  "sections": [
+    {
+      "title": "A comparison is a value, not assignment",
+      "paragraphs": [
+        "score >= 0 produces bool. == compares equality and != inequality; a single = in assignment changes an object. score = 0 can be valid C++ inside a larger expression, but it is not an equality check. Inspect meaning even after a successful build.",
+        "Identify operand types first. As seen previously, int and unsigned int can change the expected meaning of a negative comparison. Our ranges use matching ints so that logic is studied without hidden mixed-sign conversions."
+      ]
+    },
+    {
+      "title": "A range is not a mathematical comparison chain",
+      "paragraphs": [
+        "C++ 0 <= score <= 100 does not express two simultaneous bounds. First 0 <= score produces bool, which is then compared with 100. For the resulting 0 or 1, that second comparison is true even when score is invalid.",
+        "Use score >= 0 && score <= 100. One comparison checks the lower bound and one the upper; both must hold. Name the result validScore when useful in the next stage. Bounds are inclusive: 0 and 100 are valid, −1 and 101 are not."
+      ]
+    },
+    {
+      "title": "A truth table without hidden execution",
+      "paragraphs": [
+        "&& is true only for true/true. || is false only for false/false. !true is false. A table of final values does not by itself show which operands were evaluated: built-in && skips the right operand after false, and built-in || skips it after true.",
+        "Zero converts to false and a nonzero number to true. Two is not a third logical value. Prefer domain conditions such as connected && !maintenance to unexplained numeric flags."
+      ]
+    },
+    {
+      "title": "Protection depends on the correct order",
+      "paragraphs": [
+        "In divisor != 0 && 12 / divisor > 1 the divisor is checked first. At zero the left side is false, so division is skipped. Reversing the operands breaks protection by attempting division first. We discuss that unsafe reversal without executing it.",
+        "For ||, divisor == 0 || 12 / divisor > 1 protects the division. At zero the first condition is already true. Its meaning differs: no division is needed or the quotient is large. Safety does not make it equivalent to the previous && expression."
+      ]
+    },
+    {
+      "title": "Do not replace logical operators with bitwise ones",
+      "paragraphs": [
+        "Single & and | are different operators and do not provide the same short-circuit protection. They may evaluate a dangerous right side. Use && and || for these guards. Full bitwise arithmetic comes later; for now understand why deleting one symbol changes the contract.",
+        "! has high precedence: !score == 0 does not mean !(score == 0). Use explicit parentheses when negating a condition, or assign a meaningful validScore name and use !validScore."
+      ]
+    },
+    {
+      "title": "Range validity and start policy",
+      "paragraphs": [
+        "The laboratory first validates loadPercent within 0…100, then permits starting when connected and load is at most 80. Load 90 is a valid percentage but starting is forbidden. Separating valid from can_start distinguishes invalid data from a legitimate policy rejection.",
+        "Test −1, 0, 80, 81, 100, 101 and a separate disconnected case. Predict both flags. The short-circuit diagram explicitly names a skipped operand so meaning does not depend on color."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "range",
+      "title": "Two bounds for one score",
+      "purpose": "Build a clear bool range check.",
+      "code": "#include <iostream>\n\nint main() {\n    int score{75};\n    bool withinRange = score >= 0 && score <= 100;\n    std::cout << withinRange << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "1\n",
+      "steps": [
+        "75 >= 0 is true.",
+        "75 <= 100 is true.",
+        "&& gives true and cout prints 1."
+      ]
+    },
+    {
+      "id": "short-circuit",
+      "title": "Zero without executing division",
+      "purpose": "Check safe && and || forms.",
+      "code": "#include <iostream>\n\nint main() {\n    int divisor{0};\n    bool largeQuotient = divisor != 0 && 12 / divisor > 1;\n    bool noDivisionNeeded = divisor == 0 || 12 / divisor > 1;\n    std::cout << largeQuotient << ' ' << noDivisionNeeded << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "0 1\n",
+      "steps": [
+        "For && the left side is false and the right is skipped.",
+        "For || the left side is true and the right is skipped.",
+        "The results differ: safety does not imply equivalence."
+      ]
+    },
+    {
+      "id": "flags",
+      "title": "State flags",
+      "purpose": "Read operators in a domain condition.",
+      "code": "#include <iostream>\n\nint main() {\n    bool connected{true};\n    bool maintenance{false};\n    std::cout << (connected && !maintenance) << '\\n';\n    std::cout << (connected || maintenance) << '\\n';\n    std::cout << (!connected) << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "1\n1\n0\n",
+      "steps": [
+        "!maintenance is true.",
+        "connected && !maintenance permits operation.",
+        "!connected means disconnected, which is false here."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "A comparison chain hides a defect",
+      "action": "Compare the correct predicate with 0 <= score <= 100 at score=101.",
+      "prediction": "The correct predicate gives 0; the chain gives 1.",
+      "verification": "Decompose the chain into two steps with an intermediate bool."
+    },
+    {
+      "title": "Both operands may be needed",
+      "action": "Change divisor to 3, then 12, in the safe division example.",
+      "prediction": "At 3 both flags are 1; at 12 both are 0, with the right comparison evaluated.",
+      "verification": "Explain the path through each built-in logical operator."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Score 101 passes the range check",
+      "cause": "Comparisons form a mathematical-style chain.",
+      "fix": "Use two comparisons joined by &&."
+    },
+    {
+      "symptom": "A guard fails to protect division",
+      "cause": "Division is on the left or & replaced &&.",
+      "fix": "Do not run the unsafe form; restore the left-side guard."
+    },
+    {
+      "symptom": "Load 90 is mislabeled invalid data",
+      "cause": "Range validity was conflated with start policy.",
+      "fix": "Separate validLoad and canStart."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "missing-condition",
+      "title": "Intentional: missing && operand",
+      "code": "#include <iostream>\n\nint main() {\n    bool ready = true && ;\n    std::cout << ready << '\\n';\n}\n",
+      "expectation": "compile-error",
+      "explanation": "Supply a complete right-hand expression rather than a guessed symbol."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Fill tables for A&&B, A||B, and !A over the four bool pairs.",
+      "criteria": "Mark where B is skipped.",
+      "hint": "Distinguish the result from whether an operand was evaluated."
+    },
+    {
+      "level": "applied",
+      "task": "Express a valid temperature of −20…50 inclusive.",
+      "criteria": "Use two comparisons and &&; check −21, −20, 50, 51.",
+      "hint": "Start with separate lower and upper bounds."
+    },
+    {
+      "level": "transfer",
+      "task": "Distinguish valid load from a device start permission.",
+      "criteria": "Include a valid but forbidden case.",
+      "hint": "Permission depends on more than numeric validity."
+    }
+  ],
+  "laboratory": {
+    "title": "A start-permission contract",
+    "challenge": "Calculate valid and can_start. A valid percentage is 0…100; starting needs a connection and load at most 80.",
+    "starterCode": "#include <iostream>\n\nint main() {\n    int loadPercent{65};\n    bool connected{true};\n    std::cout << \"connected=\" << connected << '\\n';\n    return 0;\n}\n",
+    "starterExpectedStdout": "connected=1\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    int loadPercent{65};\n    bool connected{true};\n    bool validLoad = loadPercent >= 0 && loadPercent <= 100;\n    bool canStart = connected && validLoad && loadPercent <= 80;\n    std::cout << \"valid=\" << validLoad << '\\n';\n    std::cout << \"can_start=\" << canStart << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "valid=1\ncan_start=1\n"
+      }
+    ],
+    "steps": [
+      "Write the two formulas separately.",
+      "Check every boundary and a disconnected case.",
+      "Predict both outputs before running.",
+      "Save a data-valid/start-permitted table."
+    ],
+    "rubric": [
+      "No chained comparisons.",
+      "Logical operators use the correct forms.",
+      "90 is not called an invalid percentage.",
+      "Boundary cases are actually checked."
+    ],
+    "verificationVariants": [
+      {
+        "id": "load--1",
+        "replace": [
+          {
+            "from": "int loadPercent{65};",
+            "to": "int loadPercent{-1};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "valid=0\ncan_start=0\n"
+      },
+      {
+        "id": "load-0",
+        "replace": [
+          {
+            "from": "int loadPercent{65};",
+            "to": "int loadPercent{0};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "valid=1\ncan_start=1\n"
+      },
+      {
+        "id": "load-80",
+        "replace": [
+          {
+            "from": "int loadPercent{65};",
+            "to": "int loadPercent{80};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "valid=1\ncan_start=1\n"
+      },
+      {
+        "id": "load-81",
+        "replace": [
+          {
+            "from": "int loadPercent{65};",
+            "to": "int loadPercent{81};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "valid=1\ncan_start=0\n"
+      },
+      {
+        "id": "load-100",
+        "replace": [
+          {
+            "from": "int loadPercent{65};",
+            "to": "int loadPercent{100};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "valid=1\ncan_start=0\n"
+      },
+      {
+        "id": "load-101",
+        "replace": [
+          {
+            "from": "int loadPercent{65};",
+            "to": "int loadPercent{101};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "valid=0\ncan_start=0\n"
+      },
+      {
+        "id": "disconnected",
+        "replace": [
+          {
+            "from": "bool connected{true};",
+            "to": "bool connected{false};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "valid=1\ncan_start=0\n"
+      }
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "How do you check 0…100?",
+      "answers": [
+        "0 <= x <= 100",
+        "x >= 0 && x <= 100",
+        "x >= 0 || x <= 100"
+      ],
+      "correctIndex": 1,
+      "explanation": "Both bounds must hold."
+    },
+    {
+      "question": "When does built-in && skip the right operand?",
+      "answers": [
+        "The left is false",
+        "The left is true",
+        "Always"
+      ],
+      "correctIndex": 0,
+      "explanation": "A false left operand already determines the result."
+    },
+    {
+      "question": "Which safely guards the divisor?",
+      "answers": [
+        "12/d > 1 && d != 0",
+        "d != 0 && 12/d > 1",
+        "d != 0 & 12/d > 1"
+      ],
+      "correctIndex": 1,
+      "explanation": "The check must precede division and short-circuit."
+    }
+  ],
+  "reflection": [
+    "Why are the safe && and || examples not equivalent?",
+    "What does a skipped annotation add to a truth table?"
+  ],
+  "bridge": "Next examine compact updates, sizeof without operand evaluation, and choosing one of two values with ?:.",
+  "visualization": {
+    "kind": "toolchain",
+    "title": "Short-circuiting at d=0",
+    "description": "A trace of one built-in &&; the right operand is explicitly marked skipped.",
+    "steps": [
+      {
+        "title": "d != 0",
+        "description": "With d=0 the left condition is false."
+      },
+      {
+        "title": "&&",
+        "description": "The false result is already determined."
+      },
+      {
+        "title": "Skipped",
+        "description": "12/d is not evaluated; no division by zero occurs."
+      },
+      {
+        "title": "false",
+        "description": "cout prints 0."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Which operator means logical AND?",
+    "answers": [
+      "||",
+      "&&",
+      "!="
+    ],
+    "correctIndex": 1
+  }
+}

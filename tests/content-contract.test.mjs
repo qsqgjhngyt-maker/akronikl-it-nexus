@@ -52,7 +52,7 @@ test('generic schema allows future lifecycle states while CP-1.1 candidate stays
 test('CP-1.1 semantic validator protects production compatibility',()=>{
   const result=validateContentContract(fileURLToPath(new URL('../',import.meta.url)));
   assert.equal(result.ok,true,result.errors.join('\n'));
-  assert.deepEqual(result.stats,{modules:6,topics:45,skills:15,exercises:45,practices:6,projects:7,mappedTopics:3,pendingTopics:42});
+  assert.deepEqual(result.stats,{modules:6,topics:50,skills:15,exercises:50,practices:6,projects:7,mappedTopics:3,pendingTopics:47});
   for(const required of ['production-cpp-id-compatibility','progress-localstorage-compatibility','runtime-additive-only','future-foundation-only','skill-alias-normalization'])assert.ok(result.passes.includes(required),required);
   assert.equal(result.warnings.length,1);
 });

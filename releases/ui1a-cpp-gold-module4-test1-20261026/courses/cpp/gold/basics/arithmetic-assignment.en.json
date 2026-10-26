@@ -1,0 +1,355 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.cpp-basics",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.arithmetic-assignment",
+  "sessions": 2,
+  "prerequisiteIds": [
+    "cpp.expressions-operators-blocks",
+    "cpp.data-types"
+  ],
+  "sourceRefs": [
+    "CPP20-MULTIPLICATIVE",
+    "CPP20-ASSIGNMENT",
+    "CPP20-TYPES",
+    "CPP20-CONVERSIONS",
+    "CPP-GUIDELINES"
+  ],
+  "title": "Arithmetic and assignment: quotient, remainder, and safe intermediates",
+  "lead": "Check integer division, express state changes concisely, and calculate block counts without overflow.",
+  "why": "A defect can occur before a result is stored: a wide destination cannot repair earlier arithmetic on the right. Reliable calculation begins with valid inputs and bounds for every step rather than an overflow experiment.",
+  "objectives": [
+    "Calculate / and % for positive and negative integers.",
+    "Distinguish assignment from compound +=, −=, *=, /=, %=.",
+    "Choose a wide type before the first potentially overflowing multiplication.",
+    "Round a nonnegative block count upward with proven bounds.",
+    "Distinguish invalid division from a legitimate boundary test."
+  ],
+  "prerequisites": [
+    "Named values, type ranges, and expression grouping.",
+    "Simple if and early return from Module 1 are repeated in a protective scaffold. Full logic is treated in lesson 9."
+  ],
+  "concepts": [
+    {
+      "term": "Integer quotient",
+      "definition": "The result of integer / with the fractional part discarded toward zero."
+    },
+    {
+      "term": "Remainder",
+      "definition": "For valid integer division, related to the quotient by a = (a / b) * b + a % b."
+    },
+    {
+      "term": "Compound assignment",
+      "definition": "An operation such as stock += 4 that updates the left object using its previous value."
+    },
+    {
+      "term": "Intermediate range",
+      "definition": "A bound on each expression value before the final result is stored."
+    },
+    {
+      "term": "Signed overflow",
+      "definition": "A signed arithmetic result outside its representable range; it must not be executed as a normal test."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Session 1. Integer division has its own contract",
+      "paragraphs": [
+        "For integers, 7 / 3 is 2. −7 / 3 is −2: the fraction is discarded toward zero rather than rounded down to −3. −7 % 3 is −1 because −7 = (−2) × 3 + (−1). A nonzero remainder has the dividend’s sign, not necessarily the divisor’s.",
+        "Check 7 / −3 and −7 / −3 with the same identity. This is not the always-nonnegative mathematical modulo used in some tasks. Do not assume % produces an index in 0…b−1 for negative inputs. Here we explain the result; range normalization belongs to a later concrete task."
+      ]
+    },
+    {
+      "title": "Exclude invalid operations before computing",
+      "paragraphs": [
+        "For integers a zero divisor is invalid for both / and %. Another dangerous boundary is the minimum signed value divided by −1 when the quotient is unrepresentable. A successful build does not make these runtime operations valid. We do not execute them for an error screenshot.",
+        "The laboratory scaffold checks invalid bounds before dividing. || means or: if any rejection condition is true, it prints invalid and return 0 ends processing. This repeats the protective scaffold from Module 1 rather than requiring new independent branching design."
+      ]
+    },
+    {
+      "title": "Read compound assignment as a state change",
+      "paragraphs": [
+        "For a simple int stock, stock += 4; adds 4, stock -= 3; subtracts 3, and stock *= 2; doubles it. The sequence is 10 → 14 → 11 → 22. /= and %= replace the value with the quotient and remainder. Division and range restrictions still apply.",
+        "For a simple name, x += y updates x with the sum. Do not generalize this to a blind textual rewrite of complex left expressions: compound assignment evaluates its left operand once. We use ordinary names only, without arrays, pointers, or effectful functions."
+      ]
+    },
+    {
+      "title": "Session 2. A wide destination cannot widen the past",
+      "paragraphs": [
+        "Let width and height be ints equal to 50000. In long long area = width * height;, the product is evaluated as int when both operands remain int. On a target with 32-bit int, 2500000000 does not fit. The wider area destination cannot help. We discuss this unsafe form without executing it.",
+        "In the safe example 1LL is a long long literal with value 1. 1LL * width * height starts multiplication in a wide integer type. These small nonnegative operands convert safely. Another solution is to declare both operands long long initially. General promotions and conversions follow next; the essential point is widening before the dangerous step."
+      ]
+    },
+    {
+      "title": "How many whole blocks are needed?",
+      "paragraphs": [
+        "With bytes=1001 and blockBytes=1000 the quotient is 1 and remainder 1: one full block, but two are needed for storage. For bytes ≥ 0 and blockBytes > 0, (bytes + blockBytes - 1) / blockBytes rounds upward. Zero volume needs zero blocks and an exact multiple needs no extra block.",
+        "The formula is not automatically safe near a type maximum: the addition can overflow. We bound bytes to 1000000000000 and blockBytes to 4096, so the numerator is at most 1000000004095 and fits long long. Bounds are checked first. A different contract requires a new proof or another formula."
+      ]
+    },
+    {
+      "title": "Boundary cases beat random runs",
+      "paragraphs": [
+        "For a block size of 1000, test volumes 0, 999, 1000, and 1001. They distinguish empty volume, remainder, an exact multiple, and the next block. Also test blockBytes=0: expect invalid without executing division.",
+        "Record the maximum intermediate bound as well as output. A sanitizer helps find defects in tests, but a few clean runs do not replace reasoning over the stated range. The diagram below traces only the valid example −7 / 3."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "negative-division",
+      "title": "A negative dividend",
+      "purpose": "Check truncation toward zero and the remainder sign.",
+      "code": "#include <iostream>\n\nint main() {\n    int dividend{-7};\n    int divisor{3};\n    std::cout << dividend / divisor << ' ' << dividend % divisor << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "-2 -1\n",
+      "steps": [
+        "The mathematical quotient is about −2.333; truncation gives −2.",
+        "Recover the remainder: −7 − (−2 × 3) = −1.",
+        "Compare both values with stdout."
+      ]
+    },
+    {
+      "id": "compound",
+      "title": "Three stock updates",
+      "purpose": "Reconstruct compound-assignment state changes.",
+      "code": "#include <iostream>\n\nint main() {\n    int stock{10};\n    stock += 4;\n    stock -= 3;\n    stock *= 2;\n    std::cout << stock << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "22\n",
+      "steps": [
+        "10 + 4 = 14.",
+        "14 − 3 = 11.",
+        "11 × 2 = 22; this is the printed state."
+      ]
+    },
+    {
+      "id": "wide-first",
+      "title": "Widen before multiplying",
+      "purpose": "Compute a representable product of 50000 × 50000.",
+      "code": "#include <iostream>\n\nint main() {\n    int width{50000};\n    int height{50000};\n    long long area = 1LL * width * height;\n    std::cout << area << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "2500000000\n",
+      "steps": [
+        "Read the LL suffix on one.",
+        "Check that the first product is already long long.",
+        "Compare with the independent result 2500000000."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Division signs",
+      "action": "Independently change the dividend to 7 and divisor to −3; then try both negative.",
+      "prediction": "For 7 and −3 output is −2 1; for −7 and −3 it is 2 −1.",
+      "verification": "Check a = q*b+r for each case. Do not use a zero divisor."
+    },
+    {
+      "title": "Two safe widening choices",
+      "action": "Declare width and height as long long and remove 1LL from the safe example.",
+      "prediction": "The product remains unchanged.",
+      "verification": "State both operand types before multiplication. Do not execute the unsafe int form."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "One block instead of two",
+      "cause": "Only the integer quotient was used.",
+      "fix": "Use the proven rounding-up formula within its bounds."
+    },
+    {
+      "symptom": "A wide result did not save the calculation",
+      "cause": "The intermediate product remained in a narrower signed type.",
+      "fix": "Widen an operand before multiplying and prove the range again."
+    },
+    {
+      "symptom": "A negative remainder was mistaken for a defect",
+      "cause": "C++ rules were confused with nonnegative mathematical modulo.",
+      "fix": "Check a=q*b+r and truncation toward zero."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "floating-remainder",
+      "title": "Intentional: % on double",
+      "code": "#include <iostream>\n\nint main() {\n    double value{7.5};\n    std::cout << value % 2 << '\\n';\n}\n",
+      "expectation": "compile-error",
+      "explanation": "% here requires integer operands. Do not guess a cast that changes the task meaning."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Predict q and r for 8/3, −8/3, and 8/−3 before running.",
+      "criteria": "Quotient and remainder satisfy the identity.",
+      "hint": "First truncate the quotient toward zero."
+    },
+    {
+      "level": "applied",
+      "task": "Trace count=20; count/=3; count%=4;.",
+      "criteria": "The states are 6 then 2, with type and bounds explained.",
+      "hint": "Each operation uses the updated value."
+    },
+    {
+      "level": "transfer",
+      "task": "Propose a container count for volumes up to 10^12 bytes with an explicit maximum container size.",
+      "criteria": "Prove the numerator bound and exclude zero size and negative volume.",
+      "hint": "A formula without valid ranges is an incomplete contract."
+    }
+  ],
+  "laboratory": {
+    "title": "Volume and whole blocks",
+    "challenge": "Complete the scaffold with full blocks, remaining bytes, and needed blocks. You may use the explained protective if from the reference.",
+    "starterCode": "#include <iostream>\n\nint main() {\n    long long bytes{1001};\n    long long blockBytes{1000};\n    long long fullBlocks = bytes / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    return 0;\n}\n",
+    "starterExpectedStdout": "full=1\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    long long bytes{1001};\n    long long blockBytes{1000};\n    // Scaffold from Module 1: reject invalid bounds before division.\n    if (bytes < 0 || bytes > 1'000'000'000'000LL || blockBytes < 1 || blockBytes > 4096) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long fullBlocks = bytes / blockBytes;\n    long long remainderBytes = bytes % blockBytes;\n    long long neededBlocks = (bytes + blockBytes - 1) / blockBytes;\n    std::cout << \"full=\" << fullBlocks << '\\n';\n    std::cout << \"remainder=\" << remainderBytes << '\\n';\n    std::cout << \"needed=\" << neededBlocks << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "full=1\nremainder=1\nneeded=2\n"
+      }
+    ],
+    "steps": [
+      "Write valid ranges before coding.",
+      "Prove the numerator upper bound.",
+      "Add remainder and rounding up.",
+      "Test 0, 999, 1000, 1001, and rejection of zero block size."
+    ],
+    "rubric": [
+      "Division happens only after validation.",
+      "An exact multiple needs no extra block.",
+      "No signed overflow or division by zero was executed.",
+      "Record stdout for each case and a range proof."
+    ],
+    "verificationVariants": [
+      {
+        "id": "empty",
+        "replace": [
+          {
+            "from": "long long bytes{1001};",
+            "to": "long long bytes{0};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "full=0\nremainder=0\nneeded=0\n"
+      },
+      {
+        "id": "below",
+        "replace": [
+          {
+            "from": "long long bytes{1001};",
+            "to": "long long bytes{999};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "full=0\nremainder=999\nneeded=1\n"
+      },
+      {
+        "id": "exact",
+        "replace": [
+          {
+            "from": "long long bytes{1001};",
+            "to": "long long bytes{1000};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "full=1\nremainder=0\nneeded=1\n"
+      },
+      {
+        "id": "zero-divisor-rejected",
+        "replace": [
+          {
+            "from": "long long blockBytes{1000};",
+            "to": "long long blockBytes{0};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "invalid\n"
+      },
+      {
+        "id": "max-volume",
+        "replace": [
+          {
+            "from": "long long bytes{1001};",
+            "to": "long long bytes{1'000'000'000'000LL};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "full=1000000000\nremainder=0\nneeded=1000000000\n"
+      }
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What is −7 % 3?",
+      "answers": [
+        "2",
+        "-1",
+        "1"
+      ],
+      "correctIndex": 1,
+      "explanation": "−7 / 3 = −2 and −7 − (−2 × 3) = −1."
+    },
+    {
+      "question": "Why can long long result = a*b; be insufficient for int a,b?",
+      "answers": [
+        "The int product is computed before storage",
+        "long long cannot hold integers",
+        "All parentheses must be removed"
+      ],
+      "correctIndex": 0,
+      "explanation": "The destination type does not change arithmetic already performed on operands."
+    },
+    {
+      "question": "When does (n+d−1)/d require extra justification?",
+      "answers": [
+        "Never",
+        "Always: signs, nonzero d, and the sum range must be established",
+        "Only when printing text"
+      ],
+      "correctIndex": 1,
+      "explanation": "A correct mathematical formula does not establish representability of its intermediates."
+    }
+  ],
+  "reflection": [
+    "Which test distinguishes a quotient from required block count?",
+    "Why is a range proof stronger than random overflow hunting?"
+  ],
+  "bridge": "You can now see where an operation type matters more than a destination type. Next study conversions, narrowing, and explicit intent with static_cast.",
+  "visualization": {
+    "kind": "toolchain",
+    "title": "Quotient and remainder for −7 / 3",
+    "description": "A fixed trace of valid integer operations, not an undefined-behavior experiment.",
+    "steps": [
+      {
+        "title": "-7 / 3",
+        "description": "The mathematical quotient’s fraction is discarded toward zero."
+      },
+      {
+        "title": "q = -2",
+        "description": "−2 × 3 = −6."
+      },
+      {
+        "title": "r = -1",
+        "description": "−7 − (−6) = −1."
+      },
+      {
+        "title": "a = q*b+r",
+        "description": "−7 = −2 × 3 − 1 checks consistency."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Which operator produces an integer remainder?",
+    "answers": [
+      "/",
+      "%",
+      "+="
+    ],
+    "correctIndex": 1
+  }
+}
