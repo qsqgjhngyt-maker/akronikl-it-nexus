@@ -2617,6 +2617,414 @@
       "visualization": null,
       "pdfPages": [],
       "pdfNotes": []
+    },
+    {
+      "id": "cpp.raii-smart-pointers",
+      "legacyIndex": null,
+      "order": 51,
+      "sectionId": "cpp.section.oop",
+      "title": "RAII and smart pointers",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 4,
+      "description": "Separate ownership from observation and check early-exit cleanup and a weak back-reference.",
+      "theory": [
+        "Separate ownership from observation and check early-exit cleanup and a weak back-reference."
+      ],
+      "deep": "A resource may be memory, a file, a lock or a registered action. Each has acquisition and release operations. Manual cleanup at the bottom of a function is fragile because an early return introduces an easily missed path. RAII connects ownership to an object's lifetime and makes cleanup follow scope exit.",
+      "analogy": "unique_ptr<T> represents the sole owner of a dynamically allocated T. It cannot be copied, but ownership can be transferred by moving. make_unique<T>(args) constructs an object and immediately places it under an owner. get() returns an observing raw pointer; it neither transfers ownership nor permits the caller to delete it.",
+      "commonMistake": "No; ownership can be transferred by moving.",
+      "code": "#include <iostream>\n#include <memory>\nstruct Resource {int& active;explicit Resource(int& n):active(n){++active;}~Resource(){--active;}};\nvoid work(int& active){auto owner=std::make_unique<Resource>(active);std::cout<<active<<' ';return;}\nint main(){int active=0;work(active);std::cout<<active<<'\\n';}\n",
+      "task": "Read exactly n=0 or 1. work creates a unique_ptr<Resource> and returns immediately for zero. For one it creates a second owner and prints active followed by a space. Resource increments active at construction and decrements at destruction. After work print active 0 and a newline. Invalid input: invalid.",
+      "hint": "A resource may be memory, a file, a lock or a registered action. Each has acquisition and release operations. Manual cleanup at the bottom of a function is fragile because an early return introduces an easily missed path. RAII connects ownership to an object's lifetime and makes cleanup follow scope exit.",
+      "solution": "#include <iostream>\n#include <memory>\nstruct Resource {int& active;explicit Resource(int& n):active(n){++active;}~Resource(){--active;}};\nvoid work(int n,int& active){auto a=std::make_unique<Resource>(active);if(n==0)return;\n auto b=std::make_unique<Resource>(active);std::cout<<active<<' ';}\nint main(){int n;if(!(std::cin>>n)||n<0||n>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n int active=0;work(n,active);std::cout<<\"active \"<<active<<'\\n';}\n",
+      "quiz": {
+        "question": "Can unique_ptr be copied?",
+        "answers": [
+          "No; ownership can be transferred by moving.",
+          "Yes; shared ownership is automatic.",
+          "Yes; but only for int."
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "RAII",
+          "Tying resource ownership to the lifetime of an owning object."
+        ],
+        [
+          "Unique pointer",
+          "A movable, noncopyable exclusive owner."
+        ],
+        [
+          "Make unique",
+          "Construction that immediately places an object under a unique_ptr."
+        ],
+        [
+          "Borrowing",
+          "Observing an object while ownership remains elsewhere."
+        ],
+        [
+          "Shared pointer",
+          "Shared ownership managed through a common control block."
+        ],
+        [
+          "Weak pointer",
+          "A nonowning link to an object under shared ownership."
+        ],
+        [
+          "Lock",
+          "Obtaining a temporary strong owner if the object still exists."
+        ],
+        [
+          "Rule of zero",
+          "Relying on owning members rather than manual special-member operations."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.value-copy-move",
+      "legacyIndex": null,
+      "order": 52,
+      "sectionId": "cpp.section.oop",
+      "title": "Value semantics, copying and moving",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 5,
+      "description": "Check independent copies and ownership transfer without assuming a moved-from string is empty.",
+      "theory": [
+        "Check independent copies and ownership transfer without assuming a moved-from string is empty."
+      ],
+      "deep": "Value semantics means a copy represents an independent value. Note stores a string that manages its content. After Note b=a, changing b.text must not change a.text. Copying a pointer is different: two objects can then observe one memory region. A type's contract should explain which behaviour it provides.",
+      "analogy": "T b=a creates a new object using a copy constructor, commonly taking const T&. Writing b=a after b already exists calls copy assignment. They have different starting conditions: assignment must replace an existing value correctly. Self-assignment must satisfy the contract the type claims to provide.",
+      "commonMistake": "No; it changes expression category.",
+      "code": "#include <iostream>\n#include <string>\n#include <utility>\nstruct Note {std::string text;};\nint main(){Note a{\"draft\"};Note b=a;b.text=\"review\";Note c=std::move(a);a.text=\"reused\";\n std::cout<<a.text<<' '<<b.text<<' '<<c.text<<'\\n';}\n",
+      "task": "Read n=0…20 and n integers in −100…100. Batch a owns a vector. Copy b=a, increment b elements, move a into c, then assign a.values={42}. Print sums of c and b followed by a.values[0]. Invalid input or trailing tokens: invalid.",
+      "hint": "Value semantics means a copy represents an independent value. Note stores a string that manages its content. After Note b=a, changing b.text must not change a.text. Copying a pointer is different: two objects can then observe one memory region. A type's contract should explain which behaviour it provides.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <utility>\nstruct Batch {std::vector<int> values;};\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}Batch a;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -100||x>100){std::cout<<\"invalid\\n\";return 0;}a.values.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Batch b=a;for(int& x:b.values)++x;Batch c=std::move(a);a.values.assign(1,42);\n int original=0,changed=0;for(int x:c.values)original+=x;for(int x:b.values)changed+=x;\n std::cout<<original<<' '<<changed<<' '<<a.values[0]<<'\\n';}\n",
+      "quiz": {
+        "question": "Does std::move transfer a resource itself?",
+        "answers": [
+          "No; it changes expression category.",
+          "Yes; it always clears the source.",
+          "Yes; it always copies memory."
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Value semantics",
+          "An independent copied value under the type's observable contract."
+        ],
+        [
+          "Copy constructor",
+          "Construction of a new object from an existing value."
+        ],
+        [
+          "Copy assignment",
+          "Replacing an existing object's value with a copy."
+        ],
+        [
+          "Move operation",
+          "An operation that can transfer resources from an eligible source."
+        ],
+        [
+          "Std move",
+          "A cast changing an expression category, not itself a resource transfer."
+        ],
+        [
+          "Moved-from state",
+          "A source's post-move state governed by its specific type contract."
+        ],
+        [
+          "Noexcept",
+          "A promise that no exception escapes a marked function."
+        ],
+        [
+          "Rule of five",
+          "Deliberate coordination of five special operations for a resource-managing type."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.composition-inheritance-polymorphism",
+      "legacyIndex": null,
+      "order": 53,
+      "sectionId": "cpp.section.oop",
+      "title": "Composition, inheritance and polymorphism",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 6,
+      "description": "Choose a suitable dependency and implement substitutable strategies with correct ownership.",
+      "theory": [
+        "Choose a suitable dependency and implement substitutable strategies with correct ownership."
+      ],
+      "deep": "Composition means containing other objects and delegating part of the work to them. Report stores Rate and calls rate_.apply from total. This is a has-a relationship rather than an is-a relationship. For a fixed set of dependencies it is simpler and needs no virtual functions, dynamic allocation or common base class.",
+      "analogy": "Rule declares virtual int apply(int) const=0. Virtual dispatch selects an implementation through a base reference or pointer. The =0 makes the operation pure virtual and the class abstract: Rule cannot be instantiated directly. A derived Regular or Urgent supplies a matching implementation to become concrete.",
+      "commonMistake": "For correct deletion through an owning base pointer.",
+      "code": "#include <iostream>\nstruct Rate {int multiplier;int apply(int n)const{return multiplier*n;}};\nclass Report {Rate rate_;public:explicit Report(Rate r):rate_(r){}int total(int n)const{return rate_.apply(n);}};\nint main(){Report r{Rate{3}};std::cout<<r.total(4)<<'\\n';}\n",
+      "task": "Read mode=0…1 and n=0…100 with no trailing token. Select Regular (n) or Urgent (2n) through unique_ptr<Rule>. Print the result and the bool outcome of dynamic_cast<Urgent*> separated by a space. The base has a virtual destructor. Invalid input: invalid.",
+      "hint": "Composition means containing other objects and delegating part of the work to them. Report stores Rate and calls rate_.apply from total. This is a has-a relationship rather than an is-a relationship. For a fixed set of dependencies it is simpler and needs no virtual functions, dynamic allocation or common base class.",
+      "solution": "#include <iostream>\n#include <memory>\nstruct Rule {virtual int apply(int n)const=0;virtual ~Rule()=default;};\nstruct Regular final:Rule {int apply(int n)const override{return n;}};\nstruct Urgent final:Rule {int apply(int n)const override{return n*2;}};\nint main(){int mode,n;if(!(std::cin>>mode>>n)||mode<0||mode>1||n<0||n>100){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::unique_ptr<Rule> r;if(mode==0)r=std::make_unique<Regular>();else r=std::make_unique<Urgent>();\n std::cout<<r->apply(n)<<' '<<(dynamic_cast<Urgent*>(r.get())!=nullptr)<<'\\n';}\n",
+      "quiz": {
+        "question": "Why give the base a virtual destructor?",
+        "answers": [
+          "For correct deletion through an owning base pointer.",
+          "To forbid polymorphism.",
+          "To accelerate cin input."
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Composition",
+          "Containing collaborating objects and delegating work to them."
+        ],
+        [
+          "Inheritance",
+          "A language-defined relationship between a derived and a base type."
+        ],
+        [
+          "Substitutability",
+          "A derived type satisfying the complete base contract."
+        ],
+        [
+          "Virtual operation",
+          "Enabling dynamic dispatch through a base interface."
+        ],
+        [
+          "Abstract class",
+          "A type with a pure virtual operation that cannot be instantiated directly."
+        ],
+        [
+          "Override",
+          "A request for compile-time verification of overriding."
+        ],
+        [
+          "Slicing",
+          "Copying only the base portion of a derived object into a base value."
+        ],
+        [
+          "Dynamic cast",
+          "A checked polymorphic cast with a defined failure outcome."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.exceptions-guarantees",
+      "legacyIndex": null,
+      "order": 54,
+      "sectionId": "cpp.section.oop",
+      "title": "Exceptions and error guarantees",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 7,
+      "description": "Execute real throw/catch and justify cleanup and state preservation on failure.",
+      "theory": [
+        "Execute real throw/catch and justify cleanup and state preservation on failure."
+      ],
+      "deep": "A bool or explicit result type works for an expected rejection that a caller should examine immediately. An exception transfers control to a matching handler along the call stack. Choose according to the contract and the layer able to handle the problem. This is not a division into good and bad errors, or a reason to throw at every if statement.",
+      "analogy": "catch(const std::exception& e) observes an exception through a const reference, avoiding copying and slicing. Put a specific handler before its general base handler, otherwise the general one accepts the exception first. catch(...) accepts any type without exposing a typed object and therefore needs an explicit handling policy.",
+      "commonMistake": "Its destructor during stack unwinding.",
+      "code": "#include <iostream>\n#include <stdexcept>\nstruct Guard {int& active;explicit Guard(int& n):active(n){++active;}~Guard(){--active;}};\nint main(){int active=0;try{Guard g{active};throw std::runtime_error(\"stop\");}catch(const std::exception&){std::cout<<\"caught \"<<active<<'\\n';}}\n",
+      "task": "Read mode=0…1. Store starts with {1,2}; replace prepares a copy with nine appended and throws runtime_error before swap when mode is one. Guard tracks a resource. After the attempt print ok or rejected, current Store sum and active. Invalid input: invalid. Zero gives ok 12 0; one gives rejected 3 0.",
+      "hint": "A bool or explicit result type works for an expected rejection that a caller should examine immediately. An exception transfers control to a matching handler along the call stack. Choose according to the contract and the layer able to handle the problem. This is not a division into good and bad errors, or a reason to throw at every if statement.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <stdexcept>\nstruct Guard {int& active;explicit Guard(int& n):active(n){++active;}~Guard(){--active;}};\nclass Store {std::vector<int> values_{1,2};public:\n void replace(bool fail,int& active){Guard g{active};auto candidate=values_;candidate.push_back(9);\n  if(fail)throw std::runtime_error(\"injected\");values_.swap(candidate);}\n int sum()const{int n=0;for(int x:values_)n+=x;return n;}\n};\nint main(){int mode;if(!(std::cin>>mode)||mode<0||mode>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Store s;int active=0;try{s.replace(mode==1,active);std::cout<<\"ok \";}catch(const std::runtime_error&){std::cout<<\"rejected \";}\n std::cout<<s.sum()<<' '<<active<<'\\n';}\n",
+      "quiz": {
+        "question": "What releases Guard during throw?",
+        "answers": [
+          "Its destructor during stack unwinding.",
+          "catch deletes every address automatically.",
+          "The resource was never created."
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Exception",
+          "Transfer of control with an error object to a matching handler."
+        ],
+        [
+          "Throw",
+          "An expression initiating an exceptional path or rethrowing an exception."
+        ],
+        [
+          "Catch handler",
+          "An exception handler selected by type-matching rules."
+        ],
+        [
+          "Stack unwinding",
+          "Cleanup of constructed automatic objects in exited scopes."
+        ],
+        [
+          "Basic guarantee",
+          "Preservation of invariants without resource leaks after failure."
+        ],
+        [
+          "Strong guarantee",
+          "No observable change to the specified state after failure."
+        ],
+        [
+          "Commit",
+          "The final step publishing prepared replacement state."
+        ],
+        [
+          "Rethrow",
+          "A bare throw; propagates the current exception and preserves its type."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.templates-concepts",
+      "legacyIndex": null,
+      "order": 55,
+      "sectionId": "cpp.section.oop",
+      "title": "Templates and constrained generalization",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 8,
+      "description": "Generalize an operation for two types and separate type requirements from value bounds.",
+      "theory": [
+        "Generalize an operation for two types and separate type requirements from value bounds."
+      ],
+      "deep": "If one operation is needed for int and long, duplication hides common structure and risks inconsistent fixes. A function template describes a family of functions parameterized by type. template<class T> introduces T for use in parameters and the body. This does not erase types: the compiler forms concrete specializations.",
+      "analogy": "For smaller(3,7), both arguments deduce T as int. For smaller(9L,4L), they deduce long. In smaller(3,7L), the deductions conflict; the compiler need not invent an arbitrary common type. Align types explicitly or provide a template argument while understanding the conversion. Do not conceal data loss with a forced cast.",
+      "commonMistake": "No; value and count bounds are also needed.",
+      "code": "#include <iostream>\n#include <concepts>\ntemplate<std::integral T> T smaller(T a,T b){return b<a?b:a;}\nint main(){std::cout<<smaller(3,7)<<' '<<smaller(9L,4L)<<'\\n';}\n",
+      "task": "Read n=0…20 and n integers in −100…100 with no trailing token. Implement template<std::integral T> T sum(std::span<const T>). Invoke it for vector<int> and its vector<long long> copy; print both sums. An empty sequence with n zero gives 0 0. Invalid input: invalid.",
+      "hint": "If one operation is needed for int and long, duplication hides common structure and risks inconsistent fixes. A function template describes a family of functions parameterized by type. template<class T> introduces T for use in parameters and the body. This does not erase types: the compiler forms concrete specializations.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\ntemplate<std::integral T> T sum(std::span<const T> values){T result{};for(T x:values)result+=x;return result;}\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}std::vector<int> a;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -100||x>100){std::cout<<\"invalid\\n\";return 0;}a.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::vector<long long> b(a.begin(),a.end());std::cout<<sum<int>(std::span<const int>{a})<<' '<<sum<long long>(std::span<const long long>{b})<<'\\n';}\n",
+      "quiz": {
+        "question": "Does integral prove absence of overflow?",
+        "answers": [
+          "No; value and count bounds are also needed.",
+          "Yes; for every integral type.",
+          "Yes; except long long."
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Function template",
+          "A family of functions parameterized by types or values."
+        ],
+        [
+          "Class template",
+          "A definition of a family of concrete types through parameters."
+        ],
+        [
+          "Instantiation",
+          "Forming a required specialization from a template definition."
+        ],
+        [
+          "Deduction",
+          "Inferring template arguments from call conditions."
+        ],
+        [
+          "Concept",
+          "A named compile-time constraint on template arguments."
+        ],
+        [
+          "Std integral",
+          "A standard constraint recognizing integer types."
+        ],
+        [
+          "Span",
+          "A nonowning view of a contiguous sequence."
+        ],
+        [
+          "Value contract",
+          "Data restrictions not proven by a concept alone."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.design-testability-refactoring",
+      "legacyIndex": null,
+      "order": 56,
+      "sectionId": "cpp.section.oop",
+      "title": "Design, testability and refactoring",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 9,
+      "description": "Build a maintainable application, preserve behaviour through refactoring and defend design choices with tests.",
+      "theory": [
+        "Build a maintainable application, preserve behaviour through refactoring and defend design choices with tests."
+      ],
+      "deep": "Maintainability becomes visible when a requirement changes: can a rule be changed locally while the rest remains understandable? Do not judge it solely by class count. The project has Task values, a Board owner, Policy strategies, input parsing and report output. Each represents a decision that may change independently.",
+      "analogy": "High cohesion means a module's parts serve one understandable responsibility. Low coupling means changing an internal decision does not force changes across many clients. Board validates task invariants without opening files or reading cin. A test can therefore construct a candidate in memory without preparing a browser interface.",
+      "commonMistake": "Agreed observable behaviour.",
+      "code": "#include <iostream>\nstruct Discount {int percent;int apply(int cents)const{return cents*(100-percent)/100;}};\nint price(int cents,const Discount& policy){return policy.apply(cents);}\nint main(){std::cout<<price(1000,Discount{10})<<' '<<price(1000,Discount{0})<<'\\n';}\n",
+      "task": "Read n=0…20 and n id/minutes pairs. IDs in 1…100 must be unique; minutes are 0…100. Validate the entire input and trailing tokens first. Separate valid and total from main. Success: tasks N minutes S. Invalid input or duplicate IDs: invalid. Then extract the domain into another TU without changing results.",
+      "hint": "Maintainability becomes visible when a requirement changes: can a rule be changed locally while the rest remains understandable? Do not judge it solely by class count. The project has Task values, a Board owner, Policy strategies, input parsing and report output. Each represents a decision that may change independently.",
+      "solution": "#include <iostream>\n#include <vector>\nstruct Task {int id,minutes;};\nbool valid(const std::vector<Task>& tasks){for(std::size_t i=0;i<tasks.size();++i){if(tasks[i].id<1||tasks[i].id>100||tasks[i].minutes<0||tasks[i].minutes>100)return false;for(std::size_t j=0;j<i;++j)if(tasks[i].id==tasks[j].id)return false;}return true;}\nint total(const std::vector<Task>& tasks){int n=0;for(const auto& t:tasks)n+=t.minutes;return n;}\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}std::vector<Task> tasks;\n for(int i=0;i<n;++i){Task t;if(!(std::cin>>t.id>>t.minutes)){std::cout<<\"invalid\\n\";return 0;}tasks.push_back(t);}\n std::cin>>std::ws;if(!std::cin.eof()||!valid(tasks)){std::cout<<\"invalid\\n\";return 0;}\n std::cout<<\"tasks \"<<tasks.size()<<\" minutes \"<<total(tasks)<<'\\n';}\n",
+      "quiz": {
+        "question": "What does refactoring preserve?",
+        "answers": [
+          "Agreed observable behaviour.",
+          "Every internal address.",
+          "The source line count."
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Cohesion",
+          "How closely a module's parts serve one coherent responsibility."
+        ],
+        [
+          "Coupling",
+          "The degree to which clients depend on another component's decisions."
+        ],
+        [
+          "Refactoring",
+          "Changing structure while preserving agreed observable behaviour."
+        ],
+        [
+          "Dependency injection",
+          "Supplying a collaborator explicitly rather than through hidden global access."
+        ],
+        [
+          "Test driver",
+          "A separate program that invokes domain code and checks conditions."
+        ],
+        [
+          "ADR",
+          "A record of context, alternatives, a design decision and its consequences."
+        ],
+        [
+          "Regression check",
+          "Checking that previously agreed results survive a change."
+        ],
+        [
+          "Artifact",
+          "A saved work result with explicit provenance and verification."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
     }
   ]
 }

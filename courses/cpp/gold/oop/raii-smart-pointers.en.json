@@ -1,0 +1,420 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.oop",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.raii-smart-pointers",
+  "locale": "en",
+  "sessions": 4,
+  "learningOrder": 4,
+  "prerequisiteIds": [
+    "cpp.constructors-destructors",
+    "cpp.lifetime-ownership"
+  ],
+  "sourceRefs": [
+    "CPP20-CLASS",
+    "CPP20-UNIQUE",
+    "CPP20-WEAK"
+  ],
+  "title": "RAII and smart pointers",
+  "lead": "Separate ownership from observation and check early-exit cleanup and a weak back-reference.",
+  "why": "A resource may be memory, a file, a lock or a registered action. Each has acquisition and release operations. Manual cleanup at the bottom of a function is fragile because an early return introduces an easily missed path. RAII connects ownership to an object's lifetime and makes cleanup follow scope exit.",
+  "objectives": [
+    "Draw ownership and observation arrows.",
+    "Predict both exits from work.",
+    "Check weak_ptr before and after reset.",
+    "Remove unnecessary shared ownership from a parameter.",
+    "Design a tree with a back-reference."
+  ],
+  "prerequisites": [
+    "Modules 1–4: input, functions, sequences, ownership, testing and multifile builds.",
+    "Direct prerequisites: cpp.constructors-destructors, cpp.lifetime-ownership"
+  ],
+  "concepts": [
+    {
+      "term": "RAII",
+      "definition": "Tying resource ownership to the lifetime of an owning object."
+    },
+    {
+      "term": "Unique pointer",
+      "definition": "A movable, noncopyable exclusive owner."
+    },
+    {
+      "term": "Make unique",
+      "definition": "Construction that immediately places an object under a unique_ptr."
+    },
+    {
+      "term": "Borrowing",
+      "definition": "Observing an object while ownership remains elsewhere."
+    },
+    {
+      "term": "Shared pointer",
+      "definition": "Shared ownership managed through a common control block."
+    },
+    {
+      "term": "Weak pointer",
+      "definition": "A nonowning link to an object under shared ownership."
+    },
+    {
+      "term": "Lock",
+      "definition": "Obtaining a temporary strong owner if the object still exists."
+    },
+    {
+      "term": "Rule of zero",
+      "definition": "Relying on owning members rather than manual special-member operations."
+    }
+  ],
+  "sections": [
+    {
+      "title": "A resource is more than memory",
+      "paragraphs": [
+        "A resource may be memory, a file, a lock or a registered action. Each has acquisition and release operations. Manual cleanup at the bottom of a function is fragile because an early return introduces an easily missed path. RAII connects ownership to an object's lifetime and makes cleanup follow scope exit.",
+        "The teaching Resource increments an external counter and decrements it in its destructor. std::make_unique creates an owner whose destructor deletes Resource. When work returns early, the local unique_ptr is still destroyed. This demonstrates ordinary early exit; cleanup during exception propagation is checked separately in the exception lesson."
+      ]
+    },
+    {
+      "title": "Exclusive ownership",
+      "paragraphs": [
+        "unique_ptr<T> represents the sole owner of a dynamically allocated T. It cannot be copied, but ownership can be transferred by moving. make_unique<T>(args) constructs an object and immediately places it under an owner. get() returns an observing raw pointer; it neither transfers ownership nor permits the caller to delete it.",
+        "Dereferencing *p or using p->member requires a nonnull pointer. After reset the previous object is destroyed and its observers are invalid. Never build another unique_ptr from p.get(): that would create two owners and cause repeated deletion. The negative example rejects copying at compile time, before any execution can occur."
+      ]
+    },
+    {
+      "title": "Observers and borrowing",
+      "paragraphs": [
+        "A T& reference or T* pointer often borrows an object owned elsewhere. Identify the owner and the period during which the observer is valid. Passing Resource& to a function that does not retain it bounds the borrowing to that call. Storing a raw pointer in a longer-lived object requires an additional lifetime contract.",
+        "Do not replace every pointer with shared_ptr to create an appearance of safety. Ownership should express an architectural decision rather than copying convenience. When data fits directly in a vector or another object's field, separate allocation may be unnecessary. Start with values and justify the need for a dynamic lifetime."
+      ]
+    },
+    {
+      "title": "Shared ownership and its cost",
+      "paragraphs": [
+        "shared_ptr supports multiple owners through a shared control block. Copying it increases the owner count, and destroying the last owner releases the object. The control block and counter updates have costs, so this is not a free universal pointer. Ownership accounting does not synchronize access to the pointed-to object's state.",
+        "make_shared is usually clearer than combining new and shared_ptr manually. Shared ownership should still answer a domain question: why should several independent components determine this object's lifetime? If the answer is merely easier parameter passing, consider a const reference. use_count is not a reliable protocol for exclusive access in concurrent code."
+      ]
+    },
+    {
+      "title": "Cycles and weak_ptr",
+      "paragraphs": [
+        "When a parent owns a child through shared_ptr and the child strongly owns the parent, both counts may remain nonzero indefinitely. weak_ptr observes a control block without extending the object's lifetime. A back-reference to the parent is therefore often weak, preserving a clear direction of ownership.",
+        "lock() obtains a temporary shared_ptr if the object still exists, or returns an empty one otherwise. Acquire the lock first and use its result within that owner's lifetime. In the example observed is destroyed before root.reset(), so the weak pointer is expired afterwards. Destruction cannot be expected while a local strong owner remains alive."
+      ]
+    },
+    {
+      "title": "The rule of zero",
+      "paragraphs": [
+        "Members such as vector, string and unique_ptr release their own resources. A class containing them often needs no user-written destructor or special copy and move functions. This is the rule of zero. It reduces the amount of code that must manually coordinate ownership across ordinary and exceptional paths.",
+        "The rule of zero does not promise that every such class is copyable. A unique_ptr member disables implicit copying, whereas string and vector usually provide value semantics. That difference is useful. Select member types with suitable contracts, then check which operations the composed type actually supports. The next lesson organizes copy and move semantics."
+      ]
+    },
+    {
+      "title": "Laboratory: early exits",
+      "paragraphs": [
+        "With n zero, work creates one owner and returns immediately; the final output must be active 0. With n one, two owners exist and the function prints two before returning, followed by active 0. The counter is declared in main and outlives the owners, making observation after work valid.",
+        "Extend the test with another early return after the second acquisition and predict active first. Do not add an exception before studying that separate contract. Document each path: acquired resources, responsible owners and resources left afterwards. These checked paths do not establish the absence of every possible leak in a future application."
+      ]
+    },
+    {
+      "title": "Reviewing an ownership choice",
+      "paragraphs": [
+        "Draw an object graph with separate owns and observes arrows. Give each arrow a lifetime boundary. If strong ownership forms a cycle, identify who breaks it or replace a justified back-reference with weak_ptr. A weak reference is especially useful when disappearance of the target is an acceptable state.",
+        "Check for manual deletion of get(), duplicate owners of one address and dereferencing empty pointers. Compare the design with storing a value directly in a container. A successful design often uses fewer pointers rather than more. You can now examine transferring owners between objects without losing responsibility for cleanup."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "model",
+      "title": "Worked model",
+      "purpose": "Separate ownership from observation and check early-exit cleanup and a weak back-reference.",
+      "code": "#include <iostream>\n#include <memory>\nstruct Resource {int& active;explicit Resource(int& n):active(n){++active;}~Resource(){--active;}};\nvoid work(int& active){auto owner=std::make_unique<Resource>(active);std::cout<<active<<' ';return;}\nint main(){int active=0;work(active);std::cout<<active<<'\\n';}\n",
+      "stdin": "",
+      "expectedStdout": "1 0\n",
+      "steps": [
+        "Resource increments the count to one.",
+        "Early return destroys the local owner.",
+        "After work the count is zero: output 1 0."
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "Contract boundary check",
+      "purpose": "Separate ownership from observation and check early-exit cleanup and a weak back-reference.",
+      "code": "#include <iostream>\n#include <memory>\nstruct Node {std::weak_ptr<Node> parent;};\nint main(){auto root=std::make_shared<Node>();auto child=std::make_shared<Node>();child->parent=root;\n {auto observed=child->parent.lock();std::cout<<bool(observed)<<' ';}root.reset();std::cout<<child->parent.expired()<<'\\n';}\n",
+      "stdin": "",
+      "expectedStdout": "1 1\n",
+      "steps": [
+        "weak_ptr does not keep root alive.",
+        "Temporary observed lives in its own scope.",
+        "After root.reset(), expired is true: output 1 1."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Check weak_ptr before and after reset.",
+      "action": "Check weak_ptr before and after reset.",
+      "prediction": "First predict the result and state in writing.",
+      "verification": "lock succeeds before the last owner disappears."
+    },
+    {
+      "title": "Remove unnecessary shared ownership from a parameter.",
+      "action": "Remove unnecessary shared ownership from a parameter.",
+      "prediction": "First predict the result and state in writing.",
+      "verification": "The const reference has a justified lifetime."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Yes; shared ownership is automatic.",
+      "cause": "An interface promise was confused with an implementation assumption.",
+      "fix": "No; ownership can be transferred by moving."
+    },
+    {
+      "symptom": "A new independent owner.",
+      "cause": "An interface promise was confused with an implementation assumption.",
+      "fix": "An observing pointer without ownership transfer."
+    },
+    {
+      "symptom": "Yes; until program exit.",
+      "cause": "An interface promise was confused with an implementation assumption.",
+      "fix": "No; access requires a successful lock."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Draw ownership and observation arrows.",
+      "criteria": "Give every link a lifetime boundary.",
+      "hint": "A resource may be memory, a file, a lock or a registered action. Each has acquisition and release operations. Manual cleanup at the bottom of a function is fragile because an early return introduces an easily missed path. RAII connects ownership to an object's lifetime and makes cleanup follow scope exit."
+    },
+    {
+      "level": "basic",
+      "task": "Predict both exits from work.",
+      "criteria": "Both finish with active zero.",
+      "hint": "unique_ptr<T> represents the sole owner of a dynamically allocated T. It cannot be copied, but ownership can be transferred by moving. make_unique<T>(args) constructs an object and immediately places it under an owner. get() returns an observing raw pointer; it neither transfers ownership nor permits the caller to delete it."
+    },
+    {
+      "level": "applied",
+      "task": "Check weak_ptr before and after reset.",
+      "criteria": "lock succeeds before the last owner disappears.",
+      "hint": "A T& reference or T* pointer often borrows an object owned elsewhere. Identify the owner and the period during which the observer is valid. Passing Resource& to a function that does not retain it bounds the borrowing to that call. Storing a raw pointer in a longer-lived object requires an additional lifetime contract."
+    },
+    {
+      "level": "applied",
+      "task": "Remove unnecessary shared ownership from a parameter.",
+      "criteria": "The const reference has a justified lifetime.",
+      "hint": "shared_ptr supports multiple owners through a shared control block. Copying it increases the owner count, and destroying the last owner releases the object. The control block and counter updates have costs, so this is not a free universal pointer. Ownership accounting does not synchronize access to the pointed-to object's state."
+    },
+    {
+      "level": "transfer",
+      "task": "Design a tree with a back-reference.",
+      "criteria": "Strong ownership has no cycle.",
+      "hint": "When a parent owns a child through shared_ptr and the child strongly owns the parent, both counts may remain nonzero indefinitely. weak_ptr observes a control block without extending the object's lifetime. A back-reference to the parent is therefore often weak, preserving a clear direction of ownership."
+    },
+    {
+      "level": "transfer",
+      "task": "Justify storing a value instead of a pointer.",
+      "criteria": "Discuss cost, lifetime and avoiding allocation.",
+      "hint": "Members such as vector, string and unique_ptr release their own resources. A class containing them often needs no user-written destructor or special copy and move functions. This is the rule of zero. It reduces the amount of code that must manually coordinate ownership across ordinary and exceptional paths."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: RAII and smart pointers",
+    "catalogGoal": "Separate ownership from observation and check early-exit cleanup and a weak back-reference.",
+    "challenge": "Read exactly n=0 or 1. work creates a unique_ptr<Resource> and returns immediately for zero. For one it creates a second owner and prints active followed by a space. Resource increments active at construction and decrements at destruction. After work print active 0 and a newline. Invalid input: invalid.",
+    "starterCode": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\nstruct Resource { /* TODO: counter and lifetime */ };\nint main(){std::cout<<\"pending\\n\";}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <memory>\nstruct Resource {int& active;explicit Resource(int& n):active(n){++active;}~Resource(){--active;}};\nvoid work(int n,int& active){auto a=std::make_unique<Resource>(active);if(n==0)return;\n auto b=std::make_unique<Resource>(active);std::cout<<active<<' ';}\nint main(){int n;if(!(std::cin>>n)||n<0||n>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n int active=0;work(n,active);std::cout<<\"active \"<<active<<'\\n';}\n",
+    "cases": [
+      {
+        "stdin": "0",
+        "stdout": "active 0\n"
+      },
+      {
+        "stdin": "1",
+        "stdout": "2 active 0\n"
+      },
+      {
+        "stdin": "-1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "2",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "x",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 x",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1.5",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Restate the contract and distinguish malformed input from domain rejection.",
+      "Draw ownership and observation arrows.",
+      "Predict both exits from work.",
+      "Open Task and Code Studio: the task stays alongside the editor on desktop or in a phone tab. Save your own code before replacing an example.",
+      "Complete the starter; pending marks unfinished work rather than a correct result.",
+      "Run every reference case and record actual stdout and exit status.",
+      "Design a tree with a back-reference.",
+      "Save source, a verification table and an invariant explanation; add one independent case."
+    ],
+    "rubric": [
+      "Give every link a lifetime boundary.",
+      "Both finish with active zero.",
+      "lock succeeds before the last owner disappears.",
+      "The const reference has a justified lifetime.",
+      "Include source, actual results, an independent case and limits of the conclusion."
+    ],
+    "artifact": "A personal project containing source and a verification log.",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Can unique_ptr be copied?",
+      "answers": [
+        "No; ownership can be transferred by moving.",
+        "Yes; shared ownership is automatic.",
+        "Yes; but only for int."
+      ],
+      "correctIndex": 0,
+      "explanation": "No; ownership can be transferred by moving."
+    },
+    {
+      "question": "What does get() return?",
+      "answers": [
+        "A new independent owner.",
+        "An observing pointer without ownership transfer.",
+        "Mandatory object deletion."
+      ],
+      "correctIndex": 1,
+      "explanation": "An observing pointer without ownership transfer."
+    },
+    {
+      "question": "Does weak_ptr extend object lifetime?",
+      "answers": [
+        "Yes; until program exit.",
+        "Yes; while any weak_ptr exists.",
+        "No; access requires a successful lock."
+      ],
+      "correctIndex": 2,
+      "explanation": "No; access requires a successful lock."
+    },
+    {
+      "question": "Does shared_ptr make the target thread safe?",
+      "answers": [
+        "No; target state needs its own synchronization protocol.",
+        "Yes; each field is locked.",
+        "Yes; if the pointer is const."
+      ],
+      "correctIndex": 0,
+      "explanation": "No; target state needs its own synchronization protocol."
+    },
+    {
+      "question": "Does every class need a destructor?",
+      "answers": [
+        "Yes; even without resources.",
+        "No; RAII members often allow the rule of zero.",
+        "Only when public is present."
+      ],
+      "correctIndex": 1,
+      "explanation": "No; RAII members often allow the rule of zero."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "Who owns vector elements?",
+      "answers": [
+        "The vector itself.",
+        "Every span.",
+        "Any iterator."
+      ],
+      "correctIndex": 0,
+      "explanation": "The vector itself."
+    },
+    {
+      "question": "What follows an input read failure?",
+      "answers": [
+        "Compute using the unread value.",
+        "Handle failure before using the value.",
+        "Assume the value is automatically zero."
+      ],
+      "correctIndex": 1,
+      "explanation": "Handle failure before using the value."
+    },
+    {
+      "question": "How do two mains relate to one build?",
+      "answers": [
+        "Both are always included.",
+        "Both cpp files must be included.",
+        "Each executable has one entry point."
+      ],
+      "correctIndex": 2,
+      "explanation": "Each executable has one entry point."
+    }
+  ],
+  "reflection": [
+    "Remove unnecessary shared ownership from a parameter.",
+    "Design a tree with a back-reference.",
+    "Justify storing a value instead of a pointer."
+  ],
+  "bridge": "Next: Value semantics, copying and moving",
+  "visualization": {
+    "kind": "journey",
+    "title": "RAII and smart pointers",
+    "description": "A stepwise textual model; actual execution happens in Code Studio.",
+    "steps": [
+      {
+        "title": "A resource is more than memory",
+        "description": "A resource may be memory, a file, a lock or a registered action. Each has acquisition and release operations. Manual cleanup at the bottom of a function is fragile because an early return introduces an easily missed path. RAII connects ownership to an object's lifetime and makes cleanup follow scope exit."
+      },
+      {
+        "title": "Exclusive ownership",
+        "description": "unique_ptr<T> represents the sole owner of a dynamically allocated T. It cannot be copied, but ownership can be transferred by moving. make_unique<T>(args) constructs an object and immediately places it under an owner. get() returns an observing raw pointer; it neither transfers ownership nor permits the caller to delete it."
+      },
+      {
+        "title": "Observers and borrowing",
+        "description": "A T& reference or T* pointer often borrows an object owned elsewhere. Identify the owner and the period during which the observer is valid. Passing Resource& to a function that does not retain it bounds the borrowing to that call. Storing a raw pointer in a longer-lived object requires an additional lifetime contract."
+      },
+      {
+        "title": "Cycles and weak_ptr",
+        "description": "When a parent owns a child through shared_ptr and the child strongly owns the parent, both counts may remain nonzero indefinitely. weak_ptr observes a control block without extending the object's lifetime. A back-reference to the parent is therefore often weak, preserving a clear direction of ownership."
+      },
+      {
+        "title": "Laboratory: early exits",
+        "description": "With n zero, work creates one owner and returns immediately; the final output must be active 0. With n one, two owners exist and the function prints two before returning, followed by active 0. The counter is declared in main and outlives the owners, making observation after work valid."
+      }
+    ]
+  },
+  "legacyQuiz": {
+    "question": "Can unique_ptr be copied?",
+    "answers": [
+      "No; ownership can be transferred by moving.",
+      "Yes; shared ownership is automatic.",
+      "Yes; but only for int."
+    ],
+    "correctIndex": 0
+  },
+  "diagnosticExamples": [
+    {
+      "id": "compile-contract",
+      "title": "Expected compile failure",
+      "code": "#include <memory>\nint main(){auto a=std::make_unique<int>(7);auto b=a;return *b;}\n",
+      "expectation": "compile-error",
+      "diagnostic": "deleted",
+      "explanation": "This is a separate negative control. Keep it out of the working main.cpp."
+    }
+  ]
+}

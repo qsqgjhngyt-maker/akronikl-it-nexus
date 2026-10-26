@@ -84,7 +84,7 @@ export async function verifyM4Publication({rebuild=false,writeEvidence=true}={})
  const names=new Set();for(const record of m.files){assert.ok(!names.has(record.file),'Повтор manifest path');names.add(record.file);const bytes=await read(record.file);assert.equal(bytes.length,record.bytes,record.file);assert.equal(hash(bytes),record.sha256,record.file);}
  const payload=source.filter(x=>!x.file.startsWith('server-access/')&&!x.file.startsWith('cloudflare/')).map(x=>x.file).concat('version.json');
  for(const file of payload)assert.deepEqual(await read('releases/'+P.generation+'/'+file),await preservedRead(file),file);
- assert.equal((await json('courses/cpp/data/lessons.ru.json')).lessons.length,50);assert.equal((await json('courses/cpp/data/lessons.en.json')).lessons.length,13);
+ assert.equal(JSON.parse(await preservedRead('courses/cpp/data/lessons.ru.json')).lessons.length,50);assert.equal(JSON.parse(await preservedRead('courses/cpp/data/lessons.en.json')).lessons.length,13);
  const newFiles=git('ls-files','--others','--exclude-standard','--','releases','entry-assets').toString().trim().split('\n').filter(Boolean);
  const changed=git('diff','--name-only',P.base,'--','releases','entry-assets').toString().trim().split('\n').filter(Boolean);
  for(const file of [...newFiles,...changed])assert.ok(file.startsWith('releases/'+P.generation+'/')||file.startsWith('entry-assets/'+P.generation+'/'),'Неизвестное immutable поколение: '+file);
@@ -100,7 +100,7 @@ export async function verifyM4Publication({rebuild=false,writeEvidence=true}={})
  for(const generation of c.retainedPublicGenerations)publicationPaths.push('releases/'+generation,'entry-assets/'+generation);
  publicationPaths.push(...runtimePaths);
  const result={status:'PASS',stage:'M4-publication',publication:true,m4Publication:true,m4Authoring:true,m4Base:P.base,currentLessonCount:50,baseCommit:P.base,acceptedSource:P.accepted,checkedSource:P.checked,version:P.version,generation:P.generation,authoring:true,navigationFix:true,productPatchPaths:[...new Set([...sourceChanged,...publicationPaths])],sourceFilesChecked:source.length,sourceHashesVerified:true,historicalFilesPreserved:historical.length,historicalGenerationsUnchanged:true,publishedRootsAndGenerationsUnchanged:false,manifestFiles:m.files.length,sourcePayloads:payload.length,reproducibleRebuildChecked:rebuild,identityCloudProjectStoreUnchanged:true,legacyImporterBodyUnchanged:true,legacyRowsAndQuizUnchanged:true,curriculumExpanded:true,officialRelease:false,live:false,productionExecution:false,...(P.ux?{uiPresentationPatch:true,presentationPatchHashes,executableContractsUnchangedSince:P.base}:{} )};
- if(m5){result.m5RuntimeScope=m5;result.featureRuntimeUnpublished=true;result.executableContractsUnchangedSince=null;result.historicalRebuildSource=m5.baseCommit;}
+ if(m5){result.m5RuntimeScope=m5;result.featureRuntimeUnpublished=true;result.executableContractsUnchangedSince=null;result.historicalRebuildSource=m5.baseCommit;if(m5.contentAuthoringScope){result.historicalLessonCount=50;result.currentLessonCount=m5.contentAuthoringScope.currentLessonCount;result.featureContentUnpublished=true;}}
  if(writeEvidence){const out=path.resolve(process.env.NEXUS_M4_PUBLICATION_EVIDENCE||process.env.NEXUS_GOLD_EVIDENCE||'academy-gold-m3-evidence');await mkdir(out,{recursive:true});await writeFile(path.join(out,'M4_PUBLICATION_GATE.json'),JSON.stringify(result,null,2)+'\n');}
  return result;
 }

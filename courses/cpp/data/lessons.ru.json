@@ -4818,6 +4818,414 @@
       "visualization": null,
       "pdfPages": [],
       "pdfNotes": []
+    },
+    {
+      "id": "cpp.raii-smart-pointers",
+      "legacyIndex": null,
+      "order": 51,
+      "sectionId": "cpp.section.oop",
+      "title": "RAII и умные указатели",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 4,
+      "description": "Разделите владение и наблюдение, проверьте очистку раннего выхода и слабую обратную связь.",
+      "theory": [
+        "Разделите владение и наблюдение, проверьте очистку раннего выхода и слабую обратную связь."
+      ],
+      "deep": "Ресурсом может быть память, файл, блокировка или регистрация действия. У каждого есть операция получения и освобождения. Ручная очистка в конце функции ненадёжна: ранний return добавляет путь, который легко пропустить. RAII связывает владение ресурсом с временем жизни объекта и делает очистку следствием выхода из области.",
+      "analogy": "unique_ptr<T> обозначает единственного владельца динамического объекта T. Его нельзя копировать, но можно передать владение перемещением. make_unique<T>(args) создаёт объект и сразу помещает его под управление владельца. get() возвращает наблюдающий сырой указатель; он не передаёт владение и не разрешает клиенту вызывать delete.",
+      "commonMistake": "Нет, владение передаётся перемещением.",
+      "code": "#include <iostream>\n#include <memory>\nstruct Resource {int& active;explicit Resource(int& n):active(n){++active;}~Resource(){--active;}};\nvoid work(int& active){auto owner=std::make_unique<Resource>(active);std::cout<<active<<' ';return;}\nint main(){int active=0;work(active);std::cout<<active<<'\\n';}\n",
+      "task": "Прочитайте ровно n=0 или 1. work создаёт unique_ptr<Resource>; при 0 сразу возвращается. При 1 создаёт второго владельца и печатает active с пробелом. Resource увеличивает active при создании и уменьшает при разрушении. После work напечатайте active 0 с переводом строки. Неверный ввод: invalid.",
+      "hint": "Ресурсом может быть память, файл, блокировка или регистрация действия. У каждого есть операция получения и освобождения. Ручная очистка в конце функции ненадёжна: ранний return добавляет путь, который легко пропустить. RAII связывает владение ресурсом с временем жизни объекта и делает очистку следствием выхода из области.",
+      "solution": "#include <iostream>\n#include <memory>\nstruct Resource {int& active;explicit Resource(int& n):active(n){++active;}~Resource(){--active;}};\nvoid work(int n,int& active){auto a=std::make_unique<Resource>(active);if(n==0)return;\n auto b=std::make_unique<Resource>(active);std::cout<<active<<' ';}\nint main(){int n;if(!(std::cin>>n)||n<0||n>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n int active=0;work(n,active);std::cout<<\"active \"<<active<<'\\n';}\n",
+      "quiz": {
+        "question": "Можно ли копировать unique_ptr?",
+        "answers": [
+          "Нет, владение передаётся перемещением.",
+          "Да, общий владелец создаётся автоматически.",
+          "Да, но только для int."
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "RAII",
+          "Связь владения ресурсом со временем жизни объекта-владельца."
+        ],
+        [
+          "unique_ptr",
+          "Перемещаемый, но некопируемый единоличный владелец."
+        ],
+        [
+          "make_unique",
+          "Создание объекта сразу под управлением unique_ptr."
+        ],
+        [
+          "Заимствование",
+          "Наблюдение объекта при сохранении владения в другом месте."
+        ],
+        [
+          "shared_ptr",
+          "Совместное владение с общим управляющим блоком."
+        ],
+        [
+          "weak_ptr",
+          "Невладеющая связь с объектом под shared ownership."
+        ],
+        [
+          "lock",
+          "Получение временного сильного владельца, если объект ещё существует."
+        ],
+        [
+          "Правило нуля",
+          "Опора на владельцев-членов вместо ручных специальных операций."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.value-copy-move",
+      "legacyIndex": null,
+      "order": 52,
+      "sectionId": "cpp.section.oop",
+      "title": "Семантика значения, копирование и перемещение",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 5,
+      "description": "Проверьте независимость копии и передачу владения без предположений о moved-from string.",
+      "theory": [
+        "Проверьте независимость копии и передачу владения без предположений о moved-from string."
+      ],
+      "deep": "Семантика значения означает, что копия представляет самостоятельное значение. В Note поле string управляет своим содержимым. После Note b=a изменение b.text не должно менять a.text. Это отличается от копирования указателя, когда два объекта начинают наблюдать одну область памяти. Контракт типа должен объяснять, какое поведение выбрано.",
+      "analogy": "T b=a создаёт новый объект через конструктор копирования, обычно принимающий const T&. Запись b=a после создания b вызывает оператор копирующего присваивания. Это разные операции с разными исходными условиями: во втором случае нужно корректно заменить уже существующее значение. Самоприсваивание должно соответствовать заявленному контракту.",
+      "commonMistake": "Нет, он меняет категорию выражения.",
+      "code": "#include <iostream>\n#include <string>\n#include <utility>\nstruct Note {std::string text;};\nint main(){Note a{\"draft\"};Note b=a;b.text=\"review\";Note c=std::move(a);a.text=\"reused\";\n std::cout<<a.text<<' '<<b.text<<' '<<c.text<<'\\n';}\n",
+      "task": "Прочитайте n=0…20 и n чисел −100…100. Batch a хранит vector. Скопируйте b=a, увеличьте элементы b на 1, переместите a в c, затем присвойте a.values={42}. Напечатайте суммы c и b, затем a.values[0]. Неверный ввод или хвост: invalid.",
+      "hint": "Семантика значения означает, что копия представляет самостоятельное значение. В Note поле string управляет своим содержимым. После Note b=a изменение b.text не должно менять a.text. Это отличается от копирования указателя, когда два объекта начинают наблюдать одну область памяти. Контракт типа должен объяснять, какое поведение выбрано.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <utility>\nstruct Batch {std::vector<int> values;};\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}Batch a;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -100||x>100){std::cout<<\"invalid\\n\";return 0;}a.values.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Batch b=a;for(int& x:b.values)++x;Batch c=std::move(a);a.values.assign(1,42);\n int original=0,changed=0;for(int x:c.values)original+=x;for(int x:b.values)changed+=x;\n std::cout<<original<<' '<<changed<<' '<<a.values[0]<<'\\n';}\n",
+      "quiz": {
+        "question": "Переносит ли std::move ресурс самостоятельно?",
+        "answers": [
+          "Нет, он меняет категорию выражения.",
+          "Да, всегда очищает источник.",
+          "Да, всегда копирует память."
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Семантика значения",
+          "Независимое значение копии по наблюдаемому контракту типа."
+        ],
+        [
+          "Конструктор копирования",
+          "Создание нового объекта из существующего значения."
+        ],
+        [
+          "Копирующее присваивание",
+          "Замена значения уже живого объекта копией."
+        ],
+        [
+          "Перемещение",
+          "Операция, способная передать ресурсы из допустимого источника."
+        ],
+        [
+          "std::move",
+          "Преобразование категории выражения, само по себе не перенос ресурса."
+        ],
+        [
+          "Moved-from",
+          "Состояние источника после перемещения с контрактом конкретного типа."
+        ],
+        [
+          "noexcept",
+          "Обещание, что исключение не покинет отмеченную функцию."
+        ],
+        [
+          "Правило пяти",
+          "Осмысленное согласование пяти специальных операций ресурсного типа."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.composition-inheritance-polymorphism",
+      "legacyIndex": null,
+      "order": 53,
+      "sectionId": "cpp.section.oop",
+      "title": "Композиция, наследование и полиморфизм",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 6,
+      "description": "Выберите подходящую зависимость и реализуйте заменяемые стратегии с корректным владением.",
+      "theory": [
+        "Выберите подходящую зависимость и реализуйте заменяемые стратегии с корректным владением."
+      ],
+      "deep": "Композиция означает, что объект содержит другие объекты и делегирует им часть работы. Report хранит Rate, а total вызывает rate_.apply. Это отношение «имеет», не «является». При фиксированном наборе зависимостей такой подход проще и не требует virtual, динамического выделения или общего базового класса.",
+      "analogy": "Rule объявляет virtual int apply(int) const=0. virtual включает динамический выбор реализации через ссылку или указатель на базовый тип. =0 делает операцию чисто виртуальной и класс абстрактным: самостоятельно создать Rule нельзя. Производный Regular или Urgent обязан предоставить подходящую реализацию, чтобы стать конкретным типом.",
+      "commonMistake": "Для корректного удаления через владеющий базовый указатель.",
+      "code": "#include <iostream>\nstruct Rate {int multiplier;int apply(int n)const{return multiplier*n;}};\nclass Report {Rate rate_;public:explicit Report(Rate r):rate_(r){}int total(int n)const{return rate_.apply(n);}};\nint main(){Report r{Rate{3}};std::cout<<r.total(4)<<'\\n';}\n",
+      "task": "Прочитайте mode=0…1 и n=0…100 без хвоста. Через unique_ptr<Rule> выберите Regular (n) или Urgent (2n). Напечатайте результат и bool успешного dynamic_cast<Urgent*> через пробел. База имеет virtual destructor. Неверный ввод: invalid.",
+      "hint": "Композиция означает, что объект содержит другие объекты и делегирует им часть работы. Report хранит Rate, а total вызывает rate_.apply. Это отношение «имеет», не «является». При фиксированном наборе зависимостей такой подход проще и не требует virtual, динамического выделения или общего базового класса.",
+      "solution": "#include <iostream>\n#include <memory>\nstruct Rule {virtual int apply(int n)const=0;virtual ~Rule()=default;};\nstruct Regular final:Rule {int apply(int n)const override{return n;}};\nstruct Urgent final:Rule {int apply(int n)const override{return n*2;}};\nint main(){int mode,n;if(!(std::cin>>mode>>n)||mode<0||mode>1||n<0||n>100){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::unique_ptr<Rule> r;if(mode==0)r=std::make_unique<Regular>();else r=std::make_unique<Urgent>();\n std::cout<<r->apply(n)<<' '<<(dynamic_cast<Urgent*>(r.get())!=nullptr)<<'\\n';}\n",
+      "quiz": {
+        "question": "Зачем virtual destructor базы?",
+        "answers": [
+          "Для корректного удаления через владеющий базовый указатель.",
+          "Для запрета полиморфизма.",
+          "Для ускорения чтения cin."
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Композиция",
+          "Включение объектов как частей с делегированием работы."
+        ],
+        [
+          "Наследование",
+          "Связь производного типа с базовым по правилам языка."
+        ],
+        [
+          "Подстановка",
+          "Соответствие производного типа всему обещанному контракту базы."
+        ],
+        [
+          "virtual",
+          "Разрешение динамического выбора операции через базовый интерфейс."
+        ],
+        [
+          "Абстрактный класс",
+          "Тип с чисто виртуальной операцией, не создаваемый самостоятельно."
+        ],
+        [
+          "override",
+          "Требование проверить факт переопределения при компиляции."
+        ],
+        [
+          "Slicing",
+          "Копирование лишь базовой части производного объекта по значению."
+        ],
+        [
+          "dynamic_cast",
+          "Проверяемое приведение полиморфного типа с определённым отказом."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.exceptions-guarantees",
+      "legacyIndex": null,
+      "order": 54,
+      "sectionId": "cpp.section.oop",
+      "title": "Исключения и гарантии обработки ошибок",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 7,
+      "description": "Выполните настоящий throw/catch и докажите очистку и сохранение состояния при отказе.",
+      "theory": [
+        "Выполните настоящий throw/catch и докажите очистку и сохранение состояния при отказе."
+      ],
+      "deep": "Результат bool или отдельный тип подходит ожидаемому отказу, который клиент должен рассмотреть сразу. Исключение передаёт управление к подходящему обработчику по стеку вызовов. Выбор зависит от контракта и места, способного обработать проблему. Это не разделение на «плохие» и «хорошие» ошибки и не повод бросать при каждом условии if.",
+      "analogy": "catch(const std::exception& e) наблюдает исключение по const ссылке, избегая копирования и slicing. Более конкретный обработчик ставят до общего базового, иначе общий перехватит подходящее исключение раньше. catch(...) принимает любой тип, но не предоставляет типизированный объект; его применение должно иметь ясную политику.",
+      "commonMistake": "Деструктор в ходе раскрутки стека.",
+      "code": "#include <iostream>\n#include <stdexcept>\nstruct Guard {int& active;explicit Guard(int& n):active(n){++active;}~Guard(){--active;}};\nint main(){int active=0;try{Guard g{active};throw std::runtime_error(\"stop\");}catch(const std::exception&){std::cout<<\"caught \"<<active<<'\\n';}}\n",
+      "task": "Прочитайте mode=0…1. Store изначально хранит {1,2}; replace готовит копию с 9 и при mode=1 бросает runtime_error до swap. Guard отслеживает ресурс. После попытки напечатайте ok или rejected, сумму текущего Store и active. Неверный ввод: invalid. Для 0: ok 12 0; для 1: rejected 3 0.",
+      "hint": "Результат bool или отдельный тип подходит ожидаемому отказу, который клиент должен рассмотреть сразу. Исключение передаёт управление к подходящему обработчику по стеку вызовов. Выбор зависит от контракта и места, способного обработать проблему. Это не разделение на «плохие» и «хорошие» ошибки и не повод бросать при каждом условии if.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <stdexcept>\nstruct Guard {int& active;explicit Guard(int& n):active(n){++active;}~Guard(){--active;}};\nclass Store {std::vector<int> values_{1,2};public:\n void replace(bool fail,int& active){Guard g{active};auto candidate=values_;candidate.push_back(9);\n  if(fail)throw std::runtime_error(\"injected\");values_.swap(candidate);}\n int sum()const{int n=0;for(int x:values_)n+=x;return n;}\n};\nint main(){int mode;if(!(std::cin>>mode)||mode<0||mode>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Store s;int active=0;try{s.replace(mode==1,active);std::cout<<\"ok \";}catch(const std::runtime_error&){std::cout<<\"rejected \";}\n std::cout<<s.sum()<<' '<<active<<'\\n';}\n",
+      "quiz": {
+        "question": "Что освобождает Guard при throw?",
+        "answers": [
+          "Деструктор в ходе раскрутки стека.",
+          "catch автоматически вызывает delete всех адресов.",
+          "Ресурс вообще не создавался."
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Исключение",
+          "Передача управления с объектом ошибки к подходящему обработчику."
+        ],
+        [
+          "throw",
+          "Выражение запуска исключительного пути или повторной передачи ошибки."
+        ],
+        [
+          "catch",
+          "Обработчик исключения, подходящий по правилам сопоставления типа."
+        ],
+        [
+          "Раскрутка стека",
+          "Очистка завершённых автоматических объектов покидаемых областей."
+        ],
+        [
+          "Базовая гарантия",
+          "Сохранение инвариантов и отсутствие утечек при отказе."
+        ],
+        [
+          "Сильная гарантия",
+          "Отсутствие наблюдаемого изменения оговорённого состояния при отказе."
+        ],
+        [
+          "Commit",
+          "Последний шаг, публикующий подготовленное новое состояние."
+        ],
+        [
+          "Повторное бросание",
+          "throw; передаёт текущее исключение с сохранением типа."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.templates-concepts",
+      "legacyIndex": null,
+      "order": 55,
+      "sectionId": "cpp.section.oop",
+      "title": "Шаблоны и ограниченные обобщения",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 8,
+      "description": "Обобщите операцию для двух типов и явно отделите требования типа от диапазона значений.",
+      "theory": [
+        "Обобщите операцию для двух типов и явно отделите требования типа от диапазона значений."
+      ],
+      "deep": "Если одна операция нужна для int и long, дублирование скрывает общую структуру и создаёт риск расхождения исправлений. Шаблон функции описывает семейство функций с параметром типа. template<class T> вводит имя T, которым можно пользоваться в параметрах и теле. Это не стирание типов: компилятор строит конкретные специализации.",
+      "analogy": "В smaller(3,7) компилятор выводит T=int из обоих аргументов. В smaller(9L,4L) выводится long. При smaller(3,7L) два вывода конфликтуют: компилятор не обязан выбрать произвольный общий тип. Можно явно согласовать типы или указать параметр, понимая возможное преобразование. Не скрывайте потерю данных принудительным cast.",
+      "commonMistake": "Нет, нужны границы значений и количества.",
+      "code": "#include <iostream>\n#include <concepts>\ntemplate<std::integral T> T smaller(T a,T b){return b<a?b:a;}\nint main(){std::cout<<smaller(3,7)<<' '<<smaller(9L,4L)<<'\\n';}\n",
+      "task": "Прочитайте n=0…20 и n чисел −100…100 без лишнего токена. Реализуйте template<std::integral T> T sum(std::span<const T>). Вызовите для vector<int> и его копии vector<long long>, напечатайте обе суммы. Пустой ввод последовательности при n=0 даёт 0 0. Неверный ввод: invalid.",
+      "hint": "Если одна операция нужна для int и long, дублирование скрывает общую структуру и создаёт риск расхождения исправлений. Шаблон функции описывает семейство функций с параметром типа. template<class T> вводит имя T, которым можно пользоваться в параметрах и теле. Это не стирание типов: компилятор строит конкретные специализации.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\ntemplate<std::integral T> T sum(std::span<const T> values){T result{};for(T x:values)result+=x;return result;}\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}std::vector<int> a;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -100||x>100){std::cout<<\"invalid\\n\";return 0;}a.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::vector<long long> b(a.begin(),a.end());std::cout<<sum<int>(std::span<const int>{a})<<' '<<sum<long long>(std::span<const long long>{b})<<'\\n';}\n",
+      "quiz": {
+        "question": "Доказывает ли integral отсутствие переполнения?",
+        "answers": [
+          "Нет, нужны границы значений и количества.",
+          "Да, для любого integral.",
+          "Да, кроме long long."
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Шаблон функции",
+          "Семейство функций, параметризованное типами или значениями."
+        ],
+        [
+          "Шаблон класса",
+          "Описание семейства конкретных типов по параметрам."
+        ],
+        [
+          "Инстанцирование",
+          "Получение требуемой специализации из определения шаблона."
+        ],
+        [
+          "Deduction",
+          "Вывод аргументов шаблона по условиям вызова."
+        ],
+        [
+          "Concept",
+          "Именованное ограничение аргументов шаблона времени компиляции."
+        ],
+        [
+          "std::integral",
+          "Стандартное ограничение на целочисленные типы."
+        ],
+        [
+          "span",
+          "Невладеющее представление непрерывной последовательности."
+        ],
+        [
+          "Контракт значений",
+          "Ограничения данных, не доказываемые одним concept."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.design-testability-refactoring",
+      "legacyIndex": null,
+      "order": 56,
+      "sectionId": "cpp.section.oop",
+      "title": "Проектирование, тестируемость и рефакторинг",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 9,
+      "description": "Соберите поддерживаемое приложение, сохраните поведение при изменении структуры и защитите решения тестами.",
+      "theory": [
+        "Соберите поддерживаемое приложение, сохраните поведение при изменении структуры и защитите решения тестами."
+      ],
+      "deep": "Поддерживаемость проявляется при изменении требования: можно ли локально изменить правило и сохранить понятность остальных частей? Не оценивайте её только числом классов. В проекте есть значения Task, владелец Board, стратегия Policy, разбор входа и вывод отчёта. Каждый элемент отвечает за отдельное решение, которое может измениться.",
+      "analogy": "Высокая связность означает, что части модуля работают на одну понятную ответственность. Малое сцепление означает, что изменение внутреннего решения не заставляет множество клиентов меняться. Board проверяет инвариант задач, но не открывает файлы и не читает cin. Поэтому тест может создать кандидата прямо в памяти без подготовки браузерного интерфейса.",
+      "commonMistake": "Согласованное наблюдаемое поведение.",
+      "code": "#include <iostream>\nstruct Discount {int percent;int apply(int cents)const{return cents*(100-percent)/100;}};\nint price(int cents,const Discount& policy){return policy.apply(cents);}\nint main(){std::cout<<price(1000,Discount{10})<<' '<<price(1000,Discount{0})<<'\\n';}\n",
+      "task": "Прочитайте n=0…20 и n пар id/minutes. id=1…100 уникален, minutes=0…100. Сначала проверьте весь ввод и хвост. Отделите valid и total от main. Успех: tasks N minutes S. Неверный ввод или повтор ID: invalid. Затем перенесите домен в отдельную TU без изменения результатов.",
+      "hint": "Поддерживаемость проявляется при изменении требования: можно ли локально изменить правило и сохранить понятность остальных частей? Не оценивайте её только числом классов. В проекте есть значения Task, владелец Board, стратегия Policy, разбор входа и вывод отчёта. Каждый элемент отвечает за отдельное решение, которое может измениться.",
+      "solution": "#include <iostream>\n#include <vector>\nstruct Task {int id,minutes;};\nbool valid(const std::vector<Task>& tasks){for(std::size_t i=0;i<tasks.size();++i){if(tasks[i].id<1||tasks[i].id>100||tasks[i].minutes<0||tasks[i].minutes>100)return false;for(std::size_t j=0;j<i;++j)if(tasks[i].id==tasks[j].id)return false;}return true;}\nint total(const std::vector<Task>& tasks){int n=0;for(const auto& t:tasks)n+=t.minutes;return n;}\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}std::vector<Task> tasks;\n for(int i=0;i<n;++i){Task t;if(!(std::cin>>t.id>>t.minutes)){std::cout<<\"invalid\\n\";return 0;}tasks.push_back(t);}\n std::cin>>std::ws;if(!std::cin.eof()||!valid(tasks)){std::cout<<\"invalid\\n\";return 0;}\n std::cout<<\"tasks \"<<tasks.size()<<\" minutes \"<<total(tasks)<<'\\n';}\n",
+      "quiz": {
+        "question": "Что сохраняет рефакторинг?",
+        "answers": [
+          "Согласованное наблюдаемое поведение.",
+          "Любой внутренний адрес.",
+          "Количество строк исходника."
+        ],
+        "correctIndex": 0
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Связность",
+          "Единство частей модуля вокруг понятной ответственности."
+        ],
+        [
+          "Сцепление",
+          "Степень зависимости клиентов от решений другого компонента."
+        ],
+        [
+          "Рефакторинг",
+          "Изменение структуры при сохранении согласованного поведения."
+        ],
+        [
+          "Инъекция зависимости",
+          "Явная передача используемого компонента вместо скрытого глобального доступа."
+        ],
+        [
+          "Тестовый драйвер",
+          "Отдельная программа, вызывающая домен и проверяющая условия."
+        ],
+        [
+          "ADR",
+          "Запись контекста, вариантов, решения и последствий архитектурного выбора."
+        ],
+        [
+          "Регрессия",
+          "Проверка сохранения ранее оговорённых результатов после изменения."
+        ],
+        [
+          "Артефакт",
+          "Сохранённый результат работы с явным происхождением и проверкой."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
     }
   ]
 }

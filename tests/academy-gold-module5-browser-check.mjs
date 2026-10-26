@@ -1,4 +1,4 @@
-// M5-0: три прежних M5 ID и все50 записей в настоящей cold Offline копии.
+// M5-0: все M5 ID и все записи текущей версии в настоящей cold Offline копии.
 import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
 import {onlineRuntimeFixture} from './helpers/online-runtime-fixture.mjs';import {nativeOfflineFixture} from './helpers/native-offline-fixture.mjs';import {bindRuntimeTransport} from './helpers/runtime-transport.mjs';
 const c=JSON.parse(await readFile('courses/cpp/curriculum.json')),all=c.lessons.map(l=>l.id),ids=c.sections.find(s=>s.id==='cpp.section.oop').lessonIds;
@@ -22,18 +22,18 @@ try{
  await local.goto(f.origin+'/offline.html#copy='+vaultId);await local.locator('#localPhrase').fill(phrase);await local.locator('#unlockLocal button').click();await local.locator('#psNewProject').waitFor();
  await local.evaluate(()=>{location.hash='#view=compiler'});await local.locator('#prepareCompiler').click();await local.waitForFunction(()=>/полностью проверен и готов/.test(document.querySelector('#runtimeStatus')?.textContent||''),{},{timeout:300000});
  await f.closeBrowser();f.networkDown();local=await f.launch();await bindRuntimeTransport(f.context,{offline:()=>true});await local.goto(f.origin+'/offline.html#copy='+vaultId);await local.locator('#localPhrase').fill(phrase);await local.locator('#unlockLocal button').click();await local.locator('#psNewProject').waitFor();
- await check('Три прежних M5 ID online/cold Offline: code/stdin/quiz/VFS/completed, desktop/mobile',async()=>{
+ await check('Все M5 ID online/cold Offline: code/stdin/quiz/VFS/completed, desktop/mobile',async()=>{
   for(const id of ids)for(const page of [online.page,local]){await route(page,id);for(const width of [1366,390]){await page.setViewportSize({width,height:900});assert.equal(await page.locator('#editor').inputValue(),source(id));assert.equal(await page.locator('#stdin').inputValue(),'17\n');assert.ok(await page.locator('input[name="quiz"][value="1"]').isChecked());assert.match(await page.locator('#completeLesson').textContent(),/✓/);const expected=files.map(f=>f.path==='main.cpp'?{...f,content:source(id)}:f);assert.deepEqual(await page.locator('#editor').evaluate(n=>n.__nexusCodeStudio.getSnapshot().files.map(({path,content,languageId})=>({path,content,languageId}))),expected);}}
-  return{existingLessons:3,entrypoints:2,widths:[1366,390],combinations:12,newGoldLessons:0};
+  return{existingLessons:3,entrypoints:2,widths:[1366,390],combinations:ids.length*4,newGoldLessons:ids.length===9?9:0};
  });
  await check('Настоящий Code Studio: класс, два translation units и header в cold Offline',async()=>{
   await route(local,ids[0]);await local.locator('#runCode').click();await local.waitForFunction(()=>!document.querySelector('#runCode')?.disabled&&(/Код завершения:/.test(document.querySelector('#output')?.textContent||'')||document.querySelector('#output.error-output,#output.provider-limit-output')),{},{timeout:300000});const text=await local.locator('#output').textContent();assert.ok(text.startsWith('7\n')&&text.includes('Код завершения: 0'),text);assert.equal(await local.locator('#editor').inputValue(),source(ids[0]));return{stdout:'7\n',translationUnits:2,files:3,realCompiler:true,coldOffline:true,sourceUnchanged:true};
  });
- await check('Текущий50/50, legacy40/40 и unknown state/проект/checkpoint в encrypted IndexedDB',async()=>{
+ await check('Текущий прогресс, legacy40/40 и unknown state/проект/checkpoint в encrypted IndexedDB',async()=>{
   const data=await local.evaluate(async({prefix,id,phrase})=>{const {createVaultStore}=await import(prefix+'/pwa/local-vault.js'),s=await createVaultStore().unlock(id,phrase),d=s.read();await s.lock();return d},{prefix,id:vaultId,phrase});assert.deepEqual(data.projects,payload.projects);
   for(const id of all)for(const k of ['completed','quiz','code','stdin','workspace','note'])assert.deepEqual(data.state.courses.cpp.lessons[id][k],payload.state.courses.cpp.lessons[id][k],id+' '+k);
   assert.deepEqual(data.state.courses.cpp.lessons['cpp.synthetic-m5-unknown'],payload.state.courses.cpp.lessons['cpp.synthetic-m5-unknown']);
-  const progress=await local.evaluate(async({prefix,state,c})=>(await import(prefix+'/core/storage.js')).cppProgramProgress(state,c),{prefix,state:data.state,c});assert.deepEqual([progress.done,progress.total],[50,50]);assert.deepEqual([progress.legacy.done,progress.legacy.total],[40,40]);return{current:'50/50',legacy:'40/40',projects:1,checkpoints:1,allLessonStatesExact:true};
+  const progress=await local.evaluate(async({prefix,state,c})=>(await import(prefix+'/core/storage.js')).cppProgramProgress(state,c),{prefix,state:data.state,c});assert.deepEqual([progress.done,progress.total],[all.length,all.length]);assert.deepEqual([progress.legacy.done,progress.legacy.total],[40,40]);return{current:all.length+'/'+all.length,legacy:'40/40',projects:1,checkpoints:1,allLessonStatesExact:true};
  });
  await check('Изоляция реального аккаунта/Cloud и отсутствие browser/SW ошибок',async()=>{assert.equal(online.requests.filter(r=>r.path.startsWith('/api/')&&r.method!=='GET').length,0);assert.deepEqual(online.errors,[]);assert.deepEqual(f.errors,[]);assert.equal(await local.evaluate(async prefix=>(await import(prefix+'/core/account-storage.js')).verifiedAccount(),prefix),null);return{realCredentials:false,productionRequests:0,cloudWrites:0}});
 }catch(e){fatal={message:e.message,stack:String(e.stack).slice(0,2600)};console.error(e);}
