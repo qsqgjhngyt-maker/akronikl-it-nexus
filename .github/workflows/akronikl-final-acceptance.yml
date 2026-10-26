@@ -1,0 +1,63 @@
+name: Akronikl — авторизованный E2E и парные измерения, без публикации
+on:
+  push:
+    branches: [feature/akronikl-0-2-final-acceptance-20261026]
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/ak02-final-candidate
+      NEXUS_BASELINE_DIR: /tmp/ak02-final-baseline
+      NEXUS_SOURCE_COMMIT: ${{ github.sha }}
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+      NEXUS_CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 065606a788198045cadf250fea663246ddbb2d56
+          path: qa-baseline
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Точные исходники, неизменённый runtime и две отдельные сборки
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-final
+          git rev-parse HEAD > evidence-final/SOURCE_COMMIT.txt
+          git archive --format=zip HEAD > evidence-final/source.zip
+          (cd evidence-final && sha256sum source.zip > SOURCE_SHA256.txt)
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tools/qa-browser-driver --ignore-scripts --no-audit --no-fund
+          VERSION=$(node -p "JSON.parse(require('fs').readFileSync('version.json')).version")
+          node tools/build-ui1a-release.mjs --out "$NEXUS_FRONTEND_DIR" --generation ui1a-ak02-final-cand --version "$VERSION"
+          node tools/build-ui1a-release.mjs --source qa-baseline --out "$NEXUS_BASELINE_DIR" --generation ui1a-ak02-final-base --version "$VERSION"
+          cp "$NEXUS_FRONTEND_DIR/BUILD_MANIFEST.json" evidence-final/CANDIDATE_MANIFEST.json
+          cp "$NEXUS_BASELINE_DIR/BUILD_MANIFEST.json" evidence-final/BASELINE_MANIFEST.json
+          NEXUS_AKRONIKL_EVIDENCE=evidence-final/build node tools/check-akronikl-built-candidate.mjs
+          node --check tests/helpers/akronikl-authenticated-fixture.mjs
+          node --check tests/akronikl-authorized-browser-check.mjs
+          node --check tests/akronikl-performance-browser-check.mjs
+      - name: Собранный Nexus с серверной проверкой виртуального ключа
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-final/authorized
+        run: node tests/akronikl-authorized-browser-check.mjs
+      - name: Baseline и кандидат — одинаковая среда и чередование порядка
+        if: ${{ !cancelled() }}
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-final/performance
+          NEXUS_BENCH_SAMPLES: '12'
+        run: node tests/akronikl-performance-browser-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akronikl-final-acceptance
+          path: evidence-final
+          retention-days: 30
