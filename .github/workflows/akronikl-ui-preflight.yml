@@ -25,11 +25,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --test tests/akronikl-core.test.mjs tests/akronikl-knowledge.test.mjs tests/akronikl-security.test.mjs tests/akronikl-ui.test.mjs | tee evidence-ak02-ci/core-ui.tap
+          node --test tests/akronikl-core.test.mjs tests/akronikl-knowledge.test.mjs tests/akronikl-security.test.mjs tests/akronikl-ui.test.mjs tests/akronikl-ui-lifecycle.test.mjs | tee evidence-ak02-ci/core-ui.tap
           node --test tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/platform-lazy-imports.test.mjs | tee evidence-ak02-ci/startup.tap
           node tests/auth-bootstrap-check.mjs | tee evidence-ak02-ci/bootstrap.txt
           node tests/account-storage-isolation-check.mjs | tee evidence-ak02-ci/account.txt
           node tests/module-import-smoke-check.mjs | tee evidence-ak02-ci/imports.txt
+          node --check akronikl/ui/panel.js
+          node --check akronikl/ui/nexus-host.js
+          node --input-type=module -e "for (const path of ['./akronikl/context.js','./akronikl/ui/bridge.js','./akronikl/ui/panel.js','./akronikl/ui/nexus-host.js','./akronikl/ui/knowledge-loader.js']) { await import(path); console.log('PASS import '+path); }" | tee evidence-ak02-ci/ui-imports.txt
           node tools/build-akronikl-knowledge.mjs --check | tee evidence-ak02-ci/knowledge.json
       - name: Сохранить протоколы, не публиковать приложение
         if: always()
