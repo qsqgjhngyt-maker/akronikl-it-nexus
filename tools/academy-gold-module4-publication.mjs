@@ -12,7 +12,7 @@ export const M4_PUBLICATION=Object.freeze({
  version:'0.1.7-alpha.2.4.6-ui1a.10.8-test.1',generation:'ui1a-cpp-gold-module4-test1-20261026'
 });
 export const M4_UX_PUBLICATION=Object.freeze({
- accepted:'a0af8b8c6de2d045cf691d25442be31e3264ee96',checked:'a0af8b8c6de2d045cf691d25442be31e3264ee96',
+ accepted:'63f3465dbf060ef09a309b822beaef57afb0bde8',checked:'63f3465dbf060ef09a309b822beaef57afb0bde8',
  base:'3005c4319290b845339f03e8777584e8af88c8e8',old:'0.1.7-alpha.2.4.6-ui1a.10.8-test.1',
  version:'0.1.7-alpha.2.4.6-ui1a.10.8-test.2',generation:'ui1a-cpp-gold-module4-test2-20261026',ux:true
 });
