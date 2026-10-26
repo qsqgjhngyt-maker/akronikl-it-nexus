@@ -13,11 +13,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Ядро, источники и UI-контракты
+      - name: Сохранить воспроизводимый снимок кандидата
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p evidence-ak02-ci
+          git rev-parse HEAD > evidence-ak02-ci/SOURCE_COMMIT.txt
+          git archive --format=zip HEAD > evidence-ak02-ci/source.zip
+          (cd evidence-ak02-ci && sha256sum source.zip > SOURCE_SHA256.txt)
+      - name: Ядро, источники и UI-контракты
+        shell: bash
+        run: |
+          set -euo pipefail
           node --test tests/akronikl-core.test.mjs tests/akronikl-knowledge.test.mjs tests/akronikl-security.test.mjs tests/akronikl-ui.test.mjs | tee evidence-ak02-ci/core-ui.tap
           node --test tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/platform-lazy-imports.test.mjs | tee evidence-ak02-ci/startup.tap
           node tests/auth-bootstrap-check.mjs | tee evidence-ak02-ci/bootstrap.txt
