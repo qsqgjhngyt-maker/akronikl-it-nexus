@@ -75,3 +75,47 @@ jobs:
           name: akronikl-b2-browser
           path: evidence-b2-browser
           retention-days: 30
+  retained-rollback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/ak02-b2-retained-build
+      NEXUS_ROLLBACK_DIR: /tmp/ak02-b2-exact-rollback
+      NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-b2-rollback
+      NEXUS_BROWSER_RESULT: ${{ github.workspace }}/evidence-b2-rollback/PWA_ROLLBACK.json
+      NEXUS_SOURCE_COMMIT: ${{ github.sha }}
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+      NEXUS_CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 065606a788198045cadf250fea663246ddbb2d56
+          path: qa-rollback-source
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Сохранить старые опубликованные байты и собрать retained-кандидат отдельно
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-b2-rollback
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tools/qa-browser-driver --ignore-scripts --no-audit --no-fund
+          test -x /usr/bin/google-chrome
+          node tools/snapshot-published-build.mjs --source qa-rollback-source --out "$NEXUS_ROLLBACK_DIR" --expected-commit 065606a788198045cadf250fea663246ddbb2d56 | tee evidence-b2-rollback/snapshot.txt
+          cp "$NEXUS_ROLLBACK_DIR/BUILD_MANIFEST.json" evidence-b2-rollback/ROLLBACK_MANIFEST.json
+          node tools/prepare-akronikl-retained-check.mjs | tee evidence-b2-rollback/staging.txt
+          cp "$NEXUS_FRONTEND_DIR/BUILD_MANIFEST.json" evidence-b2-rollback/BUILD_MANIFEST.json
+          node tools/check-akronikl-built-candidate.mjs
+      - name: Настоящий SW — upgrade, точный rollback, две вкладки и зашифрованная копия
+        run: node tests/pwa-rollback-browser-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akronikl-b2-rollback
+          path: evidence-b2-rollback
+          retention-days: 30
