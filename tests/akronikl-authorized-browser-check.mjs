@@ -101,7 +101,7 @@ try{
  await check('Непривилегированный B не получает административный список и не импортирует копию A',async()=>{
   assert.equal(await page.evaluate(async()=>{const r=await fetch('/api/v2/account/control/users',{headers:{'x-nexus-account-expectation':'synthetic-ak02-b'}});return r.status}),403);
   await route('#view=offline');const form=page.locator('[data-local-import]');await form.locator('select').selectOption(copyA);await form.locator('input').fill(phraseA);await form.locator('button').click();
-  await page.locator('[data-local-status]').filter({hasText:'принадлежит другому аккаунту'}).waitFor();
+  await page.locator('[data-local-status]').filter({hasText:/OFFLINE_ACCOUNT_MISMATCH|принадлежит другому аккаунту/}).waitFor();
   assert.equal(await page.evaluate(async({prefix,id})=>(await import(prefix+'project-studio/project-store.js')).getProject(id).workspace.files[0].content,{prefix,id:projectId}),'// synthetic B\nSELECTED_B');
  });
  copyB=await makeCopy(phraseB);await unlock(copyB,phraseB);await preview('SELECTED_B');await page.keyboard.press('Escape');await page.locator('#lockLocal').click();
