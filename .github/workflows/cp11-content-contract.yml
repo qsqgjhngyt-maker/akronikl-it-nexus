@@ -51,7 +51,7 @@ jobs:
           set -euo pipefail
           mkdir -p cp11-evidence
           git diff --name-status "$BASE_SHA" "$HEAD_SHA" | tee cp11-evidence/00_DIFF_NAME_STATUS.txt
-          if node -e "process.exit(JSON.parse(require('fs').readFileSync('release-candidate.json')).publication?.module==='cpp-module-3'?0:1)"; then
+          if node -e "process.exit(['cpp-module-3','cpp-module-4'].includes(JSON.parse(require('fs').readFileSync('release-candidate.json')).publication?.module)?0:1)"; then
             NEXUS_M3_EVIDENCE=cp11-evidence node --input-type=module -e "const {verifyM3Publication}=await import('./tools/academy-gold-module3-publication.mjs');await verifyM3Publication();console.log('M3_EXACT_ACCEPTED_SOURCE_AND_PUBLICATION_PASS')"
           else
           bad=0

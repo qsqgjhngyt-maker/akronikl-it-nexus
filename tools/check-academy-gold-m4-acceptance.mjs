@@ -8,7 +8,7 @@ import {m4AuthoringScope} from './academy-gold-module4-scope.mjs';
 import {proveM4EditorialScope,M4_EDITORIAL_FILE} from './academy-gold-m4-editorial-scope.mjs';
 const source='a3e34881ad67c1d4d35605b1c500441f8e0e9f9a',probe=process.argv.includes('--editorial-probe');
 let scope,editorialCorrection;
-try{scope=await m4AuthoringScope();editorialCorrection=await proveM4EditorialScope();}
+try{scope=await m4AuthoringScope();if(scope.m4Publication){if(probe)throw Error('Публикация требует отдельного полного runtime gate');editorialCorrection={status:'EXACT_ACCEPTED_PUBLICATION',acceptedSource:scope.acceptedSource,checkedSource:scope.checkedSource,newWasmExecution:false};}else editorialCorrection=await proveM4EditorialScope();}
 catch(error){
  if(!probe)throw error;
  if(process.env.GITHUB_OUTPUT)await appendFile(process.env.GITHUB_OUTPUT,'reuse_wasm=false\n');
