@@ -1,3 +1,17 @@
+# C++ Module 5 Test.1 — завершение тестовой публикации
+
+2026-10-26 17:24:29 UTC. STATUS:PASS. Новая подтверждённая фиксация дополняет канонический MASTER30.09.2026; synced sources read-only не меняются. M5 …10.9-test.1 опубликован main `5e0e290c9bf74dde87f3169b9d7e122952fd0c57` (PR38, source `9cce35463fe57489a13611054ea83687132e5c39`); tree `84a3bea2f887667a1e6155b20df80cf24ed902a1` совпал с feature. Официальный Release/тег не создан.
+
+WHAT WAS PROVED:feature/PR шесть workflow15jobs и main восемь workflow21jobs SUCCESS; Pages40362328630 SUCCESS. Public549 проверок и6 старых файлов PASS. Девять Gold-уроков RU/EN,56 тем/55Gold; прежние50 записей и40 исторических IDs сохранены. M5 native/WASM48пакетов172verdicts; M1–5 WASM940verdicts, включая отрицательные compile controls. 05/07 и NEXUS-PERF-01 AUTOMATED PASS; field timing не измерен. Владелец после обновления: «ПК и телефон: всё работает, аккаунт, прогресс, код и проекты на месте» — FULL LIVE PASS по ручному подтверждению владельца.
+
+WHAT REMAINS:открытых P0/P1 нет; M5-07-P2-01 OPEN VISUAL TRIAGE — тесная шапка synthetic Offline390, отдельное воспроизведение/spacing review в07. С реальным телефоном владельца этот скрин не смешивается. M6 не начат; официальный релиз отдельно. Rollback commit1af3784 с сохранением4146immutable файлов подготовлен и проверен, не применён. Backend/D1/тариф не менялись; Cloud PUSH/PULL и очистки личных данных не было. Учебная эффективность не измерялась.
+
+ROUTING CHECK:05→00→07;02/01/04 информационно,06 отдельно не требуется. Готовые сообщения CPP_MODULE5_PUBLICATION_ROUTING_RU.md, не отправлены автоматически. Полный отчёт CPP_GOLD_MODULE5_PUBLICATION_RU.md, ledger CPP_MODULE5_PUBLICATION_EVIDENCE.json. Новые документы фиксируются только в feature, дополнительной публикации main для них нет.
+
+NEXT RECOMMENDED BRANCH:00 — определить следующий приоритет;03 M6-0 по отдельному поручению. RECOMMENDED MODE:высокий;runtime/publication — очень высокий.
+
+## История: подготовка до разрешения владельца
+
 # Локальная подготовка тестовой публикации C++ Module 5
 
 26.10.2026. STATUS:PARTIAL — LOCAL AUTOMATED PASS / OWNER APPROVAL PENDING. Принятый source20b3d1b и его05/07 PASS сохранены. Из документального `e72a2988eab19575a39131eac1a67a4524d40400` отдельно собран `0.1.7-alpha.2.4.6-ui1a.10.9-test.1` / `ui1a-cpp-gold-module5-test1-20261026`. Это не новая публикация или новый CI.
