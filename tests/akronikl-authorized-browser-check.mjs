@@ -63,7 +63,7 @@ try{
   assert.equal(await page.evaluate(async prefix=>(await import(prefix+'core/account-storage.js')).verifiedAccount(),f.prefix),null);
   await page.screenshot({path:path.join(out,'authorized-to-private.png')});await page.keyboard.press('Escape');await page.locator('#lockLocal').click();await page.locator('#localPhrase').waitFor();
  });
- await f.reconnect();await f.virtualKey(page);
+ await f.reconnect();
  // Повторная регистрация не нужна: для проверки logout достаточно сохранённой серверной сессии.
  await page.goto(f.origin+'/index.html#view=code-studio&project='+projectId);await page.locator('#editor').waitFor();
  await check('Logout при задержанном реальном ответе 200 не возобновляет доступ к коду',async()=>{
