@@ -5,7 +5,7 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {GATEWAY_ORIGIN} from '../../server-access/bff/account-read.mjs';
 import {bindRuntimeTransport} from './runtime-transport.mjs';
-export async function onlineRuntimeFixture(){
+export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
  const frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR),cache=process.env.NEXUS_PINNED_RUNTIME_DIR;
  const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
  const account={account:{accountId:'synthetic-runtime-online',displayName:'Synthetic Runtime',status:'active'},loginMethods:[{id:'synthetic-key',kind:'passkey',status:'active',createdAt:'2026-10-24T00:00:00Z',disabledAt:null}],enrollmentAvailable:false};
@@ -30,7 +30,7 @@ export async function onlineRuntimeFixture(){
  });
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const hostname=new URL(GATEWAY_ORIGIN).hostname;
- const browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH,args:['--disable-background-networking','--no-proxy-server','--ignore-certificate-errors','--host-resolver-rules=MAP '+hostname+' 127.0.0.1:'+server.address().port]});
+ const browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH,args:['--disable-background-networking','--no-proxy-server','--ignore-certificate-errors','--host-resolver-rules=MAP '+hostname+' 127.0.0.1:'+server.address().port,...chromiumArgs]});
  const context=await browser.newContext({ignoreHTTPSErrors:true,viewport:{width:1366,height:900}});
  // Отдельный пустой профиль. Тестовый TLS не влияет на браузер владельца/системное доверие.
  await context.route('**/*',async route=>new URL(route.request().url()).origin===GATEWAY_ORIGIN?route.continue():route.abort());

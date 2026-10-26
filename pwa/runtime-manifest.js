@@ -1,5 +1,14 @@
 // Exact public bytes acquired for this local candidate; no production execution implied.
-export const RUNTIME_GRAPH_ID="3eb53dcb260f33d040d58e304ae5922c5d842ef3164e3e4a63bae940d3a1efe0";
+// Immutable data-only sysroot; исходники учащегося остаются в браузере.
+export const CPP_EXCEPTION_RUNTIME=Object.freeze({
+  id:'wasi-sdk33-native-eh',
+  url:'https://cdn.jsdelivr.net/gh/qsqgjhngyt-maker/akronikl-it-nexus@adf91d730598d3a02a21ddca3183f76b56d8d1b8/runtime-packs/wasi-sdk33/cpp-exceptions.bin',
+  bytes:4390769,
+  sha256:'b901e4aa3f7e5f5c3917ddd4d9f40c06eadbf53567f60d3ea6ad46105029a8d2',
+  unpackedBytes:13989197,
+  mime:'application/octet-stream'
+});
+export const RUNTIME_GRAPH_ID="cb9f8b55bd440758370a2b48efe485735859ec053ec4332367916820c54dcb5c";
 export const RUNTIME_RESOURCES=Object.freeze([
   {
     "url": "https://cdn.jsdelivr.net/npm/@yowasp/clang@22.0.0-git20542-10/gen/bundle.js",
@@ -55,5 +64,6 @@ export const RUNTIME_RESOURCES=Object.freeze([
     "sha256": "79eef0c336fe55cf03ff8f5b42b784c8168f929a3603138b2c6301f4601e4c86",
     "mime": "application/x-tar",
     "dependencies": []
-  }
+  },
+  {...CPP_EXCEPTION_RUNTIME,dependencies:[]}
 ]);

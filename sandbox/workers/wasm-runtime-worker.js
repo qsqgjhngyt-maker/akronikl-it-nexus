@@ -1,6 +1,7 @@
 import {MODERN_CPP_TOOLCHAIN,MODERN_CPP_LIMITS,modernCppToolchainLabel} from '../runtime-assets.js';
 import {flatFilesToVirtualTree} from '../virtual-files.js';
 import {runtimeFilePath,runtimeInputFiles,runtimeOutputFiles,guardRuntimeFileImports} from '../runtime-files.js';
+import {nativeCppExceptionsAvailable,cppExceptionSysroot} from '../cpp-exceptions.js';
 
 const FOUNDATION_VERSION='0.1.7-alpha.1.3.2';
 let compilerModulePromise=null;
@@ -147,9 +148,18 @@ async function compile(requestId,request){
       error.code='WASM_NO_TRANSLATION_UNITS';
       throw error;
     }
+    const nativeEh=!isC&&nativeCppExceptionsAvailable();
+    const tree=flatFilesToVirtualTree(virtualFiles);let cppFlags=isC?[]:['-fno-exceptions'];
+    if(nativeEh){
+      progress(requestId,'toolchain','loading-toolchain',{label:'C++ exceptions · WASI SDK33'});
+      const sysroot=await cppExceptionSysroot();let root='__nexus_cpp_sdk';while(Object.hasOwn(tree,root))root+='_';
+      tree[root]=flatFilesToVirtualTree(sysroot);
+      cppFlags=['--sysroot='+root,'-nostdinc++','-isystem',root+'/include/wasm32-wasip1/eh/c++/v1','-isystem','/usr/include/c++/v1','-L'+root+'/lib/wasm32-wasip1/eh','-fwasm-exceptions','-mllvm','-wasm-use-legacy-eh=false'];
+    }
+    progress(requestId,'compile','compiling',{compiler,entryFile,cppExceptions:nativeEh});
     const filesOut=await runClang(
-      [compiler,stdFlag,...(isC?[]:['-fno-exceptions']),'-O0','-g0','-fdiagnostics-color=never',...includeArgs(request),...translationUnits,'-o',outputFile],
-      flatFilesToVirtualTree(virtualFiles),
+      [compiler,stdFlag,...cppFlags,'-O0','-g0','-fdiagnostics-color=never',...includeArgs(request),...translationUnits,...(nativeEh?['-lunwind']:[]),'-o',outputFile],
+      tree,
       {
         decodeASCII:false,
         stdout:value=>compilerOut.push(value),
@@ -182,12 +192,18 @@ async function compile(requestId,request){
       compilerStdout:compilerOut.value(),
       compilerStderr:compilerErr.value(),
       compileMs:elapsed(started),
+      cppExceptions:nativeEh,
       translationUnits,
       virtualFiles
     };
   }catch(error){
     compilerOut.flush();compilerErr.flush();
     error.compilerOutput=error.compilerOutput||compilerErr.value()||compilerOut.value()||safeMessage(error);
+    // На старом движке синтаксис разбирает Clang, включая raw literals/macros/headers.
+    if(!isC&&!nativeCppExceptionsAvailable()&&/cannot use ['"]?(?:try|throw)['"]? with exceptions disabled|exception handling disabled/i.test(error.compilerOutput)){
+      error.code='WASM_CPP_EXCEPTIONS_UNSUPPORTED';
+      error.message='Для исключений C++ нужен браузер с поддержкой стандартных исключений WebAssembly. Обновите браузер; код и проекты сохранены.';
+    }
     throw error;
   }
 }
@@ -233,6 +249,7 @@ async function execute(requestId,request,compiled){
 
 function classifyFailure(error,phase='compile'){
   const raw=String(error?.compilerOutput||safeMessage(error));
+  if(error?.code==='WASM_CPP_EXCEPTIONS_UNSUPPORTED')return error.code;
   if(phase==='compile'&&/(?:^|\n).+?:\d+:\d+:\s*(?:fatal\s+)?error:/i.test(raw))return'WASM_COMPILE_ERROR';
   if(phase==='compile'&&/(undefined symbol|linker command failed|wasm-ld: error|ld\.lld: error)/i.test(raw))return'WASM_LINK_ERROR';
   if(/Failed to fetch|fetch failed|network|ERR_|module script|dynamically imported module|Importing a module script failed/i.test(raw))return'WASM_TOOLCHAIN_UNAVAILABLE';
@@ -262,6 +279,7 @@ async function handleRun(message){
         runMs:executed.runMs,
         compilerStdout:compiled.compilerStdout,
         compilerStderr:compiled.compilerStderr,
+        cppExceptions:compiled.cppExceptions,
         compiler:modernCppToolchainLabel(),
         entryFile:compiled.entryFile,
         translationUnits:compiled.translationUnits,
@@ -290,7 +308,7 @@ self.addEventListener('message',event=>{
       type:'probe-result',requestId:message.requestId||null,ok:true,state,
       foundationVersion:FOUNDATION_VERSION,compilerReady,
       lazy:true,toolchain:modernCppToolchainLabel(),
-      capabilities:{workerIsolation:true,virtualFilesystem:true,multiFile:true,compiler:'clang',wasiRunner:'preview1',cppStandard:'c++20',stdlib:true},
+      capabilities:{workerIsolation:true,virtualFilesystem:true,multiFile:true,compiler:'clang',wasiRunner:'preview1',cppStandard:'c++20',cppExceptions:nativeCppExceptionsAvailable(),stdlib:true},
       reason:compilerReady?'modern-cpp-compiler-ready':'modern-cpp-compiler-lazy-load'
     });
     return;

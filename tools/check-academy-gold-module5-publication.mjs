@@ -1,0 +1,1 @@
+import{verifyM5Publication}from'./academy-gold-module5-publication.mjs';const r=await verifyM5Publication({rebuild:process.argv.includes('--rebuild')});console.log(JSON.stringify({...r,productPatchPaths:r.productPatchPaths.length,presentationPatchHashes:undefined}));
