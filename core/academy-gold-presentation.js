@@ -120,10 +120,49 @@ function goldCasesMarkup(cases,lang){
 }
 function goldWorkspaceMarkup(lang,{project=false,title='',multi=false}={}){
  const t=(ru,en)=>label(lang,ru,en);
- const editor='<button type="button" class="btn'+(project?'':' primary')+'" data-gold-open-editor>'+E(t('Перейти к Code Studio урока','Go to this lesson’s Code Studio'))+'</button>';
- const studio='<a class="btn'+(project?' primary':'')+'" href="#view=code-studio">'+E(t('Открыть Code Studio — проекты','Open Code Studio — projects'))+'</a>';
- const instructions=project?t('Создайте отдельный C++ проект «'+title+'»: откройте Code Studio, выберите «Новый проект» и перенесите заготовку'+(multi?' и указанные файлы':'')+'.','Create a separate C++ project “'+title+'”: open Code Studio, choose “New project” and copy the starter'+(multi?' and the listed files':'')+'.'):t('Выполняйте работу в Code Studio этого урока: скопируйте заготовку в редактор, укажите stdin из контрольного случая и нажмите «Запустить». Для отдельной работы можно создать проект в Code Studio.','Use this lesson’s Code Studio: copy the starter into the editor, enter the case’s stdin and select “Run”. You can also create a separate project in Code Studio.');
- return '<aside class="gold-workspace-callout"><h3>'+E(t('Где выполнять работу','Where to do the work'))+'</h3><p>'+E(instructions)+'</p><div class="gold-workspace-actions">'+(project?studio+editor:editor+studio)+'</div><p class="gold-workspace-note">'+E(t('Переход открывает рабочую среду. Перенос кода выполняйте сами; перед заменой сохраните текущую работу.','The action opens the workspace. Copy the code yourself; save your current work before replacing it.'))+'</p></aside>';
+ const editor='<button type="button" class="btn primary" data-gold-open-editor>'+E(t('Задание и Code Studio','Task and Code Studio'))+'</button>';
+ const studio='<a class="btn" href="#view=code-studio">'+E(t('Отдельный проект в Code Studio','Separate project in Code Studio'))+'</a>';
+ const instructions=project?t('Откройте рабочее окно: задание и редактор будут рядом. Итоговую работу сохраните в отдельном C++ проекте «'+title+'»: в Code Studio выберите «Новый проект» и перенесите заготовку'+(multi?' и указанные файлы':'')+'.','Open the work window to keep the task beside the editor. Save your final work in a separate C++ project “'+title+'”: choose “New project” in Code Studio and copy the starter'+(multi?' and the listed files':'')+'.'):t('Откройте рабочее окно: задание, контрольные случаи и редактор будут рядом. Скопируйте заготовку в редактор, укажите stdin и нажмите «Запустить». Закройте окно, чтобы продолжить урок с того же места.','Open the work window to keep the task, reference cases and editor together. Copy the starter into the editor, enter stdin and select “Run”. Close the window to continue the lesson from the same place.');
+ return '<aside class="gold-workspace-callout"><h3>'+E(t('Где выполнять работу','Where to do the work'))+'</h3><p>'+E(instructions)+'</p><div class="gold-workspace-actions">'+editor+studio+'</div><p class="gold-workspace-note">'+E(t('Окно использует ваш текущий редактор урока. Перед заменой кода сохраните работу.','The window uses your current lesson editor. Save your work before replacing code.'))+'</p></aside>';
+}
+function openGoldWorkspace(root,button,gold){
+ const workspace=root.querySelector('#editor')?.closest('.sandbox-block');
+ const task=button.closest('[data-gold-laboratory],[data-gold-practicum]');
+ if(!workspace||!task||root.querySelector('.gold-work-dialog[open]'))return;
+ const lang=task.closest('[data-gold-lesson]')?.getAttribute('lang')||gold?.locale||'ru',t=(ru,en)=>label(lang,ru,en);
+ const marker=document.createComment('gold-workspace-place'),host=workspace.closest('.lesson')||root.body||root,x=scrollX,y=scrollY;
+ const dialog=document.createElement('dialog');dialog.className='gold-work-dialog';dialog.lang=lang;dialog.setAttribute('aria-labelledby','goldWorkTitle');dialog.setAttribute('aria-modal','true');
+ dialog.innerHTML='<header class="gold-work-head"><div><span class="eyebrow">'+E(t('РАБОЧЕЕ ОКНО УРОКА','LESSON WORK WINDOW'))+'</span><h2 id="goldWorkTitle">'+E(task.querySelector('h2')?.textContent||t('Практическая работа','Practical work'))+'</h2></div><button type="button" class="btn" data-gold-work-close>'+E(t('Вернуться к заданию','Return to the task'))+'</button></header><div class="gold-work-tabs" role="tablist" aria-label="'+E(t('Задание и редактор','Task and editor'))+'"><button type="button" role="tab" id="goldWorkTaskTab" aria-controls="goldWorkTask" data-gold-work-tab="task">'+E(t('Задание','Task'))+'</button><button type="button" role="tab" id="goldWorkEditorTab" aria-controls="goldWorkEditor" data-gold-work-tab="editor">Code Studio</button></div><div class="gold-work-layout"><div id="goldWorkTask" class="gold-work-task academy-gold" data-gold-work-panel="task" aria-label="'+E(t('Условие и контрольные случаи','Task and reference cases'))+'" lang="'+E(lang)+'" data-gold-lesson="'+E(gold?.lessonId||task.closest('[data-gold-lesson]')?.dataset.goldLesson)+'"></div><div id="goldWorkEditor" class="gold-work-editor" data-gold-work-panel="editor" aria-label="Code Studio"></div></div>';
+ const taskPanel=dialog.querySelector('[data-gold-work-panel="task"]'),editorPanel=dialog.querySelector('[data-gold-work-panel="editor"]'),copy=task.cloneNode(true);
+ copy.removeAttribute('id');for(const n of copy.querySelectorAll('[id]'))n.removeAttribute('id');
+ for(const n of copy.querySelectorAll('.gold-workspace-callout'))n.remove();
+ taskPanel.append(copy);workspace.before(marker);editorPanel.append(workspace);host.append(dialog);
+ bindAcademyGold(taskPanel,gold);
+ const media=matchMedia('(max-width:900px)'),tabs=[...dialog.querySelectorAll('[data-gold-work-tab]')],panels=[taskPanel,editorPanel];let active='editor';
+ const update=()=>{
+  dialog.querySelector('.gold-work-tabs').hidden=!media.matches;
+  for(const tab of tabs){const selected=tab.dataset.goldWorkTab===active;tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;}
+  for(const panel of panels){panel.hidden=media.matches&&panel.dataset.goldWorkPanel!==active;panel.setAttribute('role',media.matches?'tabpanel':'region');if(media.matches)panel.setAttribute('aria-labelledby',panel===taskPanel?'goldWorkTaskTab':'goldWorkEditorTab');else panel.removeAttribute('aria-labelledby');}
+ };
+ for(const tab of tabs){
+  tab.addEventListener('click',()=>{active=tab.dataset.goldWorkTab;update();});
+  tab.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const target=event.key==='Home'?tabs[0]:event.key==='End'?tabs[1]:tabs[1-tabs.indexOf(tab)];active=target.dataset.goldWorkTab;update();target.focus();});
+ }
+ media.addEventListener('change',update);update();
+ let returnToTask=true,closed=false;
+ const onRouteChange=()=>{returnToTask=false;dialog.close();};
+ const observer=new MutationObserver(()=>{if(!dialog.isConnected){returnToTask=false;cleanup();}});
+ dialog.addEventListener('click',event=>{if(event.target.closest('[data-gold-work-close]'))dialog.close();else if(event.target.closest('a[href^="#"]')){returnToTask=false;dialog.close();}});
+ const cleanup=()=>{
+  if(closed)return;closed=true;
+  media.removeEventListener('change',update);
+  removeEventListener('hashchange',onRouteChange);observer.disconnect();
+  if(marker.isConnected){marker.replaceWith(workspace);}
+  dialog.remove();
+  if(returnToTask&&button.isConnected){button.focus({preventScroll:true});scrollTo({left:x,top:y,behavior:'instant'});}
+ };
+ dialog.addEventListener('close',cleanup,{once:true});addEventListener('hashchange',onRouteChange,{once:true});observer.observe(root.body||root,{childList:true,subtree:true});
+ dialog.showModal();editorPanel.querySelector('#editor')?.focus({preventScroll:true});
 }
 function modulePracticumMarkup(project,lang){
  if(!project)return '';
@@ -151,12 +190,7 @@ export function academyGoldMarkup(gold){
 }
 export function bindAcademyGold(root=document,gold){
   for(const button of root.querySelectorAll('[data-gold-open-editor]')){
-    button.addEventListener('click',()=>{
-      const editor=root.querySelector('#editor');
-      if(!editor)return;
-      editor.focus({preventScroll:true});
-      (editor.closest('.sandbox-block')||editor).scrollIntoView({block:'start',behavior:'instant'});
-    });
+    button.addEventListener('click',()=>openGoldWorkspace(root,button,gold));
   }
   for(const card of root.querySelectorAll('[data-gold-question]')){
     const button=card.querySelector('[data-gold-check]'),feedback=card.querySelector('[data-gold-feedback]');

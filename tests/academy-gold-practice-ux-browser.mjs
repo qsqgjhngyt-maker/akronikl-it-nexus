@@ -63,30 +63,67 @@ try{
   await p.setViewportSize({width:1366,height:900});await first.scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,'cases-1366.png')});
   return{keyboard:['Enter','Space'],cases:[0,2,expected.length-1],clipboardWriteArgumentExact:true,clipboardReadNormalizesWindowsCRLF:true};
  });
- await check('Переходы из лабораторной и практикума: focus редактора и отдельный Code Studio, код/прогресс/проект сохраняются',async()=>{
-  const ids=['cpp.languages-compilation-debugging','cpp.standard-io','cpp.files','cpp.property-testing-benchmarks'];let actions=0;
+ await check('Рабочее окно: задание рядом, мобильные вкладки и точный возврат к месту урока',async()=>{
+  const ids=['cpp.languages-compilation-debugging','cpp.standard-io','cpp.files','cpp.property-testing-benchmarks'];let actions=0,actualRuns=0;
+  const snapshot=()=>p.evaluate(async prefix=>{const {loadState}=await import(prefix+'/core/storage.js'),{listProjects}=await import(prefix+'/project-studio/project-store.js');return JSON.stringify({state:loadState(),projects:listProjects()});},prefix);
   await p.evaluate(async prefix=>{const {createProject}=await import(prefix+'/project-studio/project-store.js');createProject({id:'synthetic-gold-ux-preserved',title:'SYNTHETIC preserved work',entryFile:'main.cpp',files:[{path:'main.cpp',content:'// SYNTHETIC project\nint main(){return 23;}',languageId:'cpp'}]});},prefix);
   for(const locale of ['ru','en'])for(const id of ids){
    await goldLessonRoute(p,id,locale);
-   const source='// SYNTHETIC unsaved work '+id+'\nint main(){return 17;}';
+   let source='// SYNTHETIC work '+id+'\n#include <iostream>\nint main(){std::cout<<"modal\\n";return 0;}';
    await p.locator('#editor').fill(source);await p.locator('#editor').dispatchEvent('input');await p.locator('#stdin').fill('personal input\n');await p.locator('#stdin').dispatchEvent('input');
-   const before=await p.evaluate(async prefix=>{const {loadState}=await import(prefix+'/core/storage.js'),{listProjects}=await import(prefix+'/project-studio/project-store.js');return JSON.stringify({state:loadState(),projects:listProjects()});},prefix),hash=await p.evaluate(()=>location.hash);
-   const count=await p.locator('[data-gold-open-editor]').count();
-   for(let i=0;i<count;i++){
-    await p.locator('[data-gold-open-editor]').nth(i).focus();await p.keyboard.press('Enter');
-    assert.ok(await p.locator('#editor').evaluate(n=>document.activeElement===n));
-    assert.ok(await p.locator('.sandbox-block').evaluate(n=>n.getBoundingClientRect().top>=50&&n.getBoundingClientRect().top<innerHeight));
-    assert.equal(await p.evaluate(()=>location.hash),hash);assert.equal(await p.locator('#editor').inputValue(),source);actions++;
-    assert.deepEqual(semantic(await p.evaluate(async prefix=>{const {loadState}=await import(prefix+'/core/storage.js'),{listProjects}=await import(prefix+'/project-studio/project-store.js');return JSON.stringify({state:loadState(),projects:listProjects()});},prefix)),semantic(before));
+   const hash=await p.evaluate(()=>location.hash),count=await p.locator('[data-gold-open-editor]').count();
+   for(const width of [1366,390])for(let i=0;i<count;i++){
+    await p.setViewportSize({width,height:900});
+    const button=p.locator('[data-gold-open-editor]').nth(i);await button.scrollIntoViewIfNeeded();await button.focus();
+    await p.evaluate(()=>{window.__goldOriginalEditor=document.querySelector('#editor');});
+    const position=await p.evaluate(()=>({x:scrollX,y:scrollY})),before=await snapshot();
+    await p.keyboard.press('Enter');const dialog=p.locator('.gold-work-dialog');await dialog.waitFor({state:'visible'});
+    assert.equal(await p.locator('#editor').count(),1);assert.equal(await p.locator('#stdin').count(),1);
+    assert.ok(await p.locator('#editor').evaluate(n=>document.activeElement===n&&n===window.__goldOriginalEditor));
+    assert.equal(await p.locator('#editor').inputValue(),source);assert.equal(await p.evaluate(()=>location.hash),hash);
+    const task=dialog.locator('[data-gold-work-panel="task"]'),editor=dialog.locator('[data-gold-work-panel="editor"]');
+    if(width===390){
+     const taskTab=dialog.locator('[data-gold-work-tab="task"]'),editorTab=dialog.locator('[data-gold-work-tab="editor"]');
+     assert.equal(await task.isVisible(),false);assert.ok(await editor.isVisible());await editorTab.focus();await p.keyboard.press('Home');
+     assert.ok(await task.isVisible());assert.equal(await editor.isVisible(),false);assert.equal(await taskTab.getAttribute('aria-selected'),'true');
+     await p.keyboard.press('ArrowRight');assert.ok(await editor.isVisible());assert.equal(await task.isVisible(),false);
+    }else{assert.ok(await task.isVisible());assert.ok(await editor.isVisible());assert.equal(await dialog.locator('.gold-work-tabs').isVisible(),false);}
+    assert.ok(await dialog.evaluate(n=>n.scrollWidth<=n.clientWidth+1));
+    // Native modal сохраняет focus внутри и делает остальной урок недоступным.
+    await p.locator('#completeLesson').evaluate(n=>n.focus());assert.ok(await dialog.evaluate(n=>n.contains(document.activeElement)));
+    if(actualRuns===0){
+     for(const probeWidth of widths){await p.setViewportSize({width:probeWidth,height:900});await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));assert.ok(await dialog.evaluate(n=>n.scrollWidth<=n.clientWidth+1));assert.equal(await dialog.locator('.gold-work-tabs').isVisible(),probeWidth<=900);}
+     await p.setViewportSize({width,height:900});
+     await dialog.locator('#runCode').click();await p.waitForFunction(()=>!document.querySelector('#runCode')?.disabled&&(/Код завершения:/.test(document.querySelector('#output')?.textContent||'')||document.querySelector('#output.error-output,#output.provider-limit-output')),{},{timeout:300000});
+     const output=await dialog.locator('#output').textContent();assert.ok(output.startsWith('modal\n'),output);assert.ok(output.includes('Код завершения: 0'),output);actualRuns++;
+     source+='\n// SYNTHETIC edit inside the work window';await dialog.locator('#editor').fill(source);await dialog.locator('#editor').dispatchEvent('input');
+    }
+    if(id==='cpp.property-testing-benchmarks'&&locale==='ru'&&i===count-1){
+     await p.screenshot({path:path.join(out,'work-window-'+width+'.png')});
+     if(width===390){await dialog.locator('[data-gold-work-tab="task"]').click();await p.screenshot({path:path.join(out,'work-task-390.png')});await dialog.locator('[data-gold-work-tab="editor"]').click();}
+    }
+    const afterEdit=await snapshot();
+    if(width===390){
+     await dialog.locator('[data-gold-work-tab="task"]').click();await task.locator('.gold-cases').first().scrollIntoViewIfNeeded();const taskY=await task.evaluate(n=>n.scrollTop);
+     await dialog.locator('[data-gold-work-tab="editor"]').click();await dialog.locator('[data-gold-work-tab="task"]').click();assert.equal(await task.evaluate(n=>n.scrollTop),taskY);
+     await dialog.locator('[data-gold-work-tab="editor"]').click();
+    }
+    if(actions%2===0)await dialog.locator('[data-gold-work-close]').click();else await p.keyboard.press('Escape');
+    await dialog.waitFor({state:'detached'});assert.ok(await button.evaluate(n=>document.activeElement===n));
+    assert.ok(await p.evaluate(pos=>Math.abs(scrollX-pos.x)<=1&&Math.abs(scrollY-pos.y)<=2,position));
+    assert.ok(await p.locator('#editor').evaluate(n=>n===window.__goldOriginalEditor));
+    assert.equal(await p.locator('#editor').inputValue(),source);assert.equal(await p.locator('#stdin').inputValue(),'personal input\n');
+    assert.deepEqual(semantic(await snapshot()),semantic(afterEdit));
+    if(actions>0)assert.deepEqual(semantic(afterEdit),semantic(before));actions++;
    }
-   await p.locator('[data-gold-laboratory] a[href="#view=code-studio"]').click();await p.locator('[data-code-studio-home]').waitFor();
+   const before=await snapshot();await p.locator('[data-gold-laboratory] a[href="#view=code-studio"]').click();await p.locator('[data-code-studio-home]').waitFor();
    await p.locator('[data-cs-action="new"]').click();assert.ok(await p.locator('[data-cs-new]').isVisible());
-   await p.goBack();await p.locator('[data-gold-lesson="'+id+'"]').waitFor();
-   assert.equal(await p.locator('#editor').inputValue(),source);assert.equal(await p.locator('#stdin').inputValue(),'personal input\n');
-   const after=await p.evaluate(async prefix=>{const {loadState}=await import(prefix+'/core/storage.js'),{listProjects}=await import(prefix+'/project-studio/project-store.js');return JSON.stringify({state:loadState(),projects:listProjects()});},prefix);
-   assert.deepEqual(semantic(after),semantic(before));
+   await p.goBack();await p.locator('[data-gold-lesson="'+id+'"]').waitFor();assert.equal(await p.locator('#editor').inputValue(),source);assert.deepEqual(semantic(await snapshot()),semantic(before));
   }
-  return{lessons:ids.length,locales:2,editorActions:actions,studioNavigation:8,projectsExact:true,sourceAndProgressExact:true,transientExclusions:['state.updatedAt','lesson.workspace.revision']};
+  await p.locator('[data-gold-open-editor]').first().click();await p.locator('.gold-work-dialog').waitFor();await p.evaluate(()=>{location.hash='#view=home'});await p.locator('.visual-home').waitFor();assert.equal(await p.locator('.gold-work-dialog').count(),0);assert.notEqual(await p.evaluate(()=>getComputedStyle(document.documentElement).overflowY),'hidden');
+  await goldLessonRoute(p,ids.at(-1),'en');await p.locator('[data-gold-open-editor]').first().click();await p.locator('.gold-work-dialog').waitFor();
+  await p.locator('.gold-work-dialog').evaluate(n=>n.closest('.lesson').remove());await p.waitForFunction(()=>!document.querySelector('.gold-work-dialog'));assert.notEqual(await p.evaluate(()=>getComputedStyle(document.documentElement).overflowY),'hidden');
+  return{lessons:ids.length,locales:2,widths:[1366,390],workWindowOpenClose:actions,actualCppRuns:actualRuns,editorNodeNotCloned:true,scrollAndFocusReturn:true,nativeModalInert:true,projectsExact:true,sourceAndProgressExact:true,transientExclusions:['state.updatedAt','lesson.workspace.revision']};
  });
  assert.deepEqual(fixture.errors,[]);assert.equal(fixture.requests.filter(r=>r.path.startsWith('/api/')&&r.method!=='GET').length,0);
 }catch(e){fatal={message:e.message,stack:e.stack};console.error(e);await p.screenshot({path:path.join(out,'FAILURE.png')}).catch(()=>{});}
