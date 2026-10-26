@@ -12,7 +12,7 @@ export const M4_PUBLICATION=Object.freeze({
  version:'0.1.7-alpha.2.4.6-ui1a.10.8-test.1',generation:'ui1a-cpp-gold-module4-test1-20261026'
 });
 export const M4_UX_PUBLICATION=Object.freeze({
- accepted:'d574e669bb0f512e5d7280ea388354d798ed0e4b',checked:'d574e669bb0f512e5d7280ea388354d798ed0e4b',
+ accepted:'a0af8b8c6de2d045cf691d25442be31e3264ee96',checked:'a0af8b8c6de2d045cf691d25442be31e3264ee96',
  base:'3005c4319290b845339f03e8777584e8af88c8e8',old:'0.1.7-alpha.2.4.6-ui1a.10.8-test.1',
  version:'0.1.7-alpha.2.4.6-ui1a.10.8-test.2',generation:'ui1a-cpp-gold-module4-test2-20261026',ux:true
 });
@@ -28,12 +28,12 @@ const tree=(ref,...paths)=>git('ls-tree','-rz',ref,'--',...paths).toString().spl
 
 export function expectedM4PublicationMetadata(P=M4_PUBLICATION){
  if(P.ux){
-  const notes='Тестовая публикация C++ Module 4: компактные раскрывающиеся контрольные случаи и переходы к Code Studio во всех Gold-уроках M1–4. Учебные задания, код и сохранённый прогресс не меняются. Официальный релиз не создаётся.';
+  const notes='Тестовая публикация C++ Module 4: компактные контрольные случаи и рабочее окно с заданием и Code Studio во всех Gold-уроках M1–4. На телефоне доступны вкладки; закрытие возвращает к месту в уроке. Учебные задания и сохранённый прогресс не меняются. Официальный релиз не создаётся.';
   const v=committed(P.base,'version.json');Object.assign(v,{version:P.version,build:'cpp-gold-module4-test2-20261026',date:'2026-10-26',notes});
   Object.assign(v.releaseCandidate,{assetGeneration:P.generation,baseline:P.base,pwaMigration:'M4 test.2: точный upgrade/rollback к опубликованному test.1',formalGate05:'UI patch: автоматическая приёмка; новая публикация и LIVE проверяются отдельно',releaseReady:false,ownerPublicationAuthorized:false});
   const c=committed(P.base,'release-candidate.json');c.retainedPublicGenerations=[...new Set([...c.retainedPublicGenerations,c.assetGeneration])];
   Object.assign(c,{version:P.version,assetGeneration:P.generation,baseCommit:P.base,status:'ТЕСТОВАЯ ПОПРАВКА UX M4 / LIVE PENDING',description:notes,formalGate05:v.releaseCandidate.formalGate05});
-  c.publication={kind:'owner-authorized-production-test',module:'cpp-module-4',sourceCommit:P.accepted,checkedCommit:P.checked,rollbackCommit:P.base,sourceAcceptance:'M4 test.1 опубликован; владелец подтвердил работу на ПК/телефоне и сообщил замечание 07. UX patch: автоматическая проверка M1–4; новый личный LIVE ещё не подтверждён.',officialRelease:false};
+  c.publication={kind:'owner-authorized-production-test',module:'cpp-module-4',sourceCommit:P.accepted,checkedCommit:P.checked,rollbackCommit:P.base,sourceAcceptance:'M4 test.1 работает на ПК/телефоне; замечания 07 исправляются. Рабочее окно: 92 RU/EN объекта, 6 ширин, 32 возврата и реальный C++ внутри окна проверены автоматически. Новый личный LIVE ещё не подтверждён.',officialRelease:false};
   const project=committed(P.base,'project.json');Object.assign(project,{version:P.version,releaseName:'C++ Gold Module 4 — тестовая публикация 2, практикумы'});
   return{candidate:c,version:v,project};
  }
@@ -62,15 +62,17 @@ export async function verifyM4Publication({rebuild=false,writeEvidence=true}={})
  for(const locale of ['ru','en']){const f='courses/cpp/data/lessons.'+locale+'.json',old=committed(P.base,f);assert.deepEqual((await json(f)).lessons.slice(0,old.lessons.length),old.lessons);}
  git('diff','--exit-code',P.base,'--','core/storage.js','core/account-storage.js','core/identity.js','core/migrations','sync','sandbox','project-studio','server-access','cloudflare','pwa');
  const roots=['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa','server-access','cloudflare'];
- const source=tree(P.accepted,...roots),versionPaths=['core/app.js','core/shell-presentation.js'];
+ const source=tree(P.accepted,...roots),versionPaths=['core/app.js','core/shell-presentation.js'],acceptedVersion=committed(P.accepted,'version.json').version;
  const presentationPatchHashes=[];
  if(P.ux){
-  const patch=git('diff','--name-only',P.base,P.accepted,'--',...roots).toString().trim().split('\n').filter(Boolean);
+  const patch=git('diff','--name-only',P.base,P.accepted,'--',...roots,...versionPaths.map(f=>':(exclude)'+f)).toString().trim().split('\n').filter(Boolean);
   assert.deepEqual(patch.sort(),['core/academy-gold-presentation.js','styles/academy-gold.css']);
+  assert.ok([P.old,P.version].includes(acceptedVersion));
+  for(const file of versionPaths)assert.deepEqual(git('show',P.accepted+':'+file),Buffer.from(git('show',P.base+':'+file).toString().replaceAll(P.old,acceptedVersion)),'Только версия в принятом app/shell: '+file);
   for(const file of patch)presentationPatchHashes.push({file,sha256:hash(git('show',P.accepted+':'+file))});
  }
  for(const item of source){const actual=await read(item.file);if(versionPaths.includes(item.file)){
-  const before=git('show',P.accepted+':'+item.file).toString();assert.ok(before.includes(P.old),item.file);assert.deepEqual(actual,Buffer.from(before.replaceAll(P.old,P.version)),item.file);
+  const before=git('show',P.accepted+':'+item.file).toString();assert.ok(before.includes(acceptedVersion),item.file);assert.deepEqual(actual,Buffer.from(before.replaceAll(acceptedVersion,P.version)),item.file);
  }else assert.equal(blob(actual),item.sha,'Принятый source изменён: '+item.file);}
  git('diff','--exit-code',P.accepted,'--',...roots,...versionPaths.map(f=>':(exclude)'+f));
  assert.equal(git('ls-files','--others','--exclude-standard','--',...roots).toString().trim(),'','Новый source вне принятого SHA');
