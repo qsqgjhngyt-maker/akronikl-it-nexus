@@ -1,7 +1,7 @@
 name: Akronikl — ядро и UI, без публикации
 on:
   push:
-    branches: [feature/akronikl-0-2-ui-integration-20261026]
+    branches: [feature/akronikl-0-2-ui-integration-20261026, feature/akronikl-0-2-readiness-gate-20261026]
 permissions:
   contents: read
 jobs:
@@ -25,12 +25,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --test tests/akronikl-core.test.mjs tests/akronikl-knowledge.test.mjs tests/akronikl-security.test.mjs tests/akronikl-ui.test.mjs | tee evidence-ak02-ci/core-ui.tap
+          node --test tests/akronikl-core.test.mjs tests/akronikl-knowledge.test.mjs tests/akronikl-security.test.mjs tests/akronikl-ui.test.mjs tests/akronikl-ui-readiness.test.mjs tests/akronikl-ui-lifecycle.test.mjs | tee evidence-ak02-ci/core-ui.tap
           node --test tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/platform-lazy-imports.test.mjs | tee evidence-ak02-ci/startup.tap
           node tests/auth-bootstrap-check.mjs | tee evidence-ak02-ci/bootstrap.txt
           node tests/account-storage-isolation-check.mjs | tee evidence-ak02-ci/account.txt
           node tests/module-import-smoke-check.mjs | tee evidence-ak02-ci/imports.txt
           node tools/build-akronikl-knowledge.mjs --check | tee evidence-ak02-ci/knowledge.json
+          sha256sum akronikl/context.js akronikl/core/context.js akronikl/ui/* core/app.js core/bootstrap.js pwa/offline-entry.js tests/akronikl-ui*.mjs > evidence-ak02-ci/SHA256SUMS.txt
       - name: Сохранить протоколы, не публиковать приложение
         if: always()
         uses: actions/upload-artifact@v4
