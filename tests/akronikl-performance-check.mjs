@@ -19,9 +19,9 @@ async function preferences(context){await context.addInitScript(()=>{
  window.__ak02LongTasks=[];try{new PerformanceObserver(list=>{for(const e of list.getEntries())window.__ak02LongTasks.push(e.duration)}).observe({type:'longtask',buffered:true})}catch{}
 });}
 async function hashMetric(page,hash,selector){return page.evaluate(({hash,selector})=>new Promise((resolve,reject)=>{
- const start=performance.now();let finishing=false;
+ const start=performance.now(),previous=document.querySelector(selector);let finishing=false;
  const timer=setTimeout(()=>{observer.disconnect();reject(Error('PERF_ROUTE_TIMEOUT'))},20000);
- const inspect=()=>{if(!finishing&&document.querySelector(selector)&&location.hash===hash&&!document.querySelector('#boot-status')){finishing=true;requestAnimationFrame(()=>requestAnimationFrame(()=>{clearTimeout(timer);observer.disconnect();resolve(performance.now()-start)}))}};
+ const inspect=()=>{if(!finishing&&document.querySelector(selector)&&document.querySelector(selector)!==previous&&location.hash===hash&&!document.querySelector('#boot-status')){finishing=true;requestAnimationFrame(()=>requestAnimationFrame(()=>{clearTimeout(timer);observer.disconnect();resolve(performance.now()-start)}))}};
  const observer=new MutationObserver(inspect);observer.observe(document.body,{childList:true,subtree:true,attributes:true});location.hash=hash;
 }),{hash,selector});}
 async function uiMetric(page,kind){return page.evaluate(kind=>new Promise((resolve,reject)=>{

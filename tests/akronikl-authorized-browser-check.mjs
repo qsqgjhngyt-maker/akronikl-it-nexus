@@ -43,6 +43,7 @@ try{
  });
  await enroll(page,f.invitation);f.enableControl();await signOut(page);await page.goto(origin+'/');
  await check('Нажатие входа проходит виртуальный WebAuthn и настоящий серверный proof',async()=>{
+  await page.locator('[data-status]').filter({hasText:'Вход ключом доступа:'}).waitFor();
   await page.locator('[data-login]').click();await appReady(page);
   const c=(await context.cookies()).find(c=>c.name==='__Host-nexus_session');assert.ok(c?.httpOnly&&c.secure&&c.sameSite==='Strict');
   assert.equal(await page.evaluate(()=>document.cookie.includes('__Host-nexus_session')),false);
