@@ -1,5 +1,7 @@
 # C++ Module 5 — M5-0, аудит до Gold-authoring
 
+> Исторический снимок первоначального M5-0: PARTIAL на043cb31/e758fff. Новая подтверждённая фиксация26.10.2026: оба P1 CLOSED, повтор M5-0/M1–4/NEXUS-PERF-01 AUTOMATED PASS на7dfc9d7, CI40276100805 SUCCESS7/7. См. `CPP_GOLD_MODULE5_P1_CLOSURE_RU.md` и новый MASTER HANDOFF. Нижеследующие отказы сохраняются как evidence предыдущего состояния.
+
 26.10.2026, Asia/Krasnoyarsk. **STATUS: PARTIAL. Аудит M5-0 завершён; полный Module 5 NOT_ADMITTED.** Два P1 открыты. Это аудит возможностей и зависимостей, не готовые Gold-уроки и не публикация. Рабочая ветка `feature/academy-gold-standard-cpp-module-5`; main/production/release не менять. Проверенный changeset `043cb31dbf87c3e425088698e4246eb85df600fe`; последующая фиксация отчёта меняет только документы.
 
 ## База и область
