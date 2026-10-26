@@ -124,8 +124,19 @@ try{
   await open();await panel().getByRole('button',{name:'Показать контекст',exact:true}).click();await panel().getByText('Фрагмент кода не включён.',{exact:true}).waitFor();
   assert.equal(await panel().locator('pre').count(),0);await page.keyboard.press('Escape');
  });
- await check('Выделение и поиск не меняют ciphertext, ревизию или учебный прогресс',async()=>{
-  const before=await vaultFingerprint();await preview('A');await search();await page.keyboard.press('Escape');
+ await check('После штатного сохранения выделения панель не меняет ciphertext, ревизию или прогресс',async()=>{
+  const previous=(await vaultFingerprint()).find(row=>row.id===copies.a).revision;
+  await preview('A');
+  // Code Studio сохраняет view-state по select. Это действие редактора,
+  // не запись помощника. Ждём реальный commit перед read-only baseline.
+  await page.waitForFunction(async({id,previous})=>{
+   const db=await new Promise((ok,no)=>{const r=indexedDB.open('nexus-offline-workspaces-v1');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+   try{const row=await new Promise((ok,no)=>{const r=db.transaction('vaults').objectStore('vaults').get(id);r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});return row.revision>previous}
+   finally{db.close()}
+  },{id:copies.a,previous});await saved();
+  const before=await vaultFingerprint();
+  await panel().getByRole('button',{name:'Показать контекст',exact:true}).click();await panel().locator('pre').waitFor();
+  await search();await page.keyboard.press('Escape');
   assert.deepEqual(await vaultFingerprint(),before);assert.deepEqual(await validateSaved('a',source('A')),{code:true,progress:true,projects:1});
  });
  await check('Приватная панель не переполняется на 390/1366 CSS px',async()=>{
@@ -137,7 +148,7 @@ try{
   await preview('A');await panel().locator('input[type=checkbox]').uncheck();assert.equal(await panel().locator('pre').count(),0);await page.keyboard.press('Escape');
  });
  await check('Переключение файла закрывает старый контекст',async()=>{
-  await preview('A');await page.locator('#editor').evaluate(e=>e.__nexusCodeStudio.workspace.setActiveFile('helper.cpp'));
+  await preview('A');await page.locator('#editor').evaluate(e=>e.__nexusCodeStudio.switchFile('helper.cpp'));
   await panel().waitFor({state:'detached'});await saved();assert.equal(await page.locator('#editor').inputValue(),'SELECTED_HELPER_A');
   await page.locator('[data-open-file="main.cpp"]').first().click();await saved();
  });
