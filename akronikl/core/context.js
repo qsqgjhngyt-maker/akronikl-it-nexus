@@ -1,6 +1,6 @@
 import { SCHEMA_VERSION, LIMITS, record, field, id, locale, text, safePath, freeze, normalizeInclude, list, fail } from './contracts.js';
 
-const VIEWS = new Set(['home', 'academy', 'programming', 'code-studio', 'projects', 'project-studio', 'lesson', 'practicum']);
+const VIEWS = new Set(['home', 'akronikl', 'academy', 'programming', 'code-studio', 'projects', 'project-studio', 'lesson', 'practicum']);
 
 export function normalizeRoute(raw = {}) {
   record(raw, 'INVALID_ROUTE');

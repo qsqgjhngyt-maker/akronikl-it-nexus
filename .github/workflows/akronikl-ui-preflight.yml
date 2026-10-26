@@ -1,0 +1,33 @@
+name: Akronikl — ядро и UI, без публикации
+on:
+  push:
+    branches: [feature/akronikl-0-2-ui-integration-20261026]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Ядро, источники и UI-контракты
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-ak02-ci
+          node --test tests/akronikl-core.test.mjs tests/akronikl-knowledge.test.mjs tests/akronikl-security.test.mjs tests/akronikl-ui.test.mjs | tee evidence-ak02-ci/core-ui.tap
+          node --test tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/platform-lazy-imports.test.mjs | tee evidence-ak02-ci/startup.tap
+          node tests/auth-bootstrap-check.mjs | tee evidence-ak02-ci/bootstrap.txt
+          node tests/account-storage-isolation-check.mjs | tee evidence-ak02-ci/account.txt
+          node tests/module-import-smoke-check.mjs | tee evidence-ak02-ci/imports.txt
+          node tools/build-akronikl-knowledge.mjs --check | tee evidence-ak02-ci/knowledge.json
+      - name: Сохранить протоколы, не публиковать приложение
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akronikl-ui-preflight
+          path: evidence-ak02-ci
+          retention-days: 30
