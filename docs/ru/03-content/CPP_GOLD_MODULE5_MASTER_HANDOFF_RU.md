@@ -1,3 +1,17 @@
+# Приёмка 05/07 — финальный source20b3d1b
+
+26.10.2026. STATUS:PASS — AUTOMATED PASS. Source `20b3d1bb9f8245cea4b12b6ffd2ee0592751e36b`, CI40319377951 SUCCESS 8/8 и 40319377958 SUCCESS 3/3. Редакторское ревью ассистентом, оба P2 CLOSED. Отчёт `CPP_GOLD_MODULE5_ACCEPTANCE_0507_RU.md`, ledger `CPP_MODULE5_ACCEPTANCE_0507_EVIDENCE.json`, готовая маршрутизация `CPP_MODULE5_ACCEPTANCE_0507_ROUTING_RU.md`.
+
+WHAT WAS PROVED:9 Gold тем/18 RUEN; все 144 вопроса /288 отправок;108 расположений;220 переходов; практика 110 RUEN объектов. 48 C++ пакетов/172 native+WASM случая (167 выполнений и 5 ожидаемых compile-failure в каждом механизме), M1–4 ещё 768 случаев. 37 runtime admission,11 boundary, Offline36. Старые 50 строк/legacy40, code/stdin/quiz/VFS/projects/checkpoints сохранены на SYNTHETIC данных. Отрицательный контроль проекта: reference PASS12/exit0; commit-before-throw mutant две FAIL/exit1. NEXUS-PERF-01 PASS в измеренной области:75/590791 B; outline2/27476 B; Home vendor requests0. Все 11 artifacts SHA256 проверены.
+
+WHAT REMAINS:отдельное решение о тестовой публикации M5 с новым immutable generation, rollback и проверкой владельца на ПК/телефоне. QA build под старым generation публиковать нельзя. Main `065606a788198045cadf250fea663246ddbb2d56`, production …10.8-test.2 и официальные релизы/теги не изменялись. Нового LIVE/FULL LIVE PASS, физической проверки и образовательного эксперимента нет. M6 не начинался.
+
+ROUTING CHECK:03→05/07→00;02/01/04 информационно. Есть материал для диплома: source/contract parity, Offline и отрицательный контроль, границы измерений; не приписывать эффективность обучения. NEXT RECOMMENDED BRANCH:00. RECOMMENDED MODE:Высокий; публикация — Очень высокий. Последующий commit только документальный.
+
+---
+
+## История до закрытия приёмки 05/07
+
 # MASTER HANDOFF: C++ Module 5 — M5-1 AUTOMATED PASS
 
 26.10.2026. **STATUS: PASS — AUTOMATED PASS.** Проверенный source `b80fbfa4682e4cbaffa723650b1652d66b3b1112`. [CI 40298291111](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/actions/runs/40298291111) — SUCCESS — 8/8. Последующий commit отчётов только документальный. Main `065606a788198045cadf250fea663246ddbb2d56`, production …10.8-test.2 и официальные релизы не менялись.
