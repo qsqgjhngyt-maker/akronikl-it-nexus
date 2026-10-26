@@ -16,7 +16,7 @@ const prefix='/'+build.prefix, manifest=JSON.parse(await readFile(path.join(fron
 const ru=manifest.indexes.find(x=>x.locale==='ru');
 const allowed=new Set(build.files.map(r=>'/'+r.file));
 const profile=await mkdtemp(path.join(tmpdir(),'ak02-public-gate-'));
-let available=true, context=null, page=null, browserVersion=null, phase='prepare', fatal=null;
+let available=true, context=null, page=null, browserVersion=null, phase='prepare', fatal=null, restarted=false, verifiedWorker=false;
 const checks=[],network=[],errors=[],measurements=[];
 const mime=file=>({'.js':'text/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.md':'text/markdown'}[path.extname(file)]||'text/html');
 const server=http.createServer(async(req,res)=>{
@@ -88,7 +88,7 @@ try {
   context=await launch();await newPage();await page.goto(origin+'/__ak02__/prepare.html');
   await check('Подготовлено полное staging-поколение с настоящим SW',async()=>{
     const status=await page.evaluate(async prefix=>{const {ensureVerifiedRuntime}=await import(prefix+'pwa/client.js');return ensureVerifiedRuntime()},prefix);
-    assert.equal(status.publicReady,true);assert.equal(status.generation,build.assetGeneration);
+    assert.equal(status.publicReady,true);assert.equal(status.generation,build.assetGeneration);verifiedWorker=true;
     await setPublicLanguage('ru');await page.evaluate(()=>localStorage.setItem('synthetic-ak02-preservation','UNCHANGED'));
   });
   phase='online-public';
@@ -104,7 +104,7 @@ try {
     assert.equal(await panel().locator('input[type=checkbox]').isDisabled(),true);await page.keyboard.press('Escape');
   });
   await context.close();context=null;available=false;phase='cold-offline';
-  context=await launch(profile,true);await newPage();
+  context=await launch(profile,true);restarted=true;await newPage();
   await check('После закрытия процесса корневой адрес открывается из SW без сети',async()=>{
     const response=await page.goto(origin+'/#view=akronikl');assert.equal(response.fromServiceWorker(),true);await ready();
     assert.equal(await page.evaluate(()=>navigator.onLine),false);
@@ -118,7 +118,9 @@ try {
   await check('Холодная перезагрузка EN не использует RU индекс',async()=>{
     await setPublicLanguage('en');await page.goto(origin+'/offline.html#view=akronikl');await ready();await open();await search('pointers');
     assert.ok(await panel().getByRole('button',{name:'Show context',exact:true}).isVisible());assert.match(await panel().locator('article').first().textContent(),/pointer/i);
-    await page.keyboard.press('Escape');await setPublicLanguage('ru');await page.goto(origin+'/offline.html#view=akronikl');await ready();
+    await page.keyboard.press('Escape');await setPublicLanguage('ru');
+    // Тот же URL с hash может быть same-document navigation. Нужен новый документ.
+    await page.reload();await ready();assert.equal(await page.locator('html').getAttribute('lang'),'ru');
   });
   await check('Смена маршрута закрывает окно и позволяет открыть его заново',async()=>{
     await open();await search();await page.evaluate(()=>location.hash='#view=academy');await ready();assert.equal(await panel().count(),0);
@@ -159,5 +161,5 @@ try {
   await page?.screenshot({path:path.join(out,'FAILURE.png')}).catch(()=>{});
 } finally {
   await context?.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));
-  await writeFile(path.join(out,'OFFLINE_BROWSER.json'),JSON.stringify({status:fatal?'FAIL':'PASS',sourceCommit:process.env.NEXUS_SOURCE_COMMIT||null,generation:build.assetGeneration,checks,fatal,errors,measurements,network,browser:browserVersion,node:process.version,realServiceWorker:true,nativeESM:true,browserProcessRestarted:true,scope:'built-public-offline-shell',fullAuthenticatedNexusE2E:false,physicalDevices:false,productionLive:false,realCredentials:false,productionMutations:0,profile},null,2)+'\n');
+  await writeFile(path.join(out,'OFFLINE_BROWSER.json'),JSON.stringify({status:fatal?'FAIL':'PASS',sourceCommit:process.env.NEXUS_SOURCE_COMMIT||null,generation:build.assetGeneration,checks,fatal,errors,measurements,network,browser:browserVersion,node:process.version,realServiceWorker:verifiedWorker,nativeESM:true,browserProcessRestarted:restarted,scope:'built-public-offline-shell',fullAuthenticatedNexusE2E:false,physicalDevices:false,productionLive:false,realCredentials:false,productionMutations:0,profile},null,2)+'\n');
 }
