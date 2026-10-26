@@ -11,9 +11,10 @@ export async function m5RuntimeScope(){
  for(const p of s.productPaths){const b=await readFile(p.file);assert.equal(hash(b),p.sha256,p.file);assert.equal(b.length,p.bytes);if(p.beforeSha256)assert.equal(hash(git('show',M5_BASE+':'+p.file)),p.beforeSha256,p.file);else assert.equal(p.file,'sandbox/cpp-exceptions.js');}
  const content=await(await import('./academy-gold-module5-authoring-scope.mjs')).m5AuthoringScope();
  const permitted=[...M5_RUNTIME_PATHS,...(content?.productPatchPaths||[])];
+ const permittedFile=f=>permitted.includes(f)||(content?.m5Publication===true&&permitted.some(p=>f.startsWith(p+'/')));
  const roots=['core','courses','pwa','sandbox','project-studio','sync','server-access','cloudflare','releases','entry-assets','styles','effects','locales','assets','collaboration','feedback','akronikl','release-candidate.json','version.json','project.json','index.html','nexus-shell.html','offline.html','manifest.webmanifest','service-worker.js','BUILD_MANIFEST.json'];
  git('diff','--exit-code',M5_BASE,'--',...roots,...permitted.map(p=>':(exclude)'+p));
- for(const f of git('ls-files','--others','--exclude-standard','--',...roots).toString().trim().split('\n').filter(Boolean))assert.ok(permitted.includes(f),'Unapproved product file: '+f);
+ for(const f of git('ls-files','--others','--exclude-standard','--',...roots).toString().trim().split('\n').filter(Boolean))assert.ok(permittedFile(f),'Unapproved product file: '+f);
  git('diff','--exit-code',s.assetCommit,'--','runtime-packs');assert.equal(git('ls-files','--others','--exclude-standard','--','runtime-packs').toString().trim(),'');
  const previous=await import('data:text/javascript;base64,'+git('show',M5_BASE+':pwa/runtime-manifest.js').toString('base64'));
  assert.deepEqual(RUNTIME_RESOURCES.slice(0,7),previous.RUNTIME_RESOURCES);assert.equal(RUNTIME_RESOURCES.length,8);assert.equal(RUNTIME_GRAPH_ID,hash(JSON.stringify(RUNTIME_RESOURCES)));

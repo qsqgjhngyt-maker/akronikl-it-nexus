@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises
 export const M5_AUTHORING_BASE='a733f68a8dead4a3a747f248685b9e352883a00d';
 const git=(...args)=>execFileSync('git',args,{maxBuffer:64000000}),hash=b=>createHash('sha256').update(b).digest('hex');
 export async function m5AuthoringScope(){
+ const publicationMeta=JSON.parse(await readFile('release-candidate.json'));if(publicationMeta.publication?.module==='cpp-module-5')return(await import('./academy-gold-module5-publication.mjs')).verifyM5Publication();
  let s;try{s=JSON.parse(await readFile('docs/ru/03-content/CPP_MODULE5_AUTHORING_SCOPE.json'))}catch(e){if(e.code==='ENOENT')return null;throw e}
  const spec=JSON.parse(await readFile('docs/ru/03-content/CPP_MODULE5_AUTHORING.json'));
  assert.equal(s.baseCommit,M5_AUTHORING_BASE);assert.equal(s.stage,'M5-1');assert.equal(spec.programVersion,'cpp-gold-m5-v1');assert.equal(spec.lessons.length,9);assert.equal(spec.lessons.filter(l=>l.added).length,6);

@@ -51,6 +51,7 @@ export function expectedM4PublicationMetadata(P=M4_PUBLICATION){
 }
 
 export async function verifyM4Publication({rebuild=false,writeEvidence=true}={}){
+ if((await json('release-candidate.json')).publication?.module==='cpp-module-5')return(await import('./academy-gold-module5-publication.mjs')).verifyM5Publication({rebuild,writeEvidence});
  // Исторический M4 package продолжает проверяться по прежним bytes. Новый M5
  // runtime отдельно ограничен точным allowlist/SHA256; опубликованным не считается.
  const m5=await(await import('./academy-gold-module5-scope.mjs')).m5RuntimeScope(),runtimePaths=m5?.productPatchPaths||[],runtimeExcludes=runtimePaths.map(f=>':(exclude)'+f);

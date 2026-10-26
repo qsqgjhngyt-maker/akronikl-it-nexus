@@ -1,0 +1,431 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.oop",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.templates-concepts",
+  "locale": "en",
+  "sessions": 4,
+  "learningOrder": 8,
+  "prerequisiteIds": [
+    "cpp.value-copy-move",
+    "cpp.iterators-algorithms-lambdas"
+  ],
+  "sourceRefs": [
+    "CPP20-CLASS",
+    "CPP20-CONSTRAINTS"
+  ],
+  "title": "Templates and constrained generalization",
+  "lead": "Generalize an operation for two types and separate type requirements from value bounds.",
+  "why": "If one operation is needed for int and long, duplication hides common structure and risks inconsistent fixes. A function template describes a family of functions parameterized by type. template<class T> introduces T for use in parameters and the body. This does not erase types: the compiler forms concrete specializations.",
+  "objectives": [
+    "Deduce T for both smaller calls.",
+    "Analyze conflicting int and long arguments.",
+    "Check sum on an empty span.",
+    "Compile the separate double rejection.",
+    "Justify laboratory arithmetic bounds."
+  ],
+  "prerequisites": [
+    "Modules 1–4: input, functions, sequences, ownership, testing and multifile builds.",
+    "Direct prerequisites: cpp.value-copy-move, cpp.iterators-algorithms-lambdas"
+  ],
+  "concepts": [
+    {
+      "term": "Function template",
+      "definition": "A family of functions parameterized by types or values."
+    },
+    {
+      "term": "Class template",
+      "definition": "A definition of a family of concrete types through parameters."
+    },
+    {
+      "term": "Instantiation",
+      "definition": "Forming a required specialization from a template definition."
+    },
+    {
+      "term": "Deduction",
+      "definition": "Inferring template arguments from call conditions."
+    },
+    {
+      "term": "Concept",
+      "definition": "A named compile-time constraint on template arguments."
+    },
+    {
+      "term": "Std integral",
+      "definition": "A standard constraint recognizing integer types."
+    },
+    {
+      "term": "Span",
+      "definition": "A nonowning view of a contiguous sequence."
+    },
+    {
+      "term": "Value contract",
+      "definition": "Data restrictions not proven by a concept alone."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Generalizing from two cases",
+      "paragraphs": [
+        "If one operation is needed for int and long, duplication hides common structure and risks inconsistent fixes. A function template describes a family of functions parameterized by type. template<class T> introduces T for use in parameters and the body. This does not erase types: the compiler forms concrete specializations.",
+        "Solve the task for one type first and list its required operations. smaller compares two values and returns one by value. It needs comparison and result copying, not inheritance from a common base. The integral concept intentionally narrows this example to integer types, giving the teaching contract a clear domain."
+      ]
+    },
+    {
+      "title": "Deducing a type argument",
+      "paragraphs": [
+        "For smaller(3,7), both arguments deduce T as int. For smaller(9L,4L), they deduce long. In smaller(3,7L), the deductions conflict; the compiler need not invent an arbitrary common type. Align types explicitly or provide a template argument while understanding the conversion. Do not conceal data loss with a forced cast.",
+        "Template parameters and ordinary function parameters act at different stages. T is chosen during compilation, while numeric values can arrive at runtime. Different values of n alone do not require a template. An ordinary function suffices when types and operations are unchanged. Generalization should remove meaningful duplication rather than merely add syntax."
+      ]
+    },
+    {
+      "title": "A class template",
+      "paragraphs": [
+        "Buffer<T> defines a family of classes, each storing vector<T>. Buffer<int> and Buffer<long long> are different concrete types. The vector is an established owner, so we do not reimplement memory management. append and sum provide a small interface around the chosen operation.",
+        "Instantiation checks constraints and the required code. An error can appear at a specialization's use rather than near the original definition. Read the diagnostic from the call towards the first violated requirement. Do not edit an arbitrary library file to fix an unfamiliar specialization error; identify the type supplied by your code first."
+      ]
+    },
+    {
+      "title": "Concepts express requirements",
+      "paragraphs": [
+        "In C++20 a concept is a named constraint on a template argument. std::integral from concepts recognizes integer types. template<std::integral T> constrains selection before the body is checked. The negative example rejects smaller(1.0,2.0) because of that constraint, although comparing doubles is otherwise meaningful.",
+        "A concept checks expressible compile-time requirements rather than proving every mathematical property. integral does not prevent sum overflow or promise that input values will be small. Value ranges, complexity and side effects remain documented and tested contracts. Successful compilation does not establish correctness for every value of a type."
+      ]
+    },
+    {
+      "title": "A range without ownership",
+      "paragraphs": [
+        "The laboratory sum accepts std::span<const T>, a sized sequence without ownership transfer or permission to modify elements. The call explicitly constructs a span from a vector and specifies T. This separates element type from its owner. The owner must outlive the call because a span does not extend lifetime.",
+        "Deducing T from a span parameter need not first convert a vector into a span. The example therefore writes sum<int>(std::span<const int>{a}), exposing both boundaries. A range-based interface is a possible later generalization, but would distract from template fundamentals here. First explain the owner and why reading the view is valid."
+      ]
+    },
+    {
+      "title": "The arithmetic contract boundary",
+      "paragraphs": [
+        "The laboratory limits size to twenty and each element to plus or minus one hundred. The absolute sum therefore cannot exceed two thousand and fits both int and long long. This argument uses value bounds and element count. The same template without those limits could overflow a signed type; integral alone does not prevent it.",
+        "For production summation choose a policy: wider accumulation, checked arithmetic or a documented precondition. Do not widen types without analysis, because even long long has limits. Separate the reusable algorithm from its concrete input contract, then check empty input, negative values and the largest permitted sum. These cases connect templates to earlier testing lessons."
+      ]
+    },
+    {
+      "title": "Definitions and builds",
+      "paragraphs": [
+        "A template definition generally needs to be available at the point of instantiation, so small definitions belong in a guarded header. An ordinary function defined in a header without suitable rules can violate the ODR, while templates have their own conditions for multiple definitions. Do not apply an everything-in-cpp rule indiscriminately.",
+        "The final project defines bounded in domain.hpp and ordinary Board methods in domain.cpp. Several translation units include the header; its guard prevents repeated inclusion within one unit. That does not replace linking rules. Do not include domain.cpp: translationUnits names separately compiled sources that are linked together."
+      ]
+    },
+    {
+      "title": "Evidence of the learning outcome",
+      "paragraphs": [
+        "The laboratory invokes one operation for int and long long and compares results on the same sequence. A separate negative double example must fail to compile. Save successful sources, inputs, results and a constraint explanation. Keep the intentionally invalid call out of the file that must execute successfully.",
+        "Compare the template with duplicated functions and a virtual interface. For summing homogeneous values, a template expresses compile-time structure; a user-selected runtime strategy needs a different mechanism. The next lesson combines these tools in a maintainable application and checks that architectural changes preserve observable behaviour."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "model",
+      "title": "Worked model",
+      "purpose": "Generalize an operation for two types and separate type requirements from value bounds.",
+      "code": "#include <iostream>\n#include <concepts>\ntemplate<std::integral T> T smaller(T a,T b){return b<a?b:a;}\nint main(){std::cout<<smaller(3,7)<<' '<<smaller(9L,4L)<<'\\n';}\n",
+      "stdin": "",
+      "expectedStdout": "3 4\n",
+      "steps": [
+        "Arguments three and seven both deduce int.",
+        "L suffixes select long in the second invocation.",
+        "Both satisfy integral: output 3 4."
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "Contract boundary check",
+      "purpose": "Generalize an operation for two types and separate type requirements from value bounds.",
+      "code": "#include <iostream>\n#include <vector>\n#include <concepts>\ntemplate<std::integral T> class Buffer {std::vector<T> values_;public:\n void append(T x){values_.push_back(x);}T sum()const{T n{};for(T x:values_)n+=x;return n;}};\nint main(){Buffer<int> a;a.append(3);a.append(4);Buffer<long long> b;b.append(8);std::cout<<a.sum()<<' '<<b.sum()<<'\\n';}\n",
+      "stdin": "",
+      "expectedStdout": "7 8\n",
+      "steps": [
+        "Buffer<int> and Buffer<long long> are distinct types.",
+        "Their vectors own independent elements.",
+        "sum starts from zero and produces seven and eight."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Check sum on an empty span.",
+      "action": "Check sum on an empty span.",
+      "prediction": "First predict the result and state in writing.",
+      "verification": "The result is zero without dereferencing elements."
+    },
+    {
+      "title": "Compile the separate double rejection.",
+      "action": "Compile the separate double rejection.",
+      "prediction": "First predict the result and state in writing.",
+      "verification": "The cause is integral and the working program stays intact."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Yes; for every integral type.",
+      "cause": "An interface promise was confused with an implementation assumption.",
+      "fix": "No; value and count bounds are also needed."
+    },
+    {
+      "symptom": "Yes; after stdin input.",
+      "cause": "An interface promise was confused with an implementation assumption.",
+      "fix": "No; specialization is selected during compilation."
+    },
+    {
+      "symptom": "Yes; it deletes elements.",
+      "cause": "An interface promise was confused with an implementation assumption.",
+      "fix": "No; its owner must outlive the view's use."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Deduce T for both smaller calls.",
+      "criteria": "Obtain int and long and explain the literal suffix.",
+      "hint": "If one operation is needed for int and long, duplication hides common structure and risks inconsistent fixes. A function template describes a family of functions parameterized by type. template<class T> introduces T for use in parameters and the body. This does not erase types: the compiler forms concrete specializations."
+    },
+    {
+      "level": "basic",
+      "task": "Analyze conflicting int and long arguments.",
+      "criteria": "Do not assume an automatically chosen common T.",
+      "hint": "For smaller(3,7), both arguments deduce T as int. For smaller(9L,4L), they deduce long. In smaller(3,7L), the deductions conflict; the compiler need not invent an arbitrary common type. Align types explicitly or provide a template argument while understanding the conversion. Do not conceal data loss with a forced cast."
+    },
+    {
+      "level": "applied",
+      "task": "Check sum on an empty span.",
+      "criteria": "The result is zero without dereferencing elements.",
+      "hint": "Buffer<T> defines a family of classes, each storing vector<T>. Buffer<int> and Buffer<long long> are different concrete types. The vector is an established owner, so we do not reimplement memory management. append and sum provide a small interface around the chosen operation."
+    },
+    {
+      "level": "applied",
+      "task": "Compile the separate double rejection.",
+      "criteria": "The cause is integral and the working program stays intact.",
+      "hint": "In C++20 a concept is a named constraint on a template argument. std::integral from concepts recognizes integer types. template<std::integral T> constrains selection before the body is checked. The negative example rejects smaller(1.0,2.0) because of that constraint, although comparing doubles is otherwise meaningful."
+    },
+    {
+      "level": "transfer",
+      "task": "Justify laboratory arithmetic bounds.",
+      "criteria": "20×100=2000 fits both types.",
+      "hint": "The laboratory sum accepts std::span<const T>, a sized sequence without ownership transfer or permission to modify elements. The call explicitly constructs a span from a vector and specifies T. This separates element type from its owner. The owner must outlive the call because a span does not extend lifetime."
+    },
+    {
+      "level": "transfer",
+      "task": "Put bounded in a project header.",
+      "criteria": "Its definition is visible in each TU without including cpp files.",
+      "hint": "The laboratory limits size to twenty and each element to plus or minus one hundred. The absolute sum therefore cannot exceed two thousand and fits both int and long long. This argument uses value bounds and element count. The same template without those limits could overflow a signed type; integral alone does not prevent it."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Templates and constrained generalization",
+    "catalogGoal": "Generalize an operation for two types and separate type requirements from value bounds.",
+    "challenge": "Read n=0…20 and n integers in −100…100 with no trailing token. Implement template<std::integral T> T sum(std::span<const T>). Invoke it for vector<int> and its vector<long long> copy; print both sums. An empty sequence with n zero gives 0 0. Invalid input: invalid.",
+    "starterCode": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\ntemplate<std::integral T> T sum(std::span<const T> values){ /* TODO: accumulate within documented bounds */ return T{}; }\nint main(){std::cout<<\"pending\\n\";}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\ntemplate<std::integral T> T sum(std::span<const T> values){T result{};for(T x:values)result+=x;return result;}\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}std::vector<int> a;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -100||x>100){std::cout<<\"invalid\\n\";return 0;}a.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n std::vector<long long> b(a.begin(),a.end());std::cout<<sum<int>(std::span<const int>{a})<<' '<<sum<long long>(std::span<const long long>{b})<<'\\n';}\n",
+    "cases": [
+      {
+        "stdin": "0",
+        "stdout": "0 0\n"
+      },
+      {
+        "stdin": "3 1 2 3",
+        "stdout": "6 6\n"
+      },
+      {
+        "stdin": "2 -100 100",
+        "stdout": "0 0\n"
+      },
+      {
+        "stdin": "1 -100",
+        "stdout": "-100 -100\n"
+      },
+      {
+        "stdin": "20 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 ",
+        "stdout": "2000 2000\n"
+      },
+      {
+        "stdin": "-1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "21",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 101",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "2 1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 x",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Restate the contract and distinguish malformed input from domain rejection.",
+      "Deduce T for both smaller calls.",
+      "Analyze conflicting int and long arguments.",
+      "Open Task and Code Studio: the task stays alongside the editor on desktop or in a phone tab. Save your own code before replacing an example.",
+      "Complete the starter; pending marks unfinished work rather than a correct result.",
+      "Run every reference case and record actual stdout and exit status.",
+      "Justify laboratory arithmetic bounds.",
+      "Save source, a verification table and an invariant explanation; add one independent case."
+    ],
+    "rubric": [
+      "Obtain int and long and explain the literal suffix.",
+      "Do not assume an automatically chosen common T.",
+      "The result is zero without dereferencing elements.",
+      "The cause is integral and the working program stays intact.",
+      "Include source, actual results, an independent case and limits of the conclusion."
+    ],
+    "artifact": "A personal project containing source and a verification log.",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Does integral prove absence of overflow?",
+      "answers": [
+        "No; value and count bounds are also needed.",
+        "Yes; for every integral type.",
+        "Yes; except long long."
+      ],
+      "correctIndex": 0,
+      "explanation": "integral constrains the type, not element count or magnitude. Even valid ints can overflow without bounds; this laboratory is safe because 20×100=2000 fits."
+    },
+    {
+      "question": "Does T change during one execution?",
+      "answers": [
+        "Yes; after stdin input.",
+        "No; specialization is selected during compilation.",
+        "Yes; after std::move."
+      ],
+      "correctIndex": 1,
+      "explanation": "T belongs to a specialization formed at compile time. Input values may change during execution, but stdin input or std::move cannot change that specialization's selected type."
+    },
+    {
+      "question": "Does span own its elements?",
+      "answers": [
+        "Yes; it deletes elements.",
+        "Yes; it copies the whole vector.",
+        "No; its owner must outlive the view's use."
+      ],
+      "correctIndex": 2,
+      "explanation": "span stores a view rather than an owning collection. It neither copies the vector nor extends its lifetime, so access requires the owner's corresponding elements to remain alive."
+    },
+    {
+      "question": "Why include a negative double example?",
+      "answers": [
+        "To check the stated type constraint.",
+        "To prove successful double execution.",
+        "To accelerate the runtime."
+      ],
+      "correctIndex": 0,
+      "explanation": "Comparing doubles is meaningful, but this example intentionally requires integral. Expected compilation failure checks that constraint and must remain separate from the file intended to execute."
+    },
+    {
+      "question": "Why put a template definition in a header?",
+      "answers": [
+        "Headers execute automatically.",
+        "It must be available at instantiation.",
+        "To avoid include guards."
+      ],
+      "correctIndex": 1,
+      "explanation": "Ordinary implicit instantiation needs an available template definition. A header makes it visible to the required TUs; its include guard prevents repeated inclusion within one TU without replacing ODR rules."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "Why do vector and string help the rule of zero?",
+      "answers": [
+        "They coordinate their own resources and special operations.",
+        "They forbid all changes.",
+        "They always use shared_ptr."
+      ],
+      "correctIndex": 0,
+      "explanation": "The class's special operations compose those of its members. Established components manage ownership, avoiding manual coordination of copied addresses and raw-memory release."
+    },
+    {
+      "question": "May end be dereferenced? ",
+      "answers": [
+        "No",
+        "Always",
+        "Only in an empty vector"
+      ],
+      "correctIndex": 0,
+      "explanation": "end denotes the position past the last element rather than an element. It may be compared, but dereferencing requires a position within the valid range."
+    },
+    {
+      "question": "Why use 0LL? ",
+      "answers": [
+        "To sort",
+        "To choose a long long accumulator",
+        "To grow the vector"
+      ],
+      "correctIndex": 1,
+      "explanation": "The initial value determines accumulate's accumulator type. 0LL selects long long, but even that wider type has limits and does not replace sum-range analysis."
+    }
+  ],
+  "reflection": [
+    "Compile the separate double rejection.",
+    "Justify laboratory arithmetic bounds.",
+    "Put bounded in a project header."
+  ],
+  "bridge": "Next: Design, testability and refactoring",
+  "visualization": {
+    "kind": "journey",
+    "title": "Templates and constrained generalization",
+    "description": "A stepwise textual model; actual execution happens in Code Studio.",
+    "steps": [
+      {
+        "title": "Generalizing from two cases",
+        "description": "If one operation is needed for int and long, duplication hides common structure and risks inconsistent fixes. A function template describes a family of functions parameterized by type. template<class T> introduces T for use in parameters and the body. This does not erase types: the compiler forms concrete specializations."
+      },
+      {
+        "title": "Deducing a type argument",
+        "description": "For smaller(3,7), both arguments deduce T as int. For smaller(9L,4L), they deduce long. In smaller(3,7L), the deductions conflict; the compiler need not invent an arbitrary common type. Align types explicitly or provide a template argument while understanding the conversion. Do not conceal data loss with a forced cast."
+      },
+      {
+        "title": "A class template",
+        "description": "Buffer<T> defines a family of classes, each storing vector<T>. Buffer<int> and Buffer<long long> are different concrete types. The vector is an established owner, so we do not reimplement memory management. append and sum provide a small interface around the chosen operation."
+      },
+      {
+        "title": "A range without ownership",
+        "description": "The laboratory sum accepts std::span<const T>, a sized sequence without ownership transfer or permission to modify elements. The call explicitly constructs a span from a vector and specifies T. This separates element type from its owner. The owner must outlive the call because a span does not extend lifetime."
+      },
+      {
+        "title": "Definitions and builds",
+        "description": "A template definition generally needs to be available at the point of instantiation, so small definitions belong in a guarded header. An ordinary function defined in a header without suitable rules can violate the ODR, while templates have their own conditions for multiple definitions. Do not apply an everything-in-cpp rule indiscriminately."
+      }
+    ]
+  },
+  "legacyQuiz": {
+    "question": "Does integral prove absence of overflow?",
+    "answers": [
+      "No; value and count bounds are also needed.",
+      "Yes; for every integral type.",
+      "Yes; except long long."
+    ],
+    "correctIndex": 0
+  },
+  "diagnosticExamples": [
+    {
+      "id": "compile-contract",
+      "title": "Expected compile failure",
+      "code": "#include <concepts>\ntemplate<std::integral T> T smaller(T a,T b){return b<a?b:a;}\nint main(){return smaller(1.0,2.0);}\n",
+      "expectation": "compile-error",
+      "diagnostic": "constraints",
+      "explanation": "This is a separate negative control. Keep it out of the working main.cpp."
+    }
+  ]
+}

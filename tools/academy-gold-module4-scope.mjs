@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises
 export const M4_BASE='03c8a7ba1306c59f35b83ea5650ae73b71988272';
 const git=(...a)=>execFileSync('git',a,{maxBuffer:64*1024*1024}),sha=b=>createHash('sha256').update(b).digest('hex');
 export async function m4AuthoringScope(){
- const candidateMeta=JSON.parse(await readFile('release-candidate.json'));if(candidateMeta.publication?.module==='cpp-module-4')return(await import('./academy-gold-module4-publication.mjs')).verifyM4Publication();
+ const candidateMeta=JSON.parse(await readFile('release-candidate.json'));if(['cpp-module-4','cpp-module-5'].includes(candidateMeta.publication?.module))return(await import('./academy-gold-module4-publication.mjs')).verifyM4Publication();
  const s=JSON.parse(await readFile('docs/ru/03-content/CPP_MODULE4_AUTHORING_SCOPE.json')),spec=JSON.parse(await readFile('docs/ru/03-content/CPP_MODULE4_AUTHORING.json'));
  assert.equal(s.baseCommit,M4_BASE);assert.equal(s.stage,'M4-1');assert.equal(spec.programVersion,'cpp-gold-m4-v1');assert.equal(spec.lessons.length,8);assert.equal(spec.lessons.filter(l=>l.added).length,5);
  assert.equal(process.env.GITHUB_REF_NAME||git('branch','--show-current').toString().trim(),'feature/academy-gold-standard-cpp-module-4');

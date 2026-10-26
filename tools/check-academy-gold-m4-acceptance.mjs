@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import path from 'node:path';
 import {m4AuthoringScope} from './academy-gold-module4-scope.mjs';
 import {proveM4EditorialScope,M4_EDITORIAL_FILE} from './academy-gold-m4-editorial-scope.mjs';
+if(JSON.parse(await readFile('release-candidate.json')).publication?.module==='cpp-module-5'){await import('./check-academy-gold-m5-acceptance.mjs');process.exit(0)}
 const source='a3e34881ad67c1d4d35605b1c500441f8e0e9f9a',probe=process.argv.includes('--editorial-probe');
 let scope,editorialCorrection;
 try{scope=await m4AuthoringScope();if(scope.m4Publication){if(probe)throw Error('Публикация требует отдельного полного runtime gate');editorialCorrection={status:'EXACT_ACCEPTED_PUBLICATION',acceptedSource:scope.acceptedSource,checkedSource:scope.checkedSource,newWasmExecution:false};}else editorialCorrection=await proveM4EditorialScope();}
