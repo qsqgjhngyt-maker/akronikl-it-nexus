@@ -58,7 +58,7 @@ try{
  });
  await check('Входной вопрос, ответ с объяснением и копирование сохраняют личный редактор и старый quiz',async()=>{
   await goldLessonRoute(local,GOLD_STRUCTURED_LESSONS[0],'ru');const q=local.locator('[data-gold-readiness] [data-gold-question]').first();await q.locator('input[value="1"]').check();await q.locator('[data-gold-check]').click();assert.equal(await q.locator('[data-gold-feedback]').getAttribute('data-result'),'correct');
-  const example=local.locator('.gold-example details').first();await example.locator('summary').click();await example.locator('[data-gold-copy]').click();assert.equal(await local.locator('#editor').inputValue(),personal(GOLD_STRUCTURED_LESSONS[0]));assert.ok(await local.locator('input[name="quiz"][value="2"]').isChecked());
+  const example=local.locator('.gold-example details').first();await example.locator(':scope > summary').click();await example.locator(':scope > [data-gold-copy]').click();assert.equal(await local.locator('#editor').inputValue(),personal(GOLD_STRUCTURED_LESSONS[0]));assert.ok(await local.locator('input[name="quiz"][value="2"]').isChecked());
  });
  await check('40/45 и исторические 40/40 видны online и в холодной локальной копии',async()=>{for(const p of [online.page,local]){await p.evaluate(()=>{location.hash='#course=cpp'});await p.locator('[data-legacy-completion]').waitFor();assert.ok((await p.locator('[data-legacy-completion]').textContent()).includes('40/40'));assert.ok((await p.locator('body').textContent()).includes('40/45'));}});
  await check('Синтетический проект и все 18 состояний сохранены в зашифрованной копии',async()=>{
