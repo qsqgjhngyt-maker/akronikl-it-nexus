@@ -199,4 +199,10 @@ export function createNexusBootstrap({
 let production;
 export function startNexus(){production??=createNexusBootstrap();return production.startNexus()}
 export function readVerifiedSession(fetchImpl=globalThis.fetch){return createNexusBootstrap({fetchImpl}).readVerifiedSession()}
-if(typeof document!=='undefined')startNexus().catch(()=>{lockAccountStorage();globalThis.location.replace(ENTRY_URL)});
+// readVerifiedSession импортируется также без query из offline-center. Такой импорт
+// не является второй точкой запуска: module map различает URL с ?v и без него.
+// Полномочия не расширяются: startNexus по-прежнему требует серверный proof.
+export function isBootstrapDocumentEntry(documentRef,moduleURL){
+ try{return typeof moduleURL==='string'&&Array.from(documentRef?.querySelectorAll?.('script[type="module"][src]')||[]).some(script=>script.src===moduleURL)}catch{return false}
+}
+if(typeof document!=='undefined'&&isBootstrapDocumentEntry(document,import.meta.url))startNexus().catch(()=>{lockAccountStorage();globalThis.location.replace(ENTRY_URL)});
