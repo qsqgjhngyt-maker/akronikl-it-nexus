@@ -1,5 +1,7 @@
 # C++ Module 4: приёмка 05/07 и NEXUS-PERF-01
 
+Обновление 26.10.2026: P2 M4-05-P2-01 закрыт в 9d62de9b7a95da78733e354bdf2fe77a6ba1d724; новая приёмка CI40248534471 SUCCESS. См. CPP_GOLD_MODULE4_P2_CLOSURE_RU.md. Ниже сохранён исторический акт точного a3e3488.
+
 26.10.2026, Asia/Krasnoyarsk. STATUS: PASS — AUTOMATED PASS в feature, с одним неблокирующим замечанием P2. Публикация и FULL LIVE PASS Module 4 не выполнялись.
 
 Принят точный продукт `a3e34881ad67c1d4d35605b1c500441f8e0e9f9a`. Тесты приёмки сохранены в `6d763de5bd54a3370568f26ce2deb4db292e57c6`; после a3e3488 код продукта не менялся. Main остаётся `03c8a7ba1306c59f35b83ea5650ae73b71988272`. Новые коммиты относятся только к feature/academy-gold-standard-cpp-module-4. Production, version/generation, официальный Release и tag не менялись.

@@ -1,4 +1,12 @@
-# MASTER HANDOFF: C++ Module 4, приёмка 05/07
+# MASTER HANDOFF: C++ Module 4, P2 закрыт
+
+26.10.2026. STATUS: PASS — AUTOMATED PASS; M4-05-P2-01 CLOSED. Текущий product source 9d62de9b7a95da78733e354bdf2fe77a6ba1d724, feature/academy-gold-standard-cpp-module-4. Это более новая подтверждённая фиксация относительно акта a3e3488 с OPEN P2.
+
+Исправлена одна EN фраза о value-initialization, +26 B. Все 35 исполняемых пакетов/190 случаев и остальные product bytes неизменны. Новый native CI40248534462 SUCCESS (190 случаев, noEH/UBSan); editorial/invariants PASS, runtime SKIPPED по точному proof. Прежний WASM CI40224917193 повторно сопоставлен по source/bundle/case hashes и файловым свойствам, новый WASM запуск не заявлен. Приёмка CI40248534471 SUCCESS: 184 перехода, 96 responsive сочетаний, 128 вопросов, cold Offline и synthetic preservation PASS. NEXUS-PERF-01 75/590301, Home2/27551 B, caps сохранены.
+
+Открытых P0/P1/P2 в выполненной области нет. Main03c8a7ba1306c59f35b83ea5650ae73b71988272, production и Release/tag не менялись. Реальные данные владельца и physical/LIVE M4 не проверялись. Следующий приоритет: решение владельца о тестовой публикации; разрешения сейчас нет. Отчёт CPP_GOLD_MODULE4_P2_CLOSURE_RU.md, evidence одноимённый JSON. Routing00/05/07 и материал04 подготовлены, не отправлены; sources read-only сохранены.
+
+## Предыдущая фиксация: история a3e3488
 
 26.10.2026. Эта подтверждённая feature-фиксация дополняет MASTER от 30.09.2026 и M4-1 addendum; synced sources не меняются.
 
