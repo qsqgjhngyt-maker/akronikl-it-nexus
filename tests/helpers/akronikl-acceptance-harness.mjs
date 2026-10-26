@@ -71,8 +71,10 @@ export async function acceptanceHarness(buildPaths){
   const f=variants[variant].f,now=new Date().toISOString(),invitation='npi_'+randomBytes(32).toString('base64url');
   f.db.prepare('INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?,?,\'active\',?,?)').run(id,'Synthetic B',now,now);
   f.db.prepare("INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?,?,'bootstrap',?)").run(createHash('sha256').update(invitation).digest('hex'),id,new Date(Date.now()+600000).toISOString());
-  f.db.prepare("INSERT INTO nexus_alpha_members(account_id,state,created_at,updated_at) VALUES(?,'active',?,?)").run(id,now,now);
-  return invitation;
+  const expires=new Date(Date.now()+600000).toISOString();
+  f.db.prepare("INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at) VALUES(?,'invited',?,?,?)").run(id,expires,now,now);
+  f.db.prepare("INSERT INTO nexus_admin_invites(token_hash,account_id,kind,created_by,state,created_at) VALUES(?,?,'admin','synthetic-owner','ready',?)").run(createHash('sha256').update(invitation).digest('hex'),id,now);
+  return {token:invitation,profile:{username:'synthetic.ak02.b',displayName:'Synthetic B'}};
  }
  return {variants,requests,unexpected,serverErrors,launch,seedSecondAccount,
   choose(name){assert.ok(variants[name]);variant=name;},get current(){return variants[variant]},
@@ -89,7 +91,8 @@ export async function virtualKey(page){
 export async function enroll(page,invitation){
  await page.goto(origin+'/');
  await virtualKey(page);
- await page.evaluate(async token=>{await(await import('/account/access/passkey-client.js')).register(token)},invitation);
+ const enrollment=typeof invitation==='string'?{token:invitation,profile:{}}:invitation;
+ await page.evaluate(async({token,profile})=>{await(await import('/account/access/passkey-client.js')).register(token,profile)},enrollment);
 }
 export async function signOut(page){await page.evaluate(async()=>{await(await import('/account/access/passkey-client.js')).logout()});}
 export async function appReady(page){await page.waitForFunction(()=>!!document.querySelector('#appShell')&&!document.querySelector('#boot-status'));}
