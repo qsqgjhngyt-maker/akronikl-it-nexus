@@ -136,6 +136,7 @@ function openGoldWorkspace(root,button,gold){
  const taskPanel=dialog.querySelector('[data-gold-work-panel="task"]'),editorPanel=dialog.querySelector('[data-gold-work-panel="editor"]'),copy=task.cloneNode(true);
  copy.removeAttribute('id');for(const n of copy.querySelectorAll('[id]'))n.removeAttribute('id');
  for(const n of copy.querySelectorAll('.gold-workspace-callout'))n.remove();
+ editorPanel.lang=workspace.closest('[lang]')?.getAttribute('lang')||document.documentElement.lang||lang;
  taskPanel.append(copy);workspace.before(marker);editorPanel.append(workspace);host.append(dialog);
  bindAcademyGold(taskPanel,gold);
  const media=matchMedia('(max-width:900px)'),tabs=[...dialog.querySelectorAll('[data-gold-work-tab]')],panels=[taskPanel,editorPanel];let active='editor';

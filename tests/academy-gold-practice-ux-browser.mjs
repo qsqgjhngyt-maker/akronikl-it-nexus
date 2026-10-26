@@ -76,12 +76,13 @@ try{
     await p.setViewportSize({width,height:900});
     const button=p.locator('[data-gold-open-editor]').nth(i);await button.scrollIntoViewIfNeeded();await button.focus();
     await p.evaluate(()=>{window.__goldOriginalEditor=document.querySelector('#editor');});
-    const position=await p.evaluate(()=>({x:scrollX,y:scrollY})),before=await snapshot();
+    const position=await p.evaluate(()=>({x:scrollX,y:scrollY})),before=await snapshot(),editorLanguage=await p.locator('#editor').evaluate(n=>n.closest('[lang]')?.getAttribute('lang')||document.documentElement.lang);
     await p.keyboard.press('Enter');const dialog=p.locator('.gold-work-dialog');await dialog.waitFor({state:'visible'});
     assert.equal(await p.locator('#editor').count(),1);assert.equal(await p.locator('#stdin').count(),1);
     assert.ok(await p.locator('#editor').evaluate(n=>document.activeElement===n&&n===window.__goldOriginalEditor));
     assert.equal(await p.locator('#editor').inputValue(),source);assert.equal(await p.evaluate(()=>location.hash),hash);
     const task=dialog.locator('[data-gold-work-panel="task"]'),editor=dialog.locator('[data-gold-work-panel="editor"]');
+    assert.equal(await editor.getAttribute('lang'),editorLanguage);assert.equal(await task.getAttribute('lang'),locale);
     if(width===390){
      const taskTab=dialog.locator('[data-gold-work-tab="task"]'),editorTab=dialog.locator('[data-gold-work-tab="editor"]');
      assert.equal(await task.isVisible(),false);assert.ok(await editor.isVisible());await editorTab.focus();await p.keyboard.press('Home');
