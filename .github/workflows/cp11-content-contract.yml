@@ -52,7 +52,7 @@ jobs:
           mkdir -p cp11-evidence
           git diff --name-status "$BASE_SHA" "$HEAD_SHA" | tee cp11-evidence/00_DIFF_NAME_STATUS.txt
           if node -e "process.exit(['cpp-module-3','cpp-module-4'].includes(JSON.parse(require('fs').readFileSync('release-candidate.json')).publication?.module)?0:1)"; then
-            NEXUS_M3_EVIDENCE=cp11-evidence node --input-type=module -e "const {verifyM3Publication}=await import('./tools/academy-gold-module3-publication.mjs');await verifyM3Publication();console.log('M3_EXACT_ACCEPTED_SOURCE_AND_PUBLICATION_PASS')"
+            NEXUS_M3_EVIDENCE=cp11-evidence NEXUS_M4_PUBLICATION_EVIDENCE=cp11-evidence node --input-type=module -e "const c=JSON.parse((await import('node:fs')).readFileSync('release-candidate.json'));if(c.publication.module==='cpp-module-4'){await(await import('./tools/academy-gold-module4-publication.mjs')).verifyM4Publication()}else{await(await import('./tools/academy-gold-module3-publication.mjs')).verifyM3Publication()}console.log('EXACT_ACCEPTED_SOURCE_AND_PUBLICATION_PASS')"
           else
           bad=0
           while IFS= read -r file; do
