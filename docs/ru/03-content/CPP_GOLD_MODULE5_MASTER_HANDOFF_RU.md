@@ -1,3 +1,17 @@
+# Локальная подготовка тестовой публикации C++ Module 5
+
+26.10.2026. STATUS:PARTIAL — LOCAL AUTOMATED PASS / OWNER APPROVAL PENDING. Принятый source20b3d1b и его05/07 PASS сохранены. Из документального `e72a2988eab19575a39131eac1a67a4524d40400` отдельно собран `0.1.7-alpha.2.4.6-ui1a.10.9-test.1` / `ui1a-cpp-gold-module5-test1-20261026`. Это не новая публикация или новый CI.
+
+WHAT WAS PROVED:два одинаковых build; исторический frontend rollback побайтно; четыре ZIP FULL/PATCH/rollback с повторной проверкой каждого файла; source/config/CI rollback с сохранением4146 immutable файлов и отдельным tooling pin; Git patch roundtrip. PWA M4→M5→M4→M5 PASS5/5,56 записей/шесть будущих ID, ciphertext, проекты/checkpoint и VFS сохранены. UI18/108,144/288; runtime/preservation36 и настоящий cold Offline throw/catch stdout7 PASS. Реальные владелец/Account/Cloud не использовались.
+
+WHAT REMAINS:отдельное разрешение main/production; интеграция M5 publication mode и CI фактического publication commit в feature; финальная привязка source rollback к нему; merge/deploy и личная/физическая приёмка. Source overlay пока только в отдельной копии. Main `065606a788198045cadf250fea663246ddbb2d56`, production …10.8-test.2 и официальные релизы/теги не менялись. Предыдущий source CI11/11 не выдавать за CI новой версии. M6 не начинался.
+
+ROUTING CHECK:05→00;02/01/07/04. Отчёт `CPP_GOLD_MODULE5_PREPUBLICATION_RU.md`; ledger `CPP_MODULE5_PREPUBLICATION_EVIDENCE.json`; полный текст `CPP_MODULE5_PREPUBLICATION_ROUTING_RU.md`. Локальные пакеты:outputs/academy-gold-m5-prepublication-20261026/delivery. NEXT RECOMMENDED BRANCH:00→05 после решения владельца. RECOMMENDED MODE:Очень высокий.
+
+---
+
+## История до локальной подготовки публикации
+
 # Приёмка 05/07 — финальный source20b3d1b
 
 26.10.2026. STATUS:PASS — AUTOMATED PASS. Source `20b3d1bb9f8245cea4b12b6ffd2ee0592751e36b`, CI40319377951 SUCCESS 8/8 и 40319377958 SUCCESS 3/3. Редакторское ревью ассистентом, оба P2 CLOSED. Отчёт `CPP_GOLD_MODULE5_ACCEPTANCE_0507_RU.md`, ledger `CPP_MODULE5_ACCEPTANCE_0507_EVIDENCE.json`, готовая маршрутизация `CPP_MODULE5_ACCEPTANCE_0507_ROUTING_RU.md`.
