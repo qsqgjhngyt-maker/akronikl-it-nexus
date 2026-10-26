@@ -38,16 +38,17 @@ export function createLazyAssistantBridge(options) {
   const {root,windowRef=globalThis.window,documentRef=globalThis.document}=options;
   let bridge=null,pending=null,generation=0,disposed=false;
   const control=new AbortController();
+  const ready=()=>{try{return options.readReady?options.readReady()===true:true}catch{return false}};
   const invalidate=()=>{generation++;bridge?.invalidate()};
   const open=async trigger=>{
-    if(disposed||!root.isConnected)return;
+    if(disposed||!root.isConnected||!ready())return;
     if(bridge)return bridge.open(trigger);
     const ticket=generation,identity=options.readIdentity(),hash=windowRef.location.hash;
     const language=options.readLocale(),courseLanguage=options.readCourseLocale();
     try{
       pending??=import('./ui/bridge.js').catch(error=>{pending=null;throw error});
       const module=await pending;
-      if(disposed||ticket!==generation||!root.isConnected||options.readIdentity()!==identity||windowRef.location.hash!==hash||options.readLocale()!==language||options.readCourseLocale()!==courseLanguage)return;
+      if(disposed||ticket!==generation||!root.isConnected||!ready()||options.readIdentity()!==identity||windowRef.location.hash!==hash||options.readLocale()!==language||options.readCourseLocale()!==courseLanguage)return;
       bridge??=module.createAssistantBridge(options);control.abort();
       return bridge.open(trigger);
     }catch{
