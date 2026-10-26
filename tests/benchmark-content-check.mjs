@@ -8,8 +8,8 @@ const ids=['cpp.first-cpp-program','cpp.pointers-references-addresses','cpp.oop-
 const required=['whyItMatters','outcomes','prerequisites','quickUnderstand','fullTheory','glossary','inside','walkthrough','experiments','errors','practice','lab','knowledgeCheck','sandboxModel','skillGraph','summary','modernNotes','historicalContext'];
 function assert(value,message){if(!value)throw new Error(message)}
 function publicLessonCopy(l){const clone=structuredClone(l);delete clone.provenanceRef;delete clone.pdfPages;delete clone.pdfNotes;return JSON.stringify(clone)}
-assert(ru.lessons.length===(manifest.programVersion==='cpp-gold-m5-v1'?56:manifest.programVersion==='cpp-gold-m4-v1'?50:45) && ru.lessons.slice(0,40).every((l,i)=>l.legacyIndex===i),'RU keeps 40 historical lessons and appends five versioned additions');
-assert(en.lessons.length===(manifest.programVersion==='cpp-gold-m5-v1'?19:manifest.programVersion==='cpp-gold-m4-v1'?13:8) && en.lessons.slice(0,3).every(l=>ids.includes(l.id)),'EN retains three authored benchmarks and appends five additions');
+assert(ru.lessons.length===(manifest.programVersion==='cpp-gold-m4-v1'?50:45) && ru.lessons.slice(0,40).every((l,i)=>l.legacyIndex===i),'RU keeps 40 historical lessons and appends five versioned additions');
+assert(en.lessons.length===(manifest.programVersion==='cpp-gold-m4-v1'?13:8) && en.lessons.slice(0,3).every(l=>ids.includes(l.id)),'EN retains three authored benchmarks and appends five additions');
 for(const id of ids){
   const r=ru.lessons.find(x=>x.id===id),e=en.lessons.find(x=>x.id===id);
   assert(r&&e,`Benchmark ${id} must exist in RU and EN`);

@@ -8,7 +8,7 @@ import {CPP_LEGACY_LESSON_IDS} from '../core/storage.js';
 const json=async file=>JSON.parse(await readFile(file,'utf8'));
 const plan=await json('docs/ru/03-content/CPP_MODULE4_DEPENDENCIES.json'),curriculum=await json('courses/cpp/curriculum.json');
 assert.equal(plan.baseCommit,'03c8a7ba1306c59f35b83ea5650ae73b71988272');
-if(['cpp-gold-m4-v1','cpp-gold-m5-v1'].includes(curriculum.programVersion)){await import('./check-academy-gold-module4-authoring.mjs')}else{
+if(curriculum.programVersion==='cpp-gold-m4-v1'){await import('./check-academy-gold-module4-authoring.mjs')}else{
 assert.equal(curriculum.programVersion,plan.baseProgramVersion);assert.equal(curriculum.lessons.length,45);
 assert.equal(plan.topics.length,8);assert.equal(plan.targetLocaleObjects,16);assert.equal(plan.newProgressIdsAssigned,0);
 const old=plan.topics.filter(t=>t.stableId),additional=plan.topics.filter(t=>!t.stableId),section=curriculum.sections.find(s=>s.id===plan.moduleId);

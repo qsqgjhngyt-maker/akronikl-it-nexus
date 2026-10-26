@@ -24,7 +24,7 @@ permissions:
 jobs:
   acceptance:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 25
     env:
       NEXUS_FRONTEND_DIR: /tmp/nexus-m4-acceptance-build
       NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m4-acceptance-browser/node_modules/playwright/index.mjs
@@ -71,21 +71,11 @@ jobs:
       - name: 184 перехода из каталога, RU/EN, online и холодная Offline копия
         env:
           NEXUS_NATIVE_EVIDENCE: academy-gold-m4-acceptance/navigation
-        run: |
-          if [ "$(node -p "JSON.parse(require('fs').readFileSync('release-candidate.json')).publication.module")" = cpp-module-5 ]; then
-            node tests/academy-gold-m5-navigation-acceptance.mjs
-          else
-            node tests/academy-gold-m4-navigation-acceptance.mjs
-          fi
+        run: node tests/academy-gold-m4-navigation-acceptance.mjs
       - name: Восемь M4 уроков, 128 вопросов, словарь, клавиатура и шесть ширин
         env:
           NEXUS_NATIVE_EVIDENCE: academy-gold-m4-acceptance/ui
-        run: |
-          if [ "$(node -p "JSON.parse(require('fs').readFileSync('release-candidate.json')).publication.module")" = cpp-module-5 ]; then
-            node tests/academy-gold-m5-ui-acceptance.mjs
-          else
-            node tests/academy-gold-m4-ui-acceptance.mjs
-          fi
+        run: node tests/academy-gold-m4-ui-acceptance.mjs
       - name: Контрольные случаи всех 92 RU/EN объектов и переходы к Studio без потери работ
         env:
           NEXUS_GOLD_UX_EVIDENCE: academy-gold-m4-acceptance/practice-ui

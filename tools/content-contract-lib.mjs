@@ -150,7 +150,7 @@ export function validateContentContract(root='.'){
   assert(same(lessonIds,lessonSourceIds),'curriculum lesson IDs differ from RU lesson IDs',errors);
   assert(manifest.lessonCount===lessonIds.length&&manifest.practicumCount===practiceIds.length&&manifest.projectCount===projectIds.length,'manifest counts mismatch',errors);
   assert(curriculum.lessons.every((x,i)=>i<40?x.legacyIndex===i:x.legacyIndex===null),'legacy lesson indexes changed',errors);
-  if(curriculum.lessons.length!==40)assert(((curriculum.programVersion==='cpp-gold-m3-v1'&&curriculum.lessons.length===45)||(curriculum.programVersion==='cpp-gold-m4-v1'&&curriculum.lessons.length===50)||(curriculum.programVersion==='cpp-gold-m5-v1'&&curriculum.lessons.length===56))&&manifest.programVersion===curriculum.programVersion,'unversioned curriculum expansion',errors);
+  if(curriculum.lessons.length!==40)assert(((curriculum.programVersion==='cpp-gold-m3-v1'&&curriculum.lessons.length===45)||(curriculum.programVersion==='cpp-gold-m4-v1'&&curriculum.lessons.length===50))&&manifest.programVersion===curriculum.programVersion,'unversioned curriculum expansion',errors);
   const sectionSet=new Set(sectionIds);
   for(const l of curriculum.lessons)assert(sectionSet.has(l.sectionId),'missing section '+l.sectionId+' for '+l.id,errors);
   for(const s of curriculum.sections)for(const id of s.lessonIds)assert(lessonIds.includes(id),'section '+s.id+' references missing '+id,errors);

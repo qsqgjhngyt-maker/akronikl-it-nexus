@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {GOLD_LESSONS,GOLD_STRUCTURED_LESSONS,GOLD_OOP_LESSONS,goldLessonPath} from '../core/academy-gold-catalog.js';
+import {GOLD_LESSONS,GOLD_STRUCTURED_LESSONS,goldLessonPath} from '../core/academy-gold-catalog.js';
 import {createLearningViews} from '../core/learning-views.js';
 import {discoveryPageMarkup,orderedCppLessons,focusLearningSection} from '../core/nexus-learning-discovery.js';
 import {academyGoldMarkup} from '../core/academy-gold-presentation.js';
@@ -19,16 +19,14 @@ test('76 записей индекса согласованы с лаборат�
   assert.deepEqual(Object.keys(m).sort(),['goal','proof','stepCount','title']);
   if(locale==='en')assert.ok(!/[А-Яа-яЁё]/.test(JSON.stringify(m)));
  }
- // M5 adds nine bilingual index rows. This is fetched only with full course/labs,
- // never in the Home outline. Preserve the 40 KB baseline plus <=6 KB for M5.
- assert.ok(Buffer.byteLength(JSON.stringify(index))<40000+(GOLD_OOP_LESSONS.length===9?6000:0),'Bounded metadata, separate from the unchanged Home outline cap');
+ assert.ok(Buffer.byteLength(JSON.stringify(index))<40000,'Compact metadata, separate from Home outline');
 });
 test('RU/EN: 39 C++ labs, все18 M3, учебный порядок, без зависимости от посещения Gold',async()=>{
  for(const locale of ['ru','en']){
   const t=translator(await j('locales/'+locale+'/ui.json')),state={courses:{cpp:{lessons:{}}}},prefs={courseLocale:locale},views=createLearningViews({cpp:course,prefs,t,visualIcon:()=>'',loadState:()=>state,lessonState:()=>({}),progress:()=>({done:0,total:45,pct:0}),cppContinuation:()=>null});
   const render=()=>discoveryPageMarkup({kind:'labs',course,contentFor:views.lessonData,t,materialLocale:locale,locale});
   const before=render(),overview=views.overview();
-  assert.equal((before.match(/data-discovery-kind="lab"/g)||[]).length,GOLD_LESSONS.length+(GOLD_LESSONS.includes('cpp.oop-principles')?0:1));
+  assert.equal((before.match(/data-discovery-kind="lab"/g)||[]).length,GOLD_LESSONS.length+1);
   for(const id of GOLD_STRUCTURED_LESSONS){assert.ok(before.includes('data-discovery-item="'+id+'"'));assert.ok(overview.includes('#course=cpp&amp;lesson='+id+'&amp;focus=lab')||overview.includes('#course=cpp&lesson='+id+'&focus=lab'));}
   const positions=orderedCppLessons(course).filter(l=>GOLD_LESSONS.includes(l.id)).map(l=>before.indexOf('data-discovery-item="'+l.id+'"'));assert.deepEqual([...positions].sort((a,b)=>a-b),positions);
   course.goldLessons??={};course.goldLessons[locale]={};for(const id of GOLD_LESSONS)course.goldLessons[locale][id]=await j(goldLessonPath(id,locale));

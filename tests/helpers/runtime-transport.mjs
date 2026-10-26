@@ -18,5 +18,5 @@ export async function bindRuntimeTransport(context,{offline=()=>false}={}){
   if(offline()||!record||route.request().method()!=='GET')return route.abort('internetdisconnected');
   return route.fulfill({...record,status:200,headers:{'access-control-allow-origin':'*','cache-control':'public, max-age=31536000, immutable'}});
  });
- console.log('QA_TRANSPORT local SHA256-verified '+RUNTIME_RESOURCES.length+'-file Clang/WASI fixture; not CDN LIVE');
+ console.log('QA_TRANSPORT local SHA256-verified seven-file Clang/WASI fixture; not CDN LIVE');
 }

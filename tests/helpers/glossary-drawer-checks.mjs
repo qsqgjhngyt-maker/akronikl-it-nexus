@@ -45,11 +45,7 @@ export async function checkGlossaryDrawer(page,{cdp,probeTree=false}={}){
  assert.equal(await trigger.evaluate(n=>n===document.activeElement),true);
  const linked=page.locator('.term-link[data-term]').first();let termLink=false;
  if(await linked.count()){
-  // A term can be inside a collapsed lesson hint. Reveal that content before
-  // asking keyboard focus to reach its button; hidden controls cannot focus.
-  const term=await linked.getAttribute('data-term');
-  await linked.evaluate(n=>{for(let p=n.parentElement;p;p=p.parentElement)if(p.tagName==='DETAILS')p.open=true});
-  await linked.scrollIntoViewIfNeeded();await linked.focus();await page.keyboard.press('Enter');
+  const term=await linked.getAttribute('data-term');await linked.focus();await page.keyboard.press('Enter');
   assert.equal(await search.inputValue(),term);await page.keyboard.press('Escape');await closed();assert.equal(await linked.evaluate(n=>n===document.activeElement),true);termLink=true;
  }
  return {title,termLink,axProbe:probeTree,closedHiddenInert:true,focusAndKeyboard:true,search:true,headerAndFloatingTriggers:true,backdrop:true};

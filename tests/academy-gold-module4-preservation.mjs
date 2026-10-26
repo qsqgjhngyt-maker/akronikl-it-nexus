@@ -8,8 +8,8 @@ import {createLearningViews} from '../core/learning-views.js';
 class MemoryStorage{data=new Map();get length(){return this.data.size}key(i){return [...this.data.keys()][i]??null}getItem(k){return this.data.get(k)??null}setItem(k,v){this.data.set(k,String(v))}removeItem(k){this.data.delete(k)}}
 globalThis.localStorage=new MemoryStorage();globalThis.sessionStorage=new MemoryStorage();
 const account={accountId:'synthetic-m4-preservation',displayName:'SYNTHETIC',status:'active'};initializeAccountStorage({account,loginMethods:[],enrollmentAvailable:false});
-const curriculum=JSON.parse(await readFile('courses/cpp/curriculum.json')),ids=curriculum.lessons.slice(0,45).map(l=>l.id),legacy=[...CPP_LEGACY_LESSON_IDS],newIds=curriculum.lessons.slice(45,50).map(l=>l.id);
-const future=structuredClone(curriculum);future.lessons=future.lessons.slice(0,50);future.programVersion='cpp-gold-m4-v1';curriculum.lessons=curriculum.lessons.slice(0,45);curriculum.programVersion='cpp-gold-m3-v1';
+const curriculum=JSON.parse(await readFile('courses/cpp/curriculum.json')),ids=curriculum.lessons.slice(0,45).map(l=>l.id),legacy=[...CPP_LEGACY_LESSON_IDS],newIds=curriculum.lessons.slice(45).map(l=>l.id);
+const future=structuredClone(curriculum);curriculum.lessons=curriculum.lessons.slice(0,45);curriculum.programVersion='cpp-gold-m3-v1';
 const sample=id=>({completed:true,quiz:2,code:'// SYNTHETIC '+id,stdin:'17\n',note:'SYNTHETIC',workspace:{entryFile:'main.cpp',activeFile:'domain.hpp',files:[{path:'main.cpp',content:'// synthetic main'},{path:'domain.hpp',content:'// synthetic header'},{path:'data.txt',content:'1 2'}]},unknown:{preserve:true}});
 const checks=[],check=(name,fn)=>{fn();checks.push({name,status:'PASS'});console.log('PASS '+name)};
 for(const done of [0,23,40,45])check('Профиль '+done+'/45: хранение, patch и расчёт не теряют поля',()=>{
