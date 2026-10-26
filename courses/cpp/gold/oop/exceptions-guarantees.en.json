@@ -81,7 +81,7 @@
     {
       "title": "Stack unwinding and RAII",
       "paragraphs": [
-        "During handler search, fully constructed automatic objects in exited scopes are destroyed. This is stack unwinding. Guard increments active during construction and decrements it in its destructor. After throw the handler sees active zero: cleanup precedes entering catch. This is an actual exception path rather than an early return with similar output.",
+        "As control transfers from throw to a matching handler, fully constructed automatic objects in exited scopes are destroyed. This is stack unwinding. Guard increments active during construction and decrements it in its destructor. After throw the handler sees active zero: cleanup precedes entering catch. This is an actual exception path rather than an early return with similar output.",
         "If construction fails, the complete object's destructor is not invoked, but already constructed members are destroyed. Resources should therefore enter RAII ownership immediately. Throwing from a destructor during unwinding can cause terminate. The teaching owners use nonthrowing cleanup; recoverable export failures belong to an explicit operation before destruction."
       ]
     },
@@ -109,7 +109,7 @@
     {
       "title": "Runtime and honest results",
       "paragraphs": [
-        "This lesson needs a runtime with genuine standard exception support. The feature uses Clang/WASI with EH; native execution alone does not prove browser execution. Verification compiles and runs the same sources through both paths. Printing caught without executing throw/catch would not demonstrate exception support.",
+        "This lesson needs a runtime with genuine standard exception support. Code Studio uses Clang/WASI with EH; native execution alone does not prove browser execution. Verification compiles and runs the same sources through both paths. Printing caught without executing throw/catch would not demonstrate exception support.",
         "If an older browser reports a provider limitation, that is not a learner error on the throw line. Do not rewrite exceptions as return codes to claim this outcome. A compatible browser update and a separate native run provide different evidence. Offline compilation must first be prepared through the normal flow; an available lesson text alone does not ensure it."
       ]
     },
@@ -197,7 +197,7 @@
       "level": "applied",
       "task": "Check mode zero and one.",
       "criteria": "Sums are twelve and three, with active zero in both.",
-      "hint": "During handler search, fully constructed automatic objects in exited scopes are destroyed. This is stack unwinding. Guard increments active during construction and decrements it in its destructor. After throw the handler sees active zero: cleanup precedes entering catch. This is an actual exception path rather than an early return with similar output."
+      "hint": "As control transfers from throw to a matching handler, fully constructed automatic objects in exited scopes are destroyed. This is stack unwinding. Guard increments active during construction and decrements it in its destructor. After throw the handler sees active zero: cleanup precedes entering catch. This is an actual exception path rather than an early return with similar output."
     },
     {
       "level": "applied",
@@ -288,7 +288,7 @@
         "The resource was never created."
       ],
       "correctIndex": 0,
-      "explanation": "Its destructor during stack unwinding."
+      "explanation": "Transfer to a matching handler unwinds the exited scope and destroys the fully constructed Guard. Its destructor releases the resource before catch; the handler does not automatically delete arbitrary addresses."
     },
     {
       "question": "What does the strong guarantee promise?",
@@ -298,7 +298,7 @@
         "Every external effect is rolled back."
       ],
       "correctIndex": 1,
-      "explanation": "No change to specified state on failure."
+      "explanation": "The strong guarantee concerns specified observable state at the operation boundary. The call may throw, but failure preserves that state; already performed external effects are not automatically undone."
     },
     {
       "question": "Does a bare throw; preserve dynamic type?",
@@ -308,7 +308,7 @@
         "Yes; it propagates the current exception."
       ],
       "correctIndex": 2,
-      "explanation": "Yes; it propagates the current exception."
+      "explanation": "A bare throw propagates the current exception without creating a new base copy. throw e can copy the static base portion and therefore lose the derived exception type."
     },
     {
       "question": "Does native execution prove browser EH?",
@@ -318,7 +318,7 @@
         "Yes; a caught string suffices."
       ],
       "correctIndex": 0,
-      "explanation": "No; separate real browser execution is required."
+      "explanation": "Native and browser runtimes use different compilers, ABIs and execution mechanisms. Browser EH requires a real throw/catch through its Worker, not a native success or a preprinted word."
     },
     {
       "question": "Does swap undo an already sent message?",
@@ -328,39 +328,39 @@
         "Yes; if the vector is empty."
       ],
       "correctIndex": 1,
-      "explanation": "No; external effects have a separate contract."
+      "explanation": "swap exchanges the specified objects' state but cannot retract a message or write already performed. Separate such effects from prepare/commit or give them their own recovery protocol."
     }
   ],
   "readinessCheck": [
     {
-      "question": "Who owns vector elements?",
+      "question": "Why give the base a virtual destructor?",
       "answers": [
-        "The vector itself.",
-        "Every span.",
-        "Any iterator."
+        "For correct deletion through an owning base pointer.",
+        "To forbid polymorphism.",
+        "To accelerate cin input."
       ],
       "correctIndex": 0,
-      "explanation": "The vector itself."
+      "explanation": "unique_ptr<Rule> deletes through the base type even when the dynamic object is Urgent. A virtual destructor provides the appropriate derived destruction; virtual is not itself a speed optimization."
     },
     {
-      "question": "What follows an input read failure?",
+      "question": "What does get() return?",
       "answers": [
-        "Compute using the unread value.",
-        "Handle failure before using the value.",
-        "Assume the value is automatically zero."
+        "A new independent owner.",
+        "An observing pointer without ownership transfer.",
+        "Mandatory object deletion."
       ],
       "correctIndex": 1,
-      "explanation": "Handle failure before using the value."
+      "explanation": "get exposes the address of the already managed object without creating an owner. The observer is valid only while the object lives; deleting it or creating a second owner violates cleanup responsibility."
     },
     {
-      "question": "How do two mains relate to one build?",
+      "question": "Does every class need a destructor?",
       "answers": [
-        "Both are always included.",
-        "Both cpp files must be included.",
-        "Each executable has one entry point."
+        "Yes; even without resources.",
+        "No; RAII members often allow the rule of zero.",
+        "Only when public is present."
       ],
-      "correctIndex": 2,
-      "explanation": "Each executable has one entry point."
+      "correctIndex": 1,
+      "explanation": "Members such as vector and string already perform cleanup and compose the containing type's special operations. An unnecessary destructor adds manual responsibility; a unique_ptr member still does not make the type copyable."
     }
   ],
   "reflection": [
@@ -384,7 +384,7 @@
       },
       {
         "title": "Stack unwinding and RAII",
-        "description": "During handler search, fully constructed automatic objects in exited scopes are destroyed. This is stack unwinding. Guard increments active during construction and decrements it in its destructor. After throw the handler sees active zero: cleanup precedes entering catch. This is an actual exception path rather than an early return with similar output."
+        "description": "As control transfers from throw to a matching handler, fully constructed automatic objects in exited scopes are destroyed. This is stack unwinding. Guard increments active during construction and decrements it in its destructor. After throw the handler sees active zero: cleanup precedes entering catch. This is an actual exception path rather than an early return with similar output."
       },
       {
         "title": "Prepare and commit",
@@ -392,7 +392,7 @@
       },
       {
         "title": "Runtime and honest results",
-        "description": "This lesson needs a runtime with genuine standard exception support. The feature uses Clang/WASI with EH; native execution alone does not prove browser execution. Verification compiles and runs the same sources through both paths. Printing caught without executing throw/catch would not demonstrate exception support."
+        "description": "This lesson needs a runtime with genuine standard exception support. Code Studio uses Clang/WASI with EH; native execution alone does not prove browser execution. Verification compiles and runs the same sources through both paths. Printing caught without executing throw/catch would not demonstrate exception support."
       }
     ]
   },

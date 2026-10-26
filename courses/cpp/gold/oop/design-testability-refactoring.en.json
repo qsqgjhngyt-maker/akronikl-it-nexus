@@ -306,7 +306,7 @@
         "The source line count."
       ],
       "correctIndex": 0,
-      "explanation": "Agreed observable behaviour."
+      "explanation": "Refactoring changes internal structure while preserving agreed results for the same inputs. A new output format or business rule changes the contract separately; internal addresses and line counts are usually not client promises."
     },
     {
       "question": "Why does Board avoid reading cin?",
@@ -316,7 +316,7 @@
         "To hide every error."
       ],
       "correctIndex": 1,
-      "explanation": "So the domain can be tested independently of input."
+      "explanation": "Board can be tested with in-memory values without preparing an input stream. Parsing cin stays with the caller; this separates responsibilities rather than imposing a language restriction on classes."
     },
     {
       "question": "Why does the test driver have its own main?",
@@ -326,7 +326,7 @@
         "It replaces the application while checking shared domain code."
       ],
       "correctIndex": 2,
-      "explanation": "It replaces the application while checking shared domain code."
+      "explanation": "The driver shares domain.cpp and report.cpp but supplies its own test entry point. Build it instead of the application main; two competing entry points do not form one test executable."
     },
     {
       "question": "Is an output file saved into the project automatically?",
@@ -336,7 +336,7 @@
         "Yes; on each cout operation."
       ],
       "correctIndex": 0,
-      "explanation": "No; use the explicit artifact-save action."
+      "explanation": "A generated file initially exists only in that run's filesystem. Explicitly saving selected result files transfers them into the project; cout promises neither file persistence nor device synchronization."
     },
     {
       "question": "Does one successful test prove every possible requirement?",
@@ -346,39 +346,39 @@
         "Yes; if the code was copied."
       ],
       "correctIndex": 1,
-      "explanation": "No; conclusions are limited to checked contracts and cases."
+      "explanation": "A test supports particular observations for specified inputs and a contract. New requirements may reach unchecked behaviour, requiring analysis, additional cases and an explanation of correctness."
     }
   ],
   "readinessCheck": [
     {
-      "question": "Who owns vector elements?",
+      "question": "Does integral prove absence of overflow?",
       "answers": [
-        "The vector itself.",
-        "Every span.",
-        "Any iterator."
+        "No; value and count bounds are also needed.",
+        "Yes; for every integral type.",
+        "Yes; except long long."
       ],
       "correctIndex": 0,
-      "explanation": "The vector itself."
+      "explanation": "integral constrains the type, not element count or magnitude. Even valid ints can overflow without bounds; this laboratory is safe because 20×100=2000 fits."
     },
     {
-      "question": "What follows an input read failure?",
+      "question": "What does the strong guarantee promise?",
       "answers": [
-        "Compute using the unread value.",
-        "Handle failure before using the value.",
-        "Assume the value is automatically zero."
+        "The operation never throws.",
+        "No change to specified state on failure.",
+        "Every external effect is rolled back."
       ],
       "correctIndex": 1,
-      "explanation": "Handle failure before using the value."
+      "explanation": "The strong guarantee concerns specified observable state at the operation boundary. The call may throw, but failure preserves that state; already performed external effects are not automatically undone."
     },
     {
-      "question": "How do two mains relate to one build?",
+      "question": "How many main definitions belong in an ordinary program?",
       "answers": [
-        "Both are always included.",
-        "Both cpp files must be included.",
-        "Each executable has one entry point."
+        "One",
+        "None for a console",
+        "One in each .cpp"
       ],
-      "correctIndex": 2,
-      "explanation": "Each executable has one entry point."
+      "correctIndex": 0,
+      "explanation": "The driver and application have different roles, each built with its own single main. Both builds can share domain sources without including both entry points in one executable."
     }
   ],
   "reflection": [

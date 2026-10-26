@@ -299,7 +299,7 @@
         "Quantity becomes negative."
       ],
       "correctIndex": 0,
-      "explanation": "Quantity is preserved and the caller receives false."
+      "explanation": "ship checks its argument and available quantity before assignment. On rejection the caller therefore sees the previous quantity and false, rather than zeroing or a negative quantity."
     },
     {
       "question": "Why not return int& to the quantity?",
@@ -309,7 +309,7 @@
         "An int cannot be returned by value."
       ],
       "correctIndex": 1,
-      "explanation": "A caller could bypass the checked operations."
+      "explanation": "A returned int& would let a caller assign -1 without calling ship or receive. Returning a value keeps mutations under class control; a reference is not itself a copy of the field."
     },
     {
       "question": "Does const guarantee thread safety?",
@@ -319,7 +319,7 @@
         "No; const does not synchronize access."
       ],
       "correctIndex": 2,
-      "explanation": "No; const does not synchronize access."
+      "explanation": "const restricts ordinary member modification through this object, but supplies no lock and does not exclude external effects. Concurrent access needs a separately chosen synchronization protocol."
     },
     {
       "question": "How does amount -1 differ from x?",
@@ -329,7 +329,7 @@
         "Both parse as zero."
       ],
       "correctIndex": 0,
-      "explanation": "The former parses and is rejected by the domain; the latter fails parsing."
+      "explanation": "Minus one parses as an int and then violates the Stock domain constraint. The token x cannot be read as an amount, so input syntax is rejected before commands execute."
     },
     {
       "question": "Why does reset take both bounds?",
@@ -339,39 +339,39 @@
         "For automatic inheritance."
       ],
       "correctIndex": 1,
-      "explanation": "To validate their relationship before changing state."
+      "explanation": "The invariant relates low and high, so validate the pair before assigning either field. Independent setters can finish a public call with low>high even when the caller intended a valid final interval."
     }
   ],
   "readinessCheck": [
     {
-      "question": "Who owns vector elements?",
+      "question": "What happens when add(101) is called on zero?",
       "answers": [
-        "The vector itself.",
-        "Every span.",
-        "Any iterator."
+        "Rejection preserves zero.",
+        "The value becomes 101.",
+        "An exception is mandatory."
       ],
       "correctIndex": 0,
-      "explanation": "The vector itself."
+      "explanation": "The capacity check runs before assigning the field, so 101 cannot fit in the remaining 100. Returning false reports rejection; it neither stores the rejected value nor requires an exception."
     },
     {
-      "question": "What follows an input read failure?",
+      "question": "Why compare n with 100-value_?",
       "answers": [
-        "Compute using the unread value.",
-        "Handle failure before using the value.",
-        "Assume the value is automatically zero."
+        "It is always faster than subtraction.",
+        "To check capacity before a potentially unsafe addition.",
+        "Class syntax requires this check."
       ],
       "correctIndex": 1,
-      "explanation": "Handle failure before using the value."
+      "explanation": "The expression value_+n could overflow before comparison. Subtraction is safe because the invariant bounds value_ to 0…100, while the earlier n<0 check rejects negative increments."
     },
     {
-      "question": "How do two mains relate to one build?",
+      "question": "What does private provide by itself?",
       "answers": [
-        "Both are always included.",
-        "Both cpp files must be included.",
-        "Each executable has one entry point."
+        "Encryption of the field.",
+        "A compile-time restriction on ordinary access.",
+        "Automatic range validation."
       ],
-      "correctIndex": 2,
-      "explanation": "Each executable has one entry point."
+      "correctIndex": 1,
+      "explanation": "private restricts ordinary client access to a member at compile time. It does not encrypt bytes or validate ranges; the public operations must implement those checks."
     }
   ],
   "reflection": [

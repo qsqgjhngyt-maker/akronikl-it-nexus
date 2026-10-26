@@ -80,7 +80,7 @@
     {
       "title": "Override and final",
       "paragraphs": [
-        "override asks the compiler to verify that a method actually overrides a virtual base operation. Omitting const or changing a parameter type might otherwise introduce a different overload. The example repeats int apply(int) const override explicitly. final prevents further derivation from a class or further overriding of a marked virtual method.",
+        "override asks the compiler to verify that a method actually overrides a virtual base operation. Omitting const or changing a parameter type can instead declare a different member that hides the base name rather than overriding it. The example repeats int apply(int) const override explicitly. final prevents further derivation from a class or further overriding of a marked virtual method.",
         "Do not add final without a reason if extensions are expected. A closed concrete strategy usefully demonstrates the interface boundary here. Nonvirtual operations are selected from the expression's static type; inheritance alone does not make them dynamically dispatched. Distinguish overloading, name hiding and overriding by their actual conditions."
       ]
     },
@@ -196,7 +196,7 @@
       "level": "applied",
       "task": "Change const in override and inspect compilation failure.",
       "criteria": "Explain the mismatched signature.",
-      "hint": "override asks the compiler to verify that a method actually overrides a virtual base operation. Omitting const or changing a parameter type might otherwise introduce a different overload. The example repeats int apply(int) const override explicitly. final prevents further derivation from a class or further overriding of a marked virtual method."
+      "hint": "override asks the compiler to verify that a method actually overrides a virtual base operation. Omitting const or changing a parameter type can instead declare a different member that hides the base name rather than overriding it. The example repeats int apply(int) const override explicitly. final prevents further derivation from a class or further overriding of a marked virtual method."
     },
     {
       "level": "applied",
@@ -299,7 +299,7 @@
         "To accelerate cin input."
       ],
       "correctIndex": 0,
-      "explanation": "For correct deletion through an owning base pointer."
+      "explanation": "unique_ptr<Rule> deletes through the base type even when the dynamic object is Urgent. A virtual destructor provides the appropriate derived destruction; virtual is not itself a speed optimization."
     },
     {
       "question": "What does override check?",
@@ -309,7 +309,7 @@
         "The object count in memory."
       ],
       "correctIndex": 1,
-      "explanation": "That a matching virtual base operation is overridden."
+      "explanation": "override requires a matching virtual base operation with compatible parameters and cv/ref qualification. A missing const is diagnosed at compile time, but this mechanism does not validate the runtime range of n."
     },
     {
       "question": "What does a failing pointer dynamic_cast return?",
@@ -319,7 +319,7 @@
         "nullptr."
       ],
       "correctIndex": 2,
-      "explanation": "nullptr."
+      "explanation": "A failing pointer cast returns nullptr, which must be checked before dereferencing. A failing reference cast has a different contract and must not be confused with pointer dynamic_cast."
     },
     {
       "question": "Why can vector<Base> lose behaviour?",
@@ -329,7 +329,7 @@
         "Base values preserve every derived part."
       ],
       "correctIndex": 0,
-      "explanation": "Storing base values slices the derived portion."
+      "explanation": "A vector<Base> element stores a Base value rather than an arbitrary complete derived object. Creating that value slices the derived portion; justified polymorphic ownership needs a different representation."
     },
     {
       "question": "When is composition simpler?",
@@ -339,39 +339,39 @@
         "Whenever repeated code requires a base."
       ],
       "correctIndex": 1,
-      "explanation": "When containment and delegation suffice without a subtype relationship."
+      "explanation": "Composition expresses a has-a relationship and delegates work to a contained object. Without a subtype contract or runtime substitution requirement, introducing a base class adds an unjustified dependency."
     }
   ],
   "readinessCheck": [
     {
-      "question": "Who owns vector elements?",
+      "question": "Does std::move transfer a resource itself?",
       "answers": [
-        "The vector itself.",
-        "Every span.",
-        "Any iterator."
+        "No; it changes expression category.",
+        "Yes; it always clears the source.",
+        "Yes; it always copies memory."
       ],
       "correctIndex": 0,
-      "explanation": "The vector itself."
+      "explanation": "std::move only forms an expression that can select a move operation. The selected constructor or assignment performs the transfer; unsuitable types can instead copy or fail to compile."
     },
     {
-      "question": "What follows an input read failure?",
+      "question": "Must a moved-from string be empty?",
       "answers": [
-        "Compute using the unread value.",
-        "Handle failure before using the value.",
-        "Assume the value is automatically zero."
+        "Yes; the standard requires an empty string.",
+        "No; its specific content must not be assumed.",
+        "Yes; if iostream is included."
       ],
       "correctIndex": 1,
-      "explanation": "Handle failure before using the value."
+      "explanation": "No specific contents are promised for a moved-from string. Assigning a new value or destroying it is valid; assuming emptiness imports another type's guarantee without justification."
     },
     {
-      "question": "How do two mains relate to one build?",
+      "question": "Why do vector and string help the rule of zero?",
       "answers": [
-        "Both are always included.",
-        "Both cpp files must be included.",
-        "Each executable has one entry point."
+        "They coordinate their own resources and special operations.",
+        "They forbid all changes.",
+        "They always use shared_ptr."
       ],
-      "correctIndex": 2,
-      "explanation": "Each executable has one entry point."
+      "correctIndex": 0,
+      "explanation": "The class's special operations compose those of its members. Established components manage ownership, avoiding manual coordination of copied addresses and raw-memory release."
     }
   ],
   "reflection": [
@@ -395,7 +395,7 @@
       },
       {
         "title": "Override and final",
-        "description": "override asks the compiler to verify that a method actually overrides a virtual base operation. Omitting const or changing a parameter type might otherwise introduce a different overload. The example repeats int apply(int) const override explicitly. final prevents further derivation from a class or further overriding of a marked virtual method."
+        "description": "override asks the compiler to verify that a method actually overrides a virtual base operation. Omitting const or changing a parameter type can instead declare a different member that hides the base name rather than overriding it. The example repeats int apply(int) const override explicitly. final prevents further derivation from a class or further overriding of a marked virtual method."
       },
       {
         "title": "Slicing and value semantics",

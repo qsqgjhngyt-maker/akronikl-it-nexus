@@ -304,7 +304,7 @@
         "An exception is mandatory."
       ],
       "correctIndex": 0,
-      "explanation": "Rejection preserves zero."
+      "explanation": "The capacity check runs before assigning the field, so 101 cannot fit in the remaining 100. Returning false reports rejection; it neither stores the rejected value nor requires an exception."
     },
     {
       "question": "Why compare n with 100-value_?",
@@ -314,7 +314,7 @@
         "Class syntax requires this check."
       ],
       "correctIndex": 1,
-      "explanation": "To check capacity before a potentially unsafe addition."
+      "explanation": "The expression value_+n could overflow before comparison. Subtraction is safe because the invariant bounds value_ to 0…100, while the earlier n<0 check rejects negative increments."
     },
     {
       "question": "Does every record need a class?",
@@ -324,7 +324,7 @@
         "No; the choice depends on invariants and responsibility."
       ],
       "correctIndex": 2,
-      "explanation": "No; the choice depends on invariants and responsibility."
+      "explanation": "A class is justified when its operations must jointly protect a constraint or responsibility. For a plain record whose states are all valid, a public struct and free functions may be clearer."
     },
     {
       "question": "What does an independent second instance check?",
@@ -334,7 +334,7 @@
         "Header order."
       ],
       "correctIndex": 0,
-      "explanation": "The absence of accidentally shared state."
+      "explanation": "Changing only a should leave b unchanged, exposing an accidental static field in place of instance state. This tests independence, not performance or include order."
     },
     {
       "question": "What does private provide by itself?",
@@ -344,39 +344,39 @@
         "Automatic range validation."
       ],
       "correctIndex": 1,
-      "explanation": "A compile-time restriction on ordinary access."
+      "explanation": "private restricts ordinary client access to a member at compile time. It does not encrypt bytes or validate ranges; the public operations must implement those checks."
     }
   ],
   "readinessCheck": [
     {
-      "question": "Who owns vector elements?",
+      "question": "Does a public struct prevent assigning negative stock?",
       "answers": [
-        "The vector itself.",
-        "Every span.",
-        "Any iterator."
-      ],
-      "correctIndex": 0,
-      "explanation": "The vector itself."
-    },
-    {
-      "question": "What follows an input read failure?",
-      "answers": [
-        "Compute using the unread value.",
-        "Handle failure before using the value.",
-        "Assume the value is automatically zero."
-      ],
-      "correctIndex": 1,
-      "explanation": "Handle failure before using the value."
-    },
-    {
-      "question": "How do two mains relate to one build?",
-      "answers": [
-        "Both are always included.",
-        "Both cpp files must be included.",
-        "Each executable has one entry point."
+        "Only inside vector",
+        "Yes, automatically",
+        "No; checked operations and later encapsulation are needed"
       ],
       "correctIndex": 2,
-      "explanation": "Each executable has one entry point."
+      "explanation": "A public int field can be assigned directly, bypassing a separate validator. Grouping data does not preserve an invariant by itself; checked operations and a suitable interface must enforce it."
+    },
+    {
+      "question": "Is is_sorted sufficient for a correct sort? ",
+      "answers": [
+        "No, element preservation is also needed",
+        "Yes",
+        "Only on empty input"
+      ],
+      "correctIndex": 0,
+      "explanation": "An empty sequence is sorted too, so a faulty sort could simply delete the data. Check ordering and preservation of the original element multiset independently."
+    },
+    {
+      "question": "Five runs at n<=128 establish…",
+      "answers": [
+        "Universal superiority",
+        "Only observations under this protocol",
+        "Asymptotic behavior automatically"
+      ],
+      "correctIndex": 1,
+      "explanation": "A few small runs describe only the selected protocol and environment. They do not prove complexity or behaviour on all inputs; broader conclusions require separate evidence."
     }
   ],
   "reflection": [

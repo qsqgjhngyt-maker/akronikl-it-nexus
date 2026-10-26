@@ -296,7 +296,7 @@
         "Yes; it always copies memory."
       ],
       "correctIndex": 0,
-      "explanation": "No; it changes expression category."
+      "explanation": "std::move only forms an expression that can select a move operation. The selected constructor or assignment performs the transfer; unsuitable types can instead copy or fail to compile."
     },
     {
       "question": "Must a moved-from string be empty?",
@@ -306,7 +306,7 @@
         "Yes; if iostream is included."
       ],
       "correctIndex": 1,
-      "explanation": "No; its specific content must not be assumed."
+      "explanation": "No specific contents are promised for a moved-from string. Assigning a new value or destroying it is valid; assuming emptiness imports another type's guarantee without justification."
     },
     {
       "question": "What does moving unique_ptr guarantee for its source?",
@@ -316,7 +316,7 @@
         "The source becomes empty."
       ],
       "correctIndex": 2,
-      "explanation": "The source becomes empty."
+      "explanation": "unique_ptr move construction specifically transfers its pointer and leaves the source empty. The object remains alive under its new owner, so moving does not imply immediate destruction."
     },
     {
       "question": "Why do vector and string help the rule of zero?",
@@ -326,7 +326,7 @@
         "They always use shared_ptr."
       ],
       "correctIndex": 0,
-      "explanation": "They coordinate their own resources and special operations."
+      "explanation": "The class's special operations compose those of its members. Established components manage ownership, avoiding manual coordination of copied addresses and raw-memory release."
     },
     {
       "question": "Does noexcept mean errors are ignored?",
@@ -336,39 +336,39 @@
         "Yes; an outer catch always recovers."
       ],
       "correctIndex": 1,
-      "explanation": "No; an escaping exception violates the promise and terminates execution."
+      "explanation": "noexcept promises that no exception escapes the function. An escaping exception invokes terminate; an ordinary outer catch cannot turn that contract violation into a recoverable rejection."
     }
   ],
   "readinessCheck": [
     {
-      "question": "Who owns vector elements?",
+      "question": "Can unique_ptr be copied?",
       "answers": [
-        "The vector itself.",
-        "Every span.",
-        "Any iterator."
+        "No; ownership can be transferred by moving.",
+        "Yes; shared ownership is automatic.",
+        "Yes; but only for int."
       ],
       "correctIndex": 0,
-      "explanation": "The vector itself."
+      "explanation": "Copying would create a second owner of one address, violating exclusive ownership, so copy operations are deleted. Ownership transfer uses a move operation rather than an automatic conversion to shared_ptr."
     },
     {
-      "question": "What follows an input read failure?",
+      "question": "What does get() return?",
       "answers": [
-        "Compute using the unread value.",
-        "Handle failure before using the value.",
-        "Assume the value is automatically zero."
+        "A new independent owner.",
+        "An observing pointer without ownership transfer.",
+        "Mandatory object deletion."
       ],
       "correctIndex": 1,
-      "explanation": "Handle failure before using the value."
+      "explanation": "get exposes the address of the already managed object without creating an owner. The observer is valid only while the object lives; deleting it or creating a second owner violates cleanup responsibility."
     },
     {
-      "question": "How do two mains relate to one build?",
+      "question": "Does every class need a destructor?",
       "answers": [
-        "Both are always included.",
-        "Both cpp files must be included.",
-        "Each executable has one entry point."
+        "Yes; even without resources.",
+        "No; RAII members often allow the rule of zero.",
+        "Only when public is present."
       ],
-      "correctIndex": 2,
-      "explanation": "Each executable has one entry point."
+      "correctIndex": 1,
+      "explanation": "Members such as vector and string already perform cleanup and compose the containing type's special operations. An unnecessary destructor adds manual responsibility; a unique_ptr member still does not make the type copyable."
     }
   ],
   "reflection": [

@@ -301,7 +301,7 @@
         "Yes; except long long."
       ],
       "correctIndex": 0,
-      "explanation": "No; value and count bounds are also needed."
+      "explanation": "integral constrains the type, not element count or magnitude. Even valid ints can overflow without bounds; this laboratory is safe because 20×100=2000 fits."
     },
     {
       "question": "Does T change during one execution?",
@@ -311,7 +311,7 @@
         "Yes; after std::move."
       ],
       "correctIndex": 1,
-      "explanation": "No; specialization is selected during compilation."
+      "explanation": "T belongs to a specialization formed at compile time. Input values may change during execution, but stdin input or std::move cannot change that specialization's selected type."
     },
     {
       "question": "Does span own its elements?",
@@ -321,7 +321,7 @@
         "No; its owner must outlive the view's use."
       ],
       "correctIndex": 2,
-      "explanation": "No; its owner must outlive the view's use."
+      "explanation": "span stores a view rather than an owning collection. It neither copies the vector nor extends its lifetime, so access requires the owner's corresponding elements to remain alive."
     },
     {
       "question": "Why include a negative double example?",
@@ -331,7 +331,7 @@
         "To accelerate the runtime."
       ],
       "correctIndex": 0,
-      "explanation": "To check the stated type constraint."
+      "explanation": "Comparing doubles is meaningful, but this example intentionally requires integral. Expected compilation failure checks that constraint and must remain separate from the file intended to execute."
     },
     {
       "question": "Why put a template definition in a header?",
@@ -341,39 +341,39 @@
         "To avoid include guards."
       ],
       "correctIndex": 1,
-      "explanation": "It must be available at instantiation."
+      "explanation": "Ordinary implicit instantiation needs an available template definition. A header makes it visible to the required TUs; its include guard prevents repeated inclusion within one TU without replacing ODR rules."
     }
   ],
   "readinessCheck": [
     {
-      "question": "Who owns vector elements?",
+      "question": "Why do vector and string help the rule of zero?",
       "answers": [
-        "The vector itself.",
-        "Every span.",
-        "Any iterator."
+        "They coordinate their own resources and special operations.",
+        "They forbid all changes.",
+        "They always use shared_ptr."
       ],
       "correctIndex": 0,
-      "explanation": "The vector itself."
+      "explanation": "The class's special operations compose those of its members. Established components manage ownership, avoiding manual coordination of copied addresses and raw-memory release."
     },
     {
-      "question": "What follows an input read failure?",
+      "question": "May end be dereferenced? ",
       "answers": [
-        "Compute using the unread value.",
-        "Handle failure before using the value.",
-        "Assume the value is automatically zero."
+        "No",
+        "Always",
+        "Only in an empty vector"
+      ],
+      "correctIndex": 0,
+      "explanation": "end denotes the position past the last element rather than an element. It may be compared, but dereferencing requires a position within the valid range."
+    },
+    {
+      "question": "Why use 0LL? ",
+      "answers": [
+        "To sort",
+        "To choose a long long accumulator",
+        "To grow the vector"
       ],
       "correctIndex": 1,
-      "explanation": "Handle failure before using the value."
-    },
-    {
-      "question": "How do two mains relate to one build?",
-      "answers": [
-        "Both are always included.",
-        "Both cpp files must be included.",
-        "Each executable has one entry point."
-      ],
-      "correctIndex": 2,
-      "explanation": "Each executable has one entry point."
+      "explanation": "The initial value determines accumulate's accumulator type. 0LL selects long long, but even that wider type has limits and does not replace sum-range analysis."
     }
   ],
   "reflection": [

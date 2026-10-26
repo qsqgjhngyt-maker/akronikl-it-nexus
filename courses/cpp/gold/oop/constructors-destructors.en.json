@@ -117,7 +117,7 @@
       "title": "Laboratory and transfer",
       "paragraphs": [
         "Save the Lease source and traces for all three permitted modes. Explain declaration order, the beginning of lifetime, scope exit and destruction order as separate events. Change nesting safely and predict the new sequence first. Invalid input must be rejected before any Lease objects are created.",
-        "The cumulative Window practicum combines the invariant with initialization of an empty interval. Resource discipline next transfers to unique_ptr and standard containers. The goal is not to write a destructor for every class. When members already manage their resources, a user-written destructor is often unnecessary."
+        "The cumulative Window practicum combines the invariant with initialization of the closed, degenerate interval [0,0], which contains the point zero. Resource discipline next transfers to unique_ptr and standard containers. The goal is not to write a destructor for every class. When members already manage their resources, a user-written destructor is often unnecessary."
       ]
     }
   ],
@@ -288,7 +288,7 @@
         "Alphabetically."
       ],
       "correctIndex": 0,
-      "explanation": "In their declaration order inside the class."
+      "explanation": "Members are initialized in declaration order before the constructor body runs. Rearranging the initializer list does not change lifetime order and should not contradict the declarations."
     },
     {
       "question": "What does explicit Level(int) do?",
@@ -298,7 +298,7 @@
         "It deletes the destructor."
       ],
       "correctIndex": 1,
-      "explanation": "It prevents the corresponding implicit conversion."
+      "explanation": "explicit prevents the corresponding implicit conversion from int to Level. Explicit Level{7} remains allowed, while domain-range validation must be implemented separately."
     },
     {
       "question": "Should you manually destroy an ordinary local object?",
@@ -308,7 +308,7 @@
         "No; scope exit performs destruction."
       ],
       "correctIndex": 2,
-      "explanation": "No; scope exit performs destruction."
+      "explanation": "An ordinary local object is destroyed automatically on scope exit. A manual destructor call without correctly reestablishing lifetime would make the later automatic destruction invalid."
     },
     {
       "question": "Is the complete destructor called after constructor failure?",
@@ -318,7 +318,7 @@
         "No members are cleaned up."
       ],
       "correctIndex": 0,
-      "explanation": "No; successfully constructed subobjects are cleaned up."
+      "explanation": "The complete object was not successfully constructed, so its own destructor is not invoked. Completed subobjects are destroyed in reverse order, allowing RAII members to release resources."
     },
     {
       "question": "Why can active be read after Lease is destroyed?",
@@ -328,39 +328,39 @@
         "Reading a destroyed int is always valid."
       ],
       "correctIndex": 1,
-      "explanation": "The integer remains alive in the outer scope."
+      "explanation": "active is declared earlier in the outer scope and remains alive after the Lease owners are destroyed. The Lease reference observes the integer; it does not extend its lifetime."
     }
   ],
   "readinessCheck": [
     {
-      "question": "Who owns vector elements?",
+      "question": "What does ship rejection mean?",
       "answers": [
-        "The vector itself.",
-        "Every span.",
-        "Any iterator."
+        "Quantity is preserved and the caller receives false.",
+        "Quantity is always reset to zero.",
+        "Quantity becomes negative."
       ],
       "correctIndex": 0,
-      "explanation": "The vector itself."
+      "explanation": "ship checks its argument and available quantity before assignment. On rejection the caller therefore sees the previous quantity and false, rather than zeroing or a negative quantity."
     },
     {
-      "question": "What follows an input read failure?",
+      "question": "Does const guarantee thread safety?",
       "answers": [
-        "Compute using the unread value.",
-        "Handle failure before using the value.",
-        "Assume the value is automatically zero."
-      ],
-      "correctIndex": 1,
-      "explanation": "Handle failure before using the value."
-    },
-    {
-      "question": "How do two mains relate to one build?",
-      "answers": [
-        "Both are always included.",
-        "Both cpp files must be included.",
-        "Each executable has one entry point."
+        "Yes; it locks all threads.",
+        "Yes; it forbids every external effect.",
+        "No; const does not synchronize access."
       ],
       "correctIndex": 2,
-      "explanation": "Each executable has one entry point."
+      "explanation": "const restricts ordinary member modification through this object, but supplies no lock and does not exclude external effects. Concurrent access needs a separately chosen synchronization protocol."
+    },
+    {
+      "question": "Why does reset take both bounds?",
+      "answers": [
+        "To bypass the invariant.",
+        "To validate their relationship before changing state.",
+        "For automatic inheritance."
+      ],
+      "correctIndex": 1,
+      "explanation": "The invariant relates low and high, so validate the pair before assigning either field. Independent setters can finish a public call with low>high even when the caller intended a valid final interval."
     }
   ],
   "reflection": [
