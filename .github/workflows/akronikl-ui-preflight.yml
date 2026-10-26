@@ -41,3 +41,28 @@ jobs:
           name: akronikl-ui-preflight
           path: evidence-ak02-ci
           retention-days: 30
+  component-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Закреплённый браузерный драйвер
+        run: |
+          npm ci --prefix tools/qa-browser-driver --no-audit --no-fund
+          test -x /usr/bin/google-chrome
+      - name: Только компонент на loopback, без Account и backend
+        env:
+          NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+          NEXUS_CHROME_PATH: /usr/bin/google-chrome
+          NEXUS_AKRONIKL_EVIDENCE: ${{ runner.temp }}/ak02-component
+        run: node tests/akronikl-component-browser-check.mjs
+      - name: Сохранить компонентный протокол и скриншоты
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akronikl-component-browser
+          path: ${{ runner.temp }}/ak02-component
+          retention-days: 30
