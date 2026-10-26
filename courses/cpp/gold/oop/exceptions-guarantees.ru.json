@@ -126,7 +126,7 @@
       "id": "model",
       "title": "Разобранная модель",
       "purpose": "Выполните настоящий throw/catch и докажите очистку и сохранение состояния при отказе.",
-      "code": "#include <iostream>\n#include <stdexcept>\nstruct Guard {int& active;explicit Guard(int& n):active(n){++active;}~Guard(){--active;}};\nint main(){int active=0;try{Guard g{active};throw std::runtime_error(\"stop\");}catch(const std::exception&){std::cout<<\"caught \"<<active<<'\\n';}}\n",
+      "code": "#include <iostream>\n#include <stdexcept>\nstruct Guard {int& active;explicit Guard(int& n):active(n){++active;}Guard(const Guard&)=delete;Guard& operator=(const Guard&)=delete;~Guard(){--active;}};\nint main(){int active=0;try{Guard g{active};throw std::runtime_error(\"stop\");}catch(const std::exception&){std::cout<<\"caught \"<<active<<'\\n';}}\n",
       "stdin": "",
       "expectedStdout": "caught 0\n",
       "steps": [
@@ -224,7 +224,7 @@
     "challenge": "Прочитайте mode=0…1. Store изначально хранит {1,2}; replace готовит копию с 9 и при mode=1 бросает runtime_error до swap. Guard отслеживает ресурс. После попытки напечатайте ok или rejected, сумму текущего Store и active. Неверный ввод: invalid. Для 0: ok 12 0; для 1: rejected 3 0.",
     "starterCode": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\nclass Store { std::vector<int> values_{1,2}; /* TODO: prepare, fail, commit */ };\nint main(){std::cout<<\"pending\\n\";}\n",
     "starterExpectedStdout": "pending\n",
-    "referenceCode": "#include <iostream>\n#include <vector>\n#include <stdexcept>\nstruct Guard {int& active;explicit Guard(int& n):active(n){++active;}~Guard(){--active;}};\nclass Store {std::vector<int> values_{1,2};public:\n void replace(bool fail,int& active){Guard g{active};auto candidate=values_;candidate.push_back(9);\n  if(fail)throw std::runtime_error(\"injected\");values_.swap(candidate);}\n int sum()const{int n=0;for(int x:values_)n+=x;return n;}\n};\nint main(){int mode;if(!(std::cin>>mode)||mode<0||mode>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Store s;int active=0;try{s.replace(mode==1,active);std::cout<<\"ok \";}catch(const std::runtime_error&){std::cout<<\"rejected \";}\n std::cout<<s.sum()<<' '<<active<<'\\n';}\n",
+    "referenceCode": "#include <iostream>\n#include <vector>\n#include <stdexcept>\nstruct Guard {int& active;explicit Guard(int& n):active(n){++active;}Guard(const Guard&)=delete;Guard& operator=(const Guard&)=delete;~Guard(){--active;}};\nclass Store {std::vector<int> values_{1,2};public:\n void replace(bool fail,int& active){Guard g{active};auto candidate=values_;candidate.push_back(9);\n  if(fail)throw std::runtime_error(\"injected\");values_.swap(candidate);}\n int sum()const{int n=0;for(int x:values_)n+=x;return n;}\n};\nint main(){int mode;if(!(std::cin>>mode)||mode<0||mode>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Store s;int active=0;try{s.replace(mode==1,active);std::cout<<\"ok \";}catch(const std::runtime_error&){std::cout<<\"rejected \";}\n std::cout<<s.sum()<<' '<<active<<'\\n';}\n",
     "cases": [
       {
         "stdin": "0",

@@ -128,7 +128,7 @@
       "id": "model",
       "title": "Разобранная модель",
       "purpose": "Разделите владение и наблюдение, проверьте очистку раннего выхода и слабую обратную связь.",
-      "code": "#include <iostream>\n#include <memory>\nstruct Resource {int& active;explicit Resource(int& n):active(n){++active;}~Resource(){--active;}};\nvoid work(int& active){auto owner=std::make_unique<Resource>(active);std::cout<<active<<' ';return;}\nint main(){int active=0;work(active);std::cout<<active<<'\\n';}\n",
+      "code": "#include <iostream>\n#include <memory>\nstruct Resource {int& active;explicit Resource(int& n):active(n){++active;}Resource(const Resource&)=delete;Resource& operator=(const Resource&)=delete;~Resource(){--active;}};\nvoid work(int& active){auto owner=std::make_unique<Resource>(active);std::cout<<active<<' ';return;}\nint main(){int active=0;work(active);std::cout<<active<<'\\n';}\n",
       "stdin": "",
       "expectedStdout": "1 0\n",
       "steps": [
@@ -226,7 +226,7 @@
     "challenge": "Прочитайте ровно n=0 или 1. work создаёт unique_ptr<Resource>; при 0 сразу возвращается. При 1 создаёт второго владельца и печатает active с пробелом. Resource увеличивает active при создании и уменьшает при разрушении. После work напечатайте active 0 с переводом строки. Неверный ввод: invalid.",
     "starterCode": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\nstruct Resource { /* TODO: counter and lifetime */ };\nint main(){std::cout<<\"pending\\n\";}\n",
     "starterExpectedStdout": "pending\n",
-    "referenceCode": "#include <iostream>\n#include <memory>\nstruct Resource {int& active;explicit Resource(int& n):active(n){++active;}~Resource(){--active;}};\nvoid work(int n,int& active){auto a=std::make_unique<Resource>(active);if(n==0)return;\n auto b=std::make_unique<Resource>(active);std::cout<<active<<' ';}\nint main(){int n;if(!(std::cin>>n)||n<0||n>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n int active=0;work(n,active);std::cout<<\"active \"<<active<<'\\n';}\n",
+    "referenceCode": "#include <iostream>\n#include <memory>\nstruct Resource {int& active;explicit Resource(int& n):active(n){++active;}Resource(const Resource&)=delete;Resource& operator=(const Resource&)=delete;~Resource(){--active;}};\nvoid work(int n,int& active){auto a=std::make_unique<Resource>(active);if(n==0)return;\n auto b=std::make_unique<Resource>(active);std::cout<<active<<' ';}\nint main(){int n;if(!(std::cin>>n)||n<0||n>1){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n int active=0;work(n,active);std::cout<<\"active \"<<active<<'\\n';}\n",
     "cases": [
       {
         "stdin": "0",
@@ -415,6 +415,14 @@
       "expectation": "compile-error",
       "diagnostic": "deleted",
       "explanation": "Это отдельный отрицательный контроль. Не включайте его в рабочий main.cpp."
+    },
+    {
+      "id": "resource-copy",
+      "title": "Ожидаемый отказ: ресурсный владелец не копируется",
+      "code": "struct Resource {int& active;explicit Resource(int& n):active(n){++active;}Resource(const Resource&)=delete;Resource& operator=(const Resource&)=delete;~Resource(){--active;}};\nint main(){int active=0;Resource a{active};Resource b=a;}\n",
+      "expectation": "compile-error",
+      "diagnostic": "deleted",
+      "explanation": "Копия ссылки дала бы две очистки после одного получения; копирование запрещено до выполнения."
     }
   ]
 }
