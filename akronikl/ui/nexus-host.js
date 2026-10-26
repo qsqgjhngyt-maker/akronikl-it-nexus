@@ -13,13 +13,15 @@ export function createUiHost({root, readIdentity, readRoute, readLocale,
   const routeKey = JSON.stringify(readRoute());
   const uiLocale = readLocale(), materialLocale = readCourseLocale();
   const editor = readEditor();
-  const workspace = editor?.__nexusCodeStudio?.workspace;
+  const studio = editor?.__nexusCodeStudio;
+  const workspace = studio?.workspace;
   const revision = workspace?.revision, activeFile = workspace?.activeFile;
   function current() {
     return alive && root.isConnected && readIdentity() === identity &&
       (publicMode || identity != null) && JSON.stringify(readRoute()) === routeKey &&
       readLocale() === uiLocale && readCourseLocale() === materialLocale &&
-      readEditor() === editor && workspace?.revision === revision &&
+      readEditor() === editor && editor?.__nexusCodeStudio === studio &&
+      studio?.workspace === workspace && workspace?.revision === revision &&
       workspace?.activeFile === activeFile && (!editor || editor.isConnected);
   }
   function readSelection() {
