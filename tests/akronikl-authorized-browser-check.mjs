@@ -68,17 +68,17 @@ try{
  await page.goto(f.origin+'/index.html#view=code-studio&project='+projectId);await page.locator('#editor').waitFor();
  await check('Logout при задержанном реальном ответе 200 не возобновляет доступ к коду',async()=>{
   await preview();f.holdNextAccount();await page.evaluate(()=>location.hash='#view=akronikl');await waitHeld();
-  const second=await f.context.newPage();await second.goto(f.origin+'/account/access/');await second.locator('#logout').click();await second.locator('#status').filter({hasText:'Вы вышли'}).waitFor();
-  await page.evaluate(()=>dispatchEvent(new Event('nexus:session-ended')));f.release();await page.locator('[data-login]').waitFor();
+  await page.locator('#accountMenuButton').click();await page.locator('[data-unified-logout]').first().click();
+  await page.locator('[data-login]').waitFor();f.release();
   assert.equal(await page.locator('#editor,[data-akronikl-panel]').count(),0);
-  assert.equal(f.backend.db.prepare("SELECT count(*) n FROM account_sessions WHERE status='active'").get().n,0);await second.close();
+  assert.equal(f.backend.db.prepare("SELECT count(*) n FROM account_sessions WHERE status='active'").get().n,0);
  });
  await check('Обычный аккаунт B через UI не получает проекты A и административные полномочия',async()=>{
   await page.goto(f.origin+'/account/access/');await f.virtualKey(page);const form=page.locator('#public-register');await form.waitFor();
   await form.locator('[name=username]').fill('synthetic-b-final');await form.locator('[name=displayName]').fill('Синтетический B');await form.locator('button').click();
   await page.locator('#status').filter({hasText:'Аккаунт и ключ созданы'}).waitFor();await page.locator('#login').click();await page.locator('.visual-home').waitFor();
   const safe=await page.evaluate(async prefix=>{const storage=await import(prefix+'core/account-storage.js'),projects=await import(prefix+'project-studio/project-store.js');
-   const account=storage.verifiedAccount(),caps=await fetch('/api/v2/account/control/capabilities').then(r=>r.json());
+   const account=storage.verifiedAccount(),caps=await fetch('/api/v2/account/control/capabilities',{headers:{'x-nexus-account-expectation':account.accountId}}).then(r=>r.json());
    return{notA:account?.accountId!=='synthetic-owner',projects:projects.listProjects().length,canManage:caps.canManage};},f.prefix);
   assert.equal(safe.notA,true);assert.equal(safe.projects,0);assert.equal(safe.canManage,false);
   await route('#view=akronikl','[data-akronikl-open]');await open();await panel().getByRole('button',{name:'Показать контекст',exact:true}).click();await panel().getByText('Фрагмент кода не включён.',{exact:true}).waitFor();

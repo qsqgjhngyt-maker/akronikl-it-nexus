@@ -26,7 +26,7 @@ export async function authenticatedFixture(frontend){
  const server=https.createServer({key:await readFile(key),cert:await readFile(cert)},async(req,res)=>{
   const u=new URL(req.url,GATEWAY_ORIGIN),row={path:u.pathname,method:req.method,status:null,offline};network.push(row);
   if(offline){req.socket.destroy();return;}
-  if(req.headers.host!==hostname){row.status=421;res.writeHead(421);res.end();return;}
+  if(req.headers.host!==hostname){row.path='[foreign-host-denied]';row.status=421;res.writeHead(421);res.end();return;}
   try{
    if(u.pathname==='/favicon.ico'){row.status=204;res.writeHead(204);res.end();return;}
    const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>1048576)throw Error('BODY_LIMIT');chunks.push(chunk)}
@@ -45,7 +45,8 @@ export async function authenticatedFixture(frontend){
     if(!['index.html','page.js','passkey-client.js'].includes(leaf))throw Error('ACCESS_ASSET_DENIED');
     file=new URL('../../server-access/image/public/'+leaf,import.meta.url);
    }else{
-    if(name.startsWith('account/entry/'))name='entry-assets/'+build.assetGeneration+'/'+name.split('/').at(-1);
+    if(name==='account/entry/'||name==='account/entry/index.html')name='index.html';
+    else if(name.startsWith('account/entry/'))name='entry-assets/'+build.assetGeneration+'/'+name.split('/').at(-1);
     file=path.resolve(frontend,name);if(!file.startsWith(frontend+path.sep))throw Error('PATH_DENIED');
    }
    const body=await readFile(file);row.status=200;
