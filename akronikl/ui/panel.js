@@ -46,7 +46,8 @@ export function openAssistantPanel(options) {
   }
   const initialHash = windowRef.location.hash;
   const observer = new MutationObserver(() => {if (!host.current()) dispose();});
-  observer.observe(root, {childList:true});
+  // Закрытие вложенной области редактора или повторный bind тоже меняют контекст.
+  observer.observe(root, {childList:true, subtree:true});
   const unsubscribe = host.workspace?.subscribe?.(() => dispose());
   function current(ticket) {return !disposed && ticket === sequence && host.current();}
   async function act(kind, target = null) {
