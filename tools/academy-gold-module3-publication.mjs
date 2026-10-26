@@ -55,7 +55,8 @@ export async function verifyM3Publication({rebuild=false,writeEvidence=true}={})
  assert.equal((await json('courses/cpp/data/lessons.ru.json')).lessons.length,45);assert.equal((await json('courses/cpp/data/lessons.en.json')).lessons.length,8);
  const newFiles=git('ls-files','--others','--exclude-standard','--','releases','entry-assets').toString().trim().split('\n').filter(Boolean);
  const changed=git('diff','--name-only',P.base,'--','releases','entry-assets').toString().trim().split('\n').filter(Boolean);
- for(const file of [...newFiles,...changed])assert.ok(file.startsWith('releases/'+P.generation+'/')||file.startsWith('entry-assets/'+P.generation+'/'),'Неизвестное immutable поколение: '+file);
+ const preservedM4=new Map(tree('ad527f73a1a6b40846879609d01727ddef20a0f9','releases/ui1a-cpp-gold-module4-test1-20261026','entry-assets/ui1a-cpp-gold-module4-test1-20261026').map(x=>[x.file,x.sha]));
+ for(const file of [...newFiles,...changed]){if(file.startsWith('releases/'+P.generation+'/')||file.startsWith('entry-assets/'+P.generation+'/'))continue;assert.equal(blob(await read(file)),preservedM4.get(file),'Только точные сохранённые M4 bytes: '+file);}
  if(rebuild){const temp=await mkdtemp(path.join(tmpdir(),'nexus-m3-publication-')),out=path.join(temp,'build');execFileSync(process.execPath,['tools/build-ui1a-release.mjs','--out',out],{cwd:root,stdio:'pipe'});
   assert.deepEqual(JSON.parse(await readFile(path.join(out,'BUILD_MANIFEST.json'))),m);for(const file of ['index.html','nexus-shell.html','offline.html','version.json','service-worker.js','BUILD_MANIFEST.json'])assert.deepEqual(await read(file),await readFile(path.join(out,file)),file);
  }

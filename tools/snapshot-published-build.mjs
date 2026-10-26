@@ -3,7 +3,6 @@ import {readFile,writeFile,mkdir,lstat,realpath} from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {readWorkerConfiguration} from './published-worker-configuration.mjs';
 
 const option=name=>{const i=process.argv.indexOf(name);return i<0?null:process.argv[i+1]};
 const sourceOption=option('--source'),outOption=option('--out'),expectedCommit=option('--expected-commit');
@@ -20,6 +19,36 @@ const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 // esbuild emits a JSON-compatible literal with unquoted property names. Extract it
 // with string-aware brace matching, quote only identifier keys, then JSON.parse.
 // Do not evaluate a service worker, use eval/vm, or execute literal expressions.
+export function readWorkerConfiguration(text){
+ const assignments=[...text.matchAll(/\bvar\s+define_NEXUS_PWA_CONFIG_default\s*=\s*/g)];
+ if(assignments.length!==1)throw Error('Expected exactly one compiled public manifest');
+ const start=assignments[0].index+assignments[0][0].length;
+ if(text[start]!=='{')throw Error('Public manifest must be an object literal');
+ let depth=0,quoted=false,escaped=false,end=-1;
+ for(let i=start;i<text.length;i++){
+  const c=text[i];
+  if(quoted){if(escaped)escaped=false;else if(c==='\\')escaped=true;else if(c==='"')quoted=false;continue}
+  if(c==='"'){quoted=true;continue}
+  if(c==='{')depth++;
+  if(c==='}'&&--depth===0){end=i+1;break}
+ }
+ if(end<0||!/^\s*;/.test(text.slice(end)))throw Error('Public manifest literal is incomplete');
+ const literal=text.slice(start,end);let json='';quoted=false;escaped=false;
+ for(let i=0;i<literal.length;i++){
+  const c=literal[i];
+  if(quoted){json+=c;if(escaped)escaped=false;else if(c==='\\')escaped=true;else if(c==='"')quoted=false;continue}
+  if(c==='"'){quoted=true;json+=c;continue}
+  if(/[A-Za-z_$]/.test(c)){
+   const identifier=/^[A-Za-z_$][A-Za-z0-9_$]*/.exec(literal.slice(i))[0];
+   if(/^\s*:/.test(literal.slice(i+identifier.length)))json+=JSON.stringify(identifier);
+   else if(['true','false','null'].includes(identifier))json+=identifier;
+   else throw Error('Public manifest contains a non-JSON expression');
+   i+=identifier.length-1;continue;
+  }
+  json+=c;
+ }
+ return JSON.parse(json);
+}
 
 const worker=await readFile(path.join(source,'service-worker.js'));
 const config=readWorkerConfiguration(worker.toString('utf8'));

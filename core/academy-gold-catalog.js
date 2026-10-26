@@ -31,18 +31,16 @@ export const GOLD_STRUCTURED_LESSONS=Object.freeze([
   'cpp.streams-state','cpp.testing-diagnostics','cpp.multifile-build',
   'cpp.files','cpp.linked-lists','cpp.stacks-queues'
 ]);
-export const GOLD_CLASSIC_LESSONS=Object.freeze(['cpp.algorithm-complexity','cpp.sorting-basic','cpp.iterators-algorithms-lambdas','cpp.search-linear-binary','cpp.recursion-divide-conquer','cpp.associative-containers','cpp.pseudo-random-numbers','cpp.property-testing-benchmarks']);
-export const GOLD_LESSONS=Object.freeze([...GOLD_ALGORITHM_LESSONS,...GOLD_BASICS_LESSONS,...GOLD_STRUCTURED_LESSONS,...GOLD_CLASSIC_LESSONS]);
+export const GOLD_LESSONS=Object.freeze([...GOLD_ALGORITHM_LESSONS,...GOLD_BASICS_LESSONS,...GOLD_STRUCTURED_LESSONS]);
 const modules=new Map([
   ...GOLD_ALGORITHM_LESSONS.map(id=>[id,'cpp.section.algorithms']),
   ...GOLD_BASICS_LESSONS.map(id=>[id,'cpp.section.cpp-basics']),
-  ...GOLD_STRUCTURED_LESSONS.map(id=>[id,'cpp.section.structured-programming']),
-  ...GOLD_CLASSIC_LESSONS.map(id=>[id,'cpp.section.classic-algorithms'])
+  ...GOLD_STRUCTURED_LESSONS.map(id=>[id,'cpp.section.structured-programming'])
 ]);
 export function goldLessonModule(id){return modules.get(id)||null;}
 export function goldLessonPath(id,locale='ru'){
   const moduleId=goldLessonModule(id);
   if(!moduleId||!['ru','en'].includes(locale))return null;
-  const folder=moduleId==='cpp.section.algorithms'?'algorithms':moduleId==='cpp.section.cpp-basics'?'basics':moduleId==='cpp.section.classic-algorithms'?'classic':'structured';
+  const folder=moduleId==='cpp.section.algorithms'?'algorithms':moduleId==='cpp.section.cpp-basics'?'basics':'structured';
   return 'courses/cpp/gold/'+folder+'/'+id.slice(4)+'.'+locale+'.json';
 }

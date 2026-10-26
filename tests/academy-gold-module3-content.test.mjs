@@ -5,10 +5,9 @@ import {academyGoldMarkup} from '../core/academy-gold-presentation.js';import {g
 import {CPP_LEGACY_LESSON_IDS,cppProgramProgress} from '../core/storage.js';import {createLearningViews} from '../core/learning-views.js';
 import {orderedCppLessons,createLearningResume} from '../core/nexus-learning-discovery.js';
 const j=async p=>JSON.parse(await readFile(new URL('../'+p,import.meta.url),'utf8'));
-const isM4=(await j('courses/cpp/curriculum.json')).programVersion==='cpp-gold-m4-v1';
 const all=await module3GoldLessons(),spec=await j('docs/ru/03-content/CPP_MODULE3_AUTHORING.json'),curriculum=await j('courses/cpp/curriculum.json'),ru=await j('courses/cpp/data/lessons.ru.json'),en=await j('courses/cpp/data/lessons.en.json');
 test('M3-1: 36 полных объектов, шесть теоретических разделов, лабораторные, A/B/C и полный EN',async()=>{
- assert.equal(all.length,36);assert.equal((await readdir(new URL('../courses/cpp/gold/structured/',import.meta.url))).filter(p=>p.endsWith('.json')).length,36);assert.equal(GOLD_LESSONS.length,isM4?46:38);assert.deepEqual(GOLD_STRUCTURED_LESSONS,spec.lessons.map(l=>l.id));
+ assert.equal(all.length,36);assert.equal((await readdir(new URL('../courses/cpp/gold/structured/',import.meta.url))).filter(p=>p.endsWith('.json')).length,36);assert.equal(GOLD_LESSONS.length,38);assert.deepEqual(GOLD_STRUCTURED_LESSONS,spec.lessons.map(l=>l.id));
  for(const g of all){
   assert.equal(g.schemaVersion,1);assert.equal(g.standardVersion,'academy-gold-1.1');assert.equal(g.moduleId,spec.moduleId);assert.equal(g.target,'C++20');
   const p=spec.lessons.find(l=>l.id===g.lessonId);assert.deepEqual(g.prerequisiteIds,p.prerequisites);assert.equal(g.sessions,p.sessions);
@@ -33,7 +32,7 @@ test('Согласованность RU/EN, сохранённый смысл qu
  }
 });
 test('DAG из 18 тем: новые пять ID зарегистрированы после prerequisites, старые 40 индексов неизменны',()=>{
- assert.equal(curriculum.lessons.length,isM4?50:45);assert.equal(curriculum.programVersion,isM4?'cpp-gold-m4-v1':'cpp-gold-m3-v1');assert.deepEqual(curriculum.lessons.slice(0,40).map(l=>l.id),CPP_LEGACY_LESSON_IDS);
+ assert.equal(curriculum.lessons.length,45);assert.equal(curriculum.programVersion,'cpp-gold-m3-v1');assert.deepEqual(curriculum.lessons.slice(0,40).map(l=>l.id),CPP_LEGACY_LESSON_IDS);
  assert.ok(curriculum.lessons.slice(0,40).every((l,i)=>l.legacyIndex===i&&l.order===i+1));assert.ok(curriculum.lessons.slice(40).every(l=>l.legacyIndex===null));
  const known=new Set(CPP_LEGACY_LESSON_IDS.slice(0,20));for(const t of spec.lessons){for(const p of t.prerequisites)assert.ok(known.has(p),t.id+' <- '+p);known.add(t.id)}
  assert.deepEqual(curriculum.sections.find(s=>s.id===spec.moduleId).lessonIds,spec.lessons.map(l=>l.id));
@@ -41,8 +40,8 @@ test('DAG из 18 тем: новые пять ID зарегистрирован�
 });
 test('Реальная версия 40/45 сохраняет прежние 40/40 и не переписывает профиль',()=>{
  const state={courses:{cpp:{lessons:Object.fromEntries(CPP_LEGACY_LESSON_IDS.map(id=>[id,{completed:true,code:'personal',quiz:1}]))}}},before=JSON.stringify(state),p=cppProgramProgress(state,curriculum);
- assert.deepEqual({done:p.done,total:p.total,pct:p.pct},{done:40,total:isM4?50:45,pct:isM4?80:89});assert.equal(p.legacy.done,40);assert.equal(p.legacy.total,40);assert.equal(JSON.stringify(state),before);
- for(const locale of ['ru','en']){const views=createLearningViews({cpp:{manifest:{title:{ru:'C++',en:'C++'},description:{ru:'Курс',en:'Course'},practicumCount:6,projectCount:7},curriculum},prefs:{courseLocale:locale},progress:()=>p,t:k=>k});assert.ok(views.courseHead('overview').includes(isM4?'40/50':'40/45'));assert.ok(views.courseHead('overview').includes('40/40'));}
+ assert.deepEqual({done:p.done,total:p.total,pct:p.pct},{done:40,total:45,pct:89});assert.equal(p.legacy.done,40);assert.equal(p.legacy.total,40);assert.equal(JSON.stringify(state),before);
+ for(const locale of ['ru','en']){const views=createLearningViews({cpp:{manifest:{title:{ru:'C++',en:'C++'},description:{ru:'Курс',en:'Course'},practicumCount:6,projectCount:7},curriculum},prefs:{courseLocale:locale},progress:()=>p,t:k=>k});assert.ok(views.courseHead('overview').includes('40/45'));assert.ok(views.courseHead('overview').includes('40/40'));}
 });
 test('Продолжить следует учебному порядку 18 тем; bookmark и старые migration indices сохранены',()=>{
  const course={manifest:{id:'cpp'},curriculum},expected=curriculum.sections.flatMap(s=>s.lessonIds),ordered=orderedCppLessons(course);assert.deepEqual(ordered.map(l=>l.id),expected);

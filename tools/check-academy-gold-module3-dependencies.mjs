@@ -10,9 +10,9 @@ const json=async file=>JSON.parse(await readFile(file,'utf8'));
 const plan=await json('docs/ru/03-content/CPP_MODULE3_DEPENDENCIES.json'),curriculum=await json('courses/cpp/curriculum.json');
 const legacy=plan.topics.filter(t=>t.stableId),additional=plan.topics.filter(t=>!t.stableId),section=curriculum.sections.find(s=>s.id===plan.moduleId);
 assert.equal(plan.topics.length,18);assert.equal(legacy.length,13);assert.equal(additional.length,5);assert.equal(plan.newProgressIdsAssigned,0);
-assert.deepEqual(legacy.map(t=>t.stableId),section.lessonIds.filter(id=>legacy.some(t=>t.stableId===id)));assert.equal(curriculum.lessons.length,m3Scope?.m4Authoring?50:m3Scope?.authoring?45:40);
+assert.deepEqual(legacy.map(t=>t.stableId),section.lessonIds.filter(id=>legacy.some(t=>t.stableId===id)));assert.equal(curriculum.lessons.length,m3Scope?.authoring?45:40);
 assert.equal(new Set(M3_PROBES.map(p=>p.id)).size,M3_PROBES.length);
-const visited=new Set(curriculum.lessons.filter(l=>Number.isInteger(l.legacyIndex)&&l.legacyIndex<20).map(l=>l.id));
+const visited=new Set(curriculum.lessons.filter(l=>l.legacyIndex<20).map(l=>l.id));
 for(const t of plan.topics){
  assert.ok(!visited.has(t.key),'Повтор темы '+t.key);
  for(const dep of t.prerequisites)assert.ok(visited.has(dep),'Циклическая/будущая зависимость '+t.key+' <- '+dep);
