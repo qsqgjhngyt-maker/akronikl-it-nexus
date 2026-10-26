@@ -8,7 +8,7 @@ const candidate=JSON.parse(fs.readFileSync(new URL('release-candidate.json',root
 const app=fs.readFileSync(new URL('core/app.js',root),'utf8');
 const sharedShell=fs.readFileSync(new URL('core/shell-presentation.js',root),'utf8');
 const sw=fs.readFileSync(new URL('service-worker.js',root),'utf8');
-const expected=candidate.publication?.module==='cpp-module-4'?(candidate.assetGeneration==='ui1a-cpp-gold-module4-test2-20261026'?'0.1.7-alpha.2.4.6-ui1a.10.8-test.2':'0.1.7-alpha.2.4.6-ui1a.10.8-test.1'):candidate.publication?.module==='cpp-module-3'?'0.1.7-alpha.2.4.6-ui1a.10.7-test.1':'0.1.7-alpha.2.4.6-ui1a.10.2.1';
+const expected=candidate.publication?.module==='cpp-module-4'?'0.1.7-alpha.2.4.6-ui1a.10.8-test.1':candidate.publication?.module==='cpp-module-3'?'0.1.7-alpha.2.4.6-ui1a.10.7-test.1':'0.1.7-alpha.2.4.6-ui1a.10.2.1';
 const assert=(v,m)=>{if(!v)throw new Error(m)};
 assert(version===expected,`version.json mismatch: ${version}`);
 assert(projectVersion===expected,`project.json mismatch: ${projectVersion}`);
