@@ -2,7 +2,21 @@
 
 26.10.2026. Область 03/07; 02 — информационно. Продолжение тестовой публикации Module 4. Официальный Release/тег не создавать.
 
-STATUS: IMPLEMENTED / PARTIAL. Исправление подготовлено в feature; новая публикация и её LIVE здесь не заявляются.
+STATUS: PARTIAL. Test.2 опубликована; AUTOMATED PASS и LIVE PASS в доступной вкладке. Повторная физическая приёмка владельца и post-publication main CI ещё ожидаются. Официальный Release/тег не создан.
+
+## Фактический результат публикации test.2
+
+PR30 merged, main `065606a788198045cadf250fea663246ddbb2d56`, проверенное tree `25fd21682fc192a6736e83ec94140023aeb6fc7d`. Feature source `e168912472ca698d32fc44f09e52e6a2888773a5`; pinned UI source `63f3465dbf060ef09a309b822beaef57afb0bde8`. Версия …10.8-test.2, generation `ui1a-cpp-gold-module4-test2-20261026`. Pages40266081318 build/report/deploy SUCCESS. Backend/Worker/BFF/D1 и тарифы не менялись.
+
+До cutover exact-head CI40264296088 (полная 05/07) и40264296083 (публикация/откат) SUCCESS; тестовый mergef1c9ab2 имел то же tree25fd216. Полный M1 CI40264296162 SUCCESS; после cutover40264296125 завершился со всеми тремя jobs SUCCESS: полный M2/runtime/UI/cold Offline, module1-regression и preflight. Свежий M4 runtime40262530765 на неизменённых исполняемых контрактах: 35 программ /190 случаев, все PASS, включая трёхфайловый project. Дублирующий d18 M4 runtime ещё IN_PROGRESS на snapshot; новый post-publication main CI не выдаётся за PASS.
+
+Окончательный renderer/CSS прошли в CI полный набор: 92 RU/EN объекта, 116 групп, 936 отображённых случаев (не запусков C++), 552 responsive сочетания, 32 открытия/возврата и настоящий C++ внутри окна. NEXUS-PERF-01:75 модулей/590301 B, outline2/27551 B, caps75/600000 и30000; field timing не измерялся. Локальные M4 online/cold Offline11 групп и M3 online/cold Offline8 групп PASS. Вложенные case-details потребовали direct-child selectors в трёх старых UI-тестах; старые FAIL сохранены, проверки не отключались. M3 current denominator читается из built curriculum, legacy40/40 остаётся отдельной проверкой.
+
+LIVE: 511 анонимных GET двух origins, 508 exact static matches и3 private guards PASS. В доступной IAB-вкладке штатный update сохранил вход/Cloud, код/stdin и видимые course/project показатели. Настоящий неизменённый публичный пример сортировки внутри окна дал `1 3 5 7 8 `, exit0, Clang/LLVM22 wasm32-wasip1. Escape вернул фокус и scroll с delta0/0. Это проверка существующего примера, не автоматическая приёмка лабораторной. Содержимое личных работ, identifiers/cookies и owner screenshots не публикуются. Данные других устройств ожидают подтверждения владельца.
+
+Откат подготовлен, не применён: `rollback/cpp-gold-module4-test2-final-20261026`, commit `3ca8c8dc767ad5077d0960a9b95fa34e43a274b2`, tree `e77930a39dece90212ac1affa31533e0fedd1273`. Сохранены все3883 immutable файла, удалений нет; patch forward/reverse exact. Реальный SW QA: test.1→test.2→test.1→test.2, два документа, синтетические localStorage/progress/cache и encrypted IndexedDB сохранены. Production rollback не выполнялся. Frontend ZIP SHA256 `b45d47c874c7e80a7a83bb6cc7ad72d73682b53ef57e9dd7b6f0fd02eceb51b4`; rollback ZIP SHA256 `997d8c7151a59d10a3061adc998078b06da04b4b55e202ea9508f87ead6b367b`.
+
+## История подготовки до публикации
 
 Владелец подтвердил работу Module 4 test.1 на ПК и телефоне, но сообщил о слишком широкой/высокой таблице и отсутствии понятного перехода из задания к Studio. Видео подтверждает: длинный stdin задаёт ширину столбца, скрытые stdout/файлы задают высоту строки, единственный горизонтальный scrollbar оказывается внизу всех случаев. Функциональный LIVE не закрывает это замечание 07.
 

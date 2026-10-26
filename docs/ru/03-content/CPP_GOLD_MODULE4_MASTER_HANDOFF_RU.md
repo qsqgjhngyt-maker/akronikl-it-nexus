@@ -1,4 +1,16 @@
-# MASTER HANDOFF: C++ Module 4 опубликован; замечания 07 в работе
+# MASTER HANDOFF: C++ Module 4 test.2 опубликован; повторная приёмка 07 ожидается
+
+26.10.2026. Новейшая фиксация: STATUS PARTIAL — test.2 AUTOMATED PASS и LIVE PASS в доступной вкладке; ожидаются новая физическая приёмка владельца и завершение post-publication main CI. PR30 merged; main `065606a788198045cadf250fea663246ddbb2d56`, tree `25fd21682fc192a6736e83ec94140023aeb6fc7d`, Pages40266081318 SUCCESS. Exact-head acceptance40264296088 и publication40264296083 SUCCESS. Подробный отчёт: `docs/CPP_GOLD_PRACTICE_UX_2026-10-26_RU.md`.
+
+Во всех Gold M1–4 компактные раскрывающиеся случаи и контекстное окно существующего редактора. На ПК задание рядом с редактором, на телефоне вкладки; Escape/возврат восстанавливает место чтения. CI:92 RU/EN объекта/552 responsive сочетания/32 открытия и возврата PASS, реальный C++ внутри окна PASS. NEXUS-PERF-01 75/590301 B, outline2/27551 B PASS. Никаких изменений учебных JSON/C++/stable IDs/прогресса/storage/Identity/Cloud/ProjectStore/runtime.
+
+После штатного update в IAB вход/Cloud, код/stdin и видимые показатели сохранились; существующий публичный пример сортировки исполнился с exit0, возврат delta0/0. Это не проверка личного содержимого на других устройствах. Два origins:508 exact static matches +3 private guards PASS. Откат3ca8c8d/treee77930a подготовлен, все3883 immutable сохранены, production rollback не применён. Официальный Release/тег и backend deployments не создавались.
+
+ROUTING CHECK:05 evidence/CI/rollback →00 актуальный milestone →07 ответ владельца. 02 информировать о единственном DOM-редакторе и неизменном state/runtime contract; 01 без auth/Cloud-изменений;04 методика визуальной регрессии/сохранности;06 отдельно не требуется. Готовый текст: «M4 test.2 main065606a опубликован. Автоматическая 05/07 и доступный IAB LIVE PASS, физическая приёмка и post-publication CI ещё pending. Сохранять PARTIAL; официальный Release не создан. Следующий шаг — ответ владельца о ПК/телефоне и финальный CI readback».
+
+Есть ли здесь материал для диплома? Да: отказ от прыжка вниз и дублирования редакторов, контекстное окно с единым state, exact input/output и измеримая сохранность node/кода/прогресса/scroll/focus. Эффективность обучения экспериментально не измерялась. NEXT RECOMMENDED BRANCH:05/07; RECOMMENDED MODE:высокий.
+
+## Предыдущая фиксация test.1 — история
 
 26.10.2026. STATUS: PARTIAL — функциональный LIVE test.1 и main CI PASS; замечания UX владельца остаются открытыми до новой проверки. Эта фиксация новее записей ниже; прежние ограничения на публикацию заменены явным разрешением владельца в чате.
 
