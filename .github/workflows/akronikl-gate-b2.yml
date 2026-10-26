@@ -1,0 +1,77 @@
+name: Akronikl — границы Account и приватная офлайн-копия
+on:
+  push:
+    branches: [feature/akronikl-0-2-gate-b2-20261026]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Источник, Core, UI и контрактные границы Account
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-b2-regression
+          git rev-parse HEAD > evidence-b2-regression/SOURCE_COMMIT.txt
+          git archive --format=zip HEAD > evidence-b2-regression/source.zip
+          (cd evidence-b2-regression && sha256sum source.zip > SOURCE_SHA256.txt)
+          node --test tests/akronikl-*.test.mjs | tee evidence-b2-regression/core-ui.tap
+          node --test tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/platform-lazy-imports.test.mjs | tee evidence-b2-regression/startup.tap
+          node tests/auth-bootstrap-check.mjs | tee evidence-b2-regression/bootstrap.txt
+          node tests/account-storage-isolation-check.mjs | tee evidence-b2-regression/account.txt
+          node tests/module-import-smoke-check.mjs | tee evidence-b2-regression/imports.txt
+          node tools/build-akronikl-knowledge.mjs --check | tee evidence-b2-regression/knowledge.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akronikl-b2-regression
+          path: evidence-b2-regression
+          retention-days: 30
+  private-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/ak02-b2-build
+      NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-b2-browser
+      NEXUS_SOURCE_COMMIT: ${{ github.sha }}
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+      NEXUS_CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Отдельная сборка без изменения metadata и без публикации
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-b2-browser
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tools/qa-browser-driver --ignore-scripts --no-audit --no-fund
+          test -x /usr/bin/google-chrome
+          VERSION=$(node -p "JSON.parse(require('fs').readFileSync('version.json')).version")
+          node tools/build-ui1a-release.mjs --out "$NEXUS_FRONTEND_DIR" --generation ui1a-akronikl-02-gate-b2-20261026 --version "$VERSION" | tee evidence-b2-browser/build.txt
+          cp "$NEXUS_FRONTEND_DIR/BUILD_MANIFEST.json" evidence-b2-browser/
+          node tools/check-akronikl-built-candidate.mjs
+      - name: Приватная копия и autosave без серверной сессии
+        run: node tests/akronikl-private-offline-browser-check.mjs
+      - name: Регрессия публичного офлайна
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-b2-browser/public-regression
+        run: node tests/akronikl-built-offline-browser-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akronikl-b2-browser
+          path: evidence-b2-browser
+          retention-days: 30
