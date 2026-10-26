@@ -18,7 +18,10 @@ const seen=new Set();async function walk(f){if(seen.has(f))return;seen.add(f);co
 await walk('core/app.js');let bytes=0;for(const f of seen)bytes+=(await stat(f)).size;
 assert.ok(seen.size<=75&&bytes<=600000,'NEXUS-PERF-01 cap unchanged');
 const outlineFiles=['courses/cpp/manifest.json','courses/cpp/curriculum.json'];let outlineBytes=0;for(const f of outlineFiles)outlineBytes+=(await stat(f)).size;assert.ok(outlineBytes<=30000);
-const hashes=JSON.parse(await readFile('docs/ru/03-content/CPP_MODULE4_AUTHORING_SCOPE.json')).productPaths;
+const historicalHashes=JSON.parse(await readFile('docs/ru/03-content/CPP_MODULE4_AUTHORING_SCOPE.json')).productPaths;
+// Новый renderer допустим только после exact publication proof двух pinned файлов.
+const hashes=historicalHashes.map(p=>scope.presentationPatchHashes?.find(x=>x.file===p.file)||p);
+for(const p of scope.presentationPatchHashes||[])if(!hashes.some(x=>x.file===p.file))hashes.push(p);
 for(const p of hashes)assert.equal(createHash('sha256').update(await readFile(p.file)).digest('hex'),p.sha256);
 const head=execFileSync('git',['rev-parse','HEAD']).toString().trim(),uncommittedProductEdit=!!execFileSync('git',['diff','--name-only','HEAD','--',M4_EDITORIAL_FILE]).toString().trim();
 const result={status:'PASS',baselineProductSource:source,checkoutHead:head,uncommittedProductEdit,productEquivalent:false,executableContractsEquivalent:true,editorialCorrection,scopeProductPaths:hashes.length,perf:{status:'PASS',staticModules:seen.size,staticBytes:bytes,capModules:75,capBytes:600000,outlineFiles:2,outlineBytes,capOutlineBytes:30000,fieldTimingMeasured:false},scope:{main:scope.m4Base,branch:'feature/academy-gold-standard-cpp-module-4',identityCloudRuntimeProjectStoreUnchanged:true,mainWrites:0,productionWrites:0,officialRelease:false},productHashes:hashes};
