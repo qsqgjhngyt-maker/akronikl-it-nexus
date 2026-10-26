@@ -11,9 +11,38 @@ on:
       - 'courses/cpp/**'
       - 'core/academy-gold-*.js'
       - 'tests/helpers/module4-*.mjs'
+      - 'tools/academy-gold-m4-editorial-scope.mjs'
+      - 'tools/check-academy-gold-m4-acceptance.mjs'
+      - 'tests/academy-gold-m4-editorial-scope.test.mjs'
 permissions:
   contents: read
 jobs:
+  editorial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      reuse_wasm: ${{ steps.proof.outputs.reuse_wasm }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Отрицательные контроли редакторского proof
+        run: node --test tests/academy-gold-m4-editorial-scope.test.mjs
+      - name: Разрешить reuse WASM только для точной P2 поправки и прежних 190 контрактов
+        id: proof
+        env:
+          NEXUS_M4_ACCEPTANCE_EVIDENCE: academy-gold-m4/editorial
+        run: node tools/check-academy-gold-m4-acceptance.mjs --editorial-probe
+      - name: Сохранить доказательство, новый WASM запуск не заявляется
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m4-editorial-${{ github.sha }}
+          path: academy-gold-m4/
+          retention-days: 30
   invariants:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -74,6 +103,8 @@ jobs:
           path: academy-gold-m4/
           retention-days: 30
   runtime:
+    needs: editorial
+    if: ${{ needs.editorial.outputs.reuse_wasm != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:

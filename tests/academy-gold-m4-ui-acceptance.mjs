@@ -7,6 +7,7 @@ import {module4GoldLessons} from './helpers/module4-gold-programs.mjs';
 import {goldLessonRoute} from './helpers/gold-lesson-route.mjs';
 import {checkGlossaryDrawer} from './helpers/glossary-drawer-checks.mjs';
 import {GOLD_CLASSIC_LESSONS} from '../core/academy-gold-catalog.js';
+import {M4_EDITORIAL_BEFORE,M4_EDITORIAL_AFTER} from '../tools/academy-gold-m4-editorial-scope.mjs';
 const f=await nativeOfflineFixture('module4-gold'),online=await onlineRuntimeFixture(),prefix='/releases/'+f.generation,all=await module4GoldLessons();
 const checks=[],widths=[320,360,390,768,1366,1440],phrase='SYNTHETIC module four local phrase';let local,vaultId,fatal;
 const check=async(name,action)=>{const start=performance.now();const detail=await action();checks.push({name,status:'PASS',ms:Math.round(performance.now()-start),detail});console.log('PASS '+name);};
@@ -45,6 +46,10 @@ try{
    if(locale==='en')assert.ok(!/[А-Яа-яЁё]/.test(await local.locator('.academy-gold').textContent()));
    await local.locator('[data-gold-next]').focus();await local.keyboard.press('Enter');assert.match(await local.locator('[data-gold-index]').textContent(),/^2 \/ /);
   }return{objects:16,entrypoints:2,personalStates:8,filesPerLesson:2};
+ });
+ await check('P2: исправленная EN формулировка отображается online/cold Offline, личный код сохранён',async()=>{
+  for(const p of [online.page,local]){await goldLessonRoute(p,'cpp.associative-containers','en');const text=await p.locator('.academy-gold').textContent();assert.ok(text.includes(M4_EDITORIAL_AFTER));assert.ok(!text.includes(M4_EDITORIAL_BEFORE));assert.equal(await p.locator('#editor').inputValue(),personal('cpp.associative-containers'));assert.ok(await p.locator('input[name="quiz"][value="2"]').isChecked());}
+  return{lesson:'cpp.associative-containers',locale:'en',entrypoints:2,legacyQuizAndCodePreserved:true};
  });
  await check('Открытые тексты, примеры и практикумы: 16 объектов при ширинах 320–1440',async()=>{
   for(const g of all){await goldLessonRoute(local,g.lessonId,g.locale);await local.locator('.academy-gold details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));
