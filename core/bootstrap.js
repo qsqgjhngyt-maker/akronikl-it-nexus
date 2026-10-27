@@ -44,7 +44,9 @@ export function createNexusBootstrap({
  };
  const removeListeners=()=>{while(listeners.length)listeners.pop()()};
  const entry=()=>ENTRY_URL+(typeof locationImpl?.hash==='string'?locationImpl.hash:'');
- const lock=()=>{storage.lockAccountStorage();abortReaders();stopInterval()};
+ // Одностороннее уведомление UI: не подтверждает сессию и не выпускает маршрут.
+ const invalidateContext=()=>{const EventType=windowImpl?.Event||globalThis.Event;if(windowImpl?.dispatchEvent&&EventType)windowImpl.dispatchEvent(new EventType('nexus:context-invalidated'))};
+ const lock=()=>{storage.lockAccountStorage();invalidateContext();abortReaders();stopInterval()};
  // Проверка после временного сетевого сбоя автоматически возобновляется с backoff.
  // Не держать фоновый polling на скрытой вкладке; нет доступа к private data.
  const stopRecovery=()=>{if(recoveryTimer!==null){timers.clearTimeout(recoveryTimer);recoveryTimer=null}};
@@ -153,6 +155,7 @@ export function createNexusBootstrap({
   listen(windowImpl,'focus',()=>{if(visible())void recheck()});
   listen(windowImpl,'hashchange',event=>{
    if(releasedHashEvents.has(event))return;
+   invalidateContext();
    event.stopImmediatePropagation();pendingRoute=true;
    if(phase==='ready'&&visible())void recheck();
   },true);
