@@ -35,7 +35,7 @@ export function mountConnectionPanel({parent,documentRef,controller,locale='ru'}
     gpuNote.hidden=s.profileId!=='local-webgpu';
   };
   const unsub=controller.subscribe(display);
-  select.addEventListener('change',()=>{file.value='';controller.select(select.value);});
+  select.addEventListener('change',()=>{file.value='';try{controller.select(select.value);}catch{}display(controller.snapshot());});
   file.addEventListener('change',()=>display(controller.snapshot()));
   check.addEventListener('click',()=>{void controller.inspect();});
   load.addEventListener('click',async()=>{const chosen=file.files?.[0];if(!chosen)return;try{await controller.connect(chosen);}finally{file.value='';if(!dead)display(controller.snapshot());}});
