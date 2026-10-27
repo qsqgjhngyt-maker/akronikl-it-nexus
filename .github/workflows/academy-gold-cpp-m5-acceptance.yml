@@ -6,6 +6,12 @@ on:
       - 'release-candidate.json'
       - 'version.json'
       - 'tools/academy-gold-module5-publication.mjs'
+      - 'tools/academy-gold-module5-feature-fixes.mjs'
+      - 'docs/ru/03-content/CPP_MODULE5_FEATURE_FIX_SCOPE.json'
+      - 'pwa/offline.css'
+      - 'pwa/client.js'
+      - 'tests/pwa-entry-cross-generation-browser-check.mjs'
+      - 'tests/pwa-controller-graph-compatibility.test.mjs'
       - 'docs/ru/03-content/CPP_MODULE5_PUBLICATION_SCOPE.json'
       - '.github/workflows/academy-gold-cpp-m5-acceptance.yml'
       - 'tests/academy-gold-m5-*-acceptance*'
@@ -60,6 +66,11 @@ jobs:
         env:
           NEXUS_NATIVE_EVIDENCE: academy-gold-m5-acceptance/ui
         run: node tests/academy-gold-m5-ui-acceptance.mjs
+      - name: Шапка локальной копии — исходный дефект и исправление,54 сочетания
+        if: matrix.suite == 'ui'
+        run: |
+          NEXUS_HEADER_BASELINE=1 NEXUS_HEADER_PUBLISHED_DIR="$GITHUB_WORKSPACE" NEXUS_NATIVE_EVIDENCE=academy-gold-m5-acceptance/header-before node tests/academy-gold-m5-header-acceptance.mjs
+          NEXUS_NATIVE_EVIDENCE=academy-gold-m5-acceptance/header-after node tests/academy-gold-m5-header-acceptance.mjs
       - name: Старт, меню и основные экраны
         if: matrix.suite == 'startup-practice'
         env:
@@ -76,4 +87,41 @@ jobs:
         with:
           name: academy-gold-m5-acceptance-${{ matrix.suite }}-${{ github.sha }}
           path: academy-gold-m5-acceptance/
+          retention-days: 30
+  entry-transport:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/nexus-m5-entry-build
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m5-entry-browser/node_modules/playwright/index.mjs
+      NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m5-entry-tls
+      NEXUS_ENTRY_GRAPH_EVIDENCE: academy-gold-m5-entry
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Изолированные build, браузер и тестовый TLS, без cloud credentials
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/nexus-m5-entry-browser --no-save playwright@1.56.1
+          /tmp/nexus-m5-entry-browser/node_modules/.bin/playwright install --with-deps chromium
+          mkdir -p /tmp/nexus-m5-entry-tls
+          openssl req -x509 -newkey rsa:2048 -nodes -keyout /tmp/nexus-m5-entry-tls/qa-key.pem -out /tmp/nexus-m5-entry-tls/qa-cert.pem -days 1 -subj /CN=d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m5-entry-build
+      - name: Совместимость Account policy и строгий exact graph для runtime
+        run: |
+          node --test tests/pwa-controller-graph-compatibility.test.mjs
+          node tests/pwa-controller-check.mjs
+          node tests/entry-document-navigation-check.mjs
+      - name: Реальный SW login→logout→entry без Shift+F5; progress/project/checkpoint
+        run: node tests/pwa-entry-cross-generation-browser-check.mjs
+      - name: Сохранить PASS/FAIL evidence без TLS keys и browser profiles
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-gold-m5-entry-transport-${{ github.sha }}
+          path: academy-gold-m5-entry/
           retention-days: 30
