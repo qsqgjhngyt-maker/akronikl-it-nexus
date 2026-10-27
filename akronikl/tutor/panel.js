@@ -20,8 +20,14 @@ export function mountTutor({parent,documentRef,host,loadKnowledge,locale,getIncl
   }
   async function ask(intent,followUp=false){
     if(dead||loading||!host.current())return;const query=input.value.trim()||(followUp?(en?'Explain more simply':'Объясни проще'):'');if(!query)return;
-    const ticket=++seq;state.textContent=en?'Preparing answer…':'Готовлю ответ…';output.setAttribute('aria-busy','true');
-    const result=await session.ask({text:query,intent,followUp,include:getInclude()});
+    const ticket=++seq;delete state.dataset.tutorProgress;state.textContent=en?'Preparing answer…':'Готовлю ответ…';output.setAttribute('aria-busy','true');
+    let lastPhase='';
+    const result=await session.ask({text:query,intent,followUp,include:getInclude()},{onProgress(progress){
+      if(dead||ticket!==seq||!host.current())return;
+      // Только счётчики; непроверенный ответ не попадает в live-region.
+      state.dataset.tutorProgress=JSON.stringify(progress);
+      if(progress.phase!==lastPhase){lastPhase=progress.phase;state.textContent=progress.phase==='generation'?(en?'Generating locally; answer is being checked…':'Локальная генерация; ответ проходит проверку…'):(en?'Processing the selected context on this device…':'Обрабатываю выбранный контекст на этом устройстве…');}
+    }});
     if(dead||ticket!==seq||!host.current())return;
     output.removeAttribute('aria-busy');state.textContent=result.generated?(en?'Local-model answer; verify against sources.':'Ответ локальной модели; проверьте по источникам.'):(result.status==='ok'?(en?'Source excerpts, not generated.':'Выдержки курса, не генерация.'):result.text);
     render(query,result);
@@ -32,7 +38,7 @@ export function mountTutor({parent,documentRef,host,loadKnowledge,locale,getIncl
   button(en?'Explain selected code':'Разобрать выбранный код',()=>void ask('code'));
   button(en?'Stop answer':'Остановить ответ',()=>{cancelLoading();seq++;session.cancel();output.removeAttribute('aria-busy');state.textContent=en?'Cancelled.':'Отменено.';});
   function cancelLoading(){if(loading){loading.abort();loading=null;provider=null;renew();load.disabled=false;file.disabled=false;}}
-  function clear(){cancelLoading();seq++;session.clear();input.value='';output.replaceChildren();output.removeAttribute('aria-busy');}
+  function clear(){delete state.dataset.tutorProgress;cancelLoading();seq++;session.clear();input.value='';output.replaceChildren();output.removeAttribute('aria-busy');}
   button(en?'Clear dialogue':'Очистить диалог',clear);
   const local=make('details','',details);make('summary',en?'Local model — separate preparation':'Локальная модель — отдельная подготовка',local);
   make('p',en?'Experimental CPU mode. Select the official Qwen3-0.6B Q8_0 GGUF (~639 MB). It stays on this device and is not stored by the assistant. A prepared same-origin runtime is required. Phones and answer quality are not accepted yet.':'Экспериментальный CPU-режим. Выберите официальный Qwen3-0.6B Q8_0 GGUF (~639 МБ). Файл остаётся на устройстве и не сохраняется помощником. Нужен подготовленный runtime с того же сайта. Работа на телефонах и качество ответов ещё не приняты.',local);

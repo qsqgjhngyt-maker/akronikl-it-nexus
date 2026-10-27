@@ -44,6 +44,61 @@ test('другой язык индекса не подменяется авто�
 test('внешний provider запрещён на уровне конфигурации',()=>{const f=fixture();assert.throws(()=>createTutorSession({host:f.host,loadKnowledge:async()=>index,provider:{...model(()=>{}),kind:'external'}}),/DENIED/);f.tutor.dispose();});
 test('неизвестные поля и слишком большой ввод отклоняются',async()=>{const f=fixture();for(const r of [request({tools:[]}),{text:'a'.repeat(1501)},request({intent:'execute'}),request({include:['secret']})])assert.equal((await f.tutor.ask(r)).status,'error');f.tutor.dispose();});
 test('после dispose ответ отсутствует, модель освобождается один раз',async()=>{let disposed=0;const f=fixture({provider:{...model(async()=>({answer:'X',citations:['S1']})),dispose(){disposed++;}}});await f.tutor.ask(request());f.tutor.dispose();f.tutor.dispose();assert.equal((await f.tutor.ask(request())).status,'cancelled');assert.equal(disposed,1);});
-test('Wllama adapter: нет tools, prompt cache и thinking; есть отмена',async()=>{let received;const p=createWllamaProvider({async createChatCompletion(x){received=x;return{choices:[{finish_reason:'stop',message:{content:'{"answer":"A","citations":["S1"]}'}}]};},async exit(){}});const c=new AbortController();assert.deepEqual(await p.generate({messages:[{role:'user',content:'q'}],allowedCitations:['S1'],signal:c.signal}),{answer:'A',citations:['S1']});assert.equal(received.cache_prompt,false);assert.equal(received.chat_template_kwargs.enable_thinking,false);assert.equal(received.abortSignal,c.signal);assert.equal(received.tools,undefined);await p.dispose();});
-test('Wllama adapter отклоняет оборванный ответ',async()=>{const p=createWllamaProvider({async createChatCompletion(){return{choices:[{finish_reason:'length',message:{content:'{}'}}]};},async exit(){}});await assert.rejects(p.generate({messages:[],allowedCitations:['S1']}));await p.dispose();});
+test('Wllama adapter: нет tools, prompt cache и thinking; есть отмена',async()=>{let received;const p=createWllamaProvider({async createChatCompletion(x){received=x;x.onData({choices:[{finish_reason:'stop',delta:{content:'{"answer":"A","citations":["S1"]}'}}]});},async exit(){}});const c=new AbortController();assert.deepEqual(await p.generate({messages:[{role:'user',content:'q'}],allowedCitations:['S1'],signal:c.signal}),{answer:'A',citations:['S1']});assert.equal(received.cache_prompt,false);assert.equal(received.chat_template_kwargs.enable_thinking,false);assert.equal(received.abortSignal,c.signal);assert.equal(received.tools,undefined);await p.dispose();});
+test('Wllama adapter отклоняет оборванный ответ',async()=>{const p=createWllamaProvider({async createChatCompletion(x){x.onData({choices:[{finish_reason:'length',delta:{content:'{}'}}]});},async exit(){}});await assert.rejects(p.generate({messages:[],allowedCitations:['S1']}));await p.dispose();});
 test('неверный файл модели отклоняется до импорта runtime',async()=>{let loaded=0;await assert.rejects(loadLocalModel(new Blob(['x'.repeat(1024)]),{loadRuntime:async()=>{loaded++;}}));assert.equal(loaded,0);});
+
+test('stream: ответ собирается полностью, прогресс не содержит код или токены',async()=>{
+ const events=[];const p=createWllamaProvider({async createChatCompletion(x){
+  assert.equal(x.stream,true);assert.equal(x.return_progress,true);
+  x.onData({prompt_progress:{processed:64,total:100},choices:[]});
+  x.onData({choices:[{delta:{content:'{"answer":"SECRET_SYNTHETIC"'},finish_reason:null}]});
+  x.onData({choices:[{delta:{content:',"citations":["S1"]}'},finish_reason:'stop'}]});
+ },async exit(){}});
+ const r=await p.generate({messages:[],allowedCitations:['S1'],onProgress:x=>events.push(x)});
+ assert.equal(r.answer,'SECRET_SYNTHETIC');assert.equal(events.length,3);assert.equal(events[0].processed,64);
+ assert.doesNotMatch(JSON.stringify(events),/SECRET_SYNTHETIC|answer|content/);await p.dispose();
+});
+test('stream: отсутствие stop не считается завершённым ответом',async()=>{
+ const p=createWllamaProvider({async createChatCompletion(x){x.onData({choices:[{delta:{content:'{"answer":"A","citations":["S1"]}'}}]});},async exit(){}});
+ await assert.rejects(p.generate({messages:[],allowedCitations:['S1']}),/INVALID/);await p.dispose();
+});
+test('stream: reasoning не выводится и завершённый ответ с ним отклоняется',async()=>{
+ const events=[];const p=createWllamaProvider({async createChatCompletion(x){x.onData({choices:[{delta:{reasoning_content:'PRIVATE_THINK'}}]});x.onData({choices:[{finish_reason:'stop',delta:{content:'{"answer":"A","citations":[]}'}}]});},async exit(){}});
+ await assert.rejects(p.generate({messages:[],allowedCitations:['S1'],onProgress:x=>events.push(x)}),/INVALID/);assert.doesNotMatch(JSON.stringify(events),/PRIVATE_THINK/);assert.equal(events.at(-1).reasoningPieces,1);await p.dispose();
+});
+test('stream: tools отклоняются до вывода, JSON не исполняется',async()=>{
+ const p=createWllamaProvider({async createChatCompletion(x){x.onData({choices:[{delta:{tool_calls:[{function:{name:'remove'}}]}}]});},async exit(){}});
+ await assert.rejects(p.generate({messages:[],allowedCitations:['S1']}),/INVALID/);await p.dispose();
+});
+test('stream: слишком длинный ответ отклоняется',async()=>{
+ const p=createWllamaProvider({async createChatCompletion(x){x.onData({choices:[{delta:{content:'x'.repeat(10001)}}]});},async exit(){}});
+ await assert.rejects(p.generate({messages:[],allowedCitations:['S1']}),/INVALID/);await p.dispose();
+});
+test('stream: отмена подавляет последующие chunks и ответ',async()=>{
+ const c=new AbortController(),events=[];const p=createWllamaProvider({async createChatCompletion(x){c.abort();x.onData({choices:[{delta:{content:'{"answer":"LATE","citations":[]}'},finish_reason:'stop'}]});},async exit(){}});
+ await assert.rejects(p.generate({messages:[],allowedCitations:['S1'],signal:c.signal,onProgress:x=>events.push(x)}));assert.equal(events.length,0);await p.dispose();
+});
+test('stream: ошибка обработчика прогресса не ломает проверку ответа',async()=>{
+ const p=createWllamaProvider({async createChatCompletion(x){x.onData({choices:[{delta:{content:'{"answer":"A","citations":["S1"]}'},finish_reason:'stop'}]});},async exit(){}});
+ assert.equal((await p.generate({messages:[],allowedCitations:['S1'],onProgress(){throw Error('OBSERVER');}})).answer,'A');await p.dispose();
+});
+test('сессия передаёт только ограниченные числовые данные прогресса',async()=>{
+ let getterCalls=0;const events=[];const f=fixture({provider:model(async x=>{
+  x.onProgress({phase:'generation',elapsedMs:-10,pieces:1,total:Infinity,processed:5,reasoningPieces:0,content:'PRIVATE_TOKEN'});
+  x.onProgress({get phase(){getterCalls++;return 'generation';},get pieces(){getterCalls++;return 3;}});
+  return{answer:'A',citations:['S1']};})});
+ assert.equal((await f.tutor.ask(request(),{onProgress:x=>events.push(x)})).status,'ok');assert.equal(events[0].elapsedMs,0);assert.equal(events[0].total,0);assert.equal(getterCalls,0);assert.doesNotMatch(JSON.stringify(events),/PRIVATE_TOKEN/);f.tutor.dispose();
+});
+test('прогресс после смены аккаунта не проходит в окно',async()=>{
+ const events=[];let progress,release;const f=fixture({provider:model(x=>{progress=x.onProgress;return new Promise(r=>release=r);})});
+ const task=f.tutor.ask(request(),{onProgress:x=>events.push(x)});while(!release)await wait(1);
+ f.change();progress({phase:'generation',pieces:8});release({answer:'OLD',citations:['S1']});assert.equal((await task).status,'cancelled');assert.deepEqual(events,[]);assert.deepEqual(f.tutor.snapshot(),[]);
+});
+test('нефункциональный progress отклоняется до чтения контекста',async()=>{
+ const f=fixture();assert.equal((await f.tutor.ask(request(),{onProgress:{}})).status,'error');assert.equal(f.counts().readCount,0);f.tutor.dispose();
+});
+test('локальный runtime не использует скрытый CDN compatibility fallback',async()=>{
+ const s=await readFile(new URL('../akronikl/tutor/local-model.js',import.meta.url),'utf8');
+ assert.ok(s.indexOf('engine.setCompat(null)')<s.indexOf('await engine.loadModel('));assert.match(s,/n_parallel:1/);assert.match(s,/jinja:true/);assert.match(s,/reasoning_budget_tokens:0/);
+});

@@ -17,7 +17,7 @@ const identity={id:'synthetic-tutor'};let panel=null;
 window.fixture={root,editor,workspace};
 document.querySelector('#open').onclick=()=>{panel?.dispose();panel=openAssistantPanel({root,readIdentity:()=>identity,readRoute:()=>({view:'code-studio',project:'synthetic-tutor',hash:location.hash}),readLocale:()=> 'ru',readCourseLocale:()=> 'ru',readEditor:()=>editor,trigger:document.querySelector('#open')});};
 </script></body></html>`;
-const requests=[],errors=[],checks=[],answers=[];let fatal=null;
+const requests=[],errors=[],checks=[],answers=[],modelProgress=[];let fatal=null;
 const server=http.createServer(async(req,res)=>{const u=new URL(req.url,'http://127.0.0.1');requests.push({path:u.pathname,method:req.method});try{
  if(req.method!=='GET')throw Error('METHOD');if(u.pathname==='/'){res.writeHead(200,{'content-type':'text/html'});res.end(html);return;}
  if(u.pathname==='/favicon.ico'){res.writeHead(204);res.end();return;}
@@ -50,7 +50,9 @@ try{
    await tutor().getByRole('status').filter({hasText:'Экспериментальная локальная модель готова.'}).waitFor({timeout:180000});
   });
   await check('Генерация по реальному фрагменту курса с проверенными метками источников',async()=>{
-   await ask('Объясни RAII');const item=tutor().locator('[data-tutor-turn]').last();
+   const poll=setInterval(async()=>{try{const data=await tutor().locator('[data-tutor-progress]').getAttribute('data-tutor-progress');if(data)modelProgress.push(JSON.parse(data));}catch{}},1000);
+   try{await ask('Объясни RAII');}finally{clearInterval(poll);}
+   const item=tutor().locator('[data-tutor-turn]').last();
    assert.equal(await item.getAttribute('data-tutor-generated'),'true',await item.textContent());
    const answer=await item.locator('[data-tutor-answer]').textContent();answers.push({question:'Объясни RAII',answer});assert.ok(answer.length>20);assert.match(answer,/ресурс|времен|объект/i);
    await page.screenshot({path:path.join(out,'dialogue-local-model.png')});
@@ -66,4 +68,4 @@ try{
  await check('Изменение workspace закрывает окно и стирает диалог',async()=>{await page.evaluate(()=>fixture.workspace.updateFile('main.cpp','changed'));await panel().waitFor({state:'detached'});assert.equal(await page.locator('[data-tutor-turn]').count(),0);});
  assert.deepEqual(errors,[]);assert.equal(requests.filter(r=>r.method!=='GET').length,0);
 }catch(e){fatal={message:e.message,stack:e.stack};console.error(e);await page.screenshot({path:path.join(out,'FAILURE.png')}).catch(()=>{});}
-finally{const version=browser.version();await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));await writeFile(path.join(out,'RESULT.json'),JSON.stringify({status:fatal?'FAIL':'PASS',source:process.env.NEXUS_SOURCE_COMMIT||null,checks,answers,fatal,errors,requests,browser:version,node:process.version,realModel:!!modelPath,qualityAcceptance:false,physicalDevices:false,productionLive:false},null,2)+'\n');if(fatal)process.exitCode=1;}
+finally{const version=browser.version();await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));await writeFile(path.join(out,'RESULT.json'),JSON.stringify({status:fatal?'FAIL':'PASS',source:process.env.NEXUS_SOURCE_COMMIT||null,checks,answers,modelProgress,fatal,errors,requests,browser:version,node:process.version,realModel:!!modelPath,qualityAcceptance:false,physicalDevices:false,productionLive:false},null,2)+'\n');if(fatal)process.exitCode=1;}
