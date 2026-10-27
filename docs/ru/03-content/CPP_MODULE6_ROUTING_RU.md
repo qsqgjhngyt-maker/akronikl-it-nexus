@@ -1,0 +1,55 @@
+# M6-0: готовая маршрутизация
+
+27.10.2026. Тексты подготовлены, автоматически в другие чаты не отправлены. Статус M6-0 PARTIAL, исходник проверок0da00a4; main/production не изменены. Приоритет:02,03,05/07,00; затем01/04 и06.
+
+## 🔀 CROSS-BRANCH SYNC REQUIRED
+
+Источник:03 CONTENT PRODUCTION.
+
+Результат/milestone:M6-0 выполнен; обязательное runtime ядро31/31, host34/34, один P1 контракта неподдержанных threads.
+
+Куда:02 PROJECT/CODE STUDIO, совместно03 и07.
+
+Почему:scope поддержки runtime и сообщение учащемуся принадлежат контракту02, их нельзя молча менять контентом03.
+
+Когда:сейчас, до полного допуска M6 и M6-1.
+
+Что передать:21программа/34случая, source hashes native/browser одинаковы; std::thread route guaranteed при threads:false, затем WASM_RUNTIME_FAILURE/WebAssembly.Exception и providerLimit:false. Worker после отказа восстанавливается; EH core работает. Qt/C++CLI отсутствуют и не объявлены стандартным C++.
+
+Готовый текст для вставки:
+
+> M6-0 в feature/academy-gold-standard-cpp-module-6 завершён PARTIAL. Закрыть M6-P1-01: согласовать inspect/run/диагностику для OS threads, которые не поддерживает текущий Clang/WASI; выдавать понятное ограничение среды вместо сырого exception и неверного guaranteed. Не переписывать learner source и не заменять C++ интерпретатором. Проверить строки/комментарии/пользовательские имена против ложных срабатываний, настоящие EH, восстановление Worker, M6 positive core/Offline и M1–5. Проверки0da00a4, CI40471680590, кейс native-thread-boundary. Main, production, DB и релизы не менять. Материалы CPP_MODULE6_PREFLIGHT_RU.md и CPP_MODULE6_PREFLIGHT_EVIDENCE.json.
+
+Что потом:03 повторяет M6-0; после решения GUI scope — M6-1 RU/EN.
+
+## 🔀 CROSS-BRANCH SYNC REQUIRED
+
+Источник:03. Результат/milestone:план последнего модуля и финальной аттестации. Куда:00 MASTER,03,06. Почему:нужен выбор архитектуры обучения и GUI, окончательный объём ещё не утверждён. Когда:до M6-1. Что передать:предложены10core+2GUI и отдельная аттестация; новые уроки/IDs/оценки не реализованы.
+
+Готовый текст для вставки:
+
+> Зафиксировать M6-0 как PARTIAL, не как готовый Gold Module6. Рекомендуемый план: событийное ядро, состояния/MVP, RAII-подписки, валидация, отмена, версионирование и тестирование; затем настоящий GUI через отдельно проверенный Qt-маршрут. Выбрать внешний ПК Qt либо отдельный browser runtime milestone02, не выдавать консоль за GUI. После шести модулей предложены комплексный экзамен, практическая работа с чужим кодом, самостоятельный проект со scaffold и защита; веса/пороги/время PLANNED для пилота, соответствие уровню университета ещё не измерено. Контракты попыток/оценок/Cloud не менять автоматически. План CPP_MODULE6_COURSE_FINISH_PROPOSAL_RU.md; сначала закрыть M6-P1-01. Main/production/официальный релиз вне разрешения.
+
+Что потом:00 фиксирует решение объёма,03 готовит полный RU/EN контент,06 уточняет валидность/нагрузку заданий без автоматического внедрения.
+
+## 🔀 CROSS-BRANCH SYNC REQUIRED
+
+Источник:03. Результат/milestone:feature audit evidence. Куда:05 RELEASE/EVIDENCE и07 UI/MOBILE/PWA. Почему:разделить измеренный PASS ядра, известные ограничения и фактический общий PARTIAL. Когда:сейчас для ledger, после исправления для повторной приёмки. Что передать:CI2jobsSUCCESS, runtime RESULTPARTIAL; coldOffline×390/1366px4сочетания;13Node+4browserпроверки; NEXUS-PERF-01 caps сохранены; нет новых Gold уроков и LIVE публикации.
+
+Готовый текст для вставки:
+
+> Принять evidence аудита M6-0 на0da00a4: CI40471680590 completed success, но admission PARTIAL/M6-P1-01 OPEN. Native34/34, core WASM31/31, два ожидаемых отказа Qt/C++CLI и один некорректный отказ threads. Синтетические progress/code/VFS/project/checkpoint и real encrypted cold Offline PASS при1366/390px. Точный продукт M1–5/d76 сохранён; новая regression34/integration13/controller5/entry13 PASS, воспроизводимый прежний build3502PASS, PERF75/591219,outline27476,labs45357. Это не приёмка новых Gold уроков, не физический телефон/ПК и не новый FULL LIVE PASS. Два ZIP сохранены, digest совпали,118 файлов в hash ledger. До M6-1 закрыть P1 и GUI scope; main, production, релиз не трогать.
+
+Что потом:после authoring — полноценная05/07 и отдельное разрешение на тестовую публикацию.
+
+## 🔀 CROSS-BRANCH SYNC REQUIRED
+
+Источник:03/02. Результат/milestone:учебное расширение без миграции данных. Куда:01 IDENTITY/CLOUD и04 DIPLOMA. Почему:сохранность stable IDs и отделение подтверждённого mastery от отметки чтения затрагивают будущий контракт. Когда:сейчас для evidence, до реализации аттестации для отдельного согласования.
+
+Что передать:current56/56 и legacy40/40 неизменны; синтетическое будущее56/67 не мутирует state; аккаунты изолированы, Offline conflicts/repeat проверены, Cloud writes0. Никаких реальных данных и secrets в evidence. Для диплома сравнение native/WASI и измеренный P1; нет исследований учебной эффективности.
+
+Готовый текст для вставки:
+
+> M6-0 не меняет Identity/Cloud/storage/project schemas. Stable56/legacy40 сохранены, реальные данные не читались. Synthetic storage/ProjectStore/Offline merge и encrypted cold copy PASS; новая аттестация только PLANNED. Перед её реализацией отдельно спроектировать IDs/версионирование/попытки/оценки/синхронизацию и доступность; отметка чтения не должна стать доказанной оценкой автоматически. Для04 зафиксировать эксперимент: host threads работают, WASI объявляет threads:false, broad admission даёт guaranteed и raw runtime exception; после аудита продукт прежний, P1 открыт. Доказательства CI40471680590 и CPP_MODULE6_PREFLIGHT_EVIDENCE.json. Никакого нового LIVE PASS/аккредитации не заявлено.
+
+Что потом:04 включает факты и ограничения в evidence ledger;01 подключается к отдельному assessment contract,03 возвращается к M6 после runtime/GUI решения.
