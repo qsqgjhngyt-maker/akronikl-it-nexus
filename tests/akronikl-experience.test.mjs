@@ -1,0 +1,27 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {resolveMessage} from '../akronikl/experience/intents.js';
+import {createInferenceMeter} from '../akronikl/experience/metrics.js';
+import {textFor} from '../akronikl/experience/strings.js';
+import {createTutorSession} from '../akronikl/tutor/session.js';
+import {createKnowledgeIndex,createNexusContextAdapter} from '../akronikl/core/index.js';
+for(const [q,kind,intent] of [
+ ['Акроникл, объясни эту тему попроще','tutor','simpler'],['Покажи пример','tutor','example'],['Дай мне небольшую задачу для тренировки','tutor','practice'],
+ ['Почему мой код выдаёт ошибку?','diagnostic'],['Где я остановился?','resume'],['Помоги найти лабораторную работу','platform'],['Где мои проекты?','platform'],
+ ['Открой Академию','platform'],['Как сохранить работу','platform'],['удали все проекты','platform'],['найди RAII','search'],['Разбери выбранный код','tutor','code'],
+ ['Akronikl, explain this topic simply','tutor','simpler'],['give me an example','tutor','example'],['give me a practice task','tutor','practice'],
+ ['where did i leave off','resume'],['help me find a lab','platform'],['open Academy and delete projects','platform']])test('формулировка: '+q,()=>{const r=resolveMessage(q);assert.equal(r.kind,kind);if(intent)assert.equal(r.intent,intent);});
+for(const v of [null,{},'','x'.repeat(1501),'abc\0def'])test('некорректный ввод '+JSON.stringify(v).slice(0,20),()=>assert.equal(resolveMessage(v).kind,'invalid'));
+test('текст модели и URL не превращаются в разрешённый маршрут',()=>{for(const q of ['https://attacker.invalid','<script>remove()</script>','Открой https://attacker.invalid']){const r=resolveMessage(q);assert.equal('hash'in r,false);assert.equal('url'in r,false);}});
+test('RU/EN имеют рабочие сообщения, но не обещают подключённый голос',()=>{assert.match(textFor('ru','voiceLater'),/ещё не подключено/);assert.match(textFor('en','voiceLater'),/not connected/);assert.notEqual(textFor('ru','send'),textFor('en','send'));});
+test('SSE-фрагменты не выдаются за tokens/sec',()=>{let clock=0;const m=createInferenceMeter({now:()=>clock,readHeap:()=>null});clock=10;m.observe({choices:[{delta:{content:'abc'}}]});clock=30;m.observe({choices:[{delta:{content:'def'}}]});clock=50;const r=m.finish();assert.equal(r.firstOutputChunkMs,10);assert.equal(r.totalMs,50);assert.equal(r.outputPieces,2);assert.equal(r.completionTokens,null);assert.equal(r.tokensPerSecond,null);assert.equal(r.jsHeapBeforeBytes,null);});
+test('вычисление скорости только по числу токенов runtime',()=>{let clock=0;const m=createInferenceMeter({now:()=>clock,readHeap:()=>100});clock=200;m.observe({timings:{prompt_ms:150,predicted_ms:50,predicted_n:2},choices:[{delta:{content:'secret'}}]});clock=230;const r=m.finish();assert.equal(r.tokensPerSecond,40);assert.equal(r.promptMs,150);assert.doesNotMatch(JSON.stringify(r),/secret/);});
+test('некорректные метрики не исполняют getters и не проходят',()=>{let calls=0;const m=createInferenceMeter({now:()=>0,readHeap:()=>NaN});m.observe({timings:{get prompt_ms(){calls++;return 3},predicted_n:Infinity,predicted_ms:-2}});assert.equal(calls,0);assert.equal(m.finish().tokensPerSecond,null);});
+test('после отмены измерение не меняется',()=>{let clock=0;const m=createInferenceMeter({now:()=>clock,readHeap:()=>null});clock=3;m.finish('cancelled');clock=8;m.observe({choices:[{delta:{content:'late'}}]});assert.equal(m.snapshot().outputPieces,0);assert.equal(m.snapshot().totalMs,3);});
+const index=createKnowledgeIndex(JSON.parse(await readFile(new URL('../akronikl/knowledge/core-index.ru.json',import.meta.url))));
+function tutor(lessonId=null,provider=null){const b={};return createTutorSession({host:createNexusContextAdapter({readBoundary:()=>b,readRoute:()=>({view:lessonId?'lesson':'home',courseId:lessonId?'cpp':null,lessonId}),readLocale:()=> 'ru',authorize:()=>true}),loadKnowledge:async()=>index,provider});}
+test('естественное упрощение без прежней темы берёт реальный открытый урок',async()=>{const t=tutor('cpp.lifetime-ownership');const r=await t.ask({text:'Объясни эту тему попроще',intent:'simpler',followUp:true});assert.equal(r.status,'ok');assert.equal(r.generated,false);assert.ok(r.sources.every(s=>s.lessonId==='cpp.lifetime-ownership'));t.dispose();});
+test('без урока/темы новая задача требует уточнения, не выдумывается',async()=>{const t=tutor();assert.equal((await t.ask({text:'Дай задачу',intent:'practice',followUp:true})).status,'clarify');t.dispose();});
+test('practice — авторское упражнение, не подмена заданий курса',async()=>{let prompt;const t=tutor('cpp.lifetime-ownership',{kind:'local',transport:'in-process',modelId:'synthetic',generate:async x=>{prompt=x.messages[0].content;return{answer:'Тестовая задача',citations:['S1']}},dispose(){}});const r=await t.ask({text:'Дай задачу',intent:'practice',followUp:true});assert.equal(r.generated,true);assert.match(prompt,/not an official course assignment/);t.dispose();});
+test('новый entry остаётся ленивым и не подключает runtime сразу',async()=>{const entry=await readFile(new URL('../akronikl/ui/panel.js',import.meta.url),'utf8');const chat=await readFile(new URL('../akronikl/experience/chat.js',import.meta.url),'utf8');assert.match(entry,/experience\/chat/);assert.match(chat,/import\('\.\.\/tutor\/local-model.js'\)/);assert.doesNotMatch(chat,/localStorage|sessionStorage|innerHTML\s*=/);});

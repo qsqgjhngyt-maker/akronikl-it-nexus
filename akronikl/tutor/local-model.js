@@ -1,13 +1,14 @@
+import {createInferenceMeter} from '../experience/metrics.js';
 import {localLoadOptions} from '../connections/profiles.js';
 import {probeWebGPU,checkSignal} from '../connections/probe.js';
 // Только доверенный in-process runtime. Внешнего URL/API/ключей здесь нет.
 export const LOCAL_MODEL=Object.freeze({id:'qwen3-0.6b-q8_0',filename:'Qwen3-0.6B-Q8_0.gguf',maxBytes:700000000,sha256:'9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031',runtime:'@wllama/wllama',runtimeVersion:'3.8.1'});
 export function createWllamaProvider(engine) {
   if(!engine||typeof engine.createChatCompletion!=='function'||typeof engine.exit!=='function')throw Error('LOCAL_ENGINE_INVALID');
-  const generate=engine.createChatCompletion.bind(engine),exit=engine.exit.bind(engine);let disposed=false,busy=false;
+  const generate=engine.createChatCompletion.bind(engine),exit=engine.exit.bind(engine);let disposed=false,busy=false,lastMeasurement=null;
   return Object.freeze({kind:'local',transport:'in-process',modelId:LOCAL_MODEL.id,
     async generate({messages,allowedCitations,signal,onProgress}){
-      if(disposed||busy||signal?.aborted)throw Error('LOCAL_ENGINE_UNAVAILABLE');busy=true;
+      if(disposed||busy||signal?.aborted)throw Error('LOCAL_ENGINE_UNAVAILABLE');busy=true;const meter=createInferenceMeter();let success=false;
       try{
         let content='',finish=null,pieces=0,reasoningPieces=0;
         const started=performance.now();
@@ -18,7 +19,7 @@ export function createWllamaProvider(engine) {
           response_format:{type:'json_schema',json_schema:{name:'nexus_tutor_answer',strict:true,schema:{type:'object',properties:{answer:{type:'string'},citations:{type:'array',items:{type:'string',enum:allowedCitations}}},required:['answer','citations'],additionalProperties:false}}},
           onData(chunk){
             if(disposed||signal?.aborted)return;
-            const choice=chunk?.choices?.[0],delta=choice?.delta;
+            meter.observe(chunk);const choice=chunk?.choices?.[0],delta=choice?.delta;
             if(delta?.tool_calls?.length)throw Error('LOCAL_ANSWER_INVALID');
             if(typeof delta?.reasoning_content==='string'&&delta.reasoning_content)reasoningPieces++;
             if(typeof delta?.content==='string'){content+=delta.content;if(delta.content)pieces++;}
@@ -26,13 +27,14 @@ export function createWllamaProvider(engine) {
             if(choice?.finish_reason)finish=choice.finish_reason;
             const p=chunk?.prompt_progress;
             try{onProgress?.(Object.freeze({phase:pieces?'generation':'prompt',elapsedMs:Math.round(performance.now()-started),pieces,reasoningPieces,
-              processed:Number.isSafeInteger(p?.processed)?p.processed:0,total:Number.isSafeInteger(p?.total)?p.total:0}));}catch{}
+              processed:Number.isSafeInteger(p?.processed)?p.processed:0,total:Number.isSafeInteger(p?.total)?p.total:0,metrics:meter.snapshot()}));}catch{}
           }});
         if(disposed||signal?.aborted)throw Error('LOCAL_ENGINE_UNAVAILABLE');
         if(finish!=='stop'||!content||reasoningPieces)throw Error('LOCAL_ANSWER_INVALID');
-        return JSON.parse(content);
-      }finally{busy=false;}
+        const response=JSON.parse(content);success=true;return response;
+      }finally{lastMeasurement=meter.finish(success?'complete':signal?.aborted?'cancelled':'error');busy=false;}
     },
+    measurements(){return lastMeasurement;},
     async dispose(){if(disposed)return;disposed=true;await exit();}
   });
 }
