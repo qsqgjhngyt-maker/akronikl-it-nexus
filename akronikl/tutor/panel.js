@@ -19,7 +19,7 @@ export function mountTutor({parent,documentRef,host,loadKnowledge,locale,getIncl
     while(output.children.length>4)output.firstElementChild.remove();
   }
   async function ask(intent,followUp=false){
-    if(dead||loading||!host.current())return;const query=input.value.trim()||(followUp?(en?'Explain more simply':'Объясни проще'):'');if(!query)return;
+    if(dead||loading||!host.current())return;const query=followUp?(en?'Explain more simply':'Объясни проще'):input.value.trim();if(!query)return;
     const ticket=++seq;delete state.dataset.tutorProgress;state.textContent=en?'Preparing answer…':'Готовлю ответ…';output.setAttribute('aria-busy','true');
     let lastPhase='';
     const result=await session.ask({text:query,intent,followUp,include:getInclude()},{onProgress(progress){
