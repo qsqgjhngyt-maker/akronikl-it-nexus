@@ -1,4 +1,5 @@
 const rows={
+ personality:['Личность и общение','Personality and communication'],personalityChanged:['Стиль обновлён. Предыдущий запрос остановлен.','Style updated. Previous request stopped.'],
  gpuCheck:['Проверить доступность ускорения','Check acceleration availability'],gpuNotReady:['Аппаратное ускорение не подтверждено. Доступен режим процессора.','Hardware acceleration is unconfirmed. CPU mode remains available.'],gpuReady:['Устройство поддерживает экспериментальный режим. Его скорость ещё нужно измерить.','This device supports the experimental mode. Its speed still needs measurement.'],
  ready:['Готов','Ready'],offline:['Работаю офлайн','Working offline'],answering:['Готовлю ответ…','Preparing an answer…'],slow:['Продолжаю обдумывать. Ответ можно остановить.','Still working. You can stop the answer.'],
  close:['Закрыть Akronikl','Close Akronikl'],settings:['Настройки Akronikl','Akronikl settings'],back:['Вернуться к разговору','Back to conversation'],
