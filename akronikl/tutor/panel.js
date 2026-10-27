@@ -15,7 +15,7 @@ export function mountTutor({parent,documentRef,host,loadKnowledge,locale,getIncl
   function render(question,result){
     const item=make('section','',output);item.dataset.tutorTurn='';make('p',question,item);const answer=make('p',result.text,item);answer.dataset.tutorAnswer='';item.dataset.tutorGenerated=String(result.generated);
     if(result.notice)make('small',result.notice,item);
-    for(const s of result.sources){const source=make('details','',item);make('summary',`${s.label}: ${s.title}`,source);make('p',s.text,source);if(s.kind==='course')make('small',s.sourcePath+' · '+s.contentVersion,source);else make('small',[s.filePath,s.revision].filter(v=>v!==undefined).join(' · '),source);}
+    for(const s of result.sources){const source=make('details','',item);make('summary',`${s.label}: ${s.title}`,source);make('p',s.text,source);if(s.truncated)make('small',en?'Source excerpt; the remaining text was not supplied.':'Фрагмент источника; остальной текст не передан.',source);if(s.kind==='course')make('small',s.sourcePath+' · '+s.contentVersion,source);else make('small',[s.filePath,s.revision].filter(v=>v!==undefined).join(' · '),source);}
     while(output.children.length>4)output.firstElementChild.remove();
   }
   async function ask(intent,followUp=false){

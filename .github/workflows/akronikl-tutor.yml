@@ -95,13 +95,27 @@ jobs:
           cp /tmp/akp2-runtime/package-lock.json evidence-akp2-model/RUNTIME_LOCK.json
           node tools/prepare-akronikl-local-runtime.mjs --package /tmp/akp2-runtime/node_modules/@wllama/wllama --dest /tmp/akp2-model-source/akronikl/tutor/runtime
           cp /tmp/akp2-model-source/akronikl/tutor/runtime/RUNTIME_MANIFEST.json evidence-akp2-model/
+      - name: Закреплённая база для парного измерения
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin 1046574705b81aabe0a9eba61d6ad822c27cf7a6
+          mkdir -p /tmp/akp2-model-baseline
+          git archive 1046574705b81aabe0a9eba61d6ad822c27cf7a6 | tar -x -C /tmp/akp2-model-baseline
+          node tools/prepare-akronikl-local-runtime.mjs --package /tmp/akp2-runtime/node_modules/@wllama/wllama --dest /tmp/akp2-model-baseline/akronikl/tutor/runtime
       - name: Публичные веса — точный SHA256, без API-ключа
         run: |
           set -euo pipefail
           curl --fail --location --retry 2 --max-time 180 --output "$NEXUS_TUTOR_MODEL_FILE" https://huggingface.co/Qwen/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf
           echo '9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031  /tmp/akp2-model.gguf' | sha256sum --check
           sha256sum "$NEXUS_TUTOR_MODEL_FILE" > evidence-akp2-model/MODEL_SHA256.txt
-      - name: Настоящая браузерная генерация и продолжение без сети
+      - name: Предыдущий source — контрольное время и исходные ответы
+        id: baseline
+        continue-on-error: true
+        env:
+          NEXUS_SOURCE_COMMIT: 1046574705b81aabe0a9eba61d6ad822c27cf7a6
+          NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-akp2-model/baseline
+        run: node /tmp/akp2-model-baseline/tests/akronikl-tutor-browser-check.mjs
+      - name: Настоящая генерация — проверка смысла и продолжение без сети
         run: node /tmp/akp2-model-source/tests/akronikl-tutor-browser-check.mjs
       - uses: actions/upload-artifact@v4
         if: always()

@@ -1,5 +1,6 @@
 // Native ESM UI/Core/knowledge. Только синтетический host; не Account E2E.
 import assert from 'node:assert/strict';
+import {screenRaiiAnswer} from './helpers/akronikl-tutor-quality.mjs';
 import http from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import path from 'node:path';
@@ -54,14 +55,14 @@ try{
    try{await ask('Объясни RAII');}finally{clearInterval(poll);}
    const item=tutor().locator('[data-tutor-turn]').last();
    assert.equal(await item.getAttribute('data-tutor-generated'),'true',await item.textContent());
-   const answer=await item.locator('[data-tutor-answer]').textContent();answers.push({question:'Объясни RAII',answer});assert.ok(answer.length>20);assert.match(answer,/ресурс|времен|объект/i);
+   const answer=await item.locator('[data-tutor-answer]').textContent();const evaluation=screenRaiiAnswer(answer);answers.push({question:'Объясни RAII',answer,evaluation});assert.ok(answer.length>20);assert.deepEqual(evaluation.violations,[],JSON.stringify(evaluation));
    await page.screenshot({path:path.join(out,'dialogue-local-model.png')});
   });
   await check('Продолжение локального диалога при отключённой сети',async()=>{
    const before=requests.length;await context.setOffline(true);await tutor().getByRole('button',{name:'Объясни проще',exact:true}).click();
    await page.waitForFunction(()=>document.querySelectorAll('[data-tutor-turn]').length===2,{},{timeout:180000});
    assert.equal(await tutor().locator('[data-tutor-turn]').last().getAttribute('data-tutor-generated'),'true',await tutor().locator('[data-tutor-turn]').last().textContent());
-   const answer=await tutor().locator('[data-tutor-turn]').last().locator('[data-tutor-answer]').textContent();answers.push({question:'Объясни проще',answer});assert.notEqual(answer.trim(),answers[0].answer.trim(),'Упрощение не должно повторять прежний ответ дословно');assert.equal(await tutor().locator('[data-tutor-turn]').last().locator('p').first().textContent(),'Объясни проще');assert.equal(requests.length,before);
+   const answer=await tutor().locator('[data-tutor-turn]').last().locator('[data-tutor-answer]').textContent();const evaluation=screenRaiiAnswer(answer);answers.push({question:'Объясни проще',answer,evaluation});assert.deepEqual(evaluation.violations,[],JSON.stringify(evaluation));assert.notEqual(answer.trim(),answers[0].answer.trim(),'Упрощение не должно повторять прежний ответ дословно');assert.equal(await tutor().locator('[data-tutor-turn]').last().locator('p').first().textContent(),'Объясни проще');assert.equal(requests.length,before);
    await context.setOffline(false);
   });
  }
