@@ -12,7 +12,7 @@ const metadata=JSON.parse(await readFile(path.join(pkg,'package.json'),'utf8'));
 if(metadata.name!=='@wllama/wllama'||metadata.version!=='3.8.1')throw Error('Неверная закреплённая версия runtime');
 await mkdir(path.dirname(dest),{recursive:true});await cp(path.join(pkg,'esm'),dest,{recursive:true,errorOnExist:true});
 const files=[];async function walk(d){for(const entry of await readdir(d,{withFileTypes:true})){const file=path.join(d,entry.name);if(entry.isDirectory())await walk(file);else if(entry.isFile()){const b=await readFile(file);files.push({file:path.relative(dest,file).replaceAll(path.sep,'/'),bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')});}else throw Error('SYMLINK_DENIED');}}
+await cp(path.join(pkg,'LICENCE'),path.join(dest,'LICENSE.txt'));
 await walk(dest);for(const required of ['index.js','wasm/wllama.wasm'])if(!files.some(f=>f.file===required))throw Error('RUNTIME_ASSET_MISSING');
-await cp(path.join(pkg,'LICENSE'),path.join(dest,'LICENSE.txt'));
 const evidence={package:metadata.name,version:metadata.version,files:files.sort((a,b)=>a.file.localeCompare(b.file)),weightsIncluded:false,productSourceChanged:false};
 await writeFile(path.join(dest,'RUNTIME_MANIFEST.json'),JSON.stringify(evidence,null,2)+'\n');console.log(JSON.stringify({status:'PREPARED_QA_ONLY',files:files.length,weightsIncluded:false}));
