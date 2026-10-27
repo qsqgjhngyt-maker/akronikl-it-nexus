@@ -8,7 +8,9 @@ import {createTutorSession} from '../tutor/session.js';
 import {createModelConnections} from '../connections/controller.js';
 import {mountConnectionPanel} from '../connections/panel.js';
 import {resolveMessage} from './intents.js';
+import {normalizePersonality,DEFAULT_PERSONALITY,PERSONALITY_PROFILES} from '../personality/contract.js';
 import {textFor} from './strings.js';
+import {personalityText} from '../personality/strings.js';
 
 // Один экран разговора; все прежние привилегированные действия остаются в host.
 // Нет сетевой генерации, browser storage, сырого HTML, автоотправки кода или аудио.
@@ -21,12 +23,14 @@ export function openExperience(options) {
   let locale=options.readLocale()==='en'?'en':'ru',dead=false,seq=0,request=null,session=null;
   let connections=null,connectionPanel=null,connectedRevision=-1,settingsOpen=false,settingsSection='basics';
   let lessonAllowed=true,codeAllowed=false,privacyBoundary={},busy=false,slowTimer=null,lastMetrics=null;
-  let suggestionsEnabled=true,enterSends=true;
-  const listeners=new AbortController(),t=key=>textFor(locale,key),labels=[];
+  let suggestionsEnabled=true,enterSends=true,conversationActive=false;
+  let personality=normalizePersonality(DEFAULT_PERSONALITY);
+  const listeners=new AbortController(),t=key=>{const v=textFor(locale,key);return v===key?personalityText(locale,key):v;},labels=[];
   const el=(tag,parent,cls='',text='')=>{const n=doc.createElement(tag);if(cls)n.className=cls;if(text)n.textContent=text;parent?.append(n);return n;};
   const label=(n,key,attr)=>{if(!n.closest?.('[data-ak-message]'))labels.push({n,key,attr});if(attr)n.setAttribute(attr,t(key));else n.textContent=t(key);return n;};
   const button=(parent,key,fn,cls='ak-btn')=>{const b=label(el('button',parent,cls),key);b.type='button';if(fn)b.addEventListener('click',fn);return b;};
   if(!doc.querySelector('link[data-akronikl-style]')){const link=doc.createElement('link');link.rel='stylesheet';link.href=new URL('../ui/panel.css',import.meta.url).href;link.dataset.akroniklStyle='';doc.head.append(link);}
+  if(!doc.querySelector('link[data-akronikl-personality-style]')){const link=doc.createElement('link');link.rel='stylesheet';link.href=new URL('../personality/panel.css',import.meta.url).href;link.dataset.akroniklPersonalityStyle='';doc.head.append(link);}
   const dialog=el('dialog',null,'akronikl-core-dialog ak-chat');dialog.dataset.akroniklPanel='';dialog.dataset.akTheme='auto';dialog.lang=locale;dialog.setAttribute('aria-labelledby','ak-chat-title');
   const header=el('header',dialog,'ak-header');const brand=el('div',header,'ak-brand');el('span',brand,'ak-avatar','A').setAttribute('aria-hidden','true');
   const heading=el('div',brand);const title=el('h2',heading,'','Akronikl');title.id='ak-chat-title';title.tabIndex=-1;
@@ -48,12 +52,30 @@ export function openExperience(options) {
   const drawerHeader=el('div',drawer,'ak-settings-heading');const drawerTitle=label(el('h3',drawerHeader),'settings');drawerTitle.id='ak-settings-title';drawerTitle.tabIndex=-1;
   button(drawerHeader,'back',()=>toggleSettings(false),'ak-btn ak-back');
   const nav=el('nav',drawer,'ak-settings-nav');nav.setAttribute('aria-label',t('settings'));const sections={},tabs={};
-  for(const key of ['basics','model','voice','privacy','advanced']){tabs[key]=button(nav,key,()=>showSection(key),'ak-tab');tabs[key].setAttribute('aria-controls','ak-settings-'+key);sections[key]=el('section',drawer,'ak-settings-section');sections[key].id='ak-settings-'+key;sections[key].hidden=key!=='basics';label(el('h4',sections[key]),key);}
+  for(const key of ['basics','personality','model','voice','privacy','advanced']){tabs[key]=button(nav,key,()=>showSection(key),'ak-tab');tabs[key].setAttribute('aria-controls','ak-settings-'+key);sections[key]=el('section',drawer,'ak-settings-section');sections[key].id='ak-settings-'+key;sections[key].hidden=key!=='basics';label(el('h4',sections[key]),key);}
   const selectField=(parent,key,items)=>{const l=el('label',parent,'ak-setting-label');label(el('span',l),key);const s=el('select',l);for(const [value,caption] of items){const o=el('option',s);o.value=value;if(caption.startsWith('@'))label(o,caption.slice(1));else o.textContent=caption;}return s;};
   const language=selectField(sections.basics,'lang',[['ru','Русский'],['en','English']]);language.value=locale;language.dataset.akLanguage='';
   const theme=selectField(sections.basics,'theme',[['auto','@themeAuto'],['light','@themeLight'],['dark','@themeDark']]);theme.dataset.akThemeSelect='';
   const checkField=(parent,key,checked)=>{const l=el('label',parent,'ak-check');const c=el('input',l);c.type='checkbox';c.checked=checked;label(el('span',l),key);return c;};
   const suggest=checkField(sections.basics,'suggestions',true),enter=checkField(sections.basics,'enter',true);label(el('p',sections.basics,'ak-muted'),'windowOnly');
+  label(el('p',sections.personality),'personalityIntro');
+  const profile=selectField(sections.personality,'profile',Object.keys(PERSONALITY_PROFILES).map(id=>[id,'@'+id]));
+  profile.value=personality.profile;profile.dataset.akPersonalityProfile='';
+  const styleControls={};
+  for(const key of ['humor','directness','friendliness']){
+    const row=el('label',sections.personality,'ak-personality-range');label(el('span',row),key);
+    const range=el('input',row);range.type='range';range.min='0';range.max='100';range.step='1';range.value=String(personality[key]);range.id='ak-personality-'+key;range.dataset.akPersonality=key;
+    const value=el('output',row,'',range.value+'%');value.htmlFor=range.id;
+    const render=()=>{value.textContent=range.value+'%';range.setAttribute('aria-valuetext',range.value+'%');};render();
+    range.addEventListener('input',render);
+    range.addEventListener('change',()=>{applyPersonality({...personality,[key]:Number(range.value)});render();});
+    styleControls[key]={range,render};
+  }
+  for(const key of ['personalityScale','personalitySafety','personalityMemory','personalityLimits','chatHelp'])label(el('p',sections.personality,'ak-muted'),key);
+  button(sections.personality,'personalityReset',()=>chooseProfile());
+  function applyPersonality(next){personality=normalizePersonality(next);stop();session?.setPersonality(personality);lastMetrics=null;status.textContent=t('personalityChanged');}
+  function chooseProfile(){if(!Object.hasOwn(PERSONALITY_PROFILES,profile.value))return;applyPersonality(PERSONALITY_PROFILES[profile.value]);for(const [key,{range,render}] of Object.entries(styleControls)){range.value=String(personality[key]);render();}}
+  profile.addEventListener('change',chooseProfile);
   label(el('p',sections.voice),'voiceLater');
   const lesson=checkField(sections.privacy,'lesson',true);lesson.dataset.akLessonConsent='';
   const selection=checkField(sections.privacy,'code',false);selection.disabled=!host.selectionAvailable;selection.dataset.akCodeConsent='';
@@ -73,13 +95,13 @@ export function openExperience(options) {
   const guide=createPlatformGuide({isCurrent:host.current,readState:host.platformState,locale,onNavigate:hash=>{if(!host.current()||!allowedHash(hash))return false;dispose();onNavigate({kind:'platform',hash});return true;}});
   // Пересоздание guide при смене языка не меняет прав/маршрутов host.
   let activeGuide=guide;
-  function renew(){session?.dispose();session=createTutorSession({host:sessionHost,loadKnowledge,locale,provider:connections?.lease()??null});}
+  function renew(){session?.dispose();session=createTutorSession({host:sessionHost,loadKnowledge,locale,provider:connections?.lease()??null,personality,readSituation:options.readAssistantSituation??null});}
   function current(ticket){return !dead&&ticket===seq&&host.current();}
   function readyStatus(){if(!dead&&!busy)status.textContent=win.navigator?.onLine===false?t('offline'):t('ready');}
   function setBusy(value){busy=value;send.disabled=value||!input.value.trim();stopButton.hidden=!value;form.setAttribute('aria-busy',String(value));clearTimeout(slowTimer);if(value){status.textContent=t('answering');slowTimer=setTimeout(()=>{if(!dead&&busy)status.textContent=t('slow');},15000);}else readyStatus();}
   function stop(announce=false){seq++;request?.abort();request=null;session?.cancel();core.invalidate();activeGuide.invalidate();connections?.cancelPending();setBusy(false);log.querySelectorAll('[data-ak-pending]').forEach(n=>n.remove());log.querySelectorAll('[data-akronikl-confirm]').forEach(n=>n.disabled=true);if(announce)status.textContent=t('stopped');}
-  function clear(revokeSession=false){stop();if(revokeSession){privacyBoundary={};renew();}else session?.clear();lastMetrics=null;log.replaceChildren(welcome);welcome.hidden=false;input.value='';send.disabled=true;latest.hidden=true;refreshHints();}
-  function onModelInvalidate(){if(dead)return;stop();privacyBoundary={};session?.dispose();session=null;log.replaceChildren(welcome);welcome.hidden=false;input.value='';lastMetrics=null;renew();status.textContent=t('modelChange');}
+  function clear(revokeSession=false){stop();conversationActive=false;if(revokeSession){privacyBoundary={};renew();}else session?.clear();lastMetrics=null;log.replaceChildren(welcome);welcome.hidden=false;input.value='';send.disabled=true;latest.hidden=true;refreshHints();}
+  function onModelInvalidate(){if(dead)return;stop();conversationActive=false;privacyBoundary={};session?.dispose();session=null;log.replaceChildren(welcome);welcome.hidden=false;input.value='';lastMetrics=null;renew();status.textContent=t('modelChange');}
   connections=createModelConnections({isCurrent:()=>!dead&&host.current(),loadLocal:options.loadTutorModel??(async(file,settings)=>(await import('../tutor/local-model.js')).loadLocalModel(file,settings)),inspect:options.inspectTutorModel,onInvalidate:onModelInvalidate});
   const unsubConnection=connections.subscribe(s=>{if(dead)return;if(s.phase==='connected'&&connectedRevision!==s.revision){connectedRevision=s.revision;renew();}refreshDiagnostics(s);readyStatus();});
   function refreshDiagnostics(s=connections.snapshot()){diagnostic.textContent=JSON.stringify({profile:s.profileId,phase:s.phase,code:s.code,inspection:s.inspection,measurements:lastMetrics,externalAI:false},null,2);}
@@ -103,8 +125,8 @@ export function openExperience(options) {
   function platformResult(result){const item=appendMessage('assistant',result.text,'guide');if(result.reason){el('p',item,'',result.reason==='PERMISSION_CHECK_NOT_CONNECTED'?t('permissionCheck'):result.reason==='LOCAL_COPY_LOCKED'?t('locked'):result.reason==='OFFLINE_SHELL_REQUIRED'?t('offlineShell'):t('permission'));}for(const dest of result.destinations||[]){const b=el('button',item,'ak-btn',dest.label);b.type='button';b.disabled=!!dest.reason;b.addEventListener('click',()=>{if(host.current())platformResult(activeGuide.request({kind:'navigate',destinationId:dest.id}));});}
     for(const a of result.actions||[]){const b=el('button',item,'ak-btn ak-primary',a.label);b.type='button';b.dataset.akroniklConfirm='';b.addEventListener('click',()=>{if(!host.current()){dispose();return;}const r=activeGuide.confirm(a.token);if(!dead){b.disabled=true;platformResult(r);}});}addSources(item,result.sources);}
   async function navigateLesson(id){if(!host.current()){dispose();return;}stop();const ticket=seq;request=new AbortController();setBusy(true);try{const index=await loadKnowledge(options.readCourseLocale(),{signal:request.signal});if(!current(ticket))return;core.dispose();core=createAssistantCore({host:sessionHost,knowledge:[index],policy:{selection:true}});const result=await core.invoke({capability:'navigation.propose',input:{lessonId:id,locale:options.readCourseLocale()}},{signal:request.signal});if(!current(ticket))return;const proposal=result.status==='ok'&&result.actions.find(a=>a.kind==='navigation.proposal');if(proposal){dispose();onNavigate(proposal.target);}else appendMessage('assistant',t('unavailable'));}catch{if(current(ticket))appendMessage('assistant',t('error'));}finally{if(current(ticket))setBusy(false);}}
-  async function submit(value,override){if(dead||busy)return;if(!host.current()){dispose();return;}const message=resolveMessage(value);if(message.kind==='invalid'){appendMessage('assistant',t('invalid'));return;}
-    stop();const ticket=seq;request=new AbortController();const signal=request.signal;const action=override??message;appendMessage('user',value.trim());input.value='';setBusy(true);
+  async function submit(value,override){if(dead||busy)return;if(!host.current()){dispose();return;}const message=resolveMessage(value,{conversationActive});if(message.kind==='invalid'){appendMessage('assistant',t('invalid'));return;}
+    stop();const ticket=seq;request=new AbortController();const signal=request.signal;const action=override??message;conversationActive=action.kind==='conversation';appendMessage('user',value.trim());input.value='';setBusy(true);
     try{
       if(action.kind==='platform'){platformResult(activeGuide.request(action.request));return;}
       if(action.kind==='resume'){appendMessage('assistant',t('resume'));return;}
@@ -112,16 +134,16 @@ export function openExperience(options) {
       if(action.kind==='context'){const r=await core.invoke({capability:'context.current',input:{include:codeAllowed?['selection']:[]}},{signal});if(!current(ticket))return;if(r.status!=='ok'){appendMessage('assistant',t('unavailable'));return;}platformResult(activeGuide.request({kind:'where'}));if(r.data.selection){const item=appendMessage('assistant',t('selected'),'selected');el('pre',item,'',r.data.selection.code);}else appendMessage('assistant',t('noSelection'));return;}
       if(action.kind==='search'){const index=await loadKnowledge(options.readCourseLocale(),{signal});if(!current(ticket))return;core.dispose();core=createAssistantCore({host:sessionHost,knowledge:[index],policy:{selection:true}});const r=await core.invoke({capability:'knowledge.search',input:{query:action.text,locale:options.readCourseLocale(),limit:5}},{signal});if(!current(ticket))return;const item=appendMessage('assistant',r.status==='ok'?t('course'):t('missing'),r.status==='ok'?'course':'system');addSources(item,r.data?.matches);return;}
       if(action.intent==='code'&&!codeAllowed){appendMessage('assistant',t('noCode'));return;}
-      const result=await session.ask({text:action.text,intent:action.intent,followUp:action.followUp,include:codeAllowed?['selection']:[]},{signal,onProgress:p=>{if(!current(ticket))return;if(p.phase==='generation')status.textContent=t('generating');lastMetrics={phase:p.phase,elapsedMs:p.elapsedMs,outputPieces:p.pieces};}});
+      const result=await session.ask({text:action.text,intent:action.intent,followUp:action.followUp,include:action.kind==='conversation'?[]:(codeAllowed?['selection']:[])},{signal,onProgress:p=>{if(!current(ticket))return;if(p.phase==='generation')status.textContent=t('generating');lastMetrics={phase:p.phase,elapsedMs:p.elapsedMs,outputPieces:p.pieces};}});
       if(!current(ticket))return;
-      const badge=result.generated?(result.status==='uncertain'?'uncertain':'generated'):result.status==='ok'?'course':'system';
-      const messageText=result.mode==='sources'?t('noModel'):result.status==='empty'?t('missing'):result.status==='clarify'?(action.intent==='code'?t('noCode'):t('noTopic')):result.text;
+      const badge=result.generated?(result.mode==='local-conversation'?'conversation':result.status==='uncertain'?'uncertain':'generated'):result.status==='ok'?'course':'system';
+      const messageText=result.mode==='conversation-unavailable'?t('chatNoModel'):result.mode==='sources'?t('noModel'):result.status==='empty'?t('missing'):result.status==='clarify'?(action.intent==='code'?t('noCode'):t('noTopic')):result.text;
       const item=appendMessage('assistant',messageText,badge);item.dataset.tutorGenerated=String(result.generated);item.dataset.tutorAnswer='';addSources(item,result.sources);
     }catch{if(current(ticket))appendMessage('assistant',t('error'));}finally{if(current(ticket)){setBusy(false);refreshDiagnostics();}}
   }
   function changeLanguage(){if(!['ru','en'].includes(language.value))return;connections.disconnect();locale=language.value;privacyBoundary={};activeGuide.dispose();activeGuide=createPlatformGuide({isCurrent:host.current,readState:host.platformState,locale,onNavigate:hash=>{if(!host.current()||!allowedHash(hash))return false;dispose();onNavigate({kind:'platform',hash});return true;}});clear(true);for(const l of labels){if(l.attr)l.n.setAttribute(l.attr,t(l.key));else l.n.textContent=t(l.key);}gear.textContent='⚙';close.textContent='×';gear.setAttribute('aria-label',t('settings'));close.setAttribute('aria-label',t('close'));dialog.lang=locale;log.setAttribute('aria-label',locale==='en'?'Conversation with Akronikl':'Разговор с Akronikl');nav.setAttribute('aria-label',t('settings'));mountModels();refreshHints();inputHint.textContent=t(enterSends?'hint':'hintAlt');readyStatus();}
   function viewport(){const v=win.visualViewport;dialog.style.setProperty('--ak-viewport-height',(v?.height??win.innerHeight)+'px');dialog.style.setProperty('--ak-viewport-top',(v?.offsetTop??0)+'px');}
-  function dispose(){if(dead)return;dead=true;seq++;request?.abort();clearTimeout(slowTimer);listeners.abort();observer.disconnect();unsubscribeWorkspace?.();releaseFocus();unsubConnection();connections.dispose();connectionPanel?.dispose();session?.dispose();core.dispose();activeGuide.dispose();host.dispose();codeAllowed=false;lessonAllowed=false;input.value='';log.replaceChildren();diagnostic.textContent='';dialog.remove();onDispose();if(trigger?.isConnected&&win.location.hash===initialHash)trigger.focus();}
+  function dispose(){if(dead)return;dead=true;seq++;request?.abort();clearTimeout(slowTimer);listeners.abort();observer.disconnect();unsubscribeWorkspace?.();releaseFocus();unsubConnection();connections.dispose();connectionPanel?.dispose();session?.dispose();core.dispose();activeGuide.dispose();host.dispose();codeAllowed=false;lessonAllowed=false;personality=null;conversationActive=false;input.value='';log.replaceChildren();diagnostic.textContent='';dialog.remove();onDispose();if(trigger?.isConnected&&win.location.hash===initialHash)trigger.focus();}
   const observer=new win.MutationObserver(()=>{if(!host.current())dispose();});observer.observe(root,{childList:true,subtree:true});
   const unsubscribeWorkspace=host.workspace?.subscribe?.(()=>dispose());const releaseFocus=bindDialogFocusCycle(dialog);
   form.addEventListener('submit',e=>{e.preventDefault();void submit(input.value);});

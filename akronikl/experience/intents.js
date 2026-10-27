@@ -1,6 +1,6 @@
 // Ограниченная маршрутизация формулировок. Не исполняет текст или команды модели.
 import {DESTINATIONS, HELP_TOPICS} from '../platform/catalog.js';
-export function resolveMessage(value) {
+export function resolveMessage(value,{conversationActive=false}={}) {
   if(typeof value!=='string'||!value.trim()||value.length>1500||/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value))return {kind:'invalid'};
   const text=value.normalize('NFKC').trim().replace(/^(?:акроникл|akronikl)[,!:—\s]+/iu,'');
   const n=text.toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/[?!.,]+$/u,'').replace(/\s+/gu,' ');
@@ -19,6 +19,11 @@ export function resolveMessage(value) {
   if(/^(?:разбери|разобрать|объясни).*(?:код|фрагмент)|^(?:explain|review).*code/u.test(n))return {kind:'tutor',intent:'code',followUp:false,text};
   if(/^(?:дай|подскажи).*(?:подсказк)|^give.*hint/u.test(n))return {kind:'tutor',intent:'hint',followUp:true,text};
   if(/^(?:найди|найти|поиск|find|search)(?:\s|$)/u.test(n))return {kind:'search',text:text.replace(/^(?:найди|найти|поиск|find|search)\s*/iu,'')};
+  // Entry is explicit; ordinary conversation never turns into executable commands.
+  const explicit=/^(?:давай (?:просто )?(?:поговорим|поболтаем)|поговорим|поболтаем|let[’']?s (?:talk|chat)|let us talk|chat with me)(?:[,:.!?\s]|$)/iu.test(text);
+  const greeting=/^(?:привет|здравствуй|здравствуйте|доброе утро|добрый вечер|hello|hi|good morning|как твои дела|как дела|how are you)[!?.,]*$/iu.test(text);
+  const educational=/^(?:объясни|расскажи про|что такое|почему|explain|what (?:is|are)|why)\b|(?:^|\s)(?:C\+\+|RAII)(?:\s|[?!.,]|$)/iu.test(text)||/^(?:объясни|что такое|почему)(?:\s|$)/iu.test(text);
+  if(explicit||greeting||(conversationActive===true&&!educational))return {kind:'conversation',intent:'conversation',followUp:true,text};
   return {kind:'tutor',intent:'explain',followUp:false,text};
 }
 export function visibleDestinations(){return DESTINATIONS.filter(d=>!['restricted','planned'].includes(d.access));}

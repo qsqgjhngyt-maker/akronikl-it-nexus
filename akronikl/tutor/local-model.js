@@ -8,7 +8,8 @@ export function createWllamaProvider(engine) {
   const generate=engine.createChatCompletion.bind(engine),exit=engine.exit.bind(engine);let disposed=false,busy=false,lastMeasurement=null;
   return Object.freeze({kind:'local',transport:'in-process',modelId:LOCAL_MODEL.id,
     async generate({messages,allowedCitations,signal,onProgress}){
-      if(disposed||busy||signal?.aborted)throw Error('LOCAL_ENGINE_UNAVAILABLE');busy=true;const meter=createInferenceMeter();let success=false;
+      if(disposed||busy||signal?.aborted)throw Error('LOCAL_ENGINE_UNAVAILABLE');busy=true;
+      const meter=createInferenceMeter();let success=false;
       try{
         let content='',finish=null,pieces=0,reasoningPieces=0;
         const started=performance.now();
@@ -16,7 +17,7 @@ export function createWllamaProvider(engine) {
         // Итоговый текст появляется лишь после полного JSON и проверки цитат сессией.
         await generate({messages,abortSignal:signal,stream:true,cache_prompt:false,max_tokens:192,
           temperature:0.2,seed:42,chat_template_kwargs:{enable_thinking:false},return_progress:true,timings_per_token:true,
-          response_format:{type:'json_schema',json_schema:{name:'nexus_tutor_answer',strict:true,schema:{type:'object',properties:{answer:{type:'string'},citations:{type:'array',items:{type:'string',enum:allowedCitations}}},required:['answer','citations'],additionalProperties:false}}},
+          response_format:{type:'json_schema',json_schema:{name:'nexus_tutor_answer',strict:true,schema:{type:'object',properties:{answer:{type:'string'},citations:allowedCitations.length?{type:'array',items:{type:'string',enum:allowedCitations}}:{type:'array',items:{type:'string'},maxItems:0}},required:['answer','citations'],additionalProperties:false}}},
           onData(chunk){
             if(disposed||signal?.aborted)return;
             meter.observe(chunk);const choice=chunk?.choices?.[0],delta=choice?.delta;
