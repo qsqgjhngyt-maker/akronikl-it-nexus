@@ -1,5 +1,13 @@
 // pwa/runtime-manifest.js
-var RUNTIME_GRAPH_ID = "3eb53dcb260f33d040d58e304ae5922c5d842ef3164e3e4a63bae940d3a1efe0";
+var CPP_EXCEPTION_RUNTIME = Object.freeze({
+  id: "wasi-sdk33-native-eh",
+  url: "https://cdn.jsdelivr.net/gh/qsqgjhngyt-maker/akronikl-it-nexus@adf91d730598d3a02a21ddca3183f76b56d8d1b8/runtime-packs/wasi-sdk33/cpp-exceptions.bin",
+  bytes: 4390769,
+  sha256: "b901e4aa3f7e5f5c3917ddd4d9f40c06eadbf53567f60d3ea6ad46105029a8d2",
+  unpackedBytes: 13989197,
+  mime: "application/octet-stream"
+});
+var RUNTIME_GRAPH_ID = "cb9f8b55bd440758370a2b48efe485735859ec053ec4332367916820c54dcb5c";
 var RUNTIME_RESOURCES = Object.freeze([
   {
     "url": "https://cdn.jsdelivr.net/npm/@yowasp/clang@22.0.0-git20542-10/gen/bundle.js",
@@ -55,13 +63,14 @@ var RUNTIME_RESOURCES = Object.freeze([
     "sha256": "79eef0c336fe55cf03ff8f5b42b784c8168f929a3603138b2c6301f4601e4c86",
     "mime": "application/x-tar",
     "dependencies": []
-  }
+  },
+  { ...CPP_EXCEPTION_RUNTIME, dependencies: [] }
 ]);
 
 // pwa/client.js
 var protocol = "nexus-verified-public-v1";
 var registration;
-function status(controller, timeout = 2e3) {
+function status(controller, timeout = 2e3, requireRuntimeGraph = false) {
   return new Promise((resolve, reject) => {
     if (!controller) return reject(Error("PWA_CONTROLLER_MISSING"));
     const channel = new MessageChannel();
@@ -74,16 +83,17 @@ function status(controller, timeout = 2e3) {
       }, ms);
     };
     arm(timeout);
+    const graphMatches = (value) => typeof value?.graphId === "string" && /^[a-f0-9]{64}$/.test(value.graphId) && (!requireRuntimeGraph || value.graphId === RUNTIME_GRAPH_ID);
     channel.port1.onmessage = (event) => {
       const value = event.data;
-      if (value?.type === "checking" && value.protocol === protocol && value.graphId === RUNTIME_GRAPH_ID && !checking) {
+      if (value?.type === "checking" && value.protocol === protocol && graphMatches(value) && !checking) {
         checking = true;
         arm(2e4);
         return;
       }
       clearTimeout(timer);
       channel.port1.close();
-      if (value?.protocol !== protocol || value.graphId !== RUNTIME_GRAPH_ID || value.publicReady !== true) return reject(Error("PWA_CONTROLLER_UNVERIFIED"));
+      if (value?.protocol !== protocol || !graphMatches(value) || value.publicReady !== true) return reject(Error("PWA_CONTROLLER_UNVERIFIED"));
       resolve(value);
     };
     controller.postMessage({ type: "nexus-pwa-status", progress: true }, [channel.port2]);
@@ -117,7 +127,7 @@ async function ensureSafeController({ navigatorImpl = globalThis.navigator, loca
   }
   if (existing) {
     try {
-      return await status(existing);
+      return await status(existing, 2e3, requireController);
     } catch {
       onWaiting("\u041E\u0431\u043D\u043E\u0432\u043B\u044F\u0435\u043C \u043E\u0444\u043B\u0430\u0439\u043D-\u0437\u0430\u0449\u0438\u0442\u0443. \u041D\u0435 \u0437\u0430\u043A\u0440\u044B\u0432\u0430\u0439\u0442\u0435 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u0443.");
     }
@@ -128,7 +138,7 @@ async function ensureSafeController({ navigatorImpl = globalThis.navigator, loca
   while (Date.now() < deadline) {
     if (nav.serviceWorker.controller) {
       try {
-        return await status(nav.serviceWorker.controller, 500);
+        return await status(nav.serviceWorker.controller, 500, requireController);
       } catch {
       }
     }

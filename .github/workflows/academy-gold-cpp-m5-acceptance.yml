@@ -3,6 +3,9 @@ on:
   push:
     branches: [feature/academy-gold-standard-cpp-module-5, main]
     paths:
+      - 'tools/academy-gold-module5-header-publication.mjs'
+      - 'docs/ru/03-content/CPP_MODULE5_HEADER_PUBLICATION_SCOPE.json'
+      - 'server-access/image/public/*.js'
       - 'release-candidate.json'
       - 'version.json'
       - 'tools/academy-gold-module5-publication.mjs'
@@ -69,7 +72,9 @@ jobs:
       - name: Шапка локальной копии — исходный дефект и исправление,54 сочетания
         if: matrix.suite == 'ui'
         run: |
-          NEXUS_HEADER_BASELINE=1 NEXUS_HEADER_PUBLISHED_DIR="$GITHUB_WORKSPACE" NEXUS_NATIVE_EVIDENCE=academy-gold-m5-acceptance/header-before node tests/academy-gold-m5-header-acceptance.mjs
+          mkdir -p /tmp/nexus-header-test1-baseline
+          git archive 5e0e290c9bf74dde87f3169b9d7e122952fd0c57 | tar -x -C /tmp/nexus-header-test1-baseline
+          NEXUS_HEADER_BASELINE=1 NEXUS_HEADER_PUBLISHED_DIR=/tmp/nexus-header-test1-baseline NEXUS_NATIVE_EVIDENCE=academy-gold-m5-acceptance/header-before node tests/academy-gold-m5-header-acceptance.mjs
           NEXUS_NATIVE_EVIDENCE=academy-gold-m5-acceptance/header-after node tests/academy-gold-m5-header-acceptance.mjs
       - name: Старт, меню и основные экраны
         if: matrix.suite == 'startup-practice'
