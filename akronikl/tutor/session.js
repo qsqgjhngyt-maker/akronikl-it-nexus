@@ -1,5 +1,6 @@
 // AK-P2a: ограниченный учебный диалог. Нет DOM, сети, storage и выполнения действий.
 import {createAssistantCore} from '../core/index.js';
+import {findTutorEvidence} from './retrieval.js';
 import {completeExcerpt, previousCompleteTurn} from './evidence.js';
 import {exactKeys, text, freeze, normalizeInclude} from '../core/contracts.js';
 
@@ -71,7 +72,7 @@ export function createTutorSession({host, loadKnowledge, provider=null, locale='
         const query=followUp?(topic||(locale==='ru'?'этот урок':'this lesson')):searchQuery(question);
         let matches=[];
         if(/^(этот урок|текущий урок|this lesson)$/iu.test(query) && context.route.lessonId)matches=index.getLesson(context.route.lessonId,context.courseLocale).slice(0,3);
-        else if(query)matches=index.search(query,{locale:context.courseLocale,limit:3});
+        else if(query)matches=findTutorEvidence(index,query,{locale:context.courseLocale,lessonId:context.route.lessonId});
         check();
         // CPU-профиль: одна наиболее подходящая выдержка вместо трёх
         // пересекающихся. Приоритет теории; нет выдуманного расширения источника.
