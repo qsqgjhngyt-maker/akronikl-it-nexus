@@ -45,9 +45,10 @@ try{
  await check('Закрытие стирает историю и возвращает фокус',async()=>{await page.keyboard.press('Escape');await panel().waitFor({state:'detached'});assert.ok(await page.locator('#open').evaluate(n=>document.activeElement===n));await open();assert.equal(await tutor().locator('[data-tutor-turn]').count(),0);});
  if(modelPath){
   await check('Реальный Qwen3: файл проверен, локальный WASM без внешнего API',async()=>{
-   await tutor().getByText('Локальная модель — отдельная подготовка',{exact:true}).click();
+   await tutor().getByText('Модели и подключения',{exact:true}).click();
+   await tutor().locator('[data-akronikl-model-profile]').selectOption('local-cpu');
    await tutor().locator('input[type=file]').setInputFiles(modelPath);
-   await tutor().getByRole('button',{name:'Загрузить выбранную модель на этом устройстве',exact:true}).click();
+   await tutor().getByRole('button',{name:'Подключить выбранную модель',exact:true}).click();
    await tutor().getByRole('status').filter({hasText:'Экспериментальная локальная модель готова.'}).waitFor({timeout:180000});
   });
   await check('Генерация по реальному фрагменту курса с проверенными метками источников',async()=>{

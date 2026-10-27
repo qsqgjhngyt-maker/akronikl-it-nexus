@@ -44,7 +44,7 @@ export function openAssistantPanel(options) {
   const status = make('p',t.ready); status.setAttribute('role','status'); status.setAttribute('aria-live','polite');
   const output = make('section'); output.dataset.akroniklResults = ''; output.setAttribute('aria-label',en ? 'Assistant result' : 'Результат помощника');
   make('p',t.limited).className = 'akronikl-note';
-  const tutor=mountTutor({parent:dialog,documentRef,host,loadKnowledge,locale:en?'en':'ru',getInclude:()=>selection.checked?['selection']:[],loadModel:options.loadTutorModel});
+  const tutor=mountTutor({parent:dialog,documentRef,host,loadKnowledge,locale:en?'en':'ru',getInclude:()=>selection.checked?['selection']:[],loadModel:options.loadTutorModel,inspectModel:options.inspectTutorModel});
   function stop() {sequence++; request?.abort(); request = null; core.invalidate(); cancel.disabled = true; output.removeAttribute('aria-busy');}
   function dispose() {
     if (disposed) return; disposed = true; stop(); core.dispose(); host.dispose(); unsubscribe?.(); observer.disconnect();

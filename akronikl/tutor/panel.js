@@ -1,6 +1,8 @@
 import {createTutorSession} from './session.js';
+import {createModelConnections} from '../connections/controller.js';
+import {mountConnectionPanel} from '../connections/panel.js';
 // Режим генерации включается только после явного выбора проверенного локального файла.
-export function mountTutor({parent,documentRef,host,loadKnowledge,locale,getInclude,loadModel=async(file,options)=>(await import('./local-model.js')).loadLocalModel(file,options)}) {
+export function mountTutor({parent,documentRef,host,loadKnowledge,locale,getInclude,inspectModel,loadModel=async(file,options)=>(await import('./local-model.js')).loadLocalModel(file,options)}) {
   const en=locale==='en', make=(tag,text,root)=>{const n=documentRef.createElement(tag);if(text)n.textContent=text;root.append(n);return n;};
   const details=make('details','',parent);details.dataset.akroniklTutor='';make('summary',en?'Learning dialogue — experimental':'Учебный диалог — эксперимент',details);
   const note=make('p',en?'Without a model: course excerpts. With a prepared local model: experimental explanations. History lives only in this window.':'Без модели — выдержки курса. С подготовленной локальной моделью — экспериментальные объяснения. История живёт только в этом окне.',details);
@@ -9,8 +11,11 @@ export function mountTutor({parent,documentRef,host,loadKnowledge,locale,getIncl
   const controls=make('div','',details);controls.className='akronikl-actions';
   const state=make('p',en?'Mode: source excerpts, no model.':'Режим: материалы курса, без модели.',details);state.setAttribute('role','status');
   const output=make('div','',details);output.dataset.akroniklTutorMessages='';output.setAttribute('role','log');output.setAttribute('aria-label',en?'Tutor dialogue':'Учебный диалог');output.setAttribute('aria-live','polite');
-  let provider=null,session,dead=false,seq=0,loading=null;
-  const renew=()=>{session?.dispose();session=createTutorSession({host:host.adapter,loadKnowledge,locale,provider});};renew();
+  let session,dead=false,seq=0,connectedRevision=-1;
+  const renew=(provider=null)=>{session?.dispose();session=createTutorSession({host:host.adapter,loadKnowledge,locale,provider});};renew();
+  function resetForConnection(){seq++;session?.dispose();input.value='';output.replaceChildren();output.removeAttribute('aria-busy');delete state.dataset.tutorProgress;if(!dead)renew();}
+  const connections=createModelConnections({isCurrent:()=>!dead&&host.current(),loadLocal:loadModel,inspect:inspectModel,onInvalidate:resetForConnection});
+  const unsubscribe=connections.subscribe(s=>{if(dead)return;if(s.phase==='connected'&&connectedRevision!==s.revision){connectedRevision=s.revision;renew(connections.lease());state.textContent=en?'Experimental local model ready.':'Экспериментальная локальная модель готова.';}else if(s.phase!=='connected'){state.textContent=en?'Mode: source excerpts, no model.':'Режим: материалы курса, без модели.';}});
   const button=(title,fn)=>{const b=make('button',title,controls);b.type='button';b.className='btn';b.addEventListener('click',fn);return b;};
   function render(question,result){
     const item=make('section','',output);item.dataset.tutorTurn='';make('p',question,item);const answer=make('p',result.text,item);answer.dataset.tutorAnswer='';item.dataset.tutorGenerated=String(result.generated);
@@ -19,7 +24,7 @@ export function mountTutor({parent,documentRef,host,loadKnowledge,locale,getIncl
     while(output.children.length>4)output.firstElementChild.remove();
   }
   async function ask(intent,followUp=false){
-    if(dead||loading||!host.current())return;const query=followUp?(en?'Explain more simply':'Объясни проще'):input.value.trim();if(!query)return;
+    if(dead||['checking','loading'].includes(connections.snapshot().phase)||!host.current())return;const query=followUp?(en?'Explain more simply':'Объясни проще'):input.value.trim();if(!query)return;
     const ticket=++seq;delete state.dataset.tutorProgress;state.textContent=en?'Preparing answer…':'Готовлю ответ…';output.setAttribute('aria-busy','true');
     let lastPhase='';
     const result=await session.ask({text:query,intent,followUp,include:getInclude()},{onProgress(progress){
@@ -36,23 +41,10 @@ export function mountTutor({parent,documentRef,host,loadKnowledge,locale,getIncl
   button(en?'Give a hint':'Дать подсказку',()=>void ask('hint'));
   button(en?'Simpler':'Объясни проще',()=>void ask('simpler',true));
   button(en?'Explain selected code':'Разобрать выбранный код',()=>void ask('code'));
-  button(en?'Stop answer':'Остановить ответ',()=>{cancelLoading();seq++;session.cancel();output.removeAttribute('aria-busy');state.textContent=en?'Cancelled.':'Отменено.';});
-  function cancelLoading(){if(loading){loading.abort();loading=null;provider=null;renew();load.disabled=false;file.disabled=false;}}
-  function clear(){delete state.dataset.tutorProgress;cancelLoading();seq++;session.clear();input.value='';output.replaceChildren();output.removeAttribute('aria-busy');}
+  button(en?'Stop answer':'Остановить ответ',()=>{connections.cancelPending();seq++;session.cancel();output.removeAttribute('aria-busy');state.textContent=en?'Cancelled.':'Отменено.';});
+  function clear(){connections.cancelPending();delete state.dataset.tutorProgress;seq++;session.clear();input.value='';output.replaceChildren();output.removeAttribute('aria-busy');}
   button(en?'Clear dialogue':'Очистить диалог',clear);
-  const local=make('details','',details);make('summary',en?'Local model — separate preparation':'Локальная модель — отдельная подготовка',local);
-  make('p',en?'Experimental CPU mode. Select the official Qwen3-0.6B Q8_0 GGUF (~639 MB). It stays on this device and is not stored by the assistant. A prepared same-origin runtime is required. Phones and answer quality are not accepted yet.':'Экспериментальный CPU-режим. Выберите официальный Qwen3-0.6B Q8_0 GGUF (~639 МБ). Файл остаётся на устройстве и не сохраняется помощником. Нужен подготовленный runtime с того же сайта. Работа на телефонах и качество ответов ещё не приняты.',local);
-  const fileLabel=make('label',en?'Local GGUF file':'Локальный файл GGUF',local),file=make('input','',fileLabel);file.type='file';file.accept='.gguf';file.dataset.akroniklModelFile='';
-  const load=make('button',en?'Load selected model on this device':'Загрузить выбранную модель на этом устройстве',local);load.type='button';load.className='btn';
-  load.addEventListener('click',async()=>{
-    if(dead||loading||!file.files?.length||!host.current())return;
-    clear();session.dispose();provider=null;const controller=new AbortController();loading=controller;const ticket=++seq;load.disabled=true;file.disabled=true;
-    state.textContent=en?'Checking file and loading local runtime…':'Проверяю файл и загружаю локальный runtime…';
-    try{const model=await loadModel(file.files[0],{signal:controller.signal});if(dead||ticket!==seq||!host.current()){await model.dispose();return;}provider=model;renew();state.textContent=en?'Experimental local model ready.':'Экспериментальная локальная модель готова.';}
-    catch{if(!dead&&ticket===seq){provider=null;renew();state.textContent=en?'Model unavailable. Check the file and prepared runtime. Source mode remains available.':'Модель недоступна. Проверьте файл и подготовку runtime. Режим материалов остаётся доступным.';}}
-    finally{if(loading===controller){file.value='';loading=null;load.disabled=false;file.disabled=false;}}
-  });
-  const unload=make('button',en?'Unload model':'Выгрузить модель',local);unload.type='button';unload.className='btn';unload.addEventListener('click',()=>{loading?.abort();clear();session.dispose();provider=null;renew();state.textContent=en?'Model unloaded; source mode.':'Модель выгружена; режим материалов.';});
+  const connectionPanel=mountConnectionPanel({parent:details,documentRef,controller:connections,locale});
   input.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)&&!e.isComposing){e.preventDefault();void ask('explain');}});
-  return Object.freeze({clear,dispose(){if(dead)return;dead=true;seq++;loading?.abort();session.dispose();provider=null;file.value='';input.value='';output.replaceChildren();details.remove();}});
+  return Object.freeze({clear,dispose(){if(dead)return;dead=true;seq++;unsubscribe();connections.dispose();connectionPanel.dispose();session.dispose();input.value='';output.replaceChildren();details.remove();}});
 }
