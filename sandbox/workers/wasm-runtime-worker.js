@@ -13,6 +13,8 @@ const now=()=>typeof performance!=='undefined'?performance.now():Date.now();
 const elapsed=start=>Math.max(0,Math.round(now()-start));
 const safeMessage=error=>String(error?.message||error||'Unknown runtime error');
 const post=(payload)=>self.postMessage(payload);
+// Дополнительный target adapter, learner source/VFS не переписывается.
+const THREAD_LIMIT_ADAPTER='#include <pthread.h>\n#ifdef __cplusplus\nextern "C" {\n#endif\n__attribute__((import_module("nexus_limits"),import_name("threads"))) void nexus_threads_limit(void);\nint __wrap_pthread_create(pthread_t *t,const pthread_attr_t *a,void *(*f)(void *),void *v){nexus_threads_limit();return 38;}\n#ifdef __cplusplus\n}\n#endif\n';
 
 function progress(requestId,phase,status,extra={}){
   state=status;
@@ -150,6 +152,7 @@ async function compile(requestId,request){
     }
     const nativeEh=!isC&&nativeCppExceptionsAvailable();
     const tree=flatFilesToVirtualTree(virtualFiles);let cppFlags=isC?[]:['-fno-exceptions'];
+    let adapter='__nexus_thread_limit';while(Object.hasOwn(tree,adapter+(isC?'.c':'.cpp')))adapter+='_';adapter+=isC?'.c':'.cpp';tree[adapter]=THREAD_LIMIT_ADAPTER;
     if(nativeEh){
       progress(requestId,'toolchain','loading-toolchain',{label:'C++ exceptions · WASI SDK33'});
       const sysroot=await cppExceptionSysroot();let root='__nexus_cpp_sdk';while(Object.hasOwn(tree,root))root+='_';
@@ -158,7 +161,7 @@ async function compile(requestId,request){
     }
     progress(requestId,'compile','compiling',{compiler,entryFile,cppExceptions:nativeEh});
     const filesOut=await runClang(
-      [compiler,stdFlag,...cppFlags,'-O0','-g0','-fdiagnostics-color=never',...includeArgs(request),...translationUnits,...(nativeEh?['-lunwind']:[]),'-o',outputFile],
+      [compiler,stdFlag,...cppFlags,'-O0','-g0','-fdiagnostics-color=never',...includeArgs(request),...translationUnits,adapter,'-Wl,--wrap=pthread_create',...(nativeEh?['-lunwind']:[]),'-o',outputFile],
       tree,
       {
         decodeASCII:false,
@@ -240,7 +243,7 @@ async function execute(requestId,request,compiled){
   const started=now();
   const imports=wasi.getImportObject();let instantiated;
   const guarded=guardRuntimeFileImports(imports.wasi_snapshot_preview1,()=>instantiated.instance.exports.memory,compiled.virtualFiles);
-  instantiated=await WebAssembly.instantiate(compiled.wasm,{wasi_snapshot_preview1:guarded});
+  instantiated=await WebAssembly.instantiate(compiled.wasm,{wasi_snapshot_preview1:guarded,nexus_limits:{threads(){throw Object.assign(Error('Текущий браузерный target не поддерживает создание потоков ОС. Выберите target с поддержкой threads; исходный C++ и проект сохранены.'),{code:'WASM_THREADS_UNSUPPORTED'})}}});
   const startResult=await wasi.start(instantiated);
   const exitCode=Number.isFinite(startResult)?Number(startResult):(Number.isFinite(startResult?.exitCode)?Number(startResult.exitCode):0);
   if(outputTruncated)stderr+=(stderr?'\n':'')+'[Nexus: output truncated]';

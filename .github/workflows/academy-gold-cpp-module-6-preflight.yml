@@ -1,4 +1,4 @@
-name: C++ Module 6 — M6-0 аудит, прогресс и границы runtime
+name: C++ Module 6 — runtime, GUI candidate, переносимость и прогресс
 on:
   push:
     branches: [feature/academy-gold-standard-cpp-module-6]
@@ -8,6 +8,10 @@ on:
       - 'tests/academy-gold-module6-*.mjs'
       - 'tests/fixtures/cpp-module6-probes.mjs'
       - 'docs/ru/03-content/CPP_MODULE6_DEPENDENCIES.json'
+      - 'docs/ru/03-content/CPP_MODULE6_IMPLEMENTATION_SCOPE.json'
+      - 'sandbox/**'
+      - 'project-studio/**'
+      - 'studio-build/**'
 permissions:
   contents: read
 jobs:
@@ -27,18 +31,20 @@ jobs:
         with:
           node-version: 22
       - run: npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
-      - name: Только feature, точные bytes M1–5 и воспроизводимая прежняя сборка
+      - name: Только feature, сохранённые данные и unpublished сборка
         run: |
           node tools/check-academy-gold-module6-dependencies.mjs
-          node tools/check-academy-gold-module5-publication.mjs --rebuild
-          node --test tests/academy-gold-module6-dependencies.test.mjs
+          node tools/check-academy-gold-module6-build.mjs
+          node --test tests/academy-gold-module6-dependencies.test.mjs tests/academy-gold-module6-thread-limit.test.mjs tests/academy-gold-module6-portable.test.mjs
           node tests/academy-gold-module6-preservation.mjs
           node tools/check-academy-gold-regression.mjs
           node tools/check-academy-gold-integration.mjs
           node tests/pwa-controller-check.mjs
           node tests/entry-document-navigation-check.mjs
       - name: 21 программа, 34 случая C++20/UBSan; GUI не заявляется
-        run: node tools/check-academy-gold-module6-native.mjs
+        run: |
+          node tools/check-academy-gold-module6-native.mjs
+          node tools/check-academy-gold-module6-taskflow-native.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -83,4 +89,76 @@ jobs:
         with:
           name: academy-gold-m6-browser-audit-${{ github.sha }}
           path: /tmp/nexus-m6-evidence/
+          retention-days: 30
+
+  qt-candidate:
+    name: Настоящая сборка Qt C++ candidate, GUI ещё требует browser gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NEXUS_M6_EVIDENCE: /tmp/nexus-m6-qt
+      NEXUS_QT_IMAGE: nexus-m6-qt:6.8.3-ems3.1.56
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Закреплённый SDK, без production или личных данных
+        run: docker build -t "$NEXUS_QT_IMAGE" -f studio-build/containers/qt-wasm.Dockerfile studio-build/containers
+      - name: Исходный и изменённый C++ собираются внутри ограниченного контейнера
+        run: node tools/check-academy-gold-module6-qt.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: academy-gold-m6-qt-candidate-${{ github.sha }}
+          path: /tmp/nexus-m6-qt/
+          retention-days: 30
+
+  gold-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: m1
+            command: tests/academy-gold-runtime-browser-check.mjs
+          - module: m2
+            command: tests/academy-gold-module2-examples-browser.mjs
+          - module: m3
+            command: tests/academy-gold-module3-examples-browser.mjs
+          - module: m4
+            command: tests/academy-gold-module4-examples-browser.mjs
+          - module: m5
+            command: tests/academy-gold-module5-examples-browser.mjs
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/nexus-m6-gold-build
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m6-gold-browser/node_modules/playwright/index.mjs
+      NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m6-gold-runtime
+      NEXUS_JSCPP_FIXTURE: /tmp/nexus-m6-gold-runtime/jscpp.js
+      NEXUS_NATIVE_EVIDENCE: /tmp/nexus-m6-gold-evidence/${{ matrix.module }}
+      NEXUS_M2_EVIDENCE: /tmp/nexus-m6-gold-evidence/${{ matrix.module }}
+      NEXUS_M3_EVIDENCE: /tmp/nexus-m6-gold-evidence/${{ matrix.module }}
+      NEXUS_M4_EVIDENCE: /tmp/nexus-m6-gold-evidence/${{ matrix.module }}
+      NEXUS_M5_EVIDENCE: /tmp/nexus-m6-gold-evidence/${{ matrix.module }}
+      NEXUS_GOLD_EVIDENCE: /tmp/nexus-m6-gold-evidence/preparation
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Закреплённые инструменты, изолированный build и настоящие runtime bytes
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/nexus-m6-gold-browser --no-save playwright@1.56.1
+          /tmp/nexus-m6-gold-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m6-gold-build
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+      - name: Все Gold программы и контрольные случаи прежнего модуля через новый runtime
+        run: node ${{ matrix.command }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: academy-gold-m6-regression-${{ matrix.module }}-${{ github.sha }}
+          path: /tmp/nexus-m6-gold-evidence/
           retention-days: 30

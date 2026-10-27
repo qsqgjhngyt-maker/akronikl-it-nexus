@@ -1,0 +1,5 @@
+import assert from'node:assert/strict';import{readFile}from'node:fs/promises';import{execFileSync}from'node:child_process';import{createHash}from'node:crypto';
+export async function m6ImplementationScope(){
+ const bytes=await readFile('docs/ru/03-content/CPP_MODULE6_IMPLEMENTATION_SCOPE.json');assert.equal(createHash('sha256').update(bytes).digest('hex'),'517528a30463313fcec5639d59dcc38248c9e63bf1c5178c7ab8d39b57bef94a');const r=JSON.parse(bytes);assert.equal(r.baseCommit,'dda6e0f0f54ea932b165a2164fa71571412f27fe');assert.equal(r.productionWrites,0);assert.equal(r.mainWrites,0);assert.equal(r.deploymentAuthorized,false);execFileSync('git',['merge-base','--is-ancestor',r.baseCommit,'HEAD']);return r;
+}
+export function m6ImplementationPath(scope,file){return scope.existingProductPaths.includes(file)||scope.newFrontendFiles.includes(file)||scope.newSourceRoots.some(root=>file.startsWith(root+'/')&&!file.split('/').includes('..')&&/\.(?:mjs|json|md|txt|Dockerfile|py|cpp|hpp)$/.test(file));}
