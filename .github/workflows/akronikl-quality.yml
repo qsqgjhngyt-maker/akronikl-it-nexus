@@ -16,7 +16,7 @@ jobs:
       NEXUS_SOURCE_COMMIT: ${{ github.sha }}
       NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
       NEXUS_CHROME_PATH: /usr/bin/google-chrome
-      NEXUS_TUTOR_MODEL_FILE: ${{ runner.temp }}/akp4q-model.gguf
+      NEXUS_TUTOR_MODEL_FILE: /tmp/akp4q-model.gguf
       NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-p4q/model
     steps:
       - uses: actions/checkout@v4
@@ -64,3 +64,51 @@ jobs:
       - name: Удалить только временные веса этого опыта
         if: always()
         run: rm -f -- "$NEXUS_TUTOR_MODEL_FILE"
+  ui-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXUS_SOURCE_COMMIT: ${{ github.sha }}
+      NEXUS_FRONTEND_DIR: /tmp/akp4q-ui-build
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+      NEXUS_CHROME_PATH: /usr/bin/google-chrome
+      NEXUS_AKP4_BASELINE_DIR: /tmp/akp4q-ui-baseline
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Собрать тот же кандидат без весов и внешнего AI
+        id: build
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-p4q-ui /tmp/akp4q-ui-baseline
+          git rev-parse HEAD > evidence-p4q-ui/SOURCE_COMMIT.txt
+          git archive c3a8e5f825a90abfdb3d390331922348a62db4dd | tar -x -C /tmp/akp4q-ui-baseline
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tools/qa-browser-driver --ignore-scripts --no-audit --no-fund
+          node tests/auth-bootstrap-check.mjs > evidence-p4q-ui/bootstrap.txt
+          node tests/account-storage-isolation-check.mjs > evidence-p4q-ui/account.txt
+          VERSION=$(node -p "JSON.parse(require('fs').readFileSync('version.json')).version")
+          node tools/build-ui1a-release.mjs --out "$NEXUS_FRONTEND_DIR" --generation ui1a-akp4q-20261028 --version "$VERSION"
+          NEXUS_AKRONIKL_EVIDENCE=evidence-p4q-ui/build node tools/check-akronikl-built-candidate.mjs
+      - name: Принятый UX и настройки личности
+        if: always() && steps.build.outcome == 'success'
+        run: |
+          NEXUS_AKRONIKL_EVIDENCE=evidence-p4q-ui/experience node tests/akronikl-experience-browser-check.mjs
+          NEXUS_AKRONIKL_EVIDENCE=evidence-p4q-ui/personality node tests/akronikl-personality-browser-check.mjs
+      - name: Диагностика, Account и холодный офлайн
+        if: always() && steps.build.outcome == 'success'
+        run: |
+          NEXUS_AKRONIKL_EVIDENCE=evidence-p4q-ui/context node tests/akronikl-context-browser-check.mjs
+          NEXUS_AKRONIKL_EVIDENCE=evidence-p4q-ui/authorized node tests/akronikl-experience-authorized-browser-check.mjs
+          NEXUS_AKRONIKL_EVIDENCE=evidence-p4q-ui/offline node tests/akronikl-experience-offline-browser-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akronikl-quality-ui-regression
+          path: evidence-p4q-ui
+          retention-days: 30
