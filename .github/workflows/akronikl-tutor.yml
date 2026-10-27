@@ -1,0 +1,111 @@
+name: Akronikl — учебный диалог и локальная модель, без публикации
+on:
+  push:
+    branches: [feature/akronikl-tutor-dialogue-20261027]
+    paths: ['akronikl/**', 'tests/akronikl-*', 'tools/prepare-akronikl-local-runtime.mjs', '.github/workflows/akronikl-tutor.yml']
+permissions:
+  contents: read
+concurrency:
+  group: akronikl-tutor-feature
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXUS_SOURCE_COMMIT: ${{ github.sha }}
+      NEXUS_FRONTEND_DIR: /tmp/akp2-build
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+      NEXUS_CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Точный источник и регрессия изменённого UI
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-akp2
+          git rev-parse HEAD > evidence-akp2/SOURCE_COMMIT.txt
+          git archive --format=zip HEAD > evidence-akp2/source.zip
+          (cd evidence-akp2 && sha256sum source.zip > SOURCE_SHA256.txt)
+          node --test tests/akronikl-*.test.mjs | tee evidence-akp2/core-ui.tap
+          node --test tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/platform-lazy-imports.test.mjs | tee evidence-akp2/startup.tap
+          node tools/build-akronikl-knowledge.mjs --check | tee evidence-akp2/knowledge.json
+      - name: Отдельная сборка и браузерные зависимости
+        id: build
+        run: |
+          set -euo pipefail
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tools/qa-browser-driver --ignore-scripts --no-audit --no-fund
+          VERSION=$(node -p "JSON.parse(require('fs').readFileSync('version.json')).version")
+          node tools/build-ui1a-release.mjs --out "$NEXUS_FRONTEND_DIR" --generation ui1a-akp2-20261027 --version "$VERSION"
+          NEXUS_AKRONIKL_EVIDENCE=evidence-akp2/build node tools/check-akronikl-built-candidate.mjs
+      - name: Диалог без модели, код, отмена и клавиатура
+        if: always() && steps.build.outcome == 'success'
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: evidence-akp2/tutor
+        run: node tests/akronikl-tutor-browser-check.mjs
+      - name: Существующий компонентный сценарий
+        if: always() && steps.build.outcome == 'success'
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: evidence-akp2/component
+        run: node tests/akronikl-component-browser-check.mjs
+      - name: Собранный Nexus и границы Account
+        if: always() && steps.build.outcome == 'success'
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: evidence-akp2/authorized
+        run: node tests/akronikl-authorized-browser-check.mjs
+      - name: Публичный холодный офлайн
+        if: always() && steps.build.outcome == 'success'
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: evidence-akp2/offline
+        run: node tests/akronikl-built-offline-browser-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akronikl-tutor-evidence
+          path: evidence-akp2
+          retention-days: 30
+  local-model-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXUS_SOURCE_COMMIT: ${{ github.sha }}
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+      NEXUS_CHROME_PATH: /usr/bin/google-chrome
+      NEXUS_TUTOR_MODEL_FILE: /tmp/akp2-model.gguf
+      NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-akp2-model
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Только одноразовая QA-копия и закреплённый runtime
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-akp2-model /tmp/akp2-model-source
+          git archive HEAD | tar -x -C /tmp/akp2-model-source
+          npm ci --prefix tools/qa-browser-driver --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/akp2-runtime --ignore-scripts --no-audit --no-fund @wllama/wllama@3.12.0
+          cp /tmp/akp2-runtime/package-lock.json evidence-akp2-model/RUNTIME_LOCK.json
+          node tools/prepare-akronikl-local-runtime.mjs --package /tmp/akp2-runtime/node_modules/@wllama/wllama --dest /tmp/akp2-model-source/akronikl/tutor/runtime
+          cp /tmp/akp2-model-source/akronikl/tutor/runtime/RUNTIME_MANIFEST.json evidence-akp2-model/
+      - name: Публичные веса — точный SHA256, без API-ключа
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --max-time 180 --output "$NEXUS_TUTOR_MODEL_FILE" https://huggingface.co/Qwen/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf
+          echo '9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031  /tmp/akp2-model.gguf' | sha256sum --check
+          sha256sum "$NEXUS_TUTOR_MODEL_FILE" > evidence-akp2-model/MODEL_SHA256.txt
+      - name: Настоящая браузерная генерация и продолжение без сети
+        run: node /tmp/akp2-model-source/tests/akronikl-tutor-browser-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akronikl-tutor-local-model
+          path: evidence-akp2-model
+          retention-days: 30
