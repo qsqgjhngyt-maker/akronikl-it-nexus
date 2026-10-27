@@ -1,0 +1,8 @@
+import test from 'node:test';import assert from 'node:assert/strict';import{readFile}from'node:fs/promises';
+import{makeIndices,makeQualityProbe}from'./helpers/akronikl-quality-probe.mjs';
+const read=async p=>JSON.parse(await readFile(new URL('../'+p,import.meta.url)));
+const indices=makeIndices(await read('akronikl/knowledge/core-index.ru.json'),await read('akronikl/knowledge/core-index.en.json'));
+const corpus=await read('tests/fixtures/akronikl-tutor-quality-v1.json');
+for(const c of corpus.cases)test('QA fixture без генерации: '+c.id,async()=>{const p=makeQualityProbe(c,null,indices);const r=await p.run();assert.equal(r.generated,false);assert.equal(p.details().calls,0);assert.equal(p.details().packet,null);assert.ok(['ok','empty','clarify','unavailable','denied'].includes(r.status),r.status);if(c.kind==='compiler-diagnostic')assert.ok(r.sources.some(s=>s.label==='D1'));p.dispose();});
+test('QA снимает настоящий packet, но не подставляет эталон ответа',async()=>{const p=makeQualityProbe(corpus.cases[0],{kind:'local',modelId:'synthetic',generate:async()=>({answer:'SYNTHETIC_MARKER',citations:['S1']}),measurements:()=>({synthetic:true})},indices);const r=await p.run();assert.equal(r.text,'SYNTHETIC_MARKER');assert.equal(p.details().calls,1);assert.ok(p.details().packet.messages.length);p.dispose();});
+test('QA сообщает ошибку provider, не превращая её в правильный ответ',async()=>{const p=makeQualityProbe(corpus.cases[0],{modelId:'synthetic',generate:async()=>{throw Error('QA_ERROR');}},indices);const r=await p.run();assert.equal(r.generated,false);assert.equal(r.status,'error');assert.equal(p.details().providerError,'QA_ERROR');p.dispose();});

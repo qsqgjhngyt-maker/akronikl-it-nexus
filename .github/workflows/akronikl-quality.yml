@@ -1,0 +1,66 @@
+name: Akronikl — реальная проверка качества Qwen, без публикации
+on:
+  push:
+    branches: [feature/akronikl-quality-p4q-20261028]
+    paths: ['akronikl/**', 'tests/akronikl-quality*', 'tests/akronikl-tutor-retrieval*', 'tests/helpers/akronikl-quality*', '.github/workflows/akronikl-quality.yml']
+permissions:
+  contents: read
+concurrency:
+  group: akronikl-p4q-one-model
+  cancel-in-progress: false
+jobs:
+  model-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      NEXUS_SOURCE_COMMIT: ${{ github.sha }}
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+      NEXUS_CHROME_PATH: /usr/bin/google-chrome
+      NEXUS_TUTOR_MODEL_FILE: ${{ runner.temp }}/akp4q-model.gguf
+      NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-p4q/model
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Точный источник и регрессия до загрузки модели
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-p4q
+          git rev-parse HEAD > evidence-p4q/SOURCE_COMMIT.txt
+          git archive --format=zip HEAD > evidence-p4q/source.zip
+          (cd evidence-p4q && sha256sum source.zip > SOURCE_SHA256.txt)
+          node --test tests/akronikl-*.test.mjs | tee evidence-p4q/core-ui.tap
+          node --test tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/platform-lazy-imports.test.mjs | tee evidence-p4q/startup.tap
+          node tools/build-akronikl-knowledge.mjs --check > evidence-p4q/knowledge.json
+          node tools/check-akronikl-quality-corpus.mjs > evidence-p4q/corpus.json
+      - name: Прежний runtime только в одноразовой QA-копии
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/akp4q-source"
+          git archive HEAD | tar -x -C "$RUNNER_TEMP/akp4q-source"
+          npm ci --prefix tools/qa-browser-driver --ignore-scripts --no-audit --no-fund
+          npm install --prefix "$RUNNER_TEMP/akp4q-runtime" --ignore-scripts --no-audit --no-fund @wllama/wllama@3.8.1
+          cp "$RUNNER_TEMP/akp4q-runtime/package-lock.json" evidence-p4q/RUNTIME_LOCK.json
+          node tools/prepare-akronikl-local-runtime.mjs --package "$RUNNER_TEMP/akp4q-runtime/node_modules/@wllama/wllama" --dest "$RUNNER_TEMP/akp4q-source/akronikl/tutor/runtime"
+          cp "$RUNNER_TEMP/akp4q-source/akronikl/tutor/runtime/RUNTIME_MANIFEST.json" evidence-p4q/
+      - name: Разрешённая владельцем прежняя Qwen — один файл, точный SHA256
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 1 --max-time 300 --output "$NEXUS_TUTOR_MODEL_FILE" https://huggingface.co/Qwen/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf
+          printf '9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031  %s\n' "$NEXUS_TUTOR_MODEL_FILE" | sha256sum --check
+          sha256sum "$NEXUS_TUTOR_MODEL_FILE" > evidence-p4q/MODEL_SHA256.txt
+      - name: Настоящие ответы на корпус, продолжение, стиль и отмена
+        run: node "$RUNNER_TEMP/akp4q-source/tests/akronikl-quality-browser-batch.mjs"
+      - name: Сохранить ответы и отказы, но не веса и профили
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akronikl-quality-real-model
+          path: evidence-p4q
+          retention-days: 30
+      - name: Удалить только временные веса этого опыта
+        if: always()
+        run: rm -f -- "$NEXUS_TUTOR_MODEL_FILE"
