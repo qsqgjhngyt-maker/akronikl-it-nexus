@@ -31,7 +31,7 @@ const context=await browser.newContext({viewport:{width:1366,height:900},service
 await context.route('**/*',route=>new URL(route.request().url()).origin===origin?route.continue():route.abort());
 const page=await context.newPage();page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));
 const panel=()=>page.locator('[data-akronikl-panel]'),tutor=()=>page.locator('[data-akronikl-tutor]');
-const check=async(name,fn)=>{await fn();checks.push({name,status:'PASS'});console.log('PASS '+name);};
+const check=async(name,fn)=>{const start=performance.now();try{await fn();checks.push({name,status:'PASS',ms:Math.round(performance.now()-start)});console.log('PASS '+name);}catch(e){checks.push({name,status:'FAIL',ms:Math.round(performance.now()-start)});throw e;}};
 const open=async()=>{await page.locator('#open').click();await tutor().locator('summary').first().click();};
 const ask=async(query='Объясни RAII')=>{await tutor().locator('[data-akronikl-tutor-question]').fill(query);await tutor().getByRole('button',{name:'Спросить по материалам',exact:true}).click();await tutor().locator('[data-tutor-turn]').last().waitFor({timeout:modelPath?180000:15000});};
 try{
@@ -51,13 +51,14 @@ try{
   });
   await check('Генерация по реальному фрагменту курса с проверенными метками источников',async()=>{
    await ask('Объясни RAII');const item=tutor().locator('[data-tutor-turn]').last();
-   await page.waitForFunction(()=>document.querySelector('[data-tutor-turn]')?.dataset.tutorGenerated==='true',{},{timeout:180000});
-   const answer=await item.locator('[data-tutor-answer]').textContent();assert.ok(answer.length>20);assert.match(answer,/ресурс|времен|объект/i);answers.push({question:'Объясни RAII',answer});
+   assert.equal(await item.getAttribute('data-tutor-generated'),'true',await item.textContent());
+   const answer=await item.locator('[data-tutor-answer]').textContent();answers.push({question:'Объясни RAII',answer});assert.ok(answer.length>20);assert.match(answer,/ресурс|времен|объект/i);
    await page.screenshot({path:path.join(out,'dialogue-local-model.png')});
   });
   await check('Продолжение локального диалога при отключённой сети',async()=>{
    const before=requests.length;await context.setOffline(true);await tutor().getByRole('button',{name:'Объясни проще',exact:true}).click();
-   await page.waitForFunction(()=>document.querySelectorAll('[data-tutor-turn][data-tutor-generated="true"]').length===2,{},{timeout:180000});
+   await page.waitForFunction(()=>document.querySelectorAll('[data-tutor-turn]').length===2,{},{timeout:180000});
+   assert.equal(await tutor().locator('[data-tutor-turn]').last().getAttribute('data-tutor-generated'),'true',await tutor().locator('[data-tutor-turn]').last().textContent());
    const answer=await tutor().locator('[data-tutor-turn]').last().locator('[data-tutor-answer]').textContent();answers.push({question:'Объясни проще',answer});assert.equal(requests.length,before);
    await context.setOffline(false);
   });

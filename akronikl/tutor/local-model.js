@@ -7,7 +7,7 @@ export function createWllamaProvider(engine) {
     async generate({messages,allowedCitations,signal}){
       if(disposed||busy||signal?.aborted)throw Error('LOCAL_ENGINE_UNAVAILABLE');busy=true;
       try{
-        const response=await generate({messages,abortSignal:signal,stream:false,cache_prompt:false,max_tokens:384,temperature:0.2,seed:42,chat_template_kwargs:{enable_thinking:false},
+        const response=await generate({messages,abortSignal:signal,stream:false,cache_prompt:false,max_tokens:192,temperature:0.2,seed:42,chat_template_kwargs:{enable_thinking:false},
           response_format:{type:'json_schema',json_schema:{name:'nexus_tutor_answer',strict:true,schema:{type:'object',properties:{answer:{type:'string'},citations:{type:'array',items:{type:'string',enum:allowedCitations}}},required:['answer','citations'],additionalProperties:false}}}});
         if(disposed||signal?.aborted)throw Error('LOCAL_ENGINE_UNAVAILABLE');
         const choice=response?.choices?.[0];
@@ -27,7 +27,7 @@ export async function loadLocalModel(file,{signal,loadRuntime=()=>import('./runt
   const engine=new Wllama({default:new URL('./runtime/wasm/wllama.wasm',import.meta.url).href},{logger:{debug(){},log(){},warn(){},error(){}},suppressNativeLog:true});
   try{
     // Single thread intentionally avoids changing Nexus COOP/COEP or auth headers.
-    await engine.loadModel([file],{n_threads:1,n_gpu_layers:0,n_ctx:8192,n_batch:128,n_ubatch:128,cache_idle_slots:false,reasoning:false});
+    await engine.loadModel([file],{n_threads:1,n_gpu_layers:0,n_ctx:4096,n_batch:128,n_ubatch:128,cache_idle_slots:false,reasoning:false});
     signal?.throwIfAborted();return createWllamaProvider(engine);
   }catch(error){await engine.exit().catch(()=>{});throw Error('LOCAL_MODEL_UNAVAILABLE');}
 }
