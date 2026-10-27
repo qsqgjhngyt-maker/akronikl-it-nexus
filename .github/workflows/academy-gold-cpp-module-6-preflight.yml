@@ -119,6 +119,8 @@ jobs:
           node tools/prepare-academy-gold-runtime-fixture.mjs
       - name: Закреплённый SDK, без production или личных данных
         run: docker build -t "$NEXUS_QT_IMAGE" -f studio-build/containers/qt-wasm.Dockerfile studio-build/containers
+      - name: Реальные квоты tmpfs и блокировка слишком больших или связанных артефактов
+        run: node tools/check-academy-gold-module6-isolation.mjs
       - name: Исходный и изменённый C++ собираются внутри ограниченного контейнера
         run: node tools/check-academy-gold-module6-qt.mjs
       - name: Настоящее окно Qt и изменённый C++
