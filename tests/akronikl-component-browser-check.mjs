@@ -59,6 +59,7 @@ try{
   assert.match(await panel().locator('[data-akronikl-platform-result]').textContent(),/зашифрованная копия/);
   assert.equal(requests.filter(r=>r.path.includes('/akronikl/knowledge/')).length,0);
   for(let i=0;i<18;i++){await p.keyboard.press('Tab');assert.ok(await panel().evaluate(n=>n.contains(document.activeElement)))}
+  for(let i=0;i<18;i++){await p.keyboard.press('Shift+Tab');assert.ok(await panel().evaluate(n=>n.contains(document.activeElement)))}
   await p.screenshot({path:path.join(out,'platform-help-390.png')});await p.keyboard.press('Escape');await panel().waitFor({state:'detached'});assert.ok(await p.locator('[data-akronikl-open]').evaluate(n=>document.activeElement===n));
   await p.setViewportSize({width:1366,height:900});
  });

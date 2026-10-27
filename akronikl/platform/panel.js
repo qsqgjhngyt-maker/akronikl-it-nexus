@@ -1,10 +1,12 @@
 import {createPlatformGuide} from './service.js';
+import {bindDialogFocusCycle} from '../ui/focus-cycle.js';
 const reasons={
  ru:{NOT_IMPLEMENTED:'Эта функция пока запланирована.',PERMISSION_CHECK_NOT_CONNECTED:'Проверка административных прав помощником не подключена. Используйте штатную навигацию.',SERVER_SIGN_IN_REQUIRED:'Нужны обычный Nexus, сеть и проверка серверного аккаунта.',LOCAL_COPY_LOCKED:'Сначала откройте личную офлайн-копию.',OFFLINE_SHELL_REQUIRED:'Откройте Офлайн-центр: эта команда доступна в отдельной офлайн-оболочке.',NAVIGATION_NOT_ACCEPTED:'Переход не был принят приложением.'},
  en:{NOT_IMPLEMENTED:'This feature is still planned.',PERMISSION_CHECK_NOT_CONNECTED:'Assistant permission checks for administration are not connected. Use existing navigation.',SERVER_SIGN_IN_REQUIRED:'This requires online Nexus, connectivity and verified server sign-in.',LOCAL_COPY_LOCKED:'Unlock the private offline copy first.',OFFLINE_SHELL_REQUIRED:'Open the Offline center. This command is available in the separate offline shell.',NAVIGATION_NOT_ACCEPTED:'The application did not accept navigation.'}
 };
 export function mountPlatformGuide({parent,documentRef,locale,host,onNavigate}){
  const en=locale==='en',language=en?'en':'ru';
+ const releaseFocus=bindDialogFocusCycle(parent);
  const make=(tag,text,root=parent)=>{const n=documentRef.createElement(tag);if(text)n.textContent=text;root.append(n);return n};
  const section=make('section');section.dataset.akroniklPlatform='';section.setAttribute('aria-labelledby','akronikl-platform-title');
  const title=make('h3',en?'Nexus navigation and help':'Навигация и справка Nexus',section);title.id='akronikl-platform-title';
@@ -33,5 +35,5 @@ export function mountPlatformGuide({parent,documentRef,locale,host,onNavigate}){
  button(en?'Nexus sections':'Разделы Nexus',()=>show(guide.request({kind:'list'})));
  input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();run()}});
  input.addEventListener('input',()=>{guide.invalidate();output.replaceChildren()});
- return Object.freeze({focus(){input.focus()},clear(){guide.invalidate();input.value='';output.replaceChildren()},dispose(){guide.dispose();input.value='';output.replaceChildren();section.remove()}});
+ return Object.freeze({focus(){input.focus()},clear(){guide.invalidate();input.value='';output.replaceChildren()},dispose(){releaseFocus();guide.dispose();input.value='';output.replaceChildren();section.remove()}});
 }

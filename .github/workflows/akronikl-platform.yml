@@ -4,7 +4,6 @@ on:
     branches: [feature/akronikl-platform-guide-20261027]
     paths:
       - '.github/workflows/akronikl-platform.yml'
-      - 'tools/akp1-seed/**'
       - 'akronikl/**'
       - 'core/app.js'
       - 'core/bootstrap.js'
@@ -18,49 +17,17 @@ concurrency:
   group: akronikl-platform-feature
   cancel-in-progress: false
 jobs:
-  prepare:
-    if: github.ref == 'refs/heads/feature/akronikl-platform-guide-20261027'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-    outputs:
-      source: ${{ steps.source.outputs.sha }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      - name: Перенести точные локальные байты только в feature-ветку
-        id: source
-        shell: bash
-        run: |
-          set -euo pipefail
-          if test -f tools/akp1-seed/materialize.py; then
-            python3 tools/akp1-seed/materialize.py
-            git config user.name 'Akronikl'
-            git config user.email '249936410+qsqgjhngyt-maker@users.noreply.github.com'
-            git commit -m 'Реализовать навигацию и справку Akronikl поверх M5 Test.2' -m 'Точные локальные байты проверены по SHA256. 156 локальных Core/UI и 17 startup PASS; браузерная приёмка этого source выполняется следующим заданием. Только feature, без main и deployment.'
-            ACTUAL=$(git ls-remote origin refs/heads/feature/akronikl-platform-guide-20261027 | cut -f1)
-            test "$ACTUAL" = "$GITHUB_SHA"
-            git push origin HEAD:refs/heads/feature/akronikl-platform-guide-20261027
-          fi
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   acceptance:
-    needs: prepare
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      NEXUS_SOURCE_COMMIT: ${{ needs.prepare.outputs.source }}
+      NEXUS_SOURCE_COMMIT: ${{ github.sha }}
       NEXUS_FRONTEND_DIR: /tmp/akp1-build
       NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
       NEXUS_CHROME_PATH: /usr/bin/google-chrome
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare.outputs.source }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -73,7 +40,7 @@ jobs:
           git rev-parse HEAD > evidence-akp1/SOURCE_COMMIT.txt
           git archive --format=zip HEAD > evidence-akp1/source.zip
           (cd evidence-akp1 && sha256sum source.zip > SOURCE_SHA256.txt)
-          node --test tests/akronikl-core.test.mjs tests/akronikl-knowledge.test.mjs tests/akronikl-security.test.mjs tests/akronikl-ui.test.mjs tests/akronikl-ui-lifecycle.test.mjs tests/akronikl-ui-readiness.test.mjs tests/akronikl-account-boundary.test.mjs tests/akronikl-platform.test.mjs | tee evidence-akp1/core-ui.tap
+          node --test tests/akronikl-core.test.mjs tests/akronikl-knowledge.test.mjs tests/akronikl-security.test.mjs tests/akronikl-ui.test.mjs tests/akronikl-ui-lifecycle.test.mjs tests/akronikl-ui-readiness.test.mjs tests/akronikl-account-boundary.test.mjs tests/akronikl-platform.test.mjs tests/akronikl-focus-cycle.test.mjs | tee evidence-akp1/core-ui.tap
           node --test tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/platform-lazy-imports.test.mjs | tee evidence-akp1/startup.tap
           node tests/auth-bootstrap-check.mjs | tee evidence-akp1/bootstrap.txt
           node tests/account-storage-isolation-check.mjs | tee evidence-akp1/account.txt
