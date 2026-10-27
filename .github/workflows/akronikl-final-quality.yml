@@ -1,0 +1,68 @@
+name: Akronikl — реальный корпус AK-P4, без публикации
+on:
+  push:
+    branches: [feature/akronikl-p4-final-quality-20261027]
+    paths: ['tests/akronikl-final-quality-browser-check.mjs', 'tests/helpers/akronikl-final-quality-page.mjs', '.github/workflows/akronikl-final-quality.yml']
+permissions:
+  contents: read
+concurrency:
+  group: akronikl-p4-final-quality
+  cancel-in-progress: false
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    env:
+      AK_QUALITY_SHARD: ${{ matrix.shard }}
+      AK_QUALITY_SHARDS: '8'
+      NEXUS_SOURCE_COMMIT: ${{ github.sha }}
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+      NEXUS_CHROME_PATH: /usr/bin/google-chrome
+      NEXUS_TUTOR_MODEL_FILE: /tmp/akp4-approved-model.gguf
+      NEXUS_AKRONIKL_EVIDENCE: ${{ github.workspace }}/evidence-akp4-final
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Проверить неизменность продукта и зафиксировать источник
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-akp4-final /tmp/akp4-quality-source
+          git diff --exit-code fe1564ba7192495370385002a81d0db98f67254f HEAD -- akronikl core pwa sandbox courses server-access version.json release-candidate.json
+          git rev-parse HEAD > evidence-akp4-final/SOURCE_COMMIT.txt
+          node tools/check-akronikl-quality-corpus.mjs > evidence-akp4-final/CORPUS_CHECK.json
+          node --check tests/akronikl-final-quality-browser-check.mjs
+          node --check tests/helpers/akronikl-final-quality-page.mjs
+          git archive HEAD | tar -x -C /tmp/akp4-quality-source
+          if [ "$AK_QUALITY_SHARD" = '0' ]; then
+            git archive --format=zip HEAD > evidence-akp4-final/source.zip
+            sha256sum evidence-akp4-final/source.zip > evidence-akp4-final/SOURCE_SHA256.txt
+          fi
+      - name: Тот же Wllama и прежние проверенные веса, только QA-копия
+        run: |
+          set -euo pipefail
+          npm ci --prefix tools/qa-browser-driver --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/akp4-runtime --ignore-scripts --no-audit --no-fund @wllama/wllama@3.8.1
+          cp /tmp/akp4-runtime/package-lock.json evidence-akp4-final/RUNTIME_LOCK.json
+          node tools/prepare-akronikl-local-runtime.mjs --package /tmp/akp4-runtime/node_modules/@wllama/wllama --dest /tmp/akp4-quality-source/akronikl/tutor/runtime
+          cp /tmp/akp4-quality-source/akronikl/tutor/runtime/RUNTIME_MANIFEST.json evidence-akp4-final/
+          curl --fail --location --retry 2 --max-time 180 --output "$NEXUS_TUTOR_MODEL_FILE" https://huggingface.co/Qwen/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf
+          echo '9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031  /tmp/akp4-approved-model.gguf' | sha256sum --check
+          sha256sum "$NEXUS_TUTOR_MODEL_FILE" > evidence-akp4-final/MODEL_SHA256.txt
+      - name: Реальные ответы, источники, отмена и измерения; не quality PASS
+        run: node /tmp/akp4-quality-source/tests/akronikl-final-quality-browser-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akp4-quality-shard-${{ matrix.shard }}
+          path: evidence-akp4-final
+          retention-days: 30
