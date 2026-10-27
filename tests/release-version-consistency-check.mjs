@@ -8,11 +8,12 @@ const candidate=JSON.parse(fs.readFileSync(new URL('release-candidate.json',root
 const app=fs.readFileSync(new URL('core/app.js',root),'utf8');
 const sharedShell=fs.readFileSync(new URL('core/shell-presentation.js',root),'utf8');
 const sw=fs.readFileSync(new URL('service-worker.js',root),'utf8');
-const expected=candidate.publication?.module==='cpp-module-5'?'0.1.7-alpha.2.4.6-ui1a.10.9-test.1':candidate.publication?.module==='cpp-module-4'?(candidate.assetGeneration==='ui1a-cpp-gold-module4-test2-20261026'?'0.1.7-alpha.2.4.6-ui1a.10.8-test.2':'0.1.7-alpha.2.4.6-ui1a.10.8-test.1'):candidate.publication?.module==='cpp-module-3'?'0.1.7-alpha.2.4.6-ui1a.10.7-test.1':'0.1.7-alpha.2.4.6-ui1a.10.2.1';
+const expected=candidate.publication?.module==='cpp-module-5'?(candidate.assetGeneration==='ui1a-cpp-gold-module5-test2-header-20261027'?'0.1.7-alpha.2.4.6-ui1a.10.9-test.2':'0.1.7-alpha.2.4.6-ui1a.10.9-test.1'):candidate.publication?.module==='cpp-module-4'?(candidate.assetGeneration==='ui1a-cpp-gold-module4-test2-20261026'?'0.1.7-alpha.2.4.6-ui1a.10.8-test.2':'0.1.7-alpha.2.4.6-ui1a.10.8-test.1'):candidate.publication?.module==='cpp-module-3'?'0.1.7-alpha.2.4.6-ui1a.10.7-test.1':'0.1.7-alpha.2.4.6-ui1a.10.2.1';
 const assert=(v,m)=>{if(!v)throw new Error(m)};
 assert(version===expected,`version.json mismatch: ${version}`);
 assert(projectVersion===expected,`project.json mismatch: ${projectVersion}`);
 assert(candidate.version===expected,'candidate version mismatch');
+assert(JSON.parse(fs.readFileSync(new URL('version.json',root),'utf8')).releaseCandidate.assetGeneration===candidate.assetGeneration,'update metadata generation mismatch');
 assert(shell.includes(`app.css?v=${expected}`),'shell CSS cache-buster version mismatch');
 assert(shell.includes(`core/bootstrap.js?v=${expected}`),'shell must enter via authenticated bootstrap');
 assert(!shell.includes('src="./releases/'+candidate.assetGeneration+'/core/app.js'),'direct app entry bypass');

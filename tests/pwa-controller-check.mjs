@@ -20,7 +20,7 @@ await check('fresh page installs at stable scope without holding account proof o
  const nav={serviceWorker:{controller:null,register:async(url,options)=>{registrations++;assert.equal(url,'/service-worker.js');assert.deepEqual(options,{scope:'/',updateViaCache:'none'});return {update:async()=>{}}}}};
  assert.deepEqual(await ensure({navigatorImpl:nav,locationImpl:location}),{controlled:false});assert.equal(registrations,1);
 });
-await check('legacy, forged protocol, wrong graph and incomplete generation require a safe takeover',async()=>{
+await check('legacy, forged protocol, malformed graph and incomplete generation require a safe takeover',async()=>{
  for(const old of [{protocol:'legacy'}, {...good,graphId:'forged'},{...good,publicReady:false}]){
   const {ensureSafeController:ensure}=await module();let waited=0,updates=0;
   const nav={serviceWorker:{controller:controller(old),register:async()=>({update:async()=>{updates++;nav.serviceWorker.controller=controller(good)}})}};
