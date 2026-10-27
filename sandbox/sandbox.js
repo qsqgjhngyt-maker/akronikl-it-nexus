@@ -6,6 +6,7 @@ import {normalizeRuntimeRequest} from './provider-contract.js';
 import {languageLabel} from './languages.js';
 import {analyzeSource,parseRuntimeError} from './diagnostics.js';
 import {showRuntimeFileResults} from './runtime-files.js';
+import {beginRuntimeEvidence, finishRuntimeEvidence, clearRuntimeEvidence} from './runtime-evidence.js';
 
 export const sandboxProviders=[browserRuntimeProvider,wasmRuntimeProvider,cloudRuntimeProvider];
 export const runtimeRouter=new NexusRuntimeRouter(sandboxProviders);
@@ -130,11 +131,13 @@ export function createSandboxController({editor,stdin,output,engine,status,route
     output.className='output';output.textContent=en?'Selecting runtime provider…':'Выбираем runtime provider…';
     const analysis=renderAnalysis();
     let route=null;let unsubscribeRuntime=null;const request=runtimeRequest();
+    const evidenceTicket=beginRuntimeEvidence(codeStudio,request);
     try{
       route=await pickProvider(request);setRouteInfo(route);
       if(typeof route.provider?.subscribe==='function')unsubscribeRuntime=route.provider.subscribe(snapshot=>{if(route?.provider?.id==='wasm-cpp')renderProviderProgress(snapshot)});
       setRuntimeState('busy',en?'Runtime: running':'Runtime: выполняется');setEngine('busy',en?`${route.provider.label} · running`:`${route.provider.label} · выполняется`);
       const result=await route.provider.run(request);
+      finishRuntimeEvidence(evidenceTicket);
       unsubscribeRuntime?.();unsubscribeRuntime=null;
       setEngine('ok',en?`${route.provider.label} · ready`:`${route.provider.label} · готов`);
       setRuntimeState('ok',en?'Runtime: passed':'Runtime: выполнено');
@@ -152,6 +155,7 @@ export function createSandboxController({editor,stdin,output,engine,status,route
     }catch(err){
       unsubscribeRuntime?.();unsubscribeRuntime=null;
       if(err?.anxRuntimeRoute?.candidates&&!route){
+        finishRuntimeEvidence(evidenceTicket,{providerLimit:true});
         setRouteInfo(null);
         setEngine('bad',en?'Nexus Runtime · no provider':'Nexus Runtime · provider недоступен');
         setRuntimeState('bad',en?'Runtime: provider unavailable':'Runtime: provider недоступен');
@@ -166,10 +170,11 @@ export function createSandboxController({editor,stdin,output,engine,status,route
         setEngine('bad',en?'Nexus Runtime · error':'Nexus Runtime · ошибка');
         setRuntimeState('bad',en?'Runtime: error':'Runtime: ошибка');
       }
-      showDiagnostic(diag);throw err;
+      finishRuntimeEvidence(evidenceTicket,diag);showDiagnostic(diag);throw err;
     }
   };
   const selfTest=async()=>{
+    clearRuntimeEvidence(codeStudio); // self-test компилирует не проект пользователя.
     lastErrorLine=null;codeStudio?.clearRuntimeDiagnostics?.();setRuntimeState('busy',en?'Runtime: self-test':'Runtime: самопроверка');setEngine('busy',en?'Nexus Runtime · self-test':'Nexus Runtime · самопроверка');output.className='output';output.textContent=en?'Testing routed runtime…':'Проверяем маршрутизируемую среду…';
     try{
       const result=await sandboxSelfTest({languageId:language});setRouteInfo(result.route);if(!result.ok)throw new Error('Self-test returned unexpected output.');
@@ -187,9 +192,9 @@ export function createSandboxController({editor,stdin,output,engine,status,route
       showDiagnostic(diag);throw err;
     }
   };
-  const resetIdle=()=>{lastErrorLine=null;lastRoute=null;codeStudio?.clearRuntimeDiagnostics?.();runtimeState={kind:'idle',text:en?'Runtime: not run':'Runtime: не запускался'};setRouteInfo(null);onCodeChange(codeStudio?.getEntrySource?.()??editor.value);renderAnalysis()};
+  const resetIdle=()=>{clearRuntimeEvidence(codeStudio);lastErrorLine=null;lastRoute=null;codeStudio?.clearRuntimeDiagnostics?.();runtimeState={kind:'idle',text:en?'Runtime: not run':'Runtime: не запускался'};setRouteInfo(null);onCodeChange(codeStudio?.getEntrySource?.()??editor.value);renderAnalysis()};
   editor.addEventListener('input',resetIdle);
-  editor.addEventListener('nexus-workspace-active',()=>{lastErrorLine=null;lastRoute=null;runtimeState={kind:'idle',text:en?'Runtime: not run':'Runtime: не запускался'};setRouteInfo(null);renderAnalysis()});
+  editor.addEventListener('nexus-workspace-active',()=>{clearRuntimeEvidence(codeStudio);lastErrorLine=null;lastRoute=null;runtimeState={kind:'idle',text:en?'Runtime: not run':'Runtime: не запускался'};setRouteInfo(null);renderAnalysis()});
   editor.addEventListener('scroll',()=>{const gutter=document.querySelector('#editorLines');if(gutter)gutter.scrollTop=editor.scrollTop});
   setRouteInfo(null);renderAnalysis();
   return{run,selfTest,renderAnalysis,getRoute:()=>lastRoute,getRequest:runtimeRequest};

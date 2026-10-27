@@ -1,4 +1,14 @@
 const rows={
+ noTask:['Текущее задание пока не связано с проверенным контекстом помощника. Откройте его условие; содержание задания по названию урока я не угадываю.','The current task is not yet linked to the assistant’s verified context. Open its instructions; I do not infer the task from the lesson title.'],
+ diagnosticConsent:['Разрешить сообщение компилятора текущего файла','Allow the current file’s compiler message'],
+ diagnosticNote:['Только подтверждённая строка диагностики той же ревизии. Другие файлы и полный журнал не передаются.','Only a verified diagnostic line from the same revision. Other files and the full log are not shared.'],
+ needDiagnosticConsent:['В настройках приватности разрешите выбранный код и сообщение компилятора. Причину ошибки не угадываю.','In Privacy settings, allow selected code and the compiler message. I will not guess the cause.'],
+ compilerFact:['Компилятор сообщил','The compiler reported'],
+ currentStudy:['Сейчас открыт урок','Current lesson'],
+ noStudy:['Открытый урок не подтверждён подготовленными материалами. Откройте урок или назовите тему.','The current lesson is not verified by prepared material. Open a lesson or name a topic.'],
+ studyLimits:['Текущее задание и история прогресса пока не подключены; по адресу страницы я их не определяю.','The current task and progress history are not connected yet; I do not infer them from the page address.'],
+ fileContext:['Активный файл','Active file'], revisionContext:['Ревизия','Revision'],
+
  personality:['Личность и общение','Personality and communication'],personalityChanged:['Стиль обновлён. Предыдущий запрос остановлен.','Style updated. Previous request stopped.'],
  gpuCheck:['Проверить доступность ускорения','Check acceleration availability'],gpuNotReady:['Аппаратное ускорение не подтверждено. Доступен режим процессора.','Hardware acceleration is unconfirmed. CPU mode remains available.'],gpuReady:['Устройство поддерживает экспериментальный режим. Его скорость ещё нужно измерить.','This device supports the experimental mode. Its speed still needs measurement.'],
  ready:['Готов','Ready'],offline:['Работаю офлайн','Working offline'],answering:['Готовлю ответ…','Preparing an answer…'],slow:['Продолжаю обдумывать. Ответ можно остановить.','Still working. You can stop the answer.'],
@@ -23,7 +33,7 @@ const rows={
  noLesson:['Разрешите контекст урока в настройках приватности или назовите тему.','Allow lesson context in Privacy settings or name a topic.'],
  noTopic:['Назовите тему или откройте урок, чтобы продолжить.','Name a topic or open a lesson to continue.'],
  noCode:['Выделите нужные строки и разрешите их в настройках приватности.','Select the relevant lines and allow them in Privacy settings.'],
- noDiagnostic:['Диагностика текущего запуска ещё не подключена к этому окну. Причину ошибки не угадываю. Вы можете явно выбрать код для разбора.','Current run diagnostics are not connected to this window yet. I will not guess the cause. You can explicitly select code to review.'],
+ noDiagnostic:['Для выбранного файла и его текущей ревизии нет подтверждённого сообщения компилятора. Запустите проверку штатной кнопкой Nexus; причину ошибки я не угадываю.','There is no verified compiler message for the selected file and its current revision. Run the check using Nexus controls; I will not guess the cause.'],
  resume:['В этом окне нет подтверждённой истории учебного прогресса. Могу показать текущий раздел или открыть ваши проекты.','This window has no verified learning-progress history. I can show your current section or open your projects.'],
  noSelection:['Фрагмент кода не включён.','No code fragment included.'],error:['Не получилось получить ответ. Попробуйте ещё раз; материалы и навигация остаются доступны.','Could not get an answer. Please retry; materials and navigation remain available.'],
  unavailable:['Действие сейчас недоступно.','This action is unavailable right now.'],

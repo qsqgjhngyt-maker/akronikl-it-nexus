@@ -5,6 +5,8 @@ export function resolveMessage(value) {
   const text=value.normalize('NFKC').trim().replace(/^(?:акроникл|akronikl)[,!:—\s]+/iu,'');
   const n=text.toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/[?!.,]+$/u,'').replace(/\s+/gu,' ');
   if(/^(?:где я остановился|где я остановилась|where did i leave off)$/u.test(n))return {kind:'resume'};
+  if(/^(?:что (?:мы )?(?:сейчас )?изучаем|какая (?:сейчас )?тема|какой (?:сейчас )?урок|what are we (?:studying|learning)(?: now)?|current lesson)$/u.test(n))return {kind:'study'};
+  if(/^(?:что мне (?:нужно )?сделать в этом задании|что требуется в этом задании|what (?:should|do) i (?:need to )?do (?:in|for) this (?:task|assignment))$/u.test(n))return {kind:'task'};
   if(/^(?:покажи контекст|показать контекст|мой контекст|show context)$/u.test(n))return {kind:'context'};
   if(/^(?:помоги найти лабораторную(?: работу)?|найди лабораторную(?: работу)?|help me find a lab)$/u.test(n))return {kind:'platform',request:{kind:'navigate',destinationId:'labs'}};
   if(/^(?:где мои проекты|where are my projects)$/u.test(n))return {kind:'platform',request:{kind:'navigate',destinationId:'projects'}};
