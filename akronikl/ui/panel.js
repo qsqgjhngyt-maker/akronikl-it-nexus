@@ -1,3 +1,4 @@
+import {mountTutor} from '../tutor/panel.js';
 import {mountPlatformGuide} from '../platform/panel.js';
 import {allowedHash} from '../platform/catalog.js';
 import {createAssistantCore} from '../core/index.js';
@@ -43,11 +44,12 @@ export function openAssistantPanel(options) {
   const status = make('p',t.ready); status.setAttribute('role','status'); status.setAttribute('aria-live','polite');
   const output = make('section'); output.dataset.akroniklResults = ''; output.setAttribute('aria-label',en ? 'Assistant result' : 'Результат помощника');
   make('p',t.limited).className = 'akronikl-note';
+  const tutor=mountTutor({parent:dialog,documentRef,host,loadKnowledge,locale:en?'en':'ru',getInclude:()=>selection.checked?['selection']:[],loadModel:options.loadTutorModel});
   function stop() {sequence++; request?.abort(); request = null; core.invalidate(); cancel.disabled = true; output.removeAttribute('aria-busy');}
   function dispose() {
     if (disposed) return; disposed = true; stop(); core.dispose(); host.dispose(); unsubscribe?.(); observer.disconnect();
     output.replaceChildren(); query.value = ''; selection.checked = false;
-    platform.dispose(); dialog.remove(); onDispose(); if (trigger?.isConnected && windowRef.location.hash === initialHash) trigger.focus();
+    tutor.dispose(); platform.dispose(); dialog.remove(); onDispose(); if (trigger?.isConnected && windowRef.location.hash === initialHash) trigger.focus();
   }
   const initialHash = windowRef.location.hash;
   const observer = new MutationObserver(() => {if (!host.current()) dispose();});
@@ -101,7 +103,7 @@ export function openAssistantPanel(options) {
   form.addEventListener('submit', event => {event.preventDefault(); void act('search');});
   context.addEventListener('click', () => {void act('context');});
   cancel.addEventListener('click', () => {stop(); output.replaceChildren(); status.textContent = t.cancelled;});
-  selection.addEventListener('change', () => {stop(); output.replaceChildren(); status.textContent = t.ready;});
+  selection.addEventListener('change', () => {tutor.clear();stop(); output.replaceChildren(); status.textContent = t.ready;});
   query.addEventListener('input', () => {stop(); output.replaceChildren(); status.textContent = t.ready;});
   close.addEventListener('click',dispose); dialog.addEventListener('cancel',event => {event.preventDefault(); dispose();});
   dialog.addEventListener('close',dispose);
