@@ -9,6 +9,8 @@ import {createModelConnections} from '../connections/controller.js';
 import {mountConnectionPanel} from '../connections/panel.js';
 import {resolveMessage} from './intents.js';
 import {textFor} from './strings.js';
+import {createPersonality} from '../personality/controller.js';
+import {mountPersonalityPanel} from '../personality/panel.js';
 
 // Один экран разговора; все прежние привилегированные действия остаются в host.
 // Нет сетевой генерации, browser storage, сырого HTML, автоотправки кода или аудио.
@@ -22,6 +24,10 @@ export function openExperience(options) {
   let connections=null,connectionPanel=null,connectedRevision=-1,settingsOpen=false,settingsSection='basics';
   let lessonAllowed=true,codeAllowed=false,privacyBoundary={},busy=false,slowTimer=null,lastMetrics=null;
   let suggestionsEnabled=true,enterSends=true;
+  const personality=createPersonality({isCurrent:()=>!dead&&host.current(),locale,onChange(){
+    // Уже показанные реплики не переписываем. Новая сессия не наследует старый стиль.
+    stop();privacyBoundary={};renew();status.textContent=t('personalityChanged');
+  }});
   const listeners=new AbortController(),t=key=>textFor(locale,key),labels=[];
   const el=(tag,parent,cls='',text='')=>{const n=doc.createElement(tag);if(cls)n.className=cls;if(text)n.textContent=text;parent?.append(n);return n;};
   const label=(n,key,attr)=>{if(!n.closest?.('[data-ak-message]'))labels.push({n,key,attr});if(attr)n.setAttribute(attr,t(key));else n.textContent=t(key);return n;};
@@ -48,12 +54,13 @@ export function openExperience(options) {
   const drawerHeader=el('div',drawer,'ak-settings-heading');const drawerTitle=label(el('h3',drawerHeader),'settings');drawerTitle.id='ak-settings-title';drawerTitle.tabIndex=-1;
   button(drawerHeader,'back',()=>toggleSettings(false),'ak-btn ak-back');
   const nav=el('nav',drawer,'ak-settings-nav');nav.setAttribute('aria-label',t('settings'));const sections={},tabs={};
-  for(const key of ['basics','model','voice','privacy','advanced']){tabs[key]=button(nav,key,()=>showSection(key),'ak-tab');tabs[key].setAttribute('aria-controls','ak-settings-'+key);sections[key]=el('section',drawer,'ak-settings-section');sections[key].id='ak-settings-'+key;sections[key].hidden=key!=='basics';label(el('h4',sections[key]),key);}
+  for(const key of ['basics','personality','model','voice','privacy','advanced']){tabs[key]=button(nav,key,()=>showSection(key),'ak-tab');tabs[key].setAttribute('aria-controls','ak-settings-'+key);sections[key]=el('section',drawer,'ak-settings-section');sections[key].id='ak-settings-'+key;sections[key].hidden=key!=='basics';label(el('h4',sections[key]),key);}
   const selectField=(parent,key,items)=>{const l=el('label',parent,'ak-setting-label');label(el('span',l),key);const s=el('select',l);for(const [value,caption] of items){const o=el('option',s);o.value=value;if(caption.startsWith('@'))label(o,caption.slice(1));else o.textContent=caption;}return s;};
   const language=selectField(sections.basics,'lang',[['ru','Русский'],['en','English']]);language.value=locale;language.dataset.akLanguage='';
   const theme=selectField(sections.basics,'theme',[['auto','@themeAuto'],['light','@themeLight'],['dark','@themeDark']]);theme.dataset.akThemeSelect='';
   const checkField=(parent,key,checked)=>{const l=el('label',parent,'ak-check');const c=el('input',l);c.type='checkbox';c.checked=checked;label(el('span',l),key);return c;};
   const suggest=checkField(sections.basics,'suggestions',true),enter=checkField(sections.basics,'enter',true);label(el('p',sections.basics,'ak-muted'),'windowOnly');
+  const personalityPanel=mountPersonalityPanel({parent:sections.personality,documentRef:doc,controller:personality,locale});
   label(el('p',sections.voice),'voiceLater');
   const lesson=checkField(sections.privacy,'lesson',true);lesson.dataset.akLessonConsent='';
   const selection=checkField(sections.privacy,'code',false);selection.disabled=!host.selectionAvailable;selection.dataset.akCodeConsent='';
@@ -73,7 +80,8 @@ export function openExperience(options) {
   const guide=createPlatformGuide({isCurrent:host.current,readState:host.platformState,locale,onNavigate:hash=>{if(!host.current()||!allowedHash(hash))return false;dispose();onNavigate({kind:'platform',hash});return true;}});
   // Пересоздание guide при смене языка не меняет прав/маршрутов host.
   let activeGuide=guide;
-  function renew(){session?.dispose();session=createTutorSession({host:sessionHost,loadKnowledge,locale,provider:connections?.lease()??null});}
+  function renew(){session?.dispose();session=createTutorSession({host:sessionHost,loadKnowledge,locale,provider:connections?.lease()??null,readPersonality:()=>personality.snapshot(),
+    readCommunicationState:options.readCommunicationState??(()=> 'unknown')});}
   function current(ticket){return !dead&&ticket===seq&&host.current();}
   function readyStatus(){if(!dead&&!busy)status.textContent=win.navigator?.onLine===false?t('offline'):t('ready');}
   function setBusy(value){busy=value;send.disabled=value||!input.value.trim();stopButton.hidden=!value;form.setAttribute('aria-busy',String(value));clearTimeout(slowTimer);if(value){status.textContent=t('answering');slowTimer=setTimeout(()=>{if(!dead&&busy)status.textContent=t('slow');},15000);}else readyStatus();}
@@ -119,9 +127,9 @@ export function openExperience(options) {
       const item=appendMessage('assistant',messageText,badge);item.dataset.tutorGenerated=String(result.generated);item.dataset.tutorAnswer='';addSources(item,result.sources);
     }catch{if(current(ticket))appendMessage('assistant',t('error'));}finally{if(current(ticket)){setBusy(false);refreshDiagnostics();}}
   }
-  function changeLanguage(){if(!['ru','en'].includes(language.value))return;connections.disconnect();locale=language.value;privacyBoundary={};activeGuide.dispose();activeGuide=createPlatformGuide({isCurrent:host.current,readState:host.platformState,locale,onNavigate:hash=>{if(!host.current()||!allowedHash(hash))return false;dispose();onNavigate({kind:'platform',hash});return true;}});clear(true);for(const l of labels){if(l.attr)l.n.setAttribute(l.attr,t(l.key));else l.n.textContent=t(l.key);}gear.textContent='⚙';close.textContent='×';gear.setAttribute('aria-label',t('settings'));close.setAttribute('aria-label',t('close'));dialog.lang=locale;log.setAttribute('aria-label',locale==='en'?'Conversation with Akronikl':'Разговор с Akronikl');nav.setAttribute('aria-label',t('settings'));mountModels();refreshHints();inputHint.textContent=t(enterSends?'hint':'hintAlt');readyStatus();}
+  function changeLanguage(){if(!['ru','en'].includes(language.value))return;connections.disconnect();locale=language.value;personality.update({locale});personalityPanel.setLocale(locale);privacyBoundary={};activeGuide.dispose();activeGuide=createPlatformGuide({isCurrent:host.current,readState:host.platformState,locale,onNavigate:hash=>{if(!host.current()||!allowedHash(hash))return false;dispose();onNavigate({kind:'platform',hash});return true;}});clear(true);for(const l of labels){if(l.attr)l.n.setAttribute(l.attr,t(l.key));else l.n.textContent=t(l.key);}gear.textContent='⚙';close.textContent='×';gear.setAttribute('aria-label',t('settings'));close.setAttribute('aria-label',t('close'));dialog.lang=locale;log.setAttribute('aria-label',locale==='en'?'Conversation with Akronikl':'Разговор с Akronikl');nav.setAttribute('aria-label',t('settings'));mountModels();refreshHints();inputHint.textContent=t(enterSends?'hint':'hintAlt');readyStatus();}
   function viewport(){const v=win.visualViewport;dialog.style.setProperty('--ak-viewport-height',(v?.height??win.innerHeight)+'px');dialog.style.setProperty('--ak-viewport-top',(v?.offsetTop??0)+'px');}
-  function dispose(){if(dead)return;dead=true;seq++;request?.abort();clearTimeout(slowTimer);listeners.abort();observer.disconnect();unsubscribeWorkspace?.();releaseFocus();unsubConnection();connections.dispose();connectionPanel?.dispose();session?.dispose();core.dispose();activeGuide.dispose();host.dispose();codeAllowed=false;lessonAllowed=false;input.value='';log.replaceChildren();diagnostic.textContent='';dialog.remove();onDispose();if(trigger?.isConnected&&win.location.hash===initialHash)trigger.focus();}
+  function dispose(){if(dead)return;dead=true;seq++;request?.abort();clearTimeout(slowTimer);listeners.abort();observer.disconnect();unsubscribeWorkspace?.();releaseFocus();unsubConnection();connections.dispose();connectionPanel?.dispose();session?.dispose();core.dispose();activeGuide.dispose();personalityPanel.dispose();personality.dispose();host.dispose();codeAllowed=false;lessonAllowed=false;input.value='';log.replaceChildren();diagnostic.textContent='';dialog.remove();onDispose();if(trigger?.isConnected&&win.location.hash===initialHash)trigger.focus();}
   const observer=new win.MutationObserver(()=>{if(!host.current())dispose();});observer.observe(root,{childList:true,subtree:true});
   const unsubscribeWorkspace=host.workspace?.subscribe?.(()=>dispose());const releaseFocus=bindDialogFocusCycle(dialog);
   form.addEventListener('submit',e=>{e.preventDefault();void submit(input.value);});
