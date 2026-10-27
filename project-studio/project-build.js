@@ -17,7 +17,9 @@ export function createProjectBuildPlan(project={},mode='run'){
   const production=sourceFiles.filter(path=>sourceRoots.some(root=>underRoot(path,root))&&!testRoots.some(root=>underRoot(path,root)));
   if(isSource(entryFile,languageId)&&fileMap[entryFile]!==undefined&&!production.includes(entryFile))production.unshift(entryFile);
   const tests=sourceFiles.filter(path=>testRoots.some(root=>underRoot(path,root)));
-  const translationUnits=mode==='tests'?unique([...production.filter(path=>path!==entryFile),...tests]):unique(production);
+  let translationUnits=mode==='tests'?unique([...production.filter(path=>path!==entryFile),...tests]):unique(production);
+  // Локальная копия запускает переносимое ядро приложения через CLI/test target.
+  if(fileMap['nexus-application.json']){try{const c=JSON.parse(fileMap['nexus-application.json']),selected=c.targets?.[mode==='tests'?'tests':'console'];if(Array.isArray(selected)&&selected.length&&selected.every(p=>typeof p==='string'&&sourceFiles.includes(p)))translationUnits=unique(selected);}catch{}}
   return{mode,languageId,entryFile,sourceRoots,includeRoots,testRoots,translationUnits,files:fileMap};
 }
 

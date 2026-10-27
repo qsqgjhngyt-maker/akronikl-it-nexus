@@ -12,6 +12,7 @@ on:
       - 'sandbox/**'
       - 'project-studio/**'
       - 'studio-build/**'
+      - 'server-access/bff/server.mjs'
 permissions:
   contents: read
 jobs:
@@ -35,10 +36,10 @@ jobs:
         run: |
           node tools/check-academy-gold-module6-dependencies.mjs
           node tools/check-academy-gold-module6-build.mjs
-          node --test tests/academy-gold-module6-dependencies.test.mjs tests/academy-gold-module6-thread-limit.test.mjs tests/academy-gold-module6-portable.test.mjs
+          node --test tests/academy-gold-module6-dependencies.test.mjs tests/academy-gold-module6-thread-limit.test.mjs tests/academy-gold-module6-portable.test.mjs tests/academy-gold-module6-service.test.mjs tests/academy-gold-module6-auth.test.mjs
           node tests/academy-gold-module6-preservation.mjs
           node tools/check-academy-gold-regression.mjs
-          node tools/check-academy-gold-integration.mjs
+          node tools/check-academy-gold-module6-integration.mjs
           node tests/pwa-controller-check.mjs
           node tests/entry-document-navigation-check.mjs
       - name: 21 программа, 34 случая C++20/UBSan; GUI не заявляется
@@ -92,26 +93,48 @@ jobs:
           retention-days: 30
 
   qt-candidate:
-    name: Настоящая сборка Qt C++ candidate, GUI ещё требует browser gate
+    name: Настоящие C++ GUI, данные, переносимость и сдача в Nexus
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
       NEXUS_M6_EVIDENCE: /tmp/nexus-m6-qt
       NEXUS_QT_IMAGE: nexus-m6-qt:6.8.3-ems3.1.56
+      NEXUS_FRONTEND_DIR: /tmp/nexus-m6-app-build
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m6-app-browser/node_modules/playwright/index.mjs
+      NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m6-app-runtime
+      NEXUS_JSCPP_FIXTURE: /tmp/nexus-m6-app-runtime/jscpp.js
+      NEXUS_QT_ARTIFACT_ROOT: /tmp/nexus-m6-qt
+      NEXUS_STUDIO_TEST_STORE: /tmp/nexus-m6-private-jobs
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Отдельный браузер и изолированная сборка Nexus
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/nexus-m6-app-browser --no-save playwright@1.56.1
+          /tmp/nexus-m6-app-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-m6-app-build
+          node tools/prepare-academy-gold-runtime-fixture.mjs
       - name: Закреплённый SDK, без production или личных данных
         run: docker build -t "$NEXUS_QT_IMAGE" -f studio-build/containers/qt-wasm.Dockerfile studio-build/containers
       - name: Исходный и изменённый C++ собираются внутри ограниченного контейнера
         run: node tools/check-academy-gold-module6-qt.mjs
+      - name: Настоящее окно Qt и изменённый C++
+        run: node tests/academy-gold-module6-qt-browser.mjs
+      - name: Студент и преподаватель в настоящем Nexus, отдельный Preview site
+        run: node tests/academy-gold-module6-application-check.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: academy-gold-m6-qt-candidate-${{ github.sha }}
-          path: /tmp/nexus-m6-qt/
+          path: |
+            /tmp/nexus-m6-qt/*.json
+            /tmp/nexus-m6-qt/*.png
+            /tmp/nexus-m6-qt/*.txt
+          # Не публикуем SDK/Qt binaries, private jobs, snapshots, session/profile.
+          if-no-files-found: warn
           retention-days: 30
 
   gold-regression:

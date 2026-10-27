@@ -4,7 +4,7 @@ import {verifiedAccount} from '../core/account-storage.js';
 import {registerUpdateParticipant} from '../pwa/interface-update.js';
 import {codeStudioMarkup,bindCodeStudio} from '../sandbox/code-studio.js';
 import {createSandboxController} from '../sandbox/sandbox.js';
-import {getProject,patchProject,createCheckpoint,restoreCheckpoint,toggleProjectMilestone,deleteProject,renameProject,getProjectAudit} from './project-store.js';
+import {createProject,getProject,patchProject,createCheckpoint,restoreCheckpoint,toggleProjectMilestone,deleteProject,renameProject,getProjectAudit} from './project-store.js';
 import {projectRuntimeRequest} from './project-build.js';
 import {cloudflareSyncSummary} from '../sync/cloudflare-config.js';
 import {listCloudProjects,importCloudProject,enableProjectCloud,pushProjectNow,pullProjectNow,cloudSyncReady} from '../sync/cloud-sync.js';
@@ -24,7 +24,7 @@ export function prepareProjectNavigation(){
    history.replaceState(null,'',location.pathname+location.search+activeEditor.hash);return false;
   }
  }
- activeEditor=null;return true;
+ activeEditor?.dispose?.();activeEditor=null;return true;
 }
 
 function cloudControls(project,en=false){
@@ -55,6 +55,7 @@ export function projectStudioViewMarkup(options={}){if(!options.project)return '
 
 export function bindProjectStudioDashboard({locale='ru',onChanged=()=>{},onOpenProject=()=>{}}={}){
   const en=locale==='en';
+  const application=document.createElement('button');application.type='button';application.className='btn';application.id='psNewApplication';application.textContent=en?'＋ C++ application':'＋ Приложение C++';document.querySelector('#psNewProject')?.after(application);application.addEventListener('click',async()=>{application.disabled=true;try{const{taskFlowApplicationTemplate}=await import('./application-template.js');const project=createProject(taskFlowApplicationTemplate());onOpenProject(project.id);}catch(e){alert(e.message)}finally{application.disabled=false}});
   document.querySelector('#psCloudImport')?.addEventListener('click',async()=>{try{
     if(!cloudSyncReady()){const go=confirm(en?'Nexus Cloud is not connected on this device. Open Account → Nexus Cloud settings?':'Nexus Cloud не подключён на этом устройстве. Перейти в Аккаунт → Nexus Cloud?');if(go)location.hash='#view=account&tab=cloud';return}
     const projects=await listCloudProjects();if(!projects.length){alert(en?'No cloud projects yet.':'В облаке пока нет проектов.');return}
@@ -77,14 +78,15 @@ export function bindProjectStudio({projectId,locale='ru',onChanged=()=>{},onDele
    catch{saveStatus(en?'Could not save. Keep this editor open and export your sources.':'Не удалось сохранить. Не закрывайте редактор; экспортируйте исходники.')}
   }});
   const saveNow=()=>{if(!contextValid())return false;try{patchProject(projectId,{workspace:studio.getSnapshot(),stdin:document.querySelector('#stdin')?.value||''});unsaved=false;saveStatus(en?'Saved on this device.':'Сохранено на устройстве.');return true}catch{unsaved=true;saveStatus(en?'Could not save. Keep this editor open and export your sources.':'Не удалось сохранить. Не закрывайте редактор; экспортируйте исходники.');return false}};
-  activeEditor={current:contextValid,dirty:()=>unsaved,save:saveNow,hash:location.hash,en};
+  let applicationPanel=null;activeEditor={current:contextValid,dirty:()=>unsaved,save:saveNow,hash:location.hash,en,dispose:()=>applicationPanel?.dispose()};
   document.querySelector('#psSaveProject')?.addEventListener('click',saveNow);
   document.querySelector('#psExportProject')?.addEventListener('click',()=>{if(!contextValid())return;try{downloadProjectSources({...getProject(projectId),workspace:studio.getSnapshot()})}catch{saveStatus(en?'Could not export this workspace.':'Не удалось экспортировать эту структуру файлов.')}});
   const stdin=document.querySelector('#stdin'),output=document.querySelector('#output'),engine=document.querySelector('#engine'),status=document.querySelector('#sandboxStatus'),routeInfo=document.querySelector('#runtimeRoute');
   const runtimeStudio={...studio,runtimeRequest:value=>projectRuntimeRequest(studio,getProject(projectId)||project,value,'run')};
   const controller=createSandboxController({editor,stdin,output,engine,status,routeInfo,requirements:[],locale,languageId:project.languageId||'cpp',codeStudio:runtimeStudio,onCodeChange:()=>{}});
   stdin?.addEventListener('input',()=>{if(!contextValid())return;unsaved=true;saveNow()});
-  document.querySelector('#runCode')?.addEventListener('click',()=>{if(!contextValid())return;const request=runtimeStudio.runtimeRequest(stdin?.value||'');if(request.metadata.translationUnits.every(path=>!request.files[path]?.trim())){output.textContent=en?'The C++ project is empty. Add a program before running it.':'C++ проект пуст. Добавьте программу перед запуском.';return}void controller.run().catch(()=>{})});
+  const isApplication=project.workspace?.files?.some(f=>f.path==='nexus-application.json');const runButton=document.querySelector('#runCode');if(isApplication)runButton.disabled=true;else runButton?.addEventListener('click',()=>{if(!contextValid())return;const request=runtimeStudio.runtimeRequest(stdin?.value||'');if(request.metadata.translationUnits.every(path=>!request.files[path]?.trim())){output.textContent=en?'The C++ project is empty. Add a program before running it.':'C++ проект пуст. Добавьте программу перед запуском.';return}void controller.run().catch(()=>{})});
+  import('./application-panel.js').then(async({bindApplicationPanel})=>{if(!contextValid())return;const bound=await bindApplicationPanel({project,studio,current:contextValid,save:saveNow,runButton,locale});if(contextValid())applicationPanel=bound;else bound?.dispose();}).catch(()=>{if(contextValid()&&isApplication)output.textContent=en?'Application controls could not load. Sources are preserved.':'Не удалось загрузить управление приложением. Исходники сохранены.'});
   document.querySelector('#testRuntime')?.addEventListener('click',()=>controller.selfTest().catch(()=>{}));
   document.querySelector('#clearOutput')?.addEventListener('click',()=>{studio?.clearRuntimeDiagnostics?.();output.className='output';output.textContent=en?'Project output will appear here.':'Вывод проекта появится здесь.'});
   document.querySelectorAll('[data-ps-milestone]').forEach(box=>box.addEventListener('change',()=>{toggleProjectMilestone(projectId,Number(box.dataset.psMilestone),box.checked);box.closest('.ps-milestone')?.classList.toggle('done',box.checked);onChanged()}));

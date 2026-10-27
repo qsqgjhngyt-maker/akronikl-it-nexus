@@ -56,6 +56,7 @@ int main(){try{
 `;
 const gui=String.raw`#include "task_model.hpp"
 #include <QApplication>
+#include <QAccessible>
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QLineEdit>
@@ -74,11 +75,15 @@ public:
  TaskWindow(){setWindowTitle("TaskFlow — C++ in Nexus");resize(460,420);auto*layout=new QVBoxLayout(this);layout->addWidget(new QLabel("TaskFlow",this));input_=new QLineEdit(this);input_->setPlaceholderText("Enter a task");input_->setAccessibleName("Task title");layout->addWidget(input_);auto*button=new QPushButton("Add task",this);layout->addWidget(button);list_=new QListWidget(this);layout->addWidget(list_);status_=new QLabel("Ready",this);status_->setWordWrap(true);layout->addWidget(status_);
   connect(button,&QPushButton::clicked,this,[this]{add();});connect(input_,&QLineEdit::returnPressed,this,[this]{add();});
   auto*done=new QPushButton("Complete selected",this);layout->addWidget(done);connect(done,&QPushButton::clicked,this,[this]{try{if(!list_->currentItem())throw std::runtime_error("Select a task");model_.complete(list_->currentItem()->data(Qt::UserRole).toInt());refresh();}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});
-  auto*save=new QPushButton("Save application data",this);layout->addWidget(save);connect(save,&QPushButton::clicked,this,[this]{try{std::ostringstream out;model_.save(out);QFile f("/taskflow.txt");if(!f.open(QIODevice::WriteOnly)||f.write(QByteArray::fromStdString(out.str()))<0)throw std::runtime_error("Cannot write data");status_->setText("Data ready — use Save data in Nexus");}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});
+  auto*save=new QPushButton("Save application data",this);layout->addWidget(save);connect(save,&QPushButton::clicked,this,[this]{try{std::ostringstream out;model_.save(out);QFile f("/taskflow.txt");if(!f.open(QIODevice::WriteOnly)||f.write(QByteArray::fromStdString(out.str()))<0)throw std::runtime_error("Cannot write data");status_->setText("Application data saved");}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});
   QFile f("/taskflow.txt");if(f.open(QIODevice::ReadOnly)){try{const auto bytes=f.read(65537);if(bytes.size()>65536)throw std::runtime_error("Data file is too large");std::istringstream in(bytes.toStdString());model_.load(in);}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}}refresh();input_->setFocus();
  }
 };
-int main(int argc,char**argv){static auto app=std::make_unique<QApplication>(argc,argv);static auto window=std::make_unique<TaskWindow>();window->show();
+int main(int argc,char**argv){static auto app=std::make_unique<QApplication>(argc,argv);
+#ifdef __EMSCRIPTEN__
+ QAccessible::setActive(true);
+#endif
+ static auto window=std::make_unique<TaskWindow>();window->show();QAccessible::setRootObject(window.get());
 #ifndef __EMSCRIPTEN__
  return app->exec();
 #else
@@ -93,8 +98,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(task_model src/task_model.cpp)
 target_include_directories(task_model PUBLIC include)
 if(EMSCRIPTEN)
- target_compile_options(task_model PUBLIC -fwasm-exceptions)
- target_link_options(task_model INTERFACE -fwasm-exceptions)
+ target_compile_options(task_model PUBLIC -fexceptions)
+ target_link_options(task_model INTERFACE -fexceptions)
 endif()
 add_executable(taskflow_cli src/main.cpp)
 target_link_libraries(taskflow_cli PRIVATE task_model)
@@ -111,8 +116,8 @@ if(NEXUS_GUI)
  qt_add_executable(program MANUAL_FINALIZATION src/gui.cpp)
  target_link_libraries(program PRIVATE task_model Qt6::Widgets)
  if(EMSCRIPTEN)
-  target_compile_options(program PRIVATE -fwasm-exceptions)
-  target_link_options(program PRIVATE -fwasm-exceptions "-sEXPORTED_RUNTIME_METHODS=['FS']" -sALLOW_MEMORY_GROWTH=1)
+  target_compile_options(program PRIVATE -fexceptions)
+  target_link_options(program PRIVATE -fexceptions -sDISABLE_EXCEPTION_CATCHING=0 -sDYNAMIC_EXECUTION=0 "-sEXPORTED_RUNTIME_METHODS=['FS']" -sALLOW_MEMORY_GROWTH=1)
  endif()
  qt_finalize_executable(program)
 endif()
@@ -131,4 +136,4 @@ const readme=`# TaskFlow — переносимый учебный проект 
 
 Исходники, тесты и данные проекта не требуют Nexus-сессии для внешней сборки. Файл taskflow.txt имеет версию NXTF1; ошибки загрузки сохраняют текущую модель. Не заменяйте существующие личные работы при импорте — создайте отдельный проект.
 `;
-export function taskFlowApplicationTemplate(){return{title:'TaskFlow — приложение C++',description:'Переносимая модель, тесты и графический интерфейс.',languageId:'cpp',entryFile:'src/main.cpp',sourceRoots:['src'],includeRoots:['include'],testRoots:['tests'],files:Object.entries({'include/task_model.hpp':header,'src/task_model.cpp':model,'src/main.cpp':cli,'src/gui.cpp':gui,'tests/task_model_test.cpp':tests,'CMakeLists.txt':cmake,'README.md':readme}).map(([path,content])=>({path,content,languageId:'cpp'})),manifest:{application:{schemaVersion:1,target:'qt-wasm',outputDataFiles:['taskflow.txt']},sourceRoots:['src'],includeRoots:['include'],testRoots:['tests']}};}
+export function taskFlowApplicationTemplate(){return{title:'TaskFlow — приложение C++',description:'Переносимая модель, тесты и графический интерфейс.',languageId:'cpp',entryFile:'src/main.cpp',sourceRoots:['src'],includeRoots:['include'],testRoots:['tests'],files:Object.entries({'include/task_model.hpp':header,'src/task_model.cpp':model,'src/main.cpp':cli,'src/gui.cpp':gui,'tests/task_model_test.cpp':tests,'CMakeLists.txt':cmake,'README.md':readme,'nexus-application.json':JSON.stringify({schemaVersion:1,target:'qt-wasm',outputDataFiles:['taskflow.txt'],targets:{console:['src/main.cpp','src/task_model.cpp'],tests:['tests/task_model_test.cpp','src/task_model.cpp']}},null,2)+'\n'}).map(([path,content])=>({path,content,languageId:'cpp'})),manifest:{application:{schemaVersion:1,target:'qt-wasm',outputDataFiles:['taskflow.txt']},sourceRoots:['src'],includeRoots:['include'],testRoots:['tests']}};}
