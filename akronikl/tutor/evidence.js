@@ -1,5 +1,5 @@
 // Только сокращение фактических источников. Не создаёт новые объяснения/факты.
-// Не обрезаем предложение на середине слова: это уже исказило продолжение RAII.
+// В предыдущем контексте RAII слово «деструкторе» обрывалось.
 export function completeExcerpt(value, limit = 400) {
   if (typeof value !== 'string' || !Number.isSafeInteger(limit) || limit < 1) throw Error('TUTOR_EXCERPT_INVALID');
   if (value.length <= limit) return Object.freeze({text:value, truncated:false});

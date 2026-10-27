@@ -9,3 +9,5 @@ test('абстрактные слова без объяснения времен
 test('отрицание неверного утверждения не считается его подтверждением',()=>assert.equal(screenRaiiAnswer('Ресурс не освобождается при инициализации; он освобождается в деструкторе.').status,'AUTOMATED_SCREEN_PASS'));
 test('обратный порядок правильных фактов не смешивается',()=>assert.equal(screenRaiiAnswer('Ресурс освобождается в деструкторе, а получается при инициализации.').status,'AUTOMATED_SCREEN_PASS'));
 test('заявление о невыполненном запуске не допускается',()=>assert.equal(screenRaiiAnswer('Я запустил программу. Ресурс освобождается в деструкторе.').status,'FAIL'));
+
+test('упрощение не должно повторять английскую расшифровку аббревиатуры',()=>assert.ok(screenRaiiAnswer('RAII (Resource Acquisition Is Initialization) — ресурс освобождается в деструкторе.',{simpler:true}).violations.includes('ACRONYM_EXPANSION_NOT_SIMPLIFIED')));

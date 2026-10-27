@@ -11,7 +11,7 @@ const MESSAGES = {
 const instructions = {
   explain:'Explain the concept in short steps using the supplied material.',
   hint:'Give one useful hint and one guiding question, not a complete assignment solution.',
-  simpler:'Explain the previous topic more simply. Do not change topic.',
+  simpler:'Explain the same topic to a beginner using everyday words, not technical names. Do not repeat or expand acronyms. Briefly explain any unavoidable technical term. Preserve the same facts and event order.',
   example:'Give a small illustrative example, mark it as your example; do not claim it was executed.',
   code:'Explain only the explicitly selected code. Do not claim to have inspected other files or executed it.',
   diagnostic:'Explain the supplied diagnostic. Distinguish its exact message from hypotheses; do not claim an unperformed compilation.'

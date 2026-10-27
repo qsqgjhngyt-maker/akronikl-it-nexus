@@ -62,7 +62,7 @@ try{
    const before=requests.length;await context.setOffline(true);await tutor().getByRole('button',{name:'Объясни проще',exact:true}).click();
    await page.waitForFunction(()=>document.querySelectorAll('[data-tutor-turn]').length===2,{},{timeout:180000});
    assert.equal(await tutor().locator('[data-tutor-turn]').last().getAttribute('data-tutor-generated'),'true',await tutor().locator('[data-tutor-turn]').last().textContent());
-   const answer=await tutor().locator('[data-tutor-turn]').last().locator('[data-tutor-answer]').textContent();const evaluation=screenRaiiAnswer(answer);answers.push({question:'Объясни проще',answer,evaluation});assert.deepEqual(evaluation.violations,[],JSON.stringify(evaluation));assert.notEqual(answer.trim(),answers[0].answer.trim(),'Упрощение не должно повторять прежний ответ дословно');assert.equal(await tutor().locator('[data-tutor-turn]').last().locator('p').first().textContent(),'Объясни проще');assert.equal(requests.length,before);
+   const answer=await tutor().locator('[data-tutor-turn]').last().locator('[data-tutor-answer]').textContent();const evaluation=screenRaiiAnswer(answer,{simpler:true});answers.push({question:'Объясни проще',answer,evaluation});assert.deepEqual(evaluation.violations,[],JSON.stringify(evaluation));assert.notEqual(answer.trim(),answers[0].answer.trim(),'Упрощение не должно повторять прежний ответ дословно');assert.equal(await tutor().locator('[data-tutor-turn]').last().locator('p').first().textContent(),'Объясни проще');assert.equal(requests.length,before);
    await context.setOffline(false);
   });
  }
