@@ -10,6 +10,8 @@
 
 LOCAL PASS:rebuild,7 Node tests, version consistency, зависимости/контракты,34 regression и13 integration. NEXUS-PERF-01:75модулей/591219B; outline27476B; labs45357B; field timing не измерялся. Текущая браузерная приёмка и новый CI фиксируются отдельно, не подменяются старыми12jobs.
 
+При финальной проверке до merge обнаружено: вложенный `version.json.releaseCandidate.assetGeneration` ещё указывал Test.1. Исправлено на Test.2; добавлено обязательное равенство с candidate generation в source gate и version consistency. Снова получены две одинаковые сборки,7 Node tests и rebuild PASS; изменились только root/versioned version.json, generated SW config и BUILD_MANIFEST. Первоначальный d26c168 и его ZIP помечены DEPRECATED_NOT_PUBLISHED; их CI не выдаётся за CI исправленного commit. Шапка, compiler и C++ программы при этой коррекции не менялись. Откат и переход PWA повторяются для окончательных bytes.
+
 Откат готовится к прежнему frontend Test.1 с сохранением всех будущих immutable bytes, текущего исправления client и четырёх BFF bundles. Его отдельные статические/runtime проверки и patch hash будут записаны до merge. Реальный BFF rollback на неисправный старый image для отката шапки использовать нельзя.
 
 В доступной вкладке владелец выполнил обычный вход до публикации. Зафиксированы только локальные UI наблюдения для сравнения; личные данные/скриншоты в GitHub не помещаются. Cloud PUSH/PULL, очистки cookies/storage, создания аккаунта и перезаписи работ не будет.

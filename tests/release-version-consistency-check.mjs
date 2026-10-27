@@ -13,6 +13,7 @@ const assert=(v,m)=>{if(!v)throw new Error(m)};
 assert(version===expected,`version.json mismatch: ${version}`);
 assert(projectVersion===expected,`project.json mismatch: ${projectVersion}`);
 assert(candidate.version===expected,'candidate version mismatch');
+assert(JSON.parse(fs.readFileSync(new URL('version.json',root),'utf8')).releaseCandidate.assetGeneration===candidate.assetGeneration,'update metadata generation mismatch');
 assert(shell.includes(`app.css?v=${expected}`),'shell CSS cache-buster version mismatch');
 assert(shell.includes(`core/bootstrap.js?v=${expected}`),'shell must enter via authenticated bootstrap');
 assert(!shell.includes('src="./releases/'+candidate.assetGeneration+'/core/app.js'),'direct app entry bypass');

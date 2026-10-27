@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
-export const M5_HEADER_PUBLICATION=Object.freeze({source:'8e135c201be4275baaa06c6e65e23287be03eb60',base:'5e0e290c9bf74dde87f3169b9d7e122952fd0c57',version:'0.1.7-alpha.2.4.6-ui1a.10.9-test.2',generation:'ui1a-cpp-gold-module5-test2-header-20261027',receiptSha256:'878e618c57746eb250a2c914e39b96b658d4f5e08261725b18487c16ab2c39ee'});
+export const M5_HEADER_PUBLICATION=Object.freeze({source:'8e135c201be4275baaa06c6e65e23287be03eb60',base:'5e0e290c9bf74dde87f3169b9d7e122952fd0c57',version:'0.1.7-alpha.2.4.6-ui1a.10.9-test.2',generation:'ui1a-cpp-gold-module5-test2-header-20261027',receiptSha256:'7413fdee9a17e00d1d7e3f532d1ec821fa908e85e78a5e4dd5719c2ffb64182d'});
 const root=path.resolve(import.meta.dirname,'..'),git=(...a)=>execFileSync('git',a,{cwd:root,maxBuffer:128*1024*1024}),read=f=>readFile(path.join(root,f)),hash=b=>createHash('sha256').update(b).digest('hex'),blob=b=>createHash('sha1').update(Buffer.from('blob '+b.length+'\0')).update(b).digest('hex');
 const tree=(ref,...paths)=>git('ls-tree','-rz',ref,'--',...paths).toString().split('\0').filter(Boolean).map(s=>{const m=s.match(/^(\d+) blob ([a-f0-9]+)\t(.+)$/s);assert.ok(m);return{mode:m[1],sha:m[2],file:m[3]}});
 export function verifyM5HeaderRecord(r,b){assert.ok(!/^(?:[A-Za-z]:|[\\/])/.test(r.file)&&!r.file.split('/').includes('..'));assert.equal(b.length,r.bytes,r.file);assert.equal(hash(b),r.sha256,r.file)}
@@ -15,7 +15,7 @@ export async function verifyM5HeaderPublication({rebuild=false,writeEvidence=tru
  const P=M5_HEADER_PUBLICATION,r=verifyM5HeaderReceipt(await read('docs/ru/03-content/CPP_MODULE5_HEADER_PUBLICATION_SCOPE.json'));
  const c=JSON.parse(await readOutput('release-candidate.json')),v=JSON.parse(await readOutput('version.json')),m=JSON.parse(await readOutput('BUILD_MANIFEST.json')),rollback=c.publication.kind==='production-test-header-rollback';
  assert.equal(c.publication.module,'cpp-module-5');assert.equal(c.publication.officialRelease,false);assert.equal(c.ownerPublicationAuthorized,false);assert.equal(v.releaseCandidate.ownerPublicationAuthorized,false);assert.equal(v.releaseCandidate.releaseReady,false);
- assert.equal(c.assetGeneration,rollback?r.previousGeneration:P.generation);assert.equal(c.version,rollback?r.previousVersion:P.version);assert.equal(v.version,c.version);assert.equal(m.version,c.version);assert.equal(m.assetGeneration,c.assetGeneration);
+ assert.equal(c.assetGeneration,rollback?r.previousGeneration:P.generation);assert.equal(c.version,rollback?r.previousVersion:P.version);assert.equal(v.releaseCandidate.assetGeneration,c.assetGeneration,'Update metadata выбирает то же поколение');assert.equal(v.version,c.version);assert.equal(m.version,c.version);assert.equal(m.assetGeneration,c.assetGeneration);
  assert.equal(c.publication.kind,rollback?'production-test-header-rollback':'production-test-header');if(rollback)assert.equal(c.publication.headerRollbackFrom,P.generation);else{assert.equal(c.publication.sourceCommit,P.source);assert.equal(c.publication.rollbackCommit,P.base)}
  const records=rollback?[...r.rollbackFiles,...r.files.filter(x=>/^(?:releases|entry-assets)\//.test(x.file)),...r.bffBundles]:r.files;
  assert.equal(new Set(records.map(x=>x.file)).size,records.length);for(const x of records)verifyM5HeaderRecord(x,await readOutput(x.file));
