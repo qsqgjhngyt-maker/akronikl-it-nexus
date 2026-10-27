@@ -1,3 +1,13 @@
+# Финальный инженерный checkpoint Module 6
+
+28.10.2026. STATUS: **PARTIAL для всего M6 / AUTOMATED PASS инженерного пилота**. Source `2a737915f8a7068dea4d0b2d8cd3b79accb15952`, CI40542759814:8/8 SUCCESS. Подтверждены40 unit,13 integration groups,34 native+34 WASI, cold Offline,3 реальные квоты/артефакты, original/edited Qt C++,12/12 Nexus E2E и940/940 M1–5. SHA256/CRC всех8 CI архивов текущего source SHA проверены. В GitHub только безопасные metadata/результаты; private stores, TLS keys, profiles и Qt binaries не публикуются.
+
+Следующий приоритет03:12 полных Gold-уроков RU/EN, лабораторные с правильным runtime/переходом в Project Studio, итоговая аттестация. Сейчас новых Gold объектов и registered IDs0; прежние56/legacy40/Gold55 сохранены. Source runtime/assessment пилот реализован; production GUI runner/store/ingress, лицензирование и05/07 на устройствах — будущие gates. LIVE/FULL LIVE PASS не выданы. Main остаётся d76d161; официальный релиз/платежи/deployments не создавались.
+
+Актуальные отчёт/evidence/hash ledger: `CPP_MODULE6_IMPLEMENTATION_RU.md`, `CPP_MODULE6_IMPLEMENTATION_EVIDENCE.json`, `CPP_MODULE6_IMPLEMENTATION_HASHES.json`. Cross-branch текст02/01/07→05→00/04 подготовлен в отчёте, автоматически не отправлялся. RECOMMENDED MODE:высокий/Pro для Content, очень высокий для runtime/security. Ниже сохранены исторические checkpoints; их ожидание CI заменено этой подтверждённой фиксацией.
+
+---
+
 # Module 6 реализация в feature после разрешения владельца
 
 27.10.2026. STATUS: PARTIAL / IMPLEMENTED / локальные AUTOMATED PASS. Актуальный отчёт `CPP_MODULE6_IMPLEMENTATION_RU.md`, технические условия `studio-build/README_RU.md`. Реализованы typed thread limitation, настоящий Qt C++ target и полный пилот TaskFlow в Project Studio: данные, Stop/Restart, переносимый ZIP, серверные тесты, immutable сдача, назначенный преподаватель и рубрика. Локально12/12 browser E2E,40 unit checks,13 integration groups, native ZIP/UBSan/mutation и static NEXUS-PERF-01 PASS. Остановка настоящего бесконечного C++ callback —351ms в измеренном Chromium; это не универсальный SLA.

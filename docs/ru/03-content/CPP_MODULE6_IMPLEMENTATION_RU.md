@@ -1,63 +1,49 @@
-# C++ Module 6 реализация полного цикла в Nexus
+# C++ Module 6 технический пилот и следующая работа
 
-27.10.2026. STATUS: PARTIAL. В feature реализован и локально проверен пилот полного цикла TaskFlow. Публикации и полного допуска Module 6 нет. Учебный контент M6 и итоговый экзамен остаются отдельным этапом после runtime gate.
+28.10.2026. **STATUS: PARTIAL для всего Module6 / AUTOMATED PASS технического пилота.** В feature реализован полный проверяемый цикл TaskFlow в Nexus. Сами12 Gold-уроков и итоговая аттестация ещё не подготовлены. Main, production, платежи и официальный релиз не менялись.
 
-## Подтверждённые результаты
+## Что реализовано
 
-- M6-P1-01 исправлен: реальное обращение к pthread_create даёт типизированное ограничение runtime, без переписывания кода и ложного обвинения строки программы. Browser/WASI 34/34 и 12 unit checks PASS.
-- Настоящие исходный и изменённый C++ проекты собирались Qt/Emscripten, с разными Wasm hashes. Совместимый exception ABI проверен исполнением C++ обработчиков. Ошибочный эксперимент с native Wasm EH для этого готового Qt SDK сохранён как failed experiment.
-- TaskFlow редактируется в настоящем Project Studio; доступны GUI, данные, тесты, сдача неизменяемой версии и преподавательская оценка по рубрике. Отдельный Preview site и opaque sandbox защищают аккаунт.
-- Полный локальный browser сценарий `application-controls-final`: 12/12 PASS на синтетических аккаунтах студента и преподавателя, включая одну кнопку сохранения в Qt, ширину390, preservation56, отсутствие private API в public SW cache, настоящий бесконечный C++ callback, Stop и следующий запуск с данными. Дополнительно имитирована quota ошибка ProjectStore: UI не сообщает ложное сохранение, несохранённые данные доступны в ZIP и сохраняются после восстановления.
-- Native C++20/UBSan из обычного ZIP PASS; CRC, ожидаемый CLI результат и обнаружение намеренной ошибки PASS. Nexus-сессия и Qt для model/CLI/tests не нужны.
-- 40 unit checks и 13 интеграционных групп PASS. NEXUS-PERF-01 static PASS: 75 modules / 591219 bytes, outline27476, labs45357; compiler/Qt не входят в первую загрузку. Полевые timings этим не измерены.
-- Старые 56 IDs,40 legacy,55 Gold lessons и пользовательские storage/Identity/Cloud/Offline contracts сохранены. Контент M1–5, main, опубликованные поколения и production bundle не менялись.
+Настоящее Qt C++ приложение собирается из редактируемых исходников и запускается внутри Project Studio. Доступны данные приложения в VFS, Stop/Restart, пользовательские тесты, переносимый ZIP, сдача неизменяемой версии и назначенный преподаватель с рубрикой/обратной связью. Автотесты модели не выставляют итоговую оценку и не подтверждают освоение курса.
 
-На промежуточном commit355541f свежие полные browser matrices M1–5 прошли в CI40491449590. Весь тот workflow не был PASS: Qt job выявил permissions SDK wrapper; native job использовал старый M5 publication gate. Оба дефекта исправлены отдельно, прежние gates не ослаблены. Для новой реализации требуется итоговый CI по текущему feature head.
+Preview использует отдельный HTTPS site и opaque sandbox; доступа к аккаунту в iframe нет. Сборка выполняется без сети и привилегий, с ограничениями CPU/memory/PIDs/time. Результат сначала пишется в tmpfs96MiB без writable host bind mount, затем передаётся доверенному backend ограниченным потоком64MiB/файл и96MiB всего. Проверены отказы при превышении квоты, слишком большом файле и symlink. Temporary storage соответствует [Docker tmpfs documentation](https://docs.docker.com/engine/storage/tmpfs/), включая возможный OS swap.
 
-## Проверка окружения CI
+Закрыты гонки повторной оценки и позднего результата отменённой сборки. При ошибке локального сохранения UI показывает отказ; несохранённые данные можно забрать в ZIP и сохранить после восстановления. Проверка подключения Qt не запускает прежний WASI controller и не скачивает консольный компилятор. Обычный консольный проект сохраняет собственную самопроверку и реальный Run.
 
-CI40520128543 на f11e08f подтвердил полные M1–5:173+182+223+190+172=940 случаев PASS, native34/34, WASI34/34 и encrypted cold Offline. Весь workflow имел FAIL из-за Stop в headless shell. После перевода GUI fixture на полный Chromium CI40524597673/cdcf2be подтвердил Qt original/edited и11/11 полного Nexus сценария, включая Stop1016ms, storage quota recovery и разные аккаунты. Использовался Chromium141.0.7390.37, без принудительных site-isolation flags. Это отдельный успешный эксперимент; прежний FAIL сохранён.
+M6-P1-01 закрыт: фактический pthread_create в WASI даёт типизированное ограничение среды без переписывания исходника и ложного обвинения строки. OS threads в этом browser target не заявляются поддержанными.
 
-Архивы Qt, native и browser CDC, а также всех пяти матриц f11 скачаны через GitHub connector; SHA256 API/архивов и ZIP CRC совпали. Архивы не содержат credentials или SDK binaries; учётные данные при скачивании не читались. Общий прогон cdcf2be завершился7 SUCCESS/1 CANCELLED: M4 не завершился в45min, его прежний полный PASS подтверждён на f11e08f. Весь cdc workflow не считается PASS.
+## Что доказано
 
-При заключительной проверке сервиса исправлены гонки: повторная оценка после await проверяет уже зафиксированный review, отмена побеждает поздний успешный ответ runner, logout отменяет ещё выполняющиеся builds. Три новых unit cases довели локальный набор до40/40; полный E2E11/11 повторён. Полный frontend manifest3506 файлов до/после серверных изменений идентичен. Отдельный текущий feature CI должен подтвердить эти изменения.
+Source `2a737915f8a7068dea4d0b2d8cd3b79accb15952`, [CI40542759814](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/actions/runs/40542759814): **8/8 SUCCESS**.
 
-Основание различать headless shell и полный Chromium: [официальная документация Playwright](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
+- 40 unit checks;13 integration groups; native C++20/UBSan34/34 и browser/WASI34/34.
+- 3 настоящие Docker isolation probes; обе original/edited Qt C++ сборки с разными Wasm hashes и реальными callbacks.
+- 12/12 полного Nexus E2E: Qt connection check без лишнего компилятора, GUI/data/tests/submission/review, отдельные аккаунты, storage quota recovery, остановка настоящего бесконечного C++ callback, повторный запуск и обычный консольный проект.
+- Все940 случаев M1–5:173+182+223+190+172. Включены ожидаемые отрицательные проверки.
+- Encrypted cold Offline, сохранность56 текущих IDs,40 legacy,55 Gold, прежних code/stdin/quiz/VFS/unknown fields и личного проекта/checkpoint. Новых Gold objects/registered IDs0.
+- NEXUS-PERF-01 static PASS:75 modules/591219 bytes; outline27476; labs45357. Compiler/Qt не входят в первую загрузку; полевые timings этим не измерены.
+- Обычный ZIP проходит CRC, native C++20/UBSan/CTest и CLI без Nexus/Qt; намеренная ошибка обнаружена тестами. SDK image IDs, hashes исходников и артефактов зафиксированы.
 
-## Ограничение записи сборки
+Все8 архивов текущего source SHA скачаны через GitHub connector, SHA256 API/архивов и CRC совпали. С учётом промежуточных checkpoints проверено19 архивов. В GitHub нет private stores, TLS keys, browser profiles или Qt binaries. Машинные факты: `CPP_MODULE6_IMPLEMENTATION_EVIDENCE.json`; контрольные суммы: `CPP_MODULE6_IMPLEMENTATION_HASHES.json`. Raw evidence остаётся в `outputs/academy-gold-m6-runtime-20261027`.
 
-В первоначальном runner output был writable bind mount, а размер проверялся после выполнения. Он заменён tmpfs96MiB; доверенный backend забирает только разрешённые обычные файлы ограниченным потоком64/96MiB. Реальные Docker пробы подтвердили заполнение tmpfs, отклонение65MiB файла и symlink без записи результата на host. Сборки/отмена используют один180s budget. Определение tmpfs соответствует [Docker documentation](https://docs.docker.com/engine/storage/tmpfs/); это не обещание отсутствия OS swap.
+## Эксперименты и границы
 
-После изменения real original/edited Qt C++ и browser callbacks снова PASS. Первый вариант без SDK entrypoint занимал около85s; восстановление штатного окружения Emscripten снизило измерения до25.170/24.566s. Эти цифры относятся к безопасному runner, прежний8s замер сохраняется как исторический. Полный E2E11/11,40 unit и3 настоящие Docker isolation probes локально PASS после этой правки. Итоговый CI текущего source commit пока ожидается.
+CI40520128543 на f11e08f прошёл все940 случаев, но GUI Stop в headless shell не прошёл. Смена fixture на стандартный полный Chromium без принудительных site-isolation flags подтверждена последующими успешными прогонами; [документация Playwright](https://playwright.dev/docs/browsers#chromium-new-headless-mode) различает эти режимы. Failed logs сохранены, прежний workflow не выдан за общий PASS. Промежуточный cdcf2be имел незавершённый M4; он также не считается общим PASS.
 
-## Правильная среда проверки проекта
+Готовый Qt6.8.3 SDK с Emscripten3.1.56 использует совместимый JS exception ABI с -fexceptions; WASI сохраняет native Wasm EH. Неудачная попытка другого ABI сохранена. O3 build занимал около157s, прежний O0 около8s; после ограничения output и восстановления SDK entrypoint актуальный безопасный runner измерен локально25.170/24.566s. Это отдельные измерения, без универсального SLA или заявления полной побитовой воспроизводимости SDK.
 
-Для Qt приложения отключён прежний WASI controller и его статический вывод о пригодности runtime. Кнопка «Проверить подключение» проверяет сервис сборки; она не объявляет компилятор проверенным и не загружает консольный toolchain. Обычный проект сохраняет прежний controller, «Проверить среду» и Run. Полный локальный сценарий12/12 PASS включает оба режима,0 лишних Wasm requests при Qt connection check и настоящий положительный запуск консольного C++ проекта. Source diagnostics по итогам Qt build остаются в журнале сборки.
+AUTOMATED PASS относится к синтетическим данным и Chromium. Реальные аккаунты, физические устройства, Safari/Firefox, VoiceOver/TalkBack и production GUI service этим не принимались. GUI Offline, C++/CLI, OS threads и непроверенные Qt modules не объявляются поддержанными. Сервис default OFF; текущий production BFF bundle и исправление входа/выхода сохранены. Условия будущего подключения и хранения: `studio-build/README_RU.md`.
 
-На46eb140 CI40535314563 подтвердил40 unit,3 Docker isolation probes,11/11 GUI E2E, native34/34, WASI34/34 и cold Offline. Архивы этого source SHA скачаны, SHA256/CRC совпали. Последующее исправление controls меняет два frontend файла и проверено локально12/12 плюс13 integration groups/static perf; для него запускается собственный CI. Общие workflows не объявляются PASS до завершения всех jobs.
+## Следующая работа
 
-## Измерения и границы допуска
+03: подготовить12 полных RU/EN Gold-уроков, лабораторные/проекты и их корректные переходы в Nexus Studio. GUI-задания должны открывать Qt target в Project Studio, а не попадать в прежний WASI lesson editor. Затем подготовить комплексный экзамен, практическую работу с незнакомым кодом, самостоятельный проект и защиту с рубрикой. Пилотная проверка TaskFlow не заменяет эту аттестацию.
 
-Первый Qt O3 build занимал около157 секунд, development O0 build до изменения изоляции — около8 секунд локально; актуальный безопасный вариант измерен выше. Wasm вырос примерно с13.84 до19.92 MB. Это измерение синтетического проекта на этой машине, без обещания production SLA или полной побитовой воспроизводимости SDK. Image ID и hashes сохраняются с каждой сборкой.
+Перед тестовой публикацией нужны отдельные runner/store/preview ingress, backup/retention, подтверждённый лицензионный маршрут Qt, проверка account-read proof для Studio/logout в01 и приёмка05/07 на устройствах. Публикация требует отдельного разрешения владельца.
 
-AUTOMATED PASS относится к синтетическому Chromium и локальным API. Реальные аккаунты, production GUI service, физические телефоны, Safari/Firefox и экранные дикторы заново не принимались. GUI offline, OS threads, C++/CLI, любые Qt modules сверх проверенного Widgets target не заявляются поддержанными.
-
-До тестовой публикации нужны отдельный постоянный runner/store/preview ingress, backup/retention, лицензионное решение Qt и приёмка05/07 с устройствами. Сейчас feature default OFF, платежи/deployments/main/release вне разрешения. Курсовой финальный экзамен и оценка освоения всего материала не заменяются тестами стартового TaskFlow.
-
-## Evidence и следующие действия
-
-Машинная сводка и hashes будут зафиксированы рядом после итогового CI. Raw evidence хранится локально в `outputs/academy-gold-m6-runtime-20261027`: `application-safe-final`, `isolation-final`, `application-final2`, `application-v17`, `TASKFLOW_NATIVE.json`, `final-unit.log`, `final-integration.log`, `final-dependencies.log`, `p1`, `qt-accessible` и failed experiments. Private stores, capability URLs, TLS keys и profiles в GitHub не публикуются.
-
-Следующий шаг: завершить CI gate feature, затем отдельная Content приёмка M6 и итоговой аттестации. Подробности реализации и условий подключения: `studio-build/README_RU.md`.
-
-Есть ли здесь материал для диплома? Да: единая среда и переносимость; capability boundary WASI/Qt; изоляция learner code; immutable submissions; роль преподавателя; native/browser experiments и preservation. Результаты не доказывают эффективность обучения — для неё нужен учебный пилот.
+Есть ли здесь материал для диплома? Да: архитектура единой среды при переносимости, capability boundary, изоляция, immutable submissions, роль преподавателя, измерения и failed experiments. Эффективность обучения требует отдельного учебного пилота.
 
 🔀 CROSS-BRANCH SYNC REQUIRED
 
-Источник:03 CONTENT PRODUCTION. Результат: пилот TaskFlow в feature Module6, локальные AUTOMATED PASS, без LIVE.
+Источник:03. Результат: технический пилот M6, AUTOMATED PASS. Куда по приоритету:02/01/07→05→00/04. Когда: сейчас, до M6-1. Готовый текст: «На2a73791 завершён технический пилот C++ Module6 в feature. CI40542759814:8/8 SUCCESS,12/12 Nexus E2E,40 unit,3 isolation probes, native34+WASI34 и940/940 M1–5. Настоящий Qt C++/Preview, VFS data, Stop/Restart, ZIP и immutable сдача/преподавательская рубрика реализованы. Весь M6 остаётся PARTIAL: Gold контент/экзамен не подготовлены, production GUI service/устройства/лицензирование не принимались. Main/production/релиз не менялись. Следующий этап03:12 RU/EN уроков и правильные связи практики с runtime;02/01/07 согласуют production contracts,05 хранит evidence,04 получает архитектуру/эксперименты». Сообщения автоматически в другие чаты не отправлялись.
 
-Куда по приоритету:02 runtime/Studio;01 auth/storage/ACL;07 Preview/mobile/accessibility;05 итоговый CI/evidence;00 статусы и следующий этап;04 архитектура и эксперименты. Когда: сейчас, до следующего крупного этапа. Сообщения автоматически в другие чаты не отправлялись.
-
-Готовый текст для вставки: «В feature/academy-gold-standard-cpp-module-6 реализован полный пилот TaskFlow в Nexus: настоящий Qt C++ target, отдельный opaque Preview site, Stop/Restart, VFS data, portable ZIP, серверные тесты, immutable submission и назначенный преподаватель с рубрикой. Локально12/12 E2E,40 unit,13 integration groups, native ZIP/UBSan/mutation и static NEXUS-PERF-01 PASS. Итоговый CI ещё необходимо зафиксировать. Старые IDs/прогресс/контент M1–5 и production сохранены. Это IMPLEMENTED/AUTOMATED, не LIVE и не завершение всего M6. До публикации нужны dedicated runner/store/preview ingress, лицензирование Qt и05/07 на реальных устройствах. Материал04: архитектурные альтернативы, изоляция и hashes версий/экспериментов. Main, production и официальный релиз не изменять».
-
-WHAT REMAINS: итоговый CI, полный M6 content и аттестация, deployment/device gates. NEXT RECOMMENDED BRANCH:02 совместно03, текущая feature6. RECOMMENDED MODE:очень высокий для runtime/security, высокий/Pro для Content.
+WHAT WAS PROVED: технический пилот и перечисленные автоматические проверки. WHAT REMAINS: M6 content/аттестация и deployment/device gates. NEXT RECOMMENDED BRANCH:03 совместно02/07. RECOMMENDED MODE:высокий/Pro для Content, очень высокий для runtime/security.
