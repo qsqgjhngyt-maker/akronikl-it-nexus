@@ -1,3 +1,5 @@
+import {localLoadOptions} from '../connections/profiles.js';
+import {probeWebGPU,checkSignal} from '../connections/probe.js';
 // Только доверенный in-process runtime. Внешнего URL/API/ключей здесь нет.
 export const LOCAL_MODEL=Object.freeze({id:'qwen3-0.6b-q8_0',filename:'Qwen3-0.6B-Q8_0.gguf',maxBytes:700000000,sha256:'9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031',runtime:'@wllama/wllama',runtimeVersion:'3.8.1'});
 export function createWllamaProvider(engine) {
@@ -34,9 +36,11 @@ export function createWllamaProvider(engine) {
     async dispose(){if(disposed)return;disposed=true;await exit();}
   });
 }
-export async function loadLocalModel(file,{signal,loadRuntime=()=>import('./runtime/index.js')}={}) {
+export async function loadLocalModel(file,{signal,profile='local-cpu',loadRuntime=()=>import('./runtime/index.js')}={}) {
+  checkSignal(signal);const loadOptions=localLoadOptions(profile);
   if(!(file instanceof Blob)||file.size<1024||file.size>LOCAL_MODEL.maxBytes)throw Error('LOCAL_FILE_REJECTED');
   signal?.throwIfAborted();
+  if(profile==='local-webgpu'&&await probeWebGPU({signal})!=='available')throw Error('LOCAL_GPU_UNAVAILABLE');
   const hash=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());signal?.throwIfAborted();
   if([...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('')!==LOCAL_MODEL.sha256)throw Error('LOCAL_FILE_REJECTED');
   const {Wllama}=await loadRuntime();signal?.throwIfAborted();
@@ -44,8 +48,10 @@ export async function loadLocalModel(file,{signal,loadRuntime=()=>import('./runt
   try{
     // Запрещён скрытый CDN fallback runtime. Неподдерживаемый браузер получает отказ.
     engine.setCompat(null);
-    // Single thread avoids changing Nexus COOP/COEP or auth headers.
-    await engine.loadModel([file],{n_threads:1,n_gpu_layers:0,n_ctx:4096,n_parallel:1,n_batch:128,n_ubatch:128,cache_idle_slots:false,jinja:true,reasoning:false,reasoning_budget_tokens:0,default_template_kwargs:{enable_thinking:false}});
+    // n_parallel:1, jinja:true, reasoning_budget_tokens:0 заданы фиксированным профилем.
+    // Не меняем COOP/COEP. Запрос WebGPU не считается доказательством offload/скорости.
+    if(profile==='local-webgpu'&&engine.isSupportWebGPU?.()!==true)throw Error('LOCAL_GPU_UNAVAILABLE');
+    await engine.loadModel([file],loadOptions);
     signal?.throwIfAborted();return createWllamaProvider(engine);
   }catch(error){await engine.exit().catch(()=>{});throw Error('LOCAL_MODEL_UNAVAILABLE');}
 }
