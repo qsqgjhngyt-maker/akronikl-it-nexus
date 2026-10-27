@@ -3,7 +3,7 @@ import {createAssistantCore} from '../core/index.js';
 import {completeExcerpt, previousCompleteTurn} from './evidence.js';
 import {exactKeys, text, freeze, normalizeInclude} from '../core/contracts.js';
 
-const INTENTS = new Set(['explain', 'hint', 'simpler', 'example', 'code', 'diagnostic']);
+const INTENTS = new Set(['explain', 'hint', 'simpler', 'example', 'code', 'diagnostic', 'practice']);
 const MESSAGES = {
   ru: {timeout:'Локальная модель не успела ответить. Сократите вопрос или фрагмент; материалы курса остаются доступны.', cancelled:'Запрос отменён или контекст изменился.', error:'Ответ не получен. Источники и локальная справка остаются доступны.', empty:'В подготовленных материалах нет подходящего ответа. Уточните тему.', clarify:'Сначала задайте тему, затем можно попросить продолжение.', selection:'Для разбора кода явно включите выделенный фрагмент.', diagnostic:'Нет подтверждённой диагностики текущего файла и ревизии. Причину ошибки не угадываю.', sources:'Локальная модель не подключена. Ниже — выдержки курса, не сгенерированное объяснение.', warning:'Экспериментальный ответ локальной модели. Источники приведены для проверки; ссылки не доказывают правильность объяснения.'},
   en: {timeout:'The local model did not answer in time. Shorten the question or selection; course excerpts remain available.', cancelled:'Request cancelled or context changed.', error:'Could not produce an answer. Sources and local help remain available.', empty:'No relevant prepared material. Please specify the topic.', clarify:'Ask about a topic before requesting a follow-up.', selection:'Explicitly include the selected code fragment first.', diagnostic:'No verified diagnostic for the current file and revision. I will not guess the cause.', sources:'No local model connected. These are course excerpts, not a generated explanation.', warning:'Experimental local-model answer. Sources are provided for verification; citations do not prove that an explanation is correct.'}
@@ -13,6 +13,7 @@ const instructions = {
   hint:'Give one useful hint and one guiding question, not a complete assignment solution.',
   simpler:'Explain the same topic to a beginner using everyday words, not technical names. Do not repeat or expand acronyms. Briefly explain any unavoidable technical term. Preserve the same facts and event order.',
   example:'Give a small illustrative example, mark it as your example; do not claim it was executed.',
+  practice:'Create one short beginner practice task from the supplied topic. State the goal and expected result, but do not give the solution. Label it as a new exercise, not an official course assignment.',
   code:'Explain only the explicitly selected code. Do not claim to have inspected other files or executed it.',
   diagnostic:'Explain the supplied diagnostic. Distinguish its exact message from hypotheses; do not claim an unperformed compilation.'
 };
@@ -66,8 +67,8 @@ export function createTutorSession({host, loadKnowledge, provider=null, locale='
         if(version!==null && version!==index.stats.contentVersion){history=[];topic='';}
         version=index.stats.contentVersion;
         const followUp=request.followUp===true || intent==='simpler';
-        if(followUp && !topic)return reply('clarify',t.clarify);
-        const query=followUp?topic:searchQuery(question);
+        if(followUp && !topic && !context.route.lessonId)return reply('clarify',t.clarify);
+        const query=followUp?(topic||(locale==='ru'?'этот урок':'this lesson')):searchQuery(question);
         let matches=[];
         if(/^(этот урок|текущий урок|this lesson)$/iu.test(query) && context.route.lessonId)matches=index.getLesson(context.route.lessonId,context.courseLocale).slice(0,3);
         else if(query)matches=index.search(query,{locale:context.courseLocale,limit:3});

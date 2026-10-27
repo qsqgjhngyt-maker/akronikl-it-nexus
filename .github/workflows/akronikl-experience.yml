@@ -1,0 +1,72 @@
+name: Akronikl — опыт общения и качество, без публикации
+on:
+  push:
+    branches: [feature/akronikl-experience-p4-20261027]
+    paths: ['akronikl/**', 'tests/akronikl-*', 'tests/helpers/akronikl-*', 'tests/fixtures/akronikl-*', 'tools/check-akronikl-*', '.github/workflows/akronikl-experience.yml']
+permissions:
+  contents: read
+concurrency:
+  group: akronikl-experience-feature
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXUS_SOURCE_COMMIT: ${{ github.sha }}
+      NEXUS_FRONTEND_DIR: /tmp/akp4-build
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+      NEXUS_CHROME_PATH: /usr/bin/google-chrome
+      NEXUS_AKP4_BASELINE_DIR: /tmp/akp4-baseline
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Точный источник, старая регрессия и контрольный набор
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-akp4 /tmp/akp4-baseline
+          git rev-parse HEAD > evidence-akp4/SOURCE_COMMIT.txt
+          git archive --format=zip HEAD > evidence-akp4/source.zip
+          (cd evidence-akp4 && sha256sum source.zip > SOURCE_SHA256.txt)
+          git archive c3a8e5f825a90abfdb3d390331922348a62db4dd | tar -x -C /tmp/akp4-baseline
+          node --test tests/akronikl-*.test.mjs | tee evidence-akp4/core-ui.tap
+          node --test tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/platform-lazy-imports.test.mjs | tee evidence-akp4/startup.tap
+          node tests/auth-bootstrap-check.mjs | tee evidence-akp4/bootstrap.txt
+          node tests/account-storage-isolation-check.mjs | tee evidence-akp4/account.txt
+          node tools/build-akronikl-knowledge.mjs --check | tee evidence-akp4/knowledge.json
+          node tools/check-akronikl-quality-corpus.mjs | tee evidence-akp4/quality-corpus.json
+      - name: Изолированная сборка без новых моделей и облачных ключей
+        id: build
+        run: |
+          set -euo pipefail
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tools/qa-browser-driver --ignore-scripts --no-audit --no-fund
+          VERSION=$(node -p "JSON.parse(require('fs').readFileSync('version.json')).version")
+          node tools/build-ui1a-release.mjs --out "$NEXUS_FRONTEND_DIR" --generation ui1a-akp4-20261027 --version "$VERSION"
+          NEXUS_AKRONIKL_EVIDENCE=evidence-akp4/build node tools/check-akronikl-built-candidate.mjs
+      - name: Чистый диалог, настройки, приватность и снимки до/после
+        if: always() && steps.build.outcome == 'success'
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: evidence-akp4/experience
+        run: node tests/akronikl-experience-browser-check.mjs
+      - name: Собранный Nexus и неизменённые проверки Account
+        if: always() && steps.build.outcome == 'success'
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: evidence-akp4/authorized
+        run: node tests/akronikl-experience-authorized-browser-check.mjs
+      - name: Холодный публичный офлайн с настоящим service worker
+        if: always() && steps.build.outcome == 'success'
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: evidence-akp4/offline
+        run: node tests/akronikl-experience-offline-browser-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akronikl-experience-evidence
+          path: evidence-akp4
+          retention-days: 30

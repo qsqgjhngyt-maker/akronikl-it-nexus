@@ -11,12 +11,12 @@ const labels={
   gpu:'WebGPU is experimental. Adapter availability does not prove acceleration; performance and phones are not accepted yet.',
   states:{SOURCES_READY:'No model: navigation, help and source excerpts are available.',MODEL_NOT_LOADED:'Model not loaded. Select a file and connect.',CHECKING:'Checking the environment and prepared runtime…',MODEL_LOADING:'Checking the file and loading the model…',READY_TO_LOAD:'Preflight ready. The model is not loaded yet.',MODEL_LOADED:'Local model loaded. Speed and quality are experimental.',RUNTIME_UNAVAILABLE:'Runtime not prepared or unavailable. Source excerpts remain available.',WEBGPU_UNAVAILABLE:'A suitable WebGPU adapter was not confirmed. Select CPU explicitly; no automatic profile change.',SECURE_CONTEXT_REQUIRED:'A secure browser context (HTTPS) is required.',BROWSER_UNSUPPORTED:'Required local browser capabilities are unavailable.',EXTERNAL_DISABLED:'External AI is disabled.',LOCAL_FILE_REJECTED:'Select a supported local GGUF file.',MODEL_LOAD_FAILED:'Model not connected. Check the file, runtime and selected mode.',CONNECTION_TIMEOUT:'Connection timed out. Source excerpts remain available.',CONNECTION_CLOSED:'Connection closed.',CONNECTION_BUSY:'The previous operation is still releasing resources.',CLEANUP_FAILED:'Model cleanup was not confirmed. Close the assistant before retrying.'}}
 };
-export function mountConnectionPanel({parent,documentRef,controller,locale='ru'}) {
+export function mountConnectionPanel({parent,documentRef,controller,locale='ru',allowWebGPU=true}) {
   const t=labels[locale]||labels.ru;
   const make=(tag,text,root)=>{const n=documentRef.createElement(tag);if(text)n.textContent=text;root.append(n);return n;};
   const root=make('details','',parent);root.dataset.akroniklConnections='';make('summary',t.title,root);
   const modeLabel=make('label',t.mode,root),select=make('select','',modeLabel);select.dataset.akroniklModelProfile='';
-  for(const p of MODEL_PROFILES){const o=make('option',locale==='en'?p.labelEn:p.labelRu,select);o.value=p.id;o.disabled=!p.enabled;}
+  for(const p of MODEL_PROFILES){const o=make('option',locale==='en'?p.labelEn:p.labelRu,select);o.value=p.id;o.disabled=!p.enabled||(p.id==='local-webgpu'&&!allowWebGPU);}
   make('p',t.note,root);
   const fileLabel=make('label',t.file,root),file=make('input','',fileLabel);file.type='file';file.accept='.gguf';file.dataset.akroniklModelFile='';
   const row=make('div','',root);row.className='akronikl-actions';
@@ -40,5 +40,5 @@ export function mountConnectionPanel({parent,documentRef,controller,locale='ru'}
   check.addEventListener('click',()=>{void controller.inspect();});
   load.addEventListener('click',async()=>{const chosen=file.files?.[0];if(!chosen)return;try{await controller.connect(chosen);}finally{file.value='';if(!dead)display(controller.snapshot());}});
   disconnect.addEventListener('click',()=>{file.value='';controller.disconnect();});
-  return Object.freeze({clearFile(){file.value='';if(!dead)display(controller.snapshot());},dispose(){if(dead)return;dead=true;unsub();file.value='';root.remove();}});
+  return Object.freeze({setWebGPUAvailable(value){const option=select.querySelector('option[value=local-webgpu]');if(option)option.disabled=value!==true;},clearFile(){file.value='';if(!dead)display(controller.snapshot());},dispose(){if(dead)return;dead=true;unsub();file.value='';root.remove();}});
 }
