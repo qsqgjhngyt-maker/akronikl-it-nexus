@@ -9,6 +9,7 @@ import {createModelConnections} from '../connections/controller.js';
 import {mountConnectionPanel} from '../connections/panel.js';
 import {resolveMessage} from './intents.js';
 import {textFor} from './strings.js';
+import {currentStudy} from '../learning/current-study.js';
 import {createPersonality} from '../personality/controller.js';
 import {mountPersonalityPanel} from '../personality/panel.js';
 
@@ -22,7 +23,7 @@ export function openExperience(options) {
   const initialHash=win.location.hash;
   let locale=options.readLocale()==='en'?'en':'ru',dead=false,seq=0,request=null,session=null;
   let connections=null,connectionPanel=null,connectedRevision=-1,settingsOpen=false,settingsSection='basics';
-  let lessonAllowed=true,codeAllowed=false,privacyBoundary={},busy=false,slowTimer=null,lastMetrics=null;
+  let lessonAllowed=true,codeAllowed=false,diagnosticsAllowed=false,privacyBoundary={},busy=false,slowTimer=null,lastMetrics=null;
   let suggestionsEnabled=true,enterSends=true;
   const personality=createPersonality({isCurrent:()=>!dead&&host.current(),locale,onChange(){
     // Уже показанные реплики не переписываем. Новая сессия не наследует старый стиль.
@@ -64,19 +65,22 @@ export function openExperience(options) {
   label(el('p',sections.voice),'voiceLater');
   const lesson=checkField(sections.privacy,'lesson',true);lesson.dataset.akLessonConsent='';
   const selection=checkField(sections.privacy,'code',false);selection.disabled=!host.selectionAvailable;selection.dataset.akCodeConsent='';
+  const compilerConsent=checkField(sections.privacy,'diagnosticConsent',false);compilerConsent.disabled=true;compilerConsent.dataset.akDiagnosticConsent='';
+  label(el('p',sections.privacy,'ak-muted'),'diagnosticNote');
   label(el('p',sections.privacy,'ak-muted'),'codeNote');label(el('p',sections.privacy),'local');
   button(sections.privacy,'inspect',()=>{toggleSettings(false);void submit(t('inspect'),{kind:'context'});});
-  button(sections.privacy,'revoke',()=>{lessonAllowed=false;codeAllowed=false;lesson.checked=false;selection.checked=false;clear(true);status.textContent=t('revoked');});
+  button(sections.privacy,'revoke',()=>{lessonAllowed=false;codeAllowed=false;diagnosticsAllowed=false;lesson.checked=false;selection.checked=false;compilerConsent.checked=false;compilerConsent.disabled=true;clear(true);status.textContent=t('revoked');});
   button(sections.privacy,'clear',()=>{clear(true);status.textContent=t('cleared');});
   label(el('p',sections.advanced),'external');label(el('h4',sections.advanced),'diagnostics');
   const diagnostic=el('pre',sections.advanced,'ak-diagnostics');diagnostic.dataset.akTechnicalState='';
 
   const sessionHost=Object.freeze({
     readBoundary:()=>host.current()?privacyBoundary:null,
-    authorize:q=>host.current()&&(!(q.input?.include||[]).includes('selection')||codeAllowed)&&host.adapter.authorize(q),
+    authorize:q=>host.current()&&(!(q.input?.include||[]).includes('selection')||codeAllowed)&&
+      (!(q.input?.include||[]).includes('diagnostics')||diagnosticsAllowed&&codeAllowed)&&host.adapter.authorize(q),
     readContext(q){const c=host.adapter.readContext(q);return lessonAllowed?c:{...c,learning:undefined,route:{...c.route,courseId:null,lessonId:null,taskId:null}};}
   });
-  let core=createAssistantCore({host:sessionHost,policy:{selection:true}});
+  let core=createAssistantCore({host:sessionHost,policy:{selection:true,diagnostics:true}});
   const guide=createPlatformGuide({isCurrent:host.current,readState:host.platformState,locale,onNavigate:hash=>{if(!host.current()||!allowedHash(hash))return false;dispose();onNavigate({kind:'platform',hash});return true;}});
   // Пересоздание guide при смене языка не меняет прав/маршрутов host.
   let activeGuide=guide;
@@ -110,17 +114,35 @@ export function openExperience(options) {
   function addSources(item,sources){if(!sources?.length)return;const details=el('details',item,'ak-sources');label(el('summary',details),'sources');for(const s of sources){const card=el('section',details,'ak-source');el('strong',card,'',s.title||s.sourcePath||t('guide'));if(s.text)el(s.kind==='selection'?'pre':'p',card,'',s.text);if(s.truncated)label(el('small',card),'excerpt');if(s.lessonId&&s.courseId==='cpp'){const b=button(card,'openLesson',()=>void navigateLesson(s.lessonId));b.dataset.akLesson=s.lessonId;}const origin=el('details',card);label(el('summary',origin),'sourceDetails');el('small',origin,'',[s.sourcePath,s.contentVersion,s.contentHash].filter(Boolean).join('\n'));}}
   function platformResult(result){const item=appendMessage('assistant',result.text,'guide');if(result.reason){el('p',item,'',result.reason==='PERMISSION_CHECK_NOT_CONNECTED'?t('permissionCheck'):result.reason==='LOCAL_COPY_LOCKED'?t('locked'):result.reason==='OFFLINE_SHELL_REQUIRED'?t('offlineShell'):t('permission'));}for(const dest of result.destinations||[]){const b=el('button',item,'ak-btn',dest.label);b.type='button';b.disabled=!!dest.reason;b.addEventListener('click',()=>{if(host.current())platformResult(activeGuide.request({kind:'navigate',destinationId:dest.id}));});}
     for(const a of result.actions||[]){const b=el('button',item,'ak-btn ak-primary',a.label);b.type='button';b.dataset.akroniklConfirm='';b.addEventListener('click',()=>{if(!host.current()){dispose();return;}const r=activeGuide.confirm(a.token);if(!dead){b.disabled=true;platformResult(r);}});}addSources(item,result.sources);}
-  async function navigateLesson(id){if(!host.current()){dispose();return;}stop();const ticket=seq;request=new AbortController();setBusy(true);try{const index=await loadKnowledge(options.readCourseLocale(),{signal:request.signal});if(!current(ticket))return;core.dispose();core=createAssistantCore({host:sessionHost,knowledge:[index],policy:{selection:true}});const result=await core.invoke({capability:'navigation.propose',input:{lessonId:id,locale:options.readCourseLocale()}},{signal:request.signal});if(!current(ticket))return;const proposal=result.status==='ok'&&result.actions.find(a=>a.kind==='navigation.proposal');if(proposal){dispose();onNavigate(proposal.target);}else appendMessage('assistant',t('unavailable'));}catch{if(current(ticket))appendMessage('assistant',t('error'));}finally{if(current(ticket))setBusy(false);}}
+  async function navigateLesson(id){if(!host.current()){dispose();return;}stop();const ticket=seq;request=new AbortController();setBusy(true);try{const index=await loadKnowledge(options.readCourseLocale(),{signal:request.signal});if(!current(ticket))return;core.dispose();core=createAssistantCore({host:sessionHost,knowledge:[index],policy:{selection:true,diagnostics:true}});const result=await core.invoke({capability:'navigation.propose',input:{lessonId:id,locale:options.readCourseLocale()}},{signal:request.signal});if(!current(ticket))return;const proposal=result.status==='ok'&&result.actions.find(a=>a.kind==='navigation.proposal');if(proposal){dispose();onNavigate(proposal.target);}else appendMessage('assistant',t('unavailable'));}catch{if(current(ticket))appendMessage('assistant',t('error'));}finally{if(current(ticket))setBusy(false);}}
   async function submit(value,override){if(dead||busy)return;if(!host.current()){dispose();return;}const message=resolveMessage(value);if(message.kind==='invalid'){appendMessage('assistant',t('invalid'));return;}
-    stop();const ticket=seq;request=new AbortController();const signal=request.signal;const action=override??message;appendMessage('user',value.trim());input.value='';setBusy(true);
+    stop();const ticket=seq;request=new AbortController();const signal=request.signal;let action=override??message;appendMessage('user',value.trim());input.value='';setBusy(true);
     try{
       if(action.kind==='platform'){platformResult(activeGuide.request(action.request));return;}
+      if(action.kind==='task'){appendMessage('assistant',t('noTask'));return;}
       if(action.kind==='resume'){appendMessage('assistant',t('resume'));return;}
-      if(action.kind==='diagnostic'){appendMessage('assistant',t('noDiagnostic'));return;}
-      if(action.kind==='context'){const r=await core.invoke({capability:'context.current',input:{include:codeAllowed?['selection']:[]}},{signal});if(!current(ticket))return;if(r.status!=='ok'){appendMessage('assistant',t('unavailable'));return;}platformResult(activeGuide.request({kind:'where'}));if(r.data.selection){const item=appendMessage('assistant',t('selected'),'selected');el('pre',item,'',r.data.selection.code);}else appendMessage('assistant',t('noSelection'));return;}
-      if(action.kind==='search'){const index=await loadKnowledge(options.readCourseLocale(),{signal});if(!current(ticket))return;core.dispose();core=createAssistantCore({host:sessionHost,knowledge:[index],policy:{selection:true}});const r=await core.invoke({capability:'knowledge.search',input:{query:action.text,locale:options.readCourseLocale(),limit:5}},{signal});if(!current(ticket))return;const item=appendMessage('assistant',r.status==='ok'?t('course'):t('missing'),r.status==='ok'?'course':'system');addSources(item,r.data?.matches);return;}
+      if(action.kind==='study'){
+        if(!lessonAllowed){appendMessage('assistant',t('noLesson'));return;}
+        const r=await core.invoke({capability:'context.current',input:{include:[]}},{signal});if(!current(ticket))return;
+        if(r.status!=='ok'){appendMessage('assistant',t('unavailable'));return;}
+        const index=await loadKnowledge(options.readCourseLocale(),{signal});if(!current(ticket))return;
+        const study=currentStudy(index,r.data);if(!study){appendMessage('assistant',t('noStudy'));return;}
+        const item=appendMessage('assistant',`${t('currentStudy')}: ${study.title}.\n${t('studyLimits')}`,'course');addSources(item,[study]);return;
+      }
+      if(action.kind==='diagnostic'){
+        if(!codeAllowed||!diagnosticsAllowed){appendMessage('assistant',t('needDiagnosticConsent'));return;}
+        const r=await core.invoke({capability:'context.current',input:{include:['selection','diagnostics']}},{signal});if(!current(ticket))return;
+        if(r.status!=='ok'||!r.data.diagnostics?.length){appendMessage('assistant',t('noDiagnostic'));return;}
+        const facts=r.data.diagnostics;const item=appendMessage('assistant',t('compilerFact'),'compiler');
+        for(const fact of facts){el('pre',item,'',fact.message);const meta=el('details',item);label(el('summary',meta),'sourceDetails');el('small',meta,'',`${fact.filePath} · ${t('revisionContext')} ${fact.revision}`);}
+        // Факт показан отдельно. Ни модель, ни помощник не запускают компиляцию.
+        if(connections.snapshot().phase!=='connected'){appendMessage('assistant',t('noModel'));return;}
+        action={kind:'tutor',intent:'diagnostic',text:value.trim(),followUp:false};
+      }
+      if(action.kind==='context'){const r=await core.invoke({capability:'context.current',input:{include:codeAllowed?(diagnosticsAllowed?['selection','diagnostics']:['selection']):[]}},{signal});if(!current(ticket))return;if(r.status!=='ok'){appendMessage('assistant',t('unavailable'));return;}platformResult(activeGuide.request({kind:'where'}));const editorInfo=host.editorContext();if(editorInfo)appendMessage('assistant',`${t('fileContext')}: ${editorInfo.filePath} (${editorInfo.languageId}) · ${t('revisionContext')} ${editorInfo.revision}`);if(r.data.selection){const item=appendMessage('assistant',t('selected'),'selected');el('pre',item,'',r.data.selection.code);}else appendMessage('assistant',t('noSelection'));return;}
+      if(action.kind==='search'){const index=await loadKnowledge(options.readCourseLocale(),{signal});if(!current(ticket))return;core.dispose();core=createAssistantCore({host:sessionHost,knowledge:[index],policy:{selection:true,diagnostics:true}});const r=await core.invoke({capability:'knowledge.search',input:{query:action.text,locale:options.readCourseLocale(),limit:5}},{signal});if(!current(ticket))return;const item=appendMessage('assistant',r.status==='ok'?t('course'):t('missing'),r.status==='ok'?'course':'system');addSources(item,r.data?.matches);return;}
       if(action.intent==='code'&&!codeAllowed){appendMessage('assistant',t('noCode'));return;}
-      const result=await session.ask({text:action.text,intent:action.intent,followUp:action.followUp,include:codeAllowed?['selection']:[]},{signal,onProgress:p=>{if(!current(ticket))return;if(p.phase==='generation')status.textContent=t('generating');lastMetrics={phase:p.phase,elapsedMs:p.elapsedMs,outputPieces:p.pieces};}});
+      const result=await session.ask({text:action.text,intent:action.intent,followUp:action.followUp,include:codeAllowed?(action.intent==='diagnostic'&&diagnosticsAllowed?['selection','diagnostics']:['selection']):[]},{signal,onProgress:p=>{if(!current(ticket))return;if(p.phase==='generation')status.textContent=t('generating');lastMetrics={phase:p.phase,elapsedMs:p.elapsedMs,outputPieces:p.pieces};}});
       if(!current(ticket))return;
       const badge=result.generated?(result.status==='uncertain'?'uncertain':'generated'):result.status==='ok'?'course':'system';
       const messageText=result.mode==='sources'?t('noModel'):result.status==='empty'?t('missing'):result.status==='clarify'?(action.intent==='code'?t('noCode'):t('noTopic')):result.text;
@@ -129,13 +151,14 @@ export function openExperience(options) {
   }
   function changeLanguage(){if(!['ru','en'].includes(language.value))return;connections.disconnect();locale=language.value;personality.update({locale});personalityPanel.setLocale(locale);privacyBoundary={};activeGuide.dispose();activeGuide=createPlatformGuide({isCurrent:host.current,readState:host.platformState,locale,onNavigate:hash=>{if(!host.current()||!allowedHash(hash))return false;dispose();onNavigate({kind:'platform',hash});return true;}});clear(true);for(const l of labels){if(l.attr)l.n.setAttribute(l.attr,t(l.key));else l.n.textContent=t(l.key);}gear.textContent='⚙';close.textContent='×';gear.setAttribute('aria-label',t('settings'));close.setAttribute('aria-label',t('close'));dialog.lang=locale;log.setAttribute('aria-label',locale==='en'?'Conversation with Akronikl':'Разговор с Akronikl');nav.setAttribute('aria-label',t('settings'));mountModels();refreshHints();inputHint.textContent=t(enterSends?'hint':'hintAlt');readyStatus();}
   function viewport(){const v=win.visualViewport;dialog.style.setProperty('--ak-viewport-height',(v?.height??win.innerHeight)+'px');dialog.style.setProperty('--ak-viewport-top',(v?.offsetTop??0)+'px');}
-  function dispose(){if(dead)return;dead=true;seq++;request?.abort();clearTimeout(slowTimer);listeners.abort();observer.disconnect();unsubscribeWorkspace?.();releaseFocus();unsubConnection();connections.dispose();connectionPanel?.dispose();session?.dispose();core.dispose();activeGuide.dispose();personalityPanel.dispose();personality.dispose();host.dispose();codeAllowed=false;lessonAllowed=false;input.value='';log.replaceChildren();diagnostic.textContent='';dialog.remove();onDispose();if(trigger?.isConnected&&win.location.hash===initialHash)trigger.focus();}
+  function dispose(){if(dead)return;dead=true;seq++;request?.abort();clearTimeout(slowTimer);listeners.abort();observer.disconnect();unsubscribeWorkspace?.();releaseFocus();unsubConnection();connections.dispose();connectionPanel?.dispose();session?.dispose();core.dispose();activeGuide.dispose();personalityPanel.dispose();personality.dispose();host.dispose();codeAllowed=false;diagnosticsAllowed=false;lessonAllowed=false;input.value='';log.replaceChildren();diagnostic.textContent='';dialog.remove();onDispose();if(trigger?.isConnected&&win.location.hash===initialHash)trigger.focus();}
   const observer=new win.MutationObserver(()=>{if(!host.current())dispose();});observer.observe(root,{childList:true,subtree:true});
   const unsubscribeWorkspace=host.workspace?.subscribe?.(()=>dispose());const releaseFocus=bindDialogFocusCycle(dialog);
   form.addEventListener('submit',e=>{e.preventDefault();void submit(input.value);});
   input.addEventListener('input',()=>{send.disabled=busy||!input.value.trim();activeGuide.invalidate();log.querySelectorAll('[data-akronikl-confirm]').forEach(b=>b.disabled=true);});
   input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing&&!e.shiftKey&&(enterSends||e.ctrlKey||e.metaKey)){e.preventDefault();void submit(input.value);}});
-  selection.addEventListener('change',()=>{codeAllowed=selection.checked&&host.selectionAvailable;clear(true);});lesson.addEventListener('change',()=>{lessonAllowed=lesson.checked;clear(true);});
+  selection.addEventListener('change',()=>{codeAllowed=selection.checked&&host.selectionAvailable;compilerConsent.disabled=!codeAllowed;if(!codeAllowed){diagnosticsAllowed=false;compilerConsent.checked=false;}clear(true);});lesson.addEventListener('change',()=>{lessonAllowed=lesson.checked;clear(true);});
+  compilerConsent.addEventListener('change',()=>{diagnosticsAllowed=codeAllowed&&compilerConsent.checked;clear(true);});
   suggest.addEventListener('change',()=>{suggestionsEnabled=suggest.checked;refreshHints();});enter.addEventListener('change',()=>{enterSends=enter.checked;inputHint.textContent=t(enterSends?'hint':'hintAlt');});
   language.addEventListener('change',changeLanguage);theme.addEventListener('change',()=>{dialog.dataset.akTheme=['light','dark'].includes(theme.value)?theme.value:'auto';});
   log.addEventListener('scroll',()=>{if(log.scrollHeight-log.scrollTop-log.clientHeight<80)latest.hidden=true;});
