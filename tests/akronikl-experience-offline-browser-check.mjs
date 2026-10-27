@@ -91,14 +91,14 @@ try {
   await check('Собранная offline-оболочка открывает ленивый Akronikl',async()=>{
     await page.goto(origin+'/offline.html#view=akronikl');await ready();assert.equal(await panel().count(),0);await open();
     assert.equal(await panel().locator('[data-ak-code-consent]').isDisabled(),true);await search();
-    const first=panel().locator('.ak-source').first();await first.locator('summary').first().click();assert.match(await first.locator('details').textContent(),/courses\/cpp\//);
+    const first=panel().locator('.ak-assistant').last().locator('.ak-source').first();await first.locator('summary').first().click();assert.match(await first.locator('details').textContent(),/courses\/cpp\//);
   });
   await check('Публичный режим не предлагает личные проекты или серверный Account',async()=>{
     for(const cmd of ['Открой проекты','Открой аккаунт']){await panel().locator('[data-akronikl-message]').fill(cmd);await panel().locator('[data-akronikl-message]').press('Enter');assert.equal(await panel().locator('[data-akronikl-confirm]').count(),0);}
     await command(page,'Где я?');assert.match(await panel().locator('[data-akronikl-messages]').textContent(),/Личная копия закрыта/);
   });
   await check('Карточка открывает настоящий урок без доступа к личному редактору',async()=>{
-    await search();await panel().locator('.ak-source').first().getByRole('button',{name:'Открыть урок',exact:true}).click();await ready();
+    await search();await panel().locator('.ak-assistant').last().locator('.ak-source').first().getByRole('button',{name:'Открыть урок',exact:true}).click();await ready();
     assert.match(new URL(page.url()).hash,/^#course=cpp&lesson=cpp\./);assert.equal(await panel().count(),0);
     assert.equal(await page.locator('#editor').isDisabled(),true);await open();
     assert.equal(await panel().locator('[data-ak-code-consent]').isDisabled(),true);await page.keyboard.press('Escape');
@@ -117,7 +117,7 @@ try {
   });
   await check('Холодная перезагрузка EN не использует RU индекс',async()=>{
     await setPublicLanguage('en');await page.goto(origin+'/offline.html#view=akronikl');await ready();await open();await search('pointers');
-    assert.ok(await panel().getByRole('button',{name:'Send',exact:true}).isVisible());assert.match(await panel().locator('.ak-source').first().textContent(),/pointer/i);
+    assert.ok(await panel().getByRole('button',{name:'Send',exact:true}).isVisible());assert.match(await panel().locator('.ak-assistant').last().locator('.ak-source').first().textContent(),/pointer/i);
     await page.keyboard.press('Escape');await setPublicLanguage('ru');
     // Тот же URL с hash может быть same-document navigation. Нужен новый документ.
     await page.reload();await ready();assert.equal(await page.locator('html').getAttribute('lang'),'ru');

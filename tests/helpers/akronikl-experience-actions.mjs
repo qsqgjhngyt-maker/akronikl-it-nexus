@@ -5,5 +5,5 @@ export async function showSettings(page,section='privacy'){const p=experience(pa
 export async function leaveSettings(page){const p=experience(page);if(await p.locator('#ak-chat-settings').isVisible())await p.locator('.ak-back').click();}
 export async function enableSelection(page,value=true){await showSettings(page);await experience(page).locator('[data-ak-code-consent]').setChecked(value);await leaveSettings(page);}
 export async function revealSources(page){const p=experience(page);for(const detail of await p.locator('.ak-sources').all()){if(!await detail.evaluate(n=>n.open))await detail.locator(':scope > summary').click();}}
-export async function findMaterials(page,query='указатели'){await command(page,`find ${query}`);await revealSources(page);await experience(page).locator('.ak-source').first().waitFor();}
+export async function findMaterials(page,query='указатели'){await command(page,`find ${query}`);await revealSources(page);await experience(page).locator('.ak-assistant').last().locator('.ak-source').first().waitFor();}
 export async function showContext(page){await command(page,'Покажи контекст');}

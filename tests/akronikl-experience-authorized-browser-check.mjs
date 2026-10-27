@@ -43,7 +43,7 @@ try{
  await check('Разрешённый контекст, поиск и переход к настоящему уроку через UI',async()=>{
   await route('#view=akronikl','[data-akronikl-open]');await open();await showContext(page);
   await panel().getByText('Фрагмент кода не включён.',{exact:true}).waitFor();await search();
-  await panel().locator('.ak-source').first().getByRole('button',{name:'Открыть урок',exact:true}).click();await page.locator('#editor').waitFor();
+  await panel().locator('.ak-assistant').last().locator('.ak-source').first().getByRole('button',{name:'Открыть урок',exact:true}).click();await page.locator('#editor').waitFor();
   assert.match(await page.evaluate(()=>location.hash),/^#course=cpp&lesson=cpp\./);
  });
  await check('Личный проект и прогресс создаются в верифицированном хранилище A',async()=>{
