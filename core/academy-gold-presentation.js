@@ -9,7 +9,7 @@ const links={
   'CPP20-CHARCONV':{label:'WG21 N4861 — from_chars',url:'https://timsong-cpp.github.io/cppwp/n4861/charconv.from.chars'},
   'QT68-SIGNALS':{label:'Qt 6.8 — Signals and Slots',url:'https://doc.qt.io/qt-6.8/signalsandslots.html'},
   'QT68-OWNERSHIP':{label:'Qt 6.8 — Object Trees and Ownership',url:'https://doc.qt.io/qt-6.8/objecttrees.html'},
-  'QT68-WASM':{label:'Qt 6.8 — Qt for WebAssembly',url:'https://doc.qt.io/qt-6.8/wasm.html'},
+  'QT68-WASM':{label:'Qt 6.8 — WebAssembly supported platforms',url:'https://doc.qt.io/qt-6.8/supported-platforms.html'},
   'QT68-CMAKE':{label:'Qt 6.8 — CMake',url:'https://doc.qt.io/qt-6.8/cmake-get-started.html'},
   'CPP20-DTOR':{label:'WG21 N4861 (C++20 draft) — class.dtor',url:'https://timsong-cpp.github.io/cppwp/n4861/class.dtor'},
   'CPP20-COPY':{label:'WG21 N4861 (C++20 draft) — class.copy.ctor',url:'https://timsong-cpp.github.io/cppwp/n4861/class.copy.ctor'},

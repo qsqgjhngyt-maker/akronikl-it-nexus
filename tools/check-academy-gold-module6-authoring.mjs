@@ -1,7 +1,7 @@
 // Отдельная надстройка M6-1. Не меняет immutable допуск инженерного пилота M6-R.
 import assert from'node:assert/strict';import{readFile,writeFile,mkdir}from'node:fs/promises';import{execFileSync,spawnSync}from'node:child_process';import{createHash}from'node:crypto';import{pathToFileURL}from'node:url';import path from'node:path';
 export const M6_AUTHORING_BASE='f2c853e012a5c3a3928ca4b082816582b5de1cfa';
-export const M6_AUTHORING_RECEIPT='fd6409fde39407bce7ce7520751bd5ed407e4ef1496ca3972045251f425f0b0e';
+export const M6_AUTHORING_RECEIPT='bd2271cc2e363044e42e58f48480ab6274ff6bf41df79b9cddbe2cd63815afd1';
 const git=(...a)=>execFileSync('git',a,{maxBuffer:128*1024*1024}),hash=b=>createHash('sha256').update(b).digest('hex');
 export async function m6AuthoringScope(){
  const bytes=await readFile('docs/ru/03-content/CPP_MODULE6_AUTHORING_SCOPE.json');assert.equal(hash(bytes),M6_AUTHORING_RECEIPT,'M6-1 scope SHA256');const s=JSON.parse(bytes),spec=JSON.parse(await readFile('docs/ru/03-content/CPP_MODULE6_AUTHORING.json'));
