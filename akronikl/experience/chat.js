@@ -108,7 +108,7 @@ export function openExperience(options) {
   function clear(revokeSession=false){stop();if(revokeSession){privacyBoundary={};renew();}else session?.clear();lastMetrics=null;tree.clear();scheduleSave('chats');renderBranches();log.replaceChildren(welcome);welcome.hidden=false;pendingFiles=[];renderFiles();input.value='';send.disabled=true;latest.hidden=true;refreshHints();}
   function onModelInvalidate(){if(dead)return;stop();pendingFiles=[];renderFiles();privacyBoundary={};session?.dispose();session=null;if(generalChat)renderTree();else{tree.clear();log.replaceChildren(welcome);welcome.hidden=false;}input.value='';lastMetrics=null;renew();status.textContent=t('modelChange');}
   connections=createModelConnections({isCurrent:()=>!dead&&host.current(),loadLocal:options.loadTutorModel??(async(file,settings)=>(await import('../tutor/local-model.js')).loadLocalModel(file,settings)),inspect:options.inspectTutorModel,cloudBroker:options.cloudBroker??null,onInvalidate:onModelInvalidate});
-  const unsubConnection=connections.subscribe(s=>{if(dead)return;if(s.phase==='connected'&&connectedRevision!==s.revision){connectedRevision=s.revision;renew();}refreshDiagnostics(s);readyStatus();});
+  const unsubConnection=connections.subscribe(s=>{if(dead)return;if(s.phase==='connected'&&connectedRevision!==s.revision){connectedRevision=s.revision;renew();}attachButton.disabled=busy||!privateReady||!generalChat||!s.cloudEnabled;refreshDiagnostics(s);readyStatus();});
   function refreshDiagnostics(s=connections.snapshot()){diagnostic.textContent=JSON.stringify({profile:s.profileId,phase:s.phase,code:s.code,inspection:s.inspection,measurements:lastMetrics,externalAI:s.cloudEnabled},null,2);}
   function mountModels(){connectionPanel?.dispose();connectionPanel=mountConnectionPanel({parent:sections.model,documentRef:doc,controller:connections,locale,allowWebGPU:false});const d=sections.model.querySelector('details');if(d)d.open=true;}
   mountModels();renew();
@@ -190,7 +190,7 @@ export function openExperience(options) {
   input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing&&!e.shiftKey&&(enterSends||e.ctrlKey||e.metaKey)){e.preventDefault();void submit(input.value);}});
   selection.addEventListener('change',()=>{codeAllowed=selection.checked&&host.selectionAvailable;compilerConsent.disabled=!codeAllowed;if(!codeAllowed){diagnosticsAllowed=false;compilerConsent.checked=false;}clear(true);});lesson.addEventListener('change',()=>{lessonAllowed=lesson.checked;clear(true);});
   compilerConsent.addEventListener('change',()=>{diagnosticsAllowed=codeAllowed&&compilerConsent.checked;clear(true);});
-  generalMode.addEventListener('change',()=>{stop();generalChat=generalMode.checked;pendingFiles=[];renderFiles();session?.clear();});
+  generalMode.addEventListener('change',()=>{stop();generalChat=generalMode.checked;pendingFiles=[];renderFiles();session?.clear();setBusy(false);});
   suggest.addEventListener('change',()=>{suggestionsEnabled=suggest.checked;refreshHints();});enter.addEventListener('change',()=>{enterSends=enter.checked;inputHint.textContent=t(enterSends?'hint':'hintAlt');});
   language.addEventListener('change',changeLanguage);theme.addEventListener('change',()=>{dialog.dataset.akTheme=['light','dark'].includes(theme.value)?theme.value:'auto';});
   log.addEventListener('scroll',()=>{if(log.scrollHeight-log.scrollTop-log.clientHeight<80)latest.hidden=true;});
