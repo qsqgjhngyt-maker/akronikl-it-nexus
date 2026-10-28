@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createKnowledgeIndex} from '../akronikl/core/index.js';
-import {retrieveTutorEvidence,selectTutorSource,tutorExcerpt} from '../akronikl/tutor/retrieval.js';
+import {retrieveTutorEvidence,selectTutorSource,tutorExcerpt,rankTutorQuotes} from '../akronikl/tutor/retrieval.js';
 const indexes={};for(const l of ['ru','en'])indexes[l]=createKnowledgeIndex(JSON.parse(await readFile(new URL(`../akronikl/knowledge/core-index.${l}.json`,import.meta.url))));
 function source(locale,lesson,query){const records=retrieveTutorEvidence(indexes[locale],{query,locale,route:{courseId:'cpp',lessonId:lesson}});const record=selectTutorSource(records,query);assert.ok(record);const excerpt=tutorExcerpt(record.text,query);assert.ok(record.text.includes(excerpt.text));return excerpt.text;}
 test('formula tokens retrieve actual cost text, including a relevant second paragraph',()=>{
@@ -27,4 +27,12 @@ test('exception rollback question keeps the actual basic/strong guarantee distin
 test('query excerpts are exact source spans and retain a complete paragraph subject',()=>{
  const text='Flags and buffer\nclear resets flags but does not consume a bad character. Read or discard the bad input after clearing flags.\nA later unrelated paragraph mentions another flag.';
  const e=tutorExcerpt(text,'bad input flags',130);assert.ok(text.includes(e.text));assert.match(e.text,/clear resets flags/);assert.doesNotMatch(e.text,/^Read or discard/);
+});
+test('failure/state question ranks a state-on-failure sentence above a no-throw definition',()=>{
+ const quotes=['A nonthrowing guarantee promises that no exception escapes the operation.','The basic guarantee permits state to change after failure.'];
+ const r=rankTutorQuotes(quotes,'Does an exception undo all state changes?');assert.equal(r[0].text,quotes[1]);assert.ok(r[0].score>r[1].score);
+});
+test('Russian failure forms retain the same literal counter-condition',()=>{
+ const quotes=['Гарантия отсутствия исключений обещает, что операция не выпустит исключение.','Базовая гарантия не допускает утечки ресурсов, но состояние после отказа может измениться.'];
+ assert.equal(rankTutorQuotes(quotes,'Если возникло исключение, все изменения автоматически отменяются?')[0].text,quotes[1]);
 });

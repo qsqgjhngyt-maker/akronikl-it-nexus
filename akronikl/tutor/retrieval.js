@@ -16,7 +16,7 @@ function stem(word){
   if(/^(?:с?копир|копи[яюией]|cop(?:y|ies|ied|ying))/u.test(word))return 'copy';
   if(/^(?:перемещ|mov(?:e|es|ed|ing|able))/u.test(word))return 'move';
   if(/^(?:деструктор|destructor)/u.test(word))return 'destructor';
-  if(/^(?:исключен|exception|throw|threw|thrown)/u.test(word))return 'exception';
+  if(/^(?:исключен|отказ|неуспех|exception|throw|threw|thrown|fail)/u.test(word))return 'exception';
   if(/^(?:изменен|состоян|chang|state)/u.test(word))return 'state';
   if(/^(?:индекс|index|indices)/u.test(word))return 'index';
   if(/^(?:сортир|упорядоч|order|sort)/u.test(word))return 'ordering';
@@ -34,6 +34,10 @@ function stem(word){
 function terms(value){return [...new Set((normalize(value).replace(/\broll\s+back\b/gu,'rollback').replace(/\bo\s*\(([^)]+)\)/gu,' bigo $1 ').match(/[\p{L}\p{N}_]+(?:\+\+|#)?/gu)||[]).filter(w=>w.length>1&&!STOP.has(w)).map(stem))];}
 const weight=t=>t==='bigo'?0.2:t==='log'?4:1;
 const coverage=(value,wanted)=>terms(value).filter(t=>wanted.has(t)).reduce((n,t)=>n+weight(t),0);
+export function rankTutorQuotes(quotes,query){
+  const wanted=new Set(terms(query));
+  return quotes.map((text,order)=>({text,score:coverage(text,wanted),order})).sort((a,b)=>b.score-a.score||a.order-b.order);
+}
 function contentScore(record,wanted){
   const direct=coverage(record.text,wanted);
   const focus=Math.max(0,...record.text.split('\n').map(line=>coverage(line.split(/\s+/u).slice(0,8).join(' '),wanted)));

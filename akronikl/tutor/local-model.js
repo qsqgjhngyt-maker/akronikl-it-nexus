@@ -1,6 +1,7 @@
 import {createInferenceMeter} from '../experience/metrics.js';
 import {localLoadOptions} from '../connections/profiles.js';
 import {probeWebGPU,checkSignal} from '../connections/probe.js';
+import {rankTutorQuotes} from './retrieval.js';
 // Только доверенный in-process runtime. Внешнего URL/API/ключей здесь нет.
 export const LOCAL_MODEL=Object.freeze({id:'qwen3-0.6b-q8_0',filename:'Qwen3-0.6B-Q8_0.gguf',maxBytes:700000000,sha256:'9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031',runtime:'@wllama/wllama',runtimeVersion:'3.8.1'});
 export function evidenceQuoteCandidates(source){
@@ -52,9 +53,19 @@ export function createWllamaProvider(engine,{recreate=null,onOutcome=null}={}) {
         const diagnosticLabels=allowedCitations.filter(label=>label.startsWith('D'));
         const basisLabels=diagnosticLabels.length?diagnosticLabels:allowedCitations;
         const quoteChoices=grounded?new Map(evidence.filter(s=>basisLabels.includes(s.label)).map(s=>[s.label,evidenceQuoteCandidates(s)])):null;
+        // Select the closest literal sentence as retrieval context, not an
+        // expected answer. Otherwise a small model picked a nearby no-throw
+        // definition for a question about state after a failure.
+        if(grounded){
+          const query=evidencePacket.topic||evidencePacket.question||'';
+          const ranked=[...quoteChoices.entries()].flatMap(([label,quotes])=>rankTutorQuotes(quotes,query).map(q=>({...q,label})));
+          ranked.sort((a,b)=>b.score-a.score||a.order-b.order);
+          if(ranked[0]?.score>0)for(const label of quoteChoices.keys())quoteChoices.set(label,label===ranked[0].label?[ranked[0].text]:[]);
+        }
         const allQuotes=quoteChoices?[...new Set([...quoteChoices.values()].flat())]:[];
         if(grounded&&!allQuotes.length)throw Error('LOCAL_EVIDENCE_INSUFFICIENT');
-        const properties={...(grounded?{basis:{type:'object',properties:{label:{type:'string',enum:basisLabels},quote:{type:'string',enum:allQuotes}},required:['label','quote'],additionalProperties:false}}:{}),answer:{type:'string'},citations:{type:'array',items:{type:'string',enum:allowedCitations}}};
+        const quoteLabels=quoteChoices?[...quoteChoices.entries()].filter(([,q])=>q.length).map(([label])=>label):basisLabels;
+        const properties={...(grounded?{basis:{type:'object',properties:{label:{type:'string',enum:quoteLabels},quote:{type:'string',enum:allQuotes}},required:['label','quote'],additionalProperties:false}}:{}),answer:{type:'string'},citations:{type:'array',items:{type:'string',enum:allowedCitations}}};
         const started=performance.now();
         // Сырые фрагменты/рассуждения не выводятся: наружу только числовой прогресс.
         // Итоговый текст появляется лишь после полного JSON и проверки цитат сессией.
