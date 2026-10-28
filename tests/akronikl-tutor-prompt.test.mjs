@@ -6,12 +6,13 @@ import {createKnowledgeIndex,createNexusContextAdapter,diagnosticFromNexus} from
 import {createTutorSession} from '../akronikl/tutor/session.js';
 const index=createKnowledgeIndex(JSON.parse(await readFile(new URL('../akronikl/knowledge/core-index.ru.json',import.meta.url))));
 function fixture(generate){const boundary={};return createTutorSession({host:createNexusContextAdapter({readBoundary:()=>boundary,readRoute:()=>({view:'akronikl'}),readLocale:()=> 'ru',readCourseLocale:()=> 'ru',authorize:()=>true}),loadKnowledge:async()=>index,provider:{kind:'local',transport:'in-process',modelId:'synthetic',generate,dispose(){}}});}
-test('CPU-профиль отправляет одну теоретическую выдержку с тем же происхождением',async()=>{
+test('CPU-профиль сохраняет фактическое объяснение и соседние условия в ограниченном контексте',async()=>{
  let packet;const tutor=fixture(async x=>{packet=x;return{answer:'Ресурс связан с объектом.',citations:['S1']};});
  const r=await tutor.ask({text:'Объясни RAII'});const data=packet.evidencePacket;
- assert.equal(r.status,'ok');assert.equal(data.evidence.length,1);assert.equal(r.sources.length,1);
+ assert.equal(r.status,'ok');assert.ok(data.evidence.length>=1&&data.evidence.length<=2);assert.equal(r.sources.length,data.evidence.length);assert.equal(new Set(r.sources.map(x=>x.sourceId)).size,r.sources.length);
  assert.match(r.sources[0].sourceId,/:theory-/);assert.equal(data.evidence[0].text,r.sources[0].text);
- assert.equal(JSON.stringify(packet.messages).length<1400,true);assert.deepEqual(packet.allowedCitations,['S1']);tutor.dispose();
+ for(const s of r.sources){assert.ok(index.getSources().find(x=>x.sourceId===s.sourceId).text.includes(s.text));assert.ok(s.text.length<=700);}
+ assert.equal(JSON.stringify(packet.messages).length<6000,true);assert.deepEqual(packet.allowedCitations,r.sources.map(x=>x.label));tutor.dispose();
 });
 test('модель получает реальные строки цитат; metadata не подменяет её prompt',async()=>{
  let packet;const tutor=fixture(async x=>{packet=x;return{answer:'UNALTERED_MODEL_SENTINEL',citations:['S1']};});
@@ -34,7 +35,7 @@ test('самостоятельная новая тема не получает �
  assert.doesNotMatch(JSON.stringify(packets[1].messages),/OLD_TOPIC_SENTINEL/);assert.equal(packets[1].messages.length,2);tutor.dispose();
 });
 test('ограниченный prompt не разрешает ссылку на исключённую выдержку',async()=>{
- const tutor=fixture(async()=>({answer:'Недоказанное',citations:['S2']}));
+ const tutor=fixture(async()=>({answer:'Недоказанное',citations:['S3']}));
  assert.equal((await tutor.ask({text:'Объясни RAII'})).status,'error');assert.equal(tutor.snapshot().length,0);tutor.dispose();
 });
 

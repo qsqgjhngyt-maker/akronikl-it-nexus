@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createWllamaProvider} from '../akronikl/tutor/local-model.js';
 test('unexpected reasoning is rejected without exposure in progress or QA outcome',async()=>{
- const progress=[],outcomes=[];const p=createWllamaProvider({async createChatCompletion(x){assert.equal(x.max_tokens,192);assert.equal(x.chat_template_kwargs.enable_thinking,false);x.onData({choices:[{delta:{reasoning_content:'PRIVATE_INTERNAL_WORK'}}]});x.onData({choices:[{finish_reason:'stop',delta:{content:'{"answer":"FINAL_ONLY","citations":["S1"]}'}}]});},async exit(){}},{onOutcome:x=>outcomes.push(x)});
+ const progress=[],outcomes=[];const p=createWllamaProvider({async createChatCompletion(x){assert.equal(x.max_tokens,384);assert.equal(x.chat_template_kwargs.enable_thinking,false);x.onData({choices:[{delta:{reasoning_content:'PRIVATE_INTERNAL_WORK'}}]});x.onData({choices:[{finish_reason:'stop',delta:{content:'{"answer":"FINAL_ONLY","citations":["S1"]}'}}]});},async exit(){}},{onOutcome:x=>outcomes.push(x)});
  await assert.rejects(p.generate({messages:[],allowedCitations:['S1'],onProgress:x=>progress.push(x)}),/LOCAL_ANSWER_INVALID/);assert.doesNotMatch(JSON.stringify({progress,outcomes}),/PRIVATE_INTERNAL_WORK|FINAL_ONLY/);assert.equal(outcomes[0].rawContent,null);assert.equal(outcomes[0].reasoningRedacted,true);await p.dispose();
 });
 test('failed reasoning experiments cannot be re-enabled through provider configuration',()=>{

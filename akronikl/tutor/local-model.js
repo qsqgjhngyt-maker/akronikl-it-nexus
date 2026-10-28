@@ -67,7 +67,7 @@ export function createWllamaProvider(engine,{recreate=null,onOutcome=null,reason
         const started=performance.now();
         // Сырые фрагменты/рассуждения не выводятся: наружу только числовой прогресс.
         // Итоговый текст появляется лишь после полного JSON и проверки цитат сессией.
-        await Promise.race([selected.createChatCompletion({messages:modelMessages,abortSignal:signal,stream:true,cache_prompt:false,max_tokens:192+reasoningBudget,
+        await Promise.race([selected.createChatCompletion({messages:modelMessages,abortSignal:signal,stream:true,cache_prompt:false,max_tokens:384+reasoningBudget,
           temperature:0.2,seed:42,chat_template_kwargs:{enable_thinking:reasoningBudget>0},return_progress:true,timings_per_token:true,
           response_format:{type:'json_schema',json_schema:{name:'nexus_tutor_answer',strict:true,schema:{type:'object',properties,required:Object.keys(properties),additionalProperties:false}}},
           onData(chunk){
