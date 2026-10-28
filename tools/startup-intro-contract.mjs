@@ -15,7 +15,7 @@ export const WORKFLOWS=Object.freeze({
  '.github/workflows/academy-gold-cpp-module-2-preflight.yml':{preflight:'preflight','module2-gold':'browser','module1-regression':'integration'},
  '.github/workflows/academy-gold-cpp-module-3-publication.yml':{publication:'publication'}
 });
-export const CI_PATHS=Object.freeze([CONTRACT,'tools/startup-intro-contract.mjs','tools/startup-intro-ci-route.mjs','tools/check-startup-intro-ci.mjs','tests/startup-intro-contract.test.mjs','tests/startup-intro-retention.test.mjs','tests/startup-intro-browser-check.mjs','tests/ui1a-deterministic-public-manifest.test.mjs',...Object.keys(WORKFLOWS)]);
+export const CI_PATHS=Object.freeze([CONTRACT,'tools/startup-intro-contract.mjs','tools/startup-intro-ci-route.mjs','tools/check-startup-intro-ci.mjs','tests/startup-intro-contract.test.mjs','tests/startup-intro-retention.test.mjs','tests/startup-intro-browser-check.mjs','tests/offline-first-browser-check.mjs','tests/ui1a-deterministic-public-manifest.test.mjs',...Object.keys(WORKFLOWS)]);
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const git=(root,...a)=>execFileSync('git',a,{cwd:root,maxBuffer:256*1024*1024});
 export function validateMetadata(c){
