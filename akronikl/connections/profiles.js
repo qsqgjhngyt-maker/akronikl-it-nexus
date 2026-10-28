@@ -13,10 +13,7 @@ export function modelProfile(id) {
 }
 export function localLoadOptions(id) {
   if(!['local-cpu','local-webgpu'].includes(id))throw Error('MODEL_PROFILE_DENIED');
-  // Меньшие CPU-порции дают runtime возможность обработать отмену во время prefill.
-  // Таймаут и лимит ответа не повышаются; WebGPU-профиль здесь не меняется.
-  const batch=id==='local-cpu'?16:128;
-  return Object.freeze({n_threads:1,n_gpu_layers:id==='local-cpu'?0:99999,n_ctx:4096,n_parallel:1,n_batch:batch,n_ubatch:batch,
+  return Object.freeze({n_threads:1,n_gpu_layers:id==='local-cpu'?0:99999,n_ctx:4096,n_parallel:1,n_batch:128,n_ubatch:128,
     cache_idle_slots:false,jinja:true,reasoning:false,reasoning_budget_tokens:0,
     default_template_kwargs:Object.freeze({enable_thinking:false})});
 }
