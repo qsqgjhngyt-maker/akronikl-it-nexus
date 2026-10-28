@@ -18,7 +18,7 @@ export async function nexusChatFixture({root,privateDir,createAdapter,onOutcome}
  Object.assign(backend.env,{AKRONIKL_CLOUD_ENABLED:'true',AKRONIKL_VAULT_MASTER_KEY:randomBytes(32).toString('base64'),AKRONIKL_VAULT_FILE:path.join(privateDir,'accounts.enc')});
  const vault=createNexusCloudVault(backend.env),cloud=await createNexusCloudHandler({env:backend.env,fetchImpl:backend.fetchImpl,vault,createAdapter,onOutcome}),network=[],errors=[];
  const html='<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nexus · изолированный чат</title><style>body{font:16px system-ui;background:#edf2f6;color:#172033}button{font:inherit}</style><body><p>Изолированный стенд Nexus — production не используется</p><p id="account">Проверяем вход…</p><main id="root"><button data-akronikl-open disabled>Akronikl</button><button id="logout">Выйти из аккаунта</button></main><script type="module" src="/tools/qa-akronikl/nexus-chat-entry.mjs"></script></body></html>';
- const types={'.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.html':'text/html'};
+ const types={'.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.wasm':'application/wasm','.html':'text/html'};
  const server=https.createServer({key:await readFile(key),cert:await readFile(cert)},async(req,res)=>{
   const u=new URL(req.url,GATEWAY_ORIGIN),row={path:u.pathname,method:req.method,status:null};network.push(row);res.setHeader('cache-control','no-store');res.setHeader('vary','*');res.once('finish',()=>row.status=res.statusCode);
   try{
