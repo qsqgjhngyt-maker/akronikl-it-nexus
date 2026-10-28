@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-export const M6_FIX_RECEIPT='0cdc4b6f3a2ab34f405e30e85f853b3fcd5ec7a20d1fe794c0460df9fd27000a';
+export const M6_FIX_RECEIPT='94d1893445c4bd874511af1f0e6500f0ea3b7377fe391017cc4d0318ec939ef9';
 const hash=b=>createHash('sha256').update(b).digest('hex'),git=(...args)=>execFileSync('git',args,{maxBuffer:32000000});
 export async function m6FixScope(){
  const bytes=await readFile('docs/ru/03-content/CPP_MODULE6_FIX_SCOPE.json');assert.equal(hash(bytes),M6_FIX_RECEIPT);
