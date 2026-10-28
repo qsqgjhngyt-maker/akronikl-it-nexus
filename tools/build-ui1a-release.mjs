@@ -35,6 +35,11 @@ if(value('--generation')){
 }
 const versionBytes=value('--generation')?Buffer.from(JSON.stringify(versionMetadata,null,2)+'\n'):await readFile(path.join(source,'version.json'));
 for(const file of files){const b=file==='version.json'?versionBytes:await readFile(path.join(source,file));await output(prefix+file,b,file);if(process.argv.includes('--startup-smooth')&&file.startsWith('intro-media/cinematic-v4/'))await output(file,b,'Публичный CDN: '+file)}
+// Прежние мобильные части уже опубликованы: повторная поставка тех же bytes
+// в необязательный CDN-каталог, вне обязательного SW install.
+if(process.argv.includes('--startup-mobile-restore'))for(const format of ['mp4','webm'])for(let i=0;i<4;i++){
+ const file='intro-media/cinematic-v3/mobile/'+format+'/part-'+String(i).padStart(3,'0')+'.'+format;await output(file,await readFile(path.join(source,file)),'Прежний Mobile CDN: '+file);
+}
 // После rollback корневые документы могут ссылаться на старое поколение.
 // Перепривязываются только выходные документы сборки; immutable source bytes
 // и активные root-файлы никогда не перезаписываются этим преобразованием.

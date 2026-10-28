@@ -1,7 +1,6 @@
-// Восстановленный мобильный путь принятого PR49: тот же origin, исходные
-// Full HD части без нового перекодирования. Desktop остаётся на cinematic-v4.
-export function mobileIntroURL(format,moduleURL=import.meta.url){
- if(!['mp4','webm'].includes(format))throw Error('INTRO_MOBILE_FORMAT_INVALID');
- const prefix=new URL(moduleURL).pathname.includes('/releases/')?'../../':'../releases/';
- return new URL(prefix+'ui1a-startup-first-paint-20261028/intro-media/cinematic-v3/mobile.'+format,moduleURL).href;
+// Прежний мобильный декодер и Full HD части PR49; доставка с уже
+// разрешённого собственного статического адреса, без проксирования Gateway.
+import {INTRO_VIDEO_BASE,introVideoURL} from './startup-intro-assets.js';
+export function mobileIntroURL(format,base=INTRO_VIDEO_BASE){
+ return introVideoURL('mobile',format,base).replace('/cinematic-v4/','/cinematic-v3/');
 }

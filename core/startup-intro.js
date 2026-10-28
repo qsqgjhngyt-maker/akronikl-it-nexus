@@ -33,7 +33,7 @@ function showIntro({preview=false}={}){
  const makePlayer=()=>{
   if(variant==='mobile'){
    // Первая часть начинает показ до фоновой загрузки следующей.
-   const player=new IntroSequence(visual),next=player.slots[1];next.preload='none';
+   const player=new IntroSequence(visual),next=player.slots[1];for(const slot of player.slots)slot.crossOrigin='anonymous';next.preload='none';
    player.slots[0].addEventListener('playing',()=>{if(!player.stopped){next.preload='auto'}},{once:true});return player;
   }
   const v=document.createElement('video');v.dataset.current='';v.crossOrigin='anonymous';v.muted=true;v.defaultMuted=true;v.playsInline=true;v.preload='auto';v.disablePictureInPicture=true;v.tabIndex=-1;v.setAttribute('aria-hidden','true');visual.append(v);return v;
@@ -95,7 +95,7 @@ function showIntro({preview=false}={}){
    cancel(stallDeadline);stallDeadline=later(()=>{if(!closing&&!document.hidden&&video.readyState<3)fallback()},10000);
   },{signal});
  };bindPlayer();
- const sourceURL=()=>variant==='mobile'?mobileIntroURL(selected[0]):introVideoURL(variant,selected[0],mediaBase);
+ const sourceURL=()=>variant==='mobile'?mobileIntroURL(selected[0],mediaBase):introVideoURL(variant,selected[0],mediaBase);
  document.addEventListener('visibilitychange',()=>{
   if(document.hidden){video.pause();if(visibleAt)budget-=performance.now()-visibleAt;visibleAt=0;cancel(limit);cancel(stallDeadline);cancel(startupDeadline)}
   else{if(!played)startupDeadline=later(fallback,8000);armLimit();play()}

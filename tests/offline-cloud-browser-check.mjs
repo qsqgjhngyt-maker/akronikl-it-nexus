@@ -39,7 +39,7 @@ const server=https.createServer({key:await readFile(path.join(tls,'key.pem')),ce
  try{
   const u=new URL(req.url,'https://'+req.headers.host);requests.push({host:u.host,path:u.pathname,method:req.method});
   // Только новые публичные media bytes, также через loopback, без live CDN.
-  if(u.host==='qsqgjhngyt-maker.github.io'&&/^\/akronikl-it-nexus\/intro-media\/cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)$/.test(u.pathname)&&!u.search){
+  if(u.host==='qsqgjhngyt-maker.github.io'&&/^\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/.test(u.pathname)&&!u.search){
    assert.equal(req.method,'GET');assert.equal(Boolean(req.headers.cookie||req.headers.authorization),false,'Публичное видео не получает session credentials');
    const file=u.pathname.replace('/akronikl-it-nexus/','');res.writeHead(200,{'content-type':file.endsWith('.mp4')?'video/mp4':'video/webm','access-control-allow-origin':'*','cache-control':'no-store'});return res.end(await readFile(path.join(frontend,file)));
   }
@@ -125,7 +125,7 @@ try{
   assert.deepEqual(f.db.prepare('SELECT snapshot_json FROM project_snapshots WHERE project_id=?').get(projectId),before);
   const exists=await page.evaluate(async({generation,vaultId,phrase})=>{const {createVaultStore}=await import('/releases/'+generation+'/pwa/local-vault.js'),s=await createVaultStore().unlock(vaultId,phrase);const has=Object.keys(s.read().projects).length>0;await s.lock();return has},{generation,vaultId,phrase});assert.equal(exists,true);
  });
- assert.deepEqual(errors,[]);assert.ok(appRequests.every(r=>[host,'cdn.jsdelivr.net'].includes(r.host)||(r.host==='qsqgjhngyt-maker.github.io'&&r.method==='GET'&&/^\/akronikl-it-nexus\/intro-media\/cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)$/.test(r.path))));
+ assert.deepEqual(errors,[]);assert.ok(appRequests.every(r=>[host,'cdn.jsdelivr.net'].includes(r.host)||(r.host==='qsqgjhngyt-maker.github.io'&&r.method==='GET'&&/^\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/.test(r.path))));
  const knownBackground=new Set(['update.googleapis.com','www.gstatic.com','accounts.google.com','www.google.com','content-autofill.googleapis.com','android.clients.google.com']);
  assert.ok(deniedInfrastructure.every(r=>knownBackground.has(r.host)),'Unexpected browser infrastructure host; review before acceptance');
 }catch(error){failures.push({message:error.message,stack:error.stack,ui:await page?.evaluate(()=>document.querySelector('[data-local-status]')?.textContent||document.body.textContent.slice(0,2000)).catch(()=>null)});await page?.screenshot({path:path.join(out,'FAILURE.png'),fullPage:true}).catch(()=>{});console.error(error.stack)}
