@@ -37,3 +37,19 @@ test('ограниченный prompt не разрешает ссылку на 
  const tutor=fixture(async()=>({answer:'Недоказанное',citations:['S2']}));
  assert.equal((await tutor.ask({text:'Объясни RAII'})).status,'error');assert.equal(tutor.snapshot().length,0);tutor.dispose();
 });
+
+for(const [name,code,message,expected] of [
+ ['undeclared identifier','int main(){return unseen;}','error: unseen was not declared in this scope',false],
+ ['missing terminator','int main(){return 3 }',"error: expected ';' before '}' token",false],
+ ['private member','class Gate{int score=3;}; int main(){Gate g; return g.score;}','error: int Gate::score is private within this context',false],
+ ['verified read-only','int main(){const int guard=4; guard=5;}','error: assignment of read-only variable guard',true]
+])test('read-only policy applies only to its verified diagnostic: '+name,async()=>{
+ let packet;const boundary={},selection={filePath:'heldout.cpp',revision:7,languageId:'cpp',code,startLine:1,endLine:1};
+ const diagnostic=diagnosticFromNexus({compilerDiagnostic:true,file:'heldout.cpp',line:1,column:1,raw:'heldout.cpp:1:1: '+message},{selection,runRevision:7});assert.ok(diagnostic);
+ const host=createNexusContextAdapter({readBoundary:()=>boundary,readRoute:()=>({view:'code-studio'}),readLocale:()=> 'ru',readCourseLocale:()=> 'ru',readSelection:()=>selection,readDiagnostics:()=>[diagnostic],authorize:()=>true});
+ const tutor=createTutorSession({host,locale:'ru',loadKnowledge:async()=>index,provider:{kind:'local',transport:'in-process',generate:async x=>{packet=x;return{answer:'ACTUAL_TEST_PROVIDER',citations:['D1']};},dispose(){}}});
+ const answer=await tutor.ask({text:'Explain this compiler message',intent:'diagnostic',include:['selection','diagnostics']});assert.equal(answer.text,'ACTUAL_TEST_PROVIDER');
+ assert.equal(packet.messages[0].content.includes('Read-only prohibits assignment even of the old value'),expected);
+ assert.equal(packet.messages.at(-1).content.includes('Если объект read-only'),expected);
+ assert.equal(packet.evidencePacket.evidence.find(x=>x.label==='D1').text,'heldout.cpp:1:1: '+message);tutor.dispose();
+});
