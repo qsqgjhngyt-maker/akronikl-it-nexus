@@ -1,3 +1,13 @@
+# CPP-QT-PRODUCTION-0 и COURSE-FINAL PLAN — 28.10.2026
+
+Preflight завершён на feature `8af443f`; актуальный GitHub main `d76d161` проверен, не изменён. **Production Qt admission: PARTIAL; COURSE-FINAL: PLANNED.** Закрытый ниже M6 feature AUTOMATED PASS сохраняется;8CI не повторялись. Продуктовые файлы не менялись, main/production/платные ресурсы/IAM/OAuth/D1/Cloud/официальный релиз не затронуты.
+
+Рекомендуется изолированная серверная сборка + настоящий Qt/WASM в Nexus. Новая локальная TaskFlow сборка22,990s, artifacts20334126B; тестовое Brotli4926436B; WASM linear memory50MiB. C++ event desktop/390px PASS; physical/WAN/p95 не измерены. Обнаружены GPLv3/commercial-only лицензии используемых QWasmIntegrationPlugin/qtloader.js; LGPL blanket-разрешение неприменимо. Artifact tamper отдаётся200 при неверном hash — OPEN production P1. Также открыты bounded download/изоляция, durable lifecycle/200job cap/queue, реальные ingress/logout и mobile/perf gates.
+
+Единый комплект: `CPP_QT_PRODUCTION_0_RU.md`, `CPP_COURSE_FINAL_PLAN_RU.md`, JSON evidence/components/sources/hashes. Исторические веса25/25/40/10 заменены предварительными40/50/10 MASTER00; общая аттестация, SkillGraph/Mastery/Events не объявлены готовыми. Есть материал для04: архитектура, лицензии, corruption experiment, measurements и методика оценки. Следующий02 совместно03: CPP-QT-PRODUCTION-1 и authoring/pilot COURSE-FINAL;00нужны решения о лицензионном маршруте/правах учащихся и смете/staging. Полный routing-текст в отчёте, сообщения не отправлялись. Режим:очень высокий для runtime/security,высокий для методики. Synced sources/MASTER30.09 остаётся readonly; этот checkpoint — более новое дополнение в существующем repo.
+
+---
+
 # Закрытие исправлений05/07 —28.10.2026
 
 STATUS: **PASS / AUTOMATED PASS в feature**, source1a3f9e5, CI406435260528/8SUCCESS. P1 Qt keyboard/focus и обаP2 CLOSED. M6native110+WASI110; M1–5940; Qt: 5 сборок,application12,a11y5;144layouts/384feedback; coldOffline67/67 иlegacy40/40; PERF75/591994B,outline26769B PASS.8CI архивов SHA256/CRC проверены.
