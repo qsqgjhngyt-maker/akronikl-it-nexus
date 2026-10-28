@@ -200,9 +200,9 @@ export function openExperience(options) {
     offlineNote.hidden=false;refreshSpeech();setBusy(false);
   }
   async function hydrate(){
-    if(dead||!host.current())return;
+    if(dead||!host.current()||hydrating)return;
     if(win.navigator?.onLine===false){useOfflineHelp();return;}
-    hydrating=true;privateReady=false;setBusy(false);sections.basics.inert=true;sections.personality.inert=true;sections.model.inert=true;
+    stop();hydrating=true;privateReady=false;restorePrivate.disabled=true;setBusy(false);sections.basics.inert=true;sections.personality.inert=true;sections.model.inert=true;
     try{
       const [prefs,chats]=await Promise.all(['preferences','chats'].map(k=>options.cloudBroker.loadState(k)));
       if(dead||!host.current())return;
