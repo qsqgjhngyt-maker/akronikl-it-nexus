@@ -11,13 +11,13 @@ const MESSAGES = {
   en: {timeout:'The local model did not answer in time. Shorten the question or selection; course excerpts remain available.', cancelled:'Request cancelled or context changed.', error:'Could not produce an answer. Sources and local help remain available.', empty:'No relevant prepared material. Please specify the topic.', clarify:'Ask about a topic before requesting a follow-up.', selection:'Explicitly include the selected code fragment first.', diagnostic:'No verified diagnostic for the current file and revision. I will not guess the cause.', sources:'No local model connected. These are course excerpts, not a generated explanation.', warning:'Experimental local-model answer. Sources are provided for verification; citations do not prove that an explanation is correct.'}
 };
 const instructions = {
-  explain:'Answer the actual question directly, then explain the key condition simply.',
+  explain:'Answer the actual question directly, then explain the key condition simply. Include a tiny concrete example from the quoted source when introducing a concept; do not invent or modify source examples.',
   hint:'Give one useful hint and one guiding question, not a complete assignment solution.',
   simpler:'Explain the same topic to a beginner using everyday words, not technical names. Do not repeat or expand acronyms. Briefly explain any unavoidable technical term. Preserve the same facts and event order.',
   example:'Give a small illustrative example, mark it as your example; do not claim it was executed.',
   practice:'Create one short beginner C++ practice task from the supplied topic. State the goal, bounded valid input (for integers give explicit finite numerical limits ensuring all task arithmetic is representable, never just any int), and ONE CONCRETE numeric/text input-output pair. Describe the result in words, never as a symbolic expression. Do not disclose implementation, formulas, return expressions or solution pseudocode. Do not copy the solved source example. Label it as a new exercise, not an official course assignment.',
   code:'Explain only the explicitly selected code. Do not claim to have inspected other files or executed it.',
-  diagnostic:'Explain the exact diagnostic, then give ONE minimal legal hint removing its cause, then stop. Prefer an accessor when private data must be read; only change the API contract with a stated condition. Read-only prohibits assignment even of the old value; changing a literal cannot fix that error. Cite each label once. Do not claim compilation.'
+  diagnostic:'Explain the exact diagnostic, then give ONE minimal legal hint removing its cause, then stop. Do not invent general rules for other statements or unrelated language features. Prefer an accessor when private data must be read; only change the API contract with a stated condition. Read-only prohibits assignment even of the old value; changing a literal cannot fix that error. Cite each label once. Do not claim compilation.'
 };
 const nativeAborted = Object.getOwnPropertyDescriptor(AbortSignal.prototype, 'aborted').get;
 const sourceRef = (r, label,query,limit=700) => ({label, kind:'course', sourceId:r.sourceId, contentVersion:r.contentVersion, contentHash:r.contentHash, title:r.title, sourcePath:r.sourcePath, lessonId:r.lessonId, courseId:r.courseId, locale:r.locale, ...(query?tutorExcerpt(r.text,query,limit,r.section==='glossary'):completeExcerpt(r.text,limit))});
@@ -84,7 +84,7 @@ export function createTutorSession({host, loadKnowledge, provider=null, locale='
         // заменяет релевантность; текст остаётся точным фрагментом источника.
         // В режиме без модели сохраняются все найденные материалы.
         const sourceLimit=Math.min(provider?.kind==='cloud'?3:2,5-(context.selection?1:0)-(context.diagnostics??[]).slice(0,2).length);
-        const courseMatches=provider?selectTeachingContext(index,matches,query,sourceLimit):matches;
+        const courseMatches=provider?(intent==='practice'?matches.filter(r=>['glossary','overview'].includes(r.section)).slice(0,sourceLimit):selectTeachingContext(index,matches,query,sourceLimit)):matches;
         const sources=courseMatches.map((r,i)=>sourceRef(r,'S'+(i+1),query,provider?.kind==='cloud'?1100:700)).filter(s=>s.text);
         if(context.selection){const s=context.selection;sources.push({label:'C1',kind:'selection',title:s.filePath,filePath:s.filePath,revision:s.revision,startLine:s.startLine,endLine:s.endLine,text:s.code.slice(0,1500),truncated:s.code.length>1500});}
         for(const [i,d] of (context.diagnostics??[]).slice(0,2).entries())sources.push({label:'D'+(i+1),kind:'diagnostic',title:d.source,filePath:d.filePath,revision:d.revision,line:d.line,column:d.column,text:d.message.slice(0,500)});

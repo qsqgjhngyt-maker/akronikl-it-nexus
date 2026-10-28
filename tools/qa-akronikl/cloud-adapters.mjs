@@ -36,11 +36,11 @@ export function createCloudAdapter({selection,apiKey,fetchUpstream=globalThis.fe
  chat(data,options={}){return adapter.complete(data,{...options,conversation:true});},
  async complete(data,{signal,conversation=false}={}){
   if(conversation)data=conversationRequest(data,config);else validateCloudRequest(data);if(disposed||busy)throw Error('CLOUD_BUSY');signal?.throwIfAborted();busy=true;current=new AbortController();const combined=signal?AbortSignal.any([signal,current.signal]):current.signal,timer=setTimeout(()=>current?.abort(),timeoutMs),started=performance.now();
-  let rawFinal='',status='error',httpStatus=null,reasoningRedacted=false,usage=null;
+  let rawFinal='',status='error',httpStatus=null,reasoningRedacted=false,usage=null,providerReportedModel=null;
   try{
    const {providerId:id,modelId:model}=config,schema=responseSchema(data.allowedCitations),messages=conversation?providerConversationMessages(data.messages,id):data.messages;
    let url=origins[id],headers={'Content-Type':'application/json',Authorization:'Bearer '+key},body;
-   if(id==='qwen'){url=qwenEndpoint(config.options);body={model,messages,stream:false,enable_thinking:false,max_tokens:conversation?2048:1024,temperature:.2,response_format:{type:'json_schema',json_schema:{name:'akronikl_answer',strict:true,schema}}};}
+   if(id==='qwen'){url=qwenEndpoint(config.options);body={model,messages,stream:false,enable_thinking:/^qwen3\.[78]-(?:plus|max|flash)(?:-|$)/u.test(model),...(/^qwen3\.[78]-(?:plus|max|flash)(?:-|$)/u.test(model)?{thinking_budget:1024}:{}),max_tokens:/^qwen3\.[78]-(?:plus|max|flash)(?:-|$)/u.test(model)?3072:conversation?2048:1024,temperature:.2,response_format:{type:'json_schema',json_schema:{name:'akronikl_answer',strict:true,schema}}};}
    else if(id==='openai'){body={model,instructions:messages[0].content,input:messages.slice(1),store:false,max_output_tokens:1024,text:{format:{type:'json_schema',name:'akronikl_answer',strict:true,schema:{...schema,properties:{...schema.properties,citations:{type:'array',items:{type:'string',enum:data.allowedCitations}}}}}}};}
    else if(id==='anthropic'){headers['anthropic-version']='2026-10-21';if(config.options.workspaceId)headers['anthropic-workspace-id']=config.options.workspaceId;body={model,system:messages[0].content,messages:messages.slice(1),max_tokens:1024,output_config:{format:{type:'json_schema',schema:{...schema,properties:{...schema.properties,citations:{type:'array',items:{type:'string',enum:data.allowedCitations}}}}}}};}
    else if(id==='gemini'){url+=encodeURIComponent(model.replace(/^models\//u,''))+':generateContent';headers={'Content-Type':'application/json','x-goog-api-key':key};body={systemInstruction:{parts:[{text:messages[0].content}]},contents:messages.slice(1).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content},...(m.images??[]).map(a=>({inlineData:{mimeType:a.mime,data:a.data}}))]})),generationConfig:{maxOutputTokens:2048,responseMimeType:'application/json',responseJsonSchema:schema}};}
@@ -51,7 +51,7 @@ export function createCloudAdapter({selection,apiKey,fetchUpstream=globalThis.fe
     else if(id==='openrouter'){body.max_tokens=1024;body.provider={allow_fallbacks:false};}
     else if(id==='gigachat'){headers.Authorization='Bearer '+await gigaToken(combined);body.max_tokens=1024;}
    }
-   const r=await send(url,{method:'POST',headers,body:JSON.stringify(body)},combined);httpStatus=r.status;const result=await boundedJson(r,combined);combined.throwIfAborted();usage=usageOf(result,id);
+   const r=await send(url,{method:'POST',headers,body:JSON.stringify(body)},combined);httpStatus=r.status;const result=await boundedJson(r,combined);combined.throwIfAborted();usage=usageOf(result,id);providerReportedModel=typeof result.model==='string'?result.model.slice(0,160):null;
    if(id==='openai'){
     if(result.status!=='completed'||result.output?.some(p=>!['message','reasoning'].includes(p.type)))throw Error('CLOUD_RESPONSE_INVALID');reasoningRedacted=result.output?.some(p=>p.type==='reasoning')??false;
     rawFinal=(result.output??[]).filter(p=>p.type==='message').flatMap(p=>p.content??[]).filter(p=>p.type==='output_text').map(p=>p.text).join('');
@@ -71,7 +71,7 @@ export function createCloudAdapter({selection,apiKey,fetchUpstream=globalThis.fe
    if(['DEPTH_ZERO_SELF_SIGNED_CERT','UNABLE_TO_VERIFY_LEAF_SIGNATURE','SELF_SIGNED_CERT_IN_CHAIN'].includes(e?.cause?.code))throw Error('CLOUD_TLS_FAILED');throw Error('CLOUD_SERVICE_UNAVAILABLE');
   }finally{
    clearTimeout(timer);current=null;busy=false;const tagged=/<\/?think(?:ing)?>/iu.test(rawFinal),safeRaw=rawFinal&&!rawFinal.includes(key)&&(!access||!rawFinal.includes(access))&&!tagged?rawFinal:null;
-   try{onOutcome?.({providerId:config.providerId,modelId:config.modelId,status,rawContent:safeRaw,httpStatus,reasoningRedacted:reasoningRedacted||tagged,usage,totalMs:performance.now()-started});}catch{}
+   try{onOutcome?.({providerId:config.providerId,modelId:config.modelId,providerReportedModel,status,rawContent:safeRaw,httpStatus,reasoningRedacted:reasoningRedacted||tagged,usage,totalMs:performance.now()-started});}catch{}
   }
  },dispose(){disposed=true;current?.abort();key='';access=null;expires=0;}
  };return Object.freeze(adapter);

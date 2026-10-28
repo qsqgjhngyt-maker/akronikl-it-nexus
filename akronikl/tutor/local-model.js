@@ -34,7 +34,8 @@ export function createWllamaProvider(engine,{recreate=null,onOutcome=null,reason
     return exits.get(value);
   }
   return Object.freeze({kind:'local',transport:'in-process',modelId:LOCAL_MODEL.id,
-    async generate({messages,evidencePacket,allowedCitations,signal,onProgress}){
+    async generate({messages,evidencePacket,allowedCitations,signal:callerSignal,onProgress}){
+      const ownedStop=new AbortController(),signal=callerSignal?AbortSignal.any([callerSignal,ownedStop.signal]):ownedStop.signal;
       if(disposed||busy||cleanupFailed||signal?.aborted)throw Error('LOCAL_ENGINE_UNAVAILABLE');
       busy=true;lastMeasurement=null;const meter=createInferenceMeter();let success=false,releaseIdle,aborted=false;
       idle=new Promise(resolve=>releaseIdle=resolve);
@@ -44,7 +45,7 @@ export function createWllamaProvider(engine,{recreate=null,onOutcome=null,reason
       // Wllama 3.8.1 polls abortSignal after get_result. exit() terminates its
       // worker immediately; race also settles JS when the terminated worker's
       // pending RPC never resolves. The next request opens the same verified Blob.
-      const abort=()=>{if(aborted)return;aborted=true;forcedStops++;cancelCleanup=close(current);cancelCleanup.then(()=>rejectAbort(Error('LOCAL_REQUEST_CANCELLED')),rejectAbort);};
+      const abort=()=>{if(aborted)return;aborted=true;ownedStop.abort();forcedStops++;cancelCleanup=close(current);cancelCleanup.then(()=>rejectAbort(Error('LOCAL_REQUEST_CANCELLED')),rejectAbort);};
       cancelActive=abort;signal?.addEventListener('abort',abort,{once:true});
       try{
         if(!current){

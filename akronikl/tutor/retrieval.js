@@ -48,6 +48,7 @@ function contentScore(record,wanted){
 // full paragraphs so a relevant second paragraph is not lost before ranking.
 export function tutorExcerpt(value,query,limit=500,definitionContext=false){
   const fallback=completeExcerpt(value,limit),wanted=new Set(terms(query));
+  if(value.length<=limit)return fallback; // Keep adjacent qualifications, even without repeated query tokens.
   if(!wanted.size)return fallback;
   // Paragraph starts retain subjects and conditions. Sliding into the middle
   // of a paragraph had detached "after" from the preceding while/do contrast.
@@ -73,12 +74,17 @@ export function selectTutorSource(records,query){
 // paragraphs from the SAME verified lesson, never a prepared/reference answer.
 export function selectTeachingContext(index,matches,query,limit=2){
   const primary=selectTutorSource(matches,query);if(!primary)return [];
-  const wanted=new Set(terms(query)),selected=[primary];
-  if(primary.section==='glossary')for(const line of primary.text.split('\n')){const [heading]=line.split(':');if(coverage(heading,wanted)>0)for(const token of terms(line))wanted.add(token);}
+  const wanted=new Set(terms(query)),original=new Set(wanted),selected=[primary];
+  if(primary.section==='glossary')for(const line of primary.text.split('\n')){const [heading]=line.split(':');if(coverage(heading,original)>0)for(const token of terms(line))wanted.add(token);}
   const candidates=index.getLesson(primary.lessonId,primary.locale).filter(r=>r.section==='theory'&&r.sourceId!==primary.sourceId);
   const qualifiers=/(?:контракт|гаранти|предуслов|только|нельзя|если|не следует|не означает|зависит|contract|guarantee|precondition|only|must|unless|cannot|depends|not always|not necessarily)/giu;
-  const ranked=candidates.map(r=>({record:r,score:contentScore(r,wanted)+coverage(r.text.split('\n')[0],wanted)*3+Math.min(12,(r.text.match(qualifiers)||[]).length)*.35})).sort((a,b)=>b.score-a.score);
-  for(const x of ranked){if(selected.length>=limit)break;if(coverage(x.record.text,wanted)>0)selected.push(x.record);}
+  const conditionHeading=/(?:предуслов|контракт|после|состояни|сортиров|precondition|contract|after|state|sorting|partition)/iu;
+  const ranked=candidates.map(r=>({record:r,condition:conditionHeading.test(r.text.split('\n')[0]),score:contentScore(r,wanted)+coverage(r.text.split('\n')[0],wanted)*3+Math.min(12,(r.text.match(qualifiers)||[]).length)*.35})).sort((a,b)=>b.score-a.score);
+  const condition=ranked.find(x=>x.condition&&coverage(x.record.text,original)>0);if(condition&&selected.length<limit)selected.push(condition.record);
+  // Cover distinct query concepts in headings before spending the budget on
+  // another paragraph which merely repeats both words incidentally.
+  const covered=new Set(selected.slice(1).flatMap(r=>terms(r.text.split('\n')[0])));for(const x of ranked){if(selected.length>=limit)break;if(selected.includes(x.record))continue;const focus=terms(x.record.text.split('\n')[0]).filter(t=>original.has(t)&&!covered.has(t));if(focus.length){selected.push(x.record);for(const t of focus)covered.add(t);}}
+  for(const x of ranked){if(selected.length>=limit)break;if(!selected.includes(x.record)&&coverage(x.record.text,wanted)>0)selected.push(x.record);}
   return selected;
 }
 const cached=new WeakMap();
