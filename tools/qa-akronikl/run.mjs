@@ -67,7 +67,8 @@ try{
   const started=performance.now();await page.locator('[data-akronikl-send]').click();
   await page.waitForFunction(count=>document.querySelectorAll('[data-ak-message="assistant"]').length>count&&document.querySelector('[data-akronikl-send]')?.closest('form')?.getAttribute('aria-busy')==='false',n,{timeout:145000});
   const elapsedMs=performance.now()-started;
-  const row={question:text,visibleResponseMs:elapsedMs,includesPlaywright:true,text:await page.locator('[data-ak-message="assistant"]').last().innerText(),metrics:await page.evaluate(()=>qa.measurements()),drained:await page.evaluate(()=>qa.settle())};
+  const drained=await page.evaluate(()=>qa.settle());
+  const row={question:text,visibleResponseMs:elapsedMs,includesPlaywright:true,text:await page.locator('[data-ak-message="assistant"]').last().innerText(),metrics:await page.evaluate(()=>qa.measurements()),metricsCapturedAfterSettle:true,drained};
   result.ui.push(row);await save();if(!row.drained)throw Error('Не подтверждено завершение inference после UI-запроса');
  }
  await askUi(corpus.cases[0].prompt);
