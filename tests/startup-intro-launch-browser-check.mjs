@@ -102,7 +102,10 @@ try{
   await s.page.locator('.nexus-appearance-dialog [data-intro-preview]').click();await layer(s).waitFor();await s.page.locator('.nexus-intro-skip').click();await ended(s);
   await s.page.locator('.nexus-appearance-dialog [data-intro-enabled]').check();await s.page.locator('.nexus-appearance-dialog [data-intro-simplified]').uncheck();await s.page.locator('[data-appearance-close]').click();
   await s.page.evaluate(()=>location.hash='#view=account');await s.page.locator('[data-unified-account]').waitFor();assert.equal(await s.page.locator('[data-unified-account] [data-intro-settings]').count(),0);
-  await s.page.reload();await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);await s.context.close();
+  await s.page.reload();await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);
+  await s.page.setViewportSize({width:390,height:844});await s.page.evaluate(()=>location.hash='#view=home');await s.page.locator('.visual-home').waitFor();await s.page.locator('#visualSettings summary').click();
+  await s.page.locator('#nexusSettingsPanel [data-intro-enabled]').scrollIntoViewIfNeeded();const box=await s.page.locator('#nexusSettingsPanel').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=391);await shot(s,'mobile-settings-menu');
+  await s.page.locator('#nexusSettingsPanel [data-intro-enabled]').uncheck();await s.page.reload();await ready(s);await s.page.waitForTimeout(450);assert.equal(await layer(s).count(),0);await s.context.close();
  });
  await check('Настройки доступны и до входа; отключение сохраняется после нового открытия',async()=>{
   const s=await session({surface:'entry',guest:true});await s.open();await layer(s).waitFor();await s.page.locator('.nexus-intro-skip').click();await ended(s);
