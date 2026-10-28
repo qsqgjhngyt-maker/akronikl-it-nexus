@@ -12,7 +12,7 @@ const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json
 const sw=await readFile(path.join(frontend,'service-worker.js'),'utf8'),profile=await mkdtemp(path.join(tmpdir(),'nexus-install-bounded-'));
 const checks=[],requests=[],workerErrors=[];let context,mode='base',networkDown=false,failure,activeRequests=0,peakRequests=0;
 const optional=new Set((manifest.optionalAssets||[]).map(r=>r.url));
-const latencyMs=350,uniqueBodies=new Set(manifest.files.filter(r=>!optional.has(r.file)&&!['index.html','nexus-shell.html','version.json','service-worker.js'].includes(r.file)).map(r=>r.sha256+':'+r.bytes)).size;
+const latencyMs=350,uniqueBodies=new Set(manifest.files.filter(r=>!optional.has(r.file)&&!['index.html','nexus-shell.html','version.json','service-worker.js','startup-intro.json'].includes(r.file)).map(r=>r.sha256+':'+r.bytes)).size;
 const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.png')?'image/png':f.endsWith('.webp')?'image/webp':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.md')?'text/markdown':'text/html';
 const server=http.createServer(async(req,res)=>{
  if(networkDown){req.socket.destroy();return}
@@ -60,6 +60,8 @@ try{
   assert.equal(value.generation,generation);assert.equal(value.publicReady,true);assert.equal(value.protocol,'nexus-verified-public-v1');
   assert.equal(requests.length-before,uniqueBodies);assert.ok(peakRequests>1&&peakRequests<=8);
   assert.equal(requests.some(r=>optional.has(r.file)),false,'Необязательное медиа не загружается установщиком PWA');
+  assert.equal(requests.some(r=>r.file==='startup-intro.json'),false,'Публичный descriptor остаётся network-only');
+  assert.equal(sw.includes('url: "startup-intro.json"'),false,'Descriptor не получает обязательную Offline authority');
   for(const file of optional)assert.equal(sw.includes('url: "'+file+'"'),false,'Медиа не получает public authority');
  });
  let expected;
