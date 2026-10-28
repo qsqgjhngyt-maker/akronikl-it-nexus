@@ -17,7 +17,7 @@ export function evidenceQuoteCandidates(source){
 export function createWllamaProvider(engine,{recreate=null,onOutcome=null,reasoningBudget=0}={}) {
   if(!engine||typeof engine.createChatCompletion!=='function'||typeof engine.exit!=='function')throw Error('LOCAL_ENGINE_INVALID');
   if(recreate!==null&&typeof recreate!=='function'||onOutcome!==null&&typeof onOutcome!=='function')throw Error('LOCAL_ENGINE_INVALID');
-  if(![0,64].includes(reasoningBudget))throw Error('LOCAL_REASONING_CONFIG_INVALID');
+  if(![0,48].includes(reasoningBudget))throw Error('LOCAL_REASONING_CONFIG_INVALID');
   let current=engine,disposed=false,busy=false,lastMeasurement=null,cancelActive=null,idle=Promise.resolve(),epoch=1,forcedStops=0,cleanupFailed=false,disposal=null;
   const exits=new WeakMap();
   function close(value){
@@ -115,7 +115,7 @@ export async function loadLocalModel(file,{signal,profile='local-cpu',loadRuntim
     try{
     // Запрещён скрытый CDN fallback runtime. Неподдерживаемый браузер получает отказ.
     engine.setCompat(null);
-    // n_parallel:1, jinja:true; CPU internal reasoning is bounded at 64 tokens.
+    // n_parallel:1, jinja:true; CPU internal reasoning is bounded at 48 tokens.
     // Не меняем COOP/COEP. Запрос WebGPU не считается доказательством offload/скорости.
     if(profile==='local-webgpu'&&engine.isSupportWebGPU?.()!==true)throw Error('LOCAL_GPU_UNAVAILABLE');
     await engine.loadModel([file],loadOptions);
