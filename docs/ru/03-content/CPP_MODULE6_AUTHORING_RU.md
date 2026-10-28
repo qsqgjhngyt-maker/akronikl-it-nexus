@@ -1,3 +1,5 @@
+> Обновление28.10.2026: CI40628796921 завершён8/8SUCCESS; приёмка534373f —PARTIAL (P1Qt focus, P2критерии, P2вопросы), NEXUS-PERF-01 PASS. Актуальный итог:CPP_GOLD_MODULE6_ACCEPTANCE_0507_RU.md. Ниже сохранена фиксация этапаM6-1; прежнее ожидание CI больше не актуально.
+
 # C++ Module 6: M6-1 — полный двуязычный учебный кандидат
 
 28.10.2026. STATUS: **PASS для M6-1 / AUTOMATED PASS проверенных примеров и заданий. Полный Module6 — PARTIAL.** Source a99c320ac6a480eb048796db0d403422cc76b762, только feature. Общий CI [40628796921](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/actions/runs/40628796921) ещё выполняется; его итоговый PASS не заявлен. Формальная05/07, реальные устройства и публикация не закрыты.

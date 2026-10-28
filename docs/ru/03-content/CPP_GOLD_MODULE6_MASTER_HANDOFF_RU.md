@@ -1,3 +1,11 @@
+# Приёмка05/07 на534373f —28.10.2026
+
+STATUS: **PARTIAL: один P1 и два P2 OPEN.** CI40628796921 —8/8SUCCESS на product/test-эквивалентном a99c320; NEXUS-PERF-01 PASS75/591994B, outline26769B. Подтверждены M6 native110+WASI110, M1–5940, Qt5 functional,12E2E,144responsive/384feedback и coldOffline67/67,legacy40/40. Фокус доступного Qt-фильтра требует исправления; также нужны согласованные hint/criteria и предметные вопросы. Зелёный functionalCI не закрывает эти замечания.
+
+Актуальны CPP_GOLD_MODULE6_ACCEPTANCE_0507_RU.md, CPP_MODULE6_ACCEPTANCE_0507_EVIDENCE.json/HASHES.json/ROUTING_RU.md. Дальше07/02+03 в той же feature, затем повторная05/07. Main d76d161, production …10.9-test.2, backend/релизы не менялись. Устройства владельца, production GUI service и итоговая аттестация курса остаются отдельными gates. LIVE/FULL LIVE PASS не выдаются. Ниже сохранена история; её ожидание CI заменено текущим результатом.
+
+---
+
 # M6-1: полный Gold учебный кандидат
 
 28.10.2026. STATUS: **PASS M6-1 / AUTOMATED PASS проверенных примеров; PARTIAL полного Module6.** Source a99c320ac6a480eb048796db0d403422cc76b762. Подготовлены12 уроков RU/EN,99 разделов/24 примера/72 задачи/12 лабораторных на язык и проект TaskFlow. Подтверждены native110/110, WASI110/110,5 Qt sources и48 UI сочетаний. Текущие исполняемые bundles совпадают с проверенными; source/progress/quiz сохранены. Теперь67 lesson IDs (56 прежних+11),40 legacy,67 Gold.
