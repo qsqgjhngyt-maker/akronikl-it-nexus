@@ -1,0 +1,325 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.cpp-basics",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.variables-scope",
+  "sessions": 2,
+  "prerequisiteIds": [
+    "cpp.data-types"
+  ],
+  "sourceRefs": [
+    "CPP20-SCOPE",
+    "CPP20-LIFETIME",
+    "CPP20-INIT-GENERAL",
+    "CPP-GUIDELINES"
+  ],
+  "title": "Variables, blocks, and lifetime: a state journal",
+  "lead": "Trace when an object is created, which name denotes it, and why a copy does not change with the original.",
+  "why": "Debugging needs a history of changes rather than the last number alone. Name scope and object lifetime are related but answer different questions. We examine them without assuming a particular hardware stack layout.",
+  "objectives": [
+    "Distinguish initialization from later assignment.",
+    "Predict the state of an original object and an independent copy.",
+    "Determine name visibility in nested blocks and recognize shadowing.",
+    "Explain name scope versus object lifetime."
+  ],
+  "prerequisites": [
+    "int, const, initialization, and output labels from the first block.",
+    "Reading sequential statements. A nested block needs neither if nor a loop."
+  ],
+  "concepts": [
+    {
+      "term": "Variable",
+      "definition": "In these examples a named typed object with state; mutation is allowed unless the object is const."
+    },
+    {
+      "term": "Assignment",
+      "definition": "Replacing the value of an existing object, as in stock = 7;."
+    },
+    {
+      "term": "Name scope",
+      "definition": "The program region in which a name can be found under language rules."
+    },
+    {
+      "term": "Object lifetime",
+      "definition": "The period in which an object exists during execution, rather than a source line or merely name visibility."
+    },
+    {
+      "term": "Shadowing",
+      "definition": "An inner declaration with the same name hides the outer declaration during lookup in that block."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Session 1. An object acquires state",
+      "paragraphs": [
+        "int stock{10}; creates an object initialized to 10. stock = 7; changes that existing object rather than creating another stock. In assignment, the left side identifies the destination and the right side produces the new value. In int snapshot = stock;, a similar sign introduces the initial value of a new object.",
+        "Read statements top to bottom and record state after each. stock = stock - 3; reads the old stock, computes the difference, and stores it back. It is not the mathematical equation stock = stock − 3. These small values are safe, but range reasoning still applies."
+      ]
+    },
+    {
+      "title": "A copy is a snapshot, not a link",
+      "paragraphs": [
+        "int snapshot = stock; creates a second int holding the current value of the first. Changing stock later leaves snapshot unchanged. Equal values do not imply one object. We may label them S and C in a trace; these are symbolic identifiers rather than actual memory addresses.",
+        "Print both values after changing the original to test copying. Printing stock twice does not observe snapshot at all. References and pointers are introduced in lesson eleven; do not use them as an unexplained shortcut here."
+      ]
+    },
+    {
+      "title": "Session 2. A block limits name scope",
+      "paragraphs": [
+        "A standalone pair of braces can form a nested block inside main. Its statements execute in sequence. A name adjustment declared within is available after its declaration inside the block, but not after its closing brace. An outer count remains visible inside unless another count declaration hides it.",
+        "Distinguish block braces from the initializer in int count{10};. One groups statements and the other provides an initial value. Indentation highlights boundaries, but braces rather than whitespace define them."
+      ]
+    },
+    {
+      "title": "Shadowing creates a different object",
+      "paragraphs": [
+        "The inner int count{3}; creates another object. count = 4; affects that object rather than the outer count{10}. After leaving the block, lookup finds the outer name again with value 10. The outer object was neither destroyed nor restored from a backup.",
+        "Shadowing is allowed in the shown nested block but often makes debugging harder. Prefer distinct meaningful names such as totalCount and batchCount in normal work. The intentional example teaches recognition of the false claim that changing the inner count changed the outer one."
+      ]
+    },
+    {
+      "title": "Name visibility and object existence",
+      "paragraphs": [
+        "Scope concerns source regions and name lookup; lifetime concerns execution. The outer int still exists while control is in the inner block, even when its name is hidden. For the simple automatic ints here, lifetime begins after initialization and ends when their block is left. This is a bounded account of the current examples, not every C++ storage category.",
+        "Bytes potentially remaining somewhere do not make access after lifetime safe. We perform no such access and never read uninitialized values. The state table and block diagram are a language-level model, not a promise about physical stack placement."
+      ]
+    },
+    {
+      "title": "A journal localizes a defect",
+      "paragraphs": [
+        "Before running, record events such as stock created, beforeSale copied, stock changed, and block left. List existing objects, visible names, and values at each event. Compare printed checkpoints with the table. The first disagreement can expose a mistaken mental model rather than a compiler defect.",
+        "Distinguish repairing a program from correcting your prediction. Both are useful if the original hypothesis and actual output are retained. Preserve failed predictions in the record because they identify the confusion that was resolved."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "independent-copy",
+      "title": "Original and snapshot",
+      "purpose": "Observe independent objects after changing one.",
+      "code": "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    stock = 7;\n    std::cout << stock << ' ' << snapshot << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "7 10\n",
+      "steps": [
+        "After the first declaration stock=10.",
+        "The copy receives 10; assignment changes only stock.",
+        "Output 7 10 confirms distinct objects."
+      ]
+    },
+    {
+      "id": "shadow",
+      "title": "An inner object with the same name",
+      "purpose": "Separate hiding a name from changing its value.",
+      "code": "#include <iostream>\n\nint main() {\n    int count{10};\n    std::cout << count << '\\n';\n    {\n        int count{3};\n        count = 4;\n        std::cout << count << '\\n';\n    }\n    std::cout << count << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "10\n4\n10\n",
+      "steps": [
+        "Before the block the outer count=10 is visible.",
+        "Inside, a new count changes from 3 to 4.",
+        "Afterward the original outer count=10 is visible."
+      ]
+    },
+    {
+      "id": "outer-write",
+      "title": "Accessing an outer object",
+      "purpose": "Show that a block does not automatically copy outer objects.",
+      "code": "#include <iostream>\n\nint main() {\n    int count{10};\n    {\n        int adjustment{3};\n        count = count - adjustment;\n        std::cout << count << '\\n';\n    }\n    std::cout << count << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "7\n7\n",
+      "steps": [
+        "No new count is declared inside.",
+        "Assignment finds the outer object and changes it to 7.",
+        "The change remains after leaving the block."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Remove only the inner type",
+      "action": "In the shadowing example replace int count{3}; with count = 3;.",
+      "prediction": "Now the outer count changes: output is 10, 4, 4.",
+      "verification": "Explain why a second object is no longer created."
+    },
+    {
+      "title": "Change the copy",
+      "action": "Insert snapshot = 2; before output in the copy example.",
+      "prediction": "Output becomes 7 2: there is no reverse link to stock either.",
+      "verification": "Draw two object rows rather than an alias arrow."
+    },
+    {
+      "title": "A name boundary",
+      "action": "Try to print adjustment after the block in the third example.",
+      "prediction": "The build rejects the unavailable name.",
+      "verification": "Move the print inside the block; do not try unknown-memory access."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "The snapshot did not update",
+      "cause": "A copied value was mistaken for a link.",
+      "fix": "Record the copying moment; retaining the old value is correct for a snapshot."
+    },
+    {
+      "symptom": "The outer value did not change",
+      "cause": "An inner object shadows it.",
+      "fix": "Remove unwanted shadowing or give distinct objects distinct names."
+    },
+    {
+      "symptom": "A name is unavailable after }",
+      "cause": "Its scope has ended.",
+      "fix": "Print before the boundary or design an outer result object."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "outside-block",
+      "title": "Intentional: a name outside its block",
+      "code": "#include <iostream>\n\nint main() {\n    { int localCount{3}; }\n    std::cout << localCount << '\\n';\n}\n",
+      "expectation": "compile-error",
+      "explanation": "localCount is unavailable after the block."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Fill a stock/snapshot table before and after each copy and assignment.",
+      "criteria": "Distinguish two objects and the change moment.",
+      "hint": "Start with an empty table and add objects at declarations."
+    },
+    {
+      "level": "applied",
+      "task": "Rewrite shadowing with outerCount and batchCount while preserving output 10, 4, 10.",
+      "criteria": "Preserve behavior and explain each number.",
+      "hint": "Rename one object at a time."
+    },
+    {
+      "level": "transfer",
+      "task": "Design a stock journal before and after a sale, retaining the initial snapshot.",
+      "criteria": "The report reveals initial stock, sale, and result.",
+      "hint": "Decide which values must outlive the inner block."
+    }
+  ],
+  "laboratory": {
+    "title": "A warehouse state journal",
+    "challenge": "Print before, inside, after, and snapshot. The sale is declared inside a block, outer stock changes, and beforeSale retains the initial value.",
+    "starterCode": "#include <iostream>\n\nint main() {\n    int stock{12};\n    int beforeSale = stock;\n    stock = stock - 5;\n    std::cout << \"after=\" << stock << '\\n';\n    return 0;\n}\n",
+    "starterExpectedStdout": "after=7\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    int stock{12};\n    int beforeSale = stock;\n    std::cout << \"before=\" << beforeSale << '\\n';\n    {\n        const int sold{5};\n        stock = stock - sold;\n        std::cout << \"inside=\" << stock << '\\n';\n    }\n    std::cout << \"after=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << beforeSale << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "before=12\ninside=7\nafter=7\nsnapshot=12\n"
+      }
+    ],
+    "steps": [
+      "Predict every checkpoint.",
+      "Distinguish stock, beforeSale, and sold objects.",
+      "Complete output and compare with the trace.",
+      "Test sales of 0 and 12 from initial stock 12."
+    ],
+    "rubric": [
+      "The initial snapshot remains unchanged.",
+      "stock retains its new value after the block.",
+      "Describe names and lifetimes without invented addresses.",
+      "Preserve three actual traces and their original predictions."
+    ],
+    "verificationVariants": [
+      {
+        "id": "zero-sale",
+        "replace": [
+          {
+            "from": "const int sold{5};",
+            "to": "const int sold{0};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "before=12\ninside=12\nafter=12\nsnapshot=12\n"
+      },
+      {
+        "id": "all-sold",
+        "replace": [
+          {
+            "from": "const int sold{5};",
+            "to": "const int sold{12};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "before=12\ninside=0\nafter=0\nsnapshot=12\n"
+      }
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What does int copy = original; create?",
+      "answers": [
+        "A separate object with the current value",
+        "Another name for the same object",
+        "A permanent formula link"
+      ],
+      "correctIndex": 0,
+      "explanation": "Copying an int does not create an alias."
+    },
+    {
+      "question": "Is a shadowed outer count necessarily destroyed?",
+      "answers": [
+        "Yes",
+        "No: the name is hidden and the object still exists",
+        "Only when zero"
+      ],
+      "correctIndex": 1,
+      "explanation": "Name lookup and lifetime are different concerns."
+    },
+    {
+      "question": "adjustment is unavailable after the block. How can you repair the report?",
+      "answers": [
+        "Read arbitrary bytes",
+        "Print inside or retain the required result in an outer object",
+        "Remove the header"
+      ],
+      "correctIndex": 1,
+      "explanation": "The repair must respect scope and lifetime."
+    }
+  ],
+  "reflection": [
+    "How does “object exists” differ from “name is visible”?",
+    "Why must symbolic labels S and C not be presented as actual addresses?"
+  ],
+  "bridge": "With state and object boundaries clear, examine how expressions produce values and how parentheses group them without promising a general evaluation order.",
+  "visualization": {
+    "kind": "toolchain",
+    "title": "Two objects and one change",
+    "description": "A fixed trace of the copy example; object labels are symbolic. This does not depict the hardware stack.",
+    "steps": [
+      {
+        "title": "stock{10}",
+        "description": "S is created with value 10."
+      },
+      {
+        "title": "snapshot",
+        "description": "C is created as a copy of value 10."
+      },
+      {
+        "title": "stock = 7",
+        "description": "Only S changes; C stays 10."
+      },
+      {
+        "title": "stdout",
+        "description": "7 and 10 are printed, observing both objects."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Where is a variable declared inside a block accessible?",
+    "answers": [
+      "Throughout the entire system",
+      "Within its scope",
+      "Only to the compiler"
+    ],
+    "correctIndex": 1
+  }
+}

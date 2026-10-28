@@ -26,12 +26,12 @@ async function session({frontend=candidate,surface='shell',width=1440,height=900
   if(navigator.serviceWorker){Object.defineProperty(navigator.serviceWorker,'controller',{get:()=>({postMessage(_r,ports){ports[0].postMessage({protocol:'nexus-verified-public-v1',graphId:graph,publicReady:true})}})});navigator.serviceWorker.register=async()=>{throw Error('SYNTHETIC_SW_DISABLED')}}
   window.__introFinishes=[];window.__introAt=null;window.__appAt=null;window.__introVideoEnd=null;window.__fadeIn=[];
   addEventListener('nexus:intro-finished',e=>window.__introFinishes.push({...e.detail,at:performance.now()}));
-  addEventListener('nexus:intro-video-ended',e=>{const video=(document.querySelector('[data-startup-intro] video[data-current]')||document.querySelector('[data-startup-intro] video'));window.__introVideoEnd={...e.detail,at:performance.now(),source:video.currentSrc,opacity:Number(getComputedStyle(video.dataset.sequenceSlot!==undefined?video.closest('.nexus-intro-visual'):video).opacity),phase:video.closest('dialog').dataset.phase,frames:video.getVideoPlaybackQuality?.().totalVideoFrames}});
-  document.addEventListener('playing',e=>{if(window.__fadeIn.length||!e.target.matches?.('[data-startup-intro] video'))return;const v=e.target;const sample=()=>window.__fadeIn.push({at:performance.now(),opacity:Number(getComputedStyle(v.dataset.sequenceSlot!==undefined?v.closest('.nexus-intro-visual'):v).opacity)});requestAnimationFrame(sample);setTimeout(sample,350);setTimeout(sample,1350)},{capture:true});
+  addEventListener('nexus:intro-video-ended',e=>{const video=(document.querySelector('[data-startup-intro] video[data-current]')||document.querySelector('[data-startup-intro] video'));window.__introVideoEnd={...e.detail,at:performance.now(),source:video.currentSrc,opacity:Number(getComputedStyle(video.closest('.nexus-intro-visual')||video).opacity),phase:video.closest('dialog').dataset.phase,frames:video.getVideoPlaybackQuality?.().totalVideoFrames}});
+  document.addEventListener('playing',e=>{if(window.__fadeIn.length||!e.target.matches?.('[data-startup-intro] video'))return;const v=e.target;const sample=()=>window.__fadeIn.push({at:performance.now(),opacity:Number(getComputedStyle(v.closest('.nexus-intro-visual')||v).opacity)});requestAnimationFrame(sample);setTimeout(sample,350);setTimeout(sample,1350)},{capture:true});
   new MutationObserver(()=>{if(!window.__introAt&&document.querySelector('[data-startup-intro]'))window.__introAt=performance.now();if(!window.__appAt&&document.querySelector('#app .visual-shell'))window.__appAt=performance.now()}).observe(document,{childList:true,subtree:true});
  },{key,handoff,pref,hidden,noLocks,lowDevice,online,oauth,graph:RUNTIME_GRAPH_ID,codec});
  await context.route('**/*',async route=>{try{
-  const req=route.request(),u=new URL(req.url());if(u.origin!==origin){errors.push('Внешний запрос '+u.origin);return route.abort()}
+  const req=route.request(),u=new URL(req.url()),cdn=u.href.startsWith('https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/cinematic-v4/');if(u.origin!==origin&&!cdn){errors.push('Внешний запрос '+u.origin);return route.abort()}
   if(!['GET','HEAD'].includes(req.method())){record.writes.push(u.pathname);return route.abort()}
   if(u.pathname.startsWith('/api/')){
    await new Promise(r=>setTimeout(r,accountDelay));let status=200,body;
@@ -46,7 +46,7 @@ async function session({frontend=candidate,surface='shell',width=1440,height=900
    else{status=403;body={error:{code:'SYNTHETIC_DENIED'}}}
    record.requests.push({file:u.pathname,api:true,status});return route.fulfill({status,headers:{'content-type':'application/json','cache-control':'no-store',vary:'*'},body:JSON.stringify(body)});
   }
-  let file=u.pathname.slice(1),source=frontend;
+  let file=cdn?u.pathname.replace('/akronikl-it-nexus/',''):u.pathname.slice(1),source=frontend;if(cdn){const headers=await req.allHeaders();assert.equal(headers.authorization,undefined);assert.equal(headers.cookie,undefined)}
   if(['/','/index.html'].includes(u.pathname)){file=state.surface==='entry'?'server-access/public/entry.html':'nexus-shell.html';if(state.surface==='entry')source=root}
   if(u.pathname==='/account/entry/'){file='server-access/public/entry.html';source=root}
   if(u.pathname.startsWith('/account/entry/')&&/\.(js|css)$/.test(file))file='entry-assets/'+manifest.assetGeneration+'/'+path.basename(file);
@@ -55,7 +55,8 @@ async function session({frontend=candidate,surface='shell',width=1440,height=900
   if(movie&&missing)return route.fulfill({status:404,body:''});
   let bytes;if(file==='startup-intro.json'&&descriptorBad)bytes=Buffer.from('{"schema":1,"module":"https://outside.invalid/malicious.js"}');else bytes=await readFile(path.resolve(source,file));
   const headers={'content-type':mime(file),'cache-control':file==='service-worker.js'?'no-store':'public,max-age=0','x-content-type-options':'nosniff'};
-  if(file==='server-access/public/entry.html')headers['content-security-policy']="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
+  if(cdn)headers['access-control-allow-origin']='*';
+  if(file==='server-access/public/entry.html')headers['content-security-policy']="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; media-src 'self' https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
   record.requests.push({file,bytes:bytes.length,movie});return route.fulfill({status:200,headers,body:bytes});
  }catch(e){try{await route.fulfill({status:404,body:''})}catch{}}});
  const page=await context.newPage();current=page;page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));
@@ -71,7 +72,7 @@ try{
  await check('Поведение принятой базы при фоновом обновлении #app зафиксировано',async()=>{
   const s=await session({frontend:baseline,pref:{schema:1,enabled:true,simplified:false,seen:''}});await s.open();await playing(s);
   await s.page.evaluate(()=>{(document.querySelector('video[data-current]')||document.querySelector('video')).pause();const app=document.querySelector('#app');app.replaceChildren(...app.childNodes)});
-  if(JSON.parse(await readFile(path.join(baseline,'BUILD_MANIFEST.json'))).assetGeneration==='ui1a-startup-cinematic-launch-20261028'){await s.page.waitForTimeout(200);assert.equal(await layer(s).count(),1);await s.page.keyboard.press('Escape')}
+  if(JSON.parse(await readFile(path.join(baseline,'BUILD_MANIFEST.json'))).assetGeneration!=='ui1a-startup-cinematic-candidate-20261028'){await s.page.waitForTimeout(200);assert.equal(await layer(s).count(),1);await s.page.keyboard.press('Escape')}
   await ended(s);await s.context.close();
  });
  await check('Desktop: новый widescreen целиком10секунд, до Account, медленное проявление и финальный логотип',async()=>{
@@ -79,16 +80,16 @@ try{
   await ready(s);await s.page.evaluate(()=>{const app=document.querySelector('#app');app.replaceChildren(...app.childNodes);document.querySelector('#menuBtn')?.focus();location.hash='#view=academy'});
   await s.page.waitForTimeout(1100);assert.equal(await layer(s).count(),1);await shot(s,'desktop-full-video');
   const alpha=await s.page.evaluate(()=>window.__fadeIn);assert.ok(alpha[0].opacity<.2);assert.ok(alpha[1].opacity>alpha[0].opacity&&alpha[1].opacity<.9);assert.ok(alpha[2].opacity>.95);
-  await s.page.waitForFunction(()=>window.__introVideoEnd);const logo=await s.page.evaluate(()=>window.__introVideoEnd);assert.equal(logo.phase,'hold');assert.match(logo.source,/cinematic-v3\/desktop\/mp4\/part-004\.mp4/);assert.ok(Math.abs(logo.duration-10)<.05);assert.ok(logo.playedSeconds>=9.95);assert.ok(logo.opacity>.99);assert.equal(await s.page.locator('.nexus-intro-wordmark').count(),0);await shot(s,'desktop-final-logo');await ended(s);
+  await s.page.waitForFunction(()=>window.__introVideoEnd);const logo=await s.page.evaluate(()=>window.__introVideoEnd);assert.equal(logo.phase,'hold');assert.match(logo.source,/cinematic-v4\/desktop\.mp4/);assert.ok(Math.abs(logo.duration-10)<.05);assert.ok(logo.playedSeconds>=9.95);assert.ok(logo.opacity>.99);assert.equal(await s.page.locator('.nexus-intro-wordmark').count(),0);await shot(s,'desktop-final-logo');await ended(s);
   const done=await s.page.evaluate(()=>window.__introFinishes.at(-1));assert.equal(done.reason,'ended');assert.ok(done.at-logo.at>=1750,'Затухание должно завершиться после финального кадра');assert.equal(s.record.writes.length,0);s.record.fullPlayback={...done,logo,fadeIn:alpha};await s.context.close();
  });
  await check('Mobile: 8 секунд целиком, открытие без сессии и независимо от окончания проверки Account',async()=>{
   const s=await session({surface:'entry',guest:true,width:390,height:844,accountDelay:2500});await s.open();await playing(s);assert.equal(await layer(s).getAttribute('data-variant'),'mobile');await shot(s,'mobile-before-login');await ended(s);
-  const done=await s.page.evaluate(()=>window.__introFinishes.at(-1)),last=await s.page.evaluate(()=>window.__introVideoEnd);assert.equal(done.reason,'ended');assert.ok(done.playedSeconds>=8);assert.match(last.source,/cinematic-v3\/mobile\/mp4\/part-003\.mp4/);assert.ok(done.at-last.at>=1750);assert.equal(await s.page.locator('[data-login]').count(),1);s.record.fullPlayback={...done,logo:last};await s.context.close();
+  const done=await s.page.evaluate(()=>window.__introFinishes.at(-1)),last=await s.page.evaluate(()=>window.__introVideoEnd);assert.equal(done.reason,'ended');assert.ok(done.playedSeconds>=8);assert.match(last.source,/cinematic-v4\/mobile\.mp4/);assert.ok(done.at-last.at>=1750);assert.equal(await s.page.locator('[data-login]').count(),1);s.record.fullPlayback={...done,logo:last};await s.context.close();
  });
  await check('WebM Desktop: реальные10секунд и работа Пропустить во время удержания финального кадра',async()=>{
   const s=await session({surface:'entry',guest:true,codec:'webm'});await s.open();await playing(s);await s.page.waitForFunction(()=>window.__introVideoEnd);
-  const end=await s.page.evaluate(()=>window.__introVideoEnd);assert.match(end.source,/cinematic-v3\/desktop\/webm\/part-004\.webm/);assert.ok(Math.abs(end.duration-10)<.05);assert.ok(end.playedSeconds>=9.95);
+  const end=await s.page.evaluate(()=>window.__introVideoEnd);assert.match(end.source,/cinematic-v4\/desktop\.webm/);assert.ok(Math.abs(end.duration-10)<.05);assert.ok(end.playedSeconds>=9.95);
   await s.page.locator('.nexus-intro-skip').click();await ended(s);assert.equal(await s.page.evaluate(()=>window.__introFinishes.at(-1).reason),'skip');await s.context.close();
  });
  await check('Задержка видео 3.5 секунды не даёт секундную вспышку; Nexus загружается параллельно',async()=>{

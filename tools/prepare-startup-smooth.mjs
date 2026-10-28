@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';import {readFile,writeFile,mkdir,copyFile,unlink} from 'node:fs/promises';import {execFileSync} from 'node:child_process';import path from 'node:path';
+import {SM_BASE,SM_GENERATION,SM_META,SM_RECEIPT,SM_ROOTS,SM_PRODUCT,hash,verifyRecord,verifySmooth} from './startup-smooth-contract.mjs';
+const root=path.resolve(import.meta.dirname,'..');
+if(process.argv.includes('--rollback')){await verifySmooth({root});const r=JSON.parse(await readFile(path.join(root,SM_RECEIPT)));for(const x of r.rollback)await writeFile(path.join(root,x.file),execFileSync('git',['show',SM_BASE+':'+x.file],{cwd:root,maxBuffer:128*1024*1024}));const m=JSON.parse(await readFile(path.join(root,SM_META)));m.kind='startup-smooth-rollback';await writeFile(path.join(root,SM_META),JSON.stringify(m,null,2)+'\n');console.log(await verifySmooth({root}));process.exit(0)}
+const i=process.argv.indexOf('--artifact');assert.ok(i>=0&&process.argv[i+1]);const artifact=path.resolve(process.argv[i+1]),m=JSON.parse(await readFile(path.join(artifact,'BUILD_MANIFEST.json')));assert.equal(m.assetGeneration,SM_GENERATION);
+for(const r of m.files)verifyRecord(r,await readFile(path.join(artifact,r.file)));
+const publish=m.files.filter(r=>SM_ROOTS.includes(r.file)||r.file.startsWith('releases/'+SM_GENERATION+'/')||r.file.startsWith('entry-assets/'+SM_GENERATION+'/'));publish.push({file:'BUILD_MANIFEST.json'});
+for(const r of publish){const dst=path.join(root,r.file);await mkdir(path.dirname(dst),{recursive:true});await copyFile(path.join(artifact,r.file),dst)}
+await copyFile(path.join(artifact,'entry-assets',SM_GENERATION,'entry.js'),path.join(root,'server-access/image/public/entry.js'));await copyFile(path.join(artifact,'entry-assets',SM_GENERATION,'galaxy.js'),path.join(root,'server-access/image/public/galaxy.js'));
+const files=[];for(const f of new Set([...publish.map(r=>r.file),...SM_PRODUCT])){const b=await readFile(path.join(root,f));files.push({file:f,bytes:b.length,sha256:hash(b)})}
+const rollback=SM_ROOTS.map(file=>{const b=execFileSync('git',['show',SM_BASE+':'+file],{cwd:root,maxBuffer:128*1024*1024});return{file,bytes:b.length,sha256:hash(b)}});
+await writeFile(path.join(root,SM_META),JSON.stringify({schema:1,kind:'startup-smooth',baseCommit:SM_BASE,generation:SM_GENERATION,officialRelease:false,uiEntryDeploymentRequiresOwnerApproval:true,cspMediaSourceRequiresOwnerApproval:true},null,2)+'\n');
+await writeFile(path.join(root,SM_RECEIPT),JSON.stringify({schema:1,baseCommit:SM_BASE,generation:SM_GENERATION,files:files.sort((a,b)=>a.file.localeCompare(b.file)),rollback},null,2)+'\n');console.log({records:files.length,receiptSha256:hash(await readFile(path.join(root,SM_RECEIPT)))});

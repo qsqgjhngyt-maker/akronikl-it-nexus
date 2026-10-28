@@ -7,7 +7,8 @@ import path from 'node:path';
 import {FIX_BASE as OLD_BASE,FIX_GENERATION as OLD_GENERATION,verifyLaunchFix as verifyOldFix,hash} from './startup-intro-launch-fix-contract.mjs';
 const root=path.resolve(import.meta.dirname,'..'),lane=process.argv[process.argv.indexOf('--lane')+1];assert.ok(['preflight','content','browser','integration','publication'].includes(lane));
 let firstPaint;try{await access(path.join(root,'startup-intro-first-paint.json'));firstPaint=await import('./startup-first-paint-contract.mjs')}catch(e){if(e.code!=='ENOENT')throw e}
-const FIX_BASE=firstPaint?.FP_BASE||OLD_BASE,FIX_GENERATION=firstPaint?.FP_GENERATION||OLD_GENERATION,verifyLaunchFix=firstPaint?.verifyFirstPaint||verifyOldFix,builder=firstPaint?'tools/build-startup-first-paint.mjs':'tools/build-startup-intro-launch-fix.mjs';
+let smooth;try{await access(path.join(root,'startup-intro-smooth.json'));smooth=await import('./startup-smooth-contract.mjs')}catch(e){if(e.code!=='ENOENT')throw e}
+const FIX_BASE=smooth?.SM_BASE||firstPaint?.FP_BASE||OLD_BASE,FIX_GENERATION=smooth?.SM_GENERATION||firstPaint?.FP_GENERATION||OLD_GENERATION,verifyLaunchFix=smooth?.verifySmooth||firstPaint?.verifyFirstPaint||verifyOldFix,builder=smooth?'tools/build-startup-smooth.mjs':firstPaint?'tools/build-startup-first-paint.mjs':'tools/build-startup-intro-launch-fix.mjs';
 const out=path.resolve(process.env.NEXUS_INTRO_CI_EVIDENCE||path.join(root,'evidence-startup-intro',lane));await mkdir(out,{recursive:true});
 const records=[],env={...process.env,NEXUS_GOLD_EVIDENCE:out,NEXUS_M2_EVIDENCE:out,NEXUS_M3_EVIDENCE:out,NEXUS_M4_EVIDENCE:out,NEXUS_M5_EVIDENCE:out};
 async function run(name,args,{cwd=root,command=process.execPath,extra={}}={}){
@@ -21,6 +22,7 @@ try{
  await verifyLaunchFix({root,writeEvidence:out});await npm('server-access');
  if(lane==='preflight'){
   await run('политика-и-отрицательные-контроли',['--test','tests/startup-intro-policy.test.mjs','tests/startup-intro-launch-fix.test.mjs','tests/startup-intro-build.test.mjs','tests/startup-intro-retention.test.mjs']);
+  if(smooth)await run('непрерывное-видео-и-разрешённый-источник',['--test','tests/startup-smooth.test.mjs']);
   if(firstPaint)await run('первый-кадр-и-сохранность',['--test','tests/startup-first-paint.test.mjs']);
   await node('реальный-обработчик-входа','tests/entry-document-navigation-check.mjs');
   await run('порядок-модулей-и-ленивая-загрузка',['--test','tests/platform-startup-load.test.mjs','tests/platform-startup-views.test.mjs','tests/platform-lazy-imports.test.mjs']);
@@ -36,7 +38,8 @@ try{
   await run('сборка-поправки',[builder,'--out',build]);
   Object.assign(env,{NEXUS_FRONTEND_DIR:build,NEXUS_BASELINE_DIR:baseline,NEXUS_PLAYWRIGHT_MODULE:path.join(root,'tools/qa-browser-driver/node_modules/playwright/index.mjs'),NEXUS_CHROME_PATH:process.env.NEXUS_CHROME_PATH||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':'/usr/bin/google-chrome')});
   if(lane==='browser'){
-   if(firstPaint)await node('первый-кадр-и-mobile-надпись','tests/startup-first-paint-browser-check.mjs',{NEXUS_NATIVE_EVIDENCE:path.join(out,'first-paint')});
+   if(smooth)await node('плавность-и-финальный-логотип','tests/startup-smooth-browser-check.mjs',{NEXUS_NATIVE_EVIDENCE:path.join(out,'smooth')});
+   if(firstPaint&&!smooth)await node('первый-кадр-и-mobile-надпись','tests/startup-first-paint-browser-check.mjs',{NEXUS_NATIVE_EVIDENCE:path.join(out,'first-paint')});
    await node('запуск-до-входа-и-полное-видео','tests/startup-intro-launch-browser-check.mjs',{NEXUS_NATIVE_EVIDENCE:path.join(out,'launch')});
    await node('прежний-запуск-и-основные-разделы','tests/platform-startup-browser-check.mjs',{NEXUS_NATIVE_EVIDENCE:path.join(out,'platform')});
   }
@@ -48,7 +51,7 @@ try{
   }
   if(lane==='publication'){
    const second=path.join(temp,'second');await run('повторная-сборка',[builder,'--out',second]);
-   const m=JSON.parse(await readFile(path.join(build,'BUILD_MANIFEST.json'))),rollback=JSON.parse(await readFile(path.join(root,firstPaint?'startup-intro-first-paint.json':'startup-intro-launch-fix.json'))).kind.endsWith('-rollback');assert.equal(m.assetGeneration,FIX_GENERATION);assert.deepEqual(m,JSON.parse(await readFile(path.join(second,'BUILD_MANIFEST.json'))));if(!rollback)assert.deepEqual(m,JSON.parse(await readFile(path.join(root,'BUILD_MANIFEST.json'))));
+   const m=JSON.parse(await readFile(path.join(build,'BUILD_MANIFEST.json'))),rollback=JSON.parse(await readFile(path.join(root,smooth?'startup-intro-smooth.json':firstPaint?'startup-intro-first-paint.json':'startup-intro-launch-fix.json'))).kind.endsWith('-rollback');assert.equal(m.assetGeneration,FIX_GENERATION);assert.deepEqual(m,JSON.parse(await readFile(path.join(second,'BUILD_MANIFEST.json'))));if(!rollback)assert.deepEqual(m,JSON.parse(await readFile(path.join(root,'BUILD_MANIFEST.json'))));
    for(const x of m.files){const b=await readFile(path.join(build,x.file));assert.equal(hash(b),x.sha256);assert.deepEqual(b,await readFile(path.join(second,x.file)));if(!rollback||x.file.startsWith('releases/')||x.file.startsWith('entry-assets/'))assert.deepEqual(b,await readFile(path.join(root,x.file)))}
    const accepted=JSON.parse(await readFile(path.join(baseline,'BUILD_MANIFEST.json')));for(const x of accepted.files.filter(x=>/^(?:releases|entry-assets)\//.test(x.file)))assert.deepEqual(await readFile(path.join(build,x.file)),await readFile(path.join(baseline,x.file)));
    await node('первая-установка-и-холодный-Offline','tests/pwa-public-install-browser-check.mjs',{NEXUS_NATIVE_EVIDENCE:path.join(out,'install')});
