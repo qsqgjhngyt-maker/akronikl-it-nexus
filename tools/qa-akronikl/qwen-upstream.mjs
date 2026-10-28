@@ -7,7 +7,7 @@ export function validateCloudRequest(data){
   return data;
 }
 export function createQwenUpstream({apiKey,fetchUpstream=globalThis.fetch,onOutcome=null,timeoutMs=45000}={}){
-  if(typeof apiKey!=='string'||!/^sk-[A-Za-z0-9_-]{16,}$/u.test(apiKey)||typeof fetchUpstream!=='function'||!Number.isSafeInteger(timeoutMs)||timeoutMs<20||timeoutMs>45000)throw Error('CLOUD_KEY_REQUIRED');
+  if(typeof apiKey!=='string'||!/^sk-[A-Za-z0-9._~+\/=-]{16,1024}$/u.test(apiKey)||typeof fetchUpstream!=='function'||!Number.isSafeInteger(timeoutMs)||timeoutMs<20||timeoutMs>45000)throw Error('CLOUD_KEY_REQUIRED');
   let busy=false;
   return async function complete(data,{signal}={}){
     validateCloudRequest(data);signal?.throwIfAborted();if(busy)throw Error('CLOUD_BUSY');busy=true;

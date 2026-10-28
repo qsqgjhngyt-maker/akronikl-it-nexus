@@ -5,7 +5,7 @@ import {readFile,realpath} from 'node:fs/promises';
 import {createQwenUpstream,QWEN_UPSTREAM,validateCloudRequest} from './qwen-upstream.mjs';
 export async function readQwenKey(file){
   const value=file?(await readFile(file,'utf8')).replace(/^\uFEFF/u,'').trim():process.env.DASHSCOPE_API_KEY?.trim();
-  if(typeof value!=='string'||!/^sk-[A-Za-z0-9_-]{16,}$/u.test(value))throw Error('CLOUD_KEY_REQUIRED');return value;
+  if(typeof value!=='string'||!/^sk-[A-Za-z0-9._~+\/=-]{16,1024}$/u.test(value))throw Error('CLOUD_KEY_REQUIRED');return value;
 }
 export async function startQwenQaServer({root,apiKey=null,onOutcome=null,upstream=null}={}){
   const base=await realpath(root);let origin='',active=0,requests=0,cancellations=0;

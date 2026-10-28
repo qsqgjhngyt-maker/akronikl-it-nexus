@@ -74,3 +74,10 @@ test('localhost gateway rejects cross-origin, bad Host, oversized and proxy-shap
   assert.equal((await fetch(server.origin+'/.env')).status,404);assert.equal((await fetch(server.origin+'/api/akronikl/qwen?url=https://attacker.invalid')).status,400);assert.equal(server.status().remoteComputeStoppedProven,false);
  }finally{await server.close();}
 });
+
+test('opaque RFC6750 bearer keys are accepted without assuming alphanumeric-only format',async()=>{
+ const opaque='sk-SYNTHETIC_ONLY.part_two/part+three=last';let header;
+ const run=createQwenUpstream({apiKey:opaque,fetchUpstream:async(url,init)=>{header=init.headers.Authorization;return stream();}});
+ assert.deepEqual((await run(request)).response,answer);assert.equal(header,'Bearer '+opaque);
+ for(const invalid of ['sk-short','sk-'+('x'.repeat(20))+'\nInjected: header'])assert.throws(()=>createQwenUpstream({apiKey:invalid}),/KEY_REQUIRED/);
+});
