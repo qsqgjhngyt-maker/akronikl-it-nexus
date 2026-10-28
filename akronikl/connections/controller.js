@@ -1,3 +1,4 @@
+import {cloudSelection} from './cloud-catalog.js';
 import {modelProfile} from './profiles.js';
 import {inspectLocalProfile} from './probe.js';
 const safeCodes=new Set(['SOURCES_READY','READY_TO_LOAD','RUNTIME_UNAVAILABLE','WEBGPU_UNAVAILABLE','SECURE_CONTEXT_REQUIRED','BROWSER_UNSUPPORTED','EXTERNAL_DISABLED','CLOUD_READY','CLOUD_UNAVAILABLE','CLOUD_KEY_REQUIRED']);
@@ -9,11 +10,12 @@ const safeReport=r=>Object.freeze({code:safeCodes.has(r?.code)?r.code:'RUNTIME_U
 export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocalProfile,onInvalidate=()=>{},timeoutMs=180000,cloudBroker=null}={}) {
   if(typeof isCurrent!=='function'||typeof loadLocal!=='function'||typeof inspect!=='function'||typeof onInvalidate!=='function'||!Number.isSafeInteger(timeoutMs)||timeoutMs<20||timeoutMs>180000)throw Error('CONNECTION_CONFIG_INVALID');
   if(cloudBroker!==null&&(typeof cloudBroker.inspect!=='function'||typeof cloudBroker.connect!=='function'))throw Error('CONNECTION_CONFIG_INVALID');
+  let selection=cloudSelection(),saved=[],savedRevision=0;
   let selected='sources',phase='ready',code='SOURCES_READY',revision=0,provider=null,lifetime=null,operation=null,dead=false;
   let pendingResources=0,cleanupTasks=0,cleanupFailed=false,lastProbe=null;const listeners=new Set();
   function current(){try{return !dead&&isCurrent()===true;}catch{return false;}}
-  const state=()=>Object.freeze({profileId:selected,phase,code,revision,modelId:provider?modelProfile(selected).modelId:null,
-    pendingResources,cleanupTasks,cleanupFailed,inspection:lastProbe,cloudEnabled:provider?.kind==='cloud',cloudAvailable:cloudBroker!==null});
+  const state=()=>Object.freeze({profileId:selected,phase,code,revision,modelId:provider?provider.modelId:null,
+    pendingResources,cleanupTasks,cleanupFailed,inspection:lastProbe,cloudEnabled:provider?.kind==='cloud',cloudAvailable:cloudBroker!==null,cloudSettingsAvailable:cloudBroker?.settings===true,cloudSelection:selection,cloudSaved:Object.freeze([...saved])});
   function emit(){const value=state();for(const fn of listeners){try{fn(value);}catch{}}return value;}
   function cleanup(p){if(!p)return;cleanupTasks++;Promise.resolve().then(()=>p.dispose()).catch(()=>{cleanupFailed=true;}).finally(()=>{cleanupTasks--;if(!dead)emit();});}
   function invalidate(){revision++;operation?.abort();operation=null;lifetime?.abort();lifetime=null;const old=provider;provider=null;
@@ -21,7 +23,9 @@ export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocal
   function ensure(){if(current())return true;dispose();return false;}
   function dispose(){if(dead)return;dead=true;invalidate();phase='closed';code='CONNECTION_CLOSED';lastProbe=null;emit();listeners.clear();}
   function select(id){const p=modelProfile(id);if(!ensure())return state();if(!p.enabled&&!(id==='external'&&cloudBroker))return Object.freeze({status:'denied',code:'EXTERNAL_DISABLED'});
-    invalidate();selected=id;lastProbe=null;phase=id==='sources'?'ready':'disconnected';code=id==='sources'?'SOURCES_READY':'MODEL_NOT_LOADED';return emit();}
+    invalidate();selected=id;lastProbe=null;phase=id==='sources'?'ready':'disconnected';code=id==='sources'?'SOURCES_READY':'MODEL_NOT_LOADED';if(id==='external')void refreshCloudSaved();return emit();}
+  async function refreshCloudSaved(){if(!cloudBroker?.listSaved)return;const ticket=++savedRevision,original=selection;try{const entries=(await cloudBroker.listSaved()).map(cloudSelection);if(current()&&ticket===savedRevision){saved=entries;if(selected==='external'&&phase==='disconnected'&&selection===original)selection=entries.find(x=>x.providerId===selection.providerId)??selection;emit();}}catch{if(current()&&ticket===savedRevision){saved=[];emit();}}}
+  async function forgetCloud(){if(!cloudBroker?.forget)return;const id=selection.providerId;invalidate();phase='disconnected';code='MODEL_NOT_LOADED';emit();try{await cloudBroker.forget(id);await refreshCloudSaved();}catch{code='CLOUD_VAULT_UNAVAILABLE';emit();}}
   async function run(file,connect){
     if(!ensure())return state();
     if(selected==='sources')return emit();
@@ -42,25 +46,28 @@ export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocal
         if(!connect){phase='checked';code=external?'CLOUD_READY':'READY_TO_LOAD';return;}
         if(!external&&(!(file instanceof Blob)||file.size<1024)){phase='error';code='LOCAL_FILE_REJECTED';return;}
         pendingResources++;emit();
-        try{loaded=external?await cloudBroker.connect({signal:controller.signal}):await loadLocal(file,{signal:controller.signal,profile:id});}finally{pendingResources--;}
+        try{loaded=external?await cloudBroker.connect(cloudBroker.settings?{...selection,apiKey:file?.apiKey,remember:file?.remember,useSaved:file?.useSaved,signal:controller.signal}:{signal:controller.signal}):await loadLocal(file,{signal:controller.signal,profile:id});}finally{pendingResources--;}
         if(!active()){cleanup(loaded);return;}
-        if(!loaded||!(external?loaded.kind==='cloud'&&loaded.transport==='trusted-broker':loaded.kind==='local'&&loaded.transport==='in-process')||loaded.modelId!==modelProfile(id).modelId||typeof loaded.generate!=='function'||typeof loaded.dispose!=='function'){
+        if(!loaded||!(external?loaded.kind==='cloud'&&loaded.transport==='trusted-broker':loaded.kind==='local'&&loaded.transport==='in-process')||external&&cloudBroker.settings&&loaded.connectionVerified!==true||loaded.modelId!==(external&&cloudBroker.settings?selection.modelId:modelProfile(id).modelId)||typeof loaded.generate!=='function'||typeof loaded.dispose!=='function'){
           cleanup(loaded);phase='error';code='MODEL_LOAD_FAILED';return;
         }
         provider=loaded;lifetime=new AbortController();phase='connected';code=external?'CLOUD_CONNECTED':'MODEL_LOADED';
-      }catch{
-        if(active()){phase='error';code='MODEL_LOAD_FAILED';}
+        if(external)void refreshCloudSaved();
+      }catch(error){
+        if(active()){phase='error';code=id==='external'&&externalSafe(error?.message)?error.message:'MODEL_LOAD_FAILED';}
       }finally{if(!dead)emit();}
     })();
     await Promise.race([task,aborted]);clearTimeout(timer);
     if(ticket===revision&&operation===controller){operation=null;if(timedOut){phase='error';code='CONNECTION_TIMEOUT';}else if(controller.signal.aborted){phase='disconnected';code='MODEL_NOT_LOADED';}}
     if(!current()&&!dead)dispose();else if(!dead)emit();return state();
   }
+  function externalSafe(code){return ['CLOUD_KEY_INVALID','CLOUD_AUTH_FAILED','CLOUD_ACCESS_DENIED','CLOUD_MODEL_NOT_FOUND','CLOUD_NOT_CONNECTED','CLOUD_RATE_LIMITED','CLOUD_REQUEST_REJECTED','CLOUD_SERVICE_UNAVAILABLE','CLOUD_TLS_FAILED','CLOUD_RESPONSE_INVALID','CLOUD_VAULT_UNAVAILABLE'].includes(code);}
+  function configureCloud(value){if(!ensure()||!cloudBroker?.settings)return state();const next=cloudSelection(value);if(JSON.stringify(next)===JSON.stringify(selection))return state();if(selected!=='external'){selection=next;return emit();}invalidate();selection=next;phase='disconnected';code='MODEL_NOT_LOADED';return emit();}
   function lease(){
     if(!ensure()||!provider||phase!=='connected')return null;
     const selectedProvider=provider,connectionSignal=lifetime.signal,ticket=revision;let released=false;
     const valid=()=>!released&&current()&&ticket===revision&&provider===selectedProvider&&!connectionSignal.aborted;
-    return Object.freeze({kind:selectedProvider.kind,transport:selectedProvider.transport,modelId:modelProfile(selected).modelId,
+    return Object.freeze({kind:selectedProvider.kind,transport:selectedProvider.transport,modelId:selectedProvider.modelId,
       async generate(request){
         if(!valid())throw Error('MODEL_LEASE_EXPIRED');
         const signal=request.signal?AbortSignal.any([request.signal,connectionSignal]):connectionSignal;
@@ -69,7 +76,7 @@ export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocal
         if(!valid()||signal.aborted)throw Error('MODEL_LEASE_EXPIRED');return response;
       },dispose(){released=true;}});
   }
-  return Object.freeze({select,inspect:()=>run(null,false),connect:file=>run(file,true),lease,
+  return Object.freeze({select,configureCloud,refreshCloudSaved,forgetCloud,inspect:()=>run(null,false),connect:file=>run(file,true),lease,
     snapshot(){ensure();return state();},
     cancelPending(){if(operation){invalidate();phase=selected==='sources'?'ready':'disconnected';code=selected==='sources'?'SOURCES_READY':'MODEL_NOT_LOADED';emit();}},
     disconnect(){return select('sources');},dispose,

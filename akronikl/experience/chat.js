@@ -30,7 +30,7 @@ export function openExperience(options) {
     // Уже показанные реплики не переписываем. Новая сессия не наследует старый стиль.
     stop();privacyBoundary={};renew();status.textContent=t('personalityChanged');
   }});
-  const cloudLabels={local:['В локальном режиме контекст остаётся на устройстве. При подключении облачной Qwen отправляются вопрос, контекст продолжения и разрешённые материалы или выделенный код.','Local mode keeps context on this device. Connecting cloud Qwen sends the question, follow-up context and allowed sources or selected code.'],external:['Облачная Qwen включается выбором модели и подключением. Ключи здесь не запрашиваются.','Cloud Qwen requires selecting and connecting it. No API keys are requested here.']};
+  const cloudLabels={local:['В локальном режиме контекст остаётся на устройстве. При подключении облачной модели отправляются вопрос, контекст продолжения и разрешённые материалы или выделенный код.','Local mode keeps context on this device. Connecting a cloud model sends the question, follow-up context and allowed sources or selected code.'],external:['Облачная модель включается выбором модели и подключением. Ключи здесь не запрашиваются.','Cloud AI requires selecting and connecting it. No API keys are requested here.']};
   const listeners=new AbortController(),t=key=>options.cloudBroker&&cloudLabels[key]?cloudLabels[key][locale==='en'?1:0]:textFor(locale,key),labels=[];
   const el=(tag,parent,cls='',text='')=>{const n=doc.createElement(tag);if(cls)n.className=cls;if(text)n.textContent=text;parent?.append(n);return n;};
   const label=(n,key,attr)=>{if(!n.closest?.('[data-ak-message]'))labels.push({n,key,attr});if(attr)n.setAttribute(attr,t(key));else n.textContent=t(key);return n;};

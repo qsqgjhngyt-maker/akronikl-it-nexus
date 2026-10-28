@@ -23,7 +23,8 @@ test('server uses only the pinned Qwen endpoint/model and never sends the key as
  const traces=[];let sent;
  const run=createQwenUpstream({apiKey:key,fetchUpstream:async(url,init)=>{sent={url:String(url),init};return stream({reasoning:true});},onOutcome:x=>traces.push(x)});
  const result=await run(request);assert.deepEqual(result.response,answer);assert.equal(result.rawFinal,JSON.stringify(answer));assert.equal(sent.url,QWEN_UPSTREAM.base+'chat/completions');
- const payload=JSON.parse(sent.init.body);assert.equal(payload.model,'qwen3.7-plus');assert.equal(payload.enable_thinking,false);assert.equal(payload.max_tokens,192);assert.equal(payload.response_format.type,'json_schema');assert.equal(payload.response_format.json_schema.schema.properties.citations.uniqueItems,undefined); // Provider rejects this schema keyword; post-validation still enforces uniqueness.assert.equal(sent.init.redirect,'error');
+ const payload=JSON.parse(sent.init.body);assert.equal(payload.model,'qwen3.7-plus');assert.equal(payload.enable_thinking,false);assert.equal(payload.max_tokens,192);assert.equal(payload.response_format.type,'json_schema');assert.equal(payload.response_format.json_schema.schema.properties.citations.uniqueItems,undefined); // Provider rejects this schema keyword; post-validation still enforces uniqueness.
+ assert.equal(sent.init.redirect,'error');
  assert.deepEqual(payload.messages,request.messages);assert.ok(!sent.init.body.includes(key));assert.ok(!JSON.stringify({result,traces}).includes(key));assert.doesNotMatch(JSON.stringify({result,traces}),/SYNTHETIC_PRIVATE_WORK/);assert.equal(traces[0].reasoningRedacted,true);assert.equal(result.measurements.usage.total_tokens,28);
 });
 test('request cannot select another model, URL, key or extra system role',()=>{
