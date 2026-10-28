@@ -1,4 +1,5 @@
 import {INTRO_KEY,INTRO_MEDIA,readIntroPreference,saveIntroPreference,introVariant,staticIntro,readIntroHandoff,saveIntroHandoff,consumeIntroHandoff} from './startup-intro-policy.js';
+import {prepareIntroCover,releaseIntroCover,introCoverDismissed} from './startup-intro-cover.js';
 
 let installed=false,active=null,stylesReady;
 const media=name=>new URL('../intro-media/'+INTRO_MEDIA[name.split('.')[0]].version+'/'+name,import.meta.url).href;
@@ -20,6 +21,10 @@ function showIntro({preview=false}={}){
  const root=document.createElement('dialog');root.className='nexus-intro';root.dataset.startupIntro='';root.dataset.variant=variant;root.setAttribute('aria-label','Стартовая заставка Nexus');
  root.innerHTML='<div class="nexus-intro-visual" aria-hidden="true"></div><div class="nexus-intro-top"><button type="button" class="btn nexus-intro-skip">Пропустить <span aria-hidden="true">↗</span></button></div><div class="nexus-intro-caption"><small role="status">Открываем Nexus</small></div>';
  const visual=root.querySelector('.nexus-intro-visual'),skip=root.querySelector('button'),status=root.querySelector('[role=status]');
+ const wordmark=()=>{
+  root.querySelector('.nexus-intro-wordmark')?.remove();if(variant!=='mobile')return;
+  const label=document.createElement('div');label.className='nexus-intro-wordmark';label.setAttribute('aria-hidden','true');label.innerHTML='<strong>AKRONIKL</strong><span>IT NEXUS</span>';root.append(label);
+ };wordmark();
  const video=document.createElement('video');video.muted=true;video.defaultMuted=true;video.playsInline=true;video.preload='auto';video.disablePictureInPicture=true;video.setAttribute('aria-hidden','true');video.tabIndex=-1;visual.append(video);
  const stopVideo=()=>{video.pause();video.removeAttribute('src');video.load()};
  const cleanup=()=>{
@@ -53,7 +58,7 @@ function showIntro({preview=false}={}){
  };
  let poster;
  if(navigator.onLine!==false){poster=document.createElement('img');poster.alt='';poster.fetchPriority='low';poster.src=media(variant+'.jpg');poster.addEventListener('error',()=>poster.remove(),{once:true,signal});visual.prepend(poster)}
- document.body.append(root);root.showModal();root.addEventListener('cancel',e=>{e.preventDefault();finish('escape')},{signal:controls.signal});
+ document.body.append(root);root.showModal();releaseIntroCover();root.addEventListener('cancel',e=>{e.preventDefault();finish('escape')},{signal:controls.signal});
  // Фоновые render, focus и изменение # при bootstrap не закрывают сцену.
  if(staticIntro({...setting,reducedMotion:reduced(),online:navigator.onLine,connection:navigator.connection})){fallback();return}
  const choose=variant=>[['mp4','video/mp4; codecs="'+INTRO_MEDIA[variant].mp4Codec+'"'],['webm','video/webm; codecs="vp9"']].find(([,type])=>video.canPlayType(type));
@@ -74,7 +79,7 @@ function showIntro({preview=false}={}){
  addEventListener('resize',()=>{
   const next=introVariant(innerWidth,innerHeight);if(next===variant||closing||root.dataset.playback==='poster')return;
   const fraction=Number.isFinite(video.duration)&&video.duration>0?Math.min(.94,video.currentTime/video.duration):0;
-  variant=next;root.dataset.variant=next;if(poster)poster.src=media(next+'.jpg');selected=choose(next);if(!selected){fallback();return}
+  variant=next;root.dataset.variant=next;wordmark();if(poster)poster.src=media(next+'.jpg');selected=choose(next);if(!selected){fallback();return}
   video.addEventListener('loadedmetadata',()=>{if(fraction)video.currentTime=fraction*video.duration;play()},{once:true,signal});
   video.src=media(next+'.'+selected[0]);play();
  },{signal});
@@ -111,19 +116,20 @@ function entrySettings(){
 }
 export async function installStartupIntro({surface=document.querySelector('#app')?'shell':'entry'}={}){
  if(installed)return;installed=true;
+ prepareIntroCover();
  let authIntent=0;
  if(surface==='entry'){
   document.addEventListener('click',e=>{if(e.target.closest?.('[data-login],[data-provider-buttons] button,[data-key-access]'))authIntent=Date.now()},{capture:true});
   addEventListener('pagehide',()=>{if(authIntent&&Date.now()-authIntent<900000)try{saveIntroHandoff(sessionStorage)}catch{}},{once:true});
  }
  let handoff=false;try{handoff=surface==='shell'?consumeIntroHandoff(sessionStorage):readIntroHandoff(sessionStorage)}catch{}
- if(!await ensureStyles())return;
+ if(!await ensureStyles()){releaseIntroCover(true);return}
  mountSettings();if(surface==='entry')entrySettings();
  const observer=new MutationObserver(mountSettings);
  const app=document.querySelector('#app');if(app)observer.observe(app,{childList:true});
  observer.observe(document.body,{childList:true});addEventListener('pagehide',()=>observer.disconnect(),{once:true});
  addEventListener('storage',e=>{if(e.key===INTRO_KEY){syncSettings();if(!preference().value.enabled)active?.finish('settings',true)}});
- const start=()=>{const state=preference();if(!handoff&&state.value.enabled)showIntro()};
+ const start=()=>{prepareIntroCover();const state=preference();if(!handoff&&state.value.enabled&&!introCoverDismissed())showIntro();else releaseIntroCover(true)};
  // Первый видимый запуск: фокус и отсутствие Web Locks не подавляют ролик ПК.
  if(document.hidden){
   const visible=()=>{if(document.hidden)return;document.removeEventListener('visibilitychange',visible);start()};

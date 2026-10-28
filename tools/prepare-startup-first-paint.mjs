@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';import {readFile,writeFile,mkdir,copyFile} from 'node:fs/promises';import {execFileSync} from 'node:child_process';import path from 'node:path';
+import {FP_BASE,FP_GENERATION,FP_META,FP_RECEIPT,FP_ROOTS,FP_PRODUCT,hash,verifyRecord,verifyFirstPaint} from './startup-first-paint-contract.mjs';
+const root=path.resolve(import.meta.dirname,'..');
+if(process.argv.includes('--rollback')){await verifyFirstPaint({root});const r=JSON.parse(await readFile(path.join(root,FP_RECEIPT)));for(const x of r.rollback)await writeFile(path.join(root,x.file),execFileSync('git',['show',FP_BASE+':'+x.file],{cwd:root,maxBuffer:128*1024*1024}));const m=JSON.parse(await readFile(path.join(root,FP_META)));m.kind='startup-first-paint-rollback';await writeFile(path.join(root,FP_META),JSON.stringify(m,null,2)+'\n');console.log(await verifyFirstPaint({root}));process.exit(0)}
+const i=process.argv.indexOf('--artifact');assert.ok(i>=0&&process.argv[i+1]);const artifact=path.resolve(process.argv[i+1]),m=JSON.parse(await readFile(path.join(artifact,'BUILD_MANIFEST.json')));assert.equal(m.assetGeneration,FP_GENERATION);
+for(const r of m.files)verifyRecord(r,await readFile(path.join(artifact,r.file)));
+const publish=m.files.filter(r=>FP_ROOTS.includes(r.file)||r.file.startsWith('releases/'+FP_GENERATION+'/')||r.file.startsWith('entry-assets/'+FP_GENERATION+'/'));publish.push({file:'BUILD_MANIFEST.json'});
+for(const r of publish){const dst=path.join(root,r.file);await mkdir(path.dirname(dst),{recursive:true});await copyFile(path.join(artifact,r.file),dst)}
+await copyFile(path.join(artifact,'entry-assets',FP_GENERATION,'entry.js'),path.join(root,'server-access/image/public/entry.js'));await copyFile(path.join(root,'server-access/public/entry.html'),path.join(root,'server-access/image/public/entry.html'));
+const files=[];for(const f of new Set([...publish.map(r=>r.file),...FP_PRODUCT])){const b=await readFile(path.join(root,f));files.push({file:f,bytes:b.length,sha256:hash(b)})}
+const rollback=FP_ROOTS.map(file=>{const b=execFileSync('git',['show',FP_BASE+':'+file],{cwd:root,maxBuffer:128*1024*1024});return{file,bytes:b.length,sha256:hash(b)}});
+await writeFile(path.join(root,FP_META),JSON.stringify({schema:1,kind:'startup-first-paint',baseCommit:FP_BASE,generation:FP_GENERATION,officialRelease:false,uiEntryDeploymentRequiresOwnerApproval:true},null,2)+'\n');
+await writeFile(path.join(root,FP_RECEIPT),JSON.stringify({schema:1,baseCommit:FP_BASE,generation:FP_GENERATION,files:files.sort((a,b)=>a.file.localeCompare(b.file)),rollback},null,2)+'\n');console.log({records:files.length,receiptSha256:hash(await readFile(path.join(root,FP_RECEIPT)))});

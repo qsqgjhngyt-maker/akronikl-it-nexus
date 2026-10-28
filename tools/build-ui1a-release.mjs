@@ -3,6 +3,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
+import {withStartupCover} from '../core/startup-intro-cover.js';
 const {build}=createRequire(new URL('../server-access/package.json',import.meta.url))('esbuild');
 const value=flag=>{const i=process.argv.indexOf(flag);return i>=0?process.argv[i+1]:null},source=path.resolve(value('--source')||fileURLToPath(new URL('../',import.meta.url))),out=path.resolve(value('--out')||path.join(source,'dist-ui1a'));
 if(out===source||source.startsWith(out+path.sep))throw Error('Нельзя писать build поверх исходников');
@@ -10,6 +11,7 @@ try{await stat(out);throw Error('Каталог build уже существуе�
 const config=JSON.parse(await readFile(path.join(source,'release-candidate.json')));
 if(value('--generation')&&value('--generation')!==config.assetGeneration&&process.argv.includes('--retain-active'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),config.assetGeneration])];
 if(value('--retain-generation')){const generation=value('--retain-generation');if(!/^ui1a-[a-z0-9-]+$/.test(generation))throw Error('Неверное удерживаемое поколение');config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),generation])]}
+if(process.argv.includes('--startup-first-paint'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),'ui1a-startup-cinematic-launch-20261028'])];
 if(value('--generation')&&value('--version'))Object.assign(config,{assetGeneration:value('--generation'),version:value('--version')});
 if(!/^ui1a-[a-z0-9-]+$/.test(config.assetGeneration))throw Error('Неверный generation ID');
 const folders=['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa'];
@@ -40,7 +42,8 @@ const renderHTML=html=>{
   if(!result.includes('core/startup-intro-launch.js'))result=result.replace('<script type="module" src="./'+prefix+'core/bootstrap.js','<script type="module" async fetchpriority="low" src="./'+prefix+'core/startup-intro-launch.js"></script><script type="module" src="./'+prefix+'core/bootstrap.js');
   result=result.replace('const target=event.target;const resource=',"const target=event.target;if(target?.closest?.('[data-startup-intro]')||target?.matches?.('[data-startup-intro-style]'))return;const resource=");
  }
- return result.replaceAll(/(\.\/releases\/ui1a-[a-z0-9-]+\/(?:core\/(?:app|bootstrap)\.js|styles\/app\.css))\?v=[^"'<>\s]+/g,'$1?v='+config.version);
+ result=result.replaceAll(/(\.\/releases\/ui1a-[a-z0-9-]+\/(?:core\/(?:app|bootstrap)\.js|styles\/app\.css))\?v=[^"'<>\s]+/g,'$1?v='+config.version);
+ return process.argv.includes('--startup-first-paint')?withStartupCover(result):result;
 };
 let index=renderHTML(await readFile(path.join(source,'index.html'),'utf8'));
 index=index.replace('href="./manifest.webmanifest"','href="./manifest.webmanifest?v='+config.version+'"');

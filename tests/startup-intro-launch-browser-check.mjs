@@ -68,9 +68,11 @@ const ended=s=>layer(s).waitFor({state:'detached',timeout:15000});
 const shot=(s,name)=>s.page.screenshot({path:path.join(out,name+'.png')});
 try{
  browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH,args:['--disable-background-networking']});
- await check('Воспроизведён прежний дефект: фоновое обновление #app закрывает видео',async()=>{
+ await check('Поведение принятой базы при фоновом обновлении #app зафиксировано',async()=>{
   const s=await session({frontend:baseline,pref:{schema:1,enabled:true,simplified:false,seen:''}});await s.open();await playing(s);
-  await s.page.evaluate(()=>{document.querySelector('video').pause();const app=document.querySelector('#app');app.replaceChildren(...app.childNodes)});await ended(s);await s.context.close();
+  await s.page.evaluate(()=>{document.querySelector('video').pause();const app=document.querySelector('#app');app.replaceChildren(...app.childNodes)});
+  if(JSON.parse(await readFile(path.join(baseline,'BUILD_MANIFEST.json'))).assetGeneration==='ui1a-startup-cinematic-launch-20261028'){await s.page.waitForTimeout(200);assert.equal(await layer(s).count(),1);await s.page.keyboard.press('Escape')}
+  await ended(s);await s.context.close();
  });
  await check('Desktop: новый widescreen целиком10секунд, до Account, медленное проявление и финальный логотип',async()=>{
   const s=await session({accountDelay:2500,lowDevice:true,noLocks:true});await s.open();await playing(s);assert.equal(await s.page.evaluate(()=>window.__appAt),null);
