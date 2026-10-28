@@ -31,7 +31,11 @@ function showIntro({preview=false}={}){
   const label=document.createElement('div');label.className='nexus-intro-wordmark';label.setAttribute('aria-hidden','true');label.innerHTML='<svg viewBox="0 0 240 210" focusable="false"><defs><linearGradient id="nx-logo-white" x2=".9" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#c4e0ee"/></linearGradient><linearGradient id="nx-logo-cyan" x2=".1" y2="1"><stop stop-color="#d4effb"/><stop offset=".55" stop-color="#66c9ed"/><stop offset="1" stop-color="#0096d5"/></linearGradient></defs><path fill="url(#nx-logo-white)" d="M22 163 84 40Q95 18 112 18q18 0 30 23l29 57-32 18-29-57q-4-7-8 1l-37 74Z"/><path fill="url(#nx-logo-white)" d="m142 140 29-17 42 83h-32q-13 0-19-12Z"/><path fill="url(#nx-logo-cyan)" d="M9 206q-1-25 28-42c60-32 159-55 190-112-2 43-37 67-79 90L50 206Z"/></svg><strong>AKRONIKL</strong><span>IT NEXUS</span>';root.append(label);
  };wordmark();
  const makePlayer=()=>{
-  if(variant==='mobile')return new IntroSequence(visual);
+  if(variant==='mobile'){
+   // Первая часть начинает показ до фоновой загрузки следующей.
+   const player=new IntroSequence(visual),next=player.slots[1];next.preload='none';
+   player.slots[0].addEventListener('playing',()=>{if(!player.stopped){next.preload='auto'}},{once:true});return player;
+  }
   const v=document.createElement('video');v.dataset.current='';v.crossOrigin='anonymous';v.muted=true;v.defaultMuted=true;v.playsInline=true;v.preload='auto';v.disablePictureInPicture=true;v.tabIndex=-1;v.setAttribute('aria-hidden','true');visual.append(v);return v;
  };
  let video=makePlayer(),playerEvents=new AbortController(),frameCallback,preparingSource='';
