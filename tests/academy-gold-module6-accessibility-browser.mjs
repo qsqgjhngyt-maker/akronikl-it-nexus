@@ -27,6 +27,9 @@ try{
   await filter.press('Enter');await waitView('NEXUS_VIEW 2 OPEN 1 DONE 1');assert.equal(await filter.isChecked(),false);
   await filter.press('Space');await waitView('NEXUS_VIEW 1 OPEN 1 DONE 1');
  });
+ await check('Фокус поля и pointer по-прежнему вызывают Qt',async()=>{
+  await input.focus();assert.equal(await frame.locator('[data-nexus-a11y-focus]').isVisible(),true);const a=await filter.boundingBox(),b=await contents.boundingBox();await contents.click({position:{x:a.x-b.x+a.width/2,y:a.y-b.y+a.height/2}});await waitView('NEXUS_VIEW 2 OPEN 1 DONE 1');await filter.focus();await filter.press('Space');await waitView('NEXUS_VIEW 1 OPEN 1 DONE 1');
+ });
  await check('Фокус видим и следует геометрии контрола при390/1366',async()=>{
   for(const width of [390,1366]){await p.setViewportSize({width,height:900});await iframe.scrollIntoViewIfNeeded();await filter.focus();
    const ring=frame.locator('[data-nexus-a11y-focus]');await ring.waitFor({state:'visible'});
@@ -40,10 +43,8 @@ try{
   await filter.focus();await p.keyboard.down('Space');await waitView('NEXUS_VIEW 2 OPEN 1 DONE 1');await p.keyboard.down('Space');await p.keyboard.up('Space');await p.waitForTimeout(100);assert.equal(await latest(),'NEXUS_VIEW 2 OPEN 1 DONE 1');
   await filter.press('Control+Space');assert.equal(await latest(),'NEXUS_VIEW 2 OPEN 1 DONE 1');
  });
- await check('Фокус поля и pointer по-прежнему вызывают Qt',async()=>{
-  await input.focus();assert.equal(await frame.locator('[data-nexus-a11y-focus]').isVisible(),true);const a=await filter.boundingBox(),b=await contents.boundingBox();await contents.click({position:{x:a.x-b.x+a.width/2,y:a.y-b.y+a.height/2}});await waitView('NEXUS_VIEW 1 OPEN 1 DONE 1');
- });
  await check('Фильтр сохраняет оба ID/данные; blur и возврат клавиатурой работают',async()=>{
+  await filter.focus();await filter.press('Space');await waitView('NEXUS_VIEW 1 OPEN 1 DONE 1');
   await frame.getByRole('button',{name:'Save application data',exact:true}).press('Enter');
   await p.waitForFunction(()=>document.querySelector('[data-app="status"]')?.textContent.includes('Данные приложения сохранены'));
   await p.locator('[data-app="data"]').click();
