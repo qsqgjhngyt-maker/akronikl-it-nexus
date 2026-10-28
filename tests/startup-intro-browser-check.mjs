@@ -72,7 +72,11 @@ try{
   assert.equal(await s.page.locator('.nexus-intro-skip').evaluate(n=>getComputedStyle(n).opacity),'0.55');
   await s.page.waitForFunction(()=>document.querySelector('[data-startup-intro]')?.dataset.playback==='video');
   assert.equal(await s.page.locator('.nexus-intro video').evaluate(v=>v.muted&&v.playsInline&&v.videoWidth===1280&&v.videoHeight===720&&v.currentTime>0),true);
-  await shot(s,'desktop-video');await s.page.locator('.nexus-intro-skip').hover();await s.page.waitForTimeout(180);assert.equal(await s.page.locator('.nexus-intro-skip').evaluate(n=>getComputedStyle(n).opacity),'1');const t=performance.now();await s.page.locator('.nexus-intro-skip').click();await dismissed(s);assert.ok(performance.now()-t<1000);
+  // Декодирование уже доказано выше. На время hover-снимка останавливаем кадр,
+  // чтобы завершение 5-секундного ролика не состязалось с медленным CI renderer.
+  await s.page.locator('.nexus-intro video').evaluate(v=>v.pause());await shot(s,'desktop-video');await s.page.locator('.nexus-intro-skip').hover();
+  await s.page.waitForFunction(()=>{const n=document.querySelector('.nexus-intro-skip');return n?.matches(':hover')&&getComputedStyle(n).opacity==='1'},null,{timeout:2000});
+  const t=performance.now();await s.page.locator('.nexus-intro-skip').click();await dismissed(s);assert.ok(performance.now()-t<1000);
   const movies=s.record.requests.filter(r=>/\.(mp4|webm)$/.test(r.file));assert.equal(movies.length,1);assert.ok(movies[0].ready>0&&movies[0].now>=movies[0].ready);
   await s.page.reload();await s.page.locator('.visual-home').waitFor();await s.page.waitForTimeout(400);assert.equal(await layer(s).count(),0);assert.equal(s.record.requests.filter(r=>/\.(mp4|webm)$/.test(r.file)).length,1);
   await s.context.close();

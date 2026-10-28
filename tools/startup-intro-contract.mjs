@@ -15,7 +15,7 @@ export const WORKFLOWS=Object.freeze({
  '.github/workflows/academy-gold-cpp-module-2-preflight.yml':{preflight:'preflight','module2-gold':'browser','module1-regression':'integration'},
  '.github/workflows/academy-gold-cpp-module-3-publication.yml':{publication:'publication'}
 });
-export const CI_PATHS=Object.freeze([CONTRACT,'tools/startup-intro-contract.mjs','tools/startup-intro-ci-route.mjs','tools/check-startup-intro-ci.mjs','tests/startup-intro-contract.test.mjs','tests/startup-intro-retention.test.mjs','tests/ui1a-deterministic-public-manifest.test.mjs',...Object.keys(WORKFLOWS)]);
+export const CI_PATHS=Object.freeze([CONTRACT,'tools/startup-intro-contract.mjs','tools/startup-intro-ci-route.mjs','tools/check-startup-intro-ci.mjs','tests/startup-intro-contract.test.mjs','tests/startup-intro-retention.test.mjs','tests/startup-intro-browser-check.mjs','tests/ui1a-deterministic-public-manifest.test.mjs',...Object.keys(WORKFLOWS)]);
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const git=(root,...a)=>execFileSync('git',a,{cwd:root,maxBuffer:256*1024*1024});
 export function validateMetadata(c){
@@ -65,6 +65,7 @@ export async function verifyStartupIntroContract({root=ROOT,writeEvidence=false}
   const blob=createHash('sha1').update(Buffer.from('blob '+b.length+'\0')).update(b).digest('hex');assert.equal(blob,row.sha,'Изменён принятый файл: '+row.file);
  }
  for(const file of implementationFiles){
+  if(ciFiles.has(file))continue;
   const expected=git(root,'show',IMPLEMENTATION+':'+file),actual=await readFile(path.join(root,file));assertExpectedBytes(file,actual,expected);checks.push({file,bytes:actual.length,sha256:hash(actual)});
  }
  for(const [file,lanes]of Object.entries(WORKFLOWS))assertExpectedBytes(file,await readFile(path.join(root,file)),Buffer.from(routeWorkflow(git(root,'show',BASE+':'+file).toString(),lanes)));

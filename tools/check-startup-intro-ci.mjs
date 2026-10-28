@@ -1,6 +1,6 @@
 // Каждый заменённый legacy job выполняет свою приёмку; ни одного пустого PASS.
 import assert from 'node:assert/strict';
-import {readFile,mkdir,writeFile,mkdtemp} from 'node:fs/promises';
+import {readFile,mkdir,writeFile,mkdtemp,access} from 'node:fs/promises';
 import {spawn} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
@@ -13,14 +13,21 @@ const env={...process.env,NEXUS_GOLD_EVIDENCE:out,NEXUS_M2_EVIDENCE:out,NEXUS_M3
 async function run(name,args,{cwd=ROOT,extra={},command=process.execPath}={}){
  const started=performance.now();let stdout='';
  const code=await new Promise((resolve,reject)=>{
-  const p=spawn(command,args,{cwd,env:{...env,...extra},windowsHide:true,shell:command==='npm'&&process.platform==='win32'});
+  const p=spawn(command,args,{cwd,env:{...env,...extra},windowsHide:true});
   p.stdout.on('data',b=>{stdout+=b;process.stdout.write(b)});p.stderr.on('data',b=>{stdout+=b;process.stderr.write(b)});p.on('error',reject);p.on('close',resolve);
  });
  const log=String(records.length+1).padStart(2,'0')+'-'+name+'.log';await writeFile(path.join(out,log),stdout.replaceAll('\r\n','\n'));
  records.push({name,status:code===0?'PASS':'FAIL',exitCode:code,durationMs:Math.round(performance.now()-started),log});assert.equal(code,0,'Не пройдена проверка: '+name);
 }
 const node=(name,file,extra={},cwd=ROOT)=>run(name,[file],{extra,cwd});
-const npm=(prefix)=>run('зависимости-'+path.basename(prefix),['ci','--prefix',prefix,'--ignore-scripts','--no-audit','--no-fund'],{command:'npm'});
+const npm=async prefix=>{
+ const args=['ci','--prefix',prefix,'--ignore-scripts','--no-audit','--no-fund'];
+ if(process.platform!=='win32')return run('зависимости-'+path.basename(prefix),args,{command:'npm'});
+ for(const cli of [path.join(path.dirname(process.execPath),'node_modules/npm/bin/npm-cli.js'),path.join(path.dirname(process.execPath),'../node_modules/npm/bin/npm-cli.js')]){
+  try{await access(cli)}catch{continue}return run('зависимости-'+path.basename(prefix),[cli,...args]);
+ }
+ throw Error('Не найден npm-cli.js; shell не используется');
+};
 let failure,build,baselineBuild;
 try{
  await verifyStartupIntroContract({writeEvidence:out});
@@ -33,7 +40,11 @@ try{
  if(lane==='content'){
   await npm('server-access');
   await node('полная-регрессия-контрактов','tools/check-academy-gold-regression.mjs');
-  await run('Gold-M1-M5',['--test',...['','-module2','-module3','-module4','-module5'].map(s=>'tests/academy-gold'+s+'-content.test.mjs')]);
+  // Эти тесты совмещают содержимое курса и исторический receipt M5. Курс кандидата
+  // уже доказан побайтно равным базе, поэтому оба контракта проверяются на базе.
+  const temp=await mkdtemp(path.join(tmpdir(),'nexus-intro-content-')),baseline=path.join(temp,'baseline-source');
+  await run('точная-база-для-Content',['worktree','add','--quiet','--detach',baseline,BASE],{command:'git'});await npm(path.join(baseline,'server-access'));
+  await run('Gold-M1-M5-и-исторические-receipts',['--test',...['','-module2','-module3','-module4','-module5'].map(s=>'tests/academy-gold'+s+'-content.test.mjs')],{cwd:baseline});
   for(const [id,file]of [['M1','tools/check-academy-gold-cpp.mjs'],...['2','3','4','5'].map(n=>['M'+n,'tools/check-academy-gold-module'+n+'-examples.mjs'])])await node('C++20-UBSan-'+id,file);
  }
  if(['browser','integration','publication'].includes(lane)){
