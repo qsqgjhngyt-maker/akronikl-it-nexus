@@ -5,6 +5,11 @@ const out=path.resolve(process.env.NEXUS_M6_EVIDENCE);await mkdir(out,{recursive
 for(const b of(await module6GoldPrograms()).filter(b=>b.target==='qt-wasm')){const files=Object.fromEntries(Object.entries(b.files).filter(([f])=>f!=='README.md')),key=createHash('sha256').update(JSON.stringify({source:b.source,files})).digest('hex');if(!unique.has(key))unique.set(key,b);}
 const log=()=>p.locator('[data-app="log"]').textContent(),waitLog=text=>p.waitForFunction(text=>document.querySelector('[data-app="log"]')?.textContent.includes(text),text,{timeout:120000});
 async function build(){await p.locator('#runCode').click();const iframe=p.locator('.nexus-application-panel iframe');await iframe.waitFor({timeout:180000});const frame=await(await iframe.elementHandle()).contentFrame();assert.ok(frame);await frame.getByRole('textbox',{name:'Task title',exact:true}).waitFor({timeout:120000});return frame;}
+async function selectFirstTask(frame){
+ // SDK сообщает геометрию именованного списка; реальные pointer events принимает контейнер Qt.
+ const contents=frame.locator('.qt-window-contents').first(),list=await frame.getByText('Tasks',{exact:true}).boundingBox(),client=await contents.boundingBox();assert.ok(list&&client&&list.width>24&&list.height>24);
+ await contents.click({position:{x:list.x-client.x+12,y:list.y-client.y+12}});
+}
 try{
  await p.goto(f.origin+'/#view=home');await p.locator('.visual-home').waitFor();await f.waitReady();
  await p.evaluate(async prefix=>{const{patchLesson}=await import(prefix+'/core/storage.js'),{createProject}=await import(prefix+'/project-studio/project-store.js');const c=await(await fetch(prefix+'/courses/cpp/curriculum.json')).json();for(const l of c.lessons.slice(0,56))patchLesson(l.id,{completed:true,code:'// SYNTHETIC PRESERVED '+l.id,quiz:1,stdin:'17'});createProject({id:'synthetic-preserved-before-m6',title:'SYNTHETIC preserved',files:[{path:'main.cpp',content:'// original',languageId:'cpp'}]})},prefix);
@@ -22,9 +27,9 @@ try{
   await input.fill('alpha');await frame.getByRole('button',{name:'Add task',exact:true}).press('Enter');await waitLog('NEXUS_TASKS 1');await input.fill('beta');await frame.getByRole('button',{name:'Add task',exact:true}).press('Enter');await waitLog('NEXUS_TASKS 2');
   if(b.source.includes('NEXUS_VIEW')){
    // Настоящая клавиатурная навигация в Qt, без вызова C++ модели из JS.
-   await frame.getByRole('button',{name:'Add task',exact:true}).press('Tab');await p.keyboard.press('Home');await frame.getByRole('button',{name:'Complete selected',exact:true}).press('Enter');await waitLog('NEXUS_VIEW 2 OPEN 1 DONE 1');
-   const filter=frame.getByRole('button',{name:'Open tasks only',exact:true});await filter.press('Enter');await waitLog('NEXUS_VIEW 1 OPEN 1 DONE 1');
-   await frame.getByRole('button',{name:'Add task',exact:true}).press('Tab');await p.keyboard.press('Home');await frame.getByRole('button',{name:'Complete selected',exact:true}).press('Enter');await waitLog('NEXUS_VIEW 0 OPEN 0 DONE 2');
+   await selectFirstTask(frame);await frame.getByRole('button',{name:'Complete selected',exact:true}).press('Enter');await waitLog('NEXUS_VIEW 2 OPEN 1 DONE 1');
+   const filter=frame.getByLabel('Open tasks only',{exact:true});await filter.evaluate(e=>e.click());await waitLog('NEXUS_VIEW 1 OPEN 1 DONE 1');
+   await selectFirstTask(frame);await frame.getByRole('button',{name:'Complete selected',exact:true}).press('Enter');await waitLog('NEXUS_VIEW 0 OPEN 0 DONE 2');
    await p.setViewportSize({width:390,height:844});await p.locator('.nexus-application-panel iframe').scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,'module6-filter-390.png'),fullPage:true});
   }
   await frame.getByRole('button',{name:'Save application data',exact:true}).press('Enter');await p.waitForFunction(()=>document.querySelector('[data-app="status"]')?.textContent.includes('Данные приложения сохранены'));await p.locator('[data-app="data"]').click();await p.waitForTimeout(100);
