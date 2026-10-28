@@ -3,6 +3,16 @@ import {localLoadOptions} from '../connections/profiles.js';
 import {probeWebGPU,checkSignal} from '../connections/probe.js';
 // Только доверенный in-process runtime. Внешнего URL/API/ключей здесь нет.
 export const LOCAL_MODEL=Object.freeze({id:'qwen3-0.6b-q8_0',filename:'Qwen3-0.6B-Q8_0.gguf',maxBytes:700000000,sha256:'9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031',runtime:'@wllama/wllama',runtimeVersion:'3.8.1'});
+export function evidenceQuoteCandidates(source){
+  const quotes=[];
+  for(const line of source.text.split(/\n+/u)){
+    if(!line.trim())continue;
+    if(/^[CD]/u.test(source.label)&&line.length>=12&&line.length<=160){quotes.push(line);continue;}
+    const sentences=line.match(/.*?[.!?。！？](?=\s|$)|.+$/gu)||[];
+    for(const sentence of sentences){const q=sentence.trim();if(q.length>=12&&q.length<=160&&source.text.includes(q)&&(/^[CD]/u.test(source.label)||/[.!?。！？]$/u.test(q)))quotes.push(q);}
+  }
+  return [...new Set(quotes)].slice(0,16);
+}
 export function createWllamaProvider(engine,{recreate=null,onOutcome=null}={}) {
   if(!engine||typeof engine.createChatCompletion!=='function'||typeof engine.exit!=='function')throw Error('LOCAL_ENGINE_INVALID');
   if(recreate!==null&&typeof recreate!=='function'||onOutcome!==null&&typeof onOutcome!=='function')throw Error('LOCAL_ENGINE_INVALID');
@@ -41,7 +51,10 @@ export function createWllamaProvider(engine,{recreate=null,onOutcome=null}={}) {
         const grounded=Array.isArray(evidence)&&evidence.length>0;
         const diagnosticLabels=allowedCitations.filter(label=>label.startsWith('D'));
         const basisLabels=diagnosticLabels.length?diagnosticLabels:allowedCitations;
-        const properties={...(grounded?{basis:{type:'object',properties:{label:{type:'string',enum:basisLabels},quote:{type:'string',minLength:12,maxLength:160}},required:['label','quote'],additionalProperties:false}}:{}),answer:{type:'string'},citations:{type:'array',items:{type:'string',enum:allowedCitations}}};
+        const quoteChoices=grounded?new Map(evidence.filter(s=>basisLabels.includes(s.label)).map(s=>[s.label,evidenceQuoteCandidates(s)])):null;
+        const allQuotes=quoteChoices?[...new Set([...quoteChoices.values()].flat())]:[];
+        if(grounded&&!allQuotes.length)throw Error('LOCAL_EVIDENCE_INSUFFICIENT');
+        const properties={...(grounded?{basis:{type:'object',properties:{label:{type:'string',enum:basisLabels},quote:{type:'string',enum:allQuotes}},required:['label','quote'],additionalProperties:false}}:{}),answer:{type:'string'},citations:{type:'array',items:{type:'string',enum:allowedCitations}}};
         const started=performance.now();
         // Сырые фрагменты/рассуждения не выводятся: наружу только числовой прогресс.
         // Итоговый текст появляется лишь после полного JSON и проверки цитат сессией.
@@ -65,11 +78,11 @@ export function createWllamaProvider(engine,{recreate=null,onOutcome=null}={}) {
         const response=JSON.parse(content);
         if(grounded){
           const basis=response.basis,source=evidence.find(s=>s.label===basis?.label);
-          if(!basis||!basisLabels.includes(basis.label)||typeof basis.quote!=='string'||basis.quote.length<12||basis.quote.length>160||!source?.text.includes(basis.quote)||!response.citations?.includes(basis.label))throw Error('LOCAL_GROUNDING_INVALID');
+          if(!basis||!basisLabels.includes(basis.label)||!quoteChoices.get(basis.label)?.includes(basis.quote)||!source?.text.includes(basis.quote)||!response.citations?.includes(basis.label))throw Error('LOCAL_GROUNDING_INVALID');
           basisVerified=true;delete response.basis;
         }
         success=true;return response;
-      }finally{signal?.removeEventListener('abort',abort);cancelActive=null;try{if(aborted)await cancelCleanup;}finally{lastMeasurement=Object.freeze({...meter.finish(success?'complete':aborted||signal?.aborted?'cancelled':'error'),engineEpoch:epoch,forcedStops,cancelStrategy:aborted?'terminate-runtime-worker':null});try{onOutcome?.(Object.freeze({status:lastMeasurement.status,rawContent:finish==='stop'&&!reasoningPieces?content:null,finishReason:finish,basisVerified}));}catch{}busy=false;releaseIdle();}}
+      }finally{signal?.removeEventListener('abort',abort);cancelActive=null;try{if(aborted)await cancelCleanup;}finally{lastMeasurement=Object.freeze({...meter.finish(success?'complete':aborted||signal?.aborted?'cancelled':'error'),engineEpoch:epoch,forcedStops,cancelStrategy:aborted?'terminate-runtime-worker':null});try{onOutcome?.(Object.freeze({status:lastMeasurement.status,rawContent:!reasoningPieces&&content?content:null,finishReason:finish,basisVerified,reasoningRedacted:reasoningPieces>0}));}catch{}busy=false;releaseIdle();}}
     },
     measurements(){return lastMeasurement;},
     lifecycle(){return Object.freeze({resident:!!current,busy,epoch,forcedStops,cleanupFailed,disposed});},

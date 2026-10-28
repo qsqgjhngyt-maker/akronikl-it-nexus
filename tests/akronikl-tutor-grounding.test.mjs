@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createWllamaProvider} from '../akronikl/tutor/local-model.js';
+import {createWllamaProvider,evidenceQuoteCandidates} from '../akronikl/tutor/local-model.js';
 const source={label:'S1',text:'A local object is destroyed when its block exits. Copying its address does not keep it alive.'};
 function provider(response,outcomes=[]){return createWllamaProvider({async createChatCompletion(x){assert.ok(x.response_format.json_schema.schema.properties.basis);x.onData({choices:[{finish_reason:'stop',delta:{content:JSON.stringify(response)}}]});},async exit(){}},{onOutcome:e=>outcomes.push(e)});}
 const request={messages:[],evidencePacket:{evidence:[source]},allowedCitations:['S1']};
@@ -18,4 +18,18 @@ test('a compiler fact must ground diagnostics instead of a selected-code hypothe
 test('quote verification alone is not semantic acceptance',async()=>{
  const p=provider({basis:{label:'S1',quote:'Copying its address does not keep it alive.'},answer:'WRONG_UNVERIFIED_CONTRADICTION',citations:['S1']});
  assert.equal((await p.generate(request)).answer,'WRONG_UNVERIFIED_CONTRADICTION');await p.dispose(); // Human rubric, not this structural guard, judges truth.
+});
+test('quote choices are complete literal sentences, preserving negation and escape sequences',()=>{
+ const s={label:'S1',text:"A heading\nclear() resets flags, but does not consume invalid input. ignore(max,'\\\\n') can discard the line. Clear first, otherwise ignore may fail."};
+ const choices=evidenceQuoteCandidates(s);assert.ok(choices.includes('clear() resets flags, but does not consume invalid input.'));assert.ok(choices.includes("ignore(max,'\\\\n') can discard the line."));assert.ok(choices.every(q=>s.text.includes(q)));assert.ok(!choices.includes('A heading'));
+});
+test('completed invalid raw answer remains in QA outcome while stream progress stays numeric',async()=>{
+ const trace=[],progress=[],p=createWllamaProvider({async createChatCompletion(x){x.onData({choices:[{finish_reason:'length',delta:{content:'{"answer":"PARTIAL_ACTUAL_OUTPUT'}}]});},async exit(){}},{onOutcome:r=>trace.push(r)});
+ await assert.rejects(p.generate({...request,onProgress:r=>progress.push(r)}));assert.match(trace[0].rawContent,/PARTIAL_ACTUAL_OUTPUT/);assert.equal(trace[0].finishReason,'length');assert.doesNotMatch(JSON.stringify(progress),/PARTIAL_ACTUAL_OUTPUT/);await p.dispose();
+});
+test('C++ member access and diagnostic filenames are not sentence boundaries',()=>{
+ const sentence='After Note b=a, changing b.text must not change a.text.';
+ assert.ok(evidenceQuoteCandidates({label:'S1',text:sentence+' A copy is independent.'}).includes(sentence));
+ const diagnostic='main.cpp:1:29: error: assignment of read-only variable value';
+ assert.deepEqual(evidenceQuoteCandidates({label:'D1',text:diagnostic}),[diagnostic]);
 });
