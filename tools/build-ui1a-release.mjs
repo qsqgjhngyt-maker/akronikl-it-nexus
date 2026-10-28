@@ -14,6 +14,7 @@ if(value('--retain-generation')){const generation=value('--retain-generation');i
 if(process.argv.includes('--startup-first-paint'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),'ui1a-startup-cinematic-launch-20261028'])];
 if(process.argv.includes('--startup-smooth'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),'ui1a-startup-cinematic-launch-20261028','ui1a-startup-first-paint-20261028'])];
 if(process.argv.includes('--startup-fast'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),'ui1a-startup-smooth-20261028'])];
+if(process.argv.includes('--startup-mobile-restore'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),'ui1a-startup-fast-opening-20261029'])];
 if(value('--generation')&&value('--version'))Object.assign(config,{assetGeneration:value('--generation'),version:value('--version')});
 if(!/^ui1a-[a-z0-9-]+$/.test(config.assetGeneration))throw Error('Неверный generation ID');
 const folders=['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa'];
@@ -34,6 +35,11 @@ if(value('--generation')){
 }
 const versionBytes=value('--generation')?Buffer.from(JSON.stringify(versionMetadata,null,2)+'\n'):await readFile(path.join(source,'version.json'));
 for(const file of files){const b=file==='version.json'?versionBytes:await readFile(path.join(source,file));await output(prefix+file,b,file);if(process.argv.includes('--startup-smooth')&&file.startsWith('intro-media/cinematic-v4/'))await output(file,b,'Публичный CDN: '+file)}
+// Прежние мобильные части уже опубликованы: повторная поставка тех же bytes
+// в необязательный CDN-каталог, вне обязательного SW install.
+if(process.argv.includes('--startup-mobile-restore'))for(const format of ['mp4','webm'])for(let i=0;i<4;i++){
+ const file='intro-media/cinematic-v3/mobile/'+format+'/part-'+String(i).padStart(3,'0')+'.'+format;await output(file,await readFile(path.join(source,file)),'Прежний Mobile CDN: '+file);
+}
 // После rollback корневые документы могут ссылаться на старое поколение.
 // Перепривязываются только выходные документы сборки; immutable source bytes
 // и активные root-файлы никогда не перезаписываются этим преобразованием.
