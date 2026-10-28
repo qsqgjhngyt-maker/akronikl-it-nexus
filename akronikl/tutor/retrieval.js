@@ -74,9 +74,10 @@ export function selectTutorSource(records,query){
 export function selectTeachingContext(index,matches,query,limit=2){
   const primary=selectTutorSource(matches,query);if(!primary)return [];
   const wanted=new Set(terms(query)),selected=[primary];
+  if(primary.section==='glossary')for(const line of primary.text.split('\n')){const [heading]=line.split(':');if(coverage(heading,wanted)>0)for(const token of terms(line))wanted.add(token);}
   const candidates=index.getLesson(primary.lessonId,primary.locale).filter(r=>r.section==='theory'&&r.sourceId!==primary.sourceId);
   const qualifiers=/(?:контракт|гаранти|предуслов|только|нельзя|если|не следует|не означает|зависит|contract|guarantee|precondition|only|must|unless|cannot|depends|not always|not necessarily)/giu;
-  const ranked=candidates.map(r=>({record:r,score:contentScore(r,wanted)+Math.min(12,(r.text.match(qualifiers)||[]).length)*.35})).sort((a,b)=>b.score-a.score);
+  const ranked=candidates.map(r=>({record:r,score:contentScore(r,wanted)+coverage(r.text.split('\n')[0],wanted)*3+Math.min(12,(r.text.match(qualifiers)||[]).length)*.35})).sort((a,b)=>b.score-a.score);
   for(const x of ranked){if(selected.length>=limit)break;if(coverage(x.record.text,wanted)>0)selected.push(x.record);}
   return selected;
 }

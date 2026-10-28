@@ -1,4 +1,6 @@
 const rows={
+ voiceNote:['Используются установленные голоса устройства. Автоозвучка читает только новые ответы после вашего действия; старая история не воспроизводится. Микрофон не включается.','Uses installed device voices. Auto speech reads only new replies after your interaction; history is not replayed. The microphone is not used.'],
+ voiceAuto:['Озвучивать новые ответы автоматически','Read new replies automatically'],voiceDevice:['Голос устройства','Device voice'],voiceRate:['Скорость речи','Speech rate'],voiceTest:['Послушать пример','Test voice'],voicePause:['Пауза / продолжить','Pause / resume'],voiceStop:['Остановить озвучку','Stop speech'],
  noTask:['Текущее задание пока не связано с проверенным контекстом помощника. Откройте его условие; содержание задания по названию урока я не угадываю.','The current task is not yet linked to the assistant’s verified context. Open its instructions; I do not infer the task from the lesson title.'],
  diagnosticConsent:['Разрешить сообщение компилятора текущего файла','Allow the current file’s compiler message'],
  diagnosticNote:['Только подтверждённая строка диагностики той же ревизии. Другие файлы и полный журнал не передаются.','Only a verified diagnostic line from the same revision. Other files and the full log are not shared.'],

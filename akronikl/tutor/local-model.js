@@ -51,7 +51,7 @@ export function createWllamaProvider(engine,{recreate=null,onOutcome=null,reason
           if(!recreate)throw Error('LOCAL_ENGINE_UNAVAILABLE');
           // Keep ownership while reloading: do not claim drained until a late
           // loader has returned and its engine has been closed on cancellation.
-          current=await recreate();epoch++;
+          current=await recreate({signal});epoch++;
           if(disposed||aborted||signal?.aborted){await close(current);throw Error('LOCAL_REQUEST_CANCELLED');}
         }
         if(signal?.aborted)abort();
@@ -67,7 +67,7 @@ export function createWllamaProvider(engine,{recreate=null,onOutcome=null,reason
         const started=performance.now();
         // Сырые фрагменты/рассуждения не выводятся: наружу только числовой прогресс.
         // Итоговый текст появляется лишь после полного JSON и проверки цитат сессией.
-        await Promise.race([selected.createChatCompletion({messages:modelMessages,abortSignal:signal,stream:true,cache_prompt:false,max_tokens:384+reasoningBudget,
+        await Promise.race([selected.createChatCompletion({messages:modelMessages,abortSignal:signal,stream:true,cache_prompt:false,max_tokens:256+reasoningBudget,
           temperature:0.2,seed:42,chat_template_kwargs:{enable_thinking:reasoningBudget>0},return_progress:true,timings_per_token:true,
           response_format:{type:'json_schema',json_schema:{name:'nexus_tutor_answer',strict:true,schema:{type:'object',properties,required:Object.keys(properties),additionalProperties:false}}},
           onData(chunk){
@@ -105,16 +105,21 @@ export async function loadLocalModel(file,{signal,profile='local-cpu',loadRuntim
   async function openEngine(initialSignal){
     initialSignal?.throwIfAborted();
     const engine=new Wllama({default:new URL('./runtime/wasm/wllama.wasm',import.meta.url).href},{logger:{debug(){},log(){},warn(){},error(){}},suppressNativeLog:true});
+    let closing=null;const closeEngine=()=>closing??=Promise.resolve().then(()=>engine.exit());
+    let rejectLoad;const cancelled=new Promise((_,reject)=>rejectLoad=reject);cancelled.catch(()=>{});
+    const abortLoad=()=>{closeEngine().then(()=>rejectLoad(Error('LOCAL_MODEL_CANCELLED')),()=>rejectLoad(Error('LOCAL_MODEL_UNAVAILABLE')));};
+    initialSignal?.addEventListener('abort',abortLoad,{once:true});
     try{
     // Запрещён скрытый CDN fallback runtime. Неподдерживаемый браузер получает отказ.
     engine.setCompat(null);
     // n_parallel:1, jinja:true; failed reasoning experiments were rolled back.
     // Не меняем COOP/COEP. Запрос WebGPU не считается доказательством offload/скорости.
     if(profile==='local-webgpu'&&engine.isSupportWebGPU?.()!==true)throw Error('LOCAL_GPU_UNAVAILABLE');
-    await engine.loadModel([file],loadOptions);
+    await Promise.race([engine.loadModel([file],loadOptions),cancelled]);
       initialSignal?.throwIfAborted();return engine;
-    }catch(error){await engine.exit().catch(()=>{});throw Error('LOCAL_MODEL_UNAVAILABLE');}
+    }catch(error){await closeEngine().catch(()=>{});throw Error('LOCAL_MODEL_UNAVAILABLE');}
+    finally{initialSignal?.removeEventListener('abort',abortLoad);}
   }
   const engine=await openEngine(signal);
-  return createWllamaProvider(engine,{recreate:()=>openEngine(),onOutcome,reasoningBudget:loadOptions.reasoning_budget_tokens});
+  return createWllamaProvider(engine,{recreate:({signal})=>openEngine(signal),onOutcome,reasoningBudget:loadOptions.reasoning_budget_tokens});
 }
