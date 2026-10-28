@@ -8,6 +8,7 @@ const value=flag=>{const i=process.argv.indexOf(flag);return i>=0?process.argv[i
 if(out===source||source.startsWith(out+path.sep))throw Error('Нельзя писать build поверх исходников');
 try{await stat(out);throw Error('Каталог build уже существует: выберите новый путь')}catch(e){if(e.code!=='ENOENT')throw e}
 const config=JSON.parse(await readFile(path.join(source,'release-candidate.json')));
+if(value('--generation')&&value('--generation')!==config.assetGeneration&&process.argv.includes('--retain-active'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),config.assetGeneration])];
 if(value('--generation')&&value('--version'))Object.assign(config,{assetGeneration:value('--generation'),version:value('--version')});
 if(!/^ui1a-[a-z0-9-]+$/.test(config.assetGeneration))throw Error('Неверный generation ID');
 const folders=['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa'];
