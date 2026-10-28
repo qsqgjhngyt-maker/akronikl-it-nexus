@@ -18,6 +18,7 @@ export function validateM6Plan(p,c){
  for(const id of CPP_LEGACY_LESSON_IDS)assert.ok(c.lessons.some(l=>l.id===id));return true;
 }
 export async function checkM6Dependencies(){
+ if(JSON.parse(await readFile('courses/cpp/curriculum.json')).programVersion==='cpp-gold-m6-v1'){const result=await(await import('./check-academy-gold-module6-authoring.mjs')).m6AuthoringScope();const out=path.resolve(process.env.NEXUS_M6_EVIDENCE||'academy-gold-m6-evidence');await mkdir(out,{recursive:true});await writeFile(path.join(out,'DEPENDENCIES.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));return result;}
  const git=(...args)=>execFileSync('git',args,{maxBuffer:128*1024*1024}),hash=b=>createHash('sha256').update(b).digest('hex'),scope=await m6ImplementationScope();
  const p=JSON.parse(await readFile('docs/ru/03-content/CPP_MODULE6_DEPENDENCIES.json')),c=JSON.parse(await readFile('courses/cpp/curriculum.json'));validateM6Plan(p,c);
  assert.equal(git('branch','--show-current').toString().trim(),p.branch);git('merge-base','--is-ancestor',M6_BASE,'HEAD');git('merge-base','--is-ancestor',M5_HANDOFF,'HEAD');

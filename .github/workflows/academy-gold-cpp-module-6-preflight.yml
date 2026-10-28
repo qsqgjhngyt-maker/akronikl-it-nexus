@@ -1,4 +1,4 @@
-name: C++ Module 6 — runtime, GUI candidate, переносимость и прогресс
+name: C++ Module 6 — Gold RU/EN, runtime, Studio и прогресс
 on:
   push:
     branches: [feature/academy-gold-standard-cpp-module-6]
@@ -7,6 +7,12 @@ on:
       - 'tools/check-academy-gold-module6-*.mjs'
       - 'tests/academy-gold-module6-*.mjs'
       - 'tests/fixtures/cpp-module6-probes.mjs'
+      - 'tests/helpers/module6-gold-programs.mjs'
+      - 'core/**'
+      - 'courses/cpp/**'
+      - 'pwa/offline-entry.js'
+      - 'tools/content-contract-lib.mjs'
+      - 'docs/ru/03-content/CPP_MODULE6_AUTHORING*.json'
       - 'docs/ru/03-content/CPP_MODULE6_DEPENDENCIES.json'
       - 'docs/ru/03-content/CPP_MODULE6_IMPLEMENTATION_SCOPE.json'
       - 'sandbox/**'
@@ -35,6 +41,7 @@ jobs:
       - name: Только feature, сохранённые данные и unpublished сборка
         run: |
           node tools/check-academy-gold-module6-dependencies.mjs
+          node tools/check-academy-gold-module6-authoring.mjs
           node tools/check-academy-gold-module6-build.mjs
           node --test tests/academy-gold-module6-dependencies.test.mjs tests/academy-gold-module6-thread-limit.test.mjs tests/academy-gold-module6-portable.test.mjs tests/academy-gold-module6-service.test.mjs tests/academy-gold-module6-auth.test.mjs
           node tests/academy-gold-module6-preservation.mjs
@@ -46,6 +53,7 @@ jobs:
         run: |
           node tools/check-academy-gold-module6-native.mjs
           node tools/check-academy-gold-module6-taskflow-native.mjs
+          node tools/check-academy-gold-module6-gold-native.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -55,7 +63,7 @@ jobs:
   runtime-audit:
     name: Измерение runtime; завершённый аудит не означает допуск M6
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     env:
       NEXUS_FRONTEND_DIR: /tmp/nexus-m6-build
       NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m6-browser/node_modules/playwright/index.mjs
@@ -81,6 +89,8 @@ jobs:
         run: node tests/academy-gold-module6-preflight.mjs --audit
       - name: Реальная encrypted cold Offline копия, 390/1366 px и прежний M6 stable ID
         run: node tests/academy-gold-module6-browser-check.mjs
+      - name: Все Gold примеры, заготовки, лабораторные и настоящий Code Studio
+        run: node tests/academy-gold-module6-examples-browser.mjs
       - name: Явный статус допуска, независимо от зелёного audit job
         if: always()
         run: |
@@ -95,7 +105,7 @@ jobs:
   qt-candidate:
     name: Настоящие C++ GUI, данные, переносимость и сдача в Nexus
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 55
     env:
       NEXUS_M6_EVIDENCE: /tmp/nexus-m6-qt
       NEXUS_QT_IMAGE: nexus-m6-qt:6.8.3-ems3.1.56
@@ -127,6 +137,8 @@ jobs:
         run: node tests/academy-gold-module6-qt-browser.mjs
       - name: Студент и преподаватель в настоящем Nexus, отдельный Preview site
         run: node tests/academy-gold-module6-application-check.mjs
+      - name: Все учебные Qt bundles, фильтр, данные и сдача исходников
+        run: node tests/academy-gold-module6-gui-content-check.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

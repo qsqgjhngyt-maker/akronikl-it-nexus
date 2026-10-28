@@ -1,0 +1,408 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.visual-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "runtimeTarget": "wasm-cpp",
+  "lessonId": "cpp.responsive-work-cancellation",
+  "locale": "en",
+  "sessions": 4,
+  "learningOrder": 7,
+  "prerequisiteIds": [
+    "cpp.callback-lifetime-subscriptions",
+    "cpp.algorithm-complexity"
+  ],
+  "sourceRefs": [
+    "CPP20-ADAPTERS",
+    "CPP20-FUNCTIONS"
+  ],
+  "title": "Responsive work, bounded steps and cancellation",
+  "lead": "Split work into bounded steps and cancel without committing a partial result.",
+  "why": "In a single-threaded application, a handler occupying the event loop prevents the next user command from running. A fast average case does not guarantee responsiveness on larger input. Divide the operation into portions and return control to a scheduler between them. Bound both the number of calls and the work performed inside each call.",
+  "objectives": [
+    "Trace three steps for n=8.",
+    "Explain cancelAt=0 for an empty job.",
+    "Implement step with budget three.",
+    "Test repeated cancel and step after cancellation.",
+    "Design a queue-overflow policy."
+  ],
+  "prerequisites": [
+    "Modules 1–5: functions, STL, ownership, testing and multi-file builds.",
+    "cpp.callback-lifetime-subscriptions",
+    "cpp.algorithm-complexity"
+  ],
+  "concepts": [
+    {
+      "term": "Step budget",
+      "definition": "The maximum work performed by one cooperative invocation."
+    },
+    {
+      "term": "Cooperative execution",
+      "definition": "An operation explicitly yields control between portions of work."
+    },
+    {
+      "term": "Cancellation",
+      "definition": "A request to stop unfinished work under a specified contract."
+    },
+    {
+      "term": "Provisional result",
+      "definition": "Accumulated data not yet committed to the main model."
+    },
+    {
+      "term": "Commit point",
+      "definition": "The point after which a result is considered committed."
+    },
+    {
+      "term": "Coalescing",
+      "definition": "Replacing equivalent refresh requests with one request."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition preserved at the boundaries of permitted model operations."
+    },
+    {
+      "term": "Observable behaviour",
+      "definition": "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Why a long handler blocks interaction",
+      "paragraphs": [
+        "In a single-threaded application, a handler occupying the event loop prevents the next user command from running. A fast average case does not guarantee responsiveness on larger input. Divide the operation into portions and return control to a scheduler between them. Bound both the number of calls and the work performed inside each call.",
+        "The teaching Job sums integers from one to n. One step handles at most three numbers and retains done and candidate. The driver immediately invokes the next step for deterministic testing; a real GUI must schedule that step and return to its event loop. The laboratory while loop alone does not demonstrate actual interface responsiveness."
+      ]
+    },
+    {
+      "title": "State of an incremental job",
+      "paragraphs": [
+        "size specifies total work, done counts processed items and candidate stores a provisional result. Reason about step to establish 0≤done≤size. The local budget decreases on every iteration and done grows only up to size. Each call therefore handles at most three items even when the complete job requires many calls.",
+        "For n=8, the first step accumulates six from 1…3, the second twenty-one from 1…6 and the third thirty-six. The committed result remains zero until finished. This is a deliberate atomic-commit policy. An interface can separately display done as progress without presenting the provisional sum as a completed calculation."
+      ]
+    },
+    {
+      "title": "Precise cancellation semantics",
+      "paragraphs": [
+        "cancelAt is the step index before which cancellation is requested; -1 means no request. Indexing begins at zero. Once a job has completed, later cancellation does not convert success into rejection. With n=0 the result is ready immediately, so cancelAt=0 does not cancel work that never needed to run.",
+        "After cancellation, step does nothing, an incomplete job remains unfinished and result returns zero. Progress is retained for explanation while the candidate is not committed. A richer model needs an explicit commit point. A cancellation flag does not automatically undo an email already sent, a network request or an external write."
+      ]
+    },
+    {
+      "title": "Bounded queues and backpressure",
+      "paragraphs": [
+        "If events arrive faster than they are handled, even short callbacks can accumulate an unbounded queue. The second example admits three items and rejects the next two. The caller must be able to observe rejection. Silently dropping a user command is unacceptable without an explicit policy, particularly when it changes coursework or project state.",
+        "Display refresh requests can sometimes be coalesced: ten requests to show the current number become one. Ten commands to add stock generally cannot be merged that way. Distinguish user intention from a refresh notification. For the extension, choose a capacity, a budget unit and an overflow policy, then measure the largest retained queue size."
+      ]
+    },
+    {
+      "title": "Cooperation is not threading",
+      "paragraphs": [
+        "This lesson uses no std::thread, parallel summation or concurrent shared mutation. Work is divided over time on one thread. Console WASI and graphical Qt targets have different capabilities; including a thread header does not make an unavailable mechanism supported. Choose an algorithm compatible with the stated environment and inspect its diagnostics without rewriting learner source behind the scenes.",
+        "Test cancellation before the first step, after one step and after completion, plus empty and maximum-size jobs. Add an independent case and justify the arithmetic bound: n≤100 yields a sum at most 5050. One run does not establish consistent latency on every phone; physical acceptance and timing measurements remain separate checks."
+      ]
+    },
+    {
+      "title": "Laboratory contract: input to observation",
+      "paragraphs": [
+        "Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed.",
+        "Trace the first reference scenario before running. Exact stdin: \"8 -1\". Expected stdout: \"done processed 8 result 36\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+      ]
+    },
+    {
+      "title": "Reading a working example",
+      "paragraphs": [
+        "Each tick begins with a budget of three. The first processes three items and the second three more. Work of size eight is unfinished: done equals six. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+        "Queue capacity is three. The fourth and fifth arrivals are rejected. Size three and two rejections are observable. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+      ]
+    },
+    {
+      "title": "Independent checking and transfer",
+      "paragraphs": [
+        "Design a queue-overflow policy. Retain a checkable result: Design a queue-overflow policy. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
+        "Propose GUI scheduling of work portions without a busy while inside a callback. Retain a checkable result: Propose GUI scheduling of work portions without a busy while inside a callback. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Ask a reviewer for a small requirement change and explain which files, tests and observations it should affect."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "bounded-step",
+      "code": "#include <iostream>\nint main() { int done = 0; for (int tick = 0; tick < 2; ++tick) { int budget = 3; while (budget-- > 0 && done < 8) ++done; std::cout << \"done \" << done << '\\n'; } }\n",
+      "stdin": "",
+      "expectedStdout": "done 3\ndone 6\n",
+      "title": "Guided model",
+      "purpose": "Split work into bounded steps and cancel without committing a partial result.",
+      "steps": [
+        "Each tick begins with a budget of three.",
+        "The first processes three items and the second three more.",
+        "Work of size eight is unfinished: done equals six."
+      ]
+    },
+    {
+      "id": "backpressure",
+      "code": "#include <iostream>\n#include <queue>\nint main() { std::queue<int> events; int rejected = 0; for (int i = 0; i < 5; ++i) { if (events.size() == 3) ++rejected; else events.push(i); } std::cout << events.size() << ' ' << rejected << '\\n'; }\n",
+      "stdin": "",
+      "expectedStdout": "3 2\n",
+      "title": "Boundary and extension",
+      "purpose": "Split work into bounded steps and cancel without committing a partial result.",
+      "steps": [
+        "Queue capacity is three.",
+        "The fourth and fifth arrivals are rejected.",
+        "Size three and two rejections are observable."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Test repeated cancel and step after cancellation.",
+      "action": "Test repeated cancel and step after cancellation.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed. Explain the selected contract and supply an independent example."
+    },
+    {
+      "title": "Design a queue-overflow policy.",
+      "action": "Design a queue-overflow policy.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Design a queue-overflow policy. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "State changed after rejection.",
+      "cause": "Mutation happened before validation or violated the invariant.",
+      "fix": "Identify the laboratory commit point and check it with a separate rejection trace."
+    },
+    {
+      "symptom": "An old revision or wrong target is running.",
+      "cause": "Build inputs are wrong or the changed project was not rebuilt.",
+      "fix": "Check entryFile, includeRoots and translationUnits and run the saved copy."
+    },
+    {
+      "symptom": "One successful example is treated as complete verification.",
+      "cause": "Rejected, empty and independent cases have not been checked.",
+      "fix": "Propose GUI scheduling of work portions without a busy while inside a callback."
+    }
+  ],
+  "practice": [
+    {
+      "task": "Trace three steps for n=8.",
+      "criteria": "Retain a checkable result: The teaching Job sums integers from one to n. One step handles at most three numbers and retains done and candidate. The driver immediately invokes the next step for deterministic testing; a real GUI must schedule that step and return to its event loop. The laboratory while loop alone does not demonstrate actual interface responsiveness. Explain the selected contract and supply an independent example.",
+      "level": "basic",
+      "hint": "The teaching Job sums integers from one to n. One step handles at most three numbers and retains done and candidate. The driver immediately invokes the next step for deterministic testing; a real GUI must schedule that step and return to its event loop. The laboratory while loop alone does not demonstrate actual interface responsiveness."
+    },
+    {
+      "task": "Explain cancelAt=0 for an empty job.",
+      "criteria": "Retain a checkable result: For n=8, the first step accumulates six from 1…3, the second twenty-one from 1…6 and the third thirty-six. The committed result remains zero until finished. This is a deliberate atomic-commit policy. An interface can separately display done as progress without presenting the provisional sum as a completed calculation. Explain the selected contract and supply an independent example.",
+      "level": "basic",
+      "hint": "For n=8, the first step accumulates six from 1…3, the second twenty-one from 1…6 and the third thirty-six. The committed result remains zero until finished. This is a deliberate atomic-commit policy. An interface can separately display done as progress without presenting the provisional sum as a completed calculation."
+    },
+    {
+      "task": "Implement step with budget three.",
+      "criteria": "Retain a checkable result: Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed. Explain the selected contract and supply an independent example.",
+      "level": "applied",
+      "hint": "Each tick begins with a budget of three. The first processes three items and the second three more. Work of size eight is unfinished: done equals six."
+    },
+    {
+      "task": "Test repeated cancel and step after cancellation.",
+      "criteria": "Retain a checkable result: Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed. Explain the selected contract and supply an independent example.",
+      "level": "applied",
+      "hint": "Queue capacity is three. The fourth and fifth arrivals are rejected. Size three and two rejections are observable."
+    },
+    {
+      "task": "Design a queue-overflow policy.",
+      "criteria": "Retain a checkable result: Design a queue-overflow policy. Explain the selected contract and supply an independent example.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    },
+    {
+      "task": "Propose GUI scheduling of work portions without a busy while inside a callback.",
+      "criteria": "Retain a checkable result: Propose GUI scheduling of work portions without a busy while inside a callback. Explain the selected contract and supply an independent example.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Responsive work, bounded steps and cancellation",
+    "challenge": "Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed.",
+    "target": "wasm-cpp",
+    "starterCode": "#include <iostream>\nclass Job {\n  int size_, done_ = 0, candidate_ = 0; bool cancelled_ = false;\npublic:\n  explicit Job(int n) : size_(n) {}\n  void cancel() { if (done_ < size_) cancelled_ = true; }\n  void step() {\n  /* TODO: replace this safe unfinished-work cancellation with a bounded step. */ cancelled_ = true;\n}\n  bool finished() const { return done_ == size_; }\n  bool cancelled() const { return cancelled_; }\n  int done() const { return done_; }\n  int result() const { return finished() ? candidate_ : 0; }\n};\nint main() {\n  int n, cancelAt;\n  if (!(std::cin >> n >> cancelAt) || n < 0 || n > 100 || cancelAt < -1 || cancelAt > 40) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Job job(n); int tick = 0;\n  while (!job.finished() && !job.cancelled()) { if (tick == cancelAt) job.cancel(); if (!job.cancelled()) { job.step(); ++tick; } }\n  std::cout << (job.cancelled() ? \"cancelled\" : \"done\") << \" processed \" << job.done() << \" result \" << job.result() << '\\n';\n}\n",
+    "referenceCode": "#include <iostream>\nclass Job {\n  int size_, done_ = 0, candidate_ = 0; bool cancelled_ = false;\npublic:\n  explicit Job(int n) : size_(n) {}\n  void cancel() { if (done_ < size_) cancelled_ = true; }\n  void step() { if (cancelled_) return; int budget = 3; while (budget-- > 0 && done_ < size_) { ++done_; candidate_ += done_; } }\n  bool finished() const { return done_ == size_; }\n  bool cancelled() const { return cancelled_; }\n  int done() const { return done_; }\n  int result() const { return finished() ? candidate_ : 0; }\n};\nint main() {\n  int n, cancelAt;\n  if (!(std::cin >> n >> cancelAt) || n < 0 || n > 100 || cancelAt < -1 || cancelAt > 40) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Job job(n); int tick = 0;\n  while (!job.finished() && !job.cancelled()) { if (tick == cancelAt) job.cancel(); if (!job.cancelled()) { job.step(); ++tick; } }\n  std::cout << (job.cancelled() ? \"cancelled\" : \"done\") << \" processed \" << job.done() << \" result \" << job.result() << '\\n';\n}\n",
+    "starterFiles": {},
+    "referenceFiles": {},
+    "metadata": {},
+    "starterExpectedStdout": "cancelled processed 0 result 0\n",
+    "cases": [
+      {
+        "stdin": "8 -1",
+        "stdout": "done processed 8 result 36\n"
+      },
+      {
+        "stdin": "8 1",
+        "stdout": "cancelled processed 3 result 0\n"
+      },
+      {
+        "stdin": "8 0",
+        "stdout": "cancelled processed 0 result 0\n"
+      },
+      {
+        "stdin": "0 0",
+        "stdout": "done processed 0 result 0\n"
+      },
+      {
+        "stdin": "3 1",
+        "stdout": "done processed 3 result 6\n"
+      },
+      {
+        "stdin": "100 -1",
+        "stdout": "done processed 100 result 5050\n"
+      },
+      {
+        "stdin": "101 -1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "8 -2",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Preserve your work and create a separate project for experiments.",
+      "Open Task and Code Studio and copy the starter and listed files.",
+      "Implement step with budget three.",
+      "Before running, record the expected transitions and outcome of every case.",
+      "Execute every reference case and retain actual observations.",
+      "Test repeated cancel and step after cancellation.",
+      "Add an independent case and explain its boundary.",
+      "Save sources, the protocol and an explanation of limitations."
+    ],
+    "rubric": [
+      "The full input and output contract is satisfied.",
+      "Invariants and lifetimes are explained; rejection preserves the model.",
+      "Ordinary, empty, boundary and failure scenarios are covered.",
+      "Test repeated cancel and step after cancellation.",
+      "An independent extension and test are supplied, rather than only a reference copy.",
+      "Sources, actual observations and limits of conclusions are retained."
+    ],
+    "artifact": "A personal project and verification protocol using synthetic data.",
+    "verification": "manual-output-comparison",
+    "catalogGoal": "Split work into bounded steps and cancel without committing a partial result.",
+    "catalogProof": "A personal project and verification protocol using synthetic data."
+  },
+  "assessment": [
+    {
+      "question": "How many items does step process?",
+      "answers": [
+        "At most three.",
+        "Always all items.",
+        "Exactly n threads."
+      ],
+      "correctIndex": 0,
+      "explanation": "The budget is bounded independently of total work."
+    },
+    {
+      "question": "What result is committed after cancelling following three items?",
+      "answers": [
+        "The partial sum.",
+        "Zero; the provisional result is not committed.",
+        "A random number."
+      ],
+      "correctIndex": 1,
+      "explanation": "The laboratory uses an atomic result-commit policy."
+    },
+    {
+      "question": "Does the driver prove GUI responsiveness?",
+      "answers": [
+        "Yes.",
+        "Only for n=8.",
+        "No; actual scheduling and measurement are needed."
+      ],
+      "correctIndex": 2,
+      "explanation": "The driver tests step logic rather than interface latency."
+    },
+    {
+      "question": "What is expected in the first reference case?",
+      "answers": [
+        "done processed 8 result 36\n",
+        "Data are always deleted.",
+        "The build must always fail."
+      ],
+      "correctIndex": 0,
+      "explanation": "Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed."
+    },
+    {
+      "question": "How should the independent extension be checked?",
+      "answers": [
+        "Only rename the project.",
+        "Propose GUI scheduling of work portions without a busy while inside a callback.",
+        "Keep no observations."
+      ],
+      "correctIndex": 1,
+      "explanation": "Retain a checkable result: Propose GUI scheduling of work portions without a busy while inside a callback. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "What is required when an operation with a strong guarantee fails?",
+      "answers": [
+        "Preserve the specified state.",
+        "Delete all data.",
+        "Always close the browser."
+      ],
+      "correctIndex": 0,
+      "explanation": "The guarantee concerns the specified model at an operation boundary."
+    },
+    {
+      "question": "Who owns an object supplied through an ordinary reference?",
+      "answers": [
+        "Always the called function.",
+        "Ownership is specified separately; a reference does not transfer it.",
+        "Nobody."
+      ],
+      "correctIndex": 1,
+      "explanation": "The owner must outlive use of the reference."
+    },
+    {
+      "question": "How is a driver with its own main built?",
+      "answers": [
+        "Always together with another main.",
+        "Without domain code.",
+        "Instead of application main, sharing model sources."
+      ],
+      "correctIndex": 2,
+      "explanation": "The application and driver have separate entry points and builds."
+    }
+  ],
+  "reflection": [
+    "Explain cancelAt=0 for an empty job.",
+    "Which check distinguishes a superficially similar incorrect implementation?",
+    "Propose GUI scheduling of work portions without a busy while inside a callback."
+  ],
+  "bridge": "Next: Model persistence and format versioning. Preserve your project and experiment results.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Responsive work, bounded steps and cancellation",
+    "description": "A stepwise conceptual model; actual verification runs in the stated Studio target.",
+    "steps": [
+      {
+        "title": "Why a long handler blocks interaction",
+        "description": "In a single-threaded application, a handler occupying the event loop prevents the next user command from running. A fast average case does not guarantee responsiveness on larger input. Divide the operation into portions and return control to a scheduler between them. Bound both the number of calls and the work performed inside each call."
+      },
+      {
+        "title": "State of an incremental job",
+        "description": "size specifies total work, done counts processed items and candidate stores a provisional result. Reason about step to establish 0≤done≤size. The local budget decreases on every iteration and done grows only up to size. Each call therefore handles at most three items even when the complete job requires many calls."
+      },
+      {
+        "title": "Precise cancellation semantics",
+        "description": "cancelAt is the step index before which cancellation is requested; -1 means no request. Indexing begins at zero. Once a job has completed, later cancellation does not convert success into rejection. With n=0 the result is ready immediately, so cancelAt=0 does not cancel work that never needed to run."
+      },
+      {
+        "title": "Bounded queues and backpressure",
+        "description": "If events arrive faster than they are handled, even short callbacks can accumulate an unbounded queue. The second example admits three items and rejects the next two. The caller must be able to observe rejection. Silently dropping a user command is unacceptable without an explicit policy, particularly when it changes coursework or project state."
+      },
+      {
+        "title": "Cooperation is not threading",
+        "description": "This lesson uses no std::thread, parallel summation or concurrent shared mutation. Work is divided over time on one thread. Console WASI and graphical Qt targets have different capabilities; including a thread header does not make an unavailable mechanism supported. Choose an algorithm compatible with the stated environment and inspect its diagnostics without rewriting learner source behind the scenes."
+      }
+    ]
+  }
+}

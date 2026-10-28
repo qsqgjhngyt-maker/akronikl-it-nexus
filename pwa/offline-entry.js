@@ -172,9 +172,9 @@ async function render(){
  if(seq!==renderSequence)return;
  if(!item){root.innerHTML=lessons();bindNexusLearningUi(t);bindLearningDiscovery(t);bindReadOnlyLearning();return}
  if(kind==='exercise'){if(!needLocal())return;const p=exerciseCopy(data,kind,item);await save();return editor(p)}
- const state=data?learningState(data,kind,item.id):{},exercise=data?exerciseCopy(data,kind,item):null;
+ const state=data?learningState(data,kind,item.id):{},exercise=data&&item.gold?.runtimeTarget!=='qt-wasm'?exerciseCopy(data,kind,item):null;
  root.innerHTML=kind==='lesson'?views().lessonView(item.id):views().practicumView(item.id);
- if(exercise)bindEditor(exercise,item.code||item.starter);else for(const node of root.querySelectorAll('#editor,#stdin,#runCode,#testRuntime,#resetCode,#completeLesson,[data-task]'))node.disabled=true;
+ if(item.gold?.runtimeTarget==='qt-wasm'){/* GUI target requires the online Project Studio; no console workspace is created. */}else if(exercise)bindEditor(exercise,item.code||item.starter);else for(const node of root.querySelectorAll('#editor,#stdin,#runCode,#testRuntime,#resetCode,#completeLesson,[data-task]'))node.disabled=true;
  bindKnowledge(item,state);if(item.gold)goldPresentation.bindAcademyGold(root,item.gold);bindMemoryLab(item.benchmark?.interactiveMemory,locale);bindOopLab(item.benchmark?.interactiveOop,locale);
  const mark=root.querySelector('#completeLesson');if(mark&&data)mark.onclick=async()=>{state.completed=!state.completed;await save();await render()};
  for(const input of root.querySelectorAll('[data-task]'))input.onchange=()=>{if(!data)return;markTask(data,kind,item,Number(input.dataset.task),input.checked);void save().catch(()=>{})};

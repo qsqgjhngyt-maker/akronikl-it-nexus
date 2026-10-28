@@ -1,0 +1,411 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.visual-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "runtimeTarget": "wasm-cpp",
+  "lessonId": "cpp.callback-lifetime-subscriptions",
+  "locale": "en",
+  "sessions": 5,
+  "learningOrder": 6,
+  "prerequisiteIds": [
+    "cpp.validated-user-commands",
+    "cpp.raii-smart-pointers",
+    "cpp.lifetime-ownership"
+  ],
+  "sourceRefs": [
+    "CPP20-WEAK",
+    "CPP20-CALLABLE",
+    "CPP20-DTOR"
+  ],
+  "title": "Callback lifetime and RAII subscriptions",
+  "lead": "Design a subscription that disconnects at scope exit and never accesses a destroyed receiver.",
+  "why": "An event source and its receiver can disappear at different times. Capturing a raw this does not extend the object’s lifetime; a callback retained by the source can outlive its receiver. Capturing shared_ptr extends ownership but can sometimes create a cycle. Before choosing a pointer, draw who owns the source, receiver and subscription.",
+  "objectives": [
+    "Draw the laboratory ownership graph.",
+    "Explain the empty lock result after reset.",
+    "Implement subscription destruction.",
+    "Test self-unsubscription without an invalid iterator.",
+    "Add a safe Subscription move operation."
+  ],
+  "prerequisites": [
+    "Modules 1–5: functions, STL, ownership, testing and multi-file builds.",
+    "cpp.validated-user-commands",
+    "cpp.raii-smart-pointers",
+    "cpp.lifetime-ownership"
+  ],
+  "concepts": [
+    {
+      "term": "Subscription",
+      "definition": "A handler-registration resource with a defined lifetime."
+    },
+    {
+      "term": "Weak reference",
+      "definition": "Observation of an object without extending its lifetime."
+    },
+    {
+      "term": "lock",
+      "definition": "An attempt to obtain temporary shared ownership of a live object."
+    },
+    {
+      "term": "Ownership cycle",
+      "definition": "Mutual ownership that prevents resources from being released."
+    },
+    {
+      "term": "Identifier snapshot",
+      "definition": "A fixed candidate set for one dispatch operation."
+    },
+    {
+      "term": "Connection context",
+      "definition": "An object to whose lifetime a callback connection is bound."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition preserved at the boundaries of permitted model operations."
+    },
+    {
+      "term": "Observable behaviour",
+      "definition": "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Two independent lifetimes",
+      "paragraphs": [
+        "An event source and its receiver can disappear at different times. Capturing a raw this does not extend the object’s lifetime; a callback retained by the source can outlive its receiver. Capturing shared_ptr extends ownership but can sometimes create a cycle. Before choosing a pointer, draw who owns the source, receiver and subscription.",
+        "main owns SignalState and an integer receiver through shared_ptr. The callback stores a weak_ptr to the receiver, while Subscription stores a weak_ptr to the source. Neither subscription nor callback is required to keep its target alive. Test destroying each owner independently; absence of a crash is insufficient without checking invocation counts."
+      ]
+    },
+    {
+      "title": "weak_ptr::lock and local ownership",
+      "paragraphs": [
+        "lock returns a shared_ptr when the object still exists, or an empty pointer otherwise. if(auto value=weak.lock()) establishes a local owner for the if body. The object cannot disappear merely because the final external shared_ptr is reset during that scope. Checking expired and then dereferencing a raw address does not establish the same ownership contract.",
+        "Mode 1 destroys the receiver after the first emit. The second emit still finds the callback, but lock returns empty and no destroyed integer is accessed. Output uses -1 as an explicitly chosen marker for an absent receiver. It is neither saved model state nor evidence of event delivery; the event is intentionally skipped by subscription policy."
+      ]
+    },
+    {
+      "title": "A subscription as a resource",
+      "paragraphs": [
+        "Registration obtains an identifier. An RAII object associates it with a scope and removes the handler in its destructor when the source still exists. Copying Subscription is forbidden: independent copies could claim one resource. This first version provides no move operation either; a move-only extension must transfer the identifier and disarm the previous object.",
+        "Declaration order matters: the receiver and source outlive the inner block while the subscription belongs to it. A third emit after the block invokes no handler. Mode 2 clears handlers early; erasing an already absent identifier is harmless. A destructor must not throw merely because the subscription has already been removed."
+      ]
+    },
+    {
+      "title": "Traversal when subscribers change",
+      "paragraphs": [
+        "emit first snapshots identifiers and then looks up the current handler for each one. It copies std::function locally before invocation. If a callback removes its own subscription, the callable remains alive through the local copy. A removed later subscriber is skipped, and a subscriber added during emit is absent from the existing identifier snapshot.",
+        "This specifies one single-threaded operation, not a thread-safe signal. There is no mutex or concurrent map mutation. Nested emit requires a separate policy: queue it, reject it or explicitly support recursion. Snapshotting identifiers does not establish protection against every kind of reentrancy."
+      ]
+    },
+    {
+      "title": "Destruction tests",
+      "paragraphs": [
+        "Check normal scope exit, a vanished receiver, early unsubscription and a source destroyed before Subscription. Specify invocation counts and handler storage size for each case. Add self-unsubscription in a separate version: after the first call, the handler removes itself and is not invoked again. Supply ownership explicitly rather than returning a reference to a local object.",
+        "A Qt connection with a context object helps manage connection lifetime but does not remove the need to inspect captures. Later the window owns child widgets and its model. Compare standard RAII subscriptions with context-bound Qt connections; mixing arbitrary delete, parent ownership and shared_ptr without a coherent policy creates additional hazards."
+      ]
+    },
+    {
+      "title": "Laboratory contract: input to observation",
+      "paragraphs": [
+        "Read mode zero, one or two without trailing input. Subscribe and emit once. Mode one destroys the receiver; mode two clears handlers. Emit again, leave subscription scope and emit a third time. Print the receiver value (-1 when absent) and subscription count.",
+        "Trace the first reference scenario before running. Exact stdin: \"0\". Expected stdout: \"value 2 subscriptions 0\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+      ]
+    },
+    {
+      "title": "Reading a working example",
+      "paragraphs": [
+        "make_shared creates an owner of seven. lock creates a local owner for reading. After reset the weak reference expires. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+        "Construction increments the active-subscription count. One is observed within the scope. Destruction at scope exit reduces it to zero. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+      ]
+    },
+    {
+      "title": "Independent checking and transfer",
+      "paragraphs": [
+        "Add a safe Subscription move operation. Retain a checkable result: Add a safe Subscription move operation. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
+        "Design a notification-screen subscription whose screen can close before its source. Retain a checkable result: Design a notification-screen subscription whose screen can close before its source. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Ask a reviewer for a small requirement change and explain which files, tests and observations it should affect."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "weak",
+      "code": "#include <iostream>\n#include <memory>\nint main() {\n  auto owner = std::make_shared<int>(7); std::weak_ptr<int> observer = owner;\n  if (auto value = observer.lock()) std::cout << *value << '\\n';\n  owner.reset();\n  std::cout << \"expired \" << observer.expired() << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "7\nexpired 1\n",
+      "title": "Guided model",
+      "purpose": "Design a subscription that disconnects at scope exit and never accesses a destroyed receiver.",
+      "steps": [
+        "make_shared creates an owner of seven.",
+        "lock creates a local owner for reading.",
+        "After reset the weak reference expires."
+      ]
+    },
+    {
+      "id": "scope",
+      "code": "#include <iostream>\nstruct Subscription {\n  int& count;\n  explicit Subscription(int& n) : count(n) { ++count; }\n  ~Subscription() { --count; }\n  Subscription(const Subscription&) = delete;\n};\nint main() { int active = 0; { Subscription s(active); std::cout << active << '\\n'; } std::cout << active << '\\n'; }\n",
+      "stdin": "",
+      "expectedStdout": "1\n0\n",
+      "title": "Boundary and extension",
+      "purpose": "Design a subscription that disconnects at scope exit and never accesses a destroyed receiver.",
+      "steps": [
+        "Construction increments the active-subscription count.",
+        "One is observed within the scope.",
+        "Destruction at scope exit reduces it to zero."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Test self-unsubscription without an invalid iterator.",
+      "action": "Test self-unsubscription without an invalid iterator.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Read mode zero, one or two without trailing input. Subscribe and emit once. Mode one destroys the receiver; mode two clears handlers. Emit again, leave subscription scope and emit a third time. Print the receiver value (-1 when absent) and subscription count. Explain the selected contract and supply an independent example."
+    },
+    {
+      "title": "Add a safe Subscription move operation.",
+      "action": "Add a safe Subscription move operation.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Add a safe Subscription move operation. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "State changed after rejection.",
+      "cause": "Mutation happened before validation or violated the invariant.",
+      "fix": "Identify the laboratory commit point and check it with a separate rejection trace."
+    },
+    {
+      "symptom": "An old revision or wrong target is running.",
+      "cause": "Build inputs are wrong or the changed project was not rebuilt.",
+      "fix": "Check entryFile, includeRoots and translationUnits and run the saved copy."
+    },
+    {
+      "symptom": "One successful example is treated as complete verification.",
+      "cause": "Rejected, empty and independent cases have not been checked.",
+      "fix": "Design a notification-screen subscription whose screen can close before its source."
+    }
+  ],
+  "practice": [
+    {
+      "task": "Draw the laboratory ownership graph.",
+      "criteria": "Retain a checkable result: main owns SignalState and an integer receiver through shared_ptr. The callback stores a weak_ptr to the receiver, while Subscription stores a weak_ptr to the source. Neither subscription nor callback is required to keep its target alive. Test destroying each owner independently; absence of a crash is insufficient without checking invocation counts. Explain the selected contract and supply an independent example.",
+      "level": "basic",
+      "hint": "main owns SignalState and an integer receiver through shared_ptr. The callback stores a weak_ptr to the receiver, while Subscription stores a weak_ptr to the source. Neither subscription nor callback is required to keep its target alive. Test destroying each owner independently; absence of a crash is insufficient without checking invocation counts."
+    },
+    {
+      "task": "Explain the empty lock result after reset.",
+      "criteria": "Retain a checkable result: Mode 1 destroys the receiver after the first emit. The second emit still finds the callback, but lock returns empty and no destroyed integer is accessed. Output uses -1 as an explicitly chosen marker for an absent receiver. It is neither saved model state nor evidence of event delivery; the event is intentionally skipped by subscription policy. Explain the selected contract and supply an independent example.",
+      "level": "basic",
+      "hint": "Mode 1 destroys the receiver after the first emit. The second emit still finds the callback, but lock returns empty and no destroyed integer is accessed. Output uses -1 as an explicitly chosen marker for an absent receiver. It is neither saved model state nor evidence of event delivery; the event is intentionally skipped by subscription policy."
+    },
+    {
+      "task": "Implement subscription destruction.",
+      "criteria": "Retain a checkable result: Read mode zero, one or two without trailing input. Subscribe and emit once. Mode one destroys the receiver; mode two clears handlers. Emit again, leave subscription scope and emit a third time. Print the receiver value (-1 when absent) and subscription count. Explain the selected contract and supply an independent example.",
+      "level": "applied",
+      "hint": "make_shared creates an owner of seven. lock creates a local owner for reading. After reset the weak reference expires."
+    },
+    {
+      "task": "Test self-unsubscription without an invalid iterator.",
+      "criteria": "Retain a checkable result: Read mode zero, one or two without trailing input. Subscribe and emit once. Mode one destroys the receiver; mode two clears handlers. Emit again, leave subscription scope and emit a third time. Print the receiver value (-1 when absent) and subscription count. Explain the selected contract and supply an independent example.",
+      "level": "applied",
+      "hint": "Construction increments the active-subscription count. One is observed within the scope. Destruction at scope exit reduces it to zero."
+    },
+    {
+      "task": "Add a safe Subscription move operation.",
+      "criteria": "Retain a checkable result: Add a safe Subscription move operation. Explain the selected contract and supply an independent example.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    },
+    {
+      "task": "Design a notification-screen subscription whose screen can close before its source.",
+      "criteria": "Retain a checkable result: Design a notification-screen subscription whose screen can close before its source. Explain the selected contract and supply an independent example.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Callback lifetime and RAII subscriptions",
+    "challenge": "Read mode zero, one or two without trailing input. Subscribe and emit once. Mode one destroys the receiver; mode two clears handlers. Emit again, leave subscription scope and emit a third time. Print the receiver value (-1 when absent) and subscription count.",
+    "target": "wasm-cpp",
+    "starterCode": "#include <iostream>\n#include <memory>\n#include <map>\n#include <vector>\n#include <functional>\nstruct SignalState { int next = 1; std::map<int, std::function<void()>> handlers; };\nclass Subscription {\n  std::weak_ptr<SignalState> state_; int id_;\npublic:\n  Subscription(std::shared_ptr<SignalState> state, int id) : state_(state), id_(id) {}\n  Subscription(const Subscription&) = delete;\n  Subscription& operator=(const Subscription&) = delete;\n  ~Subscription() { if (auto s = state_.lock()) s->handlers.erase(id_); }\n};\nvoid emit(const std::shared_ptr<SignalState>& s) {\n  /* TODO: snapshot ids, look up handlers and copy before invocation. */\n}\nint main() {\n  int mode;\n  if (!(std::cin >> mode) || mode < 0 || mode > 2) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  auto signal = std::make_shared<SignalState>();\n  auto receiver = std::make_shared<int>(0); std::weak_ptr<int> weak = receiver;\n  { int id = signal->next++;\n    signal->handlers.emplace(id, [weak] { if (auto value = weak.lock()) ++*value; });\n    Subscription subscription(signal, id);\n    emit(signal);\n    if (mode == 1) receiver.reset();\n    if (mode == 2) signal->handlers.clear();\n    emit(signal);\n  }\n  emit(signal);\n  std::cout << \"value \" << (receiver ? *receiver : -1) << \" subscriptions \" << signal->handlers.size() << '\\n';\n}\n",
+    "referenceCode": "#include <iostream>\n#include <memory>\n#include <map>\n#include <vector>\n#include <functional>\nstruct SignalState { int next = 1; std::map<int, std::function<void()>> handlers; };\nclass Subscription {\n  std::weak_ptr<SignalState> state_; int id_;\npublic:\n  Subscription(std::shared_ptr<SignalState> state, int id) : state_(state), id_(id) {}\n  Subscription(const Subscription&) = delete;\n  Subscription& operator=(const Subscription&) = delete;\n  ~Subscription() { if (auto s = state_.lock()) s->handlers.erase(id_); }\n};\nvoid emit(const std::shared_ptr<SignalState>& s) {\n  std::vector<int> ids;\n  for (const auto& [id, handler] : s->handlers) ids.push_back(id);\n  for (int id : ids) {\n    auto it = s->handlers.find(id);\n    if (it != s->handlers.end()) { auto handler = it->second; if (handler) handler(); }\n  }\n}\nint main() {\n  int mode;\n  if (!(std::cin >> mode) || mode < 0 || mode > 2) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  auto signal = std::make_shared<SignalState>();\n  auto receiver = std::make_shared<int>(0); std::weak_ptr<int> weak = receiver;\n  { int id = signal->next++;\n    signal->handlers.emplace(id, [weak] { if (auto value = weak.lock()) ++*value; });\n    Subscription subscription(signal, id);\n    emit(signal);\n    if (mode == 1) receiver.reset();\n    if (mode == 2) signal->handlers.clear();\n    emit(signal);\n  }\n  emit(signal);\n  std::cout << \"value \" << (receiver ? *receiver : -1) << \" subscriptions \" << signal->handlers.size() << '\\n';\n}\n",
+    "starterFiles": {},
+    "referenceFiles": {},
+    "metadata": {},
+    "starterExpectedStdout": "value 0 subscriptions 0\n",
+    "cases": [
+      {
+        "stdin": "0",
+        "stdout": "value 2 subscriptions 0\n"
+      },
+      {
+        "stdin": "1",
+        "stdout": "value -1 subscriptions 0\n"
+      },
+      {
+        "stdin": "2",
+        "stdout": "value 1 subscriptions 0\n"
+      },
+      {
+        "stdin": "-1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "3",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "x",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 x",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Preserve your work and create a separate project for experiments.",
+      "Open Task and Code Studio and copy the starter and listed files.",
+      "Implement subscription destruction.",
+      "Before running, record the expected transitions and outcome of every case.",
+      "Execute every reference case and retain actual observations.",
+      "Test self-unsubscription without an invalid iterator.",
+      "Add an independent case and explain its boundary.",
+      "Save sources, the protocol and an explanation of limitations."
+    ],
+    "rubric": [
+      "The full input and output contract is satisfied.",
+      "Invariants and lifetimes are explained; rejection preserves the model.",
+      "Ordinary, empty, boundary and failure scenarios are covered.",
+      "Test self-unsubscription without an invalid iterator.",
+      "An independent extension and test are supplied, rather than only a reference copy.",
+      "Sources, actual observations and limits of conclusions are retained."
+    ],
+    "artifact": "A personal project and verification protocol using synthetic data.",
+    "verification": "manual-output-comparison",
+    "catalogGoal": "Design a subscription that disconnects at scope exit and never accesses a destroyed receiver.",
+    "catalogProof": "A personal project and verification protocol using synthetic data."
+  },
+  "assessment": [
+    {
+      "question": "Does weak_ptr extend object lifetime?",
+      "answers": [
+        "No.",
+        "Yes, always.",
+        "Only after expired."
+      ],
+      "correctIndex": 0,
+      "explanation": "A successful lock establishes ownership for the call."
+    },
+    {
+      "question": "Why copy handler before invoking it?",
+      "answers": [
+        "To run it in parallel.",
+        "So self-removal does not destroy the active callable.",
+        "To sort the map."
+      ],
+      "correctIndex": 1,
+      "explanation": "The local copy lives until invocation completes."
+    },
+    {
+      "question": "Is this Signal thread-safe?",
+      "answers": [
+        "Yes.",
+        "If int is small.",
+        "No; its contract is single-threaded."
+      ],
+      "correctIndex": 2,
+      "explanation": "Concurrent mutations are not synchronized here."
+    },
+    {
+      "question": "What is expected in the first reference case?",
+      "answers": [
+        "value 2 subscriptions 0\n",
+        "Data are always deleted.",
+        "The build must always fail."
+      ],
+      "correctIndex": 0,
+      "explanation": "Read mode zero, one or two without trailing input. Subscribe and emit once. Mode one destroys the receiver; mode two clears handlers. Emit again, leave subscription scope and emit a third time. Print the receiver value (-1 when absent) and subscription count."
+    },
+    {
+      "question": "How should the independent extension be checked?",
+      "answers": [
+        "Only rename the project.",
+        "Design a notification-screen subscription whose screen can close before its source.",
+        "Keep no observations."
+      ],
+      "correctIndex": 1,
+      "explanation": "Retain a checkable result: Design a notification-screen subscription whose screen can close before its source. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "What is required when an operation with a strong guarantee fails?",
+      "answers": [
+        "Preserve the specified state.",
+        "Delete all data.",
+        "Always close the browser."
+      ],
+      "correctIndex": 0,
+      "explanation": "The guarantee concerns the specified model at an operation boundary."
+    },
+    {
+      "question": "Who owns an object supplied through an ordinary reference?",
+      "answers": [
+        "Always the called function.",
+        "Ownership is specified separately; a reference does not transfer it.",
+        "Nobody."
+      ],
+      "correctIndex": 1,
+      "explanation": "The owner must outlive use of the reference."
+    },
+    {
+      "question": "How is a driver with its own main built?",
+      "answers": [
+        "Always together with another main.",
+        "Without domain code.",
+        "Instead of application main, sharing model sources."
+      ],
+      "correctIndex": 2,
+      "explanation": "The application and driver have separate entry points and builds."
+    }
+  ],
+  "reflection": [
+    "Explain the empty lock result after reset.",
+    "Which check distinguishes a superficially similar incorrect implementation?",
+    "Design a notification-screen subscription whose screen can close before its source."
+  ],
+  "bridge": "Next: Responsive work, bounded steps and cancellation. Preserve your project and experiment results.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Callback lifetime and RAII subscriptions",
+    "description": "A stepwise conceptual model; actual verification runs in the stated Studio target.",
+    "steps": [
+      {
+        "title": "Two independent lifetimes",
+        "description": "An event source and its receiver can disappear at different times. Capturing a raw this does not extend the object’s lifetime; a callback retained by the source can outlive its receiver. Capturing shared_ptr extends ownership but can sometimes create a cycle. Before choosing a pointer, draw who owns the source, receiver and subscription."
+      },
+      {
+        "title": "weak_ptr::lock and local ownership",
+        "description": "lock returns a shared_ptr when the object still exists, or an empty pointer otherwise. if(auto value=weak.lock()) establishes a local owner for the if body. The object cannot disappear merely because the final external shared_ptr is reset during that scope. Checking expired and then dereferencing a raw address does not establish the same ownership contract."
+      },
+      {
+        "title": "A subscription as a resource",
+        "description": "Registration obtains an identifier. An RAII object associates it with a scope and removes the handler in its destructor when the source still exists. Copying Subscription is forbidden: independent copies could claim one resource. This first version provides no move operation either; a move-only extension must transfer the identifier and disarm the previous object."
+      },
+      {
+        "title": "Traversal when subscribers change",
+        "description": "emit first snapshots identifiers and then looks up the current handler for each one. It copies std::function locally before invocation. If a callback removes its own subscription, the callable remains alive through the local copy. A removed later subscriber is skipped, and a subscriber added during emit is absent from the existing identifier snapshot."
+      },
+      {
+        "title": "Destruction tests",
+        "description": "Check normal scope exit, a vanished receiver, early unsubscription and a source destroyed before Subscription. Specify invocation counts and handler storage size for each case. Add self-unsubscription in a separate version: after the first call, the handler removes itself and is not invoked again. Supply ownership explicitly rather than returning a reference to a local object."
+      }
+    ]
+  }
+}

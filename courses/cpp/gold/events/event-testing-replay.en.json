@@ -1,0 +1,410 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.visual-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "runtimeTarget": "wasm-cpp",
+  "lessonId": "cpp.event-testing-replay",
+  "locale": "en",
+  "sessions": 4,
+  "learningOrder": 9,
+  "prerequisiteIds": [
+    "cpp.responsive-work-cancellation",
+    "cpp.versioned-model-persistence",
+    "cpp.property-testing-benchmarks"
+  ],
+  "sourceRefs": [
+    "CPP20-ASSERT",
+    "CPP20-VECTOR"
+  ],
+  "title": "Event testing and reproducible traces",
+  "lead": "Check a model through traces, invariants, replay and a controlled implementation mutation.",
+  "why": "An event-driven defect may require several actions. One add call says little about add→complete→complete or import→failure→save. A test needs initial state, an ordered trace, observations after steps and an expected outcome. Removing unnecessary events from a failing trace helps find a minimal reproduction.",
+  "objectives": [
+    "Compute the result of trace 3,-5,2.",
+    "Explain how replay differs from correctness.",
+    "Check replay and the invariant after each event.",
+    "Mutate a boundary and design a test that detects it.",
+    "Reduce a failing trace by greedily removing events."
+  ],
+  "prerequisites": [
+    "Modules 1–5: functions, STL, ownership, testing and multi-file builds.",
+    "cpp.responsive-work-cancellation",
+    "cpp.versioned-model-persistence",
+    "cpp.property-testing-benchmarks"
+  ],
+  "concepts": [
+    {
+      "term": "Determinism",
+      "definition": "The same specified input produces the same observation."
+    },
+    {
+      "term": "Replay",
+      "definition": "Reapplying a recorded trace to an initial state."
+    },
+    {
+      "term": "Test oracle",
+      "definition": "An independent rule for determining the expected result."
+    },
+    {
+      "term": "Mutation",
+      "definition": "A controlled implementation change testing test sensitivity."
+    },
+    {
+      "term": "Minimal reproduction",
+      "definition": "A reduced scenario that still exposes a defect."
+    },
+    {
+      "term": "Regression",
+      "definition": "A violation of previously accepted behaviour after a change."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition preserved at the boundaries of permitted model operations."
+    },
+    {
+      "term": "Observable behaviour",
+      "definition": "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+    }
+  ],
+  "sections": [
+    {
+      "title": "From a call to a sequence",
+      "paragraphs": [
+        "An event-driven defect may require several actions. One add call says little about add→complete→complete or import→failure→save. A test needs initial state, an ordered trace, observations after steps and an expected outcome. Removing unnecessary events from a failing trace helps find a minimal reproduction.",
+        "The laboratory starts at zero; each number is a delta and accepted results stay in 0…10. For 3, -5, 2, the first command succeeds, the second is rejected and the third yields five. Also check rejected=1. An implementation that merely clamps negative results to zero produces another outcome and violates preservation on rejection."
+      ]
+    },
+    {
+      "title": "Deterministic replay",
+      "paragraphs": [
+        "replay takes a const vector and creates fresh local state. It reads no clock, random seed, window or global counter. Two invocations on the same trace must return equal Results. A C++20 defaulted == compares value and rejected; adding another field should trigger a review of the observable contract.",
+        "Agreement between two runs supports reproducibility for that input, but both runs can make the same mistake. Independently computed expectations are still needed. The laboratory combines exact stdout with replay and a range invariant. Keep these forms of evidence distinct: each detects different errors and has its own limitations."
+      ]
+    },
+    {
+      "title": "Properties and negative checks",
+      "paragraphs": [
+        "The range property 0≤value≤10 should hold after each event, not only at the end. A rejection preserves value and increases rejected exactly once. Test an empty trace, extreme int values and repetition. Short-circuiting protects addition after validating delta itself; justify the bounds and check the native build with UBSan.",
+        "A controlled mutation temporarily changes the upper-bound condition or permits partial application. A useful test detects it and exits nonzero rather than merely printing FAIL while succeeding. Restore the correct project afterwards. The second example separately checks that the comparison function actually recognizes a deliberately mismatched observation."
+      ]
+    },
+    {
+      "title": "A reproducible report",
+      "paragraphs": [
+        "For a defect, retain source revision, exact stdin, actual stdout, expected stdout and exit status. A screenshot helps review an interface but is less useful than a textual protocol for repeating an algorithm test. Use synthetic data: personal tasks, tokens and account contents do not belong in a public report or shared repository.",
+        "Independent work requires minimizing a failing trace, explaining the invariant violation and adding a regression test. Supply another trace showing that the fix preserves established behaviour. Topic-completion percentage is not a substitute: learning progress, model tests and a teacher’s project evaluation are different forms of evidence."
+      ]
+    },
+    {
+      "title": "Laboratory contract: input to observation",
+      "paragraphs": [
+        "Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS.",
+        "Trace the first reference scenario before running. Exact stdin: \"3 3 -5 2\". Expected stdout: \"value 5 rejected 1 replay PASS\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+      ]
+    },
+    {
+      "title": "Reading a working example",
+      "paragraphs": [
+        "The trace accepts three, rejects minus five and accepts two. The replay creates fresh zero state. Both results equal five. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+        "Observed six deliberately differs from expected five. contract returns false. The mutation-detection test succeeds only when the mismatch is detected. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+      ]
+    },
+    {
+      "title": "Independent checking and transfer",
+      "paragraphs": [
+        "Reduce a failing trace by greedily removing events. Retain a checkable result: Reduce a failing trace by greedily removing events. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
+        "Write a reproducible defect report and regression check. Retain a checkable result: Write a reproducible defect report and regression check. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Ask a reviewer for a small requirement change and explain which files, tests and observations it should affect."
+      ]
+    },
+    {
+      "title": "Checking a boundary rejection",
+      "paragraphs": [
+        "Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS. The last reference case distinguishes a permitted command from a malformed protocol. Identify where rejection starts and which fields must remain unchanged.",
+        "Analyze this reference case: {\"stdin\":\"21\",\"stdout\":\"invalid\\n\"} Then change one boundary and state the new expectation before running. Compare the correct solution with a safe mutation in a project copy; the test must detect the behavioural change rather than merely report a successful build."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "replay",
+      "code": "#include <iostream>\n#include <vector>\nint replay(const std::vector<int>& trace) { int state = 0; for (int delta : trace) if (state + delta >= 0 && state + delta <= 10) state += delta; return state; }\nint main() { const std::vector<int> trace{3, -5, 2}; std::cout << replay(trace) << ' ' << replay(trace) << '\\n'; }\n",
+      "stdin": "",
+      "expectedStdout": "5 5\n",
+      "title": "Guided model",
+      "purpose": "Check a model through traces, invariants, replay and a controlled implementation mutation.",
+      "steps": [
+        "The trace accepts three, rejects minus five and accepts two.",
+        "The replay creates fresh zero state.",
+        "Both results equal five."
+      ]
+    },
+    {
+      "id": "test-failure",
+      "code": "#include <iostream>\nbool contract(int observed, int expected) { return observed == expected; }\nint main() { bool detected = !contract(6, 5); std::cout << \"mutation detected \" << detected << '\\n'; return detected ? 0 : 1; }\n",
+      "stdin": "",
+      "expectedStdout": "mutation detected 1\n",
+      "title": "Boundary and extension",
+      "purpose": "Check a model through traces, invariants, replay and a controlled implementation mutation.",
+      "steps": [
+        "Observed six deliberately differs from expected five.",
+        "contract returns false.",
+        "The mutation-detection test succeeds only when the mismatch is detected."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Mutate a boundary and design a test that detects it.",
+      "action": "Mutate a boundary and design a test that detects it.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS. Explain the selected contract and supply an independent example."
+    },
+    {
+      "title": "Reduce a failing trace by greedily removing events.",
+      "action": "Reduce a failing trace by greedily removing events.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Reduce a failing trace by greedily removing events. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "State changed after rejection.",
+      "cause": "Mutation happened before validation or violated the invariant.",
+      "fix": "Identify the laboratory commit point and check it with a separate rejection trace."
+    },
+    {
+      "symptom": "An old revision or wrong target is running.",
+      "cause": "Build inputs are wrong or the changed project was not rebuilt.",
+      "fix": "Check entryFile, includeRoots and translationUnits and run the saved copy."
+    },
+    {
+      "symptom": "One successful example is treated as complete verification.",
+      "cause": "Rejected, empty and independent cases have not been checked.",
+      "fix": "Write a reproducible defect report and regression check."
+    }
+  ],
+  "practice": [
+    {
+      "task": "Compute the result of trace 3,-5,2.",
+      "criteria": "Retain a checkable result: The laboratory starts at zero; each number is a delta and accepted results stay in 0…10. For 3, -5, 2, the first command succeeds, the second is rejected and the third yields five. Also check rejected=1. An implementation that merely clamps negative results to zero produces another outcome and violates preservation on rejection. Explain the selected contract and supply an independent example.",
+      "level": "basic",
+      "hint": "The laboratory starts at zero; each number is a delta and accepted results stay in 0…10. For 3, -5, 2, the first command succeeds, the second is rejected and the third yields five. Also check rejected=1. An implementation that merely clamps negative results to zero produces another outcome and violates preservation on rejection."
+    },
+    {
+      "task": "Explain how replay differs from correctness.",
+      "criteria": "Retain a checkable result: Agreement between two runs supports reproducibility for that input, but both runs can make the same mistake. Independently computed expectations are still needed. The laboratory combines exact stdout with replay and a range invariant. Keep these forms of evidence distinct: each detects different errors and has its own limitations. Explain the selected contract and supply an independent example.",
+      "level": "basic",
+      "hint": "Agreement between two runs supports reproducibility for that input, but both runs can make the same mistake. Independently computed expectations are still needed. The laboratory combines exact stdout with replay and a range invariant. Keep these forms of evidence distinct: each detects different errors and has its own limitations."
+    },
+    {
+      "task": "Check replay and the invariant after each event.",
+      "criteria": "Retain a checkable result: Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS. Explain the selected contract and supply an independent example.",
+      "level": "applied",
+      "hint": "The trace accepts three, rejects minus five and accepts two. The replay creates fresh zero state. Both results equal five."
+    },
+    {
+      "task": "Mutate a boundary and design a test that detects it.",
+      "criteria": "Retain a checkable result: Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS. Explain the selected contract and supply an independent example.",
+      "level": "applied",
+      "hint": "Observed six deliberately differs from expected five. contract returns false. The mutation-detection test succeeds only when the mismatch is detected."
+    },
+    {
+      "task": "Reduce a failing trace by greedily removing events.",
+      "criteria": "Retain a checkable result: Reduce a failing trace by greedily removing events. Explain the selected contract and supply an independent example.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    },
+    {
+      "task": "Write a reproducible defect report and regression check.",
+      "criteria": "Retain a checkable result: Write a reproducible defect report and regression check. Explain the selected contract and supply an independent example.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Event testing and reproducible traces",
+    "challenge": "Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS.",
+    "target": "wasm-cpp",
+    "starterCode": "#include <iostream>\n#include <vector>\nstruct Result { int value = 0, rejected = 0; bool operator==(const Result&) const = default; };\nResult replay(const std::vector<int>& trace) {\n  /* TODO: apply deltas with preservation and a rejection count. */ return {};\n}\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 20) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> trace(n);\n  for (int& x : trace) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  const Result a = replay(trace), b = replay(trace);\n  if (!(a == b) || a.value < 0 || a.value > 10) return 1;\n  std::cout << \"value \" << a.value << \" rejected \" << a.rejected << \" replay PASS\\n\";\n}\n",
+    "referenceCode": "#include <iostream>\n#include <vector>\nstruct Result { int value = 0, rejected = 0; bool operator==(const Result&) const = default; };\nResult replay(const std::vector<int>& trace) {\n  Result r;\n  for (int x : trace) { if (x < -10 || x > 10 || r.value + x < 0 || r.value + x > 10) ++r.rejected; else r.value += x; }\n  return r;\n}\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 20) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> trace(n);\n  for (int& x : trace) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  const Result a = replay(trace), b = replay(trace);\n  if (!(a == b) || a.value < 0 || a.value > 10) return 1;\n  std::cout << \"value \" << a.value << \" rejected \" << a.rejected << \" replay PASS\\n\";\n}\n",
+    "starterFiles": {},
+    "referenceFiles": {},
+    "metadata": {},
+    "starterExpectedStdout": "value 0 rejected 0 replay PASS\n",
+    "cases": [
+      {
+        "stdin": "3 3 -5 2",
+        "stdout": "value 5 rejected 1 replay PASS\n"
+      },
+      {
+        "stdin": "0",
+        "stdout": "value 0 rejected 0 replay PASS\n"
+      },
+      {
+        "stdin": "2 10 0",
+        "stdout": "value 10 rejected 0 replay PASS\n"
+      },
+      {
+        "stdin": "2 10 1",
+        "stdout": "value 10 rejected 1 replay PASS\n"
+      },
+      {
+        "stdin": "3 -1 -2 -3",
+        "stdout": "value 0 rejected 3 replay PASS\n"
+      },
+      {
+        "stdin": "2 2147483647 -2147483648",
+        "stdout": "value 0 rejected 2 replay PASS\n"
+      },
+      {
+        "stdin": "1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "21",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Preserve your work and create a separate project for experiments.",
+      "Open Task and Code Studio and copy the starter and listed files.",
+      "Check replay and the invariant after each event.",
+      "Before running, record the expected transitions and outcome of every case.",
+      "Execute every reference case and retain actual observations.",
+      "Mutate a boundary and design a test that detects it.",
+      "Add an independent case and explain its boundary.",
+      "Save sources, the protocol and an explanation of limitations."
+    ],
+    "rubric": [
+      "The full input and output contract is satisfied.",
+      "Invariants and lifetimes are explained; rejection preserves the model.",
+      "Ordinary, empty, boundary and failure scenarios are covered.",
+      "Mutate a boundary and design a test that detects it.",
+      "An independent extension and test are supplied, rather than only a reference copy.",
+      "Sources, actual observations and limits of conclusions are retained."
+    ],
+    "artifact": "A personal project and verification protocol using synthetic data.",
+    "verification": "manual-output-comparison",
+    "catalogGoal": "Check a model through traces, invariants, replay and a controlled implementation mutation.",
+    "catalogProof": "A personal project and verification protocol using synthetic data."
+  },
+  "assessment": [
+    {
+      "question": "Do two identical runs prove correctness?",
+      "answers": [
+        "No; an independent expected result is needed.",
+        "Yes.",
+        "Only with empty input."
+      ],
+      "correctIndex": 0,
+      "explanation": "A reproducible mistake is still a mistake."
+    },
+    {
+      "question": "What does a mutation test?",
+      "answers": [
+        "Network speed.",
+        "Whether a test can detect a defect.",
+        "Browser version."
+      ],
+      "correctIndex": 1,
+      "explanation": "A deliberate defect should make the check fail."
+    },
+    {
+      "question": "What belongs in a report?",
+      "answers": [
+        "Only PASS.",
+        "An account password.",
+        "Revision, input, expected and actual output, and exit code."
+      ],
+      "correctIndex": 2,
+      "explanation": "That protocol permits repetition without secrets."
+    },
+    {
+      "question": "What is expected in the first reference case?",
+      "answers": [
+        "value 5 rejected 1 replay PASS\n",
+        "Data are always deleted.",
+        "The build must always fail."
+      ],
+      "correctIndex": 0,
+      "explanation": "Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS."
+    },
+    {
+      "question": "How should the independent extension be checked?",
+      "answers": [
+        "Only rename the project.",
+        "Write a reproducible defect report and regression check.",
+        "Keep no observations."
+      ],
+      "correctIndex": 1,
+      "explanation": "Retain a checkable result: Write a reproducible defect report and regression check. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "What is required when an operation with a strong guarantee fails?",
+      "answers": [
+        "Preserve the specified state.",
+        "Delete all data.",
+        "Always close the browser."
+      ],
+      "correctIndex": 0,
+      "explanation": "The guarantee concerns the specified model at an operation boundary."
+    },
+    {
+      "question": "Who owns an object supplied through an ordinary reference?",
+      "answers": [
+        "Always the called function.",
+        "Ownership is specified separately; a reference does not transfer it.",
+        "Nobody."
+      ],
+      "correctIndex": 1,
+      "explanation": "The owner must outlive use of the reference."
+    },
+    {
+      "question": "How is a driver with its own main built?",
+      "answers": [
+        "Always together with another main.",
+        "Without domain code.",
+        "Instead of application main, sharing model sources."
+      ],
+      "correctIndex": 2,
+      "explanation": "The application and driver have separate entry points and builds."
+    }
+  ],
+  "reflection": [
+    "Explain how replay differs from correctness.",
+    "Which check distinguishes a superficially similar incorrect implementation?",
+    "Write a reproducible defect report and regression check."
+  ],
+  "bridge": "Next: A multi-file event-driven application. Preserve your project and experiment results.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Event testing and reproducible traces",
+    "description": "A stepwise conceptual model; actual verification runs in the stated Studio target.",
+    "steps": [
+      {
+        "title": "From a call to a sequence",
+        "description": "An event-driven defect may require several actions. One add call says little about add→complete→complete or import→failure→save. A test needs initial state, an ordered trace, observations after steps and an expected outcome. Removing unnecessary events from a failing trace helps find a minimal reproduction."
+      },
+      {
+        "title": "Deterministic replay",
+        "description": "replay takes a const vector and creates fresh local state. It reads no clock, random seed, window or global counter. Two invocations on the same trace must return equal Results. A C++20 defaulted == compares value and rejected; adding another field should trigger a review of the observable contract."
+      },
+      {
+        "title": "Properties and negative checks",
+        "description": "The range property 0≤value≤10 should hold after each event, not only at the end. A rejection preserves value and increases rejected exactly once. Test an empty trace, extreme int values and repetition. Short-circuiting protects addition after validating delta itself; justify the bounds and check the native build with UBSan."
+      },
+      {
+        "title": "A reproducible report",
+        "description": "For a defect, retain source revision, exact stdin, actual stdout, expected stdout and exit status. A screenshot helps review an interface but is less useful than a textual protocol for repeating an algorithm test. Use synthetic data: personal tasks, tokens and account contents do not belong in a public report or shared repository."
+      },
+      {
+        "title": "Laboratory contract: input to observation",
+        "description": "Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS."
+      }
+    ]
+  }
+}

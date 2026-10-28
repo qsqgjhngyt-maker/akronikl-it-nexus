@@ -25,8 +25,12 @@ export async function getCppCourse(){
    getJson('./courses/cpp/data/lessons.en.json'),
    getJson('./courses/cpp/data/practicums.ru.json'),
    getJson('./courses/cpp/data/projects.ru.json'),
-   getJson('./courses/cpp/data/gold-laboratories.json')
-  ]).then(([outline,lessonsRu,lessonsEn,practicumsRu,projectsRu,index])=>{
+   getJson('./courses/cpp/data/gold-laboratories.json'),
+   getJson('./courses/cpp/data/gold-laboratories-m6.json')
+  ]).then(([outline,lessonsRu,lessonsEn,practicumsRu,projectsRu,baseIndex,extension])=>{
+   const extensionIds=outline.curriculum.sections.find(s=>s.id==='cpp.section.visual-programming')?.lessonIds||[];
+   if(extension.schemaVersion!==1||extension.moduleId!=='cpp.section.visual-programming'||!extension.lessons||Object.keys(extension.lessons).length!==extensionIds.length||extensionIds.some(id=>!Object.hasOwn(extension.lessons,id))||Object.keys(extension.lessons).some(id=>Object.hasOwn(baseIndex.lessons||{},id)))throw Error('GOLD_LAB_INDEX_INVALID');
+   const index={schemaVersion:baseIndex.schemaVersion,lessons:{...baseIndex.lessons,...extension.lessons}};
    if(index.schemaVersion!==1||!index.lessons||typeof index.lessons!=='object'||Array.isArray(index.lessons))throw Error('GOLD_LAB_INDEX_INVALID');
    for(const [id,locales]of Object.entries(index.lessons)){
     if(!outline.curriculum.lessons.some(l=>l.id===id))throw Error('GOLD_LAB_INDEX_UNKNOWN_LESSON');

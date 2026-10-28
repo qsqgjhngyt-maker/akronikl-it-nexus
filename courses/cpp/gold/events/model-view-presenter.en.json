@@ -1,0 +1,408 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.visual-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "runtimeTarget": "wasm-cpp",
+  "lessonId": "cpp.model-view-presenter",
+  "locale": "en",
+  "sessions": 4,
+  "learningOrder": 4,
+  "prerequisiteIds": [
+    "cpp.states-typed-events",
+    "cpp.design-testability-refactoring"
+  ],
+  "sourceRefs": [
+    "CPP20-CLASS",
+    "CPP-GUIDELINES"
+  ],
+  "title": "Model, view and presenter",
+  "lead": "Separate stock rules from input and display, then test a presenter with a fake view.",
+  "why": "Stock owns the quantity and its 0…20 range. A view displays a number. A presenter connects a user command to the model and a view update. This boundary permits replacing buttons with a console or a test recording while preserving the stock rule. Merely adding classes does not establish good architecture; what matters is which decisions each class is allowed to make.",
+  "objectives": [
+    "Name each class’s responsibility.",
+    "Trace the lifetime of the three objects.",
+    "Complete change and onChange.",
+    "Add a fake recording all display updates.",
+    "Connect a text adapter without adding cin to Stock."
+  ],
+  "prerequisites": [
+    "Modules 1–5: functions, STL, ownership, testing and multi-file builds.",
+    "cpp.states-typed-events",
+    "cpp.design-testability-refactoring"
+  ],
+  "concepts": [
+    {
+      "term": "Model",
+      "definition": "The component containing domain data and mutation rules."
+    },
+    {
+      "term": "View",
+      "definition": "The component that presents state to a user."
+    },
+    {
+      "term": "Presenter",
+      "definition": "Connects user intention, the model and presentation."
+    },
+    {
+      "term": "Test double",
+      "definition": "A controlled replacement for a collaborator in a test."
+    },
+    {
+      "term": "Dependency injection",
+      "definition": "Supplying collaborators explicitly through an object interface."
+    },
+    {
+      "term": "Short-circuit evaluation",
+      "definition": "A logical chain stops once an operand determines its result."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition preserved at the boundaries of permitted model operations."
+    },
+    {
+      "term": "Observable behaviour",
+      "definition": "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Responsibility boundaries",
+      "paragraphs": [
+        "Stock owns the quantity and its 0…20 range. A view displays a number. A presenter connects a user command to the model and a view update. This boundary permits replacing buttons with a console or a test recording while preserving the stock rule. Merely adding classes does not establish good architecture; what matters is which decisions each class is allowed to make.",
+        "The laboratory starts with stock two. Commands +5, -3 and +20 leave four with one rejection. The model prints no messages and reads no cin. After every action, the presenter displays the actual quantity, including after rejection. This prevents the interface from displaying a proposed value that the model did not accept."
+      ]
+    },
+    {
+      "title": "Dependency injection through references",
+      "paragraphs": [
+        "Presenter(Stock&, View&) receives existing collaborators and stores references. It neither owns them nor creates a global stock object. main declares the model and view before the presenter, so they are destroyed after it. This is a concrete lifetime obligation; allowing the presenter to escape its owners’ scope would make those references unsafe.",
+        "A virtual hierarchy is unnecessary for this small example. View stores last and exposes show, allowing tests to observe a result without a window. If multiple adapters later share a contract, compare a templated presenter with a virtual interface. Choose according to extension needs, ownership cost and testability, rather than introducing a pattern solely for its name."
+      ]
+    },
+    {
+      "title": "A fake view",
+      "paragraphs": [
+        "A test double replaces a real collaborator with controlled behaviour. Our fake records the last displayed value; it does not emulate a graphics engine. A presenter test checks that the displayed number agrees with the model. This does not prove button accessibility, text placement or keyboard operation; those properties require a real interface and separate acceptance checks.",
+        "Extend the fake to record every show call. Check the initial display and update count after commands. Then consider updating only when quantity changes. Both policies can be valid, but tests must match the selected contract. An update count cannot change silently when a client uses updates for history or notifications."
+      ]
+    },
+    {
+      "title": "Checks before arithmetic",
+      "paragraphs": [
+        "A command can contain INT_MAX. Validate delta in -20…20 before computing quantity+delta. Logical || evaluates left to right with short-circuiting, so the potentially dangerous sum is not evaluated for a huge delta. Reversing the checks could cause signed overflow before the program decides to reject the command.",
+        "A domain error differs from a formatting error. The integer 2147483647 is a valid int input rejected by the model; a word in place of an integer violates the driver protocol. Demonstrate both cases separately. In the final application this separation supports distinct messages for insufficient stock, an invalid number and a malformed file."
+      ]
+    },
+    {
+      "title": "Requirement changes and dependencies",
+      "paragraphs": [
+        "Adding a graphical interface should change the adapter and command wiring, not the stock boundary. Adding multiple warehouses changes the domain model. Separate these changes in the work plan. If changing a button colour requires editing Stock rules, dependency direction is poorly chosen and class contracts need to be reconsidered.",
+        "Write a short ADR explaining the concrete View, object ownership, rejection test and limitations of the fake. Then propose an independent finance example storing money in integer minor units. Preserve the separation of parsing, domain decisions and presentation without copying stock limits into a different domain without justification."
+      ]
+    },
+    {
+      "title": "Laboratory contract: input to observation",
+      "paragraphs": [
+        "Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected.",
+        "Trace the first reference scenario before running. Exact stdin: \"3 5 -3 20\". Expected stdout: \"stock 4 rejected 1\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+      ]
+    },
+    {
+      "title": "Reading a working example",
+      "paragraphs": [
+        "Stock starts with two items. Minus three would violate the lower bound. false and two demonstrate preservation. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+        "fake.last starts at minus one. present calls show(8). The last displayed value is checked without a GUI. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+      ]
+    },
+    {
+      "title": "Independent checking and transfer",
+      "paragraphs": [
+        "Connect a text adapter without adding cin to Stock. Retain a checkable result: Connect a text adapter without adding cin to Stock. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
+        "Design a finance model using the same responsibility boundaries. Retain a checkable result: Design a finance model using the same responsibility boundaries. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Ask a reviewer for a small requirement change and explain which files, tests and observations it should affect."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "model",
+      "code": "#include <iostream>\nclass Stock {\n  int quantity_ = 2;\npublic:\n  bool change(int delta) { if (quantity_ + delta < 0 || quantity_ + delta > 20) return false; quantity_ += delta; return true; }\n  int quantity() const { return quantity_; }\n};\nint main() { Stock m; std::cout << m.change(-3) << ' ' << m.quantity() << '\\n'; }\n",
+      "stdin": "",
+      "expectedStdout": "0 2\n",
+      "title": "Guided model",
+      "purpose": "Separate stock rules from input and display, then test a presenter with a fake view.",
+      "steps": [
+        "Stock starts with two items.",
+        "Minus three would violate the lower bound.",
+        "false and two demonstrate preservation."
+      ]
+    },
+    {
+      "id": "fake-view",
+      "code": "#include <iostream>\nstruct View { int last = -1; void show(int value) { last = value; } };\nvoid present(View& view, int value) { view.show(value); }\nint main() { View fake; present(fake, 8); std::cout << \"shown \" << fake.last << '\\n'; }\n",
+      "stdin": "",
+      "expectedStdout": "shown 8\n",
+      "title": "Boundary and extension",
+      "purpose": "Separate stock rules from input and display, then test a presenter with a fake view.",
+      "steps": [
+        "fake.last starts at minus one.",
+        "present calls show(8).",
+        "The last displayed value is checked without a GUI."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Add a fake recording all display updates.",
+      "action": "Add a fake recording all display updates.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected. Explain the selected contract and supply an independent example."
+    },
+    {
+      "title": "Connect a text adapter without adding cin to Stock.",
+      "action": "Connect a text adapter without adding cin to Stock.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Connect a text adapter without adding cin to Stock. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "State changed after rejection.",
+      "cause": "Mutation happened before validation or violated the invariant.",
+      "fix": "Identify the laboratory commit point and check it with a separate rejection trace."
+    },
+    {
+      "symptom": "An old revision or wrong target is running.",
+      "cause": "Build inputs are wrong or the changed project was not rebuilt.",
+      "fix": "Check entryFile, includeRoots and translationUnits and run the saved copy."
+    },
+    {
+      "symptom": "One successful example is treated as complete verification.",
+      "cause": "Rejected, empty and independent cases have not been checked.",
+      "fix": "Design a finance model using the same responsibility boundaries."
+    }
+  ],
+  "practice": [
+    {
+      "task": "Name each class’s responsibility.",
+      "criteria": "Retain a checkable result: The laboratory starts with stock two. Commands +5, -3 and +20 leave four with one rejection. The model prints no messages and reads no cin. After every action, the presenter displays the actual quantity, including after rejection. This prevents the interface from displaying a proposed value that the model did not accept. Explain the selected contract and supply an independent example.",
+      "level": "basic",
+      "hint": "The laboratory starts with stock two. Commands +5, -3 and +20 leave four with one rejection. The model prints no messages and reads no cin. After every action, the presenter displays the actual quantity, including after rejection. This prevents the interface from displaying a proposed value that the model did not accept."
+    },
+    {
+      "task": "Trace the lifetime of the three objects.",
+      "criteria": "Retain a checkable result: A virtual hierarchy is unnecessary for this small example. View stores last and exposes show, allowing tests to observe a result without a window. If multiple adapters later share a contract, compare a templated presenter with a virtual interface. Choose according to extension needs, ownership cost and testability, rather than introducing a pattern solely for its name. Explain the selected contract and supply an independent example.",
+      "level": "basic",
+      "hint": "A virtual hierarchy is unnecessary for this small example. View stores last and exposes show, allowing tests to observe a result without a window. If multiple adapters later share a contract, compare a templated presenter with a virtual interface. Choose according to extension needs, ownership cost and testability, rather than introducing a pattern solely for its name."
+    },
+    {
+      "task": "Complete change and onChange.",
+      "criteria": "Retain a checkable result: Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected. Explain the selected contract and supply an independent example.",
+      "level": "applied",
+      "hint": "Stock starts with two items. Minus three would violate the lower bound. false and two demonstrate preservation."
+    },
+    {
+      "task": "Add a fake recording all display updates.",
+      "criteria": "Retain a checkable result: Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected. Explain the selected contract and supply an independent example.",
+      "level": "applied",
+      "hint": "fake.last starts at minus one. present calls show(8). The last displayed value is checked without a GUI."
+    },
+    {
+      "task": "Connect a text adapter without adding cin to Stock.",
+      "criteria": "Retain a checkable result: Connect a text adapter without adding cin to Stock. Explain the selected contract and supply an independent example.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    },
+    {
+      "task": "Design a finance model using the same responsibility boundaries.",
+      "criteria": "Retain a checkable result: Design a finance model using the same responsibility boundaries. Explain the selected contract and supply an independent example.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Model, view and presenter",
+    "challenge": "Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected.",
+    "target": "wasm-cpp",
+    "starterCode": "#include <iostream>\n#include <vector>\nclass Stock {\n  int quantity_ = 2;\npublic:\n  bool change(int delta) {\n  /* TODO: validate delta before arithmetic, then commit. */ return false;\n}\n  int quantity() const { return quantity_; }\n};\nstruct View { int last = -1; void show(int value) { last = value; } };\nclass Presenter {\n  Stock& model_; View& view_;\npublic:\n  Presenter(Stock& m, View& v) : model_(m), view_(v) { view_.show(model_.quantity()); }\n  bool onChange(int delta) { bool ok = model_.change(delta); view_.show(model_.quantity()); return ok; }\n};\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Stock model; View view; Presenter presenter(model, view); int rejected = 0;\n  for (int x : commands) if (!presenter.onChange(x)) ++rejected;\n  std::cout << \"stock \" << view.last << \" rejected \" << rejected << '\\n';\n}\n",
+    "referenceCode": "#include <iostream>\n#include <vector>\nclass Stock {\n  int quantity_ = 2;\npublic:\n  bool change(int delta) {\n    if (delta < -20 || delta > 20 || quantity_ + delta < 0 || quantity_ + delta > 20) return false;\n    quantity_ += delta; return true;\n  }\n  int quantity() const { return quantity_; }\n};\nstruct View { int last = -1; void show(int value) { last = value; } };\nclass Presenter {\n  Stock& model_; View& view_;\npublic:\n  Presenter(Stock& m, View& v) : model_(m), view_(v) { view_.show(model_.quantity()); }\n  bool onChange(int delta) { bool ok = model_.change(delta); view_.show(model_.quantity()); return ok; }\n};\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Stock model; View view; Presenter presenter(model, view); int rejected = 0;\n  for (int x : commands) if (!presenter.onChange(x)) ++rejected;\n  std::cout << \"stock \" << view.last << \" rejected \" << rejected << '\\n';\n}\n",
+    "starterFiles": {},
+    "referenceFiles": {},
+    "metadata": {},
+    "starterExpectedStdout": "stock 2 rejected 3\n",
+    "cases": [
+      {
+        "stdin": "3 5 -3 20",
+        "stdout": "stock 4 rejected 1\n"
+      },
+      {
+        "stdin": "0",
+        "stdout": "stock 2 rejected 0\n"
+      },
+      {
+        "stdin": "1 -2",
+        "stdout": "stock 0 rejected 0\n"
+      },
+      {
+        "stdin": "1 18",
+        "stdout": "stock 20 rejected 0\n"
+      },
+      {
+        "stdin": "1 -3",
+        "stdout": "stock 2 rejected 1\n"
+      },
+      {
+        "stdin": "1 2147483647",
+        "stdout": "stock 2 rejected 1\n"
+      },
+      {
+        "stdin": "1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 junk",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Preserve your work and create a separate project for experiments.",
+      "Open Task and Code Studio and copy the starter and listed files.",
+      "Complete change and onChange.",
+      "Before running, record the expected transitions and outcome of every case.",
+      "Execute every reference case and retain actual observations.",
+      "Add a fake recording all display updates.",
+      "Add an independent case and explain its boundary.",
+      "Save sources, the protocol and an explanation of limitations."
+    ],
+    "rubric": [
+      "The full input and output contract is satisfied.",
+      "Invariants and lifetimes are explained; rejection preserves the model.",
+      "Ordinary, empty, boundary and failure scenarios are covered.",
+      "Add a fake recording all display updates.",
+      "An independent extension and test are supplied, rather than only a reference copy.",
+      "Sources, actual observations and limits of conclusions are retained."
+    ],
+    "artifact": "A personal project and verification protocol using synthetic data.",
+    "verification": "manual-output-comparison",
+    "catalogGoal": "Separate stock rules from input and display, then test a presenter with a fake view.",
+    "catalogProof": "A personal project and verification protocol using synthetic data."
+  },
+  "assessment": [
+    {
+      "question": "Who validates the permitted stock range?",
+      "answers": [
+        "Stock.",
+        "QLabel.",
+        "std::cin."
+      ],
+      "correctIndex": 0,
+      "explanation": "The invariant belongs to the domain model."
+    },
+    {
+      "question": "Does the presenter own its referenced collaborators?",
+      "answers": [
+        "Yes.",
+        "No; their owners must outlive it.",
+        "Only View."
+      ],
+      "correctIndex": 1,
+      "explanation": "A reference does not transfer ownership."
+    },
+    {
+      "question": "What does the fake fail to establish?",
+      "answers": [
+        "The supplied number.",
+        "The last show value.",
+        "Accessibility of actual widgets."
+      ],
+      "correctIndex": 2,
+      "explanation": "The graphical interface is tested separately."
+    },
+    {
+      "question": "What is expected in the first reference case?",
+      "answers": [
+        "stock 4 rejected 1\n",
+        "Data are always deleted.",
+        "The build must always fail."
+      ],
+      "correctIndex": 0,
+      "explanation": "Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected."
+    },
+    {
+      "question": "How should the independent extension be checked?",
+      "answers": [
+        "Only rename the project.",
+        "Design a finance model using the same responsibility boundaries.",
+        "Keep no observations."
+      ],
+      "correctIndex": 1,
+      "explanation": "Retain a checkable result: Design a finance model using the same responsibility boundaries. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "What is required when an operation with a strong guarantee fails?",
+      "answers": [
+        "Preserve the specified state.",
+        "Delete all data.",
+        "Always close the browser."
+      ],
+      "correctIndex": 0,
+      "explanation": "The guarantee concerns the specified model at an operation boundary."
+    },
+    {
+      "question": "Who owns an object supplied through an ordinary reference?",
+      "answers": [
+        "Always the called function.",
+        "Ownership is specified separately; a reference does not transfer it.",
+        "Nobody."
+      ],
+      "correctIndex": 1,
+      "explanation": "The owner must outlive use of the reference."
+    },
+    {
+      "question": "How is a driver with its own main built?",
+      "answers": [
+        "Always together with another main.",
+        "Without domain code.",
+        "Instead of application main, sharing model sources."
+      ],
+      "correctIndex": 2,
+      "explanation": "The application and driver have separate entry points and builds."
+    }
+  ],
+  "reflection": [
+    "Trace the lifetime of the three objects.",
+    "Which check distinguishes a superficially similar incorrect implementation?",
+    "Design a finance model using the same responsibility boundaries."
+  ],
+  "bridge": "Next: Command validation and state preservation. Preserve your project and experiment results.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Model, view and presenter",
+    "description": "A stepwise conceptual model; actual verification runs in the stated Studio target.",
+    "steps": [
+      {
+        "title": "Responsibility boundaries",
+        "description": "Stock owns the quantity and its 0…20 range. A view displays a number. A presenter connects a user command to the model and a view update. This boundary permits replacing buttons with a console or a test recording while preserving the stock rule. Merely adding classes does not establish good architecture; what matters is which decisions each class is allowed to make."
+      },
+      {
+        "title": "Dependency injection through references",
+        "description": "Presenter(Stock&, View&) receives existing collaborators and stores references. It neither owns them nor creates a global stock object. main declares the model and view before the presenter, so they are destroyed after it. This is a concrete lifetime obligation; allowing the presenter to escape its owners’ scope would make those references unsafe."
+      },
+      {
+        "title": "A fake view",
+        "description": "A test double replaces a real collaborator with controlled behaviour. Our fake records the last displayed value; it does not emulate a graphics engine. A presenter test checks that the displayed number agrees with the model. This does not prove button accessibility, text placement or keyboard operation; those properties require a real interface and separate acceptance checks."
+      },
+      {
+        "title": "Checks before arithmetic",
+        "description": "A command can contain INT_MAX. Validate delta in -20…20 before computing quantity+delta. Logical || evaluates left to right with short-circuiting, so the potentially dangerous sum is not evaluated for a huge delta. Reversing the checks could cause signed overflow before the program decides to reject the command."
+      },
+      {
+        "title": "Requirement changes and dependencies",
+        "description": "Adding a graphical interface should change the adapter and command wiring, not the stock boundary. Adding multiple warehouses changes the domain model. Separate these changes in the work plan. If changing a button colour requires editing Stock rules, dependency direction is poorly chosen and class contracts need to be reconsidered."
+      }
+    ]
+  }
+}

@@ -1,0 +1,410 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.visual-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "runtimeTarget": "wasm-cpp",
+  "lessonId": "cpp.validated-user-commands",
+  "locale": "en",
+  "sessions": 4,
+  "learningOrder": 5,
+  "prerequisiteIds": [
+    "cpp.model-view-presenter",
+    "cpp.streams-state",
+    "cpp.exceptions-guarantees"
+  ],
+  "sourceRefs": [
+    "CPP20-CHARCONV",
+    "CPP20-STREAM-STATE"
+  ],
+  "title": "Command validation and state preservation",
+  "lead": "Parse a numeric field completely, explain failure and commit only after every check succeeds.",
+  "why": "An input field yields text while the model expects a constrained value. The string 12x has a numeric prefix but does not satisfy a contract requiring one complete integer. Silently applying twelve is incorrect. Each laboratory line is a separate command setting a number in 0…100; a rejected line preserves the previous value.",
+  "objectives": [
+    "Explain ptr and ec for 12x.",
+    "Compare no lines with an empty line.",
+    "Implement update using a candidate.",
+    "Return distinct error enum values.",
+    "Design input for an integer amount in minor currency units."
+  ],
+  "prerequisites": [
+    "Modules 1–5: functions, STL, ownership, testing and multi-file builds.",
+    "cpp.model-view-presenter",
+    "cpp.streams-state",
+    "cpp.exceptions-guarantees"
+  ],
+  "concepts": [
+    {
+      "term": "Input grammar",
+      "definition": "A specification of the permitted character sequence."
+    },
+    {
+      "term": "Complete consumption",
+      "definition": "Parsing leaves no unchecked input characters."
+    },
+    {
+      "term": "Candidate",
+      "definition": "A temporary value awaiting validation and commit."
+    },
+    {
+      "term": "errc",
+      "definition": "A conversion-result code checked by the caller."
+    },
+    {
+      "term": "Representation overflow",
+      "definition": "A number cannot be represented by the selected numeric type."
+    },
+    {
+      "term": "Domain range",
+      "definition": "Bounds imposed by application requirements rather than just the type."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition preserved at the boundaries of permitted model operations."
+    },
+    {
+      "term": "Observable behaviour",
+      "definition": "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Text is not yet a number",
+      "paragraphs": [
+        "An input field yields text while the model expects a constrained value. The string 12x has a numeric prefix but does not satisfy a contract requiring one complete integer. Silently applying twelve is incorrect. Each laboratory line is a separate command setting a number in 0…100; a rejected line preserves the previous value.",
+        "First specify syntax: decimal digits with an optional minus at parsing time, no spaces or plus, and at most 32 bytes. A domain check then rejects negative values and values above one hundred. Zero is permitted. An empty line is rejected, whereas no lines means no commands. These are different observable cases."
+      ]
+    },
+    {
+      "title": "The from_chars contract",
+      "paragraphs": [
+        "std::from_chars receives pointers delimiting a character range and a reference to a number. Its result contains ptr and ec. The structured binding auto [ptr, ec] names the two fields. ec reports conversion success and ptr must equal the end of the string. Successfully parsing a prefix does not establish that all input was consumed.",
+        "For 12x, ptr points to x; a number outside int’s representable range reports result_out_of_range. Neither error should be silently converted to zero. The second example preserves value seventeen on conversion overflow. Do not generalize that behaviour to every input operation: different parsing functions have different failure-state contracts."
+      ]
+    },
+    {
+      "title": "Prepare and commit",
+      "paragraphs": [
+        "update parses into a temporary candidate. It checks length, ec, complete consumption and domain bounds before changing value through one final assignment. Until that assignment, model state is untouched. This ordering turns the promise that failure preserves state into an observable property of the code’s structure.",
+        "After accepting 12 and rejecting 12x, the value remains twelve; the following command 100 succeeds. rejected counts failed lines rather than individual characters. More than eight lines produces invalid for violating the session limit. This is a finite teaching protocol, not a claim to implement an unlimited stream of user interaction."
+      ]
+    },
+    {
+      "title": "Errors and feedback",
+      "paragraphs": [
+        "A user benefits from distinguishing an empty field, trailing characters, a representation overflow and a value outside the allowed domain. The laboratory groups them as rejected to keep stdout compact, but an extension can return an error enum and map it to display text separately. Model validation should not embed localized interface strings into its algorithm.",
+        "In a GUI, feedback should be visible near the field and accessible through keyboard interaction; retain rejected input so it can be corrected. Automatically clearing the field on failure makes recovery harder. Clearing after success can be appropriate for the selected workflow. Distinguish command rejection, persistence failure and build-service unavailability."
+      ]
+    },
+    {
+      "title": "Boundary and independent checks",
+      "paragraphs": [
+        "Reference cases include zero, one hundred, -1, 101, an empty line, spaces, a plus and an oversized number. Add a failure after a successful command to test preservation of already changed state. Testing only initial seventeen can miss an implementation that wrongly resets to seventeen whenever parsing fails.",
+        "For transfer, parse an amount in integer minor currency units or a duration in minutes. Do not introduce double merely for input-field convenience. Set a length bound and range, specify syntax, separate representation overflow from domain rejection and justify why calculations after validation fit the chosen type."
+      ]
+    },
+    {
+      "title": "Laboratory contract: input to observation",
+      "paragraphs": [
+        "Read at most eight command lines, initially value=17. Completely parse each 1…32-byte line with integer from_chars, without spaces or plus. Accept 0…100. Rejection preserves value and increments rejected. More than eight lines produces invalid.",
+        "Trace the first reference scenario before running. Exact stdin: \"12\\n12x\\n100\". Expected stdout: \"value 100 rejected 1\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+      ]
+    },
+    {
+      "title": "Reading a working example",
+      "paragraphs": [
+        "candidate receives numeric prefix twelve. ptr points to x rather than the end. The function rejects input and result remains seventeen. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+        "The number does not fit in int. ec reports result_out_of_range. The destination value remains seventeen. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+      ]
+    },
+    {
+      "title": "Independent checking and transfer",
+      "paragraphs": [
+        "Design input for an integer amount in minor currency units. Retain a checkable result: Design input for an integer amount in minor currency units. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
+        "Find a test that detects resetting to seventeen on failure. Retain a checkable result: Find a test that detects resetting to seventeen on failure. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Ask a reviewer for a small requirement change and explain which files, tests and observations it should affect."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "full-parse",
+      "code": "#include <iostream>\n#include <charconv>\n#include <string>\nbool parse(const std::string& text, int& result) {\n  int candidate = 0;\n  const auto [ptr, ec] = std::from_chars(text.data(), text.data() + text.size(), candidate);\n  if (ec != std::errc{} || ptr != text.data() + text.size()) return false;\n  result = candidate; return true;\n}\nint main() { int value = 17; std::cout << parse(\"12x\", value) << ' ' << value << '\\n'; }\n",
+      "stdin": "",
+      "expectedStdout": "0 17\n",
+      "title": "Guided model",
+      "purpose": "Parse a numeric field completely, explain failure and commit only after every check succeeds.",
+      "steps": [
+        "candidate receives numeric prefix twelve.",
+        "ptr points to x rather than the end.",
+        "The function rejects input and result remains seventeen."
+      ]
+    },
+    {
+      "id": "range",
+      "code": "#include <iostream>\n#include <charconv>\n#include <string>\nint main() {\n  const std::string text = \"999999999999999999999\"; int value = 17;\n  auto result = std::from_chars(text.data(), text.data() + text.size(), value);\n  std::cout << (result.ec == std::errc::result_out_of_range) << ' ' << value << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "1 17\n",
+      "title": "Boundary and extension",
+      "purpose": "Parse a numeric field completely, explain failure and commit only after every check succeeds.",
+      "steps": [
+        "The number does not fit in int.",
+        "ec reports result_out_of_range.",
+        "The destination value remains seventeen."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Return distinct error enum values.",
+      "action": "Return distinct error enum values.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Read at most eight command lines, initially value=17. Completely parse each 1…32-byte line with integer from_chars, without spaces or plus. Accept 0…100. Rejection preserves value and increments rejected. More than eight lines produces invalid. Explain the selected contract and supply an independent example."
+    },
+    {
+      "title": "Design input for an integer amount in minor currency units.",
+      "action": "Design input for an integer amount in minor currency units.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Design input for an integer amount in minor currency units. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "State changed after rejection.",
+      "cause": "Mutation happened before validation or violated the invariant.",
+      "fix": "Identify the laboratory commit point and check it with a separate rejection trace."
+    },
+    {
+      "symptom": "An old revision or wrong target is running.",
+      "cause": "Build inputs are wrong or the changed project was not rebuilt.",
+      "fix": "Check entryFile, includeRoots and translationUnits and run the saved copy."
+    },
+    {
+      "symptom": "One successful example is treated as complete verification.",
+      "cause": "Rejected, empty and independent cases have not been checked.",
+      "fix": "Find a test that detects resetting to seventeen on failure."
+    }
+  ],
+  "practice": [
+    {
+      "task": "Explain ptr and ec for 12x.",
+      "criteria": "Retain a checkable result: First specify syntax: decimal digits with an optional minus at parsing time, no spaces or plus, and at most 32 bytes. A domain check then rejects negative values and values above one hundred. Zero is permitted. An empty line is rejected, whereas no lines means no commands. These are different observable cases. Explain the selected contract and supply an independent example.",
+      "level": "basic",
+      "hint": "First specify syntax: decimal digits with an optional minus at parsing time, no spaces or plus, and at most 32 bytes. A domain check then rejects negative values and values above one hundred. Zero is permitted. An empty line is rejected, whereas no lines means no commands. These are different observable cases."
+    },
+    {
+      "task": "Compare no lines with an empty line.",
+      "criteria": "Retain a checkable result: For 12x, ptr points to x; a number outside int’s representable range reports result_out_of_range. Neither error should be silently converted to zero. The second example preserves value seventeen on conversion overflow. Do not generalize that behaviour to every input operation: different parsing functions have different failure-state contracts. Explain the selected contract and supply an independent example.",
+      "level": "basic",
+      "hint": "For 12x, ptr points to x; a number outside int’s representable range reports result_out_of_range. Neither error should be silently converted to zero. The second example preserves value seventeen on conversion overflow. Do not generalize that behaviour to every input operation: different parsing functions have different failure-state contracts."
+    },
+    {
+      "task": "Implement update using a candidate.",
+      "criteria": "Retain a checkable result: Read at most eight command lines, initially value=17. Completely parse each 1…32-byte line with integer from_chars, without spaces or plus. Accept 0…100. Rejection preserves value and increments rejected. More than eight lines produces invalid. Explain the selected contract and supply an independent example.",
+      "level": "applied",
+      "hint": "candidate receives numeric prefix twelve. ptr points to x rather than the end. The function rejects input and result remains seventeen."
+    },
+    {
+      "task": "Return distinct error enum values.",
+      "criteria": "Retain a checkable result: Read at most eight command lines, initially value=17. Completely parse each 1…32-byte line with integer from_chars, without spaces or plus. Accept 0…100. Rejection preserves value and increments rejected. More than eight lines produces invalid. Explain the selected contract and supply an independent example.",
+      "level": "applied",
+      "hint": "The number does not fit in int. ec reports result_out_of_range. The destination value remains seventeen."
+    },
+    {
+      "task": "Design input for an integer amount in minor currency units.",
+      "criteria": "Retain a checkable result: Design input for an integer amount in minor currency units. Explain the selected contract and supply an independent example.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    },
+    {
+      "task": "Find a test that detects resetting to seventeen on failure.",
+      "criteria": "Retain a checkable result: Find a test that detects resetting to seventeen on failure. Explain the selected contract and supply an independent example.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Command validation and state preservation",
+    "challenge": "Read at most eight command lines, initially value=17. Completely parse each 1…32-byte line with integer from_chars, without spaces or plus. Accept 0…100. Rejection preserves value and increments rejected. More than eight lines produces invalid.",
+    "target": "wasm-cpp",
+    "starterCode": "#include <iostream>\n#include <charconv>\n#include <string>\nbool update(int& value, const std::string& text) {\n  /* TODO: full from_chars parse into a candidate, then commit. */ return false;\n}\nint main() {\n  int value = 17, rejected = 0, count = 0;\n  std::string line;\n  while (std::getline(std::cin, line)) {\n    if (++count > 8) { std::cout << \"invalid\\n\"; return 0; }\n    if (!update(value, line)) ++rejected;\n  }\n  std::cout << \"value \" << value << \" rejected \" << rejected << '\\n';\n}\n",
+    "referenceCode": "#include <iostream>\n#include <charconv>\n#include <string>\nbool update(int& value, const std::string& text) {\n  if (text.empty() || text.size() > 32) return false;\n  int candidate = 0;\n  auto [ptr, ec] = std::from_chars(text.data(), text.data() + text.size(), candidate);\n  if (ec != std::errc{} || ptr != text.data() + text.size() || candidate < 0 || candidate > 100) return false;\n  value = candidate; return true;\n}\nint main() {\n  int value = 17, rejected = 0, count = 0;\n  std::string line;\n  while (std::getline(std::cin, line)) {\n    if (++count > 8) { std::cout << \"invalid\\n\"; return 0; }\n    if (!update(value, line)) ++rejected;\n  }\n  std::cout << \"value \" << value << \" rejected \" << rejected << '\\n';\n}\n",
+    "starterFiles": {},
+    "referenceFiles": {},
+    "metadata": {},
+    "starterExpectedStdout": "value 17 rejected 3\n",
+    "cases": [
+      {
+        "stdin": "12\n12x\n100",
+        "stdout": "value 100 rejected 1\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "value 17 rejected 0\n"
+      },
+      {
+        "stdin": "\n",
+        "stdout": "value 17 rejected 1\n"
+      },
+      {
+        "stdin": "0",
+        "stdout": "value 0 rejected 0\n"
+      },
+      {
+        "stdin": "-1\n101",
+        "stdout": "value 17 rejected 2\n"
+      },
+      {
+        "stdin": "+2\n 2\n2 ",
+        "stdout": "value 17 rejected 3\n"
+      },
+      {
+        "stdin": "999999999999999999999",
+        "stdout": "value 17 rejected 1\n"
+      },
+      {
+        "stdin": "2\n2\n2\n2\n2\n2\n2\n2\n2",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Preserve your work and create a separate project for experiments.",
+      "Open Task and Code Studio and copy the starter and listed files.",
+      "Implement update using a candidate.",
+      "Before running, record the expected transitions and outcome of every case.",
+      "Execute every reference case and retain actual observations.",
+      "Return distinct error enum values.",
+      "Add an independent case and explain its boundary.",
+      "Save sources, the protocol and an explanation of limitations."
+    ],
+    "rubric": [
+      "The full input and output contract is satisfied.",
+      "Invariants and lifetimes are explained; rejection preserves the model.",
+      "Ordinary, empty, boundary and failure scenarios are covered.",
+      "Return distinct error enum values.",
+      "An independent extension and test are supplied, rather than only a reference copy.",
+      "Sources, actual observations and limits of conclusions are retained."
+    ],
+    "artifact": "A personal project and verification protocol using synthetic data.",
+    "verification": "manual-output-comparison",
+    "catalogGoal": "Parse a numeric field completely, explain failure and commit only after every check succeeds.",
+    "catalogProof": "A personal project and verification protocol using synthetic data."
+  },
+  "assessment": [
+    {
+      "question": "Is ec==errc{} sufficient?",
+      "answers": [
+        "No; also check ptr==end and domain bounds.",
+        "Yes, always.",
+        "Only string length matters."
+      ],
+      "correctIndex": 0,
+      "explanation": "A valid prefix may leave invalid trailing input."
+    },
+    {
+      "question": "When is value changed?",
+      "answers": [
+        "Before parsing.",
+        "After all candidate checks.",
+        "After each character."
+      ],
+      "correctIndex": 1,
+      "explanation": "The final assignment is the commit point."
+    },
+    {
+      "question": "Does this contract accept +2?",
+      "answers": [
+        "Yes.",
+        "Only with a space.",
+        "No."
+      ],
+      "correctIndex": 2,
+      "explanation": "Integer from_chars does not accept a leading plus."
+    },
+    {
+      "question": "What is expected in the first reference case?",
+      "answers": [
+        "value 100 rejected 1\n",
+        "Data are always deleted.",
+        "The build must always fail."
+      ],
+      "correctIndex": 0,
+      "explanation": "Read at most eight command lines, initially value=17. Completely parse each 1…32-byte line with integer from_chars, without spaces or plus. Accept 0…100. Rejection preserves value and increments rejected. More than eight lines produces invalid."
+    },
+    {
+      "question": "How should the independent extension be checked?",
+      "answers": [
+        "Only rename the project.",
+        "Find a test that detects resetting to seventeen on failure.",
+        "Keep no observations."
+      ],
+      "correctIndex": 1,
+      "explanation": "Retain a checkable result: Find a test that detects resetting to seventeen on failure. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "What is required when an operation with a strong guarantee fails?",
+      "answers": [
+        "Preserve the specified state.",
+        "Delete all data.",
+        "Always close the browser."
+      ],
+      "correctIndex": 0,
+      "explanation": "The guarantee concerns the specified model at an operation boundary."
+    },
+    {
+      "question": "Who owns an object supplied through an ordinary reference?",
+      "answers": [
+        "Always the called function.",
+        "Ownership is specified separately; a reference does not transfer it.",
+        "Nobody."
+      ],
+      "correctIndex": 1,
+      "explanation": "The owner must outlive use of the reference."
+    },
+    {
+      "question": "How is a driver with its own main built?",
+      "answers": [
+        "Always together with another main.",
+        "Without domain code.",
+        "Instead of application main, sharing model sources."
+      ],
+      "correctIndex": 2,
+      "explanation": "The application and driver have separate entry points and builds."
+    }
+  ],
+  "reflection": [
+    "Compare no lines with an empty line.",
+    "Which check distinguishes a superficially similar incorrect implementation?",
+    "Find a test that detects resetting to seventeen on failure."
+  ],
+  "bridge": "Next: Callback lifetime and RAII subscriptions. Preserve your project and experiment results.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Command validation and state preservation",
+    "description": "A stepwise conceptual model; actual verification runs in the stated Studio target.",
+    "steps": [
+      {
+        "title": "Text is not yet a number",
+        "description": "An input field yields text while the model expects a constrained value. The string 12x has a numeric prefix but does not satisfy a contract requiring one complete integer. Silently applying twelve is incorrect. Each laboratory line is a separate command setting a number in 0…100; a rejected line preserves the previous value."
+      },
+      {
+        "title": "The from_chars contract",
+        "description": "std::from_chars receives pointers delimiting a character range and a reference to a number. Its result contains ptr and ec. The structured binding auto [ptr, ec] names the two fields. ec reports conversion success and ptr must equal the end of the string. Successfully parsing a prefix does not establish that all input was consumed."
+      },
+      {
+        "title": "Prepare and commit",
+        "description": "update parses into a temporary candidate. It checks length, ec, complete consumption and domain bounds before changing value through one final assignment. Until that assignment, model state is untouched. This ordering turns the promise that failure preserves state into an observable property of the code’s structure."
+      },
+      {
+        "title": "Errors and feedback",
+        "description": "A user benefits from distinguishing an empty field, trailing characters, a representation overflow and a value outside the allowed domain. The laboratory groups them as rejected to keep stdout compact, but an extension can return an error enum and map it to display text separately. Model validation should not embed localized interface strings into its algorithm."
+      },
+      {
+        "title": "Boundary and independent checks",
+        "description": "Reference cases include zero, one hundred, -1, 101, an empty line, spaces, a plus and an oversized number. Add a failure after a successful command to test preservation of already changed state. Testing only initial seventeen can miss an implementation that wrongly resets to seventeen whenever parsing fails."
+      }
+    ]
+  }
+}

@@ -1,0 +1,423 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.visual-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "runtimeTarget": "wasm-cpp",
+  "lessonId": "cpp.visual-event-model",
+  "locale": "en",
+  "sessions": 3,
+  "learningOrder": 1,
+  "prerequisiteIds": [
+    "cpp.functions-contracts",
+    "cpp.iterators-algorithms-lambdas",
+    "cpp.design-testability-refactoring"
+  ],
+  "sourceRefs": [
+    "CPP20-FUNCTIONS"
+  ],
+  "title": "Events, handlers and the application loop",
+  "lead": "Build an event-driven counter model and explain every state transition.",
+  "why": "A console exercise often receives all input and immediately computes an answer. An application must also respond when a user decides to add a task, edit a field or cancel an action. An event reports something that happened; its handler decides what that occurrence means for the model. Event order becomes part of the input, so rearranging the same actions can change the result.",
+  "objectives": [
+    "Trace 1, 0, -1 by hand.",
+    "Explain both outputs of the second example.",
+    "Implement dispatch according to the laboratory contract.",
+    "Change the maximum to twenty and update the tests.",
+    "Specify complete and toggle task commands."
+  ],
+  "prerequisites": [
+    "Modules 1–5: functions, STL, ownership, testing and multi-file builds.",
+    "cpp.functions-contracts",
+    "cpp.iterators-algorithms-lambdas",
+    "cpp.design-testability-refactoring"
+  ],
+  "concepts": [
+    {
+      "term": "Event",
+      "definition": "A report of an occurrence that the application can handle."
+    },
+    {
+      "term": "Command",
+      "definition": "A request to change a model under specified acceptance conditions."
+    },
+    {
+      "term": "Handler",
+      "definition": "A function that defines the response to an event."
+    },
+    {
+      "term": "Dispatcher",
+      "definition": "A component that selects a handler according to event kind."
+    },
+    {
+      "term": "State",
+      "definition": "Data that influence the result of the next action."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition preserved at the boundaries of permitted operations."
+    },
+    {
+      "term": "Trace",
+      "definition": "An ordered event sequence used to reproduce behaviour."
+    },
+    {
+      "term": "Idempotence",
+      "definition": "Repeating an operation preserves the same selected final state."
+    }
+  ],
+  "sections": [
+    {
+      "title": "From a sequence to events",
+      "paragraphs": [
+        "A console exercise often receives all input and immediately computes an answer. An application must also respond when a user decides to add a task, edit a field or cancel an action. An event reports something that happened; its handler decides what that occurrence means for the model. Event order becomes part of the input, so rearranging the same actions can change the result.",
+        "Consider a counter constrained to zero through ten. Event 1 increments it, -1 decrements it and 0 resets it. The trace 1, 0, 1 ends at one, whereas 1, 1, 0 ends at zero. This is event-driven logic even without a window. A graphical adapter can later translate button presses into these same commands without changing the counter rule."
+      ]
+    },
+    {
+      "title": "Three parts of the contract",
+      "paragraphs": [
+        "Before writing a handler, specify the state, the accepted events and the observable result. Model stores value and the rejection count; dispatch takes a model reference and an event value. The reference permits mutation of that particular model. A separate result would be useful for displaying an error; the laboratory includes the rejection statistic in state so that its behaviour can be checked directly.",
+        "The contract distinguishes a rejected command from a malformed input protocol. Decrementing a zero counter is a known event that the model refuses. A missing number after the declared event count is a formatting error affecting the whole trace. Combining these cases makes feedback ambiguous and prevents reliable tests that deliberately expect different kinds of rejection."
+      ]
+    },
+    {
+      "title": "Handlers and pure calculations",
+      "paragraphs": [
+        "The calculate function in the first example returns a new number without knowing about a window, input stream or file. A handler can call that calculation, validate its result and commit it to the model. This separates arithmetic tests from application-response tests. Naming a function onClick does not by itself create a real button or start a graphical environment.",
+        "In the second example, apply checks the boundary before changing value. Adding two to nine is refused: false reports rejection and the value remains nine. Predict both printed values before running the program. Then temporarily move mutation before validation and identify a test that exposes the loss of state preservation. Restore the correct implementation afterwards."
+      ]
+    },
+    {
+      "title": "Dispatching step by step",
+      "paragraphs": [
+        "A dispatcher selects handling according to event kind. The laboratory uses an if chain: reset comes first, then permitted increment and decrement, and all remaining cases increase rejected. Condition order matters because reset is valid at every value. The invariant that value remains within 0…10 must hold before and after every handler, including handlers that reject an action.",
+        "Record the trace 1, 1, -1, 1 as rows containing event index, value before, command, value after and rejection. Four rows produce value two with no rejections. This table is reasoning about the program, whereas stdout is an observation from execution. They should agree; a mismatch points either to faulty code or to an incorrectly specified expected result."
+      ]
+    },
+    {
+      "title": "The loop and a finite teaching trace",
+      "paragraphs": [
+        "A real application loop normally waits for events until the user closes the program. Our driver instead reads a finite trace and calls dispatch sequentially. This makes the logic reproducible without depending on how quickly buttons are pressed. Do not add a busy infinite waiting loop to the console Worker: without a supported event source it only consumes computation and does not turn the console into an interface.",
+        "The driver first reads all n events, with n bounded by twenty. It then checks that no extra tokens remain. Only afterwards does it create the model and dispatch events. This boundary separates transport-format validation from domain logic. In the next lesson, a queue will allow a handler to defer another event instead of immediately calling another handler inside the current one."
+      ]
+    },
+    {
+      "title": "Repetition and idempotence",
+      "paragraphs": [
+        "Repeating an event is not always harmless. Two increments change the counter twice, whereas two resets have the same final effect as one reset. An operation with that property is idempotent with respect to the chosen state. This does not make every repeated request safe: a log, rejection counter or external delivery can be a separate observable effect requiring its own contract.",
+        "In a task planner, marking an item completed can usually be repeated without changing its final status. Toggling completion twice restores the original status. Choose commands according to user intention rather than button implementation convenience. In the transfer exercise, specify both versions and provide a trace that lets a reviewer distinguish their behaviour."
+      ]
+    },
+    {
+      "title": "Checking boundaries",
+      "paragraphs": [
+        "An ordinary trace does not test the prohibition on going below zero or above ten. Include an empty trace, lower-bound rejection, eleven increments, reset after mutation and an unknown event. Specify the complete stdout line, including rejected. Checking value alone can miss an incorrect rejection report or the accidental acceptance of an unknown command.",
+        "Change the upper boundary to twenty as a separate requirements change. Before editing, list which expected results must change, which should remain unchanged and why. This is a small maintenance exercise: a test need not preserve its old answer after a deliberate contract change, but unintended behavioural changes must be detected and explained."
+      ]
+    },
+    {
+      "title": "Connecting to the later application",
+      "paragraphs": [
+        "Run the examples in the Nexus lesson editor, save the laboratory as a separate project and add an independently designed trace. Preserve your existing work before replacing lesson code. Marking a topic complete records a learning action; it does not mean that a teacher has graded an application or that every possible event sequence has been verified.",
+        "The deliverables are a dispatch implementation, a transition table, actual run results and an explanation of events, commands and handlers. Later, the same principle will connect the TaskFlow model to real Qt widgets. First establish the rules without a window; then separately verify input, presentation, object lifetimes and application persistence."
+      ]
+    },
+    {
+      "title": "Laboratory contract: input to observation",
+      "paragraphs": [
+        "Read n=0…20 followed by n integer events. Zero resets value, one increments up to ten, and minus one decrements down to zero. Other or forbidden events increase rejected. Missing or trailing tokens produce invalid.",
+        "Trace the first reference scenario before running. Exact stdin: \"4 1 1 -1 1\". Expected stdout: \"value 2 rejected 0\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+      ]
+    },
+    {
+      "title": "Reading a working example",
+      "paragraphs": [
+        "calculate receives four and three without external state. Seven is returned and the handler stores it in model. stdout value 7 connects model and observation. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+        "The 9+2>10 check is true. The early return leaves the referenced value unchanged. false prints as zero and the retained value as nine. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "handler",
+      "code": "#include <iostream>\nint calculate(int value, int delta) { return value + delta; }\nint main() {\n  int model = 4;\n  model = calculate(model, 3);\n  std::cout << \"value \" << model << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "value 7\n",
+      "title": "Guided model",
+      "purpose": "Build an event-driven counter model and explain every state transition.",
+      "steps": [
+        "calculate receives four and three without external state.",
+        "Seven is returned and the handler stores it in model.",
+        "stdout value 7 connects model and observation."
+      ]
+    },
+    {
+      "id": "rejection",
+      "code": "#include <iostream>\nbool apply(int& value, int delta) {\n  if (value + delta < 0 || value + delta > 10) return false;\n  value += delta; return true;\n}\nint main() {\n  int value = 9;\n  bool accepted = apply(value, 2);\n  std::cout << accepted << ' ' << value << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "0 9\n",
+      "title": "Boundary and extension",
+      "purpose": "Build an event-driven counter model and explain every state transition.",
+      "steps": [
+        "The 9+2>10 check is true.",
+        "The early return leaves the referenced value unchanged.",
+        "false prints as zero and the retained value as nine."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Change the maximum to twenty and update the tests.",
+      "action": "Change the maximum to twenty and update the tests.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Previously unchanged rules are checked separately."
+    },
+    {
+      "title": "Specify complete and toggle task commands.",
+      "action": "Specify complete and toggle task commands.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Two traces distinguish repeated calls."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "State changed after rejection.",
+      "cause": "Mutation happened before validation or violated the invariant.",
+      "fix": "Identify the laboratory commit point and check it with a separate rejection trace."
+    },
+    {
+      "symptom": "An old revision or wrong target is running.",
+      "cause": "Build inputs are wrong or the changed project was not rebuilt.",
+      "fix": "Check entryFile, includeRoots and translationUnits and run the saved copy."
+    },
+    {
+      "symptom": "One successful example is treated as complete verification.",
+      "cause": "Rejected, empty and independent cases have not been checked.",
+      "fix": "Design timer events without a clock or a window."
+    }
+  ],
+  "practice": [
+    {
+      "task": "Trace 1, 0, -1 by hand.",
+      "criteria": "Final value zero, one rejection, with every intermediate state recorded.",
+      "level": "basic",
+      "hint": "Consider a counter constrained to zero through ten. Event 1 increments it, -1 decrements it and 0 resets it. The trace 1, 0, 1 ends at one, whereas 1, 1, 0 ends at zero. This is event-driven logic even without a window. A graphical adapter can later translate button presses into these same commands without changing the counter rule."
+    },
+    {
+      "task": "Explain both outputs of the second example.",
+      "criteria": "Rejection preserves nine and returns false.",
+      "level": "basic",
+      "hint": "The contract distinguishes a rejected command from a malformed input protocol. Decrementing a zero counter is a known event that the model refuses. A missing number after the declared event count is a formatting error affecting the whole trace. Combining these cases makes feedback ambiguous and prevents reliable tests that deliberately expect different kinds of rejection."
+    },
+    {
+      "task": "Implement dispatch according to the laboratory contract.",
+      "criteria": "All reference cases match and unknown commands are rejected.",
+      "level": "applied",
+      "hint": "calculate receives four and three without external state. Seven is returned and the handler stores it in model. stdout value 7 connects model and observation."
+    },
+    {
+      "task": "Change the maximum to twenty and update the tests.",
+      "criteria": "Previously unchanged rules are checked separately.",
+      "level": "applied",
+      "hint": "The 9+2>10 check is true. The early return leaves the referenced value unchanged. false prints as zero and the retained value as nine."
+    },
+    {
+      "task": "Specify complete and toggle task commands.",
+      "criteria": "Two traces distinguish repeated calls.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    },
+    {
+      "task": "Design timer events without a clock or a window.",
+      "criteria": "Specify the state, permitted commands and three rejection cases.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Events, handlers and the application loop",
+    "challenge": "Read n=0…20 followed by n integer events. Zero resets value, one increments up to ten, and minus one decrements down to zero. Other or forbidden events increase rejected. Missing or trailing tokens produce invalid.",
+    "target": "wasm-cpp",
+    "starterCode": "#include <iostream>\n#include <vector>\nstruct Model { int value = 0, rejected = 0; };\nvoid dispatch(Model& m, int event) {\n  /* TODO: validate event, preserve bounds and count rejection. */\n}\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 20) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> events(n);\n  for (int& e : events) if (!(std::cin >> e)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Model model;\n  for (int e : events) dispatch(model, e);\n  std::cout << \"value \" << model.value << \" rejected \" << model.rejected << '\\n';\n}\n",
+    "referenceCode": "#include <iostream>\n#include <vector>\nstruct Model { int value = 0, rejected = 0; };\nvoid dispatch(Model& m, int event) {\n  if (event == 0) m.value = 0;\n  else if (event == 1 && m.value < 10) ++m.value;\n  else if (event == -1 && m.value > 0) --m.value;\n  else ++m.rejected;\n}\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 20) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> events(n);\n  for (int& e : events) if (!(std::cin >> e)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Model model;\n  for (int e : events) dispatch(model, e);\n  std::cout << \"value \" << model.value << \" rejected \" << model.rejected << '\\n';\n}\n",
+    "starterFiles": {},
+    "referenceFiles": {},
+    "metadata": {},
+    "starterExpectedStdout": "value 0 rejected 0\n",
+    "cases": [
+      {
+        "stdin": "4 1 1 -1 1",
+        "stdout": "value 2 rejected 0\n"
+      },
+      {
+        "stdin": "0",
+        "stdout": "value 0 rejected 0\n"
+      },
+      {
+        "stdin": "2 -1 2",
+        "stdout": "value 0 rejected 2\n"
+      },
+      {
+        "stdin": "3 1 0 -1",
+        "stdout": "value 0 rejected 1\n"
+      },
+      {
+        "stdin": "11 1 1 1 1 1 1 1 1 1 1 1",
+        "stdout": "value 10 rejected 1\n"
+      },
+      {
+        "stdin": "2 1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "-1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 x",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Preserve your work and create a separate project for experiments.",
+      "Open Task and Code Studio and copy the starter and listed files.",
+      "Implement dispatch according to the laboratory contract.",
+      "Before running, record the expected transitions and outcome of every case.",
+      "Execute every reference case and retain actual observations.",
+      "Change the maximum to twenty and update the tests.",
+      "Add an independent case and explain its boundary.",
+      "Save sources, the protocol and an explanation of limitations."
+    ],
+    "rubric": [
+      "The full input and output contract is satisfied.",
+      "Invariants and lifetimes are explained; rejection preserves the model.",
+      "Ordinary, empty, boundary and failure scenarios are covered.",
+      "Change the maximum to twenty and update the tests.",
+      "An independent extension and test are supplied, rather than only a reference copy.",
+      "Sources, actual observations and limits of conclusions are retained."
+    ],
+    "artifact": "A personal project and verification protocol using synthetic data.",
+    "verification": "manual-output-comparison",
+    "catalogGoal": "Build an event-driven counter model and explain every state transition.",
+    "catalogProof": "A personal project and verification protocol using synthetic data."
+  },
+  "assessment": [
+    {
+      "question": "Does naming a function onClick create a graphical button?",
+      "answers": [
+        "No, a graphical adapter is needed.",
+        "Yes, automatically.",
+        "Only in main."
+      ],
+      "correctIndex": 0,
+      "explanation": "A function name does not connect it to an event source."
+    },
+    {
+      "question": "What happens when -1 is dispatched at zero?",
+      "answers": [
+        "The value becomes -1.",
+        "The value stays zero and rejected increases.",
+        "The program must exit."
+      ],
+      "correctIndex": 1,
+      "explanation": "The boundary is checked before mutation."
+    },
+    {
+      "question": "Which operation is idempotent for value?",
+      "answers": [
+        "Increment.",
+        "Decrement.",
+        "Reset to zero."
+      ],
+      "correctIndex": 2,
+      "explanation": "Repeating reset leaves zero."
+    },
+    {
+      "question": "Why does event order matter?",
+      "answers": [
+        "The handler uses current state.",
+        "The compiler changes numbers randomly.",
+        "A queue always sorts commands."
+      ],
+      "correctIndex": 0,
+      "explanation": "Each operation observes the result of the previous one."
+    },
+    {
+      "question": "What does a missing token after n mean?",
+      "answers": [
+        "An ordinary reset.",
+        "A malformed trace format.",
+        "An unknown button."
+      ],
+      "correctIndex": 1,
+      "explanation": "The driver validates format before dispatching to the model."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "What is required when an operation with a strong guarantee fails?",
+      "answers": [
+        "Preserve the specified state.",
+        "Delete all data.",
+        "Always close the browser."
+      ],
+      "correctIndex": 0,
+      "explanation": "The guarantee concerns the specified model at an operation boundary."
+    },
+    {
+      "question": "Who owns an object supplied through an ordinary reference?",
+      "answers": [
+        "Always the called function.",
+        "Ownership is specified separately; a reference does not transfer it.",
+        "Nobody."
+      ],
+      "correctIndex": 1,
+      "explanation": "The owner must outlive use of the reference."
+    },
+    {
+      "question": "How is a driver with its own main built?",
+      "answers": [
+        "Always together with another main.",
+        "Without domain code.",
+        "Instead of application main, sharing model sources."
+      ],
+      "correctIndex": 2,
+      "explanation": "The application and driver have separate entry points and builds."
+    }
+  ],
+  "reflection": [
+    "Explain both outputs of the second example.",
+    "Which check distinguishes a superficially similar incorrect implementation?",
+    "Design timer events without a clock or a window."
+  ],
+  "bridge": "Next: Event queues and dispatch. Preserve your project and experiment results.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Events, handlers and the application loop",
+    "description": "A stepwise conceptual model; actual verification runs in the stated Studio target.",
+    "steps": [
+      {
+        "title": "From a sequence to events",
+        "description": "A console exercise often receives all input and immediately computes an answer. An application must also respond when a user decides to add a task, edit a field or cancel an action. An event reports something that happened; its handler decides what that occurrence means for the model. Event order becomes part of the input, so rearranging the same actions can change the result."
+      },
+      {
+        "title": "Three parts of the contract",
+        "description": "Before writing a handler, specify the state, the accepted events and the observable result. Model stores value and the rejection count; dispatch takes a model reference and an event value. The reference permits mutation of that particular model. A separate result would be useful for displaying an error; the laboratory includes the rejection statistic in state so that its behaviour can be checked directly."
+      },
+      {
+        "title": "Handlers and pure calculations",
+        "description": "The calculate function in the first example returns a new number without knowing about a window, input stream or file. A handler can call that calculation, validate its result and commit it to the model. This separates arithmetic tests from application-response tests. Naming a function onClick does not by itself create a real button or start a graphical environment."
+      },
+      {
+        "title": "Dispatching step by step",
+        "description": "A dispatcher selects handling according to event kind. The laboratory uses an if chain: reset comes first, then permitted increment and decrement, and all remaining cases increase rejected. Condition order matters because reset is valid at every value. The invariant that value remains within 0…10 must hold before and after every handler, including handlers that reject an action."
+      },
+      {
+        "title": "The loop and a finite teaching trace",
+        "description": "A real application loop normally waits for events until the user closes the program. Our driver instead reads a finite trace and calls dispatch sequentially. This makes the logic reproducible without depending on how quickly buttons are pressed. Do not add a busy infinite waiting loop to the console Worker: without a supported event source it only consumes computation and does not turn the console into an interface."
+      }
+    ]
+  }
+}

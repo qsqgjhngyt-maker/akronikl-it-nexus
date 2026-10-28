@@ -8,7 +8,8 @@ import {makeLocalPayload,transferPlan} from '../pwa/offline-transfer.js';import 
 class MemoryStorage{data=new Map();get length(){return this.data.size}key(i){return [...this.data.keys()][i]??null}getItem(k){return this.data.get(k)??null}setItem(k,v){this.data.set(k,String(v))}removeItem(k){this.data.delete(k)}}
 globalThis.localStorage=new MemoryStorage();globalThis.sessionStorage=new MemoryStorage();
 const account={accountId:'synthetic-m6-preservation',displayName:'SYNTHETIC',status:'active'},initialize=a=>initializeAccountStorage({account:a,loginMethods:[],enrollmentAvailable:false});initialize(account);
-const curriculum=JSON.parse(await readFile('courses/cpp/curriculum.json')),ids=curriculum.lessons.map(l=>l.id),legacy=[...CPP_LEGACY_LESSON_IDS];assert.equal(ids.length,56);
+// Регрессия M6-0 на её исторических56 строках; реальный M6-1 56→67 проверяется content/GUI тестами.
+const curriculum=JSON.parse((await import('node:child_process')).execFileSync('git',['show','f2c853e012a5c3a3928ca4b082816582b5de1cfa:courses/cpp/curriculum.json'])),ids=curriculum.lessons.map(l=>l.id),legacy=[...CPP_LEGACY_LESSON_IDS];assert.equal(ids.length,56);
 const future=structuredClone(curriculum);future.programVersion='SYNTHETIC:M6-FUTURE';for(let i=1;i<=11;i++)future.lessons.push({id:'cpp.synthetic-m6-a'+i,sectionId:'cpp.section.visual-programming'});
 const files=[{path:'main.cpp',content:'// SYNTHETIC main',languageId:'cpp'},{path:'include/domain.hpp',content:'// SYNTHETIC header',languageId:'cpp'},{path:'data/items.txt',content:'2 4 7\n',languageId:'cpp'}];
 const sample=id=>({completed:true,quiz:0,code:'// SYNTHETIC '+id,stdin:'8\n',note:'SYNTHETIC note',workspace:{entryFile:'main.cpp',activeFile:'main.cpp',files},unknown:{preserve:true}}),checks=[],check=(name,fn)=>{fn();checks.push({name,status:'PASS'});console.log('PASS '+name)};

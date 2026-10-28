@@ -8,20 +8,20 @@ import {academyGoldMarkup} from '../core/academy-gold-presentation.js';
 import {translator} from '../core/i18n.js';
 import {createViewResume,VIEW_RESUME_KEY} from '../core/view-resume.js';
 const j=async p=>JSON.parse(await readFile(new URL('../'+p,import.meta.url),'utf8'));
-const index=await j('courses/cpp/data/gold-laboratories.json'),course={};
+const baseIndex=await j('courses/cpp/data/gold-laboratories.json'),extension=await j('courses/cpp/data/gold-laboratories-m6.json'),index={schemaVersion:1,lessons:{...baseIndex.lessons,...extension.lessons}},course={};
 for(const [key,file]of Object.entries({manifest:'manifest.json',curriculum:'curriculum.json',lessonsRu:'data/lessons.ru.json',lessonsEn:'data/lessons.en.json',practicumsRu:'data/practicums.ru.json',projectsRu:'data/projects.ru.json'}))course[key]=await j('courses/cpp/'+file);
 course.goldLaboratories=index.lessons;
 test('76 записей индекса согласованы с лабораторными; код и теория не скопированы в каталог',async()=>{
  assert.equal(index.schemaVersion,1);assert.deepEqual(Object.keys(index.lessons),GOLD_LESSONS);
  for(const id of GOLD_LESSONS)for(const locale of ['ru','en']){
   const g=await j(goldLessonPath(id,locale)),m=index.lessons[id][locale];
-  assert.deepEqual(m,{title:g.laboratory.title,goal:g.laboratory.catalogGoal||g.laboratory.challenge,stepCount:g.laboratory.steps.length,proof:g.laboratory.rubric[0]});
+  assert.deepEqual(m,{title:g.laboratory.title,goal:g.laboratory.catalogGoal||g.laboratory.challenge,stepCount:g.laboratory.steps.length,proof:g.laboratory.catalogProof||g.laboratory.rubric[0]});
   assert.deepEqual(Object.keys(m).sort(),['goal','proof','stepCount','title']);
   if(locale==='en')assert.ok(!/[А-Яа-яЁё]/.test(JSON.stringify(m)));
  }
  // M5 adds nine bilingual index rows. This is fetched only with full course/labs,
  // never in the Home outline. Preserve the 40 KB baseline plus <=6 KB for M5.
- assert.ok(Buffer.byteLength(JSON.stringify(index))<40000+(GOLD_OOP_LESSONS.length===9?6000:0),'Bounded metadata, separate from the unchanged Home outline cap');
+ assert.ok(Buffer.byteLength(JSON.stringify(baseIndex))<40000+(GOLD_OOP_LESSONS.length===9?6000:0),'Bounded metadata, separate from the unchanged Home outline cap');
 });
 test('RU/EN: 39 C++ labs, все18 M3, учебный порядок, без зависимости от посещения Gold',async()=>{
  for(const locale of ['ru','en']){

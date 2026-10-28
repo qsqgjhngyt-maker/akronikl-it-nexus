@@ -1,0 +1,497 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.visual-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20 / Qt 6.8.3 / Emscripten 3.1.56",
+  "runtimeTarget": "qt-wasm",
+  "lessonId": "cpp.qt-graphical-adapter",
+  "locale": "en",
+  "sessions": 5,
+  "learningOrder": 11,
+  "prerequisiteIds": [
+    "cpp.multifile-event-application",
+    "cpp.callback-lifetime-subscriptions"
+  ],
+  "sourceRefs": [
+    "QT68-SIGNALS",
+    "QT68-OWNERSHIP",
+    "QT68-WASM"
+  ],
+  "title": "A real Qt graphical adapter",
+  "lead": "Connect TaskModel to real Qt widgets and execute a user scenario inside Nexus.",
+  "why": "Qt is an additional library, not part of standard C++. It requires its own SDK and build toolchain. In Nexus select Project Studio, create a C++ application and open src/gui.cpp. Building compiles your C++ to Qt/WebAssembly and opens a separate Preview. The lesson’s console Clang/WASI editor contains no Qt and cannot run this exercise.",
+  "objectives": [
+    "Trace Return→add→model→refresh.",
+    "Explain the window’s parent ownership.",
+    "Change the success message and rebuild.",
+    "Add a count indicator derived from the model.",
+    "Test keyboard interaction and empty-input errors."
+  ],
+  "prerequisites": [
+    "Modules 1–5: functions, STL, ownership, testing and multi-file builds.",
+    "cpp.multifile-event-application",
+    "cpp.callback-lifetime-subscriptions"
+  ],
+  "concepts": [
+    {
+      "term": "Qt Widgets",
+      "definition": "A library of actual graphical application controls."
+    },
+    {
+      "term": "Signal",
+      "definition": "A Qt notification about an object action or change."
+    },
+    {
+      "term": "Context",
+      "definition": "The QObject bounding the lifetime of a callback connection."
+    },
+    {
+      "term": "Layout",
+      "definition": "A component that automatically arranges widgets."
+    },
+    {
+      "term": "Preview",
+      "definition": "An isolated execution of the learner’s compiled application."
+    },
+    {
+      "term": "UserRole",
+      "definition": "Item data used here for the domain entity id."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition preserved at the boundaries of permitted model operations."
+    },
+    {
+      "term": "Observable behaviour",
+      "definition": "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+    }
+  ],
+  "sections": [
+    {
+      "title": "From the model to a real window",
+      "paragraphs": [
+        "Qt is an additional library, not part of standard C++. It requires its own SDK and build toolchain. In Nexus select Project Studio, create a C++ application and open src/gui.cpp. Building compiles your C++ to Qt/WebAssembly and opens a separate Preview. The lesson’s console Clang/WASI editor contains no Qt and cannot run this exercise.",
+        "The TaskFlow starter includes a model, CLI, GUI, tests, CMake and target description. Create a new personal project while preserving earlier work. The laboratory changes actual src/gui.cpp; a JavaScript animation or an onClick message in a console does not substitute for execution. Build-service connectivity and source correctness are separate checks."
+      ]
+    },
+    {
+      "title": "Widgets, layout and ownership",
+      "paragraphs": [
+        "QApplication initializes the graphical environment. TaskWindow derives from QWidget and QVBoxLayout arranges controls vertically without manual coordinates. QLineEdit accepts text, QPushButton represents an action, QListWidget displays tasks and QLabel presents status. Passing this as a parent makes child QObjects owned by the window, so they are not separately deleted when the parent is destroyed.",
+        "Do not combine parent ownership with an independent unique_ptr to the same child without analyzing destruction order. The window owns the model by value and the model knows no Qt types. Desktop main uses app.exec; the checked WebAssembly target returns control so the browser can service events. Preserve the supplied conditional branch instead of inserting a busy while loop."
+      ]
+    },
+    {
+      "title": "Connecting a signal to an action",
+      "paragraphs": [
+        "connect(button, &QPushButton::clicked, this, [this]{add();}) connects a widget signal to a lambda. The third argument is the context and ties connection lifetime to that object. Capturing this permits access to window fields. The arrow accesses a pointed-to object, while &QPushButton::clicked names a class signal rather than invoking it while connecting.",
+        "Return in the field and the Add task button call the same add method. It obtains UTF-8, supplies a std::string to model.add, clears the field only on success and refreshes the list. Model exceptions become status feedback rather than escaping the callback. Title rules belong to TaskModel; the GUI handles translation and feedback."
+      ]
+    },
+    {
+      "title": "Lists, ids and accessibility",
+      "paragraphs": [
+        "Each list item stores t.id in Qt::UserRole. Selection is translated back to a persistent id before complete, so row position does not replace task identity. The list is rebuilt from the model after changes. That is simple for this bounded teaching project; larger data would require measurements and a more incremental view model.",
+        "The field receives an accessibleName, long status text wraps and Enter must work without a mouse. Preview checks include focus, understandable labels, empty-input rejection and repetition. An automated basic-input test is not complete VoiceOver or TalkBack acceptance on devices; those checks must be recorded separately and honestly."
+      ]
+    },
+    {
+      "title": "Changing your own application",
+      "paragraphs": [
+        "First change the window title and successful-add message while preserving model rules. Then add a task-count indicator derived from model.tasks().size() and check it after each accepted action. Do not increment a counter merely because a button was pressed: model rejection creates no task. The changed source must actually be rebuilt.",
+        "Retain source, two different builds and an action protocol: an ordinary title, whitespace-only input, repetition, completing a selected item and rejection without selection. The next lesson checks persistence. Complete the work inside Nexus; ZIP supplies an additional portable result, while installing an external IDE is not required to finish the laboratory."
+      ]
+    },
+    {
+      "title": "Laboratory contract: input to observation",
+      "paragraphs": [
+        "Create a new C++ application in Project Studio. Add a QLabel total-task indicator and derive it from the model during refresh. Preserve Add/Enter/Complete/Save, the Task title accessible name and NXTF1. Empty or whitespace-only titles must not create tasks.",
+        "Trace the first reference scenario before running. Enter learn C++ and press Enter. One open task; the count reflects the model. Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+      ]
+    },
+    {
+      "title": "Reading a working example",
+      "paragraphs": [
+        "The window creates an input, list and buttons. Return invokes C++ add and the model validates text. refresh displays actual tasks and emits NEXUS_TASKS. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+        "The second version adds a count QLabel. refresh reads model size rather than button-press count. Empty-input rejection does not increase the count. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+      ]
+    },
+    {
+      "title": "Independent checking and transfer",
+      "paragraphs": [
+        "Test keyboard interaction and empty-input errors. Retain a checkable result: Test keyboard interaction and empty-input errors. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
+        "Design a completed-task filter without changing ids. Retain a checkable result: Design a completed-task filter without changing ids. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Ask a reviewer for a small requirement change and explain which files, tests and observations it should affect."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "adapter",
+      "code": "#include \"task_model.hpp\"\n#include <QApplication>\n#include <QAccessible>\n#include <QWidget>\n#include <QVBoxLayout>\n#include <QLineEdit>\n#include <QPushButton>\n#include <QListWidget>\n#include <QLabel>\n#include <QFile>\n#include <memory>\n#include <sstream>\n#include <iostream>\nclass TaskWindow:public QWidget {\n TaskModel model_;QLineEdit*input_;QListWidget*list_;QLabel*status_;\n void refresh(){list_->clear();for(const auto&t:model_.tasks()) {auto*item=new QListWidgetItem(QString(t.done?\"[done] \":\"[ ] \")+QString::fromUtf8(t.title.data(),int(t.title.size())),list_);item->setData(Qt::UserRole,t.id);}std::cout<<\"NEXUS_TASKS \"<<model_.tasks().size()<<std::endl;}\n void add(){try{const auto text=input_->text().toUtf8();model_.add(std::string(text.constData(),std::size_t(text.size())));input_->clear();status_->setText(\"Saved in the running application\");refresh();}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}}\npublic:\n TaskWindow(){setWindowTitle(\"TaskFlow — C++ in Nexus\");resize(460,420);auto*layout=new QVBoxLayout(this);layout->addWidget(new QLabel(\"TaskFlow\",this));input_=new QLineEdit(this);input_->setPlaceholderText(\"Enter a task\");input_->setAccessibleName(\"Task title\");layout->addWidget(input_);auto*button=new QPushButton(\"Add task\",this);layout->addWidget(button);list_=new QListWidget(this);layout->addWidget(list_);status_=new QLabel(\"Ready\",this);status_->setWordWrap(true);layout->addWidget(status_);\n  connect(button,&QPushButton::clicked,this,[this]{add();});connect(input_,&QLineEdit::returnPressed,this,[this]{add();});\n  auto*done=new QPushButton(\"Complete selected\",this);layout->addWidget(done);connect(done,&QPushButton::clicked,this,[this]{try{if(!list_->currentItem())throw std::runtime_error(\"Select a task\");model_.complete(list_->currentItem()->data(Qt::UserRole).toInt());refresh();}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});\n  auto*save=new QPushButton(\"Save application data\",this);layout->addWidget(save);connect(save,&QPushButton::clicked,this,[this]{try{std::ostringstream out;model_.save(out);QFile f(\"/taskflow.txt\");if(!f.open(QIODevice::WriteOnly)||f.write(QByteArray::fromStdString(out.str()))<0)throw std::runtime_error(\"Cannot write data\");status_->setText(\"Application data saved\");}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});\n  QFile f(\"/taskflow.txt\");if(f.open(QIODevice::ReadOnly)){try{const auto bytes=f.read(65537);if(bytes.size()>65536)throw std::runtime_error(\"Data file is too large\");std::istringstream in(bytes.toStdString());model_.load(in);}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}}refresh();input_->setFocus();\n }\n};\nint main(int argc,char**argv){static auto app=std::make_unique<QApplication>(argc,argv);\n#ifdef __EMSCRIPTEN__\n QAccessible::setActive(true);\n#endif\n static auto window=std::make_unique<TaskWindow>();window->show();QAccessible::setRootObject(window.get());\n#ifndef __EMSCRIPTEN__\n return app->exec();\n#else\n return 0;\n#endif\n}\n",
+      "stdin": "",
+      "expectedStdout": "NEXUS_TASKS 0\n",
+      "files": {
+        "include/task_model.hpp": "#pragma once\n#include <string>\n#include <vector>\n#include <iosfwd>\nstruct Task { int id; std::string title; bool done=false; };\nclass TaskModel {\n  std::vector<Task> tasks_; int next_=1;\npublic:\n  int add(std::string title);\n  void complete(int id);\n  const std::vector<Task>& tasks()const noexcept{return tasks_;}\n  void save(std::ostream&)const;\n  void load(std::istream&);\n};\n",
+        "src/task_model.cpp": "#include \"task_model.hpp\"\n#include <stdexcept>\n#include <algorithm>\n#include <iomanip>\n#include <istream>\n#include <ostream>\nnamespace { bool valid(const std::string&s){return !s.empty()&&s.size()<=256&&s.find_first_not_of(\" \\t\")!=std::string::npos&&s.find_first_of(\"\\r\\n\")==std::string::npos;} }\nint TaskModel::add(std::string title){\n  if(!valid(title))throw std::invalid_argument(\"Enter a non-empty title (up to 256 bytes)\");\n  if(tasks_.size()>=200)throw std::length_error(\"Task limit reached\");\n  if(next_>1000000)throw std::length_error(\"ID limit reached\");\n  tasks_.push_back({next_,std::move(title),false});return next_++;\n}\nvoid TaskModel::complete(int id){auto it=std::find_if(tasks_.begin(),tasks_.end(),[id](const Task&t){return t.id==id;});if(it==tasks_.end())throw std::out_of_range(\"Task not found\");it->done=true;}\nvoid TaskModel::save(std::ostream&out)const{out<<\"NXTF1 \"<<next_<<' '<<tasks_.size()<<'\\n';for(const auto&t:tasks_)out<<t.id<<' '<<t.done<<' '<<std::quoted(t.title)<<'\\n';if(!out)throw std::runtime_error(\"Cannot save tasks\");}\nvoid TaskModel::load(std::istream&in){\n  std::string version;int next=0,count=0;if(!(in>>version>>next>>count)||version!=\"NXTF1\"||next<1||next>1000001||count<0||count>200)throw std::runtime_error(\"Unsupported or invalid task file\");\n  std::vector<Task> candidate;for(int i=0;i<count;++i){Task t;int done=-1;if(!(in>>t.id>>done>>std::quoted(t.title))||t.id<1||t.id>=next||done<0||done>1||!valid(t.title)||std::any_of(candidate.begin(),candidate.end(),[&](const Task&x){return x.id==t.id;}))throw std::runtime_error(\"Invalid task record\");t.done=done;candidate.push_back(std::move(t));}\n  in>>std::ws;if(!in.eof())throw std::runtime_error(\"Unexpected task data\");tasks_=std::move(candidate);next_=next;\n}\n",
+        "src/main.cpp": "#include \"task_model.hpp\"\n#include <iostream>\n#include <stdexcept>\nint main(){TaskModel model;std::string title;while(std::getline(std::cin,title)){try{int id=model.add(title);std::cout<<id<<\": \"<<model.tasks().back().title<<'\\n';}catch(const std::exception&e){std::cout<<\"error: \"<<e.what()<<'\\n';}}return 0;}\n",
+        "tests/task_model_test.cpp": "#include \"task_model.hpp\"\n#include <sstream>\n#include <iostream>\n#include <stdexcept>\nvoid require(bool value){if(!value)throw std::runtime_error(\"test failed\");}\nint main(){try{\n TaskModel m;require(m.tasks().empty());require(m.add(\"learn C++\")==1);m.complete(1);require(m.tasks()[0].done);\n bool caught=false;try{m.add(\"   \");}catch(const std::invalid_argument&){caught=true;}require(caught&&m.tasks().size()==1);\n caught=false;try{m.complete(999);}catch(const std::out_of_range&){caught=true;}require(caught);\n std::ostringstream out;m.save(out);TaskModel copy;std::istringstream in(out.str());copy.load(in);require(copy.tasks().size()==1&&copy.tasks()[0].title==\"learn C++\"&&copy.tasks()[0].done);require(copy.add(\"next\")==2);\n for(const char*bad:{\"NXTF2 2 1\\n1 0 \\\"x\\\"\\n\",\"NXTF1 3 2\\n1 0 \\\"x\\\"\\n1 0 \\\"y\\\"\\n\",\"NXTF1 2 1\\n1 3 \\\"x\\\"\\n\",\"NXTF1 1 0 extra\"}){caught=false;try{std::istringstream invalid(bad);copy.load(invalid);}catch(const std::runtime_error&){caught=true;}require(caught&&copy.tasks().size()==2);}\n std::cout<<\"TaskFlow tests: PASS\\n\";return 0;\n }catch(const std::exception&e){std::cerr<<e.what()<<'\\n';return 1;}}\n",
+        "CMakeLists.txt": "cmake_minimum_required(VERSION 3.16)\nproject(TaskFlow LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nadd_library(task_model src/task_model.cpp)\ntarget_include_directories(task_model PUBLIC include)\nif(EMSCRIPTEN)\n target_compile_options(task_model PUBLIC -fexceptions)\n target_link_options(task_model INTERFACE -fexceptions)\nendif()\nadd_executable(taskflow_cli src/main.cpp)\ntarget_link_libraries(taskflow_cli PRIVATE task_model)\nenable_testing()\nadd_executable(taskflow_tests tests/task_model_test.cpp)\ntarget_link_libraries(taskflow_tests PRIVATE task_model)\nadd_test(NAME task_model COMMAND taskflow_tests)\noption(NEXUS_GUI \"Build the Qt GUI\" OFF)\nif(EMSCRIPTEN)\n set(NEXUS_GUI ON)\nendif()\nif(NEXUS_GUI)\n find_package(Qt6 6.8 REQUIRED COMPONENTS Widgets)\n qt_add_executable(program MANUAL_FINALIZATION src/gui.cpp)\n target_link_libraries(program PRIVATE task_model Qt6::Widgets)\n if(EMSCRIPTEN)\n  target_compile_options(program PRIVATE -fexceptions)\n  target_link_options(program PRIVATE -fexceptions -sDISABLE_EXCEPTION_CATCHING=0 -sDYNAMIC_EXECUTION=0 \"-sEXPORTED_RUNTIME_METHODS=['FS']\" -sALLOW_MEMORY_GROWTH=1)\n endif()\n qt_finalize_executable(program)\nendif()\n",
+        "README.md": "# TaskFlow — portable C++20 project\n\nIn Nexus use Project Studio to edit, build, run, test and submit.\nOptional native model/CLI build: cmake -S . -B build -DNEXUS_GUI=OFF; cmake --build build; ctest --test-dir build --output-on-failure.\nGUI: Qt 6.8.3; WebAssembly: Emscripten 3.1.56.\nData: taskflow.txt / NXTF1. Preserve old projects and never include credentials.\n",
+        "nexus-application.json": "{\n  \"schemaVersion\": 1,\n  \"target\": \"qt-wasm\",\n  \"outputDataFiles\": [\n    \"taskflow.txt\"\n  ],\n  \"targets\": {\n    \"console\": [\n      \"src/main.cpp\",\n      \"src/task_model.cpp\"\n    ],\n    \"tests\": [\n      \"tests/task_model_test.cpp\",\n      \"src/task_model.cpp\"\n    ]\n  }\n}\n"
+      },
+      "metadata": {
+        "target": "qt-wasm",
+        "entryFile": "src/gui.cpp"
+      },
+      "title": "Guided model",
+      "purpose": "Connect TaskModel to real Qt widgets and execute a user scenario inside Nexus.",
+      "steps": [
+        "The window creates an input, list and buttons.",
+        "Return invokes C++ add and the model validates text.",
+        "refresh displays actual tasks and emits NEXUS_TASKS."
+      ],
+      "outputNote": "This is initial stdout from the real Qt target. Scenarios use Preview widgets, not stdin."
+    },
+    {
+      "id": "extension",
+      "code": "#include \"task_model.hpp\"\n#include <QApplication>\n#include <QAccessible>\n#include <QWidget>\n#include <QVBoxLayout>\n#include <QLineEdit>\n#include <QPushButton>\n#include <QListWidget>\n#include <QLabel>\n#include <QFile>\n#include <memory>\n#include <sstream>\n#include <iostream>\nclass TaskWindow:public QWidget {\n TaskModel model_;QLineEdit*input_;QListWidget*list_;QLabel*status_;QLabel*count_;\n void refresh(){count_->setText(QString(\"Tasks: %1\").arg(model_.tasks().size()));list_->clear();for(const auto&t:model_.tasks()) {auto*item=new QListWidgetItem(QString(t.done?\"[done] \":\"[ ] \")+QString::fromUtf8(t.title.data(),int(t.title.size())),list_);item->setData(Qt::UserRole,t.id);}std::cout<<\"NEXUS_TASKS \"<<model_.tasks().size()<<std::endl;}\n void add(){try{const auto text=input_->text().toUtf8();model_.add(std::string(text.constData(),std::size_t(text.size())));input_->clear();status_->setText(\"Saved in the running application\");refresh();}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}}\npublic:\n TaskWindow(){setWindowTitle(\"TaskFlow — C++ in Nexus\");resize(460,420);auto*layout=new QVBoxLayout(this);layout->addWidget(new QLabel(\"TaskFlow\",this));input_=new QLineEdit(this);input_->setPlaceholderText(\"Enter a task\");input_->setAccessibleName(\"Task title\");layout->addWidget(input_);auto*button=new QPushButton(\"Add task\",this);layout->addWidget(button);list_=new QListWidget(this);layout->addWidget(list_);count_=new QLabel(this);layout->addWidget(count_);status_=new QLabel(\"Ready\",this);status_->setWordWrap(true);layout->addWidget(status_);\n  connect(button,&QPushButton::clicked,this,[this]{add();});connect(input_,&QLineEdit::returnPressed,this,[this]{add();});\n  auto*done=new QPushButton(\"Complete selected\",this);layout->addWidget(done);connect(done,&QPushButton::clicked,this,[this]{try{if(!list_->currentItem())throw std::runtime_error(\"Select a task\");model_.complete(list_->currentItem()->data(Qt::UserRole).toInt());refresh();}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});\n  auto*save=new QPushButton(\"Save application data\",this);layout->addWidget(save);connect(save,&QPushButton::clicked,this,[this]{try{std::ostringstream out;model_.save(out);QFile f(\"/taskflow.txt\");if(!f.open(QIODevice::WriteOnly)||f.write(QByteArray::fromStdString(out.str()))<0)throw std::runtime_error(\"Cannot write data\");status_->setText(\"Application data saved\");}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});\n  QFile f(\"/taskflow.txt\");if(f.open(QIODevice::ReadOnly)){try{const auto bytes=f.read(65537);if(bytes.size()>65536)throw std::runtime_error(\"Data file is too large\");std::istringstream in(bytes.toStdString());model_.load(in);}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}}refresh();input_->setFocus();\n }\n};\nint main(int argc,char**argv){static auto app=std::make_unique<QApplication>(argc,argv);\n#ifdef __EMSCRIPTEN__\n QAccessible::setActive(true);\n#endif\n static auto window=std::make_unique<TaskWindow>();window->show();QAccessible::setRootObject(window.get());\n#ifndef __EMSCRIPTEN__\n return app->exec();\n#else\n return 0;\n#endif\n}\n",
+      "stdin": "",
+      "expectedStdout": "NEXUS_TASKS 0\n",
+      "files": {
+        "include/task_model.hpp": "#pragma once\n#include <string>\n#include <vector>\n#include <iosfwd>\nstruct Task { int id; std::string title; bool done=false; };\nclass TaskModel {\n  std::vector<Task> tasks_; int next_=1;\npublic:\n  int add(std::string title);\n  void complete(int id);\n  const std::vector<Task>& tasks()const noexcept{return tasks_;}\n  void save(std::ostream&)const;\n  void load(std::istream&);\n};\n",
+        "src/task_model.cpp": "#include \"task_model.hpp\"\n#include <stdexcept>\n#include <algorithm>\n#include <iomanip>\n#include <istream>\n#include <ostream>\nnamespace { bool valid(const std::string&s){return !s.empty()&&s.size()<=256&&s.find_first_not_of(\" \\t\")!=std::string::npos&&s.find_first_of(\"\\r\\n\")==std::string::npos;} }\nint TaskModel::add(std::string title){\n  if(!valid(title))throw std::invalid_argument(\"Enter a non-empty title (up to 256 bytes)\");\n  if(tasks_.size()>=200)throw std::length_error(\"Task limit reached\");\n  if(next_>1000000)throw std::length_error(\"ID limit reached\");\n  tasks_.push_back({next_,std::move(title),false});return next_++;\n}\nvoid TaskModel::complete(int id){auto it=std::find_if(tasks_.begin(),tasks_.end(),[id](const Task&t){return t.id==id;});if(it==tasks_.end())throw std::out_of_range(\"Task not found\");it->done=true;}\nvoid TaskModel::save(std::ostream&out)const{out<<\"NXTF1 \"<<next_<<' '<<tasks_.size()<<'\\n';for(const auto&t:tasks_)out<<t.id<<' '<<t.done<<' '<<std::quoted(t.title)<<'\\n';if(!out)throw std::runtime_error(\"Cannot save tasks\");}\nvoid TaskModel::load(std::istream&in){\n  std::string version;int next=0,count=0;if(!(in>>version>>next>>count)||version!=\"NXTF1\"||next<1||next>1000001||count<0||count>200)throw std::runtime_error(\"Unsupported or invalid task file\");\n  std::vector<Task> candidate;for(int i=0;i<count;++i){Task t;int done=-1;if(!(in>>t.id>>done>>std::quoted(t.title))||t.id<1||t.id>=next||done<0||done>1||!valid(t.title)||std::any_of(candidate.begin(),candidate.end(),[&](const Task&x){return x.id==t.id;}))throw std::runtime_error(\"Invalid task record\");t.done=done;candidate.push_back(std::move(t));}\n  in>>std::ws;if(!in.eof())throw std::runtime_error(\"Unexpected task data\");tasks_=std::move(candidate);next_=next;\n}\n",
+        "src/main.cpp": "#include \"task_model.hpp\"\n#include <iostream>\n#include <stdexcept>\nint main(){TaskModel model;std::string title;while(std::getline(std::cin,title)){try{int id=model.add(title);std::cout<<id<<\": \"<<model.tasks().back().title<<'\\n';}catch(const std::exception&e){std::cout<<\"error: \"<<e.what()<<'\\n';}}return 0;}\n",
+        "tests/task_model_test.cpp": "#include \"task_model.hpp\"\n#include <sstream>\n#include <iostream>\n#include <stdexcept>\nvoid require(bool value){if(!value)throw std::runtime_error(\"test failed\");}\nint main(){try{\n TaskModel m;require(m.tasks().empty());require(m.add(\"learn C++\")==1);m.complete(1);require(m.tasks()[0].done);\n bool caught=false;try{m.add(\"   \");}catch(const std::invalid_argument&){caught=true;}require(caught&&m.tasks().size()==1);\n caught=false;try{m.complete(999);}catch(const std::out_of_range&){caught=true;}require(caught);\n std::ostringstream out;m.save(out);TaskModel copy;std::istringstream in(out.str());copy.load(in);require(copy.tasks().size()==1&&copy.tasks()[0].title==\"learn C++\"&&copy.tasks()[0].done);require(copy.add(\"next\")==2);\n for(const char*bad:{\"NXTF2 2 1\\n1 0 \\\"x\\\"\\n\",\"NXTF1 3 2\\n1 0 \\\"x\\\"\\n1 0 \\\"y\\\"\\n\",\"NXTF1 2 1\\n1 3 \\\"x\\\"\\n\",\"NXTF1 1 0 extra\"}){caught=false;try{std::istringstream invalid(bad);copy.load(invalid);}catch(const std::runtime_error&){caught=true;}require(caught&&copy.tasks().size()==2);}\n std::cout<<\"TaskFlow tests: PASS\\n\";return 0;\n }catch(const std::exception&e){std::cerr<<e.what()<<'\\n';return 1;}}\n",
+        "CMakeLists.txt": "cmake_minimum_required(VERSION 3.16)\nproject(TaskFlow LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nadd_library(task_model src/task_model.cpp)\ntarget_include_directories(task_model PUBLIC include)\nif(EMSCRIPTEN)\n target_compile_options(task_model PUBLIC -fexceptions)\n target_link_options(task_model INTERFACE -fexceptions)\nendif()\nadd_executable(taskflow_cli src/main.cpp)\ntarget_link_libraries(taskflow_cli PRIVATE task_model)\nenable_testing()\nadd_executable(taskflow_tests tests/task_model_test.cpp)\ntarget_link_libraries(taskflow_tests PRIVATE task_model)\nadd_test(NAME task_model COMMAND taskflow_tests)\noption(NEXUS_GUI \"Build the Qt GUI\" OFF)\nif(EMSCRIPTEN)\n set(NEXUS_GUI ON)\nendif()\nif(NEXUS_GUI)\n find_package(Qt6 6.8 REQUIRED COMPONENTS Widgets)\n qt_add_executable(program MANUAL_FINALIZATION src/gui.cpp)\n target_link_libraries(program PRIVATE task_model Qt6::Widgets)\n if(EMSCRIPTEN)\n  target_compile_options(program PRIVATE -fexceptions)\n  target_link_options(program PRIVATE -fexceptions -sDISABLE_EXCEPTION_CATCHING=0 -sDYNAMIC_EXECUTION=0 \"-sEXPORTED_RUNTIME_METHODS=['FS']\" -sALLOW_MEMORY_GROWTH=1)\n endif()\n qt_finalize_executable(program)\nendif()\n",
+        "README.md": "# TaskFlow — portable C++20 project\n\nIn Nexus use Project Studio to edit, build, run, test and submit.\nOptional native model/CLI build: cmake -S . -B build -DNEXUS_GUI=OFF; cmake --build build; ctest --test-dir build --output-on-failure.\nGUI: Qt 6.8.3; WebAssembly: Emscripten 3.1.56.\nData: taskflow.txt / NXTF1. Preserve old projects and never include credentials.\n",
+        "nexus-application.json": "{\n  \"schemaVersion\": 1,\n  \"target\": \"qt-wasm\",\n  \"outputDataFiles\": [\n    \"taskflow.txt\"\n  ],\n  \"targets\": {\n    \"console\": [\n      \"src/main.cpp\",\n      \"src/task_model.cpp\"\n    ],\n    \"tests\": [\n      \"tests/task_model_test.cpp\",\n      \"src/task_model.cpp\"\n    ]\n  }\n}\n"
+      },
+      "metadata": {
+        "target": "qt-wasm",
+        "entryFile": "src/gui.cpp"
+      },
+      "title": "Boundary and extension",
+      "purpose": "Connect TaskModel to real Qt widgets and execute a user scenario inside Nexus.",
+      "steps": [
+        "The second version adds a count QLabel.",
+        "refresh reads model size rather than button-press count.",
+        "Empty-input rejection does not increase the count."
+      ],
+      "outputNote": "This is initial stdout from the real Qt target. Scenarios use Preview widgets, not stdin."
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Add a count indicator derived from the model.",
+      "action": "Add a count indicator derived from the model.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Create a new C++ application in Project Studio. Add a QLabel total-task indicator and derive it from the model during refresh. Preserve Add/Enter/Complete/Save, the Task title accessible name and NXTF1. Empty or whitespace-only titles must not create tasks. Explain the selected contract and supply an independent example."
+    },
+    {
+      "title": "Test keyboard interaction and empty-input errors.",
+      "action": "Test keyboard interaction and empty-input errors.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Test keyboard interaction and empty-input errors. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "State changed after rejection.",
+      "cause": "Mutation happened before validation or violated the invariant.",
+      "fix": "Identify the laboratory commit point and check it with a separate rejection trace."
+    },
+    {
+      "symptom": "An old revision or wrong target is running.",
+      "cause": "Build inputs are wrong or the changed project was not rebuilt.",
+      "fix": "Open the Project Studio application, save and rebuild the Qt target."
+    },
+    {
+      "symptom": "One successful example is treated as complete verification.",
+      "cause": "Rejected, empty and independent cases have not been checked.",
+      "fix": "Design a completed-task filter without changing ids."
+    }
+  ],
+  "practice": [
+    {
+      "task": "Trace Return→add→model→refresh.",
+      "criteria": "Retain a checkable result: The TaskFlow starter includes a model, CLI, GUI, tests, CMake and target description. Create a new personal project while preserving earlier work. The laboratory changes actual src/gui.cpp; a JavaScript animation or an onClick message in a console does not substitute for execution. Build-service connectivity and source correctness are separate checks. Explain the selected contract and supply an independent example.",
+      "level": "basic",
+      "hint": "The TaskFlow starter includes a model, CLI, GUI, tests, CMake and target description. Create a new personal project while preserving earlier work. The laboratory changes actual src/gui.cpp; a JavaScript animation or an onClick message in a console does not substitute for execution. Build-service connectivity and source correctness are separate checks."
+    },
+    {
+      "task": "Explain the window’s parent ownership.",
+      "criteria": "Retain a checkable result: Do not combine parent ownership with an independent unique_ptr to the same child without analyzing destruction order. The window owns the model by value and the model knows no Qt types. Desktop main uses app.exec; the checked WebAssembly target returns control so the browser can service events. Preserve the supplied conditional branch instead of inserting a busy while loop. Explain the selected contract and supply an independent example.",
+      "level": "basic",
+      "hint": "Do not combine parent ownership with an independent unique_ptr to the same child without analyzing destruction order. The window owns the model by value and the model knows no Qt types. Desktop main uses app.exec; the checked WebAssembly target returns control so the browser can service events. Preserve the supplied conditional branch instead of inserting a busy while loop."
+    },
+    {
+      "task": "Change the success message and rebuild.",
+      "criteria": "Retain a checkable result: Create a new C++ application in Project Studio. Add a QLabel total-task indicator and derive it from the model during refresh. Preserve Add/Enter/Complete/Save, the Task title accessible name and NXTF1. Empty or whitespace-only titles must not create tasks. Explain the selected contract and supply an independent example.",
+      "level": "applied",
+      "hint": "The window creates an input, list and buttons. Return invokes C++ add and the model validates text. refresh displays actual tasks and emits NEXUS_TASKS."
+    },
+    {
+      "task": "Add a count indicator derived from the model.",
+      "criteria": "Retain a checkable result: Create a new C++ application in Project Studio. Add a QLabel total-task indicator and derive it from the model during refresh. Preserve Add/Enter/Complete/Save, the Task title accessible name and NXTF1. Empty or whitespace-only titles must not create tasks. Explain the selected contract and supply an independent example.",
+      "level": "applied",
+      "hint": "The second version adds a count QLabel. refresh reads model size rather than button-press count. Empty-input rejection does not increase the count."
+    },
+    {
+      "task": "Test keyboard interaction and empty-input errors.",
+      "criteria": "Retain a checkable result: Test keyboard interaction and empty-input errors. Explain the selected contract and supply an independent example.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    },
+    {
+      "task": "Design a completed-task filter without changing ids.",
+      "criteria": "Retain a checkable result: Design a completed-task filter without changing ids. Explain the selected contract and supply an independent example.",
+      "level": "transfer",
+      "hint": "Specify a contract first, then compare at least two design alternatives."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: A real Qt graphical adapter",
+    "challenge": "Create a new C++ application in Project Studio. Add a QLabel total-task indicator and derive it from the model during refresh. Preserve Add/Enter/Complete/Save, the Task title accessible name and NXTF1. Empty or whitespace-only titles must not create tasks.",
+    "target": "qt-wasm",
+    "starterCode": "#include \"task_model.hpp\"\n#include <QApplication>\n#include <QAccessible>\n#include <QWidget>\n#include <QVBoxLayout>\n#include <QLineEdit>\n#include <QPushButton>\n#include <QListWidget>\n#include <QLabel>\n#include <QFile>\n#include <memory>\n#include <sstream>\n#include <iostream>\nclass TaskWindow:public QWidget {\n TaskModel model_;QLineEdit*input_;QListWidget*list_;QLabel*status_;\n void refresh(){list_->clear();for(const auto&t:model_.tasks()) {auto*item=new QListWidgetItem(QString(t.done?\"[done] \":\"[ ] \")+QString::fromUtf8(t.title.data(),int(t.title.size())),list_);item->setData(Qt::UserRole,t.id);}std::cout<<\"NEXUS_TASKS \"<<model_.tasks().size()<<std::endl;}\n void add(){try{const auto text=input_->text().toUtf8();model_.add(std::string(text.constData(),std::size_t(text.size())));input_->clear();status_->setText(\"Saved in the running application\");refresh();}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}}\npublic:\n TaskWindow(){setWindowTitle(\"TaskFlow — C++ in Nexus\");resize(460,420);auto*layout=new QVBoxLayout(this);layout->addWidget(new QLabel(\"TaskFlow\",this));input_=new QLineEdit(this);input_->setPlaceholderText(\"Enter a task\");input_->setAccessibleName(\"Task title\");layout->addWidget(input_);auto*button=new QPushButton(\"Add task\",this);layout->addWidget(button);list_=new QListWidget(this);layout->addWidget(list_);status_=new QLabel(\"Ready\",this);status_->setWordWrap(true);layout->addWidget(status_);\n  connect(button,&QPushButton::clicked,this,[this]{add();});connect(input_,&QLineEdit::returnPressed,this,[this]{add();});\n  auto*done=new QPushButton(\"Complete selected\",this);layout->addWidget(done);connect(done,&QPushButton::clicked,this,[this]{try{if(!list_->currentItem())throw std::runtime_error(\"Select a task\");model_.complete(list_->currentItem()->data(Qt::UserRole).toInt());refresh();}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});\n  auto*save=new QPushButton(\"Save application data\",this);layout->addWidget(save);connect(save,&QPushButton::clicked,this,[this]{try{std::ostringstream out;model_.save(out);QFile f(\"/taskflow.txt\");if(!f.open(QIODevice::WriteOnly)||f.write(QByteArray::fromStdString(out.str()))<0)throw std::runtime_error(\"Cannot write data\");status_->setText(\"Application data saved\");}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});\n  QFile f(\"/taskflow.txt\");if(f.open(QIODevice::ReadOnly)){try{const auto bytes=f.read(65537);if(bytes.size()>65536)throw std::runtime_error(\"Data file is too large\");std::istringstream in(bytes.toStdString());model_.load(in);}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}}refresh();input_->setFocus();\n }\n};\nint main(int argc,char**argv){static auto app=std::make_unique<QApplication>(argc,argv);\n#ifdef __EMSCRIPTEN__\n QAccessible::setActive(true);\n#endif\n static auto window=std::make_unique<TaskWindow>();window->show();QAccessible::setRootObject(window.get());\n#ifndef __EMSCRIPTEN__\n return app->exec();\n#else\n return 0;\n#endif\n}\n\n// TODO: implement the laboratory extension described in the lesson.\n",
+    "referenceCode": "#include \"task_model.hpp\"\n#include <QApplication>\n#include <QAccessible>\n#include <QWidget>\n#include <QVBoxLayout>\n#include <QLineEdit>\n#include <QPushButton>\n#include <QListWidget>\n#include <QLabel>\n#include <QFile>\n#include <memory>\n#include <sstream>\n#include <iostream>\nclass TaskWindow:public QWidget {\n TaskModel model_;QLineEdit*input_;QListWidget*list_;QLabel*status_;QLabel*count_;\n void refresh(){count_->setText(QString(\"Tasks: %1\").arg(model_.tasks().size()));list_->clear();for(const auto&t:model_.tasks()) {auto*item=new QListWidgetItem(QString(t.done?\"[done] \":\"[ ] \")+QString::fromUtf8(t.title.data(),int(t.title.size())),list_);item->setData(Qt::UserRole,t.id);}std::cout<<\"NEXUS_TASKS \"<<model_.tasks().size()<<std::endl;}\n void add(){try{const auto text=input_->text().toUtf8();model_.add(std::string(text.constData(),std::size_t(text.size())));input_->clear();status_->setText(\"Saved in the running application\");refresh();}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}}\npublic:\n TaskWindow(){setWindowTitle(\"TaskFlow — C++ in Nexus\");resize(460,420);auto*layout=new QVBoxLayout(this);layout->addWidget(new QLabel(\"TaskFlow\",this));input_=new QLineEdit(this);input_->setPlaceholderText(\"Enter a task\");input_->setAccessibleName(\"Task title\");layout->addWidget(input_);auto*button=new QPushButton(\"Add task\",this);layout->addWidget(button);list_=new QListWidget(this);layout->addWidget(list_);count_=new QLabel(this);layout->addWidget(count_);status_=new QLabel(\"Ready\",this);status_->setWordWrap(true);layout->addWidget(status_);\n  connect(button,&QPushButton::clicked,this,[this]{add();});connect(input_,&QLineEdit::returnPressed,this,[this]{add();});\n  auto*done=new QPushButton(\"Complete selected\",this);layout->addWidget(done);connect(done,&QPushButton::clicked,this,[this]{try{if(!list_->currentItem())throw std::runtime_error(\"Select a task\");model_.complete(list_->currentItem()->data(Qt::UserRole).toInt());refresh();}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});\n  auto*save=new QPushButton(\"Save application data\",this);layout->addWidget(save);connect(save,&QPushButton::clicked,this,[this]{try{std::ostringstream out;model_.save(out);QFile f(\"/taskflow.txt\");if(!f.open(QIODevice::WriteOnly)||f.write(QByteArray::fromStdString(out.str()))<0)throw std::runtime_error(\"Cannot write data\");status_->setText(\"Application data saved\");}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});\n  QFile f(\"/taskflow.txt\");if(f.open(QIODevice::ReadOnly)){try{const auto bytes=f.read(65537);if(bytes.size()>65536)throw std::runtime_error(\"Data file is too large\");std::istringstream in(bytes.toStdString());model_.load(in);}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}}refresh();input_->setFocus();\n }\n};\nint main(int argc,char**argv){static auto app=std::make_unique<QApplication>(argc,argv);\n#ifdef __EMSCRIPTEN__\n QAccessible::setActive(true);\n#endif\n static auto window=std::make_unique<TaskWindow>();window->show();QAccessible::setRootObject(window.get());\n#ifndef __EMSCRIPTEN__\n return app->exec();\n#else\n return 0;\n#endif\n}\n",
+    "starterFiles": {
+      "include/task_model.hpp": "#pragma once\n#include <string>\n#include <vector>\n#include <iosfwd>\nstruct Task { int id; std::string title; bool done=false; };\nclass TaskModel {\n  std::vector<Task> tasks_; int next_=1;\npublic:\n  int add(std::string title);\n  void complete(int id);\n  const std::vector<Task>& tasks()const noexcept{return tasks_;}\n  void save(std::ostream&)const;\n  void load(std::istream&);\n};\n",
+      "src/task_model.cpp": "#include \"task_model.hpp\"\n#include <stdexcept>\n#include <algorithm>\n#include <iomanip>\n#include <istream>\n#include <ostream>\nnamespace { bool valid(const std::string&s){return !s.empty()&&s.size()<=256&&s.find_first_not_of(\" \\t\")!=std::string::npos&&s.find_first_of(\"\\r\\n\")==std::string::npos;} }\nint TaskModel::add(std::string title){\n  if(!valid(title))throw std::invalid_argument(\"Enter a non-empty title (up to 256 bytes)\");\n  if(tasks_.size()>=200)throw std::length_error(\"Task limit reached\");\n  if(next_>1000000)throw std::length_error(\"ID limit reached\");\n  tasks_.push_back({next_,std::move(title),false});return next_++;\n}\nvoid TaskModel::complete(int id){auto it=std::find_if(tasks_.begin(),tasks_.end(),[id](const Task&t){return t.id==id;});if(it==tasks_.end())throw std::out_of_range(\"Task not found\");it->done=true;}\nvoid TaskModel::save(std::ostream&out)const{out<<\"NXTF1 \"<<next_<<' '<<tasks_.size()<<'\\n';for(const auto&t:tasks_)out<<t.id<<' '<<t.done<<' '<<std::quoted(t.title)<<'\\n';if(!out)throw std::runtime_error(\"Cannot save tasks\");}\nvoid TaskModel::load(std::istream&in){\n  std::string version;int next=0,count=0;if(!(in>>version>>next>>count)||version!=\"NXTF1\"||next<1||next>1000001||count<0||count>200)throw std::runtime_error(\"Unsupported or invalid task file\");\n  std::vector<Task> candidate;for(int i=0;i<count;++i){Task t;int done=-1;if(!(in>>t.id>>done>>std::quoted(t.title))||t.id<1||t.id>=next||done<0||done>1||!valid(t.title)||std::any_of(candidate.begin(),candidate.end(),[&](const Task&x){return x.id==t.id;}))throw std::runtime_error(\"Invalid task record\");t.done=done;candidate.push_back(std::move(t));}\n  in>>std::ws;if(!in.eof())throw std::runtime_error(\"Unexpected task data\");tasks_=std::move(candidate);next_=next;\n}\n",
+      "src/main.cpp": "#include \"task_model.hpp\"\n#include <iostream>\n#include <stdexcept>\nint main(){TaskModel model;std::string title;while(std::getline(std::cin,title)){try{int id=model.add(title);std::cout<<id<<\": \"<<model.tasks().back().title<<'\\n';}catch(const std::exception&e){std::cout<<\"error: \"<<e.what()<<'\\n';}}return 0;}\n",
+      "tests/task_model_test.cpp": "#include \"task_model.hpp\"\n#include <sstream>\n#include <iostream>\n#include <stdexcept>\nvoid require(bool value){if(!value)throw std::runtime_error(\"test failed\");}\nint main(){try{\n TaskModel m;require(m.tasks().empty());require(m.add(\"learn C++\")==1);m.complete(1);require(m.tasks()[0].done);\n bool caught=false;try{m.add(\"   \");}catch(const std::invalid_argument&){caught=true;}require(caught&&m.tasks().size()==1);\n caught=false;try{m.complete(999);}catch(const std::out_of_range&){caught=true;}require(caught);\n std::ostringstream out;m.save(out);TaskModel copy;std::istringstream in(out.str());copy.load(in);require(copy.tasks().size()==1&&copy.tasks()[0].title==\"learn C++\"&&copy.tasks()[0].done);require(copy.add(\"next\")==2);\n for(const char*bad:{\"NXTF2 2 1\\n1 0 \\\"x\\\"\\n\",\"NXTF1 3 2\\n1 0 \\\"x\\\"\\n1 0 \\\"y\\\"\\n\",\"NXTF1 2 1\\n1 3 \\\"x\\\"\\n\",\"NXTF1 1 0 extra\"}){caught=false;try{std::istringstream invalid(bad);copy.load(invalid);}catch(const std::runtime_error&){caught=true;}require(caught&&copy.tasks().size()==2);}\n std::cout<<\"TaskFlow tests: PASS\\n\";return 0;\n }catch(const std::exception&e){std::cerr<<e.what()<<'\\n';return 1;}}\n",
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.16)\nproject(TaskFlow LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nadd_library(task_model src/task_model.cpp)\ntarget_include_directories(task_model PUBLIC include)\nif(EMSCRIPTEN)\n target_compile_options(task_model PUBLIC -fexceptions)\n target_link_options(task_model INTERFACE -fexceptions)\nendif()\nadd_executable(taskflow_cli src/main.cpp)\ntarget_link_libraries(taskflow_cli PRIVATE task_model)\nenable_testing()\nadd_executable(taskflow_tests tests/task_model_test.cpp)\ntarget_link_libraries(taskflow_tests PRIVATE task_model)\nadd_test(NAME task_model COMMAND taskflow_tests)\noption(NEXUS_GUI \"Build the Qt GUI\" OFF)\nif(EMSCRIPTEN)\n set(NEXUS_GUI ON)\nendif()\nif(NEXUS_GUI)\n find_package(Qt6 6.8 REQUIRED COMPONENTS Widgets)\n qt_add_executable(program MANUAL_FINALIZATION src/gui.cpp)\n target_link_libraries(program PRIVATE task_model Qt6::Widgets)\n if(EMSCRIPTEN)\n  target_compile_options(program PRIVATE -fexceptions)\n  target_link_options(program PRIVATE -fexceptions -sDISABLE_EXCEPTION_CATCHING=0 -sDYNAMIC_EXECUTION=0 \"-sEXPORTED_RUNTIME_METHODS=['FS']\" -sALLOW_MEMORY_GROWTH=1)\n endif()\n qt_finalize_executable(program)\nendif()\n",
+      "README.md": "# TaskFlow — portable C++20 project\n\nIn Nexus use Project Studio to edit, build, run, test and submit.\nOptional native model/CLI build: cmake -S . -B build -DNEXUS_GUI=OFF; cmake --build build; ctest --test-dir build --output-on-failure.\nGUI: Qt 6.8.3; WebAssembly: Emscripten 3.1.56.\nData: taskflow.txt / NXTF1. Preserve old projects and never include credentials.\n",
+      "nexus-application.json": "{\n  \"schemaVersion\": 1,\n  \"target\": \"qt-wasm\",\n  \"outputDataFiles\": [\n    \"taskflow.txt\"\n  ],\n  \"targets\": {\n    \"console\": [\n      \"src/main.cpp\",\n      \"src/task_model.cpp\"\n    ],\n    \"tests\": [\n      \"tests/task_model_test.cpp\",\n      \"src/task_model.cpp\"\n    ]\n  }\n}\n"
+    },
+    "referenceFiles": {
+      "include/task_model.hpp": "#pragma once\n#include <string>\n#include <vector>\n#include <iosfwd>\nstruct Task { int id; std::string title; bool done=false; };\nclass TaskModel {\n  std::vector<Task> tasks_; int next_=1;\npublic:\n  int add(std::string title);\n  void complete(int id);\n  const std::vector<Task>& tasks()const noexcept{return tasks_;}\n  void save(std::ostream&)const;\n  void load(std::istream&);\n};\n",
+      "src/task_model.cpp": "#include \"task_model.hpp\"\n#include <stdexcept>\n#include <algorithm>\n#include <iomanip>\n#include <istream>\n#include <ostream>\nnamespace { bool valid(const std::string&s){return !s.empty()&&s.size()<=256&&s.find_first_not_of(\" \\t\")!=std::string::npos&&s.find_first_of(\"\\r\\n\")==std::string::npos;} }\nint TaskModel::add(std::string title){\n  if(!valid(title))throw std::invalid_argument(\"Enter a non-empty title (up to 256 bytes)\");\n  if(tasks_.size()>=200)throw std::length_error(\"Task limit reached\");\n  if(next_>1000000)throw std::length_error(\"ID limit reached\");\n  tasks_.push_back({next_,std::move(title),false});return next_++;\n}\nvoid TaskModel::complete(int id){auto it=std::find_if(tasks_.begin(),tasks_.end(),[id](const Task&t){return t.id==id;});if(it==tasks_.end())throw std::out_of_range(\"Task not found\");it->done=true;}\nvoid TaskModel::save(std::ostream&out)const{out<<\"NXTF1 \"<<next_<<' '<<tasks_.size()<<'\\n';for(const auto&t:tasks_)out<<t.id<<' '<<t.done<<' '<<std::quoted(t.title)<<'\\n';if(!out)throw std::runtime_error(\"Cannot save tasks\");}\nvoid TaskModel::load(std::istream&in){\n  std::string version;int next=0,count=0;if(!(in>>version>>next>>count)||version!=\"NXTF1\"||next<1||next>1000001||count<0||count>200)throw std::runtime_error(\"Unsupported or invalid task file\");\n  std::vector<Task> candidate;for(int i=0;i<count;++i){Task t;int done=-1;if(!(in>>t.id>>done>>std::quoted(t.title))||t.id<1||t.id>=next||done<0||done>1||!valid(t.title)||std::any_of(candidate.begin(),candidate.end(),[&](const Task&x){return x.id==t.id;}))throw std::runtime_error(\"Invalid task record\");t.done=done;candidate.push_back(std::move(t));}\n  in>>std::ws;if(!in.eof())throw std::runtime_error(\"Unexpected task data\");tasks_=std::move(candidate);next_=next;\n}\n",
+      "src/main.cpp": "#include \"task_model.hpp\"\n#include <iostream>\n#include <stdexcept>\nint main(){TaskModel model;std::string title;while(std::getline(std::cin,title)){try{int id=model.add(title);std::cout<<id<<\": \"<<model.tasks().back().title<<'\\n';}catch(const std::exception&e){std::cout<<\"error: \"<<e.what()<<'\\n';}}return 0;}\n",
+      "tests/task_model_test.cpp": "#include \"task_model.hpp\"\n#include <sstream>\n#include <iostream>\n#include <stdexcept>\nvoid require(bool value){if(!value)throw std::runtime_error(\"test failed\");}\nint main(){try{\n TaskModel m;require(m.tasks().empty());require(m.add(\"learn C++\")==1);m.complete(1);require(m.tasks()[0].done);\n bool caught=false;try{m.add(\"   \");}catch(const std::invalid_argument&){caught=true;}require(caught&&m.tasks().size()==1);\n caught=false;try{m.complete(999);}catch(const std::out_of_range&){caught=true;}require(caught);\n std::ostringstream out;m.save(out);TaskModel copy;std::istringstream in(out.str());copy.load(in);require(copy.tasks().size()==1&&copy.tasks()[0].title==\"learn C++\"&&copy.tasks()[0].done);require(copy.add(\"next\")==2);\n for(const char*bad:{\"NXTF2 2 1\\n1 0 \\\"x\\\"\\n\",\"NXTF1 3 2\\n1 0 \\\"x\\\"\\n1 0 \\\"y\\\"\\n\",\"NXTF1 2 1\\n1 3 \\\"x\\\"\\n\",\"NXTF1 1 0 extra\"}){caught=false;try{std::istringstream invalid(bad);copy.load(invalid);}catch(const std::runtime_error&){caught=true;}require(caught&&copy.tasks().size()==2);}\n std::cout<<\"TaskFlow tests: PASS\\n\";return 0;\n }catch(const std::exception&e){std::cerr<<e.what()<<'\\n';return 1;}}\n",
+      "CMakeLists.txt": "cmake_minimum_required(VERSION 3.16)\nproject(TaskFlow LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nadd_library(task_model src/task_model.cpp)\ntarget_include_directories(task_model PUBLIC include)\nif(EMSCRIPTEN)\n target_compile_options(task_model PUBLIC -fexceptions)\n target_link_options(task_model INTERFACE -fexceptions)\nendif()\nadd_executable(taskflow_cli src/main.cpp)\ntarget_link_libraries(taskflow_cli PRIVATE task_model)\nenable_testing()\nadd_executable(taskflow_tests tests/task_model_test.cpp)\ntarget_link_libraries(taskflow_tests PRIVATE task_model)\nadd_test(NAME task_model COMMAND taskflow_tests)\noption(NEXUS_GUI \"Build the Qt GUI\" OFF)\nif(EMSCRIPTEN)\n set(NEXUS_GUI ON)\nendif()\nif(NEXUS_GUI)\n find_package(Qt6 6.8 REQUIRED COMPONENTS Widgets)\n qt_add_executable(program MANUAL_FINALIZATION src/gui.cpp)\n target_link_libraries(program PRIVATE task_model Qt6::Widgets)\n if(EMSCRIPTEN)\n  target_compile_options(program PRIVATE -fexceptions)\n  target_link_options(program PRIVATE -fexceptions -sDISABLE_EXCEPTION_CATCHING=0 -sDYNAMIC_EXECUTION=0 \"-sEXPORTED_RUNTIME_METHODS=['FS']\" -sALLOW_MEMORY_GROWTH=1)\n endif()\n qt_finalize_executable(program)\nendif()\n",
+      "README.md": "# TaskFlow — portable C++20 project\n\nIn Nexus use Project Studio to edit, build, run, test and submit.\nOptional native model/CLI build: cmake -S . -B build -DNEXUS_GUI=OFF; cmake --build build; ctest --test-dir build --output-on-failure.\nGUI: Qt 6.8.3; WebAssembly: Emscripten 3.1.56.\nData: taskflow.txt / NXTF1. Preserve old projects and never include credentials.\n",
+      "nexus-application.json": "{\n  \"schemaVersion\": 1,\n  \"target\": \"qt-wasm\",\n  \"outputDataFiles\": [\n    \"taskflow.txt\"\n  ],\n  \"targets\": {\n    \"console\": [\n      \"src/main.cpp\",\n      \"src/task_model.cpp\"\n    ],\n    \"tests\": [\n      \"tests/task_model_test.cpp\",\n      \"src/task_model.cpp\"\n    ]\n  }\n}\n"
+    },
+    "metadata": {
+      "target": "qt-wasm",
+      "entryFile": "src/gui.cpp"
+    },
+    "starterExpectedStdout": "NEXUS_TASKS 0\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "NEXUS_TASKS 1\n",
+        "purpose": "Ordinary addition",
+        "actions": [
+          "Enter learn C++ and press Enter."
+        ],
+        "expected": "One open task; the count reflects the model."
+      },
+      {
+        "stdin": "",
+        "stdout": "",
+        "purpose": "Empty title",
+        "actions": [
+          "Leave the input empty and activate Add task."
+        ],
+        "expected": "A validation error; task count is unchanged."
+      },
+      {
+        "stdin": "",
+        "stdout": "",
+        "purpose": "Whitespace title",
+        "actions": [
+          "Enter three spaces and press Enter."
+        ],
+        "expected": "Rejection; input remains available for correction."
+      },
+      {
+        "stdin": "",
+        "stdout": "",
+        "purpose": "Complete without selection",
+        "actions": [
+          "Activate Complete selected with an empty list."
+        ],
+        "expected": "Select a task feedback; the model is unchanged."
+      },
+      {
+        "stdin": "",
+        "stdout": "NEXUS_TASKS 2\n",
+        "purpose": "Repeated title",
+        "actions": [
+          "Add identical text twice."
+        ],
+        "expected": "Two tasks with distinct ids: duplicate titles are permitted."
+      },
+      {
+        "stdin": "",
+        "stdout": "NEXUS_TASKS 1\n",
+        "purpose": "Explicit persistence",
+        "actions": [
+          "Add a task; save application data, save through the panel, Stop and Run."
+        ],
+        "expected": "The task is restored from taskflow.txt and sources are preserved."
+      },
+      {
+        "stdin": "",
+        "stdout": "NEXUS_TASKS 2\n",
+        "purpose": "Selecting a persistent id",
+        "actions": [
+          "Add two tasks, select the second and complete it."
+        ],
+        "expected": "Only the second task is completed; repetition does not increase done."
+      },
+      {
+        "stdin": "",
+        "stdout": "",
+        "purpose": "Stop and continue",
+        "actions": [
+          "Stop Preview, change a C++ label and rebuild."
+        ],
+        "expected": "New build text appears; an earlier submitted revision stays unchanged."
+      }
+    ],
+    "steps": [
+      "Preserve your work and create a separate project for experiments.",
+      "Open Project Studio → new C++ application, then src/gui.cpp.",
+      "Copy the listed files, save and check the Qt build connection.",
+      "Change the success message and rebuild.",
+      "Before running, record the expected transitions and outcome of every case.",
+      "Execute every reference case and retain actual observations.",
+      "Add a count indicator derived from the model.",
+      "Add an independent case and explain its boundary.",
+      "Save sources, the protocol and an explanation of limitations."
+    ],
+    "rubric": [
+      "The full input and output contract is satisfied.",
+      "Invariants and lifetimes are explained; rejection preserves the model.",
+      "Ordinary, empty, boundary and failure scenarios are covered.",
+      "Add a count indicator derived from the model.",
+      "An independent extension and test are supplied, rather than only a reference copy.",
+      "Sources, actual observations and limits of conclusions are retained."
+    ],
+    "artifact": "A personal project and verification protocol using synthetic data.",
+    "verification": "interactive-qt-project",
+    "catalogGoal": "Connect TaskModel to real Qt widgets and execute a user scenario inside Nexus.",
+    "catalogProof": "A personal project and verification protocol using synthetic data."
+  },
+  "assessment": [
+    {
+      "question": "Where should the Qt laboratory run?",
+      "answers": [
+        "In a Project Studio C++ application.",
+        "In the ordinary WASI lesson editor.",
+        "Only outside Nexus."
+      ],
+      "correctIndex": 0,
+      "explanation": "Qt uses a separate checked build toolchain."
+    },
+    {
+      "question": "Why supply a context to connect?",
+      "answers": [
+        "To print stdout.",
+        "To bind connection lifetime to a QObject.",
+        "To launch std::thread."
+      ],
+      "correctIndex": 1,
+      "explanation": "Captures still need lifetime analysis."
+    },
+    {
+      "question": "What is stored in UserRole?",
+      "answers": [
+        "The SDK version.",
+        "A cookie.",
+        "The task id."
+      ],
+      "correctIndex": 2,
+      "explanation": "Display position does not replace domain identity."
+    },
+    {
+      "question": "What is expected in the first reference case?",
+      "answers": [
+        "One open task; the count reflects the model.",
+        "Data are always deleted.",
+        "The build must always fail."
+      ],
+      "correctIndex": 0,
+      "explanation": "Create a new C++ application in Project Studio. Add a QLabel total-task indicator and derive it from the model during refresh. Preserve Add/Enter/Complete/Save, the Task title accessible name and NXTF1. Empty or whitespace-only titles must not create tasks."
+    },
+    {
+      "question": "How should the independent extension be checked?",
+      "answers": [
+        "Only rename the project.",
+        "Design a completed-task filter without changing ids.",
+        "Keep no observations."
+      ],
+      "correctIndex": 1,
+      "explanation": "Retain a checkable result: Design a completed-task filter without changing ids. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "What is required when an operation with a strong guarantee fails?",
+      "answers": [
+        "Preserve the specified state.",
+        "Delete all data.",
+        "Always close the browser."
+      ],
+      "correctIndex": 0,
+      "explanation": "The guarantee concerns the specified model at an operation boundary."
+    },
+    {
+      "question": "Who owns an object supplied through an ordinary reference?",
+      "answers": [
+        "Always the called function.",
+        "Ownership is specified separately; a reference does not transfer it.",
+        "Nobody."
+      ],
+      "correctIndex": 1,
+      "explanation": "The owner must outlive use of the reference."
+    },
+    {
+      "question": "How is a driver with its own main built?",
+      "answers": [
+        "Always together with another main.",
+        "Without domain code.",
+        "Instead of application main, sharing model sources."
+      ],
+      "correctIndex": 2,
+      "explanation": "The application and driver have separate entry points and builds."
+    }
+  ],
+  "reflection": [
+    "Explain the window’s parent ownership.",
+    "Which check distinguishes a superficially similar incorrect implementation?",
+    "Design a completed-task filter without changing ids."
+  ],
+  "bridge": "Next: Build, persistence and application submission. Preserve your project and experiment results.",
+  "visualization": {
+    "kind": "journey",
+    "title": "A real Qt graphical adapter",
+    "description": "A stepwise conceptual model; actual verification runs in the stated Studio target.",
+    "steps": [
+      {
+        "title": "From the model to a real window",
+        "description": "Qt is an additional library, not part of standard C++. It requires its own SDK and build toolchain. In Nexus select Project Studio, create a C++ application and open src/gui.cpp. Building compiles your C++ to Qt/WebAssembly and opens a separate Preview. The lesson’s console Clang/WASI editor contains no Qt and cannot run this exercise."
+      },
+      {
+        "title": "Widgets, layout and ownership",
+        "description": "QApplication initializes the graphical environment. TaskWindow derives from QWidget and QVBoxLayout arranges controls vertically without manual coordinates. QLineEdit accepts text, QPushButton represents an action, QListWidget displays tasks and QLabel presents status. Passing this as a parent makes child QObjects owned by the window, so they are not separately deleted when the parent is destroyed."
+      },
+      {
+        "title": "Connecting a signal to an action",
+        "description": "connect(button, &QPushButton::clicked, this, [this]{add();}) connects a widget signal to a lambda. The third argument is the context and ties connection lifetime to that object. Capturing this permits access to window fields. The arrow accesses a pointed-to object, while &QPushButton::clicked names a class signal rather than invoking it while connecting."
+      },
+      {
+        "title": "Lists, ids and accessibility",
+        "description": "Each list item stores t.id in Qt::UserRole. Selection is translated back to a persistent id before complete, so row position does not replace task identity. The list is rebuilt from the model after changes. That is simple for this bounded teaching project; larger data would require measurements and a more incremental view model."
+      },
+      {
+        "title": "Changing your own application",
+        "description": "First change the window title and successful-add message while preserving model rules. Then add a task-count indicator derived from model.tasks().size() and check it after each accepted action. Do not increment a counter merely because a button was pressed: model rejection creates no task. The changed source must actually be rebuilt."
+      }
+    ]
+  }
+}
