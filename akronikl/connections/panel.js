@@ -11,26 +11,30 @@ const labels={
   gpu:'WebGPU is experimental. Adapter availability does not prove acceleration; performance and phones are not accepted yet.',
   states:{SOURCES_READY:'No model: navigation, help and source excerpts are available.',MODEL_NOT_LOADED:'Model not loaded. Select a file and connect.',CHECKING:'Checking the environment and prepared runtime…',MODEL_LOADING:'Checking the file and loading the model…',READY_TO_LOAD:'Preflight ready. The model is not loaded yet.',MODEL_LOADED:'Local model loaded. Speed and quality are experimental.',RUNTIME_UNAVAILABLE:'Runtime not prepared or unavailable. Source excerpts remain available.',WEBGPU_UNAVAILABLE:'A suitable WebGPU adapter was not confirmed. Select CPU explicitly; no automatic profile change.',SECURE_CONTEXT_REQUIRED:'A secure browser context (HTTPS) is required.',BROWSER_UNSUPPORTED:'Required local browser capabilities are unavailable.',EXTERNAL_DISABLED:'External AI is disabled.',LOCAL_FILE_REJECTED:'Select a supported local GGUF file.',MODEL_LOAD_FAILED:'Model not connected. Check the file, runtime and selected mode.',CONNECTION_TIMEOUT:'Connection timed out. Source excerpts remain available.',CONNECTION_CLOSED:'Connection closed.',CONNECTION_BUSY:'The previous operation is still releasing resources.',CLEANUP_FAILED:'Model cleanup was not confirmed. Close the assistant before retrying.'}}
 };
+Object.assign(labels.ru.states,{CLOUD_READY:'Сервер готов. Нажмите «Подключить выбранную модель».',CLOUD_CONNECTED:'Облачная Qwen подключена. Ответы требуют проверки.',CLOUD_UNAVAILABLE:'Облачное подключение недоступно. Материалы курса остаются доступны.',CLOUD_KEY_REQUIRED:'Для облачной модели ещё не настроен ключ на сервере.'});
+Object.assign(labels.en.states,{CLOUD_READY:'Broker ready. Connect the selected model.',CLOUD_CONNECTED:'Cloud Qwen connected. Check the answers.',CLOUD_UNAVAILABLE:'Cloud connection unavailable. Course sources remain available.',CLOUD_KEY_REQUIRED:'The server API key is not configured yet.'});
 export function mountConnectionPanel({parent,documentRef,controller,locale='ru',allowWebGPU=true}) {
   const t=labels[locale]||labels.ru;
   const make=(tag,text,root)=>{const n=documentRef.createElement(tag);if(text)n.textContent=text;root.append(n);return n;};
   const root=make('details','',parent);root.dataset.akroniklConnections='';make('summary',t.title,root);
   const modeLabel=make('label',t.mode,root),select=make('select','',modeLabel);select.dataset.akroniklModelProfile='';
-  for(const p of MODEL_PROFILES){const o=make('option',locale==='en'?p.labelEn:p.labelRu,select);o.value=p.id;o.disabled=!p.enabled||(p.id==='local-webgpu'&&!allowWebGPU);}
-  make('p',t.note,root);
+  for(const p of MODEL_PROFILES){const o=make('option',locale==='en'?p.labelEn:p.labelRu,select);o.value=p.id;o.disabled=(!(p.enabled||p.id==='external'&&controller.snapshot().cloudAvailable))||(p.id==='local-webgpu'&&!allowWebGPU);}
+  const localNote=make('p',t.note,root);
   const fileLabel=make('label',t.file,root),file=make('input','',fileLabel);file.type='file';file.accept='.gguf';file.dataset.akroniklModelFile='';
   const row=make('div','',root);row.className='akronikl-actions';
   const check=make('button',t.check,row),load=make('button',t.load,row),disconnect=make('button',t.disconnect,row);
   for(const b of [check,load,disconnect]){b.type='button';b.className='btn';}
   const status=make('p','',root);status.setAttribute('role','status');status.dataset.akroniklConnectionStatus='';
-  const gpuNote=make('p',t.gpu,root);make('p',t.cloud,root).className='akronikl-note';
+  const gpuNote=make('p',t.gpu,root),cloudNote=make('p',t.cloud,root);cloudNote.className='akronikl-note';
   let dead=false;
   const display=s=>{
     if(dead)return;select.value=s.profileId;
-    status.textContent=t.states[s.cleanupFailed?'CLEANUP_FAILED':s.code]||t.states.MODEL_LOAD_FAILED;
+    const cloud=s.profileId==='external';
+    status.textContent=cloud&&s.code==='MODEL_NOT_LOADED'?(locale==='en'?'Cloud model disconnected. Connect when ready.':'Облачная модель отключена. Нажмите «Подключить выбранную модель».'):t.states[s.cleanupFailed?'CLEANUP_FAILED':cloud&&s.code==='MODEL_LOAD_FAILED'?'CLOUD_UNAVAILABLE':s.code]||t.states.MODEL_LOAD_FAILED;
+    localNote.hidden=cloud;fileLabel.hidden=cloud;cloudNote.textContent=s.cloudAvailable?(locale==='en'?'Cloud mode sends your question, follow-up context, course excerpts and only explicitly allowed selected code/diagnostics. No API key is entered in this window.':'В облачном режиме отправляются вопрос, контекст продолжения, выдержки курса и только явно разрешённый выделенный код/диагностика. Ключ в этом окне вводить не нужно.'):t.cloud;
     status.dataset.connectionPhase=s.phase;status.dataset.connectionCode=s.code;
     const local=s.profileId.startsWith('local-'),busy=['checking','loading','closed'].includes(s.phase)||s.pendingResources>0||s.cleanupTasks>0||s.cleanupFailed;
-    file.disabled=!local||busy||s.phase==='connected';load.disabled=file.disabled||!file.files?.length;check.disabled=!local||busy||s.phase==='connected';
+    file.disabled=!local||busy||s.phase==='connected';load.disabled=cloud?busy||s.phase==='connected':file.disabled||!file.files?.length;check.disabled=!(local||cloud)||busy||s.phase==='connected';
     disconnect.disabled=s.phase==='closed'||s.profileId==='sources'&&s.pendingResources===0&&s.cleanupTasks===0;
     gpuNote.hidden=s.profileId!=='local-webgpu';
   };
@@ -38,7 +42,7 @@ export function mountConnectionPanel({parent,documentRef,controller,locale='ru',
   select.addEventListener('change',()=>{file.value='';try{controller.select(select.value);}catch{}display(controller.snapshot());});
   file.addEventListener('change',()=>display(controller.snapshot()));
   check.addEventListener('click',()=>{void controller.inspect();});
-  load.addEventListener('click',async()=>{const chosen=file.files?.[0];if(!chosen)return;try{await controller.connect(chosen);}finally{file.value='';if(!dead)display(controller.snapshot());}});
+  load.addEventListener('click',async()=>{const cloud=controller.snapshot().profileId==='external',chosen=file.files?.[0];if(!cloud&&!chosen)return;try{await controller.connect(chosen);}finally{file.value='';if(!dead)display(controller.snapshot());}});
   disconnect.addEventListener('click',()=>{file.value='';controller.disconnect();});
   return Object.freeze({setWebGPUAvailable(value){const option=select.querySelector('option[value=local-webgpu]');if(option)option.disabled=value!==true;},clearFile(){file.value='';if(!dead)display(controller.snapshot());},dispose(){if(dead)return;dead=true;unsub();file.value='';root.remove();}});
 }

@@ -25,13 +25,14 @@ function searchQuery(value) {
   return value.normalize('NFKC').replace(/(?:объясни(?:те)?|пожалуйста|попроще|простыми словами|что такое|покажи(?:те)?|расскажи(?:те)?|please|explain|what is|what are|tell me about)/giu,' ').replace(/[?!.,:]/g,' ').replace(/\s+/g,' ').trim();
 }
 function reply(status, message, extra={}) { return freeze({schemaVersion:1, status, text:message, generated:false, sources:[], actions:[], ...extra}); }
-export function createTutorSession({host, loadKnowledge, provider=null, locale='ru', timeoutMs=120000,readPersonality=null,readCommunicationState=()=> 'unknown'}={}) {
+export function createTutorSession({host, loadKnowledge, provider=null, locale='ru', timeoutMs=120000,readPersonality=null,readCommunicationState=()=> 'unknown',allowCloud=false}={}) {
   if (!host || typeof host.readBoundary!=='function' || typeof loadKnowledge!=='function' || !MESSAGES[locale] || !Number.isSafeInteger(timeoutMs) || timeoutMs<20 || timeoutMs>180000) throw Error('TUTOR_CONFIG_INVALID');
-  if (provider!==null && (provider.kind!=='local' || provider.transport!=='in-process' || typeof provider.generate!=='function' || typeof provider.dispose!=='function')) throw Error('TUTOR_PROVIDER_DENIED');
+  if(typeof allowCloud!=='boolean')throw Error('TUTOR_CONFIG_INVALID');
+  if (provider!==null && (!(provider.kind==='local'&&provider.transport==='in-process'||allowCloud&&provider.kind==='cloud'&&provider.transport==='trusted-broker') || typeof provider.generate!=='function' || typeof provider.dispose!=='function')) throw Error('TUTOR_PROVIDER_DENIED');
   if(readPersonality!==null&&typeof readPersonality!=='function'||typeof readCommunicationState!=='function')throw Error('TUTOR_CONFIG_INVALID');
   const styleSnapshot=()=>readPersonality===null?null:validatePersonality(readPersonality());
   const situation=()=>{try{return normalizeSituation(readCommunicationState());}catch{return 'unknown';}};
-  const readBoundary=host.readBoundary.bind(host), boundary=readBoundary(), t=MESSAGES[locale];
+  const readBoundary=host.readBoundary.bind(host), boundary=readBoundary(), t=provider?.kind==='cloud'?{...MESSAGES[locale],timeout:locale==='ru'?'Облачная модель не успела ответить. Материалы курса остаются доступны.':'The cloud model did not answer in time. Source excerpts remain available.',warning:locale==='ru'?'Экспериментальный ответ облачной модели. Проверьте объяснение по источникам.':'Experimental cloud-model answer. Check the explanation against its sources.'}:MESSAGES[locale];
   if (!boundary || typeof boundary!=='object') throw Error('TUTOR_CONTEXT_UNAVAILABLE');
   const core=createAssistantCore({host, policy:{selection:true,diagnostics:true}});
   let dead=false, epoch=0, pending=null, history=[], topic='', consent='', version=null;
@@ -124,7 +125,7 @@ export function createTutorSession({host, loadKnowledge, provider=null, locale='
         if(!Array.isArray(response.citations)||response.citations.length>sources.length||response.citations.some(s=>typeof s!=='string'||!allowed.includes(s))||new Set(response.citations).size!==response.citations.length)throw Error('TUTOR_CITATION_INVALID');
         const citations=[...response.citations];
         topic=query;history=[...history,{question,answer,generated:true}].slice(-4);
-        return reply(citations.length?'ok':'uncertain',answer,{generated:true,mode:'local-model',notice:t.warning,sources,citations,modelId:provider.modelId});
+        return reply(citations.length?'ok':'uncertain',answer,{generated:true,mode:provider.kind==='cloud'?'cloud-model':'local-model',notice:t.warning,sources,citations,modelId:provider.modelId});
       };
       return await Promise.race([operation(),cancelled]);
     } catch {

@@ -5,7 +5,7 @@ import {createTutorSession} from '../../akronikl/tutor/session.js';
 import {resolveMessage} from '../../akronikl/experience/intents.js';
 import {personalityPreset} from '../../akronikl/personality/config.js';
 
-export function makeCase(item, indexes, provider, {readPersonality=null, situation='unknown'}={}) {
+export function makeCase(item, indexes, provider, {readPersonality=null, situation='unknown',allowCloud=false}={}) {
   if (!item || typeof item.id!=='string' || !['ru','en'].includes(item.locale)) throw Error('QA_CASE_INVALID');
   let boundary=Object.freeze({});
   const route=item.source?.lessonId
@@ -33,7 +33,7 @@ export function makeCase(item, indexes, provider, {readPersonality=null, situati
   const request={text:item.prompt,intent:selected?'diagnostic':resolved.kind==='tutor'?resolved.intent:'explain',
     followUp:selected?false:resolved.kind==='tutor'?resolved.followUp:false,include};
   const style=personalityPreset('mentor',item.locale);
-  const session=createTutorSession({host,loadKnowledge:async language=>indexes[language],provider,locale:item.locale,
+  const session=createTutorSession({host,loadKnowledge:async language=>indexes[language],provider,locale:item.locale,allowCloud,
     readPersonality:readPersonality??(()=>style),readCommunicationState:()=>situation});
   return {session,request,resolved,host,reads,diagnostics,lock(){boundary=null;},change(){boundary={};}};
 }

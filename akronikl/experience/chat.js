@@ -14,7 +14,8 @@ import {createPersonality} from '../personality/controller.js';
 import {mountPersonalityPanel} from '../personality/panel.js';
 
 // Один экран разговора; все прежние привилегированные действия остаются в host.
-// Нет сетевой генерации, browser storage, сырого HTML, автоотправки кода или аудио.
+// Cloud requires an explicit trusted host broker and user-selected connection.
+// No keys, browser storage, raw HTML, automatic code/audio upload or fallback.
 export function openExperience(options) {
   const doc=options.documentRef??globalThis.document, win=options.windowRef??globalThis.window;
   const {root,trigger,onDispose=()=>{},onNavigate=()=>{},loadKnowledge=loadUiKnowledge}=options;
@@ -29,7 +30,8 @@ export function openExperience(options) {
     // Уже показанные реплики не переписываем. Новая сессия не наследует старый стиль.
     stop();privacyBoundary={};renew();status.textContent=t('personalityChanged');
   }});
-  const listeners=new AbortController(),t=key=>textFor(locale,key),labels=[];
+  const cloudLabels={local:['В локальном режиме контекст остаётся на устройстве. При подключении облачной Qwen отправляются вопрос, контекст продолжения и разрешённые материалы или выделенный код.','Local mode keeps context on this device. Connecting cloud Qwen sends the question, follow-up context and allowed sources or selected code.'],external:['Облачная Qwen включается выбором модели и подключением. Ключи здесь не запрашиваются.','Cloud Qwen requires selecting and connecting it. No API keys are requested here.']};
+  const listeners=new AbortController(),t=key=>options.cloudBroker&&cloudLabels[key]?cloudLabels[key][locale==='en'?1:0]:textFor(locale,key),labels=[];
   const el=(tag,parent,cls='',text='')=>{const n=doc.createElement(tag);if(cls)n.className=cls;if(text)n.textContent=text;parent?.append(n);return n;};
   const label=(n,key,attr)=>{if(!n.closest?.('[data-ak-message]'))labels.push({n,key,attr});if(attr)n.setAttribute(attr,t(key));else n.textContent=t(key);return n;};
   const button=(parent,key,fn,cls='ak-btn')=>{const b=label(el('button',parent,cls),key);b.type='button';if(fn)b.addEventListener('click',fn);return b;};
@@ -84,7 +86,7 @@ export function openExperience(options) {
   const guide=createPlatformGuide({isCurrent:host.current,readState:host.platformState,locale,onNavigate:hash=>{if(!host.current()||!allowedHash(hash))return false;dispose();onNavigate({kind:'platform',hash});return true;}});
   // Пересоздание guide при смене языка не меняет прав/маршрутов host.
   let activeGuide=guide;
-  function renew(){session?.dispose();session=createTutorSession({host:sessionHost,loadKnowledge,locale,provider:connections?.lease()??null,readPersonality:()=>personality.snapshot(),
+  function renew(){session?.dispose();session=createTutorSession({host:sessionHost,loadKnowledge,locale,provider:connections?.lease()??null,allowCloud:!!options.cloudBroker,readPersonality:()=>personality.snapshot(),
     readCommunicationState:options.readCommunicationState??(()=> 'unknown')});}
   function current(ticket){return !dead&&ticket===seq&&host.current();}
   function readyStatus(){if(!dead&&!busy)status.textContent=win.navigator?.onLine===false?t('offline'):t('ready');}
@@ -92,9 +94,9 @@ export function openExperience(options) {
   function stop(announce=false){seq++;request?.abort();request=null;session?.cancel();core.invalidate();activeGuide.invalidate();connections?.cancelPending();setBusy(false);log.querySelectorAll('[data-ak-pending]').forEach(n=>n.remove());log.querySelectorAll('[data-akronikl-confirm]').forEach(n=>n.disabled=true);if(announce)status.textContent=t('stopped');}
   function clear(revokeSession=false){stop();if(revokeSession){privacyBoundary={};renew();}else session?.clear();lastMetrics=null;log.replaceChildren(welcome);welcome.hidden=false;input.value='';send.disabled=true;latest.hidden=true;refreshHints();}
   function onModelInvalidate(){if(dead)return;stop();privacyBoundary={};session?.dispose();session=null;log.replaceChildren(welcome);welcome.hidden=false;input.value='';lastMetrics=null;renew();status.textContent=t('modelChange');}
-  connections=createModelConnections({isCurrent:()=>!dead&&host.current(),loadLocal:options.loadTutorModel??(async(file,settings)=>(await import('../tutor/local-model.js')).loadLocalModel(file,settings)),inspect:options.inspectTutorModel,onInvalidate:onModelInvalidate});
+  connections=createModelConnections({isCurrent:()=>!dead&&host.current(),loadLocal:options.loadTutorModel??(async(file,settings)=>(await import('../tutor/local-model.js')).loadLocalModel(file,settings)),inspect:options.inspectTutorModel,cloudBroker:options.cloudBroker??null,onInvalidate:onModelInvalidate});
   const unsubConnection=connections.subscribe(s=>{if(dead)return;if(s.phase==='connected'&&connectedRevision!==s.revision){connectedRevision=s.revision;renew();}refreshDiagnostics(s);readyStatus();});
-  function refreshDiagnostics(s=connections.snapshot()){diagnostic.textContent=JSON.stringify({profile:s.profileId,phase:s.phase,code:s.code,inspection:s.inspection,measurements:lastMetrics,externalAI:false},null,2);}
+  function refreshDiagnostics(s=connections.snapshot()){diagnostic.textContent=JSON.stringify({profile:s.profileId,phase:s.phase,code:s.code,inspection:s.inspection,measurements:lastMetrics,externalAI:s.cloudEnabled},null,2);}
   function mountModels(){connectionPanel?.dispose();connectionPanel=mountConnectionPanel({parent:sections.model,documentRef:doc,controller:connections,locale,allowWebGPU:false});const d=sections.model.querySelector('details');if(d)d.open=true;}
   mountModels();renew();
   const gpuStatus=el('p',sections.model,'ak-muted');

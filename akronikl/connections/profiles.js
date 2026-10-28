@@ -3,7 +3,7 @@ export const MODEL_PROFILES = Object.freeze([
   Object.freeze({id:'sources',kind:'none',modelId:null,labelRu:'Без модели — справка и материалы',labelEn:'No model — help and sources',enabled:true}),
   Object.freeze({id:'local-cpu',kind:'local',modelId:'qwen3-0.6b-q8_0',labelRu:'Локальная Qwen3 — процессор',labelEn:'Local Qwen3 — CPU',enabled:true}),
   Object.freeze({id:'local-webgpu',kind:'local',modelId:'qwen3-0.6b-q8_0',labelRu:'Локальная Qwen3 — WebGPU, эксперимент',labelEn:'Local Qwen3 — WebGPU, experimental',enabled:true}),
-  Object.freeze({id:'external',kind:'external',modelId:null,labelRu:'Внешний AI — ещё не подключён',labelEn:'External AI — not connected yet',enabled:false})
+  Object.freeze({id:'external',kind:'external',modelId:'qwen3.7-plus',labelRu:'Qwen3.7-Plus — облако',labelEn:'Qwen3.7-Plus — cloud',enabled:false})
 ]);
 export const RUNTIME_VERSION = '3.8.1';
 export function modelProfile(id) {
