@@ -1,0 +1,408 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.multifile-build",
+  "sessions": 3,
+  "learningOrder": 15,
+  "prerequisiteIds": [
+    "cpp.testing-diagnostics",
+    "cpp.structures"
+  ],
+  "sourceRefs": [
+    "CPP20-ODR",
+    "CPP20-TU"
+  ],
+  "title": "Multifile builds: headers, translation units, and ODR",
+  "lead": "Separate interface and implementation, building the application and test driver as distinct programs.",
+  "why": "Copying functions between files does not scale. Correct declarations support separate compilation and identify failures at the right stage.",
+  "objectives": [
+    "Explain: Declaration and definition",
+    "Trace: A translation unit",
+    "Justify: ODR and linking",
+    "Implement and verify the lab against its exact contract.",
+    "Identify a common defect: Do not include .cpp files or link two mains together. A header guard is not a program-wide definition registry."
+  ],
+  "prerequisites": [
+    "Modules 1–2: expressions, comparisons, types, references, and checked cin.",
+    "Follow the prerequisite links: cpp.testing-diagnostics, cpp.structures. New constructs are introduced before the assignment."
+  ],
+  "concepts": [
+    {
+      "term": "TU",
+      "definition": "a source file after includes and directives are processed."
+    },
+    {
+      "term": "Linking",
+      "definition": "combining compiled parts and resolving external names."
+    },
+    {
+      "term": "Declaration",
+      "definition": "describing a name and type without necessarily supplying a body."
+    },
+    {
+      "term": "Definition",
+      "definition": "supplying an implementation or object under language rules."
+    },
+    {
+      "term": "Header guard",
+      "definition": "preventing repeated inclusion within one TU."
+    },
+    {
+      "term": "ODR",
+      "definition": "rules for definition uniqueness and consistency."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Declaration and definition",
+      "paragraphs": [
+        "int twice(int); declares the name, parameter, and result without a body. int twice(int x){return 2*x;} defines the function. A caller needs a compatible declaration, and the final program needs the corresponding definition.",
+        "domain.hpp holds the shared interface, domain.cpp includes it and supplies the body, and main.cpp includes it and calls the function. The compiler can then check implementation against interface rather than trusting manually repeated signatures."
+      ]
+    },
+    {
+      "title": "A translation unit",
+      "paragraphs": [
+        "After #include processing, a .cpp and its included headers form a translation unit, or TU. Compile each .cpp separately. A header is normally not a standalone build unit, and a .cpp should not be included into another .cpp.",
+        "includeRoots specifies directories for user headers. With include/domain.hpp and #include \"domain.hpp\", add include. translationUnits lists main.cpp and src/domain.cpp. File paths belong to the project, not to absolute machine locations."
+      ]
+    },
+    {
+      "title": "Header guards",
+      "paragraphs": [
+        "An #ifndef DOMAIN_HPP / #define DOMAIN_HPP / #endif guard prevents repeated inclusion within one TU. Use a unique guard name. It prevents repeated structure definitions within a TU, not multiple ordinary function definitions across a program.",
+        "A header should include the standard headers it needs. Do not depend on accidental include order in main.cpp. Avoid using namespace std in a public header because it changes every including file’s environment."
+      ]
+    },
+    {
+      "title": "ODR and linking",
+      "paragraphs": [
+        "The One Definition Rule requires consistent definitions; an ordinary external function needs one definition in the program. Placing its body in a header included by two .cpp files may cause multiple definition at linking. inline has special rules and is not an arbitrary patch.",
+        "If the declaration is visible but domain.cpp is absent from the build, the caller may compile and then fail linking with an unresolved symbol. Distinguish that from an unknown-name compile error. The lesson includes intentional negative controls."
+      ]
+    },
+    {
+      "title": "Build the application and tests separately",
+      "paragraphs": [
+        "The application has one main in main.cpp and the test driver another in tests.cpp. Do not link both together. Build the application from main.cpp and domain.cpp, and tests from tests.cpp and domain.cpp using separate translationUnits lists.",
+        "Create files through Code Studio and select the intended entry. If a project automatically builds every .cpp, keep the driver in a separate project or explicitly exclude it from that build. Never rename personal source files without preserving a copy."
+      ]
+    },
+    {
+      "title": "A reproducible build",
+      "paragraphs": [
+        "Preserve file paths, includeRoots, translationUnits, and the C++20 standard. A desktop compiler uses the equivalent -Iinclude main.cpp src/domain.cpp principle. Instructions must not contain another machine’s private paths or secrets.",
+        "Check a successful build, a missing definition, a duplicate definition, and recovery after correction. Compare stdout and exit code. File import requires similar precision next: a filename alone does not prove persistence between runs."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "declaration",
+      "title": "Declaration before a call",
+      "purpose": "One TU first sees a declaration and later the definition.",
+      "code": "#include <iostream>\nint twice(int);\nint main() { std::cout << twice(6) << '\\n'; }\nint twice(int value) { return 2 * value; }\n",
+      "stdin": "",
+      "expectedStdout": "12\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    },
+    {
+      "id": "real-two-tu",
+      "title": "Two actual TUs",
+      "purpose": "Build main.cpp and src/domain.cpp together and find the header through include.",
+      "code": "#include <iostream>\n#include \"domain.hpp\"\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+      "stdin": "3 4",
+      "expectedStdout": "12\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": [
+        {
+          "stdin": "0 2",
+          "stdout": "0\n"
+        },
+        {
+          "stdin": "-1 2",
+          "stdout": "invalid\n"
+        }
+      ],
+      "files": {
+        "include/domain.hpp": "#ifndef DOMAIN_HPP\n#define DOMAIN_HPP\nbool checkedArea(int width, int height, int& result);\n#endif\n",
+        "src/domain.cpp": "#include \"domain.hpp\"\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\n"
+      },
+      "metadata": {
+        "translationUnits": [
+          "main.cpp",
+          "src/domain.cpp"
+        ],
+        "includeRoots": [
+          "include"
+        ]
+      }
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Predict before running",
+      "action": "Trace the first worked example step by step, then run all of its cases.",
+      "prediction": "A header communicates the interface; selected TUs determine what is actually built.",
+      "verification": "Compare every state transition and stdout; record a mismatch as a hypothesis rather than revising the expectation afterward."
+    },
+    {
+      "title": "A counterexample to a wrong rule",
+      "action": "Using the second example and theory, construct a minimal safe case for this defect: Do not include .cpp files or link two mains together. A header guard is not a program-wide definition registry.",
+      "prediction": "The correct and incorrect models should make distinguishable predictions without executing undefined behaviour.",
+      "verification": "Preserve the prediction, actual output, and an explanation of the violated rule."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A boundary result differs",
+      "cause": "Do not include .cpp files or link two mains together. A header guard is not a program-wide definition registry.",
+      "fix": "A header communicates the interface; selected TUs determine what is actually built."
+    },
+    {
+      "symptom": "One case works and the next fails",
+      "cause": "The invariant or empty/malformed-input policy is unspecified.",
+      "fix": "Return to the lab contract and check every published case independently."
+    },
+    {
+      "symptom": "The environment rejected execution",
+      "cause": "Build failure, unsupported syntax, and quotas are different causes.",
+      "fix": "Keep the phase and diagnostic; exceptions are unsupported and environment limits are not learner knowledge failures."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "missing-definition",
+      "title": "Intentional: missing definition",
+      "code": "#include <iostream>\nint missing(int);\nint main() { std::cout << missing(2) << '\\n'; }\n",
+      "expectation": "link-error",
+      "diagnostic": "missing",
+      "explanation": "The declaration allows compiling the call, but linking lacks its definition."
+    },
+    {
+      "id": "duplicate-definition",
+      "title": "Intentional: two definitions",
+      "code": "#include <iostream>\nint value() { return 1; }\nint main() { std::cout << value() << '\\n'; }\n",
+      "files": {
+        "other.cpp": "int value() { return 2; }\n"
+      },
+      "metadata": {
+        "translationUnits": [
+          "main.cpp",
+          "other.cpp"
+        ]
+      },
+      "expectation": "link-error",
+      "diagnostic": "value",
+      "explanation": "Two ordinary external definitions of value violate the one-definition requirement."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Manually trace the first example and explain every expected output line.",
+      "criteria": "A header communicates the interface; selected TUs determine what is actually built.",
+      "hint": "Identify input, state, and observable output first."
+    },
+    {
+      "level": "basic",
+      "task": "Choose the lab’s empty or minimum valid case and its nearest invalid counterpart.",
+      "criteria": "Derive both expectations before execution and connect each to a contract clause.",
+      "hint": "Do not include .cpp files or link two mains together. A header guard is not a program-wide definition registry."
+    },
+    {
+      "level": "applied",
+      "task": "Split checkedArea across include/domain.hpp, src/domain.cpp, and main.cpp. Read two dimensions in 0…1000 and print the area or invalid. Build a separate test driver without linking two mains into the application.",
+      "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
+      "hint": "A header communicates the interface; selected TUs determine what is actually built."
+    },
+    {
+      "level": "applied",
+      "task": "Compare the two worked examples: which assumptions differ and why can they not be silently transferred into the lab?",
+      "criteria": "State inputs, state, and at least one applicability boundary for each example.",
+      "hint": "The application has one main in main.cpp and the test driver another in tests.cpp. Do not link both together. Build the application from main.cpp and domain.cpp, and tests from tests.cpp and domain.cpp using separate translationUnits lists."
+    },
+    {
+      "level": "transfer",
+      "task": "Add checkedPerimeter to the shared interface and independent unit tests; show that main does not depend on implementation details.",
+      "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour.",
+      "hint": "Preserve file paths, includeRoots, translationUnits, and the C++20 standard. A desktop compiler uses the equivalent -Iinclude main.cpp src/domain.cpp principle. Instructions must not contain another machine’s private paths or secrets."
+    },
+    {
+      "level": "transfer",
+      "task": "Give a mini-defence: explain a bound, complexity, and a counterexample to a wrong implementation without running the reference.",
+      "criteria": "Connect the explanation to specific lines of your source and actual tests.",
+      "hint": "A header communicates the interface; selected TUs determine what is actually built."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Multifile builds: headers, translation units, and ODR",
+    "challenge": "Split checkedArea across include/domain.hpp, src/domain.cpp, and main.cpp. Read two dimensions in 0…1000 and print the area or invalid. Build a separate test driver without linking two mains into the application.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include \"domain.hpp\"\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+    "cases": [
+      {
+        "stdin": "3 4",
+        "stdout": "12\n"
+      },
+      {
+        "stdin": "1000 1000",
+        "stdout": "1000000\n"
+      },
+      {
+        "stdin": "0 2",
+        "stdout": "0\n"
+      },
+      {
+        "stdin": "-1 2",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 2 x",
+        "stdout": "invalid\n"
+      }
+    ],
+    "referenceFiles": {
+      "include/domain.hpp": "#ifndef DOMAIN_HPP\n#define DOMAIN_HPP\nbool checkedArea(int width, int height, int& result);\n#endif\n",
+      "src/domain.cpp": "#include \"domain.hpp\"\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\n"
+    },
+    "starterFiles": {
+      "include/domain.hpp": "#ifndef DOMAIN_HPP\n#define DOMAIN_HPP\nbool checkedArea(int width, int height, int& result);\n#endif\n",
+      "src/domain.cpp": "#include \"domain.hpp\"\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\n"
+    },
+    "metadata": {
+      "translationUnits": [
+        "main.cpp",
+        "src/domain.cpp"
+      ],
+      "includeRoots": [
+        "include"
+      ]
+    },
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: A header communicates the interface; selected TUs determine what is actually built.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "A header communicates the interface; selected TUs determine what is actually built.",
+      "Do not include .cpp files or link two mains together. A header guard is not a program-wide definition registry.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Does a header guard prevent an ordinary function body appearing in two TUs?",
+      "answers": [
+        "Only on a phone",
+        "Yes, across the whole program",
+        "No; a guard works within one TU"
+      ],
+      "correctIndex": 2,
+      "explanation": "Place the ordinary definition in one .cpp."
+    },
+    {
+      "question": "What does unresolved symbol indicate?",
+      "answers": [
+        "A line is too short",
+        "A required definition was not found during linking",
+        "A successful test"
+      ],
+      "correctIndex": 1,
+      "explanation": "Check the TU list and declaration compatibility."
+    },
+    {
+      "question": "How many main definitions belong in an ordinary program?",
+      "answers": [
+        "One",
+        "None for a console",
+        "One in each .cpp"
+      ],
+      "correctIndex": 0,
+      "explanation": "Build the test driver separately from the application."
+    },
+    {
+      "question": "Should domain.cpp be included into main.cpp?",
+      "answers": [
+        "Only on a PC",
+        "Yes, always",
+        "No; include the header and build both TUs"
+      ],
+      "correctIndex": 2,
+      "explanation": "Separating interface and implementation requires an explicit build."
+    },
+    {
+      "question": "What is needed to accept this lab?",
+      "answers": [
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation",
+        "Only a completed flag"
+      ],
+      "correctIndex": 1,
+      "explanation": "A progress flag is not evidence of independent mastery."
+    }
+  ],
+  "reflection": [
+    "A header communicates the interface; selected TUs determine what is actually built.",
+    "Add checkedPerimeter to the shared interface and independent unit tests; show that main does not depend on implementation details.",
+    "Which case refutes the wrong rule and what do your checks still not establish?"
+  ],
+  "bridge": "Next: Files: formats, failures, and explicit saving. Preserve the lab and its verification table.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Stepwise map: Multifile builds: headers, translation units, and ODR",
+    "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+    "steps": [
+      {
+        "title": "Declaration and definition",
+        "description": "int twice(int); declares the name, parameter, and result without a body. int twice(int x){return 2*x;} defines the function. A caller needs a compatible declaration, and the final program needs the corresponding definition."
+      },
+      {
+        "title": "A translation unit",
+        "description": "After #include processing, a .cpp and its included headers form a translation unit, or TU. Compile each .cpp separately. A header is normally not a standalone build unit, and a .cpp should not be included into another .cpp."
+      },
+      {
+        "title": "Header guards",
+        "description": "An #ifndef DOMAIN_HPP / #define DOMAIN_HPP / #endif guard prevents repeated inclusion within one TU. Use a unique guard name. It prevents repeated structure definitions within a TU, not multiple ordinary function definitions across a program."
+      },
+      {
+        "title": "ODR and linking",
+        "description": "The One Definition Rule requires consistent definitions; an ordinary external function needs one definition in the program. Placing its body in a header included by two .cpp files may cause multiple definition at linking. inline has special rules and is not an arbitrary patch."
+      },
+      {
+        "title": "Build the application and tests separately",
+        "description": "The application has one main in main.cpp and the test driver another in tests.cpp. Do not link both together. Build the application from main.cpp and domain.cpp, and tests from tests.cpp and domain.cpp using separate translationUnits lists."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Does a header guard prevent an ordinary function body appearing in two TUs?",
+    "answers": [
+      "Only on a phone",
+      "Yes, across the whole program",
+      "No; a guard works within one TU"
+    ],
+    "correctIndex": 2
+  }
+}
