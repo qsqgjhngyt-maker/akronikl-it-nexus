@@ -69,7 +69,7 @@ export async function verifyStartupIntroContract({root=ROOT,writeEvidence=false}
   const expected=git(root,'show',IMPLEMENTATION+':'+file),actual=await readFile(path.join(root,file));assertExpectedBytes(file,actual,expected);checks.push({file,bytes:actual.length,sha256:hash(actual)});
  }
  for(const [file,lanes]of Object.entries(WORKFLOWS))assertExpectedBytes(file,await readFile(path.join(root,file)),Buffer.from(routeWorkflow(git(root,'show',BASE+':'+file).toString(),lanes)));
- const result={status:'PASS',baseCommit:BASE,implementationCommit:IMPLEMENTATION,head:git(root,'rev-parse','HEAD').toString().trim(),protectedFiles:baseRows.length-implementationFiles.size,implementationFiles:checks,ciPaths:CI_PATHS,publicationReceiptUnchanged:true,contentIdentityCloudPwaAndHistoricalAssetsUnchanged:true,productionPublication:false,officialRelease:false};
+ const result={status:'PASS',baseCommit:BASE,implementationCommit:IMPLEMENTATION,head:git(root,'rev-parse','HEAD').toString().trim(),protectedFiles:baseRows.filter(r=>!implementationFiles.has(r.file)&&!ciFiles.has(r.file)).length,implementationFiles:checks,ciPaths:CI_PATHS,publicationReceiptUnchanged:true,contentIdentityCloudPwaAndHistoricalAssetsUnchanged:true,productionPublication:false,officialRelease:false};
  if(writeEvidence){const dir=path.resolve(writeEvidence);await mkdir(dir,{recursive:true});await writeFile(path.join(dir,'CONTRACT.json'),JSON.stringify(result,null,2)+'\n')}
  return result;
 }

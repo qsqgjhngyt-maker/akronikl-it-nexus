@@ -78,9 +78,13 @@ try{
   await s.page.waitForFunction(()=>{const n=document.querySelector('.nexus-intro-skip');return n?.matches(':hover')&&getComputedStyle(n).opacity==='1'},null,{timeout:2000});
   // Измеряется освобождение слоя внутри браузера: задержка протокола Playwright
   // и скорость screenshot CI-машины не являются задержкой кнопки пользователя.
-  await s.page.locator('.nexus-intro-skip').evaluate(n=>n.addEventListener('click',()=>{
-   const at=performance.now(),root=n.closest('[data-startup-intro]');queueMicrotask(()=>{window.qaSkipProof={released:!root.isConnected||root.style.pointerEvents==='none',delayMs:performance.now()-at}});
-  },{capture:true,once:true}));
+  await s.page.locator('.nexus-intro-skip').evaluate(n=>{
+   let at;const root=n.closest('[data-startup-intro]');
+   n.addEventListener('click',()=>{at=performance.now()},{capture:true,once:true});
+   // Listener приложения уже установлен; этот listener вызывается после него.
+   // Microtask из capture может выполниться ДО target-listener в Chrome.
+   n.addEventListener('click',()=>{window.qaSkipProof={released:!root.isConnected||root.style.pointerEvents==='none',delayMs:performance.now()-at}},{once:true});
+  });
   await s.page.locator('.nexus-intro-skip').click();await dismissed(s);s.record.skipProof=await s.page.evaluate(()=>window.qaSkipProof);
   assert.equal(s.record.skipProof.released,true);assert.ok(s.record.skipProof.delayMs<1000);
   const movies=s.record.requests.filter(r=>/\.(mp4|webm)$/.test(r.file));assert.equal(movies.length,1);assert.ok(movies[0].ready>0&&movies[0].now>=movies[0].ready);

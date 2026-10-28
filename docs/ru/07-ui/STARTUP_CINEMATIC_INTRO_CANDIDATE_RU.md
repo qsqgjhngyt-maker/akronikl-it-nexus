@@ -1,5 +1,7 @@
 # STARTUP CINEMATIC INTRO — кандидат для проверки, 28.10.2026
 
+> Исторический отчёт первого этапа. Блокер сравнения Intro с прежними байтами M5 устранён отдельным контрактом; актуальная реализация упаковки — `1d83e485bc9bc8a122b6a4eebd79f39a408f635a`. См. `STARTUP_CINEMATIC_INTRO_CI_CLOSURE_RU.md` и текущие Checks PR №47. Ниже сохранены факты и отказы первоначального прогона.
+
 **STATUS: PARTIAL. IMPLEMENTED; локальные функциональные проверки — AUTOMATED PASS. GitHub publication gates — FAIL. Кандидат готов к review, к публикации не допущен; LIVE PASS и FULL LIVE PASS не заявлены.**
 
 Draft PR: [№47](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/pull/47). После создания PR пять существующих Content jobs остановились в `verifyM5HeaderPublication`: опубликованный M5 receipt требует прежние bytes `core/app.js` (30596), а Intro hook меняет файл (30877 bytes в GitHub checkout). Это срабатывание действующего ограничения на изменение принятой публикации. Его нельзя подменять локальными функциональными PASS. Нужен согласованный с 05/03 отдельный контракт Intro-кандидата; receipt M5, его хеши и validators в этой работе не изменялись. Подробности и ссылки — `GITHUB_CI.json`. Source/runtime и проверенный архив при документировании CI не менялись.
