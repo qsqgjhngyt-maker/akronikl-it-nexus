@@ -208,7 +208,7 @@ export function openExperience(options) {
   language.addEventListener('change',changeLanguage);theme.addEventListener('change',()=>{dialog.dataset.akTheme=['light','dark'].includes(theme.value)?theme.value:'auto';});
   log.addEventListener('scroll',()=>{if(log.scrollHeight-log.scrollTop-log.clientHeight<80)latest.hidden=true;});
   dialog.addEventListener('cancel',e=>{e.preventDefault();if(settingsOpen)toggleSettings(false);else dispose();});dialog.addEventListener('close',dispose);
-  for(const name of ['hashchange','pagehide','nexus:session-ended','nexus:context-invalidated'])win.addEventListener(name,dispose,{capture:true,signal:listeners.signal});
+  for(const name of ['hashchange','pagehide','nexus:session-ending','nexus:session-ended','nexus:context-invalidated'])win.addEventListener(name,dispose,{capture:true,signal:listeners.signal});
   doc.addEventListener('visibilitychange',()=>{if(doc.hidden)dispose();},{signal:listeners.signal});
   win.addEventListener('online',readyStatus,{signal:listeners.signal});win.addEventListener('offline',readyStatus,{signal:listeners.signal});
   win.visualViewport?.addEventListener('resize',viewport,{signal:listeners.signal});win.visualViewport?.addEventListener('scroll',viewport,{signal:listeners.signal});
