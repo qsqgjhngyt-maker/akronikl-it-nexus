@@ -88,6 +88,10 @@ try{
   const s=await session({surface:'entry',guest:true,width:390,height:844,accountDelay:2500});await s.open();await playing(s);assert.equal(await layer(s).getAttribute('data-variant'),'mobile');await shot(s,'mobile-before-login');await ended(s);
   const done=await s.page.evaluate(()=>window.__introFinishes.at(-1)),last=await s.page.evaluate(()=>window.__introVideoEnd);assert.equal(done.reason,'ended');assert.ok(done.playedSeconds>=8);assert.match(last.source,/cinematic-v3\/mobile\/mp4\/part-003\.mp4/);assert.ok(done.at-last.at>=1750);assert.equal(await s.page.locator('[data-login]').count(),1);s.record.fullPlayback={...done,logo:last};await s.context.close();
  });
+ await check('WebM Mobile: все четыре части и полные8секунд без MP4',async()=>{
+  const s=await session({surface:'entry',guest:true,width:390,height:844,codec:'webm'});await s.open();await playing(s);await ended(s);
+  const done=await s.page.evaluate(()=>window.__introFinishes.at(-1)),last=await s.page.evaluate(()=>window.__introVideoEnd);assert.equal(done.reason,'ended');assert.equal(done.duration,8);assert.ok(done.playedSeconds>=7.95);assert.match(last.source,/cinematic-v3\/mobile\/webm\/part-003\.webm/);assert.equal(s.record.requests.filter(x=>x.movie&&/\.mp4$/.test(x.file)).length,0);await s.context.close();
+ });
  await check('WebM Desktop: реальные10секунд и работа Пропустить во время удержания финального кадра',async()=>{
   const s=await session({surface:'entry',guest:true,codec:'webm'});await s.open();await playing(s);await s.page.waitForFunction(()=>window.__introVideoEnd);
   const end=await s.page.evaluate(()=>window.__introVideoEnd);assert.match(end.source,/cinematic-v4\/desktop\.webm/);assert.ok(Math.abs(end.duration-10)<.05);assert.ok(end.playedSeconds>=9.95);
