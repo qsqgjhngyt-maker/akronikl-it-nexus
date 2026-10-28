@@ -24,7 +24,7 @@ export function selectEvidenceFocus(evidence,allowedCitations,query=''){
 export function createWllamaProvider(engine,{recreate=null,onOutcome=null,reasoningBudget=0}={}) {
   if(!engine||typeof engine.createChatCompletion!=='function'||typeof engine.exit!=='function')throw Error('LOCAL_ENGINE_INVALID');
   if(recreate!==null&&typeof recreate!=='function'||onOutcome!==null&&typeof onOutcome!=='function')throw Error('LOCAL_ENGINE_INVALID');
-  if(![0,48].includes(reasoningBudget))throw Error('LOCAL_REASONING_CONFIG_INVALID');
+  if(reasoningBudget!==0)throw Error('LOCAL_REASONING_CONFIG_INVALID');
   let current=engine,disposed=false,busy=false,lastMeasurement=null,cancelActive=null,idle=Promise.resolve(),epoch=1,forcedStops=0,cleanupFailed=false,disposal=null;
   const exits=new WeakMap();
   function close(value){
@@ -58,11 +58,11 @@ export function createWllamaProvider(engine,{recreate=null,onOutcome=null,reason
         const selected=current;
         const evidence=evidencePacket?.evidence;
         const grounded=Array.isArray(evidence)&&evidence.length>0;
-        // A verbatim retrieval focus is input data, never a replacement answer
-        // or a certificate of semantic correctness. Keep the full evidence too.
+        // A literal focus is optional QA metadata, never a replacement answer
+        // or a certificate of semantic correctness. Model input stays unchanged.
         if(grounded)evidenceFocus=selectEvidenceFocus(evidence,allowedCitations,evidencePacket.topic||evidencePacket.question||'');
-        if(grounded&&!evidenceFocus)throw Error('LOCAL_EVIDENCE_INSUFFICIENT');
-        modelMessages=evidenceFocus?[...messages,{role:'user',content:`Closest evidence (quoted data):\n[${evidenceFocus.label}] ${JSON.stringify(evidenceFocus.quote)}\nQuestion: ${evidencePacket.question}\nExplain how this evidence answers the question, preserving its subject and conditions. JSON: answer, citations.`}]:messages;
+
+        modelMessages=messages; // Focus is QA metadata only; no prompt/answer rewrite.
         const properties={answer:{type:'string'},citations:{type:'array',items:{type:'string',enum:allowedCitations},minItems:grounded?1:0,maxItems:allowedCitations.length,uniqueItems:true}};
         const started=performance.now();
         // Сырые фрагменты/рассуждения не выводятся: наружу только числовой прогресс.
@@ -108,7 +108,7 @@ export async function loadLocalModel(file,{signal,profile='local-cpu',loadRuntim
     try{
     // Запрещён скрытый CDN fallback runtime. Неподдерживаемый браузер получает отказ.
     engine.setCompat(null);
-    // n_parallel:1, jinja:true; CPU internal reasoning is bounded at 48 tokens.
+    // n_parallel:1, jinja:true; failed reasoning experiments were rolled back.
     // Не меняем COOP/COEP. Запрос WebGPU не считается доказательством offload/скорости.
     if(profile==='local-webgpu'&&engine.isSupportWebGPU?.()!==true)throw Error('LOCAL_GPU_UNAVAILABLE');
     await engine.loadModel([file],loadOptions);

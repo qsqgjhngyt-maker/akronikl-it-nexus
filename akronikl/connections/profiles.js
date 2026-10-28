@@ -14,6 +14,6 @@ export function modelProfile(id) {
 export function localLoadOptions(id) {
   if(!['local-cpu','local-webgpu'].includes(id))throw Error('MODEL_PROFILE_DENIED');
   return Object.freeze({n_threads:1,n_gpu_layers:id==='local-cpu'?0:99999,n_ctx:4096,n_parallel:1,n_batch:128,n_ubatch:128,
-    cache_idle_slots:false,jinja:true,reasoning:id==='local-cpu',reasoning_budget_tokens:id==='local-cpu'?48:0,reasoning_format:'deepseek',
-    default_template_kwargs:Object.freeze({enable_thinking:id==='local-cpu'})});
+    cache_idle_slots:false,jinja:true,reasoning:false,reasoning_budget_tokens:0,
+    default_template_kwargs:Object.freeze({enable_thinking:false})});
 }

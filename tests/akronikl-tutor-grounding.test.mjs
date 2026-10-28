@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createWllamaProvider,evidenceQuoteCandidates,selectEvidenceFocus} from '../akronikl/tutor/local-model.js';
 const source={label:'S1',text:'A local object is destroyed when its block exits. Copying its address does not keep it alive.'};
-function provider(response,outcomes=[]){return createWllamaProvider({async createChatCompletion(x){assert.equal(x.response_format.json_schema.schema.properties.basis,undefined);const focus=x.messages.at(-1);assert.ok(focus.content.includes(source.text.split('. ')[0])||focus.content.includes('read-only'));x.onData({choices:[{finish_reason:'stop',delta:{content:JSON.stringify(response)}}]});},async exit(){}},{onOutcome:e=>outcomes.push(e)});}
+function provider(response,outcomes=[]){return createWllamaProvider({async createChatCompletion(x){assert.equal(x.response_format.json_schema.schema.properties.basis,undefined);assert.deepEqual(x.messages,[]);x.onData({choices:[{finish_reason:'stop',delta:{content:JSON.stringify(response)}}]});},async exit(){}},{onOutcome:e=>outcomes.push(e)});}
 const request={messages:[],evidencePacket:{question:'local object lifetime',evidence:[source]},allowedCitations:['S1']};
 test('actual model answer stays unaltered; retrieval focus is separately recorded',async()=>{
  const trace=[],p=provider({answer:'ACTUAL_PROVIDER_SENTINEL',citations:['S1']},trace);
