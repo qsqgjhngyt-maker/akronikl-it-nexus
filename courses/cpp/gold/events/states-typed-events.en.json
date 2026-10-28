@@ -186,39 +186,39 @@
   "practice": [
     {
       "task": "Complete the four-state, four-event transition table.",
-      "criteria": "Retain a checkable result: Draw the transition table: Start takes idle to running, Pause takes running to paused, Resume takes paused to running and Finish takes running to done. All other pairs are rejected. This is the laboratory specification. It supports discussing requirements before implementation: finishing while paused is deliberately forbidden here, although another product could permit it. Explain the selected contract and supply an independent example.",
+      "criteria": "Fill all 16 state/event pairs: four permitted transitions and 12 unchanged-state rejections; identify done as terminal.",
       "level": "basic",
-      "hint": "Draw the transition table: Start takes idle to running, Pause takes running to paused, Resume takes paused to running and Finish takes running to done. All other pairs are rejected. This is the laboratory specification. It supports discussing requirements before implementation: finishing while paused is deliberately forbidden here, although another product could permit it."
+      "hint": "Only Resume is allowed from paused; Finish is allowed only from running."
     },
     {
       "task": "Explain decay_t and is_same_v in the visitor.",
-      "criteria": "Retain a checkable result: In the first example, Event event = Start{} constructs the Start alternative. Braces create an empty command object; it carries no user payload yet. A later Rename event could contain std::string title. Event types then associate each action with its required data and eliminate meaningless fields such as a title attached to Finish. Explain the selected contract and supply an independent example.",
+      "criteria": "For const Start&, show decltype(item), its decay_t result and is_same_v; explain the if constexpr choice for each alternative.",
       "level": "basic",
-      "hint": "In the first example, Event event = Start{} constructs the Start alternative. Braces create an empty command object; it carries no user payload yet. A later Rename event could contain std::string title. Event types then associate each action with its required data and eliminate meaningless fields such as a title attached to Finish."
+      "hint": "decltype retains the reference and const; first obtain the ordinary command type for comparison."
     },
     {
       "task": "Implement apply without reading cin.",
-      "criteria": "Retain a checkable result: Read one line of at most 100 characters. S maps idle→running, P running→paused, R paused→running, F running→done. Other pairs or characters count as one rejection without mutation. An empty line is valid; a missing line or extra data after it produces invalid. Explain the selected contract and supply an independent example.",
+      "criteria": "apply accepts an Event and state without cin, returns bool and mutates state only according to the table; SPRF and SPF have the specified distinct outcomes.",
       "level": "applied",
-      "hint": "The variant constructs Start. visit receives Start and decay_t normalizes its type. if constexpr selects the start message."
+      "hint": "The adapter maps a character to a type; the visitor checks that type against the current state."
     },
     {
       "task": "Add an explicit Finish branch and a Reopen event type.",
-      "criteria": "Retain a checkable result: Read one line of at most 100 characters. S maps idle→running, P running→paused, R paused→running, F running→done. Other pairs or characters count as one rejection without mutation. An empty line is valid; a missing line or extra data after it produces invalid. Explain the selected contract and supply an independent example.",
+      "criteria": "Name Finish explicitly and specify Reopen from done; the visitor must not treat the new alternative as Finish, and tests cover acceptance and rejection.",
       "level": "applied",
-      "hint": "The initial state is idle. finish is permitted only for running. false and true show rejection and retained idle."
+      "hint": "Avoid a catch-all else for the final command; revisit every pair after extending the variant."
     },
     {
       "task": "Design a document-review state machine.",
-      "criteria": "Retain a checkable result: Design a document-review state machine. Explain the selected contract and supply an independent example.",
+      "criteria": "Specify draft/review/approved states, events and rejected pairs; an independent trace checks that approved documents cannot be edited.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Decide whether returning for revision is allowed before introducing a separate event."
     },
     {
       "task": "Find shortest traces for each forbidden state-event pair.",
-      "criteria": "Retain a checkable result: Find shortest traces for each forbidden state-event pair. Explain the selected contract and supply an independent example.",
+      "criteria": "For each of 12 forbidden pairs, give a shortest reachable prefix followed by the forbidden event; justify minimality using the transition table.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Treat the table as a graph: find a shortest path from idle, then append one rejected event."
     }
   ],
   "laboratory": {
@@ -290,86 +290,86 @@
   },
   "assessment": [
     {
-      "question": "How many alternatives does an ordinary Event hold at once?",
+      "question": "What state and rejection count result from SPF starting at idle?",
       "answers": [
-        "One.",
-        "All four.",
-        "Always none."
-      ],
-      "correctIndex": 0,
-      "explanation": "A variant stores an active alternative."
-    },
-    {
-      "question": "Where does Finish from paused lead?",
-      "answers": [
-        "done",
-        "It stays paused and rejects the event.",
-        "idle"
+        "running and 1.",
+        "paused and 1.",
+        "done and 0."
       ],
       "correctIndex": 1,
-      "explanation": "The table permits Finish only from running."
+      "explanation": "S enters running, P enters paused and F from paused is forbidden. Rejection preserves paused."
     },
     {
-      "question": "Where should S be translated into Start?",
+      "question": "Why does the visitor apply decay_t to decltype(item) for const auto& item?",
       "answers": [
-        "Inside TaskModel through cin.",
-        "In a destructor.",
-        "In the input adapter."
+        "To compare the ordinary command type without const/reference.",
+        "To obtain the numeric code of an alternative.",
+        "To copy the active object to the heap."
+      ],
+      "correctIndex": 0,
+      "explanation": "is_same_v compares types. Without removing qualifications, const Start& differs from Start."
+    },
+    {
+      "question": "Reopen is added, but the visitor ends with a catch-all else previously meaning Finish. What is the risk?",
+      "answers": [
+        "Reopen may incorrectly follow the Finish branch.",
+        "variant prohibits a fifth alternative.",
+        "std::visit automatically supplies the correct transition."
+      ],
+      "correctIndex": 0,
+      "explanation": "A catch-all else cannot distinguish new types. Explicit alternatives and completeness checking make extension controlled."
+    },
+    {
+      "question": "A space occurs inside the otherwise valid event line. What does the laboratory contract do?",
+      "answers": [
+        "Finishes the state as Finish.",
+        "Counts the unknown character as one rejection without a state change.",
+        "Ignores all whitespace within the line."
+      ],
+      "correctIndex": 1,
+      "explanation": "The protocol reads the whole line rather than skipping internal characters as formatted cin does. Space is not S/P/R/F."
+    },
+    {
+      "question": "Which test distinguishes terminal done from an incorrectly accepted repeated Start?",
+      "answers": [
+        "SPR, checking only final running.",
+        "An empty line, checking idle.",
+        "SFS, checking the state and one rejection."
       ],
       "correctIndex": 2,
-      "explanation": "Domain logic receives an event independently of its source."
-    },
-    {
-      "question": "What is expected in the first reference case?",
-      "answers": [
-        "done rejected 0\n",
-        "Data are always deleted.",
-        "The build must always fail."
-      ],
-      "correctIndex": 0,
-      "explanation": "Read one line of at most 100 characters. S maps idle→running, P running→paused, R paused→running, F running→done. Other pairs or characters count as one rejection without mutation. An empty line is valid; a missing line or extra data after it produces invalid."
-    },
-    {
-      "question": "How should the independent extension be checked?",
-      "answers": [
-        "Only rename the project.",
-        "Find shortest traces for each forbidden state-event pair.",
-        "Keep no observations."
-      ],
-      "correctIndex": 1,
-      "explanation": "Retain a checkable result: Find shortest traces for each forbidden state-event pair. Explain the selected contract and supply an independent example."
+      "explanation": "SF reaches done and the following S must be rejected. The other traces never reach done and cannot test this prohibition."
     }
   ],
   "readinessCheck": [
     {
-      "question": "What is required when an operation with a strong guarantee fails?",
+      "question": "How does FIFO differ from immediate recursive dispatch of a generated command?",
       "answers": [
-        "Preserve the specified state.",
-        "Delete all data.",
-        "Always close the browser."
-      ],
-      "correctIndex": 0,
-      "explanation": "The guarantee concerns the specified model at an operation boundary."
-    },
-    {
-      "question": "Who owns an object supplied through an ordinary reference?",
-      "answers": [
-        "Always the called function.",
-        "Ownership is specified separately; a reference does not transfer it.",
-        "Nobody."
+        "Recursion automatically requires a second thread.",
+        "The generated command waits behind already queued events.",
+        "FIFO always sorts commands by code."
       ],
       "correctIndex": 1,
-      "explanation": "The owner must outlive use of the reference."
+      "explanation": "Ordering can differ on one thread. Recursion is not threading and FIFO does not sort."
     },
     {
-      "question": "How is a driver with its own main built?",
+      "question": "How is running from enum class State referred to?",
       "answers": [
-        "Always together with another main.",
-        "Without domain code.",
-        "Instead of application main, sharing model sources."
+        "State::running.",
+        "Through any integer without an explicit conversion.",
+        "Through an object name running.State."
       ],
-      "correctIndex": 2,
-      "explanation": "The application and driver have separate entry points and builds."
+      "correctIndex": 0,
+      "explanation": "A scoped enum uses the type scope and does not implicitly become int like an ordinary numeric convention."
+    },
+    {
+      "question": "What determines an auto parameter type in a generic lambda invocation?",
+      "answers": [
+        "The argument type under template deduction rules.",
+        "The textual result of the previous run.",
+        "The current source line number."
+      ],
+      "correctIndex": 0,
+      "explanation": "A generic lambda provides a call template. Its type is determined on instantiation rather than from a runtime log."
     }
   ],
   "reflection": [

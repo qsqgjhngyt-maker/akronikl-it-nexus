@@ -214,39 +214,39 @@
   "practice": [
     {
       "task": "Trace Return→add→model→refresh.",
-      "criteria": "Retain a checkable result: The TaskFlow starter includes a model, CLI, GUI, tests, CMake and target description. Create a new personal project while preserving earlier work. The laboratory changes actual src/gui.cpp; a JavaScript animation or an onClick message in a console does not substitute for execution. Build-service connectivity and source correctness are separate checks. Explain the selected contract and supply an independent example.",
+      "criteria": "Identify returnPressed, add, model validation and refresh; trace accepted and empty input, including retention of rejected text.",
       "level": "basic",
-      "hint": "The TaskFlow starter includes a model, CLI, GUI, tests, CMake and target description. Create a new personal project while preserving earlier work. The laboratory changes actual src/gui.cpp; a JavaScript animation or an onClick message in a console does not substitute for execution. Build-service connectivity and source correctness are separate checks."
+      "hint": "Find the QLineEdit connect, the model call inside try/catch and the refresh location."
     },
     {
       "task": "Explain the window’s parent ownership.",
-      "criteria": "Retain a checkable result: Do not combine parent ownership with an independent unique_ptr to the same child without analyzing destruction order. The window owns the model by value and the model knows no Qt types. Desktop main uses app.exec; the checked WebAssembly target returns control so the browser can service events. Preserve the supplied conditional branch instead of inserting a busy while loop. Explain the selected contract and supply an independent example.",
+      "criteria": "List child widgets and their window owner; explain parent-based destruction and the danger of a second independent owner of the same widget.",
       "level": "basic",
-      "hint": "Do not combine parent ownership with an independent unique_ptr to the same child without analyzing destruction order. The window owns the model by value and the model knows no Qt types. Desktop main uses app.exec; the checked WebAssembly target returns control so the browser can service events. Preserve the supplied conditional branch instead of inserting a busy while loop."
+      "hint": "new QLabel(...,this) establishes Qt parentage unlike a raw pointer without an owner."
     },
     {
       "task": "Change the success message and rebuild.",
-      "criteria": "Retain a checkable result: Create a new C++ application in Project Studio. Add a QLabel total-task indicator and derive it from the model during refresh. Preserve Add/Enter/Complete/Save, the Task title accessible name and NXTF1. Empty or whitespace-only titles must not create tasks. Explain the selected contract and supply an independent example.",
+      "criteria": "Change only the success message; confirm a rebuilt Preview actually displays it and that original/edited snapshots differ.",
       "level": "applied",
-      "hint": "The window creates an input, list and buttons. Return invokes C++ add and the model validates text. refresh displays actual tasks and emits NEXUS_TASKS."
+      "hint": "An old open window does not establish execution of edited C++."
     },
     {
       "task": "Add a count indicator derived from the model.",
-      "criteria": "Retain a checkable result: Create a new C++ application in Project Studio. Add a QLabel total-task indicator and derive it from the model during refresh. Preserve Add/Enter/Complete/Save, the Task title accessible name and NXTF1. Empty or whitespace-only titles must not create tasks. Explain the selected contract and supply an independent example.",
+      "criteria": "QLabel updates from tasks().size() during refresh; test add, complete and Stop→Run without changing NXTF1/model for the counter.",
       "level": "applied",
-      "hint": "The second version adds a count QLabel. refresh reads model size rather than button-press count. Empty-input rejection does not increase the count."
+      "hint": "Display a value derived from the model rather than a separate Add-click counter."
     },
     {
       "task": "Test keyboard interaction and empty-input errors.",
-      "criteria": "Retain a checkable result: Test keyboard interaction and empty-input errors. Explain the selected contract and supply an independent example.",
+      "criteria": "In Nexus, test Enter in the input, activation of named controls and rejection of whitespace titles without clearing; record actual keys and observations.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Check focus and the C++ model change separately: a DOM control's presence does not establish accessibility."
     },
     {
       "task": "Design a completed-task filter without changing ids.",
-      "criteria": "Retain a checkable result: Design a completed-task filter without changing ids. Explain the selected contract and supply an independent example.",
+      "criteria": "The filter changes only rendering, stores ids in UserRole and completes id 2 after hiding id 1; persisted data retains both tasks.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "The first visible row after filtering need not mean id 1."
     }
   ],
   "laboratory": {
@@ -378,86 +378,86 @@
   },
   "assessment": [
     {
-      "question": "Where should the Qt laboratory run?",
+      "question": "A user enters only spaces and activates Add. What behaviour is specified?",
       "answers": [
-        "In a Project Studio C++ application.",
-        "In the ordinary WASI lesson editor.",
-        "Only outside Nexus."
-      ],
-      "correctIndex": 0,
-      "explanation": "Qt uses a separate checked build toolchain."
-    },
-    {
-      "question": "Why supply a context to connect?",
-      "answers": [
-        "To print stdout.",
-        "To bind connection lifetime to a QObject.",
-        "To launch std::thread."
+        "Input is cleared and rejection counts as a successful addition.",
+        "No task is created and rejected input remains for correction.",
+        "A task with an empty title is created."
       ],
       "correctIndex": 1,
-      "explanation": "Captures still need lifetime analysis."
+      "explanation": "The model validates title and the adapter clears input only on success. This distinguishes rejection from acceptance."
     },
     {
-      "question": "What is stored in UserRole?",
+      "question": "Why should a total QLabel derive its value from tasks().size() during refresh?",
       "answers": [
-        "The SDK version.",
-        "A cookie.",
-        "The task id."
+        "To require changing NXTF1.",
+        "To reflect the model after loading and any commands rather than only Add clicks.",
+        "To retain a separate independent click counter."
+      ],
+      "correctIndex": 1,
+      "explanation": "A derived view is recomputed from its source of truth. A separate click counter can diverge from a loaded model."
+    },
+    {
+      "question": "A QLabel is created with parent this. What is dangerous to add without ownership analysis?",
+      "answers": [
+        "Calling setText while the window is alive.",
+        "An independent owner that may outlive deletion of the child by its Qt parent.",
+        "A non-owning pointer used to update text."
+      ],
+      "correctIndex": 1,
+      "explanation": "The Qt parent manages child lifetime. A second independent deletion path requires coordination; an observing pointer does not itself release the resource."
+    },
+    {
+      "question": "Message source was edited but Preview was not rebuilt. What does the old window establish?",
+      "answers": [
+        "Behaviour of the new version because its file was saved.",
+        "That the compiler automatically rewrote the old Wasm.",
+        "Only behaviour of the previously built version."
       ],
       "correctIndex": 2,
-      "explanation": "Display position does not replace domain identity."
+      "explanation": "A build belongs to a source snapshot. Edited text requires rebuilding and repeating the observed scenario."
     },
     {
-      "question": "What is expected in the first reference case?",
+      "question": "After filtering, the first visible row belongs to id 2. How should complete identify its target?",
       "answers": [
-        "One open task; the count reflects the model.",
-        "Data are always deleted.",
-        "The build must always fail."
+        "Using the id stored in UserRole.",
+        "Always using row+1.",
+        "Using the total visible-row count."
       ],
       "correctIndex": 0,
-      "explanation": "Create a new C++ application in Project Studio. Add a QLabel total-task indicator and derive it from the model during refresh. Preserve Add/Enter/Complete/Save, the Task title accessible name and NXTF1. Empty or whitespace-only titles must not create tasks."
-    },
-    {
-      "question": "How should the independent extension be checked?",
-      "answers": [
-        "Only rename the project.",
-        "Design a completed-task filter without changing ids.",
-        "Keep no observations."
-      ],
-      "correctIndex": 1,
-      "explanation": "Retain a checkable result: Design a completed-task filter without changing ids. Explain the selected contract and supply an independent example."
+      "explanation": "Filtering changes position rather than task identity. UserRole connects the row to its persistent model id."
     }
   ],
   "readinessCheck": [
     {
-      "question": "What is required when an operation with a strong guarantee fails?",
+      "question": "Why should model.cpp not include QApplication merely for a GUI adapter?",
       "answers": [
-        "Preserve the specified state.",
-        "Delete all data.",
-        "Always close the browser."
-      ],
-      "correctIndex": 0,
-      "explanation": "The guarantee concerns the specified model at an operation boundary."
-    },
-    {
-      "question": "Who owns an object supplied through an ordinary reference?",
-      "answers": [
-        "Always the called function.",
-        "Ownership is specified separately; a reference does not transfer it.",
-        "Nobody."
-      ],
-      "correctIndex": 1,
-      "explanation": "The owner must outlive use of the reference."
-    },
-    {
-      "question": "How is a driver with its own main built?",
-      "answers": [
-        "Always together with another main.",
-        "Without domain code.",
-        "Instead of application main, sharing model sources."
+        "Otherwise tasks cannot be stored in a vector.",
+        "C++ prohibits separate model and GUI files.",
+        "It would add a GUI dependency to the model and its independent tests."
       ],
       "correctIndex": 2,
-      "explanation": "The application and driver have separate entry points and builds."
+      "explanation": "Separating model and adapter preserves CLI/tests builds without Qt. The GUI dependency belongs to the GUI target."
+    },
+    {
+      "question": "What does a callback retaining non-owning receiver access require?",
+      "answers": [
+        "A lifetime guarantee or checked weak access before invocation.",
+        "Only an onClick name.",
+        "An assumption that the window is never closed."
+      ],
+      "correctIndex": 0,
+      "explanation": "A callback name does not manage lifetime. Receiver closure is a separate scenario requiring design and tests."
+    },
+    {
+      "question": "Can the domain rule complete be tested without a real GUI?",
+      "answers": [
+        "Yes, but only replace the model with an unrelated JS mock-up.",
+        "Yes, invoke the same model from a separate driver.",
+        "No, the rule must run only inside paint."
+      ],
+      "correctIndex": 1,
+      "explanation": "The driver checks the actual C++ model. It does not establish GUI accessibility, but GUI is not needed for domain logic."
     }
   ],
   "reflection": [

@@ -185,39 +185,39 @@
   "practice": [
     {
       "task": "Name each class’s responsibility.",
-      "criteria": "Retain a checkable result: The laboratory starts with stock two. Commands +5, -3 and +20 leave four with one rejection. The model prints no messages and reads no cin. After every action, the presenter displays the actual quantity, including after rejection. This prevents the interface from displaying a proposed value that the model did not accept. Explain the selected contract and supply an independent example.",
+      "criteria": "Assign the invariant to Stock, display to View and command/update coordination to Presenter; give one responsibility and one forbidden dependency for each.",
       "level": "basic",
-      "hint": "The laboratory starts with stock two. Commands +5, -3 and +20 leave four with one rejection. The model prints no messages and reads no cin. After every action, the presenter displays the actual quantity, including after rejection. This prevents the interface from displaying a proposed value that the model did not accept."
+      "hint": "Ask which class should know about cin, Qt or a particular message string."
     },
     {
       "task": "Trace the lifetime of the three objects.",
-      "criteria": "Retain a checkable result: A virtual hierarchy is unnecessary for this small example. View stores last and exposes show, allowing tests to observe a result without a window. If multiple adapters later share a contract, compare a templated presenter with a virtual interface. Choose according to extension needs, ownership cost and testability, rather than introducing a pattern solely for its name. Explain the selected contract and supply an independent example.",
+      "criteria": "State construction and reverse destruction order for Stock/View/Presenter in main; explain why the references remain valid and which scope escape would violate lifetime.",
       "level": "basic",
-      "hint": "A virtual hierarchy is unnecessary for this small example. View stores last and exposes show, allowing tests to observe a result without a window. If multiple adapters later share a contract, compare a templated presenter with a virtual interface. Choose according to extension needs, ownership cost and testability, rather than introducing a pattern solely for its name."
+      "hint": "References do not own their targets. Compare Presenter destruction with destruction of its dependencies."
     },
     {
       "task": "Complete change and onChange.",
-      "criteria": "Retain a checkable result: Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected. Explain the selected contract and supply an independent example.",
+      "criteria": "change validates delta before addition; onChange displays actual stock even after rejection; all reference cases match, including INT_MAX.",
       "level": "applied",
-      "hint": "Stock starts with two items. Minus three would violate the lower bound. false and two demonstrate preservation."
+      "hint": "The delta-range check must short-circuit before potentially unsafe addition."
     },
     {
       "task": "Add a fake recording all display updates.",
-      "criteria": "Retain a checkable result: Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected. Explain the selected contract and supply an independent example.",
+      "criteria": "The fake records show history; a test checks the initial display and the number/values of updates following accepted and rejected commands.",
       "level": "applied",
-      "hint": "fake.last starts at minus one. present calls show(8). The last displayed value is checked without a GUI."
+      "hint": "last alone cannot establish call count; record every value in a vector."
     },
     {
       "task": "Connect a text adapter without adding cin to Stock.",
-      "criteria": "Retain a checkable result: Connect a text adapter without adding cin to Stock. Explain the selected contract and supply an independent example.",
+      "criteria": "The text adapter parses input outside Stock; the same model tests work with fake and text views, and the model contains no cin dependency.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Pass a numeric command to Presenter rather than the complete input stream."
     },
     {
       "task": "Design a finance model using the same responsibility boundaries.",
-      "criteria": "Retain a checkable result: Design a finance model using the same responsibility boundaries. Explain the selected contract and supply an independent example.",
+      "criteria": "The finance model uses integer minor units, explicit bounds and unchanged-state rejection; its adapter and two boundary tests are independent of stock rules.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Do not copy the limit 20 automatically. Choose bounds and establish arithmetic safety before committing."
     }
   ],
   "laboratory": {
@@ -289,86 +289,86 @@
   },
   "assessment": [
     {
-      "question": "Who validates the permitted stock range?",
+      "question": "Stock starts at 2 and receives+5,-3,+20. What should model and View show at the end?",
       "answers": [
-        "Stock.",
-        "QLabel.",
-        "std::cin."
-      ],
-      "correctIndex": 0,
-      "explanation": "The invariant belongs to the domain model."
-    },
-    {
-      "question": "Does the presenter own its referenced collaborators?",
-      "answers": [
-        "Yes.",
-        "No; their owners must outlive it.",
-        "Only View."
+        "Both 20, rejected 0 after clamping.",
+        "Both 4, rejected 1.",
+        "Model 4, View 24, rejected 1."
       ],
       "correctIndex": 1,
-      "explanation": "A reference does not transfer ownership."
+      "explanation": "The first two commands produce 7 and 4. The last is rejected, and Presenter displays actual 4 rather than proposed 24."
     },
     {
-      "question": "What does the fake fail to establish?",
+      "question": "Why check delta before quantity+delta?",
       "answers": [
-        "The supplied number.",
-        "The last show value.",
-        "Accessibility of actual widgets."
+        "INT_MAX may cause signed overflow before a later result check.",
+        "Addition automatically clamps to the Stock range.",
+        "The View makes every int safe."
+      ],
+      "correctIndex": 0,
+      "explanation": "Rejecting after undefined behaviour does not provide safety. Short-circuiting must avoid the unsafe calculation."
+    },
+    {
+      "question": "Stock/View are constructed before Presenter in one scope. Why are its references valid during destruction?",
+      "answers": [
+        "Every reference extends its target lifetime.",
+        "Presenter silently copies both dependencies.",
+        "Local objects are destroyed in reverse construction order."
       ],
       "correctIndex": 2,
-      "explanation": "The graphical interface is tested separately."
+      "explanation": "Presenter is destroyed first while dependencies remain. Retaining it beyond their scope would be a different, unsafe contract."
     },
     {
-      "question": "What is expected in the first reference case?",
+      "question": "A fake View stores only last. What cannot be checked without extending it?",
       "answers": [
-        "stock 4 rejected 1\n",
-        "Data are always deleted.",
-        "The build must always fail."
-      ],
-      "correctIndex": 0,
-      "explanation": "Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected."
-    },
-    {
-      "question": "How should the independent extension be checked?",
-      "answers": [
-        "Only rename the project.",
-        "Design a finance model using the same responsibility boundaries.",
-        "Keep no observations."
+        "Whether last equals current Stock.",
+        "The exact count and order of all show calls.",
+        "The last supplied value."
       ],
       "correctIndex": 1,
-      "explanation": "Retain a checkable result: Design a finance model using the same responsibility boundaries. Explain the selected contract and supply an independent example."
+      "explanation": "Overwriting last loses call history. Count and ordering checks require recording each call."
+    },
+    {
+      "question": "Adding a GUI button is said to require moving cin into Stock. What does this indicate?",
+      "answers": [
+        "A need to replace Stock bounds with window dimensions.",
+        "Mixing the input adapter with the domain model.",
+        "A mandatory C++ class requirement."
+      ],
+      "correctIndex": 1,
+      "explanation": "The button should form a command for Presenter. The model need not know the input device or depend on GUI for that change."
     }
   ],
   "readinessCheck": [
     {
-      "question": "What is required when an operation with a strong guarantee fails?",
+      "question": "After a forbidden state-machine transition, what should the next handler observe?",
       "answers": [
-        "Preserve the specified state.",
-        "Delete all data.",
-        "Always close the browser."
-      ],
-      "correctIndex": 0,
-      "explanation": "The guarantee concerns the specified model at an operation boundary."
-    },
-    {
-      "question": "Who owns an object supplied through an ordinary reference?",
-      "answers": [
-        "Always the called function.",
-        "Ownership is specified separately; a reference does not transfer it.",
-        "Nobody."
-      ],
-      "correctIndex": 1,
-      "explanation": "The owner must outlive use of the reference."
-    },
-    {
-      "question": "How is a driver with its own main built?",
-      "answers": [
-        "Always together with another main.",
-        "Without domain code.",
-        "Instead of application main, sharing model sources."
+        "An intermediate new state before rollback.",
+        "The initial state of the program regardless of prior commands.",
+        "The previous state with the rejection recorded."
       ],
       "correctIndex": 2,
-      "explanation": "The application and driver have separate entry points and builds."
+      "explanation": "Rejection preserves the specified current state rather than restoring an arbitrary initial state."
+    },
+    {
+      "question": "Which module is best tested independently of windows and cin?",
+      "answers": [
+        "Only the browser keyboard driver.",
+        "The model containing domain rules.",
+        "Only widget layout."
+      ],
+      "correctIndex": 1,
+      "explanation": "Separating domain decisions from input/output devices permits ordinary deterministic tests."
+    },
+    {
+      "question": "An object retains a reference to a dependency. What is required?",
+      "answers": [
+        "The reference holder automatically becomes its owner.",
+        "Matching variable names is sufficient.",
+        "The dependency survives every use through that reference."
+      ],
+      "correctIndex": 2,
+      "explanation": "A non-owning reference does not manage destruction. Lifetime design and the owner must provide that guarantee."
     }
   ],
   "reflection": [

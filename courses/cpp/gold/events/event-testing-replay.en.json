@@ -186,39 +186,39 @@
   "practice": [
     {
       "task": "Compute the result of trace 3,-5,2.",
-      "criteria": "Retain a checkable result: The laboratory starts at zero; each number is a delta and accepted results stay in 0…10. For 3, -5, 2, the first command succeeds, the second is rejected and the third yields five. Also check rejected=1. An implementation that merely clamps negative results to zero produces another outcome and violates preservation on rejection. Explain the selected contract and supply an independent example.",
+      "criteria": "A manual 3,-5,2 trace shows every acceptance/rejection and final value 5/rejected 1; rejection must not be replaced with clamping to zero.",
       "level": "basic",
-      "hint": "The laboratory starts at zero; each number is a delta and accepted results stay in 0…10. For 3, -5, 2, the first command succeeds, the second is rejected and the third yields five. Also check rejected=1. An implementation that merely clamps negative results to zero produces another outcome and violates preservation on rejection."
+      "hint": "After the first step, ask whether the second is permitted to produce a negative state."
     },
     {
       "task": "Explain how replay differs from correctness.",
-      "criteria": "Retain a checkable result: Agreement between two runs supports reproducibility for that input, but both runs can make the same mistake. Independently computed expectations are still needed. The laboratory combines exact stdout with replay and a range invariant. Keep these forms of evidence distinct: each detects different errors and has its own limitations. Explain the selected contract and supply an independent example.",
+      "criteria": "Explain why identical replays can repeat the same defect; distinguish an independent expectation, an invariant and reproducibility.",
       "level": "basic",
-      "hint": "Agreement between two runs supports reproducibility for that input, but both runs can make the same mistake. Independently computed expectations are still needed. The laboratory combines exact stdout with replay and a range invariant. Keep these forms of evidence distinct: each detects different errors and has its own limitations."
+      "hint": "Consider two identical faulty implementations: would their results agree?"
     },
     {
       "task": "Check replay and the invariant after each event.",
-      "criteria": "Retain a checkable result: Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS. Explain the selected contract and supply an independent example.",
+      "criteria": "For every event, check bounds and unchanged-state rejection; two replays start fresh and agree with an independently expected result.",
       "level": "applied",
-      "hint": "The trace accepts three, rejects minus five and accepts two. The replay creates fresh zero state. Both results equal five."
+      "hint": "Do not run the second replay on top of the first one's state."
     },
     {
       "task": "Mutate a boundary and design a test that detects it.",
-      "criteria": "Retain a checkable result: Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS. Explain the selected contract and supply an independent example.",
+      "criteria": "A specific test detects an intentional boundary change; retain the original PASS, mutated FAIL and restored PASS.",
       "level": "applied",
-      "hint": "Observed six deliberately differs from expected five. contract returns false. The mutation-detection test succeeds only when the mismatch is detected."
+      "hint": "Choose input on the exact boundary being changed rather than an ordinary middle case."
     },
     {
       "task": "Reduce a failing trace by greedily removing events.",
-      "criteria": "Retain a checkable result: Reduce a failing trace by greedily removing events. Explain the selected contract and supply an independent example.",
+      "criteria": "The reducer preserves the observed failure after each deletion; distinguish the resulting deletion-minimal trace from a globally shortest one.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Greedy deletion does not prove that no different shorter trace exists."
     },
     {
       "task": "Write a reproducible defect report and regression check.",
-      "criteria": "Retain a checkable result: Write a reproducible defect report and regression check. Explain the selected contract and supply an independent example.",
+      "criteria": "The report includes revision, input, expectation, observation and exit code; regression fails with the defect and passes after restoration without personal data.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "FAIL must affect the verdict; check the driver's exit code separately."
     }
   ],
   "laboratory": {
@@ -290,86 +290,86 @@
   },
   "assessment": [
     {
-      "question": "Do two identical runs prove correctness?",
+      "question": "For trace 3,-5,2, what is the independently expected result?",
       "answers": [
-        "No; an independent expected result is needed.",
-        "Yes.",
-        "Only with empty input."
-      ],
-      "correctIndex": 0,
-      "explanation": "A reproducible mistake is still a mistake."
-    },
-    {
-      "question": "What does a mutation test?",
-      "answers": [
-        "Network speed.",
-        "Whether a test can detect a defect.",
-        "Browser version."
-      ],
-      "correctIndex": 1,
-      "explanation": "A deliberate defect should make the check fail."
-    },
-    {
-      "question": "What belongs in a report?",
-      "answers": [
-        "Only PASS.",
-        "An account password.",
-        "Revision, input, expected and actual output, and exit code."
+        "value 2 rejected 1.",
+        "value 0 rejected 0.",
+        "value 5 rejected 1."
       ],
       "correctIndex": 2,
-      "explanation": "That protocol permits repetition without secrets."
+      "explanation": "After 3, an attempted-2 is rejected while retaining 3; then+2 yields 5. Clamping to zero would incorrectly yield 2."
     },
     {
-      "question": "What is expected in the first reference case?",
+      "question": "Two replay results match. Which conclusion is supported?",
       "answers": [
-        "value 5 rejected 1 replay PASS\n",
-        "Data are always deleted.",
-        "The build must always fail."
-      ],
-      "correctIndex": 0,
-      "explanation": "Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS."
-    },
-    {
-      "question": "How should the independent extension be checked?",
-      "answers": [
-        "Only rename the project.",
-        "Write a reproducible defect report and regression check.",
-        "Keep no observations."
+        "Absence of dependence on any external state.",
+        "Reproducibility for this input, while correctness needs an independent expectation.",
+        "Correctness of all possible traces."
       ],
       "correctIndex": 1,
-      "explanation": "Retain a checkable result: Write a reproducible defect report and regression check. Explain the selected contract and supply an independent example."
+      "explanation": "The same error can be reproducible. One input check does not prove universal properties."
+    },
+    {
+      "question": "A mutant changes upper bound 10 to 9. Which trace directly detects it?",
+      "answers": [
+        "One delta 10 from zero.",
+        "One delta 3 from zero.",
+        "An empty trace."
+      ],
+      "correctIndex": 0,
+      "explanation": "Ten is valid under the original contract and rejected by the mutant. Ordinary 3 and the empty trace do not reach the changed bound."
+    },
+    {
+      "question": "The second replay starts from the first result instead of zero. What is wrong?",
+      "answers": [
+        "Replay requires shared mutable state by definition.",
+        "Determinism prohibits constructing a fresh model.",
+        "The initial conditions differ."
+      ],
+      "correctIndex": 2,
+      "explanation": "Replay comparison repeats one contract with the same input and pre-state. Continuing a run is not replaying it."
+    },
+    {
+      "question": "A driver prints FAIL followed by PASS 10 and exits 1. What verdict is correct?",
+      "answers": [
+        "The check failed.",
+        "It passed because PASS appears somewhere.",
+        "Exit code is irrelevant when there is more than one line."
+      ],
+      "correctIndex": 0,
+      "explanation": "A count of successful checks does not cancel a detected failure. The oracle must consider the complete protocol and exit code."
     }
   ],
   "readinessCheck": [
     {
-      "question": "What is required when an operation with a strong guarantee fails?",
+      "question": "An unfinished cancelled job has candidate 6. What is its committed result under the earlier contract?",
       "answers": [
-        "Preserve the specified state.",
-        "Delete all data.",
-        "Always close the browser."
+        "0: the candidate was not committed as a completed result.",
+        "6: every intermediate value is automatically committed.",
+        "The previous run sum without checking."
       ],
       "correctIndex": 0,
-      "explanation": "The guarantee concerns the specified model at an operation boundary."
+      "explanation": "Progress and a committed result are distinct observations. The test must follow the chosen commit point."
     },
     {
-      "question": "Who owns an object supplied through an ordinary reference?",
+      "question": "After successfully loading{4}, a corrupt record is rejected. Which expectation checks preservation?",
       "answers": [
-        "Always the called function.",
-        "Ownership is specified separately; a reference does not transfer it.",
-        "Nobody."
+        "The model equals the incomplete corrupt input.",
+        "The model remains{4}.",
+        "The model is always{99}, as at laboratory startup."
       ],
       "correctIndex": 1,
-      "explanation": "The owner must outlive use of the reference."
+      "explanation": "Compare with that operation pre-state. Substituting initial state is not a strong guarantee."
     },
     {
-      "question": "How is a driver with its own main built?",
+      "question": "Why run a test against an intentionally faulty implementation?",
       "answers": [
-        "Always together with another main.",
-        "Without domain code.",
-        "Instead of application main, sharing model sources."
+        "To replace independent expected results.",
+        "To check whether it detects the chosen defect.",
+        "To prove absence of every possible defect."
       ],
-      "correctIndex": 2,
-      "explanation": "The application and driver have separate entry points and builds."
+      "correctIndex": 1,
+      "explanation": "A negative control establishes sensitivity to a particular defect. It neither makes the test complete nor supplies an oracle by itself."
     }
   ],
   "reflection": [

@@ -92,7 +92,7 @@
     {
       "title": "A toggle button and filter state",
       "paragraphs": [
-        "A QPushButton can retain an enabled state: setCheckable(true) selects that mode, isChecked() reads it and toggled reports a change. Connect toggled to refresh with this as context. Filtering changes only which tasks are displayed; open and completed counts always come from the entire model. Activating the button with Enter and activating it again must change the view predictably.",
+        "QPushButton supports a checkable mode: setCheckable(true) enables checking, isChecked() reads the checked state and toggled reports its change. This differs from enabled: interaction availability and checked state are separate properties. Connect toggled to refresh with this as context. Filtering changes displayed rows only, while open/done counts use the entire model. In Nexus Preview, focus the named Open tasks only control: a visible ring identifies the target, Space and Enter activate it, and another activation restores the full view. For an ordinary Qt button, Space with focus is the basic activation key; outside Nexus, Enter depends on default/autoDefault and the window type.",
         "Check two tasks: complete the first, enable filtering and complete the remaining second task. Its id remains two even though it is now the first visible row. Open: 0 Done: 2 verifies that scenario; saved NXTF1 must still contain both tasks. Changing the filter requires no change to TaskModel or its data format."
       ]
     },
@@ -222,39 +222,39 @@
   "practice": [
     {
       "task": "Identify the files required for a reproducible build.",
-      "criteria": "Retain a checkable result: A build belongs to a source snapshot. Editing after launch means the old Preview does not establish that the new text works. Check revision status, rebuild and repeat the scenario. Build diagnostics, model tests and interface checks provide different results. A build-service connection error is not a learner variable-declaration error. Explain the selected contract and supply an independent example.",
+      "criteria": "List model/GUI/CLI/tests/CMake/target and the pinned SDK; README enables reproducing application and model builds from the same sources.",
       "level": "basic",
-      "hint": "A build belongs to a source snapshot. Editing after launch means the old Preview does not establish that the new text works. Check revision status, rebuild and repeat the scenario. Build diagnostics, model tests and interface checks provide different results. A build-service connection error is not a learner variable-declaration error."
+      "hint": "Separate build inputs from Wasm/Preview outputs and from a personal Nexus session."
     },
     {
       "task": "Explain data saving versus source submission.",
-      "criteria": "Retain a checkable result: Before corruption tests, retain the valid file and a checkpoint. In a copy, change the version marker and verify explicit rejection rather than silent reinterpretation. Restore the valid file afterwards. Do not experiment on the only copy of a personal project or clear storage and cookies; those actions are unnecessary for checking the teaching format. Explain the selected contract and supply an independent example.",
+      "criteria": "Distinguish saving taskflow.txt from immutable source submission; Stop→Run proves data retention, while post-submission edits leave its hash unchanged.",
       "level": "basic",
-      "hint": "Before corruption tests, retain the valid file and a checkpoint. In a copy, change the version marker and verify explicit rejection rather than silent reinterpretation. Restore the valid file afterwards. Do not experiment on the only copy of a personal project or clear storage and cookies; those actions are unnecessary for checking the teaching format."
+      "hint": "A submission is not the current workspace, and a process file is not a saved project file."
     },
     {
       "task": "Implement open and completed task counts.",
-      "criteria": "Retain a checkable result: In a new TaskFlow project implement open/done counts and an all/open GUI filter. Filtering must preserve the model, persistent ids and all NXTF1 data. Verify persistence, Stop→Run, model tests, immutable submission and portable ZIP within Nexus. Explain the selected contract and supply an independent example.",
+      "criteria": "Compute open/done over all tasks during refresh; repeated complete and filtering preserve counts, with 0/2 and 1/1 checked on two tasks.",
       "level": "applied",
-      "hint": "The total count comes from tasks().size(). Model code and NXTF1 remain unchanged. This is the starting reference before adding a filter."
+      "hint": "Do not compute total done using only visible QListWidget rows."
     },
     {
       "task": "Add an all/open filter preserving ids.",
-      "criteria": "Retain a checkable result: In a new TaskFlow project implement open/done counts and an all/open GUI filter. Filtering must preserve the model, persistent ids and all NXTF1 data. Verify persistence, Stop→Run, model tests, immutable submission and portable ZIP within Nexus. Explain the selected contract and supply an independent example.",
+      "criteria": "All/open changes visibility without deleting model data; complete the correct id 2 after filtering, retain both tasks in NXTF1 and test accessible-control Space/Enter.",
       "level": "applied",
-      "hint": "The filter skips done items only while rendering. UserRole continues to store the persistent id. Saving records all tasks regardless of the filter."
+      "hint": "Bind UserRole to the persistent id and select the model item rather than a row number."
     },
     {
       "task": "Prepare ZIP, README, ADR and a restoration check.",
-      "criteria": "Retain a checkable result: Prepare ZIP, README, ADR and a restoration check. Explain the selected contract and supply an independent example.",
+      "criteria": "ZIP contains sources, data and instructions without credentials; ADR compares alternatives, and reimport/rebuild plus data restoration are documented.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Downloading the archive does not establish portability: restore it into a separate copy."
     },
     {
       "task": "Defend the project by adding a small new scenario.",
-      "criteria": "Retain a checkable result: Defend the project by adding a small new scenario. Explain the selected contract and supply an independent example.",
+      "criteria": "During defense, implement a newly agreed scenario with prediction, source and observation; explain affected files and baseline automatic-test limitations.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Choose a small change absent from the reference and record its expected behaviour first."
     }
   ],
   "laboratory": {
@@ -476,86 +476,86 @@
   },
   "assessment": [
     {
-      "question": "Does editing change an already submitted revision?",
+      "question": "One of two tasks is done and the open filter is enabled. What are total counts and model size?",
       "answers": [
-        "No.",
-        "Yes, always.",
-        "Only its title."
-      ],
-      "correctIndex": 0,
-      "explanation": "Submission retains an immutable snapshot."
-    },
-    {
-      "question": "Should the open filter delete completed tasks?",
-      "answers": [
-        "Yes.",
-        "No; only the view changes.",
-        "If there are more than two."
-      ],
-      "correctIndex": 1,
-      "explanation": "Persistence and the model must retain all tasks."
-    },
-    {
-      "question": "What does a green baseline test establish?",
-      "answers": [
-        "Complete academic assessment.",
-        "Every new feature.",
-        "The checked baseline cases, not every extension."
+        "Open 1/Done 0, model size 1.",
+        "Open 2/Done 0, model size 2.",
+        "Open 1/Done 1, model size 2, one visible row."
       ],
       "correctIndex": 2,
-      "explanation": "Extensions require their own tests and review."
+      "explanation": "The filter excludes rows only from the view. Counts and persistence use the whole model, including the hidden completed task."
     },
     {
-      "question": "What is expected in the first reference case?",
+      "question": "After immutable submission, the learner edits workspace src/gui.cpp. What should the teacher read in the earlier submission?",
       "answers": [
-        "One open task; the count reflects the model.",
-        "Data are always deleted.",
-        "The build must always fail."
-      ],
-      "correctIndex": 0,
-      "explanation": "In a new TaskFlow project implement open/done counts and an all/open GUI filter. Filtering must preserve the model, persistent ids and all NXTF1 data. Verify persistence, Stop→Run, model tests, immutable submission and portable ZIP within Nexus."
-    },
-    {
-      "question": "How should the independent extension be checked?",
-      "answers": [
-        "Only rename the project.",
-        "Defend the project by adding a small new scenario.",
-        "Keep no observations."
+        "A mixture of old model and new GUI depending on opening time.",
+        "The snapshot bytes recorded by that submission.",
+        "The current workspace without hash verification."
       ],
       "correctIndex": 1,
-      "explanation": "Retain a checkable result: Defend the project by adding a small new scenario. Explain the selected contract and supply an independent example."
+      "explanation": "An immutable submission belongs to a specific revision. Later edits require another submission rather than rewriting the earlier one."
+    },
+    {
+      "question": "Baseline tests pass, but a new filter was added. How should the extension be assessed?",
+      "answers": [
+        "Treat every new GUI feature as automatically fully tested.",
+        "Check only that CMakeLists.txt exists.",
+        "Add filter scenarios, verify ids/data and apply the rubric with defense."
+      ],
+      "correctIndex": 2,
+      "explanation": "Baseline covers specified original cases. A new feature may break visibility or identity without affecting those checks."
+    },
+    {
+      "question": "What is required after downloading a portable source ZIP?",
+      "answers": [
+        "Treat the.zip extension as proof of portability.",
+        "Add session credentials to README for the model build.",
+        "Restore into a separate copy, build and test selected data/scenarios."
+      ],
+      "correctIndex": 2,
+      "explanation": "An archive enables transfer but is not its verification result. Model/CLI builds require no Nexus session, and credentials are excluded."
+    },
+    {
+      "question": "How can accessible Open tasks only be tested in Nexus Preview without calling click from test JavaScript?",
+      "answers": [
+        "Change only DOM checked and consider the model verified.",
+        "Check only the filter label in a screenshot.",
+        "Focus the named control, press Space/Enter and verify the C++ view/preserved ids."
+      ],
+      "correctIndex": 2,
+      "explanation": "The keyboard path must actually invoke the Qt/C++ action. A DOM flag and a picture alone prove neither the handler nor model preservation."
     }
   ],
   "readinessCheck": [
     {
-      "question": "What is required when an operation with a strong guarantee fails?",
+      "question": "Which GUI-test result cannot be replaced by successful model tests?",
       "answers": [
-        "Preserve the specified state.",
-        "Delete all data.",
-        "Always close the browser."
-      ],
-      "correctIndex": 0,
-      "explanation": "The guarantee concerns the specified model at an operation boundary."
-    },
-    {
-      "question": "Who owns an object supplied through an ordinary reference?",
-      "answers": [
-        "Always the called function.",
-        "Ownership is specified separately; a reference does not transfer it.",
-        "Nobody."
+        "Model format parsing.",
+        "Focus and keyboard activation of a real control.",
+        "The domain rule for repeated complete."
       ],
       "correctIndex": 1,
-      "explanation": "The owner must outlive use of the reference."
+      "explanation": "Model tests contain no browser widgets. Executable domain logic and presentation accessibility require distinct gates."
     },
     {
-      "question": "How is a driver with its own main built?",
+      "question": "Only current process FS was written before Stop. What else was needed to establish restoration?",
       "answers": [
-        "Always together with another main.",
-        "Without domain code.",
-        "Instead of application main, sharing model sources."
+        "Only the presence of a Saved string in source.",
+        "Only the built Wasm size.",
+        "Explicitly saving the permitted file into the project followed by a new Run."
       ],
       "correctIndex": 2,
-      "explanation": "The application and driver have separate entry points and builds."
+      "explanation": "Persistence requires crossing the process boundary. A message or binary size does not establish retained project bytes."
+    },
+    {
+      "question": "What does an intentionally faulty extension add to a test protocol?",
+      "answers": [
+        "A reason to remove independent expectations.",
+        "Evidence that the chosen test detects an extension defect.",
+        "Automatic proof of every course requirement."
+      ],
+      "correctIndex": 1,
+      "explanation": "A negative control concerns a particular error. It supplements rather than replaces specifications and other scenarios."
     }
   ],
   "reflection": [

@@ -186,39 +186,39 @@
   "practice": [
     {
       "task": "Show the processing order for 3, 2, 3.",
-      "criteria": "Retain a checkable result: For input 3, 2, 3, the laboratory first enqueues all three numbers. Each three appends a one to the back. Processing therefore visits 3, 2, 3, 1, 1: total ten and five calls. Recursive dispatch would process a one immediately after the first three. Equal final totals do not prove equal behaviour; an event log can distinguish the implementations. Explain the selected contract and supply an independent example.",
+      "criteria": "Show FIFO contents and the five dispatches 3,2,3,1,1; independently derive total 10 and processed 5.",
       "level": "basic",
-      "hint": "For input 3, 2, 3, the laboratory first enqueues all three numbers. Each three appends a one to the back. Processing therefore visits 3, 2, 3, 1, 1: total ten and five calls. Recursive dispatch would process a one immediately after the first three. Equal final totals do not prove equal behaviour; an event log can distinguish the implementations."
+      "hint": "All three original events are queued first; each generated one joins the tail."
     },
     {
       "task": "Explain the difference between front and pop.",
-      "criteria": "Retain a checkable result: Removing the element before the callback means the current event is no longer counted as pending. The callback may append events after those already waiting. A queue has no arbitrary indexing or sorting operation: priority scheduling requires a different contract and structure. This exercise preserves arrival order, including repeated values that represent separate events. Explain the selected contract and supply an independent example.",
+      "criteria": "Explain that front accesses the first item whereas pop removes it without returning a value; include an empty check and the invalid reference after pop.",
       "level": "basic",
-      "hint": "Removing the element before the callback means the current event is no longer counted as pending. The callback may append events after those already waiting. A queue has no arbitrary indexing or sorting operation: priority scheduling requires a different contract and structure. This exercise preserves arrival order, including repeated values that represent separate events."
+      "hint": "Copy front into a local value before removing the item and invoking its handler."
     },
     {
       "task": "Complete the queue and callback in the starter.",
-      "criteria": "Retain a checkable result: Read n=0…12 followed by n values in 0…9. Fill FIFO before dispatch. Each handler adds its value to total; a three appends a one. Print total and processed. Invalid syntax, range or trailing tokens produce invalid. Explain the selected contract and supply an independent example.",
+      "criteria": "The starter fills FIFO before draining, invokes the callback for each item and appends 1 after 3; verify reference cases and termination.",
       "level": "applied",
-      "hint": "push places two before five. front is copied and pop removes the element. The empty queue ends the loop after two iterations."
+      "hint": "The callback may enqueue events. Remove the current item before calling it rather than retaining a reference."
     },
     {
       "task": "Add an event log and verify FIFO.",
-      "criteria": "Retain a checkable result: Read n=0…12 followed by n values in 0…9. Fill FIFO before dispatch. Each handler adds its value to total; a three appends a one. Print total and processed. Invalid syntax, range or trailing tokens produce invalid. Explain the selected contract and supply an independent example.",
+      "criteria": "The log records exact dispatch order and generated-event origins; a test distinguishes FIFO from immediate recursive invocation despite equal totals.",
       "level": "applied",
-      "hint": "The lambda captures total by reference. The first invocation adds seven. After handler={} the check is false and no call occurs."
+      "hint": "Checking only the sum cannot detect an ordering change that preserves the total."
     },
     {
       "task": "Design enqueue with capacity three.",
-      "criteria": "Retain a checkable result: Design enqueue with capacity three. Explain the selected contract and supply an independent example.",
+      "criteria": "Specify capacity 3, the enqueue result and overflow policy; after four requests size remains at most 3 and the caller can observe rejection.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Check capacity before push. Do not report success when the event was not retained."
     },
     {
       "task": "Prove termination for 3→1 and disprove it for 3→3.",
-      "criteria": "Retain a checkable result: Prove termination for 3→1 and disprove it for 3→3. Explain the selected contract and supply an independent example.",
+      "criteria": "Give a decreasing-measure termination argument for 3→1 and a nonterminating 3→3 trace; state the initial-event bounds separately.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "One generates no event; replacing 3 with 3 always leaves another three to process."
     }
   ],
   "laboratory": {
@@ -290,86 +290,86 @@
   },
   "assessment": [
     {
-      "question": "When is the current event removed?",
+      "question": "FIFO is prefilled with 3,2,3; handling 3 appends 1. What is dispatch order?",
       "answers": [
-        "Before the callback.",
-        "After an arbitrary later event.",
-        "Never."
+        "3,2,3,1,1.",
+        "3,1,2,3,1.",
+        "1,1,2,3,3."
       ],
       "correctIndex": 0,
-      "explanation": "A local copy retains the value after pop."
+      "explanation": "Generated ones follow events already waiting. The second option is immediate recursion; the third sorts values."
     },
     {
-      "question": "What does if(handler) check?",
+      "question": "Why copy front and pop before invoking the callback?",
       "answers": [
-        "The event result.",
-        "Whether a callable target exists.",
-        "Queue size."
+        "To avoid retaining a reference to a removed item and make it no longer pending.",
+        "To prevent the callback from ever adding an event.",
+        "Because pop returns a copy of the handler."
       ],
-      "correctIndex": 1,
-      "explanation": "Checking and invoking are separate operations."
+      "correctIndex": 0,
+      "explanation": "pop returns nothing. The callback may still enqueue; removing the current event does not forbid later insertion."
     },
     {
-      "question": "What is the maximum processed count for n=12?",
+      "question": "With one initial three, what happens if 3→1 becomes 3→3?",
       "answers": [
-        "12",
-        "36",
-        "24"
+        "There is one call because the new 3 is considered a duplicate.",
+        "FIFO empties the queue after two calls.",
+        "The queue may never become empty."
       ],
       "correctIndex": 2,
-      "explanation": "Each original three generates exactly one one."
+      "explanation": "Each dispatch removes one three and adds another. FIFO establishes order but does not establish termination."
     },
     {
-      "question": "What is expected in the first reference case?",
+      "question": "Two dispatchers have equal totals but may process different orders. What should the test add?",
       "answers": [
-        "total 10 processed 5\n",
-        "Data are always deleted.",
-        "The build must always fail."
-      ],
-      "correctIndex": 0,
-      "explanation": "Read n=0…12 followed by n values in 0…9. Fill FIFO before dispatch. Each handler adds its value to total; a three appends a one. Print total and processed. Invalid syntax, range or trailing tokens produce invalid."
-    },
-    {
-      "question": "How should the independent extension be checked?",
-      "answers": [
-        "Only rename the project.",
-        "Prove termination for 3→1 and disprove it for 3→3.",
-        "Keep no observations."
+        "The callback names.",
+        "The exact event sequence in a log.",
+        "Only the character count of the total."
       ],
       "correctIndex": 1,
-      "explanation": "Retain a checkable result: Prove termination for 3→1 and disprove it for 3→3. Explain the selected contract and supply an independent example."
+      "explanation": "An equal commutative sum may conceal reordering. The log checks information lost by the total."
+    },
+    {
+      "question": "A capacity 3 queue is full and rejects a fourth event. What should its caller observe?",
+      "answers": [
+        "Success with an unspecified removal of the head.",
+        "Explicit rejection with size remaining 3.",
+        "Success because a handler will eventually free space."
+      ],
+      "correctIndex": 1,
+      "explanation": "Bounded memory requires a specified overflow policy. Silent removal changes command semantics and is not the specified success."
     }
   ],
   "readinessCheck": [
     {
-      "question": "What is required when an operation with a strong guarantee fails?",
+      "question": "Why can two consecutive reset commands leave the same value as one?",
       "answers": [
-        "Preserve the specified state.",
-        "Delete all data.",
-        "Always close the browser."
-      ],
-      "correctIndex": 0,
-      "explanation": "The guarantee concerns the specified model at an operation boundary."
-    },
-    {
-      "question": "Who owns an object supplied through an ordinary reference?",
-      "answers": [
-        "Always the called function.",
-        "Ownership is specified separately; a reference does not transfer it.",
-        "Nobody."
+        "A queue merges identical numbers.",
+        "Reset is idempotent with respect to value.",
+        "Every repeated event is automatically discarded."
       ],
       "correctIndex": 1,
-      "explanation": "The owner must outlive use of the reference."
+      "explanation": "The property follows reset semantics rather than a general delivery rule. Increment has a repeated effect."
     },
     {
-      "question": "How is a driver with its own main built?",
+      "question": "FIFO contains 2,5. After push 7, what does the next front return?",
       "answers": [
-        "Always together with another main.",
-        "Without domain code.",
-        "Instead of application main, sharing model sources."
+        "2.",
+        "7.",
+        "5 because the first two elements swap."
       ],
-      "correctIndex": 2,
-      "explanation": "The application and driver have separate entry points and builds."
+      "correctIndex": 0,
+      "explanation": "push appends to the tail and front accesses the head. This is neither a stack nor value-based sorting."
+    },
+    {
+      "question": "A callback with [&sum] outlives local sum. What is wrong with this design?",
+      "answers": [
+        "The callback retains a dangling reference.",
+        "sum was copied and only that copy changes.",
+        "std::function automatically moves sum to the heap."
+      ],
+      "correctIndex": 0,
+      "explanation": "Storing std::function does not turn a captured reference into ownership. Lifetimes must be coordinated separately."
     }
   ],
   "reflection": [

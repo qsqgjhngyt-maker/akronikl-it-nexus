@@ -14,6 +14,17 @@ test('M6: одинаковые исполняемые контракты RU/EN, 
  const ps=await module6GoldPrograms();for(const p of ps)assert.ok(p.aliases.some(a=>a.locale==='ru')&&p.aliases.some(a=>a.locale==='en'),p.id);assert.equal(all.filter(g=>g.runtimeTarget==='qt-wasm').length,4);for(const locale of ['ru','en']){const d=all.find(g=>g.lessonId==='cpp.application-build-delivery'&&g.locale===locale).laboratory.delivery;assert.equal(d.rubric.reduce((n,r)=>n+r.points,0),100);assert.ok(d.artifacts.length>=5);assert.equal(d.courseWideAssessment,false)}
  for(const id of GOLD_EVENT_LESSONS)assert.equal(all.find(g=>g.lessonId===id&&g.locale==='ru').assessment[0].correctIndex,all.find(g=>g.lessonId===id&&g.locale==='en').assessment[0].correctIndex);assert.equal(goldLessonPath('../../secret'),null);
 });
+test('M6: предметные наборы вопросов, согласованный RU/EN answer key и сохранённые legacyQuiz',()=>{
+ for(const locale of ['ru','en']){
+  const gs=all.filter(g=>g.locale===locale);assert.equal(new Set(gs.map(g=>JSON.stringify(g.readinessCheck))).size,12);
+  assert.equal(new Set(gs.flatMap(g=>g.readinessCheck.map(q=>q.question))).size,36);
+  assert.equal(new Set(gs.flatMap(g=>g.assessment.map(q=>q.question))).size,60);
+  for(const g of gs){for(const task of g.practice){assert.ok(task.criteria.length>=60);assert.ok(task.hint.length>=30);assert.ok(!task.criteria.startsWith('Retain a checkable result:'));assert.ok(!task.criteria.startsWith('Сохраните проверяемый результат:'));}
+   for(const q of g.assessment)assert.ok(!q.answers.some(a=>['Данные всегда удаляются.','Сборка всегда должна отказать.','Только переименовать проект.','Не сохранять результаты.','Data are always deleted.','The build must always fail.','Only rename the project.','Keep no observations.'].includes(a)));
+  }
+ }
+ for(const id of GOLD_EVENT_LESSONS){const ru=all.find(g=>g.lessonId===id&&g.locale==='ru'),en=all.find(g=>g.lessonId===id&&g.locale==='en');for(const key of ['assessment','readinessCheck'])assert.deepEqual(ru[key].map(q=>q.correctIndex),en[key].map(q=>q.correctIndex));}
+});
 test('M6: NEXUS-PERF-01, прежние жёсткие границы без скачивания Gold/компилятора на Home',async()=>{
  const seen=new Set();async function visit(f){if(seen.has(f))return;seen.add(f);const code=await readFile(f,'utf8');for(const m of code.matchAll(/(?:^|;|\n)\s*(?:import|export)\s+(?:[^;'"`]*?\s+from\s*)?["']([^"']+)["']/gm))if(m[1].startsWith('.'))await visit((await import('node:path')).posix.normalize((await import('node:path')).posix.join((await import('node:path')).posix.dirname(f),m[1])))}await visit('core/app.js');let bytes=0;for(const f of seen)bytes+=(await stat(f)).size;assert.ok(seen.size<=75&&bytes<=600000,JSON.stringify({modules:seen.size,bytes}));const outline=(await stat('courses/cpp/curriculum.json')).size+(await stat('courses/cpp/manifest.json')).size;assert.ok(outline<=30000);assert.ok(Buffer.byteLength(JSON.stringify(await j('courses/cpp/data/gold-laboratories.json')))<=46000);assert.ok(Buffer.byteLength(JSON.stringify(await j('courses/cpp/data/gold-laboratories-m6.json')))<=12000);assert.ok(!seen.has('core/academy-gold-presentation.js'));console.log(JSON.stringify({staticModules:seen.size,staticBytes:bytes,outlineBytes:outline,capModules:75,capBytes:600000,capOutline:30000}));
 });

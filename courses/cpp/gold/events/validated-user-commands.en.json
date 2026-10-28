@@ -186,39 +186,39 @@
   "practice": [
     {
       "task": "Explain ptr and ec for 12x.",
-      "criteria": "Retain a checkable result: First specify syntax: decimal digits with an optional minus at parsing time, no spaces or plus, and at most 32 bytes. A domain check then rejects negative values and values above one hundred. Zero is permitted. An empty line is rejected, whereas no lines means no commands. These are different observable cases. Explain the selected contract and supply an independent example.",
+      "criteria": "For 12x, identify candidate 12, successful conversion ec and ptr at x; reject the incomplete parse and preserve the previous value.",
       "level": "basic",
-      "hint": "First specify syntax: decimal digits with an optional minus at parsing time, no spaces or plus, and at most 32 bytes. A domain check then rejects negative values and values above one hundred. Zero is permitted. An empty line is rejected, whereas no lines means no commands. These are different observable cases."
+      "hint": "Successful prefix conversion does not imply ptr==end. Consider those checks separately."
     },
     {
       "task": "Compare no lines with an empty line.",
-      "criteria": "Retain a checkable result: For 12x, ptr points to x; a number outside int’s representable range reports result_out_of_range. Neither error should be silently converted to zero. The second example preserves value seventeen on conversion overflow. Do not generalize that behaviour to every input operation: different parsing functions have different failure-state contracts. Explain the selected contract and supply an independent example.",
+      "criteria": "Give separate runs: no lines retains 17/rejected 0, whereas an empty line retains 17 and increments rejected; explain getline behaviour.",
       "level": "basic",
-      "hint": "For 12x, ptr points to x; a number outside int’s representable range reports result_out_of_range. Neither error should be silently converted to zero. The second example preserves value seventeen on conversion overflow. Do not generalize that behaviour to every input operation: different parsing functions have different failure-state contracts."
+      "hint": "An empty line is a successful zero-length getline; EOF before the first line means no command."
     },
     {
       "task": "Implement update using a candidate.",
-      "criteria": "Retain a checkable result: Read at most eight command lines, initially value=17. Completely parse each 1…32-byte line with integer from_chars, without spaces or plus. Accept 0…100. Rejection preserves value and increments rejected. More than eight lines produces invalid. Explain the selected contract and supply an independent example.",
+      "criteria": "update uses a candidate and validates length, ec, ptr and bounds before assignment;12 followed by 12x retains 12 rather than resetting to 17.",
       "level": "applied",
-      "hint": "candidate receives numeric prefix twelve. ptr points to x rather than the end. The function rejects input and result remains seventeen."
+      "hint": "The single assignment to value belongs after all checks."
     },
     {
       "task": "Return distinct error enum values.",
-      "criteria": "Retain a checkable result: Read at most eight command lines, initially value=17. Completely parse each 1…32-byte line with integer from_chars, without spaces or plus. Accept 0…100. Rejection preserves value and increments rejected. More than eight lines produces invalid. Explain the selected contract and supply an independent example.",
+      "criteria": "The enum distinguishes an empty line, trailing input, conversion overflow and domain bounds; each has an input and an unchanged-value check.",
       "level": "applied",
-      "hint": "The number does not fit in int. ec reports result_out_of_range. The destination value remains seventeen."
+      "hint": "Return a code from the parser; choose localized text in the view."
     },
     {
       "task": "Design input for an integer amount in minor currency units.",
-      "criteria": "Retain a checkable result: Design input for an integer amount in minor currency units. Explain the selected contract and supply an independent example.",
+      "criteria": "Specify units, sign, length and bounds for a money string; test overflow, plus/whitespace and rejection following a successful value.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Store minor units as an integer; specify syntax separately from domain restrictions."
     },
     {
       "task": "Find a test that detects resetting to seventeen on failure.",
-      "criteria": "Retain a checkable result: Find a test that detects resetting to seventeen on failure. Explain the selected contract and supply an independent example.",
+      "criteria": "The test first sets a value other than 17, then supplies invalid input; a reset-to 17 implementation must fail the preservation check.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "A test starting only from 17 cannot distinguish preservation from an incorrect reset."
     }
   ],
   "laboratory": {
@@ -290,86 +290,86 @@
   },
   "assessment": [
     {
-      "question": "Is ec==errc{} sufficient?",
+      "question": "from_chars parses 12x into a candidate. What is insufficient to accept the whole string?",
       "answers": [
-        "No; also check ptr==end and domain bounds.",
-        "Yes, always.",
-        "Only string length matters."
-      ],
-      "correctIndex": 0,
-      "explanation": "A valid prefix may leave invalid trailing input."
-    },
-    {
-      "question": "When is value changed?",
-      "answers": [
-        "Before parsing.",
-        "After all candidate checks.",
-        "After each character."
-      ],
-      "correctIndex": 1,
-      "explanation": "The final assignment is the commit point."
-    },
-    {
-      "question": "Does this contract accept +2?",
-      "answers": [
-        "Yes.",
-        "Only with a space.",
-        "No."
+        "Checking ec, ptr==end and domain bounds together.",
+        "A length check together with complete parsing and bounds.",
+        "A successful ec alone; ptr==end and domain bounds are also needed."
       ],
       "correctIndex": 2,
-      "explanation": "Integer from_chars does not accept a leading plus."
+      "explanation": "The prefix 12 converts successfully but x remains unread. A successful ec does not certify full consumption."
     },
     {
-      "question": "What is expected in the first reference case?",
+      "question": "After command lines 12 and 12x, what does the laboratory model report?",
       "answers": [
-        "value 100 rejected 1\n",
-        "Data are always deleted.",
-        "The build must always fail."
+        "value 17 rejected 1.",
+        "value 12 rejected 0.",
+        "value 12 rejected 1."
+      ],
+      "correctIndex": 2,
+      "explanation": "The second line is rejected while retaining the first successful value. Restoring 17 would be reset rather than preservation."
+    },
+    {
+      "question": "How do empty stdin and stdin containing one newline differ?",
+      "answers": [
+        "No commands/rejected 0 versus one rejected empty command/rejected 1.",
+        "Both create one command 0.",
+        "Both always mean a malformed session with invalid."
       ],
       "correctIndex": 0,
-      "explanation": "Read at most eight command lines, initially value=17. Completely parse each 1…32-byte line with integer from_chars, without spaces or plus. Accept 0…100. Rejection preserves value and increments rejected. More than eight lines produces invalid."
+      "explanation": "getline distinguishes EOF before any line from a zero-length line. An empty command is not numeric 0."
     },
     {
-      "question": "How should the independent extension be checked?",
+      "question": "Why does this contract reject+2 although 2 is allowed?",
       "answers": [
-        "Only rename the project.",
-        "Find a test that detects resetting to seventeen on failure.",
-        "Keep no observations."
+        "Because from_chars requires a space before a digit.",
+        "Integer from_chars does not accept a leading plus.",
+        "Because 2 is outside 0…100."
       ],
       "correctIndex": 1,
-      "explanation": "Retain a checkable result: Find a test that detects resetting to seventeen on failure. Explain the selected contract and supply an independent example."
+      "explanation": "Conversion grammar and model bounds are separate conditions. A positive sign is outside this parser syntax."
+    },
+    {
+      "question": "Which check detects an erroneous conversion of overflow into 0?",
+      "answers": [
+        "After accepting 42, submit an oversized integer and check 42/rejected 1.",
+        "Starting from 17, submit 0 and check 0.",
+        "Submit 100 and check only for no crash."
+      ],
+      "correctIndex": 0,
+      "explanation": "Conversion overflow must reject the command and retain 42. Zero is a valid domain value, making substitution with 0 especially easy to miss."
     }
   ],
   "readinessCheck": [
     {
-      "question": "What is required when an operation with a strong guarantee fails?",
+      "question": "Where does converting field text into a numeric command belong?",
       "answers": [
-        "Preserve the specified state.",
-        "Delete all data.",
-        "Always close the browser."
+        "In the input adapter before invoking the domain model.",
+        "In a View method that only draws a supplied number.",
+        "In a global successful-command counter."
       ],
       "correctIndex": 0,
-      "explanation": "The guarantee concerns the specified model at an operation boundary."
+      "explanation": "Text parsing depends on transport, whereas numeric-command acceptance belongs to the model. Their failures can need different feedback."
     },
     {
-      "question": "Who owns an object supplied through an ordinary reference?",
+      "question": "What can unsuccessful formatted int extraction from cin establish?",
       "answers": [
-        "Always the called function.",
-        "Ownership is specified separately; a reference does not transfer it.",
-        "Nobody."
-      ],
-      "correctIndex": 1,
-      "explanation": "The owner must outlive use of the reference."
-    },
-    {
-      "question": "How is a driver with its own main built?",
-      "answers": [
-        "Always together with another main.",
-        "Without domain code.",
-        "Instead of application main, sharing model sources."
+        "That the next extraction necessarily succeeds without clear.",
+        "That the destination is guaranteed unchanged for every failure.",
+        "A stream failure state that must be checked."
       ],
       "correctIndex": 2,
-      "explanation": "The application and driver have separate entry points and builds."
+      "explanation": "Check stream state. Value-preservation contracts cannot automatically be transferred between cin and from_chars."
+    },
+    {
+      "question": "What does a strong failure guarantee mean after an earlier successful model update?",
+      "answers": [
+        "Restore the original startup value of the program.",
+        "Treat every later command as successful.",
+        "Preserve the state immediately before the rejected operation."
+      ],
+      "correctIndex": 2,
+      "explanation": "The guarantee concerns the operation and its pre-state, not rolling the whole history back to initial state."
     }
   ],
   "reflection": [

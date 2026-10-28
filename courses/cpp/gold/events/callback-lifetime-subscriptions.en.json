@@ -187,39 +187,39 @@
   "practice": [
     {
       "task": "Draw the laboratory ownership graph.",
-      "criteria": "Retain a checkable result: main owns SignalState and an integer receiver through shared_ptr. The callback stores a weak_ptr to the receiver, while Subscription stores a weak_ptr to the source. Neither subscription nor callback is required to keep its target alive. Test destroying each owner independently; absence of a crash is insufficient without checking invocation counts. Explain the selected contract and supply an independent example.",
+      "criteria": "The graph identifies strong main→source/receiver and weak callback→receiver, subscription→source edges; explain why ownership has no cycle.",
       "level": "basic",
-      "hint": "main owns SignalState and an integer receiver through shared_ptr. The callback stores a weak_ptr to the receiver, while Subscription stores a weak_ptr to the source. Neither subscription nor callback is required to keep its target alive. Test destroying each owner independently; absence of a crash is insufficient without checking invocation counts."
+      "hint": "Distinguish retaining a callback from owning the object it refers to."
     },
     {
       "task": "Explain the empty lock result after reset.",
-      "criteria": "Retain a checkable result: Mode 1 destroys the receiver after the first emit. The second emit still finds the callback, but lock returns empty and no destroyed integer is accessed. Output uses -1 as an explicitly chosen marker for an absent receiver. It is neither saved model state nor evidence of event delivery; the event is intentionally skipped by subscription policy. Explain the selected contract and supply an independent example.",
+      "criteria": "Trace the first emit, receiver.reset and second emit in mode 1; explain empty lock, absence of access to the destroyed int and stdout marker-1.",
       "level": "basic",
-      "hint": "Mode 1 destroys the receiver after the first emit. The second emit still finds the callback, but lock returns empty and no destroyed integer is accessed. Output uses -1 as an explicitly chosen marker for an absent receiver. It is neither saved model state nor evidence of event delivery; the event is intentionally skipped by subscription policy."
+      "hint": "A successful lock creates a temporary strong owner; after reset there may be none left."
     },
     {
       "task": "Implement subscription destruction.",
-      "criteria": "Retain a checkable result: Read mode zero, one or two without trailing input. Subscribe and emit once. Mode one destroys the receiver; mode two clears handlers. Emit again, leave subscription scope and emit a third time. Print the receiver value (-1 when absent) and subscription count. Explain the selected contract and supply an independent example.",
+      "criteria": "The destructor locks the weak source and removes its own id if it survives; handlers are empty after scope, and earlier source destruction is safe.",
       "level": "applied",
-      "hint": "make_shared creates an owner of seven. lock creates a local owner for reading. After reset the weak reference expires."
+      "hint": "Do not dereference weak_ptr directly or retain a raw pointer to an already destroyed source."
     },
     {
       "task": "Test self-unsubscription without an invalid iterator.",
-      "criteria": "Retain a checkable result: Read mode zero, one or two without trailing input. Subscribe and emit once. Mode one destroys the receiver; mode two clears handlers. Emit again, leave subscription scope and emit a third time. Print the receiver value (-1 when absent) and subscription count. Explain the selected contract and supply an independent example.",
+      "criteria": "A callback unsubscribes during emit; the test finishes without an invalid iterator and checks invocation count and skipping a removed later subscriber.",
       "level": "applied",
-      "hint": "Construction increments the active-subscription count. One is observed within the scope. Destruction at scope exit reduces it to zero."
+      "hint": "An id snapshot protects traversal; a local std::function copy protects the invoked callable's lifetime."
     },
     {
       "task": "Add a safe Subscription move operation.",
-      "criteria": "Retain a checkable result: Add a safe Subscription move operation. Explain the selected contract and supply an independent example.",
+      "criteria": "Move transfers id/state and disarms its source; moved-from destruction must not disconnect the live subscription, and move-assignment first releases its old one.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Track two subscription objects: which retains the right to unsubscribe exactly once after the move?"
     },
     {
       "task": "Design a notification-screen subscription whose screen can close before its source.",
-      "criteria": "Retain a checkable result: Design a notification-screen subscription whose screen can close before its source. Explain the selected contract and supply an independent example.",
+      "criteria": "Specify both screen/source lifetime orders; closing the screen then delivering a late event is checked by invocation count without use-after-free or an ownership cycle.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Separate screen ownership from a callback that merely attempts temporary access."
     }
   ],
   "laboratory": {
@@ -291,86 +291,86 @@
   },
   "assessment": [
     {
-      "question": "Does weak_ptr extend object lifetime?",
+      "question": "In mode 1, receiver is destroyed after the first emit. What does the second callback do?",
       "answers": [
-        "No.",
-        "Yes, always.",
-        "Only after expired."
-      ],
-      "correctIndex": 0,
-      "explanation": "A successful lock establishes ownership for the call."
-    },
-    {
-      "question": "Why copy handler before invoking it?",
-      "answers": [
-        "To run it in parallel.",
-        "So self-removal does not destroy the active callable.",
-        "To sort the map."
+        "The weak reference keeps the old int alive.",
+        "lock is empty and access to int is skipped.",
+        "weak_ptr recreates int initialized to zero."
       ],
       "correctIndex": 1,
-      "explanation": "The local copy lives until invocation completes."
+      "explanation": "weak_ptr neither owns nor recreates receiver. Successful lock requires surviving strong ownership."
     },
     {
-      "question": "Is this Signal thread-safe?",
+      "question": "Why does emit copy the found std::function before invoking it?",
       "answers": [
-        "Yes.",
-        "If int is small.",
-        "No; its contract is single-threaded."
-      ],
-      "correctIndex": 2,
-      "explanation": "Concurrent mutations are not synchronized here."
-    },
-    {
-      "question": "What is expected in the first reference case?",
-      "answers": [
-        "value 2 subscriptions 0\n",
-        "Data are always deleted.",
-        "The build must always fail."
-      ],
-      "correctIndex": 0,
-      "explanation": "Read mode zero, one or two without trailing input. Subscribe and emit once. Mode one destroys the receiver; mode two clears handlers. Emit again, leave subscription scope and emit a third time. Print the receiver value (-1 when absent) and subscription count."
-    },
-    {
-      "question": "How should the independent extension be checked?",
-      "answers": [
-        "Only rename the project.",
-        "Design a notification-screen subscription whose screen can close before its source.",
-        "Keep no observations."
+        "To add new subscribers to the existing id snapshot.",
+        "The callback may erase itself from the map; a local copy retains the callable during invocation.",
+        "To make every callback thread-safe."
       ],
       "correctIndex": 1,
-      "explanation": "Retain a checkable result: Design a notification-screen subscription whose screen can close before its source. Explain the selected contract and supply an independent example."
+      "explanation": "The id snapshot and local copy address traversal and callable lifetime respectively. Neither introduces thread synchronization."
+    },
+    {
+      "question": "CallbackA removes not-yet-invoked B from handlers. What does this emit do with its id snapshot?",
+      "answers": [
+        "A later lookup does not find B and skips it.",
+        "It still invokes B through the old iterator.",
+        "It necessarily stops all remaining callbacks."
+      ],
+      "correctIndex": 0,
+      "explanation": "The snapshot stores ids rather than an obligation to call a removed callback. Repeated find checks the current subscription."
+    },
+    {
+      "question": "Why does Subscription destruction first call state_.lock()?",
+      "answers": [
+        "The source may have been destroyed before the subscription.",
+        "To create a new source when weak_ptr is empty.",
+        "To prohibit id removal if receiver survives."
+      ],
+      "correctIndex": 0,
+      "explanation": "Source and receiver lifetimes are independent. A weak source permits a safe no-op when the source no longer exists."
+    },
+    {
+      "question": "A user-declared destructor already exists. Can Subscription be assumed safely movable without further design?",
+      "answers": [
+        "Yes: the destructor automatically generates the required move.",
+        "No: specify transfer of unsubscribe ownership and disarm the source.",
+        "Yes: every bitwise copy automatically transfers the obligation."
+      ],
+      "correctIndex": 1,
+      "explanation": "A destructor does not design move semantics. Two active id owners could disconnect a live subscription when moved-from is destroyed."
     }
   ],
   "readinessCheck": [
     {
-      "question": "What is required when an operation with a strong guarantee fails?",
+      "question": "Why does the validator mutate the model only after checking a candidate?",
       "answers": [
-        "Preserve the specified state.",
-        "Delete all data.",
-        "Always close the browser."
-      ],
-      "correctIndex": 0,
-      "explanation": "The guarantee concerns the specified model at an operation boundary."
-    },
-    {
-      "question": "Who owns an object supplied through an ordinary reference?",
-      "answers": [
-        "Always the called function.",
-        "Ownership is specified separately; a reference does not transfer it.",
-        "Nobody."
+        "So bounds are no longer needed.",
+        "So rejection does not destroy the previous valid state.",
+        "So a reference automatically becomes shared_ptr."
       ],
       "correctIndex": 1,
-      "explanation": "The owner must outlive use of the reference."
+      "explanation": "Prepare/commit separates validation from mutation. It changes neither ownership type nor valid-value requirements."
     },
     {
-      "question": "How is a driver with its own main built?",
+      "question": "Which unique_ptr property is relevant when representing a subscription resource?",
       "answers": [
-        "Always together with another main.",
-        "Without domain code.",
-        "Instead of application main, sharing model sources."
+        "Every copy independently owns the same pointer.",
+        "Destruction never releases the resource.",
+        "Sole ownership: copying is forbidden while move can transfer it."
       ],
       "correctIndex": 2,
-      "explanation": "The application and driver have separate entry points and builds."
+      "explanation": "RAII ties a resource to an owner. Independent owners of one resource risk duplicate release; move transfers the release obligation."
+    },
+    {
+      "question": "What does not itself extend the lifetime of a local receiver?",
+      "answers": [
+        "A raw pointer or reference retained in a callback.",
+        "A surviving shared_ptr owning receiver.",
+        "A local strong shared_ptr copy during invocation."
+      ],
+      "correctIndex": 0,
+      "explanation": "Non-owning access and strong ownership have different lifetime effects. A callback may outlive the object at its raw address."
     }
   ],
   "reflection": [

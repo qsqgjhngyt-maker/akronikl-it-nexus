@@ -185,39 +185,39 @@
   "practice": [
     {
       "task": "Trace three steps for n=8.",
-      "criteria": "Retain a checkable result: The teaching Job sums integers from one to n. One step handles at most three numbers and retains done and candidate. The driver immediately invokes the next step for deterministic testing; a real GUI must schedule that step and return to its event loop. The laboratory while loop alone does not demonstrate actual interface responsiveness. Explain the selected contract and supply an independent example.",
+      "criteria": "For three steps with n=8, show done, candidate and committed result after each call; no step processes more than three items.",
       "level": "basic",
-      "hint": "The teaching Job sums integers from one to n. One step handles at most three numbers and retains done and candidate. The driver immediately invokes the next step for deterministic testing; a real GUI must schedule that step and return to its event loop. The laboratory while loop alone does not demonstrate actual interface responsiveness."
+      "hint": "Accumulate 1…3, then 4…6, then 7…8; the result is committed only after the final step."
     },
     {
       "task": "Explain cancelAt=0 for an empty job.",
-      "criteria": "Retain a checkable result: For n=8, the first step accumulates six from 1…3, the second twenty-one from 1…6 and the third thirty-six. The committed result remains zero until finished. This is a deliberate atomic-commit policy. An interface can separately display done as progress without presenting the provisional sum as a completed calculation. Explain the selected contract and supply an independent example.",
+      "criteria": "For n=0/cancelAt=0, explain that neither step nor cancellation runs: the job is already finished with processed 0/result 0; contrast n=8/cancelAt=0.",
       "level": "basic",
-      "hint": "For n=8, the first step accumulates six from 1…3, the second twenty-one from 1…6 and the third thirty-six. The committed result remains zero until finished. This is a deliberate atomic-commit policy. An interface can separately display done as progress without presenting the provisional sum as a completed calculation."
+      "hint": "Inspect the while condition first: an empty job is finished before cancelAt is examined."
     },
     {
       "task": "Implement step with budget three.",
-      "criteria": "Retain a checkable result: Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed. Explain the selected contract and supply an independent example.",
+      "criteria": "step spends budget 3, preserves done≤size and does nothing after cancellation; ordinary, maximum, empty and early-cancel cases match.",
       "level": "applied",
-      "hint": "Each tick begins with a budget of three. The first processes three items and the second three more. Work of size eight is unfinished: done equals six."
+      "hint": "Check cancelled before the loop and decrease budget for every processed item."
     },
     {
       "task": "Test repeated cancel and step after cancellation.",
-      "criteria": "Retain a checkable result: Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed. Explain the selected contract and supply an independent example.",
+      "criteria": "Repeated cancel preserves observable state; step after cancel advances neither done nor commit; late cancellation does not undo a finished job.",
       "level": "applied",
-      "hint": "Queue capacity is three. The fourth and fifth arrivals are rejected. Size three and two rejections are observable."
+      "hint": "Record done/result before repeated calls and compare after each one."
     },
     {
       "task": "Design a queue-overflow policy.",
-      "criteria": "Retain a checkable result: Design a queue-overflow policy. Explain the selected contract and supply an independent example.",
+      "criteria": "Specify queue capacity and distinct accept/reject outcomes; a burst test checks peak size and accepted-event order without disguising dropped commands as success.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Identify which refreshes can be coalesced and which user commands must remain separate."
     },
     {
       "task": "Propose GUI scheduling of work portions without a busy while inside a callback.",
-      "criteria": "Retain a checkable result: Propose GUI scheduling of work portions without a busy while inside a callback. Explain the selected contract and supply an independent example.",
+      "criteria": "Propose a bounded-step callback that returns to the GUI loop before scheduling another; the protocol measures responsiveness separately from sum correctness.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Do not move the entire console while into a button handler; return control between portions."
     }
   ],
   "laboratory": {
@@ -289,86 +289,86 @@
   },
   "assessment": [
     {
-      "question": "How many items does step process?",
+      "question": "For n=8 and cancelAt=1, what is the result after one permitted step?",
       "answers": [
-        "At most three.",
-        "Always all items.",
-        "Exactly n threads."
-      ],
-      "correctIndex": 0,
-      "explanation": "The budget is bounded independently of total work."
-    },
-    {
-      "question": "What result is committed after cancelling following three items?",
-      "answers": [
-        "The partial sum.",
-        "Zero; the provisional result is not committed.",
-        "A random number."
+        "done, processed 8, result 36.",
+        "cancelled, processed 3, result 0.",
+        "cancelled, processed 3, result 6."
       ],
       "correctIndex": 1,
-      "explanation": "The laboratory uses an atomic result-commit policy."
+      "explanation": "The first portion processes 1…3, then cancellation prevents commit. Candidate 6 is not a completed result."
     },
     {
-      "question": "Does the driver prove GUI responsiveness?",
+      "question": "Why does n=0/cancelAt=0 yield done rather than cancelled?",
       "answers": [
-        "Yes.",
-        "Only for n=8.",
-        "No; actual scheduling and measurement are needed."
+        "cancelAt=0 always means ignore cancellation.",
+        "An empty job must execute three dummy operations.",
+        "finished is true before entering the cancellation-check loop."
       ],
       "correctIndex": 2,
-      "explanation": "The driver tests step logic rather than interface latency."
+      "explanation": "Late cancellation does not replace an already completed result. For n=8 the same request before step zero does cancel work."
     },
     {
-      "question": "What is expected in the first reference case?",
+      "question": "A console while calls bounded steps consecutively until completion. What does it establish about GUI responsiveness?",
       "answers": [
-        "done processed 8 result 36\n",
-        "Data are always deleted.",
-        "The build must always fail."
+        "Budget 3 proves responsiveness on every phone.",
+        "A second thread is guaranteed by the step function.",
+        "Nothing by itself: GUI must return to its event loop between portions."
+      ],
+      "correctIndex": 2,
+      "explanation": "A bounded step is useful, but a busy loop still occupies the handler. Scheduling and separate real-interface measurements are needed."
+    },
+    {
+      "question": "After finished, cancel then step are called. What contract is selected?",
+      "answers": [
+        "The completed result is retained.",
+        "The completed sum is necessarily reset to 0.",
+        "done increases by 3 without checking size."
       ],
       "correctIndex": 0,
-      "explanation": "Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed."
+      "explanation": "The contract prevents changing success into late rejection or exceeding size. Only unfinished work can be cancelled."
     },
     {
-      "question": "How should the independent extension be checked?",
+      "question": "What can reduce queue memory without changing the meaning of ten requests to redraw the current state?",
       "answers": [
-        "Only rename the project.",
-        "Propose GUI scheduling of work portions without a busy while inside a callback.",
-        "Keep no observations."
+        "Coalesce refreshes under an explicit policy.",
+        "Also merge ten add commands into one.",
+        "Remove arbitrary user commands without rejection."
       ],
-      "correctIndex": 1,
-      "explanation": "Retain a checkable result: Propose GUI scheduling of work portions without a busy while inside a callback. Explain the selected contract and supply an independent example."
+      "correctIndex": 0,
+      "explanation": "Refresh can be an idempotent observation of current state. Each accepted add changes the model and does not share that property."
     }
   ],
   "readinessCheck": [
     {
-      "question": "What is required when an operation with a strong guarantee fails?",
+      "question": "A callback re-enters dispatch before its first invocation returns. Is this necessarily multithreading?",
       "answers": [
-        "Preserve the specified state.",
-        "Delete all data.",
-        "Always close the browser."
-      ],
-      "correctIndex": 0,
-      "explanation": "The guarantee concerns the specified model at an operation boundary."
-    },
-    {
-      "question": "Who owns an object supplied through an ordinary reference?",
-      "answers": [
-        "Always the called function.",
-        "Ownership is specified separately; a reference does not transfer it.",
-        "Nobody."
-      ],
-      "correctIndex": 1,
-      "explanation": "The owner must outlive use of the reference."
-    },
-    {
-      "question": "How is a driver with its own main built?",
-      "answers": [
-        "Always together with another main.",
-        "Without domain code.",
-        "Instead of application main, sharing model sources."
+        "Yes: each callback creates a thread.",
+        "No, because re-entry is impossible in C++.",
+        "No: reentrancy can occur on one thread stack."
       ],
       "correctIndex": 2,
-      "explanation": "The application and driver have separate entry points and builds."
+      "explanation": "Re-entry differs from parallel execution. Queuing and a nested-drain policy can be necessary even on one thread."
+    },
+    {
+      "question": "A loop processes n items with bounded work per item. How does total work grow?",
+      "answers": [
+        "O(n²) regardless of the loop body.",
+        "O(n).",
+        "O(1) because each individual step is bounded."
+      ],
+      "correctIndex": 1,
+      "explanation": "Bounded per-item cost does not eliminate n repetitions. Distinguish total work from one callback duration."
+    },
+    {
+      "question": "Why retain the shared_ptr obtained from weak receiver.lock until callback completion?",
+      "answers": [
+        "It keeps receiver alive during access.",
+        "It automatically makes the callback nonblocking.",
+        "It guarantees a constant event-queue size."
+      ],
+      "correctIndex": 0,
+      "explanation": "Ownership addresses lifetime, not computation duration or queue growth."
     }
   ],
   "reflection": [

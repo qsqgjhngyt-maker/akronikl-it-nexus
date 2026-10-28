@@ -187,39 +187,39 @@
   "practice": [
     {
       "task": "Specify the EV1 grammar.",
-      "criteria": "Retain a checkable result: EV1 3 1 2 3 declares three values; EV1 2 1 is incomplete, while EV1 0 extra contains unexpected data. Whitespace between tokens is flexible but extra tokens are forbidden. A count limit of eight bounds memory and the teaching scenarios. If a product needs more data, revise the limit and tests explicitly. Explain the selected contract and supply an independent example.",
+      "criteria": "The EV1 grammar specifies a marker, count 0…8, exactly count values 0…100 and whitespace-only trailing input; show one valid and three invalid records.",
       "level": "basic",
-      "hint": "EV1 3 1 2 3 declares three values; EV1 2 1 is incomplete, while EV1 0 extra contains unexpected data. Whitespace between tokens is flexible but extra tokens are forbidden. A count limit of eight bounds memory and the teaching scenarios. If a product needs more data, revise the limit and tests explicitly."
+      "hint": "The element-count limit and trailing-input rule belong to the format rather than incidental cin behaviour."
     },
     {
       "task": "Explain the swap commit point and preservation of 99.",
-      "criteria": "Retain a checkable result: The initial laboratory model contains 99. Every malformed record prints rejected 99, making preservation observable. An additional test should first load another valid model, then reject malformed data and compare against that updated model. This detects an implementation that simply recreates the original 99 on every failure. Explain the selected contract and supply an independent example.",
+      "criteria": "Identify model.swap(candidate) as the sole commit point; trace an incomplete record while preserving 99 without clearing the old model.",
       "level": "basic",
-      "hint": "The initial laboratory model contains 99. Every malformed record prints rejected 99, making preservation observable. An additional test should first load another valid model, then reject malformed data and compare against that updated model. This detects an implementation that simply recreates the original 99 on every failure."
+      "hint": "A separate vector is built before commit. Where is model first modified?"
     },
     {
       "task": "Implement load and save.",
-      "criteria": "Retain a checkable result: The format is EV1 count values, with count=0…8, values=0…100 and whitespace-only trailing input. Failure preserves old model {99} and prints rejected 99. On success save in memory, reload into a copy and compare; stdout is the canonical EV1 record. Explain the selected contract and supply an independent example.",
+      "criteria": "load validates the complete format before swap; save produces canonical EV1, roundtrip equals the original model and malformed cases preserve the old one.",
       "level": "applied",
-      "hint": "ostringstream produces EV1 and seven. istringstream reads those bytes back. Agreement checks one simple concrete roundtrip."
+      "hint": "Do not compare strings alone: load the saved text into another model and compare values."
     },
     {
       "task": "Test rejection following an earlier successful load.",
-      "criteria": "Retain a checkable result: The format is EV1 count values, with count=0…8, values=0…100 and whitespace-only trailing input. Failure preserves old model {99} and prints rejected 99. On success save in memory, reload into a copy and compare; stdout is the canonical EV1 record. Explain the selected contract and supply an independent example.",
+      "criteria": "The test first accepts a model other than 99, then rejects a corrupt record and compares with that accepted model; it detects reset-to 99.",
       "level": "applied",
-      "hint": "The old vector contains nine. Candidate 1,-2 is rejected before swap. false and nine demonstrate preservation."
+      "hint": "The guarantee concerns the state immediately before the call rather than the program's initial value."
     },
     {
       "task": "Propose an EV0→EV1 specification and tests.",
-      "criteria": "Retain a checkable result: Propose an EV0→EV1 specification and tests. Explain the selected contract and supply an independent example.",
+      "criteria": "Specify both grammars and an unambiguous EV0→EV1 conversion; test old, new, unknown and corrupt formats without partial commit.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Do not guess the version from numbers. Read the marker before selecting the algorithm."
     },
     {
       "task": "Distinguish process memory, a saved project artifact and device export.",
-      "criteria": "Retain a checkable result: Distinguish process memory, a saved project artifact and device export. Explain the selected contract and supply an independent example.",
+      "criteria": "Distinguish process FS, a saved project file and device export; Stop→Run and reimport establish which step actually retained data.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "A file existing in the current process does not establish retention in the project VFS."
     }
   ],
   "laboratory": {
@@ -291,86 +291,86 @@
   },
   "assessment": [
     {
-      "question": "When is the candidate committed?",
+      "question": "Starting from model{99}, load receives EV1 2 1. What should it do?",
       "answers": [
-        "After complete validation including end of input.",
-        "After the first number.",
-        "Before reading the version."
-      ],
-      "correctIndex": 0,
-      "explanation": "swap completes preparation of the entire model."
-    },
-    {
-      "question": "Does roundtrip prove everything?",
-      "answers": [
-        "Yes.",
-        "No; shared mistakes require independent cases.",
-        "Only network availability."
-      ],
-      "correctIndex": 1,
-      "explanation": "Matching save and load mistakes can conceal one another."
-    },
-    {
-      "question": "What should this program do with EV2?",
-      "answers": [
-        "Read it as EV1.",
-        "Delete the model.",
-        "Reject it while preserving the model."
+        "Accept{1}, automatically lowering count.",
+        "Retain partial model{1,99}.",
+        "Reject the record and retain{99}."
       ],
       "correctIndex": 2,
-      "explanation": "Unknown versions are not interpreted by guessing."
+      "explanation": "Two values were declared but only one supplied. An incomplete candidate cannot be committed."
     },
     {
-      "question": "What is expected in the first reference case?",
+      "question": "Why is EV1 0 extra rejected while EV1 0 followed by a newline is accepted?",
       "answers": [
-        "EV1 3 1 2 3\n",
-        "Data are always deleted.",
-        "The build must always fail."
+        "Only whitespace is permitted after the values.",
+        "An empty model is forbidden with any trailing input.",
+        "The word extra counts as a zero value."
       ],
       "correctIndex": 0,
-      "explanation": "The format is EV1 count values, with count=0…8, values=0…100 and whitespace-only trailing input. Failure preserves old model {99} and prints rejected 99. On success save in memory, reload into a copy and compare; stdout is the canonical EV1 record."
+      "explanation": "count 0 is valid but does not remove complete-input validation. Whitespace is not an additional record field."
     },
     {
-      "question": "How should the independent extension be checked?",
+      "question": "Which experiment actually checks a model roundtrip?",
       "answers": [
-        "Only rename the project.",
-        "Distinguish process memory, a saved project artifact and device export.",
-        "Keep no observations."
+        "Print the same buffer twice without loading.",
+        "Check only the filename.",
+        "Save, load into another model and compare values."
+      ],
+      "correctIndex": 2,
+      "explanation": "A roundtrip must exercise both conversions. Identical repeated prints do not test deserialization."
+    },
+    {
+      "question": "An unknown EV2 record arrives. May it be treated as EV1 because its numbers look similar?",
+      "answers": [
+        "Yes, if the current model is still empty.",
+        "No: a version specification and explicit migration path are required.",
+        "Yes, if its first value is 0."
       ],
       "correctIndex": 1,
-      "explanation": "Retain a checkable result: Distinguish process memory, a saved project artifact and device export. Explain the selected contract and supply an independent example."
+      "explanation": "Identical-looking fields may have different meanings in a new version. Similar syntax does not establish semantic compatibility."
+    },
+    {
+      "question": "Which negative test detects reset-to 99 instead of a strong guarantee?",
+      "answers": [
+        "First load{7} successfully, then reject corrupt input and expect{7}.",
+        "Only reject corrupt input starting from{99}.",
+        "Only save{99} without reading."
+      ],
+      "correctIndex": 0,
+      "explanation": "The first test separates current and startup state. Starting from{99}, both algorithms could appear correct."
     }
   ],
   "readinessCheck": [
     {
-      "question": "What is required when an operation with a strong guarantee fails?",
+      "question": "A parser converted the start of a string, but x remains. What must be checked before commit?",
       "answers": [
-        "Preserve the specified state.",
-        "Delete all data.",
-        "Always close the browser."
-      ],
-      "correctIndex": 0,
-      "explanation": "The guarantee concerns the specified model at an operation boundary."
-    },
-    {
-      "question": "Who owns an object supplied through an ordinary reference?",
-      "answers": [
-        "Always the called function.",
-        "Ownership is specified separately; a reference does not transfer it.",
-        "Nobody."
+        "Only whether the model has its startup value.",
+        "Complete consumption of permitted input.",
+        "Only the presence of at least one digit."
       ],
       "correctIndex": 1,
-      "explanation": "The owner must outlive use of the reference."
+      "explanation": "A validated prefix is not a validated complete record. Trailing input is part of the format contract."
     },
     {
-      "question": "How is a driver with its own main built?",
+      "question": "Does creating a file in Code Studio process FS prove retention after a new run?",
       "answers": [
-        "Always together with another main.",
-        "Without domain code.",
-        "Instead of application main, sharing model sources."
+        "No: explicitly save the result into the project and test a new run.",
+        "Yes: each file descriptor automatically creates a Cloud snapshot.",
+        "Yes: the.txt extension guarantees persistence."
       ],
-      "correctIndex": 2,
-      "explanation": "The application and driver have separate entry points and builds."
+      "correctIndex": 0,
+      "explanation": "Process FS, project VFS and synchronization are distinct storage boundaries. Their transitions require verification."
+    },
+    {
+      "question": "Which model should a failed strongly guaranteed load retain?",
+      "answers": [
+        "The partially parsed candidate.",
+        "The model immediately preceding load.",
+        "An empty model regardless of previous data."
+      ],
+      "correctIndex": 1,
+      "explanation": "The candidate may be discarded while the observable object retains its pre-state. Failure does not require clearing it."
     }
   ],
   "reflection": [

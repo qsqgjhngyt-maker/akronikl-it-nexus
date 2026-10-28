@@ -187,39 +187,39 @@
   "practice": [
     {
       "task": "Name the responsibilities of the three files.",
-      "criteria": "Retain a checkable result: A zero command adds an unfinished task and a positive number completes an existing task. Here an identifier equals its position plus one because deletion is absent. State that teaching restriction explicitly. TaskFlow uses persistent ids: if deletion were added, treating a moving position as identity could select the wrong task. Explain the selected contract and supply an independent example.",
+      "criteria": "Assign interface, implementation and adapter roles to model.hpp, model.cpp and main.cpp; identify header inclusions and single definition locations.",
       "level": "basic",
-      "hint": "A zero command adds an unfinished task and a positive number completes an existing task. Here an identifier equals its position plus one because deletion is absent. State that teaching restriction explicitly. TaskFlow uses persistent ids: if deletion were added, treating a moving position as identity could select the wrong task."
+      "hint": "A declaration permits calling a function from another TU; its definition must participate in linking."
     },
     {
       "task": "Explain repeated complete commands.",
-      "criteria": "Retain a checkable result: Work in Nexus Code Studio using a saved project copy. Verify that editing src/model.cpp changes the result instead of accidentally running an old single-file program. Removing Board::apply should produce a linker error; perform this diagnostic experiment in a copy, then restore the source and verify a successful run. Explain the selected contract and supply an independent example.",
+      "criteria": "Repeated complete of an existing id succeeds without increasing done twice; a test distinguishes completed-task count from successful-command count.",
       "level": "basic",
-      "hint": "Work in Nexus Code Studio using a saved project copy. Verify that editing src/model.cpp changes the result instead of accidentally running an old single-file program. Removing Board::apply should produce a linker error; perform this diagnostic experiment in a copy, then restore the source and verify a successful run."
+      "hint": "Consider 0,0,1,1: how many distinct tasks are done and how many complete commands succeeded?"
     },
     {
       "task": "Build the laboratory from two translation units.",
-      "criteria": "Retain a checkable result: Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid. Explain the selected contract and supply an independent example.",
+      "criteria": "The project builds main.cpp and src/model.cpp with includeRoots include; removing a definition yields a linker error and restoration reproduces reference results.",
       "level": "applied",
-      "hint": "Command stores a delta. update receives its data explicitly. Three plus four yields seven without a global dependency."
+      "hint": "Adding a VFS file is insufficient: inspect which TUs reach the compiler."
     },
     {
       "task": "Create a separate test driver.",
-      "criteria": "Retain a checkable result: Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid. Explain the selected contract and supply an independent example.",
+      "criteria": "The driver has a separate main and links the same model.cpp; test addition, repeated complete, unknown ids and capacity 8 without linking two mains.",
       "level": "applied",
-      "hint": "The first complete sets true. The second leaves true. Counting state must not count two completed tasks."
+      "hint": "Replace application main with test main while sharing model sources."
     },
     {
       "task": "Replace vector<bool> with vector<Task> without changing results.",
-      "criteria": "Retain a checkable result: Replace vector<bool> with vector<Task> without changing results. Explain the selected contract and supply an independent example.",
+      "criteria": "vector<Task> preserves the public contract and all old results; explain the vector<bool> proxy difference and check done after a repeated command.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Do not couple Board's interface to its container; tests should observe behaviour."
     },
     {
       "task": "Add deletion with stable ids and an independent test.",
-      "criteria": "Retain a checkable result: Add deletion with stable ids and an independent test. Explain the selected contract and supply an independent example.",
+      "criteria": "Deletion neither renumbers nor reuses ids; an add/delete/add/complete scenario distinguishes a stable id from the current position.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Keep next-id separate from vector indices and define the result of referencing a deleted id."
     }
   ],
   "laboratory": {
@@ -305,86 +305,86 @@
   },
   "assessment": [
     {
-      "question": "Which translation units build the application?",
+      "question": "Commands 0,0,1,1 add two tasks and complete id 1 twice. What is the result?",
       "answers": [
-        "main.cpp and src/model.cpp.",
-        "Only model.hpp.",
-        "Every file including two mains."
-      ],
-      "correctIndex": 0,
-      "explanation": "The header is included and model definitions are linked separately."
-    },
-    {
-      "question": "How does repeated complete affect done?",
-      "answers": [
-        "It always increases it.",
-        "It does not increase it again.",
-        "It deletes the task."
-      ],
-      "correctIndex": 1,
-      "explanation": "The task state is already true."
-    },
-    {
-      "question": "Why use stable ids when deleting?",
-      "answers": [
-        "To change the visual theme.",
-        "To prevent testing.",
-        "So list position is not confused with task identity."
+        "tasks 2 done 2 rejected 0.",
+        "tasks 2 done 1 rejected 1.",
+        "tasks 2 done 1 rejected 0."
       ],
       "correctIndex": 2,
-      "explanation": "Positions may shift after deletion."
+      "explanation": "Repeated complete succeeds idempotently. done counts distinct completed tasks rather than successful complete calls."
     },
     {
-      "question": "What is expected in the first reference case?",
+      "question": "model.hpp is included by two TUs and defines an ordinary non-inline function. Does pragma once fix possible multiple definitions at link time?",
       "answers": [
-        "tasks 2 done 1 rejected 0\n",
-        "Data are always deleted.",
-        "The build must always fail."
-      ],
-      "correctIndex": 0,
-      "explanation": "Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid."
-    },
-    {
-      "question": "How should the independent extension be checked?",
-      "answers": [
-        "Only rename the project.",
-        "Add deletion with stable ids and an independent test.",
-        "Keep no observations."
+        "Yes: the linker automatically chooses the newest definition.",
+        "No: pragma once limits inclusion within one TU.",
+        "Yes: the header is processed once for the entire program."
       ],
       "correctIndex": 1,
-      "explanation": "Retain a checkable result: Add deletion with stable ids and an independent test. Explain the selected contract and supply an independent example."
+      "explanation": "Once-per-TU inclusion does not remove processing in another TU. An ordinary definition belongs in the implementation."
+    },
+    {
+      "question": "main.cpp sees Board::apply declaration, but model.cpp is absent from build inputs. Where is failure expected?",
+      "answers": [
+        "At link time due to the missing definition.",
+        "Necessarily while reading stdin.",
+        "Only when closing a Qt window."
+      ],
+      "correctIndex": 0,
+      "explanation": "The declaration permits compilation of a call, but the program still needs its definition. A VFS file is not automatically a build input."
+    },
+    {
+      "question": "Why can a vector position not simply remain a persistent id after deletion is added?",
+      "answers": [
+        "Later element positions may shift.",
+        "Every vector automatically sorts after erase.",
+        "An id must equal the address of main."
+      ],
+      "correctIndex": 0,
+      "explanation": "Identity must survive representation and position changes. Deletion needs an explicit stable id and a separate issuance policy."
+    },
+    {
+      "question": "Capacity 8 is reached and another add arrives. What should be checked?",
+      "answers": [
+        "tasks remains 8, rejected increases by 1 and old tasks survive.",
+        "tasks becomes 9 because vector can grow.",
+        "The first task is silently removed for the new one."
+      ],
+      "correctIndex": 0,
+      "explanation": "Domain capacity differs from the container ability to allocate memory. Rejection must not alter existing tasks."
     }
   ],
   "readinessCheck": [
     {
-      "question": "What is required when an operation with a strong guarantee fails?",
+      "question": "What is needed for a repeatable comparison of two model runs?",
       "answers": [
-        "Preserve the specified state.",
-        "Delete all data.",
-        "Always close the browser."
+        "The same input and initial state.",
+        "Only an identical project name.",
+        "Shared mutable state already changed by the first run."
       ],
       "correctIndex": 0,
-      "explanation": "The guarantee concerns the specified model at an operation boundary."
+      "explanation": "Replay starts from a specified pre-state. A project name does not define computation state."
     },
     {
-      "question": "Who owns an object supplied through an ordinary reference?",
+      "question": "The application and test driver each define main. How should they be built?",
       "answers": [
-        "Always the called function.",
-        "Ownership is specified separately; a reference does not transfer it.",
-        "Nobody."
+        "Two separate builds sharing model sources.",
+        "One build with both mains in any file order.",
+        "Exclude the model from both builds."
       ],
-      "correctIndex": 1,
-      "explanation": "The owner must outlive use of the reference."
+      "correctIndex": 0,
+      "explanation": "Each program has its own entry point. Shared model sources link with the selected main rather than being duplicated."
     },
     {
-      "question": "How is a driver with its own main built?",
+      "question": "Which dependency should be removed from a reusable model?",
       "answers": [
-        "Always together with another main.",
-        "Without domain code.",
-        "Instead of application main, sharing model sources."
+        "Domain-state structure.",
+        "Invariant validation.",
+        "Reading cin and creating GUI widgets."
       ],
       "correctIndex": 2,
-      "explanation": "The application and driver have separate entry points and builds."
+      "explanation": "Input devices and presentation belong to adapters. Domain rules and invariants remain in the model."
     }
   ],
   "reflection": [

@@ -199,39 +199,39 @@
   "practice": [
     {
       "task": "Trace 1, 0, -1 by hand.",
-      "criteria": "Final value zero, one rejection, with every intermediate state recorded.",
+      "criteria": "A table contains all three commands, the value before/after each and accumulated rejections; decrementing zero is identified as a rejection.",
       "level": "basic",
-      "hint": "Consider a counter constrained to zero through ten. Event 1 increments it, -1 decrements it and 0 resets it. The trace 1, 0, 1 ends at one, whereas 1, 1, 0 ends at zero. This is event-driven logic even without a window. A graphical adapter can later translate button presses into these same commands without changing the counter rule."
+      "hint": "Start at zero. Reset is always allowed; decrement requires a positive value."
     },
     {
       "task": "Explain both outputs of the second example.",
-      "criteria": "Rejection preserves nine and returns false.",
+      "criteria": "Explain both stdout values of the second example: false prints as 0 and the referenced value remains 9 after rejecting 9+2. Identify the check before mutation.",
       "level": "basic",
-      "hint": "The contract distinguishes a rejected command from a malformed input protocol. Decrementing a zero counter is a known event that the model refuses. A missing number after the declared event count is a formatting error affecting the whole trace. Combining these cases makes feedback ambiguous and prevents reliable tests that deliberately expect different kinds of rejection."
+      "hint": "Find the early return and decide whether the assignment after it executes."
     },
     {
       "task": "Implement dispatch according to the laboratory contract.",
-      "criteria": "All reference cases match and unknown commands are rejected.",
+      "criteria": "dispatch preserves 0…10 and counts exactly one rejection per refused command; all laboratory cases match, including an unknown command.",
       "level": "applied",
-      "hint": "calculate receives four and three without external state. Seven is returned and the handler stores it in model. stdout value 7 connects model and observation."
+      "hint": "Separate reset, permitted increment/decrement and rejection; do not mutate value before checking its bound."
     },
     {
       "task": "Change the maximum to twenty and update the tests.",
-      "criteria": "Previously unchanged rules are checked separately.",
+      "criteria": "Provide the revised 0…20 contract, updated expectations and tests at 20/21; explain which old expectations remain unchanged.",
       "level": "applied",
-      "hint": "The 9+2>10 check is true. The early return leaves the referenced value unchanged. false prints as zero and the retained value as nine."
+      "hint": "Eleven increments now succeed. Separately test an attempt to exceed the new bound."
     },
     {
       "task": "Specify complete and toggle task commands.",
-      "criteria": "Two traces distinguish repeated calls.",
+      "criteria": "Define states and repeated-command outcomes for complete and toggle; two traces distinguish idempotent completion from toggling.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Compare the state after one and two identical events for each command."
     },
     {
       "task": "Design timer events without a clock or a window.",
-      "criteria": "Specify the state, permitted commands and three rejection cases.",
+      "criteria": "Specify Tick/Stop events, a finite test trace and expected states without a clock; explain why a busy loop does not create an event source.",
       "level": "transfer",
-      "hint": "Specify a contract first, then compare at least two design alternatives."
+      "hint": "Supply Tick explicitly through a test driver; separate step number from wall-clock time."
     }
   ],
   "laboratory": {
@@ -303,86 +303,86 @@
   },
   "assessment": [
     {
-      "question": "Does naming a function onClick create a graphical button?",
+      "question": "Starting at zero, what is observed after events 1,0,-1?",
       "answers": [
-        "No, a graphical adapter is needed.",
-        "Yes, automatically.",
-        "Only in main."
-      ],
-      "correctIndex": 0,
-      "explanation": "A function name does not connect it to an event source."
-    },
-    {
-      "question": "What happens when -1 is dispatched at zero?",
-      "answers": [
-        "The value becomes -1.",
-        "The value stays zero and rejected increases.",
-        "The program must exit."
-      ],
-      "correctIndex": 1,
-      "explanation": "The boundary is checked before mutation."
-    },
-    {
-      "question": "Which operation is idempotent for value?",
-      "answers": [
-        "Increment.",
-        "Decrement.",
-        "Reset to zero."
+        "value-1, rejected 0.",
+        "value 1, rejected 1.",
+        "value 0, rejected 1."
       ],
       "correctIndex": 2,
-      "explanation": "Repeating reset leaves zero."
+      "explanation": "Increment yields 1, reset yields 0, and the final decrement is rejected without mutation. Reset does not remove the lower bound."
     },
     {
-      "question": "Why does event order matter?",
+      "question": "Which experiment distinguishes idempotent reset from toggle?",
       "answers": [
-        "The handler uses current state.",
-        "The compiler changes numbers randomly.",
-        "A queue always sorts commands."
+        "Test only one invocation from zero.",
+        "Compare handler names without running them.",
+        "Compare the state after one and two repetitions of each command."
       ],
-      "correctIndex": 0,
-      "explanation": "Each operation observes the result of the previous one."
+      "correctIndex": 2,
+      "explanation": "Idempotence concerns repetition and the chosen observable state. One invocation cannot test the repetition property."
     },
     {
-      "question": "What does a missing token after n mean?",
+      "question": "At value 10, unknown command 7 arrives. How should the report change?",
       "answers": [
-        "An ordinary reset.",
-        "A malformed trace format.",
-        "An unknown button."
+        "rejected increases by 2 for unknown kind and the upper bound.",
+        "value stays 10 and rejected increases by 1.",
+        "value becomes 7 without rejection."
       ],
       "correctIndex": 1,
-      "explanation": "The driver validates format before dispatching to the model."
+      "explanation": "An unknown event is rejected exactly once. It neither assigns 7 nor represents two independent rejections."
+    },
+    {
+      "question": "Input declares n=2 but contains only one command. When may the model be changed?",
+      "answers": [
+        "After the first command, retaining a partial result.",
+        "After silently replacing the missing command with reset.",
+        "Not in this driver: validate the whole format first and report invalid."
+      ],
+      "correctIndex": 2,
+      "explanation": "The laboratory transport validates the entire finite trace before dispatch. Formatting failure differs from refusal of a correctly transported command."
+    },
+    {
+      "question": "Which test detects a handler that mutates the counter but never records rejection?",
+      "answers": [
+        "An empty trace, checking only that stdout exists.",
+        "Decrement at zero, checking both value and rejected.",
+        "One increment from zero, checking only value."
+      ],
+      "correctIndex": 1,
+      "explanation": "Checking both values distinguishes correct rejection from missing statistics. A successful increment never exercises rejection."
     }
   ],
   "readinessCheck": [
     {
-      "question": "What is required when an operation with a strong guarantee fails?",
+      "question": "A function receives Model&. What can it do to the original model?",
       "answers": [
-        "Preserve the specified state.",
-        "Delete all data.",
-        "Always close the browser."
-      ],
-      "correctIndex": 0,
-      "explanation": "The guarantee concerns the specified model at an operation boundary."
-    },
-    {
-      "question": "Who owns an object supplied through an ordinary reference?",
-      "answers": [
-        "Always the called function.",
-        "Ownership is specified separately; a reference does not transfer it.",
-        "Nobody."
-      ],
-      "correctIndex": 1,
-      "explanation": "The owner must outlive use of the reference."
-    },
-    {
-      "question": "How is a driver with its own main built?",
-      "answers": [
-        "Always together with another main.",
-        "Without domain code.",
-        "Instead of application main, sharing model sources."
+        "Mutate only a local copy of the model.",
+        "Only read it: every reference prohibits writes.",
+        "Mutate it if permitted by the contract."
       ],
       "correctIndex": 2,
-      "explanation": "The application and driver have separate entry points and builds."
+      "explanation": "An ordinary non-const reference denotes the original object. It creates no copy and does not establish ownership."
+    },
+    {
+      "question": "A lambda stores [&total]. What must hold until its last invocation?",
+      "answers": [
+        "Only the lambda itself needs to remain alive.",
+        "The capture automatically extends the lifetime of total.",
+        "total remains alive."
+      ],
+      "correctIndex": 2,
+      "explanation": "Reference capture does not extend total lifetime. A surviving callable does not make a dangling reference valid."
+    },
+    {
+      "question": "What can a fake View establish in a unit test?",
+      "answers": [
+        "Text placement on a physical phone.",
+        "Which values were supplied for display.",
+        "Keyboard operation in a real window."
+      ],
+      "correctIndex": 1,
+      "explanation": "The fake records calls through its interface. Real widgets and screens are absent, so their properties require separate tests."
     }
   ],
   "reflection": [
