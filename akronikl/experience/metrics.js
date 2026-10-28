@@ -5,7 +5,7 @@ export function createInferenceMeter({now=()=>performance.now(),readHeap=()=>glo
   const heap=()=>{try{const v=readHeap();return Number.isSafeInteger(v)&&v>=0?v:null;}catch{return null;}};
   const before=heap();let after=null;
   const snapshot=()=>Object.freeze({status,firstOutputChunkMs:firstOutput,promptMs,decodeMs,completionTokens:tokens,
-    tokensPerSecond:tokens!==null&&decodeMs>0?tokens*1000/decodeMs:null,totalMs:finished,
+    tokensPerSecond:pieces>0&&tokens>0&&decodeMs>=1?tokens*1000/decodeMs:null,totalMs:finished,
     outputPieces:pieces,jsHeapBeforeBytes:before,jsHeapAfterBytes:after,memoryScope:'page-js-heap-only-not-worker-or-rss'});
   return Object.freeze({
     observe(chunk){if(finished!==null)return;const content=chunk?.choices?.[0]?.delta?.content;if(typeof content==='string'&&content){pieces++;if(firstOutput===null)firstOutput=Math.max(0,now()-started);}

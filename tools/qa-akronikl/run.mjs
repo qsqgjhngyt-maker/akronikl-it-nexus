@@ -33,6 +33,11 @@ try{
  result.runtimeManifestSha256=await shaFile(path.join(root,'akronikl/tutor/runtime/RUNTIME_MANIFEST.json'));
  const corpus=JSON.parse(await readFile(path.join(root,'tests/fixtures/akronikl-tutor-quality-v1.json'),'utf8'));
  assert.equal(corpus.cases.length,32);
+ const mode=process.env.NEXUS_QA_MODE||'full';assert.ok(['full','probe'].includes(mode));
+ const selectedIds=process.env.NEXUS_QA_CASE_IDS?.split(',').filter(Boolean);
+ if(selectedIds)assert.ok(new Set(selectedIds).size===selectedIds.length&&selectedIds.every(id=>corpus.cases.some(c=>c.id===id)));
+ const planned=selectedIds?corpus.cases.filter(c=>selectedIds.includes(c.id)):corpus.cases;
+ result.mode=mode;result.plannedCases=planned.map(c=>c.id);result.notRun=corpus.cases.filter(c=>!planned.includes(c)).map(c=>c.id);
  for(const c of corpus.cases)if(c.source)assert.equal(await shaFile(path.join(root,c.source.path)),c.source.sha256,c.id+' изменился источник');
  result.corpusSha256=await shaFile(path.join(root,'tests/fixtures/akronikl-tutor-quality-v1.json'));
  const html='<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Akronikl P4-Q — изолированная проверка</title><body><main id="root"><button id="open">Akronikl</button></main><script type="module" src="/tools/qa-akronikl/browser-entry.mjs"></script></body></html>';
@@ -62,33 +67,46 @@ try{
  result.environment=await page.evaluate(()=>qa.environment());result.scope={real:'UI/Core/Tutor/Wllama/weights/index',fixture:'identity/route/consent synthetic QA host; g++ diagnostics from pinned corpus',notTested:'production Account, Cloud Sync, cold model persistence, physical devices, hardware GPU'};await save();
  await page.getByRole('button',{name:'Вернуться к разговору',exact:true}).click();
  async function askUi(text){
+  const beforeCalls=await page.evaluate(()=>qa.calls);
   const n=await page.locator('[data-ak-message="assistant"]').count();
   await page.locator('[data-akronikl-message]').fill(text);
   const started=performance.now();await page.locator('[data-akronikl-send]').click();
   await page.waitForFunction(count=>document.querySelectorAll('[data-ak-message="assistant"]').length>count&&document.querySelector('[data-akronikl-send]')?.closest('form')?.getAttribute('aria-busy')==='false',n,{timeout:145000});
   const elapsedMs=performance.now()-started;
   const drained=await page.evaluate(()=>qa.settle());
-  const row={question:text,visibleResponseMs:elapsedMs,includesPlaywright:true,text:await page.locator('[data-ak-message="assistant"]').last().innerText(),metrics:await page.evaluate(()=>qa.measurements()),metricsCapturedAfterSettle:true,drained};
+  const row={question:text,visibleResponseMs:elapsedMs,includesPlaywright:true,text:await page.locator('[data-ak-message="assistant"]').last().innerText(),generated:await page.locator('[data-ak-message="assistant"]').last().getAttribute('data-tutor-generated')==='true',providerOutcomes:await page.evaluate(n=>qa.outcomes().slice(n),beforeCalls),metrics:await page.evaluate(()=>qa.measurements()),metricsCapturedAfterSettle:true,drained};
   result.ui.push(row);await save();if(!row.drained)throw Error('Не подтверждено завершение inference после UI-запроса');
  }
+ async function cancelUi(){
+  const assistantCount=await page.locator('[data-ak-message="assistant"]').count();
+  const before=await page.evaluate(()=>qa.lifecycle());
+  await page.locator('[data-akronikl-message]').fill(corpus.cases[0].prompt);await page.locator('[data-akronikl-send]').click();
+  await page.waitForFunction(()=>qa.pending,{},{timeout:10000});await page.waitForTimeout(250);
+  const cancelStart=performance.now();await page.locator('[data-akronikl-stop]').click();
+  await page.waitForFunction(()=>document.querySelector('[data-akronikl-send]')?.closest('form')?.getAttribute('aria-busy')==='false');
+  const uiCancelMs=performance.now()-cancelStart,drained=await page.evaluate(()=>qa.settle());
+  const drainMs=performance.now()-cancelStart,after=await page.evaluate(()=>qa.lifecycle());
+  await page.waitForTimeout(100);
+  result.cancellation={uiCancelMs,drainMs,includesPlaywright:true,drained,before,after,measurements:await page.evaluate(()=>qa.measurements()),lateAssistantMessages:(await page.locator('[data-ak-message="assistant"]').count())-assistantCount};await save();
+  assert.equal(result.cancellation.lateAssistantMessages,0);assert.equal(drained,true);assert.equal(after.resident,false);assert.ok(after.forcedStops>before.forcedStops);assert.equal(after.cleanupFailed,false);
+ }
+ if(mode==='full'){
  await askUi(corpus.cases[0].prompt);
  await page.screenshot({path:path.join(out,'real-model-desktop.png')});
  await context.setOffline(true);await askUi('Объясни проще');await context.setOffline(false);
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(out,'real-model-390.png')});
- for(const item of corpus.cases){
+ }else await cancelUi();
+ for(const item of planned){
   const row=await page.evaluate(c=>qa.runCase(c),item);result.cases.push(row);await save();
   console.log(JSON.stringify({id:row.id,status:row.response.status,generated:row.response.generated,ms:Math.round(row.callerElapsedMs)}));
   if(!row.drained)throw Error('Модель не освободила предыдущий запрос; следующие случаи NOT_RUN');
  }
- const assistantCount=await page.locator('[data-ak-message="assistant"]').count();
- await page.locator('[data-akronikl-message]').fill(corpus.cases[0].prompt);await page.locator('[data-akronikl-send]').click();
- await page.waitForFunction(()=>qa.pending,{},{timeout:10000});
- const cancelStart=performance.now();await page.locator('[data-akronikl-stop]').click();
- await page.waitForFunction(()=>document.querySelector('[data-akronikl-send]')?.closest('form')?.getAttribute('aria-busy')==='false');
- const uiCancelMs=performance.now()-cancelStart,drained=await page.evaluate(()=>qa.settle());
- await page.waitForTimeout(100);
- result.cancellation={uiCancelMs,includesPlaywright:true,drained,lateAssistantMessages:(await page.locator('[data-ak-message="assistant"]').count())-assistantCount};
- assert.equal(result.cancellation.lateAssistantMessages,0);assert.equal(drained,true);
+ if(mode==='full'){
+  await cancelUi();
+  result.cancellation.recovery=await page.evaluate(c=>qa.runCase(c),corpus.cases[0]);await save();
+  assert.equal(result.cancellation.recovery.modelCalled,true);assert.equal(result.cancellation.recovery.drained,true);assert.ok(result.cancellation.recovery.lifecycle.epoch>result.cancellation.after.epoch);
+ }else result.cancellation.recoveryCaseId=planned[0]?.id??null;
+ result.providerOutcomes=await page.evaluate(()=>qa.outcomes());
  result.release=await page.evaluate(()=>qa.close());result.status='COMPLETED_PENDING_HUMAN_REVIEW';
 }catch(error){result.status='BLOCKED_OR_FAILED';result.failure={message:error.message,stack:error.stack};console.error(error.message);if(page)await page.screenshot({path:path.join(out,'FAILURE.png')}).catch(()=>{});process.exitCode=1;}
 finally{

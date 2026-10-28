@@ -71,7 +71,8 @@ function fixture({provider=true,denied=false,style=true,locale='ru',situation='r
 for(const locale of ['ru','en'])test(`Реальный Tutor + синтетическая модель ${locale}: стиль только в доверенной инструкции`,async()=>{
  const f=fixture({locale});const r=await f.session.ask({text:'Объясни RAII'});assert.equal(r.generated,true);
  assert.equal(f.packets[0].messages.filter(m=>m.role==='system').length,1);
- assert.match(f.packets[0].messages[0].content,locale==='ru'?/Ты Akronikl/:/You are Akronikl/);
+ assert.match(f.packets[0].messages[0].content,/You are Akronikl/);
+ assert.match(f.packets[0].messages[0].content,locale==='ru'?/Reply in Russian/:/Reply in English/);
  assert.deepEqual(r.actions,[]);assert.ok(r.sources[0].sourcePath.startsWith('courses/cpp/'));f.session.dispose();
 });
 test('Смена стиля не меняет evidence, метки и права',async()=>{
@@ -106,5 +107,5 @@ test('Проверка неверной конфигурации происхо�
  const f=fixture();f.replace({...base(),humor:'100'});assert.equal((await f.session.ask({text:'RAII'})).status,'error');assert.equal(f.calls,0);f.session.dispose();
 });
 test('Неизвестный серьёзный контекст выбирает тихий стиль',async()=>{
- const f=fixture({situation:'untrusted-new-state'});f.set({humor:100});await f.session.ask({text:'RAII'});assert.match(f.packets[0].messages[0].content,/Без шуток и иронии/);f.session.dispose();
+ const f=fixture({situation:'untrusted-new-state'});f.set({humor:100});await f.session.ask({text:'RAII'});assert.match(f.packets[0].messages[0].content,/No jokes or irony/);f.session.dispose();
 });
