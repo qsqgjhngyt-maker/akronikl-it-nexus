@@ -486,7 +486,7 @@ async function bindProviderButtons(container, { intent = "login", expectedAccoun
 // core/startup-intro-policy.js
 var INTRO_KEY = "akronikl:it-nexus:startup-intro:v1";
 var INTRO_VERSION = "cinematic-v2";
-var INTRO_MEDIA = Object.freeze({ desktop: { version: "cinematic-v2", mp4Codec: "avc1.4D4028", seconds: 10 }, mobile: { version: "cinematic-v1", mp4Codec: "avc1.4D401F", seconds: 8.033333 } });
+var INTRO_MEDIA = Object.freeze({ desktop: { version: "cinematic-v3", mp4Codec: "avc1.4D4028", seconds: 10 }, mobile: { version: "cinematic-v3", mp4Codec: "avc1.4D4028", seconds: 8 } });
 var INTRO_HANDOFF_KEY = "akronikl:it-nexus:startup-intro:auth-handoff:v1";
 var defaults = () => ({ schema: 1, enabled: true, simplified: false, seen: "" });
 function readIntroPreference(storage) {

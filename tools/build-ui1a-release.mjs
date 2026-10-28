@@ -21,6 +21,7 @@ try{await stat(path.join(source,'intro-media'));await walk('intro-media')}catch(
 // В новом поколении нужны новый Desktop и прежний Mobile; опубликованные
 // старые поколения удерживаются ниже побайтно, вместе с прежним Desktop.
 if(process.argv.includes('--startup-launch')&&files.includes('intro-media/cinematic-v2/desktop.mp4'))for(let i=files.length-1;i>=0;i--)if(/^intro-media\/cinematic-v1\/desktop\.(mp4|webm|jpg)$/.test(files[i]))files.splice(i,1);
+if(process.argv.includes('--startup-first-paint')&&files.includes('intro-media/cinematic-v3/desktop/mp4/part-000.mp4'))for(let i=files.length-1;i>=0;i--)if(files[i].startsWith('intro-media/')&&!files[i].startsWith('intro-media/cinematic-v3/'))files.splice(i,1);
 const manifest=await readFile(path.join(source,'manifest.webmanifest')),prefix='releases/'+config.assetGeneration+'/',records=[],hash=b=>createHash('sha256').update(b).digest('hex');
 async function output(file,b,origin){const target=path.join(out,file);await mkdir(path.dirname(target),{recursive:true});await writeFile(target,b);records.push({file,bytes:b.length,sha256:hash(b),source:origin})}
 const versionMetadata=JSON.parse(await readFile(path.join(source,'version.json')));
