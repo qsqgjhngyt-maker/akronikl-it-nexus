@@ -38,6 +38,11 @@ const server=https.createServer({key:await readFile(path.join(tls,'key.pem')),ce
  if(offline){req.socket.destroy();return}
  try{
   const u=new URL(req.url,'https://'+req.headers.host);requests.push({host:u.host,path:u.pathname,method:req.method});
+  // Только новые публичные media bytes, также через loopback, без live CDN.
+  if(u.host==='qsqgjhngyt-maker.github.io'&&/^\/akronikl-it-nexus\/intro-media\/cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)$/.test(u.pathname)&&!u.search){
+   assert.equal(req.method,'GET');assert.equal(Boolean(req.headers.cookie||req.headers.authorization),false,'Публичное видео не получает session credentials');
+   const file=u.pathname.replace('/akronikl-it-nexus/','');res.writeHead(200,{'content-type':file.endsWith('.mp4')?'video/mp4':'video/webm','access-control-allow-origin':'*','cache-control':'no-store'});return res.end(await readFile(path.join(frontend,file)));
+  }
   if(u.host==='cdn.jsdelivr.net'){
    const i=RUNTIME_RESOURCES.findIndex(r=>r.url===u.href);if(i<0)throw Error('UNAPPROVED_CDN');
    res.writeHead(200,{'content-type':RUNTIME_RESOURCES[i].mime,'cache-control':'public','access-control-allow-origin':'*'});return res.end(await readFile(path.join(runtime,runtimeNames[i])));
@@ -64,7 +69,7 @@ const server=https.createServer({key:await readFile(path.join(tls,'key.pem')),ce
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const port=server.address().port;
 async function launch(){
  context=await chromium.launchPersistentContext(profile,{headless:true,executablePath:process.env.NEXUS_CHROME_PATH,ignoreHTTPSErrors:true,serviceWorkers:'allow',args:['--ignore-certificate-errors','--no-proxy-server','--disable-background-networking','--disable-component-update','--disable-sync','--disable-features=AutofillServerCommunication,DnsOverHttpsUpgrade','--no-first-run','--host-resolver-rules=MAP * 127.0.0.1:'+port]});
- context.on('request',r=>appRequests.push({host:new URL(r.url()).host,path:new URL(r.url()).pathname}));
+ context.on('request',r=>appRequests.push({host:new URL(r.url()).host,path:new URL(r.url()).pathname,method:r.method()}));
  return context.newPage();
 }
 async function check(name,fn){const start=performance.now();await fn();checks.push({name,status:'PASS',durationMs:Math.round(performance.now()-start)});console.log('PASS '+name)}
@@ -120,7 +125,7 @@ try{
   assert.deepEqual(f.db.prepare('SELECT snapshot_json FROM project_snapshots WHERE project_id=?').get(projectId),before);
   const exists=await page.evaluate(async({generation,vaultId,phrase})=>{const {createVaultStore}=await import('/releases/'+generation+'/pwa/local-vault.js'),s=await createVaultStore().unlock(vaultId,phrase);const has=Object.keys(s.read().projects).length>0;await s.lock();return has},{generation,vaultId,phrase});assert.equal(exists,true);
  });
- assert.deepEqual(errors,[]);assert.ok(appRequests.every(r=>[host,'cdn.jsdelivr.net'].includes(r.host)));
+ assert.deepEqual(errors,[]);assert.ok(appRequests.every(r=>[host,'cdn.jsdelivr.net'].includes(r.host)||(r.host==='qsqgjhngyt-maker.github.io'&&r.method==='GET'&&/^\/akronikl-it-nexus\/intro-media\/cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)$/.test(r.path))));
  const knownBackground=new Set(['update.googleapis.com','www.gstatic.com','accounts.google.com','www.google.com','content-autofill.googleapis.com','android.clients.google.com']);
  assert.ok(deniedInfrastructure.every(r=>knownBackground.has(r.host)),'Unexpected browser infrastructure host; review before acceptance');
 }catch(error){failures.push({message:error.message,stack:error.stack,ui:await page?.evaluate(()=>document.querySelector('[data-local-status]')?.textContent||document.body.textContent.slice(0,2000)).catch(()=>null)});await page?.screenshot({path:path.join(out,'FAILURE.png'),fullPage:true}).catch(()=>{});console.error(error.stack)}
