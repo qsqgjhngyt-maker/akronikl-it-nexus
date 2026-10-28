@@ -7,12 +7,23 @@ const {build}=createRequire(new URL('../server-access/package.json',import.meta.
 const value=flag=>{const i=process.argv.indexOf(flag);return i>=0?process.argv[i+1]:null},source=path.resolve(value('--source')||fileURLToPath(new URL('../',import.meta.url))),out=path.resolve(value('--out')||path.join(source,'dist-ui1a'));
 if(out===source||source.startsWith(out+path.sep))throw Error('Нельзя писать build поверх исходников');
 try{await stat(out);throw Error('Каталог build уже существует: выберите новый путь')}catch(e){if(e.code!=='ENOENT')throw e}
-const config=value('--generation')&&value('--version')?{assetGeneration:value('--generation'),version:value('--version')}:JSON.parse(await readFile(path.join(source,'release-candidate.json')));if(!/^ui1a-[a-z0-9-]+$/.test(config.assetGeneration))throw Error('Неверный generation ID');
+const config=JSON.parse(await readFile(path.join(source,'release-candidate.json')));
+if(value('--generation')&&value('--generation')!==config.assetGeneration&&process.argv.includes('--retain-active'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),config.assetGeneration])];
+if(value('--generation')&&value('--version'))Object.assign(config,{assetGeneration:value('--generation'),version:value('--version')});
+if(!/^ui1a-[a-z0-9-]+$/.test(config.assetGeneration))throw Error('Неверный generation ID');
 const folders=['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa'];
 const files=[];async function walk(dir,prefix=''){for(const e of await readdir(path.join(source,dir,prefix),{withFileTypes:true})){const f=path.posix.join(dir,prefix,e.name);if(e.isDirectory())await walk(dir,path.posix.join(prefix,e.name));else if(e.isFile())files.push(f);else throw Error('Недопустимый source entry')}}for(const dir of folders)await walk(dir);files.push('version.json');files.sort();
+// Необязательное медиа не входит в public authority Service Worker.
+try{await stat(path.join(source,'intro-media'));await walk('intro-media')}catch(error){if(error.code!=='ENOENT')throw error}
 const manifest=await readFile(path.join(source,'manifest.webmanifest')),prefix='releases/'+config.assetGeneration+'/',records=[],hash=b=>createHash('sha256').update(b).digest('hex');
 async function output(file,b,origin){const target=path.join(out,file);await mkdir(path.dirname(target),{recursive:true});await writeFile(target,b);records.push({file,bytes:b.length,sha256:hash(b),source:origin})}
-for(const file of files){const b=await readFile(path.join(source,file));await output(prefix+file,b,file)}
+const versionMetadata=JSON.parse(await readFile(path.join(source,'version.json')));
+if(value('--generation')){
+ versionMetadata.version=config.version;versionMetadata.assetGeneration=config.assetGeneration;
+ if(versionMetadata.releaseCandidate)Object.assign(versionMetadata.releaseCandidate,{version:config.version,assetGeneration:config.assetGeneration});
+}
+const versionBytes=value('--generation')?Buffer.from(JSON.stringify(versionMetadata,null,2)+'\n'):await readFile(path.join(source,'version.json'));
+for(const file of files){const b=file==='version.json'?versionBytes:await readFile(path.join(source,file));await output(prefix+file,b,file)}
 // После rollback корневые документы могут ссылаться на старое поколение.
 // Перепривязываются только выходные документы сборки; immutable source bytes
 // и активные root-файлы никогда не перезаписываются этим преобразованием.
@@ -23,7 +34,7 @@ const renderHTML=html=>{
 };
 let index=renderHTML(await readFile(path.join(source,'index.html'),'utf8'));
 index=index.replace('href="./manifest.webmanifest"','href="./manifest.webmanifest?v='+config.version+'"');
-await output('index.html',Buffer.from(index),'index.html: generation path rendering');await output('manifest.webmanifest',manifest,'manifest.webmanifest: identity preserved');await output('version.json',await readFile(path.join(source,'version.json')),'version.json');
+await output('index.html',Buffer.from(index),'index.html: generation path rendering');await output('manifest.webmanifest',manifest,'manifest.webmanifest: identity preserved');await output('version.json',versionBytes,'version.json');
 try{
  const shell=renderHTML(await readFile(path.join(source,'nexus-shell.html'),'utf8'));
  await output('nexus-shell.html',Buffer.from(shell),'nexus-shell.html: Account bootstrap');
@@ -52,10 +63,14 @@ for(const generation of config.retainedPublicGenerations||[]){
 for(const file of ['assets/icons/icon-192.png','assets/icons/icon-512.png','assets/icons/apple-touch-icon.png'])await output(file,await readFile(path.join(source,file)),file);
 const offline=renderHTML(await readFile(path.join(source,'offline.html'),'utf8')).replaceAll('./pwa/','./'+prefix+'pwa/');
 await output('offline.html',Buffer.from(offline),'offline.html: independent public educational shell; local vault unlock required');
-const mime=file=>file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.md')?'text/markdown':'text/html';
-const approved=records.filter(r=>!['index.html','nexus-shell.html','version.json'].includes(r.file)).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file),...(r.version?{version:r.version}:{})})).sort((a,b)=>a.url<b.url?-1:a.url>b.url?1:0);
+const mime=file=>file.endsWith('.mp4')?'video/mp4':file.endsWith('.webm')?'video/webm':file.endsWith('.jpg')?'image/jpeg':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.md')?'text/markdown':'text/html';
+// Сохраняет правило также при будущем удержании прежнего intro-поколения.
+const optional=r=>/^releases\/ui1a-[a-z0-9-]+\/intro-media\//.test(r.file);
+const optionalAssets=records.filter(optional).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file)}));
+const approved=records.filter(r=>!optional(r)&&!['index.html','nexus-shell.html','version.json'].includes(r.file)).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file),...(r.version?{version:r.version}:{})})).sort((a,b)=>a.url<b.url?-1:a.url>b.url?1:0);
 const pwaConfig={generation:config.assetGeneration,version:config.version,assets:approved};
 const sw=(await build({absWorkingDir:source,entryPoints:[path.join(source,'pwa/service-worker.js')],bundle:true,platform:'browser',format:'iife',target:'es2022',write:false,define:{__NEXUS_PWA_CONFIG__:JSON.stringify(pwaConfig)},logLevel:'warning'})).outputFiles[0].contents;
 await output('service-worker.js',Buffer.from(sw),'pwa/service-worker.js: exact public manifest bound');
 const bundle={version:config.version,assetGeneration:config.assetGeneration,prefix,files:records.sort((a,b)=>a.file<b.file?-1:a.file>b.file?1:0),publicAuthority:'EXACT PUBLIC STATIC FILES / CANDIDATE OWNER PUBLICATION APPROVAL REQUIRED',publicAssets:approved.length,legacyWorkerIncluded:false,verifiedWorkerIncluded:true,manifestIdentity:JSON.parse(manifest),rootHTMLURLReuse:'Network only; independent public offline shell grants no server proof; personal copies require local phrase'};
-await writeFile(path.join(out,'BUILD_MANIFEST.json'),JSON.stringify(bundle,null,2)+'\n');console.log(JSON.stringify({out,files:records.length,version:config.version,prefix,serviceWorker:true}));
+if(optionalAssets.length)Object.assign(bundle,{optionalAssets,optionalMediaPolicy:'NETWORK ONLY / NO SW INSTALL / NO EXPLICIT OFFLINE DOWNLOAD'});
+await writeFile(path.join(out,'BUILD_MANIFEST.json'),JSON.stringify(bundle,null,2)+'\n');console.log(JSON.stringify({out,files:records.length,version:config.version,prefix,serviceWorker:true,optionalAssets:optionalAssets.length}));

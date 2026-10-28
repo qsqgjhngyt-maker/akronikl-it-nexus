@@ -50,9 +50,29 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Проверить отдельный контракт Intro без изменения допуска M5
+        id: startup_intro
+        run: node tools/startup-intro-ci-route.mjs
+      - name: Node.js 24 для изолированной проверки Intro
+        if: steps.startup_intro.outputs.enabled == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Приёмка Intro — content
+        if: steps.startup_intro.outputs.enabled == 'true'
+        run: node tools/check-startup-intro-ci.mjs --lane content
+      - name: Сохранить доказательства Intro — content
+        if: always() && steps.startup_intro.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: startup-intro-content-${{ github.sha }}
+          path: evidence-startup-intro/content/
+          retention-days: 14
       - name: Зафиксированные зависимости проверок
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
       - name: Неизменность ID, прогресса, Identity, Cloud; только согласованный runtime patch
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: |
           if node -e "process.exit(['cpp-module-3','cpp-module-4','cpp-module-5'].includes(JSON.parse(require('fs').readFileSync('release-candidate.json')).publication?.module)?0:1)"; then
             node tools/check-academy-gold-module3-publication.mjs
@@ -62,14 +82,18 @@ jobs:
             git diff --exit-code bad182cc020e51dcfd0b36a7b0127c637c8f79ee HEAD -- courses/cpp/curriculum.json courses/cpp/content-package.json courses/cpp/data core/storage.js core/account-storage.js core/identity.js core/migrations sync sandbox project-studio server-access pwa/local-vault.js pwa/offline-learning.js pwa/runtime-manifest.js pwa/service-worker.js ':(exclude)sandbox/providers/browser-runtime.js'
           fi
       - name: Content Quality Gate и совместимость
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: node tools/check-academy-gold-regression.mjs
       - name: Интеграция с подтверждённым main и сохранность rollback
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: |
           git merge-base --is-ancestor 0a134bbb496efae19df373bddff9a00dae9ff3dc HEAD
           node tools/check-academy-gold-integration.mjs
       - name: Реальное выполнение C++20 с проверкой undefined behavior
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: node tools/check-academy-gold-cpp.mjs
       - name: Подготовить браузерную проверку
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: |
           npm install --prefix /tmp/nexus-gold-browser --no-save playwright@1.56.1
           /tmp/nexus-gold-browser/node_modules/.bin/playwright install --with-deps chromium
@@ -77,6 +101,7 @@ jobs:
           git worktree add --detach /tmp/nexus-gold-rollback-source 02369149b465a98c0f3ff780b8c59add36e52e1b
           node tools/snapshot-published-build.mjs --source /tmp/nexus-gold-rollback-source --out /tmp/nexus-gold-rollback --expected-commit 02369149b465a98c0f3ff780b8c59add36e52e1b
       - name: Настоящие браузерные C++ runtime — все Gold программы и случаи ввода
+        if: steps.startup_intro.outputs.enabled != 'true'
         env:
           NEXUS_FRONTEND_DIR: /tmp/nexus-gold-build
           NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-gold-browser/node_modules/playwright/index.mjs
@@ -87,12 +112,14 @@ jobs:
           node tools/prepare-academy-gold-runtime-fixture.mjs
           node tests/academy-gold-runtime-browser-check.mjs
       - name: Настоящие online и холодный Offline entry points
+        if: steps.startup_intro.outputs.enabled != 'true'
         env:
           NEXUS_FRONTEND_DIR: /tmp/nexus-gold-build
           NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-gold-browser/node_modules/playwright/index.mjs
           NEXUS_NATIVE_EVIDENCE: academy-gold-evidence/browser
         run: node tests/academy-gold-browser-check.mjs
       - name: Браузерная интеграция Home, меню, Account и media
+        if: steps.startup_intro.outputs.enabled != 'true'
         env:
           NEXUS_FRONTEND_DIR: /tmp/nexus-gold-build
           NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-gold-browser/node_modules/playwright/index.mjs
@@ -101,6 +128,7 @@ jobs:
           NEXUS_NATIVE_EVIDENCE=academy-gold-evidence/administration node tests/platform-admin-browser-check.mjs
           NEXUS_NATIVE_EVIDENCE=academy-gold-evidence/public-media node tests/blog-media-public-browser-check.mjs
       - name: Реальная PWA — обновление, точный откат и сохранение учебных данных
+        if: steps.startup_intro.outputs.enabled != 'true'
         env:
           NEXUS_FRONTEND_DIR: /tmp/nexus-gold-build
           NEXUS_ROLLBACK_DIR: /tmp/nexus-gold-rollback
@@ -108,14 +136,14 @@ jobs:
           NEXUS_BROWSER_RESULT: academy-gold-evidence/PWA_ROLLBACK.json
         run: node tests/pwa-rollback-browser-check.mjs
       - name: Хеши и контекст evidence
-        if: always()
+        if: always() && steps.startup_intro.outputs.enabled != 'true'
         run: |
           mkdir -p academy-gold-evidence
           git rev-parse HEAD > academy-gold-evidence/HEAD.txt
           git diff --stat bad182cc020e51dcfd0b36a7b0127c637c8f79ee HEAD > academy-gold-evidence/DIFF.txt
           find courses/cpp/gold core -type f \( -path 'courses/cpp/gold/*' -o -name 'academy-gold-*.js' \) -print0 | sort -z | xargs -0 sha256sum > academy-gold-evidence/SHA256SUMS.txt
       - name: Сохранить доказательства
-        if: always()
+        if: always() && steps.startup_intro.outputs.enabled != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: academy-gold-module-1-${{ github.sha }}

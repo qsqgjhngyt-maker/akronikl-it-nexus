@@ -38,6 +38,15 @@ on:
       - 'tests/pwa-policy-check.mjs'
       - 'tests/helpers/online-runtime-fixture.mjs'
       - 'tests/helpers/runtime-transport.mjs'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'startup-intro-publication.json'
+      - 'tools/startup-intro-*.mjs'
+      - 'tools/check-startup-intro-*.mjs'
+      - 'tools/prepare-startup-intro-delivery.mjs'
+      - '.github/workflows/academy-gold-cpp-module-5-preflight.yml'
+      - '.github/workflows/academy-gold-cpp-m5-acceptance.yml'
 permissions:
   contents: read
 jobs:
@@ -58,9 +67,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Node.js 24 для проверки точной доставки
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Проверить точный Intro и сохранность прежней публикации
+        id: startup_delivery
+        run: node tools/check-startup-intro-delivery.mjs --prepare-legacy
       - name: Инструменты проверки, без изменения продукта
+        working-directory: ${{ steps.startup_delivery.outputs.legacy_root }}
         run: npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
       - name: DAG девяти тем, неизменность прежних50 ID и NEXUS-PERF-01
+        working-directory: ${{ steps.startup_delivery.outputs.legacy_root }}
         run: |
           node tools/check-academy-gold-module5-publication.mjs --rebuild
           node --test tests/academy-gold-module5-publication.test.mjs
@@ -72,8 +90,10 @@ jobs:
           node tools/check-academy-gold-module5-dependencies.mjs
           node tools/check-academy-gold-module5-authoring.mjs
       - name: Прогресс, аккаунт, ProjectStore и Offline merge на синтетических данных
+        working-directory: ${{ steps.startup_delivery.outputs.legacy_root }}
         run: node tests/academy-gold-module5-preservation.mjs
       - name: Регрессия опубликованных M1–4 и интеграций
+        working-directory: ${{ steps.startup_delivery.outputs.legacy_root }}
         run: |
           node tools/check-academy-gold-regression.mjs
           node tools/check-academy-gold-integration.mjs
@@ -96,9 +116,18 @@ jobs:
       NEXUS_M5_EVIDENCE: /tmp/nexus-m5-native
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Node.js 24 для проверки точной доставки
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Проверить точный Intro и сохранность прежней публикации
+        id: startup_delivery
+        run: node tools/check-startup-intro-delivery.mjs
       - name: C++20 и UBSan, настоящие исключения, без подмены browser proof
         run: |
           node tools/check-academy-gold-module5-native.mjs
@@ -126,13 +155,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Node.js 24 для проверки точной доставки
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Проверить точный Intro и сохранность прежней публикации
+        id: startup_delivery
+        run: node tools/check-startup-intro-delivery.mjs
       - name: Изолированная сборка, Chromium и закреплённый Clang/WASI
         id: prepare
         run: |
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           npm install --prefix /tmp/nexus-m5-browser --no-save playwright@1.56.1
           /tmp/nexus-m5-browser/node_modules/.bin/playwright install --with-deps chromium
-          node tools/build-ui1a-release.mjs --out /tmp/nexus-m5-build
+          node tools/check-startup-intro-delivery.mjs --build /tmp/nexus-m5-build
           node tools/prepare-academy-gold-runtime-fixture.mjs
       - name: Строгий runtime admission, unsupported и FAIL не объявляются PASS
         run: node tests/academy-gold-module5-preflight.mjs
@@ -180,15 +216,24 @@ jobs:
       NEXUS_GOLD_EVIDENCE: /tmp/nexus-m5-gold-evidence/preparation
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Node.js 24 для проверки точной доставки
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Проверить точный Intro и сохранность прежней публикации
+        id: startup_delivery
+        run: node tools/check-startup-intro-delivery.mjs
       - name: Закреплённые инструменты, изолированный build и настоящие runtime bytes
         run: |
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           npm install --prefix /tmp/nexus-m5-gold-browser --no-save playwright@1.56.1
           /tmp/nexus-m5-gold-browser/node_modules/.bin/playwright install --with-deps chromium
-          node tools/build-ui1a-release.mjs --out /tmp/nexus-m5-gold-build
+          node tools/check-startup-intro-delivery.mjs --build /tmp/nexus-m5-gold-build
           node tools/prepare-academy-gold-runtime-fixture.mjs
       - name: Все Gold программы и контрольные случаи прежнего модуля через новый runtime
         run: node ${{ matrix.command }}
