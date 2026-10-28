@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {createKnowledgeIndex,createNexusContextAdapter,diagnosticFromNexus} from '../akronikl/core/index.js';
 import {createTutorSession} from '../akronikl/tutor/session.js';
 import {createWllamaProvider,loadLocalModel} from '../akronikl/tutor/local-model.js';
+import {localLoadOptions} from '../akronikl/connections/profiles.js';
 const index=createKnowledgeIndex(JSON.parse(await readFile(new URL('../akronikl/knowledge/core-index.ru.json',import.meta.url))));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 function fixture(options={}) {
@@ -100,5 +101,5 @@ test('нефункциональный progress отклоняется до чт
 });
 test('локальный runtime не использует скрытый CDN compatibility fallback',async()=>{
  const s=await readFile(new URL('../akronikl/tutor/local-model.js',import.meta.url),'utf8');
- assert.ok(s.indexOf('engine.setCompat(null)')<s.indexOf('await engine.loadModel('));assert.match(s,/n_parallel:1/);assert.match(s,/jinja:true/);assert.match(s,/reasoning_budget_tokens:0/);
+ assert.ok(s.indexOf('engine.setCompat(null)')<s.indexOf('await engine.loadModel('));assert.match(s,/n_parallel:1/);assert.match(s,/jinja:true/);assert.equal(localLoadOptions('local-cpu').reasoning_budget_tokens,64);assert.equal(localLoadOptions('local-webgpu').reasoning_budget_tokens,0);
 });

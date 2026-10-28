@@ -17,7 +17,7 @@ const instructions = {
   example:'Give a small illustrative example, mark it as your example; do not claim it was executed.',
   practice:'Create one short beginner C++ practice task from the supplied topic. State the goal and expected result, but do not give the solution. Label it as a new exercise, not an official course assignment.',
   code:'Explain only the explicitly selected code. Do not claim to have inspected other files or executed it.',
-  diagnostic:'Explain the exact diagnostic, then give a minimal legal hint that removes its cause. Distinguish a variable, function and type. Do not claim an unperformed compilation.'
+  diagnostic:'Explain the exact diagnostic, then give a minimal legal hint removing its cause. Read-only prohibits assignment even of the old value; changing a literal cannot fix that error. Distinguish variables, functions and types. Cite each label once. Do not claim compilation.'
 };
 const nativeAborted = Object.getOwnPropertyDescriptor(AbortSignal.prototype, 'aborted').get;
 const sourceRef = (r, label,query) => ({label, kind:'course', sourceId:r.sourceId, contentVersion:r.contentVersion, contentHash:r.contentHash, title:r.title, sourcePath:r.sourcePath, lessonId:r.lessonId, courseId:r.courseId, locale:r.locale, ...(query?tutorExcerpt(r.text,query,500,r.section==='glossary'):completeExcerpt(r.text))});
