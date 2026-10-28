@@ -1,5 +1,5 @@
 // Isolated frontend host; Account proof and lazy assistant bridge are production source modules.
-import {createNexusBootstrap} from '../../core/bootstrap.js';
+import {createNexusBootstrap} from '../../core/bootstrap-engine.js';
 import {verifiedAccount} from '../../core/account-storage.js';
 import {createLazyAssistantBridge} from '../../akronikl/context.js';
 import {logout} from '../../server-access/public/passkey-client.js';
