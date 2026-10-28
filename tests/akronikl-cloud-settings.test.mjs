@@ -55,7 +55,7 @@ test('HTTP cancellation settles without claiming remote compute stopped',async()
 });
 const repo=fileURLToPath(new URL('../',import.meta.url));
 test('settings credential sessions are verified, isolated by browser cookie, revocable and never returned',async()=>{
- let disposed=0,seenKey=null;const s=await startCloudSettingsServer({root:repo,createAdapter:options=>{seenKey=options.apiKey;return {complete:async()=>({response:answer,rawFinal:raw,measurements:{}}),dispose(){disposed++;}};}});
+ let disposed=0,seenKey=null;const s=await startCloudSettingsServer({personalPreview:true,root:repo,createAdapter:options=>{seenKey=options.apiKey;return {complete:async()=>({response:answer,rawFinal:raw,measurements:{}}),dispose(){disposed++;}};}});
  try{
   const post=(route,data,cookie='',origin=s.origin)=>fetch(s.origin+'/api/akronikl/cloud/'+route,{method:'POST',headers:{origin,'Content-Type':'application/json',...(cookie?{cookie}:{})},body:JSON.stringify(data)});
   assert.equal(s.status().connections,0);assert.equal((await post('connect',{providerId:'qwen',modelId:'qwen3.7-plus',apiKey:secret},'','https://attacker.invalid')).status,403);
@@ -65,11 +65,11 @@ test('settings credential sessions are verified, isolated by browser cookie, rev
  }finally{await s.close();}
 });
 test('a rejected verification never becomes connected and erases the tentative adapter',async()=>{
- let disposed=0;const s=await startCloudSettingsServer({root:repo,createAdapter:()=>({complete:async()=>{throw Error('CLOUD_AUTH_FAILED');},dispose(){disposed++;}})});
+ let disposed=0;const s=await startCloudSettingsServer({personalPreview:true,root:repo,createAdapter:()=>({complete:async()=>{throw Error('CLOUD_AUTH_FAILED');},dispose(){disposed++;}})});
  try{const r=await fetch(s.origin+'/api/akronikl/cloud/connect',{method:'POST',headers:{origin:s.origin,'Content-Type':'application/json'},body:JSON.stringify({providerId:'openai',modelId:'gpt-6-astra',apiKey:secret})});assert.equal(r.status,401);assert.equal(s.status().sessions,0);assert.equal(disposed,1);}finally{await s.close();}
 });
 test('idle session expiry disposes server credentials',async()=>{
- let now=Date.now(),disposed=0;const s=await startCloudSettingsServer({root:repo,ttlMs:100,now:()=>now,createAdapter:()=>({complete:async()=>({response:answer}),dispose(){disposed++;}})});
+ let now=Date.now(),disposed=0;const s=await startCloudSettingsServer({personalPreview:true,root:repo,ttlMs:100,now:()=>now,createAdapter:()=>({complete:async()=>({response:answer}),dispose(){disposed++;}})});
  try{await fetch(s.origin+'/api/akronikl/cloud/connect',{method:'POST',headers:{origin:s.origin,'Content-Type':'application/json'},body:JSON.stringify({providerId:'qwen',modelId:'m',apiKey:secret})});assert.equal(s.status().sessions,1);now+=101;assert.equal(s.status().sessions,0);assert.equal(disposed,1);}finally{await s.close();}
 });
 test('controller snapshots never include the entered API key or overwrite the selected model',async()=>{
@@ -82,7 +82,7 @@ test('browser settings broker does not store keys and sends them only to connect
 });
 
 test('late disposal and old requests cannot target a newer connection',async()=>{
- const server=await startCloudSettingsServer({root:repo,createAdapter:()=>({complete:async()=>({response:answer}),dispose(){}})});
+ const server=await startCloudSettingsServer({personalPreview:true,root:repo,createAdapter:()=>({complete:async()=>({response:answer}),dispose(){}})});
  const post=(route,data,cookie='')=>fetch(server.origin+'/api/akronikl/cloud/'+route,{method:'POST',headers:{origin:server.origin,'Content-Type':'application/json',cookie},body:JSON.stringify(data)});
  try{
   const a=await post('connect',{providerId:'qwen',modelId:'m',apiKey:secret}),cookieA=a.headers.get('set-cookie').split(';')[0],first=await a.json();
@@ -98,7 +98,7 @@ test('encrypted vault survives a new gateway, isolates browser owners and revoke
  const dir=await mkdtemp(path.join(tmpdir(),'ak-cloud-vault-')),file=path.join(dir,'fixture.bin'),master=randomBytes(32);
  const codec={protect:async b=>{const iv=randomBytes(12),c=createCipheriv('aes-256-gcm',master,iv),bytes=Buffer.concat([c.update(b),c.final()]);return Buffer.concat([iv,c.getAuthTag(),bytes]);},unprotect:async b=>{const d=createDecipheriv('aes-256-gcm',master,b.subarray(0,12));d.setAuthTag(b.subarray(12,28));return Buffer.concat([d.update(b.subarray(28)),d.final()]);}};
  const newVault=()=>createCloudVault({file,codec}),keys=[],disposed=[];
- const options=()=>({root:repo,vault:newVault(),createAdapter:o=>{keys.push(o.apiKey);return {complete:async()=>({response:answer}),dispose(){disposed.push(o.selection.providerId);}};}});
+ const options=()=>({root:repo,personalPreview:true,vault:newVault(),createAdapter:o=>{keys.push(o.apiKey);return {complete:async()=>({response:answer}),dispose(){disposed.push(o.selection.providerId);}};}});
  let server=await startCloudSettingsServer(options());
  const post=(route,data,cookie='')=>fetch(server.origin+'/api/akronikl/cloud/'+route,{method:'POST',headers:{origin:server.origin,'Content-Type':'application/json',cookie},body:JSON.stringify(data)});
  try{
@@ -119,11 +119,36 @@ test('encrypted vault survives a new gateway, isolates browser owners and revoke
 
 test('failed verification never writes a key and vault failure never claims saved or connected',async()=>{
  let writes=0;const vault={id:'SYNTHETIC',list:async()=>[],get:async()=>null,put:async()=>{writes++;throw Error('private disk error');},remove:async()=>{}};
- let authFail=true,disposed=0;const server=await startCloudSettingsServer({root:repo,vault,createAdapter:()=>({complete:async()=>{if(authFail)throw Error('CLOUD_AUTH_FAILED');return {response:answer};},dispose(){disposed++;}})});
+ let authFail=true,disposed=0;const server=await startCloudSettingsServer({personalPreview:true,root:repo,vault,createAdapter:()=>({complete:async()=>{if(authFail)throw Error('CLOUD_AUTH_FAILED');return {response:answer};},dispose(){disposed++;}})});
  const post=data=>fetch(server.origin+'/api/akronikl/cloud/connect',{method:'POST',headers:{origin:server.origin,'Content-Type':'application/json'},body:JSON.stringify(data)});
  try{
   const data={providerId:'qwen',modelId:'m',apiKey:secret,remember:true};assert.equal((await post(data)).status,401);assert.equal(writes,0);authFail=false;
   const r=await post(data);assert.equal(r.ok,false);assert.equal(server.status().sessions,0);assert.equal(r.headers.get('set-cookie'),null);assert.equal(writes,1);assert.equal(disposed,2);
   assert.equal((await post({...data,remember:false})).status,200);
  }finally{await server.close();}
+});
+
+test('authenticated account A/B in the same browser cannot list, reuse, delete or generate with each other credentials',async()=>{
+ // Trusted server resolver fixture, not a production Nexus authentication test.
+ const records=new Map(),auth=new Map([['issued-session-a','account-a'],['issued-session-b','account-b']]);
+ const vault={id:'ACCOUNT_FIXTURE',list:async o=>[...(records.get(o)?.values()??[])].map(({apiKey,...r})=>r),get:async(o,p)=>records.get(o)?.get(p),put:async(o,r)=>{if(!records.has(o))records.set(o,new Map());records.get(o).set(r.providerId,r);},remove:async(o,p)=>records.get(o)?.delete(p)};
+ const resolver=req=>auth.get((req.headers.cookie??'').match(/(?:^|; )nexus_test=([^;]+)/u)?.[1])??null;
+ const server=await startCloudSettingsServer({root:repo,vault,resolveAccount:resolver,createAdapter:()=>({complete:async()=>({response:answer}),dispose(){}})});
+ const post=(route,data,cookie='')=>fetch(server.origin+'/api/akronikl/cloud/'+route,{method:'POST',headers:{origin:server.origin,'Content-Type':'application/json',cookie},body:JSON.stringify(data)});
+ const saved=async cookie=>(await(await fetch(server.origin+'/api/akronikl/cloud/saved',{headers:{cookie}})).json()).connections;
+ try{
+  assert.equal((await post('connect',{providerId:'qwen',modelId:'m',apiKey:secret})).status,401);
+  const a=await post('connect',{providerId:'qwen',modelId:'model-a',apiKey:secret,remember:true},'nexus_test=issued-session-a');assert.equal(a.status,200);const first=await a.json(),cookies=a.headers.getSetCookie().map(c=>c.split(';')[0]).join('; '),asA=cookies+'; nexus_test=issued-session-a',asB=cookies+'; nexus_test=issued-session-b';
+  assert.equal((await saved(asA))[0].modelId,'model-a');assert.deepEqual(await saved(asB),[]);
+  assert.equal((await post('connect',{providerId:'qwen',modelId:'m',useSaved:true},asB)).status,400);
+  assert.equal((await post('generate',{...request,connectionVersion:first.connectionVersion},asB)).status,401);
+  assert.equal((await post('forget',{providerId:'qwen'},asB)).status,200);assert.equal((await saved(asA)).length,1);
+  assert.equal((await post('connect',{providerId:'qwen',modelId:'m',apiKey:secret,accountId:'account-a'},asB)).status,400);
+  const b=await post('connect',{providerId:'qwen',modelId:'model-b',apiKey:secret+'B',remember:true},asB);assert.equal(b.status,200);assert.equal((await saved(asB))[0].modelId,'model-b');assert.equal((await saved(asA))[0].modelId,'model-a');
+  server.revokeAccount('account-b');assert.equal(server.status().sessions,0);auth.delete('issued-session-b');assert.equal((await post('connect',{providerId:'qwen',modelId:'m',useSaved:true},asB)).status,401);
+ }finally{await server.close();}
+});
+
+test('gateway without a verified account resolver or explicit personal preview fails closed',async()=>{
+ const server=await startCloudSettingsServer({root:repo});try{assert.equal((await fetch(server.origin+'/api/akronikl/cloud/ready')).status,401);assert.equal((await fetch(server.origin+'/api/akronikl/cloud/saved')).status,401);}finally{await server.close();}
 });

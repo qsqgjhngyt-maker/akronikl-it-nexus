@@ -1,7 +1,7 @@
 import {cloudSelection} from './cloud-catalog.js';
 import {modelProfile} from './profiles.js';
 import {inspectLocalProfile} from './probe.js';
-const safeCodes=new Set(['SOURCES_READY','READY_TO_LOAD','RUNTIME_UNAVAILABLE','WEBGPU_UNAVAILABLE','SECURE_CONTEXT_REQUIRED','BROWSER_UNSUPPORTED','EXTERNAL_DISABLED','CLOUD_READY','CLOUD_UNAVAILABLE','CLOUD_KEY_REQUIRED']);
+const safeCodes=new Set(['CLOUD_ACCOUNT_REQUIRED','SOURCES_READY','READY_TO_LOAD','RUNTIME_UNAVAILABLE','WEBGPU_UNAVAILABLE','SECURE_CONTEXT_REQUIRED','BROWSER_UNSUPPORTED','EXTERNAL_DISABLED','CLOUD_READY','CLOUD_UNAVAILABLE','CLOUD_KEY_REQUIRED']);
 const safeReport=r=>Object.freeze({code:safeCodes.has(r?.code)?r.code:'RUNTIME_UNAVAILABLE',readyToLoad:['READY_TO_LOAD','CLOUD_READY'].includes(r?.code)&&r.readyToLoad===true,
   runtimeManifest:r?.runtimeManifest===true,webgpu:['not-checked','available','unavailable','insecure','software','unknown'].includes(r?.webgpu)?r.webgpu:'unknown',generationTested:false});
 
@@ -61,7 +61,7 @@ export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocal
     if(ticket===revision&&operation===controller){operation=null;if(timedOut){phase='error';code='CONNECTION_TIMEOUT';}else if(controller.signal.aborted){phase='disconnected';code='MODEL_NOT_LOADED';}}
     if(!current()&&!dead)dispose();else if(!dead)emit();return state();
   }
-  function externalSafe(code){return ['CLOUD_KEY_INVALID','CLOUD_AUTH_FAILED','CLOUD_ACCESS_DENIED','CLOUD_MODEL_NOT_FOUND','CLOUD_NOT_CONNECTED','CLOUD_RATE_LIMITED','CLOUD_REQUEST_REJECTED','CLOUD_SERVICE_UNAVAILABLE','CLOUD_TLS_FAILED','CLOUD_RESPONSE_INVALID','CLOUD_VAULT_UNAVAILABLE'].includes(code);}
+  function externalSafe(code){return ['CLOUD_ACCOUNT_REQUIRED','CLOUD_KEY_INVALID','CLOUD_AUTH_FAILED','CLOUD_ACCESS_DENIED','CLOUD_MODEL_NOT_FOUND','CLOUD_NOT_CONNECTED','CLOUD_RATE_LIMITED','CLOUD_REQUEST_REJECTED','CLOUD_SERVICE_UNAVAILABLE','CLOUD_TLS_FAILED','CLOUD_RESPONSE_INVALID','CLOUD_VAULT_UNAVAILABLE'].includes(code);}
   function configureCloud(value){if(!ensure()||!cloudBroker?.settings)return state();const next=cloudSelection(value);if(JSON.stringify(next)===JSON.stringify(selection))return state();if(selected!=='external'){selection=next;return emit();}invalidate();selection=next;phase='disconnected';code='MODEL_NOT_LOADED';return emit();}
   function lease(){
     if(!ensure()||!provider||phase!=='connected')return null;

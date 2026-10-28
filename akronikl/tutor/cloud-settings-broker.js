@@ -1,7 +1,7 @@
 import {checkSignal} from '../connections/probe.js';
 import {cloudSelection} from '../connections/cloud-catalog.js';
 const PREFIX='/api/akronikl/cloud';
-const codes=new Set(['CLOUD_KEY_INVALID','CLOUD_AUTH_FAILED','CLOUD_ACCESS_DENIED','CLOUD_MODEL_NOT_FOUND','CLOUD_NOT_CONNECTED','CLOUD_RATE_LIMITED','CLOUD_REQUEST_REJECTED','CLOUD_REQUEST_CANCELLED','CLOUD_SERVICE_UNAVAILABLE','CLOUD_BUSY','CLOUD_RESPONSE_INVALID','CLOUD_TLS_FAILED','CLOUD_VAULT_UNAVAILABLE']);
+const codes=new Set(['CLOUD_ACCOUNT_REQUIRED','CLOUD_KEY_INVALID','CLOUD_AUTH_FAILED','CLOUD_ACCESS_DENIED','CLOUD_MODEL_NOT_FOUND','CLOUD_NOT_CONNECTED','CLOUD_RATE_LIMITED','CLOUD_REQUEST_REJECTED','CLOUD_REQUEST_CANCELLED','CLOUD_SERVICE_UNAVAILABLE','CLOUD_BUSY','CLOUD_RESPONSE_INVALID','CLOUD_TLS_FAILED','CLOUD_VAULT_UNAVAILABLE']);
 async function readResponse(response,signal){
  if(response.redirected||!response.headers.get('content-type')?.startsWith('application/json'))throw Error('CLOUD_SERVICE_UNAVAILABLE');
  const reader=response.body?.getReader();if(!reader)throw Error('CLOUD_RESPONSE_INVALID');const parts=[];let count=0;
@@ -18,7 +18,7 @@ export function createCloudSettingsBroker({origin=globalThis.location?.origin,fe
  return Object.freeze({settings:true,
   async listSaved(){const data=await readResponse(await send('/saved'));if(!Array.isArray(data.connections)||data.connections.length>8)throw Error('CLOUD_RESPONSE_INVALID');return data.connections.map(cloudSelection);},
   async forget(providerId){const selection=cloudSelection({providerId,modelId:'validation-only'});return readResponse(await send('/forget',{providerId:selection.providerId}));},
-  async inspect({signal}={}){checkSignal(signal);try{const r=await readResponse(await send('/ready',undefined,{signal}),signal);return {code:r.available?'CLOUD_READY':'CLOUD_UNAVAILABLE',readyToLoad:r.available===true,generationTested:false};}catch{checkSignal(signal);return {code:'CLOUD_UNAVAILABLE',readyToLoad:false,generationTested:false};}},
+  async inspect({signal}={}){checkSignal(signal);try{const r=await readResponse(await send('/ready',undefined,{signal}),signal);return {code:r.available?'CLOUD_READY':'CLOUD_UNAVAILABLE',readyToLoad:r.available===true,generationTested:false};}catch(error){checkSignal(signal);return {code:error?.message==='CLOUD_ACCOUNT_REQUIRED'?'CLOUD_ACCOUNT_REQUIRED':'CLOUD_UNAVAILABLE',readyToLoad:false,generationTested:false};}},
   async connect({providerId,modelId,options={},apiKey='',remember=false,useSaved=false,signal}={}){
    const selection=cloudSelection({providerId,modelId,options});checkSignal(signal);if(typeof apiKey!=='string'||!apiKey.trim()&&!useSaved||apiKey.length>4096)throw Error('CLOUD_KEY_INVALID');
    let connected;try{connected=await readResponse(await send('/connect',{...selection,apiKey:apiKey.trim(),remember:remember===true,useSaved:useSaved===true},{signal}),signal);}finally{apiKey='';}
