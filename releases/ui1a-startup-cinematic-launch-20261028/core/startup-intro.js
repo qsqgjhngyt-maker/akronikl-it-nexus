@@ -1,0 +1,122 @@
+import {INTRO_KEY,INTRO_VERSION,readIntroPreference,saveIntroPreference,introVariant,staticIntro,readIntroHandoff,saveIntroHandoff,consumeIntroHandoff} from './startup-intro-policy.js';
+
+let installed=false,active=null,stylesReady;
+const media=name=>new URL('../intro-media/'+INTRO_VERSION+'/'+name,import.meta.url).href;
+const preference=()=>{try{return readIntroPreference(localStorage)}catch{return readIntroPreference({getItem(){throw Error()}})}};
+const persist=value=>{try{return saveIntroPreference(localStorage,value)}catch{return false}};
+const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+function ensureStyles(){
+ return stylesReady??=new Promise(resolve=>{
+  const link=document.createElement('link');link.rel='stylesheet';link.dataset.startupIntroStyle='';link.fetchPriority='low';link.href=new URL('../styles/startup-intro.css',import.meta.url).href;
+  const timer=setTimeout(()=>resolve(false),3000);link.onload=()=>{clearTimeout(timer);resolve(true)};link.onerror=()=>{clearTimeout(timer);resolve(false)};document.head.append(link);
+ });
+}
+function showIntro({preview=false}={}){
+ if(active||document.hidden)return;
+ const setting=preference().value,bindings=new AbortController(),signal=bindings.signal,timers=new Set();
+ let closing=false,played=false,variant=introVariant(innerWidth,innerHeight),startupDeadline,stallDeadline,limit,budget=25000,visibleAt=0;
+ const later=(fn,ms)=>{const id=setTimeout(()=>{timers.delete(id);fn()},ms);timers.add(id);return id};
+ const cancel=id=>{clearTimeout(id);timers.delete(id)};
+ const root=document.createElement('dialog');root.className='nexus-intro';root.dataset.startupIntro='';root.dataset.variant=variant;root.setAttribute('aria-label','Стартовая заставка Nexus');
+ root.innerHTML='<div class="nexus-intro-visual" aria-hidden="true"></div><div class="nexus-intro-top"><span class="nexus-intro-wordmark">AKRONIKL <b>IT NEXUS</b></span><button type="button" class="btn nexus-intro-skip">Пропустить <span aria-hidden="true">↗</span></button></div><div class="nexus-intro-caption"><span class="eyebrow">ВАШЕ ПРОСТРАНСТВО ЗНАНИЙ</span><p>Каждая идея — начало новой вселенной.</p><small role="status">Открываем Nexus</small></div>';
+ const visual=root.querySelector('.nexus-intro-visual'),skip=root.querySelector('button'),status=root.querySelector('[role=status]');
+ const video=document.createElement('video');video.muted=true;video.defaultMuted=true;video.playsInline=true;video.preload='auto';video.disablePictureInPicture=true;video.setAttribute('aria-hidden','true');video.tabIndex=-1;visual.append(video);
+ const stopVideo=()=>{video.pause();video.removeAttribute('src');video.load()};
+ const finish=(reason='skip',immediate=false)=>{
+  if(closing)return;closing=true;bindings.abort();for(const id of timers)clearTimeout(id);timers.clear();
+  const detail={reason,variant,playedSeconds:video.currentTime,duration:Number.isFinite(video.duration)?video.duration:null,preview};
+  stopVideo();active=null;root.style.pointerEvents='none';root.setAttribute('aria-hidden','true');skip.disabled=true;
+  if(immediate||reduced())root.remove();else{root.classList.add('nexus-intro-leaving');setTimeout(()=>root.remove(),240)}
+  dispatchEvent(new CustomEvent('nexus:intro-finished',{detail}));
+ };
+ active={finish};skip.addEventListener('click',()=>finish('skip'),{signal});
+ addEventListener('keydown',e=>{
+  root.dataset.keyboard='';
+  if(e.key==='Escape'){e.preventDefault();finish('escape')}
+  if(e.key==='Tab'){e.preventDefault();skip.focus({preventScroll:true})}
+ },{signal});
+ addEventListener('pagehide',()=>finish('pagehide',true),{signal});
+ addEventListener('nexus:session-ended',()=>finish('session-ended',true),{signal});
+ const fallback=()=>{
+  if(closing||root.dataset.playback==='poster')return;
+  cancel(startupDeadline);cancel(stallDeadline);cancel(limit);stopVideo();root.dataset.playback='poster';status.textContent='Nexus готов к работе';later(()=>finish('fallback'),1400);
+ };
+ let poster;
+ if(navigator.onLine!==false){poster=document.createElement('img');poster.alt='';poster.fetchPriority='low';poster.src=media(variant+'.jpg');poster.addEventListener('error',()=>poster.remove(),{once:true,signal});visual.prepend(poster)}
+ document.body.append(root);root.showModal();root.addEventListener('cancel',e=>{e.preventDefault();finish('escape')},{signal});
+ // Фоновые render, focus и изменение # при bootstrap не закрывают сцену.
+ if(staticIntro({...setting,reducedMotion:reduced(),online:navigator.onLine,connection:navigator.connection})){fallback();return}
+ const formats=[['mp4','video/mp4; codecs="avc1.4D401F"'],['webm','video/webm; codecs="vp9"']];
+ const selected=formats.find(([,type])=>video.canPlayType(type));if(!selected){fallback();return}
+ const play=()=>{if(!closing&&!document.hidden)video.play()?.catch(fallback)};
+ const armLimit=()=>{if(visibleAt)return;visibleAt=performance.now();limit=later(()=>finish('deadline'),Math.max(0,budget))};
+ video.addEventListener('error',fallback,{signal});video.addEventListener('ended',()=>finish('ended'),{signal});
+ video.addEventListener('playing',()=>{played=true;cancel(startupDeadline);cancel(stallDeadline);root.dataset.playback='video';status.textContent='';armLimit()},{signal});
+ video.addEventListener('waiting',()=>{
+  cancel(stallDeadline);stallDeadline=later(()=>{if(!closing&&!document.hidden&&video.readyState<3)fallback()},10000);
+ },{signal});
+ document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){video.pause();if(visibleAt)budget-=performance.now()-visibleAt;visibleAt=0;cancel(limit);cancel(stallDeadline);cancel(startupDeadline)}
+  else{if(!played)startupDeadline=later(fallback,8000);armLimit();play()}
+ },{signal});
+ matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',fallback,{signal});
+ addEventListener('offline',fallback,{signal});
+ addEventListener('resize',()=>{
+  const next=introVariant(innerWidth,innerHeight);if(next===variant||closing||root.dataset.playback==='poster')return;
+  const fraction=Number.isFinite(video.duration)&&video.duration>0?Math.min(.94,video.currentTime/video.duration):0;
+  variant=next;root.dataset.variant=next;if(poster)poster.src=media(next+'.jpg');
+  video.addEventListener('loadedmetadata',()=>{if(fraction)video.currentTime=fraction*video.duration;play()},{once:true,signal});
+  video.src=media(next+'.'+selected[0]);play();
+ },{signal});
+ startupDeadline=later(fallback,8000);armLimit();video.src=media(variant+'.'+selected[0]);play();
+}
+function controlsMarkup(){
+ return '<legend>Запуск приложения</legend><label class="nexus-switch"><span>Показывать заставку при открытии</span><input type="checkbox" data-intro-enabled></label><label class="nexus-switch"><span>Упрощённый запуск</span><input type="checkbox" data-intro-simplified></label><p>Заставка появляется при открытии Nexus. Выбор сохраняется на этом устройстве.</p><button type="button" class="btn" data-intro-preview>Посмотреть заставку</button><p role="status" data-intro-save-status></p>';
+}
+function syncSettings(){
+ const {value,writable}=preference();
+ for(const panel of document.querySelectorAll('[data-intro-settings]'))for(const name of ['enabled','simplified']){const input=panel.querySelector('[data-intro-'+name+']');input.checked=value[name];input.disabled=!writable}
+}
+function mountSettings(){
+ for(const host of document.querySelectorAll('#nexusSettingsPanel,.nexus-appearance-controls,[data-entry-intro-settings]')){
+  if(host.querySelector('[data-intro-settings]'))continue;
+  const panel=document.createElement('fieldset');panel.className='nexus-intro-settings';panel.dataset.introSettings='';panel.innerHTML=controlsMarkup();
+  for(const name of ['enabled','simplified'])panel.querySelector('[data-intro-'+name+']').addEventListener('change',e=>{
+   const current=preference(),ok=current.writable&&persist({...current.value,[name]:e.target.checked});
+   panel.querySelector('[data-intro-save-status]').textContent=ok?'Настройка сохранена.':'Не удалось сохранить настройку.';
+   if(ok&&(name==='enabled'&&!e.target.checked||name==='simplified'&&e.target.checked))active?.finish('settings',true);
+   syncSettings();
+  });
+  panel.querySelector('[data-intro-preview]').addEventListener('click',()=>showIntro({preview:true}));host.append(panel);
+ }
+ syncSettings();
+}
+function entrySettings(){
+ const footer=document.querySelector('.entry-footer');if(!footer||footer.querySelector('[data-entry-launch-settings]'))return;
+ const button=document.createElement('button');button.type='button';button.className='motion-button';button.dataset.entryLaunchSettings='';button.textContent='Настройки запуска';
+ button.addEventListener('click',()=>{
+  const dialog=document.createElement('dialog');dialog.className='nexus-intro-preferences';dialog.dataset.entryIntroSettings='';dialog.innerHTML='<header><h2>Запуск Nexus</h2><button type="button" class="btn" data-intro-close>Закрыть</button></header>';
+  document.body.append(dialog);mountSettings();dialog.querySelector('[data-intro-close]').addEventListener('click',()=>dialog.close());dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
+ });footer.append(button);
+}
+export async function installStartupIntro({surface=document.querySelector('#app')?'shell':'entry'}={}){
+ if(installed)return;installed=true;
+ let authIntent=0;
+ if(surface==='entry'){
+  document.addEventListener('click',e=>{if(e.target.closest?.('[data-login],[data-provider-buttons] button,[data-key-access]'))authIntent=Date.now()},{capture:true});
+  addEventListener('pagehide',()=>{if(authIntent&&Date.now()-authIntent<900000)try{saveIntroHandoff(sessionStorage)}catch{}},{once:true});
+ }
+ let handoff=false;try{handoff=surface==='shell'?consumeIntroHandoff(sessionStorage):readIntroHandoff(sessionStorage)}catch{}
+ if(!await ensureStyles())return;
+ mountSettings();if(surface==='entry')entrySettings();
+ const observer=new MutationObserver(mountSettings);
+ const app=document.querySelector('#app');if(app)observer.observe(app,{childList:true});
+ observer.observe(document.body,{childList:true});addEventListener('pagehide',()=>observer.disconnect(),{once:true});
+ addEventListener('storage',e=>{if(e.key===INTRO_KEY){syncSettings();if(!preference().value.enabled)active?.finish('settings',true)}});
+ const start=()=>{const state=preference();if(!handoff&&state.value.enabled)showIntro()};
+ // Первый видимый запуск: фокус и отсутствие Web Locks не подавляют ролик ПК.
+ if(document.hidden){
+  const visible=()=>{if(document.hidden)return;document.removeEventListener('visibilitychange',visible);start()};
+  document.addEventListener('visibilitychange',visible);
+ }else start();
+}

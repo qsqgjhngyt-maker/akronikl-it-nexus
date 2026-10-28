@@ -483,6 +483,22 @@ async function bindProviderButtons(container, { intent = "login", expectedAccoun
   container.hidden = !container.children.length;
 }
 
+// server-access/public/startup-intro-loader.js
+function startPublicIntro() {
+  requestAnimationFrame(() => setTimeout(() => {
+    void fetch("/startup-intro.json", { cache: "no-store", credentials: "omit", redirect: "error" }).then(async (response) => {
+      if (!response.ok || !response.headers.get("content-type")?.startsWith("application/json")) return;
+      const text = await response.text();
+      if (text.length > 1024) return;
+      const value = JSON.parse(text);
+      if (value?.schema !== 1 || !/^\/releases\/ui1a-[a-z0-9-]+\/core\/startup-intro\.js$/.test(value.module)) return;
+      const module = await import(value.module);
+      return module.installStartupIntro({ surface: "entry" });
+    }).catch(() => {
+    });
+  }, 0));
+}
+
 // server-access/public/entry.js
 var ENTRY_ORIGIN = "https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net";
 var ENTRY_URL = ENTRY_ORIGIN + "/account/entry/";
@@ -759,6 +775,7 @@ function bindEntry({ loadPasskeyClient = () => import("/account/access/passkey-c
   return update();
 }
 if (typeof document !== "undefined") {
+  startPublicIntro();
   bindInstallButton();
   ensureSafeController({ onWaiting: (message) => {
     const status2 = document.querySelector("[data-status]");

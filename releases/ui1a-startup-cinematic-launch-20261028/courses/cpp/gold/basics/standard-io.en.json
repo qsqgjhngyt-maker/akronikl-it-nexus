@@ -1,0 +1,850 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.cpp-basics",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.standard-io",
+  "sessions": 2,
+  "prerequisiteIds": [
+    "cpp.first-cpp-program",
+    "cpp.variables-scope",
+    "cpp.arithmetic-assignment",
+    "cpp.type-conversions",
+    "cpp.relations-logic",
+    "cpp.pointers-references-addresses"
+  ],
+  "sourceRefs": [
+    "CPP20-INPUT",
+    "CPP20-STREAM-STATE",
+    "CPP20-WS",
+    "CPP20-STRING-IO",
+    "CPP20-FORMAT",
+    "CPP-GUIDELINES"
+  ],
+  "title": "Standard input and output: data contracts and a verifiable project",
+  "lead": "Handle valid and malformed input, inspect a remaining newline, and finish the module with an exact file-transfer calculation.",
+  "why": "Programs receive character streams rather than prevalidated numbers. A reliable interface separates parsing, domain range, and extra data while preserving reproducible output. Nexus’s finite stdin field makes this convenient but differs from a live terminal.",
+  "objectives": [
+    "Read numbers with cin and check success before use.",
+    "Distinguish fail, eof, empty input, and a line ending.",
+    "Explain std::string, getline, and std::ws behavior.",
+    "Use fixed/setprecision without claiming exact internal double representation.",
+    "Implement a strict contract, prove integer bounds, and preserve a project test report."
+  ],
+  "prerequisites": [
+    "All previous Module 2 lessons, simple if/else, and early return from Module 1.",
+    "Integer division, early long long multiplication, comparisons, bool, references, and live objects. No loops or authored functions are needed."
+  ],
+  "concepts": [
+    {
+      "term": "stdin",
+      "definition": "Standard input. Nexus supplies a finite character sequence followed by end of input."
+    },
+    {
+      "term": "Formatted extraction",
+      "definition": "Reading a typed value with >> according to parsing and stream-state rules."
+    },
+    {
+      "term": "fail()",
+      "definition": "Reports failed extraction or a more serious error; a value after failure is not treated as validated input."
+    },
+    {
+      "term": "eof()",
+      "definition": "Reports end of input already encountered rather than predicting future extraction success."
+    },
+    {
+      "term": "std::string",
+      "definition": "A library type for a sequence of characters; string algorithms are studied separately."
+    },
+    {
+      "term": "std::getline",
+      "definition": "Reads through a delimiter, usually newline; the delimiter is extracted but not included in the result."
+    },
+    {
+      "term": "std::ws",
+      "definition": "Consumes leading whitespace, including newlines and blank lines, up to a nonwhitespace character or end of input."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Session 1. Reading is an operation with a result",
+      "paragraphs": [
+        "std::cin >> count attempts to parse an int into an existing object. >> here extracts from a stream rather than shifting bits. Normal formatted extraction skips leading whitespace. cin >> a >> b extracts sequentially but may fail before reading the second value.",
+        "if (!(std::cin >> count)) checks failure of the operation. In this condition the stream indicates whether its post-read state is usable; ! negates that result. On failure we print invalid and return before using the number. Parsing success does not establish the domain range, which requires a separate check."
+      ]
+    },
+    {
+      "title": "A line ending is not end of input",
+      "paragraphs": [
+        "Nexus supplies stdin as a finite buffer. After its last character, extraction can encounter EOF, end of input. In a live terminal, Enter normally adds a newline without closing the stream; more input may still arrive. A strict whole-tail check using ws can therefore wait for end of input in a live terminal.",
+        "eof() reports an already-set state, not whether another number exists. Do not replace extraction checks with while(!cin.eof()). Our finite-input task checks the actual extraction first and then, after ws, rejects a nonwhitespace tail."
+      ]
+    },
+    {
+      "title": "Stream state and evidence-based rejection",
+      "paragraphs": [
+        "fail() reports failed reading or bad state; eof() reports an encountered end. Both can be true when reading a number from an empty buffer. Successfully extracting the final number without trailing whitespace can set eof without an extraction failure. Thus eof alone does not mean an invalid number.",
+        "We stop processing on error here. Recovery with clear and discarding damaged input needs a separate policy and usually a loop; it is not a hidden requirement. An input number too large for long long must cause extraction failure rather than become trusted calculation data."
+      ]
+    },
+    {
+      "title": "Session 2. Strings, remaining delimiters, and getline",
+      "paragraphs": [
+        "<string> supplies std::string, a ready-made text type. std::string line; starts empty. std::getline(std::cin, line) stores characters before the newline and consumes the newline itself. After cin >> count that newline often remains, so the next getline can successfully obtain an empty line.",
+        "std::getline(std::cin >> std::ws, name) first removes all leading whitespace, then reads text. It suits a name without significant leading spaces but destroys blank lines and indentation. Do not use it when an empty line is meaningful data. The comma separates arguments to a library function; no authored functions are required."
+      ]
+    },
+    {
+      "title": "A strict numeric contract and its tail",
+      "paragraphs": [
+        "Integer extraction can successfully read the initial 8 in 8.5 and leave .5. Extraction success alone therefore does not prove that the entire input contains exactly the required integer fields. After all fields, use cin >> ws and check eof(): .5 or extra remains and is rejected. A whitespace-only tail is permitted.",
+        "The task uses the environment’s ordinary numeric format without changing locale. A C++ source literal 010 was octal; stdin text follows stream formatting and need not reproduce source-literal grammar. Parsing rules, not visual similarity, define the contract."
+      ]
+    },
+    {
+      "title": "Output formatting is a separate decision",
+      "paragraphs": [
+        "<iomanip> supplies setprecision. std::fixed selects fixed-point formatting and std::setprecision(2) then requests two fractional digits. The setting affects subsequent output on that stream. It changes text representation without making double exact decimal arithmetic.",
+        "Do not print prompts when the comparison contract requires only the answer. stdin already supplies input separately. Preserve exit status and exact newlines for manual checking; interface status text is not part of stdout."
+      ]
+    },
+    {
+      "title": "Practicum C: input and object identity",
+      "paragraphs": [
+        "Read stock within 0…100, reject extra input, and create a snapshot, reference, and pointer to live stock. Issue at most three and report initial stock, remainder, and issued quantity. &alias == selected checks that both paths identify the same object without printing a numeric address.",
+        "This combines the first eleven lessons with input. It creates no new progress IDs and does not automatically push code to the cloud. Preserve source and report normally; CI execution of references is not grading a learner submission."
+      ]
+    },
+    {
+      "title": "Module project: units and exact rounding",
+      "paragraphs": [
+        "Input m r h: m is MiB, 1024 × 1024 bytes; r is kbit/s, 1000 bits per second; h is overhead as a percentage of payload bits. Ranges are 0…1000000 MiB, 1…1000000 kbit/s, and 0…100 percent. This is a constant-rate model rather than a real-network timing promise.",
+        "num = m × 1024 × 1024 × 8 × (100+h), den = 100 × r × 1000. Round upward to seconds using num/den + (num%den != 0). The comparison produces bool, converted to 0 or 1 in the sum. Maximum num is 1677721600000000 and den at most 100000000000; long long suffices and multiplication begins with long long.",
+        "stdout contains seconds, seconds/60, and seconds%60 separated by spaces and a final newline. This ensures seconds = 60 × minutes + remainder with remainder 0…59. Invalid, incomplete, fractional, overflowing, or extra nonwhitespace input yields only invalid. Add two original cases and explain which defect they expose."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "typed-input",
+      "title": "Typed input and rejection",
+      "purpose": "Check extraction before using a value.",
+      "code": "#include <iostream>\n\nint main() {\n    int count{0};\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"count=\" << count << '\\n';\n    return 0;\n}\n",
+      "stdin": "8\n",
+      "expectedStdout": "count=8\n",
+      "steps": [
+        "Supply 8 and a newline.",
+        "The stream extracts an int and the rejection condition is false.",
+        "Also check empty and nonnumeric input."
+      ],
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "bad",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "9999999999999999999999",
+          "stdout": "invalid\n"
+        }
+      ]
+    },
+    {
+      "id": "line-remainder",
+      "title": "A line remains after a number",
+      "purpose": "Observe where formatted extraction stopped.",
+      "code": "#include <iostream>\n#include <string>\n\nint main() {\n    int count{0};\n    std::string line;\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::getline(std::cin, line);\n    std::cout << count << '|' << line << '\\n';\n    return 0;\n}\n",
+      "stdin": "8 rest of line\n",
+      "expectedStdout": "8| rest of line\n",
+      "steps": [
+        "The number is extracted without the following space.",
+        "getline receives the remaining line, including its leading space.",
+        "For 8 immediately followed by newline the remainder is empty."
+      ],
+      "cases": [
+        {
+          "stdin": "8\nnext\n",
+          "stdout": "8|\n"
+        }
+      ]
+    },
+    {
+      "id": "line-ws",
+      "title": "A name after leading whitespace",
+      "purpose": "Use ws only when dropping blank lines is acceptable.",
+      "code": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string name;\n    if (!std::getline(std::cin >> std::ws, name)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"name=\" << name << '\\n';\n    return 0;\n}\n",
+      "stdin": " \n  Nexus Academy\n",
+      "expectedStdout": "name=Nexus Academy\n",
+      "steps": [
+        "ws consumes leading spaces and newlines.",
+        "getline retains the internal space in the name.",
+        "Empty input is rejected."
+      ],
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ]
+    },
+    {
+      "id": "fixed-format",
+      "title": "Two fractional digits as an output contract",
+      "purpose": "Set representation separately from arithmetic.",
+      "code": "#include <iostream>\n#include <iomanip>\n\nint main() {\n    double lengthMeters{1.25};\n    std::cout << std::fixed << std::setprecision(2) << lengthMeters << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "1.25\n",
+      "steps": [
+        "Include iomanip for setprecision.",
+        "fixed makes precision mean fractional digits.",
+        "Formatting does not prove exactness of arbitrary decimal fractions."
+      ]
+    },
+    {
+      "id": "stream-state",
+      "title": "Observing fail and eof",
+      "purpose": "Distinguish post-extraction states.",
+      "code": "#include <iostream>\n\nint main() {\n    int count{0};\n    std::cin >> count;\n    std::cout << std::cin.fail() << ' ' << std::cin.eof() << '\\n';\n    return 0;\n}\n",
+      "stdin": "8\n",
+      "expectedStdout": "0 0\n",
+      "steps": [
+        "With 8 followed by newline, extraction succeeds and the newline remains.",
+        "An empty buffer produces both fail and eof.",
+        "Input 8 without a newline reaches eof after a successful number and fail stays false."
+      ],
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "1 1\n"
+        },
+        {
+          "stdin": "bad",
+          "stdout": "1 0\n"
+        },
+        {
+          "stdin": "8",
+          "stdout": "0 1\n"
+        }
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "A token and a line",
+      "action": "For the remainder example compare 8 rest and 8\\nnext.",
+      "prediction": "getline reads the current line remainder rather than automatically the next line.",
+      "verification": "Draw the extracted-character boundary and remaining buffer."
+    },
+    {
+      "title": "Tail strictness",
+      "action": "In the laboratory compare 3 8, the same input with trailing whitespace, and 3 8.5.",
+      "prediction": "The first two produce 24; the third is invalid because of .5.",
+      "verification": "Explain why two successful extractions are insufficient."
+    },
+    {
+      "title": "Formatting persists",
+      "action": "After fixed/setprecision output add std::cout << 2.0 << '\\n';.",
+      "prediction": "A 2.00 line is added.",
+      "verification": "The setting belongs to the stream rather than one literal."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "getline immediately returned an empty line",
+      "cause": "A newline remained after >>.",
+      "fix": "Decide whether you need the current remainder or following nonblank text; ws suits only the latter constrained contract."
+    },
+    {
+      "symptom": "A number parsed but .5 was ignored",
+      "cause": "The remaining input was not checked.",
+      "fix": "After all fields consume allowed whitespace and check end of finite input."
+    },
+    {
+      "symptom": "A terminal run waits after Enter",
+      "cause": "Enter is not EOF and ws may wait for more input.",
+      "fix": "Use finite Nexus stdin or your OS’s end-of-input action; waiting is not an arithmetic error."
+    },
+    {
+      "symptom": "Transfer time is consistently too small",
+      "cause": "The quotient was not rounded upward or MiB was confused with decimal units.",
+      "fix": "Check units and num%den."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "wrong-input-direction",
+      "title": "Intentional: the wrong stream direction",
+      "code": "#include <iostream>\n\nint main() {\n    int count{0};\n    std::cin << count;\n}\n",
+      "expectation": "compile-error",
+      "explanation": "cin extracts with >>; cout inserts with <<."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Read two ints and handle incomplete and nonnumeric input.",
+      "criteria": "Use values only after successful extraction.",
+      "hint": "Check the entire extraction chain."
+    },
+    {
+      "level": "applied",
+      "task": "Define a line contract with significant leading spaces. Is ws appropriate?",
+      "criteria": "Answer no and explain the data loss.",
+      "hint": "getline and ws solve different problems."
+    },
+    {
+      "level": "transfer",
+      "task": "Propose two new project cases distinguishing a unit error from a rounding error.",
+      "criteria": "Provide independent calculations and explain the defects they expose.",
+      "hint": "Pair an exact multiple with a nonmultiple."
+    }
+  ],
+  "laboratory": {
+    "title": "A reliable finite-input interface",
+    "challenge": "Read exactly two integers within 0…1000 and print items=boxes*itemsPerBox. Permit trailing whitespace; reject other tails and parsing failures with invalid.",
+    "starterCode": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"received\\n\";\n    return 0;\n}\n",
+    "starterExpectedStdout": "received\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "3 8\n",
+        "stdout": "items=24\n"
+      },
+      {
+        "stdin": "0 8",
+        "stdout": "items=0\n"
+      },
+      {
+        "stdin": "1000 1000",
+        "stdout": "items=1000000\n"
+      },
+      {
+        "stdin": "3 8 \n\t",
+        "stdout": "items=24\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "3",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "x 8",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "-1 8",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1001 8",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "3 1001",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "3 8 extra",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "3 8.5",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "999999999999999999999999999999 8",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Separate parsing, range, and tail errors.",
+      "Check input before multiplying.",
+      "Use long long for the entire product.",
+      "Preserve every reference input, including empty input."
+    ],
+    "rubric": [
+      "Provide an exact stdin/stdout contract.",
+      "Compare all 13 cases with actual results.",
+      "Do not ignore a fractional tail.",
+      "stdout contains only the contracted answer; preserve source and the test report together."
+    ],
+    "verificationVariants": [],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "blockPracticum": {
+    "title": "Practicum C: objects, aliases, and an input contract",
+    "label": "CUMULATIVE PRACTICUM C",
+    "starterLabel": "Starter: make your own attempt",
+    "challenge": "Read stock, issue at most three, and report snapshot, updated value, and object identity.",
+    "readiness": "Lessons 9–12 and state tracing. Addresses are compared rather than printed as fixed numbers.",
+    "skills": [
+      {
+        "lessonId": "cpp.relations-logic",
+        "title": "Comparisons and logic: conditions as testable contracts"
+      },
+      {
+        "lessonId": "cpp.increment-decrement-sizeof-conditional",
+        "title": "++ and --, sizeof and ?: — concise syntax with precise meaning"
+      },
+      {
+        "lessonId": "cpp.pointers-references-addresses",
+        "title": "Objects, copies, references, and pointers: links without unsafe memory"
+      },
+      {
+        "lessonId": "cpp.standard-io",
+        "title": "Standard input and output: data contracts and a verifiable project"
+      }
+    ],
+    "requirements": [
+      "Exactly one integer within 0…100 and an optional whitespace tail.",
+      "The snapshot is independent; alias and selected access live stock.",
+      "Issue min(stock,3) with the explained ?:.",
+      "same_object=1 is checked by pointer equality."
+    ],
+    "milestones": [
+      "Draw objects.",
+      "Validate input.",
+      "Update through the reference and read through the pointer.",
+      "Preserve eight actual runs."
+    ],
+    "walkthrough": [
+      "snapshot copies the initial value. &alias yields stock’s address and selected holds that address.",
+      "issued≤stock makes subtraction safe. stock’s lifetime covers all accesses."
+    ],
+    "starterCode": "#include <iostream>\n\nint main() {\n    int stock{0};\n    if (!(std::cin >> stock)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"stock=\" << stock << '\\n';\n    return 0;\n}\n",
+    "starterExpectedStdout": "stock=8\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    int stock{0};\n    if (!(std::cin >> stock)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || stock < 0 || stock > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int snapshot = stock;\n    int& alias = stock;\n    int* selected = &stock;\n    int issued = stock >= 3 ? 3 : stock;\n    alias -= issued;\n    std::cout << \"before=\" << snapshot << '\\n';\n    std::cout << \"after=\" << *selected << '\\n';\n    std::cout << \"issued=\" << issued << '\\n';\n    std::cout << \"same_object=\" << (&alias == selected) << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "8",
+        "stdout": "before=8\nafter=5\nissued=3\nsame_object=1\n"
+      },
+      {
+        "stdin": "0",
+        "stdout": "before=0\nafter=0\nissued=0\nsame_object=1\n"
+      },
+      {
+        "stdin": "2",
+        "stdout": "before=2\nafter=0\nissued=2\nsame_object=1\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "-1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "101",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "8 extra",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "8.5",
+        "stdout": "invalid\n"
+      }
+    ],
+    "verificationVariants": [],
+    "artifacts": [
+      "Source.",
+      "A symbolic object map.",
+      "Eight actual and expected stdout records.",
+      "A diagnosed defect without unsafe reads."
+    ],
+    "rubric": [
+      {
+        "criterion": "Correctness",
+        "complete": "Stock and issue agree.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Input",
+        "complete": "Tail and bounds are validated.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Objects",
+        "complete": "Copy and alias are distinguished.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Safety",
+        "complete": "All targets are alive and null is not read.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Checks",
+        "complete": "All eight results are preserved.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      }
+    ],
+    "completionRule": "Self-check: at least 8/10 with no zero for correctness, safety, or checks. This is a manual rubric rather than an automatic grade or next-lesson gate.",
+    "verification": "manual-output-comparison"
+  },
+  "modulePracticum": {
+    "title": "Module project: verifiable file-transfer time",
+    "label": "MODULE 2 PROJECT",
+    "starterLabel": "Starter: make your own attempt",
+    "challenge": "Implement a MiB-to-kbit/s transfer model with overhead, upward rounding, and strict finite input.",
+    "readiness": "All 12 lessons. Use main, long long, conditions, and streams; no loops, new/delete, or authored functions are required.",
+    "skills": [
+      {
+        "lessonId": "cpp.first-cpp-program",
+        "title": "Your first C++ program: from source to a verifiable report"
+      },
+      {
+        "lessonId": "cpp.tokens-identifiers-keywords",
+        "title": "Tokens and names: precise source with clear meaning"
+      },
+      {
+        "lessonId": "cpp.comments-constants-literals",
+        "title": "Comments, constants, and literals: meaning instead of magic numbers"
+      },
+      {
+        "lessonId": "cpp.data-types",
+        "title": "Data types: choosing values, initialization, and measuring a target"
+      },
+      {
+        "lessonId": "cpp.variables-scope",
+        "title": "Variables, blocks, and lifetime: a state journal"
+      },
+      {
+        "lessonId": "cpp.expressions-operators-blocks",
+        "title": "Expressions and operators: grouping, values, and clear steps"
+      },
+      {
+        "lessonId": "cpp.arithmetic-assignment",
+        "title": "Arithmetic and assignment: quotient, remainder, and safe intermediates"
+      },
+      {
+        "lessonId": "cpp.type-conversions",
+        "title": "Type conversions: intent, information loss, and range checks"
+      },
+      {
+        "lessonId": "cpp.relations-logic",
+        "title": "Comparisons and logic: conditions as testable contracts"
+      },
+      {
+        "lessonId": "cpp.increment-decrement-sizeof-conditional",
+        "title": "++ and --, sizeof and ?: — concise syntax with precise meaning"
+      },
+      {
+        "lessonId": "cpp.pointers-references-addresses",
+        "title": "Objects, copies, references, and pointers: links without unsafe memory"
+      },
+      {
+        "lessonId": "cpp.standard-io",
+        "title": "Standard input and output: data contracts and a verifiable project"
+      }
+    ],
+    "requirements": [
+      "Input m r h with the theory’s ranges: exactly three integer fields.",
+      "MiB=1048576 bytes and kbit/s=1000 bit/s; h is a payload-bit percentage.",
+      "All intermediate products use long long before the first multiplication.",
+      "stdout: seconds minutes remainder and newline; errors: invalid and newline.",
+      "Do not add pointers or references to the formula without a purpose; practicum C separately demonstrates that skill."
+    ],
+    "milestones": [
+      "Restate units and independently derive four baseline cases.",
+      "Complete the starter calculation and stdout.",
+      "Prove the numerator upper bound and nonzero denominator.",
+      "Run 30 reference cases and two original cases.",
+      "Preserve source, report, and self-review."
+    ],
+    "walkthrough": [
+      "1 MiB contains 8388608 bits. At 1000 kbit/s without overhead it takes 8.388608 seconds, rounded upward to 9.",
+      "At h=25 the payload is multiplied by 125/100, producing 10.48576 seconds and rounding to 11.",
+      "num/den supplies whole seconds and a nonzero remainder adds one, avoiding a potentially risky num+den−1 sum.",
+      "At maximum volume, minimum rate, and 100% overhead, the result is 16777216000 seconds: 279620266 minutes and 40 seconds."
+    ],
+    "starterCode": "#include <iostream>\n\nint main() {\n    long long mib{0};\n    long long rateKbit{0};\n    long long overheadPercent{0};\n    if (!(std::cin >> mib >> rateKbit >> overheadPercent)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || mib < 0 || mib > 1000000 || rateKbit < 1 || rateKbit > 1000000 || overheadPercent < 0 || overheadPercent > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    // Complete the bounded integer calculation and replace this placeholder.\n    std::cout << \"TODO\\n\";\n    return 0;\n}\n",
+    "starterExpectedStdout": "TODO\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    long long mib{0};\n    long long rateKbit{0};\n    long long overheadPercent{0};\n    if (!(std::cin >> mib >> rateKbit >> overheadPercent)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || mib < 0 || mib > 1000000 || rateKbit < 1 || rateKbit > 1000000 || overheadPercent < 0 || overheadPercent > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    constexpr long long bytesPerMiB{1024LL * 1024};\n    constexpr long long bitsPerByte{8};\n    constexpr long long bitsPerKbit{1000};\n    long long numerator = mib * bytesPerMiB * bitsPerByte * (100 + overheadPercent);\n    long long denominator = 100LL * rateKbit * bitsPerKbit;\n    long long seconds = numerator / denominator + (numerator % denominator != 0);\n    std::cout << seconds << ' ' << seconds / 60 << ' ' << seconds % 60 << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "0 1000 0",
+        "stdout": "0 0 0\n"
+      },
+      {
+        "stdin": "1 1000 0",
+        "stdout": "9 0 9\n"
+      },
+      {
+        "stdin": "1 1000 25",
+        "stdout": "11 0 11\n"
+      },
+      {
+        "stdin": "1000000 1 100",
+        "stdout": "16777216000 279620266 40\n"
+      },
+      {
+        "stdin": "1 1 0",
+        "stdout": "8389 139 49\n"
+      },
+      {
+        "stdin": "1 1000000 0",
+        "stdout": "1 0 1\n"
+      },
+      {
+        "stdin": "2 8192 0",
+        "stdout": "3 0 3\n"
+      },
+      {
+        "stdin": "125 1000 100",
+        "stdout": "2098 34 58\n"
+      },
+      {
+        "stdin": "1000000 1000000 100",
+        "stdout": "16778 279 38\n"
+      },
+      {
+        "stdin": "10 800 25",
+        "stdout": "132 2 12\n"
+      },
+      {
+        "stdin": "1 1000 100",
+        "stdout": "17 0 17\n"
+      },
+      {
+        "stdin": "0 1 100",
+        "stdout": "0 0 0\n"
+      },
+      {
+        "stdin": "1000000 1 0",
+        "stdout": "8388608000 139810133 20\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1000",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "abc 1000 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1.5 1000 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1000 0.5",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "-1 1000 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1000001 1000 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 0 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 -1 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1000001 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1000 -1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1000 101",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1000 0 extra",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1000 0 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "99999999999999999999999999999 1000 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1000 25 \n\t",
+        "stdout": "11 0 11\n"
+      }
+    ],
+    "verificationVariants": [],
+    "artifacts": [
+      "main.cpp and a written unit contract.",
+      "A proof of intermediate bounds.",
+      "A table of 30+2 inputs, expectations, and actual stdout.",
+      "One defect with hypothesis, repair, and repeat check.",
+      "Model limits: constant rate, specified overhead, and no real-network measurement."
+    ],
+    "rubric": [
+      {
+        "criterion": "Contract and units",
+        "complete": "MiB, kbit/s, and overhead are consistent.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Calculation correctness",
+        "complete": "Upward rounding and minute formatting are consistent.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Range safety",
+        "complete": "Bounds are proven and operations follow validation.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Strict input",
+        "complete": "Empty, malformed, extra, and out-of-range input is rejected.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      },
+      {
+        "criterion": "Checks and explanation",
+        "complete": "30+2 results are recorded and the solution is explained independently.",
+        "points": 2,
+        "partial": "A working part is present, but explanation or evidence is incomplete.",
+        "missing": "No verifiable result for this criterion."
+      }
+    ],
+    "completionRule": "Self-check: at least 8/10 with no zero for correctness, safety, or checks. This is a manual rubric rather than an automatic grade or next-lesson gate.",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What does cin >> value failure mean?",
+      "answers": [
+        "value may be trusted",
+        "Handle failure before using the value",
+        "Every number automatically equals zero"
+      ],
+      "correctIndex": 1,
+      "explanation": "Initialization does not replace extraction checks."
+    },
+    {
+      "question": "Does ws remove only one newline?",
+      "answers": [
+        "Yes",
+        "No, all leading whitespace including blank lines",
+        "It reads nothing"
+      ],
+      "correctIndex": 1,
+      "explanation": "It does not preserve meaningful leading spaces or blank lines."
+    },
+    {
+      "question": "Why does the project reject 1 1000 0.5?",
+      "answers": [
+        "A nonwhitespace .5 tail remains after integer h",
+        "All overhead is forbidden",
+        "MiB cannot be 1"
+      ],
+      "correctIndex": 0,
+      "explanation": "Exactly three integer fields require a whole-tail check."
+    },
+    {
+      "question": "How can nonnegative num/den be rounded up when den>0?",
+      "answers": [
+        "num/den",
+        "num/den + (num%den != 0)",
+        "static_cast<double>(num/den)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Add one second only for a nonzero remainder."
+    },
+    {
+      "question": "What does fixed/setprecision(2) establish?",
+      "answers": [
+        "Exact internal decimal double arithmetic",
+        "A selected text-output format",
+        "The end of stdin"
+      ],
+      "correctIndex": 1,
+      "explanation": "Formatting and number representation are different layers."
+    }
+  ],
+  "reflection": [
+    "Why can a valid final token coexist with eof=true?",
+    "Which project bound proves long long is sufficient?",
+    "Which skills now have source and check evidence, and which need further practice?"
+  ],
+  "bridge": "Module 2 supports the next control-flow module. Complete the three practica and module project before moving on; the manual rubric is not automatic mastery or a study of teaching effectiveness.",
+  "visualization": {
+    "kind": "toolchain",
+    "title": "A finite buffer and strict input",
+    "description": "A fixed model of input “1 1000 25 extra”. This is not a C++ parser; EOF here refers to finite Nexus input.",
+    "steps": [
+      {
+        "title": "Buffer",
+        "description": "Three numbers and extra are supplied."
+      },
+      {
+        "title": ">> m >> r >> h",
+        "description": "1, 1000, and 25 are extracted; the tail is not yet checked."
+      },
+      {
+        "title": ">> ws",
+        "description": "The space before extra is consumed; e remains."
+      },
+      {
+        "title": "!eof()",
+        "description": "A nonwhitespace tail remains and input is rejected."
+      },
+      {
+        "title": "invalid",
+        "description": "Project arithmetic is not executed."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Which operator is used with cin for input?",
+    "answers": [
+      "<<",
+      ">>",
+      "?:"
+    ],
+    "correctIndex": 1
+  }
+}

@@ -1,6 +1,6 @@
 // Отдельный контракт кандидата. Receipt и валидаторы принятой M5 неизменны.
 import assert from 'node:assert/strict';
-import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {readFile,mkdir,writeFile,access} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
@@ -52,6 +52,8 @@ export function routeWorkflow(original,lanes){
  assert.equal(count,Object.keys(lanes).length,'Потерян ожидаемый job');return out.join('\n');
 }
 export async function verifyStartupIntroContract({root=ROOT,writeEvidence=false}={}){
+ let launchFix=false;try{await access(path.join(root,'startup-intro-launch-fix.json'));launchFix=true}catch(error){if(error.code!=='ENOENT')throw error}
+ if(launchFix)return(await import('./startup-intro-launch-fix-contract.mjs')).verifyLaunchFix({root,writeEvidence});
  const c=JSON.parse(await readFile(path.join(root,CONTRACT)));validateMetadata(c);
  const delivery=await verifyIntroDelivery(root),deliveryFiles=delivery?.allowed||new Set();
  git(root,'merge-base','--is-ancestor',BASE,'HEAD');

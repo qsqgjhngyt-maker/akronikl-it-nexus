@@ -1,12 +1,13 @@
 // Каждый заменённый legacy job выполняет свою приёмку; ни одного пустого PASS.
 import assert from 'node:assert/strict';
 import {readFile,mkdir,writeFile,mkdtemp,access} from 'node:fs/promises';
-import {spawn} from 'node:child_process';
+import {spawn,spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
 import {ROOT,BASE,GENERATION,verifyStartupIntroContract} from './startup-intro-contract.mjs';
 const i=process.argv.indexOf('--lane'),lane=process.argv[i+1];
+try{await access(path.join(ROOT,'startup-intro-launch-fix.json'));const r=spawnSync(process.execPath,['tools/check-startup-intro-launch-fix-ci.mjs','--lane',lane],{cwd:ROOT,stdio:'inherit',windowsHide:true});process.exit(r.status??1)}catch(error){if(error.code!=='ENOENT')throw error}
 assert.ok(['preflight','content','browser','integration','publication'].includes(lane),'Неизвестный набор проверок');
 const out=path.resolve(process.env.NEXUS_INTRO_CI_EVIDENCE||path.join(ROOT,'evidence-startup-intro',lane));await mkdir(out,{recursive:true});
 const env={...process.env,NEXUS_GOLD_EVIDENCE:out,NEXUS_M2_EVIDENCE:out,NEXUS_M3_EVIDENCE:out,NEXUS_M4_EVIDENCE:out,NEXUS_M5_EVIDENCE:out,NEXUS_M4_PUBLICATION_EVIDENCE:out},records=[];
