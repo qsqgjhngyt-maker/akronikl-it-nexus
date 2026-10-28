@@ -86,7 +86,7 @@ try{
  });
  await check('Mobile: 8 секунд целиком, открытие без сессии и независимо от окончания проверки Account',async()=>{
   const s=await session({surface:'entry',guest:true,width:390,height:844,accountDelay:2500});await s.open();await playing(s);assert.equal(await layer(s).getAttribute('data-variant'),'mobile');await shot(s,'mobile-before-login');await ended(s);
-  const done=await s.page.evaluate(()=>window.__introFinishes.at(-1)),last=await s.page.evaluate(()=>window.__introVideoEnd);assert.equal(done.reason,'ended');assert.ok(done.playedSeconds>=8);assert.match(last.source,/cinematic-v4\/mobile\.mp4/);assert.ok(done.at-last.at>=1750);assert.equal(await s.page.locator('[data-login]').count(),1);s.record.fullPlayback={...done,logo:last};await s.context.close();
+  const done=await s.page.evaluate(()=>window.__introFinishes.at(-1)),last=await s.page.evaluate(()=>window.__introVideoEnd);assert.equal(done.reason,'ended');assert.ok(done.playedSeconds>=8);assert.match(last.source,/cinematic-v3\/mobile\/mp4\/part-003\.mp4/);assert.ok(done.at-last.at>=1750);assert.equal(await s.page.locator('[data-login]').count(),1);s.record.fullPlayback={...done,logo:last};await s.context.close();
  });
  await check('WebM Desktop: реальные10секунд и работа Пропустить во время удержания финального кадра',async()=>{
   const s=await session({surface:'entry',guest:true,codec:'webm'});await s.open();await playing(s);await s.page.waitForFunction(()=>window.__introVideoEnd);

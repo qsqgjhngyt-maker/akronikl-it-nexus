@@ -11,7 +11,7 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
  const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
  const account={account:{accountId:'synthetic-runtime-online',displayName:'Synthetic Runtime',status:'active'},loginMethods:[{id:'synthetic-key',kind:'passkey',status:'active',createdAt:'2026-10-24T00:00:00Z',disabledAt:null}],enrollmentAvailable:false};
  const requests=[],errors=[],workerEvents=[];
- const mime=f=>({'.js':'text/javascript','.json':'application/json','.css':'text/css','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.md':'text/markdown'}[path.extname(f)]||'text/html');
+ const mime=f=>({'.js':'text/javascript','.json':'application/json','.css':'text/css','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.md':'text/markdown','.mp4':'video/mp4','.webm':'video/webm','.jpg':'image/jpeg'}[path.extname(f)]||'text/html');
  const server=https.createServer({key:await readFile(path.join(cache,'qa-key.pem')),cert:await readFile(path.join(cache,'qa-cert.pem'))},async(req,res)=>{
   requests.push({path:new URL(req.url,GATEWAY_ORIGIN).pathname,method:req.method});
   try{const u=new URL(req.url,GATEWAY_ORIGIN);if(req.method!=='GET'){res.writeHead(403);return res.end('SYNTHETIC_WRITE_DENIED');}

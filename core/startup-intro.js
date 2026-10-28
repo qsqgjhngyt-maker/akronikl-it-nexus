@@ -1,6 +1,8 @@
 import {INTRO_KEY,readIntroPreference,saveIntroPreference,introVariant,staticIntro,readIntroHandoff,saveIntroHandoff,consumeIntroHandoff} from './startup-intro-policy.js';
 import {prepareIntroCover,releaseIntroCover,introCoverDismissed} from './startup-intro-cover.js';
 import {INTRO_ASSETS as INTRO_MEDIA,INTRO_VIDEO_BASE,introVideoURL} from './startup-intro-assets.js';
+import {IntroSequence} from './startup-intro-sequence.js';
+import {mobileIntroURL} from './startup-intro-mobile.js';
 import {waitForIntroBuffer} from './startup-intro-buffer.js';
 import {installIntroEntryReturn,consumeIntroEntryReturn} from './startup-intro-entry-return.js';
 
@@ -28,15 +30,16 @@ function showIntro({preview=false}={}){
   root.querySelector('.nexus-intro-wordmark')?.remove();if(variant!=='mobile')return;
   const label=document.createElement('div');label.className='nexus-intro-wordmark';label.setAttribute('aria-hidden','true');label.innerHTML='<svg viewBox="0 0 240 210" focusable="false"><defs><linearGradient id="nx-logo-white" x2=".9" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#c4e0ee"/></linearGradient><linearGradient id="nx-logo-cyan" x2=".1" y2="1"><stop stop-color="#d4effb"/><stop offset=".55" stop-color="#66c9ed"/><stop offset="1" stop-color="#0096d5"/></linearGradient></defs><path fill="url(#nx-logo-white)" d="M22 163 84 40Q95 18 112 18q18 0 30 23l29 57-32 18-29-57q-4-7-8 1l-37 74Z"/><path fill="url(#nx-logo-white)" d="m142 140 29-17 42 83h-32q-13 0-19-12Z"/><path fill="url(#nx-logo-cyan)" d="M9 206q-1-25 28-42c60-32 159-55 190-112-2 43-37 67-79 90L50 206Z"/></svg><strong>AKRONIKL</strong><span>IT NEXUS</span>';root.append(label);
  };wordmark();
- const video=document.createElement('video');video.dataset.current='';video.crossOrigin='anonymous';video.muted=true;video.defaultMuted=true;video.playsInline=true;video.preload='auto';video.disablePictureInPicture=true;video.tabIndex=-1;video.setAttribute('aria-hidden','true');visual.append(video);
- let frameCallback,preparingSource='';
+ const makePlayer=()=>{
+  if(variant==='mobile')return new IntroSequence(visual);
+  const v=document.createElement('video');v.dataset.current='';v.crossOrigin='anonymous';v.muted=true;v.defaultMuted=true;v.playsInline=true;v.preload='auto';v.disablePictureInPicture=true;v.tabIndex=-1;v.setAttribute('aria-hidden','true');visual.append(v);return v;
+ };
+ let video=makePlayer(),playerEvents=new AbortController(),frameCallback,preparingSource='';
  const syncLogo=()=>{root.dataset.logoVisible=String(variant==='mobile'&&Number.isFinite(video.duration)&&video.currentTime>=Math.max(0,video.duration-2))};
  const trackFrame=()=>{syncLogo();if(!closing&&video.requestVideoFrameCallback)frameCallback=video.requestVideoFrameCallback(trackFrame)};
- video.addEventListener('timeupdate',syncLogo,{signal});video.addEventListener('seeked',syncLogo,{signal});video.addEventListener('loadedmetadata',syncLogo,{signal});
- if(video.requestVideoFrameCallback)frameCallback=video.requestVideoFrameCallback(trackFrame);
- const stopVideo=()=>{video.pause();video.removeAttribute('src');video.load()};
+ const stopVideo=()=>{if(frameCallback!==undefined)video.cancelVideoFrameCallback?.(frameCallback);frameCallback=undefined;video.pause();video.removeAttribute('src');video.load()};
  const cleanup=()=>{
-  if(removed)return;removed=true;bindings.abort();controls.abort();for(const id of timers)clearTimeout(id);timers.clear();
+  if(removed)return;removed=true;bindings.abort();controls.abort();playerEvents.abort();for(const id of timers)clearTimeout(id);timers.clear();
   if(frameCallback!==undefined)video.cancelVideoFrameCallback?.(frameCallback);stopVideo();active=null;root.close();root.remove();delete document.documentElement.dataset.nexusIntroActive;dispatchEvent(new Event('nexus:intro-statechange'));dispatchEvent(new CustomEvent('nexus:intro-finished',{detail:completion}));
  };
  const finish=(reason='skip',immediate=false)=>{
@@ -73,30 +76,37 @@ function showIntro({preview=false}={}){
  let selected=choose(variant);if(!selected){fallback();return}
  const play=()=>{
   if(closing||document.hidden||root.dataset.playback==='poster')return;
-  if(played){video.play()?.catch(e=>{if(e.name!=='AbortError')fallback()});return}
-  const source=video.src;if(preparingSource===source)return;preparingSource=source;
-  void waitForIntroBuffer(video,signal).then(ready=>{if(preparingSource===source)preparingSource='';if(ready&&!closing&&!document.hidden&&video.src===source&&root.dataset.playback!=='poster')video.play()?.catch(e=>{if(e.name!=='AbortError')fallback()})});
+  if(played||variant==='mobile'){video.play()?.catch(e=>{if(e.name!=='AbortError')fallback()});return}
+  const target=video,source=target.src;if(preparingSource===source)return;preparingSource=source;
+  void waitForIntroBuffer(target,playerEvents.signal).then(ready=>{if(preparingSource===source)preparingSource='';if(ready&&target===video&&!closing&&!document.hidden&&video.src===source&&root.dataset.playback!=='poster')video.play()?.catch(e=>{if(e.name!=='AbortError')fallback()})});
  };
  const armLimit=()=>{if(visibleAt)return;visibleAt=performance.now();limit=later(()=>finish('deadline'),Math.max(0,budget))};
- video.addEventListener('error',fallback,{signal});video.addEventListener('ended',()=>finish('ended'),{signal});
- video.addEventListener('playing',()=>{played=true;cancel(startupDeadline);cancel(stallDeadline);root.dataset.playback='video';status.textContent='';armLimit()},{signal});
- video.addEventListener('waiting',()=>{
-  cancel(stallDeadline);stallDeadline=later(()=>{if(!closing&&!document.hidden&&video.readyState<3)fallback()},10000);
- },{signal});
+ const bindPlayer=()=>{
+  const signal=playerEvents.signal;
+  for(const type of ['timeupdate','seeked','loadedmetadata'])video.addEventListener(type,syncLogo,{signal});
+  if(video.requestVideoFrameCallback)frameCallback=video.requestVideoFrameCallback(trackFrame);
+  video.addEventListener('error',fallback,{signal});video.addEventListener('ended',()=>finish('ended'),{signal});
+  video.addEventListener('playing',()=>{played=true;cancel(startupDeadline);cancel(stallDeadline);root.dataset.playback='video';status.textContent='';armLimit()},{signal});
+  video.addEventListener('waiting',()=>{
+   cancel(stallDeadline);stallDeadline=later(()=>{if(!closing&&!document.hidden&&video.readyState<3)fallback()},10000);
+  },{signal});
+ };bindPlayer();
+ const sourceURL=()=>variant==='mobile'?mobileIntroURL(selected[0]):introVideoURL(variant,selected[0],mediaBase);
  document.addEventListener('visibilitychange',()=>{
   if(document.hidden){video.pause();if(visibleAt)budget-=performance.now()-visibleAt;visibleAt=0;cancel(limit);cancel(stallDeadline);cancel(startupDeadline)}
-  else{if(!played)startupDeadline=later(fallback,variant==='mobile'?3500:8000);armLimit();play()}
+  else{if(!played)startupDeadline=later(fallback,8000);armLimit();play()}
  },{signal});
  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',fallback,{signal});
  addEventListener('offline',fallback,{signal});
  addEventListener('resize',()=>{
   const next=introVariant(innerWidth,innerHeight);if(next===variant||closing||root.dataset.playback==='poster')return;
   const fraction=Number.isFinite(video.duration)&&video.duration>0?Math.min(.94,video.currentTime/video.duration):0;
-  variant=next;root.dataset.variant=next;wordmark();syncLogo();if(poster)poster.src=media(next+'.jpg');selected=choose(next);if(!selected){fallback();return}
+  stopVideo();playerEvents.abort();for(const element of visual.querySelectorAll('video'))element.remove();
+  variant=next;root.dataset.variant=next;video=makePlayer();playerEvents=new AbortController();played=false;preparingSource='';delete root.dataset.playback;bindPlayer();cancel(startupDeadline);cancel(stallDeadline);startupDeadline=later(fallback,8000);wordmark();syncLogo();if(poster)poster.src=media(next+'.jpg');selected=choose(next);if(!selected){fallback();return}
   video.addEventListener('loadedmetadata',()=>{if(fraction)video.currentTime=fraction*video.duration;play()},{once:true,signal});
-  video.src=introVideoURL(next,selected[0],mediaBase);play();
+  video.src=sourceURL();play();
  },{signal});
- startupDeadline=later(fallback,variant==='mobile'?3500:8000);armLimit();video.src=introVideoURL(variant,selected[0],mediaBase);requestAnimationFrame(()=>requestAnimationFrame(play));
+ startupDeadline=later(fallback,8000);armLimit();video.src=sourceURL();requestAnimationFrame(()=>requestAnimationFrame(play));
 }
 function controlsMarkup(){
  return '<legend>Запуск приложения</legend><label class="nexus-switch"><span>Показывать заставку при открытии</span><input type="checkbox" data-intro-enabled></label><label class="nexus-switch"><span>Упрощённый запуск</span><input type="checkbox" data-intro-simplified></label><p>Заставка появляется при открытии Nexus. Выбор сохраняется на этом устройстве.</p><button type="button" class="btn" data-intro-preview>Посмотреть заставку</button><p role="status" data-intro-save-status></p>';

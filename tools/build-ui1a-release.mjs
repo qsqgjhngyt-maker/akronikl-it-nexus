@@ -14,6 +14,7 @@ if(value('--retain-generation')){const generation=value('--retain-generation');i
 if(process.argv.includes('--startup-first-paint'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),'ui1a-startup-cinematic-launch-20261028'])];
 if(process.argv.includes('--startup-smooth'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),'ui1a-startup-cinematic-launch-20261028','ui1a-startup-first-paint-20261028'])];
 if(process.argv.includes('--startup-fast'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),'ui1a-startup-smooth-20261028'])];
+if(process.argv.includes('--startup-mobile-restore'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),'ui1a-startup-fast-opening-20261029'])];
 if(value('--generation')&&value('--version'))Object.assign(config,{assetGeneration:value('--generation'),version:value('--version')});
 if(!/^ui1a-[a-z0-9-]+$/.test(config.assetGeneration))throw Error('Неверный generation ID');
 const folders=['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa'];

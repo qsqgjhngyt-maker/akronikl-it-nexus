@@ -1,0 +1,381 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.cpp-basics",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.first-cpp-program",
+  "sessions": 2,
+  "prerequisiteIds": [
+    "cpp.languages-compilation-debugging"
+  ],
+  "sourceRefs": [
+    "CPP20-MAIN",
+    "CPP20-IOSTREAM",
+    "CPP20-LEX",
+    "CPP-GUIDELINES"
+  ],
+  "title": "Your first C++ program: from source to a verifiable report",
+  "lead": "Build a program, explain every part of its scaffold, and produce a small report with predictable output.",
+  "why": "Printing a line becomes useful when you can identify the source that was built, explain what executed, and check its result. This lesson turns copying and running into a reproducible development cycle.",
+  "objectives": [
+    "Explain #include, int main(), braces, std::cout, <<, a string, ;, and return 0.",
+    "Distinguish source, build diagnostics, stdout, and an exit code.",
+    "Build a report from labels and named integer quantities.",
+    "Predict output and verify a repair by changing one thing at a time."
+  ],
+  "prerequisites": [
+    "Module 1: source → compilation → execution; syntax errors versus incorrect results.",
+    "Multiplication of small whole numbers. You do not need to write functions, loops, or keyboard input here."
+  ],
+  "readinessCheck": [
+    {
+      "question": "The program fails to build. Does the new source have runtime stdout?",
+      "answers": [
+        "Yes, always an empty line",
+        "No: execution of the new source has not started",
+        "Yes: it is the compiler message"
+      ],
+      "correctIndex": 1,
+      "explanation": "Build diagnostics belong to the build. Old text in the output panel does not prove that the new source ran. Revisit the last Module 1 lesson if these phases are unclear."
+    },
+    {
+      "question": "A successful build prints 16 instead of 24. What should you check first?",
+      "answers": [
+        "The input values and calculation",
+        "Change the password",
+        "Assume the compiler is broken"
+      ],
+      "correctIndex": 0,
+      "explanation": "This suggests a logic error. First reproduce it with a small example whose answer you calculated independently."
+    }
+  ],
+  "concepts": [
+    {
+      "term": "Source code",
+      "definition": "Program text checked and translated by a compiler before execution."
+    },
+    {
+      "term": "The main entry point",
+      "definition": "The special function that begins the user-written part of a normal hosted C++ program after runtime setup."
+    },
+    {
+      "term": "stdout",
+      "definition": "The standard output stream; Code Studio displays its content in the result area."
+    },
+    {
+      "term": "Declaration with initialization",
+      "definition": "In int boxes = 3;, a named integer object is created with the initial value 3."
+    },
+    {
+      "term": "Exit code",
+      "definition": "A status value returned when the program ends; 0 indicates success and is not a printed character."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Session 1. Define an observable result first",
+      "paragraphs": [
+        "Our first task is to print exactly Hello, C++! followed by a newline. Write that expectation before running. The editor contains source; the result panel shows consequences of execution. Similar text in both places does not make them the same thing.",
+        "Open main.cpp in Code Studio, insert the first example, and select Run. Leave stdin, the separate field for standard input, empty: this program reads nothing. The first run may download the pinned Clang/WASM compiler. Wait for the build result, then locate the output line and exit code."
+      ]
+    },
+    {
+      "title": "Why begin with #include <iostream>?",
+      "paragraphs": [
+        "The #include preprocessing directive names the standard <iostream> header. It makes declarations for stream input and output available, including std::cout. It is not a print command and does not require an iostream.cpp file beside main.cpp.",
+        "The directive line does not end with ;. The environment supplies the corresponding library during the build. Include headers for facilities you actually use. The diagnostic example without <iostream> should fail to build."
+      ]
+    },
+    {
+      "title": "main is an explained scaffold, not a hidden functions prerequisite",
+      "paragraphs": [
+        "In int main(), main names the entry point, int is the return-status type, and empty parentheses specify the no-parameter form. The body between { and } contains statements. In a hosted environment it runs after runtime setup. Functions will receive a full treatment later; for now explain the scaffold rather than inventing additional functions.",
+        "return 0; ends main successfully. It does not print 0. A special rule for main gives the same successful status when execution reaches its closing brace without an explicit return. Do not generalize that rule to every function. Most examples keep return explicit to make the status visible."
+      ]
+    },
+    {
+      "title": "Reading std::cout << \"text\"",
+      "paragraphs": [
+        "std is the standard-library namespace; :: selects cout within it. std::cout represents standard output. In this expression, << inserts the following value into the stream. The same symbol can mean a bit shift elsewhere, but the stream on the left determines its use here. You do not need operator-overloading theory yet.",
+        "Double quotes delimit a string literal: they appear in source but are not printed. Inside a literal, \\n denotes a newline; two source characters describe one control character. A chain of << operations can print a label, a number, and a newline. Spaces are not inserted automatically."
+      ]
+    },
+    {
+      "title": "Semicolons and indentation serve different purposes",
+      "paragraphs": [
+        "Output statements and return end with ;. A source newline does not replace it. Braces delimit the body of main; its closing brace needs no semicolon. Indentation helps people see structure but cannot repair a missing delimiter.",
+        "Start with the first meaningful build diagnostic and inspect the indicated line and the previous line. A compiler may detect a problem after its cause. Repair one defect, rebuild, and then evaluate the output. Exact diagnostic wording depends on the compiler and is not part of the program output contract."
+      ]
+    },
+    {
+      "title": "Session 2. From a fixed line to named quantities",
+      "paragraphs": [
+        "In int boxes = 3;, int supplies an integer type, boxes is the author-chosen name, and = 3 supplies the initial value. The object stores a value and its name lets later statements use it. This is a small scaffold; type ranges and scope are separate lessons. All values here are small enough for int.",
+        "int totalItems = boxes * itemsPerBox; evaluates the current values when totalItems is created. It is not a spreadsheet formula that stays linked forever. Editing initial values and rerunning the whole program performs a new calculation. The labels boxes= and items= make the output understandable without memorizing column positions."
+      ]
+    },
+    {
+      "title": "Verification record and model limits",
+      "paragraphs": [
+        "For each experiment record source, empty stdin, expected stdout, actual stdout, and exit code. Distinguish a missing final newline from a wrong number. Calculate the product independently; copying the same mistaken formula into a check is not independent verification.",
+        "The diagram below explains stages and does not execute a compiler. Next changes the stage explanation; real execution occurs in Code Studio. Saving a file or answering a question does not prove a build or mastery. Keep a copy before replacing work in your own project."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "hello",
+      "title": "One line and a successful status",
+      "purpose": "Obtain a minimal reproducible run without input.",
+      "code": "#include <iostream>\n\nint main() {\n    std::cout << \"Hello, C++!\\n\";\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "Hello, C++!\n",
+      "steps": [
+        "Predict the line, including case and comma.",
+        "Build the source with empty stdin.",
+        "Compare stdout and exit status: 0 is not part of the line."
+      ]
+    },
+    {
+      "id": "named-report",
+      "title": "Warehouse report: 3 boxes of 8 items",
+      "purpose": "Separate data, calculation, and output formatting.",
+      "code": "#include <iostream>\n\nint main() {\n    int boxes = 3;\n    int itemsPerBox = 8;\n    int totalItems = boxes * itemsPerBox;\n    std::cout << \"boxes=\" << boxes << '\\n';\n    std::cout << \"items=\" << totalItems << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "boxes=3\nitems=24\n",
+      "steps": [
+        "Calculate 3 × 8 = 24 by hand.",
+        "Read each declaration: type, name, initial expression.",
+        "Read the two output statements left to right, including explicit newlines."
+      ]
+    },
+    {
+      "id": "implicit-main",
+      "title": "Checking the special rule for main",
+      "purpose": "Separate output text from the way successful termination is expressed.",
+      "code": "#include <iostream>\n\nint main() {\n    std::cout << \"done\\n\";\n}\n",
+      "stdin": "",
+      "expectedStdout": "done\n",
+      "steps": [
+        "Locate the closing brace without a return statement.",
+        "Verify that main is still declared with int.",
+        "Verify done and status 0; do not transfer the rule to future functions."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "One character changes presentation",
+      "action": "Change Hello to Hello! in the first example and write the new expected line before running.",
+      "prediction": "The text changes while the success status remains the same.",
+      "verification": "Compare the line character by character. Restore the original and repeat the baseline test."
+    },
+    {
+      "title": "Build defect versus calculation defect",
+      "action": "First remove the output semicolon and build. Restore it. Then replace 8 with 7 in the warehouse example and run.",
+      "prediction": "The first version fails to build; the second successfully prints items=21.",
+      "verification": "Record the phase of each result. Do not attribute old stdout to new source after a failed build."
+    },
+    {
+      "title": "Input is not used automatically",
+      "action": "Run the warehouse example first with empty stdin, then with 999 as stdin.",
+      "prediction": "Output stays the same because the code reads nothing.",
+      "verification": "Explain where 3 and 8 are specified. Input will be introduced explicitly in a later lesson; do not add unexplained cin code."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Expected a printed zero that is absent",
+      "cause": "return 0; sets status, not stdout.",
+      "fix": "Use a separate std::cout statement to print zero; do not change status for formatting."
+    },
+    {
+      "symptom": "Numbers appear joined together",
+      "cause": "The stream does not add separators automatically.",
+      "fix": "Insert \" \" or '\\n' between values and update the expectation."
+    },
+    {
+      "symptom": "An unknown cout name",
+      "cause": "std:: is missing, or <iostream> was not included.",
+      "fix": "Restore both #include <iostream> and std::cout. Do not randomly rename main."
+    },
+    {
+      "symptom": "A correct number without meaning",
+      "cause": "The output omits the field meaning and domain unit.",
+      "fix": "Match labels to the contract: items counts individual items, not boxes."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "missing-semicolon",
+      "title": "Intentional: missing ;",
+      "code": "#include <iostream>\n\nint main() {\n    std::cout << \"Hello, C++!\\n\"\n    return 0;\n}\n",
+      "expectation": "compile-error",
+      "explanation": "The build should report an error; restore ; after the output."
+    },
+    {
+      "id": "missing-header",
+      "title": "Intentional: missing header",
+      "code": "\nint main() {\n    std::cout << \"Hello, C++!\\n\";\n    return 0;\n}\n",
+      "expectation": "compile-error",
+      "explanation": "Undeclared std::cout is not a calculation error."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Print two lines: name=Nexus and mode=study.",
+      "criteria": "Exact labels, two newlines, successful status.",
+      "hint": "Two output statements are easier to inspect than a long chain."
+    },
+    {
+      "level": "applied",
+      "task": "For 4 packs of 5 pencils, print packs=4 and pencils=20 using named quantities.",
+      "criteria": "20 is calculated rather than hardcoded in the output string.",
+      "hint": "Define the two quantities first and their product afterward."
+    },
+    {
+      "level": "transfer",
+      "task": "Propose an output contract for 3 rows of 9 seats. Justify every label and check.",
+      "criteria": "A reviewer can identify the initial quantities and independently obtain 27.",
+      "hint": "Consider what someone without the source can understand."
+    }
+  ],
+  "laboratory": {
+    "title": "A classroom calculation report",
+    "challenge": "Complete the starter with exactly three lines: room=A, rows=2, seats=12. Preserve a record of repairing one intentional syntax defect separately from the working file.",
+    "starterCode": "#include <iostream>\n\nint main() {\n    int rows = 2;\n    int seatsPerRow = 6;\n    std::cout << \"room=A\\n\";\n    return 0;\n}\n",
+    "starterExpectedStdout": "room=A\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    int rows = 2;\n    int seatsPerRow = 6;\n    int seats = rows * seatsPerRow;\n    std::cout << \"room=A\\n\";\n    std::cout << \"rows=\" << rows << '\\n';\n    std::cout << \"seats=\" << seats << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "room=A\nrows=2\nseats=12\n"
+      }
+    ],
+    "steps": [
+      "Write the contract before editing; stdin is empty.",
+      "Calculate seats from rows and seatsPerRow; add labels and newlines.",
+      "Compare stdout and status with the expectation.",
+      "Remove one ; in a copy, record the first diagnostic, restore it, and rerun.",
+      "Also test rows=0 and rows=3 without changing the formula."
+    ],
+    "rubric": [
+      "The source is explained line by line and each name has meaning.",
+      "Baseline output is exact and the result is calculated.",
+      "Expectations of 0 and 18 seats for 0 and 3 rows and actual results are recorded.",
+      "A short record gives defect → phase → repair → repeat check."
+    ],
+    "verificationVariants": [
+      {
+        "id": "zero-rows",
+        "replace": [
+          {
+            "from": "int rows = 2;",
+            "to": "int rows = 0;"
+          }
+        ],
+        "stdin": "",
+        "stdout": "room=A\nrows=0\nseats=0\n"
+      },
+      {
+        "id": "three-rows",
+        "replace": [
+          {
+            "from": "int rows = 2;",
+            "to": "int rows = 3;"
+          }
+        ],
+        "stdin": "",
+        "stdout": "room=A\nrows=3\nseats=18\n"
+      }
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What reaches stdout in the first example?",
+      "answers": [
+        "Hello, C++!\n",
+        "Hello, C++!\n0\n",
+        "The #include text"
+      ],
+      "correctIndex": 0,
+      "explanation": "std::cout writes stdout. The interface reports the return status separately."
+    },
+    {
+      "question": "What does << mean after std::cout?",
+      "answers": [
+        "Always a bit shift",
+        "Insertion into the stream",
+        "The beginning of a comment"
+      ],
+      "correctIndex": 1,
+      "explanation": "The left operand is a stream, so this is stream insertion; one symbol can have different roles in different expressions."
+    },
+    {
+      "question": "Boxes is changed to 0 with 8 items per box. What should you check?",
+      "answers": [
+        "boxes=0\nitems=0\n",
+        "boxes=0\nitems=8\n",
+        "A mandatory compilation error"
+      ],
+      "correctIndex": 0,
+      "explanation": "Zero is valid in this model: 0 × 8 = 0. Do not invent an unstated restriction."
+    },
+    {
+      "question": "Why does a successful build not prove a correct report?",
+      "answers": [
+        "The compiler does not know the agreed formula or domain labels",
+        "main never executes",
+        "stdout is always random"
+      ],
+      "correctIndex": 0,
+      "explanation": "A valid program can use the wrong quantities or labels. You need a test defined beforehand."
+    }
+  ],
+  "reflection": [
+    "Explain the difference between the source escape \"\\n\", an actual newline, and an exit code.",
+    "How can you demonstrate that the shown stdout came from the saved repaired source?"
+  ],
+  "bridge": "You can now produce a verifiable result. Next we examine how source is divided into meaningful pieces and why names form a precise agreement rather than decoration.",
+  "visualization": {
+    "kind": "toolchain",
+    "title": "The path of one report",
+    "description": "A teaching diagram of stages. The controls change explanations but do not compile or execute C++. The full current-stage text appears below the diagram.",
+    "steps": [
+      {
+        "title": "Contract",
+        "description": "Expect Hello, C++! and a newline; stdin is empty."
+      },
+      {
+        "title": "Source",
+        "description": "main.cpp contains the main scaffold and one output statement."
+      },
+      {
+        "title": "Build",
+        "description": "The compiler checks the source. A failed build does not proceed to a new run."
+      },
+      {
+        "title": "Run",
+        "description": "The environment executes the built program, which writes stdout."
+      },
+      {
+        "title": "Compare",
+        "description": "Compare the line and status with the independent expectation."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Which statement best describes the role of main in a normal C++ program?",
+    "answers": [
+      "It is the source-code editor",
+      "It is the special function where the user-written part of execution begins",
+      "It is the name of the standard library"
+    ],
+    "correctIndex": 1
+  }
+}
