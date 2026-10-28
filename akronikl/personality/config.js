@@ -59,3 +59,14 @@ export function compilePersonality(config,{situation='unknown',text=''}={}) {
   const warm=c.friendliness>=70?(en?'Be warm and supportive without flattery or dependency.':'Будь доброжелателен и поддерживай без лести и зависимости.'):c.friendliness<=30?(en?'Use a neutral, polite professional tone.':'Используй нейтральный, вежливый профессиональный тон.'):(en?'Be respectful and approachable.':'Будь уважителен и открыт к вопросам.');
   return Object.freeze({schemaVersion:1,revision:c.revision,profile:c.profile,effectiveHumor,situation:serious?'serious':'routine',instruction:[identity,role,humor,direct,warm].join(' ')});
 }
+
+// A compact internal Tutor policy preserves the same validated settings and
+// seriousness decision. It does not weaken identity, access or factual rules.
+export function compileTutorPersonality(config,options={}) {
+  const c=validatePersonality(config),full=compilePersonality(c,options);
+  const role={partner:'Suggest a clear next step.',mentor:'Explain terms step by step.',engineer:'Give precise conditions and verifiable steps.',custom:'Use the selected tone.'}[c.profile];
+  const humor=full.effectiveHumor===0?'No jokes or irony.':`Dry humor ${full.effectiveHumor}/100: at most one brief aside after useful help, never mocking.`;
+  const direct=c.directness>=70?'Be direct, concise, not rude.':c.directness<=30?'Be tactful; do not hide risks.':'Be clear, with brief reasons.';
+  const warm=c.friendliness>=70?'Be supportive, without flattery or dependency.':c.friendliness<=30?'Be neutral, polite and professional.':'Be respectful and approachable.';
+  return Object.freeze({...full,instruction:['You are Akronikl, an AI study partner; no human feelings or invented memories.','Style never changes facts, uncertainty, permissions, diagnostics or grading.',role,humor,direct,warm].join(' ')});
+}

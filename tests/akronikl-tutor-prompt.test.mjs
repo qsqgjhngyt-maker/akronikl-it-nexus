@@ -8,10 +8,16 @@ const index=createKnowledgeIndex(JSON.parse(await readFile(new URL('../akronikl/
 function fixture(generate){const boundary={};return createTutorSession({host:createNexusContextAdapter({readBoundary:()=>boundary,readRoute:()=>({view:'akronikl'}),readLocale:()=> 'ru',readCourseLocale:()=> 'ru',authorize:()=>true}),loadKnowledge:async()=>index,provider:{kind:'local',transport:'in-process',modelId:'synthetic',generate,dispose(){}}});}
 test('CPU-профиль отправляет одну теоретическую выдержку с тем же происхождением',async()=>{
  let packet;const tutor=fixture(async x=>{packet=x;return{answer:'Ресурс связан с объектом.',citations:['S1']};});
- const r=await tutor.ask({text:'Объясни RAII'});const data=JSON.parse(packet.messages.at(-1).content);
+ const r=await tutor.ask({text:'Объясни RAII'});const data=packet.evidencePacket;
  assert.equal(r.status,'ok');assert.equal(data.evidence.length,1);assert.equal(r.sources.length,1);
  assert.match(r.sources[0].sourceId,/:theory-/);assert.equal(data.evidence[0].text,r.sources[0].text);
  assert.equal(JSON.stringify(packet.messages).length<1400,true);assert.deepEqual(packet.allowedCitations,['S1']);tutor.dispose();
+});
+test('модель получает реальные строки цитат; metadata не подменяет её prompt',async()=>{
+ let packet;const tutor=fixture(async x=>{packet=x;return{answer:'UNALTERED_MODEL_SENTINEL',citations:['S1']};});
+ const r=await tutor.ask({text:'Объясни RAII'});const content=packet.messages.at(-1).content;
+ for(const s of packet.evidencePacket.evidence)for(const line of s.text.split('\n'))assert.ok(content.includes('> '+line));
+ assert.match(content,/Question \(not an asserted fact\)/);assert.equal(r.text,'UNALTERED_MODEL_SENTINEL');assert.equal(packet.messages.filter(m=>m.role==='system').length,1);tutor.dispose();
 });
 test('самостоятельная новая тема не получает прежний разговор в prompt',async()=>{
  const packets=[];const tutor=fixture(async x=>{packets.push(x);return{answer:'OLD_TOPIC_SENTINEL',citations:['S1']};});

@@ -74,7 +74,7 @@ try{
   await page.waitForFunction(count=>document.querySelectorAll('[data-ak-message="assistant"]').length>count&&document.querySelector('[data-akronikl-send]')?.closest('form')?.getAttribute('aria-busy')==='false',n,{timeout:145000});
   const elapsedMs=performance.now()-started;
   const drained=await page.evaluate(()=>qa.settle());
-  const row={question:text,visibleResponseMs:elapsedMs,includesPlaywright:true,text:await page.locator('[data-ak-message="assistant"]').last().innerText(),generated:await page.locator('[data-ak-message="assistant"]').last().getAttribute('data-tutor-generated')==='true',providerOutcomes:await page.evaluate(n=>qa.outcomes().slice(n),beforeCalls),metrics:await page.evaluate(()=>qa.measurements()),metricsCapturedAfterSettle:true,drained};
+  const row={question:text,visibleResponseMs:elapsedMs,includesPlaywright:true,text:await page.locator('[data-ak-message="assistant"]').last().innerText(),generated:await page.locator('[data-ak-message="assistant"]').last().getAttribute('data-tutor-generated')==='true',providerOutcomes:await page.evaluate(n=>qa.outcomes().slice(n),beforeCalls),rawModelOutcomes:await page.evaluate(n=>qa.rawOutcomes().slice(n),beforeCalls),metrics:await page.evaluate(()=>qa.measurements()),metricsCapturedAfterSettle:true,drained};
   result.ui.push(row);await save();if(!row.drained)throw Error('Не подтверждено завершение inference после UI-запроса');
  }
  async function cancelUi(){
@@ -107,6 +107,7 @@ try{
   assert.equal(result.cancellation.recovery.modelCalled,true);assert.equal(result.cancellation.recovery.drained,true);assert.ok(result.cancellation.recovery.lifecycle.epoch>result.cancellation.after.epoch);
  }else result.cancellation.recoveryCaseId=planned[0]?.id??null;
  result.providerOutcomes=await page.evaluate(()=>qa.outcomes());
+ result.rawModelOutcomes=await page.evaluate(()=>qa.rawOutcomes());
  result.release=await page.evaluate(()=>qa.close());result.status='COMPLETED_PENDING_HUMAN_REVIEW';
 }catch(error){result.status='BLOCKED_OR_FAILED';result.failure={message:error.message,stack:error.stack};console.error(error.message);if(page)await page.screenshot({path:path.join(out,'FAILURE.png')}).catch(()=>{});process.exitCode=1;}
 finally{

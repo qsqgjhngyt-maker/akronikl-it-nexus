@@ -20,10 +20,10 @@ for(const item of corpus.cases){
   }
   let packet=null;
   const provider={kind:'local',transport:'in-process',modelId:'qa-intercept-no-model',
-    async generate(request){packet={messages:request.messages,allowedCitations:request.allowedCitations};throw Error('QA_CAPTURE_ONLY_NO_GENERATION');},dispose(){}};
+    async generate(request){packet={messages:request.messages,evidencePacket:request.evidencePacket,allowedCitations:request.allowedCitations};throw Error('QA_CAPTURE_ONLY_NO_GENERATION');},dispose(){}};
   const f=makeCase(item,indexes,provider);
   const result=await f.session.ask(f.request);
-  const requestData=packet?JSON.parse(packet.messages.at(-1).content):null;
+  const requestData=packet?.evidencePacket??null;
   const evidence=requestData?.evidence??[];
   const expectedRecords=item.source?indexes[item.locale].getLesson(item.source.lessonId,item.locale):[];
   const evidenceFromExpectedLesson=evidence.filter(s=>s.label.startsWith('S')).some(s=>expectedRecords.some(r=>r.text.startsWith(s.text)||r.text.includes(s.text)));
@@ -35,7 +35,7 @@ for(const item of corpus.cases){
     consentReads:f.reads,prompt:packet?.messages??null,realModel:false,generatedAnswer:null,review:blankReview()};
   reports.push(audit);f.session.dispose();
 }
-const report={schemaVersion:1,source:'1cfdfd527da8fd061815a74ae3b88db1b40e4afe',scope:'prompt-and-source-audit-only',
+const report={schemaVersion:1,source:process.env.NEXUS_SOURCE_COMMIT||null,scope:'prompt-and-source-audit-only',sourceProof:'separate Git archive and QA copy verification; an environment string alone is not proof',
   modelCalls:0,qualityAcceptance:false,caseCount:reports.length,promptsPrepared:reports.filter(c=>c.promptPrepared).length,
   expectedLessonMissing:reports.filter(c=>c.expectedLesson&&!c.evidenceFromExpectedLesson).map(c=>c.id),cases:reports};
 await writeFile(path.join(out,'PREFLIGHT.json'),JSON.stringify(report,null,2)+'\n');

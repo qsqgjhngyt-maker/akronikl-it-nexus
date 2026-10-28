@@ -53,5 +53,5 @@ for(const locale of ['ru','en'])test(`${locale}: Tutor передаёт длин
  const session=createTutorSession({host,loadKnowledge:async()=>indexes[locale],locale,
   provider:{kind:'local',transport:'in-process',modelId:'synthetic-test-only',generate:async r=>{packet=r;return{answer:'SYNTHETIC_PROVIDER_SENTINEL',citations:['S1']};},dispose(){}}});
  const result=await session.ask({text:questions[locale]});assert.equal(result.status,'ok');assert.equal(result.text,'SYNTHETIC_PROVIDER_SENTINEL');
- assert.equal(JSON.parse(packet.messages.at(-1).content).question,questions[locale]);assert.equal(result.sources[0].lessonId,route.lessonId);session.dispose();
+ assert.equal(packet.evidencePacket.question,questions[locale]);assert.ok(packet.messages.at(-1).content.includes(questions[locale]));assert.equal(result.sources[0].lessonId,route.lessonId);session.dispose();
 });
