@@ -1,0 +1,25 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,mkdir,writeFile,readFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+test('Новый candidate сохраняет активное поколение; его прежнее видео не попадает в SW-install',async()=>{
+ const temp=await mkdtemp(path.join(tmpdir(),'nexus-intro-retain-')),source=path.join(temp,'source'),out=path.join(temp,'build');
+ const put=async(f,b)=>{await mkdir(path.dirname(path.join(source,f)),{recursive:true});await writeFile(path.join(source,f),b)};
+ for(const f of ['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa','entry-assets/ui1a-active'])await mkdir(path.join(source,f),{recursive:true});
+ await put('release-candidate.json',JSON.stringify({version:'1.0.0',assetGeneration:'ui1a-active',retainedPublicGenerations:[]}));
+ await put('version.json',JSON.stringify({version:'1.0.0',releaseCandidate:{assetGeneration:'ui1a-active'}}));
+ for(const f of ['index.html','offline.html'])await put(f,'<html></html>');await put('manifest.webmanifest','{}');
+ for(const icon of ['icon-192.png','icon-512.png','apple-touch-icon.png'])await put('assets/icons/'+icon,'synthetic');
+ await put('pwa/service-worker.js','self.config=__NEXUS_PWA_CONFIG__;');
+ await put('releases/ui1a-active/version.json','{"version":"0.9.0"}');await put('releases/ui1a-active/core/accepted.js','// ACCEPTED EXACT BYTES');
+ await put('releases/ui1a-active/intro-media/old.mp4','synthetic previous video');
+ const tool=fileURLToPath(new URL('../tools/build-ui1a-release.mjs',import.meta.url));
+ const r=spawnSync(process.execPath,[tool,'--source',source,'--out',out,'--generation','ui1a-next','--version','1.0.0','--retain-active'],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);
+ const m=JSON.parse(await readFile(path.join(out,'BUILD_MANIFEST.json'))),sw=await readFile(path.join(out,'service-worker.js'),'utf8');
+ assert.equal((await readFile(path.join(out,'releases/ui1a-active/core/accepted.js'),'utf8')),'// ACCEPTED EXACT BYTES');
+ assert.equal(m.optionalAssets.length,1);assert.equal(sw.includes('old.mp4'),false);assert.equal(sw.includes('accepted.js'),true);
+ const c=JSON.parse(await readFile(path.join(source,'release-candidate.json')));assert.equal(c.assetGeneration,'ui1a-active');assert.deepEqual(c.retainedPublicGenerations,[]);
+});

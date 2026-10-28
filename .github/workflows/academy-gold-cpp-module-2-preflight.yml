@@ -28,7 +28,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Проверить отдельный контракт Intro без изменения допуска M5
+        id: startup_intro
+        run: node tools/startup-intro-ci-route.mjs
+      - name: Node.js 24 для изолированной проверки Intro
+        if: steps.startup_intro.outputs.enabled == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Приёмка Intro — preflight
+        if: steps.startup_intro.outputs.enabled == 'true'
+        run: node tools/check-startup-intro-ci.mjs --lane preflight
+      - name: Сохранить доказательства Intro — preflight
+        if: always() && steps.startup_intro.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: startup-intro-preflight-${{ github.sha }}
+          path: evidence-startup-intro/preflight/
+          retention-days: 14
       - name: Проверить изоляцию от принятого main
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: |
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           test "${GITHUB_REF_NAME}" = feature/academy-gold-standard-cpp-module-2 || test "${GITHUB_REF_NAME}" = main || test "${GITHUB_EVENT_NAME}" = pull_request
@@ -36,12 +55,15 @@ jobs:
           node tools/check-academy-gold-module2-dependencies.mjs
           node --test tests/ui1a-deterministic-public-manifest.test.mjs
       - name: Учебные зависимости, stable IDs и NEXUS-PERF-01
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: |
           node --test tests/platform-lazy-imports.test.mjs tests/platform-startup-load.test.mjs
           node --test tests/cpp-stream-state-routing.test.mjs
       - name: Реальный host C++20 и UBSan
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: node tools/check-academy-gold-module2-cpp.mjs
       - name: Подготовить отдельную локальную сборку и настоящие runtime bytes
+        if: steps.startup_intro.outputs.enabled != 'true'
         env:
           NEXUS_PINNED_RUNTIME_DIR: /tmp/nexus-m2-runtime
           NEXUS_GOLD_EVIDENCE: academy-gold-m2-evidence
@@ -52,6 +74,7 @@ jobs:
           node tools/build-ui1a-release.mjs --out /tmp/nexus-m2-build
           node tools/prepare-academy-gold-runtime-fixture.mjs
       - name: Строгий допуск runtime Module 2 и реальный Code Studio UI
+        if: steps.startup_intro.outputs.enabled != 'true'
         env:
           NEXUS_FRONTEND_DIR: /tmp/nexus-m2-build
           NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-m2-browser/node_modules/playwright/index.mjs
@@ -59,7 +82,7 @@ jobs:
           NEXUS_JSCPP_FIXTURE: /tmp/nexus-m2-runtime/jscpp.js
         run: node tests/academy-gold-module2-preflight.mjs
       - name: Сохранить фактический результат, включая FAIL
-        if: always()
+        if: always() && steps.startup_intro.outputs.enabled != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: academy-gold-m2-0-${{ github.sha }}
@@ -82,15 +105,36 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Проверить отдельный контракт Intro без изменения допуска M5
+        id: startup_intro
+        run: node tools/startup-intro-ci-route.mjs
+      - name: Node.js 24 для изолированной проверки Intro
+        if: steps.startup_intro.outputs.enabled == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Приёмка Intro — browser
+        if: steps.startup_intro.outputs.enabled == 'true'
+        run: node tools/check-startup-intro-ci.mjs --lane browser
+      - name: Сохранить доказательства Intro — browser
+        if: always() && steps.startup_intro.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: startup-intro-browser-${{ github.sha }}
+          path: evidence-startup-intro/browser/
+          retention-days: 14
       - name: 24 Gold объекта, локализация, учебные зависимости и сохранность state
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: |
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           node --test tests/academy-gold-content.test.mjs tests/academy-gold-module2-content.test.mjs
           node tools/check-academy-gold-module2-dependencies.mjs
           node tools/check-academy-gold-module2-quality.mjs
       - name: Все программы уроков, заготовки и варианты — настоящий g++ C++20 и UBSan
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: node tools/check-academy-gold-module2-examples.mjs
       - name: Отдельная QA сборка и закреплённые runtime bytes
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: |
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           npm install --prefix /tmp/nexus-m2-gold-browser --no-save playwright@1.56.1
@@ -98,13 +142,15 @@ jobs:
           node tools/build-ui1a-release.mjs --out /tmp/nexus-m2-gold-build
           node tools/prepare-academy-gold-runtime-fixture.mjs
       - name: Все программы уроков — реальный router, Clang/WASM, Worker и Code Studio UI
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: node tests/academy-gold-module2-examples-browser.mjs
       - name: 24 RU/EN урока, desktop/mobile, словарь и холодный Offline
+        if: steps.startup_intro.outputs.enabled != 'true'
         env:
           NEXUS_NATIVE_EVIDENCE: academy-gold-module2/browser
         run: node tests/academy-gold-module2-browser-check.mjs
       - name: Сохранить факты проверки Module 2, включая FAIL
-        if: always()
+        if: always() && steps.startup_intro.outputs.enabled != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: academy-gold-module2-${{ github.sha }}
@@ -127,15 +173,38 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Проверить отдельный контракт Intro без изменения допуска M5
+        id: startup_intro
+        run: node tools/startup-intro-ci-route.mjs
+      - name: Node.js 24 для изолированной проверки Intro
+        if: steps.startup_intro.outputs.enabled == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Приёмка Intro — integration
+        if: steps.startup_intro.outputs.enabled == 'true'
+        run: node tools/check-startup-intro-ci.mjs --lane integration
+      - name: Сохранить доказательства Intro — integration
+        if: always() && steps.startup_intro.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: startup-intro-integration-${{ github.sha }}
+          path: evidence-startup-intro/integration/
+          retention-days: 14
       - name: Подготовить зависимости проверки
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
       - name: Module 1 — Content Quality Gate и регрессия контрактов
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: node tools/check-academy-gold-regression.mjs
       - name: Интеграция и неизменность опубликованного main
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: node tools/check-academy-gold-integration.mjs
       - name: Module 1 — настоящие C++20 примеры и UBSan
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: node tools/check-academy-gold-cpp.mjs
       - name: Подготовить браузерную сборку и точный rollback test.2
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: |
           npm install --prefix /tmp/nexus-m1-browser --no-save playwright@1.56.1
           /tmp/nexus-m1-browser/node_modules/.bin/playwright install --with-deps chromium
@@ -144,25 +213,29 @@ jobs:
           git worktree add --detach /tmp/nexus-m1-rollback-source d9249b2e977483718cd67a151f62552296dd51e4
           node tools/snapshot-published-build.mjs --source /tmp/nexus-m1-rollback-source --out /tmp/nexus-m1-rollback --expected-commit d9249b2e977483718cd67a151f62552296dd51e4
       - name: Module 1 — полный настоящий runtime matrix, UI и холодный Offline
+        if: steps.startup_intro.outputs.enabled != 'true'
         env:
           NEXUS_NATIVE_EVIDENCE: academy-gold-m1-regression/runtime-browser
         run: node tests/academy-gold-runtime-browser-check.mjs
       - name: Module 1 — desktop, mobile, словарь, доступность и Offline
+        if: steps.startup_intro.outputs.enabled != 'true'
         env:
           NEXUS_NATIVE_EVIDENCE: academy-gold-m1-regression/browser
         run: node tests/academy-gold-browser-check.mjs
       - name: Home, Account, media и стартовая загрузка
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: |
           NEXUS_NATIVE_EVIDENCE=academy-gold-m1-regression/startup node tests/platform-startup-browser-check.mjs
           NEXUS_NATIVE_EVIDENCE=academy-gold-m1-regression/administration node tests/platform-admin-browser-check.mjs
           NEXUS_NATIVE_EVIDENCE=academy-gold-m1-regression/public-media node tests/blog-media-public-browser-check.mjs
       - name: Native PWA upgrade/rollback и сохранность синтетических работ/прогресса
+        if: steps.startup_intro.outputs.enabled != 'true'
         env:
           NEXUS_ROLLBACK_DIR: /tmp/nexus-m1-rollback
           NEXUS_BROWSER_RESULT: academy-gold-m1-regression/PWA_ROLLBACK.json
         run: node tests/pwa-rollback-browser-check.mjs
       - name: Сохранить фактические результаты Module 1
-        if: always()
+        if: always() && steps.startup_intro.outputs.enabled != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: academy-gold-m1-regression-${{ github.sha }}
