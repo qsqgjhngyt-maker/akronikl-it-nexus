@@ -9,6 +9,7 @@ const ci=new Set([MR_META,MR_RECEIPT,'tools/startup-mobile-restore-contract.mjs'
 export const hash=b=>createHash('sha256').update(b).digest('hex');
 export function verifyRecord(r,b){assert.ok(typeof r.file==='string'&&!/[:\\?#\u0000]/.test(r.file)&&!r.file.startsWith('/')&&!r.file.split('/').some(s=>!s||s==='.'||s==='..'));assert.equal(b.length,r.bytes,r.file);assert.equal(hash(b),r.sha256,r.file)}
 export async function verifyMobileRestore({root,writeEvidence=false}){
+ try{await readFile(path.join(root,'startup-intro-opening.json'));return(await import('./verify-intro-opening.mjs')).verifyOpening({root,writeEvidence})}catch(e){if(e.code!=='ENOENT')throw e}
  const git=(...a)=>execFileSync('git',a,{cwd:root,maxBuffer:256*1024*1024});git('merge-base','--is-ancestor',MR_BASE,'HEAD');
  const meta=JSON.parse(await readFile(path.join(root,MR_META))),rollback=meta.kind==='startup-mobile-restore-rollback';assert.deepEqual({...meta,kind:'startup-mobile-restore'},{schema:1,kind:'startup-mobile-restore',baseCommit:MR_BASE,generation:MR_GENERATION,officialRelease:false,uiEntryDeploymentRequiresOwnerApproval:false});assert.ok(['startup-mobile-restore','startup-mobile-restore-rollback'].includes(meta.kind));
  const receiptBytes=await readFile(path.join(root,MR_RECEIPT));assert.equal(hash(receiptBytes),MR_RECEIPT_SHA256);const receipt=JSON.parse(receiptBytes);assert.equal(receipt.baseCommit,MR_BASE);assert.equal(receipt.generation,MR_GENERATION);

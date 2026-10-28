@@ -72,7 +72,12 @@ function showIntro({preview=false}={}){
   cancel(startupDeadline);cancel(stallDeadline);cancel(limit);stopVideo();root.dataset.playback='poster';status.textContent='Nexus готов к работе';later(()=>finish('fallback'),variant==='mobile'&&!preview?120:1400);
  };
  let poster;
- if(navigator.onLine!==false){poster=document.createElement('img');poster.alt='';poster.fetchPriority=variant==='mobile'?'auto':'low';poster.src=media(variant+'.jpg');poster.addEventListener('error',()=>poster.remove(),{once:true,signal});visual.prepend(poster)}
+ const setPoster=()=>{
+  const mobile=variant==='mobile';poster.style.visibility=mobile?'hidden':'';
+  poster.src=mobile?new URL('../intro-media/cinematic-v5/mobile-start.jpg',import.meta.url).href:media(variant+'.jpg');
+  if(mobile){const source=poster.src;Promise.resolve(poster.decode?.()).then(()=>{if(!removed&&poster.src===source)poster.style.visibility=''}).catch(()=>{if(poster.src===source)poster.remove()})}
+ };
+ if(navigator.onLine!==false){poster=document.createElement('img');poster.alt='';poster.fetchPriority=variant==='mobile'?'auto':'low';poster.addEventListener('error',()=>poster.remove(),{once:true,signal});visual.prepend(poster);setPoster()}
  document.body.append(root);root.showModal();document.documentElement.dataset.nexusIntroActive='true';dispatchEvent(new Event('nexus:intro-statechange'));releaseIntroCover();root.addEventListener('cancel',e=>{e.preventDefault();finish('escape')},{signal:controls.signal});
  // Фоновые render, focus и изменение # при bootstrap не закрывают сцену.
  if(staticIntro({...setting,reducedMotion:reduced(),online:navigator.onLine,connection:navigator.connection})){fallback();return}
@@ -106,7 +111,7 @@ function showIntro({preview=false}={}){
   const next=introVariant(innerWidth,innerHeight);if(next===variant||closing||root.dataset.playback==='poster')return;
   const fraction=Number.isFinite(video.duration)&&video.duration>0?Math.min(.94,video.currentTime/video.duration):0;
   stopVideo();playerEvents.abort();for(const element of visual.querySelectorAll('video'))element.remove();
-  variant=next;root.dataset.variant=next;video=makePlayer();playerEvents=new AbortController();played=false;preparingSource='';delete root.dataset.playback;bindPlayer();cancel(startupDeadline);cancel(stallDeadline);startupDeadline=later(fallback,8000);wordmark();syncLogo();if(poster)poster.src=media(next+'.jpg');selected=choose(next);if(!selected){fallback();return}
+  variant=next;root.dataset.variant=next;video=makePlayer();playerEvents=new AbortController();played=false;preparingSource='';delete root.dataset.playback;bindPlayer();cancel(startupDeadline);cancel(stallDeadline);startupDeadline=later(fallback,8000);wordmark();syncLogo();if(poster)setPoster();selected=choose(next);if(!selected){fallback();return}
   video.addEventListener('loadedmetadata',()=>{if(fraction)video.currentTime=fraction*video.duration;play()},{once:true,signal});
   video.src=sourceURL();play();
  },{signal});
