@@ -1,6 +1,8 @@
 # STARTUP CINEMATIC INTRO — кандидат для проверки, 28.10.2026
 
-**STATUS: PASS для implementation candidate. IMPLEMENTED / AUTOMATED PASS. Готовность к production: PARTIAL; LIVE PASS и FULL LIVE PASS не заявлены.**
+**STATUS: PARTIAL. IMPLEMENTED; локальные функциональные проверки — AUTOMATED PASS. GitHub publication gates — FAIL. Кандидат готов к review, к публикации не допущен; LIVE PASS и FULL LIVE PASS не заявлены.**
+
+Draft PR: [№47](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/pull/47). После создания PR пять существующих Content jobs остановились в `verifyM5HeaderPublication`: опубликованный M5 receipt требует прежние bytes `core/app.js` (30596), а Intro hook меняет файл (30877 bytes в GitHub checkout). Это срабатывание действующего ограничения на изменение принятой публикации. Его нельзя подменять локальными функциональными PASS. Нужен согласованный с 05/03 отдельный контракт Intro-кандидата; receipt M5, его хеши и validators в этой работе не изменялись. Подробности и ссылки — `GITHUB_CI.json`. Source/runtime и проверенный архив при документировании CI не менялись.
 
 Исходный main: **d76d1613a1fbf6726d453e40366c306ea502d4c7**; сверён до начала и перед фиксацией. Исходники реализации: **f58d3df33108ad25073b46ef898d46fc42d572ab**. Ветка: 'feature/startup-cinematic-intro-20261028'. Отдельная чистая копия; существующие dirty-каталоги, 'sources/', ветки 08/Content и их PR не переписывались. Изменения source: 19 файлов; отдельный последующий коммит содержит только отчёт/evidence.
 

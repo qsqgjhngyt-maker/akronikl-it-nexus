@@ -1,7 +1,7 @@
 # 🔀 CROSS-BRANCH SYNC REQUIRED
 
 Источник: 07 · UI / UX / MOBILE / PWA.
-Результат: STARTUP CINEMATIC INTRO — IMPLEMENTED / AUTOMATED PASS, кандидат для проверки.
+Результат: STARTUP CINEMATIC INTRO — IMPLEMENTED / локальный AUTOMATED PASS; общий STATUS: PARTIAL, GitHub publication gates FAIL.
 Когда: сейчас, до интеграции и публикации.
 
 ## 1. Куда: 05 · RELEASE / EVIDENCE / DOCUMENTATION, затем 00 · MASTER
@@ -14,6 +14,10 @@
 > Получен кандидат STARTUP CINEMATIC INTRO от ветки 07. Основа main: d76d1613a1fbf6726d453e40366c306ea502d4c7; реализация: f58d3df33108ad25073b46ef898d46fc42d572ab. Отдельная ветка feature/startup-cinematic-intro-20261028. IMPLEMENTED / AUTOMATED PASS: 10 сценариев Intro, 6 PWA lifecycle, 12 Offline-First, 5 локальных Account/Cloud. Есть 42 замера старта (21 пара ДО/ПОСЛЕ), 4 чистые установки PWA, скриншоты и точный source rollback. MP4 занимают 2,32/2,00 МБ; видео не входят в обязательную установку SW. По уточнению владельца кнопка «Пропустить» полупрозрачная. Нужны review 05 и физические проверки 07; LIVE/FULL LIVE не заявлять. main, production и GitHub Releases не менялись. Ветка 00 фиксирует candidate milestone; MASTER обновляется после согласованного closure.
 
 Что потом: 07 проверяет физические Desktop/Android/iPhone/Safari; 05 закрывает evidence gate; владелец отдельно разрешает публикацию.
+
+Дополнение после создания Draft PR №47 — готовый текст для 05/03/00:
+
+> В PR №47 пять GitHub jobs остановились на verifyM5HeaderPublication: receipt принятого M5 требует прежние байты core/app.js, а новый Intro hook закономерно меняет файл. Функциональные тесты локального кандидата PASS; общий статус PARTIAL, не release-ready. Требуется спроектировать и согласовать отдельный контракт Intro-кандидата с точной областью изменений, проверкой сохранности M5 и собственной CI-матрицей. Не менять хеши принятого M5, не отключать validators и не считать прежний receipt разрешением на новую публикацию. Материал: docs/evidence/startup-cinematic-20261028/GITHUB_CI.json. После согласования вернуться к 07/05 и повторить интеграционный gate.
 
 ## 2. Куда: 08 · Akronikl и 03 · CONTENT
 
