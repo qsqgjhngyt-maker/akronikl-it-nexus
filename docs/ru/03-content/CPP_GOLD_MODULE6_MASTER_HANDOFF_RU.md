@@ -1,3 +1,13 @@
+# M6-1: полный Gold учебный кандидат
+
+28.10.2026. STATUS: **PASS M6-1 / AUTOMATED PASS проверенных примеров; PARTIAL полного Module6.** Source a99c320ac6a480eb048796db0d403422cc76b762. Подготовлены12 уроков RU/EN,99 разделов/24 примера/72 задачи/12 лабораторных на язык и проект TaskFlow. Подтверждены native110/110, WASI110/110,5 Qt sources и48 UI сочетаний. Текущие исполняемые bundles совпадают с проверенными; source/progress/quiz сохранены. Теперь67 lesson IDs (56 прежних+11),40 legacy,67 Gold.
+
+Общий CI40628796921 ещё выполняется; формальная05/07, устройства и LIVE не закрыты. Не переносить эти ожидания в PASS. Следующий приоритет05/07 в текущей feature. Production GUI service, итоговый экзамен и отдельный выпуск — дальнейшие gates. Main d76d161 и production не менялись, официальный релиз не создавался.
+
+Актуальные отчёт/evidence/hashes/routing:CPP_MODULE6_AUTHORING_RU.md, CPP_MODULE6_AUTHORING_EVIDENCE.json, CPP_MODULE6_AUTHORING_HASHES.json, CPP_MODULE6_AUTHORING_ROUTING_RU.md. Синтетические проверки не подтверждают состояние устройств владельца. Ниже неизменённая история ранее подтверждённых checkpoints.
+
+---
+
 # Финальный инженерный checkpoint Module 6
 
 28.10.2026. STATUS: **PARTIAL для всего M6 / AUTOMATED PASS инженерного пилота**. Source `2a737915f8a7068dea4d0b2d8cd3b79accb15952`, CI40542759814:8/8 SUCCESS. Подтверждены40 unit,13 integration groups,34 native+34 WASI, cold Offline,3 реальные квоты/артефакты, original/edited Qt C++,12/12 Nexus E2E и940/940 M1–5. SHA256/CRC всех8 CI архивов текущего source SHA проверены. В GitHub только безопасные metadata/результаты; private stores, TLS keys, profiles и Qt binaries не публикуются.
