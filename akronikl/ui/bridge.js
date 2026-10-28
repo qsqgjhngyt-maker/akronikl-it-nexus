@@ -1,4 +1,6 @@
 import {allowedHash} from '../platform/catalog.js';
+import {createCloudSettingsBroker} from '../tutor/cloud-settings-broker.js';
+import {SERVER_ACCOUNT_ORIGIN} from '../../core/server-account-origin.js';
 // Лёгкая точка интеграции. Core/индекс/CSS не входят в стартовый граф Nexus.
 export function createAssistantBridge(options) {
   const {root, windowRef = globalThis.window, documentRef = globalThis.document,
@@ -22,7 +24,8 @@ export function createAssistantBridge(options) {
       const module = await loadPanel();
       if (disposed || currentGeneration !== generation || !root.isConnected || !ready() ||
           options.readIdentity() !== identity || windowRef.location.hash !== hash) return;
-      active = module.openAssistantPanel({...options, trigger,
+      const cloudBroker=options.cloudBroker??(!options.publicMode&&identity?.accountId&&windowRef.location.origin===SERVER_ACCOUNT_ORIGIN?createCloudSettingsBroker({origin:SERVER_ACCOUNT_ORIGIN,readIdentity:options.readIdentity,windowRef}):null);
+      active = module.openAssistantPanel({...options,cloudBroker, trigger,
         onDispose:() => {active = null;}, onNavigate:target => {
           if (currentGeneration !== generation) return;
           invalidate();

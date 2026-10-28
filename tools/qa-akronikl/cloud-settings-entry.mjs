@@ -5,7 +5,7 @@ const indexes={};for(const l of ['ru','en'])indexes[l]=createKnowledgeIndex(awai
 const rawOutcomes=[],broker=createCloudSettingsBroker({onOutcome:value=>rawOutcomes.push(value)});let panel=null,engine=null,calls=0,pending=null;
 const cloudBroker=Object.freeze({settings:true,inspect:broker.inspect,listSaved:broker.listSaved,forget:broker.forget,async connect(options){
  const selected=await broker.connect(options);engine=selected;
- return {kind:'cloud',transport:'trusted-broker',modelId:selected.modelId,providerId:selected.providerId,connectionVerified:selected.connectionVerified,remembered:selected.remembered,
+ return {kind:'cloud',transport:'trusted-broker',modelId:selected.modelId,providerId:selected.providerId,connectionVerified:selected.connectionVerified,remembered:selected.remembered,chat:request=>selected.chat(request),
   async generate(request){calls++;const task=selected.generate(request);pending=task;try{return await task;}finally{if(pending===task)pending=null;}},
   dispose:()=>selected.dispose()};
 }});

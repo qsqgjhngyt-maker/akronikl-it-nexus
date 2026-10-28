@@ -68,6 +68,7 @@ export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocal
     const selectedProvider=provider,connectionSignal=lifetime.signal,ticket=revision;let released=false;
     const valid=()=>!released&&current()&&ticket===revision&&provider===selectedProvider&&!connectionSignal.aborted;
     return Object.freeze({kind:selectedProvider.kind,transport:selectedProvider.transport,modelId:selectedProvider.modelId,
+      async chat(request){if(!valid()||typeof selectedProvider.chat!=='function')throw Error('CHAT_PROVIDER_REQUIRED');const signal=request.signal?AbortSignal.any([request.signal,connectionSignal]):connectionSignal;const response=await selectedProvider.chat({...request,signal});if(!valid()||signal.aborted)throw Error('MODEL_LEASE_EXPIRED');return response;},
       async generate(request){
         if(!valid())throw Error('MODEL_LEASE_EXPIRED');
         const signal=request.signal?AbortSignal.any([request.signal,connectionSignal]):connectionSignal;

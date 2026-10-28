@@ -73,5 +73,5 @@ export async function fixture(frontend,{oauth=false,control=false}={}){
   db.exec('UPDATE nexus_alpha_settings SET enforced=1,max_testers=3 WHERE id=1');
   Object.assign(env,{COMMUNITY_ENABLED:'true',CONTENT_ENABLED:'true',CONTENT_PROXY_ENABLED:'true',FEEDBACK_ENABLED:'true',FEEDBACK_PROXY_ENABLED:'true',FEEDBACK_SERVICE_KEY:'SYNTHETIC_FEEDBACK_SERVICE_KEY_ONLY_20261020',ADMIN_CONTROL_ENABLED:'true',ACCOUNT_CONTROL_PROXY_ENABLED:'true',ALPHA_ADMISSION_ENABLED:'true',ADMIN_PURGE_ENABLED:'true',COOKIE_INGRESS_V3_ENABLED:'true',ADMIN_SERVICE_KEY:'SYNTHETIC_CONTROL_SERVICE_KEY_ONLY_20261020'});
  }
- return{db,invitation,dispatch,metrics,enableControl,enablePublicRegistration(){if(!control)throw Error('CONTROL_REQUIRED');env.PUBLIC_PASSKEY_REGISTRATION_ENABLED='true'},beforeBatch(fn){beforeBatch=fn},setMismatch(value){mismatch=value},close(){db.close()}};
+ return{db,env,fetchImpl,invitation,dispatch,metrics,enableControl,enablePublicRegistration(){if(!control)throw Error('CONTROL_REQUIRED');env.PUBLIC_PASSKEY_REGISTRATION_ENABLED='true'},beforeBatch(fn){beforeBatch=fn},setMismatch(value){mismatch=value},close(){db.close()}};
 }

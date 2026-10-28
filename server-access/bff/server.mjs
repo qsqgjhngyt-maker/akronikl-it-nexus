@@ -7,6 +7,8 @@ import {createEntryGateHandler} from './entry-gate.mjs';
 import {createCloudSessionHandler} from './cloud-session.mjs';
 import {createOAuthHandler} from './oauth.mjs';
 import {createAccountControlHandler} from './account-control.mjs';
+import {createNexusCloudHandler} from './akronikl-cloud.mjs';
+const akronikl=await createNexusCloudHandler({env:process.env});
 const passkey=createPasskeyHandler({env:process.env}),existing=createCombinedHandler({env:process.env});
 const landingBody=readFileSync(new URL('../public/entry.html',import.meta.url));
 const entryGate=createEntryGateHandler({env:process.env,landingBody});
@@ -29,6 +31,7 @@ const server=http.createServer({maxHeaderSize:16384},async(req,res)=>{
  res.setHeader('vary','*');
  try{
   if(await entryGate(req,res))return;
+  if(await akronikl.handle(req,res)!==false)return;
   if(await content(req,res))return;
   if(await control(req,res))return;
   if(await cloud(req,res))return;

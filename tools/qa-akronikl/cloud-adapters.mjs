@@ -1,6 +1,7 @@
 // Server-only provider adapters. All destinations are fixed here; no browser URL.
 import {randomUUID} from 'node:crypto';
 import {cloudSelection} from '../../akronikl/connections/cloud-catalog.js';
+import {conversationRequest,providerConversationMessages} from './conversation-request.mjs';
 import {validateCloudRequest} from './qwen-upstream.mjs';
 const origins=Object.freeze({openai:'https://api.openai.com/v1/responses',anthropic:'https://api.anthropic.com/v1/messages',kimi:'https://api.moonshot.ai/v1/chat/completions',deepseek:'https://api.deepseek.com/chat/completions',gigachat:'https://api.giga.chat/v1/chat/completions',gemini:'https://generativelanguage.googleapis.com/v1beta/models/',openrouter:'https://openrouter.ai/api/v1/chat/completions'});
 export function validApiKey(key){return typeof key==='string'&&/^[A-Za-z0-9._~+\/=-]{16,4096}$/u.test(key);}
@@ -31,17 +32,18 @@ export function createCloudAdapter({selection,apiKey,fetchUpstream=globalThis.fe
   const r=await send('https://ngw.devices.sberbank.ru:9443/api/v2/oauth',{method:'POST',headers:{Authorization:'Basic '+key,RqUID:randomUUID(),'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},body:new URLSearchParams({scope:config.options.scope}).toString()},signal);
   const data=await boundedJson(r,signal);if(typeof data.access_token!=='string'||!validApiKey(data.access_token)||!Number.isFinite(data.expires_at))throw Error('CLOUD_AUTH_FAILED');access=data.access_token;expires=data.expires_at>1e12?data.expires_at:data.expires_at*1000;return access;
  }
- return Object.freeze({providerId:config.providerId,modelId:config.modelId,
- async complete(data,{signal}={}){
-  validateCloudRequest(data);if(disposed||busy)throw Error('CLOUD_BUSY');signal?.throwIfAborted();busy=true;current=new AbortController();const combined=signal?AbortSignal.any([signal,current.signal]):current.signal,timer=setTimeout(()=>current?.abort(),timeoutMs),started=performance.now();
+ const adapter={providerId:config.providerId,modelId:config.modelId,
+ chat(data,options={}){return adapter.complete(data,{...options,conversation:true});},
+ async complete(data,{signal,conversation=false}={}){
+  if(conversation)data=conversationRequest(data,config);else validateCloudRequest(data);if(disposed||busy)throw Error('CLOUD_BUSY');signal?.throwIfAborted();busy=true;current=new AbortController();const combined=signal?AbortSignal.any([signal,current.signal]):current.signal,timer=setTimeout(()=>current?.abort(),timeoutMs),started=performance.now();
   let rawFinal='',status='error',httpStatus=null,reasoningRedacted=false,usage=null;
   try{
-   const {providerId:id,modelId:model}=config,schema=responseSchema(data.allowedCitations),messages=data.messages;
+   const {providerId:id,modelId:model}=config,schema=responseSchema(data.allowedCitations),messages=conversation?providerConversationMessages(data.messages,id):data.messages;
    let url=origins[id],headers={'Content-Type':'application/json',Authorization:'Bearer '+key},body;
-   if(id==='qwen'){url=qwenEndpoint(config.options);body={model,messages,stream:false,enable_thinking:false,max_tokens:512,temperature:.2,response_format:{type:'json_schema',json_schema:{name:'akronikl_answer',strict:true,schema}}};}
+   if(id==='qwen'){url=qwenEndpoint(config.options);body={model,messages,stream:false,enable_thinking:false,max_tokens:conversation?2048:512,temperature:.2,response_format:{type:'json_schema',json_schema:{name:'akronikl_answer',strict:true,schema}}};}
    else if(id==='openai'){body={model,instructions:messages[0].content,input:messages.slice(1),store:false,max_output_tokens:1024,text:{format:{type:'json_schema',name:'akronikl_answer',strict:true,schema:{...schema,properties:{...schema.properties,citations:{type:'array',items:{type:'string',enum:data.allowedCitations}}}}}}};}
    else if(id==='anthropic'){headers['anthropic-version']='2026-10-21';if(config.options.workspaceId)headers['anthropic-workspace-id']=config.options.workspaceId;body={model,system:messages[0].content,messages:messages.slice(1),max_tokens:1024,output_config:{format:{type:'json_schema',schema:{...schema,properties:{...schema.properties,citations:{type:'array',items:{type:'string',enum:data.allowedCitations}}}}}}};}
-   else if(id==='gemini'){url+=encodeURIComponent(model.replace(/^models\//u,''))+':generateContent';headers={'Content-Type':'application/json','x-goog-api-key':key};body={systemInstruction:{parts:[{text:messages[0].content}]},contents:messages.slice(1).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]})),generationConfig:{maxOutputTokens:2048,responseMimeType:'application/json',responseJsonSchema:schema}};}
+   else if(id==='gemini'){url+=encodeURIComponent(model.replace(/^models\//u,''))+':generateContent';headers={'Content-Type':'application/json','x-goog-api-key':key};body={systemInstruction:{parts:[{text:messages[0].content}]},contents:messages.slice(1).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content},...(m.images??[]).map(a=>({inlineData:{mimeType:a.mime,data:a.data}}))]})),generationConfig:{maxOutputTokens:2048,responseMimeType:'application/json',responseJsonSchema:schema}};}
    else{
     body={model,messages,stream:false};
     if(id==='kimi'){body.max_completion_tokens=2048;if(/^kimi-k3/u.test(model))body.reasoning_effort='low';else body.thinking={type:'disabled'};}
@@ -72,5 +74,5 @@ export function createCloudAdapter({selection,apiKey,fetchUpstream=globalThis.fe
    try{onOutcome?.({providerId:config.providerId,modelId:config.modelId,status,rawContent:safeRaw,httpStatus,reasoningRedacted:reasoningRedacted||tagged,usage,totalMs:performance.now()-started});}catch{}
   }
  },dispose(){disposed=true;current?.abort();key='';access=null;expires=0;}
- });
+ };return Object.freeze(adapter);
 }
