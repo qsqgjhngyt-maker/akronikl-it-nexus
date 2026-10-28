@@ -5,7 +5,7 @@ const LEGACY_OWNER='user-4849a9d6-4cd7-4ebe-8dba-1cf81b3dac8b';
 const IDENTITY_KEY='akronikl:it-nexus:identity:v1';
 const CLOUD_KEY='akronikl:it-nexus:cloudflare-sync:v1';
 const LOCAL_KEYS=new Set([
-  'akronikl:it-nexus:state:v1','akronikl:it-nexus:projects:v1',IDENTITY_KEY,
+  'akronikl:it-nexus:state:v1','akronikl:it-nexus:projects:v1','akronikl:it-nexus:prefs:v1',IDENTITY_KEY,
   CLOUD_KEY,'akronikl:it-nexus:sync-queue:v1','akronikl:it-nexus:audit:v1',
   'akronikl:it-nexus:identity-v2:cookie-session:v1','cpp_programming_pdf_course_v1'
 ]);
@@ -92,7 +92,7 @@ export function createAccountStorageController({localStorage,sessionStorage,lega
       return {account:context,...result};
     },
     lockAccountStorage(){locked=true;context=null},
-    verifiedAccount(){return locked?null:context},
+    verifiedAccount(){return locked?null:context},isLocked(){return locked},
     accountLocalStorage(){return facade('local')},
     accountSessionStorage(){return facade('session')}
   });
@@ -102,6 +102,7 @@ const controller=createAccountStorageController();
 export const initializeAccountStorage=dto=>controller.initializeAccountStorage(dto);
 export const lockAccountStorage=()=>controller.lockAccountStorage();
 export const verifiedAccount=()=>controller.verifiedAccount();
+export const accountStorageLocked=()=>controller.isLocked();
 export const accountLocalStorage=()=>controller.accountLocalStorage();
 export const accountSessionStorage=()=>controller.accountSessionStorage();
 export const accountStoragePrefix=accountId=>{if(!validId(accountId))throw denied('INVALID_ACCOUNT_ID');return PREFIX+encodeURIComponent(accountId)+':'};
