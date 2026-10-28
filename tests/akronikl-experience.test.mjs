@@ -7,7 +7,7 @@ import {textFor} from '../akronikl/experience/strings.js';
 import {createTutorSession} from '../akronikl/tutor/session.js';
 import {createKnowledgeIndex,createNexusContextAdapter} from '../akronikl/core/index.js';
 for(const [q,kind,intent] of [
- ['Акроникл, объясни эту тему попроще','tutor','simpler'],['Покажи пример','tutor','example'],['Дай мне небольшую задачу для тренировки','tutor','practice'],
+ ['Акроникл, объясни эту тему попроще','tutor','simpler'],['Объясни проще и приведи короткий пример.','tutor','simpler'],['Explain simply and give me a short example','tutor','simpler'],['Покажи пример','tutor','example'],['Дай мне небольшую задачу для тренировки','tutor','practice'],
  ['Почему мой код выдаёт ошибку?','diagnostic'],['Где я остановился?','resume'],['Помоги найти лабораторную работу','platform'],['Где мои проекты?','platform'],
  ['Открой Академию','platform'],['Как сохранить работу','platform'],['удали все проекты','platform'],['найди RAII','search'],['Разбери выбранный код','tutor','code'],
  ['Akronikl, explain this topic simply','tutor','simpler'],['give me an example','tutor','example'],['give me a practice task','tutor','practice'],

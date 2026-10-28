@@ -13,7 +13,7 @@ export function resolveMessage(value) {
   if(/^(?:где я(?: сейчас)?|текущий раздел|where am i|current screen|что доступно|разделы nexus|куда можно перейти|list sections|available sections)$/u.test(n)||
     /^(?:открой|открыть|перейди в|перейди к|open|go to|сохрани|сохранить|удали|удалить|запусти|выйди|опубликуй|save|delete|run|logout|publish)(?:\s|$)/u.test(n)||
     HELP_TOPICS.some(t=>t.aliases.includes(n)))return {kind:'platform',request:{kind:'text',text:n}};
-  if(/^(?:объясни (?:эту тему |текущую тему |этот урок )?(?:попроще|проще|простыми словами)|не понял(?:а)?|explain (?:this (?:topic|lesson) )?(?:more simply|simply)|simpler)$/u.test(n))
+  if(/^(?:объясни (?:эту тему |текущую тему |этот урок )?(?:попроще|проще|простыми словами)(?: и (?:покажи|дай|приведи) (?:короткий |небольшой |простой )?пример)?|не понял(?:а)?|explain (?:this (?:topic|lesson) )?(?:more simply|simply)(?: and (?:show|give)(?: me)? (?:an? |a short |a small )?example)?|simpler)$/u.test(n))
     return {kind:'tutor',intent:'simpler',followUp:true,text};
   if(/^(?:покажи|дай|приведи) (?:небольшой |другой |простой )?пример$|^(?:show|give)(?: me)? (?:an? |another )?example$/u.test(n))return {kind:'tutor',intent:'example',followUp:true,text};
   if(/(?:задач[ауи]|упражнени[ея])(?:\s|$)|\b(?:practice task|exercise)\b/u.test(n))return {kind:'tutor',intent:'practice',followUp:true,text};
