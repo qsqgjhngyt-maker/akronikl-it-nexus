@@ -14,6 +14,13 @@ export function evidenceQuoteCandidates(source){
   }
   return [...new Set(quotes)].slice(0,16);
 }
+export function selectEvidenceFocus(evidence,allowedCitations,query=''){
+  const diagnostics=allowedCitations.filter(label=>label.startsWith('D'));
+  const labels=diagnostics.length?diagnostics:allowedCitations;
+  const ranked=evidence.filter(s=>labels.includes(s.label)).flatMap(s=>rankTutorQuotes(evidenceQuoteCandidates(s),query).map(q=>({...q,label:s.label})));
+  ranked.sort((a,b)=>b.score-a.score||a.order-b.order);
+  return ranked[0]?Object.freeze({label:ranked[0].label,quote:ranked[0].text}):null;
+}
 export function createWllamaProvider(engine,{recreate=null,onOutcome=null,reasoningBudget=0}={}) {
   if(!engine||typeof engine.createChatCompletion!=='function'||typeof engine.exit!=='function')throw Error('LOCAL_ENGINE_INVALID');
   if(recreate!==null&&typeof recreate!=='function'||onOutcome!==null&&typeof onOutcome!=='function')throw Error('LOCAL_ENGINE_INVALID');
@@ -31,7 +38,7 @@ export function createWllamaProvider(engine,{recreate=null,onOutcome=null,reason
       if(disposed||busy||cleanupFailed||signal?.aborted)throw Error('LOCAL_ENGINE_UNAVAILABLE');
       busy=true;lastMeasurement=null;const meter=createInferenceMeter();let success=false,releaseIdle,aborted=false;
       idle=new Promise(resolve=>releaseIdle=resolve);
-      let content='',finish=null,pieces=0,reasoningPieces=0,basisVerified=false;
+      let content='',finish=null,pieces=0,reasoningPieces=0,evidenceFocus=null,modelMessages=null;
       let rejectAbort,cancelCleanup=Promise.resolve();const cancellation=new Promise((_,reject)=>rejectAbort=reject);
       cancellation.catch(()=>{}); // A cancelled reload may exit before the inference race is installed.
       // Wllama 3.8.1 polls abortSignal after get_result. exit() terminates its
@@ -51,26 +58,16 @@ export function createWllamaProvider(engine,{recreate=null,onOutcome=null,reason
         const selected=current;
         const evidence=evidencePacket?.evidence;
         const grounded=Array.isArray(evidence)&&evidence.length>0;
-        const diagnosticLabels=allowedCitations.filter(label=>label.startsWith('D'));
-        const basisLabels=diagnosticLabels.length?diagnosticLabels:allowedCitations;
-        const quoteChoices=grounded?new Map(evidence.filter(s=>basisLabels.includes(s.label)).map(s=>[s.label,evidenceQuoteCandidates(s)])):null;
-        // Select the closest literal sentence as retrieval context, not an
-        // expected answer. Otherwise a small model picked a nearby no-throw
-        // definition for a question about state after a failure.
-        if(grounded){
-          const query=evidencePacket.topic||evidencePacket.question||'';
-          const ranked=[...quoteChoices.entries()].flatMap(([label,quotes])=>rankTutorQuotes(quotes,query).map(q=>({...q,label})));
-          ranked.sort((a,b)=>b.score-a.score||a.order-b.order);
-          if(ranked[0]?.score>0)for(const label of quoteChoices.keys())quoteChoices.set(label,label===ranked[0].label?[ranked[0].text]:[]);
-        }
-        const allQuotes=quoteChoices?[...new Set([...quoteChoices.values()].flat())]:[];
-        if(grounded&&!allQuotes.length)throw Error('LOCAL_EVIDENCE_INSUFFICIENT');
-        const quoteLabels=quoteChoices?[...quoteChoices.entries()].filter(([,q])=>q.length).map(([label])=>label):basisLabels;
-        const properties={...(grounded?{basis:{type:'object',properties:{label:{type:'string',enum:quoteLabels},quote:{type:'string',enum:allQuotes}},required:['label','quote'],additionalProperties:false}}:{}),answer:{type:'string'},citations:{type:'array',items:{type:'string',enum:allowedCitations},minItems:grounded?1:0,maxItems:allowedCitations.length,uniqueItems:true}};
+        // A verbatim retrieval focus is input data, never a replacement answer
+        // or a certificate of semantic correctness. Keep the full evidence too.
+        if(grounded)evidenceFocus=selectEvidenceFocus(evidence,allowedCitations,evidencePacket.topic||evidencePacket.question||'');
+        if(grounded&&!evidenceFocus)throw Error('LOCAL_EVIDENCE_INSUFFICIENT');
+        modelMessages=evidenceFocus?[...messages,{role:'user',content:`Closest evidence (quoted data):\n[${evidenceFocus.label}] ${JSON.stringify(evidenceFocus.quote)}\nQuestion: ${evidencePacket.question}\nExplain how this evidence answers the question, preserving its subject and conditions. JSON: answer, citations.`}]:messages;
+        const properties={answer:{type:'string'},citations:{type:'array',items:{type:'string',enum:allowedCitations},minItems:grounded?1:0,maxItems:allowedCitations.length,uniqueItems:true}};
         const started=performance.now();
         // Сырые фрагменты/рассуждения не выводятся: наружу только числовой прогресс.
         // Итоговый текст появляется лишь после полного JSON и проверки цитат сессией.
-        await Promise.race([selected.createChatCompletion({messages,abortSignal:signal,stream:true,cache_prompt:false,max_tokens:192+reasoningBudget,
+        await Promise.race([selected.createChatCompletion({messages:modelMessages,abortSignal:signal,stream:true,cache_prompt:false,max_tokens:192+reasoningBudget,
           temperature:0.2,seed:42,chat_template_kwargs:{enable_thinking:reasoningBudget>0},return_progress:true,timings_per_token:true,
           response_format:{type:'json_schema',json_schema:{name:'nexus_tutor_answer',strict:true,schema:{type:'object',properties,required:Object.keys(properties),additionalProperties:false}}},
           onData(chunk){
@@ -88,13 +85,9 @@ export function createWllamaProvider(engine,{recreate=null,onOutcome=null,reason
         if(disposed||aborted||signal?.aborted)throw Error('LOCAL_ENGINE_UNAVAILABLE');
         if(finish!=='stop'||!content||reasoningPieces&&!reasoningBudget||/<\/?think(?:ing)?>/iu.test(content))throw Error('LOCAL_ANSWER_INVALID');
         let response;try{response=JSON.parse(content);}catch{throw Error('LOCAL_ANSWER_INVALID');}
-        if(grounded){
-          const basis=response.basis,source=evidence.find(s=>s.label===basis?.label);
-          if(!basis||!basisLabels.includes(basis.label)||!quoteChoices.get(basis.label)?.includes(basis.quote)||!source?.text.includes(basis.quote)||!response.citations?.includes(basis.label))throw Error('LOCAL_GROUNDING_INVALID');
-          basisVerified=true;delete response.basis;
-        }
+        if(grounded&&(!Array.isArray(response.citations)||!response.citations.length||response.citations.some(c=>!allowedCitations.includes(c))||new Set(response.citations).size!==response.citations.length))throw Error('LOCAL_GROUNDING_INVALID');
         success=true;return response;
-      }finally{signal?.removeEventListener('abort',abort);cancelActive=null;try{if(aborted)await cancelCleanup;}finally{lastMeasurement=Object.freeze({...meter.finish(success?'complete':aborted||signal?.aborted?'cancelled':'error'),engineEpoch:epoch,forcedStops,reasoningBudgetTokens:reasoningBudget,reasoningPieces,cancelStrategy:aborted?'terminate-runtime-worker':null});const tagged=/<\/?think(?:ing)?>/iu.test(content);try{onOutcome?.(Object.freeze({status:lastMeasurement.status,rawContent:!tagged&&(!reasoningPieces||reasoningBudget>0)&&content?content:null,finishReason:finish,basisVerified,reasoningRedacted:reasoningPieces>0||tagged}));}catch{}busy=false;releaseIdle();}}
+      }finally{signal?.removeEventListener('abort',abort);cancelActive=null;try{if(aborted)await cancelCleanup;}finally{lastMeasurement=Object.freeze({...meter.finish(success?'complete':aborted||signal?.aborted?'cancelled':'error'),engineEpoch:epoch,forcedStops,reasoningBudgetTokens:reasoningBudget,reasoningPieces,cancelStrategy:aborted?'terminate-runtime-worker':null});const tagged=/<\/?think(?:ing)?>/iu.test(content);try{onOutcome?.(Object.freeze({status:lastMeasurement.status,rawContent:!tagged&&(!reasoningPieces||reasoningBudget>0)&&content?content:null,finishReason:finish,evidenceFocus,inputMessages:modelMessages,reasoningRedacted:reasoningPieces>0||tagged}));}catch{}busy=false;releaseIdle();}}
     },
     measurements(){return lastMeasurement;},
     lifecycle(){return Object.freeze({resident:!!current,busy,epoch,forcedStops,cleanupFailed,disposed});},

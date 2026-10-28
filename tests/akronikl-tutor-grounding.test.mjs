@@ -1,23 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createWllamaProvider,evidenceQuoteCandidates} from '../akronikl/tutor/local-model.js';
+import {createWllamaProvider,evidenceQuoteCandidates,selectEvidenceFocus} from '../akronikl/tutor/local-model.js';
 const source={label:'S1',text:'A local object is destroyed when its block exits. Copying its address does not keep it alive.'};
-function provider(response,outcomes=[]){return createWllamaProvider({async createChatCompletion(x){assert.ok(x.response_format.json_schema.schema.properties.basis);x.onData({choices:[{finish_reason:'stop',delta:{content:JSON.stringify(response)}}]});},async exit(){}},{onOutcome:e=>outcomes.push(e)});}
-const request={messages:[],evidencePacket:{evidence:[source]},allowedCitations:['S1']};
-test('actual model answer stays unaltered; evidence quote is separately validated',async()=>{
- const trace=[],p=provider({basis:{label:'S1',quote:'Copying its address does not keep it alive.'},answer:'ACTUAL_PROVIDER_SENTINEL',citations:['S1']},trace);
- assert.deepEqual(await p.generate(request),{answer:'ACTUAL_PROVIDER_SENTINEL',citations:['S1']});assert.equal(trace[0].basisVerified,true);assert.match(trace[0].rawContent,/ACTUAL_PROVIDER_SENTINEL/);await p.dispose();
+function provider(response,outcomes=[]){return createWllamaProvider({async createChatCompletion(x){assert.equal(x.response_format.json_schema.schema.properties.basis,undefined);const focus=x.messages.at(-1);assert.ok(focus.content.includes(source.text.split('. ')[0])||focus.content.includes('read-only'));x.onData({choices:[{finish_reason:'stop',delta:{content:JSON.stringify(response)}}]});},async exit(){}},{onOutcome:e=>outcomes.push(e)});}
+const request={messages:[],evidencePacket:{question:'local object lifetime',evidence:[source]},allowedCitations:['S1']};
+test('actual model answer stays unaltered; retrieval focus is separately recorded',async()=>{
+ const trace=[],p=provider({answer:'ACTUAL_PROVIDER_SENTINEL',citations:['S1']},trace);
+ assert.deepEqual(await p.generate(request),{answer:'ACTUAL_PROVIDER_SENTINEL',citations:['S1']});assert.ok(source.text.includes(trace[0].evidenceFocus.quote));assert.equal(trace[0].basisVerified,undefined);assert.match(trace[0].rawContent,/ACTUAL_PROVIDER_SENTINEL/);await p.dispose();
 });
-for(const basis of [{label:'S1',quote:'The copied address keeps its object alive.'},{label:'OTHER',quote:source.text},{label:'S1',quote:'alive'}])test('fabricated/foreign/trivial quote is rejected: '+basis.quote,async()=>{
- const trace=[],p=provider({basis,answer:'UNSUPPORTED_ACTUAL_ANSWER',citations:['S1']},trace);await assert.rejects(p.generate(request),/GROUNDING_INVALID/);assert.equal(trace[0].basisVerified,false);assert.match(trace[0].rawContent,/UNSUPPORTED_ACTUAL_ANSWER/);await p.dispose();
+for(const citations of [[],['OTHER'],['S1','S1']])test('empty/foreign/duplicate citations are rejected: '+JSON.stringify(citations),async()=>{
+ const trace=[],p=provider({answer:'UNSUPPORTED_ACTUAL_ANSWER',citations},trace);await assert.rejects(p.generate(request),/GROUNDING_INVALID/);assert.match(trace[0].rawContent,/UNSUPPORTED_ACTUAL_ANSWER/);await p.dispose();
 });
-test('a compiler fact must ground diagnostics instead of a selected-code hypothesis',async()=>{
- const trace=[],p=provider({basis:{label:'C1',quote:'const int value=4;'},answer:'Wrong fact',citations:['C1']},trace);
- await assert.rejects(p.generate({...request,allowedCitations:['C1','D1'],evidencePacket:{evidence:[{label:'C1',text:'const int value=4;'},{label:'D1',text:'error: assignment of read-only variable value'}]}}),/GROUNDING_INVALID/);await p.dispose();
+test('a compiler fact is the diagnostic retrieval focus instead of a code hypothesis',async()=>{
+ const trace=[],p=provider({answer:'ACTUAL_DIAGNOSTIC_OUTPUT',citations:['D1']},trace);
+ await p.generate({...request,allowedCitations:['C1','D1'],evidencePacket:{question:'value assignment',evidence:[{label:'C1',text:'const int value=4;'},{label:'D1',text:'error: assignment of read-only variable value'}]}});
+ assert.equal(trace[0].evidenceFocus.label,'D1');assert.match(trace[0].evidenceFocus.quote,/read-only/);await p.dispose();
 });
-test('quote verification alone is not semantic acceptance',async()=>{
- const p=provider({basis:{label:'S1',quote:'Copying its address does not keep it alive.'},answer:'WRONG_UNVERIFIED_CONTRADICTION',citations:['S1']});
- assert.equal((await p.generate(request)).answer,'WRONG_UNVERIFIED_CONTRADICTION');await p.dispose(); // Human rubric, not this structural guard, judges truth.
+test('a correct literal focus is not semantic acceptance or answer substitution',async()=>{
+ const p=provider({answer:'WRONG_UNVERIFIED_CONTRADICTION',citations:['S1']});
+ assert.equal((await p.generate(request)).answer,'WRONG_UNVERIFIED_CONTRADICTION');await p.dispose();
 });
 test('quote choices are complete literal sentences, preserving negation and escape sequences',()=>{
  const s={label:'S1',text:"A heading\nclear() resets flags, but does not consume invalid input. ignore(max,'\\\\n') can discard the line. Clear first, otherwise ignore may fail."};
