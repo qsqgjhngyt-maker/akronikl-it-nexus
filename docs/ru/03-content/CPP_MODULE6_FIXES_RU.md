@@ -1,3 +1,11 @@
+# Закрытие исправлений05/07 —28.10.2026
+
+STATUS: **PASS / AUTOMATED PASS в feature**, source1a3f9e5, CI406435260528/8SUCCESS. P1 Qt keyboard/focus и обаP2 CLOSED. M6native110+WASI110; M1–5940; Qt: 5 сборок,application12,a11y5;144layouts/384feedback; coldOffline67/67 иlegacy40/40; PERF75/591994B,outline26769B PASS.8CI архивов SHA256/CRC проверены.
+
+Актуальны CPP_GOLD_MODULE6_ACCEPTANCE_0507_RU.md, CPP_MODULE6_ACCEPTANCE_0507_EVIDENCE.json/HASHES.json/ROUTING_RU.md и CPP_MODULE6_EDITORIAL_CLOSURE.json. Main d76d161,production …10.9-test.2/backend/release не менялись. Production Qt runtime/лицензионный маршрут, physical LIVE и итоговая аттестация курса остаются отдельными gates. FULL LIVE PASS не выдан. Далее00 для следующего решения. Ниже сохранена история; прежний PARTIAL заменён этим подтверждённым результатом.
+
+---
+
 # C++ Module6 — исправления замечаний05/07
 
 28.10.2026. STATUS: IMPLEMENTED / локальный AUTOMATED PASS; итоговая повторная приёмка и CI ещё выполняются. База4d957746b12463a04188a2b774aef6d1b24bec50, только feature/academy-gold-standard-cpp-module-6. Этот checkpoint не заменяет итоговый gate и не разрешает публикацию.

@@ -1,23 +1,12 @@
-# Маршрутизация приёмки Module6 на534373f —28.10.2026
+# Закрытие исправлений Module6 —28.10.2026
 
 🔀 CROSS-BRANCH SYNC REQUIRED
-Источник:03 / приёмка05/07
-Результат/milestone:PARTIAL; CI8/8 и NEXUS-PERF-01 PASS, открыт один P1 и два P2.
-Куда:07+02 →03 →05/00 →04.
-Почему:GUI focus contract, предметное качество контроля, точный статус roadmap и evidence.
-Когда:сейчас, до следующей публикации или крупного этапа.
-Что передать:source534373f равен продукту/тестам CIa99c320; main/prod не менялись; исходные данные синтетические.
-
-Готовый текст для07/02:
-«На534373f воспроизведён M6-07-P1-01: доступный контрол Open tasks only не переключает C++ фильтр при Enter/Space. Pointer работает, native Space после pointer работает: исследовать передачу фокуса Qt/HTML accessibility proxy. Не считать JS element.click доказательством keyboard PASS. Нужны путь только клавиатурой, именованный контрол, регрессия RU/EN и согласованная инструкция урока. Полный functional Qt CI5/5 не покрывает эту доступность. Данные/IDs/исходники не менять скрыто. Main и production запрещены. Evidence:CPP_MODULE6_ACCEPTANCE_0507_EVIDENCE.json.»
-
-Готовый текст для03:
-«На534373f OPEN M6-05-P2-01: hint/criteria ряда RU/EN basic заданий не соответствуют вопросам (validated-user-commands, states-typed-events, model-view-presenter, responsive-work-cancellation, multifile-event-application). OPEN M6-05-P2-02:12 одинаковых readiness-наборов и11 пар слабых повторяющихся итоговых вопросов. Переписать предметно, проверить72 задания/60 assessment/36 readiness на язык; сохранить legacyQuiz, stableIDs и исполняемые контракты. После исправления повторить05/07, C++ parity и PERF без main/prod.»
-
-Готовый текст для05/00:
-«C++Module6 на534373f: приёмка05/07 PARTIAL, один P1+два P2 OPEN. CI40628796921 на эквивалентном product/test sourcea99c320 —8/8SUCCESS; все8 архивов SHA256/CRC проверены. M6 native110+WASI110, M1–5940, Qt5 функционально,12NexusE2E,144responsive/384feedback, coldOffline67/67 иlegacy40/40 PASS. PERF75/591994B, outline26769B в прежнихcaps. Это не разрешение на публикацию и не FULL LIVE PASS. Main d76d161, production/backend/release не изменялись. Следующий приоритет—07/02 и03, затем повторная приёмка. MASTER_HANDOFF и итоговый отчёт обновлены.»
-
-Готовый текст для04:
-«Есть материал для диплома: functionalCI может быть зелёным при дефекте keyboard accessibility; counts/schema не устанавливают предметное качество вопросов. Сохранены отрицательные эксперименты, источник/хеши, exact product/test equivalence и синтетическая проверка stable progress. Альтернатива—принимать по одному зелёному CI—отклонена как недостаточная. Исполняемые console/Qt разделены, проекты переносимы, данные не передаются внешним получателям. Количественные результаты в ledger; академическая эффективность/аккредитация не измерялись.»
-
-Что потом:исправления в той же feature6 →05/07/PERF →00 для отдельного решения. Не создавать release, не менять main/prod.01/06:контракты не менялись, новых исследовательских/identity работ не требуется до отдельного routing. Сообщения подготовлены, внешняя отправка не выполнялась.
+Источник:03/07; результат:05/07 AUTOMATED PASS на1a3f9e5, все3 замечания CLOSED.
+Куда:02/07/03→05→00/04;01 — security/progress contract unchanged.
+Почему:закрыт keyboard adapter и методический gate; нужны точный roadmap/evidence и материал диплома.
+Когда:сейчас, до следующего крупного этапа.
+Что передать:CI406435260528/8,8SHA256/CRC архивов; M6native110/WASI110, M1–5940,Qt: 5 сборок/application12/a11y5,144layouts/384feedback,cold67/67/legacy40/40,PERF75/591994B иoutline26769B.
+Готовый текст для00/05:«C++Module6 на1a3f9e5: повторная05/07 AUTOMATED PASS, M6-07-P1-01/M6-05-P2-01/02 CLOSED. ПолныйCI8/8 иNEXUS-PERF-01 PASS. Исходники/legacyQuiz/progress/security boundaries сохранены;8архивов провереныSHA256/CRC. Main d76d161,production/backend/release не менялись. MASTER и отчёт обновлены. Следующее решение—production Qt runtime gate; реальный LIVE и итоговая аттестация курса ещё отдельно.»
+Готовый текст для02/07/03:«Keyboard Space/Enter идёт через Qt SDK action; видимый фокус ограничен viewport и восстановлен после callback/blur.5a11y+5GUI+12applicationE2E PASS. Тест не подменяет действие JS моделью.144 RU/EN task rubrics и192 вопроса переписаны, readiness связан сDAG, answer key парный, код/cases/старыеquiz неизменны. Полная VoiceOver/TalkBack/physical matrix не заявляется.»
+Готовый текст для01/04:«Побайтно сохранены CSP/sandbox/origins/nonce/snapshot/data messages; helper ограничен opaque iframe. Есть материал для диплома:границы functional/schema/accessibility доказательств, independent oracle и отрицательные эксперименты, точные receipt/hash и сохранность стабильного прогресса. Эффективность обучения и аккредитация не измерялись.»
+Что потом:00 выбирает следующий этап; без разрешения main/production/release не менять.06:новое исследование не требуется для закрытых багов; методику обучения исследовать отдельно. Сообщения подготовлены, внешняя отправка не выполнялась.

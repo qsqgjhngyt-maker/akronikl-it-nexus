@@ -1,6 +1,14 @@
+# Закрытие исправлений05/07 —28.10.2026
+
+STATUS: **PASS / AUTOMATED PASS в feature**, source1a3f9e5, CI406435260528/8SUCCESS. P1 Qt keyboard/focus и обаP2 CLOSED. M6native110+WASI110; M1–5940; Qt: 5 сборок,application12,a11y5;144layouts/384feedback; coldOffline67/67 иlegacy40/40; PERF75/591994B,outline26769B PASS.8CI архивов SHA256/CRC проверены.
+
+Актуальны CPP_GOLD_MODULE6_ACCEPTANCE_0507_RU.md, CPP_MODULE6_ACCEPTANCE_0507_EVIDENCE.json/HASHES.json/ROUTING_RU.md и CPP_MODULE6_EDITORIAL_CLOSURE.json. Main d76d161,production …10.9-test.2/backend/release не менялись. Production Qt runtime/лицензионный маршрут, physical LIVE и итоговая аттестация курса остаются отдельными gates. FULL LIVE PASS не выдан. Далее00 для следующего решения. Ниже сохранена история; прежний PARTIAL заменён этим подтверждённым результатом.
+
+---
+
 # Приёмка05/07 на534373f —28.10.2026
 
-STATUS: **PARTIAL: один P1 и два P2 OPEN.** CI40628796921 —8/8SUCCESS на product/test-эквивалентном a99c320; NEXUS-PERF-01 PASS75/591994B, outline26769B. Подтверждены M6 native110+WASI110, M1–5940, Qt5 functional,12E2E,144responsive/384feedback и coldOffline67/67,legacy40/40. Фокус доступного Qt-фильтра требует исправления; также нужны согласованные hint/criteria и предметные вопросы. Зелёный functionalCI не закрывает эти замечания.
+STATUS: **PARTIAL: один P1 и два P2 OPEN.** CI40628796921 —8/8SUCCESS на product/test-эквивалентном a99c320; NEXUS-PERF-01 PASS75/591994B, outline26769B. Подтверждены M6 native110+WASI110, M1–5940, Qt: 5 сборок functional,12E2E,144responsive/384feedback и coldOffline67/67,legacy40/40. Фокус доступного Qt-фильтра требует исправления; также нужны согласованные hint/criteria и предметные вопросы. Зелёный functionalCI не закрывает эти замечания.
 
 Актуальны CPP_GOLD_MODULE6_ACCEPTANCE_0507_RU.md, CPP_MODULE6_ACCEPTANCE_0507_EVIDENCE.json/HASHES.json/ROUTING_RU.md. Дальше07/02+03 в той же feature, затем повторная05/07. Main d76d161, production …10.9-test.2, backend/релизы не менялись. Устройства владельца, production GUI service и итоговая аттестация курса остаются отдельными gates. LIVE/FULL LIVE PASS не выдаются. Ниже сохранена история; её ожидание CI заменено текущим результатом.
 
