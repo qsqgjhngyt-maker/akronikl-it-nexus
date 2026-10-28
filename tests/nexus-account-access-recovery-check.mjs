@@ -78,8 +78,9 @@ try{
  const logoutPending=deferred();
  const signedIn=mount(async url=>url.endsWith('/logout')?logoutPending.promise:json(validAccount));await settle();entryVisible(signedIn);
  assert.equal(signedIn.panel.dataset.state,'signed-in');assert.equal(signedIn.name.hidden,false);assert.equal(signedIn.name.textContent,'Synthetic Akronikl');assert.equal(signedIn.logout.hidden,false);assert.equal(signedIn.entry.textContent,'Управлять ключами');
- signedIn.logout.click();entryVisible(signedIn);window.dispatchEvent(new Event('focus'));document.dispatchEvent(new Event('visibilitychange'));assert.equal(signedIn.calls.length,2);
- logoutPending.resolve(json({ok:true}));await settle();entryVisible(signedIn);assert.equal(signedIn.panel.dataset.state,'signed-out');assert.equal(signedIn.entry.textContent,'Войти ключом доступа');assert.equal(signedIn.name.hidden,true);assert.equal(signedIn.logout.hidden,true);assert.equal(signedIn.calls.length,2,'Successful logout must not wait for another session probe');
+ const logoutEvents=[];window.addEventListener('nexus:session-ending',()=>logoutEvents.push('starting'));window.addEventListener('nexus:session-ended',()=>logoutEvents.push('confirmed'));
+ signedIn.logout.click();assert.deepEqual(logoutEvents,['starting']);entryVisible(signedIn);window.dispatchEvent(new Event('focus'));document.dispatchEvent(new Event('visibilitychange'));assert.equal(signedIn.calls.length,2);
+ logoutPending.resolve(json({ok:true}));await settle();assert.deepEqual(logoutEvents,['starting','confirmed']);entryVisible(signedIn);assert.equal(signedIn.panel.dataset.state,'signed-out');assert.equal(signedIn.entry.textContent,'Войти ключом доступа');assert.equal(signedIn.name.hidden,true);assert.equal(signedIn.logout.hidden,true);assert.equal(signedIn.calls.length,2,'Successful logout must not wait for another session probe');
  assert.equal(signedIn.calls[1].options.method,'POST');assert.equal(signedIn.calls[1].options.headers['x-nexus-passkey-write'],'1');checks.push('Validated Account DTO signs in; confirmed logout exposes login immediately with no extra probe');
  const late=deferred();let reads=0;
  const race=mount(async url=>url.endsWith('/logout')?json({ok:true}):++reads===1?json(validAccount):late.promise);await settle();
