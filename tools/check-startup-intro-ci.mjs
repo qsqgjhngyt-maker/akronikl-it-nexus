@@ -33,7 +33,7 @@ try{
  await verifyStartupIntroContract({writeEvidence:out});
  if(lane==='preflight'){
   await npm('server-access');
-  await run('контракт-и-отрицательные-контроли',['--test','tests/startup-intro-contract.test.mjs','tests/startup-intro-policy.test.mjs','tests/startup-intro-build.test.mjs','tests/startup-intro-retention.test.mjs']);
+  await run('контракт-и-отрицательные-контроли',['--test','tests/startup-intro-contract.test.mjs','tests/startup-intro-publication.test.mjs','tests/startup-intro-policy.test.mjs','tests/startup-intro-build.test.mjs','tests/startup-intro-retention.test.mjs']);
   await run('детерминированный-public-набор',['--test','tests/ui1a-deterministic-public-manifest.test.mjs']);
   await run('прежний-порядок-запуска',['--test','tests/platform-startup-load.test.mjs','tests/platform-startup-views.test.mjs','tests/platform-lazy-imports.test.mjs','tests/blog-media-perf-guard.test.mjs']);
  }
@@ -73,6 +73,14 @@ try{
    const second=path.join(temp,'second-build');await run('повторная-сборка',['tools/build-startup-intro-candidate.mjs','--out',second]);
    const manifest=JSON.parse(await readFile(path.join(build,'BUILD_MANIFEST.json'))),again=JSON.parse(await readFile(path.join(second,'BUILD_MANIFEST.json')));
    assert.deepEqual(manifest,again);assert.equal(manifest.assetGeneration,GENERATION);assert.equal(manifest.optionalAssets.length,6);
+   // Для доставки проверяется и настоящий root package, а не только временная сборка.
+   try{await access(path.join(ROOT,'startup-intro-publication.json'));
+    const delivery=JSON.parse(await readFile(path.join(ROOT,'startup-intro-publication.json')));
+    if(delivery.kind==='production-test'){
+     assert.deepEqual(manifest,JSON.parse(await readFile(path.join(ROOT,'BUILD_MANIFEST.json'))));
+     for(const r of manifest.files)assert.deepEqual(await readFile(path.join(build,r.file)),await readFile(path.join(ROOT,r.file)),r.file);
+    }
+   }catch(e){if(e.code!=='ENOENT')throw e}
    const accepted=JSON.parse(await readFile(path.join(baselineBuild,'BUILD_MANIFEST.json'))),map=new Map(manifest.files.map(r=>[r.file,r]));
    for(const r of accepted.files.filter(r=>r.file.startsWith('releases/')||r.file.startsWith('entry-assets/'))){assert.deepEqual(await readFile(path.join(build,r.file)),await readFile(path.join(baselineBuild,r.file)),r.file);assert.ok(map.has(r.file))}
    const hash=b=>createHash('sha256').update(b).digest('hex'),sw=await readFile(path.join(build,'service-worker.js'),'utf8');

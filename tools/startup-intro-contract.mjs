@@ -5,6 +5,8 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {verifyIntroDelivery,DELIVERY,RECEIPT,ROOT_FILES} from './startup-intro-publication.mjs';
+import {DELIVERY_WORKFLOWS,routeDeliveryWorkflow} from './startup-intro-delivery-workflows.mjs';
 export const ROOT=fileURLToPath(new URL('../',import.meta.url));
 export const BASE='d76d1613a1fbf6726d453e40366c306ea502d4c7';
 export const IMPLEMENTATION='1d83e485bc9bc8a122b6a4eebd79f39a408f635a';
@@ -15,7 +17,7 @@ export const WORKFLOWS=Object.freeze({
  '.github/workflows/academy-gold-cpp-module-2-preflight.yml':{preflight:'preflight','module2-gold':'browser','module1-regression':'integration'},
  '.github/workflows/academy-gold-cpp-module-3-publication.yml':{publication:'publication'}
 });
-export const CI_PATHS=Object.freeze([CONTRACT,'tools/startup-intro-contract.mjs','tools/startup-intro-ci-route.mjs','tools/check-startup-intro-ci.mjs','tests/startup-intro-contract.test.mjs','tests/startup-intro-retention.test.mjs','tests/startup-intro-browser-check.mjs','tests/offline-first-browser-check.mjs','tests/ui1a-deterministic-public-manifest.test.mjs',...Object.keys(WORKFLOWS)]);
+export const CI_PATHS=Object.freeze([CONTRACT,DELIVERY,RECEIPT,'tools/startup-intro-publication.mjs','tools/prepare-startup-intro-delivery.mjs','tools/check-startup-intro-delivery.mjs','tools/startup-intro-delivery-workflows.mjs','tests/startup-intro-publication.test.mjs','tools/startup-intro-contract.mjs','tools/startup-intro-ci-route.mjs','tools/check-startup-intro-ci.mjs','tests/startup-intro-contract.test.mjs','tests/startup-intro-retention.test.mjs','tests/startup-intro-browser-check.mjs','tests/offline-first-browser-check.mjs','tests/ui1a-deterministic-public-manifest.test.mjs',...Object.keys(WORKFLOWS),...Object.keys(DELIVERY_WORKFLOWS)]);
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const git=(root,...a)=>execFileSync('git',a,{cwd:root,maxBuffer:256*1024*1024});
 export function validateMetadata(c){
@@ -24,8 +26,8 @@ export function validateMetadata(c){
 }
 const documentation=f=>f.startsWith('docs/evidence/startup-cinematic-20261028/')||/^docs\/ru\/07-ui\/STARTUP_CINEMATIC_INTRO_[A-Z_]+\.md$/.test(f);
 const dependency=f=>f.startsWith('server-access/node_modules/')||f.startsWith('tools/qa-browser-driver/node_modules/')||f.startsWith('evidence-startup-intro/');
-export function assertPathAllowed(file,{baseFiles,implementationFiles,ciFiles=new Set(CI_PATHS)}={}){
- assert.ok(baseFiles.has(file)||implementationFiles.has(file)||ciFiles.has(file)||documentation(file)||dependency(file),'Недопустимый новый файл: '+file);
+export function assertPathAllowed(file,{baseFiles,implementationFiles,ciFiles=new Set(CI_PATHS),deliveryFiles=new Set()}={}){
+ assert.ok(baseFiles.has(file)||implementationFiles.has(file)||ciFiles.has(file)||deliveryFiles.has(file)||documentation(file)||dependency(file),'Недопустимый новый файл: '+file);
 }
 export function assertExpectedBytes(file,actual,expected){assert.ok(Buffer.from(actual).equals(Buffer.from(expected)),'Изменён защищённый файл: '+file)}
 export function routeWorkflow(original,lanes){
@@ -51,16 +53,17 @@ export function routeWorkflow(original,lanes){
 }
 export async function verifyStartupIntroContract({root=ROOT,writeEvidence=false}={}){
  const c=JSON.parse(await readFile(path.join(root,CONTRACT)));validateMetadata(c);
+ const delivery=await verifyIntroDelivery(root),deliveryFiles=delivery?.allowed||new Set();
  git(root,'merge-base','--is-ancestor',BASE,'HEAD');
  const rows=ref=>git(root,'ls-tree','-r','-z',ref).toString().split('\0').filter(Boolean).map(row=>{const m=row.match(/^(\d+) blob ([a-f0-9]+)\t(.+)$/s);assert.ok(m,'Разрешены только Git blobs');return{mode:m[1],sha:m[2],file:m[3]}});
  const baseRows=rows(BASE),baseFiles=new Set(baseRows.map(r=>r.file));
  const changed=git(root,'diff','--name-only',BASE,IMPLEMENTATION).toString().trim().split('\n').filter(f=>!documentation(f));
  assert.equal(changed.length,19,'Область проверенной реализации изменилась');const implementationFiles=new Set(changed),ciFiles=new Set(CI_PATHS);
  const tracked=git(root,'ls-files','-z').toString().split('\0').filter(Boolean),extra=git(root,'ls-files','--others','--exclude-standard','-z').toString().split('\0').filter(Boolean);
- for(const file of new Set([...tracked,...extra]))assertPathAllowed(file,{baseFiles,implementationFiles,ciFiles});
+ for(const file of new Set([...tracked,...extra]))assertPathAllowed(file,{baseFiles,implementationFiles,ciFiles,deliveryFiles});
  const checks=[];
  for(const row of baseRows){
-  if(implementationFiles.has(row.file)||ciFiles.has(row.file))continue;
+  if(implementationFiles.has(row.file)||ciFiles.has(row.file)||deliveryFiles.has(row.file))continue;
   const b=await readFile(path.join(root,row.file));
   const blob=createHash('sha1').update(Buffer.from('blob '+b.length+'\0')).update(b).digest('hex');assert.equal(blob,row.sha,'Изменён принятый файл: '+row.file);
  }
@@ -69,7 +72,9 @@ export async function verifyStartupIntroContract({root=ROOT,writeEvidence=false}
   const expected=git(root,'show',IMPLEMENTATION+':'+file),actual=await readFile(path.join(root,file));assertExpectedBytes(file,actual,expected);checks.push({file,bytes:actual.length,sha256:hash(actual)});
  }
  for(const [file,lanes]of Object.entries(WORKFLOWS))assertExpectedBytes(file,await readFile(path.join(root,file)),Buffer.from(routeWorkflow(git(root,'show',BASE+':'+file).toString(),lanes)));
+ for(const [file,jobs]of Object.entries(DELIVERY_WORKFLOWS))assertExpectedBytes(file,await readFile(path.join(root,file)),Buffer.from(routeDeliveryWorkflow(git(root,'show',BASE+':'+file).toString(),jobs)));
  const result={status:'PASS',baseCommit:BASE,implementationCommit:IMPLEMENTATION,head:git(root,'rev-parse','HEAD').toString().trim(),protectedFiles:baseRows.filter(r=>!implementationFiles.has(r.file)&&!ciFiles.has(r.file)).length,implementationFiles:checks,ciPaths:CI_PATHS,publicationReceiptUnchanged:true,contentIdentityCloudPwaAndHistoricalAssetsUnchanged:true,productionPublication:false,officialRelease:false};
+ if(delivery)result.delivery={...delivery,allowed:undefined};
  if(writeEvidence){const dir=path.resolve(writeEvidence);await mkdir(dir,{recursive:true});await writeFile(path.join(dir,'CONTRACT.json'),JSON.stringify(result,null,2)+'\n')}
  return result;
 }

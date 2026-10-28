@@ -1,0 +1,389 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.files",
+  "sessions": 3,
+  "learningOrder": 16,
+  "prerequisiteIds": [
+    "cpp.multifile-build",
+    "cpp.streams-state"
+  ],
+  "sourceRefs": [
+    "CPP20-FILE",
+    "CPP20-STREAM-STATE"
+  ],
+  "title": "Files: formats, failures, and explicit saving",
+  "lead": "Validate an import, create a report, and separately confirm transfer of runtime output into the project.",
+  "why": "A written message does not establish persistence. You need stream checks, an explicit format, the resulting artifact, and a clear boundary between the sandbox and a personal project.",
+  "objectives": [
+    "Explain: A file as a resource",
+    "Trace: The format is an interface",
+    "Justify: The Nexus virtual filesystem",
+    "Implement and verify the lab against its exact contract.",
+    "Identify a common defect: Do not open the input with ofstream before validation. Do not assume ambient runtime persistence between runs."
+  ],
+  "prerequisites": [
+    "Modules 1–2: expressions, comparisons, types, references, and checked cin.",
+    "Follow the prerequisite links: cpp.multifile-build, cpp.streams-state. New constructs are introduced before the assignment."
+  ],
+  "concepts": [
+    {
+      "term": "Runtime FS",
+      "definition": "the isolated file set for one program execution."
+    },
+    {
+      "term": "Artifact",
+      "definition": "an execution result that can be inspected and explicitly saved."
+    },
+    {
+      "term": "ifstream",
+      "definition": "an input file stream."
+    },
+    {
+      "term": "ofstream",
+      "definition": "an output file stream."
+    },
+    {
+      "term": "Truncation",
+      "definition": "discarding previous contents under the selected open mode."
+    },
+    {
+      "term": "Roundtrip",
+      "definition": "export, explicit saving, and a fresh verified import."
+    }
+  ],
+  "sections": [
+    {
+      "title": "A file as a resource",
+      "paragraphs": [
+        "ifstream from <fstream> reads a file; ofstream writes one. Construction associates the stream with a path, and destruction closes the resource. Check opening through bool(stream). RAII cleanup is useful, but successful opening does not guarantee every later operation succeeds.",
+        "A regular ofstream may truncate an existing file. Do not open an input file for writing before validating its data. The lab writes a separate report.txt and preserves records.txt."
+      ]
+    },
+    {
+      "title": "The format is an interface",
+      "paragraphs": [
+        "A text format defines encoding, delimiters, field counts, and bounds. The lab records.txt contains one integer in -1000…1000 per line, at most 100 lines of 200 bytes. An empty file is valid; a blank line is malformed.",
+        "Parse each line using a local istringstream and reject trailing data. Do not save a struct by dumping its memory: padding, type sizes, and byte order may differ. A textual contract is easier to verify manually and with two compilers."
+      ]
+    },
+    {
+      "title": "Read and write failures",
+      "paragraphs": [
+        "A missing file produces missing; a malformed record produces invalid. Do not treat every stopped getline as normal completion: check bad and unexpected failure without eof. A partial import must not generate a successful final report.",
+        "After writing, call close and check the stream: flushing can fail late. The lab distinguishes write-error from invalid. This does not promise atomic replacement after a crash; that needs a separate storage strategy."
+      ]
+    },
+    {
+      "title": "The Nexus virtual filesystem",
+      "paragraphs": [
+        "A program sees relative files supplied with its request. Absolute paths, .., and system directories are unavailable. Every run receives a fresh runtime filesystem; a previous run’s file does not appear automatically in the next. stdin is not a substitute for testing file input.",
+        "Limits are 128 files, 512 KiB per file, 2 MiB for input and runtime files, and 2 MiB of writes per run. Exceeding them is a provider limitation distinct from an algorithm defect. Do not raise quotas to bypass an exercise."
+      ]
+    },
+    {
+      "title": "An artifact and a personal project",
+      "paragraphs": [
+        "The result panel lists new or changed runtime files. Downloading saves a separate copy. Saving text results transfers them into the VFS only through an explicit action and when no conflicting edits exist. A program cannot silently replace source code.",
+        "A binary result downloads as bytes rather than becoming an editor text file. A conflict preserves the project source. For another run, explicitly save a permitted text file, then rerun the reader and compare contents."
+      ]
+    },
+    {
+      "title": "Roundtrip evidence",
+      "paragraphs": [
+        "Separately test a missing file, a valid import, malformed data, export, and report.txt contents. Then confirm saving into the project and a fresh run. Reading within the same run does not establish that final step.",
+        "Use synthetic data only; do not put keys or personal work into evidence. Next, a linked list demonstrates node-resource management, while the final project combines records, commands, tests, and file formats."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "within-run",
+      "title": "Write and read within one run",
+      "purpose": "Close the writer before opening the reader; this does not establish cross-run persistence.",
+      "code": "#include <iostream>\n#include <fstream>\nint main() {\n    std::ofstream output{\"sample.txt\"};\n    output << \"73\\n\";\n    output.close();\n    if (!output) { std::cout << \"write-error\\n\"; return 0; }\n    std::ifstream input{\"sample.txt\"};\n    int value{};\n    if (!(input >> value)) { std::cout << \"read-error\\n\"; return 0; }\n    std::cout << value << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "73\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": [],
+      "outputFiles": {
+        "sample.txt": "73\n"
+      }
+    },
+    {
+      "id": "project-input",
+      "title": "A file supplied from the project VFS",
+      "purpose": "Add input.txt to the project before running; without it expect missing.",
+      "code": "#include <iostream>\n#include <fstream>\n#include <string>\nint main() {\n    std::ifstream input{\"input.txt\"};\n    if (!input) { std::cout << \"missing\\n\"; return 0; }\n    std::string line;\n    std::getline(input, line);\n    std::cout << line << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "NEXUS_LOG_V1\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": [],
+      "files": {
+        "input.txt": "NEXUS_LOG_V1\n"
+      }
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Predict before running",
+      "action": "Trace the first worked example step by step, then run all of its cases.",
+      "prediction": "Creating a runtime file and saving it into a personal project are separate actions.",
+      "verification": "Compare every state transition and stdout; record a mismatch as a hypothesis rather than revising the expectation afterward."
+    },
+    {
+      "title": "A counterexample to a wrong rule",
+      "action": "Using the second example and theory, construct a minimal safe case for this defect: Do not open the input with ofstream before validation. Do not assume ambient runtime persistence between runs.",
+      "prediction": "The correct and incorrect models should make distinguishable predictions without executing undefined behaviour.",
+      "verification": "Preserve the prediction, actual output, and an explanation of the violated rule."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A boundary result differs",
+      "cause": "Do not open the input with ofstream before validation. Do not assume ambient runtime persistence between runs.",
+      "fix": "Creating a runtime file and saving it into a personal project are separate actions."
+    },
+    {
+      "symptom": "One case works and the next fails",
+      "cause": "The invariant or empty/malformed-input policy is unspecified.",
+      "fix": "Return to the lab contract and check every published case independently."
+    },
+    {
+      "symptom": "The environment rejected execution",
+      "cause": "Build failure, unsupported syntax, and quotas are different causes.",
+      "fix": "Keep the phase and diagnostic; exceptions are unsupported and environment limits are not learner knowledge failures."
+    }
+  ],
+  "diagnosticExamples": [],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Manually trace the first example and explain every expected output line.",
+      "criteria": "Creating a runtime file and saving it into a personal project are separate actions.",
+      "hint": "Identify input, state, and observable output first."
+    },
+    {
+      "level": "basic",
+      "task": "Choose the lab’s empty or minimum valid case and its nearest invalid counterpart.",
+      "criteria": "Derive both expectations before execution and connect each to a contract clause.",
+      "hint": "Do not open the input with ofstream before validation. Do not assume ambient runtime persistence between runs."
+    },
+    {
+      "level": "applied",
+      "task": "Read records.txt under the stated format. On success create report.txt containing count sum and print exported. Missing input prints missing, malformed data invalid, and write failure write-error. Verify the artifact separately.",
+      "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
+      "hint": "Creating a runtime file and saving it into a personal project are separate actions."
+    },
+    {
+      "level": "applied",
+      "task": "Compare the two worked examples: which assumptions differ and why can they not be silently transferred into the lab?",
+      "criteria": "State inputs, state, and at least one applicability boundary for each example.",
+      "hint": "The result panel lists new or changed runtime files. Downloading saves a separate copy. Saving text results transfers them into the VFS only through an explicit action and when no conflicting edits exist. A program cannot silently replace source code."
+    },
+    {
+      "level": "transfer",
+      "task": "Add a NEXUS_LOG_V1 format header and reject unknown versions while preserving the input file.",
+      "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour.",
+      "hint": "Separately test a missing file, a valid import, malformed data, export, and report.txt contents. Then confirm saving into the project and a fresh run. Reading within the same run does not establish that final step."
+    },
+    {
+      "level": "transfer",
+      "task": "Give a mini-defence: explain a bound, complexity, and a counterexample to a wrong implementation without running the reference.",
+      "criteria": "Connect the explanation to specific lines of your source and actual tests.",
+      "hint": "Creating a runtime file and saving it into a personal project are separate actions."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Files: formats, failures, and explicit saving",
+    "challenge": "Read records.txt under the stated format. On success create report.txt containing count sum and print exported. Missing input prints missing, malformed data invalid, and write failure write-error. Verify the artifact separately.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <fstream>\n#include <sstream>\n#include <string>\nint main() {\n    std::ifstream input{\"records.txt\"};\n    if (!input) { std::cout << \"missing\\n\"; return 0; }\n    std::string line;\n    int count{};\n    long long sum{};\n    while (std::getline(input, line)) {\n        if (++count > 100 || line.size() > 200) { std::cout << \"invalid\\n\"; return 0; }\n        std::istringstream parser{line};\n        int value{};\n        if (!(parser >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        parser >> std::ws;\n        if (!parser.eof()) { std::cout << \"invalid\\n\"; return 0; }\n        sum += value;\n    }\n    if (input.bad() || (!input.eof() && input.fail())) { std::cout << \"invalid\\n\"; return 0; }\n    std::ofstream output{\"report.txt\"};\n    output << count << ' ' << sum << '\\n';\n    output.close();\n    if (!output) { std::cout << \"write-error\\n\"; return 0; }\n    std::cout << \"exported\\n\";\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "exported\n",
+        "files": {
+          "records.txt": "2\n-1\n4\n"
+        },
+        "outputFiles": {
+          "report.txt": "3 5\n"
+        }
+      },
+      {
+        "stdin": "",
+        "stdout": "exported\n",
+        "files": {
+          "records.txt": ""
+        },
+        "outputFiles": {
+          "report.txt": "0 0\n"
+        }
+      },
+      {
+        "stdin": "",
+        "stdout": "missing\n",
+        "files": {}
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n",
+        "files": {
+          "records.txt": "2\nbad\n"
+        }
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n",
+        "files": {
+          "records.txt": "1 2\n"
+        }
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n",
+        "files": {
+          "records.txt": "\n"
+        }
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n",
+        "files": {
+          "records.txt": "999999999999999999999999"
+        }
+      }
+    ],
+    "referenceFiles": {
+      "records.txt": "2\n-1\n4\n"
+    },
+    "starterFiles": {
+      "records.txt": "2\n-1\n4\n"
+    },
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: Creating a runtime file and saving it into a personal project are separate actions.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "Creating a runtime file and saving it into a personal project are separate actions.",
+      "Do not open the input with ofstream before validation. Do not assume ambient runtime persistence between runs.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Does stdout exported prove saving into a personal project?",
+      "answers": [
+        "Yes, automatically",
+        "No; inspect the artifact and explicitly save it",
+        "Only with empty stdin"
+      ],
+      "correctIndex": 1,
+      "explanation": "Check the runtime-to-VFS boundary separately."
+    },
+    {
+      "question": "Can ofstream truncate an existing file?",
+      "answers": [
+        "Yes, under ordinary write opening",
+        "Only with cin",
+        "No"
+      ],
+      "correctIndex": 0,
+      "explanation": "Write output to a separate path after validating input."
+    },
+    {
+      "question": "What is needed after writing to check a late error?",
+      "answers": [
+        "Delete the input",
+        "Merely print written",
+        "Close and check stream state"
+      ],
+      "correctIndex": 2,
+      "explanation": "Flushing can fail too."
+    },
+    {
+      "question": "Will a runtime file automatically appear in the next run?",
+      "answers": [
+        "Yes",
+        "No; explicit acceptance into the project is needed",
+        "Only with a short name"
+      ],
+      "correctIndex": 1,
+      "explanation": "Every run receives a fresh request file set."
+    },
+    {
+      "question": "What is needed to accept this lab?",
+      "answers": [
+        "Source, actual results, original tests, and a contract explanation",
+        "Only a completed flag",
+        "Only a copied reference"
+      ],
+      "correctIndex": 0,
+      "explanation": "A progress flag is not evidence of independent mastery."
+    }
+  ],
+  "reflection": [
+    "Creating a runtime file and saving it into a personal project are separate actions.",
+    "Add a NEXUS_LOG_V1 format header and reject unknown versions while preserving the input file.",
+    "Which case refutes the wrong rule and what do your checks still not establish?"
+  ],
+  "bridge": "Next: Linked lists: node invariants and ownership. Preserve the lab and its verification table.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Stepwise map: Files: formats, failures, and explicit saving",
+    "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+    "steps": [
+      {
+        "title": "A file as a resource",
+        "description": "ifstream from <fstream> reads a file; ofstream writes one. Construction associates the stream with a path, and destruction closes the resource. Check opening through bool(stream). RAII cleanup is useful, but successful opening does not guarantee every later operation succeeds."
+      },
+      {
+        "title": "The format is an interface",
+        "description": "A text format defines encoding, delimiters, field counts, and bounds. The lab records.txt contains one integer in -1000…1000 per line, at most 100 lines of 200 bytes. An empty file is valid; a blank line is malformed."
+      },
+      {
+        "title": "Read and write failures",
+        "description": "A missing file produces missing; a malformed record produces invalid. Do not treat every stopped getline as normal completion: check bad and unexpected failure without eof. A partial import must not generate a successful final report."
+      },
+      {
+        "title": "The Nexus virtual filesystem",
+        "description": "A program sees relative files supplied with its request. Absolute paths, .., and system directories are unavailable. Every run receives a fresh runtime filesystem; a previous run’s file does not appear automatically in the next. stdin is not a substitute for testing file input."
+      },
+      {
+        "title": "An artifact and a personal project",
+        "description": "The result panel lists new or changed runtime files. Downloading saves a separate copy. Saving text results transfers them into the VFS only through an explicit action and when no conflicting edits exist. A program cannot silently replace source code."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Why check a file stream?",
+    "answers": [
+      "Opening can fail",
+      "To make an array start at 1",
+      "For sizeof"
+    ],
+    "correctIndex": 0
+  }
+}

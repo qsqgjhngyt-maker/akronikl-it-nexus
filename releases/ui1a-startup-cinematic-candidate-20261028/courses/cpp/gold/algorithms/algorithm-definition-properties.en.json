@@ -1,0 +1,351 @@
+{
+  "schemaVersion": 1,
+  "lessonId": "cpp.algorithm-definition-properties",
+  "moduleId": "cpp.section.algorithms",
+  "locale": "en",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "title": "Algorithms: precision, termination and correctness",
+  "lead": "An algorithm transforms input into a result through steps that a specified executor can follow without guessing.",
+  "why": "The properties of algorithms reveal problems before a program is run: ambiguous instructions, unreachable termination and solutions that work for just one sample.",
+  "objectives": [
+    "State preconditions, postconditions and algorithm steps.",
+    "Distinguish definiteness, discrete steps, generality and termination.",
+    "Trace the program state after each step.",
+    "Describe how invariants and decreasing measures support correctness reasoning."
+  ],
+  "prerequisites": [
+    "You can identify a problem's inputs and outputs.",
+    "Division with remainder helps but C++ syntax is not a prerequisite."
+  ],
+  "concepts": [
+    {
+      "term": "Definiteness",
+      "definition": "The intended action of each step is unambiguous."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A property that remains true across specified state transitions."
+    },
+    {
+      "term": "Postcondition",
+      "definition": "A property that must hold when the algorithm finishes."
+    },
+    {
+      "term": "Termination measure",
+      "definition": "A well-founded quantity that decreases as execution makes progress."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Turn an informal task into precise steps",
+      "paragraphs": [
+        "An instruction such as 'repeat until the number is small' leaves 'small' undefined. An algorithm needs an explicit condition, state update and result.",
+        "We can state a Euclidean step precisely: while b is not zero, replace (a,b) by (b,a modulo b). With a suitable input domain, a programmer can implement and test the process."
+      ]
+    },
+    {
+      "title": "Definiteness and discreteness",
+      "paragraphs": [
+        "Discreteness means reasoning about a computation as a sequence of individual steps. Definiteness means the executor can identify the intended operation at each step.",
+        "Different programming languages may implement the same algorithm. Precise transitions let us trace intermediate states and compare implementations."
+      ]
+    },
+    {
+      "title": "Termination, the input domain and generality",
+      "paragraphs": [
+        "A terminating algorithm must finish for every input in its stated domain. A condition such as n >= 0 matters: a loop designed for positive counts may misbehave outside that domain.",
+        "Generality means solving a class of related instances, not a single hard-coded example. A sound addition algorithm should work for multiple valid pairs."
+      ]
+    },
+    {
+      "title": "Correctness requires more than stopping",
+      "paragraphs": [
+        "A program may halt quickly and still produce the wrong result. We must establish both a terminating process and a postcondition satisfied by its output.",
+        "In Euclid's algorithm, replacing (a,b) with (b,a mod b) preserves the greatest common divisor; when b becomes zero, a is the answer. This illustrates invariant-based reasoning."
+      ]
+    },
+    {
+      "title": "Identify an exit condition before coding the loop",
+      "paragraphs": [
+        "A nonnegative quantity that strictly decreases often explains termination. But you must check that each transition actually reduces the quantity under the preconditions.",
+        "Changing a loop requires revisiting its invariant and exit condition. Forgetting to update a counter can turn a correct finite loop into an infinite one."
+      ]
+    },
+    {
+      "title": "Contract and postcondition",
+      "paragraphs": [
+        "For 125 seconds, the result is 2 minutes and 5 seconds: 125 = 60·2 + 5. Zero produces 0 and 0. The general postcondition is seconds = 60·minutes + remainder with 0 ≤ remainder < 60. Integer / gives the quotient and % the remainder. Once nonnegative input has been checked, these operations match ordinary division."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "Integer inputs must fit the Code Studio int type. Failed extraction (text instead of a number or end of input) produces invalid; no further calculation is performed.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "title": "Age validation",
+      "purpose": "Express a precondition as an executable condition.",
+      "code": "#include <iostream>\nint main() {\n    int age;\n    if (!(std::cin >> age)) { std::cout << \"invalid\\n\"; return 0; }\n    if (age >= 0 && age <= 120) std::cout << \"valid\\n\";\n    else std::cout << \"invalid\\n\";\n}",
+      "stdin": "25\n",
+      "expectedStdout": "valid\n",
+      "steps": [
+        "The valid interval is 0..120 inclusive.",
+        "Both comparisons are required.",
+        "The result is observable on stdout.",
+        "121 must be rejected."
+      ],
+      "cases": [
+        {
+          "stdin": "0\n",
+          "stdout": "valid\n"
+        },
+        {
+          "stdin": "120\n",
+          "stdout": "valid\n"
+        },
+        {
+          "stdin": "-1\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "121\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "oops\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ]
+    },
+    {
+      "title": "Convert seconds into minutes and a remainder",
+      "purpose": "A state relation gives us a simple correctness check.",
+      "code": "#include <iostream>\nint main() {\n    int seconds;\n    if (!(std::cin >> seconds)) { std::cout << \"invalid\\n\"; return 0; }\n    if (seconds < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << seconds / 60 << ' ' << seconds % 60 << '\\n';\n}",
+      "stdin": "125\n",
+      "expectedStdout": "2 5\n",
+      "steps": [
+        "125 seconds equals two minutes and five seconds.",
+        "The remainder is less than 60 for a nonnegative input.",
+        "Never apply remainder reasoning to division by zero.",
+        "The program halts after reporting the pair."
+      ],
+      "cases": [
+        {
+          "stdin": "0\n",
+          "stdout": "0 0\n"
+        },
+        {
+          "stdin": "59\n",
+          "stdout": "0 59\n"
+        },
+        {
+          "stdin": "60\n",
+          "stdout": "1 0\n"
+        },
+        {
+          "stdin": "2147483647\n",
+          "stdout": "35791394 7\n"
+        },
+        {
+          "stdin": "-1\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "oops\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Boundary testing",
+      "action": "Run the age validator on 0, 120, -1 and 121.",
+      "prediction": "Only 0 and 120 are valid.",
+      "verification": "Record four expected outcomes before running."
+    },
+    {
+      "title": "A nonterminating loop",
+      "action": "Consider a counter k that should increase but is never updated.",
+      "prediction": "k<n may remain true indefinitely.",
+      "verification": "Identify the missing update and explain termination."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "The age 250 is accepted",
+      "cause": "The code checks only the lower bound.",
+      "fix": "Enforce the stated upper bound too."
+    },
+    {
+      "symptom": "A loop repeats with an unchanged result",
+      "cause": "The state does not advance or the exit condition is unreachable.",
+      "fix": "Trace two iterations and repair the update."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Describe an invariant for accumulating a sum.",
+      "criteria": "After k steps, sum equals the total of the processed terms.",
+      "hint": "Trace the first three values."
+    },
+    {
+      "level": "applied",
+      "task": "Write four boundary tests for age validation.",
+      "criteria": "Include both endpoints and two invalid inputs.",
+      "hint": "Pay attention to comparison operators."
+    },
+    {
+      "level": "transfer",
+      "task": "Justify the result of converting seconds into minutes and a remainder.",
+      "criteria": "For accepted input, seconds = 60*minutes + remainder and 0 <= remainder < 60.",
+      "hint": "Check the relation with 125 seconds."
+    }
+  ],
+  "laboratory": {
+    "title": "Lab: algorithm properties in time conversion",
+    "challenge": "Read a nonnegative number of seconds and print whole minutes and the remainder; print invalid on negative input. Integer inputs must fit the Code Studio int type. Failed extraction (text instead of a number or end of input) produces invalid; no further calculation is performed.",
+    "starterCode": "// Validate seconds and compute minutes/remainder.\n",
+    "referenceCode": "#include <iostream>\nint main() {\n    int seconds;\n    if (!(std::cin >> seconds)) { std::cout << \"invalid\\n\"; return 0; }\n    if (seconds < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << seconds / 60 << ' ' << seconds % 60 << '\\n';\n}",
+    "cases": [
+      {
+        "stdin": "125\n",
+        "stdout": "2 5\n"
+      },
+      {
+        "stdin": "60\n",
+        "stdout": "1 0\n"
+      },
+      {
+        "stdin": "-1\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0\n",
+        "stdout": "0 0\n"
+      },
+      {
+        "stdin": "59\n",
+        "stdout": "0 59\n"
+      },
+      {
+        "stdin": "61\n",
+        "stdout": "1 1\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Define the precondition.",
+      "Verify seconds = 60*minutes + remainder by hand.",
+      "Run the three supplied cases.",
+      "Explain the remainder bound."
+    ],
+    "rubric": [
+      "The precondition is enforced.",
+      "The postcondition is satisfied.",
+      "The reasoning matches the observed test cases."
+    ],
+    "artifact": "source-code",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What property makes each step unambiguous?",
+      "answers": [
+        "Definiteness",
+        "Generality",
+        "Efficiency"
+      ],
+      "correctIndex": 0,
+      "explanation": "The executor can determine the next operation without guessing."
+    },
+    {
+      "question": "How does correctness differ from termination?",
+      "answers": [
+        "They are identical",
+        "An algorithm may halt and return a wrong result",
+        "Correctness does not require output"
+      ],
+      "correctIndex": 1,
+      "explanation": "Finishing and producing the required result are separate obligations."
+    },
+    {
+      "question": "What is a loop invariant?",
+      "answers": [
+        "Another name for any variable",
+        "A number that must always be positive",
+        "A property preserved across transitions"
+      ],
+      "correctIndex": 2,
+      "explanation": "An invariant supports reasoning about intermediate states."
+    }
+  ],
+  "reflection": [
+    "Can you name a terminating but incorrect algorithm?",
+    "Why must preconditions be included in a task statement?"
+  ],
+  "bridge": "Next, compare natural language, tables, pseudocode and flowcharts as algorithm representations.",
+  "visualization": {
+    "kind": "properties",
+    "steps": [
+      {
+        "title": "Domain",
+        "description": "Identify valid inputs."
+      },
+      {
+        "title": "Definiteness",
+        "description": "Each operation is unambiguous."
+      },
+      {
+        "title": "Transition",
+        "description": "The state changes by explicit steps."
+      },
+      {
+        "title": "Invariant",
+        "description": "A useful property remains true."
+      },
+      {
+        "title": "Termination",
+        "description": "Progress leads to an exit."
+      },
+      {
+        "title": "Verification",
+        "description": "The result satisfies the postcondition."
+      }
+    ]
+  },
+  "sourceRefs": [
+    "CS2023-AL",
+    "ISO-CPP"
+  ],
+  "legacyQuiz": {
+    "question": "Which property describes dividing a process into individual steps?",
+    "answers": [
+      "Generality",
+      "Discreteness",
+      "Polymorphism"
+    ],
+    "correctIndex": 1
+  }
+}

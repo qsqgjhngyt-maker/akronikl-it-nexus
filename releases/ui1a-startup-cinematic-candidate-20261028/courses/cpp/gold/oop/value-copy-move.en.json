@@ -1,0 +1,416 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.oop",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.value-copy-move",
+  "locale": "en",
+  "sessions": 4,
+  "learningOrder": 5,
+  "prerequisiteIds": [
+    "cpp.raii-smart-pointers"
+  ],
+  "sourceRefs": [
+    "CPP20-CLASS",
+    "CPP20-COPY"
+  ],
+  "title": "Value semantics, copying and moving",
+  "lead": "Check independent copies and ownership transfer without assuming a moved-from string is empty.",
+  "why": "Value semantics means a copy represents an independent value. Note stores a string that manages its content. After Note b=a, changing b.text must not change a.text. Copying a pointer is different: two objects can then observe one memory region. A type's contract should explain which behaviour it provides.",
+  "objectives": [
+    "Distinguish b=a at construction and later.",
+    "Predict Note after reassignment.",
+    "Justify independence of Batch b.",
+    "Check vector self-assignment.",
+    "Analyze std::move on a const string."
+  ],
+  "prerequisites": [
+    "Modules 1–4: input, functions, sequences, ownership, testing and multifile builds.",
+    "Direct prerequisites: cpp.raii-smart-pointers"
+  ],
+  "concepts": [
+    {
+      "term": "Value semantics",
+      "definition": "An independent copied value under the type's observable contract."
+    },
+    {
+      "term": "Copy constructor",
+      "definition": "Construction of a new object from an existing value."
+    },
+    {
+      "term": "Copy assignment",
+      "definition": "Replacing an existing object's value with a copy."
+    },
+    {
+      "term": "Move operation",
+      "definition": "An operation that can transfer resources from an eligible source."
+    },
+    {
+      "term": "Std move",
+      "definition": "A cast changing an expression category, not itself a resource transfer."
+    },
+    {
+      "term": "Moved-from state",
+      "definition": "A source's post-move state governed by its specific type contract."
+    },
+    {
+      "term": "Noexcept",
+      "definition": "A promise that no exception escapes a marked function."
+    },
+    {
+      "term": "Rule of five",
+      "definition": "Deliberate coordination of five special operations for a resource-managing type."
+    }
+  ],
+  "sections": [
+    {
+      "title": "A value and its independent copy",
+      "paragraphs": [
+        "Value semantics means a copy represents an independent value. Note stores a string that manages its content. After Note b=a, changing b.text must not change a.text. Copying a pointer is different: two objects can then observe one memory region. A type's contract should explain which behaviour it provides.",
+        "Batch uses vector<int> and follows the rule of zero: compiler-generated special operations compose the member operations. A vector copy has its own elements, so changing b.values leaves the original batch intact. Check independence through observable behaviour. Equality of addresses or internal buffer layouts is not a required part of a value contract."
+      ]
+    },
+    {
+      "title": "Construction and assignment",
+      "paragraphs": [
+        "T b=a creates a new object using a copy constructor, commonly taking const T&. Writing b=a after b already exists calls copy assignment. They have different starting conditions: assignment must replace an existing value correctly. Self-assignment must satisfy the contract the type claims to provide.",
+        "Ordinary domain types containing vector and string should usually retain generated operations. A type manually managing a raw resource may copy its address and cause double release. That is a reason to introduce an RAII member, rather than immediately writing four more complicated functions. A manual implementation needs a concrete requirement."
+      ]
+    },
+    {
+      "title": "What std::move does",
+      "paragraphs": [
+        "std::move casts an expression to a category that permits selection of a move operation. It does not transfer or clear anything by itself. Note c=std::move(a) subsequently invokes an appropriate constructor, which may move the string. Without a suitable move operation, copying may be selected or compilation may fail.",
+        "T&& in a move constructor parameter declares an rvalue reference. A named variable is still an lvalue expression even if its type is an rvalue reference, so forwarding a member to a move operation often requires std::move. This is not a reason to add move everywhere: a const source may be copied, and moving a returned local can inhibit an optimization."
+      ]
+    },
+    {
+      "title": "The moved-from state",
+      "paragraphs": [
+        "After a permitted move, standard-library types generally remain valid but with an unspecified specific state unless a tighter contract is provided. Do not assert that a moved-from string is necessarily empty. Destruction and assignment remain useful permitted operations. The example assigns reused to a.text before reading it, making the output portable.",
+        "unique_ptr has a more specific promise: transferring ownership leaves the source pointer empty. The separate example checks bool(a), while b owns the integer seven. Do not generalize this guarantee to arbitrary containers. State which type contract justifies every test involving a moved-from object."
+      ]
+    },
+    {
+      "title": "Noexcept and container choices",
+      "paragraphs": [
+        "noexcept promises that an exception will not leave a function. It does not instruct the program to ignore errors: violating the promise invokes terminate. Containers can account for nonthrowing moves when preserving guarantees during reallocation. A custom special member's exception specification must match the operations performed on its members.",
+        "Do not mark arbitrary code noexcept as a speed trick. Copying a vector can allocate memory; inventing a strong guarantee does not make that allocation nonthrowing. The rule of zero lets suitable library members contribute their properties to the composed type. Actual exception guarantees are studied two lessons later, so throwing move experiments are unnecessary here."
+      ]
+    },
+    {
+      "title": "The rule of five signals complexity",
+      "paragraphs": [
+        "When manual resource management requires a destructor, consider the copy constructor, copy assignment, move constructor and move assignment deliberately. Some can be =delete and others =default. This is the rule of five, not a requirement to permit all five operations for every type.",
+        "A sole-resource owner can be neither movable nor copyable when the surrounding system requires that restriction. Such constraints are usually unnecessary for this domain model. Choosing vector or unique_ptr delegates ownership to an established component. During review first ask whether the rule of zero is possible, and only then discuss manual special-member code."
+      ]
+    },
+    {
+      "title": "Laboratory: batches of values",
+      "paragraphs": [
+        "The laboratory reads up to twenty integers between minus one hundred and one hundred into Batch a. Copy b increments each of its own elements. Then c receives a's contents through moving, and a is explicitly assigned a new vector containing forty-two. For 1 2 3 the output is 6 9 42.",
+        "The test never examines a between the move and reassignment and does not depend on optional copy elision. With an empty batch the copies remain independent, both sums are zero and reusing a is valid. Add self-assignment b=b and explain why the chosen members handle it without manual raw-memory management."
+      ]
+    },
+    {
+      "title": "Measuring without false conclusions",
+      "paragraphs": [
+        "An instrumented type can count calls to explicitly selected copy and move operations. Counts in return expressions, however, depend on mandatory and permitted copy-elision rules. Do not present one observed count as a universal property of a C++ program. Fix the expression and compiler, and distinguish observable semantics from timing.",
+        "The outcome is the ability to explain copy independence, ownership transfer and safe source reuse. The project will use a Board copy as an independent state snapshot in a test. Next we separate value semantics from polymorphic interfaces, where copying a base portion can discard a derived object's behaviour."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "model",
+      "title": "Worked model",
+      "purpose": "Check independent copies and ownership transfer without assuming a moved-from string is empty.",
+      "code": "#include <iostream>\n#include <string>\n#include <utility>\nstruct Note {std::string text;};\nint main(){Note a{\"draft\"};Note b=a;b.text=\"review\";Note c=std::move(a);a.text=\"reused\";\n std::cout<<a.text<<' '<<b.text<<' '<<c.text<<'\\n';}\n",
+      "stdin": "",
+      "expectedStdout": "reused review draft\n",
+      "steps": [
+        "Copy b changes independently of a.",
+        "c receives the original value by moving.",
+        "Assign reused to a before reading: reused review draft."
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "Contract boundary check",
+      "purpose": "Check independent copies and ownership transfer without assuming a moved-from string is empty.",
+      "code": "#include <iostream>\n#include <memory>\n#include <utility>\nint main(){auto a=std::make_unique<int>(7);auto b=std::move(a);std::cout<<bool(a)<<' '<<*b<<'\\n';a=std::make_unique<int>(9);std::cout<<*a<<'\\n';}\n",
+      "stdin": "",
+      "expectedStdout": "0 7\n9\n",
+      "steps": [
+        "Moving unique_ptr leaves a empty.",
+        "b owns seven under the type-specific guarantee.",
+        "Assigning a new owner to a safely produces nine."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Justify independence of Batch b.",
+      "action": "Justify independence of Batch b.",
+      "prediction": "First predict the result and state in writing.",
+      "verification": "Incrementing the copy preserves the original sum."
+    },
+    {
+      "title": "Check vector self-assignment.",
+      "action": "Check vector self-assignment.",
+      "prediction": "First predict the result and state in writing.",
+      "verification": "Values remain and no manual ownership is introduced."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Yes; it always clears the source.",
+      "cause": "An interface promise was confused with an implementation assumption.",
+      "fix": "No; it changes expression category."
+    },
+    {
+      "symptom": "Yes; the standard requires an empty string.",
+      "cause": "An interface promise was confused with an implementation assumption.",
+      "fix": "No; its specific content must not be assumed."
+    },
+    {
+      "symptom": "Both pointers keep owning.",
+      "cause": "An interface promise was confused with an implementation assumption.",
+      "fix": "The source becomes empty."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Distinguish b=a at construction and later.",
+      "criteria": "Identify copy construction and copy assignment.",
+      "hint": "Value semantics means a copy represents an independent value. Note stores a string that manages its content. After Note b=a, changing b.text must not change a.text. Copying a pointer is different: two objects can then observe one memory region. A type's contract should explain which behaviour it provides."
+    },
+    {
+      "level": "basic",
+      "task": "Predict Note after reassignment.",
+      "criteria": "Obtain reused review draft without assuming unspecified content.",
+      "hint": "T b=a creates a new object using a copy constructor, commonly taking const T&. Writing b=a after b already exists calls copy assignment. They have different starting conditions: assignment must replace an existing value correctly. Self-assignment must satisfy the contract the type claims to provide."
+    },
+    {
+      "level": "applied",
+      "task": "Justify independence of Batch b.",
+      "criteria": "Incrementing the copy preserves the original sum.",
+      "hint": "std::move casts an expression to a category that permits selection of a move operation. It does not transfer or clear anything by itself. Note c=std::move(a) subsequently invokes an appropriate constructor, which may move the string. Without a suitable move operation, copying may be selected or compilation may fail."
+    },
+    {
+      "level": "applied",
+      "task": "Check vector self-assignment.",
+      "criteria": "Values remain and no manual ownership is introduced.",
+      "hint": "After a permitted move, standard-library types generally remain valid but with an unspecified specific state unless a tighter contract is provided. Do not assert that a moved-from string is necessarily empty. Destruction and assignment remain useful permitted operations. The example assigns reused to a.text before reading it, making the output portable."
+    },
+    {
+      "level": "transfer",
+      "task": "Analyze std::move on a const string.",
+      "criteria": "Do not promise a move instead of a copy.",
+      "hint": "noexcept promises that an exception will not leave a function. It does not instruct the program to ignore errors: violating the promise invokes terminate. Containers can account for nonthrowing moves when preserving guarantees during reallocation. A custom special member's exception specification must match the operations performed on its members."
+    },
+    {
+      "level": "transfer",
+      "task": "Choose rule of zero or deleted copy for an owner.",
+      "criteria": "The resource contract justifies the choice and a negative test.",
+      "hint": "When manual resource management requires a destructor, consider the copy constructor, copy assignment, move constructor and move assignment deliberately. Some can be =delete and others =default. This is the rule of five, not a requirement to permit all five operations for every type."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Value semantics, copying and moving",
+    "catalogGoal": "Check independent copies and ownership transfer without assuming a moved-from string is empty.",
+    "challenge": "Read n=0…20 and n integers in −100…100. Batch a owns a vector. Copy b=a, increment b elements, move a into c, then assign a.values={42}. Print sums of c and b followed by a.values[0]. Invalid input or trailing tokens: invalid.",
+    "starterCode": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\nstruct Batch { std::vector<int> values; };\nint main(){std::cout<<\"pending\\n\";}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <vector>\n#include <utility>\nstruct Batch {std::vector<int> values;};\nint main(){int n;if(!(std::cin>>n)||n<0||n>20){std::cout<<\"invalid\\n\";return 0;}Batch a;\n for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -100||x>100){std::cout<<\"invalid\\n\";return 0;}a.values.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Batch b=a;for(int& x:b.values)++x;Batch c=std::move(a);a.values.assign(1,42);\n int original=0,changed=0;for(int x:c.values)original+=x;for(int x:b.values)changed+=x;\n std::cout<<original<<' '<<changed<<' '<<a.values[0]<<'\\n';}\n",
+    "cases": [
+      {
+        "stdin": "0",
+        "stdout": "0 0 42\n"
+      },
+      {
+        "stdin": "3 1 2 3",
+        "stdout": "6 9 42\n"
+      },
+      {
+        "stdin": "2 -100 100",
+        "stdout": "0 2 42\n"
+      },
+      {
+        "stdin": "1 -7",
+        "stdout": "-7 -6 42\n"
+      },
+      {
+        "stdin": "20 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 100 ",
+        "stdout": "2000 2020 42\n"
+      },
+      {
+        "stdin": "21",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 101",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "2 3",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 x",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Restate the contract and distinguish malformed input from domain rejection.",
+      "Distinguish b=a at construction and later.",
+      "Predict Note after reassignment.",
+      "Open Task and Code Studio: the task stays alongside the editor on desktop or in a phone tab. Save your own code before replacing an example.",
+      "Complete the starter; pending marks unfinished work rather than a correct result.",
+      "Run every reference case and record actual stdout and exit status.",
+      "Analyze std::move on a const string.",
+      "Save source, a verification table and an invariant explanation; add one independent case."
+    ],
+    "rubric": [
+      "Identify copy construction and copy assignment.",
+      "Obtain reused review draft without assuming unspecified content.",
+      "Incrementing the copy preserves the original sum.",
+      "Values remain and no manual ownership is introduced.",
+      "Include source, actual results, an independent case and limits of the conclusion."
+    ],
+    "artifact": "A personal project containing source and a verification log.",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Does std::move transfer a resource itself?",
+      "answers": [
+        "No; it changes expression category.",
+        "Yes; it always clears the source.",
+        "Yes; it always copies memory."
+      ],
+      "correctIndex": 0,
+      "explanation": "std::move only forms an expression that can select a move operation. The selected constructor or assignment performs the transfer; unsuitable types can instead copy or fail to compile."
+    },
+    {
+      "question": "Must a moved-from string be empty?",
+      "answers": [
+        "Yes; the standard requires an empty string.",
+        "No; its specific content must not be assumed.",
+        "Yes; if iostream is included."
+      ],
+      "correctIndex": 1,
+      "explanation": "No specific contents are promised for a moved-from string. Assigning a new value or destroying it is valid; assuming emptiness imports another type's guarantee without justification."
+    },
+    {
+      "question": "What does moving unique_ptr guarantee for its source?",
+      "answers": [
+        "Both pointers keep owning.",
+        "The object is always destroyed immediately.",
+        "The source becomes empty."
+      ],
+      "correctIndex": 2,
+      "explanation": "unique_ptr move construction specifically transfers its pointer and leaves the source empty. The object remains alive under its new owner, so moving does not imply immediate destruction."
+    },
+    {
+      "question": "Why do vector and string help the rule of zero?",
+      "answers": [
+        "They coordinate their own resources and special operations.",
+        "They forbid all changes.",
+        "They always use shared_ptr."
+      ],
+      "correctIndex": 0,
+      "explanation": "The class's special operations compose those of its members. Established components manage ownership, avoiding manual coordination of copied addresses and raw-memory release."
+    },
+    {
+      "question": "Does noexcept mean errors are ignored?",
+      "answers": [
+        "Yes; the exception disappears.",
+        "No; an escaping exception violates the promise and terminates execution.",
+        "Yes; an outer catch always recovers."
+      ],
+      "correctIndex": 1,
+      "explanation": "noexcept promises that no exception escapes the function. An escaping exception invokes terminate; an ordinary outer catch cannot turn that contract violation into a recoverable rejection."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "Can unique_ptr be copied?",
+      "answers": [
+        "No; ownership can be transferred by moving.",
+        "Yes; shared ownership is automatic.",
+        "Yes; but only for int."
+      ],
+      "correctIndex": 0,
+      "explanation": "Copying would create a second owner of one address, violating exclusive ownership, so copy operations are deleted. Ownership transfer uses a move operation rather than an automatic conversion to shared_ptr."
+    },
+    {
+      "question": "What does get() return?",
+      "answers": [
+        "A new independent owner.",
+        "An observing pointer without ownership transfer.",
+        "Mandatory object deletion."
+      ],
+      "correctIndex": 1,
+      "explanation": "get exposes the address of the already managed object without creating an owner. The observer is valid only while the object lives; deleting it or creating a second owner violates cleanup responsibility."
+    },
+    {
+      "question": "Does every class need a user-defined destructor?",
+      "answers": [
+        "Yes; even without resources.",
+        "No; RAII members often allow the rule of zero.",
+        "Only when public is present."
+      ],
+      "correctIndex": 1,
+      "explanation": "Members such as vector and string already perform cleanup and compose the containing type's special operations. An unnecessary destructor adds manual responsibility; a unique_ptr member still does not make the type copyable."
+    }
+  ],
+  "reflection": [
+    "Check vector self-assignment.",
+    "Analyze std::move on a const string.",
+    "Choose rule of zero or deleted copy for an owner."
+  ],
+  "bridge": "Next: Composition, inheritance and polymorphism",
+  "visualization": {
+    "kind": "journey",
+    "title": "Value semantics, copying and moving",
+    "description": "A stepwise textual model; actual execution happens in Code Studio.",
+    "steps": [
+      {
+        "title": "A value and its independent copy",
+        "description": "Value semantics means a copy represents an independent value. Note stores a string that manages its content. After Note b=a, changing b.text must not change a.text. Copying a pointer is different: two objects can then observe one memory region. A type's contract should explain which behaviour it provides."
+      },
+      {
+        "title": "Construction and assignment",
+        "description": "T b=a creates a new object using a copy constructor, commonly taking const T&. Writing b=a after b already exists calls copy assignment. They have different starting conditions: assignment must replace an existing value correctly. Self-assignment must satisfy the contract the type claims to provide."
+      },
+      {
+        "title": "What std::move does",
+        "description": "std::move casts an expression to a category that permits selection of a move operation. It does not transfer or clear anything by itself. Note c=std::move(a) subsequently invokes an appropriate constructor, which may move the string. Without a suitable move operation, copying may be selected or compilation may fail."
+      },
+      {
+        "title": "Noexcept and container choices",
+        "description": "noexcept promises that an exception will not leave a function. It does not instruct the program to ignore errors: violating the promise invokes terminate. Containers can account for nonthrowing moves when preserving guarantees during reallocation. A custom special member's exception specification must match the operations performed on its members."
+      },
+      {
+        "title": "Laboratory: batches of values",
+        "description": "The laboratory reads up to twenty integers between minus one hundred and one hundred into Batch a. Copy b increments each of its own elements. Then c receives a's contents through moving, and a is explicitly assigned a new vector containing forty-two. For 1 2 3 the output is 6 9 42."
+      }
+    ]
+  },
+  "legacyQuiz": {
+    "question": "Does std::move transfer a resource itself?",
+    "answers": [
+      "No; it changes expression category.",
+      "Yes; it always clears the source.",
+      "Yes; it always copies memory."
+    ],
+    "correctIndex": 0
+  }
+}
