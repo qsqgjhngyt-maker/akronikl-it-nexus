@@ -5,7 +5,21 @@ import {execFileSync} from 'node:child_process';
 import {INTRO_VIDEO_BASE,introVideoURL} from '../core/startup-intro-assets.js';
 import {waitForIntroBuffer} from '../core/startup-intro-buffer.js';
 import {SM_BASE} from '../tools/startup-smooth-contract.mjs';
+import {installIntroEntryReturn,consumeIntroEntryReturn} from '../core/startup-intro-entry-return.js';
+import {INTRO_HANDOFF_KEY,readIntroHandoff,saveIntroHandoff} from '../core/startup-intro-policy.js';
 const root=new URL('../',import.meta.url);
+test('Выход создаёт одноразовый UX marker; повторное открытие и обычный auth handoff сохранены',()=>{
+ const values=new Map([['personal','preserved']]),storage={getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)},doc=new EventTarget(),win=new EventTarget();win.sessionStorage=storage;
+ let t=100000;const button={disabled:false,isConnected:true,hidden:false},click=()=>{const event=new Event('click');Object.defineProperty(event,'target',{value:{closest:()=>button}});doc.dispatchEvent(event)};
+ installIntroEntryReturn({surface:'shell',documentRef:doc,windowRef:win,now:()=>t});click();button.isConnected=false;win.dispatchEvent(new Event('pagehide'));
+ assert.equal(readIntroHandoff(storage,t),true);assert.equal(consumeIntroEntryReturn(storage,t),true);assert.equal(consumeIntroEntryReturn(storage,t),false);assert.equal(storage.getItem('personal'),'preserved');
+ saveIntroHandoff(storage,t);assert.equal(consumeIntroEntryReturn(storage,t),false);assert.equal(readIntroHandoff(storage,t),true);
+ storage.setItem(INTRO_HANDOFF_KEY,JSON.stringify({schema:1,kind:'auth-navigation',entryReturn:'logout',at:t}));assert.equal(consumeIntroEntryReturn(storage,t+900000),false);
+});
+test('Неудавшийся выход и посторонний переход не подавляют следующий запуск',()=>{
+ const data=new Map(),doc=new EventTarget(),win=new EventTarget();win.sessionStorage={setItem:(k,v)=>data.set(k,v)};
+ const button={disabled:false,isConnected:true,hidden:false};installIntroEntryReturn({surface:'shell',documentRef:doc,windowRef:win});const event=new Event('click');Object.defineProperty(event,'target',{value:{closest:()=>button}});doc.dispatchEvent(event);win.dispatchEvent(new Event('pagehide'));assert.equal(data.size,0);
+});
 test('Публичный media URL ограничен собственным каталогом; credentials и произвольный origin запрещены',()=>{
  globalThis.location={origin:'http://127.0.0.1:1234'};
  assert.equal(introVideoURL('mobile','mp4'),INTRO_VIDEO_BASE+'mobile.mp4');

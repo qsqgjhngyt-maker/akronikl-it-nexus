@@ -11,8 +11,8 @@ const origin='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net',key='
 const rows=[],sessions=[],errors=[],measurements=[];let browser,fatal,current;
 const check=async(name,fn)=>{const t=performance.now();await fn();rows.push({name,status:'PASS',ms:Math.round(performance.now()-t)});console.log('PASS '+name)};
 const mime=f=>({'.js':'text/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.mp4':'video/mp4','.webm':'video/webm'}[path.extname(f)]||'text/html');
-async function session({frontend=candidate,surface='shell',width=1440,height=900,pref={schema:1,enabled:true,simplified:false,seen:'cinematic-v1'},accountDelay=250,guest=false,mediaDelay=0,missing=false,hidden=false,reducedMotion='no-preference',noLocks=false,lowDevice=false,oauth=false,online=true,descriptorBad=false,codec='auto'}={}){
- const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),state={surface,guest},record={surface,width,height,frontend:path.basename(frontend),requests:[],writes:[]};sessions.push(record);
+async function session({frontend=candidate,surface='shell',width=1440,height=900,pref={schema:1,enabled:true,simplified:false,seen:'cinematic-v1'},accountDelay=250,guest=false,mediaDelay=0,missing=false,hidden=false,reducedMotion='no-preference',noLocks=false,lowDevice=false,oauth=false,online=true,descriptorBad=false,codec='auto',logout=false}={}){
+ const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),state={surface,guest},record={surface,width,height,frontend:path.basename(frontend),requests:[],writes:[],syntheticLogouts:0};sessions.push(record);
  const context=await browser.newContext({viewport:{width,height},reducedMotion});
  await context.addInitScript(({key,handoff,pref,hidden,noLocks,lowDevice,online,oauth,graph,codec})=>{
   if(window!==window.top)return;
@@ -32,6 +32,7 @@ async function session({frontend=candidate,surface='shell',width=1440,height=900
  },{key,handoff,pref,hidden,noLocks,lowDevice,online,oauth,graph:RUNTIME_GRAPH_ID,codec});
  await context.route('**/*',async route=>{try{
   const req=route.request(),u=new URL(req.url()),cdn=u.href.startsWith('https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/cinematic-v4/');if(u.origin!==origin&&!cdn){errors.push('Внешний запрос '+u.origin);return route.abort()}
+  if(logout&&req.method()==='POST'&&u.pathname==='/api/v2/account/passkey/logout'){state.guest=true;state.surface='entry';record.syntheticLogouts++;return route.fulfill({status:200,contentType:'application/json',body:'{}'})}
   if(!['GET','HEAD'].includes(req.method())){record.writes.push(u.pathname);return route.abort()}
   if(u.pathname.startsWith('/api/')){
    await new Promise(r=>setTimeout(r,accountDelay));let status=200,body;
@@ -103,6 +104,12 @@ try{
   const s=await session({surface:'entry'});await s.open();await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);await s.page.getByText('Вы вошли. Ваше пространство готово.',{exact:true}).waitFor();
   s.state.surface='shell';await s.page.locator('[data-login]').click();await ready(s);await s.page.waitForTimeout(450);assert.equal(await layer(s).count(),0);
   assert.equal(await s.page.evaluate(k=>sessionStorage.getItem(k),handoff),null);
+  await s.page.reload();await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);await s.context.close();
+ });
+ for(const button of ['switch','logout'])await check('Настоящая кнопка '+button+': выход на entry без видео; новое открытие снова показывает заставку',async()=>{
+  const s=await session({logout:true});await s.open('#view=account');await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);await s.page.locator('[data-unified-account]').waitFor();
+  const before=s.record.requests.filter(r=>r.movie).length;await s.page.locator('[data-unified-account] [data-unified-logout]').nth(button==='switch'?0:1).click();await s.page.waitForURL(origin+'/account/entry/');await s.page.locator('[data-entry-launch-settings]').waitFor();await s.page.waitForTimeout(400);
+  assert.equal(s.record.syntheticLogouts,1);assert.equal(await layer(s).count(),0);assert.equal(s.record.requests.filter(r=>r.movie).length,before);assert.equal(await s.page.evaluate(k=>sessionStorage.getItem(k),handoff),null);assert.equal(await s.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).enabled,key),true);
   await s.page.reload();await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);await s.context.close();
  });
  await check('OAuth return внутри запуска не включает заставку после авторизации',async()=>{

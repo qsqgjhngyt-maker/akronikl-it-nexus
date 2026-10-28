@@ -2,6 +2,7 @@ import {INTRO_KEY,readIntroPreference,saveIntroPreference,introVariant,staticInt
 import {prepareIntroCover,releaseIntroCover,introCoverDismissed} from './startup-intro-cover.js';
 import {INTRO_ASSETS as INTRO_MEDIA,INTRO_VIDEO_BASE,introVideoURL} from './startup-intro-assets.js';
 import {waitForIntroBuffer} from './startup-intro-buffer.js';
+import {installIntroEntryReturn,consumeIntroEntryReturn} from './startup-intro-entry-return.js';
 
 let installed=false,active=null,stylesReady,mediaBase=INTRO_VIDEO_BASE;
 const media=name=>new URL('../intro-media/'+INTRO_MEDIA[name.split('.')[0]].version+'/'+name,import.meta.url).href;
@@ -129,13 +130,14 @@ function entrySettings(){
 export async function installStartupIntro({surface=document.querySelector('#app')?'shell':'entry',videoBase=INTRO_VIDEO_BASE}={}){
  if(installed)return;installed=true;
  mediaBase=videoBase;
+ installIntroEntryReturn({surface});
  prepareIntroCover();
  let authIntent=0;
  if(surface==='entry'){
   document.addEventListener('click',e=>{if(e.target.closest?.('[data-login],[data-provider-buttons] button,[data-key-access]'))authIntent=Date.now()},{capture:true});
   addEventListener('pagehide',()=>{if(authIntent&&Date.now()-authIntent<900000)try{saveIntroHandoff(sessionStorage)}catch{}},{once:true});
  }
- let handoff=false;try{handoff=surface==='shell'?consumeIntroHandoff(sessionStorage):readIntroHandoff(sessionStorage)}catch{}
+ let handoff=false;try{handoff=surface==='shell'?consumeIntroHandoff(sessionStorage):(consumeIntroEntryReturn(sessionStorage)||readIntroHandoff(sessionStorage))}catch{}
  if(!await ensureStyles()){releaseIntroCover(true);return}
  mountSettings();if(surface==='entry')entrySettings();
  const observer=new MutationObserver(mountSettings);
