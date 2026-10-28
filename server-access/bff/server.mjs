@@ -39,7 +39,7 @@ const server=http.createServer({maxHeaderSize:16384},async(req,res)=>{
   if(assets.has(req.url)){
    const[contentType,content]=assets.get(req.url);
    if(req.method!=='GET'||process.env.PASSKEY_PROXY_ENABLED!=='true'||req.headers.host!==new URL(process.env.PASSKEY_ORIGIN).host){res.writeHead(404,{'cache-control':'no-store','vary':'*'});res.end();return}
-   res.writeHead(200,{'content-type':contentType,'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",'permissions-policy':'publickey-credentials-create=(self), publickey-credentials-get=(self)'});res.end(content);return;
+   res.writeHead(200,{'content-type':contentType,'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; media-src 'self' https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",'permissions-policy':'publickey-credentials-create=(self), publickey-credentials-get=(self)'});res.end(content);return;
   }
   await existing(req,res);
  }catch{if(!res.headersSent)res.writeHead(500,{'cache-control':'no-store','vary':'*'});res.end()}

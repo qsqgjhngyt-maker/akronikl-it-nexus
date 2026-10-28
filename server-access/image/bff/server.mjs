@@ -4512,7 +4512,7 @@ var server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
         res.end();
         return;
       }
-      res.writeHead(200, { "content-type": contentType, "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'", "permissions-policy": "publickey-credentials-create=(self), publickey-credentials-get=(self)" });
+      res.writeHead(200, { "content-type": contentType, "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; media-src 'self' https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'", "permissions-policy": "publickey-credentials-create=(self), publickey-credentials-get=(self)" });
       res.end(content2);
       return;
     }

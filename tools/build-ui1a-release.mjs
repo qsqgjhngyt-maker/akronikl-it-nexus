@@ -12,6 +12,7 @@ const config=JSON.parse(await readFile(path.join(source,'release-candidate.json'
 if(value('--generation')&&value('--generation')!==config.assetGeneration&&process.argv.includes('--retain-active'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),config.assetGeneration])];
 if(value('--retain-generation')){const generation=value('--retain-generation');if(!/^ui1a-[a-z0-9-]+$/.test(generation))throw Error('Неверное удерживаемое поколение');config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),generation])]}
 if(process.argv.includes('--startup-first-paint'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),'ui1a-startup-cinematic-launch-20261028'])];
+if(process.argv.includes('--startup-smooth'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),'ui1a-startup-cinematic-launch-20261028','ui1a-startup-first-paint-20261028'])];
 if(value('--generation')&&value('--version'))Object.assign(config,{assetGeneration:value('--generation'),version:value('--version')});
 if(!/^ui1a-[a-z0-9-]+$/.test(config.assetGeneration))throw Error('Неверный generation ID');
 const folders=['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa'];
@@ -22,6 +23,7 @@ try{await stat(path.join(source,'intro-media'));await walk('intro-media')}catch(
 // старые поколения удерживаются ниже побайтно, вместе с прежним Desktop.
 if(process.argv.includes('--startup-launch')&&files.includes('intro-media/cinematic-v2/desktop.mp4'))for(let i=files.length-1;i>=0;i--)if(/^intro-media\/cinematic-v1\/desktop\.(mp4|webm|jpg)$/.test(files[i]))files.splice(i,1);
 if(process.argv.includes('--startup-first-paint')&&files.includes('intro-media/cinematic-v3/desktop/mp4/part-000.mp4'))for(let i=files.length-1;i>=0;i--)if(files[i].startsWith('intro-media/')&&!files[i].startsWith('intro-media/cinematic-v3/'))files.splice(i,1);
+if(process.argv.includes('--startup-smooth'))for(let i=files.length-1;i>=0;i--)if(files[i].startsWith('intro-media/')&&!files[i].startsWith('intro-media/cinematic-v4/'))files.splice(i,1);
 const manifest=await readFile(path.join(source,'manifest.webmanifest')),prefix='releases/'+config.assetGeneration+'/',records=[],hash=b=>createHash('sha256').update(b).digest('hex');
 async function output(file,b,origin){const target=path.join(out,file);await mkdir(path.dirname(target),{recursive:true});await writeFile(target,b);records.push({file,bytes:b.length,sha256:hash(b),source:origin})}
 const versionMetadata=JSON.parse(await readFile(path.join(source,'version.json')));
@@ -30,7 +32,7 @@ if(value('--generation')){
  if(versionMetadata.releaseCandidate)Object.assign(versionMetadata.releaseCandidate,{version:config.version,assetGeneration:config.assetGeneration});
 }
 const versionBytes=value('--generation')?Buffer.from(JSON.stringify(versionMetadata,null,2)+'\n'):await readFile(path.join(source,'version.json'));
-for(const file of files){const b=file==='version.json'?versionBytes:await readFile(path.join(source,file));await output(prefix+file,b,file)}
+for(const file of files){const b=file==='version.json'?versionBytes:await readFile(path.join(source,file));await output(prefix+file,b,file);if(process.argv.includes('--startup-smooth')&&file.startsWith('intro-media/cinematic-v4/'))await output(file,b,'Публичный CDN: '+file)}
 // После rollback корневые документы могут ссылаться на старое поколение.
 // Перепривязываются только выходные документы сборки; immutable source bytes
 // и активные root-файлы никогда не перезаписываются этим преобразованием.
@@ -44,7 +46,7 @@ const renderHTML=html=>{
   result=result.replace('const target=event.target;const resource=',"const target=event.target;if(target?.closest?.('[data-startup-intro]')||target?.matches?.('[data-startup-intro-style]'))return;const resource=");
  }
  result=result.replaceAll(/(\.\/releases\/ui1a-[a-z0-9-]+\/(?:core\/(?:app|bootstrap)\.js|styles\/app\.css))\?v=[^"'<>\s]+/g,'$1?v='+config.version);
- return process.argv.includes('--startup-first-paint')?withStartupCover(result):result;
+ return (process.argv.includes('--startup-first-paint')||process.argv.includes('--startup-smooth'))?withStartupCover(result):result;
 };
 let index=renderHTML(await readFile(path.join(source,'index.html'),'utf8'));
 index=index.replace('href="./manifest.webmanifest"','href="./manifest.webmanifest?v='+config.version+'"');
@@ -80,7 +82,7 @@ const offline=renderHTML(await readFile(path.join(source,'offline.html'),'utf8')
 await output('offline.html',Buffer.from(offline),'offline.html: independent public educational shell; local vault unlock required');
 const mime=file=>file.endsWith('.mp4')?'video/mp4':file.endsWith('.webm')?'video/webm':file.endsWith('.jpg')?'image/jpeg':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.md')?'text/markdown':'text/html';
 // Сохраняет правило также при будущем удержании прежнего intro-поколения.
-const optional=r=>/^releases\/ui1a-[a-z0-9-]+\/intro-media\//.test(r.file);
+const optional=r=>/^(?:releases\/ui1a-[a-z0-9-]+\/)?intro-media\//.test(r.file);
 const optionalAssets=records.filter(optional).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file)}));
 const approved=records.filter(r=>!optional(r)&&!['index.html','nexus-shell.html','version.json','startup-intro.json'].includes(r.file)).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file),...(r.version?{version:r.version}:{})})).sort((a,b)=>a.url<b.url?-1:a.url>b.url?1:0);
 const pwaConfig={generation:config.assetGeneration,version:config.version,assets:approved};

@@ -61,7 +61,7 @@ export function bindNexusOrbit({catalog,locale,translate:t,languageCatalog,langu
     for(const body of bodies){const p=body.position,x=m[0]*p[0]+m[3]*p[1]+m[6]*p[2],y=m[1]*p[0]+m[4]*p[1]+m[7]*p[2],z=m[2]*p[0]+m[5]*p[1]+m[8]*p[2],radius=body.radius*(body.ringed?2.3:1.1);distance=Math.max(distance,z+side*Math.abs(x)+radius*Math.hypot(1,side),z+top*y+radius*Math.hypot(1,top),z-bottom*y+radius*Math.hypot(1,bottom))}
     heroDistance=distance>heroDistance||matchMedia('(prefers-reduced-motion:reduce)').matches?distance:heroDistance+(distance-heroDistance)*(1-Math.exp(-dt*2.5));return Math.abs(heroDistance-distance)>.005;
   };
-  const schedule=()=>{if(!frame&&!disposed)frame=requestAnimationFrame(draw)};
+  const schedule=()=>{if(!frame&&!disposed&&document.documentElement.dataset.nexusIntroActive!=='true')frame=requestAnimationFrame(draw)};
   const refreshLabels=()=>{
     if(!dialog)return;
     const layer=dialog.querySelector('.ns-labels');layer.innerHTML='';parked.clear();dialog.querySelectorAll('[data-leader]').forEach(line=>line.style.display='none');
@@ -120,7 +120,7 @@ export function bindNexusOrbit({catalog,locale,translate:t,languageCatalog,langu
     dialog.querySelectorAll('[data-halo]').forEach(halo=>{const p=projectPoint(positionMap.get(halo.dataset.halo)||[0,0,0],view,width,height);halo.hidden=!p.visible;halo.style.left=p.x+'px';halo.style.top=p.y+'px';halo.style.width=Math.max(20,p.scale*(halo.dataset.halo==='nexus'?.95:.28))+'px'});
   };
   const draw=time=>{
-    frame=0;if(disposed)return;if(!lifetime.isConnected){dispose();return}if(document.hidden||(!heroVisible&&!dialog?.open)){last=0;return}
+    frame=0;if(disposed)return;if(!lifetime.isConnected){dispose();return}if(document.hidden||document.documentElement.dataset.nexusIntroActive==='true'||(!heroVisible&&!dialog?.open)){last=0;return}
     const dt=Math.min(.05,last?(time-last)/1000:.016);last=time;if(motion())simTime+=dt*getNexusAppearance().orbitalSpeed;if(dustMotion())dustTime+=dt*getNexusAppearance().particleSpeed;
     const {bodies,orbits}=model();let settling=false;
     if(dialog?.open&&flight.state.active){settling=flight.step(dt,bodies)}
@@ -234,7 +234,7 @@ export function bindNexusOrbit({catalog,locale,translate:t,languageCatalog,langu
   }
   document.querySelectorAll('[data-nexus-solar]').forEach(trigger=>trigger.addEventListener('click',()=>open(trigger),options));
   const visibility=new IntersectionObserver(entries=>{heroVisible=entries[0].isIntersecting;schedule()});if(mount)visibility.observe(mount);
-  const resize=new ResizeObserver(schedule);if(mount)resize.observe(mount);document.addEventListener('visibilitychange',()=>{last=0;if(document.hidden)clearFlightInput();schedule()},options);document.addEventListener('nexus-appearance-change',appearanceChanged,options);document.querySelector('#effectsQuality')?.addEventListener('change',()=>queueMicrotask(appearanceChanged),options);
+  const resize=new ResizeObserver(schedule);if(mount)resize.observe(mount);document.addEventListener('visibilitychange',()=>{last=0;if(document.hidden)clearFlightInput();schedule()},options);addEventListener('nexus:intro-statechange',()=>{last=0;cancelAnimationFrame(frame);frame=0;schedule()},options);document.addEventListener('nexus-appearance-change',appearanceChanged,options);document.querySelector('#effectsQuality')?.addEventListener('change',()=>queueMicrotask(appearanceChanged),options);
   const lifetime=mount?.closest('.visual-home')||shell;
   const dispose=()=>{
     if(disposed)return;disposed=true;selectionVersion++;controller.abort();

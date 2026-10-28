@@ -1,8 +1,10 @@
-import {INTRO_KEY,INTRO_MEDIA,readIntroPreference,saveIntroPreference,introVariant,staticIntro,readIntroHandoff,saveIntroHandoff,consumeIntroHandoff} from './startup-intro-policy.js';
+import {INTRO_KEY,readIntroPreference,saveIntroPreference,introVariant,staticIntro,readIntroHandoff,saveIntroHandoff,consumeIntroHandoff} from './startup-intro-policy.js';
 import {prepareIntroCover,releaseIntroCover,introCoverDismissed} from './startup-intro-cover.js';
-import {IntroSequence} from './startup-intro-sequence.js';
+import {INTRO_ASSETS as INTRO_MEDIA,INTRO_VIDEO_BASE,introVideoURL} from './startup-intro-assets.js';
+import {waitForIntroBuffer} from './startup-intro-buffer.js';
+import {installIntroEntryReturn,consumeIntroEntryReturn} from './startup-intro-entry-return.js';
 
-let installed=false,active=null,stylesReady;
+let installed=false,active=null,stylesReady,mediaBase=INTRO_VIDEO_BASE;
 const media=name=>new URL('../intro-media/'+INTRO_MEDIA[name.split('.')[0]].version+'/'+name,import.meta.url).href;
 const preference=()=>{try{return readIntroPreference(localStorage)}catch{return readIntroPreference({getItem(){throw Error()}})}};
 const persist=value=>{try{return saveIntroPreference(localStorage,value)}catch{return false}};
@@ -26,11 +28,16 @@ function showIntro({preview=false}={}){
   root.querySelector('.nexus-intro-wordmark')?.remove();if(variant!=='mobile')return;
   const label=document.createElement('div');label.className='nexus-intro-wordmark';label.setAttribute('aria-hidden','true');label.innerHTML='<svg viewBox="0 0 240 210" focusable="false"><defs><linearGradient id="nx-logo-white" x2=".9" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#c4e0ee"/></linearGradient><linearGradient id="nx-logo-cyan" x2=".1" y2="1"><stop stop-color="#d4effb"/><stop offset=".55" stop-color="#66c9ed"/><stop offset="1" stop-color="#0096d5"/></linearGradient></defs><path fill="url(#nx-logo-white)" d="M22 163 84 40Q95 18 112 18q18 0 30 23l29 57-32 18-29-57q-4-7-8 1l-37 74Z"/><path fill="url(#nx-logo-white)" d="m142 140 29-17 42 83h-32q-13 0-19-12Z"/><path fill="url(#nx-logo-cyan)" d="M9 206q-1-25 28-42c60-32 159-55 190-112-2 43-37 67-79 90L50 206Z"/></svg><strong>AKRONIKL</strong><span>IT NEXUS</span>';root.append(label);
  };wordmark();
- const video=new IntroSequence(visual);
+ const video=document.createElement('video');video.dataset.current='';video.crossOrigin='anonymous';video.muted=true;video.defaultMuted=true;video.playsInline=true;video.preload='auto';video.disablePictureInPicture=true;video.tabIndex=-1;video.setAttribute('aria-hidden','true');visual.append(video);
+ let frameCallback,preparingSource='';
+ const syncLogo=()=>{root.dataset.logoVisible=String(variant==='mobile'&&Number.isFinite(video.duration)&&video.currentTime>=Math.max(0,video.duration-2))};
+ const trackFrame=()=>{syncLogo();if(!closing&&video.requestVideoFrameCallback)frameCallback=video.requestVideoFrameCallback(trackFrame)};
+ video.addEventListener('timeupdate',syncLogo,{signal});video.addEventListener('seeked',syncLogo,{signal});video.addEventListener('loadedmetadata',syncLogo,{signal});
+ if(video.requestVideoFrameCallback)frameCallback=video.requestVideoFrameCallback(trackFrame);
  const stopVideo=()=>{video.pause();video.removeAttribute('src');video.load()};
  const cleanup=()=>{
   if(removed)return;removed=true;bindings.abort();controls.abort();for(const id of timers)clearTimeout(id);timers.clear();
-  stopVideo();active=null;root.close();root.remove();dispatchEvent(new CustomEvent('nexus:intro-finished',{detail:completion}));
+  if(frameCallback!==undefined)video.cancelVideoFrameCallback?.(frameCallback);stopVideo();active=null;root.close();root.remove();delete document.documentElement.dataset.nexusIntroActive;dispatchEvent(new Event('nexus:intro-statechange'));dispatchEvent(new CustomEvent('nexus:intro-finished',{detail:completion}));
  };
  const finish=(reason='skip',immediate=false)=>{
   if(removed)return;
@@ -59,12 +66,17 @@ function showIntro({preview=false}={}){
  };
  let poster;
  if(navigator.onLine!==false){poster=document.createElement('img');poster.alt='';poster.fetchPriority='low';poster.src=media(variant+'.jpg');poster.addEventListener('error',()=>poster.remove(),{once:true,signal});visual.prepend(poster)}
- document.body.append(root);root.showModal();releaseIntroCover();root.addEventListener('cancel',e=>{e.preventDefault();finish('escape')},{signal:controls.signal});
+ document.body.append(root);root.showModal();document.documentElement.dataset.nexusIntroActive='true';dispatchEvent(new Event('nexus:intro-statechange'));releaseIntroCover();root.addEventListener('cancel',e=>{e.preventDefault();finish('escape')},{signal:controls.signal});
  // Фоновые render, focus и изменение # при bootstrap не закрывают сцену.
  if(staticIntro({...setting,reducedMotion:reduced(),online:navigator.onLine,connection:navigator.connection})){fallback();return}
  const choose=variant=>[['mp4','video/mp4; codecs="'+INTRO_MEDIA[variant].mp4Codec+'"'],['webm','video/webm; codecs="vp9"']].find(([,type])=>video.canPlayType(type));
  let selected=choose(variant);if(!selected){fallback();return}
- const play=()=>{if(!closing&&!document.hidden)video.play()?.catch(fallback)};
+ const play=()=>{
+  if(closing||document.hidden||root.dataset.playback==='poster')return;
+  if(played){video.play()?.catch(e=>{if(e.name!=='AbortError')fallback()});return}
+  const source=video.src;if(preparingSource===source)return;preparingSource=source;
+  void waitForIntroBuffer(video,signal).then(ready=>{if(preparingSource===source)preparingSource='';if(ready&&!closing&&!document.hidden&&video.src===source&&root.dataset.playback!=='poster')video.play()?.catch(e=>{if(e.name!=='AbortError')fallback()})});
+ };
  const armLimit=()=>{if(visibleAt)return;visibleAt=performance.now();limit=later(()=>finish('deadline'),Math.max(0,budget))};
  video.addEventListener('error',fallback,{signal});video.addEventListener('ended',()=>finish('ended'),{signal});
  video.addEventListener('playing',()=>{played=true;cancel(startupDeadline);cancel(stallDeadline);root.dataset.playback='video';status.textContent='';armLimit()},{signal});
@@ -80,11 +92,11 @@ function showIntro({preview=false}={}){
  addEventListener('resize',()=>{
   const next=introVariant(innerWidth,innerHeight);if(next===variant||closing||root.dataset.playback==='poster')return;
   const fraction=Number.isFinite(video.duration)&&video.duration>0?Math.min(.94,video.currentTime/video.duration):0;
-  variant=next;root.dataset.variant=next;wordmark();if(poster)poster.src=media(next+'.jpg');selected=choose(next);if(!selected){fallback();return}
+  variant=next;root.dataset.variant=next;wordmark();syncLogo();if(poster)poster.src=media(next+'.jpg');selected=choose(next);if(!selected){fallback();return}
   video.addEventListener('loadedmetadata',()=>{if(fraction)video.currentTime=fraction*video.duration;play()},{once:true,signal});
-  video.src=media(next+'.'+selected[0]);play();
+  video.src=introVideoURL(next,selected[0],mediaBase);play();
  },{signal});
- startupDeadline=later(fallback,8000);armLimit();video.src=media(variant+'.'+selected[0]);requestAnimationFrame(()=>requestAnimationFrame(play));
+ startupDeadline=later(fallback,8000);armLimit();video.src=introVideoURL(variant,selected[0],mediaBase);requestAnimationFrame(()=>requestAnimationFrame(play));
 }
 function controlsMarkup(){
  return '<legend>Запуск приложения</legend><label class="nexus-switch"><span>Показывать заставку при открытии</span><input type="checkbox" data-intro-enabled></label><label class="nexus-switch"><span>Упрощённый запуск</span><input type="checkbox" data-intro-simplified></label><p>Заставка появляется при открытии Nexus. Выбор сохраняется на этом устройстве.</p><button type="button" class="btn" data-intro-preview>Посмотреть заставку</button><p role="status" data-intro-save-status></p>';
@@ -115,15 +127,17 @@ function entrySettings(){
   document.body.append(dialog);mountSettings();dialog.querySelector('[data-intro-close]').addEventListener('click',()=>dialog.close());dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
  });footer.append(button);
 }
-export async function installStartupIntro({surface=document.querySelector('#app')?'shell':'entry'}={}){
+export async function installStartupIntro({surface=document.querySelector('#app')?'shell':'entry',videoBase=INTRO_VIDEO_BASE}={}){
  if(installed)return;installed=true;
+ mediaBase=videoBase;
+ installIntroEntryReturn({surface});
  prepareIntroCover();
  let authIntent=0;
  if(surface==='entry'){
   document.addEventListener('click',e=>{if(e.target.closest?.('[data-login],[data-provider-buttons] button,[data-key-access]'))authIntent=Date.now()},{capture:true});
   addEventListener('pagehide',()=>{if(authIntent&&Date.now()-authIntent<900000)try{saveIntroHandoff(sessionStorage)}catch{}},{once:true});
  }
- let handoff=false;try{handoff=surface==='shell'?consumeIntroHandoff(sessionStorage):readIntroHandoff(sessionStorage)}catch{}
+ let handoff=false;try{handoff=surface==='shell'?consumeIntroHandoff(sessionStorage):(consumeIntroEntryReturn(sessionStorage)||readIntroHandoff(sessionStorage))}catch{}
  if(!await ensureStyles()){releaseIntroCover(true);return}
  mountSettings();if(surface==='entry')entrySettings();
  const observer=new MutationObserver(mountSettings);
