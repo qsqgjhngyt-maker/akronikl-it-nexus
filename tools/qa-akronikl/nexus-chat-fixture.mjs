@@ -9,6 +9,7 @@ import {fixture} from '../../tests/helpers/auth-fixture.mjs';
 import {GATEWAY_ORIGIN} from '../../server-access/bff/account-read.mjs';
 import {createNexusCloudHandler,createNexusCloudVault} from '../../server-access/bff/akronikl-cloud.mjs';
 export async function nexusChatFixture({root,privateDir,createAdapter,onOutcome}={}){
+ root=path.resolve(root);
  await mkdir(privateDir,{recursive:true});const openssl=process.env.NEXUS_OPENSSL??'C:/Program Files/Git/usr/bin/openssl.exe',key=path.join(privateDir,'tls.key'),cert=path.join(privateDir,'tls.crt'),host=new URL(GATEWAY_ORIGIN).hostname;
  const cmd=args=>spawnSync(openssl,args,{windowsHide:true,stdio:['ignore','pipe','ignore']});
  if(cmd(['req','-x509','-newkey','rsa:2048','-nodes','-keyout',key,'-out',cert,'-days','1','-subj','/CN=Isolated Nexus Chat QA','-addext','subjectAltName=DNS:'+host]).status!==0)throw Error('QA_TLS_UNAVAILABLE');
