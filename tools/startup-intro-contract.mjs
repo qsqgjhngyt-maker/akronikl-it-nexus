@@ -52,6 +52,7 @@ export function routeWorkflow(original,lanes){
  assert.equal(count,Object.keys(lanes).length,'Потерян ожидаемый job');return out.join('\n');
 }
 export async function verifyStartupIntroContract({root=ROOT,writeEvidence=false}={}){
+ try{await access(path.join(root,'startup-intro-fast.json'));return(await import('./startup-fast-contract.mjs')).verifyFast({root,writeEvidence})}catch(error){if(error.code!=='ENOENT')throw error}
  try{await access(path.join(root,'startup-intro-smooth.json'));return(await import('./startup-smooth-contract.mjs')).verifySmooth({root,writeEvidence})}catch(error){if(error.code!=='ENOENT')throw error}
  try{await access(path.join(root,'startup-intro-first-paint.json'));return(await import('./startup-first-paint-contract.mjs')).verifyFirstPaint({root,writeEvidence})}catch(error){if(error.code!=='ENOENT')throw error}
  let launchFix=false;try{await access(path.join(root,'startup-intro-launch-fix.json'));launchFix=true}catch(error){if(error.code!=='ENOENT')throw error}

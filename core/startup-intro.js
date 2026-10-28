@@ -62,10 +62,10 @@ function showIntro({preview=false}={}){
  addEventListener('nexus:session-ended',()=>finish('session-ended',true),{signal});
  const fallback=()=>{
   if(closing||root.dataset.playback==='poster')return;
-  cancel(startupDeadline);cancel(stallDeadline);cancel(limit);stopVideo();root.dataset.playback='poster';status.textContent='Nexus готов к работе';later(()=>finish('fallback'),1400);
+  cancel(startupDeadline);cancel(stallDeadline);cancel(limit);stopVideo();root.dataset.playback='poster';status.textContent='Nexus готов к работе';later(()=>finish('fallback'),variant==='mobile'&&!preview?120:1400);
  };
  let poster;
- if(navigator.onLine!==false){poster=document.createElement('img');poster.alt='';poster.fetchPriority='low';poster.src=media(variant+'.jpg');poster.addEventListener('error',()=>poster.remove(),{once:true,signal});visual.prepend(poster)}
+ if(navigator.onLine!==false){poster=document.createElement('img');poster.alt='';poster.fetchPriority=variant==='mobile'?'auto':'low';poster.src=media(variant+'.jpg');poster.addEventListener('error',()=>poster.remove(),{once:true,signal});visual.prepend(poster)}
  document.body.append(root);root.showModal();document.documentElement.dataset.nexusIntroActive='true';dispatchEvent(new Event('nexus:intro-statechange'));releaseIntroCover();root.addEventListener('cancel',e=>{e.preventDefault();finish('escape')},{signal:controls.signal});
  // Фоновые render, focus и изменение # при bootstrap не закрывают сцену.
  if(staticIntro({...setting,reducedMotion:reduced(),online:navigator.onLine,connection:navigator.connection})){fallback();return}
@@ -85,7 +85,7 @@ function showIntro({preview=false}={}){
  },{signal});
  document.addEventListener('visibilitychange',()=>{
   if(document.hidden){video.pause();if(visibleAt)budget-=performance.now()-visibleAt;visibleAt=0;cancel(limit);cancel(stallDeadline);cancel(startupDeadline)}
-  else{if(!played)startupDeadline=later(fallback,8000);armLimit();play()}
+  else{if(!played)startupDeadline=later(fallback,variant==='mobile'?3500:8000);armLimit();play()}
  },{signal});
  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',fallback,{signal});
  addEventListener('offline',fallback,{signal});
@@ -96,7 +96,7 @@ function showIntro({preview=false}={}){
   video.addEventListener('loadedmetadata',()=>{if(fraction)video.currentTime=fraction*video.duration;play()},{once:true,signal});
   video.src=introVideoURL(next,selected[0],mediaBase);play();
  },{signal});
- startupDeadline=later(fallback,8000);armLimit();video.src=introVideoURL(variant,selected[0],mediaBase);requestAnimationFrame(()=>requestAnimationFrame(play));
+ startupDeadline=later(fallback,variant==='mobile'?3500:8000);armLimit();video.src=introVideoURL(variant,selected[0],mediaBase);requestAnimationFrame(()=>requestAnimationFrame(play));
 }
 function controlsMarkup(){
  return '<legend>Запуск приложения</legend><label class="nexus-switch"><span>Показывать заставку при открытии</span><input type="checkbox" data-intro-enabled></label><label class="nexus-switch"><span>Упрощённый запуск</span><input type="checkbox" data-intro-simplified></label><p>Заставка появляется при открытии Nexus. Выбор сохраняется на этом устройстве.</p><button type="button" class="btn" data-intro-preview>Посмотреть заставку</button><p role="status" data-intro-save-status></p>';
