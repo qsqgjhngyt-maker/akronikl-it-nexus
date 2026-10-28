@@ -31,7 +31,7 @@ export function clearAkroniklTaskContext() {
 // UI загружается лениво через уже существующую точку входа; legacy API сохранён.
 export function assistantPageMarkup(locale = 'ru') {
   const en = locale === 'en';
-  return `<section class="ps-hero glass-panel"><div><span class="eyebrow">AKRONIKL · CORE</span><h1>Akronikl</h1><p>${en ? 'Navigate Nexus, read platform help and find Academy materials. No AI provider or API key is required.' : 'Ориентируйтесь в Nexus, читайте справку и находите материалы Академии. Нейросеть и API-ключ не требуются.'}</p><button type="button" class="btn primary" data-akronikl-open>${en ? 'Open assistant' : 'Открыть помощника'}</button><p class="small">${en ? 'Local search, not a generative model. Voice, BYOK and personal memory are not connected.' : 'Локальный поиск, не генеративная модель. Голос, BYOK и персональная память не подключены.'}</p></div></section>`;
+  return `<section class="ps-hero glass-panel"><div><span class="eyebrow">AKRONIKL · CORE</span><h1>Akronikl</h1><p>${en ? 'Navigate Nexus, read platform help and find Academy materials. No AI provider or API key is required.' : 'Ориентируйтесь в Nexus, читайте справку и находите материалы Академии. Нейросеть и API-ключ не требуются.'}</p><button type="button" class="btn primary" data-akronikl-open>${en ? 'Open assistant' : 'Открыть помощника'}</button><p class="small">${en ? 'Source help works without a model. Cloud AI, personal settings and speech are available in assistant settings.' : 'Справка работает без модели. Облачный ИИ, личные настройки и озвучка доступны в настройках помощника.'}</p></div></section>`;
 }
 
 export function createLazyAssistantBridge(options) {

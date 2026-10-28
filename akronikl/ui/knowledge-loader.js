@@ -39,19 +39,35 @@ export async function loadUiKnowledge(language, {signal, fetchImpl = globalThis.
   signal?.addEventListener('abort', abort, {once:true});
   if (signal?.aborted) abort();
   const timer = setTimeout(abort, 12000);
+  const cacheName='akronikl-public-course-'+KNOWLEDGE_MANIFEST_SHA256.slice(0,16);
+  const manifestURL=new URL('../knowledge/manifest.json',import.meta.url),indexURL=new URL(`../knowledge/core-index.${language}.json`,import.meta.url);
+  let indexBytes=null;
+  async function readPublic(url,options){
+    try{return await readBoundedJsonBytes(url,{...options,fetchImpl});}
+    catch(error){
+      controller.signal.throwIfAborted();
+      if(fetchImpl!==globalThis.fetch||!globalThis.caches)throw error;
+      const stored=await(await globalThis.caches.open(cacheName)).match(url);
+      if(!stored)throw error;
+      // Cached bytes still pass the SAME pinned manifest/index digest checks.
+      return readBoundedJsonBytes(url,{...options,fetchImpl:async()=>stored});
+    }
+  }
   try {
-    const bytes = await readBoundedJsonBytes(new URL('../knowledge/manifest.json', import.meta.url), {
-      signal:controller.signal, maxBytes:65536, fetchImpl
+    const bytes = await readPublic(manifestURL, {
+      signal:controller.signal, maxBytes:65536
     });
     const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
     if ([...digest].map(v => v.toString(16).padStart(2,'0')).join('') !== KNOWLEDGE_MANIFEST_SHA256) throw Error('AKRONIKL_MANIFEST_REJECTED');
     const manifest = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes));
     const descriptor = manifest.indexes.find(row => row.locale === language);
     const index = await loadPreparedKnowledge({descriptor, signal:controller.signal,
-      readBytes:(_path, options) => readBoundedJsonBytes(new URL(`../knowledge/core-index.${language}.json`, import.meta.url), {
-        ...options, maxBytes:descriptor.bytes, fetchImpl
-      })
+      readBytes:async(_path, options) => indexBytes=await readPublic(indexURL,{...options,maxBytes:descriptor.bytes})
     });
+    controller.signal.throwIfAborted();
+    if(fetchImpl===globalThis.fetch&&globalThis.caches&&indexBytes){
+      try{const store=await globalThis.caches.open(cacheName),headers={'content-type':'application/json'};await store.put(manifestURL,new Response(bytes,{headers}));await store.put(indexURL,new Response(indexBytes,{headers}));}catch{/* A full/disabled cache does not invent offline availability. */}
+    }
     controller.signal.throwIfAborted();
     if (fetchImpl === globalThis.fetch) cache.set(language, index);
     return index;

@@ -10,7 +10,7 @@ const safeReport=r=>Object.freeze({code:safeCodes.has(r?.code)?r.code:'RUNTIME_U
 export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocalProfile,onInvalidate=()=>{},timeoutMs=180000,cloudBroker=null}={}) {
   if(typeof isCurrent!=='function'||typeof loadLocal!=='function'||typeof inspect!=='function'||typeof onInvalidate!=='function'||!Number.isSafeInteger(timeoutMs)||timeoutMs<20||timeoutMs>180000)throw Error('CONNECTION_CONFIG_INVALID');
   if(cloudBroker!==null&&(typeof cloudBroker.inspect!=='function'||typeof cloudBroker.connect!=='function'))throw Error('CONNECTION_CONFIG_INVALID');
-  let selection=cloudSelection(),saved=[],savedRevision=0;
+  let selection=cloudSelection(),selectionExplicit=false,saved=[],savedRevision=0;
   let selected='sources',phase='ready',code='SOURCES_READY',revision=0,provider=null,lifetime=null,operation=null,dead=false;
   let pendingResources=0,cleanupTasks=0,cleanupFailed=false,lastProbe=null;const listeners=new Set();
   function current(){try{return !dead&&isCurrent()===true;}catch{return false;}}
@@ -24,7 +24,7 @@ export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocal
   function dispose(){if(dead)return;dead=true;invalidate();phase='closed';code='CONNECTION_CLOSED';lastProbe=null;emit();listeners.clear();}
   function select(id){const p=modelProfile(id);if(!ensure())return state();if(!p.enabled&&!(id==='external'&&cloudBroker))return Object.freeze({status:'denied',code:'EXTERNAL_DISABLED'});
     invalidate();selected=id;lastProbe=null;phase=id==='sources'?'ready':'disconnected';code=id==='sources'?'SOURCES_READY':'MODEL_NOT_LOADED';if(id==='external')void refreshCloudSaved();return emit();}
-  async function refreshCloudSaved(){if(!cloudBroker?.listSaved)return;const ticket=++savedRevision,original=selection;try{const entries=(await cloudBroker.listSaved()).map(cloudSelection);if(current()&&ticket===savedRevision){saved=entries;if(selected==='external'&&phase==='disconnected'&&selection===original)selection=entries.find(x=>x.providerId===selection.providerId)??selection;emit();}}catch{if(current()&&ticket===savedRevision){saved=[];emit();}}}
+  async function refreshCloudSaved(){if(!cloudBroker?.listSaved)return;const ticket=++savedRevision,original=selection;try{const entries=(await cloudBroker.listSaved()).map(cloudSelection);if(current()&&ticket===savedRevision){saved=entries;if(selected==='external'&&phase==='disconnected'&&!selectionExplicit&&selection===original)selection=entries.find(x=>x.providerId===selection.providerId)??selection;emit();}}catch{if(current()&&ticket===savedRevision){saved=[];emit();}}}
   async function forgetCloud(){if(!cloudBroker?.forget)return;const id=selection.providerId;invalidate();phase='disconnected';code='MODEL_NOT_LOADED';emit();try{await cloudBroker.forget(id);await refreshCloudSaved();}catch{code='CLOUD_VAULT_UNAVAILABLE';emit();}}
   async function run(file,connect){
     if(!ensure())return state();
@@ -62,7 +62,7 @@ export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocal
     if(!current()&&!dead)dispose();else if(!dead)emit();return state();
   }
   function externalSafe(code){return ['CLOUD_ACCOUNT_REQUIRED','CLOUD_KEY_INVALID','CLOUD_AUTH_FAILED','CLOUD_ACCESS_DENIED','CLOUD_MODEL_NOT_FOUND','CLOUD_NOT_CONNECTED','CLOUD_RATE_LIMITED','CLOUD_REQUEST_REJECTED','CLOUD_SERVICE_UNAVAILABLE','CLOUD_TLS_FAILED','CLOUD_RESPONSE_INVALID','CLOUD_VAULT_UNAVAILABLE'].includes(code);}
-  function configureCloud(value){if(!ensure()||!cloudBroker?.settings)return state();const next=cloudSelection(value);if(JSON.stringify(next)===JSON.stringify(selection))return state();if(selected!=='external'){selection=next;return emit();}invalidate();selection=next;phase='disconnected';code='MODEL_NOT_LOADED';return emit();}
+  function configureCloud(value){if(!ensure()||!cloudBroker?.settings)return state();const next=cloudSelection(value);selectionExplicit=true;if(JSON.stringify(next)===JSON.stringify(selection))return state();if(selected!=='external'){selection=next;return emit();}invalidate();selection=next;phase='disconnected';code='MODEL_NOT_LOADED';return emit();}
   function lease(){
     if(!ensure()||!provider||phase!=='connected')return null;
     const selectedProvider=provider,connectionSignal=lifetime.signal,ticket=revision;let released=false;

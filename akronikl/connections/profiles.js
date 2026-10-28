@@ -6,6 +6,9 @@ export const MODEL_PROFILES = Object.freeze([
   Object.freeze({id:'external',kind:'external',modelId:'qwen3.7-plus',labelRu:'Облачные ИИ',labelEn:'Cloud AI providers',enabled:false})
 ]);
 export const RUNTIME_VERSION = '3.8.1';
+// Current product choice: cloud AI or source help. Local inference remains
+// available to isolated historical QA/library tests, not in the user menu.
+export const USER_MODEL_PROFILES=Object.freeze(MODEL_PROFILES.filter(p=>p.kind!=='local'));
 export function modelProfile(id) {
   const p=MODEL_PROFILES.find(item=>item.id===id);
   if(!p) throw Error('MODEL_PROFILE_INVALID');
