@@ -16,6 +16,9 @@ const folders=['core','effects','styles','locales','courses','assets','sandbox',
 const files=[];async function walk(dir,prefix=''){for(const e of await readdir(path.join(source,dir,prefix),{withFileTypes:true})){const f=path.posix.join(dir,prefix,e.name);if(e.isDirectory())await walk(dir,path.posix.join(prefix,e.name));else if(e.isFile())files.push(f);else throw Error('Недопустимый source entry')}}for(const dir of folders)await walk(dir);files.push('version.json');files.sort();
 // Необязательное медиа не входит в public authority Service Worker.
 try{await stat(path.join(source,'intro-media'));await walk('intro-media')}catch(error){if(error.code!=='ENOENT')throw error}
+// В новом поколении нужны новый Desktop и прежний Mobile; опубликованные
+// старые поколения удерживаются ниже побайтно, вместе с прежним Desktop.
+if(process.argv.includes('--startup-launch')&&files.includes('intro-media/cinematic-v2/desktop.mp4'))for(let i=files.length-1;i>=0;i--)if(/^intro-media\/cinematic-v1\/desktop\.(mp4|webm|jpg)$/.test(files[i]))files.splice(i,1);
 const manifest=await readFile(path.join(source,'manifest.webmanifest')),prefix='releases/'+config.assetGeneration+'/',records=[],hash=b=>createHash('sha256').update(b).digest('hex');
 async function output(file,b,origin){const target=path.join(out,file);await mkdir(path.dirname(target),{recursive:true});await writeFile(target,b);records.push({file,bytes:b.length,sha256:hash(b),source:origin})}
 const versionMetadata=JSON.parse(await readFile(path.join(source,'version.json')));

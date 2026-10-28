@@ -16,6 +16,13 @@ const m=JSON.parse(await readFile(path.join(artifact,'BUILD_MANIFEST.json')));as
 for(const x of m.files)verifyFixRecord(x,await readFile(path.join(artifact,x.file)));
 const publish=m.files.filter(x=>FIX_ROOTS.includes(x.file)||x.file.startsWith('releases/'+FIX_GENERATION+'/')||x.file.startsWith('entry-assets/'+FIX_GENERATION+'/'));
 publish.push({file:'BUILD_MANIFEST.json'});
+// Удаляются только три неиспользуемых файла ещё НЕ опубликованного поколения
+// этого candidate. Ни один путь из принятого main не может попасть в удаление.
+assert.equal(execFileSync('git',['ls-tree','-r','--name-only',FIX_BASE,'--','releases/'+FIX_GENERATION],{cwd:root}).toString().trim(),'');
+for(const ext of ['mp4','webm','jpg']){
+ const file='releases/'+FIX_GENERATION+'/intro-media/cinematic-v1/desktop.'+ext;
+ if(!publish.some(x=>x.file===file)){const target=path.resolve(root,file);assert.ok(target.startsWith(path.resolve(root,'releases',FIX_GENERATION)+path.sep));try{await unlink(target)}catch(error){if(error.code!=='ENOENT')throw error}}
+}
 for(const x of publish){const target=path.join(root,x.file);await mkdir(path.dirname(target),{recursive:true});await copyFile(path.join(artifact,x.file),target)}
 await copyFile(path.join(artifact,'entry-assets',FIX_GENERATION,'entry.js'),path.join(root,'server-access/image/public/entry.js'));
 const files=[];for(const file of new Set([...publish.map(x=>x.file),...FIX_PRODUCT])){const b=await readFile(path.join(root,file));files.push({file,bytes:b.length,sha256:hash(b)})}

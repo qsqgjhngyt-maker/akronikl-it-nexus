@@ -11,10 +11,10 @@ const origin='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net',key='
 const rows=[],sessions=[],errors=[],measurements=[];let browser,fatal,current;
 const check=async(name,fn)=>{const t=performance.now();await fn();rows.push({name,status:'PASS',ms:Math.round(performance.now()-t)});console.log('PASS '+name)};
 const mime=f=>({'.js':'text/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.mp4':'video/mp4','.webm':'video/webm'}[path.extname(f)]||'text/html');
-async function session({frontend=candidate,surface='shell',width=1440,height=900,pref={schema:1,enabled:true,simplified:false,seen:'cinematic-v1'},accountDelay=250,guest=false,mediaDelay=0,missing=false,hidden=false,reducedMotion='no-preference',noLocks=false,lowDevice=false,oauth=false,online=true,descriptorBad=false}={}){
+async function session({frontend=candidate,surface='shell',width=1440,height=900,pref={schema:1,enabled:true,simplified:false,seen:'cinematic-v1'},accountDelay=250,guest=false,mediaDelay=0,missing=false,hidden=false,reducedMotion='no-preference',noLocks=false,lowDevice=false,oauth=false,online=true,descriptorBad=false,codec='auto'}={}){
  const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),state={surface,guest},record={surface,width,height,frontend:path.basename(frontend),requests:[],writes:[]};sessions.push(record);
  const context=await browser.newContext({viewport:{width,height},reducedMotion});
- await context.addInitScript(({key,handoff,pref,hidden,noLocks,lowDevice,online,oauth,graph})=>{
+ await context.addInitScript(({key,handoff,pref,hidden,noLocks,lowDevice,online,oauth,graph,codec})=>{
   if(window!==window.top)return;
   if(pref&&!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(pref));
   if(oauth)sessionStorage.setItem(handoff,JSON.stringify({schema:1,kind:'auth-navigation',at:Date.now()}));
@@ -22,11 +22,14 @@ async function session({frontend=candidate,surface='shell',width=1440,height=900
   Object.defineProperty(navigator,'onLine',{get:()=>online});Object.defineProperty(navigator,'hardwareConcurrency',{get:()=>lowDevice?2:8});Object.defineProperty(navigator,'deviceMemory',{get:()=>lowDevice?2:8});
   Object.defineProperty(navigator,'connection',{get:()=>({effectiveType:lowDevice?'3g':'4g',saveData:false,addEventListener(){}})});
   if(noLocks)Object.defineProperty(navigator,'locks',{get:()=>undefined});
+  if(codec==='webm'){const can=HTMLMediaElement.prototype.canPlayType;HTMLMediaElement.prototype.canPlayType=function(t){return t.includes('mp4')?'':can.call(this,t)}}
   if(navigator.serviceWorker){Object.defineProperty(navigator.serviceWorker,'controller',{get:()=>({postMessage(_r,ports){ports[0].postMessage({protocol:'nexus-verified-public-v1',graphId:graph,publicReady:true})}})});navigator.serviceWorker.register=async()=>{throw Error('SYNTHETIC_SW_DISABLED')}}
-  window.__introFinishes=[];window.__introAt=null;window.__appAt=null;
-  addEventListener('nexus:intro-finished',e=>window.__introFinishes.push(e.detail));
+  window.__introFinishes=[];window.__introAt=null;window.__appAt=null;window.__introVideoEnd=null;window.__fadeIn=[];
+  addEventListener('nexus:intro-finished',e=>window.__introFinishes.push({...e.detail,at:performance.now()}));
+  addEventListener('nexus:intro-video-ended',e=>{const video=document.querySelector('[data-startup-intro] video');window.__introVideoEnd={...e.detail,at:performance.now(),source:video.currentSrc,opacity:Number(getComputedStyle(video).opacity),phase:video.closest('dialog').dataset.phase,frames:video.getVideoPlaybackQuality?.().totalVideoFrames}});
+  document.addEventListener('playing',e=>{if(window.__fadeIn.length||!e.target.matches?.('[data-startup-intro] video'))return;const v=e.target;const sample=()=>window.__fadeIn.push({at:performance.now(),opacity:Number(getComputedStyle(v).opacity)});requestAnimationFrame(sample);setTimeout(sample,350);setTimeout(sample,1350)},{capture:true});
   new MutationObserver(()=>{if(!window.__introAt&&document.querySelector('[data-startup-intro]'))window.__introAt=performance.now();if(!window.__appAt&&document.querySelector('#app .visual-shell'))window.__appAt=performance.now()}).observe(document,{childList:true,subtree:true});
- },{key,handoff,pref,hidden,noLocks,lowDevice,online,oauth,graph:RUNTIME_GRAPH_ID});
+ },{key,handoff,pref,hidden,noLocks,lowDevice,online,oauth,graph:RUNTIME_GRAPH_ID,codec});
  await context.route('**/*',async route=>{try{
   const req=route.request(),u=new URL(req.url());if(u.origin!==origin){errors.push('Внешний запрос '+u.origin);return route.abort()}
   if(!['GET','HEAD'].includes(req.method())){record.writes.push(u.pathname);return route.abort()}
@@ -69,15 +72,22 @@ try{
   const s=await session({frontend:baseline,pref:{schema:1,enabled:true,simplified:false,seen:''}});await s.open();await playing(s);
   await s.page.evaluate(()=>{document.querySelector('video').pause();const app=document.querySelector('#app');app.replaceChildren(...app.childNodes)});await ended(s);await s.context.close();
  });
- await check('Desktop: при открытии до Account; низкая оценка CPU/3G и отсутствие Locks не отменяют полные 5 секунд',async()=>{
+ await check('Desktop: новый widescreen целиком10секунд, до Account, медленное проявление и финальный логотип',async()=>{
   const s=await session({accountDelay:2500,lowDevice:true,noLocks:true});await s.open();await playing(s);assert.equal(await s.page.evaluate(()=>window.__appAt),null);
   await ready(s);await s.page.evaluate(()=>{const app=document.querySelector('#app');app.replaceChildren(...app.childNodes);document.querySelector('#menuBtn')?.focus();location.hash='#view=academy'});
-  await s.page.waitForTimeout(1100);assert.equal(await layer(s).count(),1);await shot(s,'desktop-full-video');await ended(s);
-  const done=await s.page.evaluate(()=>window.__introFinishes.at(-1));assert.equal(done.reason,'ended');assert.ok(done.playedSeconds>=4.8);assert.equal(s.record.writes.length,0);await s.context.close();
+  await s.page.waitForTimeout(1100);assert.equal(await layer(s).count(),1);await shot(s,'desktop-full-video');
+  const alpha=await s.page.evaluate(()=>window.__fadeIn);assert.ok(alpha[0].opacity<.2);assert.ok(alpha[1].opacity>alpha[0].opacity&&alpha[1].opacity<.9);assert.ok(alpha[2].opacity>.95);
+  await s.page.waitForFunction(()=>window.__introVideoEnd);const logo=await s.page.evaluate(()=>window.__introVideoEnd);assert.equal(logo.phase,'hold');assert.match(logo.source,/cinematic-v2\/desktop\.mp4/);assert.ok(Math.abs(logo.duration-10)<.05);assert.ok(logo.playedSeconds>=9.95);assert.ok(logo.opacity>.99);assert.equal(await s.page.locator('.nexus-intro-wordmark').count(),0);await shot(s,'desktop-final-logo');await ended(s);
+  const done=await s.page.evaluate(()=>window.__introFinishes.at(-1));assert.equal(done.reason,'ended');assert.ok(done.at-logo.at>=1750,'Затухание должно завершиться после финального кадра');assert.equal(s.record.writes.length,0);s.record.fullPlayback={...done,logo,fadeIn:alpha};await s.context.close();
  });
  await check('Mobile: 8 секунд целиком, открытие без сессии и независимо от окончания проверки Account',async()=>{
   const s=await session({surface:'entry',guest:true,width:390,height:844,accountDelay:2500});await s.open();await playing(s);assert.equal(await layer(s).getAttribute('data-variant'),'mobile');await shot(s,'mobile-before-login');await ended(s);
-  const done=await s.page.evaluate(()=>window.__introFinishes.at(-1));assert.equal(done.reason,'ended');assert.ok(done.playedSeconds>=7.8);assert.equal(await s.page.locator('[data-login]').count(),1);await s.context.close();
+  const done=await s.page.evaluate(()=>window.__introFinishes.at(-1)),last=await s.page.evaluate(()=>window.__introVideoEnd);assert.equal(done.reason,'ended');assert.ok(done.playedSeconds>=8);assert.match(last.source,/cinematic-v1\/mobile\.mp4/);assert.ok(done.at-last.at>=1750);assert.equal(await s.page.locator('[data-login]').count(),1);s.record.fullPlayback={...done,logo:last};await s.context.close();
+ });
+ await check('WebM Desktop: реальные10секунд и работа Пропустить во время удержания финального кадра',async()=>{
+  const s=await session({surface:'entry',guest:true,codec:'webm'});await s.open();await playing(s);await s.page.waitForFunction(()=>window.__introVideoEnd);
+  const end=await s.page.evaluate(()=>window.__introVideoEnd);assert.match(end.source,/cinematic-v2\/desktop\.webm/);assert.ok(Math.abs(end.duration-10)<.05);assert.ok(end.playedSeconds>=9.95);
+  await s.page.locator('.nexus-intro-skip').click();await ended(s);assert.equal(await s.page.evaluate(()=>window.__introFinishes.at(-1).reason),'skip');await s.context.close();
  });
  await check('Задержка видео 3.5 секунды не даёт секундную вспышку; Nexus загружается параллельно',async()=>{
   const s=await session({mediaDelay:3500});await s.open();await ready(s);assert.equal(await layer(s).count(),1);assert.notEqual(await layer(s).getAttribute('data-playback'),'poster');await playing(s);await shot(s,'slow-network-full-video');await ended(s);assert.equal(await s.page.evaluate(()=>window.__introFinishes.at(-1).reason),'ended');await s.context.close();

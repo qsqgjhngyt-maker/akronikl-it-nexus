@@ -1,6 +1,7 @@
 // Настройка устройства, не часть аккаунта, прогресса или Cloud Sync.
 export const INTRO_KEY='akronikl:it-nexus:startup-intro:v1';
-export const INTRO_VERSION='cinematic-v1';
+export const INTRO_VERSION='cinematic-v2';
+export const INTRO_MEDIA=Object.freeze({desktop:{version:'cinematic-v2',mp4Codec:'avc1.4D4028',seconds:10},mobile:{version:'cinematic-v1',mp4Codec:'avc1.4D401F',seconds:8.033333}});
 export const INTRO_HANDOFF_KEY='akronikl:it-nexus:startup-intro:auth-handoff:v1';
 const defaults=()=>({schema:1,enabled:true,simplified:false,seen:''});
 export function readIntroPreference(storage){

@@ -16,3 +16,6 @@ test('Подмена файла, traversal и расширение receipt от�
 test('Серверный BFF, bootstrap, OAuth, runtime и Content побайтно прежние',async()=>{
  for(const f of ['core/bootstrap.js','server-access/bff/server.mjs','server-access/image/bff/server.mjs','server-access/public/oauth-client.js','pwa/runtime-manifest.js','courses/cpp/manifest.json'])assert.deepEqual(await readFile(new URL(f,root)),execFileSync('git',['show',FIX_BASE+':'+f],{cwd:root,maxBuffer:128*1024*1024}));
 });
+test('Вертикальные MP4/WebM/постер побайтно прежние; новый Desktop существует отдельной версией',async()=>{
+ for(const ext of ['mp4','webm','jpg']){const file='intro-media/cinematic-v1/mobile.'+ext;assert.deepEqual(await readFile(new URL(file,root)),execFileSync('git',['show',FIX_BASE+':'+file],{cwd:root,maxBuffer:128*1024*1024}));assert.ok((await readFile(new URL('intro-media/cinematic-v2/desktop.'+ext,root))).length>0)}
+});
