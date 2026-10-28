@@ -1,6 +1,8 @@
 // Настройка устройства, не часть аккаунта, прогресса или Cloud Sync.
 export const INTRO_KEY='akronikl:it-nexus:startup-intro:v1';
-export const INTRO_VERSION='cinematic-v1';
+export const INTRO_VERSION='cinematic-v2';
+export const INTRO_MEDIA=Object.freeze({desktop:{version:'cinematic-v2',mp4Codec:'avc1.4D4028',seconds:10},mobile:{version:'cinematic-v1',mp4Codec:'avc1.4D401F',seconds:8.033333}});
+export const INTRO_HANDOFF_KEY='akronikl:it-nexus:startup-intro:auth-handoff:v1';
 const defaults=()=>({schema:1,enabled:true,simplified:false,seen:''});
 export function readIntroPreference(storage){
  try{
@@ -17,5 +19,16 @@ export function saveIntroPreference(storage,value){
 }
 export function introVariant(width,height){return height>width&&width<=1200?'mobile':'desktop'}
 export function staticIntro({simplified,reducedMotion,online,connection,deviceMemory,hardwareConcurrency}){
- return simplified||reducedMotion||online===false||connection?.saveData===true||/^(slow-)?2g$/.test(connection?.effectiveType||'')||connection?.effectiveType==='3g'||(deviceMemory>0&&deviceMemory<=2)||(hardwareConcurrency>0&&hardwareConcurrency<=2);
+ // Число ядер и оценка 3G не доказывают неспособность декодировать ролик.
+ return simplified||reducedMotion||online===false||connection?.saveData===true;
+}
+// Только UX-подсказка внутри вкладки; она не подтверждает Account или сессию.
+export function readIntroHandoff(storage,now=Date.now()){
+ try{const raw=storage.getItem(INTRO_HANDOFF_KEY);if(!raw||raw.length>256)return false;const v=JSON.parse(raw);return v?.schema===1&&v.kind==='auth-navigation'&&Number.isSafeInteger(v.at)&&v.at<=now&&now-v.at<900000}catch{return false}
+}
+export function saveIntroHandoff(storage,now=Date.now()){
+ try{storage.setItem(INTRO_HANDOFF_KEY,JSON.stringify({schema:1,kind:'auth-navigation',at:now}));return true}catch{return false}
+}
+export function consumeIntroHandoff(storage,now=Date.now()){
+ const valid=readIntroHandoff(storage,now);try{storage.removeItem(INTRO_HANDOFF_KEY)}catch{}return valid;
 }

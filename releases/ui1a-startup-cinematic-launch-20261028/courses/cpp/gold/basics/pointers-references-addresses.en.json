@@ -1,0 +1,367 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.cpp-basics",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.pointers-references-addresses",
+  "sessions": 2,
+  "prerequisiteIds": [
+    "cpp.variables-scope",
+    "cpp.data-types",
+    "cpp.increment-decrement-sizeof-conditional"
+  ],
+  "sourceRefs": [
+    "CPP20-REFERENCES",
+    "CPP20-POINTERS",
+    "CPP20-UNARY",
+    "CPP20-LIFETIME",
+    "CPP-GUIDELINES"
+  ],
+  "title": "Objects, copies, references, and pointers: links without unsafe memory",
+  "lead": "Trace a live object through several access paths and distinguish changing an address from changing a value.",
+  "why": "References and pointers enable shared access to objects. Their power requires a precise agreement about object existence, access paths, and valid lifetime. We begin with automatic objects without new/delete or pointer arithmetic.",
+  "objectives": [
+    "Distinguish a value copy, reference, and pointer.",
+    "Read T&, T*, &object, and *pointer in context.",
+    "Check nullptr before access and account for lifetime.",
+    "Explain read-only access through const int* and const int&.",
+    "Draw symbolic links without relying on actual addresses."
+  ],
+  "prerequisites": [
+    "Copying and assignment, scope and lifetime, bool, and simple if from Module 1.",
+    "The previous lesson’s expression distinctions and tracing one update at a time."
+  ],
+  "concepts": [
+    {
+      "term": "Reference T&",
+      "definition": "In our declarations, an alias of an existing object; it needs initialization and cannot be reseated."
+    },
+    {
+      "term": "Pointer T*",
+      "definition": "A separate object holding a pointer value, such as the address of a suitable live T or nullptr."
+    },
+    {
+      "term": "Address-of &",
+      "definition": "In &value, produces a pointer to the value object."
+    },
+    {
+      "term": "Indirection *",
+      "definition": "In *pointer, refers to the pointed-to object; access needs a valid pointer and valid lifetime."
+    },
+    {
+      "term": "nullptr",
+      "definition": "A null pointer value; it must not be dereferenced."
+    },
+    {
+      "term": "Dangling pointer",
+      "definition": "A pointer whose former object has ended its lifetime; being non-null does not prove safe access."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Session 1. Three relationships to a value",
+      "paragraphs": [
+        "After int value{10};, int copy = value; creates an independent int. int& alias = value; creates a reference to the original object: alias is another way to refer to value, not a snapshot. alias = 12; changes value. Contrast this with lesson 5 copying.",
+        "In a declaration, & beside a type introduces a reference. In int* pointer = &value;, * beside the type declares a pointer and &value on the right obtains an address. Symbols have different roles in declarations and expressions; read the complete construct."
+      ]
+    },
+    {
+      "title": "A pointer is separate; an address is not a stock value",
+      "paragraphs": [
+        "pointer holds a pointer value, while *pointer refers to the target object. *pointer = 15; changes value. pointer = &second; changes the pointer itself so access now leads to second. These are different operations and different state-journal events.",
+        "A diagram may name objects A and B and draw pointer → A. These are symbolic labels rather than numeric addresses. Actual addresses depend on the run, target, and environment and must not become expected stdout or stable learning-object identifiers."
+      ]
+    },
+    {
+      "title": "A reference is not reseated",
+      "paragraphs": [
+        "After int& alias = first;, alias = second; copies second’s current value into first rather than switching the reference. selected = &second; really does reseat a pointer. Observe both original objects when testing or the distinction can remain invisible.",
+        "A reference is useful when access consistently names a known live object. A pointer can represent absence or selection, but does not by itself mean ownership. Neither references nor pointers here create or delete their targets."
+      ]
+    },
+    {
+      "title": "Session 2. nullptr and lifetime",
+      "paragraphs": [
+        "int* selected{nullptr}; explicitly means no selected object. Check selected != nullptr before reading *selected. The familiar if/else chooses a safe branch: absent when null, or the value when present. This checks absence rather than proving every aspect of pointer validity.",
+        "A non-null pointer can dangle after its target leaves an inner block. Checking nullptr does not extend lifetime. Every dereference here targets a live object; null and dangling pointers are never dereferenced, even as a bad experiment. Record that data outlive all access paths in your project."
+      ]
+    },
+    {
+      "title": "const restricts a particular access path",
+      "paragraphs": [
+        "const int* observer = &value; permits reading *observer but not changing value through this pointer. The original value can remain an ordinary int: value = 14; is valid and the observer sees 14. Likewise const int& view prohibits mutation through view. Read-only access does not imply that the source object can never change.",
+        "Do not remove const through a guessed cast to silence a diagnostic. The negative example deliberately requires a build rejection when writing through const int*. A constant pointer itself, int* const, can be studied later; the introductory contract focuses on const before int."
+      ]
+    },
+    {
+      "title": "An object journal and checks",
+      "paragraphs": [
+        "In the laboratory, stock and snapshot are two objects; selectedStock references stock and stockPointer points to it. Subtracting 3 through the reference and adding 2 through the pointer gives 9 while the snapshot remains 10. Do not invent a separate stored-value object for selectedStock; the reference accesses stock.",
+        "Repeat the operations from initial values 3 and 20, safely within range. Explain the null example separately without forcing a crash. Preserve both a legend-labeled diagram and stdout: a picture alone does not prove execution, and stdout alone does not explain object relationships."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "copy-reference-pointer",
+      "title": "Copy, alias, and pointer",
+      "purpose": "Distinguish a shared object from a snapshot.",
+      "code": "#include <iostream>\n\nint main() {\n    int value{10};\n    int copy = value;\n    int& alias = value;\n    int* pointer = &value;\n    alias = 12;\n    *pointer = 15;\n    std::cout << value << ' ' << copy << ' ' << alias << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "15 10 15\n",
+      "steps": [
+        "copy gets an independent value 10.",
+        "alias changes the original to 12.",
+        "*pointer changes that same object to 15; copy stays 10."
+      ]
+    },
+    {
+      "id": "pointer-selection",
+      "title": "Reseating a pointer",
+      "purpose": "Distinguish address changes from value copies.",
+      "code": "#include <iostream>\n\nint main() {\n    int first{5};\n    int second{9};\n    int* selected = &first;\n    selected = &second;\n    *selected = 7;\n    std::cout << first << ' ' << second << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "5 7\n",
+      "steps": [
+        "selected initially points to first.",
+        "selected = &second changes the target.",
+        "*selected=7 changes only second."
+      ]
+    },
+    {
+      "id": "null-guard",
+      "title": "Safe absence",
+      "purpose": "Handle nullptr without nonexistent-object access.",
+      "code": "#include <iostream>\n\nint main() {\n    int* selected{nullptr};\n    if (selected != nullptr) {\n        std::cout << *selected << '\\n';\n    } else {\n        std::cout << \"absent\\n\";\n    }\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "absent\n",
+      "steps": [
+        "selected is explicitly null.",
+        "The access condition is false.",
+        "Only the absent branch executes."
+      ]
+    },
+    {
+      "id": "const-view",
+      "title": "An observer without write access",
+      "purpose": "Separate a const access path from source immutability.",
+      "code": "#include <iostream>\n\nint main() {\n    int value{10};\n    const int* observer = &value;\n    const int& view = value;\n    value = 14;\n    std::cout << *observer << ' ' << view << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "14 14\n",
+      "steps": [
+        "Both access paths refer to value.",
+        "The ordinary value name changes the object to 14.",
+        "Both observers read the updated value."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Assigning through a reference",
+      "action": "Use first=5, second=9, int& alias=first; then alias=second;.",
+      "prediction": "Both numbers become 9, but the reference still names first.",
+      "verification": "Change second to 2 in a separate statement; first stays 9."
+    },
+    {
+      "title": "A shared object and a snapshot",
+      "action": "Change initial value=10 to 20 while retaining later assignments to 12 and 15.",
+      "prediction": "Output becomes 15 20 15.",
+      "verification": "Explain how copy records its creation-time value."
+    },
+    {
+      "title": "Presence instead of absence",
+      "action": "In the null example declare int stock{6}; before selected and initialize selected=&stock.",
+      "prediction": "Output becomes 6 instead of absent; stock is alive when read.",
+      "verification": "Do not return a dead local object’s address or test dangling pointers by reading."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A reference did not reseat",
+      "cause": "Assignment through a reference changes the object.",
+      "fix": "Use the explained pointer form when target selection is needed."
+    },
+    {
+      "symptom": "Non-null does not establish safety",
+      "cause": "The target lifetime was ignored.",
+      "fix": "Establish the lifetime contract before access, without unsafe probe reads."
+    },
+    {
+      "symptom": "A const observer saw an updated value",
+      "cause": "Read-only access was mistaken for source immutability.",
+      "fix": "Distinguish object properties from access permissions."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "write-through-const",
+      "title": "Intentional: writing through const int*",
+      "code": "#include <iostream>\n\nint main() {\n    int value{10};\n    const int* observer = &value;\n    *observer = 20;\n}\n",
+      "expectation": "compile-error",
+      "explanation": "This access path is read-only."
+    },
+    {
+      "id": "uninitialized-reference",
+      "title": "Intentional: a reference without an object",
+      "code": "#include <iostream>\n\nint main() {\n    int& alias;\n}\n",
+      "expectation": "compile-error",
+      "explanation": "An ordinary local reference needs initialization."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Draw value, copy, alias, and pointer after the first example.",
+      "criteria": "Show two int objects, a reference, and a separate pointer; use symbolic addresses.",
+      "hint": "Draw objects first, then access paths."
+    },
+    {
+      "level": "applied",
+      "task": "Reseat a pointer between two live ints and change only the second.",
+      "criteria": "The first stays unchanged, the second changes, and null is not read.",
+      "hint": "Distinguish p=&second from *p=number."
+    },
+    {
+      "level": "transfer",
+      "task": "Describe a non-owning selected-data contract: when it may be absent and how long it lives.",
+      "criteria": "Specify absence, checks, and lifetime without new/delete.",
+      "hint": "A non-null address alone is not proof."
+    }
+  ],
+  "laboratory": {
+    "title": "One stock object, several access paths",
+    "challenge": "Create a snapshot, reference, and pointer. Sell 3 through the reference and add 2 through the pointer. The snapshot must preserve its initial value.",
+    "starterCode": "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    std::cout << \"stock=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << snapshot << '\\n';\n    return 0;\n}\n",
+    "starterExpectedStdout": "stock=10\nsnapshot=10\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    int& selectedStock = stock;\n    int* stockPointer = &stock;\n    selectedStock -= 3;\n    *stockPointer += 2;\n    std::cout << \"stock=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << snapshot << '\\n';\n    std::cout << \"alias=\" << selectedStock << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "stock=9\nsnapshot=10\nalias=9\n"
+      }
+    ],
+    "steps": [
+      "Draw relationships before running.",
+      "Separate the updates into statements.",
+      "Compare final stock and snapshot.",
+      "Repeat with initial values 3 and 20."
+    ],
+    "rubric": [
+      "Every dereference targets live stock.",
+      "The copy is not presented as an alias.",
+      "Provide a legend, values, and actual stdout.",
+      "No new/delete, pointer arithmetic, or unsafe reads."
+    ],
+    "verificationVariants": [
+      {
+        "id": "initial-three",
+        "replace": [
+          {
+            "from": "int stock{10};",
+            "to": "int stock{3};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "stock=2\nsnapshot=3\nalias=2\n"
+      },
+      {
+        "id": "initial-twenty",
+        "replace": [
+          {
+            "from": "int stock{10};",
+            "to": "int stock{20};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "stock=19\nsnapshot=20\nalias=19\n"
+      }
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What does *p=7 do for a valid int* p?",
+      "answers": [
+        "Changes the pointed-to object",
+        "Creates a new int",
+        "Always changes p’s address"
+      ],
+      "correctIndex": 0,
+      "explanation": "Indirection refers to the target object."
+    },
+    {
+      "question": "Does alias=second reseat int& alias=first?",
+      "answers": [
+        "Yes",
+        "No, it copies the value into first",
+        "Only for zero"
+      ],
+      "correctIndex": 1,
+      "explanation": "An ordinary reference is not reseated."
+    },
+    {
+      "question": "Does p!=nullptr prove the target is alive?",
+      "answers": [
+        "Yes",
+        "No, lifetime needs a separate contract",
+        "Only on a PC"
+      ],
+      "correctIndex": 1,
+      "explanation": "A dangling pointer can remain non-null."
+    },
+    {
+      "question": "Can const int* observe a change to an ordinary source int?",
+      "answers": [
+        "Yes, const restricts writes through this path",
+        "No, the source is frozen forever",
+        "Only through copying"
+      ],
+      "correctIndex": 0,
+      "explanation": "Access-path properties differ from source-object properties."
+    }
+  ],
+  "reflection": [
+    "Why can an address not be compared with one fixed expected number across runs?",
+    "What conditions beyond non-nullness are needed to read *p?"
+  ],
+  "bridge": "The final lesson combines access paths with input contracts, stream state, and a reproducible module project.",
+  "visualization": {
+    "kind": "toolchain",
+    "title": "One object, a copy, and two access paths",
+    "description": "Addresses and arrows are symbolic rather than measured memory. All targets are alive.",
+    "steps": [
+      {
+        "title": "value = 10",
+        "description": "Object A holds 10."
+      },
+      {
+        "title": "copy = 10",
+        "description": "A separate B is created without a mutation link."
+      },
+      {
+        "title": "alias → A",
+        "description": "A write through the reference changes A to 12."
+      },
+      {
+        "title": "pointer → A",
+        "description": "A write through the pointer changes A to 15."
+      },
+      {
+        "title": "15 10 15",
+        "description": "value and alias denote A while copy stores B."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "What does *p mean when p is a valid int*?",
+    "answers": [
+      "It obtains p's address",
+      "It accesses the int object at the address stored in p",
+      "It creates a new int"
+    ],
+    "correctIndex": 1
+  }
+}

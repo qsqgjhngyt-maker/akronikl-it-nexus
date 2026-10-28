@@ -31,7 +31,7 @@ const key='SYNTHETIC_OFFLINE_CLOUD_HMAC_KEY_ONLY_2026';
 const env={DB,CLOUD_SESSION_ENABLED:'true',CLOUD_SERVICE_KEY:key,AUTH_MODE:'nexus-token',ALPHA_ADMISSION_ENABLED:'true'};
 let cloudCalls=0,offline=false,context,vaultId,projectId;
 const cloud=createCloudSessionHandler({env:{CLOUD_SESSION_PROXY_ENABLED:'true',PRIVATE_GATEWAY_CONFIRMED:'true',CLOUD_SERVICE_KEY:key},fetchImpl:async(url,options)=>{assert.equal(url,WORKER_ORIGIN+'/api/v2/cloud/internal');return worker.fetch(new Request(url,options),env,{})}});
-const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.webp')?'image/webp':f.endsWith('.md')?'text/markdown':'text/html';
+const mime=f=>f.endsWith('.mp4')?'video/mp4':f.endsWith('.webm')?'video/webm':f.endsWith('.jpg')?'image/jpeg':f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.webp')?'image/webp':f.endsWith('.md')?'text/markdown':'text/html';
 const checks=[],failures=[],requests=[],errors=[],deniedInfrastructure=[],appRequests=[];
 const runtimeNames=['clang-bundle.js','runno-entry.js','llvm.core.wasm','llvm.core2.wasm','llvm.core3.wasm','llvm.core4.wasm','llvm-resources.tar'];
 const server=https.createServer({key:await readFile(path.join(tls,'key.pem')),cert:await readFile(path.join(tls,'cert.pem'))},async(req,res)=>{
@@ -69,12 +69,21 @@ async function launch(){
 }
 async function check(name,fn){const start=performance.now();await fn();checks.push({name,status:'PASS',durationMs:Math.round(performance.now()-start)});console.log('PASS '+name)}
 let page;
+async function finishStartup(){
+ // Реальный пользователь закрывает launch overlay перед заполнением форм.
+ // Прежняя проверка программно печатала в inert фоне модального intro.
+ if(await page.locator('script[src*="startup-intro-launch.js"]').count()){
+  await page.waitForFunction(()=>Boolean(document.querySelector('link[data-startup-intro-style]')?.sheet));
+  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+ }
+ const layer=page.locator('[data-startup-intro]');if(await layer.count()){await layer.locator('.nexus-intro-skip').click();await layer.waitFor({state:'detached'})}
+}
 try{
  page=await launch();page.setDefaultTimeout(30000);await page.goto(origin+'/');
  const cdp=await context.newCDPSession(page);await cdp.send('WebAuthn.enable');await cdp.send('WebAuthn.addVirtualAuthenticator',{options:{protocol:'ctap2',transport:'internal',hasResidentKey:true,hasUserVerification:true,isUserVerified:true,automaticPresenceSimulation:true}});
  await page.evaluate(async invitation=>{const client=await import('/account/access/passkey-client.js');await client.register(invitation)},f.invitation);
  f.enableControl();
- await page.goto(origin+'/index.html#view=offline');await page.locator('[data-offline-center]').waitFor();
+ await page.goto(origin+'/index.html#view=offline');await page.locator('[data-offline-center]').waitFor();await finishStartup();
  await check('actual account gate and offline-center UI prepare only personal data under local encryption',async()=>{
   projectId=await page.evaluate(async generation=>{
    const s=await import('/releases/'+generation+'/project-studio/project-store.js'),state=await import('/releases/'+generation+'/core/storage.js');
@@ -94,7 +103,7 @@ try{
   await context.close();page=await launch();await page.goto(origin+'/#copy='+vaultId);await page.locator('#localPhrase').fill(phrase);await page.locator('#unlockLocal button').click();await page.locator('#psNewProject').waitFor();await page.goto(origin+'/#project='+encodeURIComponent(projectId));await page.locator('#editor').waitFor();assert.match(await page.locator('#editor').inputValue(),/OFFLINE_CLOUD_EDIT/);
  });
  await check('network return preserves offline edits; explicit same-account UI import updates local project without Cloud traffic',async()=>{
-  offline=false;await page.goto(origin+'/index.html#view=offline');await page.locator('[data-local-import]').waitFor();
+  offline=false;await page.goto(origin+'/index.html#view=offline');await page.locator('[data-local-import]').waitFor();await finishStartup();
   const form=page.locator('[data-local-import]');await form.locator('select').selectOption(vaultId);await form.locator('input').fill(phrase);await form.locator('button').click();await page.waitForFunction(()=>document.querySelector('[data-local-status]')?.textContent.includes('Изменения перенесены.'));
   const source=await page.evaluate(async({generation,projectId})=>(await import('/releases/'+generation+'/project-studio/project-store.js')).getProject(projectId).workspace.files[0].content,{generation,projectId});assert.match(source,/OFFLINE_CLOUD_EDIT/);assert.equal(cloudCalls,0);
  });

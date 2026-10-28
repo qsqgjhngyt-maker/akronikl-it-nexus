@@ -1,0 +1,370 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.for-loop",
+  "sessions": 2,
+  "learningOrder": 2,
+  "prerequisiteIds": [
+    "cpp.if-else-switch"
+  ],
+  "sourceRefs": [
+    "CPP20-ITERATION",
+    "CPP20-SEQUENCING"
+  ],
+  "title": "The for loop: invariants, boundaries, and cost",
+  "lead": "Repeat a known number of steps and explain the state before and after every iteration.",
+  "why": "Processing measurements and batches requires more than repetition: justify the iteration count, valid indices, and accumulator range.",
+  "objectives": [
+    "Explain: The three header parts",
+    "Trace: A half-open interval rather than a guess",
+    "Justify: Accumulators and ranges",
+    "Implement and verify the lab against its exact contract.",
+    "Identify a common defect: Do not reset the sum in the body. Test < versus <= only with a safe scalar counter."
+  ],
+  "prerequisites": [
+    "Modules 1–2: expressions, comparisons, types, references, and checked cin.",
+    "Follow the prerequisite links: cpp.if-else-switch. New constructs are introduced before the assignment."
+  ],
+  "concepts": [
+    {
+      "term": "Invariant",
+      "definition": "a statement preserved by each loop iteration."
+    },
+    {
+      "term": "Termination variant",
+      "definition": "a bounded quantity that decreases on every iteration."
+    },
+    {
+      "term": "Iteration",
+      "definition": "one execution of a loop body."
+    },
+    {
+      "term": "Accumulator",
+      "definition": "state collecting the result of multiple steps."
+    },
+    {
+      "term": "Half-open range",
+      "definition": "a range including its left bound and excluding its right bound."
+    },
+    {
+      "term": "Off-by-one",
+      "definition": "a one-step error caused by an incorrect boundary."
+    }
+  ],
+  "sections": [
+    {
+      "title": "The three header parts",
+      "paragraphs": [
+        "for(init; condition; update) runs init once and tests condition before every iteration. update follows the body. If the first condition is false, the body never runs, making n=0 a natural case.",
+        "In for(int i=0; i<n; ++i), i exists in the condition, body, and update but not after the loop. It denotes the next index to process. The iteration count is n for a bounded nonnegative n."
+      ]
+    },
+    {
+      "title": "A half-open interval rather than a guess",
+      "paragraphs": [
+        "The index range [0,n) includes 0 and excludes n, giving exactly n positions. Values 1 through n can use i=1; i<=n, but mixing the first version’s start with the second version’s condition changes the count.",
+        "For n=3, the body sees i=0,1,2; the i=3 check terminates the loop. That final value is tested but not processed. Confusing a check with an execution often causes an off-by-one error."
+      ]
+    },
+    {
+      "title": "An invariant as a short proof",
+      "paragraphs": [
+        "For the sum of n integers starting at zero, the invariant is: before each iteration, sum contains the sum of [0,i). At i=0 the range is empty, so sum=0. After sum+=i and ++i, the claim holds for the larger boundary.",
+        "When i==n, the invariant yields the required result. Prove termination separately: n-i is nonnegative before the body and decreases by one. A correct invariant cannot guarantee termination if the counter never advances."
+      ]
+    },
+    {
+      "title": "Accumulators and ranges",
+      "paragraphs": [
+        "Initialize an accumulator before the loop and update it inside. Resetting it on every iteration retains only the final contribution. With n<=1000 and values between -1000 and 1000, the absolute sum is at most 1000000.",
+        "Use long long for broader bounds and justify intermediate values before addition. A larger type does not make unbounded input safe. Handle an extraction failure inside the loop instead of repeatedly adding an old value."
+      ]
+    },
+    {
+      "title": "break and continue",
+      "paragraphs": [
+        "break exits the nearest loop. continue skips the rest of the body but still performs a for loop’s update. In filtering it can separate an unsuitable element, but it must not bypass the operation that obtains the next item.",
+        "Nested loops have separate counters; break exits only the inner loop. A complete r by c traversal performs r*c iterations. Establish dimension bounds before multiplying and estimating cost."
+      ]
+    },
+    {
+      "title": "Measuring work",
+      "paragraphs": [
+        "A linear traversal performs work proportional to n: O(n), with O(1) extra memory for a fixed number of accumulators. This describes growth, not milliseconds or an exact instruction count.",
+        "Test n=0, n=1, the maximum n, and a failure midway through input. For a small n, record i, the condition, and sum before and after the body. Next, while will handle a stream whose length is not given in advance."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "prefix-sum",
+      "title": "Summing a half-open range",
+      "purpose": "Before a step, sum contains the sum of [0,i).",
+      "code": "#include <iostream>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    int sum{};\n    for (int i = 0; i < n; ++i) { sum += i; }\n    std::cout << sum << '\\n';\n}\n",
+      "stdin": "5",
+      "expectedStdout": "10\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": [
+        {
+          "stdin": "0",
+          "stdout": "0\n"
+        },
+        {
+          "stdin": "1",
+          "stdout": "0\n"
+        },
+        {
+          "stdin": "100",
+          "stdout": "4950\n"
+        }
+      ]
+    },
+    {
+      "id": "continue",
+      "title": "Skipping odd values",
+      "purpose": "continue does not skip the for update.",
+      "code": "#include <iostream>\nint main() {\n    int sum{};\n    for (int i = 1; i <= 6; ++i) {\n        if (i % 2 != 0) { continue; }\n        sum += i;\n    }\n    std::cout << sum << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "12\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Predict before running",
+      "action": "Trace the first worked example step by step, then run all of its cases.",
+      "prediction": "Before each iteration state which portion is already processed.",
+      "verification": "Compare every state transition and stdout; record a mismatch as a hypothesis rather than revising the expectation afterward."
+    },
+    {
+      "title": "A counterexample to a wrong rule",
+      "action": "Using the second example and theory, construct a minimal safe case for this defect: Do not reset the sum in the body. Test < versus <= only with a safe scalar counter.",
+      "prediction": "The correct and incorrect models should make distinguishable predictions without executing undefined behaviour.",
+      "verification": "Preserve the prediction, actual output, and an explanation of the violated rule."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A boundary result differs",
+      "cause": "Do not reset the sum in the body. Test < versus <= only with a safe scalar counter.",
+      "fix": "Before each iteration state which portion is already processed."
+    },
+    {
+      "symptom": "One case works and the next fails",
+      "cause": "The invariant or empty/malformed-input policy is unspecified.",
+      "fix": "Return to the lab contract and check every published case independently."
+    },
+    {
+      "symptom": "The environment rejected execution",
+      "cause": "Build failure, unsupported syntax, and quotas are different causes.",
+      "fix": "Keep the phase and diagnostic; exceptions are unsupported and environment limits are not learner knowledge failures."
+    }
+  ],
+  "diagnosticExamples": [],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Manually trace the first example and explain every expected output line.",
+      "criteria": "Before each iteration state which portion is already processed.",
+      "hint": "Identify input, state, and observable output first."
+    },
+    {
+      "level": "basic",
+      "task": "Choose the lab’s empty or minimum valid case and its nearest invalid counterpart.",
+      "criteria": "Derive both expectations before execution and connect each to a contract clause.",
+      "hint": "Do not reset the sum in the body. Test < versus <= only with a safe scalar counter."
+    },
+    {
+      "level": "applied",
+      "task": "Read n from 0 to 100 followed by exactly n integers from -1000 to 1000; print their sum and positive count. Reject extra tokens and incomplete data as invalid.",
+      "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
+      "hint": "Before each iteration state which portion is already processed."
+    },
+    {
+      "level": "applied",
+      "task": "Compare the two worked examples: which assumptions differ and why can they not be silently transferred into the lab?",
+      "criteria": "State inputs, state, and at least one applicability boundary for each example.",
+      "hint": "break exits the nearest loop. continue skips the rest of the body but still performs a for loop’s update. In filtering it can separate an unsuitable element, but it must not bypass the operation that obtains the next item."
+    },
+    {
+      "level": "transfer",
+      "task": "Count sign changes between adjacent nonzero measurements and explain which previous-step state is needed.",
+      "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour.",
+      "hint": "A linear traversal performs work proportional to n: O(n), with O(1) extra memory for a fixed number of accumulators. This describes growth, not milliseconds or an exact instruction count."
+    },
+    {
+      "level": "transfer",
+      "task": "Give a mini-defence: explain a bound, complexity, and a counterexample to a wrong implementation without running the reference.",
+      "criteria": "Connect the explanation to specific lines of your source and actual tests.",
+      "hint": "Before each iteration state which portion is already processed."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: The for loop: invariants, boundaries, and cost",
+    "challenge": "Read n from 0 to 100 followed by exactly n integers from -1000 to 1000; print their sum and positive count. Reject extra tokens and incomplete data as invalid.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    long long sum{};\n    int positive{};\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        sum += value;\n        if (value > 0) { ++positive; }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << sum << ' ' << positive << '\\n';\n}\n",
+    "cases": [
+      {
+        "stdin": "0",
+        "stdout": "0 0\n"
+      },
+      {
+        "stdin": "1 -1",
+        "stdout": "-1 0\n"
+      },
+      {
+        "stdin": "4 -2 0 3 4",
+        "stdout": "5 2\n"
+      },
+      {
+        "stdin": "2 1000 1000",
+        "stdout": "2000 2\n"
+      },
+      {
+        "stdin": "2 1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 2 3",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "101",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1001",
+        "stdout": "invalid\n"
+      }
+    ],
+    "referenceFiles": {},
+    "starterFiles": {},
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: Before each iteration state which portion is already processed.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "Before each iteration state which portion is already processed.",
+      "Do not reset the sum in the body. Test < versus <= only with a safe scalar counter.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "How many times does for(i=0;i<3;++i) execute?",
+      "answers": [
+        "Three",
+        "Two",
+        "Four"
+      ],
+      "correctIndex": 0,
+      "explanation": "The body sees i=0,1,2; i=3 is only tested."
+    },
+    {
+      "question": "What is the sum of [0,0)?",
+      "answers": [
+        "It requires a[0]",
+        "1",
+        "0"
+      ],
+      "correctIndex": 2,
+      "explanation": "An empty sum requires no element access."
+    },
+    {
+      "question": "Where is a total sum initialized?",
+      "answers": [
+        "Inside every iteration",
+        "Before the loop",
+        "After printing"
+      ],
+      "correctIndex": 1,
+      "explanation": "Resetting in the body loses previous terms."
+    },
+    {
+      "question": "Does for execute its update after continue?",
+      "answers": [
+        "Yes",
+        "Only after break",
+        "No"
+      ],
+      "correctIndex": 0,
+      "explanation": "continue skips the body remainder and then update executes."
+    },
+    {
+      "question": "What is needed to accept this lab?",
+      "answers": [
+        "Only a completed flag",
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation"
+      ],
+      "correctIndex": 2,
+      "explanation": "A progress flag is not evidence of independent mastery."
+    }
+  ],
+  "reflection": [
+    "Before each iteration state which portion is already processed.",
+    "Count sign changes between adjacent nonzero measurements and explain which previous-step state is needed.",
+    "Which case refutes the wrong rule and what do your checks still not establish?"
+  ],
+  "bridge": "Next: while and do while: finite streams and termination. Preserve the lab and its verification table.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Stepwise map: The for loop: invariants, boundaries, and cost",
+    "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+    "steps": [
+      {
+        "title": "The three header parts",
+        "description": "for(init; condition; update) runs init once and tests condition before every iteration. update follows the body. If the first condition is false, the body never runs, making n=0 a natural case."
+      },
+      {
+        "title": "A half-open interval rather than a guess",
+        "description": "The index range [0,n) includes 0 and excludes n, giving exactly n positions. Values 1 through n can use i=1; i<=n, but mixing the first version’s start with the second version’s condition changes the count."
+      },
+      {
+        "title": "An invariant as a short proof",
+        "description": "For the sum of n integers starting at zero, the invariant is: before each iteration, sum contains the sum of [0,i). At i=0 the range is empty, so sum=0. After sum+=i and ++i, the claim holds for the larger boundary."
+      },
+      {
+        "title": "Accumulators and ranges",
+        "description": "Initialize an accumulator before the loop and update it inside. Resetting it on every iteration retains only the final contribution. With n<=1000 and values between -1000 and 1000, the absolute sum is at most 1000000."
+      },
+      {
+        "title": "break and continue",
+        "description": "break exits the nearest loop. continue skips the rest of the body but still performs a for loop’s update. In filtering it can separate an unsuitable element, but it must not bypass the operation that obtains the next item."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Which for part normally changes the counter after an iteration?",
+    "answers": [
+      "The third header part",
+      "The main body before the loop",
+      "#include"
+    ],
+    "correctIndex": 0
+  }
+}
