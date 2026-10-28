@@ -1,0 +1,682 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.stacks-queues",
+  "sessions": 4,
+  "learningOrder": 18,
+  "prerequisiteIds": [
+    "cpp.linked-lists",
+    "cpp.standard-sequences"
+  ],
+  "sourceRefs": [
+    "CPP20-ADAPTERS",
+    "CPP20-VECTOR"
+  ],
+  "title": "Стеки, очереди и итоговый каталог команд",
+  "lead": "Выберите LIFO или FIFO, проверьте пустоту и соедините навыки модуля в проверяемом проекте.",
+  "why": "Отмена и обработка очереди имеют разные правила порядка. Стандартные адаптеры выражают эти правила без ручного управления узлами, но не отменяют проверку состояния.",
+  "objectives": [
+    "Объяснить: LIFO и FIFO",
+    "Проследить: Операции и предусловия",
+    "Обосновать: Очередь и выполнение",
+    "Реализовать и проверить лабораторную по точному контракту.",
+    "Выявить типичную ошибку: Не добавляйте историю для rejected. Не читайте front/top у пустого адаптера."
+  ],
+  "prerequisites": [
+    "Module 1–2: выражения, сравнения, типы, ссылки и проверка cin.",
+    "Предыдущие темы по ссылкам: Связанные списки: инварианты узлов и владение, array, vector и span: владелец и представление. Новые конструкции вводятся в теории до задания."
+  ],
+  "concepts": [
+    {
+      "term": "LIFO",
+      "definition": "последним добавлен, первым извлечён."
+    },
+    {
+      "term": "FIFO",
+      "definition": "первым добавлен, первым извлечён."
+    },
+    {
+      "term": "Адаптер",
+      "definition": "интерфейс операций поверх подходящего контейнера."
+    },
+    {
+      "term": "top",
+      "definition": "доступ к верхушке непустого стека."
+    },
+    {
+      "term": "front",
+      "definition": "доступ к началу непустой очереди."
+    },
+    {
+      "term": "Undo-снимок",
+      "definition": "сохранённое прежнее состояние для отмены успешной операции."
+    }
+  ],
+  "sections": [
+    {
+      "title": "LIFO и FIFO",
+      "paragraphs": [
+        "std::stack<T> из <stack> даёт last in, first out: последним добавленный элемент извлекается первым. std::queue<T> из <queue> даёт first in, first out: первым обрабатывается самый ранний элемент. Это дисциплины доступа, а не требования к физическому представлению.",
+        "Оба являются адаптерами над подходящим контейнером. Для учебной очереди не нужно писать связный список заново. Выбор обосновывается требуемым порядком, размером и операциями; произвольный доступ по индексу здесь не предлагается."
+      ]
+    },
+    {
+      "title": "Операции и предусловия",
+      "paragraphs": [
+        "push добавляет, empty проверяет отсутствие элементов, size сообщает количество. У stack top читает верхушку, у queue front — начало, back — конец. Эти операции чтения требуют непустого адаптера.",
+        "pop удаляет, но не возвращает значение. Сначала получите нужное значение через top/front, затем вызовите pop. Не храните ссылку на удаляемый элемент. Пустой pop не является допустимым способом узнать, что данных нет."
+      ]
+    },
+    {
+      "title": "Отмена как история состояний",
+      "paragraphs": [
+        "Для небольшого каталога можно сохранять предыдущую проверенную копию состояния в stack перед успешным изменением. undo восстанавливает top и удаляет его. Отказанная команда не добавляет историю, иначе отмена станет зависеть от ошибок пользователя.",
+        "Копия всего состояния проста, но расходует память пропорционально числу записей на каждый шаг. Хранение обратных операций компактнее и сложнее для доказательства. В проекте выбираем ограниченные снимки и явно фиксируем максимум записей и команд."
+      ]
+    },
+    {
+      "title": "Очередь и выполнение",
+      "paragraphs": [
+        "Парсер проверяет синтаксис команды и помещает её в queue. Исполнитель извлекает front и применяет предметные проверки к текущему состоянию. Валидная по форме команда может быть rejected из-за недостатка запаса в момент выполнения.",
+        "Порядок имеет значение: add перед remove может дать иной результат, чем наоборот. Для воспроизводимости обработайте конечную очередь последовательно и выводите один результат на команду. Параллельность и блокирующие очереди здесь не рассматриваются."
+      ]
+    },
+    {
+      "title": "Интеграция проекта",
+      "paragraphs": [
+        "Итоговый проект использует vector записей, очередь типизированных команд, стек снимков для undo, функции с контрактами и текстовый импорт/экспорт. Список из предыдущей темы остаётся отдельным учебным артефактом с обоснованным сравнением, а не лишней зависимостью каталога.",
+        "Работу разбейте на парсер, предметные операции, формат отчёта и main. Приложение и тестовый драйвер собираются отдельно. Полная оценка включает объяснение решений и собственные тесты; работающий reference не означает, что ученик освоил все навыки."
+      ]
+    },
+    {
+      "title": "Проверка порядка и итоговая защита",
+      "paragraphs": [
+        "Лабораторная подаёт одни значения в stack и queue и сравнивает обратный и исходный порядок. Проверьте пустой набор, один элемент и повторы. Каждый вызов top/front защищён empty, а каждый pop выполняется после чтения.",
+        "Для проекта покажите отказ без изменения, две отмены, пустую историю, испорченный файл и roundtrip сохранённого отчёта. На защите объясните владение, границы и сложность; затем измените одно требование и добавьте проверку. Это доказательство самостоятельного понимания."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "adapters",
+      "title": "Одинаковый ввод, разный порядок",
+      "purpose": "top и front читаются только у непустых адаптеров.",
+      "code": "#include <iostream>\n#include <stack>\n#include <queue>\nint main() {\n    std::stack<int> stack;\n    std::queue<int> queue;\n    for (int value : {1, 2, 3}) { stack.push(value); queue.push(value); }\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n    stack.pop(); queue.pop();\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "3 1\n2 2\n",
+      "steps": [
+        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+      ],
+      "cases": []
+    },
+    {
+      "id": "undo",
+      "title": "История только успешных изменений",
+      "purpose": "Снимок помещается в стек до успешного изменения и извлекается при undo.",
+      "code": "#include <iostream>\n#include <stack>\nint main() {\n    int stock{5};\n    std::stack<int> history;\n    history.push(stock);\n    stock += 3;\n    std::cout << stock << '\\n';\n    if (!history.empty()) { stock = history.top(); history.pop(); }\n    std::cout << stock << ' ' << history.empty() << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "8\n5 1\n",
+      "steps": [
+        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
+        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
+        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Сначала прогноз, затем запуск",
+      "action": "Возьмите первый разобранный пример, выполните трассу по шагам, затем запустите все его случаи.",
+      "prediction": "Порядок извлечения — часть предметного контракта.",
+      "verification": "Сверьте каждый переход состояния и stdout; несовпадение запишите как гипотезу, не меняйте ожидание задним числом."
+    },
+    {
+      "title": "Контрпример к неверному правилу",
+      "action": "Используя второй пример и теорию, составьте минимальный безопасный случай для ошибки: Не добавляйте историю для rejected. Не читайте front/top у пустого адаптера.",
+      "prediction": "Правильная и неверная модели должны дать различимые предсказания без исполнения UB.",
+      "verification": "Сохраните предсказание, фактический вывод и объяснение нарушенного правила."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Результат не совпал на границе",
+      "cause": "Не добавляйте историю для rejected. Не читайте front/top у пустого адаптера.",
+      "fix": "Порядок извлечения — часть предметного контракта."
+    },
+    {
+      "symptom": "Работает один случай, ломается следующий",
+      "cause": "Не выписан инвариант или политика пустого/неверного входа.",
+      "fix": "Вернитесь к контракту лабораторной и проверьте каждый опубликованный случай независимо."
+    },
+    {
+      "symptom": "Среда отклонила запуск",
+      "cause": "Отказ сборки, unsupported syntax и квоты — разные причины.",
+      "fix": "Сохраните фазу и диагностику; исключения не поддерживаются, ограничения среды не выдаются за ошибку знания."
+    }
+  ],
+  "diagnosticExamples": [],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Вручную проследите первый пример и объясните каждую строку ожидаемого вывода.",
+      "criteria": "Порядок извлечения — часть предметного контракта.",
+      "hint": "Сначала выделите вход, состояние и наблюдаемый результат."
+    },
+    {
+      "level": "basic",
+      "task": "Для лабораторной выберите пустой или минимальный допустимый случай и ближайший недопустимый.",
+      "criteria": "Оба ожидаемых результата вычислены до запуска и связаны с конкретным пунктом контракта.",
+      "hint": "Не добавляйте историю для rejected. Не читайте front/top у пустого адаптера."
+    },
+    {
+      "level": "applied",
+      "task": "Прочитайте n в 0…100 и n целых в -1000…1000. Заполните stack и queue; выведите порядок извлечения стека и очереди двумя строками. Пустой набор даёт две пустые строки.",
+      "criteria": "Пройдены все случаи, сохранены исходник и фактическая таблица; отказ не выдаётся за успех.",
+      "hint": "Порядок извлечения — часть предметного контракта."
+    },
+    {
+      "level": "applied",
+      "task": "Сравните два разобранных примера: какие предположения различаются и почему их нельзя незаметно переносить в лабораторную?",
+      "criteria": "Названы входы, состояния и хотя бы одна граница применимости каждого примера.",
+      "hint": "Итоговый проект использует vector записей, очередь типизированных команд, стек снимков для undo, функции с контрактами и текстовый импорт/экспорт. Список из предыдущей темы остаётся отдельным учебным артефактом с обоснованным сравнением, а не лишней зависимостью каталога."
+    },
+    {
+      "level": "transfer",
+      "task": "Добавьте redo с отдельным стеком и объясните, почему новая успешная команда должна сбросить прежнюю ветку redo.",
+      "criteria": "Есть изменённый контракт, два новых теста и объяснение сохранения прежнего поведения.",
+      "hint": "Лабораторная подаёт одни значения в stack и queue и сравнивает обратный и исходный порядок. Проверьте пустой набор, один элемент и повторы. Каждый вызов top/front защищён empty, а каждый pop выполняется после чтения."
+    },
+    {
+      "level": "transfer",
+      "task": "Проведите мини-защиту: объясните ограничение, стоимость и контрпример к неверной реализации без запуска эталона.",
+      "criteria": "Объяснение связано с конкретными строками собственного исходника и фактическими тестами.",
+      "hint": "Порядок извлечения — часть предметного контракта."
+    }
+  ],
+  "laboratory": {
+    "title": "Лабораторная: Стеки, очереди и итоговый каталог команд",
+    "challenge": "Прочитайте n в 0…100 и n целых в -1000…1000. Заполните stack и queue; выведите порядок извлечения стека и очереди двумя строками. Пустой набор даёт две пустые строки.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <stack>\n#include <queue>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    std::stack<int> stack;\n    std::queue<int> queue;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        stack.push(value); queue.push(value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    bool first{true};\n    while (!stack.empty()) { if (!first) { std::cout << ' '; } std::cout << stack.top(); stack.pop(); first = false; }\n    std::cout << '\\n';\n    first = true;\n    while (!queue.empty()) { if (!first) { std::cout << ' '; } std::cout << queue.front(); queue.pop(); first = false; }\n    std::cout << '\\n';\n}\n",
+    "cases": [
+      {
+        "stdin": "0",
+        "stdout": "\n\n"
+      },
+      {
+        "stdin": "1 7",
+        "stdout": "7\n7\n"
+      },
+      {
+        "stdin": "3 1 2 3",
+        "stdout": "3 2 1\n1 2 3\n"
+      },
+      {
+        "stdin": "3 2 2 -1",
+        "stdout": "-1 2 2\n2 2 -1\n"
+      },
+      {
+        "stdin": "2 1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 x",
+        "stdout": "invalid\n"
+      }
+    ],
+    "referenceFiles": {},
+    "starterFiles": {},
+    "metadata": {},
+    "steps": [
+      "Перепишите контракт входа, результата и отказов своими словами.",
+      "Нарисуйте состояние и сформулируйте инвариант: Порядок извлечения — часть предметного контракта.",
+      "Начните с заготовки, реализуйте допустимый путь, затем добавьте проверки границ.",
+      "Для каждого контрольного случая независимо запишите ожидание до запуска; сохраните stdout и exit code.",
+      "Выполните ещё два собственных случая, включая один отказ; объясните результат без ссылки на эталон.",
+      "Сохраните исходник, таблицу фактов и краткий разбор стоимости и ограничений."
+    ],
+    "rubric": [
+      "Контракт соответствует задаче; единицы, пустой ввод и лишние данные определены.",
+      "Все опубликованные случаи совпали; добавлены два объяснённых собственных теста.",
+      "Порядок извлечения — часть предметного контракта.",
+      "Не добавляйте историю для rejected. Не читайте front/top у пустого адаптера.",
+      "Есть исходник, фактический вывод, exit code и объяснение O(n) либо другого обоснованного роста."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Возвращает ли pop удаляемое значение?",
+      "answers": [
+        "Только у queue",
+        "Да, всегда",
+        "Нет, сначала читают top/front"
+      ],
+      "correctIndex": 2,
+      "explanation": "pop удаляет элемент и имеет результат void."
+    },
+    {
+      "question": "Что извлечёт stack после push 1,2,3 первым?",
+      "answers": [
+        "1",
+        "3",
+        "2"
+      ],
+      "correctIndex": 1,
+      "explanation": "Стек реализует LIFO."
+    },
+    {
+      "question": "Должна ли rejected добавлять снимок undo?",
+      "answers": [
+        "Нет",
+        "Только для remove",
+        "Да, всегда"
+      ],
+      "correctIndex": 0,
+      "explanation": "История отражает успешные предметные изменения."
+    },
+    {
+      "question": "Когда можно читать queue.front()?",
+      "answers": [
+        "Всегда",
+        "До создания queue",
+        "После проверки непустоты"
+      ],
+      "correctIndex": 2,
+      "explanation": "Пустой доступ нарушает предусловие."
+    },
+    {
+      "question": "Что нужно для приёмки этой лабораторной?",
+      "answers": [
+        "Только скопированный эталон",
+        "Исходник, реальные результаты, свои тесты и объяснение контракта",
+        "Только отметка completed"
+      ],
+      "correctIndex": 1,
+      "explanation": "Отметка прогресса не равна доказательству самостоятельного освоения."
+    }
+  ],
+  "reflection": [
+    "Порядок извлечения — часть предметного контракта.",
+    "Добавьте redo с отдельным стеком и объясните, почему новая успешная команда должна сбросить прежнюю ветку redo.",
+    "Какой случай опровергает неверное правило и что ваши проверки ещё не доказывают?"
+  ],
+  "bridge": "Модуль завершён итоговым проектом и защитой. Module 4 продолжит поиск, сортировки и анализ алгоритмов.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Пошаговая карта: Стеки, очереди и итоговый каталог команд",
+    "description": "Схема поясняет рассуждение; это не исполнение C++ и не автоматическая проверка решения.",
+    "steps": [
+      {
+        "title": "LIFO и FIFO",
+        "description": "std::stack<T> из <stack> даёт last in, first out: последним добавленный элемент извлекается первым. std::queue<T> из <queue> даёт first in, first out: первым обрабатывается самый ранний элемент. Это дисциплины доступа, а не требования к физическому представлению."
+      },
+      {
+        "title": "Операции и предусловия",
+        "description": "push добавляет, empty проверяет отсутствие элементов, size сообщает количество. У stack top читает верхушку, у queue front — начало, back — конец. Эти операции чтения требуют непустого адаптера."
+      },
+      {
+        "title": "Отмена как история состояний",
+        "description": "Для небольшого каталога можно сохранять предыдущую проверенную копию состояния в stack перед успешным изменением. undo восстанавливает top и удаляет его. Отказанная команда не добавляет историю, иначе отмена станет зависеть от ошибок пользователя."
+      },
+      {
+        "title": "Очередь и выполнение",
+        "description": "Парсер проверяет синтаксис команды и помещает её в queue. Исполнитель извлекает front и применяет предметные проверки к текущему состоянию. Валидная по форме команда может быть rejected из-за недостатка запаса в момент выполнения."
+      },
+      {
+        "title": "Интеграция проекта",
+        "description": "Итоговый проект использует vector записей, очередь типизированных команд, стек снимков для undo, функции с контрактами и текстовый импорт/экспорт. Список из предыдущей темы остаётся отдельным учебным артефактом с обоснованным сравнением, а не лишней зависимостью каталога."
+      }
+    ]
+  },
+  "locale": "ru",
+  "legacyQuiz": {
+    "question": "Какой принцип у очереди?",
+    "answers": [
+      "LIFO",
+      "FIFO",
+      "Только FILO"
+    ],
+    "correctIndex": 1
+  },
+  "modulePracticum": {
+    "title": "Итоговый проект: каталог и журнал команд",
+    "label": "ПРОЕКТ MODULE 3",
+    "challenge": "Соберите многофайловое приложение из опубликованного набора. Импортируйте каталог, выполните конечную очередь команд, поддержите undo и экспорт с явным сохранением артефакта.",
+    "readiness": "Все 18 тем. Список — отдельный сравнительный артефакт; для каталога обоснуйте vector. Исключения, собственные шаблоны и сторонние фреймворки не требуются.",
+    "skills": [
+      {
+        "lessonId": "cpp.if-else-switch",
+        "title": "Ветвления: решения, диапазоны и switch"
+      },
+      {
+        "lessonId": "cpp.for-loop",
+        "title": "Цикл for: инвариант, границы и стоимость"
+      },
+      {
+        "lessonId": "cpp.while-do-while",
+        "title": "while и do while: конечный поток и завершение"
+      },
+      {
+        "lessonId": "cpp.functions-contracts",
+        "title": "Функции: параметры, результат и контракт"
+      },
+      {
+        "lessonId": "cpp.standard-sequences",
+        "title": "array, vector и span: владелец и представление"
+      },
+      {
+        "lessonId": "cpp.one-dimensional-arrays",
+        "title": "Одномерные массивы: индексы, фильтрация и поиск"
+      },
+      {
+        "lessonId": "cpp.two-dimensional-arrays",
+        "title": "Матрицы: форма, обход и линейное хранение"
+      },
+      {
+        "lessonId": "cpp.char-arrays-strings",
+        "title": "Строки: байты, терминатор и безопасный просмотр"
+      },
+      {
+        "lessonId": "cpp.structures",
+        "title": "Структуры: запись, инвариант и обновление"
+      },
+      {
+        "lessonId": "cpp.unions-typedef-enums",
+        "title": "Перечисления, alias и варианты данных"
+      },
+      {
+        "lessonId": "cpp.lifetime-ownership",
+        "title": "Время жизни, RAII и единственное владение"
+      },
+      {
+        "lessonId": "cpp.formatted-io",
+        "title": "Форматированный вывод: значение и представление"
+      },
+      {
+        "lessonId": "cpp.streams-state",
+        "title": "Состояния потоков и надёжный разбор строк"
+      },
+      {
+        "lessonId": "cpp.testing-diagnostics",
+        "title": "Тестирование: контракт, дефект и регрессия"
+      },
+      {
+        "lessonId": "cpp.multifile-build",
+        "title": "Многофайловая сборка: заголовки, TU и ODR"
+      },
+      {
+        "lessonId": "cpp.files",
+        "title": "Файлы: формат, ошибки и явное сохранение"
+      },
+      {
+        "lessonId": "cpp.linked-lists",
+        "title": "Связанные списки: инварианты узлов и владение"
+      },
+      {
+        "lessonId": "cpp.stacks-queues",
+        "title": "Стеки, очереди и итоговый каталог команд"
+      }
+    ],
+    "requirements": [
+      "catalog.txt: точный заголовок NEXUS_CATALOG_V1, затем до 10 строк id stock; id уникален в 1…1000, stock в 0…1000.",
+      "stdin: до 50 строк по 200 байтов; add id amount, remove id amount, undo, list, export. Пустая строка и хвост — invalid.",
+      "Сначала разобрать все команды; при синтаксической ошибке напечатать только invalid без частичного выполнения.",
+      "add/remove с amount в 0…1000 применяются только к существующему id и сохраняют запас в 0…1000; отказ rejected не меняет историю. Нулевая успешная команда добавляет снимок.",
+      "undo восстанавливает прошлый снимок и печатает undone; пустая история — empty-history. list сохраняет исходный порядок и печатает id:stock через пробел.",
+      "export создаёт catalog-out.txt в том же формате и печатает exported, при отказе записи write-error. missing означает отсутствие catalog.txt; неизвестная версия или испорченный каталог — invalid.",
+      "Каждый запуск получает свежую FS. Проверьте содержимое результата, явно сохраните допустимый текстовый файл в VFS и выполните новый импорт из этого файла.",
+      "Портфолио включает 18 лабораторных и три накопительных практикума. Матрицы, span, variant и владение подтверждаются соответствующими работами; не добавляйте ненужные структуры в каталог ради списка тем."
+    ],
+    "milestones": [
+      "A. Контракт, схема записи, ручные ожидания и unit-драйвер.",
+      "B. Парсер, операции и очередь; отказы не меняют состояние.",
+      "C. Стек undo, версия файла и экспорт; проверка roundtrip.",
+      "D. Многофайловая сборка, полный набор случаев и мини-защита с изменением требования."
+    ],
+    "walkthrough": [
+      "При исходном 1:5 команда add 1 3 создаёт 1:8 и снимок 1:5. remove 1 8 создаёт 1:0 и снимок 1:8. undo возвращает 1:8, экспорт содержит именно это состояние.",
+      "Пределы дают до 10 записей и 50 снимков по 10 записей. Поиск O(n), очередь обрабатывается последовательно; худшая работа предметных изменений O(commands*records), память истории O(commands*records).",
+      "Сравните vector с учебным списком, но не добавляйте список без причины. Драйвер ниже собирается как отдельный main с теми же domain.cpp и format.cpp."
+    ],
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement main using the provided interface and your own domain operations.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterFiles": {
+      "include/catalog.hpp": "#ifndef NEXUS_CATALOG_HPP\n#define NEXUS_CATALOG_HPP\n#include <string>\n#include <vector>\nstruct Item { int id{}; int stock{}; };\nenum class Kind { add, remove, undo, list, exportFile };\nstruct Command { Kind kind{Kind::list}; int id{}; int amount{}; };\nbool applyCommand(std::vector<Item>& items, const Command& command);\nbool parseCommand(const std::string& line, Command& command);\nbool loadCatalog(const std::string& path, std::vector<Item>& items);\nbool saveCatalog(const std::string& path, const std::vector<Item>& items);\n#endif\n",
+      "src/domain.cpp": "#include \"catalog.hpp\"\nbool applyCommand(std::vector<Item>& items, const Command& command) {\n    if (command.amount < 0 || command.amount > 1000) { return false; }\n    for (Item& item : items) {\n        if (item.id != command.id) { continue; }\n        if (command.kind == Kind::add) {\n            if (command.amount > 1000 - item.stock) { return false; }\n            item.stock += command.amount;\n            return true;\n        }\n        if (command.kind == Kind::remove) {\n            if (command.amount > item.stock) { return false; }\n            item.stock -= command.amount;\n            return true;\n        }\n        return false;\n    }\n    return false;\n}\n",
+      "src/format.cpp": "#include \"catalog.hpp\"\n#include <fstream>\n#include <sstream>\nbool parseCommand(const std::string& line, Command& command) {\n    std::istringstream input{line};\n    std::string name;\n    if (!(input >> name)) { return false; }\n    Command candidate;\n    if (name == \"add\" || name == \"remove\") {\n        candidate.kind = name == \"add\" ? Kind::add : Kind::remove;\n        if (!(input >> candidate.id >> candidate.amount) || candidate.id < 1 || candidate.id > 1000 || candidate.amount < 0 || candidate.amount > 1000) { return false; }\n    } else if (name == \"undo\") { candidate.kind = Kind::undo; }\n    else if (name == \"list\") { candidate.kind = Kind::list; }\n    else if (name == \"export\") { candidate.kind = Kind::exportFile; }\n    else { return false; }\n    input >> std::ws;\n    if (!input.eof()) { return false; }\n    command = candidate;\n    return true;\n}\nbool loadCatalog(const std::string& path, std::vector<Item>& items) {\n    std::ifstream input{path};\n    std::string line;\n    if (!std::getline(input, line) || line != \"NEXUS_CATALOG_V1\") { return false; }\n    std::vector<Item> candidate;\n    while (std::getline(input, line)) {\n        if (line.size() > 200 || candidate.size() == 10) { return false; }\n        std::istringstream parser{line};\n        Item item;\n        if (!(parser >> item.id >> item.stock) || item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000) { return false; }\n        parser >> std::ws;\n        if (!parser.eof()) { return false; }\n        for (const Item& old : candidate) { if (old.id == item.id) { return false; } }\n        candidate.push_back(item);\n    }\n    if (input.bad() || (!input.eof() && input.fail())) { return false; }\n    items = candidate;\n    return true;\n}\nbool saveCatalog(const std::string& path, const std::vector<Item>& items) {\n    std::ofstream output{path};\n    output << \"NEXUS_CATALOG_V1\\n\";\n    for (const Item& item : items) { output << item.id << ' ' << item.stock << '\\n'; }\n    output.close();\n    return bool(output);\n}\n"
+    },
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include \"catalog.hpp\"\n#include <fstream>\n#include <queue>\n#include <stack>\nint main() {\n    std::ifstream probe{\"catalog.txt\"};\n    if (!probe) { std::cout << \"missing\\n\"; return 0; }\n    probe.close();\n    std::vector<Item> items;\n    if (!loadCatalog(\"catalog.txt\", items)) { std::cout << \"invalid\\n\"; return 0; }\n    std::queue<Command> commands;\n    std::string line;\n    while (std::getline(std::cin, line)) {\n        Command command;\n        if (commands.size() == 50 || line.size() > 200 || !parseCommand(line, command)) { std::cout << \"invalid\\n\"; return 0; }\n        commands.push(command);\n    }\n    if (std::cin.bad()) { std::cout << \"invalid\\n\"; return 0; }\n    std::stack<std::vector<Item>> history;\n    while (!commands.empty()) {\n        Command command = commands.front();\n        commands.pop();\n        if (command.kind == Kind::list) {\n            for (std::size_t i = 0; i < items.size(); ++i) { if (i != 0) { std::cout << ' '; } std::cout << items[i].id << ':' << items[i].stock; }\n            std::cout << '\\n';\n        } else if (command.kind == Kind::undo) {\n            if (history.empty()) { std::cout << \"empty-history\\n\"; }\n            else { items = history.top(); history.pop(); std::cout << \"undone\\n\"; }\n        } else if (command.kind == Kind::exportFile) {\n            if (!saveCatalog(\"catalog-out.txt\", items)) { std::cout << \"write-error\\n\"; return 0; }\n            std::cout << \"exported\\n\";\n        } else {\n            auto candidate = items;\n            if (!applyCommand(candidate, command)) { std::cout << \"rejected\\n\"; }\n            else { history.push(items); items = candidate; std::cout << \"ok\\n\"; }\n        }\n    }\n}\n",
+    "referenceFiles": {
+      "include/catalog.hpp": "#ifndef NEXUS_CATALOG_HPP\n#define NEXUS_CATALOG_HPP\n#include <string>\n#include <vector>\nstruct Item { int id{}; int stock{}; };\nenum class Kind { add, remove, undo, list, exportFile };\nstruct Command { Kind kind{Kind::list}; int id{}; int amount{}; };\nbool applyCommand(std::vector<Item>& items, const Command& command);\nbool parseCommand(const std::string& line, Command& command);\nbool loadCatalog(const std::string& path, std::vector<Item>& items);\nbool saveCatalog(const std::string& path, const std::vector<Item>& items);\n#endif\n",
+      "src/domain.cpp": "#include \"catalog.hpp\"\nbool applyCommand(std::vector<Item>& items, const Command& command) {\n    if (command.amount < 0 || command.amount > 1000) { return false; }\n    for (Item& item : items) {\n        if (item.id != command.id) { continue; }\n        if (command.kind == Kind::add) {\n            if (command.amount > 1000 - item.stock) { return false; }\n            item.stock += command.amount;\n            return true;\n        }\n        if (command.kind == Kind::remove) {\n            if (command.amount > item.stock) { return false; }\n            item.stock -= command.amount;\n            return true;\n        }\n        return false;\n    }\n    return false;\n}\n",
+      "src/format.cpp": "#include \"catalog.hpp\"\n#include <fstream>\n#include <sstream>\nbool parseCommand(const std::string& line, Command& command) {\n    std::istringstream input{line};\n    std::string name;\n    if (!(input >> name)) { return false; }\n    Command candidate;\n    if (name == \"add\" || name == \"remove\") {\n        candidate.kind = name == \"add\" ? Kind::add : Kind::remove;\n        if (!(input >> candidate.id >> candidate.amount) || candidate.id < 1 || candidate.id > 1000 || candidate.amount < 0 || candidate.amount > 1000) { return false; }\n    } else if (name == \"undo\") { candidate.kind = Kind::undo; }\n    else if (name == \"list\") { candidate.kind = Kind::list; }\n    else if (name == \"export\") { candidate.kind = Kind::exportFile; }\n    else { return false; }\n    input >> std::ws;\n    if (!input.eof()) { return false; }\n    command = candidate;\n    return true;\n}\nbool loadCatalog(const std::string& path, std::vector<Item>& items) {\n    std::ifstream input{path};\n    std::string line;\n    if (!std::getline(input, line) || line != \"NEXUS_CATALOG_V1\") { return false; }\n    std::vector<Item> candidate;\n    while (std::getline(input, line)) {\n        if (line.size() > 200 || candidate.size() == 10) { return false; }\n        std::istringstream parser{line};\n        Item item;\n        if (!(parser >> item.id >> item.stock) || item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000) { return false; }\n        parser >> std::ws;\n        if (!parser.eof()) { return false; }\n        for (const Item& old : candidate) { if (old.id == item.id) { return false; } }\n        candidate.push_back(item);\n    }\n    if (input.bad() || (!input.eof() && input.fail())) { return false; }\n    items = candidate;\n    return true;\n}\nbool saveCatalog(const std::string& path, const std::vector<Item>& items) {\n    std::ofstream output{path};\n    output << \"NEXUS_CATALOG_V1\\n\";\n    for (const Item& item : items) { output << item.id << ' ' << item.stock << '\\n'; }\n    output.close();\n    return bool(output);\n}\n"
+    },
+    "metadata": {
+      "translationUnits": [
+        "main.cpp",
+        "src/domain.cpp",
+        "src/format.cpp"
+      ],
+      "includeRoots": [
+        "include"
+      ]
+    },
+    "cases": [
+      {
+        "stdin": "add 1 3\nlist\nremove 1 8\nlist\nundo\nlist\nexport\n",
+        "stdout": "ok\n1:8 2:0\nok\n1:0 2:0\nundone\n1:8 2:0\nexported\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        },
+        "outputFiles": {
+          "catalog-out.txt": "NEXUS_CATALOG_V1\n1 8\n2 0\n"
+        }
+      },
+      {
+        "stdin": "undo\n",
+        "stdout": "empty-history\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "remove 1 6\nundo\nlist\n",
+        "stdout": "rejected\nempty-history\n1:5 2:0\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "add 1 3\nadd 1 4\nundo\nundo\nundo\nlist\n",
+        "stdout": "ok\nok\nundone\nundone\nempty-history\n1:5 2:0\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "add 9 1\nlist\n",
+        "stdout": "rejected\n1:5 2:0\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "add 1 996\nlist\n",
+        "stdout": "rejected\n1:5 2:0\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "add 1 995\nlist\n",
+        "stdout": "ok\n1:1000 2:0\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "add 1 0\nundo\n",
+        "stdout": "ok\nundone\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "list\nexport\n",
+        "stdout": "\nexported\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n"
+        },
+        "outputFiles": {
+          "catalog-out.txt": "NEXUS_CATALOG_V1\n"
+        }
+      },
+      {
+        "stdin": "list\n",
+        "stdout": "missing\n",
+        "files": {}
+      },
+      {
+        "stdin": "list\n",
+        "stdout": "invalid\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V2\n"
+        }
+      },
+      {
+        "stdin": "list\n",
+        "stdout": "invalid\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 2\n1 3\n"
+        }
+      },
+      {
+        "stdin": "list\n",
+        "stdout": "invalid\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 2 x\n"
+        }
+      },
+      {
+        "stdin": "add 1 2\nbad\n",
+        "stdout": "invalid\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "add 1 -1\n",
+        "stdout": "invalid\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "list x\n",
+        "stdout": "invalid\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "\n",
+        "stdout": "invalid\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "",
+        "stdout": "",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "list\n",
+        "stdout": "invalid\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 1001\n"
+        }
+      },
+      {
+        "stdin": "list\n",
+        "stdout": "invalid\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 0\n2 0\n3 0\n4 0\n5 0\n6 0\n7 0\n8 0\n9 0\n10 0\n11 0\n"
+        }
+      },
+      {
+        "stdin": "list\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\nlist\n",
+        "stdout": "invalid\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      },
+      {
+        "stdin": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "stdout": "invalid\n",
+        "files": {
+          "catalog.txt": "NEXUS_CATALOG_V1\n1 5\n2 0\n"
+        }
+      }
+    ],
+    "testDriver": "#include <iostream>\n#include \"catalog.hpp\"\nint main() {\n    std::vector<Item> items{{1, 5}};\n    int failures{};\n    if (!applyCommand(items, Command{Kind::add, 1, 3}) || items[0].stock != 8) { ++failures; }\n    if (applyCommand(items, Command{Kind::remove, 1, 9}) || items[0].stock != 8) { ++failures; }\n    if (!applyCommand(items, Command{Kind::remove, 1, 8}) || items[0].stock != 0) { ++failures; }\n    if (applyCommand(items, Command{Kind::add, 9, 1}) || items[0].stock != 0) { ++failures; }\n    if (applyCommand(items, Command{Kind::add, 1, -1}) || items[0].stock != 0) { ++failures; }\n    Command command;\n    if (!parseCommand(\"add 1 2\", command) || command.id != 1 || command.amount != 2) { ++failures; }\n    if (parseCommand(\"add 1 2 x\", command)) { ++failures; }\n    if (parseCommand(\"undo x\", command)) { ++failures; }\n    if (failures) { std::cout << \"FAIL\\n\"; return 1; }\n    std::cout << \"PASS 8\\n\";\n}\n",
+    "testExpectedStdout": "PASS 8\n",
+    "artifacts": [
+      "Все исходники и список TU/includeRoots.",
+      "Контракт, схема владения и объяснение выбранных контейнеров.",
+      "Факты всех случаев, восемь unit-проверок и два собственных контрпримера.",
+      "catalog-out.txt, подтверждение явного сохранения и новый импорт.",
+      "Мини-защита: новая команда или правило и соответствующие тесты."
+    ],
+    "rubric": [
+      {
+        "criterion": "Контракт и границы",
+        "points": 2,
+        "complete": "Все требования подтверждены исходником и реальными случаями.",
+        "partial": "Основной путь подтверждён, один существенный случай или довод отсутствует.",
+        "missing": "Нет проверяемого результата или нарушен основной контракт."
+      },
+      {
+        "criterion": "Корректность и отказ без изменения",
+        "points": 2,
+        "complete": "Все требования подтверждены исходником и реальными случаями.",
+        "partial": "Основной путь подтверждён, один существенный случай или довод отсутствует.",
+        "missing": "Нет проверяемого результата или нарушен основной контракт."
+      },
+      {
+        "criterion": "Проверки и независимые ожидания",
+        "points": 2,
+        "complete": "Все требования подтверждены исходником и реальными случаями.",
+        "partial": "Основной путь подтверждён, один существенный случай или довод отсутствует.",
+        "missing": "Нет проверяемого результата или нарушен основной контракт."
+      },
+      {
+        "criterion": "Структура и ресурсы",
+        "points": 2,
+        "complete": "Все требования подтверждены исходником и реальными случаями.",
+        "partial": "Основной путь подтверждён, один существенный случай или довод отсутствует.",
+        "missing": "Нет проверяемого результата или нарушен основной контракт."
+      },
+      {
+        "criterion": "Объяснение и собственное расширение",
+        "points": 2,
+        "complete": "Все требования подтверждены исходником и реальными случаями.",
+        "partial": "Основной путь подтверждён, один существенный случай или довод отсутствует.",
+        "missing": "Нет проверяемого результата или нарушен основной контракт."
+      }
+    ],
+    "completionRule": "Ручная приёмка: не менее 8/10, нет нуля за корректность или проверки, все обязательные случаи пройдены, выполнена защита. Копирование эталона и отметка completed не означают автоматическую оценку навыков.",
+    "verification": "manual-output-comparison"
+  }
+}

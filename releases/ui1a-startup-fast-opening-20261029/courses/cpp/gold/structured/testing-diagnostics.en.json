@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.testing-diagnostics",
+  "sessions": 2,
+  "learningOrder": 14,
+  "prerequisiteIds": [
+    "cpp.streams-state",
+    "cpp.functions-contracts"
+  ],
+  "sourceRefs": [
+    "CPP20-ASSERT",
+    "CPP20-FUNCTIONS"
+  ],
+  "title": "Testing: contracts, defects, and regression",
+  "lead": "Build a small test driver and distinguish a program defect from a build error or environment limitation.",
+  "why": "One successful run does not check boundary behaviour. Repeatable tests turn a discovered defect into protection against its return.",
+  "objectives": [
+    "Explain: An expectation before execution",
+    "Trace: Unit and integration",
+    "Justify: Diagnosis by phase",
+    "Implement and verify the lab against its exact contract.",
+    "Identify a common defect: Do not derive expected values by running the function under test. Do not classify provider limits as learner knowledge errors."
+  ],
+  "prerequisites": [
+    "Modules 1–2: expressions, comparisons, types, references, and checked cin.",
+    "Follow the prerequisite links: cpp.streams-state, cpp.functions-contracts. New constructs are introduced before the assignment."
+  ],
+  "concepts": [
+    {
+      "term": "Regression",
+      "definition": "recurrence of a previously fixed defect."
+    },
+    {
+      "term": "Oracle",
+      "definition": "an independent rule determining the expected result."
+    },
+    {
+      "term": "Unit test",
+      "definition": "checking one operation through its interface."
+    },
+    {
+      "term": "Integration test",
+      "definition": "checking several parts working together."
+    },
+    {
+      "term": "Mutation",
+      "definition": "a safe implementation change used to assess test discrimination."
+    },
+    {
+      "term": "Exit code",
+      "definition": "the numeric status returned by a program."
+    }
+  ],
+  "sections": [
+    {
+      "title": "An expectation before execution",
+      "paragraphs": [
+        "A test has initial data, an action, and an independently derived expectation. Copying the current output as the expectation merely preserves a possible defect. For a small sum, derive and explain the result manually.",
+        "First list input classes: empty range, one element, several elements, boundaries, and rejection. checkedArea needs valid-dimension tests and output-preservation tests on failure. These are different properties requiring distinct checks."
+      ]
+    },
+    {
+      "title": "Unit and integration",
+      "paragraphs": [
+        "A unit test calls a small function directly. An integration test runs main with textual input and checks parsing, computation, and output together. Passing the first does not imply the second because text conversion can be wrong.",
+        "A driver counts failures, prints a clear summary, and returns zero on success or nonzero on failure. Check stderr separately. A PASS message is insufficient if the exit code indicates failure."
+      ]
+    },
+    {
+      "title": "assert and external validation",
+      "paragraphs": [
+        "assert from <cassert> supports internal development-time expectations. It may disappear with NDEBUG, so input reading, range validation, and required side effects must not occur only inside assert.",
+        "The lab harness uses explicit if checks and a failure counter so results do not depend on NDEBUG. assert may additionally check an already computed internal property, but cannot replace a clear invalid response to external input."
+      ]
+    },
+    {
+      "title": "Diagnosis by phase",
+      "paragraphs": [
+        "A syntax error or unknown name is a compilation failure. A missing function definition commonly fails at linking. Wrong stdout from a built program is a logic defect. Unsupported exceptions or environment quotas are separate provider limitations.",
+        "An intentional compile-negative is a control expected to fail to build. Do not present it as a working lab solution. Compiler messages vary; check the phase and meaning rather than the entire message byte for byte."
+      ]
+    },
+    {
+      "title": "The defect-fixing cycle",
+      "paragraphs": [
+        "Reproduce a defect with minimal input first. Record the expectation and cause. Add a test that fails on the wrong implementation, fix the implementation, and rerun the complete set including previously passing cases.",
+        "A mutation experiment changes one safe operation, such as > to >= when counting positives. If every test stays green, the set cannot distinguish the implementations. Add a zero-valued case; do not infer that no defect exists."
+      ]
+    },
+    {
+      "title": "Limits of the evidence",
+      "paragraphs": [
+        "Tests cover a finite case set and do not replace bounds or lifetime arguments. UBSan detects some violations, but silence does not prove complete safety. Combine tests with invariants.",
+        "Preserve versioned source, build instructions, inputs, expectations, actual results, and verification limits. Lesson rubrics remain manual; automatic Mastery is not claimed. Next, separate the application and driver into compilation units."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "unit",
+      "title": "An independent expectation",
+      "purpose": "The expectation for {-2,0,4} is one, derived independently of the function.",
+      "code": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 3> values{-2, 0, 4};\n    bool pass = countPositive(values) == 1;\n    std::cout << (pass ? \"PASS\\n\" : \"FAIL\\n\");\n    return pass ? 0 : 1;\n}\n",
+      "stdin": "",
+      "expectedStdout": "PASS\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    },
+    {
+      "id": "safe-mutation",
+      "title": "A test detects a safe mutation",
+      "purpose": "Two separate functions show why zero distinguishes > from >=.",
+      "code": "#include <iostream>\nint correct(int value) { return value > 0 ? 1 : 0; }\nint mutant(int value) { return value >= 0 ? 1 : 0; }\nint main() {\n    std::cout << correct(0) << ' ' << mutant(0) << ' ' << (correct(0) != mutant(0)) << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "0 1 1\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Predict before running",
+      "action": "Trace the first worked example step by step, then run all of its cases.",
+      "prediction": "A useful test distinguishes the correct implementation from a plausible wrong one.",
+      "verification": "Compare every state transition and stdout; record a mismatch as a hypothesis rather than revising the expectation afterward."
+    },
+    {
+      "title": "A counterexample to a wrong rule",
+      "action": "Using the second example and theory, construct a minimal safe case for this defect: Do not derive expected values by running the function under test. Do not classify provider limits as learner knowledge errors.",
+      "prediction": "The correct and incorrect models should make distinguishable predictions without executing undefined behaviour.",
+      "verification": "Preserve the prediction, actual output, and an explanation of the violated rule."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A boundary result differs",
+      "cause": "Do not derive expected values by running the function under test. Do not classify provider limits as learner knowledge errors.",
+      "fix": "A useful test distinguishes the correct implementation from a plausible wrong one."
+    },
+    {
+      "symptom": "One case works and the next fails",
+      "cause": "The invariant or empty/malformed-input policy is unspecified.",
+      "fix": "Return to the lab contract and check every published case independently."
+    },
+    {
+      "symptom": "The environment rejected execution",
+      "cause": "Build failure, unsupported syntax, and quotas are different causes.",
+      "fix": "Keep the phase and diagnostic; exceptions are unsupported and environment limits are not learner knowledge failures."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "unknown-name",
+      "title": "Intentional: unknown name",
+      "code": "#include <iostream>\nint main() {\n    std::cout << missing_value;\n}\n",
+      "expectation": "compile-error",
+      "diagnostic": "missing_value",
+      "explanation": "The name is undeclared: this controls compile failure rather than providing a working solution."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Manually trace the first example and explain every expected output line.",
+      "criteria": "A useful test distinguishes the correct implementation from a plausible wrong one.",
+      "hint": "Identify input, state, and observable output first."
+    },
+    {
+      "level": "basic",
+      "task": "Choose the lab’s empty or minimum valid case and its nearest invalid counterpart.",
+      "criteria": "Derive both expectations before execution and connect each to a contract clause.",
+      "hint": "Do not derive expected values by running the function under test. Do not classify provider limits as learner knowledge errors."
+    },
+    {
+      "level": "applied",
+      "task": "Write countPositive(span<const int>) and a driver with five independent datasets including empty, zero, and mixed-sign cases. Print PASS 5 on success; on mismatch print FAIL and return a nonzero exit code.",
+      "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
+      "hint": "A useful test distinguishes the correct implementation from a plausible wrong one."
+    },
+    {
+      "level": "applied",
+      "task": "Compare the two worked examples: which assumptions differ and why can they not be silently transferred into the lab?",
+      "criteria": "State inputs, state, and at least one applicability boundary for each example.",
+      "hint": "Reproduce a defect with minimal input first. Record the expectation and cause. Add a test that fails on the wrong implementation, fix the implementation, and rerun the complete set including previously passing cases."
+    },
+    {
+      "level": "transfer",
+      "task": "Replace >0 with >=0, show the failing test, restore the function, and keep a regression report.",
+      "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour.",
+      "hint": "Tests cover a finite case set and do not replace bounds or lifetime arguments. UBSan detects some violations, but silence does not prove complete safety. Combine tests with invariants."
+    },
+    {
+      "level": "transfer",
+      "task": "Give a mini-defence: explain a bound, complexity, and a counterexample to a wrong implementation without running the reference.",
+      "criteria": "Connect the explanation to specific lines of your source and actual tests.",
+      "hint": "A useful test distinguishes the correct implementation from a plausible wrong one."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Testing: contracts, defects, and regression",
+    "challenge": "Write countPositive(span<const int>) and a driver with five independent datasets including empty, zero, and mixed-sign cases. Print PASS 5 on success; on mismatch print FAIL and return a nonzero exit code.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 1> zero{0};\n    std::array<int, 1> negative{-1};\n    std::array<int, 3> mixed{-2, 0, 4};\n    std::array<int, 3> positive{1, 2, 3};\n    int failures{};\n    if (countPositive(std::span<const int>{}) != 0) { ++failures; }\n    if (countPositive(zero) != 0) { ++failures; }\n    if (countPositive(negative) != 0) { ++failures; }\n    if (countPositive(mixed) != 1) { ++failures; }\n    if (countPositive(positive) != 3) { ++failures; }\n    if (failures != 0) { std::cout << \"FAIL\\n\"; return 1; }\n    std::cout << \"PASS 5\\n\";\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "PASS 5\n"
+      }
+    ],
+    "referenceFiles": {},
+    "starterFiles": {},
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: A useful test distinguishes the correct implementation from a plausible wrong one.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "A useful test distinguishes the correct implementation from a plausible wrong one.",
+      "Do not derive expected values by running the function under test. Do not classify provider limits as learner knowledge errors.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Is assert sufficient to validate user input?",
+      "answers": [
+        "No; it may disappear with NDEBUG",
+        "Only for strings",
+        "Yes, in every build"
+      ],
+      "correctIndex": 0,
+      "explanation": "Validate external data with ordinary program logic."
+    },
+    {
+      "question": "Where should expected come from?",
+      "answers": [
+        "Always zero",
+        "From the current actual result",
+        "From an independently explained contract"
+      ],
+      "correctIndex": 2,
+      "explanation": "Otherwise a test may preserve the defect."
+    },
+    {
+      "question": "What does an integration test check?",
+      "answers": [
+        "Only a variable name",
+        "Interaction of parts through an interface",
+        "Only font size"
+      ],
+      "correctIndex": 1,
+      "explanation": "Parsing and computation can pass separately but fail together."
+    },
+    {
+      "question": "Does UBSan silence prove complete safety?",
+      "answers": [
+        "No",
+        "Only for vector",
+        "Yes"
+      ],
+      "correctIndex": 0,
+      "explanation": "Invariants, bounds, and lifetime reasoning are also required."
+    },
+    {
+      "question": "What is needed to accept this lab?",
+      "answers": [
+        "Only a completed flag",
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation"
+      ],
+      "correctIndex": 2,
+      "explanation": "A progress flag is not evidence of independent mastery."
+    }
+  ],
+  "reflection": [
+    "A useful test distinguishes the correct implementation from a plausible wrong one.",
+    "Replace >0 with >=0, show the failing test, restore the function, and keep a regression report.",
+    "Which case refutes the wrong rule and what do your checks still not establish?"
+  ],
+  "bridge": "Next: Multifile builds: headers, translation units, and ODR. Preserve the lab and its verification table.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Stepwise map: Testing: contracts, defects, and regression",
+    "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+    "steps": [
+      {
+        "title": "An expectation before execution",
+        "description": "A test has initial data, an action, and an independently derived expectation. Copying the current output as the expectation merely preserves a possible defect. For a small sum, derive and explain the result manually."
+      },
+      {
+        "title": "Unit and integration",
+        "description": "A unit test calls a small function directly. An integration test runs main with textual input and checks parsing, computation, and output together. Passing the first does not imply the second because text conversion can be wrong."
+      },
+      {
+        "title": "assert and external validation",
+        "description": "assert from <cassert> supports internal development-time expectations. It may disappear with NDEBUG, so input reading, range validation, and required side effects must not occur only inside assert."
+      },
+      {
+        "title": "Diagnosis by phase",
+        "description": "A syntax error or unknown name is a compilation failure. A missing function definition commonly fails at linking. Wrong stdout from a built program is a logic defect. Unsupported exceptions or environment quotas are separate provider limitations."
+      },
+      {
+        "title": "The defect-fixing cycle",
+        "description": "Reproduce a defect with minimal input first. Record the expectation and cause. Add a test that fails on the wrong implementation, fix the implementation, and rerun the complete set including previously passing cases."
+      }
+    ]
+  },
+  "verificationMutation": {
+    "from": "value > 0",
+    "to": "value >= 0",
+    "stdout": "FAIL\n",
+    "exitCode": 1
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Is assert sufficient to validate user input?",
+    "answers": [
+      "No; it may disappear with NDEBUG",
+      "Only for strings",
+      "Yes, in every build"
+    ],
+    "correctIndex": 0
+  }
+}
