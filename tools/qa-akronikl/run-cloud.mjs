@@ -23,7 +23,7 @@ try{
  result.browser=browser.version();result.node=process.version;context=await browser.newContext({serviceWorkers:'block',viewport:{width:1366,height:900}});
  await context.route('**/*',route=>{const q=route.request(),u=new URL(q.url()),allowed=u.origin===server.origin&&(q.method()==='GET'||q.method()==='POST'&&u.pathname==='/api/akronikl/qwen');result.network.push({path:allowed?u.pathname:'BLOCKED_EXTERNAL',method:q.method(),allowed});return allowed?route.continue():route.abort();});
  page=await context.newPage();page.setDefaultTimeout(15000);page.on('pageerror',e=>result.errors.push(e.message.slice(0,1000)));
- await page.goto(server.origin);await page.waitForFunction(()=>!!window.qa);assert.equal(server.status().requests,0);
+ await page.goto(server.origin);await page.waitForFunction(()=>!!window.qa);if(synthetic)await page.evaluate(()=>{const n=document.createElement('div');n.textContent='SYNTHETIC BROKER TEST — NO REAL AI';n.style.cssText='position:fixed;top:0;left:0;z-index:99999;background:#ffe08a;color:#111;padding:8px;font:14px sans-serif';document.body.append(n);});assert.equal(server.status().requests,0);
  await page.locator('#open').click();await page.locator('[data-akronikl-settings]').click();await page.getByRole('button',{name:'Модель',exact:true}).click();
  assert.equal(await page.locator('[data-akronikl-model-profile] option[value="external"]').isEnabled(),true);
  await page.locator('[data-akronikl-model-profile]').selectOption('external');assert.equal(server.status().requests,0);
