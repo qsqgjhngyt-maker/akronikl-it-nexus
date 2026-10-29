@@ -4,20 +4,20 @@ import {readFile,writeFile,mkdir,rename,unlink} from 'node:fs/promises';
 import {createHash,randomBytes} from 'node:crypto';
 import path from 'node:path';
 const HEADER=Buffer.from('AKRONIKL-DPAPI-V1\n');
-async function dpapi(bytes,decrypt=false){
+async function dpapi(bytes,decrypt=false,powerShellPath='powershell.exe'){
  if(process.platform!=='win32')throw Error('CLOUD_VAULT_UNAVAILABLE');
  const script=`$ErrorActionPreference='Stop'; Add-Type -AssemblyName System.Security; $b=[Convert]::FromBase64String([Console]::In.ReadToEnd()); $r=[System.Security.Cryptography.ProtectedData]::${decrypt?'Unprotect':'Protect'}($b,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser); [Console]::Out.Write([Convert]::ToBase64String($r))`;
  return new Promise((resolve,reject)=>{
-  const child=spawn('powershell.exe',['-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(script,'utf16le').toString('base64')],{windowsHide:true,stdio:['pipe','pipe','pipe']});const parts=[];let size=0,failed=false;
+  const child=spawn(powerShellPath,['-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(script,'utf16le').toString('base64')],{windowsHide:true,stdio:['pipe','pipe','pipe']});const parts=[];let size=0,failed=false;
   const fail=()=>{if(failed)return;failed=true;child.kill();reject(Error('CLOUD_VAULT_UNAVAILABLE'));};const timer=setTimeout(fail,15000);
   child.stdout.on('data',b=>{size+=b.length;if(size>48*1024*1024)fail();else parts.push(b);});child.stderr.resume();child.on('error',fail);child.stdin.on('error',fail);
   child.on('close',code=>{clearTimeout(timer);if(failed)return;if(code!==0){fail();return;}try{const text=Buffer.concat(parts).toString('utf8').trim();if(!/^[A-Za-z0-9+/=]+$/u.test(text))throw Error();resolve(Buffer.from(text,'base64'));}catch{fail();}});
   child.stdin.end(bytes.toString('base64'));
  });
 }
-export function createCloudVault({file=path.join(process.env.LOCALAPPDATA??'','Akronikl','cloud-connections.dpapi'),codec=null,protection='Windows DPAPI CurrentUser'}={}){
+export function createCloudVault({file=path.join(process.env.LOCALAPPDATA??'','Akronikl','cloud-connections.dpapi'),codec=null,protection='Windows DPAPI CurrentUser',powerShellPath='powershell.exe'}={}){
  const location=path.resolve(file),ownerId=owner=>typeof owner==='string'&&/^[A-Za-z0-9_-]{32,100}$/u.test(owner)?createHash('sha256').update(owner).digest('hex'):null;
- const protect=codec?.protect??(b=>dpapi(b)),unprotect=codec?.unprotect??(b=>dpapi(b,true));let queue=Promise.resolve();
+ const protect=codec?.protect??(b=>dpapi(b,false,powerShellPath)),unprotect=codec?.unprotect??(b=>dpapi(b,true,powerShellPath));let queue=Promise.resolve();
  async function load(){
   let bytes;try{bytes=await readFile(location);}catch(e){if(e.code==='ENOENT')return {version:1,owners:{}};throw Error('CLOUD_VAULT_UNAVAILABLE');}
   if(bytes.length>32*1024*1024||!bytes.subarray(0,HEADER.length).equals(HEADER))throw Error('CLOUD_VAULT_UNAVAILABLE');

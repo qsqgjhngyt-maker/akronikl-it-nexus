@@ -1,9 +1,9 @@
 // Local test environment only. It never uses production services or physical passkeys.
 import {mkdir,writeFile} from 'node:fs/promises';import {randomBytes,createHash} from 'node:crypto';import path from 'node:path';import {pathToFileURL} from 'node:url';
 import {nexusChatFixture} from './nexus-chat-fixture.mjs';import {createCloudVault} from './cloud-vault.mjs';import {createLocalSpeechProvider} from './local-speech.mjs';
-export async function createLocalStand({root,privateDir,playwrightModule,chromePath,speechConfig=null,headless=false,persistent=true}={}){
+export async function createLocalStand({root,privateDir,playwrightModule,chromePath,speechConfig=null,headless=false,persistent=true,powerShellPath=process.env.NEXUS_STAND_POWERSHELL??'powershell.exe'}={}){
  await mkdir(privateDir,{recursive:true});
- const secrets=createCloudVault({file:path.join(privateDir,'stand-secrets.dpapi')}),owner=createHash('sha256').update('isolated-local-stand').digest('base64url');
+ const secrets=createCloudVault({file:path.join(privateDir,'stand-secrets.dpapi'),powerShellPath}),owner=createHash('sha256').update('isolated-local-stand').digest('base64url');
  let saved=persistent?await secrets.readState(owner,'preferences'):{revision:0,value:null},material=saved.value??{masterKey:randomBytes(32).toString('base64'),credentials:[]};
  if(!/^[A-Za-z0-9+/]{43}=$/.test(material.masterKey)||!Array.isArray(material.credentials))throw Error('STAND_SECRETS_INVALID');
  if(persistent&&!saved.value)saved=await secrets.writeState(owner,'preferences',material,saved.revision);
