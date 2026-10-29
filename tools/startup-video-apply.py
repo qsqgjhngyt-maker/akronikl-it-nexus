@@ -1,6 +1,6 @@
-"""Применяет только проверенную поправку runtime; не публикует production."""
+"""Применяет проверенную поправку runtime и синхронизирует метку версии."""
 from pathlib import Path
-import hashlib
+import hashlib, subprocess
 ROOT=Path(__file__).resolve().parent.parent
 p=ROOT/'core/startup-intro.js'
 b=p.read_bytes();before='b347e4688fc2666b9b11f3e347f2918da617761eebab2b7001b872e06245fd6e';after='94fc9d4f6c2c0aadfb05173cf4db4333933f6740896bfbf56a46fae946fa31d3'
@@ -22,4 +22,9 @@ if h==before:
  if hashlib.sha256(s.encode()).hexdigest()!=after:raise ValueError('Результат не совпал с проверенной поправкой')
  p.write_text(s)
 p=ROOT/'tests/startup-intro-launch-browser-check.mjs';s=p.read_text();s=s.replace('cinematic-v4\\/(?:desktop|mobile)','(?:cinematic-v4|cinematic-v6)\\/(?:desktop|mobile)');p.write_text(s)
-print('Runtime и точный CDN allowlist браузерного теста проверены. Production не изменён.')
+p=ROOT/'core/shell-presentation.js';s=p.read_text();old='0.1.7-alpha.2.4.6-ui1a.10.10.2';new='0.1.7-alpha.2.4.6-ui1a.10.10.3'
+base=subprocess.check_output(['git','show','75e24e195919e7c3d39659ba804e977d51ef5591:core/shell-presentation.js'],cwd=ROOT).decode()
+if base.count(old)!=2 or s not in (base,base.replace(old,new)):raise ValueError('Оболочка изменена вне двух меток версии')
+p.write_text(base.replace(old,new))
+subprocess.run(['git','add','--','core/shell-presentation.js'],cwd=ROOT,check=True)
+print('Плеер и обе метки версии проверены. Production не изменён.')
