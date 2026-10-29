@@ -1,0 +1,533 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.oop",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.constructors-destructors",
+  "locale": "en",
+  "sessions": 3,
+  "learningOrder": 3,
+  "prerequisiteIds": [
+    "cpp.classes-objects-state-control"
+  ],
+  "sourceRefs": [
+    "CPP20-CLASS",
+    "CPP20-DTOR"
+  ],
+  "title": "Construction and lifetime completion",
+  "lead": "Trace construction of object parts and automatic cleanup in reverse order.",
+  "why": "A constructor establishes an object's initial state. Its name matches the class and it has no return type. In Level(int n):value_(n), the part after the colon is a member initializer list. The field is created with n directly. Assignment inside the body happens later, after the member has already had to be created.",
+  "objectives": [
+    "List the Machine event order.",
+    "Compare initialization and body assignment.",
+    "Justify the Lease counter lifetime.",
+    "Add a third nested scope.",
+    "Explain why Lease copying is forbidden."
+  ],
+  "prerequisites": [
+    "Modules 1–4: input, functions, sequences, ownership, testing and multifile builds.",
+    "Direct prerequisites: cpp.classes-objects-state-control"
+  ],
+  "concepts": [
+    {
+      "term": "Constructor",
+      "definition": "A special function that establishes an object's initial state."
+    },
+    {
+      "term": "Member initializer list",
+      "definition": "Constructor syntax specifying direct initialization of bases and members."
+    },
+    {
+      "term": "Explicit constructor",
+      "definition": "A constructor declaration restricting implicit conversions."
+    },
+    {
+      "term": "Destructor",
+      "definition": "A special function for completing object lifetime and owned cleanup."
+    },
+    {
+      "term": "Declaration order",
+      "definition": "The order controlling initialization of nonstatic members."
+    },
+    {
+      "term": "Scope",
+      "definition": "A program region in which a name is available under lookup rules."
+    },
+    {
+      "term": "Deleted operation",
+      "definition": "An operation marked =delete whose use is rejected at compile time."
+    },
+    {
+      "term": "Subobject",
+      "definition": "A base or member whose lifetime participates in the complete object's lifetime."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Initialization precedes the body",
+      "paragraphs": [
+        "A constructor establishes an object's initial state. Its name matches the class and it has no return type. In Level(int n):value_(n), the part after the colon is a member initializer list. The field is created with n directly. Assignment inside the body happens later, after the member has already had to be created.",
+        "Prefer direct initialization, especially for const members, references and types without a default constructor. An uninitialized built-in int can hold an indeterminate value that must not be read. A =0 field initializer supplies a useful default, but does not replace validation of domain requirements on constructor arguments."
+      ]
+    },
+    {
+      "title": "Declaration order controls initialization",
+      "paragraphs": [
+        "Members are initialized in their declaration order inside the class, regardless of their order in the initializer list. The constructor body executes afterwards. Machine therefore creates a, then b, then prints ready. Rearranging a and b in the initializer list is not a way to change their lifetimes.",
+        "If the second member needs the first during construction, declare the dependency earlier. Fix a compiler warning about reordered initialization instead of ignoring it. Do not demonstrate the rule by reading a member whose lifetime has not begun. A safe trace prints identifiers of initialized parts and reveals order without undefined behaviour."
+      ]
+    },
+    {
+      "title": "Explicit construction and caller intent",
+      "paragraphs": [
+        "A one-argument constructor can participate in an implicit conversion when its declaration permits it. explicit prevents that copy-initialization conversion while allowing an explicit Level{7}. Calling show(l) with an existing Level is clear; show(7) in the negative example must fail to compile.",
+        "This matters for units, identifiers and resources: the integer seven should not accidentally become seven metres or an opened handle. explicit neither checks a range nor automatically makes a type safe. Separate the decisions about permitted conversions from the decisions about which values satisfy the construction contract."
+      ]
+    },
+    {
+      "title": "Destruction reverses construction",
+      "paragraphs": [
+        "A destructor is spelled ~Type() and has no parameters. Automatic objects are destroyed in reverse order of successful construction when their scope ends. The complete object's destructor body runs first, followed by its members in reverse declaration order. The Machine trace therefore ends with stop, minus B, minus A.",
+        "Reverse order follows dependencies: a later part may rely on an earlier part and should finish first. Do not manually call the destructor of an ordinary local object; later automatic destruction would make the program incorrect. Scopes, containers and standard-library owners suffice for ordinary course work. Placement new is outside this lesson's requirements."
+      ]
+    },
+    {
+      "title": "Owning a resource counter",
+      "paragraphs": [
+        "Lease stores an int& referring to an external active counter. Its constructor increments it and its destructor decrements it. The counter outlives every Lease because it is declared earlier in an outer scope. A reference does not own the integer or extend its lifetime. That is an important precondition of this teaching model.",
+        "Copying Lease is deleted with =delete. Otherwise two copies could decrement a counter after just one original increment, violating ownership accounting. We do not implement a custom move yet; that has a separate lesson. A deleted operation is a compile-time prohibition rather than a special result produced while the program runs."
+      ]
+    },
+    {
+      "title": "Tracing a nested scope",
+      "paragraphs": [
+        "With mode zero, only a exists: the output contains one inside the scope, one before its end and zero afterwards. With mode one, b is created too; one, two, one, zero shows that b is destroyed after the inner if and a later. Mode two intentionally follows the same path and checks the stated input contract.",
+        "Write an event, live-object and active-count table before running. The counter is not a universal memory leak detector, but checks acquire/release pairing in this model. Do not inspect a destroyed b to discover what happened; observe the counter whose lifetime continues. No Lease owners remain after the outer scope ends."
+      ]
+    },
+    {
+      "title": "Construction failure and cleanup",
+      "paragraphs": [
+        "If construction of a complete object fails with an exception, that complete object's destructor is not called. Members that were successfully constructed are cleaned up. Throwing is studied later; the design implication already matters: do not leave ownership in an unprotected raw pointer between constructor steps.",
+        "Destructors should finish without throwing exceptions. Output in tracing examples makes order visible; it is not a model for complicated cleanup with recoverable failures. Handle a file-saving error in an explicit operation before destruction. Prefer established RAII owners for real resources because they reduce the number of manual release paths."
+      ]
+    },
+    {
+      "title": "Laboratory and transfer",
+      "paragraphs": [
+        "Save the Lease source and traces for all three permitted modes. Explain declaration order, the beginning of lifetime, scope exit and destruction order as separate events. Change nesting safely and predict the new sequence first. Invalid input must be rejected before any Lease objects are created.",
+        "The cumulative Window practicum combines the invariant with initialization of the closed, degenerate interval [0,0], which contains the point zero. Resource discipline next transfers to unique_ptr and standard containers. The goal is not to write a destructor for every class. When members already manage their resources, a user-written destructor is often unnecessary."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "model",
+      "title": "Worked model",
+      "purpose": "Trace construction of object parts and automatic cleanup in reverse order.",
+      "code": "#include <iostream>\nstruct Part {char id;explicit Part(char c):id(c){std::cout<<'+'<<id<<' ';}~Part(){std::cout<<'-'<<id<<' ';}};\nstruct Machine {Part a,b;Machine():a('A'),b('B'){std::cout<<\"ready \";}~Machine(){std::cout<<\"stop \";}};\nint main(){{Machine m;}std::cout<<'\\n';}\n",
+      "stdin": "",
+      "expectedStdout": "+A +B ready stop -B -A \n",
+      "steps": [
+        "Members a and b initialize in declaration order.",
+        "The constructor body prints ready.",
+        "Scope exit prints stop, then -B and -A."
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "Contract boundary check",
+      "purpose": "Trace construction of object parts and automatic cleanup in reverse order.",
+      "code": "#include <iostream>\nclass Level {int value_;public:explicit Level(int n):value_(n){}int value()const{return value_;}};\nvoid show(const Level& l){std::cout<<l.value()<<'\\n';}\nint main(){Level l{7};show(l);}\n",
+      "stdin": "",
+      "expectedStdout": "7\n",
+      "steps": [
+        "explicit requires deliberate Level{7} construction.",
+        "show borrows the existing live object.",
+        "value() prints seven without mutating state."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Justify the Lease counter lifetime.",
+      "action": "Justify the Lease counter lifetime.",
+      "prediction": "First predict the result and state in writing.",
+      "verification": "The earlier outer counter outlives both leases."
+    },
+    {
+      "title": "Add a third nested scope.",
+      "action": "Add a third nested scope.",
+      "prediction": "First predict the result and state in writing.",
+      "verification": "Prediction matches actual reverse cleanup."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "In initializer-list order.",
+      "cause": "An interface promise was confused with an implementation assumption.",
+      "fix": "In their declaration order inside the class."
+    },
+    {
+      "symptom": "It checks the range 0…100.",
+      "cause": "An interface promise was confused with an implementation assumption.",
+      "fix": "It prevents the corresponding implicit conversion."
+    },
+    {
+      "symptom": "Yes; before every return.",
+      "cause": "An interface promise was confused with an implementation assumption.",
+      "fix": "No; scope exit performs destruction."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "List the Machine event order.",
+      "criteria": "Obtain +A +B ready stop -B -A.",
+      "hint": "A constructor establishes an object's initial state. Its name matches the class and it has no return type. In Level(int n):value_(n), the part after the colon is a member initializer list. The field is created with n directly. Assignment inside the body happens later, after the member has already had to be created."
+    },
+    {
+      "level": "basic",
+      "task": "Compare initialization and body assignment.",
+      "criteria": "Explain when the member must already exist.",
+      "hint": "Members are initialized in their declaration order inside the class, regardless of their order in the initializer list. The constructor body executes afterwards. Machine therefore creates a, then b, then prints ready. Rearranging a and b in the initializer list is not a way to change their lifetimes."
+    },
+    {
+      "level": "applied",
+      "task": "Justify the Lease counter lifetime.",
+      "criteria": "The earlier outer counter outlives both leases.",
+      "hint": "A one-argument constructor can participate in an implicit conversion when its declaration permits it. explicit prevents that copy-initialization conversion while allowing an explicit Level{7}. Calling show(l) with an existing Level is clear; show(7) in the negative example must fail to compile."
+    },
+    {
+      "level": "applied",
+      "task": "Add a third nested scope.",
+      "criteria": "Prediction matches actual reverse cleanup.",
+      "hint": "A destructor is spelled ~Type() and has no parameters. Automatic objects are destroyed in reverse order of successful construction when their scope ends. The complete object's destructor body runs first, followed by its members in reverse declaration order. The Machine trace therefore ends with stop, minus B, minus A."
+    },
+    {
+      "level": "transfer",
+      "task": "Explain why Lease copying is forbidden.",
+      "criteria": "Two cleanups must not correspond to one acquisition.",
+      "hint": "Lease stores an int& referring to an external active counter. Its constructor increments it and its destructor decrements it. The counter outlives every Lease because it is declared earlier in an outer scope. A reference does not own the integer or extend its lifetime. That is an important precondition of this teaching model."
+    },
+    {
+      "level": "transfer",
+      "task": "Design a nonthrowing-close wrapper.",
+      "criteria": "Separate ownership from explicit error reporting.",
+      "hint": "With mode zero, only a exists: the output contains one inside the scope, one before its end and zero afterwards. With mode one, b is created too; one, two, one, zero shows that b is destroyed after the inner if and a later. Mode two intentionally follows the same path and checks the stated input contract."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Construction and lifetime completion",
+    "catalogGoal": "Trace construction of object parts and automatic cleanup in reverse order.",
+    "challenge": "Read exactly one mode=0…2. Construct Lease a and print active; for a nonzero mode construct b in an inner scope and print active. Print active after the inner scope and again after a is destroyed, ending the line. Lease increments the counter on construction and decrements on destruction; copying is forbidden. Invalid input: invalid.",
+    "starterCode": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\nclass Lease { /* TODO: reference, explicit acquisition, deleted copy, release */ };\nint main(){std::cout<<\"pending\\n\";}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\nclass Lease {\n int& active_;\npublic:\n explicit Lease(int& n):active_(n){++active_;}\n Lease(const Lease&)=delete;Lease& operator=(const Lease&)=delete;\n ~Lease(){--active_;}\n};\nint main(){int mode;if(!(std::cin>>mode)||mode<0||mode>2){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n int active=0;{Lease a{active};std::cout<<active<<' ';if(mode){Lease b{active};std::cout<<active<<' ';}std::cout<<active<<' ';}\n std::cout<<active<<'\\n';}\n",
+    "cases": [
+      {
+        "stdin": "0",
+        "stdout": "1 1 0\n"
+      },
+      {
+        "stdin": "1",
+        "stdout": "1 2 1 0\n"
+      },
+      {
+        "stdin": "2",
+        "stdout": "1 2 1 0\n"
+      },
+      {
+        "stdin": "-1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "3",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "x",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 x",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Restate the contract and distinguish malformed input from domain rejection.",
+      "List the Machine event order.",
+      "Compare initialization and body assignment.",
+      "Open Task and Code Studio: the task stays alongside the editor on desktop or in a phone tab. Save your own code before replacing an example.",
+      "Complete the starter; pending marks unfinished work rather than a correct result.",
+      "Run every reference case and record actual stdout and exit status.",
+      "Explain why Lease copying is forbidden.",
+      "Save source, a verification table and an invariant explanation; add one independent case."
+    ],
+    "rubric": [
+      "Obtain +A +B ready stop -B -A.",
+      "Explain when the member must already exist.",
+      "The earlier outer counter outlives both leases.",
+      "Prediction matches actual reverse cleanup.",
+      "Include source, actual results, an independent case and limits of the conclusion."
+    ],
+    "artifact": "A personal project containing source and a verification log.",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "In what order are members initialized?",
+      "answers": [
+        "In their declaration order inside the class.",
+        "In initializer-list order.",
+        "Alphabetically."
+      ],
+      "correctIndex": 0,
+      "explanation": "Members are initialized in declaration order before the constructor body runs. Rearranging the initializer list does not change lifetime order and should not contradict the declarations."
+    },
+    {
+      "question": "What does explicit Level(int) do?",
+      "answers": [
+        "It checks the range 0…100.",
+        "It prevents the corresponding implicit conversion.",
+        "It deletes the destructor."
+      ],
+      "correctIndex": 1,
+      "explanation": "explicit prevents the corresponding implicit conversion from int to Level. Explicit Level{7} remains allowed, while domain-range validation must be implemented separately."
+    },
+    {
+      "question": "Should you manually destroy an ordinary local object?",
+      "answers": [
+        "Yes; before every return.",
+        "Yes; before first use.",
+        "No; scope exit performs destruction."
+      ],
+      "correctIndex": 2,
+      "explanation": "An ordinary local object is destroyed automatically on scope exit. A manual destructor call without correctly reestablishing lifetime would make the later automatic destruction invalid."
+    },
+    {
+      "question": "Is the complete destructor called after constructor failure?",
+      "answers": [
+        "No; successfully constructed subobjects are cleaned up.",
+        "Yes; always twice.",
+        "No members are cleaned up."
+      ],
+      "correctIndex": 0,
+      "explanation": "The complete object was not successfully constructed, so its own destructor is not invoked. Completed subobjects are destroyed in reverse order, allowing RAII members to release resources."
+    },
+    {
+      "question": "Why can active be read after Lease is destroyed?",
+      "answers": [
+        "The Lease reference extends int lifetime.",
+        "The integer remains alive in the outer scope.",
+        "Reading a destroyed int is always valid."
+      ],
+      "correctIndex": 1,
+      "explanation": "active is declared earlier in the outer scope and remains alive after the Lease owners are destroyed. The Lease reference observes the integer; it does not extend its lifetime."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "What does ship rejection mean?",
+      "answers": [
+        "Quantity is preserved and the caller receives false.",
+        "Quantity is always reset to zero.",
+        "Quantity becomes negative."
+      ],
+      "correctIndex": 0,
+      "explanation": "ship checks its argument and available quantity before assignment. On rejection the caller therefore sees the previous quantity and false, rather than zeroing or a negative quantity."
+    },
+    {
+      "question": "Does const guarantee thread safety?",
+      "answers": [
+        "Yes; it locks all threads.",
+        "Yes; it forbids every external effect.",
+        "No; const does not synchronize access."
+      ],
+      "correctIndex": 2,
+      "explanation": "const restricts ordinary member modification through this object, but supplies no lock and does not exclude external effects. Concurrent access needs a separately chosen synchronization protocol."
+    },
+    {
+      "question": "Why does reset take both bounds?",
+      "answers": [
+        "To bypass the invariant.",
+        "To validate their relationship before changing state.",
+        "For automatic inheritance."
+      ],
+      "correctIndex": 1,
+      "explanation": "The invariant relates low and high, so validate the pair before assigning either field. Independent setters can finish a public call with low>high even when the caller intended a valid final interval."
+    }
+  ],
+  "reflection": [
+    "Add a third nested scope.",
+    "Explain why Lease copying is forbidden.",
+    "Design a nonthrowing-close wrapper."
+  ],
+  "bridge": "Next: RAII and smart pointers",
+  "visualization": {
+    "kind": "journey",
+    "title": "Construction and lifetime completion",
+    "description": "A stepwise textual model; actual execution happens in Code Studio.",
+    "steps": [
+      {
+        "title": "Initialization precedes the body",
+        "description": "A constructor establishes an object's initial state. Its name matches the class and it has no return type. In Level(int n):value_(n), the part after the colon is a member initializer list. The field is created with n directly. Assignment inside the body happens later, after the member has already had to be created."
+      },
+      {
+        "title": "Declaration order controls initialization",
+        "description": "Members are initialized in their declaration order inside the class, regardless of their order in the initializer list. The constructor body executes afterwards. Machine therefore creates a, then b, then prints ready. Rearranging a and b in the initializer list is not a way to change their lifetimes."
+      },
+      {
+        "title": "Explicit construction and caller intent",
+        "description": "A one-argument constructor can participate in an implicit conversion when its declaration permits it. explicit prevents that copy-initialization conversion while allowing an explicit Level{7}. Calling show(l) with an existing Level is clear; show(7) in the negative example must fail to compile."
+      },
+      {
+        "title": "Owning a resource counter",
+        "description": "Lease stores an int& referring to an external active counter. Its constructor increments it and its destructor decrements it. The counter outlives every Lease because it is declared earlier in an outer scope. A reference does not own the integer or extend its lifetime. That is an important precondition of this teaching model."
+      },
+      {
+        "title": "Construction failure and cleanup",
+        "description": "If construction of a complete object fails with an exception, that complete object's destructor is not called. Members that were successfully constructed are cleaned up. Throwing is studied later; the design implication already matters: do not leave ownership in an unprotected raw pointer between constructor steps."
+      }
+    ]
+  },
+  "legacyQuiz": {
+    "question": "When is a constructor normally invoked?",
+    "answers": [
+      "When an object is created",
+      "After every if",
+      "Only during compilation"
+    ],
+    "correctIndex": 0
+  },
+  "blockPracticum": {
+    "referenceCode": "#include <iostream>\nclass Window {\n int low_=0,high_=0;\npublic:\n bool reset(int a,int b){if(a<0||b>100||a>b)return false;low_=a;high_=b;return true;}\n int width()const{return high_-low_;}\n};\nint main(){int a,b;if(!(std::cin>>a>>b)){std::cout<<\"invalid\\n\";return 0;}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n Window w;bool ok=w.reset(a,b);std::cout<<(ok?\"ok \":\"rejected \")<<w.width()<<'\\n';}\n",
+    "cases": [
+      {
+        "stdin": "2 7",
+        "stdout": "ok 5\n"
+      },
+      {
+        "stdin": "0 100",
+        "stdout": "ok 100\n"
+      },
+      {
+        "stdin": "5 5",
+        "stdout": "ok 0\n"
+      },
+      {
+        "stdin": "7 2",
+        "stdout": "rejected 0\n"
+      },
+      {
+        "stdin": "-1 2",
+        "stdout": "rejected 0\n"
+      },
+      {
+        "stdin": "0 101",
+        "stdout": "rejected 0\n"
+      },
+      {
+        "stdin": "x",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 1 x",
+        "stdout": "invalid\n"
+      }
+    ],
+    "title": "Cumulative practicum: An intact interval",
+    "challenge": "Read a b. Window starts at [0,0]; reset accepts only 0≤a≤b≤100. Print ok/rejected and current interval width. Malformed input or trailing tokens: invalid.",
+    "starterCode": "#include <iostream>\nclass Window {int low_=0,high_=0;public:/* TODO: checked reset(a,b) and const width() */};\nint main(){std::cout<<\"pending\\n\";}\n",
+    "starterExpectedStdout": "pending\n",
+    "milestones": [
+      "Restate the contract and distinguish malformed input from domain rejection.",
+      "List the Machine event order.",
+      "Compare initialization and body assignment."
+    ],
+    "rubric": [
+      {
+        "points": 2,
+        "criterion": "Valid input and exact output format.",
+        "complete": "Fully support this criterion with source, an actual case and reasoning: Valid input and exact output format.",
+        "partial": "Partially implemented, but an independent case or explanation is missing.",
+        "missing": "The criterion is unmet or the observed behaviour violates its contract."
+      },
+      {
+        "points": 2,
+        "criterion": "Invariant after a successful operation.",
+        "complete": "Fully support this criterion with source, an actual case and reasoning: Invariant after a successful operation.",
+        "partial": "Partially implemented, but an independent case or explanation is missing.",
+        "missing": "The criterion is unmet or the observed behaviour violates its contract."
+      },
+      {
+        "points": 2,
+        "criterion": "State preservation on rejection.",
+        "complete": "Fully support this criterion with source, an actual case and reasoning: State preservation on rejection.",
+        "partial": "Partially implemented, but an independent case or explanation is missing.",
+        "missing": "The criterion is unmet or the observed behaviour violates its contract."
+      },
+      {
+        "points": 2,
+        "criterion": "Boundaries and an independent test case.",
+        "complete": "Fully support this criterion with source, an actual case and reasoning: Boundaries and an independent test case.",
+        "partial": "Partially implemented, but an independent case or explanation is missing.",
+        "missing": "The criterion is unmet or the observed behaviour violates its contract."
+      },
+      {
+        "points": 2,
+        "criterion": "Source, actual results and reasoning.",
+        "complete": "Fully support this criterion with source, an actual case and reasoning: Source, actual results and reasoning.",
+        "partial": "Partially implemented, but an independent case or explanation is missing.",
+        "missing": "The criterion is unmet or the observed behaviour violates its contract."
+      }
+    ],
+    "artifacts": [
+      "Source",
+      "Actual-run table",
+      "Invariant and rejection explanation"
+    ],
+    "completionRule": "Evidence supports every mandatory criterion; manual assessment without automatic credit.",
+    "skills": [
+      {
+        "lessonId": "cpp.oop-principles",
+        "title": "Objects, abstraction and responsibility boundaries"
+      },
+      {
+        "lessonId": "cpp.classes-objects-state-control",
+        "title": "Classes, interfaces and state"
+      },
+      {
+        "lessonId": "cpp.constructors-destructors",
+        "title": "Construction and lifetime completion"
+      }
+    ],
+    "label": "CUMULATIVE PRACTICUM",
+    "readiness": "Start after completing the listed laboratories. Attempt your own solution before comparing the reference.",
+    "requirements": [
+      "Read a b. Window starts at [0,0]; reset accepts only 0≤a≤b≤100. Print ok/rejected and current interval width. Malformed input or trailing tokens: invalid.",
+      "Preserve your previous code in a separate project or saved copy before replacement.",
+      "Compare exit status, stdout and specified files rather than merely the absence of a red message."
+    ],
+    "walkthrough": [
+      "Window initializes both fields to zero, so the initial width is zero.",
+      "reset checks bounds and ordering before assignment. Rejection of 7 2 preserves [0,0].",
+      "After accepting 2 7, the width is five: a public observation rather than private access."
+    ]
+  },
+  "diagnosticExamples": [
+    {
+      "id": "compile-contract",
+      "title": "Expected compile failure",
+      "code": "struct Level {explicit Level(int){}};\nvoid show(Level){}\nint main(){show(7);}\n",
+      "expectation": "compile-error",
+      "diagnostic": "Level",
+      "explanation": "This is a separate negative control. Keep it out of the working main.cpp."
+    }
+  ]
+}

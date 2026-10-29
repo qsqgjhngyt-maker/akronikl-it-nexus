@@ -53,6 +53,12 @@ jobs:
           node tools/check-cpp-course-perf.mjs
           node server-access/build-worker.mjs
           node server-access/build-bff.mjs
+      - name: Максимальный6MiB checkpoint при действующих128МБ и1CPU
+        run: |
+          node tools/prepare-course-final-limit-fixture.mjs --out /tmp/nexus-course-limit-input
+          mkdir -p /tmp/nexus-course-limit-evidence
+          chmod 777 /tmp/nexus-course-limit-evidence
+          docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges --memory 128m --memory-swap 128m --cpus 1 --pids-limit 64 --user 1000:1000 --tmpfs /tmp:rw,noexec,nosuid,size=8m,mode=1777 --mount type=bind,source=/tmp/nexus-course-limit-input,target=/input,readonly --mount type=bind,source=/tmp/nexus-course-limit-evidence,target=/evidence --workdir /input --env NEXUS_COURSE_FINAL_EVIDENCE=/evidence --env PORT=18080 --entrypoint node node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 tests/course-final-bridge-limit.mjs --with-bff-image
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -60,5 +66,6 @@ jobs:
           path: |
             /tmp/nexus-course-final/*.json
             /tmp/nexus-course-final-expert/*.json
+            /tmp/nexus-course-limit-evidence/*.json
           retention-days: 30
           # Ни БД, ни ключи ответов, ни профили браузера не выгружаются.

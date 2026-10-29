@@ -3656,7 +3656,7 @@ function bound(data, p, expected) {
   if (p.phase === "begin" && (data.upload.snapshotHash !== p.snapshotHash || data.upload.totalBytes !== p.totalBytes || data.upload.chunkCount !== p.chunkCount)) fail5("ASSESSMENT_RESPONSE_INVALID", 502);
   return data;
 }
-async function assessmentBridge(payload, rpc, { expectedAccountId, signal = AbortSignal.timeout(45e3) } = {}) {
+async function assessmentBridge(payload, rpc, { expectedAccountId, signal = AbortSignal.timeout(12e3) } = {}) {
   try {
     validateAssessmentRequest(payload);
   } catch {
@@ -3682,13 +3682,17 @@ async function assessmentBridge(payload, rpc, { expectedAccountId, signal = Abor
   }
   if (parts.length !== u.chunkCount || parts.some((r, i) => r.index !== i || r.bytes !== (i === u.chunkCount - 1 ? u.totalBytes - i * FINAL_LIMITS.chunkBytes : FINAL_LIMITS.chunkBytes))) fail5("ASSESSMENT_INCOMPLETE", 409);
   const chunks = [];
-  for (let offset = 0; offset < u.chunkCount; offset += 5) {
-    const page = await call({ phase: "parts", attemptId, uploadId, offset });
-    if (page.parts.length !== Math.min(5, u.chunkCount - offset)) fail5("ASSESSMENT_INCOMPLETE", 409);
-    for (const [index, row] of page.parts.entries()) {
-      const i = offset + index, bytes3 = Buffer4.from(row.data, "base64");
-      if (row.index !== i || row.bytes !== parts[i].bytes || row.sha256 !== parts[i].sha256 || bytes3.length !== row.bytes || bytes3.toString("base64") !== row.data || sha2(bytes3) !== row.sha256) fail5("ASSESSMENT_PART_INVALID", 409);
-      chunks.push(bytes3);
+  for (let start = 0; start < u.chunkCount; start += 20) {
+    const offsets = Array.from({ length: Math.min(4, Math.ceil((u.chunkCount - start) / 5)) }, (_, i) => start + i * 5);
+    const pages = await Promise.all(offsets.map((offset) => call({ phase: "parts", attemptId, uploadId, offset })));
+    for (const [p, page] of pages.entries()) {
+      const offset = offsets[p];
+      if (page.parts.length !== Math.min(5, u.chunkCount - offset)) fail5("ASSESSMENT_INCOMPLETE", 409);
+      for (const [index, row] of page.parts.entries()) {
+        const i = offset + index, bytes3 = Buffer4.from(row.data, "base64");
+        if (row.index !== i || row.bytes !== parts[i].bytes || row.sha256 !== parts[i].sha256 || bytes3.length !== row.bytes || bytes3.toString("base64") !== row.data || sha2(bytes3) !== row.sha256) fail5("ASSESSMENT_PART_INVALID", 409);
+        chunks.push(bytes3);
+      }
     }
   }
   const bytes2 = Buffer4.concat(chunks, u.totalBytes);

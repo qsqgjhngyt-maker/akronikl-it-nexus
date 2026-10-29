@@ -20,7 +20,7 @@ function bound(data,p,expected){
  if(p.phase==='begin'&&(data.upload.snapshotHash!==p.snapshotHash||data.upload.totalBytes!==p.totalBytes||data.upload.chunkCount!==p.chunkCount))fail('ASSESSMENT_RESPONSE_INVALID',502);
  return data;
 }
-export async function assessmentBridge(payload,rpc,{expectedAccountId,signal=AbortSignal.timeout(45000)}={}){
+export async function assessmentBridge(payload,rpc,{expectedAccountId,signal=AbortSignal.timeout(12000)}={}){
  try{validateAssessmentRequest(payload)}catch{fail('ASSESSMENT_INPUT_INVALID')}
  const call=async p=>{
   signal.throwIfAborted();const data=await rpc(p,{signal:AbortSignal.any([signal,AbortSignal.timeout(12000)])});signal.throwIfAborted();
@@ -32,10 +32,16 @@ export async function assessmentBridge(payload,rpc,{expectedAccountId,signal=Abo
  if(a.status!=='draft'){if(a.uploadId===u.id&&a.snapshotHash===u.snapshotHash)return{attempt:a};fail('ASSESSMENT_STATE_INVALID',409)}
  if(parts.length!==u.chunkCount||parts.some((r,i)=>r.index!==i||r.bytes!==(i===u.chunkCount-1?u.totalBytes-i*FINAL_LIMITS.chunkBytes:FINAL_LIMITS.chunkBytes)))fail('ASSESSMENT_INCOMPLETE',409);
  const chunks=[];
- for(let offset=0;offset<u.chunkCount;offset+=5){
-  const page=await call({phase:'parts',attemptId,uploadId,offset});if(page.parts.length!==Math.min(5,u.chunkCount-offset))fail('ASSESSMENT_INCOMPLETE',409);
-  for(const[index,row]of page.parts.entries()){
-   const i=offset+index,bytes=Buffer.from(row.data,'base64');if(row.index!==i||row.bytes!==parts[i].bytes||row.sha256!==parts[i].sha256||bytes.length!==row.bytes||bytes.toString('base64')!==row.data||sha(bytes)!==row.sha256)fail('ASSESSMENT_PART_INVALID',409);chunks.push(bytes);
+ // Четыре независимых read RPC за раз: ограниченная память и запас до
+ // существующего15s лимита BFF. Порядок и SHA каждой части всё равно обязательны.
+ for(let start=0;start<u.chunkCount;start+=20){
+  const offsets=Array.from({length:Math.min(4,Math.ceil((u.chunkCount-start)/5))},(_,i)=>start+i*5);
+  const pages=await Promise.all(offsets.map(offset=>call({phase:'parts',attemptId,uploadId,offset})));
+  for(const[p,page]of pages.entries()){
+   const offset=offsets[p];if(page.parts.length!==Math.min(5,u.chunkCount-offset))fail('ASSESSMENT_INCOMPLETE',409);
+   for(const[index,row]of page.parts.entries()){
+    const i=offset+index,bytes=Buffer.from(row.data,'base64');if(row.index!==i||row.bytes!==parts[i].bytes||row.sha256!==parts[i].sha256||bytes.length!==row.bytes||bytes.toString('base64')!==row.data||sha(bytes)!==row.sha256)fail('ASSESSMENT_PART_INVALID',409);chunks.push(bytes);
+   }
   }
  }
  const bytes=Buffer.concat(chunks,u.totalBytes);if(sha(bytes)!==u.snapshotHash)fail('ASSESSMENT_BUNDLE_INVALID');let bundle;

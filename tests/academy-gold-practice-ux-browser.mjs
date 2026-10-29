@@ -17,7 +17,7 @@ try{
  await p.goto(fixture.origin+'/#course=cpp&lesson=cpp.algorithm-complexity');
  await p.locator('[data-gold-lesson="cpp.algorithm-complexity"]').waitFor();await fixture.waitReady();
  const prefix='/releases/'+await p.evaluate(()=>document.querySelector('script[type="module"][src*="/releases/"]').src.split('/releases/')[1].split('/')[0]);
- if(!process.argv.includes('--interaction-only'))await check('Все 92 RU/EN объекта M1–4: случаи, stdin/stdout, файлы и свойства без потерь',async()=>{
+ if(!process.argv.includes('--interaction-only'))await check('Все RU/EN Gold-объекты M1–6: случаи, stdin/stdout, файлы и свойства без потерь',async()=>{
   let groups=0,cases=0;
   for(const id of GOLD_LESSONS)for(const locale of ['ru','en']){
    const g=JSON.parse(await readFile(new URL('../'+goldLessonPath(id,locale),import.meta.url)));
@@ -26,7 +26,11 @@ try{
    assert.equal(await sections.count(),expected.length);
    for(let i=0;i<expected.length;i++){
     const section=sections.nth(i),rows=section.locator('.gold-case');assert.equal(await rows.count(),expected[i].cases.length);
-    assert.equal(await section.locator('[data-gold-open-editor]').count(),1);assert.equal(await section.locator('a[href="#view=code-studio"]').count(),1);
+    if(expected[i].target==='qt-wasm'){assert.equal(await section.locator('[data-gold-open-editor]').count(),0);const link=section.locator('[data-gold-qt-workspace] a');assert.equal(await link.getAttribute('href'),'./#view=project-studio');assert.equal(await link.getAttribute('target'),'_blank');}else{assert.equal(await section.locator('[data-gold-open-editor]').count(),1);assert.equal(await section.locator('a[href="#view=code-studio"]').count(),1);}
+    if(expected[i].target==='qt-wasm'){
+     const actual=await rows.evaluateAll(nodes=>nodes.map(n=>({open:n.open,purpose:n.querySelector(':scope>summary').textContent,actions:[...n.querySelectorAll(':scope>ol>li')].map(x=>x.textContent),expected:n.querySelector(':scope>p').textContent})));
+     for(let j=0;j<actual.length;j++)assert.deepEqual(actual[j],{open:j===0,purpose:expected[i].cases[j].purpose,actions:expected[i].cases[j].actions,expected:expected[i].cases[j].expected});groups++;cases+=actual.length;continue;
+    }
     const actual=await rows.evaluateAll(nodes=>nodes.map(n=>({open:n.open,values:[...n.querySelector('.gold-case-values').querySelectorAll('pre code')].map(c=>c.textContent),files:[...n.querySelectorAll('.gold-case-files')].map(f=>({title:f.querySelector('summary').textContent,values:[...f.querySelectorAll('.gold-case-value')].map(v=>({path:v.querySelector('strong').textContent,text:v.querySelector('pre code').textContent})),properties:f.querySelector('.gold-case-value')?null:f.querySelector('pre code')?.textContent}))})));
     for(let j=0;j<actual.length;j++){
      const a=actual[j],e=expected[i].cases[j];assert.equal(a.open,j===0);assert.deepEqual(a.values,[e.stdin,e.stdout]);
@@ -35,7 +39,7 @@ try{
      if(e.fileProperties!==undefined)assert.deepEqual(JSON.parse(a.files.at(-1).properties),e.fileProperties);
     }groups++;cases+=actual.length;
    }
-   await p.locator('.gold-cases details').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));
+   await p.locator('.gold-cases details,.gold-case').evaluateAll(nodes=>nodes.forEach(n=>n.open=true));
    for(const width of widths){await p.setViewportSize({width,height:900});const overflow=await p.evaluate(()=>({document:document.documentElement.scrollWidth>innerWidth+1,cases:[...document.querySelectorAll('.gold-cases,.gold-case,.gold-case pre')].some(n=>n.scrollWidth>n.clientWidth+1)}));assert.deepEqual(overflow,{document:false,cases:false},id+' '+locale+' '+width);}
   }
   return{objects:GOLD_LESSONS.length*2,groups,cases,widths,responsiveChecks:GOLD_LESSONS.length*2*widths.length};

@@ -27,7 +27,7 @@ def archive(name,names,reader):
 full=archive('CPP_GOLD_FULL_PUBLIC.zip',rows,lambda f:safe(f).read_bytes())
 changed=[f for f,r in rows.items() if f not in baseline or r['sha256']!=baseline[f]['sha256']]
 patch=archive('CPP_GOLD_PATCH_PUBLIC.zip',changed,lambda f:safe(f).read_bytes())
-rollback_names=['index.html','nexus-shell.html','offline.html','manifest.webmanifest','service-worker.js','version.json','BUILD_MANIFEST.json']
+rollback_names=['index.html','nexus-shell.html','offline.html','manifest.webmanifest','service-worker.js','version.json','BUILD_MANIFEST.json','startup-intro.json']
 rollback=archive('CPP_GOLD_ROLLBACK_ROOT.zip',rollback_names,git)
 result={'status':'PASS / packages reread verified','version':manifest['version'],'assetGeneration':manifest['assetGeneration'],'baselineCommit':a.baseline,'packages':[full,patch,rollback],'runtimeAndCorrespondingSourceIncluded':True,'privateLearnerDataIncluded':False,'rollbackDeletesData':False}
 (out/'PACKAGES.json').write_bytes((json.dumps(result,ensure_ascii=False,indent=2)+'\n').encode());print(json.dumps(result,ensure_ascii=False))
