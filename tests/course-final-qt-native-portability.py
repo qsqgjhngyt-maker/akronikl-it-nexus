@@ -1,6 +1,6 @@
 """Настоящие native Qt/FS; I/O-stub модели не оценивает решение учащегося."""
 import argparse,pathlib,json,subprocess,tempfile,hashlib,copy,os
-p=argparse.ArgumentParser();p.add_argument('--out',required=True);p.add_argument('--image',default='nexus-m6-qt:6.8.3-ems3.1.56');a=p.parse_args();r=pathlib.Path(__file__).resolve().parents[1];out=pathlib.Path(a.out).resolve();out.mkdir(parents=True,exist_ok=True);work=pathlib.Path(tempfile.mkdtemp(prefix='private-qt-native-',dir=out));base='f923c6b1fec8d62ad85dc0a1ede02cbbb6ba0248';records=[]
+p=argparse.ArgumentParser();p.add_argument('--out',required=True);p.add_argument('--image',default='nexus-qt-native-portability:6.8.3');a=p.parse_args();r=pathlib.Path(__file__).resolve().parents[1];out=pathlib.Path(a.out).resolve();out.mkdir(parents=True,exist_ok=True);work=pathlib.Path(tempfile.mkdtemp(prefix='private-qt-native-',dir=out));base='f923c6b1fec8d62ad85dc0a1ede02cbbb6ba0248';records=[]
 stub='#pragma once\n#include <vector>\n#include <string>\n#include <ostream>\n#include <istream>\nstruct SyntheticItem{int id=0;std::string title;int value=0;int state=0;};\nclass Model{std::vector<SyntheticItem> values_;public:const auto&items()const{return values_;}void save(std::ostream&o)const{o<<"SYNTHETIC\\n";}void load(std::istream&){} };\n'
 def run(args,stage):
  q=subprocess.run(args,capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=180);(out/(stage+'.log')).write_text(q.stdout+q.stderr,encoding='utf-8');assert q.returncode==0,stage+' failed; see local log';return q.stdout

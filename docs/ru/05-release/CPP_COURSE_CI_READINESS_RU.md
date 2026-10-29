@@ -11,3 +11,15 @@
 Доказательство: `docs/ru/03-content/evidence/cpp-course-studio-20261029/READINESS_BUDGET.json`. Добавлен отдельный CI-сценарий с задержкой35s. После CI необходимо зафиксировать фактические результаты повторных M1/M6; не называть исправление стенда общим зелёным CI заранее.
 
 Frontend кандидат остаётся…10.10.1, manifest SHA256 `2e2007e8300fc44c4bcb7419df48d3f26bdf472bc20f514cc403f9d06547642d`. Его полноценная локальная приёмка, реальный Qt и откат описаны в `CPP_COURSE_STUDIO_FIX_RU.md`. Main`2d33f0e` содержит эти bytes; доставка Pages пока проверяется отдельно. Официальный релиз ожидает текущие CI и подтверждение владельца на ПК/телефоне.
+
+## Воспроизведение native Qt проверки
+
+Локальный QA-образ требует development-пакеты OpenGL. Его Dockerfile теперь находится в `tests/fixtures/qt-native-portability.Dockerfile` и совпадает с использованным в эксперименте. Это проверочный образ; опубликованный browser runtime pack не пересобирается. Из корня репозитория:
+
+```sh
+docker build -t nexus-m6-qt:6.8.3-ems3.1.56 -f studio-build/containers/qt-wasm.Dockerfile studio-build/containers
+docker build -t nexus-qt-native-portability:6.8.3 -f tests/fixtures/qt-native-portability.Dockerfile .
+python tests/course-final-qt-native-portability.py --out ../native-exam-qa
+```
+
+Для TaskFlow и пяти Gold-вариантов установите `NEXUS_QT_EVIDENCE_DIR` в отдельный каталог вне репозитория и выполните `node tests/qt-template-native-portability.mjs`. CLI `--image` и `NEXUS_QT_NATIVE_IMAGE` позволяют указать совместимый готовый QA-образ. В native-эксперименте проверяются настоящие Qt и файловая система при read-only корне, uid1000 и отключённой сети.
