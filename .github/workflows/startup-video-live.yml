@@ -1,0 +1,74 @@
+name: Заставка V6 — фактическая публичная доставка
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/startup-video-live.yml'
+      - 'startup-intro.json'
+permissions:
+  contents: read
+jobs:
+  public-delivery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Проверить опубликованные адреса, версии и SHA256 без аккаунта
+        shell: bash
+        run: |
+          mkdir -p /tmp/nexus-intro-live
+          python3 - <<'PY'
+          import json, hashlib, time, pathlib, urllib.request, urllib.error, os
+          root=pathlib.Path.cwd(); out=pathlib.Path('/tmp/nexus-intro-live/RESULT.json')
+          gen='ui1a-startup-video-v6-20261029'; version='0.1.7-alpha.2.4.6-ui1a.10.10.3'
+          bases={'pages':'https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/','gateway':'https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net/'}
+          report={'status':'PARTIAL','commit':os.environ['GITHUB_SHA'],'generation':gen,'physicalDevicePlayback':False,'scope':'Публичные GET без cookies, Authorization и входа в аккаунт','origins':{},'media':[]}
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,*args,**kwargs):return None
+          opener=urllib.request.build_opener(NoRedirect())
+          def get(url,limit=16000000,headers=None):
+              req=urllib.request.Request(url,headers={'Cache-Control':'no-cache','User-Agent':'Nexus-Public-Delivery-Check',**(headers or {})})
+              with opener.open(req,timeout=20) as response:
+                  b=response.read(limit+1)
+                  if len(b)>limit:raise ValueError('Ответ превышает допустимый размер')
+                  return response.status,dict(response.headers),b
+          try:
+              deadline=time.monotonic()+600
+              for label,base in bases.items():
+                  while True:
+                      try:
+                          code,headers,b=get(base+'startup-intro.json',4096);descriptor=json.loads(b)
+                          assert code==200 and descriptor=={'schema':1,'module':'/releases/'+gen+'/core/startup-intro.js'}
+                          code,headers,b=get(base+'version.json',65536);meta=json.loads(b)
+                          assert code==200 and meta['version']==version and meta['assetGeneration']==gen
+                          module=descriptor['module'].lstrip('/');code,headers,b=get(base+module,65536)
+                          assert code==200 and b==(root/module).read_bytes()
+                          report['origins'][label]={'status':'PASS','version':version,'module':descriptor['module'],'moduleSha256':hashlib.sha256(b).hexdigest()};break
+                      except Exception as error:
+                          if time.monotonic()>deadline:raise
+                          print('Ожидается обновление публичных bytes:',label,type(error).__name__,flush=True);time.sleep(10)
+              manifest=json.loads((root/'intro-media/cinematic-v6/MANIFEST.json').read_text())
+              for name,expected in manifest['outputs'].items():
+                  url=bases['pages']+'intro-media/cinematic-v6/'+name
+                  code,headers,b=get(url);actual=hashlib.sha256(b).hexdigest()
+                  assert code==200 and len(b)==expected['bytes'] and actual==expected['sha256'],name
+                  row={'file':name,'status':'PASS','bytes':len(b),'sha256':actual}
+                  if name.endswith('.mp4'):
+                      status,rh,part=get(url,16000000,{'Range':'bytes=0-1023','Origin':bases['gateway'].rstrip('/')})
+                      row.update({'rangeStatus':status,'contentRange':rh.get('Content-Range'),'cors':rh.get('Access-Control-Allow-Origin')})
+                      assert status in (200,206) and part[:1024]==b[:1024]
+                      assert rh.get('Access-Control-Allow-Origin') in ('*',bases['gateway'].rstrip('/'))
+                  report['media'].append(row)
+              report['status']='PASS';print(json.dumps(report,ensure_ascii=False,indent=2))
+          except Exception as error:
+              report['status']='FAIL';report['error']={'type':type(error).__name__,'message':str(error)};raise
+          finally:out.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: startup-video-live-${{ github.sha }}
+          path: /tmp/nexus-intro-live
+          retention-days: 30
