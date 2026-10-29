@@ -4,6 +4,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
 import {fixture} from './helpers/auth-fixture.mjs';
+import {assistantPreferencesBrowserScenarios} from './helpers/assistant-preferences-browser-scenarios.mjs';
 import {accountKeyBrowserScenarios} from './helpers/account-key-browser-scenarios.mjs';
 import {communityBrowserScenarios} from './helpers/community-browser-scenarios.mjs';
 const jpeg=createRequire(new URL('../server-access/package.json',import.meta.url))('jpeg-js');
@@ -105,6 +106,7 @@ try{
   await tester.page.evaluate(id=>localStorage.setItem('akronikl:it-nexus:account-store:v1:'+encodeURIComponent(id)+':akronikl:it-nexus:projects:v1','synthetic-local-project-preservation'),testerId);
  });
  await accountKeyBrowserScenarios({owner,tester,testerId,f,generation,check});
+ await assistantPreferencesBrowserScenarios({owner,tester,f,check});
  await check('blocking from admin UI revokes the tester session; next navigation is denied',async()=>{
   await owner.page.locator('[data-admin-refresh]').click();
   const row=owner.page.locator('tr[data-account-id="'+testerId+'"]');

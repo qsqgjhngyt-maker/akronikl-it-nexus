@@ -33,13 +33,15 @@ export function createCloudSettingsBroker({origin=globalThis.location?.origin,fe
   async listSaved(){const data=await readResponse(await send('/saved'));if(!Array.isArray(data.connections)||data.connections.length>8)throw Error('CLOUD_RESPONSE_INVALID');return data.connections.map(cloudSelection);},
   async forget(providerId){const selection=cloudSelection({providerId,modelId:'validation-only'});const data=await readResponse(await send('/forget',{providerId:selection.providerId}));if(data?.forgotten!==true||Object.keys(data).join(',')!=='forgotten')throw Error('CLOUD_RESPONSE_INVALID');return data;},
   async inspect({signal}={}){checkSignal(signal);try{const r=await readResponse(await send('/ready',undefined,{signal}),signal);return {code:r.available?'CLOUD_READY':'CLOUD_UNAVAILABLE',readyToLoad:r.available===true,generationTested:false};}catch(error){checkSignal(signal);return {code:error?.message==='CLOUD_ACCOUNT_REQUIRED'?'CLOUD_ACCOUNT_REQUIRED':'CLOUD_UNAVAILABLE',readyToLoad:false,generationTested:false};}},
-  async connect({providerId,modelId,options={},apiKey='',remember=false,useSaved=false,signal}={}){
-   const selection=cloudSelection({providerId,modelId,options});checkSignal(signal);if(typeof apiKey!=='string'||!apiKey.trim()&&!useSaved||apiKey.length>4096)throw Error('CLOUD_KEY_INVALID');
-   let connected;try{connected=await readResponse(await send('/connect',{...selection,apiKey:apiKey.trim(),remember:remember===true,useSaved:useSaved===true},{signal}),signal);}finally{apiKey='';}
+  resume(value){return this.connect({...value,resume:true});},
+  async connect({providerId,modelId,options={},apiKey='',remember=false,useSaved=false,resume=false,signal}={}){
+   const selection=cloudSelection({providerId,modelId,options});checkSignal(signal);if(typeof resume!=='boolean'||typeof apiKey!=='string'||!resume&&!apiKey.trim()&&!useSaved||apiKey.length>4096)throw Error('CLOUD_KEY_INVALID');
+   let connected;try{connected=await readResponse(await send('/connect',resume?{...selection,resume:true}:{...selection,apiKey:apiKey.trim(),remember:remember===true,useSaved:useSaved===true},{signal}),signal);}finally{apiKey='';}
    if(typeof connected.connectionVersion!=='string'||!/^[A-Za-z0-9_-]{16,80}$/u.test(connected.connectionVersion)||connected.connected!==true||connected.verified!==true||connected.providerId!==selection.providerId||connected.modelId!==selection.modelId)throw Error('CLOUD_RESPONSE_INVALID');
    const version=connected.connectionVersion;
    let dead=false,busy=false,active=null,idle=Promise.resolve(),releaseIdle,last=null,closing=null;
    const pagehide=()=>{void send('/disconnect',{connectionVersion:version}, {keepalive:true}).catch(()=>{});};windowRef?.addEventListener?.('pagehide',pagehide,{once:true});
+   const close=disconnectRemote=>{if(closing)return closing;dead=true;active?.abort();windowRef?.removeEventListener?.('pagehide',pagehide);closing=(async()=>{await idle;if(disconnectRemote)await disconnect(version);})();return closing;};
    const engine={kind:'cloud',transport:'trusted-broker',providerId:selection.providerId,modelId:selection.modelId,connectionVerified:true,remembered:connected.remembered===true,
     chat({signal,onProgress,...data}){return engine.generate({conversation:data,allowedCitations:['U1'],signal,onProgress});},
     async generate({messages,allowedCitations,signal,onProgress,conversation}){
@@ -53,7 +55,7 @@ export function createCloudSettingsBroker({origin=globalThis.location?.origin,fe
       const tagged=typeof data.rawFinal==='string'&&/<\/?think(?:ing)?>/iu.test(data.rawFinal);try{onOutcome?.({status:'complete',rawContent:!tagged&&typeof data.rawFinal==='string'?data.rawFinal:null,reasoningRedacted:tagged,measurements:last});}catch{}return r;
      }finally{busy=false;active=null;releaseIdle();}
     },measurements:()=>last,lifecycle:()=>({busy,disposed:dead,remoteComputeStoppedProven:false}),
-    dispose(){if(closing)return closing;dead=true;active?.abort();windowRef?.removeEventListener?.('pagehide',pagehide);closing=(async()=>{await idle;await disconnect(version);})();return closing;}
+    suspend(){return close(false);},dispose(){return close(true);}
    };return Object.freeze(engine);
   }
  });

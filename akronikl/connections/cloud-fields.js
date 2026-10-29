@@ -1,11 +1,12 @@
-import {CLOUD_PROVIDERS,cloudProvider,cloudSelection} from './cloud-catalog.js';
+import {CLOUD_PROVIDERS,cloudProvider,cloudSelection,cloudModelInput} from './cloud-catalog.js';
 let serial=0;
 export function mountCloudFields({parent,documentRef:doc,controller,locale='ru',onChange=()=>{}}){
  const en=locale==='en',make=(tag,text,root=parent)=>{const n=doc.createElement(tag);if(text)n.textContent=text;root.append(n);return n;};
  const root=make('div','');root.dataset.akCloudFields='';
  const field=(label,tag)=>{const l=make('label',label,root);return make(tag,'',l);};
  const provider=field(en?'Provider':'Провайдер','select');provider.dataset.akCloudProvider='';for(const p of CLOUD_PROVIDERS){const o=make('option',p.label,provider);o.value=p.id;}
- const model=field(en?'Model':'Модель','input');model.type='text';model.maxLength=160;model.autocomplete='off';model.dataset.akCloudModel='';
+ const model=field(en?'Model':'Модель','input');model.type='text';model.maxLength=160;model.autocomplete='off';model.spellcheck=false;model.dataset.akCloudModel='';
+ const modelHint=make('p','',root);modelHint.className='akronikl-note';modelHint.dataset.akCloudModelHint='';
  const list=make('datalist','',root);list.id='ak-cloud-models-'+(++serial);model.setAttribute('list',list.id);
  const keyLabel=make('label','',root),keyCaption=make('span',en?'API key':'API-ключ',keyLabel),key=make('input','',keyLabel);key.type='password';key.autocomplete='off';key.spellcheck=false;key.maxLength=4096;key.dataset.akCloudKey='';
  const rememberLabel=make('label','',root),remember=make('input','',rememberLabel);rememberLabel.className='ak-cloud-remember';remember.type='checkbox';remember.checked=true;remember.dataset.akCloudRemember='';make('span',en?'Save key in my account':'Сохранить ключ в моём аккаунте',rememberLabel);
@@ -16,16 +17,23 @@ export function mountCloudFields({parent,documentRef:doc,controller,locale='ru',
  const optionField=(label,tag)=>{const l=make('label',label,advanced);return {label:l,input:make(tag,'',l)};};
  const region=optionField(en?'Qwen region':'Регион Qwen','select');region.input.dataset.akCloudRegion='';for(const [value,label]of [['singapore','Singapore'],['beijing','Beijing'],['virginia','US Virginia']]){const o=make('option',label,region.input);o.value=value;}
  const workspace=optionField(en?'Workspace ID (if needed)':'Рабочая область — ID (при необходимости)','input');workspace.input.type='text';workspace.input.maxLength=100;workspace.input.dataset.akCloudWorkspace='';
+ const standardWorkspace=make('button',en?'Use standard workspace':'Использовать стандартную рабочую область',advanced);standardWorkspace.type='button';standardWorkspace.className='btn';standardWorkspace.dataset.akCloudWorkspaceReset='';
  const scope=optionField(en?'GigaChat account':'Аккаунт GigaChat','select');scope.input.dataset.akCloudScope='';for(const [value,label]of [['GIGACHAT_API_PERS',en?'Personal':'Физическое лицо'],['GIGACHAT_API_B2B',en?'Business packages':'ИП / организация, пакеты'],['GIGACHAT_API_CORP',en?'Business pay-as-you-go':'ИП / организация, pay-as-you-go']]){const o=make('option',label,scope.input);o.value=value;}
  function clear(){key.value='';key.type='password';}
- function config(){return cloudSelection({providerId:provider.value,modelId:model.value.trim(),options:provider.value==='qwen'?{region:region.input.value,workspaceId:workspace.input.value.trim()}:provider.value==='gigachat'?{scope:scope.input.value}:provider.value==='anthropic'?{workspaceId:workspace.input.value.trim()}:{}});}
- function commit(){try{model.setCustomValidity?.('');controller.configureCloud(config());return true;}catch{model.setCustomValidity?.(en?'Enter a valid model ID and provider options.':'Введите корректный ID модели и параметры провайдера.');model.reportValidity?.();return false;}}
+ function config(){return cloudSelection({providerId:provider.value,modelId:cloudModelInput(provider.value,model.value),options:provider.value==='qwen'?{region:region.input.value,workspaceId:workspace.input.value.trim()}:provider.value==='gigachat'?{scope:scope.input.value}:provider.value==='anthropic'?{workspaceId:workspace.input.value.trim()}:{}});}
+ function commit(){try{model.setCustomValidity?.('');const chosen=config();model.value=chosen.modelId;controller.configureCloud(chosen);return true;}catch{model.setCustomValidity?.(en?'Enter a valid model ID and provider options.':'Введите корректный ID модели и параметры провайдера.');model.reportValidity?.();return false;}}
  provider.addEventListener('change',()=>{clear();const p=cloudProvider(provider.value),saved=controller.snapshot().cloudSaved?.find(x=>x.providerId===p.id);model.value=saved?.modelId??p.modelId;region.input.value=saved?.options.region??'singapore';workspace.input.value=saved?.options.workspaceId??(p.id==='qwen'?cloudSelection().options.workspaceId:'');scope.input.value=saved?.options.scope??'GIGACHAT_API_PERS';commit();onChange();});
- for(const n of [model,region.input,workspace.input,scope.input])n.addEventListener('change',()=>{clear();commit();onChange();});key.addEventListener('input',onChange);remember.addEventListener('change',onChange);
+ model.addEventListener('change',()=>{commit();onChange();});
+ for(const n of [region.input,workspace.input,scope.input])n.addEventListener('change',()=>{clear();commit();onChange();});key.addEventListener('input',onChange);remember.addEventListener('change',onChange);
+ standardWorkspace.addEventListener('click',()=>{clear();workspace.input.value='';commit();onChange();});
+ let lastCode=null;
  return Object.freeze({
   display(s){
    root.hidden=s.profileId!=='external'||!s.cloudSettingsAvailable;if(root.hidden){clear();return;}
    const c=s.cloudSelection,p=cloudProvider(c.providerId),busy=['checking','loading','closed'].includes(s.phase)||s.pendingResources>0||s.cleanupTasks>0||s.cleanupFailed||!!s.cloudSavedOperation;
+   modelHint.hidden=p.id!=='qwen';modelHint.textContent=en?'Qwen 3.8 Max API ID: qwen3.8-max. The API-key region must match the provider settings.':'API ID для Qwen 3.8 Max: qwen3.8-max. Регион API-ключа должен совпадать с параметрами провайдера.';
+   if(s.code==='CLOUD_MODEL_NOT_FOUND'&&lastCode!==s.code)advanced.open=true;lastCode=s.code;
+   standardWorkspace.hidden=p.id!=='qwen'||!c.options.workspaceId;standardWorkspace.disabled=busy||s.phase==='connected';
    hasSaved=s.cloudSaved?.some(x=>x.providerId===c.providerId)===true;forget.hidden=true;forget.disabled=busy;remember.disabled=busy||s.phase==='connected';
    provider.value=c.providerId;if(doc.activeElement!==model)model.value=c.modelId;
    list.replaceChildren();for(const id of p.models){const o=make('option','',list);o.value=id;}

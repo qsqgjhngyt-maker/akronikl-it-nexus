@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
-import {CLOUD_PROVIDERS,cloudSelection} from '../akronikl/connections/cloud-catalog.js';
+import {CLOUD_PROVIDERS,cloudSelection,cloudModelInput} from '../akronikl/connections/cloud-catalog.js';
 import {createCloudAdapter} from '../tools/qa-akronikl/cloud-adapters.mjs';
 import {startCloudSettingsServer} from '../tools/qa-akronikl/cloud-settings-gateway.mjs';
 import {createCloudSettingsBroker} from '../akronikl/tutor/cloud-settings-broker.js';
@@ -14,6 +14,13 @@ import {createCloudVault} from '../tools/qa-akronikl/cloud-vault.mjs';
 const secret='SYNTHETIC_API_KEY_ONLY_123456789',access='SYNTHETIC_ACCESS_TOKEN_ONLY_123456789';
 const request={messages:[{role:'system',content:'Teach C++. JSON answer and citations.'},{role:'user',content:'S1: Local object lifetime ends on block exit. Explain.'}],allowedCitations:['S1']},answer={answer:'ACTUAL_PROVIDER_SENTINEL',citations:['S1']},raw=JSON.stringify(answer);
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json'}});
+test('human-entered Qwen catalog names resolve before transport; a fresh account has no inherited workspace',()=>{
+ for(const name of ['Qwen3.8-Max','QWEN3.8-MAX',' qwen3.8-max '])assert.equal(cloudModelInput('qwen',name),'qwen3.8-max');
+ assert.equal(cloudModelInput('qwen','MyCaseSensitiveDeployment'),'MyCaseSensitiveDeployment');assert.equal(cloudModelInput('openai','CaseSensitiveId'),'CaseSensitiveId');
+ assert.equal(cloudSelection().options.workspaceId,'');assert.deepEqual(cloudSelection({providerId:'qwen',modelId:'qwen3.8-max',options:{region:'singapore',workspaceId:'ws-explicit123'}}).options,{region:'singapore',workspaceId:'ws-explicit123'});
+ // Exact already-selected IDs remain a wire contract for old clients; only input is normalized.
+ assert.equal(cloudSelection({providerId:'qwen',modelId:'Qwen3.8-Max',options:{}}).modelId,'Qwen3.8-Max');
+});
 function providerResponse(id,content=raw){
  if(id==='openai')return {status:'completed',output:[{type:'reasoning',summary:'PRIVATE_THINKING_SENTINEL'},{type:'message',content:[{type:'output_text',text:content}]}],usage:{input_tokens:12,output_tokens:9}};
  if(id==='anthropic')return {stop_reason:'end_turn',content:[{type:'thinking',thinking:'PRIVATE_THINKING_SENTINEL'},{type:'text',text:content}],usage:{input_tokens:12,output_tokens:9}};

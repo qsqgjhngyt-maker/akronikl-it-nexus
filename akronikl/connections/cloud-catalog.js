@@ -11,7 +11,12 @@ export const CLOUD_PROVIDERS=Object.freeze([
  entry('openrouter','OpenRouter','openai/gpt-4o',['openai/gpt-4o'],'https://openrouter.ai/settings/keys','https://openrouter.ai/docs/quickstart')
 ]);
 export function cloudProvider(id){const p=CLOUD_PROVIDERS.find(p=>p.id===id);if(!p)throw Error('CLOUD_PROVIDER_INVALID');return p;}
-export function cloudSelection(value={providerId:'qwen',modelId:'qwen3.7-plus',options:{region:'singapore',workspaceId:'ws-xoczzsb7am4cyl8c'}}){
+// Resolve human-entered names before committing the UI choice. Unknown deployment IDs remain exact.
+export function cloudModelInput(providerId,value){
+ const p=cloudProvider(providerId);if(typeof value!=='string')throw Error('CLOUD_MODEL_INVALID');
+ const id=value.trim();return providerId==='qwen'?p.models.find(model=>model.toLowerCase()===id.toLowerCase())??id:id;
+}
+export function cloudSelection(value={providerId:'qwen',modelId:'qwen3.7-plus',options:{region:'singapore',workspaceId:''}}){
  if(!value||Object.keys(value).some(k=>!['providerId','modelId','options'].includes(k)))throw Error('CLOUD_CONFIG_INVALID');
  cloudProvider(value.providerId);
  if(typeof value.modelId!=='string'||value.modelId.includes('://')||!/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,159}$/u.test(value.modelId))throw Error('CLOUD_MODEL_INVALID');

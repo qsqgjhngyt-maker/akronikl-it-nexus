@@ -5107,7 +5107,7 @@ function cloudProvider(id2) {
   if (!p) throw Error("CLOUD_PROVIDER_INVALID");
   return p;
 }
-function cloudSelection(value = { providerId: "qwen", modelId: "qwen3.7-plus", options: { region: "singapore", workspaceId: "ws-xoczzsb7am4cyl8c" } }) {
+function cloudSelection(value = { providerId: "qwen", modelId: "qwen3.7-plus", options: { region: "singapore", workspaceId: "" } }) {
   if (!value || Object.keys(value).some((k) => !["providerId", "modelId", "options"].includes(k))) throw Error("CLOUD_CONFIG_INVALID");
   cloudProvider(value.providerId);
   if (typeof value.modelId !== "string" || value.modelId.includes("://") || !/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,159}$/u.test(value.modelId)) throw Error("CLOUD_MODEL_INVALID");
@@ -5601,8 +5601,8 @@ function speechPreferences(value = { auto: false, voiceURI: "", rate: 1 }) {
 // akronikl/connections/preferences.js
 function cloudPreferences(value = { theme: "auto", locale: "ru", suggestions: true, enterSends: true, personality: personalityPreset() }) {
   const required = ["enterSends", "locale", "personality", "suggestions", "theme"];
-  if (!value || !required.every((k) => Object.hasOwn(value, k)) || Object.keys(value).some((k) => ![...required, "speech", "cloudChoice", "learningProgress", "assistantPresenceMotion"].includes(k)) || !["auto", "light", "dark"].includes(value.theme) || !["ru", "en"].includes(value.locale) || typeof value.suggestions !== "boolean" || typeof value.enterSends !== "boolean" || ["learningProgress", "assistantPresenceMotion"].some((k) => value[k] !== void 0 && typeof value[k] !== "boolean")) throw Error("CLOUD_SETTINGS_INVALID");
-  return Object.freeze({ ...value, assistantPresenceMotion: value.assistantPresenceMotion ?? true, learningProgress: value.learningProgress ?? true, personality: validatePersonality(value.personality), speech: speechPreferences(value.speech), cloudChoice: value.cloudChoice == null ? null : cloudSelection(value.cloudChoice) });
+  if (!value || !required.every((k) => Object.hasOwn(value, k)) || Object.keys(value).some((k) => ![...required, "speech", "cloudChoice", "modelProfile", "generalChat", "learningProgress", "assistantPresenceMotion"].includes(k)) || !["auto", "light", "dark"].includes(value.theme) || !["ru", "en"].includes(value.locale) || typeof value.suggestions !== "boolean" || typeof value.enterSends !== "boolean" || ["learningProgress", "assistantPresenceMotion", "generalChat"].some((k) => value[k] !== void 0 && typeof value[k] !== "boolean") || value.modelProfile !== void 0 && !["sources", "external"].includes(value.modelProfile)) throw Error("CLOUD_SETTINGS_INVALID");
+  return Object.freeze({ ...value, modelProfile: value.modelProfile ?? "sources", generalChat: value.generalChat ?? true, assistantPresenceMotion: value.assistantPresenceMotion ?? true, learningProgress: value.learningProgress ?? true, personality: validatePersonality(value.personality), speech: speechPreferences(value.speech), cloudChoice: value.cloudChoice == null ? null : cloudSelection(value.cloudChoice) });
 }
 
 // tools/qa-akronikl/cloud-settings-gateway.mjs
@@ -5801,8 +5801,17 @@ async function createCloudSettingsHost({ root, origin: initialOrigin, serveStati
           sweep();
           if (sessions.size >= 64) throw Error("CLOUD_BUSY");
           const data = await readBody2(req);
-          if (!data || Object.keys(data).some((k) => !["providerId", "modelId", "options", "apiKey", "remember", "useSaved"].includes(k)) || data.remember !== void 0 && typeof data.remember !== "boolean" || data.useSaved !== void 0 && typeof data.useSaved !== "boolean") throw Error("CLOUD_REQUEST_INVALID");
+          if (!data || Object.keys(data).some((k) => !["providerId", "modelId", "options", "apiKey", "remember", "useSaved", "resume"].includes(k)) || data.remember !== void 0 && typeof data.remember !== "boolean" || data.useSaved !== void 0 && typeof data.useSaved !== "boolean" || data.resume !== void 0 && data.resume !== true) throw Error("CLOUD_REQUEST_INVALID");
           const selection = cloudSelection({ providerId: data.providerId, modelId: data.modelId, options: data.options ?? {} });
+          if (data.resume === true) {
+            if (Object.keys(data).sort().join(",") !== "modelId,options,providerId,resume") throw Error("CLOUD_REQUEST_INVALID");
+            const s = await session(req, accountId2);
+            if (s.busy) throw Error("CLOUD_BUSY");
+            if (JSON.stringify(s.selection) !== JSON.stringify(selection)) throw Error("CLOUD_NOT_CONNECTED");
+            await stillAccount();
+            json2(res, 200, { connected: true, verified: true, connectionVersion: s.version, providerId: selection.providerId, modelId: selection.modelId });
+            return;
+          }
           const providerEpoch = await (sessionStore?.providerEpoch?.(selection.providerId) ?? 0);
           controller.signal.throwIfAborted();
           let owned = owner(req), key = data.apiKey;

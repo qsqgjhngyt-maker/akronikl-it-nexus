@@ -59,8 +59,14 @@ export async function createCloudSettingsHost({root,origin:initialOrigin,serveSt
     if([PREFIX+'/preferences',PREFIX+'/chats'].includes(url.pathname)){const data=await readBody(req,maxStateBytes);if(Object.keys(data).sort().join(',')!=='revision,value')throw Error('CLOUD_SETTINGS_INVALID');const value=url.pathname.endsWith('/chats')?validateChatTree(data.value):cloudPreferences(data.value);const result=await vault.writeState(scopedOwner(owner(req),accountId),url.pathname.endsWith('/chats')?'chats':'preferences',value,data.revision);await stillAccount();json(res,200,result);return;}
     if(url.pathname===PREFIX+'/connect'){
      if(pending.size>4)throw Error('CLOUD_BUSY');sweep();if(sessions.size>=64)throw Error('CLOUD_BUSY');
-     const data=await readBody(req);if(!data||Object.keys(data).some(k=>!['providerId','modelId','options','apiKey','remember','useSaved'].includes(k))||data.remember!==undefined&&typeof data.remember!=='boolean'||data.useSaved!==undefined&&typeof data.useSaved!=='boolean')throw Error('CLOUD_REQUEST_INVALID');
+     const data=await readBody(req);if(!data||Object.keys(data).some(k=>!['providerId','modelId','options','apiKey','remember','useSaved','resume'].includes(k))||data.remember!==undefined&&typeof data.remember!=='boolean'||data.useSaved!==undefined&&typeof data.useSaved!=='boolean'||data.resume!==undefined&&data.resume!==true)throw Error('CLOUD_REQUEST_INVALID');
      const selection=cloudSelection({providerId:data.providerId,modelId:data.modelId,options:data.options??{}});
+     if(data.resume===true){
+      if(Object.keys(data).sort().join(',')!=='modelId,options,providerId,resume')throw Error('CLOUD_REQUEST_INVALID');
+      const s=await session(req,accountId);if(s.busy)throw Error('CLOUD_BUSY');if(JSON.stringify(s.selection)!==JSON.stringify(selection))throw Error('CLOUD_NOT_CONNECTED');await stillAccount();
+      // Reattach the already verified, account/session-bound lease; no paid verification or TTL extension.
+      json(res,200,{connected:true,verified:true,connectionVersion:s.version,providerId:selection.providerId,modelId:selection.modelId});return;
+     }
      const providerEpoch=await(sessionStore?.providerEpoch?.(selection.providerId)??0);controller.signal.throwIfAborted();let owned=owner(req),key=data.apiKey;if(!key&&data.useSaved)key=(await vault.get(scopedOwner(owned,accountId),selection.providerId))?.apiKey;
      if(!validApiKey(key))throw Error('CLOUD_KEY_INVALID');
      fresh=createAdapter({selection,apiKey:key,onOutcome});data.apiKey='';
