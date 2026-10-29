@@ -1,6 +1,6 @@
 // Точный новый changeset над закрытыми M6 receipts. Старые receipts не меняются.
 import assert from'node:assert/strict';import{readFile}from'node:fs/promises';import{execFileSync}from'node:child_process';import{createHash}from'node:crypto';
-const RECEIPT_SHA256='2a131dda9a00463f06ba588c9d970e10c9afd7ece286a0c39d4886bf58c0ae95';
+const RECEIPT_SHA256='9439fec480cd9486c6b91445596b1551721f72268e9cf1a728da804ef5ffa3eb';
 export const COMPLETION_BASE='330d29dde2c4a5c8ef136f5b8b40ce7a9179aa49';
 export const COMPLETION_RECEIPT='docs/ru/03-content/CPP_COURSE_COMPLETION_SCOPE.json';
 const self='tools/cpp-course-completion-scope.mjs',git=(...a)=>execFileSync('git',a,{maxBuffer:128*1024*1024,stdio:['ignore','pipe','pipe']}),list=b=>b.toString().split('\n').filter(Boolean),sha=b=>createHash('sha256').update(b).digest('hex');
@@ -28,11 +28,14 @@ export async function courseCompletionScope(){
  }
  const changed=new Set([...list(git('diff','--name-only',s.baseCommit)),...list(git('ls-files','--others','--exclude-standard'))]);
  for(const file of changed){if(file===COMPLETION_RECEIPT||rows.has(file))continue;assert.ok(incoming.includes(file),'Outside completion scope: '+file);assert.equal(gitBlobHash(await readFile(file)),mainTree.get(file),file+' current main bytes');}
- // Уроки: допускается редактировать объяснения, но не C++, cases, ID или legacy quiz.
+ // Сохраняем C++, cases, ID и legacy quiz. Единственная поправка C++:
+ // два Qt-урока RU/EN используют относительный путь того же файла данных.
  for(const row of s.paths.filter(r=>/^courses\/cpp\/gold\/.+\.json$/.test(r.file))){
   const a=JSON.parse(beforeBlobs.get(baseTree.get(row.file))),b=JSON.parse(await readFile(row.file));
   const eraseText=x=>{if(Array.isArray(x))return x.map(eraseText);if(x&&typeof x==='object')return Object.fromEntries(Object.entries(x).map(([k,v])=>[k,(/(?:Code|Files|Stdout)$/.test(k)||['source','code','files','cases','metadata','expected','stdin','legacyQuiz','lessonId','id','target','languageId'].includes(k))?v:eraseText(v)]));return typeof x==='string'?'[editorial text]':x};
-  assert.deepEqual(eraseText(b),eraseText(a),row.file+' executable/identity contract');
+  const portableQt=/^courses\/cpp\/gold\/events\/(qt-graphical-adapter|application-build-delivery)\.(ru|en)\.json$/.test(row.file);
+  const relativePaths=x=>typeof x==='string'?x.replaceAll('QFile f("/taskflow.txt")','QFile f("taskflow.txt")'):Array.isArray(x)?x.map(relativePaths):x&&typeof x==='object'?Object.fromEntries(Object.entries(x).map(([k,v])=>[k,relativePaths(v)])):x;
+  assert.deepEqual(eraseText(b),eraseText(portableQt?relativePaths(a):a),row.file+' executable/identity contract');
  }
  cached={...s,admittedPaths:[...new Set([...rows.keys(),...incoming])],historicalBytes:file=>rows.has(file)?beforeBlobs.get(baseTree.get(file)):readFile(file)};return cached;
 }

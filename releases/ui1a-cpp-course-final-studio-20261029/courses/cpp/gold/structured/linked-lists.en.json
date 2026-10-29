@@ -1,0 +1,508 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.linked-lists",
+  "sessions": 3,
+  "learningOrder": 17,
+  "prerequisiteIds": [
+    "cpp.lifetime-ownership",
+    "cpp.structures",
+    "cpp.testing-diagnostics"
+  ],
+  "sourceRefs": [
+    "CPP20-UNIQUE",
+    "CPP20-LIFETIME"
+  ],
+  "title": "Linked lists: node invariants and ownership",
+  "lead": "Build a small singly linked list using unique_ptr and justify each ownership transfer.",
+  "why": "A list is useful for understanding linked storage but is not universally fast. Comparing it with vector requires considering lookup, allocation, and the actual operation.",
+  "objectives": [
+    "Explain: A node and the head",
+    "Trace: Insertion at the front",
+    "Justify: Iterative cleanup",
+    "Implement and verify the lab against its exact contract.",
+    "Identify a common defect: Do not lose the tail when removing the head. Do not generalize O(1) link changes to position lookup."
+  ],
+  "prerequisites": [
+    "Modules 1–2: expressions, comparisons, types, references, and checked cin.",
+    "Follow the prerequisite links: cpp.lifetime-ownership, cpp.structures, cpp.testing-diagnostics. New constructs are introduced before the assignment."
+  ],
+  "concepts": [
+    {
+      "term": "Node",
+      "definition": "a value together with a link to the next structural element."
+    },
+    {
+      "term": "Head",
+      "definition": "the owner of the first node or an empty list."
+    },
+    {
+      "term": "next",
+      "definition": "an owning successor link in this model."
+    },
+    {
+      "term": "pushFront",
+      "definition": "inserting a new node before the former head."
+    },
+    {
+      "term": "Node observer",
+      "definition": "a non-owning address used for a short traversal."
+    },
+    {
+      "term": "Iterative cleanup",
+      "definition": "destroying nodes successively without a deep call chain."
+    }
+  ],
+  "sections": [
+    {
+      "title": "A node and the head",
+      "paragraphs": [
+        "Node stores value and unique_ptr<Node> next. head owns the first node, and each next owns its successor. An empty head means an empty list. A valid model has neither ownership cycles nor a second owner of any node.",
+        "The ownership lesson introduced explicit Node(int v):value(v){} and ->. A raw Node* is only a traversal observer. It does not delete a node and must not outlive an update that destroys that node."
+      ]
+    },
+    {
+      "title": "Insertion at the front",
+      "paragraphs": [
+        "Create a new unique_ptr, move head into newNode->next, then move newNode into head. Every node retains one owner at each step. unique_ptr copying is forbidden and must not be replaced with a copied raw address.",
+        "Pushing 1,2,3 at the front yields 3,2,1. That order follows from the operation, not a printing defect. To preserve input order, use a tail-insertion invariant or an appropriate standard container."
+      ]
+    },
+    {
+      "title": "Removal without losing ownership",
+      "paragraphs": [
+        "To remove the head, first move head->next into a temporary next, then replace head with next. The old node is destroyed while the tail retains an owner. Check head first: -> through nullptr is invalid.",
+        "Do not use an observer of a removed node afterward. A before-and-after diagram is more useful than executing a dangling pointer. Removing an interior node requires the owning link; its value alone is insufficient when duplicates exist."
+      ]
+    },
+    {
+      "title": "Iterative cleanup",
+      "paragraphs": [
+        "A unique_ptr chain may be destroyed recursively through next destructors. Huge lists can therefore have depth problems. This lesson bounds the count to 100 and also demonstrates iterative cleanup by detaching next before destroying the head.",
+        "while(head) detaches the tail into a temporary owner and replaces the head. Each step destroys exactly one node. Afterward head is empty and observers are no longer used. No shared_ptr or manual delete is required."
+      ]
+    },
+    {
+      "title": "Cost depends on the operation",
+      "paragraphs": [
+        "Front insertion and head removal perform O(1) link changes. Searching by value is O(n). An O(1) removal claim assumes the required owning link is already known; locating that position may cost O(n).",
+        "vector stores elements compactly, while a list allocates nodes separately and stores links. vector is often simpler for an ordinary catalogue. The teaching list develops ownership reasoning; it is not automatically the right final-project container."
+      ]
+    },
+    {
+      "title": "Structural tests",
+      "paragraphs": [
+        "Test empty, singleton, and three-node lists with duplicates, head removal, and complete cleanup. A live-node counter in the extra scaffold should return to zero. A value sum checks data but does not establish every link’s correctness.",
+        "Preserve traversal order, node counts, and before-and-after ownership diagrams. Next, stack and queue adapters provide LIFO or FIFO without manually linking nodes and combine queued commands with undo in the project."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "push-front",
+      "title": "Three front insertions",
+      "purpose": "Every next link has one owner.",
+      "code": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Node {\n    int value{};\n    std::unique_ptr<Node> next;\n    explicit Node(int n) : value(n) {}\n};\nvoid pushFront(std::unique_ptr<Node>& head, int value) {\n    auto node = std::make_unique<Node>(value);\n    node->next = std::move(head);\n    head = std::move(node);\n}\nvoid clear(std::unique_ptr<Node>& head) {\n    while (head) { auto next = std::move(head->next); head = std::move(next); }\n}\nint main() {\n    std::unique_ptr<Node> head;\n    for (int value : {1, 2, 3}) { pushFront(head, value); }\n    for (Node* node = head.get(); node; node = node->next.get()) { std::cout << node->value << ' '; }\n    std::cout << '\\n';\n    clear(head);\n    std::cout << bool(head) << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "3 2 1 \n0\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    },
+    {
+      "id": "pop-head",
+      "title": "Removing the head",
+      "purpose": "The tail first obtains a temporary owner.",
+      "code": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Node {\n    int value{};\n    std::unique_ptr<Node> next;\n    explicit Node(int n) : value(n) {}\n};\nvoid pushFront(std::unique_ptr<Node>& head, int value) {\n    auto node = std::make_unique<Node>(value);\n    node->next = std::move(head);\n    head = std::move(node);\n}\nvoid clear(std::unique_ptr<Node>& head) {\n    while (head) { auto next = std::move(head->next); head = std::move(next); }\n}\nint main() {\n    std::unique_ptr<Node> head;\n    pushFront(head, 2);\n    pushFront(head, 1);\n    auto next = std::move(head->next);\n    head = std::move(next);\n    std::cout << head->value << '\\n';\n    clear(head);\n}\n",
+      "stdin": "",
+      "expectedStdout": "2\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Predict before running",
+      "action": "Trace the first worked example step by step, then run all of its cases.",
+      "prediction": "Transfer the owning link before destroying the node.",
+      "verification": "Compare every state transition and stdout; record a mismatch as a hypothesis rather than revising the expectation afterward."
+    },
+    {
+      "title": "A counterexample to a wrong rule",
+      "action": "Using the second example and theory, construct a minimal safe case for this defect: Do not lose the tail when removing the head. Do not generalize O(1) link changes to position lookup.",
+      "prediction": "The correct and incorrect models should make distinguishable predictions without executing undefined behaviour.",
+      "verification": "Preserve the prediction, actual output, and an explanation of the violated rule."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A boundary result differs",
+      "cause": "Do not lose the tail when removing the head. Do not generalize O(1) link changes to position lookup.",
+      "fix": "Transfer the owning link before destroying the node."
+    },
+    {
+      "symptom": "One case works and the next fails",
+      "cause": "The invariant or empty/malformed-input policy is unspecified.",
+      "fix": "Return to the lab contract and check every published case independently."
+    },
+    {
+      "symptom": "The environment rejected execution",
+      "cause": "Build failure, unsupported syntax, and quotas are different causes.",
+      "fix": "Keep the phase and diagnostic; exceptions are unsupported and environment limits are not learner knowledge failures."
+    }
+  ],
+  "diagnosticExamples": [],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Manually trace the first example and explain every expected output line.",
+      "criteria": "Transfer the owning link before destroying the node.",
+      "hint": "Identify input, state, and observable output first."
+    },
+    {
+      "level": "basic",
+      "task": "Choose the lab’s empty or minimum valid case and its nearest invalid counterpart.",
+      "criteria": "Derive both expectations before execution and connect each to a contract clause.",
+      "hint": "Do not lose the tail when removing the head. Do not generalize O(1) link changes to position lookup."
+    },
+    {
+      "level": "applied",
+      "task": "Read n in 0…100 and n values in -1000…1000. Push them at the front, print reverse order on one line, then clean up iteratively and print empty=1.",
+      "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
+      "hint": "Transfer the owning link before destroying the node."
+    },
+    {
+      "level": "applied",
+      "task": "Compare the two worked examples: which assumptions differ and why can they not be silently transferred into the lab?",
+      "criteria": "State inputs, state, and at least one applicability boundary for each example.",
+      "hint": "Front insertion and head removal perform O(1) link changes. Searching by value is O(n). An O(1) removal claim assumes the required owning link is already known; locating that position may cost O(n)."
+    },
+    {
+      "level": "transfer",
+      "task": "Add a live-node counter and test cleanup for every size from 0 to 10; compare traversal order with vector.",
+      "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour.",
+      "hint": "Test empty, singleton, and three-node lists with duplicates, head removal, and complete cleanup. A live-node counter in the extra scaffold should return to zero. A value sum checks data but does not establish every link’s correctness."
+    },
+    {
+      "level": "transfer",
+      "task": "Give a mini-defence: explain a bound, complexity, and a counterexample to a wrong implementation without running the reference.",
+      "criteria": "Connect the explanation to specific lines of your source and actual tests.",
+      "hint": "Transfer the owning link before destroying the node."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Linked lists: node invariants and ownership",
+    "challenge": "Read n in 0…100 and n values in -1000…1000. Push them at the front, print reverse order on one line, then clean up iteratively and print empty=1.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Node {\n    int value{};\n    std::unique_ptr<Node> next;\n    explicit Node(int n) : value(n) {}\n};\nvoid pushFront(std::unique_ptr<Node>& head, int value) {\n    auto node = std::make_unique<Node>(value);\n    node->next = std::move(head);\n    head = std::move(node);\n}\nvoid clear(std::unique_ptr<Node>& head) {\n    while (head) { auto next = std::move(head->next); head = std::move(next); }\n}\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    std::unique_ptr<Node> head;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { clear(head); std::cout << \"invalid\\n\"; return 0; }\n        pushFront(head, value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { clear(head); std::cout << \"invalid\\n\"; return 0; }\n    bool first{true};\n    for (Node* node = head.get(); node; node = node->next.get()) {\n        if (!first) { std::cout << ' '; }\n        std::cout << node->value;\n        first = false;\n    }\n    std::cout << '\\n';\n    clear(head);\n    std::cout << \"empty=\" << (!head) << '\\n';\n}\n",
+    "cases": [
+      {
+        "stdin": "0",
+        "stdout": "\nempty=1\n"
+      },
+      {
+        "stdin": "1 7",
+        "stdout": "7\nempty=1\n"
+      },
+      {
+        "stdin": "3 1 2 3",
+        "stdout": "3 2 1\nempty=1\n"
+      },
+      {
+        "stdin": "3 2 2 -1",
+        "stdout": "-1 2 2\nempty=1\n"
+      },
+      {
+        "stdin": "2 1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 1001",
+        "stdout": "invalid\n"
+      }
+    ],
+    "referenceFiles": {},
+    "starterFiles": {},
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: Transfer the owning link before destroying the node.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "Transfer the owning link before destroying the node.",
+      "Do not lose the tail when removing the head. Do not generalize O(1) link changes to position lookup.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What is the cost of finding an unknown value in a list?",
+      "answers": [
+        "O(n)",
+        "O(0)",
+        "Always O(1)"
+      ],
+      "correctIndex": 0,
+      "explanation": "Usually the chain must be traversed to reach the desired node."
+    },
+    {
+      "question": "What order results from pushFront(1), pushFront(2), pushFront(3)?",
+      "answers": [
+        "2 1 3",
+        "1 2 3",
+        "3 2 1"
+      ],
+      "correctIndex": 2,
+      "explanation": "Each new node becomes the head."
+    },
+    {
+      "question": "Who releases a node in the unique_ptr model?",
+      "answers": [
+        "Every observer",
+        "Its unique owner",
+        "Only a garbage collector"
+      ],
+      "correctIndex": 1,
+      "explanation": "A raw Node* is used for observation."
+    },
+    {
+      "question": "Why demonstrate iterative cleanup?",
+      "answers": [
+        "To avoid relying on a deep destructor chain",
+        "To create a second owner",
+        "To lose the tail"
+      ],
+      "correctIndex": 0,
+      "explanation": "Detach next first, then destroy one node."
+    },
+    {
+      "question": "What is needed to accept this lab?",
+      "answers": [
+        "Only a completed flag",
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation"
+      ],
+      "correctIndex": 2,
+      "explanation": "A progress flag is not evidence of independent mastery."
+    }
+  ],
+  "reflection": [
+    "Transfer the owning link before destroying the node.",
+    "Add a live-node counter and test cleanup for every size from 0 to 10; compare traversal order with vector.",
+    "Which case refutes the wrong rule and what do your checks still not establish?"
+  ],
+  "bridge": "Next: Stacks, queues, and the final command catalogue. Preserve the lab and its verification table.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Stepwise map: Linked lists: node invariants and ownership",
+    "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+    "steps": [
+      {
+        "title": "A node and the head",
+        "description": "Node stores value and unique_ptr<Node> next. head owns the first node, and each next owns its successor. An empty head means an empty list. A valid model has neither ownership cycles nor a second owner of any node."
+      },
+      {
+        "title": "Insertion at the front",
+        "description": "Create a new unique_ptr, move head into newNode->next, then move newNode into head. Every node retains one owner at each step. unique_ptr copying is forbidden and must not be replaced with a copied raw address."
+      },
+      {
+        "title": "Removal without losing ownership",
+        "description": "To remove the head, first move head->next into a temporary next, then replace head with next. The old node is destroyed while the tail retains an owner. Check head first: -> through nullptr is invalid."
+      },
+      {
+        "title": "Iterative cleanup",
+        "description": "A unique_ptr chain may be destroyed recursively through next destructors. Huge lists can therefore have depth problems. This lesson bounds the count to 100 and also demonstrates iterative cleanup by detaching next before destroying the head."
+      },
+      {
+        "title": "Cost depends on the operation",
+        "description": "Front insertion and head removal perform O(1) link changes. Searching by value is O(n). An O(1) removal claim assumes the required owning link is already known; locating that position may cost O(n)."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "How is the next node linked?",
+    "answers": [
+      "By a next pointer",
+      "By a SQL index",
+      "Only by a for loop"
+    ],
+    "correctIndex": 0
+  },
+  "blockPracticum": {
+    "title": "Cumulative practicum: Linked lists: node invariants and ownership",
+    "challenge": "File reversal: input.txt contains n in 0…10 and n integers in -1000…1000, with only trailing whitespace. Push values into a front-inserted list, write reverse order to reversed.txt, clean up iteratively, and verify live=0. Errors: missing, invalid, write-error.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <fstream>\n#include <memory>\n#include <utility>\nint live{};\nstruct Node {\n    int value{};\n    std::unique_ptr<Node> next;\n    explicit Node(int v) : value(v) { ++live; }\n    ~Node() { --live; }\n};\nvoid clear(std::unique_ptr<Node>& head) {\n    while (head) { auto next = std::move(head->next); head = std::move(next); }\n}\nint main() {\n    std::ifstream input{\"input.txt\"};\n    if (!input) { std::cout << \"missing\\n\"; return 0; }\n    int n{};\n    if (!(input >> n) || n < 0 || n > 10) { std::cout << \"invalid\\n\"; return 0; }\n    std::unique_ptr<Node> head;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(input >> value) || value < -1000 || value > 1000) { clear(head); std::cout << \"invalid\\n\"; return 0; }\n        auto node = std::make_unique<Node>(value);\n        node->next = std::move(head);\n        head = std::move(node);\n    }\n    input >> std::ws;\n    if (!input.eof()) { clear(head); std::cout << \"invalid\\n\"; return 0; }\n    std::ofstream output{\"reversed.txt\"};\n    bool first{true};\n    for (Node* node = head.get(); node; node = node->next.get()) {\n        if (!first) { output << ' '; }\n        output << node->value;\n        first = false;\n    }\n    output << '\\n';\n    output.close();\n    clear(head);\n    if (!output) { std::cout << \"write-error\\n\"; return 0; }\n    std::cout << \"exported live=\" << live << '\\n';\n    return live == 0 ? 0 : 1;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "exported live=0\n",
+        "files": {
+          "input.txt": "3 1 2 3\n"
+        },
+        "outputFiles": {
+          "reversed.txt": "3 2 1\n"
+        }
+      },
+      {
+        "stdin": "",
+        "stdout": "exported live=0\n",
+        "files": {
+          "input.txt": "0\n"
+        },
+        "outputFiles": {
+          "reversed.txt": "\n"
+        }
+      },
+      {
+        "stdin": "",
+        "stdout": "exported live=0\n",
+        "files": {
+          "input.txt": "1 -2"
+        },
+        "outputFiles": {
+          "reversed.txt": "-2\n"
+        }
+      },
+      {
+        "stdin": "",
+        "stdout": "missing\n",
+        "files": {}
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n",
+        "files": {
+          "input.txt": "2 1"
+        }
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n",
+        "files": {
+          "input.txt": "1 0 extra"
+        }
+      }
+    ],
+    "referenceFiles": {
+      "input.txt": "3 1 2 3\n"
+    },
+    "starterFiles": {
+      "input.txt": "3 1 2 3\n"
+    },
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: Transfer the owning link before destroying the node.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      {
+        "criterion": "Contract and bounds",
+        "points": 2,
+        "complete": "All requirements are supported by source and actual cases.",
+        "partial": "The main path is supported, but one significant case or argument is missing.",
+        "missing": "No verifiable result, or the core contract is violated."
+      },
+      {
+        "criterion": "Correctness and rejection without mutation",
+        "points": 2,
+        "complete": "All requirements are supported by source and actual cases.",
+        "partial": "The main path is supported, but one significant case or argument is missing.",
+        "missing": "No verifiable result, or the core contract is violated."
+      },
+      {
+        "criterion": "Tests and independent expectations",
+        "points": 2,
+        "complete": "All requirements are supported by source and actual cases.",
+        "partial": "The main path is supported, but one significant case or argument is missing.",
+        "missing": "No verifiable result, or the core contract is violated."
+      },
+      {
+        "criterion": "Structure and resources",
+        "points": 2,
+        "complete": "All requirements are supported by source and actual cases.",
+        "partial": "The main path is supported, but one significant case or argument is missing.",
+        "missing": "No verifiable result, or the core contract is violated."
+      },
+      {
+        "criterion": "Explanation and original extension",
+        "points": 2,
+        "complete": "All requirements are supported by source and actual cases.",
+        "partial": "The main path is supported, but one significant case or argument is missing.",
+        "missing": "No verifiable result, or the core contract is violated."
+      }
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison",
+    "label": "CUMULATIVE PRACTICUM",
+    "readiness": "Modules 1–2: expressions, comparisons, types, references, and checked cin. Follow the prerequisite links: cpp.lifetime-ownership, cpp.structures, cpp.testing-diagnostics. New constructs are introduced before the assignment.",
+    "skills": [
+      {
+        "lessonId": "cpp.testing-diagnostics",
+        "title": "Testing: contracts, defects, and regression"
+      },
+      {
+        "lessonId": "cpp.multifile-build",
+        "title": "Multifile builds: headers, translation units, and ODR"
+      },
+      {
+        "lessonId": "cpp.files",
+        "title": "Files: formats, failures, and explicit saving"
+      },
+      {
+        "lessonId": "cpp.linked-lists",
+        "title": "Linked lists: node invariants and ownership"
+      }
+    ],
+    "requirements": [
+      "File reversal: input.txt contains n in 0…10 and n integers in -1000…1000, with only trailing whitespace. Push values into a front-inserted list, write reverse order to reversed.txt, clean up iteratively, and verify live=0. Errors: missing, invalid, write-error.",
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "Transfer the owning link before destroying the node."
+    ],
+    "milestones": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: Transfer the owning link before destroying the node.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "walkthrough": [
+      "A list is useful for understanding linked storage but is not universally fast. Comparing it with vector requires considering lookup, allocation, and the actual operation.",
+      "Next: Stacks, queues, and the final command catalogue. Preserve the lab and its verification table."
+    ],
+    "artifacts": [
+      "All source files and the TU/includeRoots lists.",
+      "Contract, ownership model, and container-choice explanation.",
+      "Actual results for every case, eight unit checks, and two original counterexamples.",
+      "catalog-out.txt, explicit-save confirmation, and a fresh import."
+    ],
+    "completionRule": "Manual review at 8/10, every case and two original cases; explain connections to earlier lessons."
+  }
+}

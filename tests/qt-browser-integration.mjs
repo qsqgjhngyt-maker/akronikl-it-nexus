@@ -16,7 +16,32 @@ try{
  const manifest=JSON.parse(await readFile(path.join(process.env.NEXUS_FRONTEND_DIR,'BUILD_MANIFEST.json'))),prefix='/'+manifest.prefix.replace(/\/$/,'');
  const before=await p.evaluate(async prefix=>{const{patchLesson,loadState}=await import(prefix+'/core/storage.js'),{createProject,createCheckpoint}=await import(prefix+'/project-studio/project-store.js');const c=await(await fetch(prefix+'/courses/cpp/curriculum.json')).json();for(const l of c.lessons)patchLesson(l.id,{completed:true,code:'// SYNTHETIC PRESERVED '+l.id,stdin:'17',quiz:1,unknown:{keep:true}});createProject({id:'synthetic-preserved-free-qt',title:'SYNTHETIC preserved',files:[{path:'src/main.cpp',content:'// preserved project',languageId:'cpp'}]});createCheckpoint('synthetic-preserved-free-qt','SYNTHETIC checkpoint');return loadState().courses},prefix);
  const id=await p.evaluate(async prefix=>{const{createProject}=await import(prefix+'/project-studio/project-store.js'),{taskFlowApplicationTemplate}=await import(prefix+'/project-studio/application-template.js');return createProject({...taskFlowApplicationTemplate(),title:'SYNTHETIC free browser Qt'}).id},prefix);
- await p.evaluate(id=>{location.hash='#view=project-studio&project='+id},id);await p.locator('#editor').waitFor();await p.waitForFunction(()=>!document.querySelector('#runCode').disabled);
+ // Настоящий повторный документ, включая прелоадер; настройка показа остаётся включённой.
+ await p.evaluate(()=>localStorage.setItem('akronikl:it-nexus:startup-intro:v1',JSON.stringify({schema:1,enabled:true,simplified:false,seen:''})));
+ const introRequestStart=requests.length;
+ await p.goto(f.origin+'/#view=project-studio&project='+id);await p.reload();await p.locator('#editor').waitFor();await p.waitForFunction(()=>!document.querySelector('#runCode').disabled);await p.waitForTimeout(500);
+ assert.equal(await p.locator('[data-startup-intro],[data-startup-cover]').count(),0);
+ assert.equal(requests.slice(introRequestStart).some(r=>/\.(mp4|webm)(?:$|\?)/.test(r.url)),false);
+ assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('akronikl:it-nexus:startup-intro:v1')).enabled),true);
+ record('Прямое открытие проекта без заставки и медиазапросов; настройка не меняется');
+ const layouts=[];
+ for(const width of [390,768,1024,1280,1366,1540,1920]){
+  await p.setViewportSize({width,height:900});
+  const size=await p.evaluate(()=>{const box=s=>document.querySelector(s).getBoundingClientRect(),main=box('.stage'),content=box('#nexusContent'),work=box('.ps-workbench'),code=box('.ps-workbench>.codebox'),app=box('.nexus-application-panel'),editor=box('.code-editor-stage');return{viewport:innerWidth,document:document.documentElement.scrollWidth,main:main.width,content:content.width,work:work.width,code:code.width,app:app.width,editor:editor.width,sideBySide:Math.abs(code.y-app.y)<2,gapLeft:work.x-main.x,gapRight:main.right-work.right}});
+  assert.ok(size.document<=width,width+' document overflow');assert.ok(size.gapLeft<=29&&size.gapRight<=29,width+' unused workspace: '+JSON.stringify(size));
+  assert.equal(size.sideBySide,size.work>=1082);if(width>=1540)assert.ok(size.code>=560&&size.editor>=340,width+' editor too narrow: '+JSON.stringify(size));
+  layouts.push(size);
+ }
+ record('390–1920 px: Студия использует ширину окна; узкое окно складывает панели',{layouts});await p.setViewportSize({width:1540,height:900});
+ if(process.argv.includes('--layout-only')){
+  for(const width of [390,1540]){
+   await p.setViewportSize({width,height:900});const files=p.locator('[data-studio-files]');if(await files.getAttribute('aria-expanded')!=='true')await files.click();await p.locator('[data-open-file="README.md"]').first().click();if(await files.getAttribute('aria-expanded')!=='true')await files.click();
+   const rows=await p.locator('.code-file-row').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return{top:r.top,bottom:r.bottom,children:[...n.querySelectorAll('button')].filter(b=>b.getClientRects().length).map(b=>{const x=b.getBoundingClientRect();return{top:x.top,bottom:x.bottom,left:x.left,right:x.right}}),left:r.left,right:r.right}}));
+   for(const r of rows)for(const b of r.children)assert.ok(b.top>=r.top-1&&b.bottom<=r.bottom+1&&b.left>=r.left-1&&b.right<=r.right+1,'File actions overlap '+width+' '+JSON.stringify(r));
+  }
+  await p.setViewportSize({width:1540,height:900});await p.screenshot({path:path.join(out,'studio-wide-1540.png'),fullPage:true});
+  await p.goto(f.origin+'/#course=cpp&lesson=cpp.qt-graphical-adapter');await p.locator('[data-gold-qt-workspace] a').waitFor();const opened=f.context.waitForEvent('page');await p.locator('[data-gold-qt-workspace] a').click();const tab=await opened;await tab.locator('.ps-hero').waitFor();await tab.waitForTimeout(500);assert.equal(await tab.locator('[data-startup-intro],[data-startup-cover]').count(),0);await tab.close();record('Кнопка Qt-урока открывает новую вкладку Студии без заставки; действия файлов не перекрывают строки');assert.deepEqual(f.errors,[]);
+ }else{
  const initial=await p.evaluate(()=>document.querySelector('#editor').__nexusCodeStudio.getSnapshot());
  await p.locator('#testRuntime').click();assert.equal(requests.filter(r=>r.url.startsWith(base.href)).length,0);assert.equal(requests.filter(r=>r.url.includes('/api/v2/studio/')).length,0);record('До явного запуска SDK/сервер сборки не запрашиваются');
  await p.locator('#runCode').click();await p.waitForFunction(()=>['Приложение работает.'].includes(document.querySelector('[data-app="status"]')?.textContent),{},{timeout:180000});
@@ -46,5 +71,6 @@ try{
  const downloadPromise=p.waitForEvent('download');await p.locator('[data-app="zip"]').click();const downloaded=await downloadPromise;assert.ok((await readFile(await downloaded.path())).includes(Buffer.from('unsaved quota')));await p.evaluate(()=>{Storage.prototype.setItem=originalQaSetItem;delete window.originalQaSetItem});await p.locator('#psSaveProject').click();record('При storage quota нет ложного успеха; несохранённые данные доступны в ZIP');
  const state=await p.evaluate(async prefix=>{const{loadState}=await import(prefix+'/core/storage.js'),{getProject}=await import(prefix+'/project-studio/project-store.js');return{courses:loadState().courses,old:getProject('synthetic-preserved-free-qt')}},prefix);assert.deepEqual(state.courses,before);assert.equal(state.old.workspace.files[0].content,'// preserved project');assert.equal(state.old.checkpoints.length,1);record('67 lesson states, код старого проекта и checkpoint сохранены');
  assert.equal(requests.filter(r=>r.url.includes('/api/v2/studio/')).length,0);assert.equal(f.studio.jobs.size,0);assert.deepEqual(f.errors,[]);
+ }
 }catch(e){fatal=e.stack||e.message;await p.screenshot({path:path.join(out,'failure.png')}).catch(()=>{});console.error(JSON.stringify({status:'FAIL',message:e.message,state:await p.locator('[data-app="status"]').textContent().catch(()=>null),log:await p.locator('[data-app="log"]').textContent().catch(()=>null),errors:f.errors}));}
 finally{await f.close();const result={status:fatal?'FAIL':'PASS / local integration',records,fatal,physicalMobile:false,productionRequests:0};await writeFile(path.join(out,'QT_BROWSER_INTEGRATION.json'),JSON.stringify(result,null,2)+'\n');if(fatal)process.exitCode=1;}
