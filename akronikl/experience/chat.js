@@ -100,7 +100,7 @@ export function openExperience(options) {
   if(options.cloudBroker?.accountBound&&options.cloudBroker.pairLocalSpeech){
     const local=el('details',sections.voice,'ak-local-voice');local.dataset.akLocalVoice='';el('summary',local,'',chatText('Прежний «Уют-7» · локальная Qwen','Original Uyut-7 · local Qwen'));
     el('p',local,'ak-muted',chatText('Для компьютера с установленной локальной Qwen TTS. Запустите модуль, откройте его окно и введите код. Ключ облачного ИИ здесь не нужен.','For a computer with local Qwen TTS installed. Start the module, open its window and enter its code. No cloud AI key is needed.'));
-    const download=el('a',local,'ak-btn',chatText('Скачать модуль Windows','Download Windows module'));download.href='/akronikl/local-voice/AKRONIKL_LOCAL_QWEN_VOICE_20261029.zip';download.download='';
+    const download=el('a',local,'ak-btn',chatText('Скачать модуль Windows','Download Windows module'));download.href=new URL('../local-voice/AKRONIKL_LOCAL_QWEN_VOICE_20261030_STREAM.zip',import.meta.url).href;download.download='';
     const portal=el('a',local,'ak-btn',chatText('Окно модуля','Module window'));portal.href='http://127.0.0.1:18791/';portal.target='_blank';portal.rel='noopener noreferrer';
     const codeLabel=el('label',local,'ak-setting-label',chatText('Код подключения','Pairing code')),pairCode=el('input',codeLabel);pairCode.type='password';pairCode.inputMode='numeric';pairCode.maxLength=8;pairCode.autocomplete='off';pairCode.dataset.akLocalVoiceCode='';
     const pair=el('button',local,'ak-btn',chatText('Подключить локальный голос','Connect local voice'));pair.type='button';pair.dataset.akLocalVoiceConnect='';

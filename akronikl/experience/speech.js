@@ -19,7 +19,7 @@ export function createSpeechController({windowRef=globalThis.window,isCurrent=()
   const voice=available.find(v=>v.voiceURI===prefs.voiceURI)||(['uyut7:narrator','kitsune:piper-irina','kitsune:piper-uyut7'].includes(prefs.voiceURI)?null:matching.find(v=>v.default)||matching[0]);
   if(!supported()||!voice){publish('unavailable');return false;}
   if(typeof value!=='string'||!value.trim()||value.length>12000){publish('error');return false;}
-  let chunks;try{chunks=['local-server','local-browser'].includes(voice.kind)?localSpeechChunks(locale==='ru'?prepareSpeechText(value):value):value.match(/[\s\S]{1,180}(?:\s|$)|[\s\S]{1,180}/gu)||[];}catch{stop();publish('error');return false;}
+  let chunks;try{chunks=['local-server','local-browser'].includes(voice.kind)?localSpeechChunks(prepareSpeechText(value,{language:locale})):value.match(/[\s\S]{1,180}(?:\s|$)|[\s\S]{1,180}/gu)||[];}catch{stop();publish('error');return false;}
   if(!chunks.some(c=>c.trim())){stop();return false;}
   stop();if(nativeSupported&&engine.paused)engine.resume();armed=true;const ticket=generation;let at=0;
   function next(){

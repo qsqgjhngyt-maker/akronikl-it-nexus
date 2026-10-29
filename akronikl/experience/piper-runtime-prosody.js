@@ -11322,7 +11322,8 @@ var _TtsSession = class _TtsSession2 {
       throw new Error(`TTS Session initialization failed: ${error}`);
     }
   }
-  async predict(text, phonemeTransform) {
+  async predict(text, phonemeTransform, audioOptions = {}) {
+    if (audioOptions.language !== undefined && !["ru", "en-us"].includes(audioOptions.language)) throw Error("PIPER_LANGUAGE_INVALID");
     await this.waitReady;
     const input = JSON.stringify([{ text: text.trim() }]);
     const phonemeIds = await new Promise((resolve, reject) => {
@@ -11347,7 +11348,7 @@ var _TtsSession = class _TtsSession2 {
       });
       module.callMain([
         "-l",
-        __privateGet(this, _modelConfig).espeak.voice,
+        audioOptions.language ?? __privateGet(this, _modelConfig).espeak.voice,
         "--input",
         input,
         "--espeak_data",
@@ -11357,9 +11358,9 @@ var _TtsSession = class _TtsSession2 {
     });
     const speakerId = 0;
     const sampleRate = __privateGet(this, _modelConfig).audio.sample_rate;
-    const noiseScale = __privateGet(this, _modelConfig).inference.noise_scale;
-    const lengthScale = __privateGet(this, _modelConfig).inference.length_scale;
-    const noiseW = __privateGet(this, _modelConfig).inference.noise_w;
+    const noiseScale = audioOptions.scales?.[0] ?? __privateGet(this, _modelConfig).inference.noise_scale;
+    const lengthScale = audioOptions.scales?.[1] ?? __privateGet(this, _modelConfig).inference.length_scale;
+    const noiseW = audioOptions.scales?.[2] ?? __privateGet(this, _modelConfig).inference.noise_w;
     const session = __privateGet(this, _ortSession);
     const feeds = {
       input: new (__privateGet(this, _ort)).Tensor("int64", phonemeIds, [1, phonemeIds.length]),
@@ -11375,10 +11376,15 @@ var _TtsSession = class _TtsSession2 {
         sid: new (__privateGet(this, _ort)).Tensor("int64", [speakerId])
       });
     }
+    if (session.inputNames.includes("phoneme_pace")) {
+      const pace = audioOptions.phonemePace ? audioOptions.phonemePace(phonemeIds, __privateGet(this, _modelConfig).phoneme_id_map) : new Float32Array(phonemeIds.length).fill(1);
+      if (pace.length !== phonemeIds.length || Array.from(pace).some(n => !Number.isFinite(n) || n < .7 || n > 1.3)) throw Error("PIPER_PACE_INVALID");
+      feeds.phoneme_pace = new (__privateGet(this, _ort)).Tensor("float32", pace, [1, 1, pace.length]);
+    }
     const {
       output: { data: pcm }
     } = await session.run(feeds);
-    return new Blob([pcm2wav(pcm, 1, sampleRate)], {
+    return new Blob([pcm2wav(audioOptions.processPcm ? audioOptions.processPcm(pcm, sampleRate) : pcm, 1, sampleRate)], {
       type: "audio/x-wav"
     });
   }

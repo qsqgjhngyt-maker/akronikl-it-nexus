@@ -1002,6 +1002,188 @@ export const PIPER_PRONUNCIATIONS=Object.freeze([
     "to": "autʲintʲifʲikˈɑtsyjij"
   },
   {
+    "word": "косинус",
+    "accent": "ко́синус",
+    "automatic": true,
+    "from": "kˈosʲinus",
+    "to": "kˈosʲinus"
+  },
+  {
+    "word": "косинуса",
+    "accent": "ко́синуса",
+    "automatic": true,
+    "from": "kˈosʲinusa",
+    "to": "kˈosʲinusa"
+  },
+  {
+    "word": "косинусы",
+    "accent": "ко́синусы",
+    "automatic": true,
+    "from": "kˈosʲinusy",
+    "to": "kˈosʲinusy"
+  },
+  {
+    "word": "синус",
+    "accent": "си́нус",
+    "automatic": true,
+    "from": "sʲˈinus",
+    "to": "sʲˈinus"
+  },
+  {
+    "word": "синуса",
+    "accent": "си́нуса",
+    "automatic": true,
+    "from": "sʲˈinusa",
+    "to": "sʲˈinusa"
+  },
+  {
+    "word": "тангенс",
+    "accent": "та́нгенс",
+    "automatic": true,
+    "from": "tˈɑnɡʲins",
+    "to": "tˈɑnɡʲins"
+  },
+  {
+    "word": "котангенс",
+    "accent": "кота́нгенс",
+    "automatic": true,
+    "from": "kʌtˈɑnɡʲins",
+    "to": "kʌtˈɑnɡʲins"
+  },
+  {
+    "word": "логарифм",
+    "accent": "логари́фм",
+    "automatic": true,
+    "from": "ɭʌɡarʲˈifm",
+    "to": "ɭʌɡarʲˈifm"
+  },
+  {
+    "word": "логарифма",
+    "accent": "логари́фма",
+    "automatic": true,
+    "from": "ɭʌɡarʲˈifma",
+    "to": "ɭʌɡarʲˈifma"
+  },
+  {
+    "word": "логарифмы",
+    "accent": "логари́фмы",
+    "automatic": true,
+    "from": "ɭʌɡarʲˈifmy",
+    "to": "ɭʌɡarʲˈifmy"
+  },
+  {
+    "word": "логарифмов",
+    "accent": "логари́фмов",
+    "automatic": true,
+    "from": "ɭʌɡarʲˈifmʌf",
+    "to": "ɭʌɡarʲˈifmʌf"
+  },
+  {
+    "word": "логарифмический",
+    "accent": "логарифми́ческий",
+    "automatic": true,
+    "from": "ɭʌɡʌrʲifmʲˈitʃʲiskʲij",
+    "to": "ɭʌɡʌrʲifmʲˈitʃʲiskʲij"
+  },
+  {
+    "word": "логарифмическая",
+    "accent": "логарифми́ческая",
+    "automatic": true,
+    "from": "ɭʌɡʌrʲifmʲˈitʃʲiskʌja",
+    "to": "ɭʌɡʌrʲifmʲˈitʃʲiskʌja"
+  },
+  {
+    "word": "матрица",
+    "accent": "ма́трица",
+    "automatic": true,
+    "from": "mˈɑtrʲitsa",
+    "to": "mˈɑtrʲitsa"
+  },
+  {
+    "word": "матрицы",
+    "accent": "ма́трицы",
+    "automatic": true,
+    "from": "mˈɑtrʲitsy",
+    "to": "mˈɑtrʲitsy"
+  },
+  {
+    "word": "матрицу",
+    "accent": "ма́трицу",
+    "automatic": true,
+    "from": "mˈɑtrʲitsu",
+    "to": "mˈɑtrʲitsu"
+  },
+  {
+    "word": "матрицей",
+    "accent": "ма́трицей",
+    "automatic": true,
+    "from": "mˈɑtrʲitsyj",
+    "to": "mˈɑtrʲitsyj"
+  },
+  {
+    "word": "матриц",
+    "accent": "ма́триц",
+    "automatic": true,
+    "from": "mˈɑtrʲits",
+    "to": "mˈɑtrʲits"
+  },
+  {
+    "word": "матрицами",
+    "accent": "ма́трицами",
+    "automatic": true,
+    "from": "mˈɑtrʲitsʌmʲɪ",
+    "to": "mˈɑtrʲitsʌmʲɪ"
+  },
+  {
+    "word": "интеграл",
+    "accent": "интегра́л",
+    "automatic": true,
+    "from": "ɪntʲiɡrˈɑɭ",
+    "to": "ɪntɛɡrˈɑɭ"
+  },
+  {
+    "word": "интеграла",
+    "accent": "интегра́ла",
+    "automatic": true,
+    "from": "ɪntʲiɡrˈɑɭa",
+    "to": "ɪntɛɡrˈɑɭa"
+  },
+  {
+    "word": "интегралы",
+    "accent": "интегра́лы",
+    "automatic": true,
+    "from": "ɪntʲiɡrˈɑɭy",
+    "to": "ɪntɛɡrˈɑɭy"
+  },
+  {
+    "word": "интегралов",
+    "accent": "интегра́лов",
+    "automatic": true,
+    "from": "ɪntʲiɡrˈɑɭʌf",
+    "to": "ɪntɛɡrˈɑɭʌf"
+  },
+  {
+    "word": "производная",
+    "accent": "произво́дная",
+    "automatic": true,
+    "from": "prʌizvˈodnʌja",
+    "to": "prʌizvˈodnʌja"
+  },
+  {
+    "word": "производной",
+    "accent": "произво́дной",
+    "automatic": true,
+    "from": "prʌizvˈodnʌj",
+    "to": "prʌizvˈodnʌj"
+  },
+  {
+    "word": "запятой",
+    "accent": "запято́й",
+    "automatic": true,
+    "from": "zʌpʲatˈoj",
+    "to": "zʌpʲatˈoj"
+  },
+  {
     "word": "замок",
     "accent": "за́мок",
     "automatic": false,
