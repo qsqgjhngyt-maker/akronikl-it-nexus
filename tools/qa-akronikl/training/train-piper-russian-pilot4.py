@@ -26,7 +26,9 @@ try:
  root=Path('private/piper-uyut7-dataset').resolve();base=Path('dependencies/training-base-dmitri/initial-weights.pt').resolve()
  conversion=json.loads(Path('evidence/TRAIN_BASE_DMITRI_CONVERSION.json').read_text(encoding='utf-8'))
  if hashlib.file_digest(base.open('rb'),'sha256').hexdigest()!=conversion['convertedSha256']:raise RuntimeError('BASE_CHANGED_AFTER_CONVERSION')
- data=VitsDataModule(csv_path=root/'train.csv',audio_dir=root/'wav',cache_dir=root/'cache',config_path=root/'voice-pilot4.onnx.json',voice_name='uyut7-pilot4',espeak_voice='ru',sample_rate=22050,num_speakers=1,batch_size=4,num_workers=0,validation_split=.05,num_test_examples=0,trim_silence=False)
+ cache_proof=json.loads(Path('evidence/PILOT4_WASM_TRAIN_CACHE.json').read_text(encoding='utf-8'))
+ if cache_proof['rows']!=148 or cache_proof['externalHoldoutReadOrUsed'] is not False:raise RuntimeError('WASM_TRAIN_CACHE_REQUIRED')
+ data=VitsDataModule(csv_path=root/'train.csv',audio_dir=root/'wav',cache_dir=root/'cache-pilot4',config_path=root/'voice-pilot4.onnx.json',voice_name='uyut7-pilot4',espeak_voice='ru',sample_rate=22050,num_speakers=1,batch_size=4,num_workers=0,validation_split=.05,num_test_examples=0,trim_silence=False)
  model=VitsModel(sample_rate=22050,batch_size=4,num_speakers=1,num_symbols=256,warmstart_ckpt=str(base),mos_metric=None,learning_rate=1e-4,learning_rate_d=5e-5,lr_decay=.999875)
  initial=torch.load(base,map_location='cpu',weights_only=True)['state_dict'];expected=model.state_dict();keys=[k for k in expected if k.startswith('model_g.')]
  matched=[k for k in keys if k in initial and initial[k].shape==expected[k].shape];fraction=sum(expected[k].numel() for k in matched)/sum(expected[k].numel() for k in keys)
@@ -35,6 +37,12 @@ try:
  del initial,expected
  class Progress(Callback):
   def __init__(self):self.saved=set()
+  def on_fit_start(self,trainer,module):
+   rows=json.loads(Path('private/piper4-wasm-phonemes.json').read_text(encoding='utf-8'))
+   for row in rows:
+    actual=torch.load(root/'cache-pilot4'/(row['cacheKey']+'.phonemes.pt'),map_location='cpu',weights_only=True).reshape(-1).tolist()
+    if actual!=row['ids']:raise RuntimeError('TRAIN_CACHE_DIFFERS_FROM_BROWSER_WASM')
+   state['browserWasmTrainCacheVerifiedRows']=len(rows);save()
   def on_train_batch_end(self,trainer,module,outputs,batch,batch_idx):
    step=int(trainer.global_step)
    if step%10==0 or batch_idx==0:
