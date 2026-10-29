@@ -60,7 +60,15 @@ try:
         def checked_codes(*a, **kw):
             global codec_frames, code_generation_ms
             code_started = time.perf_counter()
-            result = generate_codes(*a, **kw)
+            try:
+                result = generate_codes(*a, **kw)
+            except Exception:
+                # The SDK can stack an empty codec list when cancellation stops
+                # the initial prefill. This is an acknowledged cancellation,
+                # never an incomplete waveform or a reason to reload weights.
+                if cancelled.is_set():
+                    raise SpeechCancelled() from None
+                raise
             code_generation_ms = (time.perf_counter() - code_started) * 1000
             if cancelled.is_set():
                 raise SpeechCancelled()
@@ -143,6 +151,6 @@ while True:
         emit_result({"id": request["id"], "code": "SPEECH_CANCELLED"})
     except Exception:
         emit_result({"id": request.get("id") if isinstance(request, dict) else None,
-                          "code": "SPEECH_SYNTHESIS_FAILED"})
+                          "code": "SPEECH_CANCELLED" if cancelled.is_set() else "SPEECH_SYNTHESIS_FAILED"})
     finally:
         del request
