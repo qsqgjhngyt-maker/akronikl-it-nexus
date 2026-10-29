@@ -265,7 +265,6 @@ export function openExperience(options) {
   log.addEventListener('scroll',()=>{if(log.scrollHeight-log.scrollTop-log.clientHeight<80)latest.hidden=true;});
   dialog.addEventListener('cancel',e=>{e.preventDefault();if(settingsOpen)toggleSettings(false);else dispose({retainConnection:true});});dialog.addEventListener('close',dispose);
   for(const name of ['hashchange','pagehide','nexus:session-ending','nexus:session-ended','nexus:context-invalidated'])win.addEventListener(name,dispose,{capture:true,signal:listeners.signal});
-  doc.addEventListener('visibilitychange',()=>{if(doc.hidden)dispose();},{signal:listeners.signal});
   win.addEventListener('online',()=>{readyStatus();if(personalState&&!offlineHelp)void personalState.flush().catch(()=>{});},{signal:listeners.signal});win.addEventListener('offline',readyStatus,{signal:listeners.signal});
   win.visualViewport?.addEventListener('resize',viewport,{signal:listeners.signal});win.visualViewport?.addEventListener('scroll',viewport,{signal:listeners.signal});
   for(const field of [theme,language,suggest,enter])field.addEventListener('change',()=>scheduleSave('preferences'));

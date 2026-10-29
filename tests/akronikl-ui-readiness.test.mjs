@@ -68,9 +68,9 @@ test('смена языка вне root (offline shell) очищает окно'
  const change=new Event('change');Object.defineProperty(change,'target',{value:{id:'mentorLocale'}});f.doc.dispatchEvent(change);
  assert.equal(f.state.closes,1);bridge.dispose();
 });
-test('hidden закрывает окно и dispose снимает listeners',async()=>{
+test('смена видимости сохраняет открытого помощника; явный dispose закрывает и снимает listeners',async()=>{
  const f=fixture(),bridge=createAssistantBridge(f.options);await bridge.open(f.trigger);f.doc.hidden=true;f.doc.dispatchEvent(new Event('visibilitychange'));
- assert.equal(f.state.closes,1);bridge.dispose();await bridge.open(f.trigger);assert.equal(f.state.opens,1);
+ assert.equal(f.state.closes,0);f.doc.hidden=false;f.doc.dispatchEvent(new Event('visibilitychange'));await bridge.open(f.trigger);assert.equal(f.state.opens,1);bridge.dispose();assert.equal(f.state.closes,1);await bridge.open(f.trigger);assert.equal(f.state.opens,1);
 });
 // Исполняется точный wrapper из offline-entry, а не переписанная копия алгоритма.
 const offline=await readFile(new URL('../pwa/offline-entry.js',import.meta.url),'utf8');

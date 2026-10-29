@@ -50,7 +50,6 @@ export function createAssistantBridge(options) {
   }, {capture:true, signal:listeners.signal});
   for (const type of ['hashchange','pagehide','nexus:session-ended','nexus:context-invalidated'])
     windowRef.addEventListener(type, invalidate, {capture:true, signal:listeners.signal});
-  documentRef.addEventListener('visibilitychange', () => {if (documentRef.hidden) invalidate();}, {signal:listeners.signal});
   // Смена языка, в том числе без hashchange, отменяет прежние результаты.
   documentRef.addEventListener('change', event => {
     if (['uiLocale','mentorLocale','courseLocale','materialLocale'].includes(event.target.id)) invalidate();
