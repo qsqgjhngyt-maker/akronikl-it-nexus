@@ -55,7 +55,7 @@ const route=()=>{const p=new URLSearchParams(location.hash.replace(/^#/,''));ret
 const readLearningProgress=createLearningProgressReader({readIdentity:verifiedAccount,loadCourse:()=>cpp||cppLanding||getCppOutline(),readState:loadState,readResume:(course,state)=>learningResume.continuation(course,state.courses?.cpp?.lessons),readLocale:()=>prefs.mentorLocale||prefs.uiLocale,readLesson:()=>route().course==='cpp'?route().lesson:null});
 const assistantBridge=createLazyAssistantBridge({root,readIdentity:()=>verifiedAccount(),readReady:()=>root.dataset.akroniklRoute===location.hash,readRoute:route,readLocale:()=>prefs.mentorLocale||prefs.uiLocale,readCourseLocale:()=>prefs.courseLocale,readEditor:()=>root.querySelector('#editor'),readLearningProgress});
 addEventListener('nexus:context-invalidated',()=>{delete root.dataset.akroniklRoute});
-const PROJECT_STUDIO_VERSION='0.1.7-alpha.2.4.6-ui1a.10.10.2-p4q.4';
+const PROJECT_STUDIO_VERSION='0.1.7-alpha.2.4.6-ui1a.10.10.2-p4q.5';
 async function loadProjectStudio(){
   if(projectStudioApi)return projectStudioApi;
   const suffix=`?v=${PROJECT_STUDIO_VERSION}`;
