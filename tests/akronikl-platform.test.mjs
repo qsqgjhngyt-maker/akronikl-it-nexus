@@ -82,7 +82,7 @@ test('все help-ответы имеют источник; не заявляю�
  const f=fixture();for(const topic of HELP_TOPICS){const r=text(f,topic.aliases[0]);assert.equal(r.status,'ok');assert.ok(r.sources.length);}
  assert.match(text(f,'почему кнопка недоступна').text,/не могу достоверно/);assert.match(text(f,'как сохранить работу').text,/не выполняет сохранение/);
 });
-test('новые уроки M5 индексируются, old IDs сохранены, неизвестный модуль отклоняется',async()=>{
- const m=JSON.parse(await readFile(new URL('../akronikl/knowledge/manifest.json',import.meta.url)));assert.equal(m.programVersion,'cpp-gold-m5-v1');
- for(const index of m.indexes){assert.equal(index.lessons,56);assert.equal(index.goldLessons,55);const b=JSON.parse(await readFile(new URL('../'+index.path,import.meta.url)));for(const id of ['cpp.raii-smart-pointers','cpp.templates-concepts','cpp.exceptions-guarantees','cpp.pointers-references-addresses'])assert.ok(b.records.some(r=>r.lessonId===id));}
+test('новые уроки M5 и M6 индексируются, old IDs сохранены',async()=>{
+ const m=JSON.parse(await readFile(new URL('../akronikl/knowledge/manifest.json',import.meta.url)));assert.equal(m.programVersion,'cpp-gold-m6-v1');
+ for(const index of m.indexes){assert.equal(index.lessons,67);assert.equal(index.goldLessons,67);const b=JSON.parse(await readFile(new URL('../'+index.path,import.meta.url)));for(const id of ['cpp.raii-smart-pointers','cpp.templates-concepts','cpp.exceptions-guarantees','cpp.pointers-references-addresses','cpp.event-queues-dispatch','cpp.application-build-delivery'])assert.ok(b.records.some(r=>r.lessonId===id));}
 });

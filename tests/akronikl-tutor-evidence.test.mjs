@@ -16,7 +16,7 @@ test('реальная выдержка сохраняет завершённы�
  const s=session(async()=>({answer:recorded,citations:['S1']}));const r=await s.ask({text:'Объясни RAII'});
  const original=index.search('RAII',{locale:'ru',limit:3}).find(x=>x.section==='theory');
  assert.equal(r.sources[0].sourceId,original.sourceId);assert.ok(original.text.startsWith(r.sources[0].text));
- assert.match(r.sources[0].text,/освобождает в деструкторе/);assert.match(r.sources[0].text,/[.!?]$/);assert.equal(r.sources[0].truncated,r.sources[0].text!==original.text);s.dispose();
+ const destructorParagraph=original.text.split('\n').find(line=>line.includes('деструктор'));assert.ok(destructorParagraph);assert.ok(r.sources[0].text.includes(destructorParagraph));assert.equal(r.sources[0].sourcePath,original.sourcePath);assert.equal(r.sources[0].contentHash,original.contentHash);assert.match(r.sources[0].text,/[.!?]$/);assert.equal(r.sources[0].truncated,r.sources[0].text!==original.text);s.dispose();
 });
 test('короткий источник передаётся без изменений',()=>assert.deepEqual(completeExcerpt('A complete sentence.'),{text:'A complete sentence.',truncated:false}));
 test('длинный одноабзацный источник заканчивается на настоящем предложении',()=>{const x='First complete sentence. '+ 'Word '.repeat(100);assert.equal(completeExcerpt(x,60).text,'First complete sentence.');});

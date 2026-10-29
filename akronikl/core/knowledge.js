@@ -72,11 +72,11 @@ function copyRecord(raw, bundleLocale) {
   const part = sourceId.slice(idPrefix.length, -idSuffix.length);
   if (!(part === raw.section || (raw.section === 'theory' && /^theory-[1-9]\d{0,2}$/.test(part)))) fail('KNOWLEDGE_SOURCE_INVALID');
   const sourcePath = text(raw.sourcePath, 200, 'KNOWLEDGE_PATH_INVALID');
-  const gold = /^courses\/cpp\/gold\/(algorithms|basics|structured|classic|oop)\/([a-z0-9-]+)\.(ru|en)\.json$/.exec(sourcePath);
+  const gold = /^courses\/cpp\/gold\/(algorithms|basics|structured|classic|oop|events)\/([a-z0-9-]+)\.(ru|en)\.json$/.exec(sourcePath);
   const baselinePath = `courses/cpp/data/lessons.${raw.locale}.json`;
   if (gold) {
     if (`cpp.${gold[2]}` !== raw.lessonId || gold[3] !== raw.locale) fail('KNOWLEDGE_PATH_INVALID');
-    const expectedModules = {algorithms: 'cpp.section.algorithms', basics: 'cpp.section.cpp-basics', structured: 'cpp.section.structured-programming', classic: 'cpp.section.classic-algorithms', oop: 'cpp.section.oop'};
+    const expectedModules = {algorithms: 'cpp.section.algorithms', basics: 'cpp.section.cpp-basics', structured: 'cpp.section.structured-programming', classic: 'cpp.section.classic-algorithms', oop: 'cpp.section.oop', events: 'cpp.section.visual-programming'};
     if (expectedModules[gold[1]] !== raw.moduleId) fail('KNOWLEDGE_MODULE_INVALID');
   } else if (sourcePath !== baselinePath && sourcePath !== 'courses/cpp/curriculum.json') fail('KNOWLEDGE_PATH_INVALID');
   if (typeof raw.contentHash !== 'string' || !/^[a-f0-9]{64}$/.test(raw.contentHash)) fail('KNOWLEDGE_HASH_INVALID');

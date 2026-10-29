@@ -7,6 +7,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createKnowledgeIndex, KNOWLEDGE_LIMITS} from '../akronikl/core/knowledge.js';
 import {buildKnowledgeArtifacts} from '../tools/build-akronikl-knowledge.mjs';
+import {GOLD_EVENT_LESSONS, GOLD_LESSONS} from '../core/academy-gold-catalog.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const json = async relative => JSON.parse(await readFile(path.join(root, relative), 'utf8'));
@@ -88,16 +89,15 @@ test('locale mismatch never silently returns the other language', () => {
   assert.throws(() => ru.search('pointer', {locale: 'fr'}), {code: 'KNOWLEDGE_LOCALE_INVALID'});
 });
 
-test('EN lessons lacking authored bodies are explicitly title-only', () => {
+test('all authored EN lessons have real content, including the event application module', () => {
   const entry = manifest.indexes.find(item => item.locale === 'en');
-  assert.deepEqual(entry.titleOnlyLessons, ['cpp.visual-event-model']);
+  assert.deepEqual(entry.titleOnlyLessons, []);
   assert.equal(entry.baselineLessons, 0);
-  for (const lessonId of entry.titleOnlyLessons) {
-    const records = en.getLesson(lessonId);
-    assert.equal(records.length, 1);
-    assert.equal(records[0].section, 'overview');
-    assert.equal(records[0].sourcePath, 'courses/cpp/curriculum.json');
-    assert.equal(records[0].text, curriculum.lessons.find(item => item.id === lessonId).title.en);
+  assert.equal(entry.goldLessons, GOLD_LESSONS.length);
+  for (const index of [ru, en]) for (const lessonId of GOLD_EVENT_LESSONS) {
+    const records = index.getLesson(lessonId);
+    assert.ok(records.some(record => record.section === 'theory'));
+    assert.ok(records.every(record => record.moduleId === 'cpp.section.visual-programming' && record.sourcePath === `courses/cpp/gold/events/${lessonId.slice(4)}.${index.stats.locale}.json`));
   }
 });
 
