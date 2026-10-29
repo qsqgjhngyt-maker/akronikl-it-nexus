@@ -48,7 +48,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Проверить отдельный контракт Intro без изменения допуска M5
+        id: startup_intro
+        run: node tools/startup-intro-ci-route.mjs
+      - name: Node.js 24 для изолированной проверки Intro
+        if: steps.startup_intro.outputs.enabled == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Приёмка Intro — publication
+        if: steps.startup_intro.outputs.enabled == 'true'
+        run: node tools/check-startup-intro-ci.mjs --lane publication
+      - name: Сохранить доказательства Intro — publication
+        if: always() && steps.startup_intro.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: startup-intro-publication-${{ github.sha }}
+          path: evidence-startup-intro/publication/
+          retention-days: 14
       - name: Проверить точный принятый source, все поколения и повторную сборку
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: |
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           node tools/check-academy-gold-module3-publication.mjs
@@ -59,6 +78,7 @@ jobs:
           node tests/academy-gold-module3-preservation.mjs
           node --test tests/academy-gold-module3-navigation.test.mjs
       - name: Подготовить текущий пакет и точные прежние опубликованные bytes
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: |
           npm install --prefix /tmp/nexus-m3-publication-browser --no-save playwright@1.56.1
           /tmp/nexus-m3-publication-browser/node_modules/.bin/playwright install --with-deps chromium
@@ -67,16 +87,18 @@ jobs:
           git worktree add --detach /tmp/nexus-m3-publication-rollback-source "$ROLLBACK_SHA"
           node tools/snapshot-published-build.mjs --source /tmp/nexus-m3-publication-rollback-source --out /tmp/nexus-m3-publication-rollback --expected-commit "$ROLLBACK_SHA"
       - name: Настоящий SW — upgrade, точный rollback и сохранность учебных данных
+        if: steps.startup_intro.outputs.enabled != 'true'
         env:
           NEXUS_ROLLBACK_DIR: /tmp/nexus-m3-publication-rollback
           NEXUS_BROWSER_RESULT: academy-gold-m3-publication/PWA_ROLLBACK.json
         run: node tests/pwa-rollback-browser-check.mjs
       - name: Home, Account и media текущего пакета
+        if: steps.startup_intro.outputs.enabled != 'true'
         run: |
           NEXUS_NATIVE_EVIDENCE=academy-gold-m3-publication/startup node tests/platform-startup-browser-check.mjs
           NEXUS_NATIVE_EVIDENCE=academy-gold-m3-publication/media node tests/blog-media-public-browser-check.mjs
       - name: Сохранить фактические результаты, включая FAIL
-        if: always()
+        if: always() && steps.startup_intro.outputs.enabled != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: academy-gold-m3-publication-${{ github.sha }}

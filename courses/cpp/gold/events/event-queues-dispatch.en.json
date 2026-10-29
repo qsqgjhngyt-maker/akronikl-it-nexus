@@ -1,0 +1,432 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.visual-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "runtimeTarget": "wasm-cpp",
+  "lessonId": "cpp.event-queues-dispatch",
+  "locale": "en",
+  "sessions": 4,
+  "learningOrder": 2,
+  "prerequisiteIds": [
+    "cpp.visual-event-model",
+    "cpp.stacks-queues",
+    "cpp.iterators-algorithms-lambdas"
+  ],
+  "sourceRefs": [
+    "CPP20-ADAPTERS",
+    "CPP20-CALLABLE"
+  ],
+  "title": "Event queues and dispatch",
+  "lead": "Build a FIFO dispatcher with deferred callbacks instead of recursive dispatch.",
+  "why": "A handler can generate another action: adding a task may require refreshing a list. Immediately invoking another handler increases stack depth and can expose partially updated state. A queue stores the new event until a later dispatch step. This changes when processing occurs, so ordering must be specified as a contract rather than treated as an implementation detail.",
+  "objectives": [
+    "Show the processing order for 3, 2, 3.",
+    "Explain the difference between front and pop.",
+    "Complete the queue and callback in the starter.",
+    "Add an event log and verify FIFO.",
+    "Design enqueue with capacity three."
+  ],
+  "prerequisites": [
+    "Modules 1–5: functions, STL, ownership, testing and multi-file builds.",
+    "Study the linked prerequisite topics below before this lesson."
+  ],
+  "concepts": [
+    {
+      "term": "FIFO",
+      "definition": "The earliest enqueued item is processed first."
+    },
+    {
+      "term": "Callback",
+      "definition": "A callable supplied for execution at a later point."
+    },
+    {
+      "term": "Capture",
+      "definition": "How a lambda obtains access to surrounding values."
+    },
+    {
+      "term": "Empty handler",
+      "definition": "A function wrapper that contains no callable target."
+    },
+    {
+      "term": "Reentrancy",
+      "definition": "Entering an operation before its previous invocation finishes."
+    },
+    {
+      "term": "Backpressure",
+      "definition": "Restricting incoming work when processing capacity is insufficient."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition preserved at the boundaries of permitted model operations."
+    },
+    {
+      "term": "Observable behaviour",
+      "definition": "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Why a queue is needed",
+      "paragraphs": [
+        "A handler can generate another action: adding a task may require refreshing a list. Immediately invoking another handler increases stack depth and can expose partially updated state. A queue stores the new event until a later dispatch step. This changes when processing occurs, so ordering must be specified as a contract rather than treated as an implementation detail.",
+        "For input 3, 2, 3, the laboratory first enqueues all three numbers. Each three appends a one to the back. Processing therefore visits 3, 2, 3, 1, 1: total ten and five calls. Recursive dispatch would process a one immediately after the first three. Equal final totals do not prove equal behaviour; an event log can distinguish the implementations."
+      ]
+    },
+    {
+      "title": "FIFO operations",
+      "paragraphs": [
+        "std::queue supplies push, front, pop, empty and size. front accesses the first element; pop removes it and returns nothing. Check empty before accessing front. The dispatcher copies the value into a local variable, removes the queued element and only then calls user code. A reference to the removed element is invalid after pop.",
+        "Removing the element before the callback means the current event is no longer counted as pending. The callback may append events after those already waiting. A queue has no arbitrary indexing or sorting operation: priority scheduling requires a different contract and structure. This exercise preserves arrival order, including repeated values that represent separate events."
+      ]
+    },
+    {
+      "title": "Functions as values",
+      "paragraphs": [
+        "std::function<void(int)> stores a callable object such as a function or compatible lambda. void specifies no returned value and int specifies one event argument. Capturing [&total] accesses the original variable rather than copying it. total must outlive the callback. Here both belong to main and dispatch completes before the function returns.",
+        "An empty std::function contains no handler. The if(handler) condition checks whether a callable exists; it does not execute it. handler(event) is a separate invocation. Skipping an absent handler is this example’s policy, while another application might treat it as a diagnostic error. Do not invoke an empty callback or silently discard events without specifying the expected behaviour."
+      ]
+    },
+    {
+      "title": "Reentrancy and handler changes",
+      "paragraphs": [
+        "Reentrancy occurs when a handler re-enters dispatch before the previous dispatch has finished. It does not require threads: everything can happen on one thread’s call stack. Queuing and refusing nested drain calls simplify reasoning. Finish the current command and restore its invariants before selecting the next event.",
+        "If a callback changes subscriber storage, traversal must not continue through an invalidated iterator. A later lesson snapshots subscriber identifiers and checks each subscription before invoking it. This laboratory has one callback that is not replaced during invocation. The restricted example deliberately separates FIFO reasoning from the more complex problem of managing callback lifetime."
+      ]
+    },
+    {
+      "title": "Bounds and termination",
+      "paragraphs": [
+        "Input contains at most twelve numbers in 0…9. Only a three generates a one, and a one generates nothing. Each original event therefore causes at most one extra invocation, giving a maximum of twenty-four. This proves termination for the specified rule; it is not a general property of every event-driven system.",
+        "Replacing the generated one with another three prevents the queue from emptying. Predict that outcome before experimenting and propose a safe processing limit and overflow message. Real applications distinguish queue capacity, the budget for one dispatch step and rejection policy. A single timeout that kills the application and loses unfinished work does not replace those separate decisions."
+      ]
+    },
+    {
+      "title": "Testing more than the total",
+      "paragraphs": [
+        "Compare inputs containing no threes, one three, only threes and an empty queue. Record processed separately from total. To verify FIFO, add a diagnostic trace in a separate stream or change output deliberately in a project copy. Do not claim the order is established merely because addition is commutative and the final total matches.",
+        "For independent transfer, design a notification queue with a capacity and an enqueue result. Specify whether a full buffer rejects input, merges equivalent refresh requests or evicts an item. Choose one policy for the exercise, explain it to the user and provide a trace whose observable result would differ under another policy."
+      ]
+    },
+    {
+      "title": "Laboratory contract: input to observation",
+      "paragraphs": [
+        "Read n=0…12 followed by n values in 0…9. Fill FIFO before dispatch. Each handler adds its value to total; a three appends a one. Print total and processed. Invalid syntax, range or trailing tokens produce invalid.",
+        "Trace the first reference scenario before running. Exact stdin: \"3 3 2 3\". Expected stdout: \"total 10 processed 5\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+      ]
+    },
+    {
+      "title": "Reading a working example",
+      "paragraphs": [
+        "push places two before five. front is copied and pop removes the element. The empty queue ends the loop after two iterations. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+        "The lambda captures total by reference. The first invocation adds seven. After handler={} the check is false and no call occurs. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "fifo",
+      "code": "#include <iostream>\n#include <queue>\nint main() {\n  std::queue<int> q; q.push(2); q.push(5);\n  while (!q.empty()) { int event = q.front(); q.pop(); std::cout << event << '\\n'; }\n}\n",
+      "stdin": "",
+      "expectedStdout": "2\n5\n",
+      "title": "Guided model",
+      "purpose": "Build a FIFO dispatcher with deferred callbacks instead of recursive dispatch.",
+      "steps": [
+        "push places two before five.",
+        "front is copied and pop removes the element.",
+        "The empty queue ends the loop after two iterations."
+      ]
+    },
+    {
+      "id": "callable",
+      "code": "#include <iostream>\n#include <functional>\nint main() {\n  int total = 0;\n  std::function<void(int)> handler = [&total](int x) { total += x; };\n  if (handler) handler(7);\n  handler = {};\n  if (handler) handler(100);\n  std::cout << \"total \" << total << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "total 7\n",
+      "title": "Boundary and extension",
+      "purpose": "Build a FIFO dispatcher with deferred callbacks instead of recursive dispatch.",
+      "steps": [
+        "The lambda captures total by reference.",
+        "The first invocation adds seven.",
+        "After handler={} the check is false and no call occurs."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Add an event log and verify FIFO.",
+      "action": "Add an event log and verify FIFO.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Read n=0…12 followed by n values in 0…9. Fill FIFO before dispatch. Each handler adds its value to total; a three appends a one. Print total and processed. Invalid syntax, range or trailing tokens produce invalid. Explain the selected contract and supply an independent example."
+    },
+    {
+      "title": "Design enqueue with capacity three.",
+      "action": "Design enqueue with capacity three.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Design enqueue with capacity three. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "State changed after rejection.",
+      "cause": "Mutation happened before validation or violated the invariant.",
+      "fix": "Identify the laboratory commit point and check it with a separate rejection trace."
+    },
+    {
+      "symptom": "An old revision or wrong target is running.",
+      "cause": "Build inputs are wrong or the changed project was not rebuilt.",
+      "fix": "Check entryFile, includeRoots and translationUnits and run the saved copy."
+    },
+    {
+      "symptom": "One successful example is treated as complete verification.",
+      "cause": "Rejected, empty and independent cases have not been checked.",
+      "fix": "Prove termination for 3→1 and disprove it for 3→3."
+    }
+  ],
+  "practice": [
+    {
+      "task": "Show the processing order for 3, 2, 3.",
+      "criteria": "Show FIFO contents and the five dispatches 3,2,3,1,1; independently derive total 10 and processed 5.",
+      "level": "basic",
+      "hint": "All three original events are queued first; each generated one joins the tail."
+    },
+    {
+      "task": "Explain the difference between front and pop.",
+      "criteria": "Explain that front accesses the first item whereas pop removes it without returning a value; include an empty check and the invalid reference after pop.",
+      "level": "basic",
+      "hint": "Copy front into a local value before removing the item and invoking its handler."
+    },
+    {
+      "task": "Complete the queue and callback in the starter.",
+      "criteria": "The starter fills FIFO before draining, invokes the callback for each item and appends 1 after 3; verify reference cases and termination.",
+      "level": "applied",
+      "hint": "The callback may enqueue events. Remove the current item before calling it rather than retaining a reference."
+    },
+    {
+      "task": "Add an event log and verify FIFO.",
+      "criteria": "The log records exact dispatch order and generated-event origins; a test distinguishes FIFO from immediate recursive invocation despite equal totals.",
+      "level": "applied",
+      "hint": "Checking only the sum cannot detect an ordering change that preserves the total."
+    },
+    {
+      "task": "Design enqueue with capacity three.",
+      "criteria": "Specify capacity 3, the enqueue result and overflow policy; after four requests size remains at most 3 and the caller can observe rejection.",
+      "level": "transfer",
+      "hint": "Check capacity before push. Do not report success when the event was not retained."
+    },
+    {
+      "task": "Prove termination for 3→1 and disprove it for 3→3.",
+      "criteria": "Give a decreasing-measure termination argument for 3→1 and a nonterminating 3→3 trace; state the initial-event bounds separately.",
+      "level": "transfer",
+      "hint": "One generates no event; replacing 3 with 3 always leaves another three to process."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Event queues and dispatch",
+    "challenge": "Read n=0…12 followed by n values in 0…9. Fill FIFO before dispatch. Each handler adds its value to total; a three appends a one. Print total and processed. Invalid syntax, range or trailing tokens produce invalid.",
+    "target": "wasm-cpp",
+    "starterCode": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> input(n);\n  for (int& x : input) if (!(std::cin >> x) || x < 0 || x > 9) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  std::queue<int> q;\n  for (int x : input) q.push(x);\n  int total = 0, processed = 0;\n  std::function<void(int)> handler = [&](int x) {\n  /* TODO: add value; enqueue a deferred one for event three. */\n};\n  while (!q.empty()) {\n    int event = q.front(); q.pop();\n    if (handler) handler(event);\n    ++processed;\n  }\n  std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n",
+    "referenceCode": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> input(n);\n  for (int& x : input) if (!(std::cin >> x) || x < 0 || x > 9) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  std::queue<int> q;\n  for (int x : input) q.push(x);\n  int total = 0, processed = 0;\n  std::function<void(int)> handler = [&](int x) {\n    total += x;\n    if (x == 3) q.push(1);\n  };\n  while (!q.empty()) {\n    int event = q.front(); q.pop();\n    if (handler) handler(event);\n    ++processed;\n  }\n  std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n",
+    "starterFiles": {},
+    "referenceFiles": {},
+    "metadata": {},
+    "starterExpectedStdout": "total 0 processed 3\n",
+    "cases": [
+      {
+        "stdin": "3 3 2 3",
+        "stdout": "total 10 processed 5\n"
+      },
+      {
+        "stdin": "0",
+        "stdout": "total 0 processed 0\n"
+      },
+      {
+        "stdin": "1 3",
+        "stdout": "total 4 processed 2\n"
+      },
+      {
+        "stdin": "2 0 9",
+        "stdout": "total 9 processed 2\n"
+      },
+      {
+        "stdin": "12 3 3 3 3 3 3 3 3 3 3 3 3",
+        "stdout": "total 48 processed 24\n"
+      },
+      {
+        "stdin": "1 -1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "13",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 3 x",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Preserve your work and create a separate project for experiments.",
+      "Open Task and Code Studio and copy the starter and listed files.",
+      "Complete the queue and callback in the starter.",
+      "Before running, record the expected transitions and outcome of every case.",
+      "Execute every reference case and retain actual observations.",
+      "Add an event log and verify FIFO.",
+      "Add an independent case and explain its boundary.",
+      "Save sources, the protocol and an explanation of limitations."
+    ],
+    "rubric": [
+      "The full input and output contract is satisfied.",
+      "Invariants and lifetimes are explained; rejection preserves the model.",
+      "Ordinary, empty, boundary and failure scenarios are covered.",
+      "Add an event log and verify FIFO.",
+      "An independent extension and test are supplied, rather than only a reference copy.",
+      "Sources, actual observations and limits of conclusions are retained."
+    ],
+    "artifact": "A personal project and verification protocol using synthetic data.",
+    "verification": "manual-output-comparison",
+    "catalogGoal": "Build a FIFO dispatcher with deferred callbacks instead of recursive dispatch.",
+    "catalogProof": "A personal project and verification protocol using synthetic data."
+  },
+  "assessment": [
+    {
+      "question": "FIFO is prefilled with 3,2,3; handling 3 appends 1. What is dispatch order?",
+      "answers": [
+        "3,2,3,1,1.",
+        "3,1,2,3,1.",
+        "1,1,2,3,3."
+      ],
+      "correctIndex": 0,
+      "explanation": "Generated ones follow events already waiting. The second option is immediate recursion; the third sorts values."
+    },
+    {
+      "question": "Why copy front and pop before invoking the callback?",
+      "answers": [
+        "To avoid retaining a reference to a removed item and make it no longer pending.",
+        "To prevent the callback from ever adding an event.",
+        "Because pop returns a copy of the handler."
+      ],
+      "correctIndex": 0,
+      "explanation": "pop returns nothing. The callback may still enqueue; removing the current event does not forbid later insertion."
+    },
+    {
+      "question": "With one initial three, what happens if 3→1 becomes 3→3?",
+      "answers": [
+        "There is one call because the new 3 is considered a duplicate.",
+        "FIFO empties the queue after two calls.",
+        "The queue may never become empty."
+      ],
+      "correctIndex": 2,
+      "explanation": "Each dispatch removes one three and adds another. FIFO establishes order but does not establish termination."
+    },
+    {
+      "question": "Two dispatchers have equal totals but may process different orders. What should the test add?",
+      "answers": [
+        "The callback names.",
+        "The exact event sequence in a log.",
+        "Only the character count of the total."
+      ],
+      "correctIndex": 1,
+      "explanation": "An equal commutative sum may conceal reordering. The log checks information lost by the total."
+    },
+    {
+      "question": "A capacity 3 queue is full and rejects a fourth event. What should its caller observe?",
+      "answers": [
+        "Success with an unspecified removal of the head.",
+        "Explicit rejection with size remaining 3.",
+        "Success because a handler will eventually free space."
+      ],
+      "correctIndex": 1,
+      "explanation": "Bounded memory requires a specified overflow policy. Silent removal changes command semantics and is not the specified success."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "Why can two consecutive reset commands leave the same value as one?",
+      "answers": [
+        "A queue merges identical numbers.",
+        "Reset is idempotent with respect to value.",
+        "Every repeated event is automatically discarded."
+      ],
+      "correctIndex": 1,
+      "explanation": "The property follows reset semantics rather than a general delivery rule. Increment has a repeated effect."
+    },
+    {
+      "question": "FIFO contains 2,5. After push 7, what does the next front return?",
+      "answers": [
+        "2.",
+        "7.",
+        "5 because the first two elements swap."
+      ],
+      "correctIndex": 0,
+      "explanation": "push appends to the tail and front accesses the head. This is neither a stack nor value-based sorting."
+    },
+    {
+      "question": "A callback with [&sum] outlives local sum. What is wrong with this design?",
+      "answers": [
+        "The callback retains a dangling reference.",
+        "sum was copied and only that copy changes.",
+        "std::function automatically moves sum to the heap."
+      ],
+      "correctIndex": 0,
+      "explanation": "Storing std::function does not turn a captured reference into ownership. Lifetimes must be coordinated separately."
+    }
+  ],
+  "reflection": [
+    "Explain the difference between front and pop.",
+    "Which check distinguishes a superficially similar incorrect implementation?",
+    "Prove termination for 3→1 and disprove it for 3→3."
+  ],
+  "bridge": "Next: States and typed events. Preserve your project and experiment results.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Event queues and dispatch",
+    "description": "A stepwise conceptual model; actual verification runs in the stated Studio target.",
+    "steps": [
+      {
+        "title": "Why a queue is needed",
+        "description": "A handler can generate another action: adding a task may require refreshing a list. Immediately invoking another handler increases stack depth and can expose partially updated state. A queue stores the new event until a later dispatch step. This changes when processing occurs, so ordering must be specified as a contract rather than treated as an implementation detail."
+      },
+      {
+        "title": "FIFO operations",
+        "description": "std::queue supplies push, front, pop, empty and size. front accesses the first element; pop removes it and returns nothing. Check empty before accessing front. The dispatcher copies the value into a local variable, removes the queued element and only then calls user code. A reference to the removed element is invalid after pop."
+      },
+      {
+        "title": "Functions as values",
+        "description": "std::function<void(int)> stores a callable object such as a function or compatible lambda. void specifies no returned value and int specifies one event argument. Capturing [&total] accesses the original variable rather than copying it. total must outlive the callback. Here both belong to main and dispatch completes before the function returns."
+      },
+      {
+        "title": "Reentrancy and handler changes",
+        "description": "Reentrancy occurs when a handler re-enters dispatch before the previous dispatch has finished. It does not require threads: everything can happen on one thread’s call stack. Queuing and refusing nested drain calls simplify reasoning. Finish the current command and restore its invariants before selecting the next event."
+      },
+      {
+        "title": "Bounds and termination",
+        "description": "Input contains at most twelve numbers in 0…9. Only a three generates a one, and a one generates nothing. Each original event therefore causes at most one extra invocation, giving a maximum of twenty-four. This proves termination for the specified rule; it is not a general property of every event-driven system."
+      }
+    ]
+  },
+  "prerequisiteLessons": [
+    {
+      "lessonId": "cpp.visual-event-model",
+      "title": "Events, handlers and the application loop"
+    },
+    {
+      "lessonId": "cpp.stacks-queues",
+      "title": "Stacks and Queues"
+    },
+    {
+      "lessonId": "cpp.iterators-algorithms-lambdas",
+      "title": "Iterators, STL algorithms and lambdas"
+    }
+  ],
+  "legacyQuiz": {
+    "question": "When is the current event removed?",
+    "answers": [
+      "Before the callback.",
+      "After an arbitrary later event.",
+      "Never."
+    ],
+    "correctIndex": 0,
+    "explanation": "A local copy retains the value after pop."
+  }
+}

@@ -1,0 +1,335 @@
+{
+  "schemaVersion": 1,
+  "lessonId": "cpp.algorithm-representations",
+  "moduleId": "cpp.section.algorithms",
+  "locale": "en",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "title": "Representing algorithms: decision tables, pseudocode, flowcharts and code",
+  "lead": "A single algorithm can be expressed in different forms. Each form exposes a different type of mistake or assumption.",
+  "why": "Before implementing a program, engineers use representations to agree on logic, inspect branches and communicate decisions.",
+  "objectives": [
+    "Translate requirements into a decision table and pseudocode.",
+    "Check that a flowchart expresses the same conditions as the algorithm.",
+    "Distinguish abstract steps from executable C++.",
+    "Trace all branches using explicit inputs."
+  ],
+  "prerequisites": [
+    "You understand inputs, outputs and conditional decisions.",
+    "C++ syntax is introduced within the examples."
+  ],
+  "concepts": [
+    {
+      "term": "Pseudocode",
+      "definition": "A readable description of algorithmic steps without a single language's concrete syntax."
+    },
+    {
+      "term": "Decision table",
+      "definition": "A table pairing relevant conditions with their expected actions."
+    },
+    {
+      "term": "Flowchart",
+      "definition": "A diagram of actions and branches linked by directed connections."
+    },
+    {
+      "term": "Trace",
+      "definition": "A record of the evolving program state through execution steps."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Different representations expose different concerns",
+      "paragraphs": [
+        "Consider classifying an integer as negative, zero or positive. In natural language it seems obvious, but we might forget the zero case when implementing it.",
+        "A decision table enumerates all cases, pseudocode shows the evaluation order, a flowchart makes branches visible and C++ implements the transitions."
+      ]
+    },
+    {
+      "title": "Decision tables test completeness",
+      "paragraphs": [
+        "Write the conditions x<0, x==0 and x>0, each with one expected action. This reveals omitted or overlapping cases before code is written.",
+        "If a valid input does not belong to any row, the requirement is incomplete. For a sign classifier, the zero row is essential."
+      ]
+    },
+    {
+      "title": "Pseudocode makes the sequence explicit",
+      "paragraphs": [
+        "A clear version reads: IF x<0 print negative; ELSE IF x==0 print zero; ELSE print positive. The logic can be reviewed by someone who does not yet know iostream.",
+        "Pseudocode conventions vary. Always state inputs, outputs and nesting unambiguously; pseudocode itself is not executable C++."
+      ]
+    },
+    {
+      "title": "Flowcharts visualize control flow",
+      "paragraphs": [
+        "An oval commonly denotes start/end, a rectangle an action, and a diamond a condition. Arrows indicate the next step, with true/false paths labeled.",
+        "A flowchart is only useful if a reader can follow every input to the correct output. Unlabeled branches or arrows are a source of confusion."
+      ]
+    },
+    {
+      "title": "Code is a concrete implementation",
+      "paragraphs": [
+        "Compare each pseudocode condition with the corresponding C++ branch. The remainder operator % is commonly used to test parity through x%2==0.",
+        "Check x=-5, x=0 and x=7. Equal observed results across these examples support consistency, though finite tests do not prove all possible cases."
+      ]
+    },
+    {
+      "title": "From the decision table to code",
+      "paragraphs": [
+        "The sign table has three rows: x<0 → negative; x=0 → zero; x>0 → positive. They are mutually exclusive and cover the allowed integers. C++ uses == for equality and = for assignment. An if / else if / else chain selects one branch. Three independent if statements need a separate condition audit and are not always equivalent."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "Integer inputs must fit the Code Studio int type. Failed extraction (text instead of a number or end of input) produces invalid; no further calculation is performed.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "title": "Parity",
+      "purpose": "Connect a mathematical rule to a real C++ branch.",
+      "code": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
+      "stdin": "8\n",
+      "expectedStdout": "even\n",
+      "steps": [
+        "The remainder of 8 divided by 2 is zero.",
+        "Therefore the even branch executes.",
+        "The other branch handles odd numbers.",
+        "Try 7 to exercise the alternative."
+      ],
+      "cases": [
+        {
+          "stdin": "-3\n",
+          "stdout": "odd\n"
+        },
+        {
+          "stdin": "-2147483648\n",
+          "stdout": "even\n"
+        },
+        {
+          "stdin": "0\n",
+          "stdout": "even\n"
+        },
+        {
+          "stdin": "oops\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ]
+    },
+    {
+      "title": "Sign classification",
+      "purpose": "A three-row decision table becomes an ordered set of conditions.",
+      "code": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+      "stdin": "0\n",
+      "expectedStdout": "zero\n",
+      "steps": [
+        "x<0 handles negatives.",
+        "x==0 handles zero explicitly.",
+        "The else branch covers positive integers.",
+        "-3, 0 and 9 exercise all paths."
+      ],
+      "cases": [
+        {
+          "stdin": "-2147483648\n",
+          "stdout": "negative\n"
+        },
+        {
+          "stdin": "0\n",
+          "stdout": "zero\n"
+        },
+        {
+          "stdin": "2147483647\n",
+          "stdout": "positive\n"
+        },
+        {
+          "stdin": "oops\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Reorder exclusive conditions",
+      "action": "Check x==0 before x<0 without changing the else-if logic.",
+      "prediction": "The output stays the same when the conditions remain exclusive.",
+      "verification": "Compare -5, 0 and 7."
+    },
+    {
+      "title": "Remove the zero row",
+      "action": "Delete the zero case from the decision table.",
+      "prediction": "The specification no longer defines x=0.",
+      "verification": "Restore it before writing code."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Zero is labeled positive",
+      "cause": "The logic has x<0 and else but no zero case.",
+      "fix": "Insert an explicit zero branch."
+    },
+    {
+      "symptom": "A flowchart has an ambiguous transition",
+      "cause": "The decision diamond lacks labeled true/false outputs.",
+      "fix": "Label every branch with its condition outcome."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Build a decision table for integer signs.",
+      "criteria": "Three rows cover negative, zero and positive.",
+      "hint": "Test with -1, 0, 1."
+    },
+    {
+      "level": "applied",
+      "task": "Write pseudocode for ticket total validation.",
+      "criteria": "Negative inputs are rejected, otherwise the product is printed.",
+      "hint": "Separate validation from calculation."
+    },
+    {
+      "level": "transfer",
+      "task": "Draw a flowchart for divisibility by 3, by 5, or otherwise.",
+      "criteria": "Specify priority and test 15, 9, 10, 7.",
+      "hint": "Decide how to handle inputs divisible by both 3 and 5."
+    }
+  ],
+  "laboratory": {
+    "title": "Lab: three representations of a classifier",
+    "challenge": "Express integer sign classification in a decision table, pseudocode and flowchart, then implement and verify the C++ program. Integer inputs must fit the Code Studio int type. Failed extraction (text instead of a number or end of input) produces invalid; no further calculation is performed.",
+    "starterCode": "// Read x and print negative, zero or positive.\n",
+    "referenceCode": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+    "cases": [
+      {
+        "stdin": "-5\n",
+        "stdout": "negative\n"
+      },
+      {
+        "stdin": "0\n",
+        "stdout": "zero\n"
+      },
+      {
+        "stdin": "7\n",
+        "stdout": "positive\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "-1\n",
+        "stdout": "negative\n"
+      },
+      {
+        "stdin": "1\n",
+        "stdout": "positive\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "State the behavior in words.",
+      "Create a complete three-row table.",
+      "Draw two condition diamonds with labeled edges.",
+      "Implement in Code Studio and run the three cases."
+    ],
+    "rubric": [
+      "No valid input category is omitted.",
+      "The diagram has clear branch labels.",
+      "The program returns the expected result for all three cases."
+    ],
+    "artifact": "source-code-and-diagram",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What does a decision table help reveal?",
+      "answers": [
+        "Missing combinations of conditions",
+        "It compiles the program",
+        "It translates the text to C++"
+      ],
+      "correctIndex": 0,
+      "explanation": "It exposes omitted or contradictory cases."
+    },
+    {
+      "question": "What shape commonly represents a condition in a flowchart?",
+      "answers": [
+        "Rectangle",
+        "Diamond",
+        "Comment"
+      ],
+      "correctIndex": 1,
+      "explanation": "A diamond denotes a decision and its alternative paths."
+    },
+    {
+      "question": "Can a C++ compiler execute pseudocode unchanged?",
+      "answers": [
+        "Yes",
+        "Only in an HTML file",
+        "No, it needs a concrete implementation"
+      ],
+      "correctIndex": 2,
+      "explanation": "Pseudocode is a description rather than valid C++ source."
+    }
+  ],
+  "reflection": [
+    "Which representation makes an omitted case most obvious?",
+    "What tests should follow a conversion from pseudocode to C++?"
+  ],
+  "bridge": "Next, use pseudocode to understand Euclid's algorithm step by step.",
+  "visualization": {
+    "kind": "representations",
+    "steps": [
+      {
+        "title": "Words",
+        "description": "Negative, zero and positive are different cases."
+      },
+      {
+        "title": "Table",
+        "description": "One row per outcome."
+      },
+      {
+        "title": "Pseudocode",
+        "description": "IF x<0 / ELSE IF x==0 / ELSE."
+      },
+      {
+        "title": "Flowchart",
+        "description": "Two decision diamonds with labeled arrows."
+      },
+      {
+        "title": "C++",
+        "description": "An if / else if / else implementation."
+      },
+      {
+        "title": "Tests",
+        "description": "-5, 0 and 7 cover all three branches."
+      }
+    ]
+  },
+  "sourceRefs": [
+    "CS2023-AL",
+    "ISO-CPP"
+  ],
+  "legacyQuiz": {
+    "question": "What is the main purpose of pseudocode?",
+    "answers": [
+      "To replace the compiler",
+      "To describe an algorithm clearly without unnecessary syntax details",
+      "To store files"
+    ],
+    "correctIndex": 1
+  }
+}

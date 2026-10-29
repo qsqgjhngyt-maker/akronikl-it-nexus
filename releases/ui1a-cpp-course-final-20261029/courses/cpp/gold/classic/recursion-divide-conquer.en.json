@@ -1,0 +1,447 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.classic-algorithms",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.recursion-divide-conquer",
+  "sessions": 4,
+  "learningOrder": 5,
+  "prerequisiteIds": [
+    "cpp.search-linear-binary",
+    "cpp.functions-contracts"
+  ],
+  "sourceRefs": [
+    "CPP20-SORT",
+    "CPP20-FUNCTIONS"
+  ],
+  "title": "Recursion and divide-and-conquer",
+  "lead": "Prove the base case is reachable, trace returns and construct a stable merge over bounded input.",
+  "why": "Recursion is useful when a problem splits into smaller problems of the same form. It does not automatically make code simple or fast: account for call state, combination cost and runtime limits.",
+  "objectives": [
+    "Prove termination with a decreasing measure.",
+    "Trace calls and returns.",
+    "Implement stable merging.",
+    "Derive a merge-sort recurrence.",
+    "Separate stack depth and buffer size."
+  ],
+  "prerequisites": [
+    "Modules 1–3: validated input, functions, vector, records, references and lifetimes.",
+    "Direct learning dependencies: cpp.search-linear-binary, cpp.functions-contracts. New constructs are explained before the task."
+  ],
+  "concepts": [
+    {
+      "term": "Base case",
+      "definition": "A simple case that ends a branch without another call."
+    },
+    {
+      "term": "Measure",
+      "definition": "A nonnegative quantity decreasing strictly before a recursive step."
+    },
+    {
+      "term": "Call frame",
+      "definition": "Separate parameters and local objects for one invocation."
+    },
+    {
+      "term": "Depth",
+      "definition": "The maximum simultaneously active calls along one branch."
+    },
+    {
+      "term": "Divide",
+      "definition": "Splitting a problem into smaller subproblems."
+    },
+    {
+      "term": "Conquer",
+      "definition": "Solving subproblems under their contracts."
+    },
+    {
+      "term": "Merge",
+      "definition": "Combining two ordered ranges in linear work."
+    },
+    {
+      "term": "Recurrence",
+      "definition": "Relating problem cost to subproblem and combination costs."
+    }
+  ],
+  "sections": [
+    {
+      "title": "A call preserves a continuation",
+      "paragraphs": [
+        "A recursive function calls itself directly or through other functions. Each call has its own parameters and local objects. In factorial(4), 4·factorial(3) remains unfinished until the inner result returns. A trace must therefore show both descent 4→3→2→1 and return values 1→2→6→24.",
+        "A conventional implementation stores continuation state on a call stack. This is not the std::stack container from the previous module: calls are managed by the language/runtime, while the container holds application data. Never return a reference to a local object whose call has ended. Mutate a live external vector through a reference and pass subproblem bounds as values."
+      ]
+    },
+    {
+      "title": "A base case and a progress measure",
+      "paragraphs": [
+        "A base case produces its answer without another recursive call. Factorial returns one at zero and one. A sort needs no work on a range shorter than two. Handle the base case before operations requiring an element: an empty range has no a[0], though sorting it is valid.",
+        "The progress measure must strictly decrease within a well-founded domain. For factorial(n−1) at n≥2 it is n; for merge sort it is hi−lo. Checking n<0 before conversion to unsigned is essential, or a negative input becomes a large positive value and changes the argument. “It will stop eventually” is not a named progress measure."
+      ]
+    },
+    {
+      "title": "Induction connects a local step to the answer",
+      "paragraphs": [
+        "Assume a call correctly solves a smaller problem. Then multiplying n by a correct factorial(n−1) gives factorial(n), provided arithmetic is valid. This is the inductive step; the base case anchors it. Assuming correctness for a problem of the same size is circular and supplies no termination proof.",
+        "For merge sort the assumption covers two smaller ranges. After they return, merging still needs its own proof: correct halves do not guarantee the next item is chosen correctly. Separate valid splitting, correct smaller solutions and correct combination preserving every item."
+      ]
+    },
+    {
+      "title": "Splitting and the call tree",
+      "paragraphs": [
+        "Use [lo,hi) and mid=lo+(hi−lo)/2. At length at least two, both halves are smaller. Their lengths can differ by one: seven items split into three and four. Draw the size tree 7→(3,4) down to singletons; empty and singleton leaves use the base case.",
+        "The lab numbers the root depth as one, including an empty input. maximum is the deepest executed call, not the total number of calls. For 128 items it is eight, following from balanced splitting and that numbering convention. This small experiment does not determine the browser’s maximum stack capacity."
+      ]
+    },
+    {
+      "title": "Merging two prepared fronts",
+      "paragraphs": [
+        "After sorting the halves, i and j identify their first unconsumed items. The invariant says tmp holds the smallest items already selected in order, while both remainders remain sorted. Compare their fronts and append the smaller. When one half is exhausted, append the other remainder in its existing order.",
+        "Choose the left half on ties when stability is required. The code tests right<left first and otherwise selects left. tmp then has hi−lo items and copies back to the same range. Do not read a[i] at i==mid or a[j] at j==hi; boundary checks precede the comparison."
+      ]
+    },
+    {
+      "title": "Recurrence cost and memory",
+      "paragraphs": [
+        "Merging n bounded integers takes linear work. T(n)=T(⌊n/2⌋)+T(⌈n/2⌉)+Θ(n) gives Θ(n log n): each level processes about n items in total and there are about log n levels. This is a level-by-level argument, not a deduction from one timing graph.",
+        "Here tmp is created after both child calls return. Peak auxiliary-buffer space is O(n), with O(log n) active call frames. Repeated allocation still affects constants; a shared workspace buffer is a separate design option. Total allocated bytes over a run and maximum simultaneously occupied memory are different metrics."
+      ]
+    },
+    {
+      "title": "Depth, repeated work and bounded rejection",
+      "paragraphs": [
+        "Not every recursion is balanced. Splitting n into n−1 and one gives linear depth, while naive Fibonacci repeats identical subproblems many times. Estimate both call count and path depth before choosing recursion. Iteration or an explicit work stack may be preferable when depth follows potentially large input.",
+        "The lab rejects n>128 before sorting; the factorial example is limited to 12. These are documented educational bounds, not an ability to process every input. Do not promise tail-call elimination as a required guarantee of ordinary C++ code. Timeouts and stack exhaustion should not be your main precondition checks."
+      ]
+    },
+    {
+      "title": "Traces, tests and transfer",
+      "paragraphs": [
+        "Draw the call tree for n=3, then a return trace showing the halves being merged. Test empty, singleton, odd-length, reverse, duplicate and maximum-size data. Validate maximum under the stated root-depth-one convention. Check multiset preservation separately: a correct depth says nothing about preserved values.",
+        "Extend values with original labels and demonstrate stability on tied keys. Compare local and shared-buffer space without calling an assumption a measurement. Next, choose containers for key-based queries; a container’s potentially recursive implementation does not replace understanding its public contract."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "base-case",
+      "title": "Factorial: base case, progress and a bound",
+      "purpose": "Compare recursion with an independent iterative computation over a bounded domain.",
+      "code": "#include <iostream>\n#include <cstdint>\nstd::uint64_t factorial(unsigned n){return n<2?1:n*factorial(n-1);}\nint main(){int n;if(!(std::cin>>n)||n<0||n>12){std::cout<<\"limit\\n\";return 0;}std::uint64_t iterative=1;for(int i=2;i<=n;++i)iterative*=static_cast<unsigned>(i);auto result=factorial(static_cast<unsigned>(n));if(result!=iterative)return 2;std::cout<<result<<'\\n';}",
+      "stdin": "5",
+      "expectedStdout": "120\n",
+      "steps": [
+        "Validate 0…12 before converting to unsigned; a negative input must not silently become a large value.",
+        "At 0 or 1 the function returns 1 without another call.",
+        "For 5, factorial(4) is evaluated first; return-time multiplications produce 2, 6, 24, 120.",
+        "Each call decreases n, so the base case is reachable; uint64_t and the bound 12 avoid overflow here.",
+        "Agreement with a loop checks the result, not equal memory use or guaranteed tail-call elimination."
+      ],
+      "cases": [
+        {
+          "stdin": "0",
+          "stdout": "1\n"
+        },
+        {
+          "stdin": "12",
+          "stdout": "479001600\n"
+        },
+        {
+          "stdin": "13",
+          "stdout": "limit\n"
+        }
+      ]
+    },
+    {
+      "id": "split-and-merge",
+      "title": "Split, solve, combine",
+      "purpose": "Separate merge correctness from the recursion-depth bound.",
+      "code": "#include <iostream>\n#include <vector>\n#include <algorithm>\nvoid merge_sort(std::vector<int>&a,std::size_t lo,std::size_t hi,int depth,int&maximum){maximum=std::max(maximum,depth);if(hi-lo<2)return;auto mid=lo+(hi-lo)/2;merge_sort(a,lo,mid,depth+1,maximum);merge_sort(a,mid,hi,depth+1,maximum);std::vector<int>tmp;auto i=lo,j=mid;while(i<mid&&j<hi){if(a[j]<a[i])tmp.push_back(a[j++]);else tmp.push_back(a[i++]);}while(i<mid)tmp.push_back(a[i++]);while(j<hi)tmp.push_back(a[j++]);std::copy(tmp.begin(),tmp.end(),a.begin()+static_cast<std::ptrdiff_t>(lo));}\nint main(){int n;if(!(std::cin>>n)||n<0||n>128){std::cout<<\"limit\\n\";return 0;}std::vector<int>a;for(int i=0;i<n;++i){int x;if(!(std::cin>>x))return 2;a.push_back(x);}auto expected=a;std::sort(expected.begin(),expected.end());int maximum=0;merge_sort(a,0,a.size(),1,maximum);if(a!=expected||maximum>8)return 3;std::cout<<\"sorted \"<<a.size()<<\" bounded\\n\";}",
+      "stdin": "6 9 1 9 -1 0 2",
+      "expectedStdout": "sorted 6 bounded\n",
+      "steps": [
+        "[0,6) splits into [0,3) and [3,6), then repeatedly splits down to lengths zero or one.",
+        "After both calls return, each half is sorted by the induction hypothesis.",
+        "Choose the smaller first remaining item; ties go to the left half.",
+        "Append the remainder of the nonempty half and copy the temporary buffer back.",
+        "This bounded experiment checks an oracle and maximum<=8; it does not measure the maximum WASI stack."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Draw calls for n=3.",
+      "action": "Draw calls for n=3. Write a prediction first, then perform the safe check.",
+      "prediction": "Root depth is 1.",
+      "verification": "Include both branches and returns; maximum depth is 3."
+    },
+    {
+      "title": "Reuse a single external merge buffer.",
+      "action": "Reuse a single external merge buffer. Write a prediction first, then perform the safe check.",
+      "prediction": "Keep buffer sections correctly separated.",
+      "verification": "Show write boundaries and O(n) auxiliary space."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Stack exhaustion",
+      "cause": "A subproblem did not shrink",
+      "fix": "Prove decreasing length."
+    },
+    {
+      "symptom": "Duplicates changed order",
+      "cause": "The right item was chosen on equality",
+      "fix": "Choose the left item for equivalent keys."
+    },
+    {
+      "symptom": "An O(log n) space claim is wrong",
+      "cause": "The stack was counted but the buffer omitted",
+      "fix": "Combine O(n) buffer and O(log n) stack."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Draw calls for n=3.",
+      "criteria": "Include both branches and returns; maximum depth is 3.",
+      "hint": "Root depth is 1."
+    },
+    {
+      "level": "basic",
+      "task": "Prove termination on an empty range.",
+      "criteria": "The n<2 base runs before splitting.",
+      "hint": "An empty range must not call itself."
+    },
+    {
+      "level": "applied",
+      "task": "Implement merge sort under the lab contract.",
+      "criteria": "Check duplicates, empty input, 128 items and depth.",
+      "hint": "Take from the left on equality."
+    },
+    {
+      "level": "applied",
+      "task": "Count merge work for 8 items.",
+      "criteria": "Three levels, each totaling O(n).",
+      "hint": "Call count differs from depth."
+    },
+    {
+      "level": "transfer",
+      "task": "Reuse a single external merge buffer.",
+      "criteria": "Show write boundaries and O(n) auxiliary space.",
+      "hint": "Keep buffer sections correctly separated."
+    },
+    {
+      "level": "transfer",
+      "task": "Compare recursive and bottom-up merge sort.",
+      "criteria": "Same contract, different control and stack; use common tests.",
+      "hint": "Do not promise elimination of the buffer."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Recursion and divide-and-conquer",
+    "catalogGoal": "Prove the base case is reachable, trace returns and construct a stable merge over bounded input.",
+    "challenge": "Read n in 0…128 and n integers in −10000…10000 with no extra tokens. Sort using recursive merge sort. First line: space-separated values; second: max-depth D. Root depth is 1, with base n<2. Invalid input produces only invalid.",
+    "starterCode": "#include <iostream>\nint main(){ std::cout << \"pending\\n\"; }\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <vector>\n#include <algorithm>\nvoid merge_sort(std::vector<int>&a,std::size_t lo,std::size_t hi,int depth,int&maximum){\n maximum=std::max(maximum,depth);\n if(hi-lo<2)return;\n const auto mid=lo+(hi-lo)/2;\n merge_sort(a,lo,mid,depth+1,maximum);merge_sort(a,mid,hi,depth+1,maximum);\n std::vector<int>tmp;auto i=lo,j=mid;\n while(i<mid&&j<hi){if(a[j]<a[i])tmp.push_back(a[j++]);else tmp.push_back(a[i++]);}\n while(i<mid)tmp.push_back(a[i++]);while(j<hi)tmp.push_back(a[j++]);\n std::copy(tmp.begin(),tmp.end(),a.begin()+static_cast<std::ptrdiff_t>(lo));\n}\nint main(){int n;if(!(std::cin>>n)||n<0||n>128){std::cout<<\"invalid\\n\";return 0;}\n std::vector<int>a;for(int i=0;i<n;++i){int x;if(!(std::cin>>x)||x< -10000||x>10000){std::cout<<\"invalid\\n\";return 0;}a.push_back(x);}\n std::cin>>std::ws;if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n int maximum=0;merge_sort(a,0,a.size(),1,maximum);\n for(std::size_t i=0;i<a.size();++i){if(i)std::cout<<' ';std::cout<<a[i];}std::cout<<\"\\nmax-depth \"<<maximum<<'\\n';\n}",
+    "cases": [
+      {
+        "stdin": "0",
+        "stdout": "\nmax-depth 1\n"
+      },
+      {
+        "stdin": "1 5",
+        "stdout": "5\nmax-depth 1\n"
+      },
+      {
+        "stdin": "2 3 1",
+        "stdout": "1 3\nmax-depth 2\n"
+      },
+      {
+        "stdin": "3 5 4 3",
+        "stdout": "3 4 5\nmax-depth 3\n"
+      },
+      {
+        "stdin": "4 3 2 1 0",
+        "stdout": "0 1 2 3\nmax-depth 3\n"
+      },
+      {
+        "stdin": "6 4 1 4 -1 0 2",
+        "stdout": "-1 0 1 2 4 4\nmax-depth 4\n"
+      },
+      {
+        "stdin": "128 127 126 125 124 123 122 121 120 119 118 117 116 115 114 113 112 111 110 109 108 107 106 105 104 103 102 101 100 99 98 97 96 95 94 93 92 91 90 89 88 87 86 85 84 83 82 81 80 79 78 77 76 75 74 73 72 71 70 69 68 67 66 65 64 63 62 61 60 59 58 57 56 55 54 53 52 51 50 49 48 47 46 45 44 43 42 41 40 39 38 37 36 35 34 33 32 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0",
+        "stdout": "0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125 126 127\nmax-depth 8\n"
+      },
+      {
+        "stdin": "-1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "129",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 x",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "2 1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 extra",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 10001",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Restate the input domain, format, bounds and rejection policy.",
+      "Draw calls for n=3.",
+      "First implement complete input validation without partial results.",
+      "Implement merge sort under the lab contract.",
+      "Count merge work for 8 items.",
+      "Run all reference cases; for files check existence and content too.",
+      "Save the source, observed-results table and invariant explanation; add an independent case."
+    ],
+    "rubric": [
+      "Check duplicates, empty input, 128 items and depth.",
+      "Include both branches and returns; maximum depth is 3.",
+      "Three levels, each totaling O(n).",
+      "Show write boundaries and O(n) auxiliary space.",
+      "Preserve sources, inputs, actual outputs and rejection explanations."
+    ],
+    "artifact": "A personal project with source and a verification table.",
+    "verification": "manual-output-comparison"
+  },
+  "visualization": {
+    "kind": "journey",
+    "title": "Recursion and divide-and-conquer",
+    "description": "A textual step model of the concepts, not C++ execution or a performance measurement.",
+    "steps": [
+      {
+        "title": "[3,1,2]",
+        "description": "The root has depth 1 and length 3; the base case has not been reached."
+      },
+      {
+        "title": "1 + 2",
+        "description": "Splitting gives [3] and [1,2] at depth 2. Both lengths are smaller than 3."
+      },
+      {
+        "title": "Base n < 2",
+        "description": "The right branch splits into [1] and [2] at depth 3; singleton ranges return without more calls."
+      },
+      {
+        "title": "merge [1,2]",
+        "description": "After child calls return, merge the two ordered ranges while preserving every element."
+      },
+      {
+        "title": "max-depth 3",
+        "description": "The final merge of [3] with [1,2] gives [1,2,3]. Maximum active depth is 3, not the total call count."
+      }
+    ]
+  },
+  "assessment": [
+    {
+      "question": "Merge-sort base case? ",
+      "answers": [
+        "Length below 2",
+        "Only length 1",
+        "Only length 2"
+      ],
+      "correctIndex": 0,
+      "explanation": "An empty range must terminate too."
+    },
+    {
+      "question": "A termination measure? ",
+      "answers": [
+        "First element value",
+        "Range length",
+        "File number"
+      ],
+      "correctIndex": 1,
+      "explanation": "Both child lengths are smaller for n>=2."
+    },
+    {
+      "question": "Depth at n=0 under the contract? ",
+      "answers": [
+        "0",
+        "128",
+        "1"
+      ],
+      "correctIndex": 2,
+      "explanation": "The root invocation counts even on empty input."
+    },
+    {
+      "question": "Stable merge on equality? ",
+      "answers": [
+        "Take from the left",
+        "Take from the right",
+        "Delete a duplicate"
+      ],
+      "correctIndex": 0,
+      "explanation": "The left record originally occurred earlier."
+    },
+    {
+      "question": "Balanced T(n)=2T(n/2)+O(n) gives…",
+      "answers": [
+        "O(log n) total work",
+        "O(n log n)",
+        "Necessarily O(n²)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each of O(log n) levels performs O(n) work."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "What should follow a failed cin read?",
+      "answers": [
+        "Use the unread value",
+        "Handle failure before computation",
+        "Increase the index"
+      ],
+      "correctIndex": 1,
+      "explanation": "Read validation precedes data use."
+    },
+    {
+      "question": "Who owns the elements of a vector?",
+      "answers": [
+        "The vector itself",
+        "Any span referring to it",
+        "The end iterator"
+      ],
+      "correctIndex": 0,
+      "explanation": "A view does not extend its owner’s lifetime."
+    },
+    {
+      "question": "How should an application and test driver be built?",
+      "answers": [
+        "Link both main functions together",
+        "Include all .cpp files through a header",
+        "Build separately with the shared domain implementation"
+      ],
+      "correctIndex": 2,
+      "explanation": "Each executable has one entry point."
+    }
+  ],
+  "reflection": [
+    "Prove termination on an empty range.",
+    "Reuse a single external merge buffer.",
+    "Compare recursive and bottom-up merge sort."
+  ],
+  "bridge": "Next: Associative containers and data-structure choice. Save the lab and independent tests.",
+  "legacyQuiz": {
+    "question": "Merge-sort base case? ",
+    "answers": [
+      "Length below 2",
+      "Only length 1",
+      "Only length 2"
+    ],
+    "correctIndex": 0
+  },
+  "locale": "en"
+}

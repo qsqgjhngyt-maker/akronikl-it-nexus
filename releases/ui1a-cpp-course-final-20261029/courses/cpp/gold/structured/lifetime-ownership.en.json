@@ -1,0 +1,346 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.lifetime-ownership",
+  "sessions": 3,
+  "learningOrder": 11,
+  "prerequisiteIds": [
+    "cpp.unions-typedef-enums",
+    "cpp.standard-sequences"
+  ],
+  "sourceRefs": [
+    "CPP20-UNIQUE",
+    "CPP20-LIFETIME"
+  ],
+  "title": "Lifetime, RAII, and unique ownership",
+  "lead": "Trace resource creation and destruction and distinguish an owner from a short-lived observer.",
+  "why": "Linked structures need objects to outlive a single expression. Without an ownership model, leaks, double release, and dangling references are easy to create.",
+  "objectives": [
+    "Explain: Lifetime and scope",
+    "Trace: A minimal constructor vocabulary",
+    "Justify: unique_ptr and make_unique",
+    "Implement and verify the lab against its exact contract.",
+    "Identify a common defect: Do not generalize unique_ptr emptiness to all moved-from types. Never execute dangling access."
+  ],
+  "prerequisites": [
+    "Modules 1–2: expressions, comparisons, types, references, and checked cin.",
+    "Follow the prerequisite links: cpp.unions-typedef-enums, cpp.standard-sequences. New constructs are introduced before the assignment."
+  ],
+  "concepts": [
+    {
+      "term": "RAII",
+      "definition": "resource management through object initialization and destruction."
+    },
+    {
+      "term": "Dangling observer",
+      "definition": "an address or view whose object no longer exists."
+    },
+    {
+      "term": "unique_ptr",
+      "definition": "a movable but noncopyable unique object owner."
+    },
+    {
+      "term": "make_unique",
+      "definition": "creating an object together with its unique_ptr."
+    },
+    {
+      "term": "Destructor",
+      "definition": "a special function invoked at object lifetime end."
+    },
+    {
+      "term": "move",
+      "definition": "permitting a move operation rather than copying memory by itself."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Lifetime and scope",
+      "paragraphs": [
+        "Scope determines where a name is usable; lifetime determines when its object exists. A local object is normally destroyed on leaving its block, including via return. Copying its address outside does not keep the object alive.",
+        "An observer such as int*, a reference, span, or string_view neither releases an object nor extends its owner’s lifetime. Before use, establish that the object is alive and no owner operation has invalidated the address."
+      ]
+    },
+    {
+      "title": "A minimal constructor vocabulary",
+      "paragraphs": [
+        "In struct Trace { explicit Trace(int n):id(n){} ~Trace(){} int id; }; the constructor has the type’s name and no return type. :id(n) initializes the field before the body. ~Trace is called when the object’s lifetime ends.",
+        "explicit prevents certain implicit conversions from a single argument. Here the structure is a small explained lifetime-log scaffold; the full treatment of encapsulation and special member functions remains in Module 5."
+      ]
+    },
+    {
+      "title": "RAII binds a resource to an object",
+      "paragraphs": [
+        "RAII means an object acquires a resource during initialization and releases it in its destructor. vector manages a buffer, string manages text, and ofstream will later manage a file. Normal scope exit automatically triggers cleanup.",
+        "This is useful even without exceptions. It does not promise destructors will run after process termination or forced Worker cancellation. Saving a learner project and confirming a write are therefore separate interface actions."
+      ]
+    },
+    {
+      "title": "unique_ptr and make_unique",
+      "paragraphs": [
+        "std::unique_ptr<T> from <memory> owns one T object; std::make_unique<T>(args) creates it and returns its owner. An empty pointer is false in a condition. p->value accesses the object’s field, while p.get() obtains a non-owning raw pointer.",
+        "Do not delete p.get() or create another owner from the same address. reset() without an argument releases the current object and empties the pointer. Any observers of that released object are then invalid."
+      ]
+    },
+    {
+      "title": "Transferring ownership with move",
+      "paragraphs": [
+        "std::move from <utility> permits a move; the call alone neither relocates memory nor destroys the object. auto q=std::move(p) move-constructs the unique_ptr: q becomes the owner and p becomes empty. Copying a unique_ptr is forbidden.",
+        "The T object retains its address during this ownership transfer. An observer remains usable while q owns the live object, but not after q.reset(). Other moved-from types are not necessarily empty unless their documentation promises it."
+      ]
+    },
+    {
+      "title": "Safe experiments",
+      "paragraphs": [
+        "A log prints create and destroy events; nested blocks reveal reverse destruction order for local objects. Check event counts and owner emptiness after moving rather than dereferencing a released address for an interesting output.",
+        "The lab bounds the number of objects and gives each exactly one owner. Draw separate ownership and observation arrows. This will support a small linked list; shared_ptr, the Rule of Five, and deliberate undefined behaviour are not prerequisites here."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "scope",
+      "title": "Reverse destruction order",
+      "purpose": "Local objects are destroyed when their block ends.",
+      "code": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    Trace first{1};\n    { Trace second{2}; }\n    std::cout << \"end\\n\";\n}\n",
+      "stdin": "",
+      "expectedStdout": "create 1\ncreate 2\ndestroy 2\nend\ndestroy 1\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    },
+    {
+      "id": "move-observer",
+      "title": "Address across ownership transfer",
+      "purpose": "The observer is compared before reset and never used after it.",
+      "code": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    auto owner = std::make_unique<Trace>(5);\n    Trace* observer = owner.get();\n    auto next = std::move(owner);\n    std::cout << (!owner) << ' ' << (observer == next.get()) << '\\n';\n    next.reset();\n}\n",
+      "stdin": "",
+      "expectedStdout": "create 5\n1 1\ndestroy 5\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Predict before running",
+      "action": "Trace the first worked example step by step, then run all of its cases.",
+      "prediction": "Transferring ownership does not extend lifetime beyond the final owner.",
+      "verification": "Compare every state transition and stdout; record a mismatch as a hypothesis rather than revising the expectation afterward."
+    },
+    {
+      "title": "A counterexample to a wrong rule",
+      "action": "Using the second example and theory, construct a minimal safe case for this defect: Do not generalize unique_ptr emptiness to all moved-from types. Never execute dangling access.",
+      "prediction": "The correct and incorrect models should make distinguishable predictions without executing undefined behaviour.",
+      "verification": "Preserve the prediction, actual output, and an explanation of the violated rule."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A boundary result differs",
+      "cause": "Do not generalize unique_ptr emptiness to all moved-from types. Never execute dangling access.",
+      "fix": "Transferring ownership does not extend lifetime beyond the final owner."
+    },
+    {
+      "symptom": "One case works and the next fails",
+      "cause": "The invariant or empty/malformed-input policy is unspecified.",
+      "fix": "Return to the lab contract and check every published case independently."
+    },
+    {
+      "symptom": "The environment rejected execution",
+      "cause": "Build failure, unsupported syntax, and quotas are different causes.",
+      "fix": "Keep the phase and diagnostic; exceptions are unsupported and environment limits are not learner knowledge failures."
+    }
+  ],
+  "diagnosticExamples": [],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Manually trace the first example and explain every expected output line.",
+      "criteria": "Transferring ownership does not extend lifetime beyond the final owner.",
+      "hint": "Identify input, state, and observable output first."
+    },
+    {
+      "level": "basic",
+      "task": "Choose the lab’s empty or minimum valid case and its nearest invalid counterpart.",
+      "criteria": "Derive both expectations before execution and connect each to a contract clause.",
+      "hint": "Do not generalize unique_ptr emptiness to all moved-from types. Never execute dangling access."
+    },
+    {
+      "level": "applied",
+      "task": "Create an object with value in 0…1000 using make_unique, move its owner, increment value, and release it. Print create N, moved 1 1, value N+1, destroy N+1. Invalid input prints invalid.",
+      "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
+      "hint": "Transferring ownership does not extend lifetime beyond the final owner."
+    },
+    {
+      "level": "applied",
+      "task": "Compare the two worked examples: which assumptions differ and why can they not be silently transferred into the lab?",
+      "criteria": "State inputs, state, and at least one applicability boundary for each example.",
+      "hint": "std::move from <utility> permits a move; the call alone neither relocates memory nor destroys the object. auto q=std::move(p) move-constructs the unique_ptr: q becomes the owner and p becomes empty. Copying a unique_ptr is forbidden."
+    },
+    {
+      "level": "transfer",
+      "task": "Add a nested block owning another object and predict the exact destroy order before running it.",
+      "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour.",
+      "hint": "A log prints create and destroy events; nested blocks reveal reverse destruction order for local objects. Check event counts and owner emptiness after moving rather than dereferencing a released address for an interesting output."
+    },
+    {
+      "level": "transfer",
+      "task": "Give a mini-defence: explain a bound, complexity, and a counterexample to a wrong implementation without running the reference.",
+      "criteria": "Connect the explanation to specific lines of your source and actual tests.",
+      "hint": "Transferring ownership does not extend lifetime beyond the final owner."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Lifetime, RAII, and unique ownership",
+    "challenge": "Create an object with value in 0…1000 using make_unique, move its owner, increment value, and release it. Print create N, moved 1 1, value N+1, destroy N+1. Invalid input prints invalid.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Trace {\n    int value{};\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\nint main() {\n    int value{};\n    if (!(std::cin >> value)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || value < 0 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n    auto owner = std::make_unique<Trace>(value);\n    auto next = std::move(owner);\n    std::cout << \"moved \" << (!owner) << ' ' << bool(next) << '\\n';\n    ++next->value;\n    std::cout << \"value \" << next->value << '\\n';\n    next.reset();\n}\n",
+    "cases": [
+      {
+        "stdin": "0",
+        "stdout": "create 0\nmoved 1 1\nvalue 1\ndestroy 1\n"
+      },
+      {
+        "stdin": "4",
+        "stdout": "create 4\nmoved 1 1\nvalue 5\ndestroy 5\n"
+      },
+      {
+        "stdin": "1000",
+        "stdout": "create 1000\nmoved 1 1\nvalue 1001\ndestroy 1001\n"
+      },
+      {
+        "stdin": "-1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "4 x",
+        "stdout": "invalid\n"
+      }
+    ],
+    "referenceFiles": {},
+    "starterFiles": {},
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: Transferring ownership does not extend lifetime beyond the final owner.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "Transferring ownership does not extend lifetime beyond the final owner.",
+      "Do not generalize unique_ptr emptiness to all moved-from types. Never execute dangling access.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What is guaranteed for unique_ptr p after q=std::move(p)?",
+      "answers": [
+        "p is empty and q owns the previous object",
+        "The object necessarily changes address",
+        "Both own the object"
+      ],
+      "correctIndex": 0,
+      "explanation": "This transfers unique ownership rather than copying the object."
+    },
+    {
+      "question": "Does get() extend object lifetime?",
+      "answers": [
+        "Only after reset",
+        "Yes, indefinitely",
+        "No"
+      ],
+      "correctIndex": 2,
+      "explanation": "A raw pointer observes rather than owns."
+    },
+    {
+      "question": "When is an ordinary local object destroyed?",
+      "answers": [
+        "When its address is copied",
+        "When its scope lifetime ends",
+        "Only through delete"
+      ],
+      "correctIndex": 1,
+      "explanation": "RAII ties cleanup to the owner lifetime."
+    },
+    {
+      "question": "Should owner.get() be deleted manually?",
+      "answers": [
+        "No; the owner already manages it",
+        "Only on move",
+        "Yes, before reset"
+      ],
+      "correctIndex": 0,
+      "explanation": "Manual deletion would violate unique ownership."
+    },
+    {
+      "question": "What is needed to accept this lab?",
+      "answers": [
+        "Only a completed flag",
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation"
+      ],
+      "correctIndex": 2,
+      "explanation": "A progress flag is not evidence of independent mastery."
+    }
+  ],
+  "reflection": [
+    "Transferring ownership does not extend lifetime beyond the final owner.",
+    "Add a nested block owning another object and predict the exact destroy order before running it.",
+    "Which case refutes the wrong rule and what do your checks still not establish?"
+  ],
+  "bridge": "Next: Formatted output: values and representations. Preserve the lab and its verification table.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Stepwise map: Lifetime, RAII, and unique ownership",
+    "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+    "steps": [
+      {
+        "title": "Lifetime and scope",
+        "description": "Scope determines where a name is usable; lifetime determines when its object exists. A local object is normally destroyed on leaving its block, including via return. Copying its address outside does not keep the object alive."
+      },
+      {
+        "title": "A minimal constructor vocabulary",
+        "description": "In struct Trace { explicit Trace(int n):id(n){} ~Trace(){} int id; }; the constructor has the type’s name and no return type. :id(n) initializes the field before the body. ~Trace is called when the object’s lifetime ends."
+      },
+      {
+        "title": "RAII binds a resource to an object",
+        "description": "RAII means an object acquires a resource during initialization and releases it in its destructor. vector manages a buffer, string manages text, and ofstream will later manage a file. Normal scope exit automatically triggers cleanup."
+      },
+      {
+        "title": "unique_ptr and make_unique",
+        "description": "std::unique_ptr<T> from <memory> owns one T object; std::make_unique<T>(args) creates it and returns its owner. An empty pointer is false in a condition. p->value accesses the object’s field, while p.get() obtains a non-owning raw pointer."
+      },
+      {
+        "title": "Transferring ownership with move",
+        "description": "std::move from <utility> permits a move; the call alone neither relocates memory nor destroys the object. auto q=std::move(p) move-constructs the unique_ptr: q becomes the owner and p becomes empty. Copying a unique_ptr is forbidden."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "What is guaranteed for unique_ptr p after q=std::move(p)?",
+    "answers": [
+      "p is empty and q owns the previous object",
+      "The object necessarily changes address",
+      "Both own the object"
+    ],
+    "correctIndex": 0
+  }
+}

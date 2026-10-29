@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto';
 import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {GATEWAY_ORIGIN} from '../server-access/bff/account-read.mjs';
+import {bindIntroTransport} from './helpers/intro-transport.mjs';
 
 const sourceRoot=fileURLToPath(new URL('../',import.meta.url));
 const official=Boolean(process.env.NEXUS_FRONTEND_DIR);
@@ -32,7 +33,7 @@ async function evidenceScreenshot(target,name){
 }
 const cppPaths=session=>session.assets.filter(file=>/^courses\/cpp\/(?:data\/.*|manifest|curriculum)\.json$/.test(file));
 const assertOutline=session=>assert.deepEqual(cppPaths(session).sort(),['courses/cpp/curriculum.json','courses/cpp/manifest.json']);
-const assertFull=session=>assert.deepEqual(cppPaths(session).sort(),['courses/cpp/curriculum.json','courses/cpp/data/gold-laboratories.json','courses/cpp/data/lessons.en.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/practicums.ru.json','courses/cpp/data/projects.ru.json','courses/cpp/manifest.json']);
+const assertFull=session=>assert.deepEqual(cppPaths(session).sort(),['courses/cpp/curriculum.json',...(courseManifest.lessonCount===67?['courses/cpp/data/gold-laboratories-m6.json']:[]),'courses/cpp/data/gold-laboratories.json','courses/cpp/data/lessons.en.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/practicums.ru.json','courses/cpp/data/projects.ru.json','courses/cpp/manifest.json']);
 async function ready(target,selector){
  await target.waitForFunction(selector=>document.querySelector(selector)||document.querySelector('.nexus-route-message,.boot-error'),selector);
  const error=await target.locator('.route-error-detail,.boot-error').allTextContents();
@@ -82,6 +83,7 @@ async function session({width=1366}={}){
    return route.fulfill({status:200,contentType:mime(file),body});
   }catch{missingAssets.push(file);return route.fulfill({status:404,body:'SYNTHETIC_NOT_FOUND'})}
  });
+ if(official)await bindIntroTransport(context,{frontend,requests:record.api});
  const target=await context.newPage();page=target;target.setDefaultTimeout(15000);
  target.on('pageerror',error=>errors.push(error.stack||error.message));
  target.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text())});

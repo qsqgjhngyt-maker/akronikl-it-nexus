@@ -1,0 +1,353 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.two-dimensional-arrays",
+  "sessions": 2,
+  "learningOrder": 7,
+  "prerequisiteIds": [
+    "cpp.one-dimensional-arrays"
+  ],
+  "sourceRefs": [
+    "CPP20-ARRAY",
+    "CPP20-VECTOR"
+  ],
+  "title": "Matrices: shape, traversal, and linear storage",
+  "lead": "Map two coordinates to an index and validate rectangular shape before computing.",
+  "why": "Measurement tables, images, and game boards have a shape. Correct traversal requires consistent row lengths and a clear distinction between width and height.",
+  "objectives": [
+    "Explain: Two coordinates",
+    "Trace: Nested traversal",
+    "Justify: Rectangularity and nested vectors",
+    "Implement and verify the lab against its exact contract.",
+    "Identify a common defect: Do not test matrix code only with a square shape. Do not obtain cols from a[0] when there are no rows."
+  ],
+  "prerequisites": [
+    "Modules 1–2: expressions, comparisons, types, references, and checked cin.",
+    "Follow the prerequisite links: cpp.one-dimensional-arrays. New constructs are introduced before the assignment."
+  ],
+  "concepts": [
+    {
+      "term": "Shape",
+      "definition": "row and column counts together with their consistency."
+    },
+    {
+      "term": "Row-major",
+      "definition": "elements of each row are contiguous."
+    },
+    {
+      "term": "Matrix row",
+      "definition": "elements with a fixed first coordinate."
+    },
+    {
+      "term": "Matrix column",
+      "definition": "elements with a fixed second coordinate."
+    },
+    {
+      "term": "Transposition",
+      "definition": "exchanging coordinate roles and dimensions."
+    },
+    {
+      "term": "Rectangularity",
+      "definition": "equal element counts in all rows."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Two coordinates",
+      "paragraphs": [
+        "A matrix has rows rows and cols columns. Element (r,c) is valid when 0<=r<rows and 0<=c<cols. In std::array<std::array<int,3>,2>, the outer size is two rows and the inner size is three columns. A built-in int a[2][3] is also an array of rows.",
+        "a[r][c] first selects a row and then its element. Swapping indices does not safely transpose an arbitrary matrix: rectangular dimensions may produce out-of-bounds access. Check both coordinates independently."
+      ]
+    },
+    {
+      "title": "Nested traversal",
+      "paragraphs": [
+        "The outer loop visits rows; the inner loop visits columns in the current row. Set rowSum=0 before the inner loop and initialize total once before both loops. Mixing these state levels leaves only the final row’s sum.",
+        "With rows*cols elements, a complete traversal is O(rows*cols). If either dimension is zero, there are no elements. The lab explicitly permits zero dimensions so the algorithm never depends on a[0] existing."
+      ]
+    },
+    {
+      "title": "A flat buffer",
+      "paragraphs": [
+        "In row-major storage, the index is r*cols+c. The preceding r rows occupy r*cols positions, then c selects a column. In a 2x3 matrix, (1,2) maps to 5, the last of six elements. This follows from the representation rather than a magic conversion.",
+        "vector<int> data(rows*cols) creates elements, unlike reserve. Validate dimensions before multiplying. Dimensions up to 10 give at most 100 elements; values in -1000…1000 have an absolute total at most 100000."
+      ]
+    },
+    {
+      "title": "Rectangularity and nested vectors",
+      "paragraphs": [
+        "vector<vector<int>> can contain rows of different lengths. Its type does not establish rectangularity. Before running a matrix algorithm, verify that every row has cols elements; define cols separately when the outer vector is empty.",
+        "Flat storage simplifies the total size but requires an indexing formula. Nested storage exposes rows clearly but gives each row a separate owned buffer. Choose a representation for the required operations rather than bracket appearance."
+      ]
+    },
+    {
+      "title": "Rows, columns, and transposition",
+      "paragraphs": [
+        "A column sum fixes c and varies r. A square matrix’s main diagonal has r==c; a rectangular generalization has length min(rows,cols) if the contract defines it that way. Never assume square shape without validation.",
+        "A transpose has cols rows and rows columns. Write result[c*rows+r]=data[r*cols+c] into a new buffer. An in-place transpose requires another algorithm and is not an implicit requirement here."
+      ]
+    },
+    {
+      "title": "Shape tests",
+      "paragraphs": [
+        "A square example can hide reversed dimensions. Include 2x3 and 3x2, one row, one column, and a zero dimension. Label original positions with distinct values to expose permutations.",
+        "Keep a table of (r,c,index,value), expected sums, and operation counts. Incomplete or excess input must reject the whole record as invalid. Next, character sequences introduce another distinction: a byte, a character, and a terminator are different things."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "flat-index",
+      "title": "A coordinate into an index",
+      "purpose": "The final position (1,2) in 2x3 gives index 5.",
+      "code": "#include <iostream>\n#include <array>\nint main() {\n    std::array<int, 6> data{1, 2, 3, 4, 5, 6};\n    int cols{3};\n    std::cout << data[1 * cols + 2] << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "6\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    },
+    {
+      "id": "transpose",
+      "title": "Transposing 2x3",
+      "purpose": "The new 3x2 shape needs a new width in its indexing formula.",
+      "code": "#include <iostream>\n#include <array>\nint main() {\n    std::array<int, 6> data{1, 2, 3, 4, 5, 6};\n    std::array<int, 6> result{};\n    for (int r = 0; r < 2; ++r) { for (int c = 0; c < 3; ++c) { result[c * 2 + r] = data[r * 3 + c]; } }\n    for (int r = 0; r < 3; ++r) { std::cout << result[r * 2] << ' ' << result[r * 2 + 1] << '\\n'; }\n}\n",
+      "stdin": "",
+      "expectedStdout": "1 4\n2 5\n3 6\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Predict before running",
+      "action": "Trace the first worked example step by step, then run all of its cases.",
+      "prediction": "Establish the shape before applying an index formula.",
+      "verification": "Compare every state transition and stdout; record a mismatch as a hypothesis rather than revising the expectation afterward."
+    },
+    {
+      "title": "A counterexample to a wrong rule",
+      "action": "Using the second example and theory, construct a minimal safe case for this defect: Do not test matrix code only with a square shape. Do not obtain cols from a[0] when there are no rows.",
+      "prediction": "The correct and incorrect models should make distinguishable predictions without executing undefined behaviour.",
+      "verification": "Preserve the prediction, actual output, and an explanation of the violated rule."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A boundary result differs",
+      "cause": "Do not test matrix code only with a square shape. Do not obtain cols from a[0] when there are no rows.",
+      "fix": "Establish the shape before applying an index formula."
+    },
+    {
+      "symptom": "One case works and the next fails",
+      "cause": "The invariant or empty/malformed-input policy is unspecified.",
+      "fix": "Return to the lab contract and check every published case independently."
+    },
+    {
+      "symptom": "The environment rejected execution",
+      "cause": "Build failure, unsupported syntax, and quotas are different causes.",
+      "fix": "Keep the phase and diagnostic; exceptions are unsupported and environment limits are not learner knowledge failures."
+    }
+  ],
+  "diagnosticExamples": [],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Manually trace the first example and explain every expected output line.",
+      "criteria": "Establish the shape before applying an index formula.",
+      "hint": "Identify input, state, and observable output first."
+    },
+    {
+      "level": "basic",
+      "task": "Choose the lab’s empty or minimum valid case and its nearest invalid counterpart.",
+      "criteria": "Derive both expectations before execution and connect each to a contract clause.",
+      "hint": "Do not test matrix code only with a square shape. Do not obtain cols from a[0] when there are no rows."
+    },
+    {
+      "level": "applied",
+      "task": "Read rows and cols in 0…10 and exactly rows*cols integers in -1000…1000. Print the total and a line of row sums; with rows=0 the second line is empty.",
+      "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
+      "hint": "Establish the shape before applying an index formula."
+    },
+    {
+      "level": "applied",
+      "task": "Compare the two worked examples: which assumptions differ and why can they not be silently transferred into the lab?",
+      "criteria": "State inputs, state, and at least one applicability boundary for each example.",
+      "hint": "A column sum fixes c and varies r. A square matrix’s main diagonal has r==c; a rectangular generalization has length min(rows,cols) if the contract defines it that way. Never assume square shape without validation."
+    },
+    {
+      "level": "transfer",
+      "task": "Transpose into a new flat buffer and verify that transposing twice restores both data and shape.",
+      "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour.",
+      "hint": "A square example can hide reversed dimensions. Include 2x3 and 3x2, one row, one column, and a zero dimension. Label original positions with distinct values to expose permutations."
+    },
+    {
+      "level": "transfer",
+      "task": "Give a mini-defence: explain a bound, complexity, and a counterexample to a wrong implementation without running the reference.",
+      "criteria": "Connect the explanation to specific lines of your source and actual tests.",
+      "hint": "Establish the shape before applying an index formula."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Matrices: shape, traversal, and linear storage",
+    "challenge": "Read rows and cols in 0…10 and exactly rows*cols integers in -1000…1000. Print the total and a line of row sums; with rows=0 the second line is empty.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <vector>\nint main() {\n    int rows{}, cols{};\n    if (!(std::cin >> rows >> cols) || rows < 0 || rows > 10 || cols < 0 || cols > 10) { std::cout << \"invalid\\n\"; return 0; }\n    std::vector<int> data(rows * cols);\n    for (int& value : data) { if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; } }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    long long total{};\n    for (int value : data) { total += value; }\n    std::cout << total << '\\n';\n    for (int r = 0; r < rows; ++r) {\n        long long rowSum{};\n        for (int c = 0; c < cols; ++c) { rowSum += data[r * cols + c]; }\n        if (r != 0) { std::cout << ' '; }\n        std::cout << rowSum;\n    }\n    std::cout << '\\n';\n}\n",
+    "cases": [
+      {
+        "stdin": "2 3 1 2 3 4 5 6",
+        "stdout": "21\n6 15\n"
+      },
+      {
+        "stdin": "0 3",
+        "stdout": "0\n\n"
+      },
+      {
+        "stdin": "2 0",
+        "stdout": "0\n0 0\n"
+      },
+      {
+        "stdin": "1 1 -5",
+        "stdout": "-5\n-5\n"
+      },
+      {
+        "stdin": "3 2 1 2 3 4 5 6",
+        "stdout": "21\n3 7 11\n"
+      },
+      {
+        "stdin": "1 2 4",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "-1 3",
+        "stdout": "invalid\n"
+      }
+    ],
+    "referenceFiles": {},
+    "starterFiles": {},
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: Establish the shape before applying an index formula.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "Establish the shape before applying an index formula.",
+      "Do not test matrix code only with a square shape. Do not obtain cols from a[0] when there are no rows.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What is the flat index of (1,2) in a 2x3 matrix?",
+      "answers": [
+        "3",
+        "5",
+        "6"
+      ],
+      "correctIndex": 1,
+      "explanation": "1*3+2=5, with six elements in total."
+    },
+    {
+      "question": "What shape is the transpose of 2x3?",
+      "answers": [
+        "3x2",
+        "6x6",
+        "Always 2x3"
+      ],
+      "correctIndex": 0,
+      "explanation": "Rows and columns exchange roles."
+    },
+    {
+      "question": "Does vector<vector<int>> establish rectangularity?",
+      "answers": [
+        "Only with const",
+        "Yes",
+        "No; row lengths need checking"
+      ],
+      "correctIndex": 2,
+      "explanation": "Each row has an independent size."
+    },
+    {
+      "question": "How many elements does shape 2x0 contain?",
+      "answers": [
+        "2",
+        "0",
+        "It requires reading two values"
+      ],
+      "correctIndex": 1,
+      "explanation": "Two empty rows contain no elements."
+    },
+    {
+      "question": "What is needed to accept this lab?",
+      "answers": [
+        "Source, actual results, original tests, and a contract explanation",
+        "Only a completed flag",
+        "Only a copied reference"
+      ],
+      "correctIndex": 0,
+      "explanation": "A progress flag is not evidence of independent mastery."
+    }
+  ],
+  "reflection": [
+    "Establish the shape before applying an index formula.",
+    "Transpose into a new flat buffer and verify that transposing twice restores both data and shape.",
+    "Which case refutes the wrong rule and what do your checks still not establish?"
+  ],
+  "bridge": "Next: Strings: bytes, terminators, and safe views. Preserve the lab and its verification table.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Stepwise map: Matrices: shape, traversal, and linear storage",
+    "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+    "steps": [
+      {
+        "title": "Two coordinates",
+        "description": "A matrix has rows rows and cols columns. Element (r,c) is valid when 0<=r<rows and 0<=c<cols. In std::array<std::array<int,3>,2>, the outer size is two rows and the inner size is three columns. A built-in int a[2][3] is also an array of rows."
+      },
+      {
+        "title": "Nested traversal",
+        "description": "The outer loop visits rows; the inner loop visits columns in the current row. Set rowSum=0 before the inner loop and initialize total once before both loops. Mixing these state levels leaves only the final row’s sum."
+      },
+      {
+        "title": "A flat buffer",
+        "description": "In row-major storage, the index is r*cols+c. The preceding r rows occupy r*cols positions, then c selects a column. In a 2x3 matrix, (1,2) maps to 5, the last of six elements. This follows from the representation rather than a magic conversion."
+      },
+      {
+        "title": "Rectangularity and nested vectors",
+        "description": "vector<vector<int>> can contain rows of different lengths. Its type does not establish rectangularity. Before running a matrix algorithm, verify that every row has cols elements; define cols separately when the outer vector is empty."
+      },
+      {
+        "title": "Rows, columns, and transposition",
+        "description": "A column sum fixes c and varies r. A square matrix’s main diagonal has r==c; a rectangular generalization has length min(rows,cols) if the contract defines it that way. Never assume square shape without validation."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "How many indices identify a two-dimensional array element?",
+    "answers": [
+      "One",
+      "Two",
+      "Always three"
+    ],
+    "correctIndex": 1
+  }
+}

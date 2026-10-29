@@ -25,6 +25,15 @@ on:
       - 'courses/cpp/**'
       - 'core/academy-gold-*.js'
       - 'styles/academy-gold.css'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'startup-intro-publication.json'
+      - 'tools/startup-intro-*.mjs'
+      - 'tools/check-startup-intro-*.mjs'
+      - 'tools/prepare-startup-intro-delivery.mjs'
+      - '.github/workflows/academy-gold-cpp-module-5-preflight.yml'
+      - '.github/workflows/academy-gold-cpp-m5-acceptance.yml'
 permissions:
   contents: read
 jobs:
@@ -48,14 +57,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Node.js 24 для проверки точной доставки
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Проверить точный Intro и сохранность прежней публикации
+        id: startup_delivery
+        run: node tools/check-startup-intro-delivery.mjs --prepare-legacy
       - name: Изолированная QA сборка и закреплённые инструменты, без публикации
         run: |
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           npm install --prefix /tmp/nexus-m5-acceptance-browser --no-save playwright@1.56.1
           /tmp/nexus-m5-acceptance-browser/node_modules/.bin/playwright install --with-deps chromium
-          node tools/build-ui1a-release.mjs --out /tmp/nexus-m5-acceptance-build
+          node tools/check-startup-intro-delivery.mjs --build /tmp/nexus-m5-acceptance-build
           node tools/prepare-academy-gold-runtime-fixture.mjs
       - name: Методическая правка, неизменность исполняемых контрактов и бюджет загрузки
+        working-directory: ${{ steps.startup_delivery.outputs.legacy_root }}
         run: |
           node tools/check-academy-gold-m5-acceptance.mjs
           node --test tests/academy-gold-m5-loading-acceptance.test.mjs tests/academy-gold-m5-editorial-scope.test.mjs
@@ -108,6 +125,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Node.js 24 для проверки точной доставки
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Проверить точный Intro и сохранность прежней публикации
+        id: startup_delivery
+        run: node tools/check-startup-intro-delivery.mjs
       - name: Изолированные build, браузер и тестовый TLS, без cloud credentials
         run: |
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
@@ -115,7 +139,7 @@ jobs:
           /tmp/nexus-m5-entry-browser/node_modules/.bin/playwright install --with-deps chromium
           mkdir -p /tmp/nexus-m5-entry-tls
           openssl req -x509 -newkey rsa:2048 -nodes -keyout /tmp/nexus-m5-entry-tls/qa-key.pem -out /tmp/nexus-m5-entry-tls/qa-cert.pem -days 1 -subj /CN=d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net
-          node tools/build-ui1a-release.mjs --out /tmp/nexus-m5-entry-build
+          node tools/check-startup-intro-delivery.mjs --build /tmp/nexus-m5-entry-build
       - name: Совместимость Account policy и строгий exact graph для runtime
         run: |
           node --test tests/pwa-controller-graph-compatibility.test.mjs

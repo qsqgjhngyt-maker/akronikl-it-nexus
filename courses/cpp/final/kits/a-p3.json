@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "id": "cpp.final.v1.A.P3",
+  "assessmentId": "cpp.course-final.v1",
+  "variant": "A",
+  "part": 3,
+  "starterExpected": "compiles; public tests intentionally fail until repaired",
+  "template": {
+    "title": "Транзакционное обновление очереди · A",
+    "description": "COURSE-FINAL cpp.final.v1.A.P3",
+    "languageId": "cpp",
+    "entryFile": "src/main.cpp",
+    "sourceRoots": [
+      "src"
+    ],
+    "includeRoots": [
+      "include"
+    ],
+    "testRoots": [
+      "tests"
+    ],
+    "files": [
+      {
+        "path": "include/model.hpp",
+        "content": "#pragma once\n#include <memory>\n#include <vector>\nstruct Entry{int id,minutes;bool operator==(const Entry&)const=default;};\nclass QueueSnapshot{\n std::unique_ptr<std::vector<Entry>> state_;\npublic:\n QueueSnapshot();~QueueSnapshot()=default;\n QueueSnapshot(const QueueSnapshot&)=delete;QueueSnapshot&operator=(const QueueSnapshot&)=delete;\n QueueSnapshot(QueueSnapshot&&)noexcept=default;QueueSnapshot&operator=(QueueSnapshot&&)noexcept=default;\n const std::vector<Entry>& entries()const;\n void replace(const std::vector<Entry>& batch); // invalid_argument on invalid batch\n};\n",
+        "languageId": "cpp"
+      },
+      {
+        "path": "src/model.cpp",
+        "content": "#include \"model.hpp\"\n#include <algorithm>\n#include <set>\n#include <stdexcept>\nQueueSnapshot::QueueSnapshot():state_(std::make_unique<std::vector<Entry>>()){}\nconst std::vector<Entry>& QueueSnapshot::entries()const{static const std::vector<Entry> empty;return state_?*state_:empty;}\nvoid QueueSnapshot::replace(const std::vector<Entry>& batch){if(!state_)state_=std::make_unique<std::vector<Entry>>();state_->clear();std::set<int> seen;for(const auto&e:batch){if(e.id<1||e.id>1000||e.minutes<1||e.minutes>480||!seen.insert(e.id).second||state_->size()>=200)throw std::invalid_argument(\"batch\");state_->push_back(e);}std::sort(state_->begin(),state_->end(),[](const Entry&a,const Entry&b){return a.id<b.id;});}\n",
+        "languageId": "cpp"
+      },
+      {
+        "path": "src/main.cpp",
+        "content": "#include \"model.hpp\"\n#include <iostream>\nint main(){std::cout<<\"Run public_tests; repair transactional replacement.\\n\";}\n",
+        "languageId": "cpp"
+      },
+      {
+        "path": "tests/public_tests.cpp",
+        "content": "#include \"model.hpp\"\n#include <stdexcept>\n#include <iostream>\n#include <algorithm>\nvoid check(bool x,const char*why){if(!x)throw std::runtime_error(why);}\nint main(){try{\nQueueSnapshot model;model.replace({{9,30},{1,20}});auto before=model.entries();check(before==std::vector<Entry>{{1,20},{9,30}},\"sorted pairs\");\nfor(const auto&bad:std::vector<std::vector<Entry>>{{{2,1},{2,3}},{{2,1},{3,0}},{{2,1},{3,481}},std::vector<Entry>(201,{1,1})}){bool caught=false;try{model.replace(bad);}catch(const std::invalid_argument&){caught=true;}check(caught,\"bad batch accepted\");check(model.entries()==before,\"strong guarantee broken\");}\nQueueSnapshot moved=std::move(model);check(moved.entries()==before,\"move lost data\");model.replace({{8,1}});check(model.entries()==std::vector<Entry>{{8,1}},\"moved-from object cannot be reused\");check(moved.entries()==before,\"owners share state\");moved.replace({});check(moved.entries().empty(),\"empty replacement\");\nstd::cout<<\"Public contract: PASS\\n\";return 0;}catch(const std::exception&e){std::cerr<<e.what()<<\"\\n\";return 1;}}\n",
+        "languageId": "cpp"
+      },
+      {
+        "path": "README.md",
+        "content": "# Транзакционное обновление очереди / Transactional queue update\n\nИсправьте QueueSnapshot: пакет Entry{id,minutes} должен полностью заменить очередь только при успешной проверке. ID1..1000 уникальны, minutes1..480, не более200 записей; порядок результата по ID. Пустой пакет допустим. Неисправный replace меняет старую очередь до окончания проверки. Обеспечьте strong guarantee для отказа валидации/выделения памяти, явное владение snapshot и понятную copy/move политику. Проверьте повторный ID в конце пакета, неверное minutes после верного префикса и round-trip копии/переноса по выбранному контракту. После move старый объект пуст и допускает новый replace; новый владелец независим. Объясните сложность.\n\nRepair QueueSnapshot so Entry{id,minutes} batches replace the queue only after complete validation. IDs1..1000 are unique, minutes1..480, at most200 entries; result order is by ID. Empty batches are valid. Defective replace mutates old state before validation finishes. Provide the strong guarantee for validation/allocation failure, explicit snapshot ownership and a clear copy/move policy. Test a late duplicate ID, invalid minutes after a valid prefix and copy/move behavior under your policy. After move the old object is empty and accepts replace; the new owner is independent. Explain complexity.\n\n## В Nexus / In Nexus\n\nОткройте копию стартового проекта, реализуйте контракт в src/model.cpp. Нажмите «Запустить мои тесты» рядом с кнопкой запуска проекта. Starter намеренно не проходит все public tests; это не готовое решение. Добавьте собственные тесты и объяснение в REPORT.md.\n\nOpen a starter copy and implement src/model.cpp. Click Run my tests next to Run project. The starter intentionally fails public tests; it is not a completed solution. Add your own tests and explanation in REPORT.md.\n\n## Дополнительная переносимая сборка / Optional portable build\n\n    cmake -S . -B build\n    cmake --build build\n    ctest --test-dir build --output-on-failure\n",
+        "languageId": "cpp"
+      },
+      {
+        "path": "REPORT.md",
+        "content": "# Объяснение / Explanation\n\n1. Контракт и границы / Contract and boundaries\n2. Причина дефекта и изменение / Defect cause and repair\n3. Собственные различающие тесты / Your distinguishing tests\n4. Фактические результаты Nexus, ограничения / Actual Nexus results, limitations\n5. Использованные источники и помощь / Sources and assistance\n",
+        "languageId": "cpp"
+      },
+      {
+        "path": "CMakeLists.txt",
+        "content": "cmake_minimum_required(VERSION 3.16)\nproject(CourseFinal LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nadd_library(model src/model.cpp)\ntarget_include_directories(model PUBLIC include)\nadd_executable(course_cli src/main.cpp)\ntarget_link_libraries(course_cli PRIVATE model)\nenable_testing()\nadd_executable(public_tests tests/public_tests.cpp)\ntarget_link_libraries(public_tests PRIVATE model)\nadd_test(NAME public_contract COMMAND public_tests)\n",
+        "languageId": "cpp"
+      }
+    ]
+  }
+}

@@ -7,6 +7,8 @@ import {teamPermission} from './community-service.mjs';
 import {contentOperation} from './content-service.mjs';
 import {mediaPartsOperation} from './media-parts.mjs';
 import {MEDIA_PARTS_PATH,PUBLIC_MEDIA_PARTS_PATH,MAX_ENVELOPE} from '../media-parts-contract.mjs';
+import {assessmentOperation} from './assessment-service.mjs';
+import {ASSESSMENT_PATH} from '../../course-final/transport-contract.js';
 const INTERNAL='/api/v2/account/internal/control',BASE='/api/v2/account/control';
 const encoder=new TextEncoder(),now=()=>new Date().toISOString();
 export const query=(db,sql,...args)=>db.prepare(sql).bind(...args);
@@ -60,7 +62,15 @@ async function envelope(request,env){
   // Отдельное namespace: legacy nonces не удаляются и не меняют replay-политику.
   await query(env.DB,"DELETE FROM nexus_admin_nonces WHERE nonce IN(SELECT nonce FROM nexus_admin_nonces WHERE nonce LIKE 'mp1:%' AND expires_at<?1 LIMIT 128)",new Date(Date.now()-60000).toISOString()).run();
  }
- const inserted=await query(env.DB,'INSERT OR IGNORE INTO nexus_admin_nonces(nonce,expires_at) VALUES(?1,?2)',partsRPC?'mp1:'+nonce:nonce,new Date(Number(stamp)+30000).toISOString()).run();
+ const assessment=data.path===ASSESSMENT_PATH;
+ if(assessment){
+  if(env.COURSE_FINAL_ENABLED!=='true')deny('ASSESSMENT_UNAVAILABLE',503);
+  if(Math.abs(Date.now()-Number(stamp))>30000)deny('SERVICE_DENIED',401);
+  await query(env.DB,'DELETE FROM nexus_assessment_nonces WHERE nonce IN(SELECT nonce FROM nexus_assessment_nonces WHERE expires_at<?1 ORDER BY expires_at LIMIT 128)',new Date(Date.now()-60000).toISOString()).run();
+ }
+ const inserted=assessment
+  ?await query(env.DB,'INSERT OR IGNORE INTO nexus_assessment_nonces(nonce,expires_at) VALUES(?1,?2)',nonce,new Date(Number(stamp)+30000).toISOString()).run()
+  :await query(env.DB,'INSERT OR IGNORE INTO nexus_admin_nonces(nonce,expires_at) VALUES(?1,?2)',partsRPC?'mp1:'+nonce:nonce,new Date(Number(stamp)+30000).toISOString()).run();
  if(!inserted.success||inserted.meta.changes!==1)deny('SERVICE_DENIED',401);
  if(publicParts)return data;
  const actor=await controlActor(env,data.sessionHash);if(!actor)deny('SESSION_REQUIRED',401);
@@ -109,6 +119,7 @@ async function operation(env,value){
  if(path===PUBLIC_MEDIA_PARTS_PATH)return mediaPartsOperation(env,value,{publishedOnly:true});
  if(path.startsWith('/api/v2/account/profile'))return profileOperation(env,value);
  if(!await alphaSettings(env))deny('ALPHA_CONTROL_UNAVAILABLE',503);
+ if(path===ASSESSMENT_PATH&&!url.search)return assessmentOperation(env,value,{requireAdmin});
  if(path===BASE+'/capabilities'&&method==='GET'&&!url.search){
   const canManage=!!await first(env.DB,"SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'",actor.account_id);
   return {canManage,canModerate:await teamPermission(env.DB,actor.account_id,env),canPurge:canManage&&env.ADMIN_PURGE_ENABLED==='true',freshPasskey:canManage&&fresh(actor)};

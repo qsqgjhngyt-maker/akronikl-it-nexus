@@ -8,7 +8,7 @@ const ASSISTANT_CACHE='akronikl:it-nexus:assistant-cache:v1';
 const LOCAL_KEYS=new Set([
   'akronikl:it-nexus:state:v1','akronikl:it-nexus:projects:v1','akronikl:it-nexus:prefs:v1',IDENTITY_KEY,
   CLOUD_KEY,'akronikl:it-nexus:sync-queue:v1','akronikl:it-nexus:audit:v1',
-  'akronikl:it-nexus:identity-v2:cookie-session:v1','cpp_programming_pdf_course_v1'
+  'akronikl:it-nexus:identity-v2:cookie-session:v1','cpp_programming_pdf_course_v1','akronikl:it-nexus:cpp-final:v1'
 ]);
 const LOCAL_PREFIXES=['akronikl:it-nexus:learning-resume:v1:','akronikl:it-nexus:graphics-drafts:v1:','akronikl:it-nexus:feedback-draft:v1:'];
 const SESSION_KEYS=new Set(['akronikl:it-nexus:identity-v2:session:v1','akronikl:it-nexus:view-resume:v1']);
@@ -42,7 +42,7 @@ export function createAccountStorageController({localStorage,sessionStorage,lega
     if(recorded)return {adopted:false,reason:'already-checked',copied:0,sessionCopied};
     if(!eligible){local.setItem(marker,JSON.stringify({schemaVersion:1,eligible:false,copied:0}));return {adopted:false,reason:'unmatched-owner',copied:0}}
     const principals=new Set([identity?.localPrincipalId,identity?.accountSubjectId].filter(validId));
-    const sourceKeys=[...LOCAL_KEYS].filter(key=>key!=='akronikl:it-nexus:identity-v2:cookie-session:v1');
+    const sourceKeys=[...LOCAL_KEYS].filter(key=>!['akronikl:it-nexus:identity-v2:cookie-session:v1','akronikl:it-nexus:cpp-final:v1'].includes(key));
     const targetKeys=new Map();
     for(const key of keysOf(local)){
       for(const base of LOCAL_PREFIXES)for(const principal of principals){

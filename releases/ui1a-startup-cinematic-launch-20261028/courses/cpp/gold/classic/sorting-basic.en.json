@@ -1,0 +1,459 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.classic-algorithms",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.sorting-basic",
+  "sessions": 4,
+  "learningOrder": 2,
+  "prerequisiteIds": [
+    "cpp.algorithm-complexity"
+  ],
+  "sourceRefs": [
+    "CPP20-SORT"
+  ],
+  "title": "Sorting: contracts, stability and invariants",
+  "lead": "Develop bubble, selection and insertion sorts while checking order, element preservation and the relative order of tied keys.",
+  "why": "Sorting supports rankings, indexes and reports. Losing a record or silently rearranging tied events can be worse than a slow result. Algorithm selection therefore starts with a precise contract.",
+  "objectives": [
+    "Prove a sorted-prefix invariant.",
+    "Trace insertion, selection and bubble with duplicate keys.",
+    "Check stability using original indices.",
+    "Separate comparisons, shifts and swaps.",
+    "Choose an algorithm for a small nearly ordered collection."
+  ],
+  "prerequisites": [
+    "Modules 1–3: validated input, functions, vector, records, references and lifetimes.",
+    "Direct learning dependencies: cpp.algorithm-complexity. New constructs are explained before the task."
+  ],
+  "concepts": [
+    {
+      "term": "Stability",
+      "definition": "Preserving the original relative order of equivalent elements."
+    },
+    {
+      "term": "Insertion",
+      "definition": "Adding the next item to a sorted prefix by shifting."
+    },
+    {
+      "term": "Selection",
+      "definition": "Finding the minimum of the suffix and placing it at the boundary."
+    },
+    {
+      "term": "Bubble",
+      "definition": "Comparing neighbors and exchanging inverted pairs."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A property true before and after each iteration."
+    },
+    {
+      "term": "Strict comparison",
+      "definition": "A less-than relation excluding equality."
+    },
+    {
+      "term": "Shift",
+      "definition": "Moving an item to an adjacent position to make room."
+    },
+    {
+      "term": "Adaptivity",
+      "definition": "Work that depends on order already present in the input."
+    }
+  ],
+  "sections": [
+    {
+      "title": "The complete sorting contract",
+      "paragraphs": [
+        "For ascending integers, the result must be ordered and contain every original value with the same multiplicity. The second condition preserves the multiset. Replacing all items with zero can pass an order check but is not sorting. Records must retain their associated fields too: a key cannot be detached from its name or ID.",
+        "The lab automatically assigns each record an original position. key determines order while original makes rearrangements observable. n=0 is valid and prints an empty line. Reject out-of-range, missing or extra data before reporting a result; a partial output would otherwise resemble a successfully sorted collection."
+      ]
+    },
+    {
+      "title": "A comparison predicate defines the order",
+      "paragraphs": [
+        "For our integers, a<b means “a should precede b”. Strictness requires that an item never precede itself. Transitivity connects three values: a<b and b<c imply a<c. Tied keys mean neither precedes the other. General library sorting requires a strict weak order, rather than an arbitrary function returning bool.",
+        "a<=b is not strict: tied values make it true in both directions. Do not pass it to a standard sort as an experiment; violating a library precondition is unsafe. Check the wrong rule separately as a relation on a small table. Shifting tied elements in insertion sort is a different, safely observable experiment about stability."
+      ]
+    },
+    {
+      "title": "Bubble: a finalized suffix",
+      "paragraphs": [
+        "Scan left to right, swapping neighbors when the right key is smaller. After a pass, a maximum of the processed prefix is at its right end. The next pass can stop one position earlier because a suffix contains finalized maxima. The termination variant is the length of the unfinished region, which decreases after each pass.",
+        "Without early exit, neighbor comparisons total n(n−1)/2 even on sorted input. A changed flag can stop after a swap-free pass; reset it before each pass. Strict comparisons and adjacent swaps preserve tied-record order. For an empty vector, guard with end>1 instead of computing an unprotected size−1."
+      ]
+    },
+    {
+      "title": "Selection: minima on the left",
+      "paragraphs": [
+        "At step i, find best, the position of a minimum key in [i,n), then swap records a[i] and a[best]. The invariant says positions before i contain their final smallest elements. The inner search does not mutate the array; the outer step finalizes one position. Trace best separately before doing the swap.",
+        "This version uses quadratic minimum-search comparisons in both best and worst cases. At most n−1 nontrivial swaps are needed, though the shown code also assigns when best==i. Ordinary selection sort is unstable: swapping first and last in (2,A),(2,B),(1,C) places B before A. Fewer swaps alone do not make it best for every record type."
+      ]
+    },
+    {
+      "title": "Insertion: a sorted prefix",
+      "paragraphs": [
+        "Before step i, [0,i) is sorted. Copy a[i] into saved, then shift larger keys right until the insertion position is found. saved is necessary because shifting overwrites its original cell. After assigning a[j]=saved, [0,i+1) is sorted and contains the same multiset of records.",
+        "Test j>0 before reading a[j−1], protecting the left boundary. Stop shifting on equal keys so the new item stays after earlier ties; this gives stability. For sorted input with n≥1, there are n−1 key comparisons; reverse distinct input needs n(n−1)/2 shifts. Near-sortedness benefits insertion much more than selection."
+      ]
+    },
+    {
+      "title": "Stability and multiple keys",
+      "paragraphs": [
+        "Stability does not make every input permutation produce the same result: tied keys retain that particular input order. If you need “score, then ID”, specify both keys. For equal-time events, retaining arrival order may be a domain requirement that an extra name sort would violate.",
+        "Distinguish the library promises used in the next lesson: ordinary sort does not guarantee stability, while stable_sort does. Neither removes comparator requirements. First trace labels A and B manually, then state what your ranking needs and which test distinguishes the implementations."
+      ]
+    },
+    {
+      "title": "Checking a sort independently",
+      "paragraphs": [
+        "Check neighboring order, then length and value frequencies; for a stable version also check original order inside each tied-key group. Distinct-only data cannot test stability. Empty, singleton, equal, reverse, sorted and duplicate-containing inputs represent different classes, not decorative variations of one example.",
+        "For a small collection, independently write the expected result. Later we add a library oracle and property checks, but comparing two functions with the same defect is not independence. Input permutation and sorting twice provide useful extra checks. They strengthen tests without replacing invariants and boundary reasoning."
+      ]
+    },
+    {
+      "title": "Choosing an implementation and the task boundary",
+      "paragraphs": [
+        "Manual sorts here teach state, invariants and cost. Normal development should first consider an appropriate library algorithm. Selection depends on size, data structure, comparison/move cost and stability requirements. Success on 32 items is not evidence for the fastest algorithm on large logs.",
+        "Submit stable insertion source, a one-pass trace, expected and actual cases, and a worst-case shift argument. As an extension, add bubble’s early exit without changing its contract. The next lesson separates a container from traversal through iterators and introduces standard algorithms as composable tools."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "stable-insertion",
+      "title": "Insertion with original-position labels",
+      "purpose": "Observe stability on tied keys, rather than only on integers.",
+      "code": "#include <iostream>\n#include <vector>\nstruct Item{int key;int original;};\nint main(){\n std::vector<Item>a{{2,0},{1,1},{2,2},{1,3}};\n for(std::size_t i=1;i<a.size();++i){\n  Item saved=a[i];std::size_t j=i;\n  while(j>0&&saved.key<a[j-1].key){a[j]=a[j-1];--j;}\n  a[j]=saved;\n }\n for(const Item&x:a)std::cout<<x.key<<':'<<x.original<<' ';\n std::cout<<'\\n';\n}",
+      "stdin": "",
+      "expectedStdout": "1:1 1:3 2:0 2:2 \n",
+      "steps": [
+        "Label original positions 0,1,2,3; only key is a sorting key.",
+        "Before i=1 the prefix of length one is sorted. saved is a separate copy of the item being moved.",
+        "Shift right while saved.key is strictly less than the left key; stop on equality.",
+        "The prefix of length i+1 is sorted, and equal-key labels retain their original order.",
+        "Study < versus <= as a stability change; do not pass a non-strict predicate to std::sort."
+      ],
+      "cases": []
+    },
+    {
+      "id": "selection",
+      "title": "Selection: a different invariant",
+      "purpose": "Separate finding a minimum from the single swap at the end of a pass.",
+      "code": "#include <iostream>\n#include <vector>\nint main(){\n std::vector<int>a{3,1,2};\n for(std::size_t i=0;i<a.size();++i){\n  std::size_t best=i;\n  for(std::size_t j=i+1;j<a.size();++j)if(a[j]<a[best])best=j;\n  int saved=a[i];a[i]=a[best];a[best]=saved;\n }\n for(int x:a)std::cout<<x<<' ';\n std::cout<<'\\n';\n}",
+      "stdin": "",
+      "expectedStdout": "1 2 3 \n",
+      "steps": [
+        "Before pass i, positions to the left contain their final smallest elements.",
+        "best starts at i; j scans only the remaining suffix.",
+        "After the inner loop a[best] is a minimum of the suffix.",
+        "Three assignments swap a[i] and a[best]; sorted input does not reduce comparison count.",
+        "Trace records (2,A),(2,B),(1,C): swapping first and last changes the order of tied keys."
+      ],
+      "cases": []
+    },
+    {
+      "id": "bubble",
+      "title": "Bubble sort with early stopping",
+      "purpose": "Check adjacent swaps, the suffix boundary and a fresh flag on every pass.",
+      "code": "#include <iostream>\n#include <vector>\nint main(){std::vector<int>a{3,1,2,1};\n for(std::size_t end=a.size();end>1;--end){bool swapped=false;\n  for(std::size_t j=1;j<end;++j)if(a[j]<a[j-1]){int x=a[j];a[j]=a[j-1];a[j-1]=x;swapped=true;}\n  if(!swapped)break;\n }\n for(std::size_t i=0;i<a.size();++i){if(i)std::cout<<' ';std::cout<<a[i];}std::cout<<'\\n';\n}",
+      "stdin": "",
+      "expectedStdout": "1 1 2 3\n",
+      "steps": [
+        "After a pass the active-prefix maximum is on the right.",
+        "Decrease end: the finished suffix needs no more comparisons.",
+        "Equal neighbors are not swapped, preserving stability.",
+        "A pass with no swaps establishes order, so the loop may stop."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Trace insertion on 2:a 1:b 2:c 1:d.",
+      "action": "Trace insertion on 2:a 1:b 2:c 1:d. Write a prediction first, then perform the safe check.",
+      "prediction": "Compare keys only.",
+      "verification": "Obtain 1:b 1:d 2:a 2:c."
+    },
+    {
+      "title": "Implement bubble with early stopping.",
+      "action": "Implement bubble with early stopping. Write a prediction first, then perform the safe check.",
+      "prediction": "Reset the swap flag on each pass.",
+      "verification": "Prove its boundary and test already sorted input."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Equal keys changed order",
+      "cause": "The shift condition uses <=",
+      "fix": "Use strictly saved.key<a[j−1].key."
+    },
+    {
+      "symptom": "The last item was lost",
+      "cause": "Shifting overwrote saved",
+      "fix": "Save the inserted record before moving others."
+    },
+    {
+      "symptom": "Index j wrapped below zero",
+      "cause": "The boundary check follows access",
+      "fix": "Check j>0 before a[j−1]."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Trace insertion on 2:a 1:b 2:c 1:d.",
+      "criteria": "Obtain 1:b 1:d 2:a 2:c.",
+      "hint": "Compare keys only."
+    },
+    {
+      "level": "basic",
+      "task": "Construct a selection stability counterexample.",
+      "criteria": "On 2:a 2:b 1:c the twos change order.",
+      "hint": "Mark the distant swap."
+    },
+    {
+      "level": "applied",
+      "task": "Complete the stable insertion lab.",
+      "criteria": "The key:index output preserves duplicates and all indices.",
+      "hint": "Shift only strictly greater keys."
+    },
+    {
+      "level": "applied",
+      "task": "Add comparison and shift counters.",
+      "criteria": "Provide separate tables for sorted, reverse and equal input.",
+      "hint": "Do not count printing as an algorithm step."
+    },
+    {
+      "level": "transfer",
+      "task": "Implement bubble with early stopping.",
+      "criteria": "Prove its boundary and test already sorted input.",
+      "hint": "Reset the swap flag on each pass."
+    },
+    {
+      "level": "transfer",
+      "task": "Choose sorting for 20 nearly ordered log rows.",
+      "criteria": "Account for stability and movement cost.",
+      "hint": "Small n still needs a contract."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Sorting: contracts, stability and invariants",
+    "catalogGoal": "Develop bubble, selection and insertion sorts while checking order, element preservation and the relative order of tied keys.",
+    "challenge": "Read n in 0…32 and exactly n keys in −9999…9999. Assign zero-based original indices. Use stable insertion sort by key. Print key:index separated by single spaces and a newline; an empty array yields an empty line. Invalid input or an extra token produces only invalid.",
+    "starterCode": "#include <iostream>\nint main(){ std::cout << \"pending\\n\"; }\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\n#include <vector>\nstruct Item{int key;int original;};\nint main(){\n int n;if(!(std::cin>>n)||n<0||n>32){std::cout<<\"invalid\\n\";return 0;}\n std::vector<Item>a;\n for(int i=0;i<n;++i){int key;if(!(std::cin>>key)||key< -9999||key>9999){std::cout<<\"invalid\\n\";return 0;}a.push_back({key,i});}\n std::cin >> std::ws; if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n for(std::size_t i=1;i<a.size();++i){Item saved=a[i];std::size_t j=i;\n  while(j>0&&saved.key<a[j-1].key){a[j]=a[j-1];--j;}a[j]=saved;\n }\n for(std::size_t i=0;i<a.size();++i){if(i)std::cout<<' ';std::cout<<a[i].key<<':'<<a[i].original;}\n std::cout<<'\\n';\n}",
+    "cases": [
+      {
+        "stdin": "0",
+        "stdout": "\n"
+      },
+      {
+        "stdin": "1 7",
+        "stdout": "7:0\n"
+      },
+      {
+        "stdin": "4 3 1 3 0",
+        "stdout": "0:3 1:1 3:0 3:2\n"
+      },
+      {
+        "stdin": "3 -2 -2 1",
+        "stdout": "-2:0 -2:1 1:2\n"
+      },
+      {
+        "stdin": "4 4 3 2 1",
+        "stdout": "1:3 2:2 3:1 4:0\n"
+      },
+      {
+        "stdin": "4 1 2 3 4",
+        "stdout": "1:0 2:1 3:2 4:3\n"
+      },
+      {
+        "stdin": "4 5 5 5 5",
+        "stdout": "5:0 5:1 5:2 5:3\n"
+      },
+      {
+        "stdin": "3 9999 -9999 0",
+        "stdout": "-9999:1 0:2 9999:0\n"
+      },
+      {
+        "stdin": "32 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0",
+        "stdout": "0:31 1:30 2:29 3:28 4:27 5:26 6:25 7:24 8:23 9:22 10:21 11:20 12:19 13:18 14:17 15:16 16:15 17:14 18:13 19:12 20:11 21:10 22:9 23:8 24:7 25:6 26:5 27:4 28:3 29:2 30:1 31:0\n"
+      },
+      {
+        "stdin": "-1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "33",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "2 1",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 10000",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "2 1 x",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1 0 tail",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Restate the input domain, format, bounds and rejection policy.",
+      "Trace insertion on 2:a 1:b 2:c 1:d.",
+      "First implement complete input validation without partial results.",
+      "Complete the stable insertion lab.",
+      "Add comparison and shift counters.",
+      "Run all reference cases; for files check existence and content too.",
+      "Save the source, observed-results table and invariant explanation; add an independent case."
+    ],
+    "rubric": [
+      "The key:index output preserves duplicates and all indices.",
+      "Obtain 1:b 1:d 2:a 2:c.",
+      "Provide separate tables for sorted, reverse and equal input.",
+      "Prove its boundary and test already sorted input.",
+      "Preserve sources, inputs, actual outputs and rejection explanations."
+    ],
+    "artifact": "A personal project with source and a verification table.",
+    "verification": "manual-output-comparison"
+  },
+  "visualization": {
+    "kind": "journey",
+    "title": "Sorting: contracts, stability and invariants",
+    "description": "A textual step model of the concepts, not C++ execution or a performance measurement.",
+    "steps": [
+      {
+        "title": "[3,1,2]",
+        "description": "Before the first insertion, prefix [3] is already ordered."
+      },
+      {
+        "title": "saved = 1",
+        "description": "Save 1, shift the strictly greater 3 right, then insert 1: [1,3,2]."
+      },
+      {
+        "title": "saved = 2",
+        "description": "Prefix [1,3] is ordered. Save 2 and compare it to the rightmost prefix value 3."
+      },
+      {
+        "title": "[1,2,3]",
+        "description": "Shift 3, stop at 1 and place 2 into the available position."
+      },
+      {
+        "title": "Equal keys",
+        "description": "For records 2:a,1:b,2:c, an equal key is not shifted: result 1:b,2:a,2:c preserves a before c."
+      }
+    ]
+  },
+  "assessment": [
+    {
+      "question": "Stable insertion shifts…",
+      "answers": [
+        "Only strictly greater keys",
+        "All equal keys",
+        "Arbitrary items"
+      ],
+      "correctIndex": 0,
+      "explanation": "Equality must not reverse the original order."
+    },
+    {
+      "question": "The invariant before iteration i?",
+      "answers": [
+        "The whole array is sorted",
+        "Prefix [0,i) is sorted and contains the original records",
+        "The suffix is empty"
+      ],
+      "correctIndex": 1,
+      "explanation": "Insertion extends the prefix by one item."
+    },
+    {
+      "question": "Ordinary selection…",
+      "answers": [
+        "Is always stable",
+        "Is always linear",
+        "Can break stability by a distant swap"
+      ],
+      "correctIndex": 2,
+      "explanation": "Equivalent keys can jump past each other."
+    },
+    {
+      "question": "Best-case insertion with early search termination?",
+      "answers": [
+        "Linear comparisons",
+        "Necessarily quadratic",
+        "Zero checks for every n"
+      ],
+      "correctIndex": 0,
+      "explanation": "On sorted input each next item stays in place immediately."
+    },
+    {
+      "question": "Checking is_sorted alone misses…",
+      "answers": [
+        "Every inversion",
+        "Losing or duplicating a value",
+        "Every order error"
+      ],
+      "correctIndex": 1,
+      "explanation": "Also check permutation and required stability."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "What should follow a failed cin read?",
+      "answers": [
+        "Use the unread value",
+        "Handle failure before computation",
+        "Increase the index"
+      ],
+      "correctIndex": 1,
+      "explanation": "Read validation precedes data use."
+    },
+    {
+      "question": "Who owns the elements of a vector?",
+      "answers": [
+        "The vector itself",
+        "Any span referring to it",
+        "The end iterator"
+      ],
+      "correctIndex": 0,
+      "explanation": "A view does not extend its owner’s lifetime."
+    },
+    {
+      "question": "How should an application and test driver be built?",
+      "answers": [
+        "Link both main functions together",
+        "Include all .cpp files through a header",
+        "Build separately with the shared domain implementation"
+      ],
+      "correctIndex": 2,
+      "explanation": "Each executable has one entry point."
+    }
+  ],
+  "reflection": [
+    "Construct a selection stability counterexample.",
+    "Implement bubble with early stopping.",
+    "Choose sorting for 20 nearly ordered log rows."
+  ],
+  "bridge": "Next: Iterators, STL algorithms and lambdas. Save the lab and independent tests.",
+  "legacyQuiz": {
+    "question": "What does bubble sort do at an inner step?",
+    "answers": [
+      "Compare adjacent elements",
+      "Always find the middle",
+      "Create a new file"
+    ],
+    "correctIndex": 0
+  },
+  "locale": "en"
+}

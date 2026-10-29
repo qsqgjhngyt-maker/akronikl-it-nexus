@@ -1,0 +1,447 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.visual-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "runtimeTarget": "wasm-cpp",
+  "lessonId": "cpp.multifile-event-application",
+  "locale": "en",
+  "sessions": 5,
+  "learningOrder": 10,
+  "prerequisiteIds": [
+    "cpp.event-testing-replay",
+    "cpp.multifile-build",
+    "cpp.design-testability-refactoring"
+  ],
+  "sourceRefs": [
+    "CPP20-TU",
+    "CPP20-ODR",
+    "CPP20-VECTOR"
+  ],
+  "title": "A multi-file event-driven application",
+  "lead": "Assemble a planner core from an interface, implementation, adapter and separate test driver.",
+  "why": "include/model.hpp declares Board, src/model.cpp implements its rules and main.cpp translates input into commands and output. Both cpp files need the header, while ordinary function definitions belong in the implementation. pragma once prevents repeated header inclusion within one translation unit; it does not repair repeated definitions across multiple translation units.",
+  "objectives": [
+    "Name the responsibilities of the three files.",
+    "Explain repeated complete commands.",
+    "Build the laboratory from two translation units.",
+    "Create a separate test driver.",
+    "Replace vector<bool> with vector<Task> without changing results."
+  ],
+  "prerequisites": [
+    "Modules 1–5: functions, STL, ownership, testing and multi-file builds.",
+    "Study the linked prerequisite topics below before this lesson."
+  ],
+  "concepts": [
+    {
+      "term": "Translation unit",
+      "definition": "A cpp source after preprocessing its includes."
+    },
+    {
+      "term": "ODR",
+      "definition": "Rules governing permitted definitions of program entities."
+    },
+    {
+      "term": "Linking",
+      "definition": "Combining compiled units and resolving definitions."
+    },
+    {
+      "term": "Adapter",
+      "definition": "Translation from an external protocol into a domain contract."
+    },
+    {
+      "term": "Stable ID",
+      "definition": "An entity identity independent of current list position."
+    },
+    {
+      "term": "Build inputs",
+      "definition": "The explicit sources, headers and compilation settings."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition preserved at the boundaries of permitted model operations."
+    },
+    {
+      "term": "Observable behaviour",
+      "definition": "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Files follow decision boundaries",
+      "paragraphs": [
+        "include/model.hpp declares Board, src/model.cpp implements its rules and main.cpp translates input into commands and output. Both cpp files need the header, while ordinary function definitions belong in the implementation. pragma once prevents repeated header inclusion within one translation unit; it does not repair repeated definitions across multiple translation units.",
+        "A zero command adds an unfinished task and a positive number completes an existing task. Here an identifier equals its position plus one because deletion is absent. State that teaching restriction explicitly. TaskFlow uses persistent ids: if deletion were added, treating a moving position as identity could select the wrong task."
+      ]
+    },
+    {
+      "title": "Configuring the Studio build",
+      "paragraphs": [
+        "Create a separate C++ project, add all listed files and set includeRoots to include. The application builds main.cpp and src/model.cpp. A test driver replaces main.cpp rather than adding a second main. A file inside tests does not automatically become a test; build inputs must be known and reproducible.",
+        "Work in Nexus Code Studio using a saved project copy. Verify that editing src/model.cpp changes the result instead of accidentally running an old single-file program. Removing Board::apply should produce a linker error; perform this diagnostic experiment in a copy, then restore the source and verify a successful run."
+      ]
+    },
+    {
+      "title": "Repeatable operations and limits",
+      "paragraphs": [
+        "Board holds at most eight tasks and rejects a ninth addition. Repeating complete for an already completed task succeeds and leaves it completed. done is derived from the model rather than counted from successful commands; otherwise repeatedly completing one task could incorrectly make the completed count exceed the total.",
+        "The example uses vector<bool> only for flags; its elements have a special proxy type. We neither obtain bool& nor take an element address. If additional fields are needed, use vector<Task> while preserving the public contract. This storage refactoring should retain the same behavioural test results."
+      ]
+    },
+    {
+      "title": "From a model project to a graphical project",
+      "paragraphs": [
+        "Retain a README describing commands and limits, sources and a verification table. Separately explain how a GUI would create a command from user interaction while keeping Board independent of Qt. Do not put QApplication or QFile into model.hpp for convenience: doing so makes model tests depend on a graphical SDK and weakens portability.",
+        "The next lessons use a real TaskFlow application in Project Studio. It extends the teaching Board with titles, persistent ids, NXTF1 data and file artifacts. What transfers is the architectural principle and tested contract, rather than a mechanical renaming of symbols. Independent work must add a requirement and test, not merely rename a finished example."
+      ]
+    },
+    {
+      "title": "Laboratory contract: input to observation",
+      "paragraphs": [
+        "Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid.",
+        "Trace the first reference scenario before running. Exact stdin: \"4 0 0 1 1\". Expected stdout: \"tasks 2 done 1 rejected 0\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+      ]
+    },
+    {
+      "title": "Reading a working example",
+      "paragraphs": [
+        "Command stores a delta. update receives its data explicitly. Three plus four yields seven without a global dependency. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+        "The first complete sets true. The second leaves true. Counting state must not count two completed tasks. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+      ]
+    },
+    {
+      "title": "Independent checking and transfer",
+      "paragraphs": [
+        "Replace vector<bool> with vector<Task> without changing results. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
+        "Add deletion with stable ids and an independent test. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Independently complete the final assessment control-change task and explain which files, tests and observations it affects. An additional peer or teacher requirement is optional review."
+      ]
+    },
+    {
+      "title": "Checking a boundary rejection",
+      "paragraphs": [
+        "Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid. The last reference case distinguishes a permitted command from a malformed protocol. Identify where rejection starts and which fields must remain unchanged.",
+        "Analyze this reference case: {\"stdin\":\"0 x\",\"stdout\":\"invalid\\n\"} Then change one boundary and state the new expectation before running. Compare the correct solution with a safe mutation in a project copy; the test must detect the behavioural change rather than merely report a successful build."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "interface",
+      "code": "#include <iostream>\nstruct Command { int amount; };\nint update(int state, Command command) { return state + command.amount; }\nint main() { std::cout << update(3, Command{4}) << '\\n'; }\n",
+      "stdin": "",
+      "expectedStdout": "7\n",
+      "title": "Guided model",
+      "purpose": "Assemble a planner core from an interface, implementation, adapter and separate test driver.",
+      "steps": [
+        "Command stores a delta.",
+        "update receives its data explicitly.",
+        "Three plus four yields seven without a global dependency."
+      ]
+    },
+    {
+      "id": "idempotent",
+      "code": "#include <iostream>\nstruct Task { bool done = false; void complete() { done = true; } };\nint main() { Task task; task.complete(); task.complete(); std::cout << \"done \" << task.done << '\\n'; }\n",
+      "stdin": "",
+      "expectedStdout": "done 1\n",
+      "title": "Boundary and extension",
+      "purpose": "Assemble a planner core from an interface, implementation, adapter and separate test driver.",
+      "steps": [
+        "The first complete sets true.",
+        "The second leaves true.",
+        "Counting state must not count two completed tasks."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Create a separate test driver.",
+      "action": "Create a separate test driver.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid. Explain the selected contract and supply an independent example."
+    },
+    {
+      "title": "Replace vector<bool> with vector<Task> without changing results.",
+      "action": "Replace vector<bool> with vector<Task> without changing results.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Replace vector<bool> with vector<Task> without changing results. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "State changed after rejection.",
+      "cause": "Mutation happened before validation or violated the invariant.",
+      "fix": "Identify the laboratory commit point and check it with a separate rejection trace."
+    },
+    {
+      "symptom": "An old revision or wrong target is running.",
+      "cause": "Build inputs are wrong or the changed project was not rebuilt.",
+      "fix": "Check entryFile, includeRoots and translationUnits and run the saved copy."
+    },
+    {
+      "symptom": "One successful example is treated as complete verification.",
+      "cause": "Rejected, empty and independent cases have not been checked.",
+      "fix": "Add deletion with stable ids and an independent test."
+    }
+  ],
+  "practice": [
+    {
+      "task": "Name the responsibilities of the three files.",
+      "criteria": "Assign interface, implementation and adapter roles to model.hpp, model.cpp and main.cpp; identify header inclusions and single definition locations.",
+      "level": "basic",
+      "hint": "A declaration permits calling a function from another TU; its definition must participate in linking."
+    },
+    {
+      "task": "Explain repeated complete commands.",
+      "criteria": "Repeated complete of an existing id succeeds without increasing done twice; a test distinguishes completed-task count from successful-command count.",
+      "level": "basic",
+      "hint": "Consider 0,0,1,1: how many distinct tasks are done and how many complete commands succeeded?"
+    },
+    {
+      "task": "Build the laboratory from two translation units.",
+      "criteria": "The project builds main.cpp and src/model.cpp with includeRoots include; removing a definition yields a linker error and restoration reproduces reference results.",
+      "level": "applied",
+      "hint": "Adding a VFS file is insufficient: inspect which TUs reach the compiler."
+    },
+    {
+      "task": "Create a separate test driver.",
+      "criteria": "The driver has a separate main and links the same model.cpp; test addition, repeated complete, unknown ids and capacity 8 without linking two mains.",
+      "level": "applied",
+      "hint": "Replace application main with test main while sharing model sources."
+    },
+    {
+      "task": "Replace vector<bool> with vector<Task> without changing results.",
+      "criteria": "vector<Task> preserves the public contract and all old results; explain the vector<bool> proxy difference and check done after a repeated command.",
+      "level": "transfer",
+      "hint": "Do not couple Board's interface to its container; tests should observe behaviour."
+    },
+    {
+      "task": "Add deletion with stable ids and an independent test.",
+      "criteria": "Deletion neither renumbers nor reuses ids; an add/delete/add/complete scenario distinguishes a stable id from the current position.",
+      "level": "transfer",
+      "hint": "Keep next-id separate from vector indices and define the result of referencing a deleted id."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: A multi-file event-driven application",
+    "challenge": "Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid.",
+    "target": "wasm-cpp",
+    "starterCode": "#include \"model.hpp\"\n#include <iostream>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Board board; int rejected = 0;\n  for (int command : commands) if (!board.apply(command)) ++rejected;\n  std::cout << \"tasks \" << board.count() << \" done \" << board.done() << \" rejected \" << rejected << '\\n';\n}\n",
+    "referenceCode": "#include \"model.hpp\"\n#include <iostream>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Board board; int rejected = 0;\n  for (int command : commands) if (!board.apply(command)) ++rejected;\n  std::cout << \"tasks \" << board.count() << \" done \" << board.done() << \" rejected \" << rejected << '\\n';\n}\n",
+    "starterFiles": {
+      "include/model.hpp": "#pragma once\n#include <vector>\nclass Board {\n  std::vector<bool> done_;\npublic:\n  bool apply(int command);\n  int count() const;\n  int done() const;\n};\n",
+      "src/model.cpp": "#include \"model.hpp\"\n#include <algorithm>\nbool Board::apply(int command) {\n  /* TODO: bounded add and idempotent completion. */ return false;\n}\nint Board::count() const { return int(done_.size()); }\nint Board::done() const { return int(std::count(done_.begin(), done_.end(), true)); }\n"
+    },
+    "referenceFiles": {
+      "include/model.hpp": "#pragma once\n#include <vector>\nclass Board {\n  std::vector<bool> done_;\npublic:\n  bool apply(int command);\n  int count() const;\n  int done() const;\n};\n",
+      "src/model.cpp": "#include \"model.hpp\"\n#include <algorithm>\nbool Board::apply(int command) {\n  if (command == 0) { if (done_.size() == 8) return false; done_.push_back(false); return true; }\n  if (command < 1 || command > int(done_.size())) return false;\n  done_[command - 1] = true; return true;\n}\nint Board::count() const { return int(done_.size()); }\nint Board::done() const { return int(std::count(done_.begin(), done_.end(), true)); }\n"
+    },
+    "metadata": {
+      "includeRoots": [
+        "include"
+      ],
+      "translationUnits": [
+        "main.cpp",
+        "src/model.cpp"
+      ]
+    },
+    "starterExpectedStdout": "tasks 0 done 0 rejected 4\n",
+    "cases": [
+      {
+        "stdin": "4 0 0 1 1",
+        "stdout": "tasks 2 done 1 rejected 0\n"
+      },
+      {
+        "stdin": "0",
+        "stdout": "tasks 0 done 0 rejected 0\n"
+      },
+      {
+        "stdin": "1 1",
+        "stdout": "tasks 0 done 0 rejected 1\n"
+      },
+      {
+        "stdin": "3 0 1 2",
+        "stdout": "tasks 1 done 1 rejected 1\n"
+      },
+      {
+        "stdin": "9 0 0 0 0 0 0 0 0 0",
+        "stdout": "tasks 8 done 0 rejected 1\n"
+      },
+      {
+        "stdin": "1 -1",
+        "stdout": "tasks 0 done 0 rejected 1\n"
+      },
+      {
+        "stdin": "2 0",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 x",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Preserve your work and create a separate project for experiments.",
+      "Open Task and Code Studio and copy the starter and listed files.",
+      "Build the laboratory from two translation units.",
+      "Before running, record the expected transitions and outcome of every case.",
+      "Execute every reference case and retain actual observations.",
+      "Create a separate test driver.",
+      "Add an independent case and explain its boundary.",
+      "Save sources, the protocol and an explanation of limitations."
+    ],
+    "rubric": [
+      "The full input and output contract is satisfied.",
+      "Invariants and lifetimes are explained; rejection preserves the model.",
+      "Ordinary, empty, boundary and failure scenarios are covered.",
+      "Create a separate test driver.",
+      "An independent extension and test are supplied, rather than only a reference copy.",
+      "Sources, actual observations and limits of conclusions are retained."
+    ],
+    "artifact": "A personal project and verification protocol using synthetic data.",
+    "verification": "manual-output-comparison",
+    "catalogGoal": "Assemble a planner core from an interface, implementation, adapter and separate test driver.",
+    "catalogProof": "A personal project and verification protocol using synthetic data."
+  },
+  "assessment": [
+    {
+      "question": "Commands 0,0,1,1 add two tasks and complete id 1 twice. What is the result?",
+      "answers": [
+        "tasks 2 done 2 rejected 0.",
+        "tasks 2 done 1 rejected 1.",
+        "tasks 2 done 1 rejected 0."
+      ],
+      "correctIndex": 2,
+      "explanation": "Repeated complete succeeds idempotently. done counts distinct completed tasks rather than successful complete calls."
+    },
+    {
+      "question": "model.hpp is included by two TUs and defines an ordinary non-inline function. Does pragma once fix possible multiple definitions at link time?",
+      "answers": [
+        "Yes: the linker automatically chooses the newest definition.",
+        "No: pragma once limits inclusion within one TU.",
+        "Yes: the header is processed once for the entire program."
+      ],
+      "correctIndex": 1,
+      "explanation": "Once-per-TU inclusion does not remove processing in another TU. An ordinary definition belongs in the implementation."
+    },
+    {
+      "question": "main.cpp sees Board::apply declaration, but model.cpp is absent from build inputs. Where is failure expected?",
+      "answers": [
+        "At link time due to the missing definition.",
+        "When compiling the call even though a correct declaration is visible in the header.",
+        "There is no error: a header declaration automatically supplies an implementation."
+      ],
+      "correctIndex": 0,
+      "explanation": "The declaration permits compilation of a call, but the program still needs its definition. A VFS file is not automatically a build input."
+    },
+    {
+      "question": "Why can a vector position not simply remain a persistent id after deletion is added?",
+      "answers": [
+        "Later element positions may shift.",
+        "Every vector automatically sorts after erase.",
+        "After every command an id must equal the current task count."
+      ],
+      "correctIndex": 0,
+      "explanation": "Identity must survive representation and position changes. Deletion needs an explicit stable id and a separate issuance policy."
+    },
+    {
+      "question": "Capacity 8 is reached and another add arrives. What should be checked?",
+      "answers": [
+        "tasks remains 8, rejected increases by 1 and old tasks survive.",
+        "tasks becomes 9 because vector can grow.",
+        "The first task is silently removed for the new one."
+      ],
+      "correctIndex": 0,
+      "explanation": "Domain capacity differs from the container ability to allocate memory. Rejection must not alter existing tasks."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "What is needed for a repeatable comparison of two model runs?",
+      "answers": [
+        "The same input and initial state.",
+        "Only an identical project name.",
+        "Shared mutable state already changed by the first run."
+      ],
+      "correctIndex": 0,
+      "explanation": "Replay starts from a specified pre-state. A project name does not define computation state."
+    },
+    {
+      "question": "The application and test driver each define main. How should they be built?",
+      "answers": [
+        "Two separate builds sharing model sources.",
+        "One build with both mains in any file order.",
+        "Exclude the model from both builds."
+      ],
+      "correctIndex": 0,
+      "explanation": "Each program has its own entry point. Shared model sources link with the selected main rather than being duplicated."
+    },
+    {
+      "question": "Which dependency should be removed from a reusable model?",
+      "answers": [
+        "Domain-state structure.",
+        "Invariant validation.",
+        "Reading cin and creating GUI widgets."
+      ],
+      "correctIndex": 2,
+      "explanation": "Input devices and presentation belong to adapters. Domain rules and invariants remain in the model."
+    }
+  ],
+  "reflection": [
+    "Explain repeated complete commands.",
+    "Which check distinguishes a superficially similar incorrect implementation?",
+    "Add deletion with stable ids and an independent test."
+  ],
+  "bridge": "Next: A real Qt graphical adapter. Preserve your project and experiment results.",
+  "visualization": {
+    "kind": "journey",
+    "title": "A multi-file event-driven application",
+    "description": "A stepwise conceptual model; actual verification runs in the stated Studio target.",
+    "steps": [
+      {
+        "title": "Files follow decision boundaries",
+        "description": "include/model.hpp declares Board, src/model.cpp implements its rules and main.cpp translates input into commands and output. Both cpp files need the header, while ordinary function definitions belong in the implementation. pragma once prevents repeated header inclusion within one translation unit; it does not repair repeated definitions across multiple translation units."
+      },
+      {
+        "title": "Configuring the Studio build",
+        "description": "Create a separate C++ project, add all listed files and set includeRoots to include. The application builds main.cpp and src/model.cpp. A test driver replaces main.cpp rather than adding a second main. A file inside tests does not automatically become a test; build inputs must be known and reproducible."
+      },
+      {
+        "title": "Repeatable operations and limits",
+        "description": "Board holds at most eight tasks and rejects a ninth addition. Repeating complete for an already completed task succeeds and leaves it completed. done is derived from the model rather than counted from successful commands; otherwise repeatedly completing one task could incorrectly make the completed count exceed the total."
+      },
+      {
+        "title": "From a model project to a graphical project",
+        "description": "Retain a README describing commands and limits, sources and a verification table. Separately explain how a GUI would create a command from user interaction while keeping Board independent of Qt. Do not put QApplication or QFile into model.hpp for convenience: doing so makes model tests depend on a graphical SDK and weakens portability."
+      },
+      {
+        "title": "Laboratory contract: input to observation",
+        "description": "Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid."
+      }
+    ]
+  },
+  "prerequisiteLessons": [
+    {
+      "lessonId": "cpp.event-testing-replay",
+      "title": "Event testing and reproducible traces"
+    },
+    {
+      "lessonId": "cpp.multifile-build",
+      "title": "Multifile builds: headers, translation units, and ODR"
+    },
+    {
+      "lessonId": "cpp.design-testability-refactoring",
+      "title": "Design, testability and refactoring"
+    }
+  ],
+  "legacyQuiz": {
+    "question": "Which translation units build the application?",
+    "answers": [
+      "main.cpp and src/model.cpp.",
+      "Only model.hpp.",
+      "Every file including two mains."
+    ],
+    "correctIndex": 0,
+    "explanation": "The header is included and model definitions are linked separately."
+  }
+}

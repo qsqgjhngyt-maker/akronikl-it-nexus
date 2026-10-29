@@ -1,0 +1,46 @@
+name: Заставка — обновление страницы без видео
+on:
+  push:
+    branches: [feature/academy-gold-standard-cpp-module-6, main]
+    paths:
+      - '.github/workflows/startup-intro-refresh.yml'
+      - 'core/startup-intro*.js'
+      - 'tests/startup-intro*.mjs'
+      - 'tools/build-ui1a-release.mjs'
+permissions:
+  contents: read
+jobs:
+  refresh:
+    name: 32 обновления, ручной просмотр и сохранность данных
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NEXUS_FRONTEND_DIR: /tmp/nexus-intro-refresh-build
+      NEXUS_BASELINE_DIR: /tmp/nexus-intro-refresh-build
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-intro-refresh-browser/node_modules/playwright/index.mjs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Собрать текущий Nexus и установить закреплённый браузер
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/nexus-intro-refresh-browser --no-save playwright@1.56.1
+          /tmp/nexus-intro-refresh-browser/node_modules/.bin/playwright install --with-deps chromium
+          node tools/build-ui1a-release.mjs --out /tmp/nexus-intro-refresh-build
+          node --test tests/startup-intro-policy.test.mjs tests/startup-intro-build.test.mjs tests/startup-intro-retention.test.mjs
+      - name: Обычные и жёсткие обновления,390/1440px,Home/Академия/урок/вход
+        env:
+          NEXUS_NATIVE_EVIDENCE: /tmp/nexus-intro-refresh-evidence/first
+        run: node tests/startup-intro-launch-browser-check.mjs --refresh-only
+      - name: Повтор в новых профилях после исправления ожидания перехода на Главную
+        env:
+          NEXUS_NATIVE_EVIDENCE: /tmp/nexus-intro-refresh-evidence/repeat
+        run: node tests/startup-intro-launch-browser-check.mjs --refresh-only
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: intro-refresh-${{ github.sha }}
+          path: /tmp/nexus-intro-refresh-evidence
+          retention-days: 30

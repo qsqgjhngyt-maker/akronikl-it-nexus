@@ -1,0 +1,432 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.visual-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "runtimeTarget": "wasm-cpp",
+  "lessonId": "cpp.states-typed-events",
+  "locale": "en",
+  "sessions": 4,
+  "learningOrder": 3,
+  "prerequisiteIds": [
+    "cpp.event-queues-dispatch",
+    "cpp.unions-typedef-enums",
+    "cpp.templates-concepts"
+  ],
+  "sourceRefs": [
+    "CPP20-ENUM",
+    "CPP20-VARIANT"
+  ],
+  "title": "States and typed events",
+  "lead": "Specify a task state machine and express events with std::variant instead of ambiguous flag combinations.",
+  "why": "Two independent flags called running and paused admit four combinations, including contradictory ones. enum class State names the meaningful states: idle, running, paused and done. For each event the machine checks its current state and selects a transition. An absent transition means rejection, not an arbitrary choice of a next state.",
+  "objectives": [
+    "Complete the four-state, four-event transition table.",
+    "Explain decay_t and is_same_v in the visitor.",
+    "Implement apply without reading cin.",
+    "Add an explicit Finish branch and a Reopen event type.",
+    "Design a document-review state machine."
+  ],
+  "prerequisites": [
+    "Modules 1–5: functions, STL, ownership, testing and multi-file builds.",
+    "Study the linked prerequisite topics below before this lesson."
+  ],
+  "concepts": [
+    {
+      "term": "State machine",
+      "definition": "States and transition rules driven by events."
+    },
+    {
+      "term": "Transition",
+      "definition": "A permitted state change for a specified event."
+    },
+    {
+      "term": "Alternative",
+      "definition": "One of the types a variant can hold."
+    },
+    {
+      "term": "Visitor",
+      "definition": "A callable applied to the active alternative."
+    },
+    {
+      "term": "Terminal state",
+      "definition": "A state without permitted outgoing transitions in the contract."
+    },
+    {
+      "term": "if constexpr",
+      "definition": "Conditional branch instantiation controlled by a compile-time constant."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition preserved at the boundaries of permitted model operations."
+    },
+    {
+      "term": "Observable behaviour",
+      "definition": "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+    }
+  ],
+  "sections": [
+    {
+      "title": "State determines permitted actions",
+      "paragraphs": [
+        "Two independent flags called running and paused admit four combinations, including contradictory ones. enum class State names the meaningful states: idle, running, paused and done. For each event the machine checks its current state and selects a transition. An absent transition means rejection, not an arbitrary choice of a next state.",
+        "Draw the transition table: Start takes idle to running, Pause takes running to paused, Resume takes paused to running and Finish takes running to done. All other pairs are rejected. This is the laboratory specification. It supports discussing requirements before implementation: finishing while paused is deliberately forbidden here, although another product could permit it."
+      ]
+    },
+    {
+      "title": "An event type instead of a numeric convention",
+      "paragraphs": [
+        "The empty structures Start, Pause, Resume and Finish represent distinct command types. using Event = std::variant<...> names a value that holds one of the listed alternatives. Unlike an untagged union, a variant tracks its active alternative. A single ordinary Event value cannot simultaneously contain both Start and Finish.",
+        "In the first example, Event event = Start{} constructs the Start alternative. Braces create an empty command object; it carries no user payload yet. A later Rename event could contain std::string title. Event types then associate each action with its required data and eliminate meaningless fields such as a title attached to Finish."
+      ]
+    },
+    {
+      "title": "Reading std::visit",
+      "paragraphs": [
+        "std::visit invokes a visitor with the alternative actually stored. The generic lambda receives const auto& item. decltype(item) describes that parameter’s type; std::decay_t removes reference and const qualifications for comparison. std::is_same_v<T, Start> is a compile-time boolean. It does not compare addresses or inspect the textual spelling of a type name.",
+        "if constexpr selects a suitable branch when the visitor is instantiated for a particular type. Each laboratory branch checks its state-transition pair and returns bool. All visitor paths return bool, making the result of visit consistent. Read the short example first, then trace apply with Pause while idle and explain why it returns false."
+      ]
+    },
+    {
+      "title": "From text to an event",
+      "paragraphs": [
+        "The laboratory driver maps S, P, R and F into typed values. This translation belongs to the input adapter. The machine itself reads no cin and does not know whether a command came from a string, button or test. An unknown character increments rejected without changing state. An empty line is a valid empty trace.",
+        "The line is bounded to one hundred characters; extra non-whitespace data after it violates the protocol. A space inside the line is not ignored and counts as an unknown event. This precision prevents ambiguous tests. In a real GUI, a widget handler constructs the typed event; entering letters is not a substitute for the required graphical exercise."
+      ]
+    },
+    {
+      "title": "Invariants and rejection",
+      "paragraphs": [
+        "A transition is committed only after checking the starting state. Rejection preserves state and increments rejected exactly once. done is terminal in this contract: the task cannot resume from it. A requirement to reopen work calls for a separate event and a revised transition table, rather than silently reusing Start.",
+        "SPF and SPRF differ by one Resume: the former remains paused with a rejection, while the latter reaches done. Paired tests expose overly permissive transitions. After adding a variant alternative, inspect the visitor: a general else can accidentally treat a new type as Finish. A stricter extension names Finish explicitly and statically rejects unhandled alternatives."
+      ]
+    },
+    {
+      "title": "Testing the machine",
+      "paragraphs": [
+        "Visiting every state is insufficient: permitted and forbidden state-event pairs must be checked. Build a 4×4 matrix and mark the expected transitions. Choose short traces reaching each pair from initial idle. Separately test repeated Start, repeated Finish, an unknown character and an empty line. Each result includes both the final state and rejection count.",
+        "For transfer, design a document machine with draft, review and published states and a revision path. Establish domain rules before choosing types and tests. Do not copy the planner’s four states without analysis. The transferable skill is constructing a checkable transition contract used consistently by a text adapter, graphical interface and test driver."
+      ]
+    },
+    {
+      "title": "Laboratory contract: input to observation",
+      "paragraphs": [
+        "Read one line of at most 100 characters. S maps idle→running, P running→paused, R paused→running, F running→done. Other pairs or characters count as one rejection without mutation. An empty line is valid; a missing line or extra data after it produces invalid.",
+        "Trace the first reference scenario before running. Exact stdin: \"SPRF\". Expected stdout: \"done rejected 0\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+      ]
+    },
+    {
+      "title": "Reading a working example",
+      "paragraphs": [
+        "The variant constructs Start. visit receives Start and decay_t normalizes its type. if constexpr selects the start message. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+        "The initial state is idle. finish is permitted only for running. false and true show rejection and retained idle. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "typed-event",
+      "code": "#include <iostream>\n#include <variant>\n#include <type_traits>\nstruct Start {}; struct Finish {};\nusing Event = std::variant<Start, Finish>;\nint main() {\n  Event event = Start{};\n  std::visit([](const auto& item) {\n    using T = std::decay_t<decltype(item)>;\n    if constexpr (std::is_same_v<T, Start>) std::cout << \"start\\n\";\n    else std::cout << \"finish\\n\";\n  }, event);\n}\n",
+      "stdin": "",
+      "expectedStdout": "start\n",
+      "title": "Guided model",
+      "purpose": "Specify a task state machine and express events with std::variant instead of ambiguous flag combinations.",
+      "steps": [
+        "The variant constructs Start.",
+        "visit receives Start and decay_t normalizes its type.",
+        "if constexpr selects the start message."
+      ]
+    },
+    {
+      "id": "transition",
+      "code": "#include <iostream>\nenum class State { idle, running, done };\nbool finish(State& state) {\n  if (state != State::running) return false;\n  state = State::done; return true;\n}\nint main() { State s = State::idle; std::cout << finish(s) << ' ' << (s == State::idle) << '\\n'; }\n",
+      "stdin": "",
+      "expectedStdout": "0 1\n",
+      "title": "Boundary and extension",
+      "purpose": "Specify a task state machine and express events with std::variant instead of ambiguous flag combinations.",
+      "steps": [
+        "The initial state is idle.",
+        "finish is permitted only for running.",
+        "false and true show rejection and retained idle."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Add an explicit Finish branch and a Reopen event type.",
+      "action": "Add an explicit Finish branch and a Reopen event type.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Read one line of at most 100 characters. S maps idle→running, P running→paused, R paused→running, F running→done. Other pairs or characters count as one rejection without mutation. An empty line is valid; a missing line or extra data after it produces invalid. Explain the selected contract and supply an independent example."
+    },
+    {
+      "title": "Design a document-review state machine.",
+      "action": "Design a document-review state machine.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Design a document-review state machine. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "State changed after rejection.",
+      "cause": "Mutation happened before validation or violated the invariant.",
+      "fix": "Identify the laboratory commit point and check it with a separate rejection trace."
+    },
+    {
+      "symptom": "An old revision or wrong target is running.",
+      "cause": "Build inputs are wrong or the changed project was not rebuilt.",
+      "fix": "Check entryFile, includeRoots and translationUnits and run the saved copy."
+    },
+    {
+      "symptom": "One successful example is treated as complete verification.",
+      "cause": "Rejected, empty and independent cases have not been checked.",
+      "fix": "Find shortest traces for each forbidden state-event pair."
+    }
+  ],
+  "practice": [
+    {
+      "task": "Complete the four-state, four-event transition table.",
+      "criteria": "Fill all 16 state/event pairs: four permitted transitions and 12 unchanged-state rejections; identify done as terminal.",
+      "level": "basic",
+      "hint": "Only Resume is allowed from paused; Finish is allowed only from running."
+    },
+    {
+      "task": "Explain decay_t and is_same_v in the visitor.",
+      "criteria": "For const Start&, show decltype(item), its decay_t result and is_same_v; explain the if constexpr choice for each alternative.",
+      "level": "basic",
+      "hint": "decltype retains the reference and const; first obtain the ordinary command type for comparison."
+    },
+    {
+      "task": "Implement apply without reading cin.",
+      "criteria": "apply accepts an Event and state without cin, returns bool and mutates state only according to the table; SPRF and SPF have the specified distinct outcomes.",
+      "level": "applied",
+      "hint": "The adapter maps a character to a type; the visitor checks that type against the current state."
+    },
+    {
+      "task": "Add an explicit Finish branch and a Reopen event type.",
+      "criteria": "Name Finish explicitly and specify Reopen from done; the visitor must not treat the new alternative as Finish, and tests cover acceptance and rejection.",
+      "level": "applied",
+      "hint": "Avoid a catch-all else for the final command; revisit every pair after extending the variant."
+    },
+    {
+      "task": "Design a document-review state machine.",
+      "criteria": "Specify draft/review/approved states, events and rejected pairs; an independent trace checks that approved documents cannot be edited.",
+      "level": "transfer",
+      "hint": "Decide whether returning for revision is allowed before introducing a separate event."
+    },
+    {
+      "task": "Find shortest traces for each forbidden state-event pair.",
+      "criteria": "For each of 12 forbidden pairs, give a shortest reachable prefix followed by the forbidden event; justify minimality using the transition table.",
+      "level": "transfer",
+      "hint": "Treat the table as a graph: find a shortest path from idle, then append one rejected event."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: States and typed events",
+    "challenge": "Read one line of at most 100 characters. S maps idle→running, P running→paused, R paused→running, F running→done. Other pairs or characters count as one rejection without mutation. An empty line is valid; a missing line or extra data after it produces invalid.",
+    "target": "wasm-cpp",
+    "starterCode": "#include <iostream>\n#include <string>\n#include <variant>\n#include <type_traits>\nenum class State { idle, running, paused, done };\nstruct Start {}; struct Pause {}; struct Resume {}; struct Finish {};\nusing Event = std::variant<Start, Pause, Resume, Finish>;\nbool apply(State& state, const Event& event) {\n  /* TODO: visit each event and apply the transition table. */ return false;\n}\nint main() {\n  std::string trace;\n  if (!std::getline(std::cin, trace) || trace.size() > 100) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  State state = State::idle; int rejected = 0;\n  for (char c : trace) {\n    bool ok = false;\n    if (c == 'S') ok = apply(state, Start{});\n    else if (c == 'P') ok = apply(state, Pause{});\n    else if (c == 'R') ok = apply(state, Resume{});\n    else if (c == 'F') ok = apply(state, Finish{});\n    if (!ok) ++rejected;\n  }\n  const char* names[] = {\"idle\", \"running\", \"paused\", \"done\"};\n  std::cout << names[static_cast<int>(state)] << \" rejected \" << rejected << '\\n';\n}\n",
+    "referenceCode": "#include <iostream>\n#include <string>\n#include <variant>\n#include <type_traits>\nenum class State { idle, running, paused, done };\nstruct Start {}; struct Pause {}; struct Resume {}; struct Finish {};\nusing Event = std::variant<Start, Pause, Resume, Finish>;\nbool apply(State& state, const Event& event) {\n  return std::visit([&](const auto& item) {\n    using T = std::decay_t<decltype(item)>;\n    if constexpr (std::is_same_v<T, Start>) { if (state == State::idle) { state = State::running; return true; } }\n    else if constexpr (std::is_same_v<T, Pause>) { if (state == State::running) { state = State::paused; return true; } }\n    else if constexpr (std::is_same_v<T, Resume>) { if (state == State::paused) { state = State::running; return true; } }\n    else { if (state == State::running) { state = State::done; return true; } }\n    return false;\n  }, event);\n}\nint main() {\n  std::string trace;\n  if (!std::getline(std::cin, trace) || trace.size() > 100) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  State state = State::idle; int rejected = 0;\n  for (char c : trace) {\n    bool ok = false;\n    if (c == 'S') ok = apply(state, Start{});\n    else if (c == 'P') ok = apply(state, Pause{});\n    else if (c == 'R') ok = apply(state, Resume{});\n    else if (c == 'F') ok = apply(state, Finish{});\n    if (!ok) ++rejected;\n  }\n  const char* names[] = {\"idle\", \"running\", \"paused\", \"done\"};\n  std::cout << names[static_cast<int>(state)] << \" rejected \" << rejected << '\\n';\n}\n",
+    "starterFiles": {},
+    "referenceFiles": {},
+    "metadata": {},
+    "starterExpectedStdout": "idle rejected 4\n",
+    "cases": [
+      {
+        "stdin": "SPRF",
+        "stdout": "done rejected 0\n"
+      },
+      {
+        "stdin": "\n",
+        "stdout": "idle rejected 0\n"
+      },
+      {
+        "stdin": "F",
+        "stdout": "idle rejected 1\n"
+      },
+      {
+        "stdin": "SS",
+        "stdout": "running rejected 1\n"
+      },
+      {
+        "stdin": "SPF",
+        "stdout": "paused rejected 1\n"
+      },
+      {
+        "stdin": "SFF",
+        "stdout": "done rejected 1\n"
+      },
+      {
+        "stdin": "X",
+        "stdout": "idle rejected 1\n"
+      },
+      {
+        "stdin": "S\nX",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Preserve your work and create a separate project for experiments.",
+      "Open Task and Code Studio and copy the starter and listed files.",
+      "Implement apply without reading cin.",
+      "Before running, record the expected transitions and outcome of every case.",
+      "Execute every reference case and retain actual observations.",
+      "Add an explicit Finish branch and a Reopen event type.",
+      "Add an independent case and explain its boundary.",
+      "Save sources, the protocol and an explanation of limitations."
+    ],
+    "rubric": [
+      "The full input and output contract is satisfied.",
+      "Invariants and lifetimes are explained; rejection preserves the model.",
+      "Ordinary, empty, boundary and failure scenarios are covered.",
+      "Add an explicit Finish branch and a Reopen event type.",
+      "An independent extension and test are supplied, rather than only a reference copy.",
+      "Sources, actual observations and limits of conclusions are retained."
+    ],
+    "artifact": "A personal project and verification protocol using synthetic data.",
+    "verification": "manual-output-comparison",
+    "catalogGoal": "Specify a task state machine and express events with std::variant instead of ambiguous flag combinations.",
+    "catalogProof": "A personal project and verification protocol using synthetic data."
+  },
+  "assessment": [
+    {
+      "question": "What state and rejection count result from SPF starting at idle?",
+      "answers": [
+        "running and 1.",
+        "paused and 1.",
+        "done and 0."
+      ],
+      "correctIndex": 1,
+      "explanation": "S enters running, P enters paused and F from paused is forbidden. Rejection preserves paused."
+    },
+    {
+      "question": "Why does the visitor apply decay_t to decltype(item) for const auto& item?",
+      "answers": [
+        "To compare the ordinary command type without const/reference.",
+        "To obtain the numeric code of an alternative.",
+        "To copy the active object to the heap."
+      ],
+      "correctIndex": 0,
+      "explanation": "is_same_v compares types. Without removing qualifications, const Start& differs from Start."
+    },
+    {
+      "question": "Reopen is added, but the visitor ends with a catch-all else previously meaning Finish. What is the risk?",
+      "answers": [
+        "Reopen may incorrectly follow the Finish branch.",
+        "variant prohibits a fifth alternative.",
+        "std::visit automatically supplies the correct transition."
+      ],
+      "correctIndex": 0,
+      "explanation": "A catch-all else cannot distinguish new types. Explicit alternatives and completeness checking make extension controlled."
+    },
+    {
+      "question": "A space occurs inside the otherwise valid event line. What does the laboratory contract do?",
+      "answers": [
+        "Finishes the state as Finish.",
+        "Counts the unknown character as one rejection without a state change.",
+        "Ignores all whitespace within the line."
+      ],
+      "correctIndex": 1,
+      "explanation": "The protocol reads the whole line rather than skipping internal characters as formatted cin does. Space is not S/P/R/F."
+    },
+    {
+      "question": "Which test distinguishes terminal done from an incorrectly accepted repeated Start?",
+      "answers": [
+        "SPR, checking only final running.",
+        "An empty line, checking idle.",
+        "SFS, checking the state and one rejection."
+      ],
+      "correctIndex": 2,
+      "explanation": "SF reaches done and the following S must be rejected. The other traces never reach done and cannot test this prohibition."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "How does FIFO differ from immediate recursive dispatch of a generated command?",
+      "answers": [
+        "Recursion automatically requires a second thread.",
+        "The generated command waits behind already queued events.",
+        "FIFO always sorts commands by code."
+      ],
+      "correctIndex": 1,
+      "explanation": "Ordering can differ on one thread. Recursion is not threading and FIFO does not sort."
+    },
+    {
+      "question": "How is running from enum class State referred to?",
+      "answers": [
+        "State::running.",
+        "Through any integer without an explicit conversion.",
+        "Through an object name running.State."
+      ],
+      "correctIndex": 0,
+      "explanation": "A scoped enum uses the type scope and does not implicitly become int like an ordinary numeric convention."
+    },
+    {
+      "question": "What determines an auto parameter type in a generic lambda invocation?",
+      "answers": [
+        "The argument type under template deduction rules.",
+        "The current numeric argument value, even with an unchanged static type.",
+        "The auto keyword means int for every invocation."
+      ],
+      "correctIndex": 0,
+      "explanation": "A generic lambda provides a call template. Its type is determined on instantiation rather than from a runtime log."
+    }
+  ],
+  "reflection": [
+    "Explain decay_t and is_same_v in the visitor.",
+    "Which check distinguishes a superficially similar incorrect implementation?",
+    "Find shortest traces for each forbidden state-event pair."
+  ],
+  "bridge": "Next: Model, view and presenter. Preserve your project and experiment results.",
+  "visualization": {
+    "kind": "journey",
+    "title": "States and typed events",
+    "description": "A stepwise conceptual model; actual verification runs in the stated Studio target.",
+    "steps": [
+      {
+        "title": "State determines permitted actions",
+        "description": "Two independent flags called running and paused admit four combinations, including contradictory ones. enum class State names the meaningful states: idle, running, paused and done. For each event the machine checks its current state and selects a transition. An absent transition means rejection, not an arbitrary choice of a next state."
+      },
+      {
+        "title": "An event type instead of a numeric convention",
+        "description": "The empty structures Start, Pause, Resume and Finish represent distinct command types. using Event = std::variant<...> names a value that holds one of the listed alternatives. Unlike an untagged union, a variant tracks its active alternative. A single ordinary Event value cannot simultaneously contain both Start and Finish."
+      },
+      {
+        "title": "Reading std::visit",
+        "description": "std::visit invokes a visitor with the alternative actually stored. The generic lambda receives const auto& item. decltype(item) describes that parameter’s type; std::decay_t removes reference and const qualifications for comparison. std::is_same_v<T, Start> is a compile-time boolean. It does not compare addresses or inspect the textual spelling of a type name."
+      },
+      {
+        "title": "From text to an event",
+        "description": "The laboratory driver maps S, P, R and F into typed values. This translation belongs to the input adapter. The machine itself reads no cin and does not know whether a command came from a string, button or test. An unknown character increments rejected without changing state. An empty line is a valid empty trace."
+      },
+      {
+        "title": "Invariants and rejection",
+        "description": "A transition is committed only after checking the starting state. Rejection preserves state and increments rejected exactly once. done is terminal in this contract: the task cannot resume from it. A requirement to reopen work calls for a separate event and a revised transition table, rather than silently reusing Start."
+      }
+    ]
+  },
+  "prerequisiteLessons": [
+    {
+      "lessonId": "cpp.event-queues-dispatch",
+      "title": "Event queues and dispatch"
+    },
+    {
+      "lessonId": "cpp.unions-typedef-enums",
+      "title": "Unions, typedef, and Enumerations"
+    },
+    {
+      "lessonId": "cpp.templates-concepts",
+      "title": "Templates and constrained generalization"
+    }
+  ],
+  "legacyQuiz": {
+    "question": "How many alternatives does an ordinary Event hold at once?",
+    "answers": [
+      "One.",
+      "All four.",
+      "Always none."
+    ],
+    "correctIndex": 0,
+    "explanation": "A variant stores an active alternative."
+  }
+}

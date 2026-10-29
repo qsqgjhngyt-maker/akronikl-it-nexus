@@ -94,7 +94,7 @@ function initGalaxy(canvas, { onMotionChange = () => {
   };
   const tick = (now) => {
     frame = 0;
-    if (disposed || document.hidden) return;
+    if (disposed || document.hidden || document.documentElement.dataset.nexusIntroActive === "true") return;
     const delta = last ? Math.min((now - last) / 1e3, 0.06) : 0;
     last = now;
     if (moving) time += delta;
@@ -107,7 +107,7 @@ function initGalaxy(canvas, { onMotionChange = () => {
     if (moving) frame = requestAnimationFrame(tick);
   };
   const requestDraw = () => {
-    if (!frame && !disposed && !document.hidden) frame = requestAnimationFrame(tick);
+    if (!frame && !disposed && !document.hidden && document.documentElement.dataset.nexusIntroActive !== "true") frame = requestAnimationFrame(tick);
   };
   const resize = () => {
     width = innerWidth;
@@ -130,7 +130,7 @@ function initGalaxy(canvas, { onMotionChange = () => {
   };
   const visibility = () => {
     last = 0;
-    if (document.hidden) {
+    if (document.hidden || document.documentElement.dataset.nexusIntroActive === "true") {
       cancelAnimationFrame(frame);
       frame = 0;
     } else requestDraw();
@@ -152,6 +152,7 @@ function initGalaxy(canvas, { onMotionChange = () => {
   addEventListener("pointermove", move, { passive: true });
   document.addEventListener("pointerleave", leave);
   document.addEventListener("visibilitychange", visibility);
+  addEventListener("nexus:intro-statechange", visibility);
   if (reduced?.addEventListener) reduced.addEventListener("change", preference);
   resize();
   onMotionChange(moving);
@@ -162,6 +163,7 @@ function initGalaxy(canvas, { onMotionChange = () => {
     removeEventListener("pointermove", move);
     document.removeEventListener("pointerleave", leave);
     document.removeEventListener("visibilitychange", visibility);
+    removeEventListener("nexus:intro-statechange", visibility);
     reduced?.removeEventListener?.("change", preference);
   } };
 }

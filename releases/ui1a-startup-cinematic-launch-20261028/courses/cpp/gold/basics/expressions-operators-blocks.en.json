@@ -1,0 +1,320 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.cpp-basics",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.expressions-operators-blocks",
+  "sessions": 1,
+  "prerequisiteIds": [
+    "cpp.variables-scope"
+  ],
+  "sourceRefs": [
+    "CPP20-EXPR",
+    "CPP20-MULTIPLICATIVE",
+    "CPP20-ADDITIVE",
+    "CPP20-BLOCK",
+    "CPP-GUIDELINES"
+  ],
+  "title": "Expressions and operators: grouping, values, and clear steps",
+  "lead": "Break a formula into operands, predict the result, and rewrite a dense line as verifiable intermediate calculations.",
+  "why": "Similar-looking formulas can describe different calculations. Precedence determines grouping rather than a universal execution order. The distinction prevents later mistakes involving state changes.",
+  "objectives": [
+    "Identify operands, operator, type, and value in a simple expression.",
+    "Use parentheses and basic multiplicative versus additive precedence.",
+    "Distinguish grouping from operand evaluation order.",
+    "Extract intermediate quantities while preserving result and units."
+  ],
+  "prerequisites": [
+    "Initialized ints, copying, assignment, and nested blocks.",
+    "Arithmetic of small integers. Multiple state changes in one complex expression are unnecessary here."
+  ],
+  "concepts": [
+    {
+      "term": "Expression",
+      "definition": "A combination of operands and operations producing a typed value in our calculations."
+    },
+    {
+      "term": "Operand",
+      "definition": "A value or nested expression to which an operation applies."
+    },
+    {
+      "term": "Precedence",
+      "definition": "A rule for grouping operators when parentheses are absent."
+    },
+    {
+      "term": "Associativity",
+      "definition": "Grouping for operators at the same precedence level, not a general evaluation-order promise."
+    },
+    {
+      "term": "Intermediate quantity",
+      "definition": "A named calculation result that can be observed and checked separately."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Start with value and type",
+      "paragraphs": [
+        "In count * unitPriceCents the names are operands and * multiplies them. When both are int and the result is representable, the expression also has type int. An expression need not mutate its operands: reading two values and producing a result differs from assignment.",
+        "int total = count * unitPriceCents; initializes total from the expression. std::cout << total; observes the value. This separates domain calculation, storage, and formatting. Annotate units: items × cents per item = cents."
+      ]
+    },
+    {
+      "title": "Precedence determines a grouping tree",
+      "paragraphs": [
+        "2 + 3 * 4 groups multiplication inside addition: it corresponds to 2 + (3 * 4), giving 14. (2 + 3) * 4 explicitly selects another calculation and gives 20. Parentheses do not request speed; they specify expression structure.",
+        "At this level + and − group left: 20 - 5 - 3 means (20 - 5) - 3, not 20 - (5 - 3). You need not memorize the entire operator table now. Apply the levels in use and add parentheses that clarify intention. Parentheses cannot rescue a domain formula that was chosen incorrectly."
+      ]
+    },
+    {
+      "title": "Grouping is not chronological order",
+      "paragraphs": [
+        "The tree 2 + (3 * 4) describes value dependencies. It does not establish that the left operand always executes first in arbitrary C++. Our calculations have no changing operands, so stdout does not expose this distinction yet.",
+        "Increment and complex calls come later. Keep one understandable effect in its own statement. We do not run i++ + ++i as a puzzle: this style obscures sequencing rules and can have undefined behavior. Experimenting does not make a dangerous expression valid."
+      ]
+    },
+    {
+      "title": "Intermediate names expose the formula",
+      "paragraphs": [
+        "unitPriceCents * count + shippingCents can be split into goodsCents and totalCents. Goods and shipping can then be checked separately. This does not create a dynamically linked formula: each statement computes its value when executed, as in the variables lesson.",
+        "Keep types and statement dependencies and do not introduce hidden rounding. The demonstrated split preserves the bounded integer calculation. Arbitrary rearrangements of floating-point operations can change rounding; this is not permission for every algebraic rewrite."
+      ]
+    },
+    {
+      "title": "A block groups a stage, not arithmetic",
+      "paragraphs": [
+        "A nested block can limit temporary names. If a result is needed outside, declare and initialize the outer result first, then assign the calculation to it inside. Declaring another result inside hides the outer object rather than updating it.",
+        "Expression parentheses (a + b) and block braces { ... } have different roles. State what is grouped: formula operands or statements and scope. This is more useful than mechanically adding brackets everywhere."
+      ]
+    },
+    {
+      "title": "Checking readability through behavior preservation",
+      "paragraphs": [
+        "Before editing, record the contract and several data sets. After extracting intermediate quantities compare the whole stdout and explain each stage in domain terms. Agreement only at zero price is a weak test that may fail to distinguish formulas.",
+        "The diagram shows one selected grouping. It is not a parser and does not establish arbitrary program evaluation order. The laboratory needs source, checks, and an equivalence explanation rather than merely an attractive tree screenshot."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "grouping",
+      "title": "14 and 20 from similar formulas",
+      "purpose": "Observe different groupings.",
+      "code": "#include <iostream>\n\nint main() {\n    int ordinary = 2 + 3 * 4;\n    int grouped = (2 + 3) * 4;\n    std::cout << ordinary << ' ' << grouped << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "14 20\n",
+      "steps": [
+        "Mark the nested expressions on paper.",
+        "For the ordinary form derive 3 × 4 = 12, then 2 + 12.",
+        "For the parenthesized form derive 5 × 4 = 20."
+      ]
+    },
+    {
+      "id": "named-stages",
+      "title": "Cost in stages",
+      "purpose": "Make the formula inspectable without new language facilities.",
+      "code": "#include <iostream>\n\nint main() {\n    int unitPriceCents{125};\n    int count{4};\n    int shippingCents{50};\n    int goodsCents = unitPriceCents * count;\n    int totalCents = goodsCents + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "total_cents=550\n",
+      "steps": [
+        "125 × 4 = 500 cents for goods.",
+        "500 + 50 = 550 cents total.",
+        "Names and labels use one unit."
+      ]
+    },
+    {
+      "id": "left-grouping",
+      "title": "Operators at one level",
+      "purpose": "Distinguish subtraction groupings.",
+      "code": "#include <iostream>\n\nint main() {\n    std::cout << (20 - 5 - 3) << ' ' << (20 - (5 - 3)) << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "12 18\n",
+      "steps": [
+        "The first chain groups left.",
+        "In the second, 5 − 3 gives 2.",
+        "Explain that parentheses changed calculation rather than output format."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Equivalent explicit parentheses",
+      "action": "Replace 2 + 3 * 4 with 2 + (3 * 4) in the first example.",
+      "prediction": "The result stays 14.",
+      "verification": "Compare with the original and explain the unchanged grouping."
+    },
+    {
+      "title": "A weak test can hide a defect",
+      "action": "Compare (price + shipping) * count and price * count + shipping with count=1, then count=3; use price=120 and shipping=40.",
+      "prediction": "At 1 both give 160; at 3 they give 480 and 400.",
+      "verification": "Choose the test that distinguishes the incorrect shipping formula."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Shipping was multiplied by count",
+      "cause": "Parentheses grouped unit price with one-time shipping.",
+      "fix": "Calculate goods first and add shipping once."
+    },
+    {
+      "symptom": "Assuming * always executes first chronologically",
+      "cause": "Precedence was confused with general evaluation order.",
+      "fix": "Describe the dependency tree and put effects in separate statements."
+    },
+    {
+      "symptom": "The outer result stayed zero",
+      "cause": "A new inner result was declared.",
+      "fix": "Assign the existing outer object instead of hiding it."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "incomplete-expression",
+      "title": "Intentional: missing right operand",
+      "code": "#include <iostream>\n\nint main() {\n    int total = 2 + ;\n    std::cout << total << '\\n';\n}\n",
+      "expectation": "compile-error",
+      "explanation": "+ has no right operand. Restore the expression rather than guessing another type."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Calculate 3 + 2 * 5 and (3 + 2) * 5 before running.",
+      "criteria": "Obtain 13 and 25 with explained grouping.",
+      "hint": "Mark the nested expression first."
+    },
+    {
+      "level": "applied",
+      "task": "Split unitPriceCents * count + shippingCents into two named stages.",
+      "criteria": "Preserve types, units, and result.",
+      "hint": "Names should express meaning rather than a step number."
+    },
+    {
+      "level": "transfer",
+      "task": "Design tests distinguishing one-time shipping from per-item shipping.",
+      "criteria": "Include count>1 with nonzero shipping and an independent calculation.",
+      "hint": "One item cannot distinguish the formulas."
+    }
+  ],
+  "laboratory": {
+    "title": "A readable order formula",
+    "challenge": "Extract goodsCents while preserving total_cents output. State the type and unit of each intermediate result.",
+    "starterCode": "#include <iostream>\n\nint main() {\n    int unitPriceCents{120};\n    int count{3};\n    int shippingCents{40};\n    int totalCents = unitPriceCents * count + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+    "starterExpectedStdout": "total_cents=400\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    int unitPriceCents{120};\n    int count{3};\n    int shippingCents{40};\n    int goodsCents = unitPriceCents * count;\n    int totalCents = goodsCents + shippingCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "total_cents=400\n"
+      }
+    ],
+    "steps": [
+      "Derive 3 × 120 + 40 = 400 by hand.",
+      "Extract goods cost and then total cost.",
+      "Compare before/after for the baseline and two variants.",
+      "Explain the bounded-integer assumptions behind the demonstrated rewrite."
+    ],
+    "rubric": [
+      "The formula represents one-time shipping.",
+      "No unnecessary state changes inside expressions.",
+      "Three cases are recorded with expectations.",
+      "Precedence is distinguished from evaluation order."
+    ],
+    "verificationVariants": [
+      {
+        "id": "one-item",
+        "replace": [
+          {
+            "from": "int count{3};",
+            "to": "int count{1};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "total_cents=160\n"
+      },
+      {
+        "id": "free-shipping",
+        "replace": [
+          {
+            "from": "int shippingCents{40};",
+            "to": "int shippingCents{0};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "total_cents=360\n"
+      }
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What do parentheses specify in (a + b) * c?",
+      "answers": [
+        "Grouping",
+        "Mandatory acceleration",
+        "A new double type"
+      ],
+      "correctIndex": 0,
+      "explanation": "Parentheses define expression structure."
+    },
+    {
+      "question": "What is 18 - 6 - 2?",
+      "answers": [
+        "14",
+        "10",
+        "18"
+      ],
+      "correctIndex": 1,
+      "explanation": "Left grouping gives (18 − 6) − 2 = 10."
+    },
+    {
+      "question": "Does a grouping tree establish every C++ operand evaluation order?",
+      "answers": [
+        "Yes",
+        "No, these are different rules",
+        "Only on a phone"
+      ],
+      "correctIndex": 1,
+      "explanation": "The tree describes value dependencies; sequencing is a separate concern."
+    }
+  ],
+  "reflection": [
+    "Which test would detect shipping multiplied by count?",
+    "When is an intermediate name more useful than additional parentheses?"
+  ],
+  "bridge": "Next examine arithmetic semantics: integer division, remainder, and sufficient range at every intermediate step.",
+  "visualization": {
+    "kind": "toolchain",
+    "title": "Grouping 2 + 3 * 4",
+    "description": "A fixed explanation of dependencies, not a general operand execution-order trace.",
+    "steps": [
+      {
+        "title": "3 * 4",
+        "description": "The nested product has value 12."
+      },
+      {
+        "title": "2 + (...)",
+        "description": "The sum depends on the product value."
+      },
+      {
+        "title": "14",
+        "description": "The original expression has value 14."
+      },
+      {
+        "title": "Contrast",
+        "description": "(2 + 3) * 4 groups differently and yields 20."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Why use parentheses in complex expressions?",
+    "answers": [
+      "They always make a program faster",
+      "They explicitly specify grouping",
+      "They convert int to double"
+    ],
+    "correctIndex": 1
+  }
+}

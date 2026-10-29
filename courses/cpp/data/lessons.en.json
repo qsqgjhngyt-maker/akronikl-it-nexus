@@ -3025,6 +3025,765 @@
       "visualization": null,
       "pdfPages": [],
       "pdfNotes": []
+    },
+    {
+      "id": "cpp.event-queues-dispatch",
+      "legacyIndex": null,
+      "order": 57,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Event queues and dispatch",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 2,
+      "description": "Build a FIFO dispatcher with deferred callbacks instead of recursive dispatch.",
+      "theory": [
+        "Build a FIFO dispatcher with deferred callbacks instead of recursive dispatch."
+      ],
+      "deep": "A handler can generate another action: adding a task may require refreshing a list. Immediately invoking another handler increases stack depth and can expose partially updated state. A queue stores the new event until a later dispatch step. This changes when processing occurs, so ordering must be specified as a contract rather than treated as an implementation detail.",
+      "analogy": "std::queue supplies push, front, pop, empty and size. front accesses the first element; pop removes it and returns nothing. Check empty before accessing front. The dispatcher copies the value into a local variable, removes the queued element and only then calls user code. A reference to the removed element is invalid after pop.",
+      "commonMistake": "State changed after rejection.",
+      "code": "#include <iostream>\n#include <queue>\nint main() {\n  std::queue<int> q; q.push(2); q.push(5);\n  while (!q.empty()) { int event = q.front(); q.pop(); std::cout << event << '\\n'; }\n}\n",
+      "task": "Read n=0…12 followed by n values in 0…9. Fill FIFO before dispatch. Each handler adds its value to total; a three appends a one. Print total and processed. Invalid syntax, range or trailing tokens produce invalid.",
+      "hint": "Retain a checkable result: Read n=0…12 followed by n values in 0…9. Fill FIFO before dispatch. Each handler adds its value to total; a three appends a one. Print total and processed. Invalid syntax, range or trailing tokens produce invalid. Explain the selected contract and supply an independent example.",
+      "solution": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> input(n);\n  for (int& x : input) if (!(std::cin >> x) || x < 0 || x > 9) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  std::queue<int> q;\n  for (int x : input) q.push(x);\n  int total = 0, processed = 0;\n  std::function<void(int)> handler = [&](int x) {\n    total += x;\n    if (x == 3) q.push(1);\n  };\n  while (!q.empty()) {\n    int event = q.front(); q.pop();\n    if (handler) handler(event);\n    ++processed;\n  }\n  std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n",
+      "quiz": {
+        "question": "When is the current event removed?",
+        "answers": [
+          "Before the callback.",
+          "After an arbitrary later event.",
+          "Never."
+        ],
+        "correctIndex": 0,
+        "explanation": "A local copy retains the value after pop."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "FIFO",
+          "The earliest enqueued item is processed first."
+        ],
+        [
+          "Callback",
+          "A callable supplied for execution at a later point."
+        ],
+        [
+          "Capture",
+          "How a lambda obtains access to surrounding values."
+        ],
+        [
+          "Empty handler",
+          "A function wrapper that contains no callable target."
+        ],
+        [
+          "Reentrancy",
+          "Entering an operation before its previous invocation finishes."
+        ],
+        [
+          "Backpressure",
+          "Restricting incoming work when processing capacity is insufficient."
+        ],
+        [
+          "Invariant",
+          "A condition preserved at the boundaries of permitted model operations."
+        ],
+        [
+          "Observable behaviour",
+          "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.states-typed-events",
+      "legacyIndex": null,
+      "order": 58,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "States and typed events",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 3,
+      "description": "Specify a task state machine and express events with std::variant instead of ambiguous flag combinations.",
+      "theory": [
+        "Specify a task state machine and express events with std::variant instead of ambiguous flag combinations."
+      ],
+      "deep": "Two independent flags called running and paused admit four combinations, including contradictory ones. enum class State names the meaningful states: idle, running, paused and done. For each event the machine checks its current state and selects a transition. An absent transition means rejection, not an arbitrary choice of a next state.",
+      "analogy": "The empty structures Start, Pause, Resume and Finish represent distinct command types. using Event = std::variant<...> names a value that holds one of the listed alternatives. Unlike an untagged union, a variant tracks its active alternative. A single ordinary Event value cannot simultaneously contain both Start and Finish.",
+      "commonMistake": "State changed after rejection.",
+      "code": "#include <iostream>\n#include <variant>\n#include <type_traits>\nstruct Start {}; struct Finish {};\nusing Event = std::variant<Start, Finish>;\nint main() {\n  Event event = Start{};\n  std::visit([](const auto& item) {\n    using T = std::decay_t<decltype(item)>;\n    if constexpr (std::is_same_v<T, Start>) std::cout << \"start\\n\";\n    else std::cout << \"finish\\n\";\n  }, event);\n}\n",
+      "task": "Read one line of at most 100 characters. S maps idle→running, P running→paused, R paused→running, F running→done. Other pairs or characters count as one rejection without mutation. An empty line is valid; a missing line or extra data after it produces invalid.",
+      "hint": "Retain a checkable result: Read one line of at most 100 characters. S maps idle→running, P running→paused, R paused→running, F running→done. Other pairs or characters count as one rejection without mutation. An empty line is valid; a missing line or extra data after it produces invalid. Explain the selected contract and supply an independent example.",
+      "solution": "#include <iostream>\n#include <string>\n#include <variant>\n#include <type_traits>\nenum class State { idle, running, paused, done };\nstruct Start {}; struct Pause {}; struct Resume {}; struct Finish {};\nusing Event = std::variant<Start, Pause, Resume, Finish>;\nbool apply(State& state, const Event& event) {\n  return std::visit([&](const auto& item) {\n    using T = std::decay_t<decltype(item)>;\n    if constexpr (std::is_same_v<T, Start>) { if (state == State::idle) { state = State::running; return true; } }\n    else if constexpr (std::is_same_v<T, Pause>) { if (state == State::running) { state = State::paused; return true; } }\n    else if constexpr (std::is_same_v<T, Resume>) { if (state == State::paused) { state = State::running; return true; } }\n    else { if (state == State::running) { state = State::done; return true; } }\n    return false;\n  }, event);\n}\nint main() {\n  std::string trace;\n  if (!std::getline(std::cin, trace) || trace.size() > 100) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  State state = State::idle; int rejected = 0;\n  for (char c : trace) {\n    bool ok = false;\n    if (c == 'S') ok = apply(state, Start{});\n    else if (c == 'P') ok = apply(state, Pause{});\n    else if (c == 'R') ok = apply(state, Resume{});\n    else if (c == 'F') ok = apply(state, Finish{});\n    if (!ok) ++rejected;\n  }\n  const char* names[] = {\"idle\", \"running\", \"paused\", \"done\"};\n  std::cout << names[static_cast<int>(state)] << \" rejected \" << rejected << '\\n';\n}\n",
+      "quiz": {
+        "question": "How many alternatives does an ordinary Event hold at once?",
+        "answers": [
+          "One.",
+          "All four.",
+          "Always none."
+        ],
+        "correctIndex": 0,
+        "explanation": "A variant stores an active alternative."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "State machine",
+          "States and transition rules driven by events."
+        ],
+        [
+          "Transition",
+          "A permitted state change for a specified event."
+        ],
+        [
+          "Alternative",
+          "One of the types a variant can hold."
+        ],
+        [
+          "Visitor",
+          "A callable applied to the active alternative."
+        ],
+        [
+          "Terminal state",
+          "A state without permitted outgoing transitions in the contract."
+        ],
+        [
+          "if constexpr",
+          "Conditional branch instantiation controlled by a compile-time constant."
+        ],
+        [
+          "Invariant",
+          "A condition preserved at the boundaries of permitted model operations."
+        ],
+        [
+          "Observable behaviour",
+          "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.model-view-presenter",
+      "legacyIndex": null,
+      "order": 59,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Model, view and presenter",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 4,
+      "description": "Separate stock rules from input and display, then test a presenter with a fake view.",
+      "theory": [
+        "Separate stock rules from input and display, then test a presenter with a fake view."
+      ],
+      "deep": "Stock owns the quantity and its 0…20 range. A view displays a number. A presenter connects a user command to the model and a view update. This boundary permits replacing buttons with a console or a test recording while preserving the stock rule. Merely adding classes does not establish good architecture; what matters is which decisions each class is allowed to make.",
+      "analogy": "Presenter(Stock&, View&) receives existing collaborators and stores references. It neither owns them nor creates a global stock object. main declares the model and view before the presenter, so they are destroyed after it. This is a concrete lifetime obligation; allowing the presenter to escape its owners’ scope would make those references unsafe.",
+      "commonMistake": "State changed after rejection.",
+      "code": "#include <iostream>\nclass Stock {\n  int quantity_ = 2;\npublic:\n  bool change(int delta) { if (quantity_ + delta < 0 || quantity_ + delta > 20) return false; quantity_ += delta; return true; }\n  int quantity() const { return quantity_; }\n};\nint main() { Stock m; std::cout << m.change(-3) << ' ' << m.quantity() << '\\n'; }\n",
+      "task": "Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected.",
+      "hint": "Retain a checkable result: Stock initially equals two. Read n=0…12 and n integer deltas. Accept a delta in -20…20 only if the resulting stock is in 0…20. Presenter shows actual stock after every command. Syntax failure produces invalid; domain refusal increases rejected. Explain the selected contract and supply an independent example.",
+      "solution": "#include <iostream>\n#include <vector>\nclass Stock {\n  int quantity_ = 2;\npublic:\n  bool change(int delta) {\n    if (delta < -20 || delta > 20 || quantity_ + delta < 0 || quantity_ + delta > 20) return false;\n    quantity_ += delta; return true;\n  }\n  int quantity() const { return quantity_; }\n};\nstruct View { int last = -1; void show(int value) { last = value; } };\nclass Presenter {\n  Stock& model_; View& view_;\npublic:\n  Presenter(Stock& m, View& v) : model_(m), view_(v) { view_.show(model_.quantity()); }\n  bool onChange(int delta) { bool ok = model_.change(delta); view_.show(model_.quantity()); return ok; }\n};\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Stock model; View view; Presenter presenter(model, view); int rejected = 0;\n  for (int x : commands) if (!presenter.onChange(x)) ++rejected;\n  std::cout << \"stock \" << view.last << \" rejected \" << rejected << '\\n';\n}\n",
+      "quiz": {
+        "question": "Who validates the permitted stock range?",
+        "answers": [
+          "Stock.",
+          "QLabel.",
+          "std::cin."
+        ],
+        "correctIndex": 0,
+        "explanation": "The invariant belongs to the domain model."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Model",
+          "The component containing domain data and mutation rules."
+        ],
+        [
+          "View",
+          "The component that presents state to a user."
+        ],
+        [
+          "Presenter",
+          "Connects user intention, the model and presentation."
+        ],
+        [
+          "Test double",
+          "A controlled replacement for a collaborator in a test."
+        ],
+        [
+          "Dependency injection",
+          "Supplying collaborators explicitly through an object interface."
+        ],
+        [
+          "Short-circuit evaluation",
+          "A logical chain stops once an operand determines its result."
+        ],
+        [
+          "Invariant",
+          "A condition preserved at the boundaries of permitted model operations."
+        ],
+        [
+          "Observable behaviour",
+          "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.validated-user-commands",
+      "legacyIndex": null,
+      "order": 60,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Command validation and state preservation",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 5,
+      "description": "Parse a numeric field completely, explain failure and commit only after every check succeeds.",
+      "theory": [
+        "Parse a numeric field completely, explain failure and commit only after every check succeeds."
+      ],
+      "deep": "An input field yields text while the model expects a constrained value. The string 12x has a numeric prefix but does not satisfy a contract requiring one complete integer. Silently applying twelve is incorrect. Each laboratory line is a separate command setting a number in 0…100; a rejected line preserves the previous value.",
+      "analogy": "std::from_chars receives pointers delimiting a character range and a reference to a number. Its result contains ptr and ec. The structured binding auto [ptr, ec] names the two fields. ec reports conversion success and ptr must equal the end of the string. Successfully parsing a prefix does not establish that all input was consumed.",
+      "commonMistake": "State changed after rejection.",
+      "code": "#include <iostream>\n#include <charconv>\n#include <string>\nbool parse(const std::string& text, int& result) {\n  int candidate = 0;\n  const auto [ptr, ec] = std::from_chars(text.data(), text.data() + text.size(), candidate);\n  if (ec != std::errc{} || ptr != text.data() + text.size()) return false;\n  result = candidate; return true;\n}\nint main() { int value = 17; std::cout << parse(\"12x\", value) << ' ' << value << '\\n'; }\n",
+      "task": "Read at most eight command lines, initially value=17. Completely parse each 1…32-byte line with integer from_chars, without spaces or plus. Accept 0…100. Rejection preserves value and increments rejected. More than eight lines produces invalid.",
+      "hint": "Retain a checkable result: Read at most eight command lines, initially value=17. Completely parse each 1…32-byte line with integer from_chars, without spaces or plus. Accept 0…100. Rejection preserves value and increments rejected. More than eight lines produces invalid. Explain the selected contract and supply an independent example.",
+      "solution": "#include <iostream>\n#include <charconv>\n#include <string>\nbool update(int& value, const std::string& text) {\n  if (text.empty() || text.size() > 32) return false;\n  int candidate = 0;\n  auto [ptr, ec] = std::from_chars(text.data(), text.data() + text.size(), candidate);\n  if (ec != std::errc{} || ptr != text.data() + text.size() || candidate < 0 || candidate > 100) return false;\n  value = candidate; return true;\n}\nint main() {\n  int value = 17, rejected = 0, count = 0;\n  std::string line;\n  while (std::getline(std::cin, line)) {\n    if (++count > 8) { std::cout << \"invalid\\n\"; return 0; }\n    if (!update(value, line)) ++rejected;\n  }\n  std::cout << \"value \" << value << \" rejected \" << rejected << '\\n';\n}\n",
+      "quiz": {
+        "question": "Is ec==errc{} sufficient?",
+        "answers": [
+          "No; also check ptr==end and domain bounds.",
+          "Yes, always.",
+          "Only string length matters."
+        ],
+        "correctIndex": 0,
+        "explanation": "A valid prefix may leave invalid trailing input."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Input grammar",
+          "A specification of the permitted character sequence."
+        ],
+        [
+          "Complete consumption",
+          "Parsing leaves no unchecked input characters."
+        ],
+        [
+          "Candidate",
+          "A temporary value awaiting validation and commit."
+        ],
+        [
+          "errc",
+          "A conversion-result code checked by the caller."
+        ],
+        [
+          "Representation overflow",
+          "A number cannot be represented by the selected numeric type."
+        ],
+        [
+          "Domain range",
+          "Bounds imposed by application requirements rather than just the type."
+        ],
+        [
+          "Invariant",
+          "A condition preserved at the boundaries of permitted model operations."
+        ],
+        [
+          "Observable behaviour",
+          "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.callback-lifetime-subscriptions",
+      "legacyIndex": null,
+      "order": 61,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Callback lifetime and RAII subscriptions",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 6,
+      "description": "Design a subscription that disconnects at scope exit and never accesses a destroyed receiver.",
+      "theory": [
+        "Design a subscription that disconnects at scope exit and never accesses a destroyed receiver."
+      ],
+      "deep": "An event source and its receiver can disappear at different times. Capturing a raw this does not extend the object’s lifetime; a callback retained by the source can outlive its receiver. Capturing shared_ptr extends ownership but can sometimes create a cycle. Before choosing a pointer, draw who owns the source, receiver and subscription.",
+      "analogy": "lock returns a shared_ptr when the object still exists, or an empty pointer otherwise. if(auto value=weak.lock()) establishes a local owner for the if body. The object cannot disappear merely because the final external shared_ptr is reset during that scope. Checking expired and then dereferencing a raw address does not establish the same ownership contract.",
+      "commonMistake": "State changed after rejection.",
+      "code": "#include <iostream>\n#include <memory>\nint main() {\n  auto owner = std::make_shared<int>(7); std::weak_ptr<int> observer = owner;\n  if (auto value = observer.lock()) std::cout << *value << '\\n';\n  owner.reset();\n  std::cout << \"expired \" << observer.expired() << '\\n';\n}\n",
+      "task": "Read mode zero, one or two without trailing input. Subscribe and emit once. Mode one destroys the receiver; mode two clears handlers. Emit again, leave subscription scope and emit a third time. Print the receiver value (-1 when absent) and subscription count.",
+      "hint": "Retain a checkable result: Read mode zero, one or two without trailing input. Subscribe and emit once. Mode one destroys the receiver; mode two clears handlers. Emit again, leave subscription scope and emit a third time. Print the receiver value (-1 when absent) and subscription count. Explain the selected contract and supply an independent example.",
+      "solution": "#include <iostream>\n#include <memory>\n#include <map>\n#include <vector>\n#include <functional>\nstruct SignalState { int next = 1; std::map<int, std::function<void()>> handlers; };\nclass Subscription {\n  std::weak_ptr<SignalState> state_; int id_;\npublic:\n  Subscription(std::shared_ptr<SignalState> state, int id) : state_(state), id_(id) {}\n  Subscription(const Subscription&) = delete;\n  Subscription& operator=(const Subscription&) = delete;\n  ~Subscription() { if (auto s = state_.lock()) s->handlers.erase(id_); }\n};\nvoid emit(const std::shared_ptr<SignalState>& s) {\n  std::vector<int> ids;\n  for (const auto& [id, handler] : s->handlers) ids.push_back(id);\n  for (int id : ids) {\n    auto it = s->handlers.find(id);\n    if (it != s->handlers.end()) { auto handler = it->second; if (handler) handler(); }\n  }\n}\nint main() {\n  int mode;\n  if (!(std::cin >> mode) || mode < 0 || mode > 2) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  auto signal = std::make_shared<SignalState>();\n  auto receiver = std::make_shared<int>(0); std::weak_ptr<int> weak = receiver;\n  { int id = signal->next++;\n    signal->handlers.emplace(id, [weak] { if (auto value = weak.lock()) ++*value; });\n    Subscription subscription(signal, id);\n    emit(signal);\n    if (mode == 1) receiver.reset();\n    if (mode == 2) signal->handlers.clear();\n    emit(signal);\n  }\n  emit(signal);\n  std::cout << \"value \" << (receiver ? *receiver : -1) << \" subscriptions \" << signal->handlers.size() << '\\n';\n}\n",
+      "quiz": {
+        "question": "Does weak_ptr extend object lifetime?",
+        "answers": [
+          "No.",
+          "Yes, always.",
+          "Only after expired."
+        ],
+        "correctIndex": 0,
+        "explanation": "A successful lock establishes ownership for the call."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Subscription",
+          "A handler-registration resource with a defined lifetime."
+        ],
+        [
+          "Weak reference",
+          "Observation of an object without extending its lifetime."
+        ],
+        [
+          "lock",
+          "An attempt to obtain temporary shared ownership of a live object."
+        ],
+        [
+          "Ownership cycle",
+          "Mutual ownership that prevents resources from being released."
+        ],
+        [
+          "Identifier snapshot",
+          "A fixed candidate set for one dispatch operation."
+        ],
+        [
+          "Connection context",
+          "An object to whose lifetime a callback connection is bound."
+        ],
+        [
+          "Invariant",
+          "A condition preserved at the boundaries of permitted model operations."
+        ],
+        [
+          "Observable behaviour",
+          "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.responsive-work-cancellation",
+      "legacyIndex": null,
+      "order": 62,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Responsive work, bounded steps and cancellation",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 7,
+      "description": "Split work into bounded steps and cancel without committing a partial result.",
+      "theory": [
+        "Split work into bounded steps and cancel without committing a partial result."
+      ],
+      "deep": "In a single-threaded application, a handler occupying the event loop prevents the next user command from running. A fast average case does not guarantee responsiveness on larger input. Divide the operation into portions and return control to a scheduler between them. Bound both the number of calls and the work performed inside each call.",
+      "analogy": "size specifies total work, done counts processed items and candidate stores a provisional result. Reason about step to establish 0≤done≤size. The local budget decreases on every iteration and done grows only up to size. Each call therefore handles at most three items even when the complete job requires many calls.",
+      "commonMistake": "State changed after rejection.",
+      "code": "#include <iostream>\nint main() { int done = 0; for (int tick = 0; tick < 2; ++tick) { int budget = 3; while (budget-- > 0 && done < 8) ++done; std::cout << \"done \" << done << '\\n'; } }\n",
+      "task": "Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed.",
+      "hint": "Retain a checkable result: Read n=0…100 and cancelAt=-1…40. Each step processes at most three integers from 1…n. Minus one never cancels; otherwise cancellation is requested before the indexed step. Late cancellation does not alter a completed job. Incomplete results are not committed. Explain the selected contract and supply an independent example.",
+      "solution": "#include <iostream>\nclass Job {\n  int size_, done_ = 0, candidate_ = 0; bool cancelled_ = false;\npublic:\n  explicit Job(int n) : size_(n) {}\n  void cancel() { if (done_ < size_) cancelled_ = true; }\n  void step() { if (cancelled_) return; int budget = 3; while (budget-- > 0 && done_ < size_) { ++done_; candidate_ += done_; } }\n  bool finished() const { return done_ == size_; }\n  bool cancelled() const { return cancelled_; }\n  int done() const { return done_; }\n  int result() const { return finished() ? candidate_ : 0; }\n};\nint main() {\n  int n, cancelAt;\n  if (!(std::cin >> n >> cancelAt) || n < 0 || n > 100 || cancelAt < -1 || cancelAt > 40) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Job job(n); int tick = 0;\n  while (!job.finished() && !job.cancelled()) { if (tick == cancelAt) job.cancel(); if (!job.cancelled()) { job.step(); ++tick; } }\n  std::cout << (job.cancelled() ? \"cancelled\" : \"done\") << \" processed \" << job.done() << \" result \" << job.result() << '\\n';\n}\n",
+      "quiz": {
+        "question": "How many items does step process?",
+        "answers": [
+          "At most three.",
+          "Always all items.",
+          "Exactly n threads."
+        ],
+        "correctIndex": 0,
+        "explanation": "The budget is bounded independently of total work."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Step budget",
+          "The maximum work performed by one cooperative invocation."
+        ],
+        [
+          "Cooperative execution",
+          "An operation explicitly yields control between portions of work."
+        ],
+        [
+          "Cancellation",
+          "A request to stop unfinished work under a specified contract."
+        ],
+        [
+          "Provisional result",
+          "Accumulated data not yet committed to the main model."
+        ],
+        [
+          "Commit point",
+          "The point after which a result is considered committed."
+        ],
+        [
+          "Coalescing",
+          "Replacing equivalent refresh requests with one request."
+        ],
+        [
+          "Invariant",
+          "A condition preserved at the boundaries of permitted model operations."
+        ],
+        [
+          "Observable behaviour",
+          "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.versioned-model-persistence",
+      "legacyIndex": null,
+      "order": 63,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Model persistence and format versioning",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 8,
+      "description": "Implement a checkable roundtrip and candidate-based loading that preserves the old model on failure.",
+      "theory": [
+        "Implement a checkable roundtrip and candidate-based loading that preserves the old model on failure."
+      ],
+      "deep": "Saved data may outlive a program version. A format needs an explicit marker and field definitions. Teaching format EV1 stores an element count and values in 0…100. A future EV2 cannot be guessed to mean EV1: identical numbers might have different meanings. Reject unknown versions before mutation, and treat migration as a separate checkable algorithm.",
+      "analogy": "load first validates version and count, then constructs a separate candidate vector. It validates every value before appending it and checks end of input after the last item. Only a completely valid record permits model.swap(candidate). Before swap the model still holds its previous data, so rejection requires no manual restoration of overwritten elements.",
+      "commonMistake": "State changed after rejection.",
+      "code": "#include <iostream>\n#include <sstream>\nint main() { std::ostringstream out; out << \"EV1 \" << 7; std::istringstream in(out.str()); std::string version; int value = 0; in >> version >> value; std::cout << version << ' ' << value << '\\n'; }\n",
+      "task": "The format is EV1 count values, with count=0…8, values=0…100 and whitespace-only trailing input. Failure preserves old model {99} and prints rejected 99. On success save in memory, reload into a copy and compare; stdout is the canonical EV1 record.",
+      "hint": "Retain a checkable result: The format is EV1 count values, with count=0…8, values=0…100 and whitespace-only trailing input. Failure preserves old model {99} and prints rejected 99. On success save in memory, reload into a copy and compare; stdout is the canonical EV1 record. Explain the selected contract and supply an independent example.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nbool load(std::istream& in, std::vector<int>& model) {\n  std::string version; int count;\n  if (!(in >> version >> count) || version != \"EV1\" || count < 0 || count > 8) return false;\n  std::vector<int> candidate;\n  for (int i = 0; i < count; ++i) { int x; if (!(in >> x) || x < 0 || x > 100) return false; candidate.push_back(x); }\n  in >> std::ws; if (!in.eof()) return false;\n  model.swap(candidate); return true;\n}\nvoid save(std::ostream& out, const std::vector<int>& values) { out << \"EV1 \" << values.size(); for (int x : values) out << ' ' << x; out << '\\n'; }\nint main() {\n  std::vector<int> model{99};\n  if (!load(std::cin, model)) { std::cout << \"rejected \" << model[0] << '\\n'; return 0; }\n  std::ostringstream bytes; save(bytes, model); std::istringstream input(bytes.str()); std::vector<int> copy;\n  if (!load(input, copy) || copy != model) return 1;\n  std::cout << bytes.str();\n}\n",
+      "quiz": {
+        "question": "When is the candidate committed?",
+        "answers": [
+          "After complete validation including end of input.",
+          "After the first number.",
+          "Before reading the version."
+        ],
+        "correctIndex": 0,
+        "explanation": "swap completes preparation of the entire model."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Serialization",
+          "Converting a model into an explicitly specified data format."
+        ],
+        [
+          "Deserialization",
+          "Validated reconstruction of a model from a data format."
+        ],
+        [
+          "Version marker",
+          "A marker selecting how a record is interpreted."
+        ],
+        [
+          "Roundtrip",
+          "Checking reconstruction after saving a model."
+        ],
+        [
+          "Canonical output",
+          "A consistent representation used when saving data."
+        ],
+        [
+          "Migration",
+          "An explicit transformation between specified data versions."
+        ],
+        [
+          "Invariant",
+          "A condition preserved at the boundaries of permitted model operations."
+        ],
+        [
+          "Observable behaviour",
+          "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.event-testing-replay",
+      "legacyIndex": null,
+      "order": 64,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Event testing and reproducible traces",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 9,
+      "description": "Check a model through traces, invariants, replay and a controlled implementation mutation.",
+      "theory": [
+        "Check a model through traces, invariants, replay and a controlled implementation mutation."
+      ],
+      "deep": "An event-driven defect may require several actions. One add call says little about add→complete→complete or import→failure→save. A test needs initial state, an ordered trace, observations after steps and an expected outcome. Removing unnecessary events from a failing trace helps find a minimal reproduction.",
+      "analogy": "replay takes a const vector and creates fresh local state. It reads no clock, random seed, window or global counter. Two invocations on the same trace must return equal Results. A C++20 defaulted == compares value and rejected; adding another field should trigger a review of the observable contract.",
+      "commonMistake": "State changed after rejection.",
+      "code": "#include <iostream>\n#include <vector>\nint replay(const std::vector<int>& trace) { int state = 0; for (int delta : trace) if (state + delta >= 0 && state + delta <= 10) state += delta; return state; }\nint main() { const std::vector<int> trace{3, -5, 2}; std::cout << replay(trace) << ' ' << replay(trace) << '\\n'; }\n",
+      "task": "Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS.",
+      "hint": "Retain a checkable result: Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS. Explain the selected contract and supply an independent example.",
+      "solution": "#include <iostream>\n#include <vector>\nstruct Result { int value = 0, rejected = 0; bool operator==(const Result&) const = default; };\nResult replay(const std::vector<int>& trace) {\n  Result r;\n  for (int x : trace) { if (x < -10 || x > 10 || r.value + x < 0 || r.value + x > 10) ++r.rejected; else r.value += x; }\n  return r;\n}\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 20) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> trace(n);\n  for (int& x : trace) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  const Result a = replay(trace), b = replay(trace);\n  if (!(a == b) || a.value < 0 || a.value > 10) return 1;\n  std::cout << \"value \" << a.value << \" rejected \" << a.rejected << \" replay PASS\\n\";\n}\n",
+      "quiz": {
+        "question": "Do two identical runs prove correctness?",
+        "answers": [
+          "No; an independent expected result is needed.",
+          "Yes.",
+          "Only with empty input."
+        ],
+        "correctIndex": 0,
+        "explanation": "A reproducible mistake is still a mistake."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Determinism",
+          "The same specified input produces the same observation."
+        ],
+        [
+          "Replay",
+          "Reapplying a recorded trace to an initial state."
+        ],
+        [
+          "Test oracle",
+          "An independent rule for determining the expected result."
+        ],
+        [
+          "Mutation",
+          "A controlled implementation change testing test sensitivity."
+        ],
+        [
+          "Minimal reproduction",
+          "A reduced scenario that still exposes a defect."
+        ],
+        [
+          "Regression",
+          "A violation of previously accepted behaviour after a change."
+        ],
+        [
+          "Invariant",
+          "A condition preserved at the boundaries of permitted model operations."
+        ],
+        [
+          "Observable behaviour",
+          "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.multifile-event-application",
+      "legacyIndex": null,
+      "order": 65,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "A multi-file event-driven application",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 10,
+      "description": "Assemble a planner core from an interface, implementation, adapter and separate test driver.",
+      "theory": [
+        "Assemble a planner core from an interface, implementation, adapter and separate test driver."
+      ],
+      "deep": "include/model.hpp declares Board, src/model.cpp implements its rules and main.cpp translates input into commands and output. Both cpp files need the header, while ordinary function definitions belong in the implementation. pragma once prevents repeated header inclusion within one translation unit; it does not repair repeated definitions across multiple translation units.",
+      "analogy": "Create a separate C++ project, add all listed files and set includeRoots to include. The application builds main.cpp and src/model.cpp. A test driver replaces main.cpp rather than adding a second main. A file inside tests does not automatically become a test; build inputs must be known and reproducible.",
+      "commonMistake": "State changed after rejection.",
+      "code": "#include <iostream>\nstruct Command { int amount; };\nint update(int state, Command command) { return state + command.amount; }\nint main() { std::cout << update(3, Command{4}) << '\\n'; }\n",
+      "task": "Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid.",
+      "hint": "Retain a checkable result: Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid. Explain the selected contract and supply an independent example.",
+      "solution": "#include \"model.hpp\"\n#include <iostream>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Board board; int rejected = 0;\n  for (int command : commands) if (!board.apply(command)) ++rejected;\n  std::cout << \"tasks \" << board.count() << \" done \" << board.done() << \" rejected \" << rejected << '\\n';\n}\n",
+      "quiz": {
+        "question": "Which translation units build the application?",
+        "answers": [
+          "main.cpp and src/model.cpp.",
+          "Only model.hpp.",
+          "Every file including two mains."
+        ],
+        "correctIndex": 0,
+        "explanation": "The header is included and model definitions are linked separately."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Translation unit",
+          "A cpp source after preprocessing its includes."
+        ],
+        [
+          "ODR",
+          "Rules governing permitted definitions of program entities."
+        ],
+        [
+          "Linking",
+          "Combining compiled units and resolving definitions."
+        ],
+        [
+          "Adapter",
+          "Translation from an external protocol into a domain contract."
+        ],
+        [
+          "Stable ID",
+          "An entity identity independent of current list position."
+        ],
+        [
+          "Build inputs",
+          "The explicit sources, headers and compilation settings."
+        ],
+        [
+          "Invariant",
+          "A condition preserved at the boundaries of permitted model operations."
+        ],
+        [
+          "Observable behaviour",
+          "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.qt-graphical-adapter",
+      "legacyIndex": null,
+      "order": 66,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "A real Qt graphical adapter",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 11,
+      "description": "Connect TaskModel to real Qt widgets and execute a user scenario inside Nexus.",
+      "theory": [
+        "Connect TaskModel to real Qt widgets and execute a user scenario inside Nexus."
+      ],
+      "deep": "Qt is an additional library, not part of standard C++. It requires its own SDK and build toolchain. In Nexus select Project Studio, create a C++ application and open src/gui.cpp. Building compiles your C++ to Qt/WebAssembly and opens a separate Preview. The lesson’s console Clang/WASI editor contains no Qt and cannot run this exercise.",
+      "analogy": "QApplication initializes the graphical environment. TaskWindow derives from QWidget and QVBoxLayout arranges controls vertically without manual coordinates. QLineEdit accepts text, QPushButton represents an action, QListWidget displays tasks and QLabel presents status. Passing this as a parent makes child QObjects owned by the window, so they are not separately deleted when the parent is destroyed.",
+      "commonMistake": "State changed after rejection.",
+      "code": "#include <iostream>\nstruct Command { int amount; };\nint update(int state, Command command) { return state + command.amount; }\nint main() { std::cout << update(3, Command{4}) << '\\n'; }\n",
+      "task": "Create a new C++ application in Project Studio. Add a QLabel total-task indicator and derive it from the model during refresh. Preserve Add/Enter/Complete/Save, the Task title accessible name and NXTF1. Empty or whitespace-only titles must not create tasks.",
+      "hint": "Retain a checkable result: Create a new C++ application in Project Studio. Add a QLabel total-task indicator and derive it from the model during refresh. Preserve Add/Enter/Complete/Save, the Task title accessible name and NXTF1. Empty or whitespace-only titles must not create tasks. Explain the selected contract and supply an independent example.",
+      "solution": "#include <iostream>\nstruct Task { bool done = false; void complete() { done = true; } };\nint main() { Task task; task.complete(); task.complete(); std::cout << \"done \" << task.done << '\\n'; }\n",
+      "quiz": {
+        "question": "Where should the Qt laboratory run?",
+        "answers": [
+          "In a Project Studio C++ application.",
+          "In the ordinary WASI lesson editor.",
+          "Only outside Nexus."
+        ],
+        "correctIndex": 0,
+        "explanation": "Qt uses a separate checked build toolchain."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Qt Widgets",
+          "A library of actual graphical application controls."
+        ],
+        [
+          "Signal",
+          "A Qt notification about an object action or change."
+        ],
+        [
+          "Context",
+          "The QObject bounding the lifetime of a callback connection."
+        ],
+        [
+          "Layout",
+          "A component that automatically arranges widgets."
+        ],
+        [
+          "Preview",
+          "An isolated execution of the learner’s compiled application."
+        ],
+        [
+          "UserRole",
+          "Item data used here for the domain entity id."
+        ],
+        [
+          "Invariant",
+          "A condition preserved at the boundaries of permitted model operations."
+        ],
+        [
+          "Observable behaviour",
+          "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.application-build-delivery",
+      "legacyIndex": null,
+      "order": 67,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Build, persistence and application submission",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 12,
+      "description": "Complete a checkable Nexus project with GUI, data, tests, portable sources, an exact submission revision and a defense.",
+      "theory": [
+        "Complete a checkable Nexus project with GUI, data, tests, portable sources, an exact submission revision and a defense."
+      ],
+      "deep": "Sources are not the same as a running application. Project files, CMake settings, target and SDK version determine the build result. The checked pilot uses Qt 6.8.3 and Emscripten 3.1.56; console C++20 uses another runtime. Record these details in README without promising compatibility with arbitrary Qt or browser versions that have not been tested.",
+      "analogy": "TaskFlow serializes NXTF1 into the permitted taskflow.txt. First select Save application data inside the application, then use the Studio panel’s data-save action and confirm the file in the project. After Stop and a new run, the list should be restored. A file existing only in a running Preview does not establish persistence after closing it.",
+      "commonMistake": "State changed after rejection.",
+      "code": "#include <iostream>\nstruct Command { int amount; };\nint update(int state, Command command) { return state + command.amount; }\nint main() { std::cout << update(3, Command{4}) << '\\n'; }\n",
+      "task": "In a new TaskFlow project implement open/done counts and an all/open GUI filter. Filtering must preserve the model, persistent ids and all NXTF1 data. Verify persistence, Stop→Run, model tests, immutable submission and portable ZIP within Nexus.",
+      "hint": "Retain a checkable result: In a new TaskFlow project implement open/done counts and an all/open GUI filter. Filtering must preserve the model, persistent ids and all NXTF1 data. Verify persistence, Stop→Run, model tests, immutable submission and portable ZIP within Nexus. Explain the selected contract and supply an independent example.",
+      "solution": "#include <iostream>\nstruct Task { bool done = false; void complete() { done = true; } };\nint main() { Task task; task.complete(); task.complete(); std::cout << \"done \" << task.done << '\\n'; }\n",
+      "quiz": {
+        "question": "Does editing change an already submitted revision?",
+        "answers": [
+          "No.",
+          "Yes, always.",
+          "Only its title."
+        ],
+        "correctIndex": 0,
+        "explanation": "Submission retains an immutable snapshot."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Source snapshot",
+          "A fixed set of project bytes used for a build or submission."
+        ],
+        [
+          "Submission revision",
+          "An immutable work revision examined by a reviewer."
+        ],
+        [
+          "Rubric",
+          "Evaluation criteria describing observable outcomes."
+        ],
+        [
+          "Portable archive",
+          "Sources and instructions suitable for an independent build."
+        ],
+        [
+          "View filter",
+          "Selecting displayed items without deleting domain data."
+        ],
+        [
+          "Defense",
+          "Explaining decisions and independently modifying the program."
+        ],
+        [
+          "Invariant",
+          "A condition preserved at the boundaries of permitted model operations."
+        ],
+        [
+          "Observable behaviour",
+          "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
     }
   ]
 }

@@ -1,0 +1,71 @@
+name: Полный курс C++ — аттестация и сохранность
+on:
+  push:
+    branches: [feature/academy-gold-standard-cpp-module-6, main]
+    paths:
+      - 'course-final/**'
+      - 'courses/cpp/final/**'
+      - 'core/account-storage.js'
+      - 'server-access/**'
+      - 'studio-build/**'
+      - 'sandbox/qt/**'
+      - 'project-studio/**'
+      - 'runtime-packs/qt-6.8.3-v1/**'
+      - 'tests/course-final-*'
+      - 'tools/cpp-course-completion-scope.mjs'
+      - 'docs/ru/03-content/CPP_COURSE_COMPLETION_SCOPE.json'
+      - '.github/workflows/cpp-course-final.yml'
+permissions:
+  contents: read
+jobs:
+  contract-d1-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXUS_COURSE_FINAL_EVIDENCE: /tmp/nexus-course-final
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+      - name: Точный changeset, неизменные ID и GPL-source hashes
+        run: node tools/check-cpp-course-completion.mjs
+      - name: Контракты, аккаунты, частичные загрузки, границы исполнения
+        run: >-
+          node --test tests/course-final-automatic.test.mjs tests/course-final-bff.test.mjs
+          tests/course-final-service.test.mjs tests/course-final-contract.test.mjs
+          tests/course-final-purge.test.mjs tests/course-final-client.test.mjs
+          tests/qt-browser-contract.test.mjs tests/studio-artifact-delivery.test.mjs
+          tests/studio-storage-queue.test.mjs tests/academy-gold-module6-service.test.mjs
+      - name: Настоящая D1, checkpoint, пересдача, logout и сохранность чужих данных
+        run: node tests/course-final-workerd.mjs --automatic
+      - name: Будущий экспертный протокол проверен отдельно и не включается в продукт
+        env:
+          NEXUS_COURSE_FINAL_EVIDENCE: /tmp/nexus-course-final-expert
+        run: node tests/course-final-workerd.mjs
+      - name: CMake и CTest всех15публичных заготовок — TODO ожидаемо не получает готовую оценку
+        run: node tests/course-final-public-native.mjs
+      - name: Проверить ленивую загрузку и подготовить backend без deployment
+        run: |
+          node tools/check-cpp-course-perf.mjs
+          node server-access/build-worker.mjs
+          node server-access/build-bff.mjs
+      - name: Максимальный6MiB checkpoint при действующих128МБ и1CPU
+        run: |
+          node tools/prepare-course-final-limit-fixture.mjs --out /tmp/nexus-course-limit-input
+          mkdir -p /tmp/nexus-course-limit-evidence
+          chmod 777 /tmp/nexus-course-limit-evidence
+          docker run --rm --network none --read-only --cap-drop ALL --security-opt no-new-privileges --memory 128m --memory-swap 128m --cpus 1 --pids-limit 64 --user 1000:1000 --tmpfs /tmp:rw,noexec,nosuid,size=8m,mode=1777 --mount type=bind,source=/tmp/nexus-course-limit-input,target=/input,readonly --mount type=bind,source=/tmp/nexus-course-limit-evidence,target=/evidence --workdir /input --env NEXUS_COURSE_FINAL_EVIDENCE=/evidence --env PORT=18080 --entrypoint node node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 tests/course-final-bridge-limit.mjs --with-bff-image
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpp-course-final-${{ github.sha }}
+          path: |
+            /tmp/nexus-course-final/*.json
+            /tmp/nexus-course-final-expert/*.json
+            /tmp/nexus-course-limit-evidence/*.json
+          retention-days: 30
+          # Ни БД, ни ключи ответов, ни профили браузера не выгружаются.

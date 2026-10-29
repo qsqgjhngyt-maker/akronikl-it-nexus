@@ -1,5 +1,7 @@
+import{bindIntroTransport}from'./intro-transport.mjs';
 // Настоящий bootstrap/app/SW/Worker на canonical origin, физически только loopback.
 import https from 'node:https';
+import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -10,7 +12,7 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
  const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
  const account={account:{accountId:'synthetic-runtime-online',displayName:'Synthetic Runtime',status:'active'},loginMethods:[{id:'synthetic-key',kind:'passkey',status:'active',createdAt:'2026-10-24T00:00:00Z',disabledAt:null}],enrollmentAvailable:false};
  const requests=[],errors=[],workerEvents=[];
- const mime=f=>({'.js':'text/javascript','.json':'application/json','.css':'text/css','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.md':'text/markdown'}[path.extname(f)]||'text/html');
+ const mime=f=>({'.js':'text/javascript','.json':'application/json','.css':'text/css','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.md':'text/markdown','.mp4':'video/mp4','.webm':'video/webm','.jpg':'image/jpeg'}[path.extname(f)]||'text/html');
  const server=https.createServer({key:await readFile(path.join(cache,'qa-key.pem')),cert:await readFile(path.join(cache,'qa-cert.pem'))},async(req,res)=>{
   requests.push({path:new URL(req.url,GATEWAY_ORIGIN).pathname,method:req.method});
   try{const u=new URL(req.url,GATEWAY_ORIGIN);if(req.method!=='GET'){res.writeHead(403);return res.end('SYNTHETIC_WRITE_DENIED');}
@@ -28,12 +30,18 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
    const bytes=await readFile(file);res.writeHead(200,{'content-type':mime(name),'cache-control':'public, max-age=0'});res.end(bytes);
   }catch{res.writeHead(404);res.end('SYNTHETIC_NOT_FOUND');}
  });
+ // Предварительные TLS-соединения Chrome ещё не являются HTTP requests и
+ // не закрываются closeAllConnections(). Учитываем только сокеты этого стенда.
+ const sockets=new Set();server.on('connection',socket=>{sockets.add(socket);socket.once('close',()=>sockets.delete(socket))});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const hostname=new URL(GATEWAY_ORIGIN).hostname;
  const browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH,args:['--disable-background-networking','--no-proxy-server','--ignore-certificate-errors','--host-resolver-rules=MAP '+hostname+' 127.0.0.1:'+server.address().port,...chromiumArgs]});
  const context=await browser.newContext({ignoreHTTPSErrors:true,viewport:{width:1366,height:900}});
  // Отдельный пустой профиль. Тестовый TLS не влияет на браузер владельца/системное доверие.
  await context.route('**/*',async route=>new URL(route.request().url()).origin===GATEWAY_ORIGIN?route.continue():route.abort());
+ // Четыре публичных video URL читаются из точной QA-сборки, без live CDN.
+ // Все прочие внешние запросы по-прежнему запрещены; errors не фильтруются.
+ await bindIntroTransport(context,{frontend,requests});
  await bindRuntimeTransport(context);
  await context.route('https://felixhao28.github.io/JSCPP/dist/JSCPP.es5.min.js',async route=>route.fulfill({status:200,contentType:'application/javascript',body:await readFile(process.env.NEXUS_JSCPP_FIXTURE)}));
  const page=await context.newPage();page.setDefaultTimeout(45000);page.on('pageerror',e=>errors.push(e.message));
@@ -42,9 +50,11 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
  cdp.on('ServiceWorker.workerErrorReported',e=>errors.push('SW: '+e.errorMessage.errorMessage));
  cdp.on('ServiceWorker.workerVersionUpdated',e=>workerEvents.push(...e.versions.map(v=>({status:v.status,runningStatus:v.runningStatus,scriptURL:v.scriptURL}))));
  async function waitReady(){
-  const until=Date.now()+30000;let last;
+  // Home не ждёт заполнения offline-кэша. Холодный CI должен дождаться
+  // настоящего publicReady, включая install/activate всего разрешённого графа.
+  const until=Date.now()+90000;let last;
   while(Date.now()<until){last=await page.evaluate(()=>new Promise(resolve=>{const worker=navigator.serviceWorker.controller;if(!worker)return resolve(null);const channel=new MessageChannel(),timer=setTimeout(()=>resolve(null),10000);channel.port1.onmessage=e=>{clearTimeout(timer);channel.port1.close();resolve(e.data)};worker.postMessage({type:'nexus-pwa-status'},[channel.port2]);}));if(last?.publicReady===true)return last;await page.waitForTimeout(100);}
   throw Error('ONLINE_PUBLIC_PWA_NOT_READY '+JSON.stringify({last,errors,workerEvents}));
  }
- return{page,context,requests,errors,workerEvents,origin:GATEWAY_ORIGIN,waitReady,async close(){await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}};
+ return{page,context,requests,errors,workerEvents,origin:GATEWAY_ORIGIN,waitReady,async close(){await context.close();await browser.close();server.closeAllConnections();const pending=sockets.size;for(const socket of sockets)socket.destroy();await new Promise(resolve=>server.close(resolve));return{pendingTlsSocketsClosed:pending}}};
 }

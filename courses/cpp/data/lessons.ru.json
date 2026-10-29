@@ -5226,6 +5226,765 @@
       "visualization": null,
       "pdfPages": [],
       "pdfNotes": []
+    },
+    {
+      "id": "cpp.event-queues-dispatch",
+      "legacyIndex": null,
+      "order": 57,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Очереди событий и диспетчеризация",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 2,
+      "description": "Организуйте FIFO-диспетчер и отложенные callbacks без рекурсивной обработки.",
+      "theory": [
+        "Организуйте FIFO-диспетчер и отложенные callbacks без рекурсивной обработки."
+      ],
+      "deep": "Обработчик может породить новое действие: после добавления задачи нужно обновить список. Немедленный вызов следующего обработчика увеличивает глубину стека и допускает наблюдение незавершённого изменения. Очередь хранит событие до следующего оборота диспетчера. Это меняет время обработки, поэтому порядок нужно описать как контракт, а не считать технической подробностью.",
+      "analogy": "std::queue предоставляет push, front, pop, empty и size. front читает первый элемент, pop удаляет его и ничего не возвращает. Перед front проверяйте empty. В диспетчере значение копируется в локальную переменную, затем элемент удаляется и только потом вызывается пользовательская функция. Ссылка на удалённый элемент после pop недопустима.",
+      "commonMistake": "Результат после отказа изменился.",
+      "code": "#include <iostream>\n#include <queue>\nint main() {\n  std::queue<int> q; q.push(2); q.push(5);\n  while (!q.empty()) { int event = q.front(); q.pop(); std::cout << event << '\\n'; }\n}\n",
+      "task": "n=0…12, затем n чисел 0…9. Заполните FIFO до обработки. Обработчик прибавляет значение к total; событие 3 добавляет в хвост 1. Выведите total и processed. Неверный формат, диапазон или хвост: invalid.",
+      "hint": "Сохраните проверяемый результат: n=0…12, затем n чисел 0…9. Заполните FIFO до обработки. Обработчик прибавляет значение к total; событие 3 добавляет в хвост 1. Выведите total и processed. Неверный формат, диапазон или хвост: invalid. Объясните выбранный контракт и предъявите независимый пример.",
+      "solution": "#include <iostream>\n#include <queue>\n#include <functional>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> input(n);\n  for (int& x : input) if (!(std::cin >> x) || x < 0 || x > 9) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  std::queue<int> q;\n  for (int x : input) q.push(x);\n  int total = 0, processed = 0;\n  std::function<void(int)> handler = [&](int x) {\n    total += x;\n    if (x == 3) q.push(1);\n  };\n  while (!q.empty()) {\n    int event = q.front(); q.pop();\n    if (handler) handler(event);\n    ++processed;\n  }\n  std::cout << \"total \" << total << \" processed \" << processed << '\\n';\n}\n",
+      "quiz": {
+        "question": "Когда удаляется текущее событие?",
+        "answers": [
+          "Перед callback.",
+          "После любого следующего события.",
+          "Никогда."
+        ],
+        "correctIndex": 0,
+        "explanation": "Локальная копия сохраняет значение после pop."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "FIFO",
+          "Первым обрабатывается раньше добавленный элемент."
+        ],
+        [
+          "Callback",
+          "Вызываемый объект, переданный для отложенного выполнения."
+        ],
+        [
+          "Захват",
+          "Способ, которым lambda получает доступ к окружающим значениям."
+        ],
+        [
+          "Пустой обработчик",
+          "Обёртка функции, в которой нет вызываемой цели."
+        ],
+        [
+          "Повторный вход",
+          "Новый вход в операцию до завершения предыдущего вызова."
+        ],
+        [
+          "Backpressure",
+          "Ограничение поступления работы при недостатке пропускной способности."
+        ],
+        [
+          "Инвариант",
+          "Условие, сохраняющееся на границах допустимых операций модели."
+        ],
+        [
+          "Наблюдаемое поведение",
+          "Согласованный результат, по которому клиент отличает выполнение контракта от ошибки."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.states-typed-events",
+      "legacyIndex": null,
+      "order": 58,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Состояния и типизированные события",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 3,
+      "description": "Опишите автомат задачи и выразите события через std::variant без неявных комбинаций флагов.",
+      "theory": [
+        "Опишите автомат задачи и выразите события через std::variant без неявных комбинаций флагов."
+      ],
+      "deep": "Два независимых bool running и paused допускают четыре комбинации, включая противоречивую. enum class State перечисляет только осмысленные имена: idle, running, paused, done. При каждом событии автомат проверяет текущее состояние и выбирает переход. Отсутствующий переход означает отказ, а не случайный выбор следующего состояния.",
+      "analogy": "Пустые структуры Start, Pause, Resume и Finish обозначают разные типы команд. using Event = std::variant<...> создаёт имя для значения, которое хранит одну из перечисленных альтернатив. В отличие от незащищённого union, variant помнит активную альтернативу. Нельзя одновременно получить Start и Finish из одного обычного значения Event.",
+      "commonMistake": "Результат после отказа изменился.",
+      "code": "#include <iostream>\n#include <variant>\n#include <type_traits>\nstruct Start {}; struct Finish {};\nusing Event = std::variant<Start, Finish>;\nint main() {\n  Event event = Start{};\n  std::visit([](const auto& item) {\n    using T = std::decay_t<decltype(item)>;\n    if constexpr (std::is_same_v<T, Start>) std::cout << \"start\\n\";\n    else std::cout << \"finish\\n\";\n  }, event);\n}\n",
+      "task": "Одна строка до 100 символов. S: idle→running; P: running→paused; R: paused→running; F: running→done. Иная пара или символ — один отказ без смены состояния. Пустая строка допустима; отсутствующая строка и лишние данные после строки: invalid.",
+      "hint": "Сохраните проверяемый результат: Одна строка до 100 символов. S: idle→running; P: running→paused; R: paused→running; F: running→done. Иная пара или символ — один отказ без смены состояния. Пустая строка допустима; отсутствующая строка и лишние данные после строки: invalid. Объясните выбранный контракт и предъявите независимый пример.",
+      "solution": "#include <iostream>\n#include <string>\n#include <variant>\n#include <type_traits>\nenum class State { idle, running, paused, done };\nstruct Start {}; struct Pause {}; struct Resume {}; struct Finish {};\nusing Event = std::variant<Start, Pause, Resume, Finish>;\nbool apply(State& state, const Event& event) {\n  return std::visit([&](const auto& item) {\n    using T = std::decay_t<decltype(item)>;\n    if constexpr (std::is_same_v<T, Start>) { if (state == State::idle) { state = State::running; return true; } }\n    else if constexpr (std::is_same_v<T, Pause>) { if (state == State::running) { state = State::paused; return true; } }\n    else if constexpr (std::is_same_v<T, Resume>) { if (state == State::paused) { state = State::running; return true; } }\n    else { if (state == State::running) { state = State::done; return true; } }\n    return false;\n  }, event);\n}\nint main() {\n  std::string trace;\n  if (!std::getline(std::cin, trace) || trace.size() > 100) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  State state = State::idle; int rejected = 0;\n  for (char c : trace) {\n    bool ok = false;\n    if (c == 'S') ok = apply(state, Start{});\n    else if (c == 'P') ok = apply(state, Pause{});\n    else if (c == 'R') ok = apply(state, Resume{});\n    else if (c == 'F') ok = apply(state, Finish{});\n    if (!ok) ++rejected;\n  }\n  const char* names[] = {\"idle\", \"running\", \"paused\", \"done\"};\n  std::cout << names[static_cast<int>(state)] << \" rejected \" << rejected << '\\n';\n}\n",
+      "quiz": {
+        "question": "Сколько альтернатив хранит обычный Event одновременно?",
+        "answers": [
+          "Одну.",
+          "Все четыре.",
+          "Ни одной всегда."
+        ],
+        "correctIndex": 0,
+        "explanation": "variant содержит активную альтернативу."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Автомат",
+          "Состояния и правила переходов под действием событий."
+        ],
+        [
+          "Переход",
+          "Разрешённое изменение состояния при заданном событии."
+        ],
+        [
+          "Альтернатива",
+          "Один из типов, который может хранить variant."
+        ],
+        [
+          "Visitor",
+          "Вызываемый объект, применяемый к активной альтернативе."
+        ],
+        [
+          "Терминальное состояние",
+          "Состояние без исходящих разрешённых переходов данного контракта."
+        ],
+        [
+          "if constexpr",
+          "Условное инстанцирование ветви по константе времени компиляции."
+        ],
+        [
+          "Инвариант",
+          "Условие, сохраняющееся на границах допустимых операций модели."
+        ],
+        [
+          "Наблюдаемое поведение",
+          "Согласованный результат, по которому клиент отличает выполнение контракта от ошибки."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.model-view-presenter",
+      "legacyIndex": null,
+      "order": 59,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Модель, представление и presenter",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 4,
+      "description": "Отделите правила склада от ввода и отображения, затем проверьте presenter с тестовым представлением.",
+      "theory": [
+        "Отделите правила склада от ввода и отображения, затем проверьте presenter с тестовым представлением."
+      ],
+      "deep": "Модель Stock отвечает за количество товара и диапазон 0…20. Представление показывает число. Presenter связывает пользовательскую команду с моделью и обновлением представления. Такая граница позволяет менять кнопки на консоль или тестовую запись, сохраняя правило склада. Класс сам по себе не обеспечивает хорошую архитектуру: важно, какие решения ему разрешено принимать.",
+      "analogy": "Конструктор Presenter(Stock&, View&) получает готовые объекты и сохраняет ссылки. Он не владеет ими и не создаёт глобальный склад. В main модель и представление объявлены раньше presenter, поэтому уничтожаются позже него. Это конкретное обязательство времени жизни; перемещение presenter за пределы области владельцев превратило бы ссылки в опасные.",
+      "commonMistake": "Результат после отказа изменился.",
+      "code": "#include <iostream>\nclass Stock {\n  int quantity_ = 2;\npublic:\n  bool change(int delta) { if (quantity_ + delta < 0 || quantity_ + delta > 20) return false; quantity_ += delta; return true; }\n  int quantity() const { return quantity_; }\n};\nint main() { Stock m; std::cout << m.change(-3) << ' ' << m.quantity() << '\\n'; }\n",
+      "task": "Начальный Stock=2. Прочитайте n=0…12 и n целых delta. Принимайте delta в -20…20, только если новый запас в 0…20. Presenter показывает фактический запас после каждой команды. Ошибка формата: invalid; предметный отказ увеличивает rejected.",
+      "hint": "Сохраните проверяемый результат: Начальный Stock=2. Прочитайте n=0…12 и n целых delta. Принимайте delta в -20…20, только если новый запас в 0…20. Presenter показывает фактический запас после каждой команды. Ошибка формата: invalid; предметный отказ увеличивает rejected. Объясните выбранный контракт и предъявите независимый пример.",
+      "solution": "#include <iostream>\n#include <vector>\nclass Stock {\n  int quantity_ = 2;\npublic:\n  bool change(int delta) {\n    if (delta < -20 || delta > 20 || quantity_ + delta < 0 || quantity_ + delta > 20) return false;\n    quantity_ += delta; return true;\n  }\n  int quantity() const { return quantity_; }\n};\nstruct View { int last = -1; void show(int value) { last = value; } };\nclass Presenter {\n  Stock& model_; View& view_;\npublic:\n  Presenter(Stock& m, View& v) : model_(m), view_(v) { view_.show(model_.quantity()); }\n  bool onChange(int delta) { bool ok = model_.change(delta); view_.show(model_.quantity()); return ok; }\n};\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Stock model; View view; Presenter presenter(model, view); int rejected = 0;\n  for (int x : commands) if (!presenter.onChange(x)) ++rejected;\n  std::cout << \"stock \" << view.last << \" rejected \" << rejected << '\\n';\n}\n",
+      "quiz": {
+        "question": "Кто проверяет допустимый запас?",
+        "answers": [
+          "Stock.",
+          "QLabel.",
+          "std::cin."
+        ],
+        "correctIndex": 0,
+        "explanation": "Инвариант относится к предметной модели."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Модель",
+          "Компонент предметных данных и правил изменения."
+        ],
+        [
+          "Представление",
+          "Компонент отображения состояния для пользователя."
+        ],
+        [
+          "Presenter",
+          "Связывает пользовательское намерение, модель и отображение."
+        ],
+        [
+          "Test double",
+          "Контролируемая замена зависимости для проверки."
+        ],
+        [
+          "Инъекция зависимостей",
+          "Передача зависимостей явно через интерфейс объекта."
+        ],
+        [
+          "Короткое замыкание",
+          "Вычисление логической цепочки останавливается после определяющего операнда."
+        ],
+        [
+          "Инвариант",
+          "Условие, сохраняющееся на границах допустимых операций модели."
+        ],
+        [
+          "Наблюдаемое поведение",
+          "Согласованный результат, по которому клиент отличает выполнение контракта от ошибки."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.validated-user-commands",
+      "legacyIndex": null,
+      "order": 60,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Валидация команд и сохранность состояния",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 5,
+      "description": "Разберите числовое поле полностью, объясните ошибку и применяйте значение только после всех проверок.",
+      "theory": [
+        "Разберите числовое поле полностью, объясните ошибку и применяйте значение только после всех проверок."
+      ],
+      "deep": "Поле ввода возвращает текст, а модель ожидает значение с ограничениями. Строка 12x содержит числовой префикс, но не соответствует договору «одно целое число». Нельзя молча применять двенадцать. В лабораторной каждая строка — отдельная команда установки числа 0…100; отклонённая строка сохраняет предыдущее значение.",
+      "analogy": "std::from_chars получает указатели начала и конца диапазона и ссылку на число. Результат содержит ptr и ec. Structured binding auto [ptr, ec] даёт имена двум полям. ec проверяет успех преобразования, ptr должен совпасть с концом строки. Успешный разбор префикса не обеспечивает полного потребления входа.",
+      "commonMistake": "Результат после отказа изменился.",
+      "code": "#include <iostream>\n#include <charconv>\n#include <string>\nbool parse(const std::string& text, int& result) {\n  int candidate = 0;\n  const auto [ptr, ec] = std::from_chars(text.data(), text.data() + text.size(), candidate);\n  if (ec != std::errc{} || ptr != text.data() + text.size()) return false;\n  result = candidate; return true;\n}\nint main() { int value = 17; std::cout << parse(\"12x\", value) << ' ' << value << '\\n'; }\n",
+      "task": "До восьми строк-команд, исходное value=17. Полностью разберите каждую строку длиной 1…32 байта через integer from_chars, без пробелов и плюса. Принимайте 0…100. Отказ сохраняет value и увеличивает rejected. Более восьми строк: invalid.",
+      "hint": "Сохраните проверяемый результат: До восьми строк-команд, исходное value=17. Полностью разберите каждую строку длиной 1…32 байта через integer from_chars, без пробелов и плюса. Принимайте 0…100. Отказ сохраняет value и увеличивает rejected. Более восьми строк: invalid. Объясните выбранный контракт и предъявите независимый пример.",
+      "solution": "#include <iostream>\n#include <charconv>\n#include <string>\nbool update(int& value, const std::string& text) {\n  if (text.empty() || text.size() > 32) return false;\n  int candidate = 0;\n  auto [ptr, ec] = std::from_chars(text.data(), text.data() + text.size(), candidate);\n  if (ec != std::errc{} || ptr != text.data() + text.size() || candidate < 0 || candidate > 100) return false;\n  value = candidate; return true;\n}\nint main() {\n  int value = 17, rejected = 0, count = 0;\n  std::string line;\n  while (std::getline(std::cin, line)) {\n    if (++count > 8) { std::cout << \"invalid\\n\"; return 0; }\n    if (!update(value, line)) ++rejected;\n  }\n  std::cout << \"value \" << value << \" rejected \" << rejected << '\\n';\n}\n",
+      "quiz": {
+        "question": "Достаточно ли ec==errc{}?",
+        "answers": [
+          "Нет, нужен ptr==end и диапазон.",
+          "Да, всегда.",
+          "Нужен только размер строки."
+        ],
+        "correctIndex": 0,
+        "explanation": "Префикс может быть корректным, а остаток нет."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Грамматика ввода",
+          "Описание допустимой последовательности символов команды."
+        ],
+        [
+          "Полное потребление",
+          "После разбора не остаётся непроверенных символов."
+        ],
+        [
+          "candidate",
+          "Временное значение до проверки и применения."
+        ],
+        [
+          "errc",
+          "Код результата преобразования, проверяемый вызывающей стороной."
+        ],
+        [
+          "Переполнение представления",
+          "Число невозможно представить выбранным числовым типом."
+        ],
+        [
+          "Предметный диапазон",
+          "Границы, заданные требованиями приложения, а не только типом."
+        ],
+        [
+          "Инвариант",
+          "Условие, сохраняющееся на границах допустимых операций модели."
+        ],
+        [
+          "Наблюдаемое поведение",
+          "Согласованный результат, по которому клиент отличает выполнение контракта от ошибки."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.callback-lifetime-subscriptions",
+      "legacyIndex": null,
+      "order": 61,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Время жизни callbacks и RAII-подписки",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 6,
+      "description": "Спроектируйте подписку, которая отключается при выходе из scope и не обращается к уничтоженному получателю.",
+      "theory": [
+        "Спроектируйте подписку, которая отключается при выходе из scope и не обращается к уничтоженному получателю."
+      ],
+      "deep": "Источник событий и получатель могут исчезнуть в разное время. Захват сырого this не продлевает жизнь объекта; callback, сохранённый источником, способен пережить получателя. shared_ptr в захвате продлевает владение, но иногда создаёт цикл. До выбора указателя нарисуйте граф: кто владеет источником, получателем и объектом подписки.",
+      "analogy": "lock возвращает shared_ptr, если объект ещё существует, иначе пустой указатель. Конструкция if(auto value=weak.lock()) создаёт локального владельца на время тела if. В этом блоке объект не исчезнет из-за удаления последнего внешнего shared_ptr. Отдельная проверка expired перед обращением по сырому адресу не даёт такого же контракта владения.",
+      "commonMistake": "Результат после отказа изменился.",
+      "code": "#include <iostream>\n#include <memory>\nint main() {\n  auto owner = std::make_shared<int>(7); std::weak_ptr<int> observer = owner;\n  if (auto value = observer.lock()) std::cout << *value << '\\n';\n  owner.reset();\n  std::cout << \"expired \" << observer.expired() << '\\n';\n}\n",
+      "task": "Введите mode 0, 1 или 2 без хвоста. Подпишитесь, вызовите emit. В mode 1 уничтожьте получателя; в mode 2 удалите handlers. Вызовите emit снова, выйдите из scope подписки и вызовите третий emit. Выведите значение получателя (-1 при отсутствии) и число подписок.",
+      "hint": "Сохраните проверяемый результат: Введите mode 0, 1 или 2 без хвоста. Подпишитесь, вызовите emit. В mode 1 уничтожьте получателя; в mode 2 удалите handlers. Вызовите emit снова, выйдите из scope подписки и вызовите третий emit. Выведите значение получателя (-1 при отсутствии) и число подписок. Объясните выбранный контракт и предъявите независимый пример.",
+      "solution": "#include <iostream>\n#include <memory>\n#include <map>\n#include <vector>\n#include <functional>\nstruct SignalState { int next = 1; std::map<int, std::function<void()>> handlers; };\nclass Subscription {\n  std::weak_ptr<SignalState> state_; int id_;\npublic:\n  Subscription(std::shared_ptr<SignalState> state, int id) : state_(state), id_(id) {}\n  Subscription(const Subscription&) = delete;\n  Subscription& operator=(const Subscription&) = delete;\n  ~Subscription() { if (auto s = state_.lock()) s->handlers.erase(id_); }\n};\nvoid emit(const std::shared_ptr<SignalState>& s) {\n  std::vector<int> ids;\n  for (const auto& [id, handler] : s->handlers) ids.push_back(id);\n  for (int id : ids) {\n    auto it = s->handlers.find(id);\n    if (it != s->handlers.end()) { auto handler = it->second; if (handler) handler(); }\n  }\n}\nint main() {\n  int mode;\n  if (!(std::cin >> mode) || mode < 0 || mode > 2) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  auto signal = std::make_shared<SignalState>();\n  auto receiver = std::make_shared<int>(0); std::weak_ptr<int> weak = receiver;\n  { int id = signal->next++;\n    signal->handlers.emplace(id, [weak] { if (auto value = weak.lock()) ++*value; });\n    Subscription subscription(signal, id);\n    emit(signal);\n    if (mode == 1) receiver.reset();\n    if (mode == 2) signal->handlers.clear();\n    emit(signal);\n  }\n  emit(signal);\n  std::cout << \"value \" << (receiver ? *receiver : -1) << \" subscriptions \" << signal->handlers.size() << '\\n';\n}\n",
+      "quiz": {
+        "question": "Продлевает ли weak_ptr жизнь объекта?",
+        "answers": [
+          "Нет.",
+          "Да, всегда.",
+          "Только после expired."
+        ],
+        "correctIndex": 0,
+        "explanation": "Владение на время вызова создаётся успешным lock."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Подписка",
+          "Ресурс регистрации обработчика с определённым сроком жизни."
+        ],
+        [
+          "Слабая ссылка",
+          "Наблюдение за объектом без продления его времени жизни."
+        ],
+        [
+          "lock",
+          "Попытка получить временное совместное владение живым объектом."
+        ],
+        [
+          "Цикл владения",
+          "Взаимное удержание владельцев, мешающее освобождению."
+        ],
+        [
+          "Снимок идентификаторов",
+          "Зафиксированный набор кандидатов для одной операции рассылки."
+        ],
+        [
+          "Контекст соединения",
+          "Объект, с которым связан срок жизни вызова callback."
+        ],
+        [
+          "Инвариант",
+          "Условие, сохраняющееся на границах допустимых операций модели."
+        ],
+        [
+          "Наблюдаемое поведение",
+          "Согласованный результат, по которому клиент отличает выполнение контракта от ошибки."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.responsive-work-cancellation",
+      "legacyIndex": null,
+      "order": 62,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Отзывчивость, порции работы и отмена",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 7,
+      "description": "Разбейте вычисление на ограниченные шаги и отмените его, не применяя частичный результат.",
+      "theory": [
+        "Разбейте вычисление на ограниченные шаги и отмените его, не применяя частичный результат."
+      ],
+      "deep": "В однопоточном приложении обработчик, занявший цикл событий, не даёт выполнить следующую пользовательскую команду. Быстрый средний случай не гарантирует отзывчивость на большом входе. Разделите операцию на порции, после каждой возвращая управление планировщику. Важно ограничить не только число вызовов, но и объём работы внутри одного вызова.",
+      "analogy": "size задаёт объём, done — число обработанных элементов, candidate — накопленный черновой результат. Инвариант 0≤done≤size проверяется рассуждением о step. Бюджет уменьшается при каждой итерации, а done растёт только до size. Поэтому каждый вызов ограничен тремя элементами, даже если общая задача требует много вызовов.",
+      "commonMistake": "Результат после отказа изменился.",
+      "code": "#include <iostream>\nint main() { int done = 0; for (int tick = 0; tick < 2; ++tick) { int budget = 3; while (budget-- > 0 && done < 8) ++done; std::cout << \"done \" << done << '\\n'; } }\n",
+      "task": "Введите n=0…100 и cancelAt=-1…40. Один step обрабатывает до трёх чисел 1…n. -1 не отменяет; иначе отмена запрашивается перед шагом с индексом cancelAt. Завершённую задачу поздняя отмена не меняет. Незавершённый результат не применяется.",
+      "hint": "Сохраните проверяемый результат: Введите n=0…100 и cancelAt=-1…40. Один step обрабатывает до трёх чисел 1…n. -1 не отменяет; иначе отмена запрашивается перед шагом с индексом cancelAt. Завершённую задачу поздняя отмена не меняет. Незавершённый результат не применяется. Объясните выбранный контракт и предъявите независимый пример.",
+      "solution": "#include <iostream>\nclass Job {\n  int size_, done_ = 0, candidate_ = 0; bool cancelled_ = false;\npublic:\n  explicit Job(int n) : size_(n) {}\n  void cancel() { if (done_ < size_) cancelled_ = true; }\n  void step() { if (cancelled_) return; int budget = 3; while (budget-- > 0 && done_ < size_) { ++done_; candidate_ += done_; } }\n  bool finished() const { return done_ == size_; }\n  bool cancelled() const { return cancelled_; }\n  int done() const { return done_; }\n  int result() const { return finished() ? candidate_ : 0; }\n};\nint main() {\n  int n, cancelAt;\n  if (!(std::cin >> n >> cancelAt) || n < 0 || n > 100 || cancelAt < -1 || cancelAt > 40) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Job job(n); int tick = 0;\n  while (!job.finished() && !job.cancelled()) { if (tick == cancelAt) job.cancel(); if (!job.cancelled()) { job.step(); ++tick; } }\n  std::cout << (job.cancelled() ? \"cancelled\" : \"done\") << \" processed \" << job.done() << \" result \" << job.result() << '\\n';\n}\n",
+      "quiz": {
+        "question": "Сколько элементов обрабатывает step?",
+        "answers": [
+          "Не более трёх.",
+          "Всегда все.",
+          "Ровно n потоков."
+        ],
+        "correctIndex": 0,
+        "explanation": "Бюджет ограничен независимо от общего размера."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Бюджет шага",
+          "Максимальный объём работы одного кооперативного вызова."
+        ],
+        [
+          "Кооперативное выполнение",
+          "Операция явно возвращает управление между порциями работы."
+        ],
+        [
+          "Отмена",
+          "Запрос прекратить незавершённую работу согласно контракту."
+        ],
+        [
+          "Черновой результат",
+          "Накопленные данные, ещё не применённые к основной модели."
+        ],
+        [
+          "Точка фиксации",
+          "Момент, после которого результат считается применённым."
+        ],
+        [
+          "Объединение обновлений",
+          "Замена эквивалентных запросов обновления одним запросом."
+        ],
+        [
+          "Инвариант",
+          "Условие, сохраняющееся на границах допустимых операций модели."
+        ],
+        [
+          "Наблюдаемое поведение",
+          "Согласованный результат, по которому клиент отличает выполнение контракта от ошибки."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.versioned-model-persistence",
+      "legacyIndex": null,
+      "order": 63,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Сохранение модели и версия формата",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 8,
+      "description": "Реализуйте проверяемый roundtrip и загрузку через candidate с сохранением прежней модели при отказе.",
+      "theory": [
+        "Реализуйте проверяемый roundtrip и загрузку через candidate с сохранением прежней модели при отказе."
+      ],
+      "deep": "Сохранённые данные могут пережить версию программы. Нужен явный признак формата и описание полей. Учебный EV1 содержит число элементов и значения 0…100. Будущий EV2 нельзя читать как EV1 по догадке: одинаковые числа могут иметь иной смысл. Неизвестная версия отклоняется до изменения модели, а миграция должна быть отдельным проверяемым алгоритмом.",
+      "analogy": "load сначала читает и проверяет version и count, затем собирает отдельный vector candidate. Каждый элемент проверяется до добавления; после последнего проверяется конец входа. Только успешная проверка всей записи разрешает model.swap(candidate). До swap модель содержит прежние данные. Отказ не требует вручную восстанавливать уже переписанные элементы.",
+      "commonMistake": "Результат после отказа изменился.",
+      "code": "#include <iostream>\n#include <sstream>\nint main() { std::ostringstream out; out << \"EV1 \" << 7; std::istringstream in(out.str()); std::string version; int value = 0; in >> version >> value; std::cout << version << ' ' << value << '\\n'; }\n",
+      "task": "Формат EV1 count values, count=0…8, каждое value=0…100, хвост только пробельный. При отказе прежняя модель {99} сохраняется и печатается rejected 99. При успехе сохраните в память, загрузите в копию и сравните; stdout — каноническая запись EV1.",
+      "hint": "Сохраните проверяемый результат: Формат EV1 count values, count=0…8, каждое value=0…100, хвост только пробельный. При отказе прежняя модель {99} сохраняется и печатается rejected 99. При успехе сохраните в память, загрузите в копию и сравните; stdout — каноническая запись EV1. Объясните выбранный контракт и предъявите независимый пример.",
+      "solution": "#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nbool load(std::istream& in, std::vector<int>& model) {\n  std::string version; int count;\n  if (!(in >> version >> count) || version != \"EV1\" || count < 0 || count > 8) return false;\n  std::vector<int> candidate;\n  for (int i = 0; i < count; ++i) { int x; if (!(in >> x) || x < 0 || x > 100) return false; candidate.push_back(x); }\n  in >> std::ws; if (!in.eof()) return false;\n  model.swap(candidate); return true;\n}\nvoid save(std::ostream& out, const std::vector<int>& values) { out << \"EV1 \" << values.size(); for (int x : values) out << ' ' << x; out << '\\n'; }\nint main() {\n  std::vector<int> model{99};\n  if (!load(std::cin, model)) { std::cout << \"rejected \" << model[0] << '\\n'; return 0; }\n  std::ostringstream bytes; save(bytes, model); std::istringstream input(bytes.str()); std::vector<int> copy;\n  if (!load(input, copy) || copy != model) return 1;\n  std::cout << bytes.str();\n}\n",
+      "quiz": {
+        "question": "Когда применяется candidate?",
+        "answers": [
+          "После всей проверки и проверки конца.",
+          "После первого числа.",
+          "До чтения версии."
+        ],
+        "correctIndex": 0,
+        "explanation": "swap завершает подготовку целой модели."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Сериализация",
+          "Преобразование модели в явно определённый формат данных."
+        ],
+        [
+          "Десериализация",
+          "Проверяемое восстановление модели из формата данных."
+        ],
+        [
+          "Marker версии",
+          "Признак, определяющий способ интерпретации записи."
+        ],
+        [
+          "Roundtrip",
+          "Проверка восстановления модели после её сохранения."
+        ],
+        [
+          "Канонический вывод",
+          "Однозначное представление данных при сохранении."
+        ],
+        [
+          "Миграция",
+          "Явное преобразование данных между описанными версиями."
+        ],
+        [
+          "Инвариант",
+          "Условие, сохраняющееся на границах допустимых операций модели."
+        ],
+        [
+          "Наблюдаемое поведение",
+          "Согласованный результат, по которому клиент отличает выполнение контракта от ошибки."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.event-testing-replay",
+      "legacyIndex": null,
+      "order": 64,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Тестирование событий и воспроизводимые трассы",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 9,
+      "description": "Проверьте модель через трассы, инварианты, повтор и контролируемую мутацию реализации.",
+      "theory": [
+        "Проверьте модель через трассы, инварианты, повтор и контролируемую мутацию реализации."
+      ],
+      "deep": "Ошибка событийного приложения может проявиться только после нескольких действий. Один вызов add ничего не говорит о последовательности add→complete→complete или import→ошибка→save. Тесту нужны начальное состояние, упорядоченная трасса, наблюдения после шагов и ожидаемый итог. Удаление лишних событий из сбойной трассы помогает найти минимальное воспроизведение.",
+      "analogy": "replay получает весь вход как const vector и создаёт новое локальное состояние. Она не читает часы, случайный seed, окно или глобальный счётчик. Два вызова с одной трассой должны вернуть равные Result. Оператор == с =default в C++20 сравнивает поля value и rejected; добавление нового поля должно сопровождаться пересмотром наблюдаемого контракта.",
+      "commonMistake": "Результат после отказа изменился.",
+      "code": "#include <iostream>\n#include <vector>\nint replay(const std::vector<int>& trace) { int state = 0; for (int delta : trace) if (state + delta >= 0 && state + delta <= 10) state += delta; return state; }\nint main() { const std::vector<int> trace{3, -5, 2}; std::cout << replay(trace) << ' ' << replay(trace) << '\\n'; }\n",
+      "task": "n=0…20 и n целых смещений. Начальное value=0; принимайте delta=-10…10 при результате 0…10. Иначе один отказ без изменения value. Дважды replay одной трассы должен совпасть; stdout содержит value, rejected и replay PASS.",
+      "hint": "Сохраните проверяемый результат: n=0…20 и n целых смещений. Начальное value=0; принимайте delta=-10…10 при результате 0…10. Иначе один отказ без изменения value. Дважды replay одной трассы должен совпасть; stdout содержит value, rejected и replay PASS. Объясните выбранный контракт и предъявите независимый пример.",
+      "solution": "#include <iostream>\n#include <vector>\nstruct Result { int value = 0, rejected = 0; bool operator==(const Result&) const = default; };\nResult replay(const std::vector<int>& trace) {\n  Result r;\n  for (int x : trace) { if (x < -10 || x > 10 || r.value + x < 0 || r.value + x > 10) ++r.rejected; else r.value += x; }\n  return r;\n}\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 20) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> trace(n);\n  for (int& x : trace) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  const Result a = replay(trace), b = replay(trace);\n  if (!(a == b) || a.value < 0 || a.value > 10) return 1;\n  std::cout << \"value \" << a.value << \" rejected \" << a.rejected << \" replay PASS\\n\";\n}\n",
+      "quiz": {
+        "question": "Доказывают ли два одинаковых запуска правильность?",
+        "answers": [
+          "Нет, нужен независимый ожидаемый результат.",
+          "Да.",
+          "Только при пустом вводе."
+        ],
+        "correctIndex": 0,
+        "explanation": "Повторяемая ошибка остаётся ошибкой."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Детерминизм",
+          "Одинаковый описанный вход даёт одинаковое наблюдение."
+        ],
+        [
+          "Replay",
+          "Повторное применение сохранённой трассы к начальному состоянию."
+        ],
+        [
+          "Оракул теста",
+          "Независимое правило определения ожидаемого результата."
+        ],
+        [
+          "Мутация",
+          "Контролируемое изменение реализации для проверки чувствительности теста."
+        ],
+        [
+          "Минимальное воспроизведение",
+          "Уменьшенный сценарий, сохраняющий проявление дефекта."
+        ],
+        [
+          "Регрессия",
+          "Нарушение ранее принятого поведения после изменения."
+        ],
+        [
+          "Инвариант",
+          "Условие, сохраняющееся на границах допустимых операций модели."
+        ],
+        [
+          "Наблюдаемое поведение",
+          "Согласованный результат, по которому клиент отличает выполнение контракта от ошибки."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.multifile-event-application",
+      "legacyIndex": null,
+      "order": 65,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Многофайловое событийное приложение",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 10,
+      "description": "Соберите ядро планировщика из интерфейса, реализации, адаптера и отдельного тестового драйвера.",
+      "theory": [
+        "Соберите ядро планировщика из интерфейса, реализации, адаптера и отдельного тестового драйвера."
+      ],
+      "deep": "include/model.hpp объявляет Board; src/model.cpp реализует правила; main.cpp переводит вход в команды и печатает результат. Заголовок нужен обоим cpp, но определения обычных функций хранятся в реализации. pragma once предотвращает повторное включение заголовка в одну translation unit; оно не исправляет повторное определение функции в нескольких единицах трансляции.",
+      "analogy": "Создайте отдельный C++ проект, добавьте все указанные файлы и задайте includeRoots=include. Приложение собирает main.cpp и src/model.cpp. Тестовый драйвер заменяет main.cpp, а не добавляет второй main. Файл в каталоге tests не становится тестом автоматически: состав сборки должен быть известен и воспроизводим.",
+      "commonMistake": "Результат после отказа изменился.",
+      "code": "#include <iostream>\nstruct Command { int amount; };\nint update(int state, Command command) { return state + command.amount; }\nint main() { std::cout << update(3, Command{4}) << '\\n'; }\n",
+      "task": "n=0…12 и n целых команд. 0 добавляет задачу, максимум восемь. Положительное число завершает существующий id=позиция+1. Повтор завершения принят без повторного увеличения done. Иная команда отклоняется. Неполный или лишний ввод: invalid.",
+      "hint": "Сохраните проверяемый результат: n=0…12 и n целых команд. 0 добавляет задачу, максимум восемь. Положительное число завершает существующий id=позиция+1. Повтор завершения принят без повторного увеличения done. Иная команда отклоняется. Неполный или лишний ввод: invalid. Объясните выбранный контракт и предъявите независимый пример.",
+      "solution": "#include \"model.hpp\"\n#include <iostream>\n#include <vector>\nint main() {\n  int n;\n  if (!(std::cin >> n) || n < 0 || n > 12) { std::cout << \"invalid\\n\"; return 0; }\n  std::vector<int> commands(n);\n  for (int& x : commands) if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n  std::cin >> std::ws;\n  if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n  Board board; int rejected = 0;\n  for (int command : commands) if (!board.apply(command)) ++rejected;\n  std::cout << \"tasks \" << board.count() << \" done \" << board.done() << \" rejected \" << rejected << '\\n';\n}\n",
+      "quiz": {
+        "question": "Какие TU входят в приложение?",
+        "answers": [
+          "main.cpp и src/model.cpp.",
+          "Только model.hpp.",
+          "Все файлы с двумя main."
+        ],
+        "correctIndex": 0,
+        "explanation": "Заголовок включается, определения модели линкуются отдельно."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Translation unit",
+          "Исходный cpp после обработки включений препроцессором."
+        ],
+        [
+          "ODR",
+          "Правила допустимого количества определений сущностей программы."
+        ],
+        [
+          "Линковка",
+          "Соединение скомпилированных единиц с разрешением определений."
+        ],
+        [
+          "Адаптер",
+          "Перевод внешнего протокола в контракт предметной модели."
+        ],
+        [
+          "Устойчивый ID",
+          "Идентификатор сущности, не зависящий от текущей позиции списка."
+        ],
+        [
+          "Состав сборки",
+          "Явный набор исходников, заголовков и настроек компиляции."
+        ],
+        [
+          "Инвариант",
+          "Условие, сохраняющееся на границах допустимых операций модели."
+        ],
+        [
+          "Наблюдаемое поведение",
+          "Согласованный результат, по которому клиент отличает выполнение контракта от ошибки."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.qt-graphical-adapter",
+      "legacyIndex": null,
+      "order": 66,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Настоящий графический адаптер Qt",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 11,
+      "description": "Подключите TaskModel к настоящим виджетам Qt и выполните пользовательский сценарий внутри Nexus.",
+      "theory": [
+        "Подключите TaskModel к настоящим виджетам Qt и выполните пользовательский сценарий внутри Nexus."
+      ],
+      "deep": "Qt — дополнительная библиотека, не часть стандартного C++. Она требует собственного SDK и сборочной цепочки. В Nexus выберите Project Studio → новое приложение C++, затем src/gui.cpp. Кнопка сборки компилирует ваш C++ в Qt/WebAssembly и показывает приложение в отдельном Preview. Консольный редактор урока с Clang/WASI не содержит Qt и для этого задания не подходит.",
+      "analogy": "QApplication инициализирует графическую среду. TaskWindow наследует QWidget; QVBoxLayout располагает элементы вертикально без ручных координат. QLineEdit принимает текст, QPushButton выражает действие, QListWidget показывает задачи, QLabel — статус. Родитель this передаёт дочерние QObject во владение окна, поэтому вручную удалять их вместе с родителем не требуется.",
+      "commonMistake": "Результат после отказа изменился.",
+      "code": "#include <iostream>\nstruct Command { int amount; };\nint update(int state, Command command) { return state + command.amount; }\nint main() { std::cout << update(3, Command{4}) << '\\n'; }\n",
+      "task": "Создайте новое приложение C++ в Project Studio. Добавьте счётчик всех задач QLabel и обновляйте его из модели при refresh. Сохраните существующие Add/Enter/Complete/Save, доступное имя Task title и формат NXTF1. Пустой или пробельный заголовок не создаёт задачу.",
+      "hint": "Сохраните проверяемый результат: Создайте новое приложение C++ в Project Studio. Добавьте счётчик всех задач QLabel и обновляйте его из модели при refresh. Сохраните существующие Add/Enter/Complete/Save, доступное имя Task title и формат NXTF1. Пустой или пробельный заголовок не создаёт задачу. Объясните выбранный контракт и предъявите независимый пример.",
+      "solution": "#include <iostream>\nstruct Task { bool done = false; void complete() { done = true; } };\nint main() { Task task; task.complete(); task.complete(); std::cout << \"done \" << task.done << '\\n'; }\n",
+      "quiz": {
+        "question": "Где выполнять Qt лабораторную?",
+        "answers": [
+          "В приложении C++ Project Studio.",
+          "В обычном WASI уроке.",
+          "Только вне Nexus."
+        ],
+        "correctIndex": 0,
+        "explanation": "Qt имеет отдельную проверенную сборочную цепочку."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Qt Widgets",
+          "Библиотека настоящих графических компонентов приложения."
+        ],
+        [
+          "Сигнал",
+          "Уведомление Qt об изменении или действии объекта."
+        ],
+        [
+          "Context",
+          "QObject, ограничивающий срок жизни соединения callback."
+        ],
+        [
+          "Layout",
+          "Компонент автоматического размещения виджетов."
+        ],
+        [
+          "Preview",
+          "Изолированный запуск скомпилированного приложения учащегося."
+        ],
+        [
+          "UserRole",
+          "Поле данных элемента, используемое для id предметной сущности."
+        ],
+        [
+          "Инвариант",
+          "Условие, сохраняющееся на границах допустимых операций модели."
+        ],
+        [
+          "Наблюдаемое поведение",
+          "Согласованный результат, по которому клиент отличает выполнение контракта от ошибки."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
+    },
+    {
+      "id": "cpp.application-build-delivery",
+      "legacyIndex": null,
+      "order": 67,
+      "sectionId": "cpp.section.visual-programming",
+      "title": "Сборка, сохранение и сдача приложения",
+      "status": "gold-candidate",
+      "contentStatus": "gold-candidate",
+      "learningOrder": 12,
+      "description": "Завершите проверяемый проект в Nexus: GUI, данные, тесты, переносимый архив, точная версия сдачи и защита.",
+      "theory": [
+        "Завершите проверяемый проект в Nexus: GUI, данные, тесты, переносимый архив, точная версия сдачи и защита."
+      ],
+      "deep": "Исходники не равны запущенному приложению. Состав проекта, настройки CMake, target и версия SDK определяют результат сборки. В проверенном пилоте Qt 6.8.3 и Emscripten 3.1.56; консольный C++20 target использует другую среду. Сохраните эти сведения в README, не обещая работу в произвольной версии Qt или браузера без проверки.",
+      "analogy": "TaskFlow сериализует NXTF1 в разрешённый taskflow.txt. Сначала нажмите Save application data в самом приложении, затем используйте сохранение данных в панели Студии и подтвердите наличие файла в проекте. После Stop и нового запуска список должен восстановиться. Наличие файла только внутри работающего Preview ещё не доказывает сохранение после закрытия.",
+      "commonMistake": "Результат после отказа изменился.",
+      "code": "#include <iostream>\nstruct Command { int amount; };\nint update(int state, Command command) { return state + command.amount; }\nint main() { std::cout << update(3, Command{4}) << '\\n'; }\n",
+      "task": "В новом проекте TaskFlow реализуйте open/done счётчики и фильтр all/open в GUI. Фильтр не удаляет модель, сохраняет устойчивые id и все данные NXTF1. Проверьте сохранение, Stop→Run, модельные тесты, неизменяемую сдачу и переносимый ZIP внутри Nexus.",
+      "hint": "Сохраните проверяемый результат: В новом проекте TaskFlow реализуйте open/done счётчики и фильтр all/open в GUI. Фильтр не удаляет модель, сохраняет устойчивые id и все данные NXTF1. Проверьте сохранение, Stop→Run, модельные тесты, неизменяемую сдачу и переносимый ZIP внутри Nexus. Объясните выбранный контракт и предъявите независимый пример.",
+      "solution": "#include <iostream>\nstruct Task { bool done = false; void complete() { done = true; } };\nint main() { Task task; task.complete(); task.complete(); std::cout << \"done \" << task.done << '\\n'; }\n",
+      "quiz": {
+        "question": "Меняет ли редактирование уже сданную ревизию?",
+        "answers": [
+          "Нет.",
+          "Да, всегда.",
+          "Только название."
+        ],
+        "correctIndex": 0,
+        "explanation": "Сдача хранит неизменяемый снимок."
+      },
+      "requirements": [],
+      "terms": [
+        [
+          "Снимок исходников",
+          "Зафиксированный набор байтов проекта для сборки или сдачи."
+        ],
+        [
+          "Ревизия сдачи",
+          "Неизменяемая версия работы, которую рассматривает преподаватель."
+        ],
+        [
+          "Рубрика",
+          "Критерии оценки с описанием наблюдаемых результатов."
+        ],
+        [
+          "Переносимый архив",
+          "Исходники и инструкция, пригодные для независимой сборки."
+        ],
+        [
+          "Фильтр представления",
+          "Выбор показываемых объектов без удаления предметных данных."
+        ],
+        [
+          "Защита",
+          "Объяснение решений и самостоятельное изменение программы."
+        ],
+        [
+          "Инвариант",
+          "Условие, сохраняющееся на границах допустимых операций модели."
+        ],
+        [
+          "Наблюдаемое поведение",
+          "Согласованный результат, по которому клиент отличает выполнение контракта от ошибки."
+        ]
+      ],
+      "visualization": null,
+      "pdfPages": [],
+      "pdfNotes": []
     }
   ]
 }

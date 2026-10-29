@@ -1,0 +1,366 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.structured-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.while-do-while",
+  "sessions": 2,
+  "learningOrder": 3,
+  "prerequisiteIds": [
+    "cpp.for-loop"
+  ],
+  "sourceRefs": [
+    "CPP20-ITERATION",
+    "CPP20-STREAM-STATE"
+  ],
+  "title": "while and do while: finite streams and termination",
+  "lead": "Process an unknown number of items while distinguishing EOF, a sentinel, and malformed input.",
+  "why": "Logs and commands continue until a stopping event. Each iteration must make progress without losing the final value or confusing failure with normal completion.",
+  "objectives": [
+    "Explain: Pre-test and post-test loops",
+    "Trace: Reading is a progress operation",
+    "Justify: Classify extraction failure",
+    "Implement and verify the lab against its exact contract.",
+    "Identify a common defect: An oversized final number can set both fail and eof. eof alone does not prove a token was valid."
+  ],
+  "prerequisites": [
+    "Modules 1–2: expressions, comparisons, types, references, and checked cin.",
+    "Follow the prerequisite links: cpp.for-loop. New constructs are introduced before the assignment."
+  ],
+  "concepts": [
+    {
+      "term": "Sentinel",
+      "definition": "a value that terminates a sequence under its contract."
+    },
+    {
+      "term": "EOF",
+      "definition": "a state set after the end of input has been encountered."
+    },
+    {
+      "term": "Pre-test loop",
+      "definition": "the condition is checked before the body."
+    },
+    {
+      "term": "Post-test loop",
+      "definition": "the condition is checked after a mandatory initial body."
+    },
+    {
+      "term": "Progress",
+      "definition": "a change reducing the remaining work."
+    },
+    {
+      "term": "Finite stdin",
+      "definition": "a supplied buffer with a detectable end."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Pre-test and post-test loops",
+      "paragraphs": [
+        "while(condition) tests before the body and can execute zero times. do {body} while(condition); tests after the body and executes at least once. The final semicolon is required for do while; after a regular while it usually creates an unintended empty body.",
+        "Choose according to the contract. A sequence should be processed only when another value exists, making while(std::cin>>x) natural. A mandatory initial action may use do while, but this never justifies using an unread x."
+      ]
+    },
+    {
+      "title": "Reading is a progress operation",
+      "paragraphs": [
+        "In while(cin>>x), successful extraction supplies a new value and enters the body. Failure stops before x is used. Testing !cin.eof() before reading is wrong: eof reports an already encountered end rather than predicting the next extraction’s success.",
+        "When a condition contains only a flag, the body must update it or obtain new data. Ensure continue cannot skip the next progress operation. Even Nexus’s finite input cannot rescue a loop that has stopped consuming it."
+      ]
+    },
+    {
+      "title": "EOF, a sentinel, and a limit",
+      "paragraphs": [
+        "EOF is the end of the supplied buffer; a sentinel such as 0 means stop under the task’s rules. The sentinel is consumed but usually excluded from the sum. State explicitly whether data after it is rejected or ignored.",
+        "A count limit bounds memory and time even for valid input. The lab permits at most 100 nonzero measurements with magnitude at most 1000, so the absolute sum cannot exceed 100000. Check the limit before changing the result."
+      ]
+    },
+    {
+      "title": "Classify extraction failure",
+      "paragraphs": [
+        "After extraction stops, determine why. For the lab’s constrained short integers, an exhausted remainder is normal EOF and a letter is malformed input. With arbitrary tokens, fail and eof may both be set for an invalid or oversized number.",
+        "Preserve the distinction by first consuming allowed whitespace and checking EOF, then attempting extraction. If a token exists but extraction fails, reject it even if eof=true. Full line parsing and recovery are developed in the stream-state lesson."
+      ]
+    },
+    {
+      "title": "A stream invariant",
+      "paragraphs": [
+        "Before each step, count is the number of accepted values, sum is their sum, and the buffer begins with unprocessed input. Validate the range before adding. On rejection, produce invalid rather than a partially successful answer.",
+        "Termination follows from consuming the remaining finite buffer on each successful read and explicitly handling failure. A sentinel stops earlier. Waiting for more input may be normal in an interactive terminal; Nexus supplies the whole stdin buffer before execution."
+      ]
+    },
+    {
+      "title": "Choosing and checking the form",
+      "paragraphs": [
+        "Use for for a known n and while for input until EOF or stop. do while suits repetition after one mandatory initial action. Do not simulate a live menu by waiting for input absent from the supplied buffer.",
+        "Test empty input, a sentinel alone, one value, normal EOF, a letter, and an oversized numeric token. Keep a count/sum trace. Next, extract the computation into a function so input handling and calculation can be tested separately."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "finite",
+      "title": "A stream up to a sentinel",
+      "purpose": "Zero is excluded from the sum; this example deliberately ignores the tail after it.",
+      "code": "#include <iostream>\nint main() {\n    int value{};\n    int sum{};\n    int count{};\n    while (count < 10 && (std::cin >> value)) {\n        if (value == 0) { break; }\n        if (value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        sum += value;\n        ++count;\n    }\n    std::cout << count << ' ' << sum << '\\n';\n}\n",
+      "stdin": "2 3 0 99",
+      "expectedStdout": "2 5\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "0 0\n"
+        },
+        {
+          "stdin": "7",
+          "stdout": "1 7\n"
+        }
+      ]
+    },
+    {
+      "id": "post-test",
+      "title": "A mandatory first step",
+      "purpose": "do while executes its body once even when the condition is false.",
+      "code": "#include <iostream>\nint main() {\n    int before{};\n    while (false) { ++before; }\n    int after{};\n    do { ++after; } while (false);\n    std::cout << before << ' ' << after << '\\n';\n}\n",
+      "stdin": "",
+      "expectedStdout": "0 1\n",
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ],
+      "cases": []
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Predict before running",
+      "action": "Trace the first worked example step by step, then run all of its cases.",
+      "prediction": "Every repetition either consumes input or terminates.",
+      "verification": "Compare every state transition and stdout; record a mismatch as a hypothesis rather than revising the expectation afterward."
+    },
+    {
+      "title": "A counterexample to a wrong rule",
+      "action": "Using the second example and theory, construct a minimal safe case for this defect: An oversized final number can set both fail and eof. eof alone does not prove a token was valid.",
+      "prediction": "The correct and incorrect models should make distinguishable predictions without executing undefined behaviour.",
+      "verification": "Preserve the prediction, actual output, and an explanation of the violated rule."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A boundary result differs",
+      "cause": "An oversized final number can set both fail and eof. eof alone does not prove a token was valid.",
+      "fix": "Every repetition either consumes input or terminates."
+    },
+    {
+      "symptom": "One case works and the next fails",
+      "cause": "The invariant or empty/malformed-input policy is unspecified.",
+      "fix": "Return to the lab contract and check every published case independently."
+    },
+    {
+      "symptom": "The environment rejected execution",
+      "cause": "Build failure, unsupported syntax, and quotas are different causes.",
+      "fix": "Keep the phase and diagnostic; exceptions are unsupported and environment limits are not learner knowledge failures."
+    }
+  ],
+  "diagnosticExamples": [],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Manually trace the first example and explain every expected output line.",
+      "criteria": "Every repetition either consumes input or terminates.",
+      "hint": "Identify input, state, and observable output first."
+    },
+    {
+      "level": "basic",
+      "task": "Choose the lab’s empty or minimum valid case and its nearest invalid counterpart.",
+      "criteria": "Derive both expectations before execution and connect each to a contract clause.",
+      "hint": "An oversized final number can set both fail and eof. eof alone does not prove a token was valid."
+    },
+    {
+      "level": "applied",
+      "task": "Sum until EOF or 0, accepting at most 100 nonzero integers in -1000…1000. Only whitespace may follow 0. Print count sum; reject errors as invalid.",
+      "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
+      "hint": "Every repetition either consumes input or terminates."
+    },
+    {
+      "level": "applied",
+      "task": "Compare the two worked examples: which assumptions differ and why can they not be silently transferred into the lab?",
+      "criteria": "State inputs, state, and at least one applicability boundary for each example.",
+      "hint": "Before each step, count is the number of accepted values, sum is their sum, and the buffer begins with unprocessed input. Validate the range before adding. On rejection, produce invalid rather than a partially successful answer."
+    },
+    {
+      "level": "transfer",
+      "task": "Add the string command stop as a sentinel and explain why the previous integer parser must change.",
+      "criteria": "Provide an updated contract, two new tests, and an explanation of preserved previous behaviour.",
+      "hint": "Use for for a known n and while for input until EOF or stop. do while suits repetition after one mandatory initial action. Do not simulate a live menu by waiting for input absent from the supplied buffer."
+    },
+    {
+      "level": "transfer",
+      "task": "Give a mini-defence: explain a bound, complexity, and a counterexample to a wrong implementation without running the reference.",
+      "criteria": "Connect the explanation to specific lines of your source and actual tests.",
+      "hint": "Every repetition either consumes input or terminates."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: while and do while: finite streams and termination",
+    "challenge": "Sum until EOF or 0, accepting at most 100 nonzero integers in -1000…1000. Only whitespace may follow 0. Print count sum; reject errors as invalid.",
+    "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+    "starterExpectedStdout": "pending\n",
+    "referenceCode": "#include <iostream>\nint main() {\n    int count{};\n    long long sum{};\n    bool stopped{};\n    while (!stopped) {\n        std::cin >> std::ws;\n        if (std::cin.eof()) { break; }\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        if (value == 0) { stopped = true; }\n        else {\n            if (count == 100) { std::cout << \"invalid\\n\"; return 0; }\n            ++count;\n            sum += value;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << count << ' ' << sum << '\\n';\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "0 0\n"
+      },
+      {
+        "stdin": "0",
+        "stdout": "0 0\n"
+      },
+      {
+        "stdin": "2 3",
+        "stdout": "2 5\n"
+      },
+      {
+        "stdin": "2 -3 0",
+        "stdout": "2 -1\n"
+      },
+      {
+        "stdin": "2 0 3",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "2 x",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "999999999999999999999999",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1001",
+        "stdout": "invalid\n"
+      }
+    ],
+    "referenceFiles": {},
+    "starterFiles": {},
+    "metadata": {},
+    "steps": [
+      "Restate the input, output, and rejection contract in your own words.",
+      "Draw the state and state the invariant: Every repetition either consumes input or terminates.",
+      "Start from the scaffold, implement the valid path, then add boundary checks.",
+      "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+      "Add two original cases including one rejection; explain the result without consulting the reference.",
+      "Preserve source, a result table, and a short cost-and-limit analysis."
+    ],
+    "rubric": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "Every repetition either consumes input or terminates.",
+      "An oversized final number can set both fail and eof. eof alone does not prove a token was valid.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Can while execute zero iterations?",
+      "answers": [
+        "Only with break",
+        "No, always one",
+        "Yes, when its first condition is false"
+      ],
+      "correctIndex": 2,
+      "explanation": "do while requires the first iteration; while does not."
+    },
+    {
+      "question": "Is sentinel 0 included in the lab sum?",
+      "answers": [
+        "Yes, as a record",
+        "No; it terminates the sequence",
+        "It changes previous values"
+      ],
+      "correctIndex": 1,
+      "explanation": "Consuming it and processing it as data are different actions."
+    },
+    {
+      "question": "What ensures parsing makes progress?",
+      "answers": [
+        "Success consumes input and failure terminates",
+        "A constant true condition",
+        "clear without reading"
+      ],
+      "correctIndex": 0,
+      "explanation": "The remaining finite buffer must decrease."
+    },
+    {
+      "question": "Does eof prove an oversized final number valid?",
+      "answers": [
+        "Only after do",
+        "Yes, always",
+        "No; fail may also be set"
+      ],
+      "correctIndex": 2,
+      "explanation": "Check extraction success separately."
+    },
+    {
+      "question": "What is needed to accept this lab?",
+      "answers": [
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation",
+        "Only a completed flag"
+      ],
+      "correctIndex": 1,
+      "explanation": "A progress flag is not evidence of independent mastery."
+    }
+  ],
+  "reflection": [
+    "Every repetition either consumes input or terminates.",
+    "Add the string command stop as a sentinel and explain why the previous integer parser must change.",
+    "Which case refutes the wrong rule and what do your checks still not establish?"
+  ],
+  "bridge": "Next: Functions: parameters, results, and contracts. Preserve the lab and its verification table.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Stepwise map: while and do while: finite streams and termination",
+    "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+    "steps": [
+      {
+        "title": "Pre-test and post-test loops",
+        "description": "while(condition) tests before the body and can execute zero times. do {body} while(condition); tests after the body and executes at least once. The final semicolon is required for do while; after a regular while it usually creates an unintended empty body."
+      },
+      {
+        "title": "Reading is a progress operation",
+        "description": "In while(cin>>x), successful extraction supplies a new value and enters the body. Failure stops before x is used. Testing !cin.eof() before reading is wrong: eof reports an already encountered end rather than predicting the next extraction’s success."
+      },
+      {
+        "title": "EOF, a sentinel, and a limit",
+        "description": "EOF is the end of the supplied buffer; a sentinel such as 0 means stop under the task’s rules. The sentinel is consumed but usually excluded from the sum. State explicitly whether data after it is rejected or ignored."
+      },
+      {
+        "title": "Classify extraction failure",
+        "description": "After extraction stops, determine why. For the lab’s constrained short integers, an exhausted remainder is normal EOF and a letter is malformed input. With arbitrary tokens, fail and eof may both be set for an invalid or oversized number."
+      },
+      {
+        "title": "A stream invariant",
+        "description": "Before each step, count is the number of accepted values, sum is their sum, and the buffer begins with unprocessed input. Validate the range before adding. On rejection, produce invalid rather than a partially successful answer."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Which loop always executes its body at least once?",
+    "answers": [
+      "while",
+      "do while",
+      "if"
+    ],
+    "correctIndex": 1
+  }
+}

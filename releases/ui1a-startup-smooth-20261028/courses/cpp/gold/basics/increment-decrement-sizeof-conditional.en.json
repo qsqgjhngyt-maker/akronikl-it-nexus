@@ -1,0 +1,346 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.cpp-basics",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.increment-decrement-sizeof-conditional",
+  "sessions": 1,
+  "prerequisiteIds": [
+    "cpp.relations-logic",
+    "cpp.variables-scope",
+    "cpp.data-types"
+  ],
+  "sourceRefs": [
+    "CPP20-INCREMENT",
+    "CPP20-SIZEOF",
+    "CPP20-CONDITIONAL",
+    "CPP20-SEQUENCING",
+    "CPP-GUIDELINES"
+  ],
+  "title": "++ and --, sizeof and ?: — concise syntax with precise meaning",
+  "lead": "Separate object mutation, expression value, type measurement, and selecting an evaluated branch.",
+  "why": "Concise syntax helps when it keeps state understandable. Updating, an unevaluated operand, and branch selection are distinct mechanisms. One rule to read everything left to right cannot explain them.",
+  "objectives": [
+    "Distinguish prefix/postfix and object state from expression result.",
+    "Explain why sizeof(++n) does not increment an ordinary int n.",
+    "Use ?: with simple compatible branches.",
+    "Keep one update per full statement."
+  ],
+  "prerequisites": [
+    "Assignment, bool, short-circuit evaluation, and sizeof(type).",
+    "Types and safe ranges. Operator overloading is not required."
+  ],
+  "concepts": [
+    {
+      "term": "Prefix ++",
+      "definition": "For int, increments the object and refers to the updated object."
+    },
+    {
+      "term": "Postfix ++",
+      "definition": "For int, produces the previous value and increments the object."
+    },
+    {
+      "term": "Unevaluated operand",
+      "definition": "Checked under language rules without ordinary runtime evaluation; the simple sizeof operand is such a case."
+    },
+    {
+      "term": "Conditional operator ?:",
+      "definition": "Chooses the second or third operand for evaluation from a bool condition."
+    }
+  ],
+  "sections": [
+    {
+      "title": "State and result need separate columns",
+      "paragraphs": [
+        "With int count{3}; int oldValue = count++; count becomes 4 while oldValue receives 3. Next, int newValue = ++count; makes count 5 and gives newValue 5. Keep separate columns for count afterward and expression result so the distinction remains visible.",
+        "-- subtracts 1 with the same prefix/postfix distinction. As standalone statements count++; and ++count; leave the same final count because the result is discarded. Choose clarity rather than claiming one form is faster for every type."
+      ]
+    },
+    {
+      "title": "One statement, one clear update",
+      "paragraphs": [
+        "Do not combine multiple updates of one object into a puzzle. Forms such as i++ + ++i can have undefined behavior and are unsuitable prediction experiments. Our updates occupy separate full statements, with output afterward.",
+        "Range restrictions remain: ++ on the maximum signed int is not permitted merely because the notation is short. Check preconditions first. We use 3…5 safely inside range and explain dangerous boundaries without execution."
+      ]
+    },
+    {
+      "title": "sizeof obtains information without evaluating its operand",
+      "paragraphs": [
+        "In sizeof(++count) for an ordinary int, the operand is unevaluated and count stays 5. ++count has type int, so its size equals sizeof(int). Compare with == rather than demanding one byte count on every target. This extends the types lesson with an expression rule.",
+        "Unevaluated does not mean arbitrary text is valid: sizeof(stillUnknown) fails without a declaration. The compiler needs a valid operand and type. sizeof yields unsigned std::size_t; auto bytes = ... obtains it without an unnecessary cast."
+      ]
+    },
+    {
+      "title": "?: evaluates only the selected branch",
+      "paragraphs": [
+        "condition ? first : second checks the condition and evaluates first if true or second otherwise. With divisor=0 it selects 0 without evaluating 12/divisor. Zero is only a demonstration default, not a complete input-error report.",
+        "Both branches must be valid expressions even though only one is selected. Language rules determine the result type; we use two int branches. We avoid mixed signs and advanced value categories. Multi-statement branches are clearer as a separate if, treated fully next module."
+      ]
+    },
+    {
+      "title": "Allocation policy without hidden mutation",
+      "paragraphs": [
+        "requested <= available ? requested : available selects the smaller valid count. A separate assignment reduces available. Two steps expose the rule against issuing more than stock instead of mixing ++ and ?:.",
+        "First exclude negatives and values over 100. issued then lies from 0 to available and the remainder is nonnegative. Test requested=0, requested=available, and requested>available. These are distinct contract cases even if two produce the same stdout for a particular stock."
+      ]
+    },
+    {
+      "title": "Checking three different mechanisms",
+      "paragraphs": [
+        "For ++ record prior state, result, and final state. For sizeof record count before and after plus size equality. For ?: identify the chosen and skipped branches. A final number alone often hides a wrong explanation.",
+        "The diagram is a fixed journal over 3…5. Next does not mutate a live C++ object; execution is checked in Code Studio. Retain predictions made before running so the report identifies the hypothesis actually tested."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "prefix-postfix",
+      "title": "Two results, one counter",
+      "purpose": "Separate state from results.",
+      "code": "#include <iostream>\n\nint main() {\n    int count{3};\n    int oldValue = count++;\n    int newValue = ++count;\n    std::cout << oldValue << ' ' << newValue << ' ' << count << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "3 5 5\n",
+      "steps": [
+        "oldValue gets 3 and count becomes 4.",
+        "++count updates it to 5.",
+        "newValue and final count are 5."
+      ]
+    },
+    {
+      "id": "sizeof-no-update",
+      "title": "The update is unevaluated",
+      "purpose": "Check a sizeof operand for int.",
+      "code": "#include <iostream>\n\nint main() {\n    int count{5};\n    auto bytes = sizeof(++count);\n    std::cout << (bytes == sizeof(int)) << ' ' << count << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "1 5\n",
+      "steps": [
+        "Initial count is 5.",
+        "sizeof obtains the int size without mutation.",
+        "One means equal sizes, not a byte count."
+      ]
+    },
+    {
+      "id": "chosen-branch",
+      "title": "An unselected branch does not divide",
+      "purpose": "Separate the condition and chosen value.",
+      "code": "#include <iostream>\n\nint main() {\n    int divisor{0};\n    int quotient = divisor != 0 ? 12 / divisor : 0;\n    std::cout << \"quotient=\" << quotient << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "quotient=0\n",
+      "steps": [
+        "divisor != 0 is false.",
+        "The branch after the colon is selected.",
+        "12/divisor is not evaluated."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Change the ++ form",
+      "action": "Replace count++ with ++count for oldValue.",
+      "prediction": "Output becomes 4 5 5 instead of 3 5 5.",
+      "verification": "The final count is unchanged but the saved result differs."
+    },
+    {
+      "title": "Postfix inside sizeof",
+      "action": "Replace sizeof(++count) with sizeof(count++).",
+      "prediction": "Output stays 1 5.",
+      "verification": "The reason is an unevaluated operand, not postponing postfix until program end."
+    },
+    {
+      "title": "Select the other branch",
+      "action": "Change divisor to 3 in the ?: example.",
+      "prediction": "Output becomes quotient=4.",
+      "verification": "Name the evaluated and skipped expressions."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "oldValue is 3 instead of expected 4",
+      "cause": "The postfix result was confused with updated state.",
+      "fix": "Keep two separate columns."
+    },
+    {
+      "symptom": "sizeof did not increment count",
+      "cause": "The operand is unevaluated.",
+      "fix": "Write ++count separately when mutation is intended."
+    },
+    {
+      "symptom": "?: is hard to read",
+      "cause": "Choices and updates are nested.",
+      "fix": "Name the condition and result and separate complex branches."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "sizeof-unknown",
+      "title": "Intentional: an unknown name",
+      "code": "#include <iostream>\n\nint main() {\n    std::cout << sizeof(stillUnknown) << '\\n';\n}\n",
+      "expectation": "compile-error",
+      "explanation": "An unevaluated operand must still be valid."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "For n=8 predict old=n--; then newValue=--n;.",
+      "criteria": "old=8, newValue=6, n=6.",
+      "hint": "Separate statements and states."
+    },
+    {
+      "level": "applied",
+      "task": "Select the smaller of two valid counts using ?: without changing operands.",
+      "criteria": "Check less, equal, and greater cases.",
+      "hint": "The condition compares values."
+    },
+    {
+      "level": "transfer",
+      "task": "Design bounded stock allocation and justify a nonnegative remainder.",
+      "criteria": "Provide preconditions and three boundaries.",
+      "hint": "issued must not exceed available."
+    }
+  ],
+  "laboratory": {
+    "title": "Allocation from limited stock",
+    "challenge": "Issue the smaller of requested and available and update stock. Values must be 0…100.",
+    "starterCode": "#include <iostream>\n\nint main() {\n    int available{4};\n    int requested{6};\n    std::cout << \"available=\" << available << '\\n';\n    return 0;\n}\n",
+    "starterExpectedStdout": "available=4\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    int available{4};\n    int requested{6};\n    if (available < 0 || available > 100 || requested < 0 || requested > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int issued = requested <= available ? requested : available;\n    available = available - issued;\n    std::cout << \"issued=\" << issued << '\\n';\n    std::cout << \"remaining=\" << available << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "issued=4\nremaining=0\n"
+      }
+    ],
+    "steps": [
+      "Write preconditions.",
+      "Calculate issued through ?:.",
+      "Reduce stock separately.",
+      "Test zero, equality, excess, and rejection."
+    ],
+    "rubric": [
+      "No hidden updates inside ?:.",
+      "Bounds are checked first.",
+      "Output agrees with the proof.",
+      "Preserve actual variants."
+    ],
+    "verificationVariants": [
+      {
+        "id": "nothing",
+        "replace": [
+          {
+            "from": "int requested{6};",
+            "to": "int requested{0};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "issued=0\nremaining=4\n"
+      },
+      {
+        "id": "exact",
+        "replace": [
+          {
+            "from": "int requested{6};",
+            "to": "int requested{4};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "issued=4\nremaining=0\n"
+      },
+      {
+        "id": "partial",
+        "replace": [
+          {
+            "from": "int requested{6};",
+            "to": "int requested{2};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "issued=2\nremaining=2\n"
+      },
+      {
+        "id": "invalid",
+        "replace": [
+          {
+            "from": "int requested{6};",
+            "to": "int requested{-1};"
+          }
+        ],
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "After n=3; old=n++; what are old and n?",
+      "answers": [
+        "4, 4",
+        "3, 4",
+        "3, 3"
+      ],
+      "correctIndex": 1,
+      "explanation": "Postfix produces the old value and updates the object."
+    },
+    {
+      "question": "What is n after sizeof(++n) for int n=5?",
+      "answers": [
+        "6",
+        "5",
+        "Unknown"
+      ],
+      "correctIndex": 1,
+      "explanation": "The sizeof operand is unevaluated."
+    },
+    {
+      "question": "Does ?: evaluate both branches?",
+      "answers": [
+        "Yes",
+        "Only the selected branch; both must be valid",
+        "Only on a PC"
+      ],
+      "correctIndex": 1,
+      "explanation": "Evaluation selection does not remove validity rules."
+    }
+  ],
+  "reflection": [
+    "Why does the same final n not imply identical prefix and postfix results?",
+    "Why must an unevaluated expression remain valid?"
+  ],
+  "bridge": "Next introduce references to existing objects and pointers to addresses with explicit lifetime rules.",
+  "visualization": {
+    "kind": "toolchain",
+    "title": "Prefix and postfix in steps",
+    "description": "A fixed n=3 journal, with each update separate.",
+    "steps": [
+      {
+        "title": "n = 3",
+        "description": "One n object is created."
+      },
+      {
+        "title": "old = n++",
+        "description": "old gets 3 and n becomes 4."
+      },
+      {
+        "title": "new = ++n",
+        "description": "n becomes 5 and new gets 5."
+      },
+      {
+        "title": "3 5 5",
+        "description": "Results and final state are observed separately."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "What does sizeof do?",
+    "answers": [
+      "Changes the type",
+      "Returns the size of an object or type",
+      "Increments a number"
+    ],
+    "correctIndex": 1
+  }
+}

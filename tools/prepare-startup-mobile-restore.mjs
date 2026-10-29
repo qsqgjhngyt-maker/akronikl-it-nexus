@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';import {readFile,writeFile,mkdir,copyFile,unlink} from 'node:fs/promises';import {execFileSync} from 'node:child_process';import path from 'node:path';
+import {MR_BASE,MR_GENERATION,MR_META,MR_RECEIPT,MR_ROOTS,MR_PRODUCT,hash,verifyRecord,verifyMobileRestore} from './startup-mobile-restore-contract.mjs';
+const root=path.resolve(import.meta.dirname,'..');
+if(process.argv.includes('--rollback')){await verifyMobileRestore({root});const r=JSON.parse(await readFile(path.join(root,MR_RECEIPT)));for(const x of r.rollback)await writeFile(path.join(root,x.file),execFileSync('git',['show',MR_BASE+':'+x.file],{cwd:root,maxBuffer:128*1024*1024}));const m=JSON.parse(await readFile(path.join(root,MR_META)));m.kind='startup-mobile-restore-rollback';await writeFile(path.join(root,MR_META),JSON.stringify(m,null,2)+'\n');console.log(await verifyMobileRestore({root}));process.exit(0)}
+const i=process.argv.indexOf('--artifact');assert.ok(i>=0&&process.argv[i+1]);const artifact=path.resolve(process.argv[i+1]),m=JSON.parse(await readFile(path.join(artifact,'BUILD_MANIFEST.json')));assert.equal(m.assetGeneration,MR_GENERATION);
+for(const r of m.files)verifyRecord(r,await readFile(path.join(artifact,r.file)));
+const publish=m.files.filter(r=>MR_ROOTS.includes(r.file)||r.file.startsWith('releases/'+MR_GENERATION+'/')||r.file.startsWith('entry-assets/'+MR_GENERATION+'/'));publish.push({file:'BUILD_MANIFEST.json'});
+for(const r of publish){const dst=path.join(root,r.file);await mkdir(path.dirname(dst),{recursive:true});await copyFile(path.join(artifact,r.file),dst)}
+const files=[];for(const f of new Set([...publish.map(r=>r.file),...MR_PRODUCT])){const b=await readFile(path.join(root,f));files.push({file:f,bytes:b.length,sha256:hash(b)})}
+const rollback=MR_ROOTS.map(file=>{const b=execFileSync('git',['show',MR_BASE+':'+file],{cwd:root,maxBuffer:128*1024*1024});return{file,bytes:b.length,sha256:hash(b)}});
+await writeFile(path.join(root,MR_META),JSON.stringify({schema:1,kind:'startup-mobile-restore',baseCommit:MR_BASE,generation:MR_GENERATION,officialRelease:false,uiEntryDeploymentRequiresOwnerApproval:false},null,2)+'\n');
+await writeFile(path.join(root,MR_RECEIPT),JSON.stringify({schema:1,baseCommit:MR_BASE,generation:MR_GENERATION,files:files.sort((a,b)=>a.file.localeCompare(b.file)),rollback},null,2)+'\n');console.log({records:files.length,receiptSha256:hash(await readFile(path.join(root,MR_RECEIPT)))});

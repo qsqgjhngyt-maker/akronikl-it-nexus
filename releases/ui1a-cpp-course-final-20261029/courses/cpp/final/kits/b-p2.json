@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "id": "cpp.final.v1.B.P2",
+  "assessmentId": "cpp.course-final.v1",
+  "variant": "B",
+  "part": 2,
+  "starterExpected": "compiles; public tests intentionally fail until repaired",
+  "template": {
+    "title": "Пороговый поиск измерения · B",
+    "description": "COURSE-FINAL cpp.final.v1.B.P2",
+    "languageId": "cpp",
+    "entryFile": "src/main.cpp",
+    "sourceRoots": [
+      "src"
+    ],
+    "includeRoots": [
+      "include"
+    ],
+    "testRoots": [
+      "tests"
+    ],
+    "files": [
+      {
+        "path": "include/model.hpp",
+        "content": "#pragma once\n#include <vector>\n#include <optional>\nstruct Entry{int id,key;bool operator==(const Entry&)const=default;};\nstd::vector<Entry> build_index(const std::vector<Entry>& input);\nstd::optional<Entry> find(const std::vector<Entry>& index,int query);\n",
+        "languageId": "cpp"
+      },
+      {
+        "path": "src/model.cpp",
+        "content": "#include \"model.hpp\"\n// Дефект: вход может быть несортированным. Исправьте index и проверьте find.\nstd::vector<Entry> build_index(const std::vector<Entry>& input){return input;}\nstd::optional<Entry> find(const std::vector<Entry>& index,int query){std::size_t lo=0,hi=index.size();while(lo<hi){auto mid=lo+(hi-lo)/2;if(index[mid].key<query)lo=mid+1;else hi=mid;}if(lo==index.size())return std::nullopt;return index[lo];}\n",
+        "languageId": "cpp"
+      },
+      {
+        "path": "src/main.cpp",
+        "content": "#include \"model.hpp\"\n#include <iostream>\nint main(){std::cout<<\"Run public_tests and add your own tests.\\n\";}\n",
+        "languageId": "cpp"
+      },
+      {
+        "path": "tests/public_tests.cpp",
+        "content": "#include \"model.hpp\"\n#include <stdexcept>\n#include <iostream>\n#include <algorithm>\nvoid check(bool x,const char*why){if(!x)throw std::runtime_error(why);}\nint main(){try{\nstd::vector<Entry> input{{9,3},{7,1},{1,1},{4,0}};auto before=input;auto index=build_index(input);check(input==before,\"input changed\");check(index==std::vector<Entry>{{4,0},{1,1},{7,1},{9,3}},\"order/ties/pairs\");check(find(index,1)==std::optional<Entry>{{1,1}},\"tie must select lowest ID\");check(find(index,2)==std::optional<Entry>{{9,3}},\"threshold gap\");check(find(index,-1)==std::optional<Entry>{{4,0}},\"below minimum\");check(!find(index,4),\"above maximum\");check(!find({},1),\"empty search\");auto empty=build_index({});check(empty.empty(),\"empty build\");\nstd::cout<<\"Public contract: PASS\\n\";return 0;}catch(const std::exception&e){std::cerr<<e.what()<<\"\\n\";return 1;}}\n",
+        "languageId": "cpp"
+      },
+      {
+        "path": "README.md",
+        "content": "# Пороговый поиск измерения / Measurement threshold lookup\n\nEntry{id,key} хранит уникальный sensor ID и температуру key. build_index из несортированного входа должен вернуть новый порядок по (key,id), не меняя вход. find(index, threshold) возвращает первую температуру >=threshold, а среди равных — минимальный ID; если такой нет, nullopt. Исправьте дефект индекса/пограничного поиска. Проверьте отрицательные значения, равенство порогу, пропуск между двумя значениями, запрос выше максимума и пустой индекс. Подготовка O(n log n), неизменный индекс, запрос O(log n).\n\nEntry{id,key} stores unique sensor IDs and temperature keys. build_index must create a new (key,id)-ordered vector from unsorted input without mutation. find(index, threshold) returns the first temperature >=threshold, breaking ties by lowest ID, or nullopt. Repair index/boundary-search defects. Test negative values, exact threshold, an interior gap, above-maximum query and empty index. Preprocessing O(n log n), immutable index, lookup O(log n).\n\n## В Nexus / In Nexus\n\nОткройте копию стартового проекта, реализуйте контракт в src/model.cpp. Нажмите «Запустить мои тесты» рядом с кнопкой запуска проекта. Starter намеренно не проходит все public tests; это не готовое решение. Добавьте собственные тесты и объяснение в REPORT.md.\n\nOpen a starter copy and implement src/model.cpp. Click Run my tests next to Run project. The starter intentionally fails public tests; it is not a completed solution. Add your own tests and explanation in REPORT.md.\n\n## Дополнительная переносимая сборка / Optional portable build\n\n    cmake -S . -B build\n    cmake --build build\n    ctest --test-dir build --output-on-failure\n",
+        "languageId": "cpp"
+      },
+      {
+        "path": "REPORT.md",
+        "content": "# Объяснение / Explanation\n\n1. Контракт и границы / Contract and boundaries\n2. Причина дефекта и изменение / Defect cause and repair\n3. Собственные различающие тесты / Your distinguishing tests\n4. Фактические результаты Nexus, ограничения / Actual Nexus results, limitations\n5. Использованные источники и помощь / Sources and assistance\n",
+        "languageId": "cpp"
+      },
+      {
+        "path": "CMakeLists.txt",
+        "content": "cmake_minimum_required(VERSION 3.16)\nproject(CourseFinal LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nadd_library(model src/model.cpp)\ntarget_include_directories(model PUBLIC include)\nadd_executable(course_cli src/main.cpp)\ntarget_link_libraries(course_cli PRIVATE model)\nenable_testing()\nadd_executable(public_tests tests/public_tests.cpp)\ntarget_link_libraries(public_tests PRIVATE model)\nadd_test(NAME public_contract COMMAND public_tests)\n",
+        "languageId": "cpp"
+      }
+    ]
+  }
+}
