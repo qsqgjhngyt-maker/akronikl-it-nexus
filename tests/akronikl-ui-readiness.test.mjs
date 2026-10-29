@@ -5,6 +5,7 @@ import {createAssistantBridge} from '../akronikl/ui/bridge.js';
 import {createLazyAssistantBridge} from '../akronikl/context.js';
 import {createUiHost} from '../akronikl/ui/nexus-host.js';
 import {createAssistantCore} from '../akronikl/core/index.js';
+import {cloudPreferences} from '../akronikl/connections/preferences.js';
 
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no});return{promise,resolve,reject}};
 function fixture(){
@@ -107,4 +108,14 @@ test('lazy invalidation не меняет render-marker владельца: во
  const f=fixture();f.root.dataset.akroniklRoute='#view=akronikl';const bridge=createLazyAssistantBridge(f.options);
  f.doc.hidden=true;f.doc.dispatchEvent(new Event('visibilitychange'));
  assert.equal(f.root.dataset.akroniklRoute,'#view=akronikl');bridge.dispose();
+});
+
+test('initial render invalidation still allows the first greeting preference load',async()=>{
+ const f=fixture();f.state.identity={accountId:'synthetic-A'};let reads=0;f.options.broker={loadState:async()=>{reads++;return{value:null};}};
+ const bridge=createLazyAssistantBridge(f.options);bridge.invalidate();bridge.bindEditor();for(let i=0;i<200&&!reads;i++)await new Promise(r=>setTimeout(r,5));assert.equal(reads,1);bridge.dispose();
+});
+test('bridge invalidation cancels a greeting whose preferences are already pending',async()=>{
+ const f=fixture();f.state.identity={accountId:'synthetic-A'};let release,capabilities=0;
+ f.options.broker={loadState:()=>new Promise(r=>release=r),capabilities:async()=>{capabilities++;return{};}};
+ const bridge=createLazyAssistantBridge(f.options);bridge.invalidate();bridge.bindEditor();for(let i=0;i<200&&!release;i++)await new Promise(r=>setTimeout(r,5));assert.equal(typeof release,'function');bridge.invalidate();release({value:cloudPreferences({...cloudPreferences(),speech:{auto:true,greeting:true,voiceURI:'kitsune:piper-uyut7',rate:1}})});await new Promise(r=>setImmediate(r));assert.equal(capabilities,0);bridge.dispose();
 });

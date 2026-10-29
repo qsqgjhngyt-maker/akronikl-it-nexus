@@ -26,3 +26,15 @@ test('hidden window and an account switch during preference load cannot speak or
 test('old speech settings migrate safely; malformed greeting and motion preferences reject',()=>{
  assert.equal(cloudPreferences().speech.auto,false);assert.equal(cloudPreferences().speech.greeting,true);for(const patch of [{speech:{auto:true,greeting:'yes',voiceURI:'',rate:1}},{assistantPresenceMotion:'yes'},{learningProgress:'yes'}])assert.throws(()=>cloudPreferences({...cloudPreferences(),...patch}));
 });
+test('opening the chat while greeting preferences or capabilities are pending prevents late speech creation',async()=>{
+ for(const stage of ['preferences','capabilities']){
+  const f=fixture(),control=new AbortController();let release;f.args.signal=control.signal;
+  if(stage==='preferences')f.args.broker.loadState=()=>new Promise(r=>release=()=>r({value:f.settings??cloudPreferences({...cloudPreferences(),speech:{auto:true,greeting:true,voiceURI:PIPER_NARRATOR.voiceURI,rate:1}})}));
+  else f.args.broker.capabilities=()=>new Promise(r=>release=()=>r({localSpeechVoice:PIPER_NARRATOR}));
+  const task=prepareStartupGreeting(f.args);for(let i=0;i<5&&!release;i++)await Promise.resolve();assert.equal(typeof release,'function');control.abort();release();assert.equal(await task,null);assert.equal(f.counts().created,0);assert.deepEqual(f.texts,[]);
+ }
+});
+test('route changes during greeting preparation suppress it and abort stops an already created greeting',async()=>{
+ const f=fixture();f.win.location={hash:'#first'};let release;f.args.readLearningProgress=()=>new Promise(r=>release=r);const task=prepareStartupGreeting(f.args);for(let i=0;i<8&&!release;i++)await Promise.resolve();f.win.location.hash='#next';release(null);assert.equal(await task,null);assert.equal(f.counts().created,0);
+ const ready=fixture(),control=new AbortController();ready.args.signal=control.signal;const greeting=await prepareStartupGreeting(ready.args);assert.equal(ready.counts().created,1);control.abort();assert.equal(ready.counts().disposed,1);greeting.dispose();assert.equal(ready.counts().disposed,1);
+});
