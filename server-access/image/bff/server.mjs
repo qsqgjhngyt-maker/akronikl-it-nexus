@@ -6238,7 +6238,12 @@ function createPublishedAssets({ env = {}, root = fileURLToPath(new URL("../fron
   }
   const shell = readFileSync(path5.join(root, "nexus-shell.html")), shellRecord = index.shell;
   if (shell.length !== shellRecord?.bytes || hash3(shell) !== shellRecord.sha256) throw Error("PUBLIC_BUILD_INVALID");
-  return Object.freeze({ decorateEntryHTML: (html) => files.has("/releases/" + index.generation + "/core/startup-intro-early.js") ? withEarlyIntro(html, index.generation) : html, fetchImpl: async (url, init) => url === ENTRY_SHELL_URL ? new Response(shell, { headers: { "content-type": "text/html; charset=utf-8", "content-length": String(shell.length) } }) : fetchImpl(url, init), async handle(req, res) {
+  const decorateEntryHTML = (html) => {
+    const entry2 = "/entry-assets/" + index.generation + "/", brand = "/releases/" + index.generation + "/assets/brand-mark.svg";
+    if ([entry2 + "entry.js", entry2 + "entry.css", brand].every((p) => files.has(p))) html = html.replaceAll("/account/entry/entry.js", entry2 + "entry.js").replaceAll("/account/entry/entry.css", entry2 + "entry.css").replaceAll("/account/entry/brand-mark.svg", brand);
+    return files.has("/releases/" + index.generation + "/core/startup-intro-early.js") ? withEarlyIntro(html, index.generation) : html;
+  };
+  return Object.freeze({ decorateEntryHTML, fetchImpl: async (url, init) => url === ENTRY_SHELL_URL ? new Response(shell, { headers: { "content-type": "text/html; charset=utf-8", "content-length": String(shell.length) } }) : fetchImpl(url, init), async handle(req, res) {
     let url;
     try {
       url = new URL(req.url, origin);

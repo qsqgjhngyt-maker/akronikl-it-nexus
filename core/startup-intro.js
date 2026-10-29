@@ -29,7 +29,7 @@ function showIntro({preview=false}={}){
   const label=document.createElement('div');label.className='nexus-intro-wordmark';label.setAttribute('aria-hidden','true');label.innerHTML='<svg viewBox="0 0 240 210" focusable="false"><defs><linearGradient id="nx-logo-white" x2=".9" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#c4e0ee"/></linearGradient><linearGradient id="nx-logo-cyan" x2=".1" y2="1"><stop stop-color="#d4effb"/><stop offset=".55" stop-color="#66c9ed"/><stop offset="1" stop-color="#0096d5"/></linearGradient></defs><path fill="url(#nx-logo-white)" d="M22 163 84 40Q95 18 112 18q18 0 30 23l29 57-32 18-29-57q-4-7-8 1l-37 74Z"/><path fill="url(#nx-logo-white)" d="m142 140 29-17 42 83h-32q-13 0-19-12Z"/><path fill="url(#nx-logo-cyan)" d="M9 206q-1-25 28-42c60-32 159-55 190-112-2 43-37 67-79 90L50 206Z"/></svg><strong>AKRONIKL</strong><span>IT NEXUS</span>';root.append(label);
  };wordmark();
  const makePlayer=()=>{
-  const v=document.createElement('video');v.dataset.current='';v.crossOrigin='anonymous';v.muted=true;v.defaultMuted=true;v.playsInline=true;v.preload='auto';v.disablePictureInPicture=true;v.tabIndex=-1;v.setAttribute('aria-hidden','true');visual.append(v);return v;
+  const v=document.createElement('video');v.dataset.current='';v.crossOrigin='anonymous';v.muted=true;v.defaultMuted=true;v.playsInline=true;v.autoplay=true;v.setAttribute('muted','');v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.preload='auto';v.disablePictureInPicture=true;v.tabIndex=-1;v.setAttribute('aria-hidden','true');visual.append(v);return v;
  };
  let quality=introMediaQuality(navigator,variant);root.dataset.quality=quality;
  let video=makePlayer(),playerEvents=new AbortController(),preparingSource='';
@@ -63,7 +63,7 @@ function showIntro({preview=false}={}){
  addEventListener('nexus:session-ended',()=>finish('session-ended',true),{signal});
  const fallback=()=>{
   if(closing||root.dataset.playback==='poster')return;
-  cancel(startupDeadline);cancel(stallDeadline);cancel(limit);playerEvents.abort();stopVideo();root.dataset.playback='poster';delete root.dataset.buffering;if(poster)setPoster(variant+'.jpg');status.textContent='Nexus готов к работе';later(()=>finish('fallback'),variant==='mobile'&&!preview?120:1400);
+  cancel(startupDeadline);cancel(stallDeadline);cancel(limit);playerEvents.abort();stopVideo();root.dataset.playback='poster';delete root.dataset.buffering;if(poster)setPoster(variant+'.jpg');status.textContent='Nexus готов к работе';later(()=>finish('fallback'),variant==='mobile'&&!preview?900:1400);
  };
  let poster;
  const setPoster=(name=variant+'-start.jpg')=>{
@@ -75,19 +75,22 @@ function showIntro({preview=false}={}){
  document.body.append(root);root.showModal();document.documentElement.dataset.nexusIntroActive='true';dispatchEvent(new Event('nexus:intro-statechange'));releaseIntroCover();root.addEventListener('cancel',e=>{e.preventDefault();finish('escape')},{signal:controls.signal});
  // Фоновые render, focus и изменение # при bootstrap не закрывают сцену.
  if(staticIntro({...setting,reducedMotion:reduced(),online:navigator.onLine,connection:navigator.connection})){fallback();return}
- const choose=variant=>[['mp4','video/mp4; codecs="'+INTRO_MEDIA[variant].mp4Codec+'"'],['webm','video/webm; codecs="vp9"']].find(([,type])=>video.canPlayType(type));
+ const choose=variant=>[['mp4','video/mp4; codecs="'+(quality==='lite'?'avc1.4D401F':INTRO_MEDIA[variant].mp4Codec)+'"'],['webm','video/webm; codecs="vp9"']].find(([,type])=>video.canPlayType(type))??(video.canPlayType('video/mp4')?['mp4','video/mp4']:null);
  let selected=choose(variant);if(!selected){fallback();return}
  const play=({recover=false}={})=>{
   if(closing||document.hidden||root.dataset.playback==='poster')return;
   if(preparingSource)return;
-  if(played&&!recover&&video.readyState>=3){video.play()?.catch(e=>{if(e.name!=='AbortError')fallback()});return}
+  const targetVideo=video,targetSignal=playerEvents.signal;
+  const nativePlay=()=>{try{const attempt=targetVideo.play();attempt?.catch(e=>{if(closing||targetSignal.aborted||video!==targetVideo||e.name==='AbortError')return;fallback();});}catch{fallback();}};
+  // Safari may only preload metadata until play() is requested. Do not wait for a buffer before the first native play.
+  if(!recover){nativePlay();return;}
   const target=video,source=target.src,attemptSignal=playerEvents.signal;preparingSource=source;
   if(recover){target.pause();root.dataset.buffering='true'}
   void waitForIntroBuffer(target,attemptSignal,{minimum:recover?1.5:1.25,timeout:recover?3500:6000,minReadyState:recover?3:2,minWaitMs:recover?200:0}).then(ready=>{
    if(preparingSource===source)preparingSource='';
    if(attemptSignal.aborted||target!==video||closing||document.hidden||video.src!==source||root.dataset.playback==='poster')return;
    if(!ready){fallback();return}
-   video.play()?.catch(e=>{if(e.name!=='AbortError')fallback()});
+   nativePlay();
   });
  };
  const armLimit=()=>{if(visibleAt)return;visibleAt=performance.now();limit=later(()=>finish('deadline'),Math.max(0,budget))};
@@ -123,7 +126,7 @@ function showIntro({preview=false}={}){
   video.addEventListener('loadedmetadata',()=>{if(fraction)video.currentTime=fraction*video.duration;play()},{once:true,signal});
   video.src=sourceURL();play();
  },{signal});
- startupDeadline=later(fallback,8000);armLimit();video.src=sourceURL();requestAnimationFrame(()=>requestAnimationFrame(play));
+ startupDeadline=later(fallback,8000);armLimit();video.src=sourceURL();play();
 }
 function controlsMarkup(){
  return '<legend>Запуск приложения</legend><label class="nexus-switch"><span>Показывать заставку при открытии</span><input type="checkbox" data-intro-enabled></label><label class="nexus-switch"><span>Упрощённый запуск</span><input type="checkbox" data-intro-simplified></label><p>Заставка появляется при открытии Nexus. Выбор сохраняется на этом устройстве.</p><button type="button" class="btn" data-intro-preview>Посмотреть заставку</button><p role="status" data-intro-save-status></p>';
