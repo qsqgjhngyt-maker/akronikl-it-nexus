@@ -4,7 +4,7 @@ import {pronunciationIds} from '../akronikl/experience/piper-pronunciation.js';
 import {PIPER_PRONUNCIATIONS} from '../akronikl/experience/piper-pronunciation-data.js';
 test('C++ code preserves operations and literal boundaries instead of feeding punctuation to TTS',()=>{
  const spoken=prepareSpeechText('Пример C++ и API:\n```cpp\nstd::vector<int> values;\nif (x != 10 && y <= 3) { return "OK"; }\n```');
- assert.match(spoken,/си плюс плюс и эй пи ай/u);assert.match(spoken,/эс ти ди два двоеточия вектор открыть угловую скобку инт закрыть угловую скобку вэльюз точка с запятой/u);
+ assert.match(spoken,/си плюс плюс и эй пи ай/u);assert.match(spoken,/эс ти ди два двоеточия вектор открыть угловую скобку инт закрыть угловую скобку вэльюз точка с запято́й/u);
  assert.match(spoken,/икс не равно 10 логическое и игрек меньше или равно 3/u);assert.match(spoken,/строка, оу кей, конец строки/u);
  assert.doesNotMatch(spoken,/```|std::|&&/u);
 });

@@ -98,7 +98,8 @@ export function prepareSpeechText(value){
   at=match.index+match[0].length;
  }
  parts.push(proseSpeech(value.slice(at)));
- const result=parts.join('').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/gu,' ').replace(/[ \t]+/gu,' ').replace(/(?<!\.)\.\.(?!\.)/gu,'.').replace(/\.{4,}/gu,'...').trim();
+ const result=parts.join('').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/gu,' ').replace(/[ \t]+/gu,' ').replace(/(?<!\.)\.\.(?!\.)/gu,'.').replace(/\.{4,}/gu,'...')
+  .replace(/(?<![\p{L}\p{M}])запятой(?![\p{L}\p{M}])/giu,word=>word.slice(0,-1)+'\u0301'+word.slice(-1)).trim();
  if(result.length>60000)throw Error('SPEECH_TEXT_TOO_LONG');
  return result;
 }
