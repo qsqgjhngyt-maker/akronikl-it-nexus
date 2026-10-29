@@ -11,6 +11,9 @@ on:
       - 'tools/startup-video*'
 permissions:
   contents: read
+defaults:
+  run:
+    shell: bash
 concurrency:
   group: startup-video-smooth-${{ github.ref }}
   cancel-in-progress: true
@@ -40,7 +43,7 @@ jobs:
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
           npm install --prefix /tmp/nexus-intro-browser --no-save playwright@1.56.1
           python3 -m venv /tmp/nexus-intro-python
-          /tmp/nexus-intro-python/bin/pip install playwright==1.56.1
+          /tmp/nexus-intro-python/bin/pip install playwright==1.56.0
           command -v ffmpeg >/dev/null || (sudo apt-get update && sudo apt-get install -y ffmpeg)
           test -x "$NEXUS_CHROME_PATH"
       - name: Сохранить исходное поведение и собрать два оптимизированных ролика
@@ -52,6 +55,7 @@ jobs:
           git show 75e24e195919e7c3d39659ba804e977d51ef5591:styles/startup-intro.css > /tmp/nexus-intro-smooth/before/styles/startup-intro.css
           python3 tools/startup-video-apply.py
           python3 tools/startup-video-optimize.py | tee /tmp/nexus-intro-smooth/evidence/media.log
+          cp intro-media/cinematic-v6/MANIFEST.json /tmp/nexus-intro-smooth/evidence/media-manifest.json
       - name: Синтаксис, настоящий ESM import и контракты сохранности
         run: |
           node --check core/startup-intro.js
@@ -82,7 +86,5 @@ jobs:
         if: always()
         with:
           name: startup-video-evidence-${{ github.sha }}
-          path: |
-            /tmp/nexus-intro-smooth/evidence
-            intro-media/cinematic-v6/MANIFEST.json
+          path: /tmp/nexus-intro-smooth/evidence
           retention-days: 14
