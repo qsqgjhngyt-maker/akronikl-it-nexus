@@ -1,0 +1,59 @@
+name: Заставка — проверка плавности без публикации
+on:
+  push:
+    branches: [fix/startup-video-smooth-20261029]
+    paths:
+      - '.github/workflows/startup-video-smooth.yml'
+      - 'core/startup-intro*.js'
+      - 'styles/startup-intro.css'
+      - 'tests/startup-intro*.mjs'
+      - 'tools/startup-video*.mjs'
+permissions:
+  contents: read
+concurrency:
+  group: startup-video-smooth-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Сохранить проверяемые исходники и видео без секретов и деплоя
+        run: |
+          mkdir -p /tmp/nexus-intro-review
+          python3 - <<'PY'
+          import pathlib, subprocess, zipfile, json, hashlib
+          root = pathlib.Path.cwd()
+          files = subprocess.check_output(['git','ls-files','-z']).decode().split('\0')
+          records = []
+          with zipfile.ZipFile('/tmp/nexus-intro-review/source.zip','w',zipfile.ZIP_DEFLATED,compresslevel=6) as out:
+              for name in files:
+                  if not name: continue
+                  p = root / name
+                  if not p.is_file() or p.is_symlink(): continue
+                  media = name.startswith(('intro-media/cinematic-v3/','intro-media/cinematic-v4/','intro-media/cinematic-v5/'))
+                  text = p.suffix.lower() in {'.js','.mjs','.cjs','.json','.html','.css','.md','.txt','.yaml','.yml','.svg','.toml','.sql','.sh','.ps1'}
+                  if not (media or (text and p.stat().st_size < 3000000)): continue
+                  if name.startswith(('node_modules/','.git/')) or p.name.startswith('.env'): continue
+                  out.write(p,name)
+                  records.append({'path':name,'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()})
+          pathlib.Path('/tmp/nexus-intro-review/files.json').write_text(json.dumps(records,ensure_ascii=False,indent=2))
+          pathlib.Path('/tmp/nexus-intro-review/commit.txt').write_text(subprocess.check_output(['git','rev-parse','HEAD']).decode())
+          print('Подготовлено файлов:',len(records))
+          print('Размер архива:',pathlib.Path('/tmp/nexus-intro-review/source.zip').stat().st_size)
+          PY
+      - name: Проверить существующие контракты заставки
+        run: |
+          node --test tests/startup-intro-policy.test.mjs tests/startup-intro-build.test.mjs tests/startup-intro-retention.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: startup-video-review-${{ github.sha }}
+          path: /tmp/nexus-intro-review
+          retention-days: 7
