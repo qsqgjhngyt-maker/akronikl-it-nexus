@@ -1,5 +1,5 @@
 export const NARRATOR=Object.freeze({voiceURI:'uyut7:narrator',name:'Прежний рассказчик «Уют-7» · локальный Qwen',lang:'ru-RU',localService:true,kind:'local-server'});
-export function createLocalSpeaker({request,windowRef=globalThis.window,isCurrent=()=>true,voice=NARRATOR}={}){
+export function createLocalSpeaker({request,windowRef=globalThis.window,isCurrent=()=>true,voice=NARRATOR,cacheEnabled=true}={}){
  if(typeof request!=='function'||typeof windowRef?.Audio!=='function')throw Error('SPEECH_UNAVAILABLE');
  const cache=new Map(),jobs=new Set(),pending=new Map();let disposed=false,cacheBytes=0;
  const valid=()=>{try{return !disposed&&isCurrent()===true;}catch{return false;}};
@@ -17,7 +17,7 @@ export function createLocalSpeaker({request,windowRef=globalThis.window,isCurren
    blob=await request(text,{signal:controller.signal});
    if(cancelled)throw Error('SPEECH_CANCELLED');
    if(!valid()){dispose();throw Error('SPEECH_CONTEXT_CHANGED');}
-   if(blob.size<=6000000){while(cache.size>=8||cacheBytes+blob.size>8000000){const [key,value]=cache.entries().next().value??[];if(key===undefined)break;cache.delete(key);cacheBytes-=value.size;}cache.set(text,blob);cacheBytes+=blob.size;}return blob;
+   if(cacheEnabled&&blob.size<=6000000){while(cache.size>=8||cacheBytes+blob.size>8000000){const [key,value]=cache.entries().next().value??[];if(key===undefined)break;cache.delete(key);cacheBytes-=value.size;}cache.set(text,blob);cacheBytes+=blob.size;}return blob;
   })().finally(()=>{jobs.delete(job);if(pending.get(text)===job)pending.delete(text);});
   // Preparations may be cancelled without ever being consumed by playback.
   void job.promise.catch(()=>{});Object.freeze(job);pending.set(text,job);return job;
