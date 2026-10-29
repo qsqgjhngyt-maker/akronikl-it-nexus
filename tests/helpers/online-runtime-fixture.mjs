@@ -50,7 +50,9 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
  cdp.on('ServiceWorker.workerErrorReported',e=>errors.push('SW: '+e.errorMessage.errorMessage));
  cdp.on('ServiceWorker.workerVersionUpdated',e=>workerEvents.push(...e.versions.map(v=>({status:v.status,runningStatus:v.runningStatus,scriptURL:v.scriptURL}))));
  async function waitReady(){
-  const until=Date.now()+30000;let last;
+  // Home не ждёт заполнения offline-кэша. Холодный CI должен дождаться
+  // настоящего publicReady, включая install/activate всего разрешённого графа.
+  const until=Date.now()+90000;let last;
   while(Date.now()<until){last=await page.evaluate(()=>new Promise(resolve=>{const worker=navigator.serviceWorker.controller;if(!worker)return resolve(null);const channel=new MessageChannel(),timer=setTimeout(()=>resolve(null),10000);channel.port1.onmessage=e=>{clearTimeout(timer);channel.port1.close();resolve(e.data)};worker.postMessage({type:'nexus-pwa-status'},[channel.port2]);}));if(last?.publicReady===true)return last;await page.waitForTimeout(100);}
   throw Error('ONLINE_PUBLIC_PWA_NOT_READY '+JSON.stringify({last,errors,workerEvents}));
  }
