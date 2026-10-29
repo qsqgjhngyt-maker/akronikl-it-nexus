@@ -51,7 +51,7 @@ function replaceRoute(page){finalController?.dispose();finalController=null;disp
 const academyViewFilter={category:'all',availability:'all',query:''};
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const route=()=>{const p=new URLSearchParams(location.hash.replace(/^#/,''));return{view:p.get('view')||'home',course:p.get('course'),lesson:p.get('lesson'),tab:p.get('tab')||'overview',practicum:p.get('practicum'),project:p.get('project'),template:p.get('template'),focus:p.get('focus')}};
-const PROJECT_STUDIO_VERSION='0.1.7-alpha.2.4.6-ui1a.10.9-test.2';
+const PROJECT_STUDIO_VERSION='0.1.7-alpha.2.4.6-ui1a.10.10';
 async function loadProjectStudio(){
   if(projectStudioApi)return projectStudioApi;
   const suffix=`?v=${PROJECT_STUDIO_VERSION}`;

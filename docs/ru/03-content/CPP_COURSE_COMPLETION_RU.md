@@ -38,7 +38,7 @@ Qt6.8.3/Emscripten3.1.56 собирается и исполняется на у�
 | Qt доступность | 5/5 настоящих клавиатурных/фокусных проверок на390/1366; существующие данные сохранены |
 | Итоговые GUI-заготовки | все3 собираются и помещаются в350px iframe при390px viewport; кнопки не ниже44px |
 | Приёмка M6 05/07 | 144 отображения,384 действия с вопросами,0 findings/ошибок браузера |
-| NEXUS-PERF-01 | 75 модулей/593856B при600000B после нормализации source LF; outline26769/30000B, labs45357/46000B, M6labs10057/12000B; Qt на Home не загружается |
+| NEXUS-PERF-01 | 75 модулей/593850B при600000B после нормализации source LF; outline26769/30000B, labs45357/46000B, M6labs10057/12000B; Qt на Home не загружается |
 | Время локального стенда | Home2718ms, первый Gold328ms; это не WAN или физический телефон |
 | Интеграция | текущий main8827a1d включён в feature; заставка и её CSP сохранены; общие вход/Cloud/Offline/content regression PASS |
 | Qt corresponding source | 66файлов исходников/лицензий; QtBase собран из исходников без сети; host пересобран из распространяемого source kit,9 runtime-файлов побайтно совпали |
@@ -70,3 +70,7 @@ CI86 выявил устаревшее ожидание состава JSON бе
 Старт и навигация финальной сборки:7/7 PASS, ошибок/404/внешних запросов нет. Каталог67тем online/cold Offline:6/6 PASS, синтетические50завершений/40legacy, состояния67тем и проект/checkpoint сохранены, Cloud writes0. Worker dry-run:197.98KiB gzip; DB/совместимость прежние, keep-vars, без доставки. Backend Docker собран локально из закреплённого Node22; production не менялся.
 
 Расширенный тест детерминизма выявил зависимость порядка optionalAssets от порядка27удержанных поколений с видео. Список отсортирован по URL; повторный тест перестановки retained generations и retention:2/2 PASS. Service Worker и все тестировавшиеся public bytes не изменились; единственный добавленный root — NETWORK ONLY startup-intro.json, его стартовый проход7/7 PASS. Его прежние bytes включены в восьмифайловый откат.
+
+После установки publication metadata интеграционный CI обнаружил прежний PROJECT_STUDIO_VERSION10.9-test.2 в core/app.js. Обновлён только номер до10.10, runtime/учебные программы не менялись. Новый app и producer SW пересобраны двумя равными сборками; versioned-build gate повторяется, PWA переход/откат повторяется на новых bytes. Старая приёмка M4 привязана к веткеM4: теперь отдельный completion route выполняет актуальные общие gates и все8M4уроков, исторический fallback сохранён. M4 UI:11/11 PASS, включая40/67 и legacy40/40.
+
+На окончательной версии10.10: ui1a-versioned-build5590assets PASS, release-version-consistency PASS, NEXUS-PERF-01:75modules/593850B PASS. Повторный PWA upgrade/rollback/upgrade5/5 PASS; повторный старт7/7 PASS, ошибок/404/внешних запросов0. FULL/PATCH/восьмифайловый rollback перепакованы и перечитаны, SHA приведены в PACKAGES_PREPARED.json. Production всё ещё не менялся.
