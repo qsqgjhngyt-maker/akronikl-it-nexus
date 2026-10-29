@@ -1,0 +1,313 @@
+{
+  "schemaVersion": 1,
+  "lessonId": "cpp.pseudocode-euclidean-algorithm",
+  "moduleId": "cpp.section.algorithms",
+  "locale": "en",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "title": "Euclid's algorithm: remainders, traces and invariants",
+  "lead": "Instead of guessing a greatest common divisor, we repeatedly transform a pair of integers without changing the answer.",
+  "why": "Euclid's algorithm is a model of algorithmic reasoning: simplify the state while preserving a key property, then explain why the process must terminate.",
+  "objectives": [
+    "Trace the greatest common divisor calculation by hand.",
+    "Explain (a,b) → (b,a mod b).",
+    "Identify the invariant and termination argument.",
+    "Test the implementation with normal and boundary cases."
+  ],
+  "prerequisites": [
+    "Nonnegative integers and the remainder operation.",
+    "Basic pseudocode and step traces."
+  ],
+  "concepts": [
+    {
+      "term": "GCD",
+      "definition": "The greatest positive integer dividing both inputs without a remainder."
+    },
+    {
+      "term": "Remainder",
+      "definition": "For nonnegative a and positive b, a%b is between 0 and b-1."
+    },
+    {
+      "term": "GCD invariant",
+      "definition": "gcd(a,b) = gcd(b,a mod b), provided b>0."
+    },
+    {
+      "term": "Trace",
+      "definition": "A sequence of intermediate states such as a,b and remainder."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Why remainders make the problem smaller",
+      "paragraphs": [
+        "We could try every possible divisor of 48 and 18, but division tells us that 48 = 2×18 + 12. Any common divisor of 48 and 18 must also divide 12.",
+        "Therefore gcd(48,18) equals gcd(18,12), then gcd(12,6), then gcd(6,0). The result is 6. Each transformation preserves the sought divisor."
+      ]
+    },
+    {
+      "title": "Pseudocode and state transitions",
+      "paragraphs": [
+        "Start with (a,b). While b is not zero, compute r=a mod b, then replace a with b and b with r. The remainder is never computed with divisor zero.",
+        "For 48 and 18, the trace reads (48,18,12) → (18,12,6) → (12,6,0) → (6,0). The second component decreases after each iteration."
+      ]
+    },
+    {
+      "title": "Why the GCD invariant holds",
+      "paragraphs": [
+        "If a number divides both a and b, it also divides a-qb and thus the remainder r. Conversely, a common divisor of b and r divides a=qb+r.",
+        "The two pairs have the same common divisors. Once b=0, the current a is the GCD for the stated valid input domain."
+      ]
+    },
+    {
+      "title": "Why the loop must stop",
+      "paragraphs": [
+        "For nonnegative a and positive b, the remainder is nonnegative and strictly smaller than b. The second component cannot keep decreasing forever without reaching zero.",
+        "Inputs (0,18) and (18,0) both have GCD 18. In this teaching contract (0,0) is rejected explicitly because it has no unique greatest positive divisor."
+      ]
+    },
+    {
+      "title": "Build a safe C++ implementation",
+      "paragraphs": [
+        "Read and validate inputs before the loop. We accept nonnegative values within int range, excluding (0,0). Production-grade code also needs bounds and input-failure handling.",
+        "To debug, compare the full trace, not only the last output. Calculate the remainder before overwriting the previous pair."
+      ]
+    },
+    {
+      "title": "Why the pair replacement preserves the GCD",
+      "paragraphs": [
+        "If a = q·b + r, every common divisor of a and b divides r = a − q·b. Conversely, a common divisor of b and r divides a. Thus the common divisors are unchanged. With b>0, 0≤r<b, so the second value strictly decreases to zero. These arguments establish answer preservation and termination separately. For (18,48), the first remainder is 18; reversed inputs still work."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "Laboratory inputs are a,b from 0 to 100000, excluding (0,0). These bounds match the interactive model.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "title": "One Euclidean transition",
+      "purpose": "Check the first row of the trace in C++.",
+      "code": "#include <iostream>\nint main() {\n    int a = 48, b = 18;\n    int r = a % b;\n    std::cout << b << ' ' << r << '\\n';\n}",
+      "stdin": "",
+      "expectedStdout": "18 12\n",
+      "steps": [
+        "48 mod 18 is 12.",
+        "The next state is (18,12).",
+        "The output contains the next pair.",
+        "The GCD is unchanged."
+      ]
+    },
+    {
+      "title": "Complete Euclid algorithm",
+      "purpose": "A loop with explicit input validation.",
+      "code": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n}",
+      "stdin": "48 18\n",
+      "expectedStdout": "6\n",
+      "steps": [
+        "Compute the remainder while b is positive.",
+        "Assign the old b to a.",
+        "Assign the remainder to b.",
+        "Print a when b reaches zero."
+      ],
+      "cases": [
+        {
+          "stdin": "0 18\n",
+          "stdout": "18\n"
+        },
+        {
+          "stdin": "18 0\n",
+          "stdout": "18\n"
+        },
+        {
+          "stdin": "100000 100000\n",
+          "stdout": "100000\n"
+        },
+        {
+          "stdin": "0 0\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "-1 18\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "100001 18\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "oops\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Larger inputs",
+      "action": "Use 1071 and 462 instead of 48 and 18.",
+      "prediction": "The result is 21 after several reductions.",
+      "verification": "Write the first three trace rows and compare."
+    },
+    {
+      "title": "Zero boundary",
+      "action": "Try 0 18, 18 0 and 0 0.",
+      "prediction": "The first two yield 18; the last is rejected.",
+      "verification": "Explain why no division by zero is executed."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "Remainder is calculated with b=0",
+      "cause": "The loop guard was removed or misplaced.",
+      "fix": "Use modulo only inside a loop that checks b!=0."
+    },
+    {
+      "symptom": "The result changed after reordering assignments",
+      "cause": "The old state was overwritten too soon.",
+      "fix": "Store r before assigning a=b and b=r."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Write the trace for 30 and 12.",
+      "criteria": "(30,12,6), (12,6,0), result 6.",
+      "hint": "Apply the remainder rule."
+    },
+    {
+      "level": "applied",
+      "task": "Count Euclidean transitions in the program.",
+      "criteria": "For 48 18, GCD=6 and transitions=3.",
+      "hint": "Increment once per iteration."
+    },
+    {
+      "level": "transfer",
+      "task": "Compare a brute-force divisor search against Euclid.",
+      "criteria": "Explain how inputs and number of steps affect both solutions.",
+      "hint": "Try larger integer pairs."
+    }
+  ],
+  "laboratory": {
+    "title": "Lab: GCD and transition count",
+    "challenge": "Read two nonnegative integers excluding (0,0). Print the GCD and number of iterations, or invalid for forbidden inputs. Laboratory inputs are a,b from 0 to 100000, excluding (0,0). These bounds match the interactive model.",
+    "starterCode": "// Read a,b, validate the input and implement Euclid with steps.\n",
+    "referenceCode": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b)) { std::cout << \"invalid\\n\"; return 0; }\n    if (a < 0 || a > 100000 || b < 0 || b > 100000 || (a == 0 && b == 0)) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    int steps = 0;\n    while (b != 0) {\n        int r = a % b;\n        a = b;\n        b = r;\n        ++steps;\n    }\n    std::cout << a << ' ' << steps << '\\n';\n}",
+    "cases": [
+      {
+        "stdin": "48 18\n",
+        "stdout": "6 3\n"
+      },
+      {
+        "stdin": "1071 462\n",
+        "stdout": "21 3\n"
+      },
+      {
+        "stdin": "0 0\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 18\n",
+        "stdout": "18 1\n"
+      },
+      {
+        "stdin": "18 0\n",
+        "stdout": "18 0\n"
+      },
+      {
+        "stdin": "18 48\n",
+        "stdout": "6 4\n"
+      },
+      {
+        "stdin": "100001 1\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "-1 1\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Trace the first two transitions by hand.",
+      "Compute the remainder before updating the state.",
+      "Add an iteration counter.",
+      "Run the three cases and explain the reported count."
+    ],
+    "rubric": [
+      "Never compute modulo with a zero divisor.",
+      "Normal and zero cases follow the specification.",
+      "The iteration count matches the trace.",
+      "Submit code plus a short explanation of the invariant."
+    ],
+    "artifact": "source-code-and-trace",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Why does gcd(a,b) equal gcd(b,a%b) when b>0?",
+      "answers": [
+        "The pairs have the same set of common divisors",
+        "Compilers enforce it",
+        "b always equals a"
+      ],
+      "correctIndex": 0,
+      "explanation": "Divisibility is preserved in both directions."
+    },
+    {
+      "question": "Why must the loop terminate?",
+      "answers": [
+        "The remainder always equals b",
+        "The new b is strictly smaller than the old positive b",
+        "Every case has five steps"
+      ],
+      "correctIndex": 1,
+      "explanation": "A nonnegative decreasing integer cannot decrease forever."
+    },
+    {
+      "question": "Which input does our exercise reject?",
+      "answers": [
+        "0 18",
+        "18 0",
+        "0 0"
+      ],
+      "correctIndex": 2,
+      "explanation": "We exclude the two-zero case from this task's input domain."
+    }
+  ],
+  "reflection": [
+    "Explain the algorithm without relying on memorized source code.",
+    "Why is an invariant insufficient without a termination argument?"
+  ],
+  "bridge": "Next, visualize the state transitions as a flowchart.",
+  "visualization": {
+    "kind": "euclid",
+    "steps": []
+  },
+  "sourceRefs": [
+    "CS2023-AL",
+    "ISO-CPP"
+  ],
+  "legacyQuiz": {
+    "question": "What is the stopping condition in this version of the algorithm?",
+    "answers": [
+      "a becomes negative",
+      "b becomes 0",
+      "steps becomes 10"
+    ],
+    "correctIndex": 1
+  }
+}

@@ -52,22 +52,22 @@ export function initGalaxy(canvas,{onMotionChange=()=>{}}={}){
   context.globalAlpha=1;haze(cx,cy,scale*44,'223,235,235',.11);context.globalCompositeOperation='source-over';
  };
  const tick=now=>{
-  frame=0;if(disposed||document.hidden)return;
+  frame=0;if(disposed||document.hidden||document.documentElement.dataset.nexusIntroActive==='true')return;
   const delta=last?Math.min((now-last)/1000,.06):0;last=now;
   if(moving)time+=delta;
   lookX+=(pointerX-lookX)*.055;lookY+=(pointerY-lookY)*.055;
   if(now-lastDraw>(mobile?30:16)||!moving){draw();lastDraw=now}
   if(moving)frame=requestAnimationFrame(tick);
  };
- const requestDraw=()=>{if(!frame&&!disposed&&!document.hidden)frame=requestAnimationFrame(tick)};
+ const requestDraw=()=>{if(!frame&&!disposed&&!document.hidden&&document.documentElement.dataset.nexusIntroActive!=='true')frame=requestAnimationFrame(tick)};
  const resize=()=>{width=innerWidth;height=innerHeight;dpr=Math.min(devicePixelRatio||1,width<761?1.4:1.75);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);last=0;requestDraw()};
  const move=event=>{if(!finePointer?.matches||!moving)return;pointerX=(event.clientX/Math.max(width,1)-.5)*2;pointerY=(event.clientY/Math.max(height,1)-.5)*2;requestDraw()};
  const leave=()=>{pointerX=0;pointerY=0};
- const visibility=()=>{last=0;if(document.hidden){cancelAnimationFrame(frame);frame=0}else requestDraw()};
+ const visibility=()=>{last=0;if(document.hidden||document.documentElement.dataset.nexusIntroActive==='true'){cancelAnimationFrame(frame);frame=0}else requestDraw()};
  const setMotion=enabled=>{moving=!!enabled;last=0;pointerX=0;pointerY=0;if(!moving){lookX=0;lookY=0}onMotionChange(moving);requestDraw()};
  const preference=()=>setMotion(!reduced.matches);
- addEventListener('resize',resize,{passive:true});addEventListener('pointermove',move,{passive:true});document.addEventListener('pointerleave',leave);document.addEventListener('visibilitychange',visibility);
+ addEventListener('resize',resize,{passive:true});addEventListener('pointermove',move,{passive:true});document.addEventListener('pointerleave',leave);document.addEventListener('visibilitychange',visibility);addEventListener('nexus:intro-statechange',visibility);
  if(reduced?.addEventListener)reduced.addEventListener('change',preference);
  resize();onMotionChange(moving);
- return{setMotion,isMoving:()=>moving,destroy(){disposed=true;cancelAnimationFrame(frame);removeEventListener('resize',resize);removeEventListener('pointermove',move);document.removeEventListener('pointerleave',leave);document.removeEventListener('visibilitychange',visibility);reduced?.removeEventListener?.('change',preference)}};
+ return{setMotion,isMoving:()=>moving,destroy(){disposed=true;cancelAnimationFrame(frame);removeEventListener('resize',resize);removeEventListener('pointermove',move);document.removeEventListener('pointerleave',leave);document.removeEventListener('visibilitychange',visibility);removeEventListener('nexus:intro-statechange',visibility);reduced?.removeEventListener?.('change',preference)}};
 }

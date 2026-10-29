@@ -1,5 +1,6 @@
 // Настоящий bootstrap/app/SW/Worker на canonical origin, физически только loopback.
 import https from 'node:https';
+import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -10,7 +11,7 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
  const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
  const account={account:{accountId:'synthetic-runtime-online',displayName:'Synthetic Runtime',status:'active'},loginMethods:[{id:'synthetic-key',kind:'passkey',status:'active',createdAt:'2026-10-24T00:00:00Z',disabledAt:null}],enrollmentAvailable:false};
  const requests=[],errors=[],workerEvents=[];
- const mime=f=>({'.js':'text/javascript','.json':'application/json','.css':'text/css','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.md':'text/markdown'}[path.extname(f)]||'text/html');
+ const mime=f=>({'.js':'text/javascript','.json':'application/json','.css':'text/css','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.md':'text/markdown','.mp4':'video/mp4','.webm':'video/webm','.jpg':'image/jpeg'}[path.extname(f)]||'text/html');
  const server=https.createServer({key:await readFile(path.join(cache,'qa-key.pem')),cert:await readFile(path.join(cache,'qa-cert.pem'))},async(req,res)=>{
   requests.push({path:new URL(req.url,GATEWAY_ORIGIN).pathname,method:req.method});
   try{const u=new URL(req.url,GATEWAY_ORIGIN);if(req.method!=='GET'){res.writeHead(403);return res.end('SYNTHETIC_WRITE_DENIED');}
@@ -34,6 +35,15 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
  const context=await browser.newContext({ignoreHTTPSErrors:true,viewport:{width:1366,height:900}});
  // Отдельный пустой профиль. Тестовый TLS не влияет на браузер владельца/системное доверие.
  await context.route('**/*',async route=>new URL(route.request().url()).origin===GATEWAY_ORIGIN?route.continue():route.abort());
+ // Четыре публичных video URL читаются из точной QA-сборки, без live CDN.
+ // Все прочие внешние запросы по-прежнему запрещены; errors не фильтруются.
+ await context.route('https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/**',async route=>{
+  const req=route.request(),u=new URL(req.url()),headers=await req.allHeaders();
+  assert.match(u.href,/^https:\/\/qsqgjhngyt-maker\.github\.io\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/);
+  assert.equal(req.method(),'GET');assert.equal(Boolean(headers.cookie||headers.authorization),false,'Публичное видео не получает credentials');
+  const file=u.pathname.replace('/akronikl-it-nexus/','');requests.push({path:u.pathname,method:req.method(),publicMediaFixture:true});
+  await route.fulfill({status:200,headers:{'content-type':file.endsWith('.mp4')?'video/mp4':'video/webm','access-control-allow-origin':'*','cache-control':'no-store'},body:await readFile(path.join(frontend,file))});
+ });
  await bindRuntimeTransport(context);
  await context.route('https://felixhao28.github.io/JSCPP/dist/JSCPP.es5.min.js',async route=>route.fulfill({status:200,contentType:'application/javascript',body:await readFile(process.env.NEXUS_JSCPP_FIXTURE)}));
  const page=await context.newPage();page.setDefaultTimeout(45000);page.on('pageerror',e=>errors.push(e.message));

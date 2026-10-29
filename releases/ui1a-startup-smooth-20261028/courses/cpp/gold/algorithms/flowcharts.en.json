@@ -1,0 +1,339 @@
+{
+  "schemaVersion": 1,
+  "lessonId": "cpp.flowcharts",
+  "moduleId": "cpp.section.algorithms",
+  "locale": "en",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "title": "Flowcharts as testable execution models",
+  "lead": "A flowchart is not decorative artwork. It shows how an algorithm chooses actions and which path a particular input follows.",
+  "why": "In order processing, pricing and control systems, a wrong edge or label can become a business defect. A diagram should be testable against real inputs and code.",
+  "objectives": [
+    "Follow directed control-flow edges.",
+    "Distinguish actions, decisions, input/output and start/end.",
+    "Trace all branches, including boundaries.",
+    "Translate diagrams into C++ and concrete tests."
+  ],
+  "prerequisites": [
+    "You understand conditional alternatives.",
+    "You can prepare a decision table."
+  ],
+  "concepts": [
+    {
+      "term": "Decision node",
+      "definition": "A conditional split with explicitly labeled outcomes."
+    },
+    {
+      "term": "Execution path",
+      "definition": "The sequence of nodes visited by a particular input."
+    },
+    {
+      "term": "Branch coverage",
+      "definition": "Tests that exercise each alternative outcome of a decision."
+    },
+    {
+      "term": "Diagram invariant",
+      "definition": "A property assumed to be true when control reaches a particular node."
+    }
+  ],
+  "sections": [
+    {
+      "title": "The transition matters more than the shape",
+      "paragraphs": [
+        "Start and end define procedure boundaries. An action modifies state; input/output interacts with the outside world; a decision chooses a path. Connections need clear direction.",
+        "Without labeled true/false branches, a reader must guess which path to follow. A sound flowchart allows manual execution without consulting its author."
+      ]
+    },
+    {
+      "title": "Order validation before shipping price",
+      "paragraphs": [
+        "Consider a delivery policy: negative order totals are invalid, orders totaling at least 1000 get free delivery, and smaller valid orders pay 150. Validation therefore precedes the threshold check.",
+        "Moving checks into the wrong order can apply a fee to invalid orders. The diagram makes the policy explicit before C++ code is written."
+      ]
+    },
+    {
+      "title": "Tracing inputs and covering branches",
+      "paragraphs": [
+        "For -1 the result is invalid; for 999 the delivery fee is 150; for 1000 it is free. These exercise distinct execution paths.",
+        "Testing only one friendly input does not establish branch behavior. Boundary cases distinguish > from >= and catch off-by-one defects."
+      ]
+    },
+    {
+      "title": "Decompose complex charts",
+      "paragraphs": [
+        "A high-level diagram reading 'validate order → calculate total → produce receipt' is usually clearer than a hundred small rectangles. Move inner details into subprocedures.",
+        "Specify the inputs and outputs of each component. A diagram neither replaces an interface contract nor removes the need for tests."
+      ]
+    },
+    {
+      "title": "Make visual models accessible and truthful",
+      "paragraphs": [
+        "A diagram's labels must match the conditions in the executable code. On small screens, the same transitions need an accessible textual explanation.",
+        "An interactive diagram is still a model rather than a compiler result. Compare it against actual outputs in Code Studio."
+      ]
+    },
+    {
+      "title": "Two tariffs, two distinct contracts",
+      "paragraphs": [
+        "The interactive model uses an order-amount threshold; the laboratory uses distance. Do not carry x≥1000 into the kilometre program. Distances 1..5 cost 100, 6 costs 120, and 8 costs 160. The laboratory flow is input → valid distance? → distance>5? → extra charge → output. Label both yes and no exits at each decision."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "The laboratory accepts distance from 1 to 1000000; other values produce invalid.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "title": "Free shipping threshold",
+      "purpose": "A validation gate followed by a boundary condition.",
+      "code": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
+      "stdin": "1000\n",
+      "expectedStdout": "free\n",
+      "steps": [
+        "Reject negative totals first.",
+        "Only valid orders reach the threshold.",
+        "1000 satisfies >=1000.",
+        "999 must print 150."
+      ],
+      "cases": [
+        {
+          "stdin": "0\n",
+          "stdout": "150\n"
+        },
+        {
+          "stdin": "999\n",
+          "stdout": "150\n"
+        },
+        {
+          "stdin": "1000\n",
+          "stdout": "free\n"
+        },
+        {
+          "stdin": "2147483647\n",
+          "stdout": "free\n"
+        },
+        {
+          "stdin": "-1\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "oops\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ]
+    },
+    {
+      "title": "Examination score",
+      "purpose": "Reject invalid scores before deciding pass/fail.",
+      "code": "#include <iostream>\nint main() {\n    int score;\n    if (!(std::cin >> score)) { std::cout << \"invalid\\n\"; return 0; }\n    if (score < 0 || score > 100) std::cout << \"invalid\\n\";\n    else if (score >= 60) std::cout << \"pass\\n\";\n    else std::cout << \"retry\\n\";\n}",
+      "stdin": "60\n",
+      "expectedStdout": "pass\n",
+      "steps": [
+        "Accept only 0..100.",
+        "60 is included in the pass range.",
+        "59 returns retry.",
+        "101 returns invalid."
+      ],
+      "cases": [
+        {
+          "stdin": "0\n",
+          "stdout": "retry\n"
+        },
+        {
+          "stdin": "59\n",
+          "stdout": "retry\n"
+        },
+        {
+          "stdin": "60\n",
+          "stdout": "pass\n"
+        },
+        {
+          "stdin": "100\n",
+          "stdout": "pass\n"
+        },
+        {
+          "stdin": "-1\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "101\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "oops\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Wrong boundary operator",
+      "action": "Change >=1000 to >1000.",
+      "prediction": "Exactly 1000 will be charged incorrectly.",
+      "verification": "Compare 999, 1000 and 1001."
+    },
+    {
+      "title": "Incorrect order of checks",
+      "action": "Perform the price threshold check before input validation.",
+      "prediction": "An invalid order may receive an inappropriate shipping price.",
+      "verification": "Move validation back to the first branch."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "A 1000-unit order pays for shipping",
+      "cause": "The code uses > instead of >=.",
+      "fix": "Correct the boundary operator."
+    },
+    {
+      "symptom": "Invalid data has no path in the diagram",
+      "cause": "The input-validation decision lacks its negative output.",
+      "fix": "Add an explicit invalid branch ending the procedure."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Draw a flowchart for exam-score validation.",
+      "criteria": "Show invalid/pass/retry and labeled edges.",
+      "hint": "Test -1,59,60,101."
+    },
+    {
+      "level": "applied",
+      "task": "Trace free-shipping logic at the boundary.",
+      "criteria": "All three input classes follow intended paths.",
+      "hint": "Match diamonds to C++ conditions."
+    },
+    {
+      "level": "transfer",
+      "task": "Design a distance-based fare model.",
+      "criteria": "Validate the input, then apply a threshold and an incremental formula.",
+      "hint": "Try 0,5,6."
+    }
+  ],
+  "laboratory": {
+    "title": "Lab: a delivery fare flowchart",
+    "challenge": "Read whole kilometers. For distance<=0, print invalid. First five kilometers cost 100; every subsequent kilometer adds 20. The laboratory accepts distance from 1 to 1000000; other values produce invalid.",
+    "starterCode": "// Validate distance>0; implement the threshold and fare.\n",
+    "referenceCode": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+    "cases": [
+      {
+        "stdin": "0\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "5\n",
+        "stdout": "100\n"
+      },
+      {
+        "stdin": "8\n",
+        "stdout": "160\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "1\n",
+        "stdout": "100\n"
+      },
+      {
+        "stdin": "6\n",
+        "stdout": "120\n"
+      },
+      {
+        "stdin": "1000000\n",
+        "stdout": "20000000\n"
+      },
+      {
+        "stdin": "1000001\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Draw start, input and validation.",
+      "Add the 5-kilometer decision diamond.",
+      "Predict the output of each case.",
+      "Implement the code and compare output with the traced path."
+    ],
+    "rubric": [
+      "All transitions are labeled and reachable.",
+      "The 5/6 boundary is correct.",
+      "C++ output matches the three tests.",
+      "Submit the diagram and source code."
+    ],
+    "artifact": "source-code-and-diagram",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What makes a flowchart traceable?",
+      "answers": [
+        "Directed and labeled decision edges",
+        "Arbitrary shapes",
+        "Missing conditions"
+      ],
+      "correctIndex": 0,
+      "explanation": "A reader needs both direction and branch meaning."
+    },
+    {
+      "question": "What does testing 999 and 1000 reveal?",
+      "answers": [
+        "A linker error",
+        "An inclusive/exclusive boundary defect",
+        "A memory leak"
+      ],
+      "correctIndex": 1,
+      "explanation": "It distinguishes > from >=."
+    },
+    {
+      "question": "What happens with a negative order total?",
+      "answers": [
+        "Calculate delivery price",
+        "Print free",
+        "Reject it before price checks"
+      ],
+      "correctIndex": 2,
+      "explanation": "Input validation precedes the threshold decision."
+    }
+  ],
+  "reflection": [
+    "Explain paths for -1, 999 and 1000.",
+    "What happens if a false branch has no outgoing arrow?"
+  ],
+  "bridge": "Next, divide larger algorithms into functions with explicit responsibilities.",
+  "visualization": {
+    "kind": "flowchart",
+    "steps": []
+  },
+  "sourceRefs": [
+    "CS2023-AL",
+    "CS2023-SDF"
+  ],
+  "legacyQuiz": {
+    "question": "Which shape is commonly used for a condition?",
+    "answers": [
+      "A rectangle",
+      "A diamond",
+      "A terminator"
+    ],
+    "correctIndex": 1
+  }
+}

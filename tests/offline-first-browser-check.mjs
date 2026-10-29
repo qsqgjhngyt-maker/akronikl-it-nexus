@@ -10,6 +10,8 @@ const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE)
 const frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR),out=path.resolve(process.env.NEXUS_OFFLINE_EVIDENCE);
 await mkdir(out,{recursive:false});
 const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),generation=manifest.assetGeneration,profile=await mkdtemp(path.join(tmpdir(),'nx-offline-'));
+const course=JSON.parse(await readFile(path.join(frontend,'releases',generation,'courses/cpp/manifest.json')));
+assert.ok(Number.isSafeInteger(course.lessonCount)&&course.lessonCount>0);
 const phrase='SYNTHETIC local copy phrase only 2026',checks=[],failures=[],requests=[],pageErrors=[];
 let context,offline=false,vaultId,branchId;
 const source='#include <iostream>\n#include <vector>\n#include "calc.hpp"\nint main(){std::vector<int> v{2,3,5};int n=0;for(int x:v)n+=x;std::cout<<"NEXUS_OFFLINE "<<n<<" "<<calc()<<"\\n";}';
@@ -46,7 +48,7 @@ try{
    const state={courses:{cpp:{lessons:{'cpp.programming-process':{completed:true}}}},skills:{}},payload=makeLocalPayload({account,state,projects:[project],isOwner:a=>a.ownerId===account.accountId}),store=createVaultStore(),session=await store.create(payload,phrase),id=session.id;
    await session.lock();return id;
   },{generation,phrase,source});
-  assert.match(vaultId,/^[a-f0-9-]{36}$/);assert.equal(await page.locator('#cppPathPanel-topics .topic a').count(),40);
+  assert.match(vaultId,/^[a-f0-9-]{36}$/);assert.equal(await page.locator('#cppPathPanel-topics .topic a').count(),course.lessonCount);
  });
  await check('wrong phrase cannot open projects; raw durable records contain no plaintext account or project content',async()=>{
   await page.goto(origin+'/offline.html#copy='+vaultId);await page.locator('#localPhrase').fill('wrong synthetic phrase 2026');await page.locator('#unlockLocal button').click();await page.getByText('Копия не открыта.',{exact:false}).waitFor();assert.equal(await page.locator('#editor').count(),0);
@@ -62,7 +64,7 @@ try{
  });
  await check('close complete browser then cold offline PWA restart opens Academy, own projects and previous progress',async()=>{
   await context.close();offline=true;page=await launch(true);page.setDefaultTimeout(30000);await page.goto(origin+'/');await page.locator('[data-cpp-learning-path]').waitFor();
-  assert.equal(await page.locator('#cppPathPanel-topics .topic a').count(),40);
+  assert.equal(await page.locator('#cppPathPanel-topics .topic a').count(),course.lessonCount);
   await unlock(page);await page.goto(origin+'/offline.html#view=academy&focus=cpp');await page.waitForFunction(()=>document.querySelector('#offlineApp')?.textContent.includes('✓'));
   await page.goto(origin+'/offline.html#project=synthetic-project');await page.locator('#editor').waitFor();assert.match(await page.locator('#editor').inputValue(),/NEXUS_OFFLINE/);
  });
@@ -104,11 +106,14 @@ try{
   },{generation,phrase});assert.deepEqual(result,{wrong:true,quota:true,tampered:true});
  });
  await check('prepared Academy lessons, exercises, English benchmark and interactive learning models remain available offline',async()=>{
-  await page.goto(origin+'/offline.html#view=academy&focus=cpp');assert.equal(await page.locator('#cppPathPanel-topics .topic a').count(),40);await page.goto(origin+'/offline.html#course=cpp&tab=practicums');assert.equal(await page.locator('a[href*="practicum="]').count(),6);await page.goto(origin+'/offline.html#course=cpp&tab=projects');assert.equal(await page.locator('a[href*="template=cpp%3A"]').count(),7);
-  await page.goto(origin+'/offline.html#lesson=cpp.pointers-references-addresses');await page.locator('#memoryLab').waitFor();const before=await page.locator('#memoryStepIndex').textContent();await page.locator('#memoryNext').click();assert.notEqual(await page.locator('#memoryStepIndex').textContent(),before);
+  await page.goto(origin+'/offline.html#view=academy&focus=cpp');assert.equal(await page.locator('#cppPathPanel-topics .topic a').count(),course.lessonCount);await page.goto(origin+'/offline.html#course=cpp&tab=practicums');assert.equal(await page.locator('a[href*="practicum="]').count(),course.practicumCount);await page.goto(origin+'/offline.html#course=cpp&tab=projects');assert.equal(await page.locator('a[href*="template=cpp%3A"]').count(),course.projectCount);
+  await page.goto(origin+'/offline.html#lesson=cpp.pointers-references-addresses');await page.locator('[data-gold-viz]').waitFor();const before=await page.locator('[data-gold-index]').textContent();await page.locator('[data-gold-next]').click();assert.notEqual(await page.locator('[data-gold-index]').textContent(),before);
   await page.locator('#visualSettings summary').click();await page.locator('#courseLocale').click();await page.locator('#courseLocaleMenu [data-value=en]').click();await page.waitForFunction(()=>document.querySelector('#courseLocale')?.value==='en');assert.ok((await page.locator('#offlineApp').textContent()).length>500);
-  await page.goto(origin+'/offline.html#lesson=cpp.oop-principles');await page.locator('#oopLab').waitFor();await page.locator('#oopNext').click();
-  await page.bringToFront();await page.goto(origin+'/offline.html#view=computer-graphics');await page.locator('[data-graphics-stage][data-graphics-runtime-state="ready"]').waitFor();await page.locator('[data-graphics-template="sphere"]').click();await page.locator('[data-graphics-stage][data-graphics-runtime-state="ready"]').waitFor();assert.equal(await page.locator('[data-graphics-setting="planets"]').inputValue(),'1');
+  await page.goto(origin+'/offline.html#lesson=cpp.oop-principles');await page.locator('[data-gold-viz]').waitFor();await page.locator('[data-gold-next]').click();
+  await page.bringToFront();await page.goto(origin+'/offline.html#view=computer-graphics');await page.locator('[data-graphics-stage][data-graphics-runtime-state="ready"]').waitFor();await page.locator('[data-graphics-template="sphere"]').click();
+  // Предыдущая сцена тоже ready: ждём применения нового шаблона, а не старого флага.
+  await page.waitForFunction(()=>document.querySelector('[data-graphics-setting="planets"]')?.value==='1');
+  await page.locator('[data-graphics-stage][data-graphics-runtime-state="ready"]').waitFor();assert.equal(await page.locator('[data-graphics-setting="planets"]').inputValue(),'1');
   const download=page.waitForEvent('download');await page.locator('[data-graphics-download]').click();assert.equal((await download).suggestedFilename(),'nexus-my-universe.html');
  });
  await check('practicum tasks, working code and course project templates survive a cold offline restart',async()=>{

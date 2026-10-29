@@ -94,7 +94,7 @@ function initGalaxy(canvas, { onMotionChange = () => {
   };
   const tick = (now) => {
     frame = 0;
-    if (disposed || document.hidden) return;
+    if (disposed || document.hidden || document.documentElement.dataset.nexusIntroActive === "true") return;
     const delta = last ? Math.min((now - last) / 1e3, 0.06) : 0;
     last = now;
     if (moving) time += delta;
@@ -107,7 +107,7 @@ function initGalaxy(canvas, { onMotionChange = () => {
     if (moving) frame = requestAnimationFrame(tick);
   };
   const requestDraw = () => {
-    if (!frame && !disposed && !document.hidden) frame = requestAnimationFrame(tick);
+    if (!frame && !disposed && !document.hidden && document.documentElement.dataset.nexusIntroActive !== "true") frame = requestAnimationFrame(tick);
   };
   const resize = () => {
     width = innerWidth;
@@ -130,7 +130,7 @@ function initGalaxy(canvas, { onMotionChange = () => {
   };
   const visibility = () => {
     last = 0;
-    if (document.hidden) {
+    if (document.hidden || document.documentElement.dataset.nexusIntroActive === "true") {
       cancelAnimationFrame(frame);
       frame = 0;
     } else requestDraw();
@@ -152,6 +152,7 @@ function initGalaxy(canvas, { onMotionChange = () => {
   addEventListener("pointermove", move, { passive: true });
   document.addEventListener("pointerleave", leave);
   document.addEventListener("visibilitychange", visibility);
+  addEventListener("nexus:intro-statechange", visibility);
   if (reduced?.addEventListener) reduced.addEventListener("change", preference);
   resize();
   onMotionChange(moving);
@@ -162,6 +163,7 @@ function initGalaxy(canvas, { onMotionChange = () => {
     removeEventListener("pointermove", move);
     document.removeEventListener("pointerleave", leave);
     document.removeEventListener("visibilitychange", visibility);
+    removeEventListener("nexus:intro-statechange", visibility);
     reduced?.removeEventListener?.("change", preference);
   } };
 }
@@ -483,6 +485,85 @@ async function bindProviderButtons(container, { intent = "login", expectedAccoun
   container.hidden = !container.children.length;
 }
 
+// core/startup-intro-policy.js
+var INTRO_KEY = "akronikl:it-nexus:startup-intro:v1";
+var INTRO_VERSION = "cinematic-v2";
+var INTRO_MEDIA = Object.freeze({ desktop: { version: "cinematic-v3", mp4Codec: "avc1.4D4028", seconds: 10 }, mobile: { version: "cinematic-v3", mp4Codec: "avc1.4D4028", seconds: 8 } });
+var INTRO_HANDOFF_KEY = "akronikl:it-nexus:startup-intro:auth-handoff:v1";
+var defaults = () => ({ schema: 1, enabled: true, simplified: false, seen: "" });
+function readIntroPreference(storage) {
+  try {
+    const raw = storage.getItem(INTRO_KEY);
+    if (raw === null) return { value: defaults(), writable: true };
+    if (raw.length > 1024) throw Error("INTRO_PREF_INVALID");
+    const v = JSON.parse(raw);
+    if (!v || Array.isArray(v) || v.schema !== 1 || typeof v.enabled !== "boolean" || typeof v.simplified !== "boolean" || typeof v.seen !== "string" || v.seen.length > 80) throw Error("INTRO_PREF_INVALID");
+    return { value: { schema: 1, enabled: v.enabled, simplified: v.simplified, seen: v.seen }, writable: true };
+  } catch {
+    return { value: { schema: 1, enabled: false, simplified: true, seen: INTRO_VERSION }, writable: false };
+  }
+}
+function readIntroHandoff(storage, now = Date.now()) {
+  try {
+    const raw = storage.getItem(INTRO_HANDOFF_KEY);
+    if (!raw || raw.length > 256) return false;
+    const v = JSON.parse(raw);
+    return v?.schema === 1 && v.kind === "auth-navigation" && Number.isSafeInteger(v.at) && v.at <= now && now - v.at < 9e5;
+  } catch {
+    return false;
+  }
+}
+
+// core/startup-intro-cover.js
+function releaseIntroCover(suppressAuto = false) {
+  if (suppressAuto) document.documentElement.dataset.nexusIntroDismissed = "true";
+  document.querySelector("[data-startup-cover]")?.remove();
+}
+var introCoverDismissed = () => document.documentElement.dataset.nexusIntroDismissed === "true";
+function prepareIntroCover() {
+  const cover = document.querySelector("[data-startup-cover]");
+  if (!cover) return !introCoverDismissed();
+  let enabled = false, handoff = false;
+  try {
+    enabled = readIntroPreference(localStorage).value.enabled;
+    handoff = readIntroHandoff(sessionStorage);
+  } catch {
+  }
+  if (!cover.open || getComputedStyle(cover).visibility === "hidden" || !enabled || handoff) {
+    releaseIntroCover(true);
+    return false;
+  }
+  cover.addEventListener("toggle", () => {
+    if (!cover.open) releaseIntroCover(true);
+  });
+  const visibility = () => {
+    if (!cover.isConnected) {
+      document.removeEventListener("visibilitychange", visibility);
+      return;
+    }
+    cover.style.setProperty("animation-play-state", document.hidden ? "paused" : "running", "important");
+  };
+  visibility();
+  document.addEventListener("visibilitychange", visibility);
+  return true;
+}
+
+// server-access/public/startup-intro-loader.js
+function startPublicIntro() {
+  prepareIntroCover();
+  requestAnimationFrame(() => setTimeout(() => {
+    void fetch("/startup-intro.json", { cache: "no-store", credentials: "omit", redirect: "error", signal: AbortSignal.timeout(4e3) }).then(async (response) => {
+      if (!response.ok || !response.headers.get("content-type")?.startsWith("application/json")) throw Error("Intro descriptor \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D");
+      const text = await response.text();
+      if (text.length > 1024) throw Error("Intro descriptor \u0441\u043B\u0438\u0448\u043A\u043E\u043C \u0432\u0435\u043B\u0438\u043A");
+      const value = JSON.parse(text);
+      if (value?.schema !== 1 || !/^\/releases\/ui1a-[a-z0-9-]+\/core\/startup-intro\.js$/.test(value.module)) throw Error("Intro descriptor \u043D\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0451\u043D");
+      const module = await import(value.module);
+      return module.installStartupIntro({ surface: "entry" });
+    }).catch(() => releaseIntroCover(true));
+  }, 0));
+}
+
 // server-access/public/entry.js
 var ENTRY_ORIGIN = "https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net";
 var ENTRY_URL = ENTRY_ORIGIN + "/account/entry/";
@@ -759,6 +840,7 @@ function bindEntry({ loadPasskeyClient = () => import("/account/access/passkey-c
   return update();
 }
 if (typeof document !== "undefined") {
+  startPublicIntro();
   bindInstallButton();
   ensureSafeController({ onWaiting: (message) => {
     const status2 = document.querySelector("[data-status]");
