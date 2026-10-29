@@ -1,0 +1,80 @@
+// Реальные local HTTP workerd/D1 и restart. Outbound запрещён, accounts synthetic.
+import assert from'node:assert/strict';import{readFile,writeFile,mkdir,mkdtemp}from'node:fs/promises';import path from'node:path';import{tmpdir}from'node:os';import{fileURLToPath}from'node:url';import{createRequire}from'node:module';import{randomUUID,createHash}from'node:crypto';
+import{Miniflare}from'../server-access/node_modules/miniflare/dist/src/index.js';import{controlFixture}from'./helpers/control-fixture.mjs';
+import{controlService}from'../server-access/bff/account-control.mjs';import{assessmentBridge}from'../server-access/bff/assessment.mjs';import{ASSESSMENT_PATH}from'../course-final/transport-contract.js';import{QUESTION_MAX,PROJECT_RUBRIC,DEFENSE_RUBRIC}from'../course-final/contract.js';import{WORKER_ORIGIN}from'../server-access/bff/account-read.mjs';
+import{BANK_HASHES}from'../course-final/bank-integrity.js';import{AUTOMATIC_POLICY,AUTOMATIC_PROFILE,THEORY_IDS}from'../course-final/automatic-policy.js';
+const{build}=createRequire(new URL('../server-access/package.json',import.meta.url))('esbuild'),out=path.resolve(process.env.NEXUS_COURSE_FINAL_EVIDENCE||'course-final-evidence'),repo=fileURLToPath(new URL('../',import.meta.url));await mkdir(out,{recursive:true});
+const scriptPath=path.join(out,'LOCAL_TEST_WORKER.mjs');await build({absWorkingDir:repo,entryPoints:['server-access/worker/entry.mjs'],outfile:scriptPath,bundle:true,platform:'node',format:'esm',target:'es2022',external:['node:*'],logLevel:'warning'});
+const automatic=process.argv.includes('--automatic'),f=await controlFixture();f.env.COURSE_FINAL_ENABLED='true';f.env.COURSE_FINAL_EXPERT_ENABLED=automatic?'false':'true';const student=f.seed('synthetic-d1-student'),teacher=f.seed('synthetic-d1-teacher'),other=f.seed('synthetic-d1-other'),records=[];
+const store=await mkdtemp(path.join(tmpdir(),'nexus-final-d1-')),sha=v=>createHash('sha256').update(v).digest('hex');let mf,db,base,outbound=0,requestCount=0,maxEnvelope=0,fatal;
+const options={rootPath:out,modulesRoot:out,modules:true,scriptPath,host:'127.0.0.1',port:0,compatibilityDate:'2026-09-23',compatibilityFlags:['nodejs_compat'],d1Databases:{DB:'synthetic-course-final'},d1Persist:store,bindings:Object.fromEntries(Object.entries(f.env).filter(([,v])=>typeof v==='string')),outboundService:()=>{outbound++;return new Response('OUTBOUND_DENIED',{status:503})}};
+async function start(){mf=new Miniflare(options);base=await mf.ready;db=await mf.getD1Database('DB')}
+const check=async(name,fn)=>{await fn();records.push({name,status:'PASS'});console.log('PASS '+name)};
+async function wire(url,init){assert.equal(url,WORKER_ORIGIN+'/api/v2/account/internal/control');const bytes=Buffer.byteLength(init.body);assert.ok(bytes<=262144);maxEnvelope=Math.max(bytes,maxEnvelope);requestCount++;return fetch(new URL('/api/v2/account/internal/control',base),init)}
+async function call(payload,actor=student){const rpc=(p,options)=>controlService(f.env,wire,{path:ASSESSMENT_PATH,method:'POST',payload:p,sessionHash:sha(actor.secret),expectedAccountId:actor.id},options);return assessmentBridge(payload,rpc,{expectedAccountId:actor.id})}
+try{
+ await start();await check('additive schema и seed в настоящем D1; outbound0',async()=>{
+  const names=['0001_sync_team_foundation','0002_nexus_account_tokens','0003_d1_only_project_snapshots','0004_identity_v2_session_foundation'].map(n=>'cloudflare/nexus-sync-worker/migrations/'+n+'.sql');names.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content','0015_blog_media','0016_blog_media_parts','0018_course_final'].map(n=>'server-access/migrations/'+n+'.sql'));
+  for(const name of names){const sql=(await readFile(path.join(repo,name),'utf8')).split(/\r?\n/).filter(l=>!l.trimStart().startsWith('--')).join(' ');await db.exec(sql)}
+  for(const table of['account_subjects','login_methods','nexus_passkey_users','nexus_passkey_credentials','account_devices','account_sessions','session_login_methods','nexus_admin_grants','nexus_alpha_members'])for(const row of f.db.prepare('SELECT * FROM '+table).all()){const keys=Object.keys(row);await db.prepare('INSERT INTO '+table+'('+keys.join(',')+') VALUES('+keys.map(()=>'?').join(',')+')').bind(...Object.values(row)).run()}
+  if(automatic)for(const v of['A','B','C'])await db.prepare('INSERT INTO nexus_assessment_answer_keys VALUES(?,?,?,?)').bind(AUTOMATIC_POLICY,v,BANK_HASHES[v],JSON.stringify(Object.fromEntries(THEORY_IDS.map(id=>[id,'o1'])))).run(); // только synthetic keys
+  await db.exec('UPDATE nexus_alpha_settings SET enforced=1 WHERE id=1');const caps=await call({phase:'capabilities'});assert.equal(caps.enabled,true);assert.equal(caps.mode,automatic?'automatic':'expert');if(automatic)assert.equal(caps.canReview,false);
+ });
+ const a=(await call({phase:'open',requestId:randomUUID(),trackId:'taskflow',parentAttemptId:null})).attempt;
+ const source={title:'SYNTHETIC D1 source',workspace:{entryFile:'src/main.cpp',files:[{path:'src/main.cpp',content:'// '+'Синтетический транспорт '.repeat(1000)+'\nint main(){return 0;}\n',languageId:'cpp'}],languageId:'cpp'},manifest:{sourceRoots:['src'],includeRoots:['include'],testRoots:['tests']}};
+ const bundle={schemaVersion:automatic?2:1,assessmentId:'cpp.course-final.v1',taskVersion:'1.0.0',rubricVersion:'1.0.0',variant:a.variant,answers:Object.fromEntries(THEORY_IDS.map(k=>[k,automatic?{optionId:'o1',reflection:'SYNTHETIC reflection not scored'}:'SYNTHETIC explanation'])),practical:{P1:source,P2:source,P3:source,P4:source},project:{trackId:'taskflow',source},report:'SYNTHETIC protocol check, no real learner assessed',...(automatic?{automatic:{profile:AUTOMATIC_PROFILE,practical:{P1:null,P2:null,P3:null,P4:null},project:null,defense:null}}:{})},bytes=Buffer.from(JSON.stringify(bundle));
+ const u=(await call({phase:'begin',requestId:randomUUID(),attemptId:a.id,snapshotHash:sha(bytes),totalBytes:bytes.length,chunkCount:Math.ceil(bytes.length/32768)})).upload;
+ await check('parts BLOB: original UTF-8, account ACL, idempotence и persist до submit',async()=>{
+  for(let i=0;i<u.chunkCount;i++){const part=bytes.subarray(i*32768,(i+1)*32768),p={phase:'put',requestId:randomUUID(),attemptId:a.id,uploadId:u.id,index:i,data:part.toString('base64'),sha256:sha(part)};await call(p);if(i===0)await call({...p,requestId:randomUUID()})}
+  assert.equal((await db.prepare('SELECT bytes FROM nexus_assessment_usage WHERE id=1').first()).bytes,bytes.length);await assert.rejects(call({phase:'parts',attemptId:a.id,uploadId:u.id,offset:0},other));
+  await mf.dispose();mf=null;await start();assert.equal((await db.prepare('SELECT count(*) n FROM nexus_assessment_parts').first()).n,u.chunkCount);
+ });
+ await check('checkpoint в настоящем D1: источник закреплён без оценки, повтор идемпотентен',async()=>{
+  const payload={phase:'checkpoint',requestId:randomUUID(),attemptId:a.id,uploadId:u.id},saved=(await call(payload)).attempt;
+  assert.equal(saved.status,'draft');assert.equal(saved.snapshotHash,sha(bytes));assert.equal(saved.uploadId,u.id);assert.equal(saved.result,null);
+  assert.equal((await call({...payload,requestId:randomUUID()})).attempt.version,saved.version);
+  assert.equal((await db.prepare('SELECT count(*) n FROM nexus_assessment_auto_results').first()).n,0);
+ });
+ let now;await check('BFF проверяет полный hash перед единственным атомарным submit после restart',async()=>{
+  now=(await call({phase:'submit',requestId:randomUUID(),attemptId:a.id,uploadId:u.id})).attempt;assert.equal(now.status,automatic?'assessed':'submitted');assert.equal(now.snapshotHash,sha(bytes));
+  await assert.rejects(db.prepare('UPDATE nexus_assessment_parts SET sha256=? WHERE upload_id=?').bind('0'.repeat(64),u.id).run());
+ });
+ let review;if(automatic)await check('автоматический результат без преподавателя; непроверенный код не получает баллов',async()=>{
+  assert.equal(now.result.exam,40);assert.equal(now.result.project,0);assert.equal(now.result.defense,0);assert.equal(now.result.weighted,16);assert.equal(now.result.status,'requires-revision');assert.equal(now.result.authority,'automatic-self-study');assert.equal(now.result.credentialEligible,false);assert.equal(now.result.codeVerifiedServer,false);assert.equal(now.reviewerId,null);
+  await assert.rejects(call({phase:'assign',requestId:randomUUID(),attemptId:a.id,expectedVersion:now.version,reviewerId:teacher.id},f.owner));await assert.rejects(db.prepare("UPDATE nexus_assessment_auto_results SET result='{}' WHERE attempt_id=?").bind(a.id).run());
+  const next=(await call({phase:'open',requestId:randomUUID(),trackId:'taskflow',parentAttemptId:a.id})).attempt;assert.equal(next.ordinal,2);assert.notEqual(next.variant,a.variant);assert.equal(next.mode,'automatic');assert.equal((await db.prepare('SELECT count(*) n FROM nexus_assessment_reviews').first()).n,0);
+  const interrupted=(await call({phase:'withdraw',requestId:randomUUID(),attemptId:next.id,expectedVersion:next.version,reason:'owner-restart'})).attempt;
+  assert.equal(interrupted.status,'interrupted');assert.equal((await call({phase:'open',requestId:randomUUID(),trackId:'taskflow',parentAttemptId:next.id})).attempt.ordinal,3);
+ });else await check('self grade отказ; назначенная ручная оценка в D1, без автоматического grader claim',async()=>{
+  await assert.rejects(call({phase:'assign',requestId:randomUUID(),attemptId:a.id,expectedVersion:now.version,reviewerId:student.id},f.owner));
+  now=(await call({phase:'assign',requestId:randomUUID(),attemptId:a.id,expectedVersion:now.version,reviewerId:teacher.id},f.owner)).attempt;
+  const rubric={exam:{...QUESTION_MAX},project:{...PROJECT_RUBRIC},defense:{...DEFENSE_RUBRIC},feedback:'SYNTHETIC instructor protocol assessment only.',defenseMode:'written',defenseEvidence:'SYNTHETIC explanation and control change attested for this transport test.',guiObserved:true,authorshipVerified:true,controlChangeVerified:true,blockingReasons:[]};
+  const p={phase:'review',requestId:randomUUID(),attemptId:a.id,expectedVersion:now.version,previousReviewId:null,review:rubric};await assert.rejects(call(p,student));review=await call(p,teacher);assert.equal(review.review.result.weighted,100);assert.equal(review.review.result.empiricallyValidated,false);
+  await assert.rejects(db.prepare("UPDATE nexus_assessment_reviews SET result='{}' WHERE id=?").bind(review.review.id).run());
+ });
+ await check('второй restart сохраняет source, feedback и отдельные identities',async()=>{
+  await mf.dispose();mf=null;await start();const detail=await call({phase:'detail',attemptId:a.id});if(automatic){assert.equal(detail.review,null);assert.equal(detail.attempt.result.weighted,16);assert.equal(detail.attempt.result.credentialEligible,false)}else assert.equal(detail.review.id,review.review.id);assert.equal(detail.attempt.snapshotHash,sha(bytes));
+  const page=await call({phase:'parts',attemptId:a.id,uploadId:u.id,offset:0});assert.equal(sha(Buffer.from(page.parts[0].data,'base64')),page.parts[0].sha256);assert.equal((await db.prepare('SELECT count(*) n FROM account_subjects').first()).n,4);assert.equal((await db.prepare('PRAGMA foreign_key_check').all()).results.length,0);
+ });
+ await check('индекс nonce:20 пустых очисток при10000 fresh rows, legacy не читается/не удаляется',async()=>{
+  await db.exec("WITH RECURSIVE n(x) AS(SELECT 1 UNION ALL SELECT x+1 FROM n WHERE x<10000) INSERT INTO nexus_assessment_nonces SELECT printf('%032x',x),'2099-01-01' FROM n; WITH RECURSIVE n(x) AS(SELECT 1 UNION ALL SELECT x+1 FROM n WHERE x<10000) INSERT INTO nexus_admin_nonces SELECT 'legacy-retained-'||x,'2000-01-01' FROM n;");
+  const counts=[];for(let i=0;i<20;i++){const r=await db.prepare('DELETE FROM nexus_assessment_nonces WHERE nonce IN(SELECT nonce FROM nexus_assessment_nonces WHERE expires_at<?1 ORDER BY expires_at LIMIT 128)').bind('2001-01-01').run();counts.push(r.meta.rows_read)}
+  assert.ok(counts.every(n=>n<=4),JSON.stringify(counts));assert.equal((await db.prepare('SELECT count(*) n FROM nexus_admin_nonces').first()).n,10000);records.push({name:'rows_read фактически',status:'PASS',emptyCleanups:20,maxRowsRead:Math.max(...counts),totalRowsRead:counts.reduce((a,b)=>a+b,0),freshRows:10000,legacyRowsPreserved:10000});
+ });
+ await check('logout закрывает следующий приватный read, source/grade остаются',async()=>{
+  await db.prepare("UPDATE account_sessions SET status='revoked' WHERE id=?").bind(student.session).run();await assert.rejects(call({phase:'parts',attemptId:a.id,uploadId:u.id,offset:0}));assert.equal((await db.prepare('SELECT count(*) n FROM '+(automatic?'nexus_assessment_auto_results':'nexus_assessment_reviews')).first()).n,1);
+ });
+ if(automatic)await check('настоящий D1 purge: явные counts, только свои snapshot/results, чужие source и ключ банка сохранены',async()=>{
+  const otherAttempt=randomUUID(),otherUpload=randomUUID(),time=new Date().toISOString(),one=Buffer.from('k');
+  await db.prepare('INSERT INTO nexus_assessment_owners(account_id) VALUES(?)').bind(other.id).run();
+  await db.prepare("INSERT INTO nexus_assessment_attempts(id,account_id,assessment_id,task_version,rubric_version,variant,track_id,ordinal,create_request_id,created_at) VALUES(?,?,'cpp.course-final.v1','1.0.0','1.0.0','B','taskflow',1,?,?)").bind(otherAttempt,other.id,randomUUID(),time).run();
+  await db.prepare('INSERT INTO nexus_assessment_uploads VALUES(?,?,?,?,?,?)').bind(otherUpload,otherAttempt,sha(one),1,1,time).run();await db.prepare('INSERT INTO nexus_assessment_parts VALUES(?,?,?,?,?,?)').bind(otherUpload,other.id,0,1,sha(one),one).run();
+  await db.prepare("UPDATE nexus_alpha_members SET state='removed',version=2 WHERE account_id=?").bind(student.id).run();
+  const base='/api/v2/account/control/users/'+student.id,adminCall=(path,payload)=>controlService(f.env,wire,{path,method:'POST',payload,sessionHash:sha(f.owner.secret),expectedAccountId:f.owner.id});
+  const plan=await adminCall(base+'/purge-preview',{requestId:randomUUID(),version:2});assert.equal(plan.counts.courseFinalAttempts,3);assert.ok(plan.counts.courseFinalBytes>bytes.length);
+  const result=await adminCall(base+'/purge',{requestId:randomUUID(),version:2,approvalToken:plan.approvalToken,confirmation:plan.confirmation});assert.equal(result.deletedServerData,true);
+  for(const table of['nexus_assessment_attempts','nexus_assessment_parts','nexus_assessment_auto_results','nexus_assessment_owners'])assert.equal((await db.prepare('SELECT count(*) n FROM '+table+' WHERE account_id=?').bind(student.id).first()).n,0);
+  assert.equal((await db.prepare('SELECT bytes,attempts_count FROM nexus_assessment_usage').first()).bytes,1);assert.equal((await db.prepare('SELECT attempts_count FROM nexus_assessment_usage').first()).attempts_count,1);assert.equal((await db.prepare('SELECT sha256 FROM nexus_assessment_parts WHERE upload_id=?').bind(otherUpload).first()).sha256,sha(one));assert.equal((await db.prepare('SELECT count(*) n FROM nexus_assessment_answer_keys').first()).n,3);assert.equal((await db.prepare('PRAGMA foreign_key_check').all()).results.length,0);
+ });assert.equal(outbound,0);
+}catch(error){fatal={code:error.code||error.name,message:String(error.message).slice(0,400)};process.exitCode=1;console.error(JSON.stringify({status:'FAIL',fatal}))}
+finally{if(mf)try{await mf.dispose()}catch(error){fatal??={code:'CLEANUP_FAILURE',message:error.message.slice(0,200)}}f.close();const result={status:fatal?'FAIL':'PASS / actual local workerd D1',mode:automatic?'automatic':'expert-fixture',records,fatal,compatibilityDate:'2026-09-23',engineRestarts:2,requests:requestCount,maxEnvelopeBytes:maxEnvelope,outboundRequests:outbound,productionMigration:false,cloudWrites:0,realLearners:false};await writeFile(path.join(out,'COURSE_FINAL_WORKERD.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({...result,records:undefined}));}

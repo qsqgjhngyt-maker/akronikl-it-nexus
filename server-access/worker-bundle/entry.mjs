@@ -41,7 +41,7 @@ var __toESM = (mod, isNodeMode, target2) => (target2 = mod != null ? __create(__
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tslib/tslib.es6.mjs
+// server-access/node_modules/tslib/tslib.es6.mjs
 var tslib_es6_exports = {};
 __export(tslib_es6_exports, {
   __addDisposableResource: () => __addDisposableResource,
@@ -293,8 +293,8 @@ function __spread() {
 function __spreadArrays() {
   for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
   for (var r = Array(s), k = 0, i = 0; i < il; i++)
-    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-      r[k] = a[j];
+    for (var a = arguments[i], j2 = 0, jl = a.length; j2 < jl; j2++, k++)
+      r[k] = a[j2];
   return r;
 }
 function __spreadArray(to, from, pack) {
@@ -445,7 +445,7 @@ function __addDisposableResource(env, value, async) {
   return value;
 }
 function __disposeResources(env) {
-  function fail3(e) {
+  function fail6(e) {
     env.error = env.hasError ? new _SuppressedError(e, env.error, "An error was suppressed during disposal.") : e;
     env.hasError = true;
   }
@@ -457,12 +457,12 @@ function __disposeResources(env) {
         if (r.dispose) {
           var result = r.dispose.call(r.value);
           if (r.async) return s |= 2, Promise.resolve(result).then(next, function(e) {
-            fail3(e);
+            fail6(e);
             return next();
           });
         } else s |= 1;
       } catch (e) {
-        fail3(e);
+        fail6(e);
       }
     }
     if (s === 1) return env.hasError ? Promise.reject(env.error) : Promise.resolve();
@@ -480,7 +480,7 @@ function __rewriteRelativeImportExtension(path, preserveJsx) {
 }
 var extendStatics, __assign, __createBinding, __setModuleDefault, ownKeys, _SuppressedError, tslib_es6_default;
 var init_tslib_es6 = __esm({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tslib/tslib.es6.mjs"() {
+  "server-access/node_modules/tslib/tslib.es6.mjs"() {
     extendStatics = function(d, b) {
       extendStatics = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
         d2.__proto__ = b2;
@@ -566,9 +566,9 @@ var init_tslib_es6 = __esm({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/pvtsutils/build/index.js
+// server-access/node_modules/pvtsutils/build/index.js
 var require_build = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/pvtsutils/build/index.js"(exports) {
+  "server-access/node_modules/pvtsutils/build/index.js"(exports) {
     "use strict";
     var ARRAY_BUFFER_NAME = "[object ArrayBuffer]";
     var BufferSourceConverter = class _BufferSourceConverter {
@@ -656,8 +656,8 @@ var require_build = __commonJS({
     var BASE64_REGEX = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
     var BASE64URL_REGEX = /^[a-zA-Z0-9-_]+$/;
     var Utf8Converter = class {
-      static fromString(text3) {
-        const s = unescape(encodeURIComponent(text3));
+      static fromString(text5) {
+        const s = unescape(encodeURIComponent(text5));
         const uintArray = new Uint8Array(s.length);
         for (let i = 0; i < s.length; i++) {
           uintArray[i] = s.charCodeAt(i);
@@ -685,11 +685,11 @@ var require_build = __commonJS({
         }
         return res;
       }
-      static fromString(text3, littleEndian = false) {
-        const res = new ArrayBuffer(text3.length * 2);
+      static fromString(text5, littleEndian = false) {
+        const res = new ArrayBuffer(text5.length * 2);
         const dataView = new DataView(res);
-        for (let i = 0; i < text3.length; i++) {
-          dataView.setUint16(i * 2, text3.charCodeAt(i), littleEndian);
+        for (let i = 0; i < text5.length; i++) {
+          dataView.setUint16(i * 2, text5.charCodeAt(i), littleEndian);
         }
         return res;
       }
@@ -786,18 +786,18 @@ var require_build = __commonJS({
       static ToBase64Url(data) {
         return this.ToBase64(data).replace(/\+/g, "-").replace(/\//g, "_").replace(/\=/g, "");
       }
-      static FromUtf8String(text3, encoding = _Convert.DEFAULT_UTF8_ENCODING) {
+      static FromUtf8String(text5, encoding = _Convert.DEFAULT_UTF8_ENCODING) {
         switch (encoding) {
           case "ascii":
-            return this.FromBinary(text3);
+            return this.FromBinary(text5);
           case "utf8":
-            return Utf8Converter.fromString(text3);
+            return Utf8Converter.fromString(text5);
           case "utf16":
           case "utf16be":
-            return Utf16Converter.fromString(text3);
+            return Utf16Converter.fromString(text5);
           case "utf16le":
           case "usc2":
-            return Utf16Converter.fromString(text3, true);
+            return Utf16Converter.fromString(text5, true);
           default:
             throw new Error(`Unknown type of encoding '${encoding}'`);
         }
@@ -818,11 +818,11 @@ var require_build = __commonJS({
             throw new Error(`Unknown type of encoding '${encoding}'`);
         }
       }
-      static FromBinary(text3) {
-        const stringLength = text3.length;
+      static FromBinary(text5) {
+        const stringLength = text5.length;
         const resultView = new Uint8Array(stringLength);
         for (let i = 0; i < stringLength; i++) {
-          resultView[i] = text3.charCodeAt(i);
+          resultView[i] = text5.charCodeAt(i);
         }
         return resultView.buffer;
       }
@@ -868,8 +868,8 @@ var require_build = __commonJS({
       static ToUtf16String(buffer, littleEndian = false) {
         return Utf16Converter.toString(buffer, littleEndian);
       }
-      static FromUtf16String(text3, littleEndian = false) {
-        return Utf16Converter.fromString(text3, littleEndian);
+      static FromUtf16String(text5, littleEndian = false) {
+        return Utf16Converter.fromString(text5, littleEndian);
       }
       static Base64Padding(base642) {
         const padCount = 4 - base642.length % 4;
@@ -930,9 +930,9 @@ var require_build = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/pvutils/build/utils.js
+// server-access/node_modules/pvutils/build/utils.js
 var require_utils = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/pvutils/build/utils.js"(exports) {
+  "server-access/node_modules/pvutils/build/utils.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function getUTCDate(date) {
@@ -1011,10 +1011,10 @@ var require_utils = __commonJS({
             result = internalReserved;
           }
           const retView = new Uint8Array(retBuf);
-          for (let j = i - 1; j >= 0; j--) {
-            const basis = Math.pow(2, j * base);
-            retView[result - j - 1] = Math.floor(internalValue / basis);
-            internalValue -= retView[result - j - 1] * basis;
+          for (let j2 = i - 1; j2 >= 0; j2--) {
+            const basis = Math.pow(2, j2 * base);
+            retView[result - j2 - 1] = Math.floor(internalValue / basis);
+            internalValue -= retView[result - j2 - 1] * basis;
           }
           return retBuf;
         }
@@ -1068,8 +1068,8 @@ var require_utils = __commonJS({
       const bigInt = utilFromBase(bigIntView, 8);
       const smallIntBuffer = new ArrayBuffer(this.valueHex.byteLength);
       const smallIntView = new Uint8Array(smallIntBuffer);
-      for (let j = 0; j < this.valueHex.byteLength; j++) {
-        smallIntView[j] = buf[j];
+      for (let j2 = 0; j2 < this.valueHex.byteLength; j2++) {
+        smallIntView[j2] = buf[j2];
       }
       smallIntView[0] &= 127;
       const smallInt = utilFromBase(smallIntView, 8);
@@ -1283,9 +1283,9 @@ var require_utils = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/asn1js/build/index.js
+// server-access/node_modules/asn1js/build/index.js
 var require_build2 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/asn1js/build/index.js"(exports) {
+  "server-access/node_modules/asn1js/build/index.js"(exports) {
     "use strict";
     var pvtsutils = require_build();
     var pvutils = require_utils();
@@ -2901,9 +2901,9 @@ ${values.join("\n")}` : `${blockName} :`;
         return res;
       }
       convertToDER() {
-        const integer = new _a$o({ valueHex: this.valueBlock.valueHexView });
-        integer.valueBlock.toDER();
-        return integer;
+        const integer2 = new _a$o({ valueHex: this.valueBlock.valueHexView });
+        integer2.valueBlock.toDER();
+        return integer2;
       }
       convertFromDER() {
         return new _a$o({
@@ -3520,8 +3520,8 @@ ${values.join("\n")}` : `${blockName} :`;
           if (codeView.length > 4)
             continue;
           const dif = 4 - codeView.length;
-          for (let j = codeView.length - 1; j >= 0; j--)
-            valueHexView[i * 4 + j + dif] = codeView[j];
+          for (let j2 = codeView.length - 1; j2 >= 0; j2--)
+            valueHexView[i * 4 + j2 + dif] = codeView[j2];
         }
         this.valueBlock.value = inputString;
       }
@@ -3868,25 +3868,25 @@ ${values.join("\n")}` : `${blockName} :`;
         const parserArray = parser.exec(dateTimeString);
         if (parserArray === null)
           throw new Error("Wrong input string for conversion");
-        for (let j = 1; j < parserArray.length; j++) {
-          switch (j) {
+        for (let j2 = 1; j2 < parserArray.length; j2++) {
+          switch (j2) {
             case 1:
-              this.year = parseInt(parserArray[j], 10);
+              this.year = parseInt(parserArray[j2], 10);
               break;
             case 2:
-              this.month = parseInt(parserArray[j], 10);
+              this.month = parseInt(parserArray[j2], 10);
               break;
             case 3:
-              this.day = parseInt(parserArray[j], 10);
+              this.day = parseInt(parserArray[j2], 10);
               break;
             case 4:
-              this.hour = parseInt(parserArray[j], 10) + hourDifference;
+              this.hour = parseInt(parserArray[j2], 10) + hourDifference;
               break;
             case 5:
-              this.minute = parseInt(parserArray[j], 10) + minuteDifference;
+              this.minute = parseInt(parserArray[j2], 10) + minuteDifference;
               break;
             case 6:
-              this.second = parseInt(parserArray[j], 10);
+              this.second = parseInt(parserArray[j2], 10);
               break;
             default:
               throw new Error("Wrong input string for conversion");
@@ -4398,9 +4398,9 @@ ${values.join("\n")}` : `${blockName} :`;
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/buffer-source.js
+// server-access/node_modules/@peculiar/utils/build/cjs/bytes/buffer-source.js
 var require_buffer_source = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/buffer-source.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/bytes/buffer-source.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isArrayBuffer = isArrayBuffer;
@@ -4517,9 +4517,9 @@ var require_buffer_source = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/concat.js
+// server-access/node_modules/@peculiar/utils/build/cjs/bytes/concat.js
 var require_concat = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/concat.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/bytes/concat.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.concatToUint8Array = concatToUint8Array;
@@ -4562,9 +4562,9 @@ var require_concat = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/equal.js
+// server-access/node_modules/@peculiar/utils/build/cjs/bytes/equal.js
 var require_equal = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/equal.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/bytes/equal.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.equal = equal;
@@ -4585,9 +4585,9 @@ var require_equal = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/sequence.js
+// server-access/node_modules/@peculiar/utils/build/cjs/bytes/sequence.js
 var require_sequence = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/sequence.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/bytes/sequence.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.indexOf = indexOf;
@@ -4630,15 +4630,15 @@ var require_sequence = __commonJS({
       }
       return normalized;
     }
-    function encodeAscii(text3) {
-      const bytes = new Uint8Array(text3.length);
-      for (let i = 0; i < text3.length; i++) {
-        bytes[i] = text3.charCodeAt(i) & 255;
+    function encodeAscii(text5) {
+      const bytes = new Uint8Array(text5.length);
+      for (let i = 0; i < text5.length; i++) {
+        bytes[i] = text5.charCodeAt(i) & 255;
       }
       return bytes;
     }
-    function encodeUtf8(text3) {
-      return new TextEncoder().encode(text3);
+    function encodeUtf8(text5) {
+      return new TextEncoder().encode(text5);
     }
     function toPatternBytes(pattern, options) {
       if (typeof pattern === "string") {
@@ -4752,9 +4752,9 @@ var require_sequence = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/index.js
+// server-access/node_modules/@peculiar/utils/build/cjs/bytes/index.js
 var require_bytes = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/bytes/index.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/bytes/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.tail = exports.startsWith = exports.slice = exports.lastIndexOf = exports.indexOf = exports.includes = exports.endsWith = exports.copy = exports.compare = exports.equal = exports.concatToUint8Array = exports.concat = exports.toViewCopy = exports.toView = exports.toUint8ArrayCopy = exports.toUint8Array = exports.toArrayBufferLike = exports.toArrayBuffer = exports.isSharedArrayBuffer = exports.isBufferSource = exports.isArrayBufferView = exports.isArrayBufferLike = exports.isArrayBuffer = exports.assertBufferSource = void 0;
@@ -4837,9 +4837,9 @@ var require_bytes = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/binary.js
+// server-access/node_modules/@peculiar/utils/build/cjs/encoding/binary.js
 var require_binary = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/binary.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/binary.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.binary = void 0;
@@ -4855,23 +4855,23 @@ var require_binary = __commonJS({
       }
       return result;
     }
-    function decode(text3) {
-      const result = new Uint8Array(text3.length);
-      for (let i = 0; i < text3.length; i++) {
-        result[i] = text3.charCodeAt(i) & 255;
+    function decode(text5) {
+      const result = new Uint8Array(text5.length);
+      for (let i = 0; i < text5.length; i++) {
+        result[i] = text5.charCodeAt(i) & 255;
       }
       return result;
     }
-    function is(text3) {
-      return typeof text3 === "string";
+    function is(text5) {
+      return typeof text5 === "string";
     }
     exports.binary = { encode: encode2, decode, is };
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/hex.js
+// server-access/node_modules/@peculiar/utils/build/cjs/encoding/hex.js
 var require_hex = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/hex.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/hex.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.hex = exports.formats = void 0;
@@ -4898,31 +4898,31 @@ var require_hex = __commonJS({
         throw new TypeError("Hex separators must be non-empty strings");
       }
     }
-    function matchSeparator(text3, index, separators) {
+    function matchSeparator(text5, index, separators) {
       for (const separator of separators) {
-        if (text3.startsWith(separator, index)) {
+        if (text5.startsWith(separator, index)) {
           return separator;
         }
       }
       return void 0;
     }
-    function detectCase(text3) {
-      const hasUpper = /[A-F]/.test(text3);
-      const hasLower = /[a-f]/.test(text3);
+    function detectCase(text5) {
+      const hasUpper = /[A-F]/.test(text5);
+      const hasLower = /[a-f]/.test(text5);
       return hasUpper && !hasLower ? "upper" : "lower";
     }
-    function detectLineSeparator(text3) {
-      const match = /\r\n|\n/.exec(text3);
+    function detectLineSeparator(text5) {
+      const match = /\r\n|\n/.exec(text5);
       if (!match) {
         return void 0;
       }
       return match[0] === "\r\n" ? "\r\n" : "\n";
     }
-    function compactForDetection(text3) {
-      return text3.replace(/[^0-9a-f]/gi, "");
+    function compactForDetection(text5) {
+      return text5.replace(/[^0-9a-f]/gi, "");
     }
-    function detectGroup(text3) {
-      const segments = text3.match(/[0-9A-Fa-f]+|[^0-9A-Fa-f]+/g) ?? [];
+    function detectGroup(text5) {
+      const segments = text5.match(/[0-9A-Fa-f]+|[^0-9A-Fa-f]+/g) ?? [];
       if (segments.length < 3) {
         return void 0;
       }
@@ -4950,8 +4950,8 @@ var require_hex = __commonJS({
         separator
       };
     }
-    function detectFormat(text3) {
-      const trimmed = text3.trim();
+    function detectFormat(text5) {
+      const trimmed = text5.trim();
       const prefix = /^0x/i.test(trimmed) ? "0x" : "";
       const body = prefix ? trimmed.slice(2) : trimmed;
       const lineSeparator = detectLineSeparator(body);
@@ -4976,13 +4976,13 @@ var require_hex = __commonJS({
       }
       return format2;
     }
-    function normalizeText(text3, options) {
+    function normalizeText(text5, options) {
       const allowPrefix = options.allowPrefix ?? true;
       const separators = [...resolveSeparators(options)].sort((left, right) => right.length - left.length);
       for (const separator of separators) {
         validateSeparator(separator);
       }
-      let working = text3.trim();
+      let working = text5.trim();
       if (/^0x/i.test(working)) {
         if (!allowPrefix) {
           throw new TypeError("Hexadecimal text must not include a 0x prefix");
@@ -5033,15 +5033,15 @@ var require_hex = __commonJS({
       }
       return chunks.join(group.separator);
     }
-    function normalize(text3, options = {}) {
-      return normalizeText(text3, options);
+    function normalize(text5, options = {}) {
+      return normalizeText(text5, options);
     }
-    function is(text3, options = {}) {
-      if (typeof text3 !== "string") {
+    function is(text5, options = {}) {
+      if (typeof text5 !== "string") {
         return false;
       }
       try {
-        normalize(text3, options);
+        normalize(text5, options);
         return true;
       } catch {
         return false;
@@ -5051,8 +5051,8 @@ var require_hex = __commonJS({
       const bytes = (0, index_js_1.toUint8Array)(data);
       const casing = options.case ?? "lower";
       const pairs = Array.from(bytes, (byte) => {
-        const text3 = byte.toString(16).padStart(2, "0");
-        return casing === "upper" ? text3.toUpperCase() : text3;
+        const text5 = byte.toString(16).padStart(2, "0");
+        return casing === "upper" ? text5.toUpperCase() : text5;
       });
       let body = "";
       if (options.line) {
@@ -5071,19 +5071,19 @@ var require_hex = __commonJS({
       }
       return `${options.prefix ?? ""}${body}`;
     }
-    function decode(text3, options = {}) {
-      const normalized = normalize(text3, options);
+    function decode(text5, options = {}) {
+      const normalized = normalize(text5, options);
       const result = new Uint8Array(normalized.length / 2);
       for (let i = 0; i < normalized.length; i += 2) {
         result[i / 2] = Number.parseInt(normalized.slice(i, i + 2), 16);
       }
       return result;
     }
-    function parse2(text3, options = {}) {
-      const normalized = normalize(text3, options);
+    function parse2(text5, options = {}) {
+      const normalized = normalize(text5, options);
       return {
         bytes: decode(normalized),
-        format: detectFormat(text3),
+        format: detectFormat(text5),
         normalized
       };
     }
@@ -5102,17 +5102,17 @@ var require_hex = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf8.js
+// server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf8.js
 var require_utf8 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf8.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf8.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.utf8 = void 0;
     exports.encode = encode2;
     exports.decode = decode;
     var index_js_1 = require_bytes();
-    function encode2(text3) {
-      return new TextEncoder().encode(text3);
+    function encode2(text5) {
+      return new TextEncoder().encode(text5);
     }
     function decode(data) {
       return new TextDecoder("utf-8", { fatal: false }).decode((0, index_js_1.toUint8Array)(data));
@@ -5121,20 +5121,20 @@ var require_utf8 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf16.js
+// server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf16.js
 var require_utf16 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf16.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/utf16.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.utf16 = void 0;
     exports.encode = encode2;
     exports.decode = decode;
     var index_js_1 = require_bytes();
-    function encode2(text3, options = {}) {
-      const result = new ArrayBuffer(text3.length * 2);
+    function encode2(text5, options = {}) {
+      const result = new ArrayBuffer(text5.length * 2);
       const view = new DataView(result);
-      for (let i = 0; i < text3.length; i++) {
-        view.setUint16(i * 2, text3.charCodeAt(i), options.littleEndian ?? false);
+      for (let i = 0; i < text5.length; i++) {
+        view.setUint16(i * 2, text5.charCodeAt(i), options.littleEndian ?? false);
       }
       return new Uint8Array(result);
     }
@@ -5151,9 +5151,9 @@ var require_utf16 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64.js
+// server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64.js
 var require_base64 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.base64 = void 0;
@@ -5168,18 +5168,18 @@ var require_base64 = __commonJS({
     function nodeBuffer() {
       return globalThis.Buffer;
     }
-    function normalize(text3) {
-      return text3.replace(/[\n\r\t ]/g, "");
+    function normalize(text5) {
+      return text5.replace(/[\n\r\t ]/g, "");
     }
-    function pad(text3) {
-      const remainder = text3.length % 4;
-      return remainder ? text3 + "=".repeat(4 - remainder) : text3;
+    function pad(text5) {
+      const remainder = text5.length % 4;
+      return remainder ? text5 + "=".repeat(4 - remainder) : text5;
     }
-    function is(text3) {
-      if (typeof text3 !== "string") {
+    function is(text5) {
+      if (typeof text5 !== "string") {
         return false;
       }
-      const normalized = normalize(text3);
+      const normalized = normalize(text5);
       return normalized === "" || BASE64_REGEX.test(normalized);
     }
     function encode2(data, _options) {
@@ -5190,8 +5190,8 @@ var require_base64 = __commonJS({
       }
       return btoa((0, binary_js_1.encode)(bytes));
     }
-    function decode(text3, _options) {
-      const normalized = normalize(text3);
+    function decode(text5, _options) {
+      const normalized = normalize(text5);
       if (!is(normalized)) {
         throw new TypeError("Input is not valid Base64 text");
       }
@@ -5205,9 +5205,9 @@ var require_base64 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64url.js
+// server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64url.js
 var require_base64url = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64url.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/base64url.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.base64url = void 0;
@@ -5217,17 +5217,17 @@ var require_base64url = __commonJS({
     exports.decode = decode;
     var base64_js_1 = require_base64();
     var BASE64URL_REGEX = /^[A-Za-z0-9_-]*$/;
-    function normalize(text3) {
-      return text3.replace(/[\n\r\t ]/g, "");
+    function normalize(text5) {
+      return text5.replace(/[\n\r\t ]/g, "");
     }
-    function is(text3) {
-      return typeof text3 === "string" && BASE64URL_REGEX.test(normalize(text3));
+    function is(text5) {
+      return typeof text5 === "string" && BASE64URL_REGEX.test(normalize(text5));
     }
     function encode2(data, _options) {
       return base64_js_1.base64.encode(data).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
     }
-    function decode(text3, _options) {
-      const normalized = normalize(text3);
+    function decode(text5, _options) {
+      const normalized = normalize(text5);
       if (!is(normalized)) {
         throw new TypeError("Input is not valid Base64Url text");
       }
@@ -5237,9 +5237,9 @@ var require_base64url = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/index.js
+// server-access/node_modules/@peculiar/utils/build/cjs/encoding/index.js
 var require_encoding = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/encoding/index.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/encoding/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.base64url = exports.base64 = exports.utf16 = exports.utf8 = exports.hex = exports.binary = void 0;
@@ -5253,9 +5253,9 @@ var require_encoding = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/pem/pem.js
+// server-access/node_modules/@peculiar/utils/build/cjs/pem/pem.js
 var require_pem = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/pem/pem.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/pem/pem.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.pemConverter = exports.pem = void 0;
@@ -5275,10 +5275,10 @@ var require_pem = __commonJS({
         throw new TypeError(`Invalid PEM label '${label}'`);
       }
     }
-    function wrap(text3, lineLength) {
+    function wrap(text5, lineLength) {
       const result = [];
-      for (let i = 0; i < text3.length; i += lineLength) {
-        result.push(text3.slice(i, i + lineLength));
+      for (let i = 0; i < text5.length; i += lineLength) {
+        result.push(text5.slice(i, i + lineLength));
       }
       return result;
     }
@@ -5301,15 +5301,15 @@ var require_pem = __commonJS({
         base64Text: lines.slice(index).join("")
       };
     }
-    function detectNewline(text3) {
-      return /\r\n/.test(text3) ? "\r\n" : "\n";
+    function detectNewline(text5) {
+      return /\r\n/.test(text5) ? "\r\n" : "\n";
     }
-    function collectBlocks(text3, options = {}) {
+    function collectBlocks(text5, options = {}) {
       const blocks = [];
       const requestedLabel = options.label;
       let match;
       PEM_BLOCK_REGEX.lastIndex = 0;
-      while (match = PEM_BLOCK_REGEX.exec(text3)) {
+      while (match = PEM_BLOCK_REGEX.exec(text5)) {
         const label = match[1].trim();
         if (requestedLabel && label !== requestedLabel) {
           continue;
@@ -5350,21 +5350,21 @@ var require_pem = __commonJS({
     function encodeMany(blocks, options = {}) {
       return blocks.map((block) => encode2(block.label, block.data, { ...options, headers: block.headers ?? options.headers })).join("");
     }
-    function decode(text3, options = {}) {
-      return collectBlocks(text3, options).map(({ lineLength: _lineLength, newline: _newline, ...block }) => block);
+    function decode(text5, options = {}) {
+      return collectBlocks(text5, options).map(({ lineLength: _lineLength, newline: _newline, ...block }) => block);
     }
-    function find(text3, label) {
-      return decode(text3, { label })[0];
+    function find(text5, label) {
+      return decode(text5, { label })[0];
     }
-    function findAll(text3, label) {
-      return decode(text3, { label });
+    function findAll(text5, label) {
+      return decode(text5, { label });
     }
-    function decodeFirst2(text3, label) {
-      const [block] = decode(text3, { label, strict: true });
+    function decodeFirst2(text5, label) {
+      const [block] = decode(text5, { label, strict: true });
       return block.data;
     }
-    function parse2(text3, options = {}) {
-      const [block] = collectBlocks(text3, { ...options, strict: true });
+    function parse2(text5, options = {}) {
+      const [block] = collectBlocks(text5, { ...options, strict: true });
       const format2 = {
         label: block.label,
         headers: block.headers,
@@ -5389,17 +5389,17 @@ var require_pem = __commonJS({
         }
         return encode2(options.label, data, options);
       },
-      decode: (text3, options) => decodeFirst2(text3, options?.label),
+      decode: (text5, options) => decodeFirst2(text5, options?.label),
       format,
-      is: (text3) => typeof text3 === "string" && /-----BEGIN [^-]+-----/.test(text3),
+      is: (text5) => typeof text5 === "string" && /-----BEGIN [^-]+-----/.test(text5),
       parse: parse2
     };
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/pem/index.js
+// server-access/node_modules/@peculiar/utils/build/cjs/pem/index.js
 var require_pem2 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/pem/index.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/pem/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.pemConverter = exports.pem = exports.parse = exports.format = exports.findAll = exports.find = exports.encodeMany = exports.encode = exports.decodeFirst = exports.decode = void 0;
@@ -5437,9 +5437,9 @@ var require_pem2 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/registry.js
+// server-access/node_modules/@peculiar/utils/build/cjs/converters/registry.js
 var require_registry = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/registry.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/converters/registry.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.createConverterRegistry = createConverterRegistry;
@@ -5462,19 +5462,19 @@ var require_registry = __commonJS({
       }
       return method;
     }
-    function detectConfidence(name, text3, converter) {
+    function detectConfidence(name, text5, converter) {
       const normalizedName = keyOf(converter.name || name);
-      const trimmed = text3.trim();
+      const trimmed = text5.trim();
       if (!trimmed) {
         return 0;
       }
       let accepted = false;
       if (converter.is) {
-        accepted = converter.is(text3);
+        accepted = converter.is(text5);
       }
       let decodable = false;
       try {
-        converter.decode(text3);
+        converter.decode(text5);
         decodable = true;
       } catch {
         decodable = false;
@@ -5484,7 +5484,7 @@ var require_registry = __commonJS({
       }
       switch (normalizedName) {
         case "pem":
-          return /-----BEGIN [^-]+-----/.test(text3) ? 1 : 0;
+          return /-----BEGIN [^-]+-----/.test(text5) ? 1 : 0;
         case "hex": {
           const compact = trimmed.replace(/^0x/i, "").replace(/[\s:.-]/g, "");
           if (!compact || /[^0-9a-f]/i.test(compact) || compact.length % 2 !== 0) {
@@ -5573,38 +5573,38 @@ var require_registry = __commonJS({
         encode(name, data, options) {
           return this.get(name).encode(data, options);
         },
-        decode(name, text3, options) {
-          return this.get(name).decode(text3, options);
+        decode(name, text5, options) {
+          return this.get(name).decode(text5, options);
         },
-        tryDecode(name, text3, options) {
+        tryDecode(name, text5, options) {
           try {
-            return { ok: true, bytes: this.decode(name, text3, options) };
+            return { ok: true, bytes: this.decode(name, text5, options) };
           } catch (error) {
             return { ok: false, error: toError(error) };
           }
         },
-        normalize(name, text3, options) {
+        normalize(name, text5, options) {
           const converter = this.get(name);
-          return requireCapability(converter, name, "normalize").call(converter, text3, options);
+          return requireCapability(converter, name, "normalize").call(converter, text5, options);
         },
-        parse(name, text3, options) {
+        parse(name, text5, options) {
           const converter = this.get(name);
-          return requireCapability(converter, name, "parse").call(converter, text3, options);
+          return requireCapability(converter, name, "parse").call(converter, text5, options);
         },
         format(name, data, format) {
           const converter = this.get(name);
           return requireCapability(converter, name, "format").call(converter, data, format);
         },
-        transcode(text3, options) {
-          const bytes = this.decode(options.from, text3, options.fromOptions);
+        transcode(text5, options) {
+          const bytes = this.decode(options.from, text5, options.fromOptions);
           return this.encode(options.to, bytes, options.toOptions);
         },
-        detect(text3, options = {}) {
+        detect(text5, options = {}) {
           const formatNames = options.formats?.length ? options.formats.map((name) => String(name)) : this.list().map((converter) => converter.name).filter((name) => !["binary", "utf8", "utf16be", "utf16le"].includes(keyOf(name)));
           const detections = /* @__PURE__ */ new Map();
           for (const requestedName of formatNames) {
             const converter = this.get(requestedName);
-            const confidence = detectConfidence(requestedName, text3, converter);
+            const confidence = detectConfidence(requestedName, text5, converter);
             if (confidence <= 0) {
               continue;
             }
@@ -5625,9 +5625,9 @@ var require_registry = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/defaults.js
+// server-access/node_modules/@peculiar/utils/build/cjs/converters/defaults.js
 var require_defaults = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/defaults.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/converters/defaults.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.defaultConverterRegistry = exports.defaultConverters = exports.utf16leConverter = exports.utf16beConverter = exports.utf8Converter = exports.base64urlConverter = exports.base64Converter = exports.hexConverter = exports.binaryConverter = exports.pemConverter = void 0;
@@ -5674,22 +5674,22 @@ var require_defaults = __commonJS({
       name: "utf8",
       aliases: ["utf-8"],
       encode: (data) => index_js_1.utf8.decode(data),
-      decode: (text3) => index_js_1.utf8.encode(text3),
-      is: (text3) => typeof text3 === "string"
+      decode: (text5) => index_js_1.utf8.encode(text5),
+      is: (text5) => typeof text5 === "string"
     };
     exports.utf16beConverter = {
       name: "utf16be",
       aliases: ["utf16", "utf-16", "utf-16be"],
       encode: (data) => index_js_1.utf16.decode(data),
-      decode: (text3) => index_js_1.utf16.encode(text3),
-      is: (text3) => typeof text3 === "string"
+      decode: (text5) => index_js_1.utf16.encode(text5),
+      is: (text5) => typeof text5 === "string"
     };
     exports.utf16leConverter = {
       name: "utf16le",
       aliases: ["utf-16le", "ucs2", "usc2"],
       encode: (data) => index_js_1.utf16.decode(data, { littleEndian: true }),
-      decode: (text3) => index_js_1.utf16.encode(text3, { littleEndian: true }),
-      is: (text3) => typeof text3 === "string"
+      decode: (text5) => index_js_1.utf16.encode(text5, { littleEndian: true }),
+      is: (text5) => typeof text5 === "string"
     };
     exports.defaultConverters = [
       exports.binaryConverter,
@@ -5705,9 +5705,9 @@ var require_defaults = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/convert.js
+// server-access/node_modules/@peculiar/utils/build/cjs/converters/convert.js
 var require_convert = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/convert.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/converters/convert.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.convert = void 0;
@@ -5717,26 +5717,26 @@ var require_convert = __commonJS({
     function encode2(name, data, ...args) {
       return defaults_js_1.defaultConverterRegistry.encode(name, data, ...args);
     }
-    function decode(name, text3, ...args) {
-      return defaults_js_1.defaultConverterRegistry.decode(name, text3, ...args);
+    function decode(name, text5, ...args) {
+      return defaults_js_1.defaultConverterRegistry.decode(name, text5, ...args);
     }
-    function tryDecode(name, text3, ...args) {
-      return defaults_js_1.defaultConverterRegistry.tryDecode(name, text3, ...args);
+    function tryDecode(name, text5, ...args) {
+      return defaults_js_1.defaultConverterRegistry.tryDecode(name, text5, ...args);
     }
-    function normalize(name, text3, ...args) {
-      return defaults_js_1.defaultConverterRegistry.normalize(name, text3, ...args);
+    function normalize(name, text5, ...args) {
+      return defaults_js_1.defaultConverterRegistry.normalize(name, text5, ...args);
     }
-    function parse2(name, text3, ...args) {
-      return defaults_js_1.defaultConverterRegistry.parse(name, text3, ...args);
+    function parse2(name, text5, ...args) {
+      return defaults_js_1.defaultConverterRegistry.parse(name, text5, ...args);
     }
     function format(name, data, value) {
       return defaults_js_1.defaultConverterRegistry.format(name, data, value);
     }
-    function transcode(text3, options) {
-      return defaults_js_1.defaultConverterRegistry.transcode(text3, options);
+    function transcode(text5, options) {
+      return defaults_js_1.defaultConverterRegistry.transcode(text5, options);
     }
-    function detect(text3, options) {
-      return defaults_js_1.defaultConverterRegistry.detect(text3, options);
+    function detect(text5, options) {
+      return defaults_js_1.defaultConverterRegistry.detect(text5, options);
     }
     function normalizeEncodingName(encoding) {
       return encoding.toLowerCase();
@@ -5753,30 +5753,30 @@ var require_convert = __commonJS({
       to(format2, data, ...args) {
         return encode2(format2, data, ...args);
       },
-      from(format2, text3, ...args) {
-        return decode(format2, text3, ...args);
+      from(format2, text5, ...args) {
+        return decode(format2, text5, ...args);
       },
       toString(data, encoding = "utf8") {
         return encode2(encoding, data);
       },
-      fromString(text3, encoding = "utf8") {
+      fromString(text5, encoding = "utf8") {
         if (normalizeEncodingName(encoding) === "hex") {
-          return (0, index_js_1.toArrayBuffer)(index_js_2.hex.decode(text3, { allowOddLength: true }));
+          return (0, index_js_1.toArrayBuffer)(index_js_2.hex.decode(text5, { allowOddLength: true }));
         }
-        return (0, index_js_1.toArrayBuffer)(decode(encoding, text3));
+        return (0, index_js_1.toArrayBuffer)(decode(encoding, text5));
       },
       toBase64: index_js_2.base64.encode,
-      fromBase64: (text3) => (0, index_js_1.toArrayBuffer)(index_js_2.base64.decode(text3)),
+      fromBase64: (text5) => (0, index_js_1.toArrayBuffer)(index_js_2.base64.decode(text5)),
       toBase64Url: index_js_2.base64url.encode,
-      fromBase64Url: (text3) => (0, index_js_1.toArrayBuffer)(index_js_2.base64url.decode(text3)),
+      fromBase64Url: (text5) => (0, index_js_1.toArrayBuffer)(index_js_2.base64url.decode(text5)),
       toHex: index_js_2.hex.encode,
-      fromHex: (text3) => (0, index_js_1.toArrayBuffer)(index_js_2.hex.decode(text3, { allowOddLength: true })),
+      fromHex: (text5) => (0, index_js_1.toArrayBuffer)(index_js_2.hex.decode(text5, { allowOddLength: true })),
       toBinary: index_js_2.binary.encode,
-      fromBinary: (text3) => (0, index_js_1.toArrayBuffer)(index_js_2.binary.decode(text3)),
+      fromBinary: (text5) => (0, index_js_1.toArrayBuffer)(index_js_2.binary.decode(text5)),
       toUtf8String: index_js_2.utf8.decode,
-      fromUtf8String: (text3) => (0, index_js_1.toArrayBuffer)(index_js_2.utf8.encode(text3)),
+      fromUtf8String: (text5) => (0, index_js_1.toArrayBuffer)(index_js_2.utf8.encode(text5)),
       toUtf16String: (data, littleEndian = false) => index_js_2.utf16.decode(data, { littleEndian }),
-      fromUtf16String: (text3, littleEndian = false) => (0, index_js_1.toArrayBuffer)(index_js_2.utf16.encode(text3, { littleEndian })),
+      fromUtf16String: (text5, littleEndian = false) => (0, index_js_1.toArrayBuffer)(index_js_2.utf16.encode(text5, { littleEndian })),
       isHex: index_js_2.hex.is,
       isBase64: index_js_2.base64.is,
       isBase64Url: index_js_2.base64url.is,
@@ -5785,9 +5785,9 @@ var require_convert = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/index.js
+// server-access/node_modules/@peculiar/utils/build/cjs/converters/index.js
 var require_converters = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/converters/index.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/converters/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.convert = exports.utf8Converter = exports.utf16leConverter = exports.utf16beConverter = exports.pemConverter = exports.hexConverter = exports.defaultConverters = exports.defaultConverterRegistry = exports.binaryConverter = exports.base64urlConverter = exports.base64Converter = exports.createConverterRegistry = void 0;
@@ -5833,9 +5833,9 @@ var require_converters = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/buffer-source-converter.js
+// server-access/node_modules/@peculiar/utils/build/cjs/legacy/buffer-source-converter.js
 var require_buffer_source_converter = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/buffer-source-converter.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/legacy/buffer-source-converter.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.BufferSourceConverter = void 0;
@@ -5874,9 +5874,9 @@ var require_buffer_source_converter = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/convert.js
+// server-access/node_modules/@peculiar/utils/build/cjs/legacy/convert.js
 var require_convert2 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/convert.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/legacy/convert.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Convert = void 0;
@@ -5916,14 +5916,14 @@ var require_convert2 = __commonJS({
       static ToBase64Url(data) {
         return index_js_1.convert.toBase64Url(data);
       }
-      static FromUtf8String(text3, encoding = _Convert.DEFAULT_UTF8_ENCODING) {
-        return index_js_1.convert.fromString(text3, normalizeTextEncoding(encoding));
+      static FromUtf8String(text5, encoding = _Convert.DEFAULT_UTF8_ENCODING) {
+        return index_js_1.convert.fromString(text5, normalizeTextEncoding(encoding));
       }
       static ToUtf8String(buffer, encoding = _Convert.DEFAULT_UTF8_ENCODING) {
         return index_js_1.convert.toString(buffer, normalizeTextEncoding(encoding));
       }
-      static FromBinary(text3) {
-        return index_js_1.convert.fromBinary(text3);
+      static FromBinary(text5) {
+        return index_js_1.convert.fromBinary(text5);
       }
       static ToBinary(buffer) {
         return index_js_1.convert.toBinary(buffer);
@@ -5937,8 +5937,8 @@ var require_convert2 = __commonJS({
       static ToUtf16String(buffer, littleEndian = false) {
         return index_js_1.convert.toUtf16String(buffer, littleEndian);
       }
-      static FromUtf16String(text3, littleEndian = false) {
-        return index_js_1.convert.fromUtf16String(text3, littleEndian);
+      static FromUtf16String(text5, littleEndian = false) {
+        return index_js_1.convert.fromUtf16String(text5, littleEndian);
       }
       static Base64Padding(base642) {
         const padCount = 4 - base642.length % 4;
@@ -5952,9 +5952,9 @@ var require_convert2 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/functions.js
+// server-access/node_modules/@peculiar/utils/build/cjs/legacy/functions.js
 var require_functions = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/functions.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/legacy/functions.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.assign = assign;
@@ -5981,9 +5981,9 @@ var require_functions = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/index.js
+// server-access/node_modules/@peculiar/utils/build/cjs/legacy/index.js
 var require_legacy = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/legacy/index.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/legacy/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isEqual = exports.combine = exports.assign = exports.Convert = exports.BufferSourceConverter = void 0;
@@ -6008,9 +6008,9 @@ var require_legacy = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/index.js
+// server-access/node_modules/@peculiar/utils/build/cjs/index.js
 var require_cjs = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/utils/build/cjs/index.js"(exports) {
+  "server-access/node_modules/@peculiar/utils/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.bytes = void 0;
@@ -6024,9 +6024,9 @@ var require_cjs = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/enums.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/enums.js
 var require_enums = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/enums.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/enums.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnPropTypes = exports.AsnTypeTypes = void 0;
@@ -6070,9 +6070,9 @@ var require_enums = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/bit_string.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/bit_string.js
 var require_bit_string = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/bit_string.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/bit_string.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.BitString = void 0;
@@ -6141,9 +6141,9 @@ var require_bit_string = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/octet_string.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/octet_string.js
 var require_octet_string = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/octet_string.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/octet_string.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.OctetString = void 0;
@@ -6189,9 +6189,9 @@ var require_octet_string = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/index.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/index.js
 var require_types = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/types/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -6200,9 +6200,9 @@ var require_types = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/converters.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/converters.js
 var require_converters2 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/converters.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/converters.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnNullConverter = exports.AsnGeneralizedTimeConverter = exports.AsnUTCTimeConverter = exports.AsnCharacterStringConverter = exports.AsnGeneralStringConverter = exports.AsnVisibleStringConverter = exports.AsnGraphicStringConverter = exports.AsnIA5StringConverter = exports.AsnVideotexStringConverter = exports.AsnTeletexStringConverter = exports.AsnPrintableStringConverter = exports.AsnNumericStringConverter = exports.AsnUniversalStringConverter = exports.AsnBmpStringConverter = exports.AsnUtf8StringConverter = exports.AsnConstructedOctetStringConverter = exports.AsnOctetStringConverter = exports.AsnBooleanConverter = exports.AsnRelativeObjectIdentifierConverter = exports.AsnObjectIdentifierConverter = exports.AsnBitStringConverter = exports.AsnIntegerBigIntConverter = exports.AsnIntegerArrayBufferConverter = exports.AsnEnumeratedConverter = exports.AsnIntegerConverter = exports.AsnAnyConverter = void 0;
@@ -6352,9 +6352,9 @@ var require_converters2 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/helper.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/helper.js
 var require_helper = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/helper.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/helper.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isConvertible = isConvertible;
@@ -6400,9 +6400,9 @@ var require_helper = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/schema.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/schema.js
 var require_schema = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/schema.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/schema.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnSchemaStorage = void 0;
@@ -6564,9 +6564,9 @@ var require_schema = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/storage.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/storage.js
 var require_storage = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/storage.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/storage.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.schemaStorage = void 0;
@@ -6575,9 +6575,9 @@ var require_storage = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/decorators.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/decorators.js
 var require_decorators = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/decorators.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/decorators.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnProp = exports.AsnSequenceType = exports.AsnSetType = exports.AsnChoiceType = exports.AsnType = void 0;
@@ -6631,9 +6631,9 @@ var require_decorators = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/schema_validation.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/schema_validation.js
 var require_schema_validation = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/schema_validation.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/schema_validation.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnSchemaValidationError = void 0;
@@ -6644,9 +6644,9 @@ var require_schema_validation = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/index.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/index.js
 var require_errors = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/errors/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -6654,9 +6654,9 @@ var require_errors = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/parser.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/parser.js
 var require_parser = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/parser.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/parser.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnParser = void 0;
@@ -6947,9 +6947,9 @@ var require_parser = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/serializer.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/serializer.js
 var require_serializer = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/serializer.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/serializer.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnSerializer = void 0;
@@ -7092,9 +7092,9 @@ var require_serializer = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/objects.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/objects.js
 var require_objects = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/objects.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/objects.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnArray = void 0;
@@ -7114,9 +7114,9 @@ var require_objects = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/convert.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/convert.js
 var require_convert3 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/convert.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/convert.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnConvert = void 0;
@@ -7145,9 +7145,9 @@ var require_convert3 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/index.js
+// server-access/node_modules/@peculiar/asn1-schema/build/cjs/index.js
 var require_cjs2 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-schema/build/cjs/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-schema/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AsnSerializer = exports.AsnParser = exports.AsnPropTypes = exports.AsnTypeTypes = exports.AsnSetType = exports.AsnSequenceType = exports.AsnChoiceType = exports.AsnType = exports.AsnProp = void 0;
@@ -7191,9 +7191,9 @@ var require_cjs2 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/ip_converter.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/ip_converter.js
 var require_ip_converter = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/ip_converter.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/ip_converter.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IpConverter = void 0;
@@ -7286,8 +7286,8 @@ var require_ip_converter = __commonJS({
         }
         return ip;
       }
-      static parseCIDR(text3) {
-        const [addr, prefixStr] = text3.split("/");
+      static parseCIDR(text5) {
+        const [addr, prefixStr] = text5.split("/");
         const prefix = parseInt(prefixStr, 10);
         if (this.isIPv4(addr)) {
           if (prefix < 0 || prefix > 32) {
@@ -7340,9 +7340,9 @@ var require_ip_converter = __commonJS({
         }
         return this.decodeIP(encoding_1.hex.encode(buf));
       }
-      static fromString(text3) {
-        if (text3.includes("/")) {
-          const [addr, prefix] = this.parseCIDR(text3);
+      static fromString(text5) {
+        if (text5.includes("/")) {
+          const [addr, prefix] = this.parseCIDR(text5);
           const maskBytes = new Uint8Array(addr.length);
           let bitsLeft = prefix;
           for (let i = 0; i < maskBytes.length; i++) {
@@ -7359,7 +7359,7 @@ var require_ip_converter = __commonJS({
           out.set(maskBytes, addr.length);
           return out.buffer;
         }
-        const bytes = this.isIPv4(text3) ? this.parseIPv4(text3) : this.parseIPv6(text3);
+        const bytes = this.isIPv4(text5) ? this.parseIPv4(text5) : this.parseIPv6(text5);
         return new Uint8Array(bytes).buffer;
       }
     };
@@ -7367,9 +7367,9 @@ var require_ip_converter = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/name.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/name.js
 var require_name = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/name.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/name.js"(exports) {
     "use strict";
     var RelativeDistinguishedName_1;
     var RDNSequence_1;
@@ -7485,9 +7485,9 @@ var require_name = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_name.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_name.js
 var require_general_name = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_name.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_name.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.GeneralName = exports.EDIPartyName = exports.OtherName = exports.AsnIpConverter = void 0;
@@ -7623,9 +7623,9 @@ var require_general_name = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/object_identifiers.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/object_identifiers.js
 var require_object_identifiers = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/object_identifiers.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/object_identifiers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_alg_unsigned = exports.id_ce = exports.id_ad_caRepository = exports.id_ad_timeStamping = exports.id_ad_caIssuers = exports.id_ad_ocsp = exports.id_qt_unotice = exports.id_qt_csp = exports.id_ad = exports.id_kp = exports.id_qt = exports.id_pe = exports.id_pkix = void 0;
@@ -7645,9 +7645,9 @@ var require_object_identifiers = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_information_access.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_information_access.js
 var require_authority_information_access = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_information_access.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_information_access.js"(exports) {
     "use strict";
     var AuthorityInfoAccessSyntax_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7687,9 +7687,9 @@ var require_authority_information_access = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_key_identifier.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_key_identifier.js
 var require_authority_key_identifier = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_key_identifier.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/authority_key_identifier.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AuthorityKeyIdentifier = exports.KeyIdentifier = exports.id_ce_authorityKeyIdentifier = void 0;
@@ -7741,9 +7741,9 @@ var require_authority_key_identifier = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/basic_constraints.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/basic_constraints.js
 var require_basic_constraints = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/basic_constraints.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/basic_constraints.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.BasicConstraints = exports.id_ce_basicConstraints = void 0;
@@ -7774,9 +7774,9 @@ var require_basic_constraints = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_names.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_names.js
 var require_general_names = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_names.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/general_names.js"(exports) {
     "use strict";
     var GeneralNames_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7800,9 +7800,9 @@ var require_general_names = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_issuer.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_issuer.js
 var require_certificate_issuer = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_issuer.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_issuer.js"(exports) {
     "use strict";
     var CertificateIssuer_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7825,9 +7825,9 @@ var require_certificate_issuer = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_policies.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_policies.js
 var require_certificate_policies = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_policies.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/certificate_policies.js"(exports) {
     "use strict";
     var CertificatePolicies_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7967,9 +7967,9 @@ var require_certificate_policies = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_number.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_number.js
 var require_crl_number = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_number.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_number.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CRLNumber = exports.id_ce_cRLNumber = void 0;
@@ -7993,9 +7993,9 @@ var require_crl_number = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_delta_indicator.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_delta_indicator.js
 var require_crl_delta_indicator = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_delta_indicator.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_delta_indicator.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.BaseCRLNumber = exports.id_ce_deltaCRLIndicator = void 0;
@@ -8013,9 +8013,9 @@ var require_crl_delta_indicator = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_distribution_points.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_distribution_points.js
 var require_crl_distribution_points = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_distribution_points.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_distribution_points.js"(exports) {
     "use strict";
     var CRLDistributionPoints_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8151,9 +8151,9 @@ var require_crl_distribution_points = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_freshest.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_freshest.js
 var require_crl_freshest = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_freshest.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_freshest.js"(exports) {
     "use strict";
     var FreshestCRL_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8179,9 +8179,9 @@ var require_crl_freshest = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_issuing_distribution_point.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_issuing_distribution_point.js
 var require_crl_issuing_distribution_point = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_issuing_distribution_point.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_issuing_distribution_point.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IssuingDistributionPoint = exports.id_ce_issuingDistributionPoint = void 0;
@@ -8253,9 +8253,9 @@ var require_crl_issuing_distribution_point = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_reason.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_reason.js
 var require_crl_reason = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_reason.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/crl_reason.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CRLReason = exports.CRLReasons = exports.id_ce_cRLReasons = void 0;
@@ -8298,9 +8298,9 @@ var require_crl_reason = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/extended_key_usage.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/extended_key_usage.js
 var require_extended_key_usage = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/extended_key_usage.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/extended_key_usage.js"(exports) {
     "use strict";
     var ExtendedKeyUsage_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8332,9 +8332,9 @@ var require_extended_key_usage = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/inhibit_any_policy.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/inhibit_any_policy.js
 var require_inhibit_any_policy = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/inhibit_any_policy.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/inhibit_any_policy.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.InhibitAnyPolicy = exports.id_ce_inhibitAnyPolicy = void 0;
@@ -8361,9 +8361,9 @@ var require_inhibit_any_policy = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/invalidity_date.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/invalidity_date.js
 var require_invalidity_date = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/invalidity_date.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/invalidity_date.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.InvalidityDate = exports.id_ce_invalidityDate = void 0;
@@ -8389,9 +8389,9 @@ var require_invalidity_date = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/issuer_alternative_name.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/issuer_alternative_name.js
 var require_issuer_alternative_name = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/issuer_alternative_name.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/issuer_alternative_name.js"(exports) {
     "use strict";
     var IssueAlternativeName_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8414,9 +8414,9 @@ var require_issuer_alternative_name = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/key_usage.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/key_usage.js
 var require_key_usage = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/key_usage.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/key_usage.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.KeyUsage = exports.KeyUsageFlags = exports.id_ce_keyUsage = void 0;
@@ -8476,9 +8476,9 @@ var require_key_usage = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/name_constraints.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/name_constraints.js
 var require_name_constraints = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/name_constraints.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/name_constraints.js"(exports) {
     "use strict";
     var GeneralSubtrees_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8556,9 +8556,9 @@ var require_name_constraints = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_constraints.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_constraints.js
 var require_policy_constraints = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_constraints.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_constraints.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PolicyConstraints = exports.id_ce_policyConstraints = void 0;
@@ -8595,9 +8595,9 @@ var require_policy_constraints = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_mappings.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_mappings.js
 var require_policy_mappings = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_mappings.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/policy_mappings.js"(exports) {
     "use strict";
     var PolicyMappings_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8636,9 +8636,9 @@ var require_policy_mappings = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_alternative_name.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_alternative_name.js
 var require_subject_alternative_name = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_alternative_name.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_alternative_name.js"(exports) {
     "use strict";
     var SubjectAlternativeName_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8661,9 +8661,9 @@ var require_subject_alternative_name = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/attribute.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/attribute.js
 var require_attribute = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/attribute.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/attribute.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Attribute = void 0;
@@ -8689,9 +8689,9 @@ var require_attribute = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_directory_attributes.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_directory_attributes.js
 var require_subject_directory_attributes = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_directory_attributes.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_directory_attributes.js"(exports) {
     "use strict";
     var SubjectDirectoryAttributes_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8717,9 +8717,9 @@ var require_subject_directory_attributes = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_key_identifier.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_key_identifier.js
 var require_subject_key_identifier = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_key_identifier.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_key_identifier.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SubjectKeyIdentifier = exports.id_ce_subjectKeyIdentifier = void 0;
@@ -8732,9 +8732,9 @@ var require_subject_key_identifier = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/private_key_usage_period.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/private_key_usage_period.js
 var require_private_key_usage_period = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/private_key_usage_period.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/private_key_usage_period.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PrivateKeyUsagePeriod = exports.id_ce_privateKeyUsagePeriod = void 0;
@@ -8769,9 +8769,9 @@ var require_private_key_usage_period = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/entrust_version_info.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/entrust_version_info.js
 var require_entrust_version_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/entrust_version_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/entrust_version_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.EntrustVersionInfo = exports.EntrustInfo = exports.EntrustInfoFlags = exports.id_entrust_entrustVersInfo = void 0;
@@ -8821,9 +8821,9 @@ var require_entrust_version_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_info_access.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_info_access.js
 var require_subject_info_access = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_info_access.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/subject_info_access.js"(exports) {
     "use strict";
     var SubjectInfoAccessSyntax_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8849,9 +8849,9 @@ var require_subject_info_access = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/index.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/index.js
 var require_extensions = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extensions/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -8883,9 +8883,9 @@ var require_extensions = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/algorithm_identifier.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/algorithm_identifier.js
 var require_algorithm_identifier = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/algorithm_identifier.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/algorithm_identifier.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AlgorithmIdentifier = void 0;
@@ -8915,9 +8915,9 @@ var require_algorithm_identifier = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/subject_public_key_info.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/subject_public_key_info.js
 var require_subject_public_key_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/subject_public_key_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/subject_public_key_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SubjectPublicKeyInfo = void 0;
@@ -8941,9 +8941,9 @@ var require_subject_public_key_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/time.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/time.js
 var require_time = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/time.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/time.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Time = void 0;
@@ -8988,9 +8988,9 @@ var require_time = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/validity.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/validity.js
 var require_validity = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/validity.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/validity.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Validity = void 0;
@@ -9017,9 +9017,9 @@ var require_validity = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extension.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/extension.js
 var require_extension = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/extension.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/extension.js"(exports) {
     "use strict";
     var Extensions_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -9064,9 +9064,9 @@ var require_extension = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/types.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/types.js
 var require_types2 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/types.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/types.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Version = void 0;
@@ -9079,9 +9079,9 @@ var require_types2 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_certificate.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_certificate.js
 var require_tbs_certificate = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_certificate.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_certificate.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.TBSCertificate = void 0;
@@ -9163,9 +9163,9 @@ var require_tbs_certificate = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate.js
 var require_certificate = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Certificate = void 0;
@@ -9198,9 +9198,9 @@ var require_certificate = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_cert_list.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_cert_list.js
 var require_tbs_cert_list = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_cert_list.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/tbs_cert_list.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.TBSCertList = exports.RevokedCertificate = void 0;
@@ -9287,9 +9287,9 @@ var require_tbs_cert_list = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate_list.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate_list.js
 var require_certificate_list = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate_list.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/certificate_list.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CertificateList = void 0;
@@ -9322,9 +9322,9 @@ var require_certificate_list = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/index.js
+// server-access/node_modules/@peculiar/asn1-x509/build/cjs/index.js
 var require_cjs3 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509/build/cjs/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -9347,9 +9347,9 @@ var require_cjs3 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/reflect-metadata/Reflect.js
+// server-access/node_modules/reflect-metadata/Reflect.js
 var require_Reflect = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/reflect-metadata/Reflect.js"() {
+  "server-access/node_modules/reflect-metadata/Reflect.js"() {
     var Reflect2;
     (function(Reflect3) {
       (function(factory) {
@@ -10432,9 +10432,9 @@ var require_Reflect = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/issuer_and_serial_number.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/issuer_and_serial_number.js
 var require_issuer_and_serial_number = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/issuer_and_serial_number.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/issuer_and_serial_number.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IssuerAndSerialNumber = void 0;
@@ -10461,9 +10461,9 @@ var require_issuer_and_serial_number = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_identifier.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_identifier.js
 var require_signer_identifier = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_identifier.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_identifier.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SignerIdentifier = void 0;
@@ -10495,9 +10495,9 @@ var require_signer_identifier = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/types.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/types.js
 var require_types3 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/types.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/types.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.KeyDerivationAlgorithmIdentifier = exports.MessageAuthenticationCodeAlgorithm = exports.ContentEncryptionAlgorithmIdentifier = exports.KeyEncryptionAlgorithmIdentifier = exports.SignatureAlgorithmIdentifier = exports.DigestAlgorithmIdentifier = exports.CMSVersion = void 0;
@@ -10552,9 +10552,9 @@ var require_types3 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attribute.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/attribute.js
 var require_attribute2 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attribute.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/attribute.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Attribute = void 0;
@@ -10580,9 +10580,9 @@ var require_attribute2 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_info.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_info.js
 var require_signer_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/signer_info.js"(exports) {
     "use strict";
     var SignerInfos_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -10656,9 +10656,9 @@ var require_signer_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/counter_signature.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/counter_signature.js
 var require_counter_signature = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/counter_signature.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/counter_signature.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CounterSignature = exports.id_counterSignature = void 0;
@@ -10675,9 +10675,9 @@ var require_counter_signature = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/message_digest.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/message_digest.js
 var require_message_digest = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/message_digest.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/message_digest.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.MessageDigest = exports.id_messageDigest = void 0;
@@ -10689,9 +10689,9 @@ var require_message_digest = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/signing_time.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/signing_time.js
 var require_signing_time = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/signing_time.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/signing_time.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SigningTime = exports.id_signingTime = void 0;
@@ -10708,9 +10708,9 @@ var require_signing_time = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/index.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/index.js
 var require_attributes = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/attributes/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_contentType = void 0;
@@ -10722,9 +10722,9 @@ var require_attributes = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_clear_attrs.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_clear_attrs.js
 var require_aa_clear_attrs = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_clear_attrs.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_clear_attrs.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ACClearAttrs = void 0;
@@ -10755,9 +10755,9 @@ var require_aa_clear_attrs = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_spec.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_spec.js
 var require_attr_spec = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_spec.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_spec.js"(exports) {
     "use strict";
     var AttrSpec_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -10780,9 +10780,9 @@ var require_attr_spec = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_controls.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_controls.js
 var require_aa_controls = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_controls.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/aa_controls.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AAControls = void 0;
@@ -10830,9 +10830,9 @@ var require_aa_controls = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/issuer_serial.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/issuer_serial.js
 var require_issuer_serial = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/issuer_serial.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/issuer_serial.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IssuerSerial = void 0;
@@ -10866,9 +10866,9 @@ var require_issuer_serial = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_digest_info.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_digest_info.js
 var require_object_digest_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_digest_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_digest_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ObjectDigestInfo = exports.DigestedObjectType = void 0;
@@ -10909,9 +10909,9 @@ var require_object_digest_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/v2_form.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/v2_form.js
 var require_v2_form = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/v2_form.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/v2_form.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.V2Form = void 0;
@@ -10954,9 +10954,9 @@ var require_v2_form = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_issuer.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_issuer.js
 var require_attr_cert_issuer = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_issuer.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_issuer.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AttCertIssuer = void 0;
@@ -10991,9 +10991,9 @@ var require_attr_cert_issuer = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_validity_period.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_validity_period.js
 var require_attr_cert_validity_period = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_validity_period.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attr_cert_validity_period.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AttCertValidityPeriod = void 0;
@@ -11016,9 +11016,9 @@ var require_attr_cert_validity_period = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/holder.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/holder.js
 var require_holder = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/holder.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/holder.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Holder = void 0;
@@ -11063,9 +11063,9 @@ var require_holder = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate_info.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate_info.js
 var require_attribute_certificate_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AttributeCertificateInfo = exports.AttCertVersion = void 0;
@@ -11136,9 +11136,9 @@ var require_attribute_certificate_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate.js
 var require_attribute_certificate = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/attribute_certificate.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AttributeCertificate = void 0;
@@ -11167,9 +11167,9 @@ var require_attribute_certificate = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/class_list.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/class_list.js
 var require_class_list = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/class_list.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/class_list.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ClassList = exports.ClassListFlags = void 0;
@@ -11189,9 +11189,9 @@ var require_class_list = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/security_category.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/security_category.js
 var require_security_category = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/security_category.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/security_category.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SecurityCategory = void 0;
@@ -11222,9 +11222,9 @@ var require_security_category = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/clearance.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/clearance.js
 var require_clearance = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/clearance.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/clearance.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Clearance = void 0;
@@ -11259,9 +11259,9 @@ var require_clearance = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/ietf_attr_syntax.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/ietf_attr_syntax.js
 var require_ietf_attr_syntax = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/ietf_attr_syntax.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/ietf_attr_syntax.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.IetfAttrSyntax = exports.IetfAttrSyntaxValueChoices = void 0;
@@ -11311,9 +11311,9 @@ var require_ietf_attr_syntax = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_identifiers.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_identifiers.js
 var require_object_identifiers2 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_identifiers.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/object_identifiers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_at_clearance = exports.id_at_role = exports.id_at = exports.id_aca_encAttrs = exports.id_aca_group = exports.id_aca_chargingIdentity = exports.id_aca_accessIdentity = exports.id_aca_authenticationInfo = exports.id_aca = exports.id_ce_targetInformation = exports.id_pe_ac_proxying = exports.id_pe_aaControls = exports.id_pe_ac_auditIdentity = void 0;
@@ -11334,9 +11334,9 @@ var require_object_identifiers2 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/target.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/target.js
 var require_target = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/target.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/target.js"(exports) {
     "use strict";
     var Targets_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -11419,9 +11419,9 @@ var require_target = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/proxy_info.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/proxy_info.js
 var require_proxy_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/proxy_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/proxy_info.js"(exports) {
     "use strict";
     var ProxyInfo_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -11445,9 +11445,9 @@ var require_proxy_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/role_syntax.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/role_syntax.js
 var require_role_syntax = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/role_syntax.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/role_syntax.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RoleSyntax = void 0;
@@ -11480,9 +11480,9 @@ var require_role_syntax = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/svce_auth_info.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/svce_auth_info.js
 var require_svce_auth_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/svce_auth_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/svce_auth_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SvceAuthInfo = void 0;
@@ -11513,9 +11513,9 @@ var require_svce_auth_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/index.js
+// server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/index.js
 var require_cjs4 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-x509-attr/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -11542,9 +11542,9 @@ var require_cjs4 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/certificate_choices.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/certificate_choices.js
 var require_certificate_choices = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/certificate_choices.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/certificate_choices.js"(exports) {
     "use strict";
     var CertificateSet_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -11612,9 +11612,9 @@ var require_certificate_choices = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/content_info.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/content_info.js
 var require_content_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/content_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/content_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ContentInfo = void 0;
@@ -11640,9 +11640,9 @@ var require_content_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/encapsulated_content_info.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/encapsulated_content_info.js
 var require_encapsulated_content_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/encapsulated_content_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/encapsulated_content_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.EncapsulatedContentInfo = exports.EncapsulatedContent = void 0;
@@ -11686,9 +11686,9 @@ var require_encapsulated_content_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/encrypted_content_info.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/encrypted_content_info.js
 var require_encrypted_content_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/encrypted_content_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/encrypted_content_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.EncryptedContentInfo = exports.EncryptedContent = void 0;
@@ -11748,9 +11748,9 @@ var require_encrypted_content_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/other_key_attribute.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/other_key_attribute.js
 var require_other_key_attribute = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/other_key_attribute.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/other_key_attribute.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.OtherKeyAttribute = void 0;
@@ -11776,9 +11776,9 @@ var require_other_key_attribute = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_agree_recipient_info.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_agree_recipient_info.js
 var require_key_agree_recipient_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_agree_recipient_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_agree_recipient_info.js"(exports) {
     "use strict";
     var RecipientEncryptedKeys_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -11949,9 +11949,9 @@ var require_key_agree_recipient_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_trans_recipient_info.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_trans_recipient_info.js
 var require_key_trans_recipient_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_trans_recipient_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/key_trans_recipient_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.KeyTransRecipientInfo = exports.RecipientIdentifier = void 0;
@@ -12006,9 +12006,9 @@ var require_key_trans_recipient_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/kek_recipient_info.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/kek_recipient_info.js
 var require_kek_recipient_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/kek_recipient_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/kek_recipient_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.KEKRecipientInfo = exports.KEKIdentifier = void 0;
@@ -12065,9 +12065,9 @@ var require_kek_recipient_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/password_recipient_info.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/password_recipient_info.js
 var require_password_recipient_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/password_recipient_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/password_recipient_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PasswordRecipientInfo = void 0;
@@ -12103,9 +12103,9 @@ var require_password_recipient_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_info.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_info.js
 var require_recipient_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RecipientInfo = exports.OtherRecipientInfo = void 0;
@@ -12184,9 +12184,9 @@ var require_recipient_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_infos.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_infos.js
 var require_recipient_infos = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_infos.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/recipient_infos.js"(exports) {
     "use strict";
     var RecipientInfos_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -12210,9 +12210,9 @@ var require_recipient_infos = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/revocation_info_choice.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/revocation_info_choice.js
 var require_revocation_info_choice = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/revocation_info_choice.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/revocation_info_choice.js"(exports) {
     "use strict";
     var RevocationInfoChoices_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -12270,9 +12270,9 @@ var require_revocation_info_choice = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/originator_info.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/originator_info.js
 var require_originator_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/originator_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/originator_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.OriginatorInfo = void 0;
@@ -12307,9 +12307,9 @@ var require_originator_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/enveloped_data.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/enveloped_data.js
 var require_enveloped_data = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/enveloped_data.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/enveloped_data.js"(exports) {
     "use strict";
     var UnprotectedAttributes_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -12373,9 +12373,9 @@ var require_enveloped_data = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/object_identifiers.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/object_identifiers.js
 var require_object_identifiers3 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/object_identifiers.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/object_identifiers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_authData = exports.id_encryptedData = exports.id_digestedData = exports.id_envelopedData = exports.id_signedData = exports.id_data = exports.id_ct_contentInfo = void 0;
@@ -12389,9 +12389,9 @@ var require_object_identifiers3 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/signed_data.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/signed_data.js
 var require_signed_data = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/signed_data.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/signed_data.js"(exports) {
     "use strict";
     var DigestAlgorithmIdentifiers_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -12459,9 +12459,9 @@ var require_signed_data = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/index.js
+// server-access/node_modules/@peculiar/asn1-cms/build/cjs/index.js
 var require_cjs5 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-cms/build/cjs/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-cms/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -12489,9 +12489,9 @@ var require_cjs5 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/object_identifiers.js
+// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/object_identifiers.js
 var require_object_identifiers4 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/object_identifiers.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/object_identifiers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_sect571r1 = exports.id_sect571k1 = exports.id_secp521r1 = exports.id_sect409r1 = exports.id_sect409k1 = exports.id_secp384r1 = exports.id_sect283r1 = exports.id_sect283k1 = exports.id_secp256r1 = exports.id_sect233r1 = exports.id_sect233k1 = exports.id_secp224r1 = exports.id_sect163r2 = exports.id_sect163k1 = exports.id_secp192r1 = exports.id_ecdsaWithSHA512 = exports.id_ecdsaWithSHA384 = exports.id_ecdsaWithSHA256 = exports.id_ecdsaWithSHA224 = exports.id_ecdsaWithSHA1 = exports.id_ecMQV = exports.id_ecDH = exports.id_ecPublicKey = void 0;
@@ -12521,9 +12521,9 @@ var require_object_identifiers4 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/algorithms.js
+// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/algorithms.js
 var require_algorithms = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/algorithms.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/algorithms.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ecdsaWithSHA512 = exports.ecdsaWithSHA384 = exports.ecdsaWithSHA256 = exports.ecdsaWithSHA224 = exports.ecdsaWithSHA1 = void 0;
@@ -12541,9 +12541,9 @@ var require_algorithms = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/rfc3279.js
+// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/rfc3279.js
 var require_rfc3279 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/rfc3279.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/rfc3279.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SpecifiedECDomain = exports.ECPVer = exports.Curve = exports.FieldElement = exports.ECPoint = exports.FieldID = void 0;
@@ -12642,9 +12642,9 @@ var require_rfc3279 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_parameters.js
+// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_parameters.js
 var require_ec_parameters = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_parameters.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_parameters.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ECParameters = void 0;
@@ -12675,9 +12675,9 @@ var require_ec_parameters = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_private_key.js
+// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_private_key.js
 var require_ec_private_key = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_private_key.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_private_key.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ECPrivateKey = void 0;
@@ -12717,9 +12717,9 @@ var require_ec_private_key = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_signature_value.js
+// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_signature_value.js
 var require_ec_signature_value = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_signature_value.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/ec_signature_value.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.ECDSASigValue = void 0;
@@ -12748,9 +12748,9 @@ var require_ec_signature_value = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/index.js
+// server-access/node_modules/@peculiar/asn1-ecc/build/cjs/index.js
 var require_cjs6 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-ecc/build/cjs/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-ecc/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -12763,9 +12763,9 @@ var require_cjs6 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/object_identifiers.js
+// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/object_identifiers.js
 var require_object_identifiers5 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/object_identifiers.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/object_identifiers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_mgf1 = exports.id_md5 = exports.id_md2 = exports.id_sha512_256 = exports.id_sha512_224 = exports.id_sha512 = exports.id_sha384 = exports.id_sha256 = exports.id_sha224 = exports.id_sha1 = exports.id_sha512_256WithRSAEncryption = exports.id_sha512_224WithRSAEncryption = exports.id_sha512WithRSAEncryption = exports.id_sha384WithRSAEncryption = exports.id_sha256WithRSAEncryption = exports.id_ssha224WithRSAEncryption = exports.id_sha224WithRSAEncryption = exports.id_sha1WithRSAEncryption = exports.id_md5WithRSAEncryption = exports.id_md2WithRSAEncryption = exports.id_RSASSA_PSS = exports.id_pSpecified = exports.id_RSAES_OAEP = exports.id_rsaEncryption = exports.id_pkcs_1 = void 0;
@@ -12797,9 +12797,9 @@ var require_object_identifiers5 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/algorithms.js
+// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/algorithms.js
 var require_algorithms2 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/algorithms.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/algorithms.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.sha512_256WithRSAEncryption = exports.sha512_224WithRSAEncryption = exports.sha512WithRSAEncryption = exports.sha384WithRSAEncryption = exports.sha256WithRSAEncryption = exports.sha224WithRSAEncryption = exports.sha1WithRSAEncryption = exports.md5WithRSAEncryption = exports.md2WithRSAEncryption = exports.rsaEncryption = exports.pSpecifiedEmpty = exports.mgf1SHA1 = exports.sha512_256 = exports.sha512_224 = exports.sha512 = exports.sha384 = exports.sha256 = exports.sha224 = exports.sha1 = exports.md4 = exports.md2 = void 0;
@@ -12843,9 +12843,9 @@ var require_algorithms2 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsaes_oaep.js
+// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsaes_oaep.js
 var require_rsaes_oaep = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsaes_oaep.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsaes_oaep.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RSAES_OAEP = exports.RsaEsOaepParams = void 0;
@@ -12894,9 +12894,9 @@ var require_rsaes_oaep = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pss.js
+// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pss.js
 var require_rsassa_pss = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pss.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pss.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RSASSA_PSS = exports.RsaSaPssParams = void 0;
@@ -12953,9 +12953,9 @@ var require_rsassa_pss = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pkcs1_v1_5.js
+// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pkcs1_v1_5.js
 var require_rsassa_pkcs1_v1_5 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pkcs1_v1_5.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/rsassa_pkcs1_v1_5.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.DigestInfo = void 0;
@@ -12979,9 +12979,9 @@ var require_rsassa_pkcs1_v1_5 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/index.js
+// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/index.js
 var require_parameters = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/parameters/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -12991,9 +12991,9 @@ var require_parameters = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/other_prime_info.js
+// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/other_prime_info.js
 var require_other_prime_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/other_prime_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/other_prime_info.js"(exports) {
     "use strict";
     var OtherPrimeInfos_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -13043,9 +13043,9 @@ var require_other_prime_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_private_key.js
+// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_private_key.js
 var require_rsa_private_key = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_private_key.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_private_key.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RSAPrivateKey = void 0;
@@ -13128,9 +13128,9 @@ var require_rsa_private_key = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_public_key.js
+// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_public_key.js
 var require_rsa_public_key = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_public_key.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/rsa_public_key.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.RSAPublicKey = void 0;
@@ -13159,9 +13159,9 @@ var require_rsa_public_key = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/index.js
+// server-access/node_modules/@peculiar/asn1-rsa/build/cjs/index.js
 var require_cjs7 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-rsa/build/cjs/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-rsa/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -13174,7 +13174,7 @@ var require_cjs7 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/node_modules/tslib/tslib.es6.js
+// server-access/node_modules/tsyringe/node_modules/tslib/tslib.es6.js
 var tslib_es6_exports2 = {};
 __export(tslib_es6_exports2, {
   __assign: () => __assign2,
@@ -13372,8 +13372,8 @@ function __spread2() {
 function __spreadArrays2() {
   for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
   for (var r = Array(s), k = 0, i = 0; i < il; i++)
-    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-      r[k] = a[j];
+    for (var a = arguments[i], j2 = 0, jl = a.length; j2 < jl; j2++, k++)
+      r[k] = a[j2];
   return r;
 }
 function __await2(v) {
@@ -13479,7 +13479,7 @@ function __classPrivateFieldSet2(receiver, privateMap, value) {
 }
 var extendStatics2, __assign2;
 var init_tslib_es62 = __esm({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/node_modules/tslib/tslib.es6.js"() {
+  "server-access/node_modules/tsyringe/node_modules/tslib/tslib.es6.js"() {
     extendStatics2 = function(d, b) {
       extendStatics2 = Object.setPrototypeOf || { __proto__: [] } instanceof Array && function(d2, b2) {
         d2.__proto__ = b2;
@@ -13501,9 +13501,9 @@ var init_tslib_es62 = __esm({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/types/lifecycle.js
+// server-access/node_modules/tsyringe/dist/cjs/types/lifecycle.js
 var require_lifecycle = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/types/lifecycle.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/types/lifecycle.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var Lifecycle;
@@ -13517,9 +13517,9 @@ var require_lifecycle = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/types/index.js
+// server-access/node_modules/tsyringe/dist/cjs/types/index.js
 var require_types4 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/types/index.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/types/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var lifecycle_1 = require_lifecycle();
@@ -13529,9 +13529,9 @@ var require_types4 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/reflection-helpers.js
+// server-access/node_modules/tsyringe/dist/cjs/reflection-helpers.js
 var require_reflection_helpers = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/reflection-helpers.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/reflection-helpers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.defineInjectionTokenMetadata = exports.getParamInfo = exports.INJECTION_TOKEN_METADATA_KEY = void 0;
@@ -13560,9 +13560,9 @@ var require_reflection_helpers = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/class-provider.js
+// server-access/node_modules/tsyringe/dist/cjs/providers/class-provider.js
 var require_class_provider = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/class-provider.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/providers/class-provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isClassProvider = void 0;
@@ -13573,9 +13573,9 @@ var require_class_provider = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/factory-provider.js
+// server-access/node_modules/tsyringe/dist/cjs/providers/factory-provider.js
 var require_factory_provider = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/factory-provider.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/providers/factory-provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isFactoryProvider = void 0;
@@ -13586,9 +13586,9 @@ var require_factory_provider = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/lazy-helpers.js
+// server-access/node_modules/tsyringe/dist/cjs/lazy-helpers.js
 var require_lazy_helpers = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/lazy-helpers.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/lazy-helpers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.delay = exports.DelayedConstructor = void 0;
@@ -13646,9 +13646,9 @@ var require_lazy_helpers = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/injection-token.js
+// server-access/node_modules/tsyringe/dist/cjs/providers/injection-token.js
 var require_injection_token = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/injection-token.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/providers/injection-token.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isConstructorToken = exports.isTransformDescriptor = exports.isTokenDescriptor = exports.isNormalToken = void 0;
@@ -13672,9 +13672,9 @@ var require_injection_token = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/token-provider.js
+// server-access/node_modules/tsyringe/dist/cjs/providers/token-provider.js
 var require_token_provider = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/token-provider.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/providers/token-provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isTokenProvider = void 0;
@@ -13685,9 +13685,9 @@ var require_token_provider = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/value-provider.js
+// server-access/node_modules/tsyringe/dist/cjs/providers/value-provider.js
 var require_value_provider = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/value-provider.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/providers/value-provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isValueProvider = void 0;
@@ -13698,9 +13698,9 @@ var require_value_provider = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/index.js
+// server-access/node_modules/tsyringe/dist/cjs/providers/index.js
 var require_providers = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/index.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/providers/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var class_provider_1 = require_class_provider();
@@ -13726,9 +13726,9 @@ var require_providers = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/provider.js
+// server-access/node_modules/tsyringe/dist/cjs/providers/provider.js
 var require_provider = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/providers/provider.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/providers/provider.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isProvider = void 0;
@@ -13743,9 +13743,9 @@ var require_provider = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/registry-base.js
+// server-access/node_modules/tsyringe/dist/cjs/registry-base.js
 var require_registry_base = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/registry-base.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/registry-base.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var RegistryBase = class {
@@ -13788,9 +13788,9 @@ var require_registry_base = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/registry.js
+// server-access/node_modules/tsyringe/dist/cjs/registry.js
 var require_registry2 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/registry.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/registry.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var registry_base_1 = require_registry_base();
@@ -13800,9 +13800,9 @@ var require_registry2 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/resolution-context.js
+// server-access/node_modules/tsyringe/dist/cjs/resolution-context.js
 var require_resolution_context = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/resolution-context.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/resolution-context.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var ResolutionContext = class {
@@ -13814,9 +13814,9 @@ var require_resolution_context = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/error-helpers.js
+// server-access/node_modules/tsyringe/dist/cjs/error-helpers.js
 var require_error_helpers = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/error-helpers.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/error-helpers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.formatErrorCtor = void 0;
@@ -13839,9 +13839,9 @@ var require_error_helpers = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/types/disposable.js
+// server-access/node_modules/tsyringe/dist/cjs/types/disposable.js
 var require_disposable = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/types/disposable.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/types/disposable.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isDisposable = void 0;
@@ -13858,9 +13858,9 @@ var require_disposable = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/interceptors.js
+// server-access/node_modules/tsyringe/dist/cjs/interceptors.js
 var require_interceptors = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/interceptors.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/interceptors.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PostResolutionInterceptors = exports.PreResolutionInterceptors = void 0;
@@ -13881,9 +13881,9 @@ var require_interceptors = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/dependency-container.js
+// server-access/node_modules/tsyringe/dist/cjs/dependency-container.js
 var require_dependency_container = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/dependency-container.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/dependency-container.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.instance = exports.typeInfo = void 0;
@@ -14199,9 +14199,9 @@ var require_dependency_container = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/auto-injectable.js
+// server-access/node_modules/tsyringe/dist/cjs/decorators/auto-injectable.js
 var require_auto_injectable = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/auto-injectable.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/decorators/auto-injectable.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var reflection_helpers_1 = require_reflection_helpers();
@@ -14238,9 +14238,9 @@ var require_auto_injectable = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject.js
+// server-access/node_modules/tsyringe/dist/cjs/decorators/inject.js
 var require_inject = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/decorators/inject.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var reflection_helpers_1 = require_reflection_helpers();
@@ -14256,9 +14256,9 @@ var require_inject = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/injectable.js
+// server-access/node_modules/tsyringe/dist/cjs/decorators/injectable.js
 var require_injectable = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/injectable.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/decorators/injectable.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var reflection_helpers_1 = require_reflection_helpers();
@@ -14282,9 +14282,9 @@ var require_injectable = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/registry.js
+// server-access/node_modules/tsyringe/dist/cjs/decorators/registry.js
 var require_registry3 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/registry.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/decorators/registry.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es62(), __toCommonJS(tslib_es6_exports2));
@@ -14302,9 +14302,9 @@ var require_registry3 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/singleton.js
+// server-access/node_modules/tsyringe/dist/cjs/decorators/singleton.js
 var require_singleton = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/singleton.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/decorators/singleton.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var injectable_1 = require_injectable();
@@ -14319,9 +14319,9 @@ var require_singleton = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all.js
+// server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all.js
 var require_inject_all = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var reflection_helpers_1 = require_reflection_helpers();
@@ -14337,9 +14337,9 @@ var require_inject_all = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all-with-transform.js
+// server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all-with-transform.js
 var require_inject_all_with_transform = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all-with-transform.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/decorators/inject-all-with-transform.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var reflection_helpers_1 = require_reflection_helpers();
@@ -14356,9 +14356,9 @@ var require_inject_all_with_transform = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject-with-transform.js
+// server-access/node_modules/tsyringe/dist/cjs/decorators/inject-with-transform.js
 var require_inject_with_transform = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/inject-with-transform.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/decorators/inject-with-transform.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var reflection_helpers_1 = require_reflection_helpers();
@@ -14372,9 +14372,9 @@ var require_inject_with_transform = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/scoped.js
+// server-access/node_modules/tsyringe/dist/cjs/decorators/scoped.js
 var require_scoped = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/scoped.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/decorators/scoped.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var injectable_1 = require_injectable();
@@ -14391,9 +14391,9 @@ var require_scoped = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/index.js
+// server-access/node_modules/tsyringe/dist/cjs/decorators/index.js
 var require_decorators2 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/decorators/index.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/decorators/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var auto_injectable_1 = require_auto_injectable();
@@ -14435,9 +14435,9 @@ var require_decorators2 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/instance-caching-factory.js
+// server-access/node_modules/tsyringe/dist/cjs/factories/instance-caching-factory.js
 var require_instance_caching_factory = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/instance-caching-factory.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/factories/instance-caching-factory.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function instanceCachingFactory(factoryFunc) {
@@ -14453,9 +14453,9 @@ var require_instance_caching_factory = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/instance-per-container-caching-factory.js
+// server-access/node_modules/tsyringe/dist/cjs/factories/instance-per-container-caching-factory.js
 var require_instance_per_container_caching_factory = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/instance-per-container-caching-factory.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/factories/instance-per-container-caching-factory.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function instancePerContainerCachingFactory(factoryFunc) {
@@ -14473,9 +14473,9 @@ var require_instance_per_container_caching_factory = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/predicate-aware-class-factory.js
+// server-access/node_modules/tsyringe/dist/cjs/factories/predicate-aware-class-factory.js
 var require_predicate_aware_class_factory = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/predicate-aware-class-factory.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/factories/predicate-aware-class-factory.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     function predicateAwareClassFactory(predicate, trueConstructor, falseConstructor, useCaching = true) {
@@ -14497,9 +14497,9 @@ var require_predicate_aware_class_factory = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/index.js
+// server-access/node_modules/tsyringe/dist/cjs/factories/index.js
 var require_factories = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/factories/index.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/factories/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var instance_caching_factory_1 = require_instance_caching_factory();
@@ -14517,9 +14517,9 @@ var require_factories = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/index.js
+// server-access/node_modules/tsyringe/dist/cjs/index.js
 var require_cjs8 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/tsyringe/dist/cjs/index.js"(exports) {
+  "server-access/node_modules/tsyringe/dist/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es62(), __toCommonJS(tslib_es6_exports2));
@@ -14544,9 +14544,9 @@ var require_cjs8 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/attribute.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/attribute.js
 var require_attribute3 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/attribute.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/attribute.js"(exports) {
     "use strict";
     var PKCS12AttrSet_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -14586,9 +14586,9 @@ var require_attribute3 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/authenticated_safe.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/authenticated_safe.js
 var require_authenticated_safe = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/authenticated_safe.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/authenticated_safe.js"(exports) {
     "use strict";
     var AuthenticatedSafe_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -14612,9 +14612,9 @@ var require_authenticated_safe = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/object_identifiers.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/object_identifiers.js
 var require_object_identifiers6 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/object_identifiers.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/object_identifiers.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_bagtypes = exports.id_pbewithSHAAnd40BitRC2_CBC = exports.id_pbeWithSHAAnd128BitRC2_CBC = exports.id_pbeWithSHAAnd2_KeyTripleDES_CBC = exports.id_pbeWithSHAAnd3_KeyTripleDES_CBC = exports.id_pbeWithSHAAnd40BitRC4 = exports.id_pbeWithSHAAnd128BitRC4 = exports.id_pkcs_12PbeIds = exports.id_pkcs_12 = exports.id_pkcs = exports.id_rsadsi = void 0;
@@ -14632,9 +14632,9 @@ var require_object_identifiers6 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/types.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/types.js
 var require_types5 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/types.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/types.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_pkcs_9 = exports.id_SafeContents = exports.id_SecretBag = exports.id_CRLBag = exports.id_certBag = exports.id_pkcs8ShroudedKeyBag = exports.id_keyBag = void 0;
@@ -14649,9 +14649,9 @@ var require_types5 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/cert_bag.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/cert_bag.js
 var require_cert_bag = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/cert_bag.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/cert_bag.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_sdsiCertificate = exports.id_x509Certificate = exports.id_certTypes = exports.CertBag = void 0;
@@ -14681,9 +14681,9 @@ var require_cert_bag = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/crl_bag.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/crl_bag.js
 var require_crl_bag = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/crl_bag.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/crl_bag.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.id_x509CRL = exports.id_crlTypes = exports.CRLBag = void 0;
@@ -14712,9 +14712,9 @@ var require_crl_bag = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/encrypted_private_key_info.js
+// server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/encrypted_private_key_info.js
 var require_encrypted_private_key_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/encrypted_private_key_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/encrypted_private_key_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.EncryptedPrivateKeyInfo = exports.EncryptedData = void 0;
@@ -14741,9 +14741,9 @@ var require_encrypted_private_key_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/private_key_info.js
+// server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/private_key_info.js
 var require_private_key_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/private_key_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/private_key_info.js"(exports) {
     "use strict";
     var Attributes_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -14801,9 +14801,9 @@ var require_private_key_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/index.js
+// server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/index.js
 var require_cjs9 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pkcs8/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -14812,9 +14812,9 @@ var require_cjs9 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/key_bag.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/key_bag.js
 var require_key_bag = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/key_bag.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/key_bag.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.KeyBag = void 0;
@@ -14830,9 +14830,9 @@ var require_key_bag = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/pkcs8_shrouded_key_bag.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/pkcs8_shrouded_key_bag.js
 var require_pkcs8_shrouded_key_bag = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/pkcs8_shrouded_key_bag.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/pkcs8_shrouded_key_bag.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PKCS8ShroudedKeyBag = void 0;
@@ -14848,9 +14848,9 @@ var require_pkcs8_shrouded_key_bag = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/secret_bag.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/secret_bag.js
 var require_secret_bag = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/secret_bag.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/secret_bag.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.SecretBag = void 0;
@@ -14876,9 +14876,9 @@ var require_secret_bag = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/index.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/index.js
 var require_bags = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/bags/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -14891,9 +14891,9 @@ var require_bags = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/mac_data.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/mac_data.js
 var require_mac_data = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/mac_data.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/mac_data.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.MacData = void 0;
@@ -14924,9 +14924,9 @@ var require_mac_data = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/pfx.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/pfx.js
 var require_pfx = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/pfx.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/pfx.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.PFX = void 0;
@@ -14958,9 +14958,9 @@ var require_pfx = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/safe_bag.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/safe_bag.js
 var require_safe_bag = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/safe_bag.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/safe_bag.js"(exports) {
     "use strict";
     var SafeContents_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -15009,9 +15009,9 @@ var require_safe_bag = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/index.js
+// server-access/node_modules/@peculiar/asn1-pfx/build/cjs/index.js
 var require_cjs10 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pfx/build/cjs/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pfx/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -15025,9 +15025,9 @@ var require_cjs10 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs9/build/cjs/index.js
+// server-access/node_modules/@peculiar/asn1-pkcs9/build/cjs/index.js
 var require_cjs11 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-pkcs9/build/cjs/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-pkcs9/build/cjs/index.js"(exports) {
     "use strict";
     var ExtensionRequest_1;
     var ExtendedCertificateAttributes_1;
@@ -15334,9 +15334,9 @@ var require_cjs11 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/attributes.js
+// server-access/node_modules/@peculiar/asn1-csr/build/cjs/attributes.js
 var require_attributes2 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/attributes.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-csr/build/cjs/attributes.js"(exports) {
     "use strict";
     var Attributes_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -15360,9 +15360,9 @@ var require_attributes2 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request_info.js
+// server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request_info.js
 var require_certification_request_info = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request_info.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request_info.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CertificationRequestInfo = void 0;
@@ -15400,9 +15400,9 @@ var require_certification_request_info = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request.js
+// server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request.js
 var require_certification_request = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-csr/build/cjs/certification_request.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CertificationRequest = void 0;
@@ -15435,9 +15435,9 @@ var require_certification_request = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/index.js
+// server-access/node_modules/@peculiar/asn1-csr/build/cjs/index.js
 var require_cjs12 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-csr/build/cjs/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-csr/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -15447,9 +15447,9 @@ var require_cjs12 = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/x509/build/x509.cjs.js
+// server-access/node_modules/@peculiar/x509/build/x509.cjs.js
 var require_x509_cjs = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/x509/build/x509.cjs.js"(exports) {
+  "server-access/node_modules/@peculiar/x509/build/x509.cjs.js"(exports) {
     "use strict";
     require_Reflect();
     var asn1Schema = require_cjs2();
@@ -15560,8 +15560,8 @@ var require_x509_cjs = __commonJS({
         switch (alg.name.toLowerCase()) {
           case ECDSA.toLowerCase():
             if ("hash" in alg) {
-              const hash3 = typeof alg.hash === "string" ? alg.hash : alg.hash.name;
-              switch (hash3.toLowerCase()) {
+              const hash4 = typeof alg.hash === "string" ? alg.hash : alg.hash.name;
+              switch (hash4.toLowerCase()) {
                 case "sha-1":
                   return asn1Ecc__namespace.ecdsaWithSHA1;
                 case "sha-256":
@@ -15895,8 +15895,8 @@ var require_x509_cjs = __commonJS({
         const res = [];
         for (let i = 0; i < view.length; ) {
           const row = [];
-          for (let j = 0; j < 16 && i < view.length; j++) {
-            if (j === 8) {
+          for (let j2 = 0; j2 < 16 && i < view.length; j2++) {
+            if (j2 === 8) {
               row.push("");
             }
             const hex3 = view[i++].toString(16).padStart(2, "0");
@@ -16104,24 +16104,24 @@ var require_x509_cjs = __commonJS({
     names.register("I", "2.5.4.43");
     names.register("SN", "2.5.4.4");
     names.register("T", "2.5.4.12");
-    function replaceUnknownCharacter(text3, char) {
+    function replaceUnknownCharacter(text5, char) {
       return `\\${pvtsutils.Convert.ToHex(pvtsutils.Convert.FromUtf8String(char)).toUpperCase()}`;
     }
     function escape2(data) {
       return data.replace(/([,+"\\<>;])/g, "\\$1").replace(/^([ #])/, "\\$1").replace(/([ ]$)/, "\\$1").replace(/([\r\n\t])/, replaceUnknownCharacter);
     }
     var Name = class _Name {
-      static isASCII(text3) {
-        for (let i = 0; i < text3.length; i++) {
-          const code = text3.charCodeAt(i);
+      static isASCII(text5) {
+        for (let i = 0; i < text5.length; i++) {
+          const code = text5.charCodeAt(i);
           if (code > 255) {
             return false;
           }
         }
         return true;
       }
-      static isPrintableString(text3) {
-        return /^[A-Za-z0-9 '()+,-./:=?]*$/g.test(text3);
+      static isPrintableString(text5) {
+        return /^[A-Za-z0-9 '()+,-./:=?]*$/g.test(text5);
       }
       constructor(data, extraNames = {}) {
         this.extraNames = new NameIdentifier();
@@ -17308,8 +17308,8 @@ var require_x509_cjs = __commonJS({
     };
     var RsaAlgorithm_1;
     exports.RsaAlgorithm = RsaAlgorithm_1 = class RsaAlgorithm {
-      static createPssParams(hash3, saltLength) {
-        const hashAlgorithm = RsaAlgorithm_1.getHashAlgorithm(hash3);
+      static createPssParams(hash4, saltLength) {
+        const hashAlgorithm = RsaAlgorithm_1.getHashAlgorithm(hash4);
         if (!hashAlgorithm) {
           return null;
         }
@@ -17336,15 +17336,15 @@ var require_x509_cjs = __commonJS({
         switch (alg.name.toLowerCase()) {
           case "rsassa-pkcs1-v1_5":
             if ("hash" in alg) {
-              let hash3;
+              let hash4;
               if (typeof alg.hash === "string") {
-                hash3 = alg.hash;
+                hash4 = alg.hash;
               } else if (alg.hash && typeof alg.hash === "object" && "name" in alg.hash && typeof alg.hash.name === "string") {
-                hash3 = alg.hash.name.toUpperCase();
+                hash4 = alg.hash.name.toUpperCase();
               } else {
                 throw new Error("Cannot get hash algorithm name");
               }
-              switch (hash3.toLowerCase()) {
+              switch (hash4.toLowerCase()) {
                 case "sha-1":
                   return new asn1X509.AlgorithmIdentifier({
                     algorithm: asn1Rsa__namespace.id_sha1WithRSAEncryption,
@@ -18726,9 +18726,9 @@ var require_x509_cjs = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/key_description.js
+// server-access/node_modules/@peculiar/asn1-android/build/cjs/key_description.js
 var require_key_description = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/key_description.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-android/build/cjs/key_description.js"(exports) {
     "use strict";
     var IntegerSet_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -19251,9 +19251,9 @@ var require_key_description = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/nonstandard.js
+// server-access/node_modules/@peculiar/asn1-android/build/cjs/nonstandard.js
 var require_nonstandard = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/nonstandard.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-android/build/cjs/nonstandard.js"(exports) {
     "use strict";
     var NonStandardAuthorizationList_1;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -19364,9 +19364,9 @@ var require_nonstandard = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/attestation.js
+// server-access/node_modules/@peculiar/asn1-android/build/cjs/attestation.js
 var require_attestation = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/attestation.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-android/build/cjs/attestation.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.AttestationApplicationId = exports.AttestationPackageInfo = void 0;
@@ -19409,9 +19409,9 @@ var require_attestation = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/index.js
+// server-access/node_modules/@peculiar/asn1-android/build/cjs/index.js
 var require_cjs13 = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@peculiar/asn1-android/build/cjs/index.js"(exports) {
+  "server-access/node_modules/@peculiar/asn1-android/build/cjs/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     var tslib_1 = (init_tslib_es6(), __toCommonJS(tslib_es6_exports));
@@ -19644,9 +19644,9 @@ async function bodyJson(request) {
     );
   }
 }
-async function sha256(text3) {
+async function sha256(text5) {
   const data = new TextEncoder().encode(
-    String(text3 ?? "")
+    String(text5 ?? "")
   );
   const digest2 = await crypto.subtle.digest(
     "SHA-256",
@@ -19733,7 +19733,7 @@ async function securityEvent(env, {
 }
 async function authenticateSessionBearer(rawToken, env) {
   const tokenHash = await sha256(rawToken);
-  const stamp2 = now();
+  const stamp3 = now();
   const row = await env.DB.prepare(`
       SELECT
         s.id AS subject_id,
@@ -19753,7 +19753,7 @@ async function authenticateSessionBearer(rawToken, env) {
         AND x.idle_expires_at > ?2
         AND x.absolute_expires_at > ?2
       LIMIT 1
-    `).bind(tokenHash, stamp2).first();
+    `).bind(tokenHash, stamp3).first();
   if (!row) {
     throw new ApiError(
       401,
@@ -19762,7 +19762,7 @@ async function authenticateSessionBearer(rawToken, env) {
     );
   }
   const refreshedIdle = minIso(
-    datePlusMinutes(stamp2, SESSION_IDLE_MINUTES),
+    datePlusMinutes(stamp3, SESSION_IDLE_MINUTES),
     row.absolute_expires_at
   );
   await env.DB.batch([
@@ -19772,13 +19772,13 @@ async function authenticateSessionBearer(rawToken, env) {
           last_seen_at = ?1,
           idle_expires_at = ?2
         WHERE id = ?3
-      `).bind(stamp2, refreshedIdle, row.session_id),
+      `).bind(stamp3, refreshedIdle, row.session_id),
     ...row.device_id ? [
       env.DB.prepare(`
               UPDATE account_devices
               SET last_seen_at = ?1
               WHERE id = ?2
-            `).bind(stamp2, row.device_id)
+            `).bind(stamp3, row.device_id)
     ] : []
   ]);
   return {
@@ -19960,7 +19960,7 @@ async function bootstrapAccount(request, env) {
   const tokenId = id("token");
   const token = randomToken();
   const tokenHash = await sha256(token);
-  const stamp2 = now();
+  const stamp3 = now();
   await env.DB.batch([
     env.DB.prepare(`
         INSERT INTO account_subjects
@@ -19976,8 +19976,8 @@ async function bootstrapAccount(request, env) {
       subjectId,
       displayName,
       "active",
-      stamp2,
-      stamp2
+      stamp3,
+      stamp3
     ),
     env.DB.prepare(`
         INSERT INTO account_tokens
@@ -19996,7 +19996,7 @@ async function bootstrapAccount(request, env) {
       tokenHash,
       "bootstrap owner token",
       "active",
-      stamp2
+      stamp3
     )
   ]);
   return {
@@ -20071,7 +20071,7 @@ async function createSessionBridge(request, env, actor) {
     );
   }
   const body = await bodyJson(request);
-  const stamp2 = now();
+  const stamp3 = now();
   const deviceId = safeDeviceId(body?.deviceId);
   const deviceLabel = safeLabel(body?.deviceLabel);
   const platform = safePlatform(body?.platform);
@@ -20100,7 +20100,7 @@ async function createSessionBridge(request, env, actor) {
       `).bind(
       deviceLabel,
       platform,
-      stamp2,
+      stamp3,
       deviceId
     ).run();
   } else {
@@ -20122,14 +20122,14 @@ async function createSessionBridge(request, env, actor) {
       actor.subjectId,
       deviceLabel,
       platform,
-      stamp2
+      stamp3
     ).run();
   }
   const sessionId = id("session");
   const token = randomSessionToken();
   const tokenHash = await sha256(token);
-  const idleExpiresAt = datePlusMinutes(stamp2, SESSION_IDLE_MINUTES);
-  const absoluteExpiresAt = datePlusHours(stamp2, SESSION_ABSOLUTE_HOURS);
+  const idleExpiresAt = datePlusMinutes(stamp3, SESSION_IDLE_MINUTES);
+  const absoluteExpiresAt = datePlusHours(stamp3, SESSION_ABSOLUTE_HOURS);
   await env.DB.prepare(`
       INSERT INTO account_sessions (
         id,
@@ -20152,7 +20152,7 @@ async function createSessionBridge(request, env, actor) {
     actor.subjectId,
     deviceId,
     tokenHash,
-    stamp2,
+    stamp3,
     idleExpiresAt,
     absoluteExpiresAt
   ).run();
@@ -20173,7 +20173,7 @@ async function createSessionBridge(request, env, actor) {
       deviceId,
       status: "active",
       authStrength: "legacy-bridge",
-      createdAt: stamp2,
+      createdAt: stamp3,
       idleExpiresAt,
       absoluteExpiresAt
     },
@@ -20386,7 +20386,7 @@ async function revokeIdentitySession(env, actor, sessionId, reason = "user-revok
     );
   }
   if (row.status !== "revoked") {
-    const stamp2 = now();
+    const stamp3 = now();
     await env.DB.prepare(`
         UPDATE account_sessions
         SET
@@ -20395,7 +20395,7 @@ async function revokeIdentitySession(env, actor, sessionId, reason = "user-revok
           revoked_reason = ?2
         WHERE id = ?3
       `).bind(
-      stamp2,
+      stamp3,
       safeLabel(reason, "user-revoked"),
       sessionId
     ).run();
@@ -20416,7 +20416,7 @@ async function revokeIdentitySession(env, actor, sessionId, reason = "user-revok
   };
 }
 async function revokeAllIdentitySessions(env, actor, { keepCurrent = false } = {}) {
-  const stamp2 = now();
+  const stamp3 = now();
   let statement2;
   if (keepCurrent && actor.sessionId) {
     statement2 = env.DB.prepare(`
@@ -20430,7 +20430,7 @@ async function revokeAllIdentitySessions(env, actor, { keepCurrent = false } = {
           AND status = 'active'
           AND id <> ?3
       `).bind(
-      stamp2,
+      stamp3,
       actor.subjectId,
       actor.sessionId
     );
@@ -20444,7 +20444,7 @@ async function revokeAllIdentitySessions(env, actor, { keepCurrent = false } = {
         WHERE
           subject_id = ?2
           AND status = 'active'
-      `).bind(stamp2, actor.subjectId);
+      `).bind(stamp3, actor.subjectId);
   }
   const result = await statement2.run();
   await securityEvent(env, {
@@ -20480,7 +20480,7 @@ async function revokeIdentityDevice(env, actor, deviceId) {
       "Device not found."
     );
   }
-  const stamp2 = now();
+  const stamp3 = now();
   await env.DB.batch([
     env.DB.prepare(`
         UPDATE account_devices
@@ -20488,7 +20488,7 @@ async function revokeIdentityDevice(env, actor, deviceId) {
           status = 'revoked',
           last_seen_at = ?1
         WHERE id = ?2
-      `).bind(stamp2, deviceId),
+      `).bind(stamp3, deviceId),
     env.DB.prepare(`
         UPDATE account_sessions
         SET
@@ -20498,7 +20498,7 @@ async function revokeIdentityDevice(env, actor, deviceId) {
         WHERE
           device_id = ?2
           AND status = 'active'
-      `).bind(stamp2, deviceId)
+      `).bind(stamp3, deviceId)
   ]);
   await securityEvent(env, {
     subjectId: actor.subjectId,
@@ -20827,7 +20827,7 @@ async function getProject(env, actor, projectId) {
     }
   };
 }
-async function ensureWorkspaceForCreate(env, workspaceId, ownerId, incoming, stamp2) {
+async function ensureWorkspaceForCreate(env, workspaceId, ownerId, incoming, stamp3) {
   const existing = await env.DB.prepare(`
         SELECT
           id,
@@ -20857,8 +20857,8 @@ async function ensureWorkspaceForCreate(env, workspaceId, ownerId, incoming, sta
           incoming.access?.workspaceKind === "team" ? "team" : "personal",
           incoming.workspaceName || "Nexus Workspace",
           ownerId,
-          stamp2,
-          stamp2
+          stamp3,
+          stamp3
         ),
         env.DB.prepare(`
             INSERT INTO workspace_members
@@ -20877,8 +20877,8 @@ async function ensureWorkspaceForCreate(env, workspaceId, ownerId, incoming, sta
           ownerId,
           "owner",
           "active",
-          stamp2,
-          stamp2
+          stamp3,
+          stamp3
         )
       ]
     };
@@ -21027,8 +21027,8 @@ async function putProject(env, actor, projectId, payload) {
   const revision = (existing ? Number(
     existing.current_revision
   ) : 0) + 1;
-  const stamp2 = now();
-  const hash3 = await sha256(serialized);
+  const stamp3 = now();
+  const hash4 = await sha256(serialized);
   const locator = `d1:${projectId}:${revision}`;
   const statements = [];
   if (!existing) {
@@ -21037,7 +21037,7 @@ async function putProject(env, actor, projectId, payload) {
       workspaceId,
       ownerId,
       incoming,
-      stamp2
+      stamp3
     );
     statements.push(
       ...workspace.statements
@@ -21074,9 +21074,9 @@ async function putProject(env, actor, projectId, payload) {
         ),
         revision,
         locator,
-        hash3,
-        stamp2,
-        stamp2
+        hash4,
+        stamp3,
+        stamp3
       ),
       env.DB.prepare(`
           INSERT INTO project_members
@@ -21095,8 +21095,8 @@ async function putProject(env, actor, projectId, payload) {
         ownerId,
         "owner",
         "active",
-        stamp2,
-        stamp2
+        stamp3,
+        stamp3
       )
     );
   } else {
@@ -21122,8 +21122,8 @@ async function putProject(env, actor, projectId, payload) {
         ),
         revision,
         locator,
-        hash3,
-        stamp2,
+        hash4,
+        stamp3,
         projectId,
         workspaceId
       )
@@ -21153,10 +21153,10 @@ async function putProject(env, actor, projectId, payload) {
       projectId,
       revision,
       serialized,
-      hash3,
+      hash4,
       sizeBytes,
       actor.subjectId,
-      stamp2
+      stamp3
     ),
     env.DB.prepare(`
         INSERT INTO project_revisions
@@ -21179,9 +21179,9 @@ async function putProject(env, actor, projectId, payload) {
       projectId,
       revision,
       locator,
-      hash3,
+      hash4,
       actor.subjectId,
-      stamp2
+      stamp3
     ),
     auditStatement(
       env,
@@ -21196,7 +21196,7 @@ async function putProject(env, actor, projectId, payload) {
         revisionAfter: revision,
         metadata: {
           storage: "d1",
-          hash: hash3,
+          hash: hash4,
           sizeBytes,
           changedFiles: fileChanges,
           changeCount: fileChanges.length
@@ -21211,10 +21211,10 @@ async function putProject(env, actor, projectId, payload) {
     ok: true,
     projectId,
     revision,
-    hash: hash3,
+    hash: hash4,
     sizeBytes,
     storage: "d1-only",
-    updatedAt: stamp2
+    updatedAt: stamp3
   };
 }
 async function auditProject(env, actor, projectId) {
@@ -21554,10 +21554,10 @@ function blogMediaIds(layout) {
 }
 
 // server-access/worker/blog-media.mjs
-import { Buffer as Buffer5 } from "node:buffer";
+import { Buffer as Buffer6 } from "node:buffer";
 
 // server-access/worker/admin-service.mjs
-import { Buffer as Buffer4 } from "node:buffer";
+import { Buffer as Buffer5 } from "node:buffer";
 
 // server-access/worker/alpha-admission.mjs
 var query = (db, sql2, ...args) => db.prepare(sql2).bind(...args);
@@ -21580,17 +21580,17 @@ async function alphaSettings(env) {
     throw new AlphaError("ALPHA_CONTROL_UNAVAILABLE", 503);
   }
 }
-async function alphaAccess(env, accountId) {
+async function alphaAccess(env, accountId2) {
   const settings = await alphaSettings(env);
   if (!settings) return true;
-  if (await query(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", accountId).first()) return true;
-  return !!await query(env.DB, "SELECT 1 ok FROM nexus_alpha_members WHERE account_id=?1 AND state='active'", accountId).first();
+  if (await query(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", accountId2).first()) return true;
+  return !!await query(env.DB, "SELECT 1 ok FROM nexus_alpha_members WHERE account_id=?1 AND state='active'", accountId2).first();
 }
-async function oauthAdmissionCommands(env, accountId, stamp2) {
+async function oauthAdmissionCommands(env, accountId2, stamp3) {
   const settings = await alphaSettings(env);
   if (!settings) return [];
-  if (await query(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", accountId).first()) return [];
-  const member = await query(env.DB, "SELECT state FROM nexus_alpha_members WHERE account_id=?1", accountId).first();
+  if (await query(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", accountId2).first()) return [];
+  const member = await query(env.DB, "SELECT state FROM nexus_alpha_members WHERE account_id=?1", accountId2).first();
   if (member) {
     if (member.state !== "active") throw new AlphaError("ALPHA_ACCESS_CLOSED");
     return [];
@@ -21598,7 +21598,7 @@ async function oauthAdmissionCommands(env, accountId, stamp2) {
   if (settings.registration_mode !== "open") throw new AlphaError("ALPHA_INVITATION_REQUIRED");
   const occupied = await query(env.DB, "SELECT count(*) n FROM nexus_alpha_occupied").first();
   if (settings.limit_enabled === 1 && occupied.n >= settings.max_testers) throw new AlphaError("ALPHA_CAPACITY_REACHED", 409);
-  return [query(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,created_at,updated_at) SELECT ?1,'active',?2,?2 WHERE (SELECT registration_mode FROM nexus_alpha_settings WHERE id=1)='open' AND (SELECT version FROM nexus_alpha_settings WHERE id=1)=?3", accountId, stamp2, settings.version)];
+  return [query(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,created_at,updated_at) SELECT ?1,'active',?2,?2 WHERE (SELECT registration_mode FROM nexus_alpha_settings WHERE id=1)='open' AND (SELECT version FROM nexus_alpha_settings WHERE id=1)=?3", accountId2, stamp3, settings.version)];
 }
 async function managedInvitation(env, tokenHash) {
   if (env.ALPHA_ADMISSION_ENABLED !== "true") return null;
@@ -21610,14 +21610,22 @@ async function managedInvitation(env, tokenHash) {
 }
 
 // server-access/worker/admin-purge.mjs
+var ASSESSMENT_TABLES = "nexus_assessment_usage nexus_assessment_nonces nexus_assessment_write_guards nexus_assessment_audit nexus_assessment_owners nexus_assessment_attempts nexus_assessment_uploads nexus_assessment_parts nexus_assessment_reviews nexus_assessment_appeals nexus_assessment_answer_keys nexus_assessment_auto_results".split(" ");
 var KNOWN = new Set("workspaces workspace_members projects project_members project_access_policies project_revisions project_checkpoints project_invites audit_events project_snapshots account_subjects account_tokens account_devices account_sessions identity_security_events login_methods oauth_identities session_login_methods account_service_nonces nexus_passkey_users nexus_passkey_invites nexus_passkey_challenges nexus_passkey_credentials nexus_passkey_audit nexus_passkey_receipts nexus_passkey_service_nonces nexus_passkey_rate_limits feedback_permissions feedback_items feedback_revisions feedback_events feedback_rate_limits feedback_service_nonces nexus_oauth_service_nonces nexus_oauth_rate_limits nexus_oauth_transactions nexus_oauth_account_policies nexus_oauth_allowed_emails nexus_oauth_receipts nexus_oauth_verified_emails nexus_admin_grants nexus_alpha_settings nexus_alpha_members nexus_account_profiles nexus_admin_invites nexus_invite_enrollments nexus_admin_nonces nexus_admin_rate_limits nexus_admin_write_guards nexus_admin_audit nexus_admin_purge_approvals nexus_account_avatars nexus_admin_purge_links nexus_community_write_guards nexus_community_audit feedback_deleted_items feedback_replies nexus_content_posts nexus_content_home nexus_content_audit nexus_content_media nexus_content_media_audit nexus_content_media_uploads nexus_content_media_parts".split(" "));
 var PROJECTS = "SELECT id FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1)";
 var SCOPE = "SELECT json_object('schema',COALESCE((SELECT group_concat(v,'|') FROM(SELECT name||':'||COALESCE(sql,'') v FROM sqlite_master WHERE type IN('table','trigger','view') AND name NOT LIKE 'sqlite_%' ORDER BY type,name)),''),'memberVersion',(SELECT version FROM nexus_alpha_members WHERE account_id=?1),'accountUpdated',(SELECT updated_at FROM account_subjects WHERE id=?1),'projects',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||current_revision||':'||updated_at v FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1) ORDER BY id)),''),'feedback',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM feedback_items WHERE author_id=?1 ORDER BY id)),''),'feedbackReplies',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM feedback_replies WHERE author_id=?1 OR item_id IN(SELECT id FROM feedback_items WHERE author_id=?1) ORDER BY id)),''),'workspaces',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||updated_at v FROM workspaces WHERE owner_subject_id=?1 ORDER BY id)),''),'sharedRows',(SELECT count(*) FROM workspace_members WHERE workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1) AND subject_id<>?1)+(SELECT count(*) FROM project_members WHERE project_id IN(SELECT id FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1)) AND subject_id<>?1),'keys',(SELECT count(*) FROM nexus_passkey_credentials WHERE account_id=?1),'identities',(SELECT count(*) FROM oauth_identities WHERE account_id=?1),'sessions',(SELECT count(*) FROM account_sessions WHERE subject_id=?1),'avatarVersion',COALESCE((SELECT version FROM nexus_account_avatars WHERE account_id=?1),0)) AS value";
 async function scope(env, id3) {
   const tables = await rows(query2(env.DB, "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT IN('d1_migrations','_cf_KV','_cf_METADATA')"));
-  if (tables.some((t) => !KNOWN.has(t.name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
+  if (tables.some((t) => !KNOWN.has(t.name) && !ASSESSMENT_TABLES.includes(t.name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
+  const hasAssessment = tables.some((t) => ASSESSMENT_TABLES.includes(t.name));
+  if (hasAssessment && !ASSESSMENT_TABLES.every((name) => tables.some((t) => t.name === name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
   const hasMedia = tables.some((t) => t.name === "nexus_content_media");
   let scopeSQL = hasMedia ? SCOPE.replace("'avatarVersion'", "'blogMediaReferences',(SELECT count(*) FROM nexus_content_media WHERE created_by=?1)+(SELECT count(*) FROM nexus_content_media_audit WHERE actor_id=?1),'avatarVersion'") : SCOPE;
+  if (hasAssessment) {
+    if (await first(env.DB, "SELECT 1 ok FROM nexus_assessment_reviews WHERE reviewer_id=?1 AND account_id<>?1 LIMIT 1", id3)) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
+    const refs = "'assessmentState',json_object('ownerBytes',COALESCE((SELECT bytes FROM nexus_assessment_owners WHERE account_id=?1),0),'owned',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version||':'||status||':'||COALESCE(snapshot_hash,'') v FROM nexus_assessment_attempts WHERE account_id=?1 ORDER BY id)),''),'uploads',COALESCE((SELECT group_concat(v,'|') FROM(SELECT u.id||':'||u.snapshot_hash v FROM nexus_assessment_uploads u JOIN nexus_assessment_attempts a ON a.id=u.attempt_id WHERE a.account_id=?1 ORDER BY u.id)),''),'assigned',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM nexus_assessment_attempts WHERE reviewer_id=?1 AND account_id<>?1 ORDER BY id)),''),'authoredReviews',(SELECT count(*) FROM nexus_assessment_reviews WHERE reviewer_id=?1 AND account_id<>?1)),'avatarVersion'";
+    scopeSQL = scopeSQL.replace("'avatarVersion'", refs);
+  }
   if (tables.some((t) => t.name === "nexus_content_media_uploads")) {
     if ((await first(env.DB, "SELECT COUNT(*) n FROM nexus_content_media_uploads WHERE account_id=?1", id3)).n) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
     scopeSQL = scopeSQL.replace("'avatarVersion'", "'mediaUploadReferences',(SELECT COUNT(*) FROM nexus_content_media_uploads WHERE account_id=?1),'avatarVersion'");
@@ -21631,7 +21639,8 @@ async function scope(env, id3) {
   if (!member) deny("REMOVE_BEFORE_PURGE", 409);
   const encoded = (await first(env.DB, scopeSQL, id3)).value;
   const counts = await first(env.DB, "SELECT (SELECT count(*) FROM projects WHERE id IN(" + PROJECTS + ")) projects,(SELECT count(*) FROM workspaces WHERE owner_subject_id=?1) workspaces,(SELECT count(*) FROM feedback_items WHERE author_id=?1) feedback,(SELECT count(*) FROM nexus_passkey_credentials WHERE account_id=?1) keys,(SELECT count(*) FROM oauth_identities WHERE account_id=?1) providers", id3);
-  return { scopeSQL, member, encoded, hash: await sha(encoded), counts };
+  if (hasAssessment) Object.assign(counts, await first(env.DB, "SELECT (SELECT count(*) FROM nexus_assessment_attempts WHERE account_id=?1) courseFinalAttempts,COALESCE((SELECT bytes FROM nexus_assessment_owners WHERE account_id=?1),0) courseFinalBytes", id3));
+  return { scopeSQL, member, encoded, hash: await sha(encoded), counts, hasAssessment };
 }
 async function preparePurge(env, value, id3) {
   const plan = await scope(env, id3), approval = "npa_" + random(), expiresAt = new Date(Date.now() + 12e4).toISOString();
@@ -21641,16 +21650,24 @@ async function preparePurge(env, value, id3) {
 async function executePurge(env, value, id3) {
   const { payload, actor } = value;
   if (typeof payload.approvalToken !== "string" || !/^npa_[A-Za-z0-9_-]{43}$/.test(payload.approvalToken) || typeof payload.confirmation !== "string") deny("INVALID_INPUT");
-  const approvalHash = await sha(payload.approvalToken), stamp2 = (/* @__PURE__ */ new Date()).toISOString(), plan = await scope(env, id3);
+  const approvalHash = await sha(payload.approvalToken), stamp3 = (/* @__PURE__ */ new Date()).toISOString(), plan = await scope(env, id3);
   const approval = await first(env.DB, "SELECT * FROM nexus_admin_purge_approvals WHERE token_hash=?1", approvalHash);
-  if (!approval || approval.actor_id !== actor.account_id || approval.session_id !== actor.session_id || approval.target_id !== id3 || approval.target_version !== payload.version || approval.consumed_at || approval.expires_at <= stamp2 || approval.scope_hash !== plan.hash) deny("PURGE_APPROVAL_REJECTED", 409);
+  if (!approval || approval.actor_id !== actor.account_id || approval.session_id !== actor.session_id || approval.target_id !== id3 || approval.target_version !== payload.version || approval.consumed_at || approval.expires_at <= stamp3 || approval.scope_hash !== plan.hash) deny("PURGE_APPROVAL_REJECTED", 409);
   if (payload.confirmation !== "DELETE " + (plan.member.username || id3)) deny("PURGE_CONFIRMATION_REQUIRED", 400);
   const q3 = (sql2, ...args) => query2(env.DB, sql2, ...args);
   const commands = [
-    guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3 AND state='removed' AND version=?4) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3) AND EXISTS(SELECT 1 FROM nexus_admin_purge_approvals WHERE token_hash=?5 AND actor_id=?6 AND session_id=?7 AND consumed_at IS NULL AND expires_at>?8)", [id3, payload.version, approvalHash, actor.account_id, actor.session_id, stamp2]),
+    guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3 AND state='removed' AND version=?4) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3) AND EXISTS(SELECT 1 FROM nexus_admin_purge_approvals WHERE token_hash=?5 AND actor_id=?6 AND session_id=?7 AND consumed_at IS NULL AND expires_at>?8)", [id3, payload.version, approvalHash, actor.account_id, actor.session_id, stamp3]),
     // Snapshot is rechecked within this transaction before deleting anything.
     q3("INSERT INTO nexus_admin_write_guards(request_id,phase,valid) VALUES(?2,'after',((" + plan.scopeSQL.replaceAll("?1", "?3").replace(" AS value", "") + ")=?1))", plan.encoded, payload.requestId, id3),
-    q3("UPDATE nexus_admin_purge_approvals SET consumed_at=?1 WHERE token_hash=?2", stamp2, approvalHash),
+    q3("UPDATE nexus_admin_purge_approvals SET consumed_at=?1 WHERE token_hash=?2", stamp3, approvalHash),
+    ...plan.hasAssessment ? [
+      q3("DELETE FROM nexus_assessment_audit WHERE actor_id=?1 OR attempt_id IN(SELECT id FROM nexus_assessment_attempts WHERE account_id=?1)", id3),
+      q3("UPDATE nexus_assessment_attempts SET reviewer_id=NULL,version=version+1 WHERE reviewer_id=?1 AND account_id<>?1", id3),
+      // Только собственные работы, явно включённые в preview. Cascade освобождает
+      // parts/results и счётчики хранения. Закрытые глобальные answer keys остаются.
+      q3("DELETE FROM nexus_assessment_attempts WHERE account_id=?1", id3),
+      q3("DELETE FROM nexus_assessment_owners WHERE account_id=?1", id3)
+    ] : [],
     q3("INSERT INTO nexus_admin_purge_links(request_id,kind,item_id) SELECT ?2,'project',id FROM projects WHERE id IN(" + PROJECTS + ")", id3, payload.requestId),
     q3("INSERT INTO nexus_admin_purge_links(request_id,kind,item_id) SELECT ?2,'workspace',id FROM workspaces WHERE owner_subject_id=?1", id3, payload.requestId),
     q3("INSERT INTO nexus_admin_purge_links(request_id,kind,item_id) SELECT ?2,'oauth-tx',tx_id FROM nexus_oauth_receipts WHERE account_id=?1", id3, payload.requestId),
@@ -21699,7 +21716,7 @@ async function executePurge(env, value, id3) {
     q3("DELETE FROM nexus_alpha_members WHERE account_id=?1", id3),
     q3("DELETE FROM account_subjects WHERE id=?1", id3),
     q3("DELETE FROM nexus_admin_purge_links WHERE request_id=?1", payload.requestId),
-    audit(env.DB, actor, payload.requestId, "purge", id3, stamp2)
+    audit(env.DB, actor, payload.requestId, "purge", id3, stamp3)
   ];
   await atomic(env, commands);
   return { ok: true, deletedServerData: true, localCopiesRemotelyErased: false };
@@ -21738,10 +21755,10 @@ function validateAvatarEnvelope(value) {
 }
 
 // server-access/worker/profile-service.mjs
-async function dto(env, accountId) {
-  const account = await first(env.DB, "SELECT a.display_name,p.username FROM account_subjects a LEFT JOIN nexus_account_profiles p ON p.account_id=a.id WHERE a.id=?1", accountId);
-  const avatar = await first(env.DB, "SELECT jpeg_base64,version FROM nexus_account_avatars WHERE account_id=?1", accountId);
-  return { accountId, username: account.username || null, displayName: account.display_name, avatar: avatar?.jpeg_base64 ? "data:image/jpeg;base64," + avatar.jpeg_base64 : null, avatarVersion: avatar?.version || 0 };
+async function dto(env, accountId2) {
+  const account = await first(env.DB, "SELECT a.display_name,p.username FROM account_subjects a LEFT JOIN nexus_account_profiles p ON p.account_id=a.id WHERE a.id=?1", accountId2);
+  const avatar = await first(env.DB, "SELECT jpeg_base64,version FROM nexus_account_avatars WHERE account_id=?1", accountId2);
+  return { accountId: accountId2, username: account.username || null, displayName: account.display_name, avatar: avatar?.jpeg_base64 ? "data:image/jpeg;base64," + avatar.jpeg_base64 : null, avatarVersion: avatar?.version || 0 };
 }
 async function profileOperation(env, value) {
   const { actor, method, payload } = value;
@@ -21750,11 +21767,11 @@ async function profileOperation(env, value) {
   const upload = value.path === "/api/v2/account/profile/avatar", remove = value.path === "/api/v2/account/profile/avatar/remove";
   if (method !== "POST" || !upload && !remove) deny("NOT_FOUND", 404);
   if (!exact2(payload, ["requestId", "version", ...upload ? ["jpegBase64"] : []]) || !validRequestId(payload.requestId) || !Number.isInteger(payload.version) || payload.version < 0) deny("INVALID_INPUT");
-  const image = upload ? validateAvatarEnvelope(payload.jpegBase64) : null, stamp2 = (/* @__PURE__ */ new Date()).toISOString();
+  const image = upload ? validateAvatarEnvelope(payload.jpegBase64) : null, stamp3 = (/* @__PURE__ */ new Date()).toISOString();
   const condition = "EXISTS(SELECT 1 FROM account_sessions s JOIN account_subjects a ON a.id=s.subject_id AND a.status='active' WHERE s.id=?3 AND s.subject_id=?4 AND s.status='active' AND s.revoked_at IS NULL AND s.idle_expires_at>?5 AND s.absolute_expires_at>?5) AND COALESCE((SELECT version FROM nexus_account_avatars WHERE account_id=?4),0)=?6";
-  const commands = [guard(env.DB, payload.requestId, "before", condition, [actor.session_id, actor.account_id, stamp2, payload.version])];
-  if (upload) commands.push(query2(env.DB, "INSERT INTO nexus_account_avatars(account_id,jpeg_base64,version,updated_at) VALUES(?1,?2,1,?3) ON CONFLICT(account_id) DO UPDATE SET jpeg_base64=excluded.jpeg_base64,version=version+1,updated_at=excluded.updated_at", actor.account_id, image, stamp2));
-  else commands.push(query2(env.DB, "INSERT INTO nexus_account_avatars(account_id,jpeg_base64,version,updated_at) VALUES(?1,NULL,1,?2) ON CONFLICT(account_id) DO UPDATE SET jpeg_base64=NULL,version=version+1,updated_at=excluded.updated_at", actor.account_id, stamp2));
+  const commands = [guard(env.DB, payload.requestId, "before", condition, [actor.session_id, actor.account_id, stamp3, payload.version])];
+  if (upload) commands.push(query2(env.DB, "INSERT INTO nexus_account_avatars(account_id,jpeg_base64,version,updated_at) VALUES(?1,?2,1,?3) ON CONFLICT(account_id) DO UPDATE SET jpeg_base64=excluded.jpeg_base64,version=version+1,updated_at=excluded.updated_at", actor.account_id, image, stamp3));
+  else commands.push(query2(env.DB, "INSERT INTO nexus_account_avatars(account_id,jpeg_base64,version,updated_at) VALUES(?1,NULL,1,?2) ON CONFLICT(account_id) DO UPDATE SET jpeg_base64=NULL,version=version+1,updated_at=excluded.updated_at", actor.account_id, stamp3));
   await atomic(env, commands);
   return dto(env, actor.account_id);
 }
@@ -21806,12 +21823,12 @@ async function communityOperation(env, value) {
     return { itemId: id3, total, offset, replies: replies.map((r) => ({ id: r.id, body: r.body, team: !!r.is_team, authorName: r.is_team ? "\u041A\u043E\u043C\u0430\u043D\u0434\u0430 Nexus" : r.display_name, mine: r.author_id === actor.accountId, version: r.version, createdAt: r.created_at, deleted: !!r.deleted_at })), canReply: true };
   }
   if (method !== "POST") deny3("NOT_FOUND", 404);
-  const stamp2 = (/* @__PURE__ */ new Date()).toISOString(), actorId = actor.accountId;
-  const guard2 = (requestId, extra2, args = []) => q(db, "INSERT INTO nexus_community_write_guards(request_id,valid) VALUES(?1,(" + SESSION + " AND EXISTS(SELECT 1 FROM feedback_items WHERE id=?5 AND (author_id=?2 OR " + PERMISSION + ")) AND " + extra2 + "))", requestId, actorId, sessionHash, stamp2, id3, ...args);
-  const audit2 = (requestId, action) => q(db, "INSERT INTO nexus_community_audit(id,actor_id,item_id,action,created_at) VALUES(?1,?2,?3,?4,?5)", requestId, actorId, id3, action, stamp2);
+  const stamp3 = (/* @__PURE__ */ new Date()).toISOString(), actorId = actor.accountId;
+  const guard3 = (requestId, extra2, args = []) => q(db, "INSERT INTO nexus_community_write_guards(request_id,valid) VALUES(?1,(" + SESSION + " AND EXISTS(SELECT 1 FROM feedback_items WHERE id=?5 AND (author_id=?2 OR " + PERMISSION + ")) AND " + extra2 + "))", requestId, actorId, sessionHash, stamp3, id3, ...args);
+  const audit3 = (requestId, action) => q(db, "INSERT INTO nexus_community_audit(id,actor_id,item_id,action,created_at) VALUES(?1,?2,?3,?4,?5)", requestId, actorId, id3, action, stamp3);
   if (match[2] === "delete") {
     if (!exact3(payload, ["requestId", "version"]) || !uuid(payload.requestId) || payload.version !== item2.version) deny3("STALE_VERSION", 409);
-    await atomic2(db, [guard2(payload.requestId, "EXISTS(SELECT 1 FROM feedback_items WHERE id=?5 AND version=?6)", [payload.version]), q(db, "INSERT INTO feedback_deleted_items(id,author_id,request_key,deleted_at) SELECT id,author_id,request_key,?2 FROM feedback_items WHERE id=?1", id3, stamp2), audit2(payload.requestId, "delete-item"), q(db, "DELETE FROM feedback_items WHERE id=?1", id3)]);
+    await atomic2(db, [guard3(payload.requestId, "EXISTS(SELECT 1 FROM feedback_items WHERE id=?5 AND version=?6)", [payload.version]), q(db, "INSERT INTO feedback_deleted_items(id,author_id,request_key,deleted_at) SELECT id,author_id,request_key,?2 FROM feedback_items WHERE id=?1", id3, stamp3), audit3(payload.requestId, "delete-item"), q(db, "DELETE FROM feedback_items WHERE id=?1", id3)]);
     return { ok: true, deleted: true };
   }
   if (match[3]) {
@@ -21819,7 +21836,7 @@ async function communityOperation(env, value) {
     const reply4 = await q(db, "SELECT * FROM feedback_replies WHERE id=?1 AND item_id=?2", match[3], id3).first();
     if (!reply4 || reply4.author_id !== actorId && !team) deny3("NOT_FOUND", 404);
     if (reply4.version !== payload.version || reply4.deleted_at) deny3("STALE_VERSION", 409);
-    await atomic2(db, [guard2(payload.requestId, "EXISTS(SELECT 1 FROM feedback_replies WHERE id=?6 AND item_id=?5 AND version=?7 AND deleted_at IS NULL AND (author_id=?2 OR " + PERMISSION + "))", [reply4.id, payload.version]), q(db, "UPDATE feedback_replies SET body=NULL,deleted_at=?1,version=version+1 WHERE id=?2", stamp2, reply4.id), audit2(payload.requestId, "delete-reply")]);
+    await atomic2(db, [guard3(payload.requestId, "EXISTS(SELECT 1 FROM feedback_replies WHERE id=?6 AND item_id=?5 AND version=?7 AND deleted_at IS NULL AND (author_id=?2 OR " + PERMISSION + "))", [reply4.id, payload.version]), q(db, "UPDATE feedback_replies SET body=NULL,deleted_at=?1,version=version+1 WHERE id=?2", stamp3, reply4.id), audit3(payload.requestId, "delete-reply")]);
     return { ok: true, deleted: true };
   }
   if (!exact3(payload, ["requestId", "body"]) || !uuid(payload.requestId) || typeof payload.body !== "string" || payload.body.trim().length < 1 || payload.body.length > 4e3 || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(payload.body)) deny3("INVALID_INPUT");
@@ -21831,7 +21848,7 @@ async function communityOperation(env, value) {
   const rate2 = await q(db, "INSERT INTO feedback_rate_limits(account_id,bucket,used) VALUES(?1,?2,1) ON CONFLICT(account_id,bucket) DO UPDATE SET used=used+1 WHERE used<20 RETURNING used", actorId, Math.floor(Date.now() / 36e5)).first();
   if (!rate2) deny3("RATE_LIMITED", 429);
   const extra = team ? PERMISSION : "EXISTS(SELECT 1 FROM feedback_items WHERE id=?5 AND author_id=?2)";
-  await atomic2(db, [guard2(payload.requestId, extra), q(db, "INSERT INTO feedback_replies(id,item_id,author_id,body,is_team,request_key,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7)", crypto.randomUUID(), id3, actorId, body, +team, payload.requestId, stamp2), audit2(payload.requestId, "reply")]);
+  await atomic2(db, [guard3(payload.requestId, extra), q(db, "INSERT INTO feedback_replies(id,item_id,author_id,body,is_team,request_key,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7)", crypto.randomUUID(), id3, actorId, body, +team, payload.requestId, stamp3), audit3(payload.requestId, "reply")]);
   return { ok: true };
 }
 
@@ -21913,12 +21930,12 @@ async function mediaPartsOperation(env, v, { publishedOnly = false } = {}) {
       pending(r2);
       return receipt(r2);
     }
-    const m = p.meta, stamp2 = now2(), expires = new Date(Date.now() + UPLOAD_TTL_MS).toISOString();
+    const m = p.meta, stamp3 = now2(), expires = new Date(Date.now() + UPLOAD_TTL_MS).toISOString();
     const capacity = "NOT EXISTS(SELECT 1 FROM nexus_content_media_uploads WHERE account_id=?3 AND state='pending' AND expires_at>?4) AND (SELECT COUNT(*) FROM nexus_content_media_uploads WHERE expires_at>?4)<16 AND (EXISTS(SELECT 1 FROM nexus_content_media WHERE id=?5) OR ((SELECT COUNT(*) FROM nexus_content_media)+(SELECT COUNT(*) FROM nexus_content_media_uploads WHERE state='pending' AND expires_at>?4)<1000 AND (SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media)+(SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media_uploads WHERE state='pending' AND expires_at>?4)+?6<=67108864))";
     await atomic(env, [
       authority(env, v),
-      guard(env.DB, p.requestId, "after", capacity, [v.actor.account_id, stamp2, m.id, m.bytes]),
-      query2(env.DB, "INSERT INTO nexus_content_media_uploads(upload_id,account_id,session_id,request_id,external_id,media_id,encoded_length,bytes,width,height,total_parts,state,created_at,expires_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,'pending',?12,?13)", p.uploadId, v.actor.account_id, v.actor.session_id, p.originalRequestId, p.externalId, m.id, m.encodedLength, m.bytes, m.width, m.height, m.totalParts, stamp2, expires)
+      guard(env.DB, p.requestId, "after", capacity, [v.actor.account_id, stamp3, m.id, m.bytes]),
+      query2(env.DB, "INSERT INTO nexus_content_media_uploads(upload_id,account_id,session_id,request_id,external_id,media_id,encoded_length,bytes,width,height,total_parts,state,created_at,expires_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,'pending',?12,?13)", p.uploadId, v.actor.account_id, v.actor.session_id, p.originalRequestId, p.externalId, m.id, m.encodedLength, m.bytes, m.width, m.height, m.totalParts, stamp3, expires)
     ]);
     r2 = await first(env.DB, "SELECT * FROM nexus_content_media_uploads WHERE upload_id=?1", p.uploadId);
     return receipt(r2);
@@ -21960,6 +21977,403 @@ async function mediaPartsOperation(env, v, { publishedOnly = false } = {}) {
   deny("INVALID_INPUT");
 }
 
+// server-access/worker/assessment-service.mjs
+import { Buffer as Buffer4 } from "node:buffer";
+
+// project-studio/project-transfer.js
+var IMPORT_LIMITS = Object.freeze({ files: 64, fileBytes: 262144, totalBytes: 1048576, jsonBytes: 2097152 });
+
+// course-final/automatic-policy.js
+var AUTOMATIC_POLICY = "automatic-self-study-v1";
+var THEORY_IDS = Object.freeze([...Array.from({ length: 12 }, (_, i) => "C" + String(i + 1).padStart(2, "0")), ...Array.from({ length: 8 }, (_, i) => "D" + String(i + 1).padStart(2, "0"))]);
+var PRACTICAL_CHECKS = Object.freeze({
+  P1: Object.freeze({ build: 3, validRecords: 3, boundaries: 3, invalidRecords: 3, atomicFailure: 3 }),
+  P2: Object.freeze({ build: 3, indexOrder: 3, knownKey: 3, absentKey: 3, duplicates: 3 }),
+  P3: Object.freeze({ build: 3, independentOwnership: 3, moveReuse: 3, invalidReplacement: 3, atomicFailure: 3 }),
+  P4: Object.freeze({ build: 3, guiAction: 3, rejectedAction: 3, saveRoundTrip: 3, atomicLoad: 3 })
+});
+var PROJECT_CHECKS = Object.freeze(Object.fromEntries([
+  "build",
+  "createValid",
+  "createBoundary",
+  "rejectInvalid",
+  "rejectDuplicate",
+  "actionValid",
+  "actionBoundary",
+  "rejectActionAtomic",
+  "unknownIdAtomic",
+  "stableOrder",
+  "filterSubset",
+  "filterRestores",
+  "saveRoundTrip",
+  "badLoadAtomic",
+  "futureVersionAtomic",
+  "guiAdd",
+  "guiAction",
+  "guiReject",
+  "guiRestore",
+  "portableRoundTrip"
+].map((id3) => [id3, 5])));
+var DEFENSE_CHECKS = Object.freeze({ build: 25, newBehavior: 25, boundary: 25, regression: 25 });
+var PROJECT_REQUIRED = Object.freeze(["build", "rejectActionAtomic", "unknownIdAtomic", "saveRoundTrip", "badLoadAtomic", "futureVersionAtomic", "guiAdd", "guiAction", "guiReject", "guiRestore", "portableRoundTrip"]);
+var DEFENSE_CHALLENGES = Object.freeze({ taskflow: "taskflow.reopen.v1", finance: "finance.transfer-limit.v1", logscope: "logscope.component-filter.v1" });
+var exact5 = (o, keys2) => !!o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).length === keys2.length && keys2.every((k) => Object.hasOwn(o, k));
+var fail = () => {
+  throw Object.assign(Error("ASSESSMENT_AUTOMATIC_INVALID"), { code: "ASSESSMENT_AUTOMATIC_INVALID" });
+};
+function checks(value, maxima) {
+  if (!exact5(value, Object.keys(maxima)) || Object.values(value).some((v) => typeof v !== "boolean")) fail();
+  return value;
+}
+function validateTheoryChoices(value) {
+  if (!exact5(value, THEORY_IDS) || Object.values(value).some((v) => v !== null && !["o1", "o2", "o3", "o4"].includes(v))) fail();
+  return value;
+}
+function validateAutomaticProof(value) {
+  if (!exact5(value, ["policy", "choices", "practical", "project", "defense", "codeChanged"]) || value.policy !== AUTOMATIC_POLICY || typeof value.codeChanged !== "boolean") fail();
+  validateTheoryChoices(value.choices);
+  if (!exact5(value.practical, Object.keys(PRACTICAL_CHECKS))) fail();
+  for (const [id3, maxima] of Object.entries(PRACTICAL_CHECKS)) checks(value.practical[id3], maxima);
+  checks(value.project, PROJECT_CHECKS);
+  checks(value.defense, DEFENSE_CHECKS);
+  return value;
+}
+function calculateAutomatic(proof, privateKeys) {
+  validateAutomaticProof(proof);
+  if (!exact5(privateKeys, THEORY_IDS) || Object.values(privateKeys).some((v) => !["o1", "o2", "o3", "o4"].includes(v))) throw Object.assign(Error("ASSESSMENT_KEYS_UNAVAILABLE"), { code: "ASSESSMENT_KEYS_UNAVAILABLE" });
+  const theory = Object.fromEntries(THEORY_IDS.map((id3) => [id3, proof.choices[id3] === privateKeys[id3] ? 2 : 0]));
+  const score = (out, maxima) => Object.entries(maxima).reduce((n, [id3, max]) => n + (out[id3] ? max : 0), 0);
+  const practical = Object.fromEntries(Object.entries(PRACTICAL_CHECKS).map(([id3, max]) => [id3, proof.practical[id3].build ? score(proof.practical[id3], max) : 0]));
+  const exam = Object.values(theory).reduce((a, b) => a + b, 0) + Object.values(practical).reduce((a, b) => a + b, 0);
+  const project = proof.project.build ? score(proof.project, PROJECT_CHECKS) : 0;
+  const defense = proof.codeChanged && proof.defense.build ? score(proof.defense, DEFENSE_CHECKS) : 0;
+  const blockingReasons = [];
+  if (Object.values(theory).reduce((a, b) => a + b, 0) < 24) blockingReasons.push("exam-theory-minimum");
+  for (const [id3, points] of Object.entries(practical)) if (points < 9) blockingReasons.push("exam-" + id3 + "-minimum");
+  if (!proof.practical.P4.build) blockingReasons.push("practical-gui-build");
+  for (const id3 of PROJECT_REQUIRED) if (!proof.project[id3]) blockingReasons.push("project-" + id3);
+  if (!proof.codeChanged) blockingReasons.push("defense-code-unchanged");
+  if (!proof.defense.newBehavior) blockingReasons.push("defense-control-change");
+  if (!proof.defense.boundary) blockingReasons.push("defense-boundary");
+  if (!proof.defense.regression) blockingReasons.push("defense-regression");
+  const passed = exam >= 60 && project >= 60 && defense >= 60 && blockingReasons.length === 0;
+  return { exam, project, defense, weighted: Math.round((0.4 * exam + 0.5 * project + 0.1 * defense) * 100) / 100, status: passed ? "passed" : "requires-revision", policyVersion: AUTOMATIC_POLICY, empiricallyValidated: false, authority: "automatic-self-study", credentialEligible: false, theoryVerifiedServer: true, codeVerifiedServer: false, breakdown: { theory, practical, practicalChecks: Object.fromEntries(Object.entries(proof.practical).map(([id3, out]) => [id3, { ...out }])), project: { ...proof.project }, defense: { ...proof.defense } }, blockingReasons };
+}
+
+// course-final/contract.js
+var ASSESSMENT_ID = "cpp.course-final.v1";
+var TASK_VERSION = "1.0.0";
+var RUBRIC_VERSION = "1.0.0";
+var FINAL_LIMITS = Object.freeze({ chunkBytes: 32768, bundleBytes: 6 * 1024 * 1024, uploadsPerAttempt: 8, answerChars: 12e3, totalAnswerChars: 64e3, reportChars: 16e3, ownerBytes: 24 * 1024 * 1024, globalBytes: 128 * 1024 * 1024 });
+var PROJECT_RUBRIC = Object.freeze({ correctness: 30, tests: 20, resources: 15, design: 15, algorithms: 10, reproducibility: 10 });
+var DEFENSE_RUBRIC = Object.freeze({ model: 30, diagnosis: 25, controlChange: 30, tradeoffs: 15 });
+var QUESTION_MAX = Object.freeze(Object.fromEntries([...Array.from({ length: 12 }, (_, i) => ["C" + String(i + 1).padStart(2, "0"), 2]), ...Array.from({ length: 8 }, (_, i) => ["D" + String(i + 1).padStart(2, "0"), 2]), ...Array.from({ length: 4 }, (_, i) => ["P" + (i + 1), 15])]));
+var TRACK_IDS = Object.freeze(["taskflow", "finance", "logscope"]);
+var fail2 = (code) => {
+  throw Object.assign(Error(code), { code });
+};
+var exact6 = (x, keys2) => x && typeof x === "object" && !Array.isArray(x) && Object.keys(x).length === keys2.length && keys2.every((k) => Object.hasOwn(x, k));
+var text2 = (x, max, min = 0) => typeof x === "string" && x.length >= min && x.length <= max && !x.includes("\0");
+function scoreGroup(value, maxima) {
+  if (!exact6(value, Object.keys(maxima))) fail2("ASSESSMENT_REVIEW_INVALID");
+  let total = 0;
+  for (const [key, max] of Object.entries(maxima)) {
+    const n = value[key];
+    if (!Number.isFinite(n) || n < 0 || n > max || !Number.isInteger(n * 2)) fail2("ASSESSMENT_REVIEW_INVALID");
+    total += n;
+  }
+  return total;
+}
+function calculateReview(value) {
+  if (!exact6(value, ["exam", "project", "defense", "feedback", "defenseMode", "defenseEvidence", "guiObserved", "authorshipVerified", "controlChangeVerified", "blockingReasons"]) || !text2(value.feedback, 12e3, 20) || !text2(value.defenseEvidence, 4e3, 20) || !["live", "written"].includes(value.defenseMode) || ["guiObserved", "authorshipVerified", "controlChangeVerified"].some((k) => typeof value[k] !== "boolean") || !Array.isArray(value.blockingReasons) || value.blockingReasons.length > 8 || value.blockingReasons.some((s) => !text2(s, 1e3, 1))) fail2("ASSESSMENT_REVIEW_INVALID");
+  const exam = scoreGroup(value.exam, QUESTION_MAX), project = scoreGroup(value.project, PROJECT_RUBRIC), defense = scoreGroup(value.defense, DEFENSE_RUBRIC);
+  const weighted = Math.round((0.4 * exam + 0.5 * project + 0.1 * defense) * 100) / 100;
+  const passed = exam >= 60 && project >= 60 && defense >= 60 && value.guiObserved && value.authorshipVerified && value.controlChangeVerified && value.blockingReasons.length === 0;
+  return { exam, project, defense, weighted, status: passed ? "passed" : "requires-revision", policyVersion: "pilot-40-50-10-v1", empiricallyValidated: false };
+}
+
+// course-final/transport-contract.js
+var ASSESSMENT_PATH = "/api/v2/account/control/assessment";
+var ASSESSMENT_ERROR_CODES = Object.freeze(["ASSESSMENT_UNAVAILABLE", "ASSESSMENT_INPUT_INVALID", "ASSESSMENT_RESPONSE_INVALID", "ASSESSMENT_BUNDLE_INVALID", "ASSESSMENT_BUNDLE_TOO_LARGE", "ASSESSMENT_SENSITIVE_DATA", "ASSESSMENT_STATE_INVALID", "ASSESSMENT_INCOMPLETE", "ASSESSMENT_PART_INVALID", "ASSESSMENT_PART_CONFLICT", "ASSESSMENT_QUOTA", "ASSESSMENT_ATTEMPT_LIMIT", "ASSESSMENT_UPLOAD_LIMIT", "ASSESSMENT_PARENT_REQUIRED", "ASSESSMENT_SELF_REVIEW", "ASSESSMENT_REVIEW_INVALID", "ASSESSMENT_AUTOMATIC_INVALID", "ASSESSMENT_KEYS_UNAVAILABLE"]);
+var uuid3 = (value) => typeof value === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value);
+var hash = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+var exact7 = (value, keys2) => !!value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === keys2.length && keys2.every((k) => Object.hasOwn(value, k));
+var accountId = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value);
+var integer = (n, min, max) => Number.isSafeInteger(n) && n >= min && n <= max;
+var text3 = (v, max, min = 0) => typeof v === "string" && v.length >= min && v.length <= max && !v.includes("\0");
+var fail3 = () => {
+  throw Object.assign(Error("ASSESSMENT_INPUT_INVALID"), { code: "ASSESSMENT_INPUT_INVALID" });
+};
+var layouts = { capabilities: [], list: ["cursor"], queue: ["cursor"], unassigned: ["cursor"], detail: ["attemptId"], "review-detail": ["attemptId", "reviewId"], "appeal-detail": ["attemptId", "appealId"], open: ["requestId", "trackId", "parentAttemptId"], track: ["requestId", "attemptId", "expectedVersion", "trackId"], begin: ["requestId", "attemptId", "snapshotHash", "totalBytes", "chunkCount"], put: ["requestId", "attemptId", "uploadId", "index", "data", "sha256"], manifest: ["attemptId", "uploadId"], parts: ["attemptId", "uploadId", "offset"], submit: ["requestId", "attemptId", "uploadId"], checkpoint: ["requestId", "attemptId", "uploadId"], withdraw: ["requestId", "attemptId", "expectedVersion", "reason"], assign: ["requestId", "attemptId", "expectedVersion", "reviewerId"], review: ["requestId", "attemptId", "expectedVersion", "previousReviewId", "review"], appeal: ["requestId", "attemptId", "reviewId", "text"], interrupt: ["requestId", "attemptId", "expectedVersion", "reason"] };
+function validateAssessmentRequest(value) {
+  if (!value || !Object.hasOwn(layouts, value.phase) || !exact7(value, ["phase", ...layouts[value.phase]])) fail3();
+  for (const key of ["requestId", "attemptId", "uploadId", "reviewId", "appealId"]) if (Object.hasOwn(value, key) && !uuid3(value[key])) fail3();
+  for (const key of ["cursor", "parentAttemptId", "previousReviewId"]) if (Object.hasOwn(value, key) && value[key] !== null && !uuid3(value[key])) fail3();
+  if (Object.hasOwn(value, "reviewerId") && !accountId(value.reviewerId)) fail3();
+  if (Object.hasOwn(value, "expectedVersion") && !integer(value.expectedVersion, 1, 1e6)) fail3();
+  if (Object.hasOwn(value, "trackId") && !TRACK_IDS.includes(value.trackId)) fail3();
+  if (value.phase === "begin" && (!hash(value.snapshotHash) || !integer(value.totalBytes, 1, FINAL_LIMITS.bundleBytes) || value.chunkCount !== Math.ceil(value.totalBytes / FINAL_LIMITS.chunkBytes))) fail3();
+  if (value.phase === "put" && (!integer(value.index, 0, 191) || !hash(value.sha256) || typeof value.data !== "string" || value.data.length > 43692 || value.data.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value.data))) fail3();
+  if (value.phase === "parts" && !integer(value.offset, 0, 191)) fail3();
+  if (value.phase === "review") calculateReview(value.review);
+  if (value.phase === "appeal" && !text3(value.text, 4e3, 1)) fail3();
+  if (["interrupt", "withdraw"].includes(value.phase) && !text3(value.reason, 1e3, 1)) fail3();
+  return value;
+}
+
+// course-final/bank-integrity.js
+var BANK_HASHES = Object.freeze({ "A": "c0ce7f4c359e73cf6f5e1d188d6cd010584291ce5c4006c3f94072f15db11592", "B": "fe035a8ffb6f75d7d16880b1d049b6667165ad7f36c0b887f58914bd63b7c5af", "C": "f95de161ca871f3fe4e918d6cc26636575c7607f4ab8a709dacff37ba2db137f" });
+
+// server-access/worker/assessment-service.mjs
+var stamp = () => (/* @__PURE__ */ new Date()).toISOString();
+var j = (value) => JSON.stringify(value);
+function guard2(env, actor, id3, phase, condition, args = []) {
+  const n = 3 + args.length, time = stamp(), freshAdmin = phase === "assessment-admin";
+  const session = `EXISTS(SELECT 1 FROM account_sessions s JOIN account_subjects a ON a.id=s.subject_id AND a.status='active' JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active' JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active' WHERE s.id=?${n} AND s.subject_id=?${n + 1} AND s.status='active' AND s.auth_strength='account-method-v1' AND s.revoked_at IS NULL AND s.idle_expires_at>?${n + 2} AND s.absolute_expires_at>?${n + 2} AND (EXISTS(SELECT 1 FROM nexus_alpha_members m WHERE m.account_id=a.id AND m.state='active') OR EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active'))${freshAdmin ? ` AND lm.kind='passkey' AND s.created_at>=?${n + 3} AND s.created_at<=?${n + 2} AND EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active') AND EXISTS(SELECT 1 FROM nexus_passkey_credentials k WHERE k.login_method_id=lm.id AND k.account_id=a.id)` : ""})`;
+  return query2(env.DB, "INSERT INTO nexus_assessment_write_guards(request_id,phase,valid) VALUES(?1,?2,((" + condition + ") AND " + session + "))", id3, phase, ...args, actor.session_id, actor.account_id, time, ...freshAdmin ? [new Date(Date.now() - 3e5).toISOString()] : []);
+}
+var audit2 = (db, actor, id3, action, attemptId, time) => query2(db, "INSERT INTO nexus_assessment_audit(id,actor_id,action,attempt_id,created_at) VALUES(?1,?2,?3,?4,?5)", id3, actor.account_id, action, attemptId, time);
+var select = "SELECT a.*,COALESCE(g.result,r.result) review_result FROM nexus_assessment_attempts a LEFT JOIN nexus_assessment_reviews r ON r.id=a.latest_review_id LEFT JOIN nexus_assessment_auto_results g ON g.attempt_id=a.id";
+function dto2(a) {
+  return { id: a.id, accountId: a.account_id, mode: a.assessment_mode, variant: a.variant, trackId: a.track_id, ordinal: a.ordinal, parentAttemptId: a.parent_attempt_id, status: a.status, reviewerId: a.reviewer_id, snapshotHash: a.snapshot_hash, uploadId: a.upload_id, latestReviewId: a.latest_review_id, createdAt: a.created_at, submittedAt: a.submitted_at, version: a.version, result: a.review_result ? JSON.parse(a.review_result) : null, interruptReason: a.interrupt_reason };
+}
+var uploadDTO = (u) => ({ id: u.id, snapshotHash: u.snapshot_hash, totalBytes: u.total_bytes, chunkCount: u.chunk_count });
+var reviewDTO = (r) => r ? { id: r.id, attemptId: r.attempt_id, reviewerId: r.reviewer_id, previousReviewId: r.previous_review_id, rubric: JSON.parse(r.rubric), result: JSON.parse(r.result), createdAt: r.created_at } : null;
+var appealDTO = (a) => a ? { id: a.id, attemptId: a.attempt_id, reviewId: a.review_id, text: a.text, createdAt: a.created_at } : null;
+async function transaction(env, commands) {
+  try {
+    const result = await env.DB.batch(commands);
+    if (result.some((r) => !r.success)) deny("CONTROL_WRITE_UNCONFIRMED", 503);
+    return result;
+  } catch (e) {
+    if (e instanceof AlphaError) throw e;
+    if (String(e.message).includes("assessment_quota")) deny("ASSESSMENT_QUOTA", 409);
+    deny("CONTROL_CONFLICT", 409);
+  }
+}
+async function attempt(env, actor, id3, { owner = false, admin = false } = {}) {
+  const a = await first(env.DB, select + " WHERE a.id=?1", id3);
+  if (!a || a.account_id !== actor.account_id && (owner || a.reviewer_id !== actor.account_id && !admin)) deny("NOT_FOUND", 404);
+  return a;
+}
+async function privateUpload(env, actor, attemptId, uploadId) {
+  const a = await attempt(env, actor, attemptId), u = await first(env.DB, "SELECT * FROM nexus_assessment_uploads WHERE id=?1 AND attempt_id=?2", uploadId, a.id);
+  if (!u || a.account_id !== actor.account_id && a.upload_id !== u.id) deny("NOT_FOUND", 404);
+  return { a, u };
+}
+var meta2 = async (env, id3) => dto2(await first(env.DB, select + " WHERE a.id=?1", id3));
+var summary = async (env, id3) => ({ attempt: await meta2(env, id3) });
+var version = (a, v) => {
+  if (a.version !== v) deny("CONTROL_CONFLICT", 409);
+};
+var draft = (a) => {
+  if (a.status !== "draft") deny("ASSESSMENT_STATE_INVALID", 409);
+};
+function completeness(value) {
+  const answerKeys = [...Array.from({ length: 12 }, (_, i) => "C" + String(i + 1).padStart(2, "0")), ...Array.from({ length: 8 }, (_, i) => "D" + String(i + 1).padStart(2, "0"))];
+  return exact7(value, ["answers", "practical", "project"]) && exact7(value.answers, answerKeys) && exact7(value.practical, ["P1", "P2", "P3", "P4"]) && [...Object.values(value.answers), ...Object.values(value.practical), value.project].every((v) => typeof v === "boolean");
+}
+async function assessmentOperation(env, value, { requireAdmin: requireAdmin2 }) {
+  if (env.COURSE_FINAL_ENABLED !== "true") deny("ASSESSMENT_UNAVAILABLE", 503);
+  const { actor, method, payload: p } = value;
+  if (method !== "POST") deny("INVALID_INPUT");
+  if (p?.phase === "certify") {
+    if (!exact7(p, ["phase", "intent", "requestId", "attemptId", "uploadId", "snapshotHash", "totalBytes", "completeness", "expectedVersion", "automatic"]) || !["submit", "checkpoint"].includes(p.intent) || ![p.requestId, p.attemptId, p.uploadId].every(uuid3) || !hash(p.snapshotHash) || !Number.isSafeInteger(p.totalBytes) || !Number.isSafeInteger(p.expectedVersion) || p.expectedVersion < 1 || !completeness(p.completeness)) deny("INVALID_INPUT");
+    if (p.automatic !== null) try {
+      validateAutomaticProof(p.automatic);
+    } catch {
+      deny("ASSESSMENT_AUTOMATIC_INVALID");
+    }
+  } else try {
+    validateAssessmentRequest(p);
+  } catch {
+    deny("ASSESSMENT_INPUT_INVALID");
+  }
+  const admin = !!await first(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", actor.account_id);
+  if (!admin && !await first(env.DB, "SELECT 1 ok FROM nexus_alpha_members WHERE account_id=?1 AND state='active'", actor.account_id)) deny("SESSION_REQUIRED", 401);
+  const expert = env.COURSE_FINAL_EXPERT_ENABLED === "true", mode = expert ? "expert" : "automatic";
+  if (!expert && ["queue", "unassigned", "assign", "review", "review-detail", "appeal", "appeal-detail"].includes(p.phase)) deny("ASSESSMENT_UNAVAILABLE", 503);
+  const caps = async () => ({ enabled: true, assessmentId: ASSESSMENT_ID, taskVersion: TASK_VERSION, rubricVersion: RUBRIC_VERSION, canAssign: expert && admin, canReview: expert && !!await first(env.DB, "SELECT 1 ok FROM nexus_assessment_attempts WHERE reviewer_id=?1 AND assessment_mode='expert' LIMIT 1", actor.account_id), limits: FINAL_LIMITS, policy: expert ? "pilot-40-50-10-v1" : AUTOMATIC_POLICY, mode });
+  if (p.phase === "capabilities") return caps();
+  if (["list", "queue", "unassigned"].includes(p.phase)) {
+    if (p.phase === "unassigned") await requireAdmin2(env, actor);
+    const filter = p.phase === "list" ? "a.account_id=?1" : p.phase === "queue" ? "a.reviewer_id=?1" : "a.reviewer_id IS NULL AND a.status IN('submitted','reviewed')";
+    const args = p.phase === "unassigned" ? [] : [actor.account_id];
+    let cursor = "";
+    if (p.cursor) {
+      const c = await first(env.DB, select + " WHERE " + filter + " AND a.id=?" + (args.length + 1), ...args, p.cursor);
+      if (!c) deny("NOT_FOUND", 404);
+      const n = args.length + 1;
+      cursor = " AND (a.created_at,a.id)<(?" + n + ",?" + (n + 1) + ")";
+      args.push(c.created_at, c.id);
+    }
+    const all3 = await rows(query2(env.DB, select + " WHERE " + filter + cursor + " ORDER BY a.created_at DESC,a.id DESC LIMIT 26", ...args));
+    return { items: all3.slice(0, 25).map(dto2), nextCursor: all3.length > 25 ? all3[24].id : null };
+  }
+  if (p.phase === "open") {
+    const existing = await first(env.DB, select + " WHERE a.create_request_id=?1 AND a.account_id=?2", p.requestId, actor.account_id);
+    if (existing) {
+      if (existing.track_id !== p.trackId || existing.parent_attempt_id !== p.parentAttemptId) deny("CONTROL_CONFLICT", 409);
+      return { attempt: dto2(existing) };
+    }
+    const owner = await first(env.DB, "SELECT * FROM nexus_assessment_owners WHERE account_id=?1", actor.account_id), count = await first(env.DB, "SELECT count(*) n,COALESCE(max(ordinal),0) ordinal FROM nexus_assessment_attempts WHERE account_id=?1", actor.account_id), used = await first(env.DB, "SELECT count(*) n FROM nexus_assessment_attempts WHERE account_id=?1 AND status<>'interrupted'", actor.account_id);
+    if (expert && used.n >= 2 + (owner?.extra_attempts || 0) || count.ordinal >= 1e3) deny("ASSESSMENT_ATTEMPT_LIMIT", 409);
+    let parent = null;
+    if (p.parentAttemptId) {
+      parent = await attempt(env, actor, p.parentAttemptId, { owner: true });
+      if (parent.assessment_mode !== mode || parent.status !== "interrupted" && (!["reviewed", "assessed"].includes(parent.status) || JSON.parse(parent.review_result).status !== "requires-revision")) deny("ASSESSMENT_STATE_INVALID", 409);
+    } else if (count.n) deny("ASSESSMENT_PARENT_REQUIRED", 409);
+    const id3 = crypto.randomUUID(), ordinal = count.ordinal + 1, variant = ["A", "B", "C"][(parseInt((await sha(actor.account_id)).slice(0, 2), 16) + ordinal - 1) % 3], created = stamp();
+    const limit = expert ? 2 + (owner?.extra_attempts || 0) : 1e3;
+    await transaction(env, [query2(env.DB, "INSERT OR IGNORE INTO nexus_assessment_owners(account_id) VALUES(?1)", actor.account_id), guard2(env, actor, p.requestId, "assessment-open", "NOT EXISTS(SELECT 1 FROM nexus_assessment_attempts WHERE account_id=?3 AND status='draft') AND (SELECT count(*) FROM nexus_assessment_attempts WHERE account_id=?3 AND status<>'interrupted')<?6 AND ((?4 IS NULL AND NOT EXISTS(SELECT 1 FROM nexus_assessment_attempts WHERE account_id=?3)) OR EXISTS(SELECT 1 FROM nexus_assessment_attempts p LEFT JOIN nexus_assessment_reviews r ON r.id=p.latest_review_id LEFT JOIN nexus_assessment_auto_results g ON g.attempt_id=p.id WHERE p.id=?4 AND p.account_id=?3 AND p.version=?5 AND p.assessment_mode=?7 AND (p.status='interrupted' OR p.status IN('reviewed','assessed') AND json_extract(COALESCE(g.result,r.result),'$.status')='requires-revision')))", [actor.account_id, p.parentAttemptId, parent?.version || 0, limit, mode]), query2(env.DB, "INSERT INTO nexus_assessment_attempts(id,account_id,assessment_id,task_version,rubric_version,assessment_mode,variant,track_id,ordinal,parent_attempt_id,create_request_id,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)", id3, actor.account_id, ASSESSMENT_ID, TASK_VERSION, RUBRIC_VERSION, mode, variant, p.trackId, ordinal, p.parentAttemptId, p.requestId, created), audit2(env.DB, actor, p.requestId, "assessment-open", id3, created)]);
+    return summary(env, id3);
+  }
+  if (["detail", "review-detail", "appeal-detail"].includes(p.phase)) {
+    const a = await attempt(env, actor, p.attemptId);
+    if (p.phase === "review-detail") {
+      const r = await first(env.DB, "SELECT * FROM nexus_assessment_reviews WHERE id=?1 AND attempt_id=?2", p.reviewId, a.id);
+      if (!r) deny("NOT_FOUND", 404);
+      return { review: reviewDTO(r) };
+    }
+    if (p.phase === "appeal-detail") {
+      const r = await first(env.DB, "SELECT * FROM nexus_assessment_appeals WHERE id=?1 AND attempt_id=?2", p.appealId, a.id);
+      if (!r) deny("NOT_FOUND", 404);
+      return { appeal: appealDTO(r) };
+    }
+    const history = await rows(query2(env.DB, "SELECT id,created_at,result FROM nexus_assessment_reviews WHERE attempt_id=?1 ORDER BY created_at DESC,id DESC LIMIT 16", a.id)), appeals = await rows(query2(env.DB, "SELECT * FROM nexus_assessment_appeals WHERE attempt_id=?1 ORDER BY created_at DESC,id DESC LIMIT 16", a.id));
+    return { attempt: dto2(a), review: reviewDTO(a.latest_review_id ? await first(env.DB, "SELECT * FROM nexus_assessment_reviews WHERE id=?1", a.latest_review_id) : null), history: history.map((r) => ({ id: r.id, createdAt: r.created_at, result: JSON.parse(r.result) })), appeals: appeals.map((r) => ({ id: r.id, reviewId: r.review_id, createdAt: r.created_at })), latestAppeal: appealDTO(appeals[0]) };
+  }
+  if (p.phase === "track") {
+    const a = await attempt(env, actor, p.attemptId, { owner: true });
+    draft(a);
+    version(a, p.expectedVersion);
+    await transaction(env, [guard2(env, actor, p.requestId, "assessment-track", "EXISTS(SELECT 1 FROM nexus_assessment_attempts WHERE id=?3 AND account_id=?4 AND status='draft' AND version=?5)", [a.id, actor.account_id, a.version]), query2(env.DB, "UPDATE nexus_assessment_attempts SET track_id=?1,version=version+1 WHERE id=?2", p.trackId, a.id)]);
+    return summary(env, a.id);
+  }
+  if (p.phase === "withdraw") {
+    const a = await attempt(env, actor, p.attemptId, { owner: true });
+    if (a.status === "interrupted" && a.interrupt_reason === p.reason) return { attempt: dto2(a) };
+    draft(a);
+    version(a, p.expectedVersion);
+    const time = stamp();
+    await transaction(env, [guard2(env, actor, p.requestId, "assessment-withdraw", "EXISTS(SELECT 1 FROM nexus_assessment_attempts WHERE id=?3 AND account_id=?4 AND status='draft' AND version=?5)", [a.id, actor.account_id, a.version]), query2(env.DB, "UPDATE nexus_assessment_attempts SET status='interrupted',interrupt_reason=?1,version=version+1 WHERE id=?2", p.reason, a.id), audit2(env.DB, actor, p.requestId, "assessment-interrupt", a.id, time)]);
+    return summary(env, a.id);
+  }
+  if (p.phase === "begin") {
+    const a = await attempt(env, actor, p.attemptId, { owner: true });
+    draft(a);
+    const existing = await first(env.DB, "SELECT * FROM nexus_assessment_uploads WHERE attempt_id=?1 AND snapshot_hash=?2", a.id, p.snapshotHash);
+    if (existing) {
+      if (existing.total_bytes !== p.totalBytes || existing.chunk_count !== p.chunkCount) deny("CONTROL_CONFLICT", 409);
+      return { attempt: dto2(a), upload: uploadDTO(existing) };
+    }
+    if ((await first(env.DB, "SELECT count(*) n FROM nexus_assessment_uploads WHERE attempt_id=?1", a.id)).n >= 8) deny("ASSESSMENT_UPLOAD_LIMIT", 409);
+    const id3 = crypto.randomUUID();
+    await transaction(env, [guard2(env, actor, p.requestId, "assessment-begin", "EXISTS(SELECT 1 FROM nexus_assessment_attempts WHERE id=?3 AND account_id=?4 AND status='draft') AND (SELECT count(*) FROM nexus_assessment_uploads WHERE attempt_id=?3)<8", [a.id, actor.account_id]), query2(env.DB, "INSERT INTO nexus_assessment_uploads(id,attempt_id,snapshot_hash,total_bytes,chunk_count,created_at) VALUES(?1,?2,?3,?4,?5,?6)", id3, a.id, p.snapshotHash, p.totalBytes, p.chunkCount, stamp())]);
+    return { attempt: dto2(a), upload: uploadDTO(await first(env.DB, "SELECT * FROM nexus_assessment_uploads WHERE id=?1", id3)) };
+  }
+  if (["put", "manifest", "parts", "certify"].includes(p.phase)) {
+    const { a, u } = await privateUpload(env, actor, p.attemptId, p.uploadId);
+    if (p.phase === "manifest") {
+      const parts = await rows(query2(env.DB, "SELECT part_index,bytes,sha256 FROM nexus_assessment_parts WHERE upload_id=?1 ORDER BY part_index", u.id));
+      return { attempt: dto2(a), upload: uploadDTO(u), parts: parts.map((r) => ({ index: r.part_index, bytes: r.bytes, sha256: r.sha256 })) };
+    }
+    if (p.phase === "parts") {
+      const parts = await rows(query2(env.DB, "SELECT part_index,bytes,sha256,data FROM nexus_assessment_parts WHERE upload_id=?1 AND part_index>=?2 ORDER BY part_index LIMIT 5", u.id, p.offset));
+      return { uploadId: u.id, offset: p.offset, parts: parts.map((r) => ({ index: r.part_index, bytes: r.bytes, sha256: r.sha256, data: Buffer4.from(r.data).toString("base64") })) };
+    }
+    if (a.account_id !== actor.account_id) deny("NOT_FOUND", 404);
+    if (p.phase === "certify") {
+      if (a.status !== "draft") {
+        if (a.upload_id === u.id && a.snapshot_hash === p.snapshotHash) return { attempt: dto2(a) };
+        deny("ASSESSMENT_STATE_INVALID", 409);
+      }
+      version(a, p.expectedVersion);
+      if (p.snapshotHash !== u.snapshot_hash || p.totalBytes !== u.total_bytes) deny("ASSESSMENT_BUNDLE_INVALID");
+      const present = await first(env.DB, "SELECT count(*) n,COALESCE(sum(bytes),0) bytes FROM nexus_assessment_parts WHERE upload_id=?1", u.id);
+      if (present.n !== u.chunk_count || present.bytes !== u.total_bytes) deny("ASSESSMENT_INCOMPLETE", 409);
+      if (p.intent === "checkpoint") {
+        if (a.upload_id === u.id && a.snapshot_hash === u.snapshot_hash) return { attempt: dto2(a) };
+        const time2 = stamp();
+        await transaction(env, [guard2(env, actor, p.requestId, "assessment-checkpoint", "EXISTS(SELECT 1 FROM nexus_assessment_attempts WHERE id=?3 AND account_id=?4 AND status='draft' AND version=?5)", [a.id, actor.account_id, a.version]), query2(env.DB, "UPDATE nexus_assessment_attempts SET upload_id=?1,snapshot_hash=?2,completeness=?3,version=version+1 WHERE id=?4", u.id, u.snapshot_hash, j(p.completeness), a.id), audit2(env.DB, actor, p.requestId, "assessment-checkpoint", a.id, time2)]);
+        return summary(env, a.id);
+      }
+      let automaticResult = null;
+      if (a.assessment_mode === "automatic") {
+        if (p.automatic === null) deny("ASSESSMENT_AUTOMATIC_INVALID");
+        for (const [id3, selected] of Object.entries(p.automatic.choices)) if (p.completeness.answers[id3] !== (selected !== null)) deny("ASSESSMENT_AUTOMATIC_INVALID");
+        for (const [id3, out] of Object.entries(p.automatic.practical)) if (!p.completeness.practical[id3] && Object.values(out).some(Boolean)) deny("ASSESSMENT_AUTOMATIC_INVALID");
+        if (!p.completeness.project && (Object.values(p.automatic.project).some(Boolean) || Object.values(p.automatic.defense).some(Boolean) || p.automatic.codeChanged)) deny("ASSESSMENT_AUTOMATIC_INVALID");
+        const key = await first(env.DB, "SELECT bank_hash,answers FROM nexus_assessment_answer_keys WHERE policy=?1 AND variant=?2", AUTOMATIC_POLICY, a.variant);
+        if (!key || key.bank_hash !== BANK_HASHES[a.variant]) deny("ASSESSMENT_KEYS_UNAVAILABLE", 503);
+        try {
+          automaticResult = calculateAutomatic(p.automatic, JSON.parse(key.answers));
+        } catch {
+          deny("ASSESSMENT_KEYS_UNAVAILABLE", 503);
+        }
+      } else if (!expert || p.automatic !== null) deny("ASSESSMENT_UNAVAILABLE", 503);
+      const time = stamp(), encoded = automaticResult ? j(automaticResult) : null;
+      await transaction(env, [guard2(env, actor, p.requestId, "assessment-submit", "EXISTS(SELECT 1 FROM nexus_assessment_attempts WHERE id=?3 AND account_id=?4 AND status='draft' AND version=?5)", [a.id, actor.account_id, a.version]), query2(env.DB, "UPDATE nexus_assessment_attempts SET status=?1,upload_id=?2,snapshot_hash=?3,completeness=?4,submitted_at=?5,version=version+1 WHERE id=?6", automaticResult ? "assessed" : "submitted", u.id, u.snapshot_hash, j(p.completeness), time, a.id), ...automaticResult ? [query2(env.DB, "INSERT INTO nexus_assessment_auto_results(attempt_id,account_id,snapshot_hash,result,created_at,bytes) VALUES(?1,?2,?3,?4,?5,?6)", a.id, a.account_id, u.snapshot_hash, encoded, time, Buffer4.byteLength(encoded))] : [], audit2(env.DB, actor, p.requestId, "assessment-submit", a.id, time)]);
+      return summary(env, a.id);
+    }
+    draft(a);
+    if (p.index >= u.chunk_count) deny("ASSESSMENT_INPUT_INVALID");
+    const bytes = Buffer4.from(p.data, "base64"), expected = p.index === u.chunk_count - 1 ? u.total_bytes - p.index * FINAL_LIMITS.chunkBytes : FINAL_LIMITS.chunkBytes;
+    if (bytes.length !== expected || bytes.toString("base64") !== p.data || Buffer4.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex") !== p.sha256) deny("ASSESSMENT_PART_INVALID");
+    const old = await first(env.DB, "SELECT sha256,bytes FROM nexus_assessment_parts WHERE upload_id=?1 AND part_index=?2", u.id, p.index);
+    if (old) {
+      if (old.sha256 !== p.sha256 || old.bytes !== bytes.length) deny("ASSESSMENT_PART_CONFLICT", 409);
+      return { ok: true, index: p.index, sha256: p.sha256 };
+    }
+    await transaction(env, [guard2(env, actor, p.requestId, "assessment-put", "EXISTS(SELECT 1 FROM nexus_assessment_attempts WHERE id=?3 AND account_id=?4 AND status='draft')", [a.id, actor.account_id]), query2(env.DB, "INSERT OR IGNORE INTO nexus_assessment_parts(upload_id,account_id,part_index,bytes,sha256,data) VALUES(?1,?2,?3,?4,?5,?6)", u.id, actor.account_id, p.index, bytes.length, p.sha256, bytes)]);
+    const stored = await first(env.DB, "SELECT sha256,bytes FROM nexus_assessment_parts WHERE upload_id=?1 AND part_index=?2", u.id, p.index);
+    if (stored?.sha256 !== p.sha256 || stored.bytes !== bytes.length) deny("ASSESSMENT_PART_CONFLICT", 409);
+    return { ok: true, index: p.index, sha256: p.sha256 };
+  }
+  if (["submit", "checkpoint"].includes(p.phase)) deny("ASSESSMENT_INPUT_INVALID");
+  if (p.phase === "assign" || p.phase === "interrupt") {
+    await requireAdmin2(env, actor, true);
+    const a = await attempt(env, actor, p.attemptId, { admin: true });
+    version(a, p.expectedVersion);
+    if (p.phase === "assign") {
+      if (a.assessment_mode !== "expert") deny("ASSESSMENT_STATE_INVALID", 409);
+      if (a.account_id === p.reviewerId) deny("ASSESSMENT_SELF_REVIEW", 403);
+      if (!["submitted", "reviewed"].includes(a.status)) deny("ASSESSMENT_STATE_INVALID", 409);
+      if (!await first(env.DB, "SELECT 1 ok FROM account_subjects s LEFT JOIN nexus_alpha_members m ON m.account_id=s.id WHERE s.id=?1 AND s.status='active' AND (m.state='active' OR EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=s.id AND g.status='active'))", p.reviewerId)) deny("NOT_FOUND", 404);
+    } else if (["reviewed", "assessed"].includes(a.status)) deny("ASSESSMENT_STATE_INVALID", 409);
+    const time = stamp();
+    await transaction(env, [guard2(env, actor, p.requestId, "assessment-admin", "EXISTS(SELECT 1 FROM nexus_assessment_attempts WHERE id=?3 AND version=?4)", [a.id, a.version]), p.phase === "assign" ? query2(env.DB, "UPDATE nexus_assessment_attempts SET reviewer_id=?1,version=version+1 WHERE id=?2", p.reviewerId, a.id) : query2(env.DB, "UPDATE nexus_assessment_attempts SET status='interrupted',interrupt_reason=?1,version=version+1 WHERE id=?2", p.reason, a.id), audit2(env.DB, actor, p.requestId, "assessment-" + p.phase, a.id, time)]);
+    return summary(env, a.id);
+  }
+  if (p.phase === "review") {
+    const a = await attempt(env, actor, p.attemptId);
+    if (a.reviewer_id !== actor.account_id || a.account_id === actor.account_id) deny("ASSESSMENT_SELF_REVIEW", 403);
+    version(a, p.expectedVersion);
+    if (p.previousReviewId !== a.latest_review_id) deny("CONTROL_CONFLICT", 409);
+    if (a.assessment_mode !== "expert") deny("ASSESSMENT_STATE_INVALID", 409);
+    const result = calculateReview(p.review), c = JSON.parse(a.completeness || "null");
+    if (!completeness(c)) deny("ASSESSMENT_STATE_INVALID", 409);
+    for (const [key, points] of Object.entries(p.review.exam)) if (points > 0 && !(key.startsWith("P") ? c.practical[key] : c.answers[key])) deny("ASSESSMENT_REVIEW_INVALID");
+    if (result.project > 0 && !c.project || result.status === "passed" && (!c.project || !c.practical.P4)) deny("ASSESSMENT_REVIEW_INVALID");
+    const id3 = crypto.randomUUID(), time = stamp(), rubric = j(p.review), encoded = j(result), bytes = Buffer4.byteLength(rubric) + Buffer4.byteLength(encoded);
+    await transaction(env, [guard2(env, actor, p.requestId, "assessment-review", "EXISTS(SELECT 1 FROM nexus_assessment_attempts WHERE id=?3 AND reviewer_id=?4 AND account_id<>?4 AND version=?5 AND status IN('submitted','reviewed'))", [a.id, actor.account_id, a.version]), query2(env.DB, "INSERT INTO nexus_assessment_reviews(id,attempt_id,account_id,reviewer_id,previous_review_id,rubric,result,created_at,bytes) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)", id3, a.id, a.account_id, actor.account_id, p.previousReviewId, rubric, encoded, time, bytes), audit2(env.DB, actor, p.requestId, "assessment-review", a.id, time)]);
+    return { attempt: await meta2(env, a.id), review: reviewDTO(await first(env.DB, "SELECT * FROM nexus_assessment_reviews WHERE id=?1", id3)) };
+  }
+  if (p.phase === "appeal") {
+    const a = await attempt(env, actor, p.attemptId, { owner: true });
+    if (!await first(env.DB, "SELECT 1 ok FROM nexus_assessment_reviews WHERE id=?1 AND attempt_id=?2", p.reviewId, a.id)) deny("NOT_FOUND", 404);
+    const existing = await first(env.DB, "SELECT * FROM nexus_assessment_appeals WHERE attempt_id=?1 AND review_id=?2", a.id, p.reviewId);
+    if (existing) {
+      if (existing.text !== p.text) deny("CONTROL_CONFLICT", 409);
+      return { attempt: dto2(a), appeal: appealDTO(existing) };
+    }
+    const id3 = crypto.randomUUID(), time = stamp();
+    await transaction(env, [guard2(env, actor, p.requestId, "assessment-appeal", "EXISTS(SELECT 1 FROM nexus_assessment_attempts a JOIN nexus_assessment_reviews r ON r.attempt_id=a.id WHERE a.id=?3 AND a.account_id=?4 AND r.id=?5)", [a.id, actor.account_id, p.reviewId]), query2(env.DB, "INSERT INTO nexus_assessment_appeals(id,attempt_id,account_id,review_id,text,created_at,bytes) VALUES(?1,?2,?3,?4,?5,?6,?7)", id3, a.id, actor.account_id, p.reviewId, p.text, time, Buffer4.byteLength(p.text)), audit2(env.DB, actor, p.requestId, "assessment-appeal", a.id, time)]);
+    return { attempt: dto2(a), appeal: appealDTO(await first(env.DB, "SELECT * FROM nexus_assessment_appeals WHERE id=?1", id3)) };
+  }
+  deny("ASSESSMENT_INPUT_INVALID");
+}
+
 // server-access/worker/admin-service.mjs
 var INTERNAL = "/api/v2/account/internal/control";
 var BASE = "/api/v2/account/control";
@@ -21968,8 +22382,8 @@ var now3 = () => (/* @__PURE__ */ new Date()).toISOString();
 var query2 = (db, sql2, ...args) => db.prepare(sql2).bind(...args);
 var first = (db, sql2, ...args) => query2(db, sql2, ...args).first();
 var rows = async (statement2) => (await statement2.all()).results || [];
-var sha = async (value) => Buffer4.from(await crypto.subtle.digest("SHA-256", encoder.encode(value))).toString("hex");
-var random = () => Buffer4.from(crypto.getRandomValues(new Uint8Array(32))).toString("base64url");
+var sha = async (value) => Buffer5.from(await crypto.subtle.digest("SHA-256", encoder.encode(value))).toString("hex");
+var random = () => Buffer5.from(crypto.getRandomValues(new Uint8Array(32))).toString("base64url");
 var deny = (code, status = 400) => {
   throw new AlphaError(code, status);
 };
@@ -21985,8 +22399,8 @@ async function envelope(request, env) {
   if (env.ADMIN_CONTROL_ENABLED !== "true" || typeof env.ADMIN_SERVICE_KEY !== "string" || env.ADMIN_SERVICE_KEY.length < 32 || !env.DB) deny("CONTROL_UNAVAILABLE", 503);
   const url = new URL(request.url);
   if (request.method !== "POST" || url.pathname !== INTERNAL || url.search || request.headers.has("cookie") || request.headers.has("authorization") || request.headers.get("content-type") !== "application/json") deny("SERVICE_DENIED", 401);
-  const stamp2 = request.headers.get("x-nexus-service-timestamp"), nonce = request.headers.get("x-nexus-service-nonce"), signature = request.headers.get("x-nexus-service-signature");
-  if (!/^\d{13}$/.test(stamp2 || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !/^[a-f0-9]{64}$/.test(signature || "") || Math.abs(Date.now() - Number(stamp2)) > 3e4) deny("SERVICE_DENIED", 401);
+  const stamp3 = request.headers.get("x-nexus-service-timestamp"), nonce = request.headers.get("x-nexus-service-nonce"), signature = request.headers.get("x-nexus-service-signature");
+  if (!/^\d{13}$/.test(stamp3 || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !/^[a-f0-9]{64}$/.test(signature || "") || Math.abs(Date.now() - Number(stamp3)) > 3e4) deny("SERVICE_DENIED", 401);
   const reader = request.body?.getReader();
   if (!reader) deny("INVALID_INPUT");
   const parts = [];
@@ -22004,11 +22418,11 @@ async function envelope(request, env) {
     });
     reader.releaseLock();
   }
-  const bytes = Buffer4.concat(parts, size), body = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-  const digest2 = Buffer4.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex");
-  const canonical = ["v1", "POST", INTERNAL, stamp2, nonce, digest2].join("\n");
+  const bytes = Buffer5.concat(parts, size), body = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  const digest2 = Buffer5.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex");
+  const canonical = ["v1", "POST", INTERNAL, stamp3, nonce, digest2].join("\n");
   const key = await crypto.subtle.importKey("raw", encoder.encode(env.ADMIN_SERVICE_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
-  if (!await crypto.subtle.verify("HMAC", key, Buffer4.from(signature, "hex"), encoder.encode(canonical))) deny("SERVICE_DENIED", 401);
+  if (!await crypto.subtle.verify("HMAC", key, Buffer5.from(signature, "hex"), encoder.encode(canonical))) deny("SERVICE_DENIED", 401);
   let data;
   try {
     data = JSON.parse(body);
@@ -22025,7 +22439,7 @@ async function envelope(request, env) {
   if ((publicParts || data.path === MEDIA_PARTS_PATH) && body !== JSON.stringify(data)) deny("INVALID_INPUT");
   const partsRPC = publicParts || data.path === MEDIA_PARTS_PATH;
   if (partsRPC) {
-    if (Math.abs(Date.now() - Number(stamp2)) > 3e4) deny("SERVICE_DENIED", 401);
+    if (Math.abs(Date.now() - Number(stamp3)) > 3e4) deny("SERVICE_DENIED", 401);
     if (publicParts) {
       const allowed = await query2(env.DB, "INSERT INTO nexus_admin_rate_limits(scope,bucket,used) VALUES(?1,?2,1) ON CONFLICT(scope,bucket) DO UPDATE SET used=used+1 WHERE used<120 RETURNING used", "!media-public-v1:" + nonce[0], Math.floor(Date.now() / 6e4)).first();
       if (!allowed) deny("RATE_LIMITED", 429);
@@ -22033,7 +22447,13 @@ async function envelope(request, env) {
     }
     await query2(env.DB, "DELETE FROM nexus_admin_nonces WHERE nonce IN(SELECT nonce FROM nexus_admin_nonces WHERE nonce LIKE 'mp1:%' AND expires_at<?1 LIMIT 128)", new Date(Date.now() - 6e4).toISOString()).run();
   }
-  const inserted = await query2(env.DB, "INSERT OR IGNORE INTO nexus_admin_nonces(nonce,expires_at) VALUES(?1,?2)", partsRPC ? "mp1:" + nonce : nonce, new Date(Number(stamp2) + 3e4).toISOString()).run();
+  const assessment = data.path === ASSESSMENT_PATH;
+  if (assessment) {
+    if (env.COURSE_FINAL_ENABLED !== "true") deny("ASSESSMENT_UNAVAILABLE", 503);
+    if (Math.abs(Date.now() - Number(stamp3)) > 3e4) deny("SERVICE_DENIED", 401);
+    await query2(env.DB, "DELETE FROM nexus_assessment_nonces WHERE nonce IN(SELECT nonce FROM nexus_assessment_nonces WHERE expires_at<?1 ORDER BY expires_at LIMIT 128)", new Date(Date.now() - 6e4).toISOString()).run();
+  }
+  const inserted = assessment ? await query2(env.DB, "INSERT OR IGNORE INTO nexus_assessment_nonces(nonce,expires_at) VALUES(?1,?2)", nonce, new Date(Number(stamp3) + 3e4).toISOString()).run() : await query2(env.DB, "INSERT OR IGNORE INTO nexus_admin_nonces(nonce,expires_at) VALUES(?1,?2)", partsRPC ? "mp1:" + nonce : nonce, new Date(Number(stamp3) + 3e4).toISOString()).run();
   if (!inserted.success || inserted.meta.changes !== 1) deny("SERVICE_DENIED", 401);
   if (publicParts) return data;
   const actor = await controlActor(env, data.sessionHash);
@@ -22046,8 +22466,8 @@ async function envelope(request, env) {
 function guard(db, requestId, phase, condition, args = []) {
   return query2(db, "INSERT INTO nexus_admin_write_guards(request_id,phase,valid) VALUES(?1,?2,(" + condition + "))", requestId, phase, ...args);
 }
-function audit(db, actor, requestId, action, targetId, stamp2) {
-  return query2(db, "INSERT INTO nexus_admin_audit(id,actor_id,session_id,action,target_id,created_at) VALUES(?1,?2,?3,?4,?5,?6)", requestId, actor.account_id, actor.session_id, action, targetId || null, stamp2);
+function audit(db, actor, requestId, action, targetId, stamp3) {
+  return query2(db, "INSERT INTO nexus_admin_audit(id,actor_id,session_id,action,target_id,created_at) VALUES(?1,?2,?3,?4,?5,?6)", requestId, actor.account_id, actor.session_id, action, targetId || null, stamp3);
 }
 async function atomic(env, commands) {
   try {
@@ -22069,16 +22489,16 @@ async function requireAdmin(env, actor, write = false) {
   if (write && !fresh(actor)) deny("ADMIN_FRESH_PASSKEY_REQUIRED", 401);
   if (write && !await first(env.DB, "SELECT 1 ok FROM nexus_passkey_credentials k JOIN session_login_methods slm ON slm.login_method_id=k.login_method_id WHERE slm.session_id=?1 AND k.account_id=?2", actor.session_id, actor.account_id)) deny("ADMIN_FRESH_PASSKEY_REQUIRED", 401);
 }
-async function target(env, actor, id3, version) {
-  if (!validId(id3) || !Number.isInteger(version) || version < 0) deny("INVALID_INPUT");
+async function target(env, actor, id3, version2) {
+  if (!validId(id3) || !Number.isInteger(version2) || version2 < 0) deny("INVALID_INPUT");
   if (id3 === actor.account_id || await first(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1", id3)) deny("ADMIN_ACCOUNT_PROTECTED", 403);
   const row = await first(env.DB, "SELECT * FROM nexus_alpha_members WHERE account_id=?1", id3);
   if (!row) {
     if (!await first(env.DB, "SELECT id FROM account_subjects WHERE id=?1", id3)) deny("NOT_FOUND", 404);
-    if (version !== 0) deny("CONTROL_CONFLICT", 409);
+    if (version2 !== 0) deny("CONTROL_CONFLICT", 409);
     return { state: "unadmitted", version: 0 };
   }
-  if (row.version !== version) deny("CONTROL_CONFLICT", 409);
+  if (row.version !== version2) deny("CONTROL_CONFLICT", 409);
   return row;
 }
 function validMutation(input, keys2) {
@@ -22089,6 +22509,7 @@ async function operation(env, value) {
   if (path === PUBLIC_MEDIA_PARTS_PATH) return mediaPartsOperation(env, value, { publishedOnly: true });
   if (path.startsWith("/api/v2/account/profile")) return profileOperation(env, value);
   if (!await alphaSettings(env)) deny("ALPHA_CONTROL_UNAVAILABLE", 503);
+  if (path === ASSESSMENT_PATH && !url.search) return assessmentOperation(env, value, { requireAdmin });
   if (path === BASE + "/capabilities" && method === "GET" && !url.search) {
     const canManage = !!await first(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", actor.account_id);
     return { canManage, canModerate: await teamPermission(env.DB, actor.account_id, env), canPurge: canManage && env.ADMIN_PURGE_ENABLED === "true", freshPasskey: canManage && fresh(actor) };
@@ -22117,15 +22538,15 @@ async function operation(env, value) {
   if (path === BASE + "/settings") {
     validMutation(payload, ["version", "maxTesters", "limitEnabled", "registrationMode"]);
     if (typeof payload.limitEnabled !== "boolean" || !Number.isInteger(payload.version) || payload.version < 1 || !Number.isInteger(payload.maxTesters) || payload.maxTesters < 1 || payload.maxTesters > 1e4 || !["open", "invite_only"].includes(payload.registrationMode)) deny("INVALID_INPUT");
-    const stamp2 = now3();
-    await atomic(env, [guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_settings WHERE id=1 AND version=?3)", [payload.version]), query2(env.DB, "UPDATE nexus_alpha_settings SET registration_mode=?1,max_testers=?2,limit_enabled=?4,version=version+1 WHERE id=1 AND version=?3", payload.registrationMode, payload.maxTesters, payload.version, payload.limitEnabled ? 1 : 0), audit(env.DB, actor, payload.requestId, "settings", null, stamp2)]);
+    const stamp3 = now3();
+    await atomic(env, [guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_settings WHERE id=1 AND version=?3)", [payload.version]), query2(env.DB, "UPDATE nexus_alpha_settings SET registration_mode=?1,max_testers=?2,limit_enabled=?4,version=version+1 WHERE id=1 AND version=?3", payload.registrationMode, payload.maxTesters, payload.version, payload.limitEnabled ? 1 : 0), audit(env.DB, actor, payload.requestId, "settings", null, stamp3)]);
     return { ok: true };
   }
   if (path === BASE + "/invites") {
     validMutation(payload, ["ttlMinutes"]);
     if (!Number.isInteger(payload.ttlMinutes) || payload.ttlMinutes < 10 || payload.ttlMinutes > 10080) deny("INVALID_INPUT");
-    const secret = "npi_" + random(), hash3 = await sha(secret), id4 = crypto.randomUUID(), stamp2 = now3(), expiresAt = new Date(Date.now() + payload.ttlMinutes * 6e4).toISOString();
-    await atomic(env, [guard(env.DB, payload.requestId, "before", "1"), query2(env.DB, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,'\u041D\u043E\u0432\u044B\u0439 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A','active',?2,?2)", id4, stamp2), query2(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at) VALUES(?1,'invited',?2,?3,?3)", id4, expiresAt, stamp2), query2(env.DB, "INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)", hash3, id4, expiresAt), query2(env.DB, "INSERT INTO nexus_admin_invites(token_hash,account_id,created_by,state,created_at) VALUES(?1,?2,?3,'ready',?4)", hash3, id4, actor.account_id, stamp2), audit(env.DB, actor, payload.requestId, "invite", id4, stamp2)]);
+    const secret = "npi_" + random(), hash4 = await sha(secret), id4 = crypto.randomUUID(), stamp3 = now3(), expiresAt = new Date(Date.now() + payload.ttlMinutes * 6e4).toISOString();
+    await atomic(env, [guard(env.DB, payload.requestId, "before", "1"), query2(env.DB, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,'\u041D\u043E\u0432\u044B\u0439 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A','active',?2,?2)", id4, stamp3), query2(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at) VALUES(?1,'invited',?2,?3,?3)", id4, expiresAt, stamp3), query2(env.DB, "INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)", hash4, id4, expiresAt), query2(env.DB, "INSERT INTO nexus_admin_invites(token_hash,account_id,created_by,state,created_at) VALUES(?1,?2,?3,'ready',?4)", hash4, id4, actor.account_id, stamp3), audit(env.DB, actor, payload.requestId, "invite", id4, stamp3)]);
     return { ok: true, accountId: id4, invitationToken: secret, expiresAt };
   }
   const match = new RegExp("^" + BASE + "/users/([A-Za-z0-9][A-Za-z0-9._:-]{0,159})/(action|purge-preview|purge)$").exec(path);
@@ -22137,10 +22558,10 @@ async function operation(env, value) {
     const member = await target(env, actor, id3, payload.version);
     if (payload.action === "admit" && member.state !== "unadmitted" || payload.action === "restore" && !["removed", "blocked"].includes(member.state) || payload.action === "revoke-invite" && member.state !== "invited") deny("INVALID_STATE", 409);
     if (payload.action === "restore" && !await first(env.DB, "SELECT 1 ok FROM login_methods WHERE account_id=?1 AND status='active'", id3)) deny("RESTORE_WITHOUT_LOGIN_METHOD", 409);
-    const state = ["restore", "admit"].includes(payload.action) ? "active" : payload.action === "block" ? "blocked" : "removed", stamp2 = now3();
+    const state = ["restore", "admit"].includes(payload.action) ? "active" : payload.action === "block" ? "blocked" : "removed", stamp3 = now3();
     const condition = member.state === "unadmitted" ? "EXISTS(SELECT 1 FROM account_subjects WHERE id=?3) AND NOT EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3)" : "EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3 AND version=?4) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3)";
-    const change = member.state === "unadmitted" ? query2(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,reason,created_at,updated_at) VALUES(?1,?2,?3,?4,?4)", id3, state, payload.action, stamp2) : query2(env.DB, "UPDATE nexus_alpha_members SET state=?1,version=version+1,reason=?2,updated_at=?3 WHERE account_id=?4 AND version=?5", state, payload.action, stamp2, id3, payload.version);
-    await atomic(env, [guard(env.DB, payload.requestId, "before", condition, member.state === "unadmitted" ? [id3] : [id3, payload.version]), change, audit(env.DB, actor, payload.requestId, payload.action, id3, stamp2)]);
+    const change = member.state === "unadmitted" ? query2(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,reason,created_at,updated_at) VALUES(?1,?2,?3,?4,?4)", id3, state, payload.action, stamp3) : query2(env.DB, "UPDATE nexus_alpha_members SET state=?1,version=version+1,reason=?2,updated_at=?3 WHERE account_id=?4 AND version=?5", state, payload.action, stamp3, id3, payload.version);
+    await atomic(env, [guard(env.DB, payload.requestId, "before", condition, member.state === "unadmitted" ? [id3] : [id3, payload.version]), change, audit(env.DB, actor, payload.requestId, payload.action, id3, stamp3)]);
     return { ok: true };
   }
   if (env.ADMIN_PURGE_ENABLED !== "true") deny("PURGE_NOT_ENABLED", 403);
@@ -22180,26 +22601,26 @@ async function mediaDTO(env, id3, { publishedOnly = false } = {}) {
   }
   const row = await first(env.DB, "SELECT id,jpeg_base64,width,height FROM nexus_content_media WHERE id=?1", id3);
   if (!row) deny("NOT_FOUND", 404);
-  const bytes = Buffer5.from(row.jpeg_base64, "base64");
-  if (bytes.length > 98304 || bytes.toString("base64") !== row.jpeg_base64 || Buffer5.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex") !== id3) deny("CONTENT_MEDIA_UNAVAILABLE", 503);
+  const bytes = Buffer6.from(row.jpeg_base64, "base64");
+  if (bytes.length > 98304 || bytes.toString("base64") !== row.jpeg_base64 || Buffer6.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex") !== id3) deny("CONTENT_MEDIA_UNAVAILABLE", 503);
   return { media: { id: row.id, mime: "image/jpeg", data: row.jpeg_base64, width: row.width, height: row.height } };
 }
 async function uploadMedia(env, value, { reservationId = null, before = [], after: after2 = [] } = {}) {
   if (env.CONTENT_MEDIA_ENABLED !== "true" || env.CONTENT_MEDIA_UPLOAD_ENABLED !== "true") deny("CONTENT_MEDIA_UNAVAILABLE", 503);
   const p = value.payload, m = p.content;
   if (!exact2(p, ["requestId", "target", "id", "slug", "version", "action", "content"]) || !validRequestId(p.requestId) || p.target !== "media" || p.action !== "upload" || p.slug !== "" || p.version !== 0 || !/^[a-f0-9-]{36}$/.test(p.id) || !exact2(m, ["id", "mime", "data", "width", "height"]) || !validMediaId(m.id) || m.mime !== "image/jpeg" || typeof m.data !== "string" || m.data.length > 131072 || !/^[A-Za-z0-9+/]+={0,2}$/.test(m.data) || ![m.width, m.height].every((n) => Number.isInteger(n) && n >= 1 && n <= 1600)) deny("INVALID_INPUT");
-  const bytes = Buffer5.from(m.data, "base64");
-  if (bytes.toString("base64") !== m.data || !bytes.length || bytes.length > 98304 || bytes[0] !== 255 || bytes[1] !== 216 || bytes.at(-2) !== 255 || bytes.at(-1) !== 217 || Buffer5.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex") !== m.id) deny("INVALID_INPUT");
-  const stamp2 = (/* @__PURE__ */ new Date()).toISOString();
+  const bytes = Buffer6.from(m.data, "base64");
+  if (bytes.toString("base64") !== m.data || !bytes.length || bytes.length > 98304 || bytes[0] !== 255 || bytes[1] !== 216 || bytes.at(-2) !== 255 || bytes.at(-1) !== 217 || Buffer6.from(await crypto.subtle.digest("SHA-256", bytes)).toString("hex") !== m.id) deny("INVALID_INPUT");
+  const stamp3 = (/* @__PURE__ */ new Date()).toISOString();
   const existing = await first(env.DB, "SELECT id FROM nexus_content_media WHERE id=?1", m.id), usage = await first(env.DB, "SELECT COUNT(*) count,COALESCE(SUM(bytes),0) bytes FROM nexus_content_media");
   if (!existing && (usage.count >= 1e3 || usage.bytes + bytes.length > 67108864)) deny("CONTENT_MEDIA_QUOTA", 409);
   const reserve = reservationId !== null;
   const quota = reserve ? "EXISTS(SELECT 1 FROM nexus_content_media WHERE id=?3) OR ((SELECT COUNT(*) FROM nexus_content_media)+(SELECT COUNT(*) FROM nexus_content_media_uploads WHERE state='pending' AND expires_at>?6 AND upload_id<>?5)<1000 AND (SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media)+(SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media_uploads WHERE state='pending' AND expires_at>?6 AND upload_id<>?5)+?4<=67108864)" : "EXISTS(SELECT 1 FROM nexus_content_media WHERE id=?3) OR ((SELECT COUNT(*) FROM nexus_content_media)<1000 AND (SELECT COALESCE(SUM(bytes),0) FROM nexus_content_media)+?4<=67108864)";
   const commands = [
     ...before,
-    guard(env.DB, p.requestId, "before", quota, [m.id, bytes.length, ...reserve ? [reservationId, stamp2] : []]),
-    query2(env.DB, "INSERT OR IGNORE INTO nexus_content_media(id,jpeg_base64,width,height,bytes,created_by,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7)", m.id, m.data, m.width, m.height, bytes.length, value.actor.account_id, stamp2),
-    query2(env.DB, "INSERT INTO nexus_content_media_audit(id,actor_id,session_id,target_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)", p.requestId, value.actor.account_id, value.actor.session_id, m.id, "upload", stamp2),
+    guard(env.DB, p.requestId, "before", quota, [m.id, bytes.length, ...reserve ? [reservationId, stamp3] : []]),
+    query2(env.DB, "INSERT OR IGNORE INTO nexus_content_media(id,jpeg_base64,width,height,bytes,created_by,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7)", m.id, m.data, m.width, m.height, bytes.length, value.actor.account_id, stamp3),
+    query2(env.DB, "INSERT INTO nexus_content_media_audit(id,actor_id,session_id,target_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)", p.requestId, value.actor.account_id, value.actor.session_id, m.id, "upload", stamp3),
     ...after2
   ];
   await atomic(env, commands);
@@ -22216,7 +22637,7 @@ var HOME_SLOTS = {
 };
 
 // server-access/worker/content-service.mjs
-var text2 = (v, max, min = 0) => typeof v === "string" && v.trim().length >= min && v.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v);
+var text4 = (v, max, min = 0) => typeof v === "string" && v.trim().length >= min && v.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v);
 var postDto = (r) => ({ id: r.id, slug: r.slug, draft: JSON.parse(r.draft_json), published: r.published_json ? JSON.parse(r.published_json) : null, state: r.state, version: r.version, publishedAt: r.published_at });
 async function contentOperation(env, value) {
   if (env.CONTENT_ENABLED !== "true") deny("CONTENT_UNAVAILABLE", 503);
@@ -22240,11 +22661,11 @@ async function contentOperation(env, value) {
     return { posts: (await rows(query2(db, "SELECT * FROM nexus_content_posts ORDER BY updated_at DESC LIMIT 100"))).map(postDto), home: { draft: JSON.parse(home2.draft_json), published: JSON.parse(home2.published_json), version: home2.version } };
   }
   if (!exact2(p, ["requestId", "target", "id", "slug", "version", "action", "content"]) || !validRequestId(p.requestId) || !["home", "post"].includes(p.target) || !["save", "publish", "unpublish", "delete"].includes(p.action) || !Number.isInteger(p.version) || p.version < 0) deny("INVALID_INPUT");
-  const home = p.target === "home", id3 = home ? "home" : p.id, stamp2 = (/* @__PURE__ */ new Date()).toISOString();
+  const home = p.target === "home", id3 = home ? "home" : p.id, stamp3 = (/* @__PURE__ */ new Date()).toISOString();
   if (!home && (typeof id3 !== "string" || !/^[a-f0-9-]{36}$/.test(id3) || typeof p.slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p.slug) || p.slug.length > 80)) deny("INVALID_INPUT");
   if (home) {
-    if (p.id !== "home" || p.slug !== "" || p.action === "delete" || p.action === "unpublish" || !p.content || typeof p.content !== "object" || Array.isArray(p.content) || Object.entries(p.content).some(([k, v]) => !Object.hasOwn(HOME_SLOTS, k) || !text2(v, HOME_SLOTS[k].max, 1))) deny("INVALID_INPUT");
-  } else if (p.action === "save" && (!exact2(p.content, ["title", "summary", "body"]) || !text2(p.content.title, 160, 1) || !text2(p.content.summary, 500) || !text2(p.content.body, 2e4, 1))) deny("INVALID_INPUT");
+    if (p.id !== "home" || p.slug !== "" || p.action === "delete" || p.action === "unpublish" || !p.content || typeof p.content !== "object" || Array.isArray(p.content) || Object.entries(p.content).some(([k, v]) => !Object.hasOwn(HOME_SLOTS, k) || !text4(v, HOME_SLOTS[k].max, 1))) deny("INVALID_INPUT");
+  } else if (p.action === "save" && (!exact2(p.content, ["title", "summary", "body"]) || !text4(p.content.title, 160, 1) || !text4(p.content.summary, 500) || !text4(p.content.body, 2e4, 1))) deny("INVALID_INPUT");
   if (!home && p.action === "save") {
     let layout;
     try {
@@ -22268,15 +22689,15 @@ async function contentOperation(env, value) {
   else commands.push(guard(db, p.requestId, "before", "NOT EXISTS(SELECT 1 FROM nexus_content_posts WHERE id=?3 OR slug=?4)", [id3, p.slug]));
   if (home) {
     const json2 = JSON.stringify(p.content);
-    if (p.action === "save") commands.push(query2(db, "UPDATE nexus_content_home SET draft_json=?1,version=version+1,updated_at=?2 WHERE id=1", json2, stamp2));
-    else commands.push(query2(db, "UPDATE nexus_content_home SET published_json=draft_json,version=version+1,updated_at=?1 WHERE id=1", stamp2));
+    if (p.action === "save") commands.push(query2(db, "UPDATE nexus_content_home SET draft_json=?1,version=version+1,updated_at=?2 WHERE id=1", json2, stamp3));
+    else commands.push(query2(db, "UPDATE nexus_content_home SET published_json=draft_json,version=version+1,updated_at=?1 WHERE id=1", stamp3));
   } else if (p.action === "save") {
     const json2 = JSON.stringify(p.content);
-    commands.push(current ? query2(db, "UPDATE nexus_content_posts SET draft_json=?1,version=version+1,updated_at=?2 WHERE id=?3", json2, stamp2, id3) : query2(db, "INSERT INTO nexus_content_posts(id,slug,draft_json,state,updated_at) VALUES(?1,?2,?3,'draft',?4)", id3, p.slug, json2, stamp2));
-  } else if (p.action === "publish") commands.push(query2(db, "UPDATE nexus_content_posts SET published_json=draft_json,published_at=?1,state='published',version=version+1,updated_at=?1 WHERE id=?2", stamp2, id3));
-  else if (p.action === "unpublish") commands.push(query2(db, "UPDATE nexus_content_posts SET published_json=NULL,state='archived',version=version+1,updated_at=?1 WHERE id=?2", stamp2, id3));
+    commands.push(current ? query2(db, "UPDATE nexus_content_posts SET draft_json=?1,version=version+1,updated_at=?2 WHERE id=?3", json2, stamp3, id3) : query2(db, "INSERT INTO nexus_content_posts(id,slug,draft_json,state,updated_at) VALUES(?1,?2,?3,'draft',?4)", id3, p.slug, json2, stamp3));
+  } else if (p.action === "publish") commands.push(query2(db, "UPDATE nexus_content_posts SET published_json=draft_json,published_at=?1,state='published',version=version+1,updated_at=?1 WHERE id=?2", stamp3, id3));
+  else if (p.action === "unpublish") commands.push(query2(db, "UPDATE nexus_content_posts SET published_json=NULL,state='archived',version=version+1,updated_at=?1 WHERE id=?2", stamp3, id3));
   else commands.push(query2(db, "DELETE FROM nexus_content_posts WHERE id=?1", id3));
-  commands.push(query2(db, "INSERT INTO nexus_content_audit(id,actor_id,session_id,target_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)", p.requestId, actor.account_id, actor.session_id, id3, p.action, stamp2));
+  commands.push(query2(db, "INSERT INTO nexus_content_audit(id,actor_id,session_id,target_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)", p.requestId, actor.account_id, actor.session_id, id3, p.action, stamp3));
   await atomic(env, commands);
   return { ok: true };
 }
@@ -22309,10 +22730,10 @@ async function publicContent(request, env) {
 }
 
 // server-access/worker/passkey-service.mjs
-import { Buffer as Buffer6 } from "node:buffer";
+import { Buffer as Buffer7 } from "node:buffer";
 
 // server-access/worker/public-registration.mjs
-var q2 = (env, text3, ...args) => env.DB.prepare(text3).bind(...args);
+var q2 = (env, text5, ...args) => env.DB.prepare(text5).bind(...args);
 async function noUserData(env) {
   const placeholders = /* @__PURE__ */ new Set(["nexus_alpha_members", "nexus_admin_invites", "nexus_passkey_invites", "nexus_passkey_users", "nexus_passkey_challenges"]);
   const tables = await q2(env, "SELECT name,sql FROM sqlite_master WHERE type='table' AND sql IS NOT NULL").all();
@@ -22336,7 +22757,7 @@ async function registrationPolicy(env) {
   if (settings.limit_enabled === 1 && occupied.n >= settings.max_testers) return { available: false, reason: "capacity" };
   return { available: true, reason: "open" };
 }
-async function collectExpired(env, stamp2) {
+async function collectExpired(env, stamp3) {
   const safe = await noUserData(env);
   const found = await q2(env, `SELECT i.account_id FROM nexus_admin_invites i
  JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash
@@ -22347,7 +22768,7 @@ async function collectExpired(env, stamp2) {
  AND NOT EXISTS(SELECT 1 FROM nexus_account_profiles u WHERE u.account_id=i.account_id)
  AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=i.account_id)
  AND NOT EXISTS(SELECT 1 FROM nexus_passkey_challenges c WHERE c.account_id=i.account_id AND (c.consumed_at IS NOT NULL OR c.expires_at>?1)) AND (${safe})
- ORDER BY p.expires_at LIMIT 50`, stamp2).all();
+ ORDER BY p.expires_at LIMIT 50`, stamp3).all();
   for (const row of found.results || []) {
     const id3 = row.account_id, requestId = crypto.randomUUID();
     const commands = [
@@ -22358,8 +22779,8 @@ async function collectExpired(env, stamp2) {
    AND NOT EXISTS(SELECT 1 FROM login_methods l WHERE l.account_id=i.account_id)
    AND NOT EXISTS(SELECT 1 FROM nexus_account_profiles u WHERE u.account_id=i.account_id)
    AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=i.account_id)
-   AND NOT EXISTS(SELECT 1 FROM nexus_passkey_challenges c WHERE c.account_id=i.account_id AND (c.consumed_at IS NOT NULL OR c.expires_at>?3)) AND (${safe})))`, requestId, id3, stamp2),
-      q2(env, "DELETE FROM nexus_passkey_challenges WHERE account_id=?1 AND consumed_at IS NULL AND expires_at<=?2", id3, stamp2),
+   AND NOT EXISTS(SELECT 1 FROM nexus_passkey_challenges c WHERE c.account_id=i.account_id AND (c.consumed_at IS NOT NULL OR c.expires_at>?3)) AND (${safe})))`, requestId, id3, stamp3),
+      q2(env, "DELETE FROM nexus_passkey_challenges WHERE account_id=?1 AND consumed_at IS NULL AND expires_at<=?2", id3, stamp3),
       q2(env, "DELETE FROM nexus_passkey_users WHERE account_id=?1", id3),
       q2(env, "DELETE FROM nexus_admin_invites WHERE account_id=?1 AND kind='public'", id3),
       q2(env, "DELETE FROM nexus_passkey_invites WHERE account_id=?1", id3),
@@ -22404,22 +22825,22 @@ async function reservePublicRegistration(env, { networkHash, inviteHash }) {
   if (env.PUBLIC_PASSKEY_REGISTRATION_ENABLED !== "true" || env.ALPHA_ADMISSION_ENABLED !== "true") throw new AlphaError("REGISTRATION_CLOSED");
   const settings = await alphaSettings(env);
   if (settings.registration_mode !== "open") throw new AlphaError("REGISTRATION_CLOSED");
-  const bucket = Math.floor(Date.now() / 6e4), stamp2 = (/* @__PURE__ */ new Date()).toISOString();
+  const bucket = Math.floor(Date.now() / 6e4), stamp3 = (/* @__PURE__ */ new Date()).toISOString();
   const local = await q2(env, "INSERT INTO nexus_passkey_rate_limits(scope_hash,bucket,used) VALUES(?1,?2,1) ON CONFLICT(scope_hash,bucket) DO UPDATE SET used=used+1 WHERE used<5 RETURNING used", "signup:" + networkHash, bucket).first();
   const global2 = await q2(env, "INSERT INTO nexus_passkey_rate_limits(scope_hash,bucket,used) VALUES('signup:global',?1,1) ON CONFLICT(scope_hash,bucket) DO UPDATE SET used=used+1 WHERE used<40 RETURNING used", bucket).first();
   if (!local || !global2) throw new AlphaError("RATE_LIMITED", 429);
-  await collectExpired(env, stamp2);
+  await collectExpired(env, stamp3);
   const policy = await registrationPolicy(env);
   if (!policy.available) throw new AlphaError(policy.reason === "capacity" ? "ALPHA_CAPACITY_REACHED" : "REGISTRATION_CLOSED", policy.reason === "capacity" ? 409 : 403);
-  const pending2 = await q2(env, "SELECT count(*) n FROM nexus_admin_invites i JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash WHERE i.kind='public' AND i.state='ready' AND p.expires_at>?1", stamp2).first();
+  const pending2 = await q2(env, "SELECT count(*) n FROM nexus_admin_invites i JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash WHERE i.kind='public' AND i.state='ready' AND p.expires_at>?1", stamp3).first();
   if (pending2.n >= 200) throw new AlphaError("RATE_LIMITED", 429);
-  const accountId = crypto.randomUUID(), expiresAt = new Date(Date.now() + 12e4).toISOString();
+  const accountId2 = crypto.randomUUID(), expiresAt = new Date(Date.now() + 12e4).toISOString();
   try {
     const result = await env.DB.batch([
-      q2(env, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) SELECT ?1,'\u041D\u043E\u0432\u044B\u0439 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C','active',?2,?2 WHERE EXISTS(SELECT 1 FROM nexus_alpha_settings WHERE id=1 AND enforced=1 AND registration_mode='open' AND version=?3)", accountId, stamp2, settings.version),
-      q2(env, "INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at) VALUES(?1,'invited',?2,?3,?3)", accountId, expiresAt, stamp2),
-      q2(env, "INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)", inviteHash, accountId, expiresAt),
-      q2(env, "INSERT INTO nexus_admin_invites(token_hash,account_id,kind,created_by,state,created_at) VALUES(?1,?2,'public','public-registration','ready',?3)", inviteHash, accountId, stamp2)
+      q2(env, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) SELECT ?1,'\u041D\u043E\u0432\u044B\u0439 \u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C','active',?2,?2 WHERE EXISTS(SELECT 1 FROM nexus_alpha_settings WHERE id=1 AND enforced=1 AND registration_mode='open' AND version=?3)", accountId2, stamp3, settings.version),
+      q2(env, "INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at) VALUES(?1,'invited',?2,?3,?3)", accountId2, expiresAt, stamp3),
+      q2(env, "INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)", inviteHash, accountId2, expiresAt),
+      q2(env, "INSERT INTO nexus_admin_invites(token_hash,account_id,kind,created_by,state,created_at) VALUES(?1,?2,'public','public-registration','ready',?3)", inviteHash, accountId2, stamp3)
     ]);
     if (result.some((r) => !r.success) || result[0].meta.changes !== 1) throw Error("UNCONFIRMED");
   } catch (error) {
@@ -22431,7 +22852,7 @@ async function reservePublicRegistration(env, { networkHash, inviteHash }) {
   return inviteHash;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoBase64URL.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoBase64URL.js
 var isoBase64URL_exports = {};
 __export(isoBase64URL_exports, {
   fromBuffer: () => fromBuffer,
@@ -22444,7 +22865,7 @@ __export(isoBase64URL_exports, {
   trimPadding: () => trimPadding
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@hexagon/base64/src/base64.js
+// server-access/node_modules/@hexagon/base64/src/base64.js
 var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 var charsUrl = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 var genLookup = (target2) => {
@@ -22518,7 +22939,7 @@ base64.validate = (encoded, urlMode) => {
 base64.base64 = base64;
 var base64_default = base64;
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoBase64URL.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoBase64URL.js
 function toBuffer(base64urlString, from = "base64url") {
   const _buffer = base64_default.toArrayBuffer(base64urlString, from === "base64url");
   return new Uint8Array(_buffer);
@@ -22549,14 +22970,14 @@ function trimPadding(input) {
   return input.replace(/=/g, "");
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCBOR.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCBOR.js
 var isoCBOR_exports = {};
 __export(isoCBOR_exports, {
   decodeFirst: () => decodeFirst,
   encode: () => encode
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@levischuck/tiny-cbor/esm/cbor/cbor_internal.js
+// server-access/node_modules/@levischuck/tiny-cbor/esm/cbor/cbor_internal.js
 function decodeLength(data, argument, index) {
   if (argument < 24) {
     return [argument, 1];
@@ -22655,7 +23076,7 @@ function encodeLength(major, argument) {
   }
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@levischuck/tiny-cbor/esm/cbor/cbor.js
+// server-access/node_modules/@levischuck/tiny-cbor/esm/cbor/cbor.js
 var CBORTag = class {
   /**
    * Wrap a value with a tag number.
@@ -22982,7 +23403,7 @@ function encodeCBOR(data) {
   return output;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCBOR.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCBOR.js
 function decodeFirst(input) {
   const _input = new Uint8Array(input);
   const decoded = decodePartialCBOR(_input, 0);
@@ -22993,7 +23414,7 @@ function encode(input) {
   return encodeCBOR(input);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/index.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/index.js
 var isoCrypto_exports = {};
 __export(isoCrypto_exports, {
   digest: () => digest,
@@ -23001,7 +23422,7 @@ __export(isoCrypto_exports, {
   verify: () => verify
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/cose.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/cose.js
 function isCOSEPublicKeyOKP(cosePublicKey) {
   const kty = cosePublicKey.get(COSEKEYS.kty);
   return isCOSEKty(kty) && kty === COSEKTY.OKP;
@@ -23072,7 +23493,7 @@ function isCOSEAlg(alg) {
   return Object.values(COSEALG).indexOf(alg) >= 0;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/mapCoseAlgToWebCryptoHashAlgName.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/mapCoseAlgToWebCryptoHashAlgName.js
 function mapCoseAlgToWebCryptoHashAlgName(alg) {
   if ([COSEALG.RS1].indexOf(alg) >= 0) {
     return "SHA-1";
@@ -23086,7 +23507,7 @@ function mapCoseAlgToWebCryptoHashAlgName(alg) {
   throw new Error(`Could not map COSE alg value of ${alg} to a WebCrypto hash alg name`);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/getWebCrypto.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/getWebCrypto.js
 var webCrypto = void 0;
 function getWebCrypto() {
   const toResolve = new Promise((resolve, reject2) => {
@@ -23117,7 +23538,7 @@ var _getWebCryptoInternals = {
   }
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/digest.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/digest.js
 async function digest(data, algorithm) {
   const WebCrypto = await getWebCrypto();
   const subtleAlgorithm = mapCoseAlgToWebCryptoHashAlgName(algorithm);
@@ -23125,14 +23546,14 @@ async function digest(data, algorithm) {
   return new Uint8Array(hashed);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/getRandomValues.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/getRandomValues.js
 async function getRandomValues(array) {
   const WebCrypto = await getWebCrypto();
   WebCrypto.getRandomValues(array);
   return array;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/convertAAGUIDToString.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/convertAAGUIDToString.js
 function convertAAGUIDToString(aaguid) {
   const hex3 = isoUint8Array_exports.toHex(aaguid);
   const segments = [
@@ -23150,7 +23571,7 @@ function convertAAGUIDToString(aaguid) {
   return segments.join("-");
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/convertCOSEtoPKCS.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/convertCOSEtoPKCS.js
 function convertCOSEtoPKCS(cosePublicKey) {
   const struct = isoCBOR_exports.decodeFirst(cosePublicKey);
   const tag = Uint8Array.from([4]);
@@ -23165,7 +23586,7 @@ function convertCOSEtoPKCS(cosePublicKey) {
   return isoUint8Array_exports.concat([tag, x]);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeAttestationObject.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeAttestationObject.js
 function decodeAttestationObject(attestationObject) {
   return _decodeAttestationObjectInternals.stubThis(isoCBOR_exports.decodeFirst(attestationObject));
 }
@@ -23173,7 +23594,7 @@ var _decodeAttestationObjectInternals = {
   stubThis: (value) => value
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeClientDataJSON.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeClientDataJSON.js
 function decodeClientDataJSON(data) {
   const toString = isoBase64URL_exports.toUTF8String(data);
   const clientData = JSON.parse(toString);
@@ -23183,7 +23604,7 @@ var _decodeClientDataJSONInternals = {
   stubThis: (value) => value
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeCredentialPublicKey.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeCredentialPublicKey.js
 function decodeCredentialPublicKey(publicKey) {
   return _decodeCredentialPublicKeyInternals.stubThis(isoCBOR_exports.decodeFirst(publicKey));
 }
@@ -23191,7 +23612,7 @@ var _decodeCredentialPublicKeyInternals = {
   stubThis: (value) => value
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/generateChallenge.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/generateChallenge.js
 async function generateChallenge() {
   const challenge = new Uint8Array(32);
   await isoCrypto_exports.getRandomValues(challenge);
@@ -23201,7 +23622,7 @@ var _generateChallengeInternals = {
   stubThis: (value) => value
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/generateUserID.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/generateUserID.js
 async function generateUserID() {
   const newUserID = new Uint8Array(32);
   await isoCrypto_exports.getRandomValues(newUserID);
@@ -23211,7 +23632,7 @@ var _generateUserIDInternals = {
   stubThis: (value) => value
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/getCertificateInfo.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/getCertificateInfo.js
 var import_asn1_schema = __toESM(require_cjs2(), 1);
 var import_asn1_x509 = __toESM(require_cjs3(), 1);
 var issuerSubjectIDKey = {
@@ -23275,10 +23696,10 @@ function issuerSubjectToString(input) {
   return parts.join(" : ");
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/isCertRevoked.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/isCertRevoked.js
 var import_x509 = __toESM(require_x509_cjs(), 1);
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/fetch.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/fetch.js
 function fetch(url) {
   return _fetchInternals.stubThis(url);
 }
@@ -23286,7 +23707,7 @@ var _fetchInternals = {
   stubThis: (url) => globalThis.fetch(url)
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/isCertRevoked.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/isCertRevoked.js
 var cacheRevokedCerts = {};
 async function isCertRevoked(cert) {
   const { extensions } = cert;
@@ -23358,7 +23779,7 @@ async function isCertRevoked(cert) {
   return false;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeAuthenticatorExtensions.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/decodeAuthenticatorExtensions.js
 function decodeAuthenticatorExtensions(extensionData) {
   let toCBOR;
   try {
@@ -23381,7 +23802,7 @@ function convertMapToObjectDeep(input) {
   return mapped;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/parseAuthenticatorData.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/parseAuthenticatorData.js
 function parseAuthenticatorData(authData) {
   if (authData.byteLength < 37) {
     throw new Error(`Authenticator data was ${authData.byteLength} bytes, expected at least 37 bytes`);
@@ -23470,7 +23891,7 @@ var _parseAuthenticatorDataInternals = {
   stubThis: (value) => value
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/toHash.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/toHash.js
 function toHash(data, algorithm = -7) {
   if (typeof data === "string") {
     data = isoUint8Array_exports.fromUTF8String(data);
@@ -23479,7 +23900,7 @@ function toHash(data, algorithm = -7) {
   return digest2;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/validateCertificatePath.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/validateCertificatePath.js
 var import_x5092 = __toESM(require_x509_cjs(), 1);
 async function validateCertificatePath(x5cCertsPEM, trustAnchorsPEM = []) {
   if (trustAnchorsPEM.length === 0) {
@@ -23589,13 +24010,13 @@ var InvalidCertificatePath = class extends Error {
   }
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/convertX509PublicKeyToCOSE.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/convertX509PublicKeyToCOSE.js
 var import_asn1_schema2 = __toESM(require_cjs2(), 1);
 var import_asn1_x5092 = __toESM(require_cjs3(), 1);
 var import_asn1_ecc = __toESM(require_cjs6(), 1);
 var import_asn1_rsa = __toESM(require_cjs7(), 1);
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/mapX509SignatureAlgToCOSEAlg.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/mapX509SignatureAlgToCOSEAlg.js
 function mapX509SignatureAlgToCOSEAlg(signatureAlgorithm) {
   let alg;
   if (signatureAlgorithm === "1.2.840.10045.4.3.2") {
@@ -23618,7 +24039,7 @@ function mapX509SignatureAlgToCOSEAlg(signatureAlgorithm) {
   return alg;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/convertX509PublicKeyToCOSE.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/convertX509PublicKeyToCOSE.js
 function convertX509PublicKeyToCOSE(x509Certificate) {
   let cosePublicKey = /* @__PURE__ */ new Map();
   const x509 = import_asn1_schema2.AsnParser.parse(x509Certificate, import_asn1_x5092.Certificate);
@@ -23672,7 +24093,7 @@ function convertX509PublicKeyToCOSE(x509Certificate) {
   return cosePublicKey;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/verifySignature.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/verifySignature.js
 function verifySignature(opts) {
   const { signature, data, credentialPublicKey, x509Certificate, hashAlgorithm } = opts;
   if (!x509Certificate && !credentialPublicKey) {
@@ -23698,7 +24119,7 @@ var _verifySignatureInternals = {
   stubThis: (value) => value
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/metadata/parseJWT.js
+// server-access/node_modules/@simplewebauthn/server/esm/metadata/parseJWT.js
 function parseJWT(jwt) {
   const parts = jwt.split(".");
   return [
@@ -23708,7 +24129,7 @@ function parseJWT(jwt) {
   ];
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/mapJWSAlgToCOSEAlg.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/mapJWSAlgToCOSEAlg.js
 function mapJWSAlgToCOSEAlg(alg) {
   let algCOSE;
   if (alg === "ES256") {
@@ -23729,14 +24150,14 @@ function mapJWSAlgToCOSEAlg(alg) {
   return algCOSE;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/importJWKKey.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/importJWKKey.js
 async function importJWKKey(opts) {
   const WebCrypto = await getWebCrypto();
   const { keyData, algorithm } = opts;
   return WebCrypto.subtle.importKey("jwk", keyData, algorithm, false, ["verify"]);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyEC2.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyEC2.js
 async function verifyEC2(opts) {
   const { cosePublicKey, signature, data, shaHashOverride } = opts;
   const WebCrypto = await getWebCrypto();
@@ -23795,7 +24216,7 @@ async function verifyEC2(opts) {
   return WebCrypto.subtle.verify(verifyAlgorithm, key, signature, data);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/mapCoseAlgToWebCryptoKeyAlgName.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/mapCoseAlgToWebCryptoKeyAlgName.js
 function mapCoseAlgToWebCryptoKeyAlgName(alg) {
   if ([COSEALG.EdDSA].indexOf(alg) >= 0) {
     return "Ed25519";
@@ -23815,7 +24236,7 @@ function mapCoseAlgToWebCryptoKeyAlgName(alg) {
   throw new Error(`Could not map COSE alg value of ${alg} to a WebCrypto key alg name`);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyRSA.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyRSA.js
 async function verifyRSA(opts) {
   const { cosePublicKey, signature, data, shaHashOverride } = opts;
   const WebCrypto = await getWebCrypto();
@@ -23881,7 +24302,7 @@ async function verifyRSA(opts) {
   return WebCrypto.subtle.verify(verifyAlgorithm, key, signature, data);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/metadata/verifyJWT.js
+// server-access/node_modules/@simplewebauthn/server/esm/metadata/verifyJWT.js
 function verifyJWT(jwt, leafCert) {
   const [header, payload, signature] = jwt.split(".");
   const certCOSE = convertX509PublicKeyToCOSE(leafCert);
@@ -23908,13 +24329,13 @@ function verifyJWT(jwt, leafCert) {
   throw new Error(`JWT verification with public key of kty ${kty} is not supported by this method`);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/convertPEMToBytes.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/convertPEMToBytes.js
 function convertPEMToBytes(pem) {
   const certBase64 = pem.replace("-----BEGIN CERTIFICATE-----", "").replace("-----END CERTIFICATE-----", "").replace(/[\n ]/g, "");
   return isoBase64URL_exports.toBuffer(certBase64, "base64");
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/metadata/verifyMDSBlob.js
+// server-access/node_modules/@simplewebauthn/server/esm/metadata/verifyMDSBlob.js
 async function verifyMDSBlob(blob) {
   const parsedJWT = parseJWT(blob);
   const header = parsedJWT[0];
@@ -23954,7 +24375,7 @@ async function verifyMDSBlob(blob) {
   };
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyAKP.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyAKP.js
 async function verifyAKP(opts) {
   const { cosePublicKey, signature, data } = opts;
   const WebCrypto = await getWebCrypto();
@@ -23990,7 +24411,7 @@ async function verifyAKP(opts) {
   return WebCrypto.subtle.verify(webCryptoAlg, key, signature, data);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyOKP.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verifyOKP.js
 async function verifyOKP(opts) {
   const { cosePublicKey, signature, data } = opts;
   const WebCrypto = await getWebCrypto();
@@ -24033,7 +24454,7 @@ async function verifyOKP(opts) {
   return WebCrypto.subtle.verify(verifyAlgorithm, key, signature, data);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/unwrapEC2Signature.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/unwrapEC2Signature.js
 var import_asn1_schema3 = __toESM(require_cjs2(), 1);
 var import_asn1_ecc2 = __toESM(require_cjs6(), 1);
 function unwrapEC2Signature(signature, crv) {
@@ -24076,7 +24497,7 @@ function toNormalizedBytes(bytes, componentLength) {
   return normalizedBytes;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verify.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/verify.js
 function verify(opts) {
   const { cosePublicKey, signature, data, shaHashOverride } = opts;
   if (isCOSEPublicKeyEC2(cosePublicKey)) {
@@ -24102,7 +24523,7 @@ function verify(opts) {
   throw new Error(`Signature verification with public key of kty ${kty} is not supported by this method`);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoUint8Array.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoUint8Array.js
 var isoUint8Array_exports = {};
 __export(isoUint8Array_exports, {
   areEqual: () => areEqual,
@@ -24160,7 +24581,7 @@ function toDataView(array) {
   return new DataView(array.buffer, array.byteOffset, array.length);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/convertCertBufferToPEM.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/convertCertBufferToPEM.js
 function convertCertBufferToPEM(certBuffer) {
   let b64cert;
   if (typeof certBuffer === "string") {
@@ -24186,7 +24607,7 @@ ${PEMKey}-----END CERTIFICATE-----
   return PEMKey;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/runtimeSupportsWebCryptoKeyAlg.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/iso/isoCrypto/runtimeSupportsWebCryptoKeyAlg.js
 function runtimeSupportsWebCryptoKeyAlg(alg) {
   const globalSubtleCrypto = globalThis.SubtleCrypto;
   if (typeof globalSubtleCrypto.supports !== "function") {
@@ -24199,7 +24620,7 @@ function runtimeSupportsWebCryptoKeyAlg(alg) {
   }
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/android-safetynet.js
+// server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/android-safetynet.js
 var GlobalSign_Root_CA = `-----BEGIN CERTIFICATE-----
 MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkG
 A1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNVBAsTB1Jv
@@ -24223,7 +24644,7 @@ HMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
 -----END CERTIFICATE-----
 `;
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/android-key.js
+// server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/android-key.js
 var Google_Hardware_Attestation_Root_1 = `-----BEGIN CERTIFICATE-----
 MIIFYDCCA0igAwIBAgIJAOj6GWMU0voYMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNV
 BAUTEGY5MjAwOWU4NTNiNmIwNDUwHhcNMTYwNTI2MTYyODUyWhcNMjYwNTI0MTYy
@@ -24352,7 +24773,7 @@ w1IdYIg2Wxg7yHcQZemFQg==
 -----END CERTIFICATE-----
 `;
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/apple.js
+// server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/apple.js
 var Apple_WebAuthn_Root_CA = `-----BEGIN CERTIFICATE-----
 MIICEjCCAZmgAwIBAgIQaB0BbHo84wIlpQGUKEdXcTAKBggqhkjOPQQDAzBLMR8w
 HQYDVQQDDBZBcHBsZSBXZWJBdXRobiBSb290IENBMRMwEQYDVQQKDApBcHBsZSBJ
@@ -24369,7 +24790,7 @@ jAGGiQIwHFj+dJZYUJR786osByBelJYsVZd2GbHQu209b5RCmGQ21gpSAk9QZW4B
 -----END CERTIFICATE-----
 `;
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/mds.js
+// server-access/node_modules/@simplewebauthn/server/esm/services/defaultRootCerts/mds.js
 var GlobalSign_Root_CA_R3 = `-----BEGIN CERTIFICATE-----
 MIIDXzCCAkegAwIBAgILBAAAAAABIVhTCKIwDQYJKoZIhvcNAQELBQAwTDEgMB4G
 A1UECxMXR2xvYmFsU2lnbiBSb290IENBIC0gUjMxEzARBgNVBAoTCkdsb2JhbFNp
@@ -24425,7 +24846,7 @@ vouXsXgxT7PntgMTzlSdriVZzH81Xwj3QEUxeCp6
 -----END CERTIFICATE-----
 `;
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/services/settingsService.js
+// server-access/node_modules/@simplewebauthn/server/esm/services/settingsService.js
 var BaseSettingsService = class {
   constructor() {
     Object.defineProperty(this, "pemCertificates", {
@@ -24489,7 +24910,7 @@ SettingsService.setRootCertificates({
   ]
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/generateRegistrationOptions.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/generateRegistrationOptions.js
 var defaultAuthenticatorSelection = {
   residentKey: "preferred",
   userVerification: "preferred"
@@ -24573,7 +24994,7 @@ async function generateRegistrationOptions(options) {
   };
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/parseBackupFlags.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/parseBackupFlags.js
 function parseBackupFlags({ be, bs }) {
   const credentialBackedUp = bs;
   let credentialDeviceType = "singleDevice";
@@ -24592,7 +25013,7 @@ var InvalidBackupFlags = class extends Error {
   }
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/matchExpectedRPID.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/matchExpectedRPID.js
 async function matchExpectedRPID(rpIDHash, expectedRPIDs) {
   try {
     const matchedRPID = await Promise.any(expectedRPIDs.map((expected) => {
@@ -24623,7 +25044,7 @@ var UnexpectedRPIDHash = class extends Error {
   }
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationFIDOU2F.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationFIDOU2F.js
 async function verifyAttestationFIDOU2F(options) {
   const { attStmt, clientDataHash, rpIdHash, credentialID, credentialPublicKey, aaguid, rootCertificates } = options;
   const reservedByte = Uint8Array.from([0]);
@@ -24661,7 +25082,7 @@ async function verifyAttestationFIDOU2F(options) {
   });
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/validateExtFIDOGenCEAAGUID.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/validateExtFIDOGenCEAAGUID.js
 var import_asn1_schema4 = __toESM(require_cjs2(), 1);
 var id_fido_gen_ce_aaguid = "1.3.6.1.4.1.45724.1.1.4";
 function validateExtFIDOGenCEAAGUID(certExtensions, aaguid) {
@@ -24683,7 +25104,7 @@ function validateExtFIDOGenCEAAGUID(certExtensions, aaguid) {
   return true;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/helpers/logging.js
+// server-access/node_modules/@simplewebauthn/server/esm/helpers/logging.js
 var DefaultNoopLogger = {
   debug() {
   },
@@ -24711,7 +25132,7 @@ function buildLoggerAllMethods(logger) {
   return toReturn;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/services/metadataService.js
+// server-access/node_modules/@simplewebauthn/server/esm/services/metadataService.js
 var NonRefreshingMDS = {
   url: "",
   no: 0,
@@ -24924,7 +25345,7 @@ var BaseMetadataService = class {
 };
 var MetadataService = new BaseMetadataService();
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/metadata/verifyAttestationWithMetadata.js
+// server-access/node_modules/@simplewebauthn/server/esm/metadata/verifyAttestationWithMetadata.js
 async function verifyAttestationWithMetadata({ statement: statement2, credentialPublicKey, x5c, attestationStatementAlg }) {
   const { authenticationAlgorithms, authenticatorGetInfo, attestationRootCertificates } = statement2;
   const keypairCOSEAlgs = /* @__PURE__ */ new Set();
@@ -25020,7 +25441,7 @@ function stringifyCOSEInfo(info) {
   return toReturn;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationPacked.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationPacked.js
 async function verifyAttestationPacked(options) {
   const { attStmt, clientDataHash, authData, credentialPublicKey, aaguid, rootCertificates } = options;
   const sig = attStmt.get("sig");
@@ -25038,7 +25459,7 @@ async function verifyAttestationPacked(options) {
   const signatureBase = isoUint8Array_exports.concat([authData, clientDataHash]);
   let verified = false;
   if (x5c) {
-    const { subject, basicConstraintsCA, version, notBefore, notAfter, parsedCertificate } = getCertificateInfo(x5c[0]);
+    const { subject, basicConstraintsCA, version: version2, notBefore, notAfter, parsedCertificate } = getCertificateInfo(x5c[0]);
     const { OU, CN, O, C } = subject;
     if (OU !== "Authenticator Attestation") {
       throw new Error('Certificate OU was not "Authenticator Attestation" (Packed|Full)');
@@ -25055,7 +25476,7 @@ async function verifyAttestationPacked(options) {
     if (basicConstraintsCA) {
       throw new Error("Certificate basic constraints CA was not `false` (Packed|Full)");
     }
-    if (version !== 2) {
+    if (version2 !== 2) {
       throw new Error("Certificate version was not `3` (ASN.1 value of 2) (Packed|Full)");
     }
     let now5 = /* @__PURE__ */ new Date();
@@ -25113,7 +25534,7 @@ async function verifyAttestationPacked(options) {
   return verified;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationAndroidSafetyNet.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationAndroidSafetyNet.js
 async function verifyAttestationAndroidSafetyNet(options) {
   const { attStmt, clientDataHash, authData, aaguid, rootCertificates, verifyTimestampMS = true, credentialPublicKey, attestationSafetyNetEnforceCTSCheck } = options;
   const alg = attStmt.get("alg");
@@ -25189,11 +25610,11 @@ async function verifyAttestationAndroidSafetyNet(options) {
   return verified;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/verifyAttestationTPM.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/verifyAttestationTPM.js
 var import_asn1_schema5 = __toESM(require_cjs2(), 1);
 var import_asn1_x5093 = __toESM(require_cjs3(), 1);
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/constants.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/constants.js
 var TPM_ST = {
   196: "TPM_ST_RSP_COMMAND",
   32768: "TPM_ST_NULL",
@@ -25310,7 +25731,7 @@ var TPM_ECC_CURVE_COSE_CRV_MAP = {
   // p256
 };
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/parseCertInfo.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/parseCertInfo.js
 function parseCertInfo(certInfo) {
   let pointer = 0;
   const dataView = isoUint8Array_exports.toDataView(certInfo);
@@ -25357,7 +25778,7 @@ function parseCertInfo(certInfo) {
   };
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/parsePubArea.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/parsePubArea.js
 function parsePubArea(pubArea) {
   let pointer = 0;
   const dataView = isoUint8Array_exports.toDataView(pubArea);
@@ -25428,13 +25849,13 @@ function parsePubArea(pubArea) {
   };
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/isValidTPMManufacturerID.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/isValidTPMManufacturerID.js
 function getTPMManufacturerInfo(id3) {
   const _normalized = `id:${id3.substring(3).toUpperCase()}`;
   return TPM_MANUFACTURERS[_normalized];
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/verifyAttestationTPM.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/tpm/verifyAttestationTPM.js
 async function verifyAttestationTPM(options) {
   const { aaguid, attStmt, authData, credentialPublicKey, clientDataHash, rootCertificates } = options;
   const ver = attStmt.get("ver");
@@ -25546,11 +25967,11 @@ async function verifyAttestationTPM(options) {
     throw new Error("No certificates present in x5c array (TPM)");
   }
   const leafCertInfo = getCertificateInfo(x5c[0]);
-  const { basicConstraintsCA, version, subject, notAfter, notBefore } = leafCertInfo;
+  const { basicConstraintsCA, version: version2, subject, notAfter, notBefore } = leafCertInfo;
   if (basicConstraintsCA) {
     throw new Error("Certificate basic constraints CA was not `false` (TPM)");
   }
-  if (version !== 2) {
+  if (version2 !== 2) {
     throw new Error("Certificate version was not `3` (ASN.1 value of 2) (TPM)");
   }
   if (subject.combined.length > 0) {
@@ -25665,7 +26086,7 @@ function attestedNameAlgToCOSEAlg(alg) {
   throw new Error(`Unexpected TPM attested name alg ${alg}`);
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationAndroidKey.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationAndroidKey.js
 var import_asn1_schema6 = __toESM(require_cjs2(), 1);
 var import_asn1_x5094 = __toESM(require_cjs3(), 1);
 var import_asn1_android = __toESM(require_cjs13(), 1);
@@ -25742,7 +26163,7 @@ async function verifyAttestationAndroidKey(options) {
   });
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationApple.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/verifications/verifyAttestationApple.js
 var import_asn1_schema7 = __toESM(require_cjs2(), 1);
 var import_asn1_x5095 = __toESM(require_cjs3(), 1);
 async function verifyAttestationApple(options) {
@@ -25780,7 +26201,7 @@ async function verifyAttestationApple(options) {
   return true;
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/registration/verifyRegistrationResponse.js
+// server-access/node_modules/@simplewebauthn/server/esm/registration/verifyRegistrationResponse.js
 async function verifyRegistrationResponse(options) {
   const { response: response4, expectedChallenge, expectedOrigin, expectedRPID, expectedType, requireUserPresence = true, requireUserVerification = true, supportedAlgorithmIDs = defaultSupportedAlgorithmIDs, attestationSafetyNetEnforceCTSCheck = true } = options;
   const { id: id3, rawId, type: credentialType, response: attestationResponse } = response4;
@@ -25935,7 +26356,7 @@ async function verifyRegistrationResponse(options) {
   };
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/authentication/generateAuthenticationOptions.js
+// server-access/node_modules/@simplewebauthn/server/esm/authentication/generateAuthenticationOptions.js
 async function generateAuthenticationOptions(options) {
   const { allowCredentials, challenge = await generateChallenge(), timeout = 6e4, userVerification = "preferred", extensions, rpID } = options;
   let _challenge = challenge;
@@ -25961,7 +26382,7 @@ async function generateAuthenticationOptions(options) {
   };
 }
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/@simplewebauthn/server/esm/authentication/verifyAuthenticationResponse.js
+// server-access/node_modules/@simplewebauthn/server/esm/authentication/verifyAuthenticationResponse.js
 async function verifyAuthenticationResponse(options) {
   const { response: response4, expectedChallenge, expectedOrigin, expectedRPID, expectedType, expectedTopOrigin, credential, requireUserVerification = true, advancedFIDOConfig } = options;
   const { id: id3, rawId, type: credentialType, response: assertionResponse } = response4;
@@ -26105,10 +26526,10 @@ async function verifyAuthenticationResponse(options) {
 // server-access/worker/passkey-service.mjs
 var INTERNAL2 = "/api/v2/account/internal/passkey";
 var encoder2 = new TextEncoder();
-var b64 = (bytes) => Buffer6.from(bytes).toString("base64url");
+var b64 = (bytes) => Buffer7.from(bytes).toString("base64url");
 var random2 = () => b64(crypto.getRandomValues(new Uint8Array(32)));
 var id2 = () => crypto.randomUUID();
-var stamp = () => (/* @__PURE__ */ new Date()).toISOString();
+var stamp2 = () => (/* @__PURE__ */ new Date()).toISOString();
 var after = (ms) => new Date(Date.now() + ms).toISOString();
 var hex = (bytes) => Array.from(new Uint8Array(bytes), (x) => x.toString(16).padStart(2, "0")).join("");
 var sha2 = async (value) => hex(await crypto.subtle.digest("SHA-256", encoder2.encode(value)));
@@ -26123,11 +26544,11 @@ var reject = (code, status) => {
   throw new Rejected(code, status);
 };
 var response = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff" } });
-var sql = (db, text3, ...args) => db.prepare(text3).bind(...args);
-var first2 = (db, text3, ...args) => sql(db, text3, ...args).first();
-var all2 = async (db, text3, ...args) => (await sql(db, text3, ...args).all()).results || [];
+var sql = (db, text5, ...args) => db.prepare(text5).bind(...args);
+var first2 = (db, text5, ...args) => sql(db, text5, ...args).first();
+var all2 = async (db, text5, ...args) => (await sql(db, text5, ...args).all()).results || [];
 var keys = (object2, allowed) => !!object2 && typeof object2 === "object" && !Array.isArray(object2) && Object.keys(object2).every((k) => allowed.includes(k));
-var hash = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+var hash2 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 function config(env) {
   if (env.PASSKEY_ENABLED !== "true" || typeof env.PASSKEY_SERVICE_KEY !== "string" || env.PASSKEY_SERVICE_KEY.length < 32 || !env.DB) reject("PASSKEY_UNAVAILABLE", 503);
   let origin;
@@ -26175,7 +26596,7 @@ async function ingress(request, env) {
   const url = new URL(request.url);
   if (request.method !== "POST" || url.pathname !== INTERNAL2 || url.search || request.headers.has("cookie") || request.headers.has("authorization") || request.headers.get("content-type") !== "application/json") reject("SERVICE_DENIED", 401);
   const timestamp = request.headers.get("x-nexus-service-timestamp"), nonce = request.headers.get("x-nexus-service-nonce"), signature = request.headers.get("x-nexus-service-signature");
-  if (!/^\d{13}$/.test(timestamp || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !hash(signature) || Math.abs(Date.now() - Number(timestamp)) > 3e4) reject("SERVICE_DENIED", 401);
+  if (!/^\d{13}$/.test(timestamp || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !hash2(signature) || Math.abs(Date.now() - Number(timestamp)) > 3e4) reject("SERVICE_DENIED", 401);
   const { bytes, data } = await boundedJSON(request);
   const digest2 = hex(await crypto.subtle.digest("SHA-256", bytes)), canonical = `v1
 POST
@@ -26185,15 +26606,15 @@ ${nonce}
 ${digest2}`;
   const key = await crypto.subtle.importKey("raw", encoder2.encode(env.PASSKEY_SERVICE_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
   if (!await crypto.subtle.verify("HMAC", key, Uint8Array.from(signature.match(/../g), (p) => parseInt(p, 16)), encoder2.encode(canonical))) reject("SERVICE_DENIED", 401);
-  if (!keys(data, ["op", "input", "flowHash", "sessionHash", "networkHash"]) || Object.keys(data).length !== 5 || !hash(data.flowHash) || !hash(data.networkHash) || !(data.sessionHash === null || hash(data.sessionHash))) reject("SERVICE_DENIED", 401);
+  if (!keys(data, ["op", "input", "flowHash", "sessionHash", "networkHash"]) || Object.keys(data).length !== 5 || !hash2(data.flowHash) || !hash2(data.networkHash) || !(data.sessionHash === null || hash2(data.sessionHash))) reject("SERVICE_DENIED", 401);
   const saved = await sql(env.DB, "INSERT OR IGNORE INTO nexus_passkey_service_nonces(nonce,expires_at) VALUES(?1,?2)", nonce, new Date(Number(timestamp) + 3e4).toISOString()).run();
   if (!saved.success || saved.meta.changes !== 1) reject("SERVICE_DENIED", 401);
-  await sql(env.DB, "DELETE FROM nexus_passkey_service_nonces WHERE expires_at<?1", stamp()).run();
+  await sql(env.DB, "DELETE FROM nexus_passkey_service_nonces WHERE expires_at<?1", stamp2()).run();
   const bucket = Math.floor(Date.now() / 6e4), scope2 = await sha2(data.networkHash + ":" + data.op);
   const rate2 = await first2(env.DB, "INSERT INTO nexus_passkey_rate_limits(scope_hash,bucket,used) VALUES(?1,?2,1) ON CONFLICT(scope_hash,bucket) DO UPDATE SET used=used+1 WHERE used<40 RETURNING used", scope2, bucket);
   if (!rate2) reject("RATE_LIMITED", 429);
   await sql(env.DB, "DELETE FROM nexus_passkey_rate_limits WHERE bucket<?1", bucket - 2).run();
-  await sql(env.DB, "DELETE FROM nexus_passkey_challenges WHERE id IN (SELECT id FROM nexus_passkey_challenges WHERE consumed_at IS NULL AND expires_at<?1 LIMIT 500)", stamp()).run();
+  await sql(env.DB, "DELETE FROM nexus_passkey_challenges WHERE id IN (SELECT id FROM nexus_passkey_challenges WHERE consumed_at IS NULL AND expires_at<?1 LIMIT 500)", stamp2()).run();
   return data;
 }
 async function eligible(env, sessionHash, recent = false) {
@@ -26205,7 +26626,7 @@ async function eligible(env, sessionHash, recent = false) {
  JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id
  JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active'
  WHERE s.secret_hash=?1 AND s.status='active' AND s.auth_strength='account-method-v1' AND s.revoked_at IS NULL
- AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2`, sessionHash, stamp());
+ AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2`, sessionHash, stamp2());
   if (!row || !await alphaAccess(env, row.subject_id)) return null;
   const age = Date.now() - Date.parse(row.created_at);
   return recent && (!Number.isFinite(age) || age < 0 || age > 3e5) ? null : row;
@@ -26224,7 +26645,7 @@ async function registerOptions(env, settings, payload) {
     input = { inviteHash: inviteHash2, username: input.username, displayName: input.displayName };
   }
   let enrollment = null;
-  if (hash(input.inviteHash)) {
+  if (hash2(input.inviteHash)) {
     const managed = await managedInvitation(env, input.inviteHash);
     if (managed) {
       if (!validUsername(input.username) || !validDisplayName(input.displayName)) reject("PROFILE_INPUT_REQUIRED", 400);
@@ -26233,10 +26654,10 @@ async function registerOptions(env, settings, payload) {
     } else if (input.username !== void 0 || input.displayName !== void 0) reject("INVALID_INPUT");
   } else if (input.username !== void 0 || input.displayName !== void 0) reject("INVALID_INPUT");
   let account, inviteHash = null, authorizedSessionId = null;
-  if (hash(input.inviteHash)) {
+  if (hash2(input.inviteHash)) {
     const inv = await first2(env.DB, `SELECT i.account_id,i.purpose,a.display_name FROM nexus_passkey_invites i
    JOIN account_subjects a ON a.id=i.account_id AND a.status='active'
-   WHERE i.token_hash=?1 AND i.consumed_at IS NULL AND i.expires_at>?2`, input.inviteHash, stamp());
+   WHERE i.token_hash=?1 AND i.consumed_at IS NULL AND i.expires_at>?2`, input.inviteHash, stamp2());
     if (!inv) reject("ENROLLMENT_REQUIRED", 403);
     if (inv.purpose === "bootstrap" && (await first2(env.DB, "SELECT count(*) AS count FROM login_methods WHERE account_id=?1 AND kind='passkey' AND status='active'", inv.account_id)).count) reject("ENROLLMENT_REQUIRED", 403);
     account = { id: inv.account_id, display_name: enrollment?.displayName || inv.display_name };
@@ -26252,10 +26673,10 @@ async function registerOptions(env, settings, payload) {
   const user = await first2(env.DB, "SELECT user_id FROM nexus_passkey_users WHERE account_id=?1", account.id);
   const existing = await all2(env.DB, `SELECT k.id,k.transports_json FROM nexus_passkey_credentials k JOIN login_methods lm ON lm.id=k.login_method_id WHERE k.account_id=?1 AND lm.status='active'`, account.id);
   if (existing.length >= 10) reject("KEY_LIMIT", 409);
-  const options = await generateRegistrationOptions({ rpName: "AKRONIKL IT NEXUS", rpID: settings.rpID, userID: Buffer6.from(user.user_id, "base64url"), userName: enrollment?.username || account.display_name, userDisplayName: account.display_name, attestationType: "none", supportedAlgorithmIDs: [-7, -257], timeout: 12e4, authenticatorSelection: { residentKey: "required", userVerification: "required" }, excludeCredentials: existing.map((k) => ({ id: k.id, transports: JSON.parse(k.transports_json) })) });
+  const options = await generateRegistrationOptions({ rpName: "AKRONIKL IT NEXUS", rpID: settings.rpID, userID: Buffer7.from(user.user_id, "base64url"), userName: enrollment?.username || account.display_name, userDisplayName: account.display_name, attestationType: "none", supportedAlgorithmIDs: [-7, -257], timeout: 12e4, authenticatorSelection: { residentKey: "required", userVerification: "required" }, excludeCredentials: existing.map((k) => ({ id: k.id, transports: JSON.parse(k.transports_json) })) });
   const challengeId = id2();
   await sql(env.DB, `INSERT INTO nexus_passkey_challenges(id,purpose,challenge,flow_hash,account_id,invite_hash,authorized_session_id,expires_at) VALUES(?1,'register',?2,?3,?4,?5,?6,?7)`, challengeId, options.challenge, flowHash, account.id, inviteHash, authorizedSessionId, after(12e4)).run();
-  if (enrollment) await sql(env.DB, "INSERT INTO nexus_invite_enrollments(challenge_id,token_hash,username,display_name,created_at) VALUES(?1,?2,?3,?4,?5)", challengeId, inviteHash, enrollment.username, enrollment.displayName, stamp()).run();
+  if (enrollment) await sql(env.DB, "INSERT INTO nexus_invite_enrollments(challenge_id,token_hash,username,display_name,created_at) VALUES(?1,?2,?3,?4,?5)", challengeId, inviteHash, enrollment.username, enrollment.displayName, stamp2()).run();
   return { challengeId, options };
 }
 async function authenticateOptions(env, settings, payload) {
@@ -26266,31 +26687,31 @@ async function authenticateOptions(env, settings, payload) {
   return { challengeId, options };
 }
 async function invitationInfo(env, payload) {
-  if (!keys(payload.input, ["inviteHash"]) || !hash(payload.input.inviteHash)) reject("INVALID_INPUT");
+  if (!keys(payload.input, ["inviteHash"]) || !hash2(payload.input.inviteHash)) reject("INVALID_INPUT");
   const managed = await managedInvitation(env, payload.input.inviteHash);
   if (managed) return { profileRequired: true, expiresAt: managed.expires_at };
-  const row = await first2(env.DB, "SELECT i.expires_at FROM nexus_passkey_invites i JOIN account_subjects a ON a.id=i.account_id AND a.status='active' WHERE i.token_hash=?1 AND i.consumed_at IS NULL AND i.expires_at>?2", payload.input.inviteHash, stamp());
+  const row = await first2(env.DB, "SELECT i.expires_at FROM nexus_passkey_invites i JOIN account_subjects a ON a.id=i.account_id AND a.status='active' WHERE i.token_hash=?1 AND i.consumed_at IS NULL AND i.expires_at>?2", payload.input.inviteHash, stamp2());
   if (!row) reject("ENROLLMENT_REQUIRED", 403);
   return { profileRequired: false, expiresAt: row.expires_at };
 }
 async function verifyAndIssue(env, settings, payload, action) {
   const { input, flowHash } = payload;
   if (!keys(input, ["challengeId", "response"]) || typeof input.challengeId !== "string" || input.challengeId.length > 80 || !input.response) reject("INVALID_INPUT");
-  const challenge = await first2(env.DB, "SELECT * FROM nexus_passkey_challenges WHERE id=?1 AND purpose=?2 AND flow_hash=?3 AND consumed_at IS NULL AND expires_at>?4", input.challengeId, action, flowHash, stamp());
+  const challenge = await first2(env.DB, "SELECT * FROM nexus_passkey_challenges WHERE id=?1 AND purpose=?2 AND flow_hash=?3 AND consumed_at IS NULL AND expires_at>?4", input.challengeId, action, flowHash, stamp2());
   if (!challenge) reject("CHALLENGE_REJECTED", 401);
   let clientData;
   try {
     const raw = input.response.response?.clientDataJSON;
     if (typeof raw !== "string" || raw.length > 16384 || !/^[A-Za-z0-9_-]+$/.test(raw)) reject("PASSKEY_REJECTED", 401);
-    clientData = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer6.from(raw, "base64url")));
+    clientData = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer7.from(raw, "base64url")));
   } catch {
     reject("PASSKEY_REJECTED", 401);
   }
   if (clientData.crossOrigin === true || clientData.topOrigin !== void 0) reject("PASSKEY_REJECTED", 401);
-  let accountId, methodId, credential, oldVersion = null;
+  let accountId2, methodId, credential, oldVersion = null;
   if (action === "register") {
-    accountId = challenge.account_id;
-    const active = await first2(env.DB, "SELECT id FROM account_subjects WHERE id=?1 AND status='active'", accountId);
+    accountId2 = challenge.account_id;
+    const active = await first2(env.DB, "SELECT id FROM account_subjects WHERE id=?1 AND status='active'", accountId2);
     if (!active) reject("CHALLENGE_REJECTED", 401);
     let verified;
     try {
@@ -26313,48 +26734,48 @@ async function verifyAndIssue(env, settings, payload, action) {
     if (!await alphaAccess(env, row.account_id)) reject("ALPHA_ACCESS_CLOSED", 403);
     let verified;
     try {
-      verified = await verifyAuthenticationResponse({ response: input.response, expectedChallenge: challenge.challenge, expectedOrigin: settings.origin, expectedRPID: settings.rpID, requireUserVerification: true, credential: { id: row.id, publicKey: Buffer6.from(row.public_key, "base64url"), counter: row.counter, transports: JSON.parse(row.transports_json) } });
+      verified = await verifyAuthenticationResponse({ response: input.response, expectedChallenge: challenge.challenge, expectedOrigin: settings.origin, expectedRPID: settings.rpID, requireUserVerification: true, credential: { id: row.id, publicKey: Buffer7.from(row.public_key, "base64url"), counter: row.counter, transports: JSON.parse(row.transports_json) } });
     } catch {
       reject("PASSKEY_REJECTED", 401);
     }
     if (!verified.verified || !verified.authenticationInfo?.userVerified) reject("PASSKEY_REJECTED", 401);
-    accountId = row.account_id;
+    accountId2 = row.account_id;
     methodId = row.login_method_id;
     oldVersion = row.counter_version;
     credential = { id: row.id, counter: verified.authenticationInfo.newCounter, backedUp: verified.authenticationInfo.credentialBackedUp };
   }
-  const now5 = stamp(), commitId = id2(), sessionId = action === "authenticate" ? id2() : null, deviceId = action === "authenticate" ? id2() : null, secret = action === "authenticate" ? "nxs_" + random2() : null, secretHash = secret ? await sha2(secret) : null;
+  const now5 = stamp2(), commitId = id2(), sessionId = action === "authenticate" ? id2() : null, deviceId = action === "authenticate" ? id2() : null, secret = action === "authenticate" ? "nxs_" + random2() : null, secretHash = secret ? await sha2(secret) : null;
   const commands = [sql(env.DB, "UPDATE nexus_passkey_challenges SET consumed_at=?1,commit_id=?2 WHERE id=?3 AND purpose=?4 AND flow_hash=?5 AND consumed_at IS NULL AND expires_at>?1", now5, commitId, challenge.id, action, flowHash)];
   if (action === "register") {
     if (challenge.invite_hash && env.ALPHA_ADMISSION_ENABLED === "true") {
       await managedInvitation(env, challenge.invite_hash);
       const chosen = await first2(env.DB, "SELECT username,display_name FROM nexus_invite_enrollments WHERE challenge_id=?1 AND token_hash=?2", challenge.id, challenge.invite_hash);
       if (!chosen || !validUsername(chosen.username) || !validDisplayName(chosen.display_name)) reject("PROFILE_INPUT_REQUIRED", 400);
-      commands.push(sql(env.DB, "INSERT INTO nexus_account_profiles(account_id,username,created_at) VALUES(?1,?2,?3)", accountId, chosen.username, now5));
-      commands.push(sql(env.DB, "UPDATE account_subjects SET display_name=?1,updated_at=?2 WHERE id=?3", chosen.display_name, now5, accountId));
-      commands.push(sql(env.DB, "UPDATE nexus_alpha_members SET state='active',reserved_until=NULL,version=version+1,updated_at=?1 WHERE account_id=?2 AND state='invited' AND reserved_until>?1", now5, accountId));
+      commands.push(sql(env.DB, "INSERT INTO nexus_account_profiles(account_id,username,created_at) VALUES(?1,?2,?3)", accountId2, chosen.username, now5));
+      commands.push(sql(env.DB, "UPDATE account_subjects SET display_name=?1,updated_at=?2 WHERE id=?3", chosen.display_name, now5, accountId2));
+      commands.push(sql(env.DB, "UPDATE nexus_alpha_members SET state='active',reserved_until=NULL,version=version+1,updated_at=?1 WHERE account_id=?2 AND state='invited' AND reserved_until>?1", now5, accountId2));
       commands.push(sql(env.DB, "UPDATE nexus_admin_invites SET state='accepted' WHERE token_hash=?1 AND state='ready'", challenge.invite_hash));
     }
     if (challenge.invite_hash) {
-      const invitation = await first2(env.DB, "SELECT purpose FROM nexus_passkey_invites WHERE token_hash=?1 AND account_id=?2 AND consumed_at IS NULL AND expires_at>?3", challenge.invite_hash, accountId, now5);
+      const invitation = await first2(env.DB, "SELECT purpose FROM nexus_passkey_invites WHERE token_hash=?1 AND account_id=?2 AND consumed_at IS NULL AND expires_at>?3", challenge.invite_hash, accountId2, now5);
       if (!invitation) reject("CHALLENGE_REJECTED", 401);
       if (invitation.purpose === "recovery") {
-        commands.push(sql(env.DB, "UPDATE login_methods SET status='disabled',disabled_at=?1,version=version+1 WHERE account_id=?2 AND kind='passkey' AND status<>'disabled'", now5, accountId));
-        commands.push(sql(env.DB, "UPDATE account_sessions SET status='revoked',revoked_at=?1,revoked_reason='passkey-recovery' WHERE subject_id=?2 AND status='active'", now5, accountId));
-        commands.push(sql(env.DB, "UPDATE account_tokens SET status='revoked' WHERE subject_id=?1 AND status='active'", accountId));
+        commands.push(sql(env.DB, "UPDATE login_methods SET status='disabled',disabled_at=?1,version=version+1 WHERE account_id=?2 AND kind='passkey' AND status<>'disabled'", now5, accountId2));
+        commands.push(sql(env.DB, "UPDATE account_sessions SET status='revoked',revoked_at=?1,revoked_reason='passkey-recovery' WHERE subject_id=?2 AND status='active'", now5, accountId2));
+        commands.push(sql(env.DB, "UPDATE account_tokens SET status='revoked' WHERE subject_id=?1 AND status='active'", accountId2));
       }
     }
-    if (challenge.invite_hash) commands.push(sql(env.DB, "UPDATE nexus_passkey_invites SET consumed_at=?1,commit_id=?2 WHERE token_hash=?3 AND account_id=?4 AND consumed_at IS NULL AND expires_at>?1", now5, commitId, challenge.invite_hash, accountId));
-    commands.push(sql(env.DB, "INSERT INTO login_methods(id,account_id,kind,status,created_at) VALUES(?1,?2,'passkey','active',?3)", methodId, accountId, now5));
-    commands.push(sql(env.DB, `INSERT INTO nexus_passkey_credentials(id,account_id,login_method_id,public_key,counter,device_type,backed_up,transports_json,last_commit_id,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)`, credential.id, accountId, methodId, b64(credential.publicKey), credential.counter, credential.deviceType, credential.backedUp ? 1 : 0, JSON.stringify(credential.transports || []), commitId, now5));
+    if (challenge.invite_hash) commands.push(sql(env.DB, "UPDATE nexus_passkey_invites SET consumed_at=?1,commit_id=?2 WHERE token_hash=?3 AND account_id=?4 AND consumed_at IS NULL AND expires_at>?1", now5, commitId, challenge.invite_hash, accountId2));
+    commands.push(sql(env.DB, "INSERT INTO login_methods(id,account_id,kind,status,created_at) VALUES(?1,?2,'passkey','active',?3)", methodId, accountId2, now5));
+    commands.push(sql(env.DB, `INSERT INTO nexus_passkey_credentials(id,account_id,login_method_id,public_key,counter,device_type,backed_up,transports_json,last_commit_id,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)`, credential.id, accountId2, methodId, b64(credential.publicKey), credential.counter, credential.deviceType, credential.backedUp ? 1 : 0, JSON.stringify(credential.transports || []), commitId, now5));
   } else commands.push(sql(env.DB, "UPDATE nexus_passkey_credentials SET counter=?1,counter_version=counter_version+1,backed_up=?2,last_commit_id=?3 WHERE id=?4 AND counter_version=?5", credential.counter, credential.backedUp ? 1 : 0, commitId, credential.id, oldVersion));
   if (action === "authenticate") {
-    commands.push(sql(env.DB, "INSERT INTO account_devices(id,subject_id,label,status,first_seen_at,last_seen_at) VALUES(?1,?2,'Passkey browser','active',?3,?3)", deviceId, accountId, now5));
-    commands.push(sql(env.DB, "INSERT INTO account_sessions(id,subject_id,device_id,secret_hash,status,auth_strength,created_at,last_seen_at,idle_expires_at,absolute_expires_at) VALUES(?1,?2,?3,?4,'active','account-method-v1',?5,?5,?6,?7)", sessionId, accountId, deviceId, secretHash, now5, after(18e5), after(432e5)));
-    commands.push(sql(env.DB, "INSERT INTO session_login_methods(session_id,login_method_id,account_id,created_at) VALUES(?1,?2,?3,?4)", sessionId, methodId, accountId, now5));
+    commands.push(sql(env.DB, "INSERT INTO account_devices(id,subject_id,label,status,first_seen_at,last_seen_at) VALUES(?1,?2,'Passkey browser','active',?3,?3)", deviceId, accountId2, now5));
+    commands.push(sql(env.DB, "INSERT INTO account_sessions(id,subject_id,device_id,secret_hash,status,auth_strength,created_at,last_seen_at,idle_expires_at,absolute_expires_at) VALUES(?1,?2,?3,?4,'active','account-method-v1',?5,?5,?6,?7)", sessionId, accountId2, deviceId, secretHash, now5, after(18e5), after(432e5)));
+    commands.push(sql(env.DB, "INSERT INTO session_login_methods(session_id,login_method_id,account_id,created_at) VALUES(?1,?2,?3,?4)", sessionId, methodId, accountId2, now5));
   }
-  commands.push(sql(env.DB, "INSERT INTO nexus_passkey_audit(id,account_id,login_method_id,session_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)", commitId, accountId, methodId, sessionId, action, now5));
-  commands.push(sql(env.DB, "INSERT INTO nexus_passkey_receipts(id,challenge_id,credential_id,account_id,login_method_id,session_id,device_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)", commitId, challenge.id, credential.id, accountId, methodId, sessionId, deviceId, action, now5));
+  commands.push(sql(env.DB, "INSERT INTO nexus_passkey_audit(id,account_id,login_method_id,session_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6)", commitId, accountId2, methodId, sessionId, action, now5));
+  commands.push(sql(env.DB, "INSERT INTO nexus_passkey_receipts(id,challenge_id,credential_id,account_id,login_method_id,session_id,device_id,action,created_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)", commitId, challenge.id, credential.id, accountId2, methodId, sessionId, deviceId, action, now5));
   try {
     const committed = await env.DB.batch(commands);
     if (committed.length !== commands.length || committed.some((x) => !x.success)) reject("ISSUANCE_UNCONFIRMED", 503);
@@ -26370,7 +26791,7 @@ async function accountOperation(env, payload) {
   if (!session) reject("SESSION_REQUIRED", 401);
   if (payload.op === "logout") {
     if (!keys(payload.input, []) || Object.keys(payload.input).length) reject("INVALID_INPUT");
-    await sql(env.DB, "UPDATE account_sessions SET status='revoked',revoked_at=?1,revoked_reason='passkey-logout' WHERE id=?2 AND status='active'", stamp(), session.id).run();
+    await sql(env.DB, "UPDATE account_sessions SET status='revoked',revoked_at=?1,revoked_reason='passkey-logout' WHERE id=?2 AND status='active'", stamp2(), session.id).run();
     return { ok: true, clearSession: true };
   }
   if (payload.op === "keys") {
@@ -26382,7 +26803,7 @@ async function accountOperation(env, payload) {
     if (!await eligible(env, payload.sessionHash, true)) reject("FRESH_LOGIN_REQUIRED", 401);
     const revoked = await sql(env.DB, `UPDATE login_methods SET status='disabled',disabled_at=?1,version=version+1
    WHERE id=?2 AND account_id=?3 AND kind='passkey' AND status='active'
-   AND (SELECT count(*) FROM login_methods WHERE account_id=?3 AND status='active')>1`, stamp(), payload.input.methodId, session.subject_id).run();
+   AND (SELECT count(*) FROM login_methods WHERE account_id=?3 AND status='active')>1`, stamp2(), payload.input.methodId, session.subject_id).run();
     if (revoked.meta.changes !== 1) reject("LAST_KEY_OR_NOT_FOUND", 409);
     return { ok: true };
   }
@@ -26411,16 +26832,16 @@ async function handlePasskeyService(request, env) {
 }
 
 // server-access/worker/oauth-service.mjs
-import { Buffer as Buffer7 } from "node:buffer";
+import { Buffer as Buffer8 } from "node:buffer";
 var INTERNAL3 = "/api/v2/account/internal/oauth";
 var ISSUERS = Object.freeze({ google: "https://accounts.google.com", yandex: "https://login.yandex.ru", vk: "https://id.vk.ru", mailru: "https://oauth.mail.ru" });
 var encoder3 = new TextEncoder();
 var hex2 = (bytes) => Array.from(new Uint8Array(bytes), (x) => x.toString(16).padStart(2, "0")).join("");
-var sha3 = async (text3) => hex2(await crypto.subtle.digest("SHA-256", encoder3.encode(text3)));
-var uuid3 = () => crypto.randomUUID();
+var sha3 = async (text5) => hex2(await crypto.subtle.digest("SHA-256", encoder3.encode(text5)));
+var uuid4 = () => crypto.randomUUID();
 var now4 = () => (/* @__PURE__ */ new Date()).toISOString();
-var hash2 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
-var exact5 = (value, keys2) => !!value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join(",") === [...keys2].sort().join(",");
+var hash3 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+var exact8 = (value, keys2) => !!value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join(",") === [...keys2].sort().join(",");
 var statement = (db, sql2, ...args) => db.prepare(sql2).bind(...args);
 var first3 = (db, sql2, ...args) => statement(db, sql2, ...args).first();
 var Rejected2 = class extends Error {
@@ -26440,7 +26861,7 @@ async function ingress2(request, env) {
   const url = new URL(request.url);
   if (request.method !== "POST" || url.pathname !== INTERNAL3 || url.search || request.headers.has("cookie") || request.headers.has("authorization") || request.headers.get("content-type") !== "application/json") deny4("SERVICE_DENIED", 401);
   const timestamp = request.headers.get("x-nexus-service-timestamp"), nonce = request.headers.get("x-nexus-service-nonce"), signature = request.headers.get("x-nexus-service-signature");
-  if (!/^\d{13}$/.test(timestamp || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !hash2(signature) || Math.abs(Date.now() - Number(timestamp)) > 3e4) deny4("SERVICE_DENIED", 401);
+  if (!/^\d{13}$/.test(timestamp || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !hash3(signature) || Math.abs(Date.now() - Number(timestamp)) > 3e4) deny4("SERVICE_DENIED", 401);
   const reader = request.body?.getReader();
   if (!reader) deny4("INVALID_INPUT");
   const chunks = [];
@@ -26458,7 +26879,7 @@ async function ingress2(request, env) {
     });
     reader.releaseLock();
   }
-  const bytes = Buffer7.concat(chunks, length), digest2 = hex2(await crypto.subtle.digest("SHA-256", bytes));
+  const bytes = Buffer8.concat(chunks, length), digest2 = hex2(await crypto.subtle.digest("SHA-256", bytes));
   const canonical = `v1
 POST
 ${INTERNAL3}
@@ -26479,14 +26900,14 @@ ${digest2}`;
   const bucket = Math.floor(Date.now() / 6e4), globalScope = await sha3("oauth:" + data.op);
   const rate2 = await first3(env.DB, "INSERT INTO nexus_oauth_rate_limits(scope_hash,bucket,used) VALUES(?1,?2,1) ON CONFLICT(scope_hash,bucket) DO UPDATE SET used=used+1 WHERE used<120 RETURNING used", globalScope, bucket);
   if (!rate2) deny4("RATE_LIMITED", 429);
-  if (hash2(data.flowHash)) {
+  if (hash3(data.flowHash)) {
     const scoped = await first3(env.DB, "INSERT INTO nexus_oauth_rate_limits(scope_hash,bucket,used) VALUES(?1,?2,1) ON CONFLICT(scope_hash,bucket) DO UPDATE SET used=used+1 WHERE used<10 RETURNING used", await sha3("oauth:" + data.op + ":" + data.flowHash), bucket);
     if (!scoped) deny4("RATE_LIMITED", 429);
   }
   await statement(env.DB, "UPDATE nexus_oauth_transactions SET code_verifier=NULL,nonce=NULL WHERE expires_at<=?1 AND (code_verifier IS NOT NULL OR nonce IS NOT NULL)", now4()).run();
   return data;
 }
-async function freshPasskey(db, { sessionHash, sessionId, accountId } = {}) {
+async function freshPasskey(db, { sessionHash, sessionId, accountId: accountId2 } = {}) {
   const row = await first3(db, `SELECT s.id,s.subject_id,s.created_at FROM account_sessions s
  JOIN account_subjects a ON a.id=s.subject_id AND a.status='active'
  JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active'
@@ -26495,21 +26916,21 @@ async function freshPasskey(db, { sessionHash, sessionId, accountId } = {}) {
  JOIN nexus_passkey_credentials pk ON pk.login_method_id=lm.id AND pk.account_id=a.id
  WHERE ((?1 IS NOT NULL AND s.secret_hash=?1) OR (?2 IS NOT NULL AND s.id=?2))
  AND (?3 IS NULL OR a.id=?3) AND s.status='active' AND s.auth_strength='account-method-v1'
- AND s.revoked_at IS NULL AND s.idle_expires_at>?4 AND s.absolute_expires_at>?4`, sessionHash || null, sessionId || null, accountId || null, now4());
+ AND s.revoked_at IS NULL AND s.idle_expires_at>?4 AND s.absolute_expires_at>?4`, sessionHash || null, sessionId || null, accountId2 || null, now4());
   const age = row ? Date.now() - Date.parse(row.created_at) : NaN;
   return Number.isFinite(age) && age >= 0 && age < 3e5 ? row : null;
 }
 async function begin(env, data) {
   const names = ["op", "provider", "intent", "stateHash", "flowHash", "codeVerifier", "nonce"];
   if (data.intent === "link") names.push("sessionHash", "expectedAccountId");
-  if (!exact5(data, names) || !providerAllowed(env, data.provider) || !["login", "link"].includes(data.intent) || !hash2(data.stateHash) || !hash2(data.flowHash) || typeof data.codeVerifier !== "string" || !/^[A-Za-z0-9._~-]{43,128}$/.test(data.codeVerifier) || typeof data.nonce !== "string" || !/^[A-Za-z0-9_-]{22,128}$/.test(data.nonce) || data.intent === "link" && (!hash2(data.sessionHash) || typeof data.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(data.expectedAccountId))) deny4("INVALID_INPUT");
+  if (!exact8(data, names) || !providerAllowed(env, data.provider) || !["login", "link"].includes(data.intent) || !hash3(data.stateHash) || !hash3(data.flowHash) || typeof data.codeVerifier !== "string" || !/^[A-Za-z0-9._~-]{43,128}$/.test(data.codeVerifier) || typeof data.nonce !== "string" || !/^[A-Za-z0-9_-]{22,128}$/.test(data.nonce) || data.intent === "link" && (!hash3(data.sessionHash) || typeof data.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(data.expectedAccountId))) deny4("INVALID_INPUT");
   let account = null;
   if (data.intent === "link") {
     account = await freshPasskey(env.DB, { sessionHash: data.sessionHash });
     if (!account) deny4("FRESH_PASSKEY_REQUIRED", 401);
     if (account.subject_id !== data.expectedAccountId) deny4("ACCOUNT_SESSION_CHANGED", 401);
   }
-  const txId = uuid3(), created = now4(), expiresAt = new Date(Date.now() + 6e5).toISOString();
+  const txId = uuid4(), created = now4(), expiresAt = new Date(Date.now() + 6e5).toISOString();
   try {
     const saved = await statement(env.DB, `INSERT INTO nexus_oauth_transactions(id,state_hash,flow_hash,provider,intent,code_verifier,nonce,authorized_account_id,authorized_session_id,created_at,expires_at)
  VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)`, txId, data.stateHash, data.flowHash, data.provider, data.intent, data.codeVerifier, data.nonce, account?.subject_id || null, account?.id || null, created, expiresAt).run();
@@ -26520,8 +26941,8 @@ async function begin(env, data) {
   return { ok: true, txId, expiresAt };
 }
 async function claim(env, data) {
-  if (!exact5(data, ["op", "provider", "stateHash", "flowHash"]) || !providerAllowed(env, data.provider) || !hash2(data.stateHash) || !hash2(data.flowHash)) deny4("INVALID_INPUT");
-  const claimId = uuid3(), created = now4();
+  if (!exact8(data, ["op", "provider", "stateHash", "flowHash"]) || !providerAllowed(env, data.provider) || !hash3(data.stateHash) || !hash3(data.flowHash)) deny4("INVALID_INPUT");
+  const claimId = uuid4(), created = now4();
   const commands = [
     statement(env.DB, `UPDATE nexus_oauth_transactions SET claimed_at=?1,claim_id=?2
    WHERE state_hash=?3 AND flow_hash=?4 AND provider=?5 AND claimed_at IS NULL AND completed_at IS NULL
@@ -26536,7 +26957,7 @@ async function claim(env, data) {
   return { ok: true, txId: row.id, codeVerifier: row.code_verifier, nonce: row.nonce, intent: row.intent };
 }
 function profileFor(provider, profile) {
-  if (!exact5(profile, ["issuer", "subject", "email", "emailVerified", "displayName"]) || profile.issuer !== ISSUERS[provider] || typeof profile.subject !== "string" || !profile.subject.length || profile.subject.length > 512 || profile.subject !== profile.subject.trim() || /[\x00-\x1f\x7f]/.test(profile.subject) || typeof profile.emailVerified !== "boolean" || typeof profile.displayName !== "string" || !profile.displayName.trim() || profile.displayName.length > 512 || /[\x00-\x1f\x7f]/.test(profile.displayName)) deny4("PROFILE_REJECTED", 401);
+  if (!exact8(profile, ["issuer", "subject", "email", "emailVerified", "displayName"]) || profile.issuer !== ISSUERS[provider] || typeof profile.subject !== "string" || !profile.subject.length || profile.subject.length > 512 || profile.subject !== profile.subject.trim() || /[\x00-\x1f\x7f]/.test(profile.subject) || typeof profile.emailVerified !== "boolean" || typeof profile.displayName !== "string" || !profile.displayName.trim() || profile.displayName.length > 512 || /[\x00-\x1f\x7f]/.test(profile.displayName)) deny4("PROFILE_REJECTED", 401);
   let email = null;
   if (profile.email !== null) {
     if (typeof profile.email !== "string" || profile.email.length > 320 || !/^\S+@\S+\.\S+$/.test(profile.email) || /[\x00-\x1f\x7f]/.test(profile.email)) deny4("PROFILE_REJECTED", 401);
@@ -26546,57 +26967,57 @@ function profileFor(provider, profile) {
   return { ...profile, email, displayName: profile.displayName.trim() };
 }
 async function complete(env, data) {
-  if (!exact5(data, ["op", "txId", "flowHash", "profile"]) || typeof data.txId !== "string" || data.txId.length > 80 || !hash2(data.flowHash)) deny4("INVALID_INPUT");
+  if (!exact8(data, ["op", "txId", "flowHash", "profile"]) || typeof data.txId !== "string" || data.txId.length > 80 || !hash3(data.flowHash)) deny4("INVALID_INPUT");
   const tx = await first3(env.DB, "SELECT * FROM nexus_oauth_transactions WHERE id=?1 AND flow_hash=?2 AND claimed_at IS NOT NULL AND completed_at IS NULL AND expires_at>?3", data.txId, data.flowHash, now4());
   if (!tx || !providerAllowed(env, tx.provider)) deny4("TRANSACTION_REJECTED", 401);
   const profile = profileFor(tx.provider, data.profile), emailHash = profile.email ? await sha3(profile.email) : null;
   let identity = await first3(env.DB, `SELECT oi.account_id,oi.login_method_id,a.status AS account_status,lm.status AS method_status,lm.kind
  FROM oauth_identities oi JOIN account_subjects a ON a.id=oi.account_id JOIN login_methods lm ON lm.id=oi.login_method_id AND lm.account_id=a.id
  WHERE oi.provider=?1 AND oi.issuer=?2 AND oi.provider_subject=?3`, tx.provider, profile.issuer, profile.subject);
-  let accountId, methodId, isNewAccount = false, isNewIdentity = false;
+  let accountId2, methodId, isNewAccount = false, isNewIdentity = false;
   if (tx.intent === "link") {
     const authorized = await freshPasskey(env.DB, { sessionId: tx.authorized_session_id, accountId: tx.authorized_account_id });
     if (!authorized) deny4("FRESH_PASSKEY_REQUIRED", 401);
-    accountId = authorized.subject_id;
-    if (identity && identity.account_id !== accountId) deny4("IDENTITY_ALREADY_LINKED", 409);
+    accountId2 = authorized.subject_id;
+    if (identity && identity.account_id !== accountId2) deny4("IDENTITY_ALREADY_LINKED", 409);
     if (identity && (identity.account_status !== "active" || identity.method_status !== "active" || identity.kind !== "oauth")) deny4("IDENTITY_REJECTED", 403);
-    methodId = identity?.login_method_id || uuid3();
+    methodId = identity?.login_method_id || uuid4();
     isNewIdentity = !identity;
   } else if (identity) {
     if (identity.account_status !== "active" || identity.method_status !== "active" || identity.kind !== "oauth") deny4("IDENTITY_REJECTED", 403);
-    accountId = identity.account_id;
+    accountId2 = identity.account_id;
     methodId = identity.login_method_id;
   } else {
     if (emailHash && await first3(env.DB, "SELECT account_id FROM nexus_oauth_allowed_emails WHERE email_hash=?1 LIMIT 1", emailHash)) deny4("EXPLICIT_LINK_REQUIRED", 403);
-    accountId = uuid3();
-    methodId = uuid3();
+    accountId2 = uuid4();
+    methodId = uuid4();
     isNewAccount = true;
     isNewIdentity = true;
   }
-  const policy = await first3(env.DB, "SELECT status FROM nexus_oauth_account_policies WHERE account_id=?1", accountId);
-  if (policy && (!profile.emailVerified || !emailHash || !await first3(env.DB, "SELECT account_id FROM nexus_oauth_allowed_emails WHERE account_id=?1 AND email_hash=?2", accountId, emailHash))) deny4("OWNER_EMAIL_REQUIRED", 403);
-  const created = now4(), commitId = uuid3(), sessionId = uuid3(), deviceId = uuid3();
-  const secret = "nxs_" + Buffer7.from(crypto.getRandomValues(new Uint8Array(32))).toString("base64url"), secretHash = await sha3(secret);
+  const policy = await first3(env.DB, "SELECT status FROM nexus_oauth_account_policies WHERE account_id=?1", accountId2);
+  if (policy && (!profile.emailVerified || !emailHash || !await first3(env.DB, "SELECT account_id FROM nexus_oauth_allowed_emails WHERE account_id=?1 AND email_hash=?2", accountId2, emailHash))) deny4("OWNER_EMAIL_REQUIRED", 403);
+  const created = now4(), commitId = uuid4(), sessionId = uuid4(), deviceId = uuid4();
+  const secret = "nxs_" + Buffer8.from(crypto.getRandomValues(new Uint8Array(32))).toString("base64url"), secretHash = await sha3(secret);
   const commands = [statement(env.DB, `UPDATE nexus_oauth_transactions SET completed_at=?1,commit_id=?2
   WHERE id=?3 AND flow_hash=?4 AND claimed_at IS NOT NULL AND completed_at IS NULL AND expires_at>?1`, created, commitId, tx.id, data.flowHash)];
-  if (isNewAccount) commands.push(statement(env.DB, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,?2,'active',?3,?3)", accountId, profile.displayName, created));
-  commands.push(...await oauthAdmissionCommands(env, accountId, created));
+  if (isNewAccount) commands.push(statement(env.DB, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,?2,'active',?3,?3)", accountId2, profile.displayName, created));
+  commands.push(...await oauthAdmissionCommands(env, accountId2, created));
   if (isNewIdentity) {
-    commands.push(statement(env.DB, "INSERT INTO login_methods(id,account_id,kind,status,created_at) VALUES(?1,?2,'oauth','active',?3)", methodId, accountId, created));
-    commands.push(statement(env.DB, "INSERT INTO oauth_identities(login_method_id,account_id,provider,issuer,provider_subject,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?6)", methodId, accountId, tx.provider, profile.issuer, profile.subject, created));
+    commands.push(statement(env.DB, "INSERT INTO login_methods(id,account_id,kind,status,created_at) VALUES(?1,?2,'oauth','active',?3)", methodId, accountId2, created));
+    commands.push(statement(env.DB, "INSERT INTO oauth_identities(login_method_id,account_id,provider,issuer,provider_subject,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?6)", methodId, accountId2, tx.provider, profile.issuer, profile.subject, created));
   }
-  commands.push(statement(env.DB, "INSERT INTO account_devices(id,subject_id,label,status,first_seen_at,last_seen_at) VALUES(?1,?2,'OAuth browser','active',?3,?3)", deviceId, accountId, created));
-  commands.push(statement(env.DB, "INSERT INTO account_sessions(id,subject_id,device_id,secret_hash,status,auth_strength,created_at,last_seen_at,idle_expires_at,absolute_expires_at) VALUES(?1,?2,?3,?4,'active','account-method-v1',?5,?5,?6,?7)", sessionId, accountId, deviceId, secretHash, created, new Date(Date.now() + 18e5).toISOString(), new Date(Date.now() + 432e5).toISOString()));
-  commands.push(statement(env.DB, "INSERT INTO session_login_methods(session_id,login_method_id,account_id,created_at) VALUES(?1,?2,?3,?4)", sessionId, methodId, accountId, created));
+  commands.push(statement(env.DB, "INSERT INTO account_devices(id,subject_id,label,status,first_seen_at,last_seen_at) VALUES(?1,?2,'OAuth browser','active',?3,?3)", deviceId, accountId2, created));
+  commands.push(statement(env.DB, "INSERT INTO account_sessions(id,subject_id,device_id,secret_hash,status,auth_strength,created_at,last_seen_at,idle_expires_at,absolute_expires_at) VALUES(?1,?2,?3,?4,'active','account-method-v1',?5,?5,?6,?7)", sessionId, accountId2, deviceId, secretHash, created, new Date(Date.now() + 18e5).toISOString(), new Date(Date.now() + 432e5).toISOString()));
+  commands.push(statement(env.DB, "INSERT INTO session_login_methods(session_id,login_method_id,account_id,created_at) VALUES(?1,?2,?3,?4)", sessionId, methodId, accountId2, created));
   commands.push(statement(env.DB, `INSERT INTO nexus_oauth_receipts(id,tx_id,flow_hash,account_id,login_method_id,session_id,device_id,provider,issuer,provider_subject,email_hash,email_verified,new_account,created_at)
- VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14)`, commitId, tx.id, data.flowHash, accountId, methodId, sessionId, deviceId, tx.provider, profile.issuer, profile.subject, emailHash, profile.emailVerified ? 1 : 0, isNewAccount ? 1 : 0, created));
+ VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14)`, commitId, tx.id, data.flowHash, accountId2, methodId, sessionId, deviceId, tx.provider, profile.issuer, profile.subject, emailHash, profile.emailVerified ? 1 : 0, isNewAccount ? 1 : 0, created));
   if (profile.emailVerified) commands.push(statement(env.DB, `INSERT INTO nexus_oauth_verified_emails(account_id,email_hash,provider,issuer,provider_subject,receipt_id,verified_at)
  VALUES(?1,?2,?3,?4,?5,?6,?7) ON CONFLICT(account_id,email_hash,provider,issuer,provider_subject)
- DO UPDATE SET receipt_id=excluded.receipt_id,verified_at=excluded.verified_at`, accountId, emailHash, tx.provider, profile.issuer, profile.subject, commitId, created));
+ DO UPDATE SET receipt_id=excluded.receipt_id,verified_at=excluded.verified_at`, accountId2, emailHash, tx.provider, profile.issuer, profile.subject, commitId, created));
   try {
     const committed = await env.DB.batch(commands);
     if (committed.length !== commands.length || committed.some((x) => !x.success)) deny4("ISSUANCE_UNCONFIRMED", 503);
-    const receipt2 = await first3(env.DB, "SELECT session_id FROM nexus_oauth_receipts WHERE id=?1 AND tx_id=?2 AND account_id=?3", commitId, tx.id, accountId);
+    const receipt2 = await first3(env.DB, "SELECT session_id FROM nexus_oauth_receipts WHERE id=?1 AND tx_id=?2 AND account_id=?3", commitId, tx.id, accountId2);
     if (receipt2?.session_id !== sessionId) deny4("ISSUANCE_UNCONFIRMED", 503);
   } catch (error) {
     const message = String(error?.message || "");
@@ -26616,16 +27037,16 @@ async function handleOAuthService(request, env) {
 }
 
 // server-access/worker/account-foundation.js
-async function readAccountFoundation(db, accountId) {
+async function readAccountFoundation(db, accountId2) {
   const account = await db.prepare(`
     SELECT id, display_name, status
     FROM account_subjects WHERE id = ?1 AND status = 'active'
-  `).bind(accountId).first();
+  `).bind(accountId2).first();
   if (!account) return null;
   const { results = [] } = await db.prepare(`
     SELECT id, kind, status, created_at, disabled_at
     FROM login_methods WHERE account_id = ?1 ORDER BY id
-  `).bind(accountId).all();
+  `).bind(accountId2).all();
   return {
     account: { accountId: account.id, displayName: account.display_name, status: account.status },
     loginMethods: results.map((row) => ({
@@ -26638,7 +27059,7 @@ async function readAccountFoundation(db, accountId) {
     enrollmentAvailable: false
   };
 }
-async function readEligibleAccountFoundation(db, sessionHash, stamp2 = (/* @__PURE__ */ new Date()).toISOString(), env = {}) {
+async function readEligibleAccountFoundation(db, sessionHash, stamp3 = (/* @__PURE__ */ new Date()).toISOString(), env = {}) {
   const actor = await db.prepare(`
     SELECT s.id AS account_id
     FROM account_sessions x
@@ -26654,7 +27075,7 @@ async function readEligibleAccountFoundation(db, sessionHash, stamp2 = (/* @__PU
       AND x.revoked_at IS NULL
       AND x.idle_expires_at > ?2 AND x.absolute_expires_at > ?2
     LIMIT 1
-  `).bind(sessionHash, stamp2).first();
+  `).bind(sessionHash, stamp3).first();
   if (actor && !await alphaAccess(env, actor.account_id)) return null;
   return actor ? readAccountFoundation(db, actor.account_id) : null;
 }
@@ -26676,7 +27097,7 @@ var CloudError = class extends Error {
     this.code = code;
   }
 };
-var fail = (status, code) => {
+var fail4 = (status, code) => {
   throw new CloudError(status, code);
 };
 var sha4 = async (bytes) => [...new Uint8Array(await crypto.subtle.digest(
@@ -26698,7 +27119,7 @@ function cloudOperationPath(method, path) {
 }
 async function readBytes(body, max) {
   const reader = body?.getReader();
-  if (!reader) fail(400, "INVALID_INPUT");
+  if (!reader) fail4(400, "INVALID_INPUT");
   let length = 0;
   const parts = [];
   try {
@@ -26706,7 +27127,7 @@ async function readBytes(body, max) {
       const { done, value } = await reader.read();
       if (done) break;
       length += value.byteLength;
-      if (length > max) fail(413, "INPUT_TOO_LARGE");
+      if (length > max) fail4(413, "INPUT_TOO_LARGE");
       parts.push(value);
     }
     const bytes = new Uint8Array(length);
@@ -26726,17 +27147,17 @@ var parse = (bytes) => {
   try {
     return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
   } catch {
-    fail(400, "INVALID_INPUT");
+    fail4(400, "INVALID_INPUT");
   }
 };
 async function verify2(request, env) {
   const url = new URL(request.url);
-  if (request.method !== "POST" || url.pathname !== CLOUD_INTERNAL_PATH || url.search || request.headers.has("cookie") || request.headers.has("authorization") || request.headers.get("content-type") !== "application/json") fail(401, "SERVICE_DENIED");
-  const stamp2 = request.headers.get("x-nexus-service-timestamp");
+  if (request.method !== "POST" || url.pathname !== CLOUD_INTERNAL_PATH || url.search || request.headers.has("cookie") || request.headers.has("authorization") || request.headers.get("content-type") !== "application/json") fail4(401, "SERVICE_DENIED");
+  const stamp3 = request.headers.get("x-nexus-service-timestamp");
   const nonce = request.headers.get("x-nexus-service-nonce");
   const signature = request.headers.get("x-nexus-service-signature");
-  if (!/^\d{13}$/.test(stamp2 || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !/^[a-f0-9]{64}$/.test(signature || "") || Math.abs(Date.now() - Number(stamp2)) > 3e4)
-    fail(401, "SERVICE_DENIED");
+  if (!/^\d{13}$/.test(stamp3 || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !/^[a-f0-9]{64}$/.test(signature || "") || Math.abs(Date.now() - Number(stamp3)) > 3e4)
+    fail4(401, "SERVICE_DENIED");
   const bytes = await readBytes(request.body, MAX_REQUEST);
   const key = await crypto.subtle.importKey(
     "raw",
@@ -26748,7 +27169,7 @@ async function verify2(request, env) {
   const canonical = `v1
 POST
 ${CLOUD_INTERNAL_PATH}
-${stamp2}
+${stamp3}
 ${nonce}
 ${await sha4(bytes)}`;
   if (!await crypto.subtle.verify(
@@ -26757,16 +27178,16 @@ ${await sha4(bytes)}`;
     Uint8Array.from(signature.match(/../g), (x) => parseInt(x, 16)),
     encoder4.encode(canonical)
   ))
-    fail(401, "SERVICE_DENIED");
+    fail4(401, "SERVICE_DENIED");
   const value = parse(bytes);
   if (!value || typeof value !== "object" || Array.isArray(value) || Object.keys(value).sort().join(",") !== "expectedAccountId,method,path,payload,sessionCookie" || !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(value.sessionCookie || "") || typeof value.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId) || !cloudOperationPath(value.method, value.path) || (value.method === "GET" ? value.payload !== null : !value.payload || typeof value.payload !== "object" || Array.isArray(value.payload)))
-    fail(401, "SERVICE_DENIED");
+    fail4(401, "SERVICE_DENIED");
   const inserted = await env.DB.prepare(`INSERT OR IGNORE INTO account_service_nonces(nonce,expires_at)
-    VALUES(?1,?2)`).bind(nonce, new Date(Number(stamp2) + 3e4).toISOString()).run();
-  if (!inserted.success || Number(inserted.meta?.changes) !== 1) fail(401, "SERVICE_DENIED");
+    VALUES(?1,?2)`).bind(nonce, new Date(Number(stamp3) + 3e4).toISOString()).run();
+  if (!inserted.success || Number(inserted.meta?.changes) !== 1) fail4(401, "SERVICE_DENIED");
   const foundation = await readEligibleAccountFoundation(env.DB, await sha4(value.sessionCookie), void 0, env);
-  if (!foundation) fail(401, "SESSION_REQUIRED");
-  if (foundation.account.accountId !== value.expectedAccountId) fail(409, "ACCOUNT_SESSION_CHANGED");
+  if (!foundation) fail4(401, "SESSION_REQUIRED");
+  if (foundation.account.accountId !== value.expectedAccountId) fail4(409, "ACCOUNT_SESSION_CHANGED");
   return { ...value, account: foundation.account };
 }
 var allowedErrors = /* @__PURE__ */ new Set([
@@ -26801,10 +27222,10 @@ function createCloudSessionService({ fetchLegacy = legacy_sync_default.fetch.bin
         ...op.method === "PUT" ? { body: JSON.stringify(op.payload) } : {}
       }), env, context);
       if (!upstream.headers.get("content-type")?.toLowerCase().startsWith("application/json"))
-        fail(502, "CLOUD_UNAVAILABLE");
+        fail4(502, "CLOUD_UNAVAILABLE");
       const bytes = await readBytes(upstream.body, MAX_RESPONSE);
       const data = parse(bytes);
-      if (new TextDecoder().decode(bytes).includes(op.sessionCookie)) fail(502, "CLOUD_UNAVAILABLE");
+      if (new TextDecoder().decode(bytes).includes(op.sessionCookie)) fail4(502, "CLOUD_UNAVAILABLE");
       if (!upstream.ok) {
         const code = allowedErrors.has(data?.error?.code) ? data.error.code : "CLOUD_UNAVAILABLE";
         const error = { code };
@@ -26818,14 +27239,14 @@ function createCloudSessionService({ fetchLegacy = legacy_sync_default.fetch.bin
         return reply2([400, 401, 403, 404, 409, 413, 429].includes(upstream.status) ? upstream.status : 502, { error });
       }
       if (op.path === "/api/v1/me") {
-        if (data?.subject?.id !== op.account.accountId) fail(502, "CLOUD_UNAVAILABLE");
+        if (data?.subject?.id !== op.account.accountId) fail4(502, "CLOUD_UNAVAILABLE");
         return reply2(200, {
           subject: { id: op.account.accountId, displayName: op.account.displayName },
           authMode: "nexus-session"
         });
       }
       const keys2 = Object.keys(data || {}).sort().join(",");
-      if (op.method === "PUT" ? keys2 !== "hash,ok,projectId,revision,sizeBytes,storage,updatedAt" : op.path === "/api/v1/projects" ? keys2 !== "projects" : op.path.endsWith("/audit") ? keys2 !== "events" : keys2 !== "meta,project") fail(502, "CLOUD_UNAVAILABLE");
+      if (op.method === "PUT" ? keys2 !== "hash,ok,projectId,revision,sizeBytes,storage,updatedAt" : op.path === "/api/v1/projects" ? keys2 !== "projects" : op.path.endsWith("/audit") ? keys2 !== "events" : keys2 !== "meta,project") fail4(502, "CLOUD_UNAVAILABLE");
       return reply2(200, data);
     } catch (error) {
       return reply2(
@@ -26848,14 +27269,14 @@ var FeedbackError = class extends Error {
     this.code = code;
   }
 };
-var fail2 = (status, code) => {
+var fail5 = (status, code) => {
   throw new FeedbackError(status, code);
 };
 var response3 = (body, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff" } });
 var sha5 = async (value) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", typeof value === "string" ? encoder5.encode(value) : value))].map((x) => x.toString(16).padStart(2, "0")).join("");
 async function boundedFeedbackJson(request, max = 32768) {
   const reader = request.body?.getReader();
-  if (!reader) fail2(400, "INVALID_INPUT");
+  if (!reader) fail5(400, "INVALID_INPUT");
   let size = 0;
   const chunks = [];
   try {
@@ -26863,7 +27284,7 @@ async function boundedFeedbackJson(request, max = 32768) {
       const { value, done } = await reader.read();
       if (done) break;
       size += value.length;
-      if (size > max) fail2(413, "INPUT_TOO_LARGE");
+      if (size > max) fail5(413, "INPUT_TOO_LARGE");
       chunks.push(value);
     }
     const data = new Uint8Array(size);
@@ -26875,7 +27296,7 @@ async function boundedFeedbackJson(request, max = 32768) {
     return { bytes: data, value: JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(data)) };
   } catch (error) {
     if (error instanceof FeedbackError) throw error;
-    fail2(400, "INVALID_INPUT");
+    fail5(400, "INVALID_INPUT");
   } finally {
     await reader.cancel().catch(() => {
     });
@@ -26883,34 +27304,34 @@ async function boundedFeedbackJson(request, max = 32768) {
   }
 }
 var string = (value, max, min = 0) => {
-  if (typeof value !== "string" || value.trim().length < min || value.length > max || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)) fail2(400, "INVALID_INPUT");
+  if (typeof value !== "string" || value.trim().length < min || value.length > max || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)) fail5(400, "INVALID_INPUT");
   return value.trim();
 };
 var identifier = (value) => {
-  const text3 = string(value, 80);
-  if (text3 && !/^[a-zA-Z0-9._-]+$/.test(text3)) fail2(400, "INVALID_INPUT");
-  return text3;
+  const text5 = string(value, 80);
+  if (text5 && !/^[a-zA-Z0-9._-]+$/.test(text5)) fail5(400, "INVALID_INPUT");
+  return text5;
 };
 var searchable = (value) => value.normalize("NFKC").toLocaleLowerCase("ru");
 var object = (value) => {
-  if (!value || typeof value !== "object" || Array.isArray(value)) fail2(400, "INVALID_INPUT");
+  if (!value || typeof value !== "object" || Array.isArray(value)) fail5(400, "INVALID_INPUT");
   return value;
 };
 function validateFeedbackInput(value) {
   object(value);
-  if (Object.keys(value).some((x) => !["kind", "type", "body", "publicName", "rating", "courseId", "consent", "context", "requestKey", "version"].includes(x))) fail2(400, "INVALID_INPUT");
+  if (Object.keys(value).some((x) => !["kind", "type", "body", "publicName", "rating", "courseId", "consent", "context", "requestKey", "version"].includes(x))) fail5(400, "INVALID_INPUT");
   const kind = value.kind;
-  if (!["message", "review"].includes(kind)) fail2(400, "INVALID_INPUT");
+  if (!["message", "review"].includes(kind)) fail5(400, "INVALID_INPUT");
   const type = kind === "review" ? "review" : value.type;
-  if (!["bug", "material", "idea", "impression", "review"].includes(type) || kind === "message" && type === "review") fail2(400, "INVALID_INPUT");
+  if (!["bug", "material", "idea", "impression", "review"].includes(type) || kind === "message" && type === "review") fail5(400, "INVALID_INPUT");
   const context = {};
   for (const [key, item2] of Object.entries(object(value.context || {}))) {
-    if (!["courseId", "lessonId", "practicumId", "templateId", "uiLocale", "version"].includes(key)) fail2(400, "INVALID_CONTEXT");
+    if (!["courseId", "lessonId", "practicumId", "templateId", "uiLocale", "version"].includes(key)) fail5(400, "INVALID_CONTEXT");
     context[key] = identifier(item2);
   }
   const rating = value.rating ?? null;
-  if (rating !== null && (!Number.isInteger(rating) || rating < 1 || rating > 5)) fail2(400, "INVALID_INPUT");
-  if (value.consent !== void 0 && typeof value.consent !== "boolean") fail2(400, "INVALID_INPUT");
+  if (rating !== null && (!Number.isInteger(rating) || rating < 1 || rating > 5)) fail5(400, "INVALID_INPUT");
+  if (value.consent !== void 0 && typeof value.consent !== "boolean") fail5(400, "INVALID_INPUT");
   return { kind, type, body: string(value.body, 4e3, 10), publicName: kind === "review" ? string(value.publicName, 80, 1) : "", rating: kind === "review" ? rating : null, courseId: identifier(value.courseId || ""), consent: kind === "review" && value.consent === true, context };
 }
 var query3 = (db, sql2, ...values) => db.prepare(sql2).bind(...values);
@@ -26920,12 +27341,12 @@ var authorDto = (row) => ({ id: row.id, kind: row.kind, type: row.type, revision
 async function item(db, id3) {
   return query3(db, joined + " WHERE i.id=?1", id3).first();
 }
-async function rate(db, accountId) {
-  const result = await query3(db, `INSERT INTO feedback_rate_limits(account_id,bucket,used) VALUES(?1,?2,1) ON CONFLICT(account_id,bucket) DO UPDATE SET used=used+1 WHERE used<20`, accountId, Math.floor(Date.now() / 36e5)).run();
-  if (result.meta.changes !== 1) fail2(429, "RATE_LIMITED");
+async function rate(db, accountId2) {
+  const result = await query3(db, `INSERT INTO feedback_rate_limits(account_id,bucket,used) VALUES(?1,?2,1) ON CONFLICT(account_id,bucket) DO UPDATE SET used=used+1 WHERE used<20`, accountId2, Math.floor(Date.now() / 36e5)).run();
+  if (result.meta.changes !== 1) fail5(429, "RATE_LIMITED");
 }
-function event(db, id3, revision, actor, action, reason, stamp2) {
-  return query3(db, `INSERT INTO feedback_events(id,item_id,revision,actor_id,action,reason,created_at) SELECT ?1,?2,?3,?4,?5,?6,?7 WHERE changes()=1`, crypto.randomUUID(), id3, revision, actor, action, reason, stamp2);
+function event(db, id3, revision, actor, action, reason, stamp3) {
+  return query3(db, `INSERT INTO feedback_events(id,item_id,revision,actor_id,action,reason,created_at) SELECT ?1,?2,?3,?4,?5,?6,?7 WHERE changes()=1`, crypto.randomUUID(), id3, revision, actor, action, reason, stamp3);
 }
 async function publicReviews(db, params) {
   const course = identifier(params.get("course") || ""), featured = params.get("featured") === "1", limit = Math.min(20, Math.max(1, Number(params.get("limit")) || 20)), offset = Math.min(1e4, Math.max(0, Number(params.get("offset")) || 0));
@@ -26936,27 +27357,27 @@ async function publicReviews(db, params) {
   return { reviews: list.map((r) => ({ id: r.id, body: r.body, publicName: r.public_name, rating: r.rating, courseId: r.course_id, publishedAt: r.updated_at })), total: totals.count, ratings: totals.ratings, average: totals.average };
 }
 async function verifyEnvelope(request, env) {
-  if (typeof env.FEEDBACK_SERVICE_KEY !== "string" || env.FEEDBACK_SERVICE_KEY.length < 32) fail2(404, "FEEDBACK_UNAVAILABLE");
-  if (request.method !== "POST" || request.headers.has("authorization") || request.headers.has("cookie") || request.headers.get("content-type") !== "application/json" || new URL(request.url).search) fail2(401, "SERVICE_DENIED");
-  const stamp2 = request.headers.get("x-nexus-service-timestamp"), nonce = request.headers.get("x-nexus-service-nonce"), signature = request.headers.get("x-nexus-service-signature");
-  if (!/^\d{13}$/.test(stamp2 || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !/^[a-f0-9]{64}$/.test(signature || "") || Math.abs(Date.now() - Number(stamp2)) > 3e4) fail2(401, "SERVICE_DENIED");
+  if (typeof env.FEEDBACK_SERVICE_KEY !== "string" || env.FEEDBACK_SERVICE_KEY.length < 32) fail5(404, "FEEDBACK_UNAVAILABLE");
+  if (request.method !== "POST" || request.headers.has("authorization") || request.headers.has("cookie") || request.headers.get("content-type") !== "application/json" || new URL(request.url).search) fail5(401, "SERVICE_DENIED");
+  const stamp3 = request.headers.get("x-nexus-service-timestamp"), nonce = request.headers.get("x-nexus-service-nonce"), signature = request.headers.get("x-nexus-service-signature");
+  if (!/^\d{13}$/.test(stamp3 || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !/^[a-f0-9]{64}$/.test(signature || "") || Math.abs(Date.now() - Number(stamp3)) > 3e4) fail5(401, "SERVICE_DENIED");
   const { bytes, value } = await boundedFeedbackJson(request), key = await crypto.subtle.importKey("raw", encoder5.encode(env.FEEDBACK_SERVICE_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
   const canonical = `v1
 POST
 ${INTERNAL4}
-${stamp2}
+${stamp3}
 ${nonce}
 ${await sha5(bytes)}`;
-  if (!await crypto.subtle.verify("HMAC", key, Uint8Array.from(signature.match(/../g), (x) => parseInt(x, 16)), encoder5.encode(canonical))) fail2(401, "SERVICE_DENIED");
+  if (!await crypto.subtle.verify("HMAC", key, Uint8Array.from(signature.match(/../g), (x) => parseInt(x, 16)), encoder5.encode(canonical))) fail5(401, "SERVICE_DENIED");
   object(value);
   const envelopeKeys = Object.keys(value).sort().join(","), hasExpectation = envelopeKeys === "expectedAccountId,method,path,payload,sessionHash";
-  if (!(hasExpectation || envelopeKeys === "method,path,payload,sessionHash" && env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED !== "true") || hasExpectation && (typeof value.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId)) || !/^[a-f0-9]{64}$/.test(value.sessionHash || "") || !["GET", "POST", "PATCH"].includes(value.method) || typeof value.path !== "string" || !value.path.startsWith(BASE2 + "/") || value.path.length > 512) fail2(401, "SERVICE_DENIED");
-  const added = await query3(env.DB, "INSERT OR IGNORE INTO feedback_service_nonces(nonce,expires_at) VALUES(?1,?2)", nonce, new Date(Number(stamp2) + 3e4).toISOString()).run();
-  if (added.meta.changes !== 1) fail2(401, "SERVICE_DENIED");
+  if (!(hasExpectation || envelopeKeys === "method,path,payload,sessionHash" && env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED !== "true") || hasExpectation && (typeof value.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId)) || !/^[a-f0-9]{64}$/.test(value.sessionHash || "") || !["GET", "POST", "PATCH"].includes(value.method) || typeof value.path !== "string" || !value.path.startsWith(BASE2 + "/") || value.path.length > 512) fail5(401, "SERVICE_DENIED");
+  const added = await query3(env.DB, "INSERT OR IGNORE INTO feedback_service_nonces(nonce,expires_at) VALUES(?1,?2)", nonce, new Date(Number(stamp3) + 3e4).toISOString()).run();
+  if (added.meta.changes !== 1) fail5(401, "SERVICE_DENIED");
   await query3(env.DB, "DELETE FROM feedback_service_nonces WHERE expires_at<?1", (/* @__PURE__ */ new Date()).toISOString()).run();
   const foundation = await readEligibleAccountFoundation(env.DB, value.sessionHash, void 0, env);
-  if (!foundation) fail2(401, "SESSION_REQUIRED");
-  if (hasExpectation && foundation.account.accountId !== value.expectedAccountId) fail2(401, "SESSION_REQUIRED");
+  if (!foundation) fail5(401, "SESSION_REQUIRED");
+  if (hasExpectation && foundation.account.accountId !== value.expectedAccountId) fail5(401, "SESSION_REQUIRED");
   return { ...value, actor: foundation.account };
 }
 async function feedbackOperation(db, value, env = {}) {
@@ -26971,21 +27392,21 @@ async function feedbackOperation(db, value, env = {}) {
     return { account: { id: actor.accountId, displayName: actor.displayName }, canModerate: moderator, total: total.count, offset, items: (await rows2(query3(db, joined + " WHERE i.author_id=?1 ORDER BY i.created_at DESC,i.id LIMIT ?2 OFFSET ?3", actor.accountId, limit, offset))).map(authorDto) };
   }
   if (pathname === BASE2 + "/items" && method === "POST") {
-    if (env.COMMUNITY_ENABLED === "true" && await query3(db, "SELECT 1 ok FROM feedback_deleted_items WHERE author_id=?1 AND request_key=?2", actor.accountId, payload?.requestKey || "").first()) fail2(409, "ITEM_DELETED");
+    if (env.COMMUNITY_ENABLED === "true" && await query3(db, "SELECT 1 ok FROM feedback_deleted_items WHERE author_id=?1 AND request_key=?2", actor.accountId, payload?.requestKey || "").first()) fail5(409, "ITEM_DELETED");
     const input = validateFeedbackInput(payload), requestKey = string(payload.requestKey, 80, 10);
-    if (!/^[a-zA-Z0-9-]+$/.test(requestKey)) fail2(400, "INVALID_INPUT");
+    if (!/^[a-zA-Z0-9-]+$/.test(requestKey)) fail5(400, "INVALID_INPUT");
     const digest2 = await sha5(JSON.stringify(input));
     const duplicate = await query3(db, joined + " WHERE i.author_id=?1 AND i.request_key=?2", actor.accountId, requestKey).first();
     if (duplicate) {
-      if (duplicate.request_hash !== digest2) fail2(409, "REQUEST_CONFLICT");
+      if (duplicate.request_hash !== digest2) fail5(409, "REQUEST_CONFLICT");
       return { item: authorDto(duplicate) };
     }
     await rate(db, actor.accountId);
-    const id3 = crypto.randomUUID(), stamp2 = (/* @__PURE__ */ new Date()).toISOString(), status = input.kind === "review" ? "pending" : "submitted";
-    const insert = query3(db, `INSERT INTO feedback_items(id,author_id,kind,type,status,request_key,request_hash,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?8)`, id3, actor.accountId, input.kind, input.type, status, requestKey, digest2, stamp2);
-    const revision = query3(db, `INSERT INTO feedback_revisions(item_id,revision,body,public_name,rating,course_id,consent,context_json,created_at,search_text) VALUES(?1,1,?2,?3,?4,?5,?6,?7,?8,?9)`, id3, input.body, input.publicName, input.rating, input.courseId, +input.consent, JSON.stringify(input.context), stamp2, searchable(input.body));
+    const id3 = crypto.randomUUID(), stamp3 = (/* @__PURE__ */ new Date()).toISOString(), status = input.kind === "review" ? "pending" : "submitted";
+    const insert = query3(db, `INSERT INTO feedback_items(id,author_id,kind,type,status,request_key,request_hash,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?8)`, id3, actor.accountId, input.kind, input.type, status, requestKey, digest2, stamp3);
+    const revision = query3(db, `INSERT INTO feedback_revisions(item_id,revision,body,public_name,rating,course_id,consent,context_json,created_at,search_text) VALUES(?1,1,?2,?3,?4,?5,?6,?7,?8,?9)`, id3, input.body, input.publicName, input.rating, input.courseId, +input.consent, JSON.stringify(input.context), stamp3, searchable(input.body));
     try {
-      await db.batch([insert, revision, event(db, id3, 1, actor.accountId, "submitted", "", stamp2)]);
+      await db.batch([insert, revision, event(db, id3, 1, actor.accountId, "submitted", "", stamp3)]);
     } catch (error) {
       const retry = await query3(db, joined + " WHERE i.author_id=?1 AND i.request_key=?2", actor.accountId, requestKey).first();
       if (retry && retry.request_hash === digest2) return { item: authorDto(retry) };
@@ -26996,15 +27417,15 @@ async function feedbackOperation(db, value, env = {}) {
   const match = pathname.match(/^\/api\/v2\/feedback\/items\/([a-zA-Z0-9-]+)(?:\/(withdraw|moderate))?$/);
   if (match && method === "PATCH") {
     object(payload);
-    if (match[2] === "moderate" && !moderator) fail2(403, "MODERATOR_REQUIRED");
+    if (match[2] === "moderate" && !moderator) fail5(403, "MODERATOR_REQUIRED");
     const current = await item(db, match[1]);
-    if (!current || match[2] !== "moderate" && current.author_id !== actor.accountId) fail2(404, "NOT_FOUND");
-    if (!Number.isInteger(payload.version) || payload.version !== current.version) fail2(409, "STALE_VERSION");
-    const stamp2 = (/* @__PURE__ */ new Date()).toISOString();
+    if (!current || match[2] !== "moderate" && current.author_id !== actor.accountId) fail5(404, "NOT_FOUND");
+    if (!Number.isInteger(payload.version) || payload.version !== current.version) fail5(409, "STALE_VERSION");
+    const stamp3 = (/* @__PURE__ */ new Date()).toISOString();
     let result;
     if (match[2] === "moderate") {
-      if (!moderator) fail2(403, "MODERATOR_REQUIRED");
-      if (Object.keys(payload).some((x) => !["version", "revision", "action", "reason", "status"].includes(x)) || payload.revision !== current.current_revision) fail2(409, "STALE_REVISION");
+      if (!moderator) fail5(403, "MODERATOR_REQUIRED");
+      if (Object.keys(payload).some((x) => !["version", "revision", "action", "reason", "status"].includes(x)) || payload.revision !== current.current_revision) fail5(409, "STALE_REVISION");
       const reason = string(payload.reason || "", 1e3), action = payload.action;
       let status = current.status, featured = current.featured;
       if (action === "approve" && current.kind === "review" && current.status === "pending" && current.consent) {
@@ -27020,29 +27441,29 @@ async function feedbackOperation(db, value, env = {}) {
         featured = action === "feature" ? 1 : 0;
       } else if (action === "triage" && current.kind === "message" && ["triaged", "in-progress", "resolved"].includes(payload.status)) {
         status = payload.status;
-      } else fail2(409, "INVALID_TRANSITION");
-      result = await db.batch([query3(db, `UPDATE feedback_items SET status=?1,featured=?2,version=version+1,updated_at=?3 WHERE id=?4 AND version=?5 AND current_revision=?6`, status, featured, stamp2, current.id, payload.version, payload.revision), event(db, current.id, current.current_revision, actor.accountId, action, reason, stamp2)]);
+      } else fail5(409, "INVALID_TRANSITION");
+      result = await db.batch([query3(db, `UPDATE feedback_items SET status=?1,featured=?2,version=version+1,updated_at=?3 WHERE id=?4 AND version=?5 AND current_revision=?6`, status, featured, stamp3, current.id, payload.version, payload.revision), event(db, current.id, current.current_revision, actor.accountId, action, reason, stamp3)]);
     } else {
-      if (current.author_id !== actor.accountId) fail2(404, "NOT_FOUND");
+      if (current.author_id !== actor.accountId) fail5(404, "NOT_FOUND");
       if (match[2] === "withdraw") {
-        if (current.kind !== "review") fail2(409, "INVALID_TRANSITION");
-        result = await db.batch([query3(db, `UPDATE feedback_items SET status='withdrawn',featured=0,version=version+1,updated_at=?1 WHERE id=?2 AND version=?3`, stamp2, current.id, payload.version), event(db, current.id, current.current_revision, actor.accountId, "withdrawn", "", stamp2)]);
+        if (current.kind !== "review") fail5(409, "INVALID_TRANSITION");
+        result = await db.batch([query3(db, `UPDATE feedback_items SET status='withdrawn',featured=0,version=version+1,updated_at=?1 WHERE id=?2 AND version=?3`, stamp3, current.id, payload.version), event(db, current.id, current.current_revision, actor.accountId, "withdrawn", "", stamp3)]);
       } else {
         const input = validateFeedbackInput(payload);
-        if (input.kind !== current.kind) fail2(400, "INVALID_INPUT");
+        if (input.kind !== current.kind) fail5(400, "INVALID_INPUT");
         await rate(db, actor.accountId);
         const revision = current.current_revision + 1;
-        result = await db.batch([query3(db, `UPDATE feedback_items SET current_revision=?1,type=?2,status=?3,featured=0,version=version+1,updated_at=?4 WHERE id=?5 AND version=?6`, revision, input.type, input.kind === "review" ? "pending" : "submitted", stamp2, current.id, payload.version), query3(db, `INSERT INTO feedback_revisions(item_id,revision,body,public_name,rating,course_id,consent,context_json,created_at,search_text) SELECT ?1,?2,?3,?4,?5,?6,?7,?8,?9,?10 WHERE changes()=1`, current.id, revision, input.body, input.publicName, input.rating, input.courseId, +input.consent, JSON.stringify(input.context), stamp2, searchable(input.body)), event(db, current.id, revision, actor.accountId, "revised", "", stamp2)]);
+        result = await db.batch([query3(db, `UPDATE feedback_items SET current_revision=?1,type=?2,status=?3,featured=0,version=version+1,updated_at=?4 WHERE id=?5 AND version=?6`, revision, input.type, input.kind === "review" ? "pending" : "submitted", stamp3, current.id, payload.version), query3(db, `INSERT INTO feedback_revisions(item_id,revision,body,public_name,rating,course_id,consent,context_json,created_at,search_text) SELECT ?1,?2,?3,?4,?5,?6,?7,?8,?9,?10 WHERE changes()=1`, current.id, revision, input.body, input.publicName, input.rating, input.courseId, +input.consent, JSON.stringify(input.context), stamp3, searchable(input.body)), event(db, current.id, revision, actor.accountId, "revised", "", stamp3)]);
       }
     }
-    if (result[0].meta.changes !== 1) fail2(409, "STALE_VERSION");
+    if (result[0].meta.changes !== 1) fail5(409, "STALE_VERSION");
     return { item: authorDto(await item(db, current.id)) };
   }
   if (pathname === BASE2 + "/moderation" && method === "GET") {
-    if (!moderator) fail2(403, "MODERATOR_REQUIRED");
+    if (!moderator) fail5(403, "MODERATOR_REQUIRED");
     const kind = url.searchParams.get("kind") || "", status = url.searchParams.get("status") || "", course = identifier(url.searchParams.get("course") || "");
     const from = string(url.searchParams.get("from") || "", 10), to = string(url.searchParams.get("to") || "", 10), search = searchable(string(url.searchParams.get("search") || "", 100)), offset = Math.min(1e4, Math.max(0, Math.floor(Number(url.searchParams.get("offset")) || 0)));
-    if ([from, to].some((x) => x && !/^\d{4}-\d{2}-\d{2}$/.test(x))) fail2(400, "INVALID_INPUT");
+    if ([from, to].some((x) => x && !/^\d{4}-\d{2}-\d{2}$/.test(x))) fail5(400, "INVALID_INPUT");
     const where = ` WHERE (?1='' OR i.kind=?1) AND (?2='' OR i.status=?2) AND (?3='' OR r.course_id=?3) AND (?4='' OR substr(i.created_at,1,10)>=?4) AND (?5='' OR substr(i.created_at,1,10)<=?5) AND (?6='' OR instr(r.search_text,?6)>0)`;
     const list = await rows2(query3(db, joined.replace("SELECT i.*", "SELECT a.display_name AS author_name,i.*") + " LEFT JOIN account_subjects a ON a.id=i.author_id" + where + " ORDER BY i.created_at DESC,i.id LIMIT 20 OFFSET ?7", kind, status, course, from, to, search, offset));
     const total = await query3(db, "SELECT count(*) AS count FROM feedback_items i JOIN feedback_revisions r ON r.item_id=i.id AND r.revision=i.current_revision" + where, kind, status, course, from, to, search).first();
@@ -27051,19 +27472,19 @@ async function feedbackOperation(db, value, env = {}) {
   const events = pathname.match(/^\/api\/v2\/feedback\/items\/([a-zA-Z0-9-]+)\/events$/);
   if (events && method === "GET") {
     const current = await item(db, events[1]);
-    if (!current || !moderator && current.author_id !== actor.accountId) fail2(404, "NOT_FOUND");
+    if (!current || !moderator && current.author_id !== actor.accountId) fail5(404, "NOT_FOUND");
     const list = await rows2(query3(db, "SELECT revision,actor_id,action,reason,created_at FROM feedback_events WHERE item_id=?1 ORDER BY created_at,id", current.id));
     return { events: list.map((r) => ({ revision: r.revision, action: r.action, reason: r.reason, createdAt: r.created_at, ...moderator ? { actorId: r.actor_id } : {} })) };
   }
-  fail2(404, "NOT_FOUND");
+  fail5(404, "NOT_FOUND");
 }
 async function handleFeedbackRequest(request, env) {
   const url = new URL(request.url);
   if (!url.pathname.startsWith(BASE2 + "/")) return null;
   try {
-    if (env.FEEDBACK_ENABLED !== "true" || !env.DB) fail2(503, "FEEDBACK_UNAVAILABLE");
+    if (env.FEEDBACK_ENABLED !== "true" || !env.DB) fail5(503, "FEEDBACK_UNAVAILABLE");
     if (url.pathname === BASE2 + "/reviews" && request.method === "GET") return response3(await publicReviews(env.DB, url.searchParams));
-    if (url.pathname !== INTERNAL4) fail2(404, "NOT_FOUND");
+    if (url.pathname !== INTERNAL4) fail5(404, "NOT_FOUND");
     const envelope2 = await verifyEnvelope(request, env);
     return response3(await feedbackOperation(env.DB, envelope2, env));
   } catch (error) {
@@ -27106,8 +27527,8 @@ async function boundedBody(request) {
   }
 }
 async function hexSha256(bytes) {
-  const hash3 = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
-  return Array.from(hash3, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const hash4 = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return Array.from(hash4, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 async function verifyAccountServiceRequest(request, env) {
   const key = env.ACCOUNT_SERVICE_KEY;
@@ -27116,17 +27537,17 @@ async function verifyAccountServiceRequest(request, env) {
   }
   const url = new URL(request.url);
   if (request.method !== "POST" || url.pathname !== INTERNAL_PATH || url.search || request.headers.has("authorization") || request.headers.has("cookie") || request.headers.get("content-type") !== "application/json") return denied();
-  const stamp2 = request.headers.get("x-nexus-service-timestamp");
+  const stamp3 = request.headers.get("x-nexus-service-timestamp");
   const nonce = request.headers.get("x-nexus-service-nonce");
   const signature = request.headers.get("x-nexus-service-signature");
-  if (!/^\d{13}$/.test(stamp2 || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !/^[a-f0-9]{64}$/.test(signature || "") || Math.abs(Date.now() - Number(stamp2)) > CLOCK_WINDOW_MS) return denied();
+  if (!/^\d{13}$/.test(stamp3 || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !/^[a-f0-9]{64}$/.test(signature || "") || Math.abs(Date.now() - Number(stamp3)) > CLOCK_WINDOW_MS) return denied();
   const body = await boundedBody(request);
   if (!body) return denied();
   const digest2 = await hexSha256(body);
   const canonical = `v1
 POST
 ${INTERNAL_PATH}
-${stamp2}
+${stamp3}
 ${nonce}
 ${digest2}`;
   const hmacKey = await crypto.subtle.importKey(
@@ -27151,7 +27572,7 @@ ${digest2}`;
     const inserted = await env.DB.prepare(`
       INSERT INTO account_service_nonces (nonce, expires_at)
       VALUES (?1, ?2)
-    `).bind(nonce, new Date(Number(stamp2) + CLOCK_WINDOW_MS).toISOString()).run();
+    `).bind(nonce, new Date(Number(stamp3) + CLOCK_WINDOW_MS).toISOString()).run();
     if (!inserted?.success || Number(inserted?.meta?.changes) !== 1) return denied();
   } catch {
     return denied();

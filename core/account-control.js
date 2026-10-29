@@ -54,7 +54,7 @@ export async function bindAccountControl(){
  async function previewPurge(user){
   const plan=await request('/users/'+encodeURIComponent(user.accountId)+'/purge-preview',{method:'POST',body:{requestId:crypto.randomUUID(),version:user.version}});
   if(!current())return;purge={user,plan};
-  panel.querySelector('[data-purge-summary]').textContent='К удалению: проектов — '+plan.counts.projects+', пространств — '+plan.counts.workspaces+', отзывов и обращений — '+plan.counts.feedback+', ключей — '+plan.counts.keys+', привязок входа — '+plan.counts.providers+'.';
+  panel.querySelector('[data-purge-summary]').textContent='К удалению: проектов — '+plan.counts.projects+', пространств — '+plan.counts.workspaces+', отзывов и обращений — '+plan.counts.feedback+', ключей — '+plan.counts.keys+', привязок входа — '+plan.counts.providers+'.'+(Number.isSafeInteger(plan.counts.courseFinalAttempts)?' Итоговых работ курса — '+plan.counts.courseFinalAttempts+', сохранённых исходников и результатов — '+Math.ceil(plan.counts.courseFinalBytes/1024)+' КБ.':'');
   panel.querySelector('[data-purge-phrase]').textContent=plan.confirmation;panel.querySelector('[data-purge-confirm]').value='';panel.querySelector('[data-purge-agree]').checked=false;panel.querySelector('[data-purge-status]').textContent='';
   dialog.showModal();
  }

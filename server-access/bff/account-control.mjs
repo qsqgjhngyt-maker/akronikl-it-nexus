@@ -10,6 +10,8 @@ import {uploadPhotoParts,readPhotoParts} from './media-parts.mjs';
 import {GATEWAY_ORIGIN,WORKER_ORIGIN} from './account-read.mjs';
 import {readV2CookieContext} from './gateway-cookie-context.mjs';
 import {configuredOAuthProviders,oauthCallbackURL} from './oauth-providers.mjs';
+import {assessmentBridge,disabledAssessment,AssessmentBridgeError} from './assessment.mjs';
+import {ASSESSMENT_PATH,ASSESSMENT_ERROR_CODES,validateAssessmentRequest} from '../../course-final/transport-contract.js';
 const INTERNAL='/api/v2/account/internal/control',BASE='/api/v2/account/control';
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const count=(req,name)=>{
@@ -22,6 +24,7 @@ const exact=(o,keys)=>!!o&&typeof o==='object'&&!Array.isArray(o)&&Object.keys(o
 const id=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value);
 const safeText=(value,max)=>typeof value==='string'&&value.length<=max&&!/[\u0000-\u001f\u007f]/.test(value);
 const safeCodes=new Set(['SESSION_REQUIRED','ACCOUNT_SESSION_CHANGED','ADMIN_REQUIRED','ADMIN_FRESH_PASSKEY_REQUIRED','ADMIN_ACCOUNT_PROTECTED','INVALID_INPUT','INVALID_STATE','RESTORE_WITHOUT_LOGIN_METHOD','NOT_FOUND','CONTROL_CONFLICT','CONTROL_WRITE_UNCONFIRMED','CONTROL_UNAVAILABLE','ALPHA_CONTROL_UNAVAILABLE','ALPHA_ACCESS_CLOSED','ALPHA_CAPACITY_REACHED','ALPHA_LIMIT_BELOW_OCCUPIED','REMOVE_BEFORE_PURGE','PURGE_NOT_ENABLED','PURGE_SCHEMA_REVIEW_REQUIRED','SHARED_PROJECT_TRANSFER_REQUIRED','PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED','PURGE_APPROVAL_REJECTED','PURGE_CONFIRMATION_REQUIRED','AVATAR_INVALID','AVATAR_DIMENSIONS','AVATAR_TOO_LARGE','USERNAME_UNAVAILABLE','RATE_LIMITED','BLOG_IMAGE_INVALID','CONTENT_MEDIA_UNAVAILABLE','CONTENT_MEDIA_QUOTA','CONTENT_EDITOR_UPDATE_REQUIRED','CONTENT_MEDIA_PARTS_UNAVAILABLE','CONTENT_MEDIA_PARTS_REQUIRED','CONTENT_MEDIA_PARTS_CONFLICT','CONTENT_MEDIA_PARTS_INCOMPLETE']);
+for(const code of ASSESSMENT_ERROR_CODES)safeCodes.add(code);
 const reply=(res,status,body,extra={})=>{const data=JSON.stringify(body);res.writeHead(status,{'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(data),'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer',...extra});res.end(data);return true};
 async function bounded(stream){
  const chunks=[];let size=0;
@@ -69,7 +72,7 @@ function validateDTO(data,path,expected){
  }else if(path===BASE+'/invites'){
   if(!exact(data,['ok','accountId','invitationToken','expiresAt'])||data.ok!==true||!id(data.accountId)||!/^npi_[A-Za-z0-9_-]{43}$/.test(data.invitationToken)||!safeText(data.expiresAt,64))valid();
  }else if(path.endsWith('/purge-preview')){
-  if(!exact(data,['approvalToken','expiresAt','counts','confirmation','serverDataOnly'])||!/^npa_[A-Za-z0-9_-]{43}$/.test(data.approvalToken)||!safeText(data.expiresAt,64)||!safeText(data.confirmation,180)||data.serverDataOnly!==true||!exact(data.counts,['projects','workspaces','feedback','keys','providers'])||Object.values(data.counts).some(v=>!Number.isInteger(v)||v<0))valid();
+  if(!exact(data,['approvalToken','expiresAt','counts','confirmation','serverDataOnly'])||!/^npa_[A-Za-z0-9_-]{43}$/.test(data.approvalToken)||!safeText(data.expiresAt,64)||!safeText(data.confirmation,180)||data.serverDataOnly!==true||!(exact(data.counts,['projects','workspaces','feedback','keys','providers'])||exact(data.counts,['projects','workspaces','feedback','keys','providers','courseFinalAttempts','courseFinalBytes']))||Object.values(data.counts).some(v=>!Number.isSafeInteger(v)||v<0))valid();
  }else if(path.endsWith('/purge')){
   if(!exact(data,['ok','deletedServerData','localCopiesRemotelyErased'])||data.ok!==true||data.deletedServerData!==true||data.localCopiesRemotelyErased!==false)valid();
  }else if(path===BASE+'/providers'){
@@ -133,6 +136,16 @@ export function createAccountControlHandler({env={},fetchImpl=fetch,mediaFetchIm
    if(!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session))fail('INGRESS_REJECTED',401);
    const partsSignal=env.BFF_CONTENT_MEDIA_PARTS_ENABLED==='true'?AbortSignal.timeout(12000):undefined;
    const payload=req.method==='POST'?await bounded(req):null;
+   if(path===ASSESSMENT_PATH){
+    if(req.method!=='POST'||url.search)fail('ASSESSMENT_INPUT_INVALID');
+    try{validateAssessmentRequest(payload)}catch{fail('ASSESSMENT_INPUT_INVALID')}
+    if(env.BFF_COURSE_FINAL_ENABLED!=='true'){
+     if(payload.phase==='capabilities')return reply(res,200,disabledAssessment());
+     fail('ASSESSMENT_UNAVAILABLE',503);
+    }
+    const rpc=(body,options)=>service(env,fetchImpl,{path:ASSESSMENT_PATH,method:'POST',payload:body,sessionHash:sha(session),expectedAccountId:expected},options);
+    return reply(res,200,await assessmentBridge(payload,rpc,{expectedAccountId:expected}));
+   }
    let prepared=payload;
    if(path==='/api/v2/account/profile/avatar'&&req.method==='POST'){
     if(!exact(payload,['requestId','version','jpegBase64']))fail('INVALID_INPUT');
@@ -162,6 +175,6 @@ export function createAccountControlHandler({env={},fetchImpl=fetch,mediaFetchIm
    }
    if(path===BASE+'/content'&&req.method==='GET'&&Array.isArray(dto.posts))return reply(res,200,{...dto,posts:dto.posts.map(p=>({...p,draft:compatibleArticle(p.draft,{editor:true}),published:p.published?compatibleArticle(p.published,{editor:true}):null}))});
    return reply(res,200,dto);
-  }catch(error){return reply(res,error instanceof Rejected?error.status:error.name==='MediaPartsError'?error.status:error.message==='INGRESS_REJECTED'?401:502,{error:{code:error instanceof Rejected||error.name==='MediaPartsError'?error.code:error.message==='INGRESS_REJECTED'?'INGRESS_REJECTED':'CONTROL_UNAVAILABLE'}},diagnostic&&error instanceof Rejected?error.nexusWire||{}:{})}
+  }catch(error){return reply(res,error instanceof Rejected?error.status:error instanceof AssessmentBridgeError?error.status:error.name==='MediaPartsError'?error.status:error.message==='INGRESS_REJECTED'?401:502,{error:{code:error instanceof Rejected||error instanceof AssessmentBridgeError&&safeCodes.has(error.code)||error.name==='MediaPartsError'?error.code:error.message==='INGRESS_REJECTED'?'INGRESS_REJECTED':'CONTROL_UNAVAILABLE'}},diagnostic&&error instanceof Rejected?error.nexusWire||{}:{})}
  };
 }

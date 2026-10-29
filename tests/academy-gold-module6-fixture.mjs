@@ -1,3 +1,4 @@
+import{bindIntroTransport}from'./helpers/intro-transport.mjs';
 import{createStudioService}from'../studio-build/service.mjs';
 // Настоящий bootstrap/app/SW/Worker на canonical origin, физически только loopback.
 import https from 'node:https';
@@ -6,6 +7,7 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {GATEWAY_ORIGIN} from '../server-access/bff/account-read.mjs';
 import {bindRuntimeTransport} from './helpers/runtime-transport.mjs';
+import {QT_BROWSER_PROFILE} from '../sandbox/qt/profile.js';
 export async function module6ApplicationFixture({chromiumArgs=[]}={}){
  const frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR),cache=process.env.NEXUS_PINNED_RUNTIME_DIR;
  const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
@@ -37,7 +39,12 @@ export async function module6ApplicationFixture({chromiumArgs=[]}={}){
  const context=await browser.newContext({ignoreHTTPSErrors:true,viewport:{width:1366,height:900}});
  // Отдельный пустой профиль. Тестовый TLS не влияет на браузер владельца/системное доверие.
  await context.route('**/*',async route=>[GATEWAY_ORIGIN,previewOrigin].includes(new URL(route.request().url()).origin)?route.continue():route.abort());
+ await bindIntroTransport(context,{frontend,requests});
  await bindRuntimeTransport(context);
+ if(process.env.NEXUS_QT_BROWSER_PACK){
+  const base=QT_BROWSER_PROFILE.previewUrl.replace('index.html','');
+  await context.route(base+'**',async route=>{const name=route.request().url().slice(base.length);if(!/^(index\.html|preview\.js|a11y\.js|profile\.js|verified-pack\.js|qtloader\.js|program\.js|program\.wasm\.bin|headers\.bin)$/.test(name))return route.abort();await route.fulfill({status:200,body:await readFile(path.join(process.env.NEXUS_QT_BROWSER_PACK,name)),headers:{'content-type':name.endsWith('.js')?'text/javascript':name.endsWith('.html')?'text/html':'application/octet-stream','access-control-allow-origin':'*','cross-origin-resource-policy':'cross-origin','cache-control':'no-store'}})});
+ }
  await context.route('https://felixhao28.github.io/JSCPP/dist/JSCPP.es5.min.js',async route=>route.fulfill({status:200,contentType:'application/javascript',body:await readFile(process.env.NEXUS_JSCPP_FIXTURE)}));
  const page=await context.newPage();page.setDefaultTimeout(45000);page.on('pageerror',e=>errors.push(e.message));
  page.on('console',message=>{if(message.type()==='error')errors.push('console: '+message.text());});
@@ -49,5 +56,5 @@ export async function module6ApplicationFixture({chromiumArgs=[]}={}){
   while(Date.now()<until){last=await page.evaluate(()=>new Promise(resolve=>{const worker=navigator.serviceWorker.controller;if(!worker)return resolve(null);const channel=new MessageChannel(),timer=setTimeout(()=>resolve(null),10000);channel.port1.onmessage=e=>{clearTimeout(timer);channel.port1.close();resolve(e.data)};worker.postMessage({type:'nexus-pwa-status'},[channel.port2]);}));if(last?.publicReady===true)return last;await page.waitForTimeout(100);}
   throw Error('ONLINE_PUBLIC_PWA_NOT_READY '+JSON.stringify({last,errors,workerEvents}));
  }
- return{page,context,requests,errors,workerEvents,browserVersion:browser.version(),browserMode:process.env.NEXUS_CHROME_PATH?'system Chrome headless':'bundled Chromium new headless',origin:GATEWAY_ORIGIN,waitReady,studio,async rendererCpu(){const c=await browser.newBrowserCDPSession();try{return(await c.send('SystemInfo.getProcessInfo')).processInfo.filter(p=>p.type==='renderer').map(p=>({id:p.id,cpuTime:p.cpuTime}))}finally{await c.detach()}},async newActorPage(id){if(id!=='synthetic-teacher')throw Error('QA_ACTOR_INVALID');const c=await browser.newContext({ignoreHTTPSErrors:true,viewport:{width:1366,height:900},extraHTTPHeaders:{'x-nexus-qa-actor':id}});await c.route('**/*',r=>[GATEWAY_ORIGIN,previewOrigin].includes(new URL(r.request().url()).origin)?r.continue():r.abort());const p=await c.newPage();p.setDefaultTimeout(45000);p.on('pageerror',e=>errors.push(e.message));return p},async close(){await studio.close();await browser.close();server.closeAllConnections();previewServer.closeAllConnections();await Promise.all([new Promise(resolve=>server.close(resolve)),new Promise(resolve=>previewServer.close(resolve))]);}};
+ return{page,context,requests,errors,workerEvents,browserVersion:browser.version(),browserMode:process.env.NEXUS_CHROME_PATH?'system Chrome headless':'bundled Chromium new headless',origin:GATEWAY_ORIGIN,waitReady,studio,async freshLearnerPage(){const c=await browser.newContext({ignoreHTTPSErrors:true,viewport:{width:390,height:844}});await c.route('**/*',r=>[GATEWAY_ORIGIN,previewOrigin].includes(new URL(r.request().url()).origin)?r.continue():r.abort());await bindIntroTransport(c,{frontend,requests});const p=await c.newPage();p.setDefaultTimeout(45000);p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});return p},async rendererCpu(){const c=await browser.newBrowserCDPSession();try{return(await c.send('SystemInfo.getProcessInfo')).processInfo.filter(p=>p.type==='renderer').map(p=>({id:p.id,cpuTime:p.cpuTime}))}finally{await c.detach()}},async newActorPage(id){if(id!=='synthetic-teacher')throw Error('QA_ACTOR_INVALID');const c=await browser.newContext({ignoreHTTPSErrors:true,viewport:{width:1366,height:900},extraHTTPHeaders:{'x-nexus-qa-actor':id}});await c.route('**/*',r=>[GATEWAY_ORIGIN,previewOrigin].includes(new URL(r.request().url()).origin)?r.continue():r.abort());await bindIntroTransport(c,{frontend,requests});const p=await c.newPage();p.setDefaultTimeout(45000);p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});return p},async close(){await studio.close();await browser.close();server.closeAllConnections();previewServer.closeAllConnections();await Promise.all([new Promise(resolve=>server.close(resolve)),new Promise(resolve=>previewServer.close(resolve))]);}};
 }

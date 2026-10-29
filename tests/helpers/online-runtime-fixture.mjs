@@ -1,3 +1,4 @@
+import{bindIntroTransport}from'./intro-transport.mjs';
 // Настоящий bootstrap/app/SW/Worker на canonical origin, физически только loopback.
 import https from 'node:https';
 import assert from 'node:assert/strict';
@@ -37,13 +38,7 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
  await context.route('**/*',async route=>new URL(route.request().url()).origin===GATEWAY_ORIGIN?route.continue():route.abort());
  // Четыре публичных video URL читаются из точной QA-сборки, без live CDN.
  // Все прочие внешние запросы по-прежнему запрещены; errors не фильтруются.
- await context.route('https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/**',async route=>{
-  const req=route.request(),u=new URL(req.url()),headers=await req.allHeaders();
-  assert.match(u.href,/^https:\/\/qsqgjhngyt-maker\.github\.io\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/);
-  assert.equal(req.method(),'GET');assert.equal(Boolean(headers.cookie||headers.authorization),false,'Публичное видео не получает credentials');
-  const file=u.pathname.replace('/akronikl-it-nexus/','');requests.push({path:u.pathname,method:req.method(),publicMediaFixture:true});
-  await route.fulfill({status:200,headers:{'content-type':file.endsWith('.mp4')?'video/mp4':'video/webm','access-control-allow-origin':'*','cache-control':'no-store'},body:await readFile(path.join(frontend,file))});
- });
+ await bindIntroTransport(context,{frontend,requests});
  await bindRuntimeTransport(context);
  await context.route('https://felixhao28.github.io/JSCPP/dist/JSCPP.es5.min.js',async route=>route.fulfill({status:200,contentType:'application/javascript',body:await readFile(process.env.NEXUS_JSCPP_FIXTURE)}));
  const page=await context.newPage();page.setDefaultTimeout(45000);page.on('pageerror',e=>errors.push(e.message));

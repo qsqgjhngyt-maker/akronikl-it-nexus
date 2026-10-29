@@ -7,6 +7,7 @@ import {createHash} from 'node:crypto';
 import path from 'node:path';
 import {ROOT,BASE,GENERATION,verifyStartupIntroContract} from './startup-intro-contract.mjs';
 const i=process.argv.indexOf('--lane'),lane=process.argv[i+1];
+try{await access(path.join(ROOT,'docs/ru/03-content/CPP_COURSE_COMPLETION_SCOPE.json'));const r=spawnSync(process.execPath,['tools/check-cpp-course-ci.mjs','--lane',lane],{cwd:ROOT,stdio:'inherit',windowsHide:true});process.exit(r.status??1)}catch(error){if(error.code!=='ENOENT')throw error}
 try{await access(path.join(ROOT,'startup-intro-launch-fix.json'));const r=spawnSync(process.execPath,['tools/check-startup-intro-launch-fix-ci.mjs','--lane',lane],{cwd:ROOT,stdio:'inherit',windowsHide:true});process.exit(r.status??1)}catch(error){if(error.code!=='ENOENT')throw error}
 assert.ok(['preflight','content','browser','integration','publication'].includes(lane),'Неизвестный набор проверок');
 const out=path.resolve(process.env.NEXUS_INTRO_CI_EVIDENCE||path.join(ROOT,'evidence-startup-intro',lane));await mkdir(out,{recursive:true});
