@@ -416,7 +416,7 @@ async function request(path, options = {}) {
     signal?.removeEventListener("abort", abort);
   }
 }
-async function bindProviderButtons(container, { intent = "login", expectedAccountId, onStatus = () => {
+async function bindProviderButtons(container, { intent = "login", expectedAccountId, allowedProviders, onStatus = () => {
 }, acquire = () => true, release = () => {
 } } = {}) {
   if (!container || location.origin !== ORIGIN || !["login", "link"].includes(intent)) return;
@@ -450,6 +450,7 @@ async function bindProviderButtons(container, { intent = "login", expectedAccoun
     onStatus("\u0412\u044B \u0432\u0435\u0440\u043D\u0443\u043B\u0438\u0441\u044C \u0441\u043E \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B \u0432\u0445\u043E\u0434\u0430. \u0414\u043B\u044F \u043D\u043E\u0432\u043E\u0439 \u043F\u043E\u043F\u044B\u0442\u043A\u0438 \u043D\u0430\u0436\u043C\u0438\u0442\u0435 \u0441\u043F\u043E\u0441\u043E\u0431 \u0432\u0445\u043E\u0434\u0430 \u0441\u043D\u043E\u0432\u0430.");
   });
   for (const supplied of data.providers) {
+    if (allowedProviders && !allowedProviders.includes(supplied?.id)) continue;
     const definition = providers.get(supplied?.id);
     if (!definition || container.querySelector(`[data-provider="${supplied.id}"]`)) continue;
     const button = document.createElement("button");
@@ -642,6 +643,12 @@ function bindEntry({ loadPasskeyClient = () => import("/account/access/passkey-c
     status2.textContent = text;
     status2.dataset.tone = tone;
   };
+  let deletionHint = false;
+  try {
+    deletionHint = sessionStorage.getItem("nexus:self-deletion-success:v1") === "1";
+    sessionStorage.removeItem("nexus:self-deletion-success:v1");
+  } catch {
+  }
   const setBusy = (value) => {
     busy = value;
     login.setAttribute("aria-disabled", String(value));
@@ -710,7 +717,8 @@ function bindEntry({ loadPasskeyClient = () => import("/account/access/passkey-c
         }
       } else {
         clearAccount();
-        setStatus("\u0412\u0445\u043E\u0434 \u043A\u043B\u044E\u0447\u043E\u043C \u0434\u043E\u0441\u0442\u0443\u043F\u0430: Windows Hello, \u0442\u0435\u043B\u0435\u0444\u043E\u043D \u0438\u043B\u0438 \u0430\u043F\u043F\u0430\u0440\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447.");
+        setStatus(deletionHint ? "\u0412\u0430\u0448 \u0430\u043A\u043A\u0430\u0443\u043D\u0442 \u0438 \u0435\u0433\u043E \u0441\u0435\u0440\u0432\u0435\u0440\u043D\u044B\u0435 \u0434\u0430\u043D\u043D\u044B\u0435 \u0443\u0434\u0430\u043B\u0435\u043D\u044B. \u0421\u043A\u0430\u0447\u0430\u043D\u043D\u044B\u0435 \u0444\u0430\u0439\u043B\u044B \u0438 \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u044B\u0435 \u043E\u0444\u043B\u0430\u0439\u043D-\u043A\u043E\u043F\u0438\u0438 \u043E\u0441\u0442\u0430\u044E\u0442\u0441\u044F \u043D\u0430 \u0443\u0441\u0442\u0440\u043E\u0439\u0441\u0442\u0432\u0430\u0445." : "\u0412\u0445\u043E\u0434 \u043A\u043B\u044E\u0447\u043E\u043C \u0434\u043E\u0441\u0442\u0443\u043F\u0430: Windows Hello, \u0442\u0435\u043B\u0435\u0444\u043E\u043D \u0438\u043B\u0438 \u0430\u043F\u043F\u0430\u0440\u0430\u0442\u043D\u044B\u0439 \u043A\u043B\u044E\u0447.");
+        deletionHint = false;
         if (oauthReturnPending) {
           oauthReturnPending = false;
           setStatus("\u0421\u0435\u0441\u0441\u0438\u044F \u043F\u043E\u0441\u043B\u0435 \u0432\u043D\u0435\u0448\u043D\u0435\u0433\u043E \u0432\u0445\u043E\u0434\u0430 \u043D\u0435 \u043F\u043E\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043D\u0430. \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439\u0442\u0435 \u0432\u043E\u0439\u0442\u0438 \u0441\u043D\u043E\u0432\u0430.", "error");

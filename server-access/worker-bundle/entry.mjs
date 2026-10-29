@@ -21609,6 +21609,43 @@ async function managedInvitation(env, tokenHash) {
   return row;
 }
 
+// server-access/worker/self-delete.mjs
+var BASE = "/api/v2/account/control/";
+var SQL_NOW = "strftime('%Y-%m-%dT%H:%M:%fZ','now')";
+var SELF_SESSION_SQL = `EXISTS(SELECT 1 FROM account_sessions s
+ JOIN account_subjects a ON a.id=s.subject_id AND a.status='active'
+ JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active'
+ JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id
+ JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active'
+ WHERE s.id=?7 AND s.subject_id=?3 AND s.status='active' AND s.revoked_at IS NULL
+ AND s.auth_strength='account-method-v1' AND s.idle_expires_at>${SQL_NOW} AND s.absolute_expires_at>${SQL_NOW}
+ AND julianday(s.created_at)<=julianday('now') AND julianday(s.created_at)>julianday('now','-5 minutes')
+ AND ((lm.kind='passkey' AND EXISTS(SELECT 1 FROM nexus_passkey_credentials k WHERE k.account_id=a.id AND k.login_method_id=lm.id))
+ OR (lm.kind='oauth' AND EXISTS(SELECT 1 FROM oauth_identities oi JOIN nexus_oauth_receipts r
+ ON r.account_id=oi.account_id AND r.login_method_id=oi.login_method_id AND r.provider=oi.provider
+ AND r.issuer=oi.issuer AND r.provider_subject=oi.provider_subject
+ WHERE oi.account_id=a.id AND oi.login_method_id=lm.id AND r.session_id=s.id AND r.device_id=d.id))))`;
+async function selfDeleteOperation(env, value) {
+  const { actor, method, payload } = value, path = value.path;
+  if (!(path === BASE + "self-delete-capabilities" && method === "GET" || [BASE + "self-delete-preview", BASE + "self-delete"].includes(path) && method === "POST")) deny("NOT_FOUND", 404);
+  if (env.ACCOUNT_SELF_DELETE_ENABLED !== "true") deny("SELF_DELETE_UNAVAILABLE", 503);
+  const protectedAccount = !!await first(env.DB, "SELECT 1 FROM nexus_admin_grants WHERE account_id=?1", actor.account_id);
+  const member = await first(env.DB, "SELECT version FROM nexus_alpha_members WHERE account_id=?1 AND state='active'", actor.account_id);
+  const freshLogin = !!await first(env.DB, "SELECT 1 ok WHERE " + SELF_SESSION_SQL.replaceAll("?7", "?2").replaceAll("?3", "?1"), actor.account_id, actor.session_id);
+  if (path === BASE + "self-delete-capabilities" && method === "GET") {
+    const hasPasskey = !!await first(env.DB, "SELECT 1 FROM nexus_passkey_credentials k JOIN login_methods lm ON lm.id=k.login_method_id AND lm.account_id=k.account_id AND lm.status='active' WHERE k.account_id=?1", actor.account_id);
+    const providers = await rows(query2(env.DB, "SELECT DISTINCT oi.provider FROM oauth_identities oi JOIN login_methods lm ON lm.id=oi.login_method_id AND lm.account_id=oi.account_id AND lm.status='active' WHERE oi.account_id=?1 AND oi.provider IN('google','yandex','vk') ORDER BY oi.provider", actor.account_id));
+    return { accountId: actor.account_id, canDelete: !!member && !protectedAccount, protected: protectedAccount, freshLogin, version: member?.version || 0, hasPasskey, providers: providers.map((p) => p.provider) };
+  }
+  if (protectedAccount) deny("ADMIN_ACCOUNT_PROTECTED", 403);
+  if (!member) deny("INVALID_STATE", 409);
+  if (!freshLogin) deny("SELF_DELETE_FRESH_LOGIN_REQUIRED", 401);
+  const preview = path === BASE + "self-delete-preview";
+  if (method !== "POST" || !exact2(payload, preview ? ["requestId", "version"] : ["requestId", "version", "approvalToken", "confirmation"]) || !validRequestId(payload.requestId) || !Number.isSafeInteger(payload.version) || payload.version < 1) deny("INVALID_INPUT");
+  if (payload.version !== member.version) deny("CONTROL_CONFLICT", 409);
+  return preview ? preparePurge(env, value, actor.account_id, { self: true }) : executePurge(env, value, actor.account_id, { self: true });
+}
+
 // server-access/worker/admin-purge.mjs
 var ASSESSMENT_TABLES = "nexus_assessment_usage nexus_assessment_nonces nexus_assessment_write_guards nexus_assessment_audit nexus_assessment_owners nexus_assessment_attempts nexus_assessment_uploads nexus_assessment_parts nexus_assessment_reviews nexus_assessment_appeals nexus_assessment_answer_keys nexus_assessment_auto_results".split(" ");
 var AKRONIKL_TABLES = ["nexus_akronikl_state", "nexus_akronikl_connections", "nexus_akronikl_limits", "nexus_akronikl_locks"];
@@ -21616,7 +21653,7 @@ var AKRONIKL_SCHEMA = [...AKRONIKL_TABLES, "nexus_akronikl_nonces"];
 var KNOWN = new Set("workspaces workspace_members projects project_members project_access_policies project_revisions project_checkpoints project_invites audit_events project_snapshots account_subjects account_tokens account_devices account_sessions identity_security_events login_methods oauth_identities session_login_methods account_service_nonces nexus_passkey_users nexus_passkey_invites nexus_passkey_challenges nexus_passkey_credentials nexus_passkey_audit nexus_passkey_receipts nexus_passkey_service_nonces nexus_passkey_rate_limits feedback_permissions feedback_items feedback_revisions feedback_events feedback_rate_limits feedback_service_nonces nexus_oauth_service_nonces nexus_oauth_rate_limits nexus_oauth_transactions nexus_oauth_account_policies nexus_oauth_allowed_emails nexus_oauth_receipts nexus_oauth_verified_emails nexus_admin_grants nexus_alpha_settings nexus_alpha_members nexus_account_profiles nexus_admin_invites nexus_invite_enrollments nexus_admin_nonces nexus_admin_rate_limits nexus_admin_write_guards nexus_admin_audit nexus_admin_purge_approvals nexus_account_avatars nexus_admin_purge_links nexus_community_write_guards nexus_community_audit feedback_deleted_items feedback_replies nexus_content_posts nexus_content_home nexus_content_audit nexus_content_media nexus_content_media_audit nexus_content_media_uploads nexus_content_media_parts".split(" "));
 var PROJECTS = "SELECT id FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1)";
 var SCOPE = "SELECT json_object('schema',COALESCE((SELECT group_concat(v,'|') FROM(SELECT name||':'||COALESCE(sql,'') v FROM sqlite_master WHERE type IN('table','trigger','view') AND name NOT LIKE 'sqlite_%' ORDER BY type,name)),''),'memberVersion',(SELECT version FROM nexus_alpha_members WHERE account_id=?1),'accountUpdated',(SELECT updated_at FROM account_subjects WHERE id=?1),'projects',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||current_revision||':'||updated_at v FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1) ORDER BY id)),''),'feedback',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM feedback_items WHERE author_id=?1 ORDER BY id)),''),'feedbackReplies',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM feedback_replies WHERE author_id=?1 OR item_id IN(SELECT id FROM feedback_items WHERE author_id=?1) ORDER BY id)),''),'workspaces',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||updated_at v FROM workspaces WHERE owner_subject_id=?1 ORDER BY id)),''),'sharedRows',(SELECT count(*) FROM workspace_members WHERE workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1) AND subject_id<>?1)+(SELECT count(*) FROM project_members WHERE project_id IN(SELECT id FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1)) AND subject_id<>?1),'keys',(SELECT count(*) FROM nexus_passkey_credentials WHERE account_id=?1),'identities',(SELECT count(*) FROM oauth_identities WHERE account_id=?1),'sessions',(SELECT count(*) FROM account_sessions WHERE subject_id=?1),'avatarVersion',COALESCE((SELECT version FROM nexus_account_avatars WHERE account_id=?1),0)) AS value";
-async function scope(env, id3) {
+async function scope(env, id3, { self: self2 = false } = {}) {
   const tables = await rows(query2(env.DB, "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT IN('d1_migrations','_cf_KV','_cf_METADATA')"));
   if (tables.some((t) => !KNOWN.has(t.name) && !ASSESSMENT_TABLES.includes(t.name) && !AKRONIKL_SCHEMA.includes(t.name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
   const hasAkronikl = tables.some((t) => AKRONIKL_SCHEMA.includes(t.name));
@@ -21640,30 +21677,36 @@ async function scope(env, id3) {
   if (shared.n) deny("SHARED_PROJECT_TRANSFER_REQUIRED", 409);
   const external = await first(env.DB, "SELECT (SELECT count(*) FROM projects WHERE id IN(" + PROJECTS + ") AND latest_r2_key IS NOT NULL AND latest_r2_key NOT LIKE 'd1:%')+(SELECT count(*) FROM project_revisions WHERE project_id IN(" + PROJECTS + ") AND r2_key NOT LIKE 'd1:%') n", id3);
   if (external.n) deny("PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED", 409);
-  const member = await first(env.DB, "SELECT m.version,p.username FROM nexus_alpha_members m LEFT JOIN nexus_account_profiles p ON p.account_id=m.account_id WHERE m.account_id=?1 AND m.state='removed'", id3);
-  if (!member) deny("REMOVE_BEFORE_PURGE", 409);
+  const member = await first(env.DB, "SELECT m.version,p.username FROM nexus_alpha_members m LEFT JOIN nexus_account_profiles p ON p.account_id=m.account_id WHERE m.account_id=?1 AND m.state=?2", id3, self2 ? "active" : "removed");
+  if (!member) deny(self2 ? "INVALID_STATE" : "REMOVE_BEFORE_PURGE", 409);
+  if (await first(env.DB, "SELECT 1 FROM nexus_admin_grants WHERE account_id=?1", id3)) deny("ADMIN_ACCOUNT_PROTECTED", 403);
   if (hasAkronikl) scopeSQL = scopeSQL.replace("'avatarVersion'", "'assistantLock',COALESCE((SELECT lock_id||':'||busy_until FROM nexus_akronikl_locks WHERE account_id=?1),''),'avatarVersion'");
   const encoded = (await first(env.DB, scopeSQL, id3)).value;
   const counts = await first(env.DB, "SELECT (SELECT count(*) FROM projects WHERE id IN(" + PROJECTS + ")) projects,(SELECT count(*) FROM workspaces WHERE owner_subject_id=?1) workspaces,(SELECT count(*) FROM feedback_items WHERE author_id=?1) feedback,(SELECT count(*) FROM nexus_passkey_credentials WHERE account_id=?1) keys,(SELECT count(*) FROM oauth_identities WHERE account_id=?1) providers", id3);
   if (hasAssessment) Object.assign(counts, await first(env.DB, "SELECT (SELECT count(*) FROM nexus_assessment_attempts WHERE account_id=?1) courseFinalAttempts,COALESCE((SELECT bytes FROM nexus_assessment_owners WHERE account_id=?1),0) courseFinalBytes", id3));
-  if (hasAkronikl) Object.assign(counts, await first(env.DB, "SELECT (SELECT count(*) FROM nexus_akronikl_state WHERE account_id=?1) assistantRecords,(SELECT count(*) FROM nexus_akronikl_connections WHERE account_id=?1) assistantConnections", id3));
+  if (hasAkronikl) Object.assign(counts, await first(env.DB, "SELECT (SELECT count(*) FROM nexus_akronikl_state WHERE account_id=?1) assistantRecords,(SELECT count(*) FROM nexus_akronikl_connections WHERE account_id=?1) assistantConnections,(SELECT count(*) FROM nexus_akronikl_state WHERE account_id=?1 AND slot LIKE 'key:%') assistantApiKeys", id3));
   return { scopeSQL, member, encoded, hash: await sha(encoded), counts, hasAssessment, hasAkronikl };
 }
-async function preparePurge(env, value, id3) {
-  const plan = await scope(env, id3), approval = "npa_" + random(), expiresAt = new Date(Date.now() + 12e4).toISOString();
-  await query2(env.DB, "INSERT INTO nexus_admin_purge_approvals(token_hash,actor_id,session_id,target_id,target_version,scope_hash,expires_at) VALUES(?1,?2,?3,?4,?5,?6,?7)", await sha(approval), value.actor.account_id, value.actor.session_id, id3, plan.member.version, plan.hash, expiresAt).run();
+async function preparePurge(env, value, id3, { self: self2 = false } = {}) {
+  if (self2 && id3 !== value.actor.account_id) deny("INVALID_INPUT");
+  const plan = await scope(env, id3, { self: self2 }), approval = (self2 ? "nps_" : "npa_") + random(), expiresAt = new Date(Date.now() + 12e4).toISOString();
+  if (plan.member.version !== value.payload.version) deny("CONTROL_CONFLICT", 409);
+  const insert = query2(env.DB, "INSERT INTO nexus_admin_purge_approvals(token_hash,actor_id,session_id,target_id,target_version,scope_hash,expires_at) VALUES(?1,?2,?3,?4,?5,?6,?7)", await sha(approval), value.actor.account_id, value.actor.session_id, id3, plan.member.version, plan.hash, expiresAt);
+  if (self2) await atomic(env, [query2(env.DB, "DELETE FROM nexus_admin_purge_approvals WHERE actor_id=?1 AND target_id=?1", id3), insert]);
+  else await insert.run();
   return { approvalToken: approval, expiresAt, counts: plan.counts, confirmation: "DELETE " + (plan.member.username || id3), serverDataOnly: true };
 }
-async function executePurge(env, value, id3) {
+async function executePurge(env, value, id3, { self: self2 = false } = {}) {
   const { payload, actor } = value;
-  if (typeof payload.approvalToken !== "string" || !/^npa_[A-Za-z0-9_-]{43}$/.test(payload.approvalToken) || typeof payload.confirmation !== "string") deny("INVALID_INPUT");
-  const approvalHash = await sha(payload.approvalToken), stamp3 = (/* @__PURE__ */ new Date()).toISOString(), plan = await scope(env, id3);
+  if (self2 && id3 !== actor.account_id) deny("INVALID_INPUT");
+  if (typeof payload.approvalToken !== "string" || !(self2 ? /^nps_[A-Za-z0-9_-]{43}$/ : /^npa_[A-Za-z0-9_-]{43}$/).test(payload.approvalToken) || typeof payload.confirmation !== "string") deny("INVALID_INPUT");
+  const approvalHash = await sha(payload.approvalToken), stamp3 = (/* @__PURE__ */ new Date()).toISOString(), plan = await scope(env, id3, { self: self2 });
   const approval = await first(env.DB, "SELECT * FROM nexus_admin_purge_approvals WHERE token_hash=?1", approvalHash);
   if (!approval || approval.actor_id !== actor.account_id || approval.session_id !== actor.session_id || approval.target_id !== id3 || approval.target_version !== payload.version || approval.consumed_at || approval.expires_at <= stamp3 || approval.scope_hash !== plan.hash) deny("PURGE_APPROVAL_REJECTED", 409);
   if (payload.confirmation !== "DELETE " + (plan.member.username || id3)) deny("PURGE_CONFIRMATION_REQUIRED", 400);
   const q3 = (sql2, ...args) => query2(env.DB, sql2, ...args);
   const commands = [
-    guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3 AND state='removed' AND version=?4) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3) AND EXISTS(SELECT 1 FROM nexus_admin_purge_approvals WHERE token_hash=?5 AND actor_id=?6 AND session_id=?7 AND consumed_at IS NULL AND expires_at>?8)", [id3, payload.version, approvalHash, actor.account_id, actor.session_id, stamp3]),
+    guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3 AND state='" + (self2 ? "active" : "removed") + "' AND version=?4) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3) AND EXISTS(SELECT 1 FROM nexus_admin_purge_approvals WHERE token_hash=?5 AND actor_id=?6 AND session_id=?7 AND target_id=?3 AND target_version=?4 AND consumed_at IS NULL AND expires_at>" + SQL_NOW + ")" + (self2 ? " AND ?3=?6 AND " + SELF_SESSION_SQL : ""), [id3, payload.version, approvalHash, actor.account_id, actor.session_id]),
     // Snapshot is rechecked within this transaction before deleting anything.
     q3("INSERT INTO nexus_admin_write_guards(request_id,phase,valid) VALUES(?2,'after',((" + plan.scopeSQL.replaceAll("?1", "?3").replace(" AS value", "") + ")=?1))", plan.encoded, payload.requestId, id3),
     q3("UPDATE nexus_admin_purge_approvals SET consumed_at=?1 WHERE token_hash=?2", stamp3, approvalHash),
@@ -21724,7 +21767,7 @@ async function executePurge(env, value, id3) {
     q3("DELETE FROM nexus_alpha_members WHERE account_id=?1", id3),
     q3("DELETE FROM account_subjects WHERE id=?1", id3),
     q3("DELETE FROM nexus_admin_purge_links WHERE request_id=?1", payload.requestId),
-    audit(env.DB, actor, payload.requestId, "purge", id3, stamp3)
+    ...!self2 ? [audit(env.DB, actor, payload.requestId, "purge", id3, stamp3)] : []
   ];
   await atomic(env, commands);
   return { ok: true, deletedServerData: true, localCopiesRemotelyErased: false };
@@ -22384,7 +22427,7 @@ async function assessmentOperation(env, value, { requireAdmin: requireAdmin2 }) 
 
 // server-access/worker/admin-service.mjs
 var INTERNAL = "/api/v2/account/internal/control";
-var BASE = "/api/v2/account/control";
+var BASE2 = "/api/v2/account/control";
 var encoder = new TextEncoder();
 var now3 = () => (/* @__PURE__ */ new Date()).toISOString();
 var query2 = (db, sql2, ...args) => db.prepare(sql2).bind(...args);
@@ -22517,8 +22560,9 @@ async function operation(env, value) {
   if (path === PUBLIC_MEDIA_PARTS_PATH) return mediaPartsOperation(env, value, { publishedOnly: true });
   if (path.startsWith("/api/v2/account/profile")) return profileOperation(env, value);
   if (!await alphaSettings(env)) deny("ALPHA_CONTROL_UNAVAILABLE", 503);
+  if ([BASE2 + "/self-delete-capabilities", BASE2 + "/self-delete-preview", BASE2 + "/self-delete"].includes(path) && !url.search) return selfDeleteOperation(env, value);
   if (path === ASSESSMENT_PATH && !url.search) return assessmentOperation(env, value, { requireAdmin });
-  if (path === BASE + "/capabilities" && method === "GET" && !url.search) {
+  if (path === BASE2 + "/capabilities" && method === "GET" && !url.search) {
     const canManage = !!await first(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", actor.account_id);
     return { canManage, canModerate: await teamPermission(env.DB, actor.account_id, env), canPurge: canManage && env.ADMIN_PURGE_ENABLED === "true", freshPasskey: canManage && fresh(actor) };
   }
@@ -22528,9 +22572,9 @@ async function operation(env, value) {
     if (await first(env.DB, "SELECT 1 FROM nexus_alpha_members WHERE account_id=?1 AND state IN('blocked','removed')", actor.account_id)) deny("ADMIN_REQUIRED", 403);
     return mediaPartsOperation(env, value);
   }
-  if (path === BASE + "/content") return contentOperation(env, value);
-  if (path === BASE + "/providers" && method === "GET" && !url.search) return { authorized: true };
-  if (path === BASE + "/users" && method === "GET") {
+  if (path === BASE2 + "/content") return contentOperation(env, value);
+  if (path === BASE2 + "/providers" && method === "GET" && !url.search) return { authorized: true };
+  if (path === BASE2 + "/users" && method === "GET") {
     if ([...url.searchParams.keys()].some((k) => !["state", "offset"].includes(k)) || [...url.searchParams.keys()].some((k) => url.searchParams.getAll(k).length !== 1)) deny("INVALID_INPUT");
     const state = url.searchParams.get("state") || "all", offset = Number(url.searchParams.get("offset") || 0);
     if (!["all", "active", "blocked", "removed", "invited", "unadmitted"].includes(state) || !Number.isInteger(offset) || offset < 0 || offset > 1e5) deny("INVALID_INPUT");
@@ -22541,23 +22585,23 @@ async function operation(env, value) {
     const settings = await first(env.DB, "SELECT registration_mode,max_testers,limit_enabled,version FROM nexus_alpha_settings WHERE id=1"), occupied = await first(env.DB, "SELECT count(*) n FROM nexus_alpha_occupied"), active = await first(env.DB, "SELECT count(*) n FROM nexus_alpha_members WHERE state='active' AND account_id NOT IN(SELECT account_id FROM nexus_admin_grants WHERE status='active')");
     return { users: list.map((r) => ({ accountId: r.id, username: r.username || null, displayName: r.display_name, state: r.administrator ? "administrator" : r.state || "unadmitted", version: r.version || 0, createdAt: r.created_at, lastLoginAt: r.last_login || null, activeSessions: r.active_sessions, reason: r.reason || "", protected: !!r.protected_account })), total: total.n, offset, settings: { registrationMode: settings.registration_mode, maxTesters: settings.max_testers, limitEnabled: settings.limit_enabled === 1, version: settings.version }, counts: { active: active.n, occupied: occupied.n, reserved: occupied.n - active.n } };
   }
-  if (path === BASE + "/audit" && method === "GET" && !url.search) return { events: await rows(query2(env.DB, "SELECT action,target_id targetId,created_at createdAt FROM nexus_admin_audit ORDER BY created_at DESC,id DESC LIMIT 100")) };
+  if (path === BASE2 + "/audit" && method === "GET" && !url.search) return { events: await rows(query2(env.DB, "SELECT action,target_id targetId,created_at createdAt FROM nexus_admin_audit ORDER BY created_at DESC,id DESC LIMIT 100")) };
   if (method !== "POST" || url.search) deny("NOT_FOUND", 404);
-  if (path === BASE + "/settings") {
+  if (path === BASE2 + "/settings") {
     validMutation(payload, ["version", "maxTesters", "limitEnabled", "registrationMode"]);
     if (typeof payload.limitEnabled !== "boolean" || !Number.isInteger(payload.version) || payload.version < 1 || !Number.isInteger(payload.maxTesters) || payload.maxTesters < 1 || payload.maxTesters > 1e4 || !["open", "invite_only"].includes(payload.registrationMode)) deny("INVALID_INPUT");
     const stamp3 = now3();
     await atomic(env, [guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_settings WHERE id=1 AND version=?3)", [payload.version]), query2(env.DB, "UPDATE nexus_alpha_settings SET registration_mode=?1,max_testers=?2,limit_enabled=?4,version=version+1 WHERE id=1 AND version=?3", payload.registrationMode, payload.maxTesters, payload.version, payload.limitEnabled ? 1 : 0), audit(env.DB, actor, payload.requestId, "settings", null, stamp3)]);
     return { ok: true };
   }
-  if (path === BASE + "/invites") {
+  if (path === BASE2 + "/invites") {
     validMutation(payload, ["ttlMinutes"]);
     if (!Number.isInteger(payload.ttlMinutes) || payload.ttlMinutes < 10 || payload.ttlMinutes > 10080) deny("INVALID_INPUT");
     const secret = "npi_" + random(), hash5 = await sha(secret), id4 = crypto.randomUUID(), stamp3 = now3(), expiresAt = new Date(Date.now() + payload.ttlMinutes * 6e4).toISOString();
     await atomic(env, [guard(env.DB, payload.requestId, "before", "1"), query2(env.DB, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,'\u041D\u043E\u0432\u044B\u0439 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A','active',?2,?2)", id4, stamp3), query2(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at) VALUES(?1,'invited',?2,?3,?3)", id4, expiresAt, stamp3), query2(env.DB, "INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)", hash5, id4, expiresAt), query2(env.DB, "INSERT INTO nexus_admin_invites(token_hash,account_id,created_by,state,created_at) VALUES(?1,?2,?3,'ready',?4)", hash5, id4, actor.account_id, stamp3), audit(env.DB, actor, payload.requestId, "invite", id4, stamp3)]);
     return { ok: true, accountId: id4, invitationToken: secret, expiresAt };
   }
-  const match = new RegExp("^" + BASE + "/users/([A-Za-z0-9][A-Za-z0-9._:-]{0,159})/(action|purge-preview|purge)$").exec(path);
+  const match = new RegExp("^" + BASE2 + "/users/([A-Za-z0-9][A-Za-z0-9._:-]{0,159})/(action|purge-preview|purge)$").exec(path);
   if (!match) deny("NOT_FOUND", 404);
   const id3 = match[1];
   if (match[2] === "action") {
@@ -27398,7 +27442,7 @@ async function handleAkroniklService(request, env) {
 
 // server-access/worker/feedback-service.js
 var INTERNAL4 = "/api/v2/feedback/internal";
-var BASE2 = "/api/v2/feedback";
+var BASE3 = "/api/v2/feedback";
 var encoder6 = new TextEncoder();
 var FeedbackError = class extends Error {
   constructor(status, code) {
@@ -27509,7 +27553,7 @@ ${await sha6(bytes)}`;
   if (!await crypto.subtle.verify("HMAC", key, Uint8Array.from(signature.match(/../g), (x) => parseInt(x, 16)), encoder6.encode(canonical))) fail6(401, "SERVICE_DENIED");
   object(value);
   const envelopeKeys = Object.keys(value).sort().join(","), hasExpectation = envelopeKeys === "expectedAccountId,method,path,payload,sessionHash";
-  if (!(hasExpectation || envelopeKeys === "method,path,payload,sessionHash" && env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED !== "true") || hasExpectation && (typeof value.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId)) || !/^[a-f0-9]{64}$/.test(value.sessionHash || "") || !["GET", "POST", "PATCH"].includes(value.method) || typeof value.path !== "string" || !value.path.startsWith(BASE2 + "/") || value.path.length > 512) fail6(401, "SERVICE_DENIED");
+  if (!(hasExpectation || envelopeKeys === "method,path,payload,sessionHash" && env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED !== "true") || hasExpectation && (typeof value.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId)) || !/^[a-f0-9]{64}$/.test(value.sessionHash || "") || !["GET", "POST", "PATCH"].includes(value.method) || typeof value.path !== "string" || !value.path.startsWith(BASE3 + "/") || value.path.length > 512) fail6(401, "SERVICE_DENIED");
   const added = await query3(env.DB, "INSERT OR IGNORE INTO feedback_service_nonces(nonce,expires_at) VALUES(?1,?2)", nonce, new Date(Number(stamp3) + 3e4).toISOString()).run();
   if (added.meta.changes !== 1) fail6(401, "SERVICE_DENIED");
   await query3(env.DB, "DELETE FROM feedback_service_nonces WHERE expires_at<?1", (/* @__PURE__ */ new Date()).toISOString()).run();
@@ -27524,12 +27568,12 @@ async function feedbackOperation(db, value, env = {}) {
   if (extension !== void 0) return extension;
   const url = new URL(path, "https://nexus.invalid"), pathname = url.pathname;
   const moderator = await teamPermission(db, actor.accountId, env);
-  if (pathname === BASE2 + "/me" && method === "GET") {
+  if (pathname === BASE3 + "/me" && method === "GET") {
     const limit = Math.min(20, Math.max(1, Math.floor(Number(url.searchParams.get("limit")) || 20))), offset = Math.min(1e4, Math.max(0, Math.floor(Number(url.searchParams.get("offset")) || 0)));
     const total = await query3(db, "SELECT count(*) AS count FROM feedback_items WHERE author_id=?1", actor.accountId).first();
     return { account: { id: actor.accountId, displayName: actor.displayName }, canModerate: moderator, total: total.count, offset, items: (await rows2(query3(db, joined + " WHERE i.author_id=?1 ORDER BY i.created_at DESC,i.id LIMIT ?2 OFFSET ?3", actor.accountId, limit, offset))).map(authorDto) };
   }
-  if (pathname === BASE2 + "/items" && method === "POST") {
+  if (pathname === BASE3 + "/items" && method === "POST") {
     if (env.COMMUNITY_ENABLED === "true" && await query3(db, "SELECT 1 ok FROM feedback_deleted_items WHERE author_id=?1 AND request_key=?2", actor.accountId, payload?.requestKey || "").first()) fail6(409, "ITEM_DELETED");
     const input = validateFeedbackInput(payload), requestKey = string(payload.requestKey, 80, 10);
     if (!/^[a-zA-Z0-9-]+$/.test(requestKey)) fail6(400, "INVALID_INPUT");
@@ -27597,7 +27641,7 @@ async function feedbackOperation(db, value, env = {}) {
     if (result[0].meta.changes !== 1) fail6(409, "STALE_VERSION");
     return { item: authorDto(await item(db, current.id)) };
   }
-  if (pathname === BASE2 + "/moderation" && method === "GET") {
+  if (pathname === BASE3 + "/moderation" && method === "GET") {
     if (!moderator) fail6(403, "MODERATOR_REQUIRED");
     const kind = url.searchParams.get("kind") || "", status = url.searchParams.get("status") || "", course = identifier(url.searchParams.get("course") || "");
     const from = string(url.searchParams.get("from") || "", 10), to = string(url.searchParams.get("to") || "", 10), search = searchable(string(url.searchParams.get("search") || "", 100)), offset = Math.min(1e4, Math.max(0, Math.floor(Number(url.searchParams.get("offset")) || 0)));
@@ -27618,10 +27662,10 @@ async function feedbackOperation(db, value, env = {}) {
 }
 async function handleFeedbackRequest(request, env) {
   const url = new URL(request.url);
-  if (!url.pathname.startsWith(BASE2 + "/")) return null;
+  if (!url.pathname.startsWith(BASE3 + "/")) return null;
   try {
     if (env.FEEDBACK_ENABLED !== "true" || !env.DB) fail6(503, "FEEDBACK_UNAVAILABLE");
-    if (url.pathname === BASE2 + "/reviews" && request.method === "GET") return response3(await publicReviews(env.DB, url.searchParams));
+    if (url.pathname === BASE3 + "/reviews" && request.method === "GET") return response3(await publicReviews(env.DB, url.searchParams));
     if (url.pathname !== INTERNAL4) fail6(404, "NOT_FOUND");
     const envelope2 = await verifyEnvelope(request, env);
     return response3(await feedbackOperation(env.DB, envelope2, env));

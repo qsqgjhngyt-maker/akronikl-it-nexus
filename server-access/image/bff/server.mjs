@@ -3744,6 +3744,7 @@ var id = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,
 var safeText = (value, max) => typeof value === "string" && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value);
 var safeCodes = /* @__PURE__ */ new Set(["SESSION_REQUIRED", "ACCOUNT_SESSION_CHANGED", "ADMIN_REQUIRED", "ADMIN_FRESH_PASSKEY_REQUIRED", "ADMIN_ACCOUNT_PROTECTED", "INVALID_INPUT", "INVALID_STATE", "RESTORE_WITHOUT_LOGIN_METHOD", "NOT_FOUND", "CONTROL_CONFLICT", "CONTROL_WRITE_UNCONFIRMED", "CONTROL_UNAVAILABLE", "ALPHA_CONTROL_UNAVAILABLE", "ALPHA_ACCESS_CLOSED", "ALPHA_CAPACITY_REACHED", "ALPHA_LIMIT_BELOW_OCCUPIED", "REMOVE_BEFORE_PURGE", "PURGE_NOT_ENABLED", "PURGE_SCHEMA_REVIEW_REQUIRED", "SHARED_PROJECT_TRANSFER_REQUIRED", "PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED", "PURGE_APPROVAL_REJECTED", "PURGE_CONFIRMATION_REQUIRED", "AVATAR_INVALID", "AVATAR_DIMENSIONS", "AVATAR_TOO_LARGE", "USERNAME_UNAVAILABLE", "RATE_LIMITED", "BLOG_IMAGE_INVALID", "CONTENT_MEDIA_UNAVAILABLE", "CONTENT_MEDIA_QUOTA", "CONTENT_EDITOR_UPDATE_REQUIRED", "CONTENT_MEDIA_PARTS_UNAVAILABLE", "CONTENT_MEDIA_PARTS_REQUIRED", "CONTENT_MEDIA_PARTS_CONFLICT", "CONTENT_MEDIA_PARTS_INCOMPLETE"]);
 for (const code of ASSESSMENT_ERROR_CODES) safeCodes.add(code);
+for (const code of ["SELF_DELETE_UNAVAILABLE", "SELF_DELETE_FRESH_LOGIN_REQUIRED"]) safeCodes.add(code);
 var reply2 = (res, status, body, extra = {}) => {
   const data = JSON.stringify(body);
   res.writeHead(status, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(data), "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", ...extra });
@@ -3817,6 +3818,8 @@ function validateDTO(data, path10, expected) {
   const valid = () => fail6("CONTROL_UNAVAILABLE", 502);
   if (path10 === "/api/v2/account/profile" || path10.startsWith("/api/v2/account/profile/avatar")) {
     if (!exact6(data, ["accountId", "username", "displayName", "avatar", "avatarVersion"]) || data.accountId !== expected || !safeText(data.displayName, 512) || data.username !== null && !/^[a-z][a-z0-9._-]{2,31}$/.test(data.username) || !Number.isInteger(data.avatarVersion) || data.avatarVersion < 0 || data.avatar !== null && (typeof data.avatar !== "string" || data.avatar.length > 131100 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data.avatar))) valid();
+  } else if (path10 === BASE + "/self-delete-capabilities") {
+    if (!exact6(data, ["accountId", "canDelete", "protected", "freshLogin", "version", "hasPasskey", "providers"]) || data.accountId !== expected || !["canDelete", "protected", "freshLogin", "hasPasskey"].every((k) => typeof data[k] === "boolean") || !Number.isSafeInteger(data.version) || data.version < 0 || !Array.isArray(data.providers) || data.providers.length > 3 || new Set(data.providers).size !== data.providers.length || data.providers.some((p) => !["google", "yandex", "vk"].includes(p))) valid();
   } else if (path10 === BASE + "/capabilities") {
     if (!exact6(data, ["canManage", "canModerate", "canPurge", "freshPasskey"]) || Object.values(data).some((v) => typeof v !== "boolean")) valid();
   } else if (path10.startsWith(BASE + "/users?") || path10 === BASE + "/users") {
@@ -3847,9 +3850,11 @@ function validateDTO(data, path10, expected) {
     for (const e of data.events) if (!exact6(e, ["action", "targetId", "createdAt"]) || !safeText(e.action, 32) || e.targetId !== null && !id(e.targetId) || !safeText(e.createdAt, 64)) valid();
   } else if (path10 === BASE + "/invites") {
     if (!exact6(data, ["ok", "accountId", "invitationToken", "expiresAt"]) || data.ok !== true || !id(data.accountId) || !/^npi_[A-Za-z0-9_-]{43}$/.test(data.invitationToken) || !safeText(data.expiresAt, 64)) valid();
-  } else if (path10.endsWith("/purge-preview")) {
-    if (!exact6(data, ["approvalToken", "expiresAt", "counts", "confirmation", "serverDataOnly"]) || !/^npa_[A-Za-z0-9_-]{43}$/.test(data.approvalToken) || !safeText(data.expiresAt, 64) || !safeText(data.confirmation, 180) || data.serverDataOnly !== true || !(exact6(data.counts, ["projects", "workspaces", "feedback", "keys", "providers"]) || exact6(data.counts, ["projects", "workspaces", "feedback", "keys", "providers", "courseFinalAttempts", "courseFinalBytes"])) || Object.values(data.counts).some((v) => !Number.isSafeInteger(v) || v < 0)) valid();
-  } else if (path10.endsWith("/purge")) {
+  } else if (path10.endsWith("/purge-preview") || path10 === BASE + "/self-delete-preview") {
+    const base = ["projects", "workspaces", "feedback", "keys", "providers"], course = ["courseFinalAttempts", "courseFinalBytes"], assistant = ["assistantRecords", "assistantConnections"];
+    const shapes = [base, [...base, ...course], [...base, ...assistant], [...base, ...course, ...assistant], [...base, ...assistant, "assistantApiKeys"], [...base, ...course, ...assistant, "assistantApiKeys"]];
+    if (!exact6(data, ["approvalToken", "expiresAt", "counts", "confirmation", "serverDataOnly"]) || !(path10 === BASE + "/self-delete-preview" ? /^nps_[A-Za-z0-9_-]{43}$/ : /^npa_[A-Za-z0-9_-]{43}$/).test(data.approvalToken) || !safeText(data.expiresAt, 64) || !safeText(data.confirmation, 180) || data.serverDataOnly !== true || !shapes.some((keys) => exact6(data.counts, keys)) || Object.values(data.counts).some((v) => !Number.isSafeInteger(v) || v < 0)) valid();
+  } else if (path10.endsWith("/purge") || path10 === BASE + "/self-delete") {
     if (!exact6(data, ["ok", "deletedServerData", "localCopiesRemotelyErased"]) || data.ok !== true || data.deletedServerData !== true || data.localCopiesRemotelyErased !== false) valid();
   } else if (path10 === BASE + "/providers") {
     if (!exact6(data, ["authorized"]) || data.authorized !== true) valid();
@@ -3916,7 +3921,8 @@ async function controlService(env, fetchImpl, envelope, { mediaDiagnostics = fal
   return data;
 }
 var service = controlService;
-function createAccountControlHandler({ env = {}, fetchImpl = fetch, mediaFetchImpl = fetchImpl === fetch ? requestMediaHTTP2 : fetchImpl } = {}) {
+function createAccountControlHandler({ env = {}, fetchImpl = fetch, mediaFetchImpl = fetchImpl === fetch ? requestMediaHTTP2 : fetchImpl, onAccountDeleted = () => {
+} } = {}) {
   return async (req, res) => {
     if (typeof req.url !== "string" || !/^\/api\/v2\/account\/(?:control(?:\/|\?|$)|profile(?:\/|\?|$))/.test(req.url)) return false;
     let diagnostic = false;
@@ -3995,6 +4001,10 @@ function createAccountControlHandler({ env = {}, fetchImpl = fetch, mediaFetchIm
         return reply2(res, 200, { providers: [["yandex", "\u042F\u043D\u0434\u0435\u043A\u0441 ID", ["YANDEX_CLIENT_ID", "YANDEX_CLIENT_SECRET"]], ["google", "Google", ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]], ["vk", "VK ID", ["VK_CLIENT_ID"]]].map(([id2, label, names]) => ({ id: id2, label, configured: configured.has(id2), missing: names.filter((n) => typeof env[n] !== "string" || !env[n] || /[\x00-\x20\x7f]/.test(env[n])), callbackURL: oauthCallbackURL(id2) })) });
       }
       if (path10 === BASE + "/content" && req.method === "GET" && Array.isArray(dto.posts)) return reply2(res, 200, { ...dto, posts: dto.posts.map((p) => ({ ...p, draft: compatibleArticle(p.draft, { editor: true }), published: p.published ? compatibleArticle(p.published, { editor: true }) : null })) });
+      if (path10 === BASE + "/self-delete" && req.method === "POST") {
+        onAccountDeleted(expected);
+        return reply2(res, 200, dto);
+      }
       return reply2(res, 200, dto);
     } catch (error3) {
       return reply2(res, error3 instanceof Rejected ? error3.status : error3 instanceof AssessmentBridgeError ? error3.status : error3.name === "MediaPartsError" ? error3.status : error3.message === "INGRESS_REJECTED" ? 401 : 502, { error: { code: error3 instanceof Rejected || error3 instanceof AssessmentBridgeError && safeCodes.has(error3.code) || error3.name === "MediaPartsError" ? error3.code : error3.message === "INGRESS_REJECTED" ? "INGRESS_REJECTED" : "CONTROL_UNAVAILABLE" } }, diagnostic && error3 instanceof Rejected ? error3.nexusWire || {} : {});
@@ -8020,7 +8030,7 @@ var publishedAssets = createPublishedAssets({ env: process.env });
 var entryGate = createEntryGateHandler({ env: process.env, landingBody, fetchImpl: publishedAssets.fetchImpl });
 var cloud = createCloudSessionHandler({ env: process.env });
 var oauth = createOAuthHandler({ env: process.env });
-var control = createAccountControlHandler({ env: process.env });
+var control = createAccountControlHandler({ env: process.env, onAccountDeleted: (id2) => akronikl.revokeAccount(id2) });
 var content = createContentHandler({ env: process.env });
 var studio = await createStudioBffHandler({ env: process.env });
 var assets = /* @__PURE__ */ new Map([

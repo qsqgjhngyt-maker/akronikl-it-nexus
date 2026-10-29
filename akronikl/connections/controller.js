@@ -10,22 +10,28 @@ const safeReport=r=>Object.freeze({code:safeCodes.has(r?.code)?r.code:'RUNTIME_U
 export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocalProfile,onInvalidate=()=>{},timeoutMs=180000,cloudBroker=null}={}) {
   if(typeof isCurrent!=='function'||typeof loadLocal!=='function'||typeof inspect!=='function'||typeof onInvalidate!=='function'||!Number.isSafeInteger(timeoutMs)||timeoutMs<20||timeoutMs>180000)throw Error('CONNECTION_CONFIG_INVALID');
   if(cloudBroker!==null&&(typeof cloudBroker.inspect!=='function'||typeof cloudBroker.connect!=='function'))throw Error('CONNECTION_CONFIG_INVALID');
-  let selection=cloudSelection(),selectionExplicit=false,saved=[],savedRevision=0,generationAllowed=cloudBroker!==null,stateServiceAvailable=false;
+  let selection=cloudSelection(),selectionExplicit=false,saved=[],savedRevision=0,savedStatus='idle',savedError=null,savedOperation=null,generationAllowed=cloudBroker!==null,stateServiceAvailable=false;
   let selected='sources',phase='ready',code='SOURCES_READY',revision=0,provider=null,lifetime=null,operation=null,dead=false;
   let pendingResources=0,cleanupTasks=0,cleanupFailed=false,lastProbe=null;const listeners=new Set();
   function current(){try{return !dead&&isCurrent()===true;}catch{return false;}}
   const state=()=>Object.freeze({profileId:selected,phase,code,revision,modelId:provider?provider.modelId:null,
-    pendingResources,cleanupTasks,cleanupFailed,inspection:lastProbe,cloudEnabled:provider?.kind==='cloud',cloudAvailable:generationAllowed,personalStateAvailable:stateServiceAvailable,cloudSettingsAvailable:cloudBroker?.settings===true&&generationAllowed,cloudSelection:selection,cloudSaved:Object.freeze([...saved])});
+    pendingResources,cleanupTasks,cleanupFailed,inspection:lastProbe,cloudEnabled:provider?.kind==='cloud',cloudAvailable:generationAllowed,personalStateAvailable:stateServiceAvailable,cloudSettingsAvailable:cloudBroker?.settings===true&&generationAllowed,cloudKeyManagementAvailable:cloudBroker?.settings===true&&(generationAllowed||stateServiceAvailable),cloudSavedStatus:savedStatus,cloudSavedError:savedError,cloudSavedOperation:savedOperation,cloudSelection:selection,cloudSaved:Object.freeze([...saved])});
   function emit(){const value=state();for(const fn of listeners){try{fn(value);}catch{}}return value;}
   function cleanup(p){if(!p)return;cleanupTasks++;Promise.resolve().then(()=>p.dispose()).catch(()=>{cleanupFailed=true;}).finally(()=>{cleanupTasks--;if(!dead)emit();});}
   function invalidate(){revision++;operation?.abort();operation=null;lifetime?.abort();lifetime=null;const old=provider;provider=null;
     try{onInvalidate();}catch{}cleanup(old);}
   function ensure(){if(current())return true;dispose();return false;}
-  function dispose(){if(dead)return;dead=true;invalidate();phase='closed';code='CONNECTION_CLOSED';lastProbe=null;emit();listeners.clear();}
+  function dispose(){if(dead)return;dead=true;invalidate();savedRevision++;saved=[];savedStatus='idle';savedError=null;savedOperation=null;phase='closed';code='CONNECTION_CLOSED';lastProbe=null;emit();listeners.clear();}
   function select(id){const p=modelProfile(id);if(!ensure())return state();if(!p.enabled&&!(id==='external'&&generationAllowed))return Object.freeze({status:'denied',code:'EXTERNAL_DISABLED'});
     invalidate();selected=id;lastProbe=null;phase=id==='sources'?'ready':'disconnected';code=id==='sources'?'SOURCES_READY':'MODEL_NOT_LOADED';if(id==='external')void refreshCloudSaved();return emit();}
-  async function refreshCloudSaved(){if(!generationAllowed||!cloudBroker?.listSaved)return;const ticket=++savedRevision,original=selection;try{const entries=(await cloudBroker.listSaved()).map(cloudSelection);if(current()&&ticket===savedRevision){saved=entries;if(selected==='external'&&phase==='disconnected'&&!selectionExplicit&&selection===original)selection=entries.find(x=>x.providerId===selection.providerId)??selection;emit();}}catch{if(current()&&ticket===savedRevision){saved=[];emit();}}}
-  async function forgetCloud(){if(!cloudBroker?.forget)return;const id=selection.providerId;invalidate();phase='disconnected';code='MODEL_NOT_LOADED';emit();try{await cloudBroker.forget(id);await refreshCloudSaved();}catch{code='CLOUD_VAULT_UNAVAILABLE';emit();}}
+  async function refreshCloudSaved(){if(!ensure()||!cloudBroker?.listSaved)return;const ticket=++savedRevision,original=selection;savedStatus='loading';savedError=null;emit();try{const entries=(await cloudBroker.listSaved()).map(cloudSelection);if(current()&&ticket===savedRevision){saved=entries;savedStatus='ready';if(selected==='external'&&phase==='disconnected'&&!selectionExplicit&&selection===original)selection=entries.find(x=>x.providerId===selection.providerId)??selection;emit();}}catch{if(current()&&ticket===savedRevision){savedStatus='error';savedError='CLOUD_VAULT_UNAVAILABLE';emit();}}}
+  async function forgetCloud(providerId=selection.providerId){
+    if(!ensure()||!cloudBroker?.forget)return Object.freeze({status:'error',code:'CLOUD_ACCOUNT_REQUIRED'});
+    const id=cloudSelection({providerId,modelId:'validation-only'}).providerId;if(savedOperation)return Object.freeze({status:'busy'});
+    savedRevision++;savedOperation=id;savedError=null;if(selected==='external'&&selection.providerId===id){invalidate();phase='disconnected';code='MODEL_NOT_LOADED';}emit();
+    try{await cloudBroker.forget(id);if(!current())return Object.freeze({status:'closed'});saved=saved.filter(x=>x.providerId!==id);savedStatus='ready';savedOperation=null;emit();await refreshCloudSaved();return Object.freeze({status:'deleted',providerId:id});}
+    catch{if(current()){savedOperation=null;savedStatus='error';savedError='CLOUD_VAULT_UNAVAILABLE';emit();}return Object.freeze({status:'error',code:'CLOUD_VAULT_UNAVAILABLE'});}
+  }
   async function run(file,connect){
     if(!ensure())return state();
     if(selected==='sources')return emit();
@@ -78,7 +84,7 @@ export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocal
         if(!valid()||signal.aborted)throw Error('MODEL_LEASE_EXPIRED');return response;
       },dispose(){released=true;}});
   }
-  return Object.freeze({select,configureCloud,refreshCloudSaved,forgetCloud,setCloudAvailability(value,{stateAvailable=false}={}){if(typeof value!=='boolean')throw Error('CONNECTION_CONFIG_INVALID');generationAllowed=value&&cloudBroker!==null;stateServiceAvailable=stateAvailable===true;if(!generationAllowed){savedRevision++;saved=[];if(selected==='external'){invalidate();selected='sources';phase='ready';code='SOURCES_READY';}}return emit();},inspect:()=>run(null,false),connect:file=>run(file,true),lease,
+  return Object.freeze({select,configureCloud,refreshCloudSaved,forgetCloud,setCloudAvailability(value,{stateAvailable=false}={}){if(typeof value!=='boolean')throw Error('CONNECTION_CONFIG_INVALID');generationAllowed=value&&cloudBroker!==null;stateServiceAvailable=stateAvailable===true;if(!generationAllowed){if(!stateServiceAvailable){savedRevision++;saved=[];savedStatus='idle';savedError=null;}if(selected==='external'){invalidate();selected='sources';phase='ready';code='SOURCES_READY';}}return emit();},inspect:()=>run(null,false),connect:file=>run(file,true),lease,
     snapshot(){ensure();return state();},
     cancelPending(){if(operation){invalidate();phase=selected==='sources'?'ready':'disconnected';code=selected==='sources'?'SOURCES_READY':'MODEL_NOT_LOADED';emit();}},
     disconnect(){return select('sources');},dispose,

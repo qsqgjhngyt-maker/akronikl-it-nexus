@@ -2,6 +2,7 @@
 import {Buffer} from 'node:buffer';
 import {AlphaError,alphaSettings} from './alpha-admission.mjs';
 import {preparePurge,executePurge} from './admin-purge.mjs';
+import {selfDeleteOperation} from './self-delete.mjs';
 import {profileOperation} from './profile-service.mjs';
 import {teamPermission} from './community-service.mjs';
 import {contentOperation} from './content-service.mjs';
@@ -119,6 +120,7 @@ async function operation(env,value){
  if(path===PUBLIC_MEDIA_PARTS_PATH)return mediaPartsOperation(env,value,{publishedOnly:true});
  if(path.startsWith('/api/v2/account/profile'))return profileOperation(env,value);
  if(!await alphaSettings(env))deny('ALPHA_CONTROL_UNAVAILABLE',503);
+ if([BASE+'/self-delete-capabilities',BASE+'/self-delete-preview',BASE+'/self-delete'].includes(path)&&!url.search)return selfDeleteOperation(env,value);
  if(path===ASSESSMENT_PATH&&!url.search)return assessmentOperation(env,value,{requireAdmin});
  if(path===BASE+'/capabilities'&&method==='GET'&&!url.search){
   const canManage=!!await first(env.DB,"SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'",actor.account_id);

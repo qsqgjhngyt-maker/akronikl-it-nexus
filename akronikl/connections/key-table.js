@@ -1,0 +1,26 @@
+import {cloudProvider} from './cloud-catalog.js';
+
+export function mountCloudKeyTable({parent,documentRef:doc,controller,locale='ru',onConfigure=()=>{}}){
+ const en=locale==='en',make=(tag,text,root=parent)=>{const n=doc.createElement(tag);if(text)n.textContent=text;root.append(n);return n;};
+ const root=make('section','');root.className='ak-cloud-keys';root.dataset.akCloudKeys='';
+ make('h3',en?'My API connections':'Мои API-подключения',root);
+ make('p',en?'One encrypted saved key per provider. Add a new provider or replace its existing key in the connection form.':'По одному зашифрованному ключу на провайдера. В форме подключения можно добавить новый API или заменить ключ.',root);
+ const toolbar=make('div','',root);toolbar.className='akronikl-actions';
+ const add=make('button',en?'Add API':'Добавить API',toolbar),refresh=make('button',en?'Refresh list':'Обновить список',toolbar);for(const b of [add,refresh]){b.type='button';b.className='btn';}add.dataset.akApiAdd='';refresh.dataset.akApiRefresh='';
+ const status=make('p','',root);status.setAttribute('role','status');status.dataset.akApiStatus='';
+ const scroll=make('div','',root);scroll.className='ak-cloud-key-scroll';const table=make('table','',scroll);table.setAttribute('aria-label',en?'Saved API connections':'Сохранённые API-подключения');const head=make('thead','',table),header=make('tr','',head);for(const text of en?['Provider','Model','Key','Actions']:['Провайдер','Модель','Ключ','Действия'])make('th',text,header);const body=make('tbody','',table);body.dataset.akApiRows='';
+ const confirm=make('div','',root);confirm.className='ak-cloud-key-confirm';confirm.hidden=true;confirm.setAttribute('role','group');confirm.setAttribute('aria-label',en?'Delete key confirmation':'Подтверждение удаления ключа');const question=make('p','',confirm);make('p',en?'This removes the saved key from your Nexus account and closes its connections. Revoke the key itself in the provider console if needed.':'Ключ удалится из вашего аккаунта Nexus, его подключения будут закрыты. Для отзыва самого ключа используйте консоль провайдера.',confirm);const controls=make('div','',confirm);controls.className='akronikl-actions';const remove=make('button',en?'Delete key':'Удалить ключ',controls),cancel=make('button',en?'Cancel':'Отмена',controls);for(const b of [remove,cancel]){b.type='button';b.className='btn';}remove.classList.add('danger');remove.dataset.akApiDeleteConfirm='';cancel.dataset.akApiDeleteCancel='';
+ let pending=null,dead=false,lastMessage='';
+ add.addEventListener('click',()=>{if(!dead)onConfigure(null);});refresh.addEventListener('click',()=>{lastMessage='';void controller.refreshCloudSaved();});
+ cancel.addEventListener('click',()=>{pending=null;confirm.hidden=true;});
+ remove.addEventListener('click',async()=>{if(dead||!pending)return;const id=pending;lastMessage='';const result=await controller.forgetCloud(id);if(dead)return;if(result?.status==='deleted'){pending=null;lastMessage=en?'The saved key was deleted from Nexus.':'Сохранённый ключ удалён из Nexus.';}else lastMessage=en?'Deletion was not confirmed. Try again while online.':'Удаление не подтверждено. Повторите с подключённым интернетом.';display(controller.snapshot());});
+ function display(s){
+  if(dead)return;root.hidden=!s.cloudKeyManagementAvailable;if(root.hidden){pending=null;confirm.hidden=true;body.replaceChildren();return;}
+  const busy=!!s.cloudSavedOperation||s.phase==='closed';add.disabled=busy||!s.cloudAvailable;refresh.disabled=busy||s.cloudSavedStatus==='loading';remove.disabled=busy;cancel.disabled=busy;
+  status.textContent=s.cloudSavedStatus==='loading'?(en?'Loading your saved connections…':'Загружаем ваши подключения…'):s.cloudSavedStatus==='error'?(lastMessage?lastMessage+' ':'')+(en?'The saved-key list could not be verified. Existing keys are kept; retry the refresh.':'Не удалось проверить список ключей. Сохранённые ключи остаются на месте — обновите список.'):lastMessage||(!s.cloudSaved.length?(en?'No API keys are saved in this Nexus account.':'В этом аккаунте Nexus пока нет сохранённых API-ключей.'):'');
+  body.replaceChildren();for(const row of s.cloudSaved){const tr=make('tr','',body);tr.dataset.akApiProvider=row.providerId;make('td',cloudProvider(row.providerId).label,tr);make('td',row.modelId,tr);make('td',en?'Encrypted · ••••':'Зашифрован · ••••',tr);const td=make('td','',tr),choose=make('button',en?'Configure':'Настроить',td),del=make('button',en?'Delete':'Удалить',td);for(const b of [choose,del]){b.type='button';b.className='btn';b.disabled=busy;}choose.disabled=busy||!s.cloudAvailable;del.dataset.akApiDelete=row.providerId;choose.addEventListener('click',()=>onConfigure(row));del.addEventListener('click',()=>{pending=row.providerId;lastMessage='';question.textContent=(en?'Delete the saved key for ':'Удалить сохранённый ключ для ')+cloudProvider(row.providerId).label+'?';confirm.hidden=false;remove.focus();});}
+  if(pending&&!s.cloudSaved.some(x=>x.providerId===pending)&&!s.cloudSavedOperation)pending=null;confirm.hidden=!pending;
+ }
+ void controller.refreshCloudSaved();
+ return Object.freeze({display,dispose(){dead=true;pending=null;root.remove();}});
+}

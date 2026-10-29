@@ -13,7 +13,7 @@ async function request(path,options={}){
   if(!response.ok)throw Error(data?.error?.code||'OAUTH_UNAVAILABLE');return data;
  }finally{clearTimeout(timer);signal?.removeEventListener('abort',abort)}
 }
-export async function bindProviderButtons(container,{intent='login',expectedAccountId,onStatus=()=>{},acquire=()=>true,release=()=>{}}={}){
+export async function bindProviderButtons(container,{intent='login',expectedAccountId,allowedProviders,onStatus=()=>{},acquire=()=>true,release=()=>{}}={}){
  if(!container||location.origin!==ORIGIN||!['login','link'].includes(intent))return;
  let data;try{data=await request('/api/v2/account/oauth/providers',{headers:{accept:'application/json'}})}catch{return}
  if(!Array.isArray(data.providers))return;
@@ -29,6 +29,7 @@ export async function bindProviderButtons(container,{intent='login',expectedAcco
   onStatus('Вы вернулись со страницы входа. Для новой попытки нажмите способ входа снова.');
  });
  for(const supplied of data.providers){
+  if(allowedProviders&&!allowedProviders.includes(supplied?.id))continue;
   const definition=providers.get(supplied?.id);if(!definition||container.querySelector(`[data-provider="${supplied.id}"]`))continue;
   const button=document.createElement('button');button.type='button';button.className='provider-button btn';button.dataset.provider=supplied.id;button.textContent=(intent==='link'?'Привязать ':'Войти через ')+definition.label;
   button.addEventListener('click',async()=>{

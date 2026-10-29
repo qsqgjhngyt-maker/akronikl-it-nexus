@@ -4,27 +4,28 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
 import {fixture} from './helpers/auth-fixture.mjs';
+import {accountKeyBrowserScenarios} from './helpers/account-key-browser-scenarios.mjs';
 import {communityBrowserScenarios} from './helpers/community-browser-scenarios.mjs';
 const jpeg=createRequire(new URL('../server-access/package.json',import.meta.url))('jpeg-js');
 const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
 const frontend=pathToFileURL(process.env.NEXUS_FRONTEND_DIR.replace(/[\\/]?$/,'/'));
 const generation=JSON.parse(await readFile(new URL('version.json',frontend))).releaseCandidate.assetGeneration;
-const origin='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net',f=await fixture(frontend,{control:true});
+const origin='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net',f=await fixture(frontend,{control:true,productionSchema:true,assistant:true});
 const browser=await chromium.launch({executablePath:process.env.NEXUS_CHROME_PATH,headless:true,proxy:{server:'http://127.0.0.1:9'},args:['--disable-background-networking','--disable-component-update']});
-const contexts=[],checks=[],boundaries=[],errors=[];let external=0,unknown=[];
+const contexts=[],checks=[],boundaries=[],errors=[];let external=0,externalURLs=[],unknown=[];
 const contentType=p=>p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.json')?'application/json':p.endsWith('.svg')?'image/svg+xml':p.endsWith('.png')?'image/png':p.endsWith('.webp')?'image/webp':'text/html';
 async function profile(){
  const context=await browser.newContext({serviceWorkers:'block'});contexts.push(context);
  await context.route('**/*',async route=>{
   const req=route.request(),url=new URL(req.url());
-  if(url.origin!==origin){external++;return route.abort()}
+  if(url.origin!==origin){external++;externalURLs.push(url.origin+url.pathname);return route.abort()}
   try{
    const start=performance.now(),result=await f.dispatch(url.href,{method:req.method(),headers:await req.allHeaders(),body:req.postData()});
    if(result){const headers={};for(const[k,v]of Object.entries(result.headers))headers[k]=Array.isArray(v)?v.join('\n'):String(v);boundaries.push({path:url.pathname,status:result.status,durationMs:Math.round(performance.now()-start)});return route.fulfill({status:result.status,headers,body:result.body})}
    if(url.pathname.startsWith('/api/'))return route.fulfill({status:503,json:{error:{code:'LOCAL_FIXTURE_NOT_ENABLED'}},headers:{'cache-control':'no-store',vary:'*'}});
    let file=url.pathname.slice(1);
-   if(file==='account/entry/')file='index.html';
-   else if(file.startsWith('account/entry/'))file='entry-assets/'+generation+'/'+file.split('/').at(-1);
+   if(file==='account/entry/')return route.fulfill({body:await readFile(new URL('../server-access/image/public/entry.html',import.meta.url)),contentType:'text/html'});
+   if(file.startsWith('account/entry/'))return route.fulfill({body:await readFile(new URL('../server-access/image/public/'+file.split('/').at(-1),import.meta.url)),contentType:contentType(file)});
    if(file==='account/access/')return route.fulfill({body:await readFile(new URL('../server-access/image/public/index.html',import.meta.url)),contentType:'text/html'});
    if(file.startsWith('account/access/'))return route.fulfill({body:await readFile(new URL('../server-access/image/public/'+file.split('/').at(-1),import.meta.url)),contentType:'text/javascript'});
    if(!file||file.includes('..'))throw Error('UNKNOWN_PATH');
@@ -42,7 +43,7 @@ const owner=await profile();let tester,inviteURL,testerId,avatarBefore;
 try{
  await owner.page.goto(origin+'/');
  await owner.page.evaluate(async token=>{await(await import('/account/access/passkey-client.js')).register(token)},f.invitation);
- f.enableControl();
+ f.enableControl();f.env.ACCOUNT_SELF_DELETE_ENABLED='true';
  await owner.page.goto(origin+'/index.html#view=account&tab=admin');
  await check('actual admin UI recognizes verified owner and protects its account',async()=>{
   await owner.page.locator('[data-admin-users] tr').waitFor();
@@ -103,12 +104,16 @@ try{
   assert.equal(f.db.prepare("SELECT count(*) n FROM nexus_account_avatars WHERE account_id='synthetic-owner'").get().n,0);
   await tester.page.evaluate(id=>localStorage.setItem('akronikl:it-nexus:account-store:v1:'+encodeURIComponent(id)+':akronikl:it-nexus:projects:v1','synthetic-local-project-preservation'),testerId);
  });
+ await accountKeyBrowserScenarios({owner,tester,testerId,f,generation,check});
  await check('blocking from admin UI revokes the tester session; next navigation is denied',async()=>{
   await owner.page.locator('[data-admin-refresh]').click();
   const row=owner.page.locator('tr[data-account-id="'+testerId+'"]');
-  owner.page.once('dialog',d=>d.accept());await row.getByRole('button',{name:'Заблокировать',exact:true}).click();
+  await owner.page.evaluate(()=>{window.__qaConfirm=window.confirm;window.confirm=()=>false});await row.getByRole('button',{name:'Заблокировать',exact:true}).click();
+  await owner.page.locator('[data-admin-action-dialog][open]').waitFor();assert.equal(member(testerId).state,'active');await owner.page.locator('[data-admin-action-cancel]').click();assert.equal(member(testerId).state,'active');
+  f.db.prepare("UPDATE account_sessions SET created_at=? WHERE subject_id='synthetic-owner' AND status='active'").run(new Date(Date.now()-301000).toISOString());
+  await row.getByRole('button',{name:'Заблокировать',exact:true}).click();assert.equal(await owner.page.locator('[data-admin-action-execute]').isDisabled(),true);assert.equal(member(testerId).state,'active');await owner.page.locator('[data-admin-action-reauth]').click();await owner.page.waitForFunction(()=>!document.querySelector('[data-admin-action-execute]')?.disabled);await owner.page.locator('[data-admin-action-execute]').click();
   await owner.page.waitForFunction(()=>[...document.querySelectorAll('[data-admin-users] tr')].some(r=>r.textContent.includes('Заблокирован')));
-  assert.equal(member(testerId).state,'blocked');assert.equal(f.db.prepare("SELECT count(*) n FROM account_sessions WHERE subject_id=? AND status='active'").get(testerId).n,0);
+  await owner.page.evaluate(()=>{window.confirm=window.__qaConfirm;delete window.__qaConfirm});assert.equal(member(testerId).state,'blocked');assert.equal(f.db.prepare("SELECT count(*) n FROM account_sessions WHERE subject_id=? AND status='active'").get(testerId).n,0);
   await tester.page.goto(origin+'/index.html#view=account');await tester.page.locator('[data-login]').waitFor();
   assert.equal(await tester.page.locator('[data-unified-account]').count(),0);
   const sessions=f.db.prepare('SELECT count(*) n FROM account_sessions WHERE subject_id=?').get(testerId).n;
@@ -157,12 +162,12 @@ try{
  });
  await communityBrowserScenarios({owner,tester,testerId,f,origin,check});
  await check('archive keeps server data; irreversible deletion requires preview and separate typed confirmation',async()=>{
-  const row=owner.page.locator('tr[data-account-id="'+testerId+'"]');owner.page.once('dialog',d=>d.accept());await row.getByRole('button',{name:'Закрыть доступ',exact:true}).click();
-  await row.getByRole('button',{name:'Удалить безвозвратно',exact:true}).waitFor();
+  const row=owner.page.locator('tr[data-account-id="'+testerId+'"]');await row.getByRole('button',{name:'Закрыть доступ',exact:true}).click();await owner.page.locator('[data-admin-action-execute]').click();
+  await row.getByRole('button',{name:'Удалить полностью',exact:true}).waitFor();
   assert.equal(member(testerId).state,'removed');assert.ok(f.db.prepare('SELECT account_id FROM nexus_account_avatars WHERE account_id=?').get(testerId));
-  await row.getByRole('button',{name:'Удалить безвозвратно',exact:true}).click();await owner.page.locator('[data-purge-dialog][open]').waitFor();
+  await row.getByRole('button',{name:'Удалить полностью',exact:true}).click();await owner.page.locator('[data-purge-dialog][open]').waitFor();
   await owner.page.locator('[data-purge-cancel]').click();assert.ok(f.db.prepare('SELECT id FROM account_subjects WHERE id=?').get(testerId));
-  await row.getByRole('button',{name:'Удалить безвозвратно',exact:true}).click();
+  await row.getByRole('button',{name:'Удалить полностью',exact:true}).click();
   await owner.page.locator('[data-purge-confirm]').fill('DELETE tester.one');await owner.page.locator('[data-purge-agree]').check();
   await owner.page.locator('[data-purge-execute]').click();await owner.page.waitForFunction(()=>document.querySelector('[data-admin-status]')?.textContent==='Аккаунт и его серверные данные удалены.');
   assert.equal(f.db.prepare('SELECT id FROM account_subjects WHERE id=?').get(testerId),undefined);
@@ -170,10 +175,28 @@ try{
   assert.equal(f.db.prepare('PRAGMA foreign_key_check').all().length,0);
   assert.ok(f.db.prepare("SELECT id FROM nexus_admin_audit WHERE action='purge'").get());
  });
- assert.equal(external,0);assert.deepEqual(errors,[]);
- const result={status:'PASS',checks,boundaries,externalRequests:0,realAccounts:false,authenticator:'virtual CTAP2 with real verification',unknownStaticPaths:unknown,pageErrors:errors};
+ await check('own deletion UI protects admin and requires fresh login, preview, typed consent and explicit submit',async()=>{
+  await owner.page.goto(origin+'/#view=account&tab=security');await owner.page.getByText('Аккаунт администратора защищён от удаления.',{exact:true}).waitFor();assert.equal(await owner.page.locator('[data-self-open]').isDisabled(),true);
+  await owner.page.goto(origin+'/#view=account&tab=admin');await owner.page.locator('[data-admin-users] tr').first().waitFor();
+  await owner.page.locator('[data-admin-invite] button').click();await owner.page.waitForFunction(()=>document.querySelector('[data-invite-link]')?.value.includes('#invite='));
+  const url=await owner.page.locator('[data-invite-link]').inputValue(),self=await profile();await self.page.goto(url);await self.page.locator('#invitation-profile').waitFor({state:'visible'});await self.page.locator('#new-username').fill('tester.self');await self.page.locator('#new-display-name').fill('Удаление своего аккаунта');await self.page.locator('#register').click();await self.page.waitForURL('**/index.html#view=home');
+  const selfId=f.db.prepare("SELECT account_id FROM nexus_account_profiles WHERE username='tester.self'").get().account_id,ownerId='synthetic-owner';
+  for(const slot of ['key:qwen','chats'])f.db.prepare('INSERT INTO nexus_akronikl_state VALUES(?,?,1,?)').run(selfId,slot,'SYNTHETIC_CIPHERTEXT_ONLY_'.repeat(3));
+  f.db.prepare('INSERT INTO nexus_akronikl_state VALUES(?,?,1,?)').run(ownerId,'preferences','SYNTHETIC_OWNER_PRESERVE_'.repeat(3));
+  f.db.prepare("UPDATE account_sessions SET created_at=? WHERE subject_id=? AND status='active'").run(new Date(Date.now()-301000).toISOString(),selfId);
+  await self.page.goto(origin+'/#view=account&tab=security');await self.page.locator('[data-self-reauth]:not([hidden])').waitFor();assert.equal(await self.page.locator('[data-self-open]').isDisabled(),true);await self.page.locator('[data-self-passkey]').click();await self.page.waitForFunction(()=>!document.querySelector('[data-self-open]')?.disabled);
+  await self.page.locator('[data-self-open]').click();await self.page.locator('[data-self-dialog][open]').waitFor();await self.page.locator('[data-self-cancel]').click();assert.ok(f.db.prepare('SELECT id FROM account_subjects WHERE id=?').get(selfId));
+  await self.page.evaluate(({selfId,ownerId})=>{const prefix=id=>'akronikl:it-nexus:account-store:v1:'+encodeURIComponent(id)+':';localStorage.setItem(prefix(selfId)+'self-sentinel','DELETE_ME');localStorage.setItem(prefix(ownerId)+'other-sentinel','KEEP_ME');localStorage.setItem('unrelated-vault-marker','KEEP_VAULT');},{selfId,ownerId});
+  await self.page.locator('[data-self-open]').click();await self.page.locator('[data-self-dialog][open]').waitFor();await self.page.locator('[data-self-confirm]').fill('DELETE wrong');await self.page.locator('[data-self-consent]').check();assert.equal(await self.page.locator('[data-self-execute]').isDisabled(),true);await self.page.locator('[data-self-confirm]').fill('DELETE tester.self');assert.equal(await self.page.locator('[data-self-execute]').isDisabled(),false);
+  if(process.env.NEXUS_SCREENSHOT_DIR)await self.page.screenshot({path:process.env.NEXUS_SCREENSHOT_DIR+'/self-delete-confirmation.png',fullPage:true});
+  await self.page.locator('[data-self-execute]').click();await self.page.waitForURL(url=>url.pathname==='/account/entry/');await self.page.getByText('Ваш аккаунт и его серверные данные удалены. Скачанные файлы и отдельные офлайн-копии остаются на устройствах.',{exact:true}).waitFor();
+  assert.equal(f.db.prepare('SELECT id FROM account_subjects WHERE id=?').get(selfId),undefined);assert.equal(f.db.prepare('SELECT count(*) n FROM nexus_akronikl_state WHERE account_id=?').get(selfId).n,0);assert.equal(f.db.prepare('SELECT count(*) n FROM nexus_akronikl_state WHERE account_id=?').get(ownerId).n,1);assert.equal(await self.page.evaluate(async()=> (await fetch('/api/v2/account',{cache:'no-store',credentials:'same-origin'})).status),401);
+  assert.deepEqual(await self.page.evaluate(({selfId,ownerId})=>{const prefix=id=>'akronikl:it-nexus:account-store:v1:'+encodeURIComponent(id)+':';return[localStorage.getItem(prefix(selfId)+'self-sentinel'),localStorage.getItem(prefix(ownerId)+'other-sentinel'),localStorage.getItem('unrelated-vault-marker')];},{selfId,ownerId}),[null,'KEEP_ME','KEEP_VAULT']);assert.deepEqual(f.db.prepare('PRAGMA foreign_key_check').all(),[]);
+ });
+ assert.ok(externalURLs.every(url=>['https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/cinematic-v4/desktop.mp4','https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/cinematic-v3/mobile/mp4/part-000.mp4'].includes(url)));assert.deepEqual(errors,[]);assert.deepEqual(unknown,[]);
+ const result={status:'PASS',checks,boundaries,externalRequests:0,blockedOptionalIntroRequests:external,cloudProviderRequests:0,syntheticModelCalls:f.modelCalls(),realAccounts:false,authenticator:'virtual CTAP2 with real verification',unknownStaticPaths:unknown,pageErrors:errors};
  await writeFile(process.env.NEXUS_BROWSER_RESULT,JSON.stringify(result,null,2)+'\n',{flag:'wx'});
 }catch(error){
- const safe={status:'FAIL',failure:error.name,checks,boundaries,externalRequests:external,pageErrors:errors,unknownStaticPaths:unknown,ownerStatus:await owner.page.locator('[data-admin-status]').innerText().catch(()=>''),testerStatus:tester?await tester.page.locator('#status,[data-status],[data-photo-status]').first().innerText().catch(()=>''):undefined};
+ const safe={status:'FAIL',failure:error.name,detail:error.stack,checks,boundaries,externalRequests:external,externalURLs,pageErrors:errors,unknownStaticPaths:unknown,ownerStatus:await owner.page.locator('[data-admin-status]').innerText().catch(()=>''),testerStatus:tester?await tester.page.locator('#status,[data-status],[data-photo-status]').first().innerText().catch(()=>''):undefined};
  await writeFile(process.env.NEXUS_BROWSER_RESULT,JSON.stringify(safe,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({status:'FAIL',failure:error.name,checks:checks.length,ownerStatus:safe.ownerStatus,testerStatus:safe.testerStatus}));process.exitCode=1;
 }finally{await browser.close();f.close()}

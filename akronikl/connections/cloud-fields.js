@@ -25,15 +25,15 @@ export function mountCloudFields({parent,documentRef:doc,controller,locale='ru',
  return Object.freeze({
   display(s){
    root.hidden=s.profileId!=='external'||!s.cloudSettingsAvailable;if(root.hidden){clear();return;}
-   const c=s.cloudSelection,p=cloudProvider(c.providerId),busy=['checking','loading','closed'].includes(s.phase)||s.pendingResources>0||s.cleanupTasks>0||s.cleanupFailed;
-   hasSaved=s.cloudSaved?.some(x=>x.providerId===c.providerId)===true;forget.hidden=!hasSaved;forget.disabled=busy;remember.disabled=busy||s.phase==='connected';
+   const c=s.cloudSelection,p=cloudProvider(c.providerId),busy=['checking','loading','closed'].includes(s.phase)||s.pendingResources>0||s.cleanupTasks>0||s.cleanupFailed||!!s.cloudSavedOperation;
+   hasSaved=s.cloudSaved?.some(x=>x.providerId===c.providerId)===true;forget.hidden=true;forget.disabled=busy;remember.disabled=busy||s.phase==='connected';
    provider.value=c.providerId;if(doc.activeElement!==model)model.value=c.modelId;
    list.replaceChildren();for(const id of p.models){const o=make('option','',list);o.value=id;}
    getKey.href=p.keyUrl;keyCaption.textContent=p.id==='gigachat'?(en?'Authorization Key':'Ключ авторизации (Authorization Key)'):(en?'API key':'API-ключ');region.label.hidden=p.id!=='qwen';scope.label.hidden=p.id!=='gigachat';workspace.label.hidden=!['qwen','anthropic'].includes(p.id);advanced.hidden=!['qwen','gigachat','anthropic'].includes(p.id);
    region.input.value=c.options.region??'singapore';if(doc.activeElement!==workspace.input)workspace.input.value=c.options.workspaceId??'';scope.input.value=c.options.scope??'GIGACHAT_API_PERS';
    for(const n of [provider,model,region.input,workspace.input,scope.input])n.disabled=busy;key.disabled=busy||s.phase==='connected';key.placeholder=hasSaved?(en?'Key saved — enter a new one to replace':'Ключ сохранён — новый можно вставить для замены'):s.phase==='connected'?(en?'Connected — key is hidden':'Подключено — ключ скрыт'):'';
    hint.textContent=remember.checked?(en?'Saved keys are encrypted. Next time, connect without entering the key again.':'Сохранённый ключ зашифрован. В следующий раз можно подключиться без повторного ввода.'):(en?'New keys are used for this connection only. Use Delete to remove an existing saved key.':'Новый ключ используется только для этого подключения. Ранее сохранённый ключ удаляется отдельной кнопкой.');
-  },hasKey:()=>key.value.trim().length>=16||hasSaved,
+  },focusKey(){(key.disabled?provider:key).focus();},hasKey:()=>key.value.trim().length>=16||hasSaved,
   credentials(){if(!commit())return null;const apiKey=key.value.trim();clear();return {apiKey,remember:remember.checked,useSaved:!apiKey&&hasSaved};},clearSecret:clear,dispose(){clear();root.remove();}
  });
 }

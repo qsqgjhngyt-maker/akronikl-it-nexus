@@ -17,7 +17,7 @@ const publishedAssets=createPublishedAssets({env:process.env});
 const entryGate=createEntryGateHandler({env:process.env,landingBody,fetchImpl:publishedAssets.fetchImpl});
 const cloud=createCloudSessionHandler({env:process.env});
 const oauth=createOAuthHandler({env:process.env});
-const control=createAccountControlHandler({env:process.env});
+const control=createAccountControlHandler({env:process.env,onAccountDeleted:id=>akronikl.revokeAccount(id)});
 const content=createContentHandler({env:process.env});
 const studio=await createStudioBffHandler({env:process.env});
 const assets=new Map([

@@ -94,6 +94,12 @@ export function createAccountStorageController({localStorage,sessionStorage,lega
       return {account:context,...result};
     },
     lockAccountStorage(){locked=true;context=null},
+    clearVerifiedAccountData(accountId){
+      const capture=requireContext();if(capture.accountId!==accountId)throw denied('ACCOUNT_STORAGE_CONTEXT_CHANGED');
+      const ownerPrefix=prefix(accountId);let removed=0;
+      for(const store of [local,session])if(store)for(const key of keysOf(store))if(key.startsWith(ownerPrefix)){store.removeItem(key);removed++}
+      return removed;
+    },
     verifiedAccount(){return locked?null:context},isLocked(){return locked},
     accountLocalStorage(){return facade('local')},
     accountSessionStorage(){return facade('session')}
@@ -103,6 +109,7 @@ export function createAccountStorageController({localStorage,sessionStorage,lega
 const controller=createAccountStorageController();
 export const initializeAccountStorage=dto=>controller.initializeAccountStorage(dto);
 export const lockAccountStorage=()=>controller.lockAccountStorage();
+export const clearVerifiedAccountData=accountId=>controller.clearVerifiedAccountData(accountId);
 export const verifiedAccount=()=>controller.verifiedAccount();
 export const accountStorageLocked=()=>controller.isLocked();
 export const accountLocalStorage=()=>controller.accountLocalStorage();

@@ -46,6 +46,7 @@ export function bindEntry({loadPasskeyClient=()=>import('/account/access/passkey
  for(const link of document.querySelectorAll('[data-key-access]'))link.href=accessURL;
  let signedIn=false,busy=false,version=0,accessPromise=null,activeAttempt=null,pageHidden=false;
  const setStatus=(text,tone='')=>{status.textContent=text;status.dataset.tone=tone};
+ let deletionHint=false;try{deletionHint=sessionStorage.getItem('nexus:self-deletion-success:v1')==='1';sessionStorage.removeItem('nexus:self-deletion-success:v1')}catch{}
  const setBusy=value=>{busy=value;login.setAttribute('aria-disabled',String(value));login.setAttribute('aria-busy',String(value));switcher.disabled=value};
  const clearAccount=()=>{signedIn=false;welcome.hidden=true;name.textContent='';switcher.hidden=true;label.textContent='Войти ключом доступа';login.href=ENTRY_URL};
  const passkey=()=>{
@@ -78,7 +79,7 @@ export function bindEntry({loadPasskeyClient=()=>import('/account/access/passkey
      location.assign(destination);
     }
    }else{
-    clearAccount();setStatus('Вход ключом доступа: Windows Hello, телефон или аппаратный ключ.');
+    clearAccount();setStatus(deletionHint?'Ваш аккаунт и его серверные данные удалены. Скачанные файлы и отдельные офлайн-копии остаются на устройствах.':'Вход ключом доступа: Windows Hello, телефон или аппаратный ключ.');deletionHint=false;
     if(oauthReturnPending){
      oauthReturnPending=false;
      setStatus('Сессия после внешнего входа не подтверждена. Попробуйте войти снова.','error');
