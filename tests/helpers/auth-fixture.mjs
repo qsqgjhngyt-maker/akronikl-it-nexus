@@ -60,8 +60,8 @@ export async function fixture(frontend,{oauth=false,control=false,productionSche
  const gate=createEntryGateHandler({env,fetchImpl,landingBody:await asset('index.html')});
  const oauthHandler=createOAuthHandler({env,fetchImpl});
  if(assistant){if(!productionSchema)throw Error('ASSISTANT_REQUIRES_FULL_SCHEMA');Object.assign(env,{AKRONIKL_CLOUD_ENABLED:'true',AKRONIKL_STATE_ENABLED:'true',AKRONIKL_STORAGE:'d1',AKRONIKL_SERVICE_KEY:'SYNTHETIC_AKRONIKL_SIGNING_KEY_ONLY_20261029',AKRONIKL_VAULT_MASTER_KEY:Buffer.alloc(32,37).toString('base64')});}
- let modelCalls=0;
- const assistantHost=assistant?await createNexusCloudHandler({env,fetchImpl,createAdapter:()=>({async complete(){modelCalls++;return{response:{answer:'SYNTHETIC_VERIFICATION_ONLY',citations:['S1']}}},dispose(){}})}):null;
+ let modelCalls=0;const chatRequests=[];
+ const assistantHost=assistant?await createNexusCloudHandler({env,fetchImpl,createAdapter:()=>({async complete(){modelCalls++;return{response:{answer:'SYNTHETIC_VERIFICATION_ONLY',citations:['S1']}}},async chat(data){modelCalls++;chatRequests.push(structuredClone(data));return{response:{answer:'SYNTHETIC_CHAT_ONLY_'+chatRequests.length,citations:['U1']}}},dispose(){}})}):null;
  const controlHandler=createAccountControlHandler({env,fetchImpl,onAccountDeleted:id=>assistantHost?.revokeAccount(id)});
  const feedbackHandler=createFeedbackHandler({env,fetchImpl}),contentHandler=createContentHandler({env,fetchImpl});
  let mismatch=false;const metrics=[];
@@ -80,5 +80,5 @@ export async function fixture(frontend,{oauth=false,control=false,productionSche
   db.exec('UPDATE nexus_alpha_settings SET enforced=1,max_testers=3 WHERE id=1');
   Object.assign(env,{COMMUNITY_ENABLED:'true',CONTENT_ENABLED:'true',CONTENT_PROXY_ENABLED:'true',FEEDBACK_ENABLED:'true',FEEDBACK_PROXY_ENABLED:'true',FEEDBACK_SERVICE_KEY:'SYNTHETIC_FEEDBACK_SERVICE_KEY_ONLY_20261020',ADMIN_CONTROL_ENABLED:'true',ACCOUNT_CONTROL_PROXY_ENABLED:'true',ALPHA_ADMISSION_ENABLED:'true',ADMIN_PURGE_ENABLED:'true',COOKIE_INGRESS_V3_ENABLED:'true',ADMIN_SERVICE_KEY:'SYNTHETIC_CONTROL_SERVICE_KEY_ONLY_20261020'});
  }
- return{db,env,fetchImpl,invitation,dispatch,metrics,enableControl,modelCalls:()=>modelCalls,enablePublicRegistration(){if(!control)throw Error('CONTROL_REQUIRED');env.PUBLIC_PASSKEY_REGISTRATION_ENABLED='true'},beforeBatch(fn){beforeBatch=fn},setMismatch(value){mismatch=value},close(){assistantHost?.close();db.close()}};
+ return{db,env,fetchImpl,invitation,dispatch,metrics,enableControl,modelCalls:()=>modelCalls,chatRequests:()=>structuredClone(chatRequests),enablePublicRegistration(){if(!control)throw Error('CONTROL_REQUIRED');env.PUBLIC_PASSKEY_REGISTRATION_ENABLED='true'},beforeBatch(fn){beforeBatch=fn},setMismatch(value){mismatch=value},close(){assistantHost?.close();db.close()}};
 }

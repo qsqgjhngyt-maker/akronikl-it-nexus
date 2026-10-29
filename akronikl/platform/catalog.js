@@ -47,8 +47,8 @@ const topics = [
   'Причина зависит от конкретного экрана. Проверьте вход в серверный аккаунт, состояние личной копии, сеть и сообщение у действия. Без этих данных я не могу достоверно назвать причину. Локальное открытие копии не заменяет серверную проверку прав.',
   'The reason depends on the screen. Check server sign-in, private-copy lock, connectivity and the action’s status message. Without that information I cannot determine the cause. Local unlock does not replace server permission checks.', ['core/bootstrap.js','pwa/offline-entry.js']],
  ['privacy',['что ты видишь','какие данные доступны','what can you see','privacy'],
-  'Команды навигации получают только режим оболочки и маршрут. Они не читают код, проекты, cookies или хранилище аккаунта. Выделенный код можно включить отдельным действием. Внешняя модель, запись аудио и голосовое управление здесь не подключены.',
-  'Navigation commands receive only the shell mode and route. They do not read code, projects, cookies or account storage. Selected code may be included separately. External models, audio recording and voice control are not connected here.', ['akronikl/platform/service.js','akronikl/ui/nexus-host.js']]
+  'Команды навигации получают режим оболочки и маршрут. В режиме «Разговор» подключённая модель получает отправленные сообщения, продолжение выбранной ветки и прикреплённые файлы. Учебный прогресс и выбранный код передаются согласно разрешениям в настройках. Данные другого аккаунта недоступны. Микрофон не включается.',
+  'Navigation commands receive the shell mode and route. In Conversation mode a connected model receives sent messages, the selected branch history and attached files. Learning progress and selected code follow the permissions in Settings. Other accounts are inaccessible. The microphone is not activated.', ['akronikl/platform/service.js','akronikl/ui/nexus-host.js']]
 ];
 export const HELP_TOPICS = freeze(topics.map(([id,aliases,ru,en,paths])=>({id,aliases,text:{ru,en},paths})));
 export function destinationById(id){return DESTINATIONS.find(row=>row.id===id)||null}

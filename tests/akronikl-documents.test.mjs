@@ -10,4 +10,4 @@ test('ZIP traversal, XML entities, macros, corruption and expansion bombs fail b
  const valid=officeFixture('docx','VALUE'),bad=valid.slice();bad[bad.length-22+10]=255;assert.throws(()=>officeParts(bad));assert.throws(()=>officeParts(new Uint8Array([1,2,3])));
 });
 
-test('CRC mismatch in an otherwise valid stored XML part is rejected',()=>{const bytes=zipSync({'[Content_Types].xml':strToU8('types'),'word/document.xml':strToU8('UNIQUE_CRC_CANARY')},{level:0});const text=new TextDecoder().decode(bytes),at=text.indexOf('UNIQUE_CRC_CANARY');assert.ok(at>=0);bytes[at]^=1;assert.throws(()=>officeParts(bytes),/CHAT_DOCUMENT_INVALID/);});
+test('CRC mismatch in an otherwise valid stored XML part is rejected',()=>{const bytes=zipSync({'[Content_Types].xml':strToU8('types'),'word/document.xml':strToU8('UNIQUE_CRC_CANARY')},{level:0});const at=Buffer.from(bytes).indexOf(Buffer.from('UNIQUE_CRC_CANARY'));assert.ok(at>=0);bytes[at]^=1;assert.throws(()=>officeParts(bytes),/CHAT_DOCUMENT_INVALID/);});

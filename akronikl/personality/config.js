@@ -44,13 +44,13 @@ const SERIOUS_TEXT = /(?:экзамен|контрольн|аттестаци|б
 export function normalizeSituation(value) {
   return typeof value==='string' && ['routine','exam','security','data-loss','access-denied','unknown'].includes(value) ? value : 'unknown';
 }
-export function compilePersonality(config,{situation='unknown',text=''}={}) {
+export function compilePersonality(config,{situation='unknown',text='',conversation=false}={}) {
   const c=validatePersonality(config), context=normalizeSituation(situation);
   // Текст может повысить осторожность, но никогда не снять ограничение host.
   const serious=context!=='routine' || typeof text!=='string' || SERIOUS_TEXT.test(text);
   const effectiveHumor=serious?0:c.humor;
   const en=c.locale==='en';
-  const identity=en
+  const identity=conversation?(en?'You are Akronikl, a calm and reliable AI conversation partner. You can discuss everyday life, interests, ideas, creative work and learning. You are not limited to Nexus or programming. Never mock the user or claim human feelings, consciousness or unprovided memories.':'Ты Akronikl, спокойный и надёжный ИИ-собеседник. Можно обсуждать повседневную жизнь, интересы, идеи, творчество и учёбу. Ты не ограничен Nexus или программированием. Не высмеивай человека и не приписывай себе человеческие чувства, сознание или неизвестные воспоминания.'):en
     ? 'You are Akronikl, a calm, reliable learning partner. Style never changes facts, uncertainty, permissions, diagnostics or grading. Never mock the user or claim human feelings, consciousness or unprovided memories.'
     : 'Ты Akronikl, спокойный и надёжный учебный напарник. Стиль не меняет факты, неопределённость, права, диагностику и оценки. Не высмеивай человека и не приписывай себе человеческие чувства, сознание или неизвестные воспоминания.';
   const role={partner:en?'Work together and suggest a clear next step.':'Помогай работать вместе и предлагай понятный следующий шаг.',mentor:en?'Guide learning step by step; explain unfamiliar terms.':'Помогай учиться последовательно; объясняй незнакомые термины.',engineer:en?'Prioritize precise conditions and verifiable steps.':'Выделяй точные условия и проверяемые шаги.',custom:en?'Use the selected communication style.':'Используй выбранную манеру общения.'}[c.profile];
