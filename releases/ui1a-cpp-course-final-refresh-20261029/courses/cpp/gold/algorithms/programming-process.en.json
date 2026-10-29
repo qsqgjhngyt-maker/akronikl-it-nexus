@@ -1,0 +1,326 @@
+{
+  "schemaVersion": 1,
+  "lessonId": "cpp.programming-process",
+  "moduleId": "cpp.section.algorithms",
+  "locale": "en",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "title": "How programming works: from a real problem to a verified solution",
+  "lead": "A program is a testable model of a problem, not merely a collection of commands. Start with inputs, rules and observable results.",
+  "why": "In practice, a developer must reason about requirements, invalid data and test evidence. Compilable code can still compute the wrong answer.",
+  "objectives": [
+    "Distinguish the problem statement, algorithm, implementation and tests.",
+    "Specify inputs, outputs and boundary cases.",
+    "Explain why a successful build does not establish correctness.",
+    "Change a program and demonstrate the effect with reproducible tests."
+  ],
+  "prerequisites": [
+    "Everyday arithmetic is sufficient.",
+    "Variables, conditions and compilers are introduced from first principles."
+  ],
+  "concepts": [
+    {
+      "term": "Input",
+      "definition": "Data supplied for a particular execution of a program."
+    },
+    {
+      "term": "Precondition",
+      "definition": "A constraint under which the requested behavior is defined."
+    },
+    {
+      "term": "Test case",
+      "definition": "A concrete input together with the expected observable result."
+    },
+    {
+      "term": "Compiler",
+      "definition": "A tool that checks and translates C++ source for the build process."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Agree on behavior before writing code",
+      "paragraphs": [
+        "To compute the total for a shopping basket, we need a unit price, quantity and a rule: price multiplied by quantity. The requirement is incomplete until invalid inputs and numeric bounds have been discussed.",
+        "A table of cases makes expectations explicit: 120 and 3 must yield 360; 120 and 0 must yield 0; a negative price must be rejected or handled under an agreed policy."
+      ]
+    },
+    {
+      "title": "An algorithm bridges a requirement and a programming language",
+      "paragraphs": [
+        "An algorithm specifies the necessary steps: read values, check them, compute a result and produce output. It can be expressed without using C++ syntax at all.",
+        "The same steps can be implemented in different languages. The required outcome remains the benchmark against which each implementation is evaluated."
+      ]
+    },
+    {
+      "title": "What happens when C++ is executed",
+      "paragraphs": [
+        "A developer edits source files; compilation checks the language rules and translates source; linking assembles required components; execution runs the program. A failure can occur at different stages.",
+        "A program using addition instead of multiplication might compile and run without any warning. It is still wrong for this requirement. Debugging means reproducing the mismatch, locating its cause and retesting."
+      ]
+    },
+    {
+      "title": "Tests are evidence, not decoration",
+      "paragraphs": [
+        "A test case states input, expected output and observed output. Running the same case after a change is regression testing: it checks that a fix did not break behavior that used to work.",
+        "Use ordinary, boundary and invalid inputs. A single successful run says very little about the full input space or the quality of a program."
+      ]
+    },
+    {
+      "title": "A disciplined development cycle",
+      "paragraphs": [
+        "Clarify the problem, model the data, design an algorithm, implement it, run checks, explain results and refine. This ordering reduces random code changes.",
+        "Document the accepted inputs, error policy and outputs in words another person can understand. These notes are part of an engineering deliverable."
+      ]
+    },
+    {
+      "title": "Reading your first C++ program",
+      "paragraphs": [
+        "#include <iostream> makes stream declarations available. int main() is the entry point; braces enclose its body. int price = 120 creates an integer variable with an initial value. The = operator assigns a value; it does not test equality. A simple statement ends with a semicolon.",
+        "std::cin >> price >> count reads two whitespace-separated integers. std::cout << total prints the result; \\n ends the line. If the stream cannot read a number, !(std::cin >> ...) is true and the program prints invalid. The || operator means logical OR: one failed boundary condition is enough to reject the input."
+      ]
+    },
+    {
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "Price and quantity are integers 0..1000; discount is 0..100. Round the saving down to whole units: total = subtotal − (subtotal·discount)/100. The bounds keep intermediate products within a 32-bit int.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "title": "Small order calculation",
+      "purpose": "Connect the requirement, formula and C++ implementation.",
+      "code": "#include <iostream>\nint main() {\n    int price = 120, count = 3;\n    int total = price * count;\n    std::cout << total << '\\n';\n}",
+      "stdin": "",
+      "expectedStdout": "360\n",
+      "steps": [
+        "Unit price is 120 and quantity is 3.",
+        "The total variable receives their product.",
+        "std::cout prints the observable result.",
+        "Compare the output against a hand calculation."
+      ]
+    },
+    {
+      "title": "Input validation",
+      "purpose": "Separate invalid data from the actual calculation.",
+      "code": "#include <iostream>\nint main() {\n    int price, count;\n    if (!(std::cin >> price >> count)) { std::cout << \"invalid\\n\"; return 0; }\n    if (price < 0 || price > 1000 || count < 0 || count > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << price * count << '\\n';\n}",
+      "stdin": "120 3\n",
+      "expectedStdout": "360\n",
+      "steps": [
+        "std::cin reads the two integers.",
+        "The condition rejects negative values.",
+        "Only valid values reach the multiplication.",
+        "Repeat with -1 3 and expect invalid."
+      ],
+      "cases": [
+        {
+          "stdin": "0 1000\n",
+          "stdout": "0\n"
+        },
+        {
+          "stdin": "1000 1000\n",
+          "stdout": "1000000\n"
+        },
+        {
+          "stdin": "-1 2\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1001 1\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "oops\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Change the quantity",
+      "action": "Set the quantity to zero.",
+      "prediction": "Expected total is zero.",
+      "verification": "Run the program and explain how the formula determines the result."
+    },
+    {
+      "title": "Introduce a logic defect",
+      "action": "Replace multiplication with addition.",
+      "prediction": "The code still executes but returns 123 instead of 360.",
+      "verification": "Use the original test to locate and repair the discrepancy."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "The program builds but prints 123 instead of 360",
+      "cause": "The arithmetic operator no longer matches the requirement.",
+      "fix": "Review the original formula and rerun the regression case."
+    },
+    {
+      "symptom": "A negative unit price produces a negative charge",
+      "cause": "The input policy was not specified or enforced.",
+      "fix": "Reject invalid input before computing the total."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Define the input, output and rule for converting seconds to minutes.",
+      "criteria": "The result includes whole minutes and remaining seconds; negative input has an explicit policy.",
+      "hint": "Try 125 seconds by hand."
+    },
+    {
+      "level": "applied",
+      "task": "Extend the order program to reject negative values and accept a zero quantity.",
+      "criteria": "120 3 → 360, 120 0 → 0, -1 3 → invalid.",
+      "hint": "Write the test table first."
+    },
+    {
+      "level": "transfer",
+      "task": "Design a ticket-price calculator with a percentage discount.",
+      "criteria": "Provide a clear formula, three meaningful cases and readable code.",
+      "hint": "Separate validation from arithmetic."
+    }
+  ],
+  "laboratory": {
+    "title": "Mini-project: verified order total",
+    "challenge": "Read price, quantity and an integer discount percentage (0..100). Reject invalid values with invalid. Price and quantity are integers 0..1000; discount is 0..100. Round the saving down to whole units: total = subtotal − (subtotal·discount)/100. The bounds keep intermediate products within a 32-bit int.",
+    "starterCode": "// Read price, amount and discount.\n// Validate the inputs, compute the discounted total.\n",
+    "referenceCode": "#include <iostream>\nint main() {\n    int price, amount, discount;\n    if (!(std::cin >> price >> amount >> discount)) { std::cout << \"invalid\\n\"; return 0; }\n    if (price < 0 || price > 1000 || amount < 0 || amount > 1000 || discount < 0 || discount > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int subtotal = price * amount;\n    int saving = subtotal * discount / 100;\n    std::cout << subtotal - saving << '\\n';\n}",
+    "cases": [
+      {
+        "stdin": "100 3 10\n",
+        "stdout": "270\n"
+      },
+      {
+        "stdin": "120 0 25\n",
+        "stdout": "0\n"
+      },
+      {
+        "stdin": "20 2 -1\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "oops\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "0 0 0\n",
+        "stdout": "0\n"
+      },
+      {
+        "stdin": "1 1 1\n",
+        "stdout": "1\n"
+      },
+      {
+        "stdin": "1000 1000 100\n",
+        "stdout": "0\n"
+      },
+      {
+        "stdin": "1001 1 0\n",
+        "stdout": "invalid\n"
+      },
+      {
+        "stdin": "",
+        "stdout": "invalid\n"
+      }
+    ],
+    "steps": [
+      "Specify inputs, formula and bounds.",
+      "Prepare three expected outcomes before running code.",
+      "Implement the program in Code Studio and run the cases.",
+      "Compare observed output with the expected output."
+    ],
+    "rubric": [
+      "All input boundaries are checked.",
+      "Both standard and zero-quantity cases are correct.",
+      "Submit saved source and a short test record."
+    ],
+    "artifact": "source-code",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "Why does a successful compilation not prove correctness?",
+      "answers": [
+        "A logic defect may be valid C++",
+        "The compiler already knows user requirements",
+        "Executable programs cannot have defects"
+      ],
+      "correctIndex": 0,
+      "explanation": "Compilation cannot validate your domain requirement."
+    },
+    {
+      "question": "Which example is a reproducible test?",
+      "answers": [
+        "Try something later",
+        "Price 120, quantity 3, expected 360",
+        "This code looks fine"
+      ],
+      "correctIndex": 1,
+      "explanation": "A test requires concrete input and expected output."
+    },
+    {
+      "question": "What should precede a focused defect fix?",
+      "answers": [
+        "Randomly edit several unrelated lines",
+        "Remove all tests",
+        "Reproduce the wrong result on a known case"
+      ],
+      "correctIndex": 2,
+      "explanation": "A reproducible failure is the starting point for diagnosis."
+    }
+  ],
+  "reflection": [
+    "Where does the algorithm end and the implementation begin?",
+    "Why should a small program test invalid input?"
+  ],
+  "bridge": "Next you will learn the properties that make a set of steps a dependable algorithm.",
+  "visualization": {
+    "kind": "journey",
+    "steps": [
+      {
+        "title": "Requirement",
+        "description": "Unit price and quantity define the task."
+      },
+      {
+        "title": "Model",
+        "description": "Write the formula, bounds and error cases."
+      },
+      {
+        "title": "Algorithm",
+        "description": "Read → validate → multiply → print."
+      },
+      {
+        "title": "Code",
+        "description": "Express the steps in C++."
+      },
+      {
+        "title": "Tests",
+        "description": "Compare predicted and observed outputs."
+      },
+      {
+        "title": "Refinement",
+        "description": "Fix defects and repeat earlier checks."
+      }
+    ]
+  },
+  "sourceRefs": [
+    "CS2023-SDF",
+    "ISO-CPP"
+  ],
+  "legacyQuiz": {
+    "question": "What should come before source code?",
+    "answers": [
+      "Understanding the problem and an algorithm",
+      "An .exe file",
+      "A destructor"
+    ],
+    "correctIndex": 0
+  }
+}
