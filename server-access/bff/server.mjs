@@ -8,17 +8,20 @@ import {createCloudSessionHandler} from './cloud-session.mjs';
 import {createOAuthHandler} from './oauth.mjs';
 import {createAccountControlHandler} from './account-control.mjs';
 import {createNexusCloudHandler} from './akronikl-cloud.mjs';
+import {createPublishedAssets} from './published-assets.mjs';
 const akronikl=await createNexusCloudHandler({env:process.env});
 import {createStudioBffHandler} from '../../studio-build/bff.mjs';
 const passkey=createPasskeyHandler({env:process.env}),existing=createCombinedHandler({env:process.env});
 const landingBody=readFileSync(new URL('../public/entry.html',import.meta.url));
-const entryGate=createEntryGateHandler({env:process.env,landingBody});
+const publishedAssets=createPublishedAssets({env:process.env});
+const entryGate=createEntryGateHandler({env:process.env,landingBody,fetchImpl:publishedAssets.fetchImpl});
 const cloud=createCloudSessionHandler({env:process.env});
 const oauth=createOAuthHandler({env:process.env});
 const control=createAccountControlHandler({env:process.env});
 const content=createContentHandler({env:process.env});
 const studio=await createStudioBffHandler({env:process.env});
 const assets=new Map([
+ ['/account/entry/brand-mark.svg',['image/svg+xml',readFileSync(new URL('../public/brand-mark.svg',import.meta.url))]],
  ['/account/entry/',['text/html; charset=utf-8',landingBody]],
  ['/account/entry/entry.css',['text/css; charset=utf-8',readFileSync(new URL('../public/entry.css',import.meta.url))]],
  ['/account/entry/entry.js',['text/javascript; charset=utf-8',readFileSync(new URL('../public/entry.js',import.meta.url))]],
@@ -33,6 +36,7 @@ const server=http.createServer({maxHeaderSize:16384},async(req,res)=>{
  res.setHeader('vary','*');
  try{
   if(await entryGate(req,res))return;
+  if(await publishedAssets.handle(req,res))return;
   if(await akronikl.handle(req,res)!==false)return;
   if(await studio(req,res))return;
   if(await content(req,res))return;

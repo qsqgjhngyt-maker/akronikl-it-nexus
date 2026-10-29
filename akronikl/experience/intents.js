@@ -5,6 +5,7 @@ export function resolveMessage(value) {
   const text=value.normalize('NFKC').trim().replace(/^(?:акроникл|akronikl)[,!:—\s]+/iu,'');
   const n=text.toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/[?!.,]+$/u,'').replace(/\s+/gu,' ');
   if(/^(?:где я остановился|где я остановилась|where did i leave off)$/u.test(n))return {kind:'resume'};
+  if(/^(?:мой прогресс|наши успехи|что (?:у нас )?(?:сегодня )?на повестке дня|с чего (?:сегодня )?начн[её]м|что дальше|что мне делать дальше|my progress|what next|what shall we start with today)$/u.test(n))return {kind:'progress'};
   if(/^(?:что (?:мы )?(?:сейчас )?изучаем|какая (?:сейчас )?тема|какой (?:сейчас )?урок|what are we (?:studying|learning)(?: now)?|current lesson)$/u.test(n))return {kind:'study'};
   if(/^(?:что мне (?:нужно )?сделать в этом задании|что требуется в этом задании|what (?:should|do) i (?:need to )?do (?:in|for) this (?:task|assignment))$/u.test(n))return {kind:'task'};
   if(/^(?:покажи контекст|показать контекст|мой контекст|show context)$/u.test(n))return {kind:'context'};

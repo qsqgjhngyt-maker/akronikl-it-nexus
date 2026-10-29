@@ -6,10 +6,13 @@ export function validateChatTree(value){
  const branches=new Set();for(const b of value.branches){if(!b||Object.keys(b).sort().join(',')!=='id,leaf,title'||!validId(b.id)||branches.has(b.id)||b.leaf!==null&&!ids.has(b.leaf)||typeof b.title!=='string'||!b.title||b.title.length>80)throw Error('CHAT_STATE_INVALID');branches.add(b.id);}if(!branches.has(value.active))throw Error('CHAT_STATE_INVALID');return structuredClone(value);
 }
 export function createChatTree(initial){
+ let byteLimit=3000000;
  let state=initial?validateChatTree(initial):{nodes:[],branches:[{id:id(),title:'Основная ветка',leaf:null}],active:null};state.active??=state.branches[0].id;
  const branch=()=>state.branches.find(x=>x.id===state.active),save=()=>validateChatTree(state);
  const pathTo=leaf=>{const result=[];for(let node=state.nodes.find(n=>n.id===leaf);node;node=state.nodes.find(n=>n.id===node.parent))result.unshift(node);return structuredClone(result);};
  return Object.freeze({snapshot:save,path:()=>pathTo(branch().leaf),replace(value){state=validateChatTree(value);},
+  setByteLimit(value){if(!Number.isSafeInteger(value)||value<100000||value>3000000)throw Error('CHAT_LIMIT');byteLimit=value;},byteLimit:()=>byteLimit,
+  assertCanAsk({text,attachments=[]}){const next=structuredClone(state),node={id:id(),parent:branch().leaf,role:'user',text,badge:'system',generated:false,attachments,sources:[]};next.nodes.push(node);next.branches.find(x=>x.id===state.active).leaf=node.id;validateChatTree(next);if(next.nodes.length>127||new TextEncoder().encode(JSON.stringify(next)).length>byteLimit-90000)throw Error('CHAT_LIMIT');},
   append({role,text,badge='system',generated=false,attachments=[]}){const node={id:id(),parent:branch().leaf,role,text,badge,generated,attachments:attachments.map(validateAttachment),sources:[]};const next=structuredClone(state);next.nodes.push(node);next.branches.find(x=>x.id===state.active).leaf=node.id;state=validateChatTree(next);return structuredClone(node);},
   sources(nodeId,sources){const next=structuredClone(state),node=next.nodes.find(n=>n.id===nodeId);if(node)node.sources=structuredClone(sources);state=validateChatTree(next);},
   fork(nodeId){if(nodeId!==null&&!state.nodes.some(n=>n.id===nodeId))throw Error('CHAT_STATE_INVALID');if(state.branches.length>=12)throw Error('CHAT_LIMIT');const b={id:id(),title:'Ветка '+(state.branches.length+1),leaf:nodeId};state.branches.push(b);state.active=b.id;return save();},

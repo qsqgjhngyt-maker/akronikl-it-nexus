@@ -5,6 +5,8 @@ import {createCloudSettingsHost} from '../../tools/qa-akronikl/cloud-settings-ga
 import {createCloudVault} from '../../tools/qa-akronikl/cloud-vault.mjs';
 import {createCipheriv,createDecipheriv,randomBytes,createHash} from 'node:crypto';
 import path from 'node:path';
+import {createNexusDurableStore} from './akronikl-store.mjs';
+import {PIPER_NARRATOR} from '../../akronikl/experience/piper-voice.js';
 export function createNexusAccountResolver(options={}){
  const read=createAccountReadHandler(options);
  const resolve=async req=>{
@@ -30,12 +32,15 @@ export async function createNexusCloudHandler({env={},fetchImpl=fetch,vault,crea
  const generationEnabled=env.AKRONIKL_CLOUD_ENABLED==='true';
  if(!generationEnabled&&env.AKRONIKL_STATE_ENABLED!=='true')return Object.freeze({handle:async()=>false,close(){},revokeAccount(){}});
  const resolveAccount=createNexusAccountResolver({env,fetchImpl});
- const host=await createCloudSettingsHost({origin:GATEWAY_ORIGIN,secureCookies:true,resolveAccount,vault:vault??createNexusCloudVault(env),generationEnabled,localSpeech,...(createAdapter?{createAdapter}:{}),onOutcome});
+ const durable=env.AKRONIKL_STORAGE==='d1'?createNexusDurableStore({env,fetchImpl}):null;
+ const speech=localSpeech??(env.AKRONIKL_PIPER_ENABLED==='true'?{voice:PIPER_NARRATOR,voices:[PIPER_NARRATOR],assetTransport:'chunks-v1'}:null);
+ const host=await createCloudSettingsHost({origin:GATEWAY_ORIGIN,secureCookies:true,resolveAccount,vault:vault??durable?.vault??createNexusCloudVault(env),generationEnabled,localSpeech:speech,...(durable?{sessionStore:durable.leases,beforeModelCall:durable.beforeModelCall,maxStateBytes:1400000,maxChatBytes:1900000}:{}),...(createAdapter?{createAdapter}:{}),onOutcome});
  return Object.freeze({...host,async handle(req,res){
   if(req.url==='/api/v2/account/passkey/logout'&&req.method==='POST'){
    let session;try{session=readV2CookieContext(req,'passkeyIngressContract',{env})?.get('__Host-nexus_session');}catch{}
    if(session){const bound=createHash('sha256').update(session).digest('hex');res.once('finish',()=>{if(res.statusCode===200)host.revokeBinding(bound);});}return false;
   }
-  return host.handle(req,res);
+  if(!req.url?.startsWith('/api/akronikl/cloud'))return false;
+  return durable?durable.run(req,()=>host.handle(req,res)):host.handle(req,res);
  }});
 }

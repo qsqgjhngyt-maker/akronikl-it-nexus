@@ -1,5 +1,6 @@
 import {createLocalSpeaker} from './local-speaker.js';import {PIPER_VOICE} from './piper-voice.js';
-export function createPiperSpeaker({windowRef=globalThis.window,isCurrent=()=>true,voice=PIPER_VOICE,createWorker=()=>{const url=new URL('./piper-worker.js',import.meta.url);url.searchParams.set('voice',voice.modelId==='ru_RU-uyut7-pilot5-medium'?'uyut7-pilot5':'irina');return new windowRef.Worker(url,{type:'module'});},timeoutMs=120000}={}){
+export function createPiperSpeaker({windowRef=globalThis.window,isCurrent=()=>true,voice=PIPER_VOICE,assetTransport='direct',createWorker=()=>{const url=new URL('./piper-worker.js',import.meta.url);url.searchParams.set('voice',voice.modelId==='ru_RU-uyut7-pilot5-medium'?'uyut7-pilot5':'irina');if(assetTransport==='chunks-v1')url.searchParams.set('transport',assetTransport);return new windowRef.Worker(url,{type:'module'});},timeoutMs=120000}={}){
+ if(!['direct','chunks-v1'].includes(assetTransport))throw Error('SPEECH_UNAVAILABLE');
  if(!['ru_RU-irina-medium','ru_RU-uyut7-pilot5-medium'].includes(voice.modelId))throw Error('SPEECH_UNAVAILABLE');
  let worker=null,ready=null,rejectReady=null,pending=null,closed=false,loadTimer=null,sequence=0;
  const counts={processStarts:0,requests:0,generated:0,cancelled:0,externalModelCalls:0,downloads:0};let timings=null,lastSynthesisMs=null;

@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import path from 'node:path';
 import {tmpdir} from 'node:os';
+import {staticMime} from '../pwa/static-mime.js';
 import {readFile,writeFile,mkdir,mkdtemp} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 const frontend=process.env.NEXUS_FRONTEND_DIR, out=process.env.NEXUS_AKRONIKL_EVIDENCE;
@@ -18,7 +19,7 @@ const allowed=new Set(build.files.map(r=>'/'+r.file));
 const profile=await mkdtemp(path.join(tmpdir(),'ak02-public-gate-'));
 let available=true, context=null, page=null, browserVersion=null, phase='prepare', fatal=null, restarted=false, verifiedWorker=false;
 const checks=[],network=[],errors=[],measurements=[];
-const mime=file=>({'.js':'text/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.md':'text/markdown'}[path.extname(file)]||'text/html');
+const mime=staticMime;
 const server=http.createServer(async(req,res)=>{
   const u=new URL(req.url,'http://127.0.0.1'); const row={phase,path:u.pathname,method:req.method,served:false};network.push(row);
   if (!available) {req.socket.destroy(); return;}

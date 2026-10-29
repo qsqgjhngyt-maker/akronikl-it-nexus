@@ -1,4 +1,5 @@
 import { loadPrefs } from '../core/storage.js';
+import {createPresenceLauncher} from './presence.js';
 
 const context = {
   schemaVersion: 1,
@@ -36,12 +37,14 @@ export function assistantPageMarkup(locale = 'ru') {
 
 export function createLazyAssistantBridge(options) {
   const {root,windowRef=globalThis.window,documentRef=globalThis.document}=options;
-  let bridge=null,pending=null,generation=0,disposed=false;
+  let bridge=null,pending=null,generation=0,disposed=false,welcome=null,welcomePending=null,welcomeSuppressed=false;
   const control=new AbortController();
   const ready=()=>{try{return options.readReady?options.readReady()===true:true}catch{return false}};
+  const presence=createPresenceLauncher({documentRef,windowRef,readIdentity:options.readIdentity,locale:options.readLocale,onOpen:trigger=>void open(trigger)});
   const invalidate=()=>{generation++;bridge?.invalidate()};
   const open=async trigger=>{
     if(disposed||!root.isConnected||!ready())return;
+    welcomeSuppressed=true;welcome?.dispose();
     if(bridge)return bridge.open(trigger);
     const ticket=generation,identity=options.readIdentity(),hash=windowRef.location.hash;
     const language=options.readLocale(),courseLanguage=options.readCourseLocale();
@@ -67,6 +70,7 @@ export function createLazyAssistantBridge(options) {
   documentRef.addEventListener('visibilitychange',()=>{if(documentRef.hidden)invalidate()},{signal:control.signal});
   // Добавление кнопки не загружает UI/Core и не читает содержимое workspace.
   const bindEditor=()=>{
+    presence.refresh();queueMicrotask(()=>{if(disposed||welcomeSuppressed||welcomePending||!ready()||!options.readIdentity()?.accountId||options.publicMode)return;welcomePending=import('./experience/startup-greeting.js').then(m=>m.prepareStartupGreeting({...options,onPreferences:prefs=>presence.configure(prefs)})).then(value=>{welcome=value;if(disposed||welcomeSuppressed)welcome?.dispose();}).catch(()=>{});});
     const editor=options.readEditor?.(),studio=editor?.closest?.('[data-nexus-code-studio]');
     if(disposed||!studio||!root.contains(studio)||studio.previousElementSibling?.hasAttribute('data-akronikl-editor'))return;
     const button=documentRef.createElement('button');button.type='button';button.className='btn';
@@ -74,5 +78,5 @@ export function createLazyAssistantBridge(options) {
     button.textContent=options.readLocale()==='en'?'Akronikl · context':'Akronikl · контекст';
     studio.before(button);
   };
-  return Object.freeze({open,invalidate,bindEditor,dispose(){disposed=true;invalidate();control.abort();bridge?.dispose()}});
+  return Object.freeze({open,invalidate,bindEditor,dispose(){disposed=true;welcomeSuppressed=true;welcome?.dispose();presence.dispose();invalidate();control.abort();bridge?.dispose()}});
 }

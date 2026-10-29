@@ -4,12 +4,15 @@ import {handleAdminService} from './admin-service.mjs';
 import {handlePasskeyService} from './passkey-service.mjs';
 import {handleOAuthService} from './oauth-service.mjs';
 import {handleCloudSessionRequest} from './cloud-session-service.mjs';
+import {handleAkroniklService} from './akronikl-service.mjs';
 import {handleFeedbackRequest} from './feedback-service.js';
 import {verifyAccountServiceRequest} from './account-service-auth.js';
 import {readEligibleAccountFoundation} from './account-foundation.js';
 const reply=(status,code)=>Response.json({error:{code}},{status,headers:{'cache-control':'no-store','vary':'*'}});
 export default {async fetch(request,env,context){
  const path=new URL(request.url).pathname;
+ if(path==='/api/v2/akronikl/internal')return handleAkroniklService(request,env);
+ if(path.startsWith('/api/v2/akronikl/'))return reply(404,'NOT_FOUND');
  if(path==='/api/v2/content/feed')return publicContent(request,env);
  if(path==='/api/v2/account/internal/control')return handleAdminService(request,env);
  if(path.startsWith('/api/v2/account/control')||path.startsWith('/api/v2/account/profile'))return reply(404,'NOT_FOUND');

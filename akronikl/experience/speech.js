@@ -1,7 +1,7 @@
 // Device voices and an authenticated local narrator. No historical auto-replay.
 export function speechPreferences(value={auto:false,voiceURI:'',rate:1}){
- if(!value||Object.keys(value).sort().join(',')!=='auto,rate,voiceURI'||typeof value.auto!=='boolean'||typeof value.voiceURI!=='string'||value.voiceURI.length>240||!Number.isFinite(value.rate)||value.rate<.7||value.rate>1.5)throw Error('SPEECH_SETTINGS_INVALID');
- return Object.freeze({...value});
+ if(!value||!['auto,rate,voiceURI','auto,greeting,rate,voiceURI'].includes(Object.keys(value).sort().join(','))||typeof value.auto!=='boolean'||value.greeting!==undefined&&typeof value.greeting!=='boolean'||typeof value.voiceURI!=='string'||value.voiceURI.length>240||!Number.isFinite(value.rate)||value.rate<.7||value.rate>1.5)throw Error('SPEECH_SETTINGS_INVALID');
+ return Object.freeze({...value,greeting:value.greeting??true});
 }
 export function localSpeechChunks(value){const first=value.match(/^[\s\S]{1,60}(?:\s|$)|^[\s\S]{1,60}/u)?.[0]??'';return first?[first,...(value.slice(first.length).match(/[\s\S]{1,100}(?:\s|$)|[\s\S]{1,100}/gu)??[])]:[];}
 export function createSpeechController({windowRef=globalThis.window,isCurrent=()=>true,onChange=()=>{}}={}){

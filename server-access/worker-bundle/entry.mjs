@@ -445,7 +445,7 @@ function __addDisposableResource(env, value, async) {
   return value;
 }
 function __disposeResources(env) {
-  function fail6(e) {
+  function fail7(e) {
     env.error = env.hasError ? new _SuppressedError(e, env.error, "An error was suppressed during disposal.") : e;
     env.hasError = true;
   }
@@ -457,12 +457,12 @@ function __disposeResources(env) {
         if (r.dispose) {
           var result = r.dispose.call(r.value);
           if (r.async) return s |= 2, Promise.resolve(result).then(next, function(e) {
-            fail6(e);
+            fail7(e);
             return next();
           });
         } else s |= 1;
       } catch (e) {
-        fail6(e);
+        fail7(e);
       }
     }
     if (s === 1) return env.hasError ? Promise.reject(env.error) : Promise.resolve();
@@ -2881,8 +2881,8 @@ ${values.join("\n")}` : `${blockName} :`;
         assertBigInt();
         const bigIntValue = BigInt(value);
         const writer = new ViewWriter();
-        const hex3 = bigIntValue.toString(16).replace(/^-/, "");
-        const view = new Uint8Array(pvtsutils__namespace.Convert.FromHex(hex3));
+        const hex4 = bigIntValue.toString(16).replace(/^-/, "");
+        const view = new Uint8Array(pvtsutils__namespace.Convert.FromHex(hex4));
         if (bigIntValue < 0) {
           const first4 = new Uint8Array(view.length + (view[0] & 128 ? 1 : 0));
           first4[0] |= 128;
@@ -9516,15 +9516,15 @@ var require_Reflect = __commonJS({
             throw new TypeError();
           if (!IsUndefined(propertyKey))
             propertyKey = ToPropertyKey(propertyKey);
-          var provider = GetMetadataProvider(
+          var provider2 = GetMetadataProvider(
             target2,
             propertyKey,
             /*Create*/
             false
           );
-          if (IsUndefined(provider))
+          if (IsUndefined(provider2))
             return false;
-          return provider.OrdinaryDeleteMetadata(metadataKey, target2, propertyKey);
+          return provider2.OrdinaryDeleteMetadata(metadataKey, target2, propertyKey);
         }
         exporter("deleteMetadata", deleteMetadata);
         function DecorateConstructor(decorators, target2) {
@@ -9561,15 +9561,15 @@ var require_Reflect = __commonJS({
           return false;
         }
         function OrdinaryHasOwnMetadata(MetadataKey, O, P) {
-          var provider = GetMetadataProvider(
+          var provider2 = GetMetadataProvider(
             O,
             P,
             /*Create*/
             false
           );
-          if (IsUndefined(provider))
+          if (IsUndefined(provider2))
             return false;
-          return ToBoolean(provider.OrdinaryHasOwnMetadata(MetadataKey, O, P));
+          return ToBoolean(provider2.OrdinaryHasOwnMetadata(MetadataKey, O, P));
         }
         function OrdinaryGetMetadata(MetadataKey, O, P) {
           var hasOwn2 = OrdinaryHasOwnMetadata(MetadataKey, O, P);
@@ -9581,24 +9581,24 @@ var require_Reflect = __commonJS({
           return void 0;
         }
         function OrdinaryGetOwnMetadata(MetadataKey, O, P) {
-          var provider = GetMetadataProvider(
+          var provider2 = GetMetadataProvider(
             O,
             P,
             /*Create*/
             false
           );
-          if (IsUndefined(provider))
+          if (IsUndefined(provider2))
             return;
-          return provider.OrdinaryGetOwnMetadata(MetadataKey, O, P);
+          return provider2.OrdinaryGetOwnMetadata(MetadataKey, O, P);
         }
         function OrdinaryDefineOwnMetadata(MetadataKey, MetadataValue, O, P) {
-          var provider = GetMetadataProvider(
+          var provider2 = GetMetadataProvider(
             O,
             P,
             /*Create*/
             true
           );
-          provider.OrdinaryDefineOwnMetadata(MetadataKey, MetadataValue, O, P);
+          provider2.OrdinaryDefineOwnMetadata(MetadataKey, MetadataValue, O, P);
         }
         function OrdinaryMetadataKeys(O, P) {
           var ownKeys2 = OrdinaryOwnMetadataKeys(O, P);
@@ -9631,16 +9631,16 @@ var require_Reflect = __commonJS({
           return keys2;
         }
         function OrdinaryOwnMetadataKeys(O, P) {
-          var provider = GetMetadataProvider(
+          var provider2 = GetMetadataProvider(
             O,
             P,
             /*create*/
             false
           );
-          if (!provider) {
+          if (!provider2) {
             return [];
           }
-          return provider.OrdinaryOwnMetadataKeys(O, P);
+          return provider2.OrdinaryOwnMetadataKeys(O, P);
         }
         function Type(x) {
           if (x === null)
@@ -9828,27 +9828,27 @@ var require_Reflect = __commonJS({
             setProvider
           };
           return registry;
-          function registerProvider(provider) {
+          function registerProvider(provider2) {
             if (!Object.isExtensible(registry)) {
               throw new Error("Cannot add provider to a frozen registry.");
             }
             switch (true) {
-              case fallback === provider:
+              case fallback === provider2:
                 break;
               case IsUndefined(first4):
-                first4 = provider;
+                first4 = provider2;
                 break;
-              case first4 === provider:
+              case first4 === provider2:
                 break;
               case IsUndefined(second):
-                second = provider;
+                second = provider2;
                 break;
-              case second === provider:
+              case second === provider2:
                 break;
               default:
                 if (rest === void 0)
                   rest = new _Set();
-                rest.add(provider);
+                rest.add(provider2);
                 break;
             }
           }
@@ -9866,10 +9866,10 @@ var require_Reflect = __commonJS({
                     if (!next) {
                       return void 0;
                     }
-                    var provider = IteratorValue(next);
-                    if (provider.isProviderFor(O, P)) {
+                    var provider2 = IteratorValue(next);
+                    if (provider2.isProviderFor(O, P)) {
                       IteratorClose(iterator);
-                      return provider;
+                      return provider2;
                     }
                   }
                 }
@@ -9882,34 +9882,34 @@ var require_Reflect = __commonJS({
           }
           function getProvider(O, P) {
             var providerMap = targetProviderMap.get(O);
-            var provider;
+            var provider2;
             if (!IsUndefined(providerMap)) {
-              provider = providerMap.get(P);
+              provider2 = providerMap.get(P);
             }
-            if (!IsUndefined(provider)) {
-              return provider;
+            if (!IsUndefined(provider2)) {
+              return provider2;
             }
-            provider = getProviderNoCache(O, P);
-            if (!IsUndefined(provider)) {
+            provider2 = getProviderNoCache(O, P);
+            if (!IsUndefined(provider2)) {
               if (IsUndefined(providerMap)) {
                 providerMap = new _Map();
                 targetProviderMap.set(O, providerMap);
               }
-              providerMap.set(P, provider);
+              providerMap.set(P, provider2);
             }
-            return provider;
+            return provider2;
           }
-          function hasProvider(provider) {
-            if (IsUndefined(provider))
+          function hasProvider(provider2) {
+            if (IsUndefined(provider2))
               throw new TypeError();
-            return first4 === provider || second === provider || !IsUndefined(rest) && rest.has(provider);
+            return first4 === provider2 || second === provider2 || !IsUndefined(rest) && rest.has(provider2);
           }
-          function setProvider(O, P, provider) {
-            if (!hasProvider(provider)) {
+          function setProvider(O, P, provider2) {
+            if (!hasProvider(provider2)) {
               throw new Error("Metadata provider not registered.");
             }
             var existingProvider = getProvider(O, P);
-            if (existingProvider !== provider) {
+            if (existingProvider !== provider2) {
               if (!IsUndefined(existingProvider)) {
                 return false;
               }
@@ -9918,7 +9918,7 @@ var require_Reflect = __commonJS({
                 providerMap = new _Map();
                 targetProviderMap.set(O, providerMap);
               }
-              providerMap.set(P, provider);
+              providerMap.set(P, provider2);
             }
             return true;
           }
@@ -9943,7 +9943,7 @@ var require_Reflect = __commonJS({
         }
         function CreateMetadataProvider(registry) {
           var metadata2 = new _WeakMap();
-          var provider = {
+          var provider2 = {
             isProviderFor: function(O, P) {
               var targetMetadata = metadata2.get(O);
               if (IsUndefined(targetMetadata))
@@ -9956,8 +9956,8 @@ var require_Reflect = __commonJS({
             OrdinaryOwnMetadataKeys: OrdinaryOwnMetadataKeys2,
             OrdinaryDeleteMetadata
           };
-          metadataRegistry.registerProvider(provider);
-          return provider;
+          metadataRegistry.registerProvider(provider2);
+          return provider2;
           function GetOrCreateMetadataMap(O, P, Create) {
             var targetMetadata = metadata2.get(O);
             var createdTargetMetadata = false;
@@ -9974,7 +9974,7 @@ var require_Reflect = __commonJS({
                 return void 0;
               metadataMap = new _Map();
               targetMetadata.set(P, metadataMap);
-              if (!registry.setProvider(O, P, provider)) {
+              if (!registry.setProvider(O, P, provider2)) {
                 targetMetadata.delete(P);
                 if (createdTargetMetadata) {
                   metadata2.delete(O);
@@ -10073,7 +10073,7 @@ var require_Reflect = __commonJS({
         function CreateFallbackProvider(reflect) {
           var defineMetadata2 = reflect.defineMetadata, hasOwnMetadata2 = reflect.hasOwnMetadata, getOwnMetadata2 = reflect.getOwnMetadata, getOwnMetadataKeys2 = reflect.getOwnMetadataKeys, deleteMetadata2 = reflect.deleteMetadata;
           var metadataOwner = new _WeakMap();
-          var provider = {
+          var provider2 = {
             isProviderFor: function(O, P) {
               var metadataPropertySet = metadataOwner.get(O);
               if (!IsUndefined(metadataPropertySet) && metadataPropertySet.has(P)) {
@@ -10095,7 +10095,7 @@ var require_Reflect = __commonJS({
             OrdinaryOwnMetadataKeys: getOwnMetadataKeys2,
             OrdinaryDeleteMetadata: deleteMetadata2
           };
-          return provider;
+          return provider2;
         }
         function GetMetadataProvider(O, P, Create) {
           var registeredProvider = metadataRegistry.getProvider(O, P);
@@ -13566,8 +13566,8 @@ var require_class_provider = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isClassProvider = void 0;
-    function isClassProvider(provider) {
-      return !!provider.useClass;
+    function isClassProvider(provider2) {
+      return !!provider2.useClass;
     }
     exports.isClassProvider = isClassProvider;
   }
@@ -13579,8 +13579,8 @@ var require_factory_provider = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isFactoryProvider = void 0;
-    function isFactoryProvider(provider) {
-      return !!provider.useFactory;
+    function isFactoryProvider(provider2) {
+      return !!provider2.useFactory;
     }
     exports.isFactoryProvider = isFactoryProvider;
   }
@@ -13678,8 +13678,8 @@ var require_token_provider = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isTokenProvider = void 0;
-    function isTokenProvider(provider) {
-      return !!provider.useToken;
+    function isTokenProvider(provider2) {
+      return !!provider2.useToken;
     }
     exports.isTokenProvider = isTokenProvider;
   }
@@ -13691,8 +13691,8 @@ var require_value_provider = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isValueProvider = void 0;
-    function isValueProvider(provider) {
-      return provider.useValue != void 0;
+    function isValueProvider(provider2) {
+      return provider2.useValue != void 0;
     }
     exports.isValueProvider = isValueProvider;
   }
@@ -13736,8 +13736,8 @@ var require_provider = __commonJS({
     var value_provider_1 = require_value_provider();
     var token_provider_1 = require_token_provider();
     var factory_provider_1 = require_factory_provider();
-    function isProvider(provider) {
-      return class_provider_1.isClassProvider(provider) || value_provider_1.isValueProvider(provider) || token_provider_1.isTokenProvider(provider) || factory_provider_1.isFactoryProvider(provider);
+    function isProvider(provider2) {
+      return class_provider_1.isClassProvider(provider2) || value_provider_1.isValueProvider(provider2) || token_provider_1.isTokenProvider(provider2) || factory_provider_1.isFactoryProvider(provider2);
     }
     exports.isProvider = isProvider;
   }
@@ -13909,15 +13909,15 @@ var require_dependency_container = __commonJS({
       }
       register(token, providerOrConstructor, options = { lifecycle: lifecycle_1.default.Transient }) {
         this.ensureNotDisposed();
-        let provider;
+        let provider2;
         if (!provider_1.isProvider(providerOrConstructor)) {
-          provider = { useClass: providerOrConstructor };
+          provider2 = { useClass: providerOrConstructor };
         } else {
-          provider = providerOrConstructor;
+          provider2 = providerOrConstructor;
         }
-        if (providers_1.isTokenProvider(provider)) {
+        if (providers_1.isTokenProvider(provider2)) {
           const path = [token];
-          let tokenProvider = provider;
+          let tokenProvider = provider2;
           while (tokenProvider != null) {
             const currentToken = tokenProvider.useToken;
             if (path.includes(currentToken)) {
@@ -13933,11 +13933,11 @@ var require_dependency_container = __commonJS({
           }
         }
         if (options.lifecycle === lifecycle_1.default.Singleton || options.lifecycle == lifecycle_1.default.ContainerScoped || options.lifecycle == lifecycle_1.default.ResolutionScoped) {
-          if (providers_1.isValueProvider(provider) || providers_1.isFactoryProvider(provider)) {
+          if (providers_1.isValueProvider(provider2) || providers_1.isFactoryProvider(provider2)) {
             throw new Error(`Cannot use lifecycle "${lifecycle_1.default[options.lifecycle]}" with ValueProviders or FactoryProviders`);
           }
         }
-        this._registry.set(token, { provider, options });
+        this._registry.set(token, { provider: provider2, options });
         return this;
       }
       registerType(from, to) {
@@ -14292,8 +14292,8 @@ var require_registry3 = __commonJS({
     function registry(registrations = []) {
       return function(target2) {
         registrations.forEach((_a) => {
-          var { token, options } = _a, provider = tslib_1.__rest(_a, ["token", "options"]);
-          return dependency_container_1.instance.register(token, provider, options);
+          var { token, options } = _a, provider2 = tslib_1.__rest(_a, ["token", "options"]);
+          return dependency_container_1.instance.register(token, provider2, options);
         });
         return target2;
       };
@@ -15560,8 +15560,8 @@ var require_x509_cjs = __commonJS({
         switch (alg.name.toLowerCase()) {
           case ECDSA.toLowerCase():
             if ("hash" in alg) {
-              const hash4 = typeof alg.hash === "string" ? alg.hash : alg.hash.name;
-              switch (hash4.toLowerCase()) {
+              const hash5 = typeof alg.hash === "string" ? alg.hash : alg.hash.name;
+              switch (hash5.toLowerCase()) {
                 case "sha-1":
                   return asn1Ecc__namespace.ecdsaWithSHA1;
                 case "sha-256":
@@ -15899,8 +15899,8 @@ var require_x509_cjs = __commonJS({
             if (j2 === 8) {
               row.push("");
             }
-            const hex3 = view[i++].toString(16).padStart(2, "0");
-            row.push(hex3);
+            const hex4 = view[i++].toString(16).padStart(2, "0");
+            row.push(hex4);
           }
           res.push(`${pad}${row.join(" ")}`);
         }
@@ -16324,7 +16324,7 @@ var require_x509_cjs = __commonJS({
               if (!matches) {
                 throw new Error("Cannot parse GUID value. Value doesn't match to regular expression");
               }
-              const hex3 = matches.slice(1).map((o, i) => {
+              const hex4 = matches.slice(1).map((o, i) => {
                 if (i < 3) {
                   return pvtsutils.Convert.ToHex(new Uint8Array(pvtsutils.Convert.FromHex(o)).reverse());
                 }
@@ -16333,7 +16333,7 @@ var require_x509_cjs = __commonJS({
               name = new asn1X509__namespace.GeneralName({
                 otherName: new asn1X509__namespace.OtherName({
                   typeId: id_GUID,
-                  value: asn1Schema.AsnConvert.serialize(new asn1Schema.OctetString(pvtsutils.Convert.FromHex(hex3)))
+                  value: asn1Schema.AsnConvert.serialize(new asn1Schema.OctetString(pvtsutils.Convert.FromHex(hex4)))
                 })
               });
               break;
@@ -17308,8 +17308,8 @@ var require_x509_cjs = __commonJS({
     };
     var RsaAlgorithm_1;
     exports.RsaAlgorithm = RsaAlgorithm_1 = class RsaAlgorithm {
-      static createPssParams(hash4, saltLength) {
-        const hashAlgorithm = RsaAlgorithm_1.getHashAlgorithm(hash4);
+      static createPssParams(hash5, saltLength) {
+        const hashAlgorithm = RsaAlgorithm_1.getHashAlgorithm(hash5);
         if (!hashAlgorithm) {
           return null;
         }
@@ -17336,15 +17336,15 @@ var require_x509_cjs = __commonJS({
         switch (alg.name.toLowerCase()) {
           case "rsassa-pkcs1-v1_5":
             if ("hash" in alg) {
-              let hash4;
+              let hash5;
               if (typeof alg.hash === "string") {
-                hash4 = alg.hash;
+                hash5 = alg.hash;
               } else if (alg.hash && typeof alg.hash === "object" && "name" in alg.hash && typeof alg.hash.name === "string") {
-                hash4 = alg.hash.name.toUpperCase();
+                hash5 = alg.hash.name.toUpperCase();
               } else {
                 throw new Error("Cannot get hash algorithm name");
               }
-              switch (hash4.toLowerCase()) {
+              switch (hash5.toLowerCase()) {
                 case "sha-1":
                   return new asn1X509.AlgorithmIdentifier({
                     algorithm: asn1Rsa__namespace.id_sha1WithRSAEncryption,
@@ -21028,7 +21028,7 @@ async function putProject(env, actor, projectId, payload) {
     existing.current_revision
   ) : 0) + 1;
   const stamp3 = now();
-  const hash4 = await sha256(serialized);
+  const hash5 = await sha256(serialized);
   const locator = `d1:${projectId}:${revision}`;
   const statements = [];
   if (!existing) {
@@ -21074,7 +21074,7 @@ async function putProject(env, actor, projectId, payload) {
         ),
         revision,
         locator,
-        hash4,
+        hash5,
         stamp3,
         stamp3
       ),
@@ -21122,7 +21122,7 @@ async function putProject(env, actor, projectId, payload) {
         ),
         revision,
         locator,
-        hash4,
+        hash5,
         stamp3,
         projectId,
         workspaceId
@@ -21153,7 +21153,7 @@ async function putProject(env, actor, projectId, payload) {
       projectId,
       revision,
       serialized,
-      hash4,
+      hash5,
       sizeBytes,
       actor.subjectId,
       stamp3
@@ -21179,7 +21179,7 @@ async function putProject(env, actor, projectId, payload) {
       projectId,
       revision,
       locator,
-      hash4,
+      hash5,
       actor.subjectId,
       stamp3
     ),
@@ -21196,7 +21196,7 @@ async function putProject(env, actor, projectId, payload) {
         revisionAfter: revision,
         metadata: {
           storage: "d1",
-          hash: hash4,
+          hash: hash5,
           sizeBytes,
           changedFiles: fileChanges,
           changeCount: fileChanges.length
@@ -21211,7 +21211,7 @@ async function putProject(env, actor, projectId, payload) {
     ok: true,
     projectId,
     revision,
-    hash: hash4,
+    hash: hash5,
     sizeBytes,
     storage: "d1-only",
     updatedAt: stamp3
@@ -21611,16 +21611,21 @@ async function managedInvitation(env, tokenHash) {
 
 // server-access/worker/admin-purge.mjs
 var ASSESSMENT_TABLES = "nexus_assessment_usage nexus_assessment_nonces nexus_assessment_write_guards nexus_assessment_audit nexus_assessment_owners nexus_assessment_attempts nexus_assessment_uploads nexus_assessment_parts nexus_assessment_reviews nexus_assessment_appeals nexus_assessment_answer_keys nexus_assessment_auto_results".split(" ");
+var AKRONIKL_TABLES = ["nexus_akronikl_state", "nexus_akronikl_connections", "nexus_akronikl_limits", "nexus_akronikl_locks"];
+var AKRONIKL_SCHEMA = [...AKRONIKL_TABLES, "nexus_akronikl_nonces"];
 var KNOWN = new Set("workspaces workspace_members projects project_members project_access_policies project_revisions project_checkpoints project_invites audit_events project_snapshots account_subjects account_tokens account_devices account_sessions identity_security_events login_methods oauth_identities session_login_methods account_service_nonces nexus_passkey_users nexus_passkey_invites nexus_passkey_challenges nexus_passkey_credentials nexus_passkey_audit nexus_passkey_receipts nexus_passkey_service_nonces nexus_passkey_rate_limits feedback_permissions feedback_items feedback_revisions feedback_events feedback_rate_limits feedback_service_nonces nexus_oauth_service_nonces nexus_oauth_rate_limits nexus_oauth_transactions nexus_oauth_account_policies nexus_oauth_allowed_emails nexus_oauth_receipts nexus_oauth_verified_emails nexus_admin_grants nexus_alpha_settings nexus_alpha_members nexus_account_profiles nexus_admin_invites nexus_invite_enrollments nexus_admin_nonces nexus_admin_rate_limits nexus_admin_write_guards nexus_admin_audit nexus_admin_purge_approvals nexus_account_avatars nexus_admin_purge_links nexus_community_write_guards nexus_community_audit feedback_deleted_items feedback_replies nexus_content_posts nexus_content_home nexus_content_audit nexus_content_media nexus_content_media_audit nexus_content_media_uploads nexus_content_media_parts".split(" "));
 var PROJECTS = "SELECT id FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1)";
 var SCOPE = "SELECT json_object('schema',COALESCE((SELECT group_concat(v,'|') FROM(SELECT name||':'||COALESCE(sql,'') v FROM sqlite_master WHERE type IN('table','trigger','view') AND name NOT LIKE 'sqlite_%' ORDER BY type,name)),''),'memberVersion',(SELECT version FROM nexus_alpha_members WHERE account_id=?1),'accountUpdated',(SELECT updated_at FROM account_subjects WHERE id=?1),'projects',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||current_revision||':'||updated_at v FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1) ORDER BY id)),''),'feedback',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM feedback_items WHERE author_id=?1 ORDER BY id)),''),'feedbackReplies',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM feedback_replies WHERE author_id=?1 OR item_id IN(SELECT id FROM feedback_items WHERE author_id=?1) ORDER BY id)),''),'workspaces',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||updated_at v FROM workspaces WHERE owner_subject_id=?1 ORDER BY id)),''),'sharedRows',(SELECT count(*) FROM workspace_members WHERE workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1) AND subject_id<>?1)+(SELECT count(*) FROM project_members WHERE project_id IN(SELECT id FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1)) AND subject_id<>?1),'keys',(SELECT count(*) FROM nexus_passkey_credentials WHERE account_id=?1),'identities',(SELECT count(*) FROM oauth_identities WHERE account_id=?1),'sessions',(SELECT count(*) FROM account_sessions WHERE subject_id=?1),'avatarVersion',COALESCE((SELECT version FROM nexus_account_avatars WHERE account_id=?1),0)) AS value";
 async function scope(env, id3) {
   const tables = await rows(query2(env.DB, "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT IN('d1_migrations','_cf_KV','_cf_METADATA')"));
-  if (tables.some((t) => !KNOWN.has(t.name) && !ASSESSMENT_TABLES.includes(t.name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
+  if (tables.some((t) => !KNOWN.has(t.name) && !ASSESSMENT_TABLES.includes(t.name) && !AKRONIKL_SCHEMA.includes(t.name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
+  const hasAkronikl = tables.some((t) => AKRONIKL_SCHEMA.includes(t.name));
+  if (hasAkronikl && !AKRONIKL_SCHEMA.every((name) => tables.some((t) => t.name === name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
   const hasAssessment = tables.some((t) => ASSESSMENT_TABLES.includes(t.name));
   if (hasAssessment && !ASSESSMENT_TABLES.every((name) => tables.some((t) => t.name === name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
   const hasMedia = tables.some((t) => t.name === "nexus_content_media");
   let scopeSQL = hasMedia ? SCOPE.replace("'avatarVersion'", "'blogMediaReferences',(SELECT count(*) FROM nexus_content_media WHERE created_by=?1)+(SELECT count(*) FROM nexus_content_media_audit WHERE actor_id=?1),'avatarVersion'") : SCOPE;
+  if (hasAkronikl) scopeSQL = scopeSQL.replace("'avatarVersion'", "'assistantState',COALESCE((SELECT group_concat(v,'|') FROM(SELECT slot||':'||revision v FROM nexus_akronikl_state WHERE account_id=?1 ORDER BY slot)),''),'assistantConnections',COALESCE((SELECT group_concat(v,'|') FROM(SELECT token_hash||':'||version||':'||expires_at||':'||busy_until v FROM nexus_akronikl_connections WHERE account_id=?1 ORDER BY token_hash)),''),'assistantLimits',COALESCE((SELECT group_concat(v,'|') FROM(SELECT bucket||':'||count v FROM nexus_akronikl_limits WHERE account_id=?1 ORDER BY bucket)),''),'avatarVersion'");
   if (hasAssessment) {
     if (await first(env.DB, "SELECT 1 ok FROM nexus_assessment_reviews WHERE reviewer_id=?1 AND account_id<>?1 LIMIT 1", id3)) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
     const refs = "'assessmentState',json_object('ownerBytes',COALESCE((SELECT bytes FROM nexus_assessment_owners WHERE account_id=?1),0),'owned',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version||':'||status||':'||COALESCE(snapshot_hash,'') v FROM nexus_assessment_attempts WHERE account_id=?1 ORDER BY id)),''),'uploads',COALESCE((SELECT group_concat(v,'|') FROM(SELECT u.id||':'||u.snapshot_hash v FROM nexus_assessment_uploads u JOIN nexus_assessment_attempts a ON a.id=u.attempt_id WHERE a.account_id=?1 ORDER BY u.id)),''),'assigned',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM nexus_assessment_attempts WHERE reviewer_id=?1 AND account_id<>?1 ORDER BY id)),''),'authoredReviews',(SELECT count(*) FROM nexus_assessment_reviews WHERE reviewer_id=?1 AND account_id<>?1)),'avatarVersion'";
@@ -21637,10 +21642,12 @@ async function scope(env, id3) {
   if (external.n) deny("PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED", 409);
   const member = await first(env.DB, "SELECT m.version,p.username FROM nexus_alpha_members m LEFT JOIN nexus_account_profiles p ON p.account_id=m.account_id WHERE m.account_id=?1 AND m.state='removed'", id3);
   if (!member) deny("REMOVE_BEFORE_PURGE", 409);
+  if (hasAkronikl) scopeSQL = scopeSQL.replace("'avatarVersion'", "'assistantLock',COALESCE((SELECT lock_id||':'||busy_until FROM nexus_akronikl_locks WHERE account_id=?1),''),'avatarVersion'");
   const encoded = (await first(env.DB, scopeSQL, id3)).value;
   const counts = await first(env.DB, "SELECT (SELECT count(*) FROM projects WHERE id IN(" + PROJECTS + ")) projects,(SELECT count(*) FROM workspaces WHERE owner_subject_id=?1) workspaces,(SELECT count(*) FROM feedback_items WHERE author_id=?1) feedback,(SELECT count(*) FROM nexus_passkey_credentials WHERE account_id=?1) keys,(SELECT count(*) FROM oauth_identities WHERE account_id=?1) providers", id3);
   if (hasAssessment) Object.assign(counts, await first(env.DB, "SELECT (SELECT count(*) FROM nexus_assessment_attempts WHERE account_id=?1) courseFinalAttempts,COALESCE((SELECT bytes FROM nexus_assessment_owners WHERE account_id=?1),0) courseFinalBytes", id3));
-  return { scopeSQL, member, encoded, hash: await sha(encoded), counts, hasAssessment };
+  if (hasAkronikl) Object.assign(counts, await first(env.DB, "SELECT (SELECT count(*) FROM nexus_akronikl_state WHERE account_id=?1) assistantRecords,(SELECT count(*) FROM nexus_akronikl_connections WHERE account_id=?1) assistantConnections", id3));
+  return { scopeSQL, member, encoded, hash: await sha(encoded), counts, hasAssessment, hasAkronikl };
 }
 async function preparePurge(env, value, id3) {
   const plan = await scope(env, id3), approval = "npa_" + random(), expiresAt = new Date(Date.now() + 12e4).toISOString();
@@ -21660,6 +21667,7 @@ async function executePurge(env, value, id3) {
     // Snapshot is rechecked within this transaction before deleting anything.
     q3("INSERT INTO nexus_admin_write_guards(request_id,phase,valid) VALUES(?2,'after',((" + plan.scopeSQL.replaceAll("?1", "?3").replace(" AS value", "") + ")=?1))", plan.encoded, payload.requestId, id3),
     q3("UPDATE nexus_admin_purge_approvals SET consumed_at=?1 WHERE token_hash=?2", stamp3, approvalHash),
+    ...plan.hasAkronikl ? AKRONIKL_TABLES.map((table) => q3("DELETE FROM " + table + " WHERE account_id=?1", id3)) : [],
     ...plan.hasAssessment ? [
       q3("DELETE FROM nexus_assessment_audit WHERE actor_id=?1 OR attempt_id IN(SELECT id FROM nexus_assessment_attempts WHERE account_id=?1)", id3),
       q3("UPDATE nexus_assessment_attempts SET reviewer_id=NULL,version=version+1 WHERE reviewer_id=?1 AND account_id<>?1", id3),
@@ -21833,10 +21841,10 @@ async function communityOperation(env, value) {
   }
   if (match[3]) {
     if (!exact3(payload, ["requestId", "version"]) || !uuid(payload.requestId) || !Number.isInteger(payload.version)) deny3("INVALID_INPUT");
-    const reply4 = await q(db, "SELECT * FROM feedback_replies WHERE id=?1 AND item_id=?2", match[3], id3).first();
-    if (!reply4 || reply4.author_id !== actorId && !team) deny3("NOT_FOUND", 404);
-    if (reply4.version !== payload.version || reply4.deleted_at) deny3("STALE_VERSION", 409);
-    await atomic2(db, [guard3(payload.requestId, "EXISTS(SELECT 1 FROM feedback_replies WHERE id=?6 AND item_id=?5 AND version=?7 AND deleted_at IS NULL AND (author_id=?2 OR " + PERMISSION + "))", [reply4.id, payload.version]), q(db, "UPDATE feedback_replies SET body=NULL,deleted_at=?1,version=version+1 WHERE id=?2", stamp3, reply4.id), audit3(payload.requestId, "delete-reply")]);
+    const reply5 = await q(db, "SELECT * FROM feedback_replies WHERE id=?1 AND item_id=?2", match[3], id3).first();
+    if (!reply5 || reply5.author_id !== actorId && !team) deny3("NOT_FOUND", 404);
+    if (reply5.version !== payload.version || reply5.deleted_at) deny3("STALE_VERSION", 409);
+    await atomic2(db, [guard3(payload.requestId, "EXISTS(SELECT 1 FROM feedback_replies WHERE id=?6 AND item_id=?5 AND version=?7 AND deleted_at IS NULL AND (author_id=?2 OR " + PERMISSION + "))", [reply5.id, payload.version]), q(db, "UPDATE feedback_replies SET body=NULL,deleted_at=?1,version=version+1 WHERE id=?2", stamp3, reply5.id), audit3(payload.requestId, "delete-reply")]);
     return { ok: true, deleted: true };
   }
   if (!exact3(payload, ["requestId", "body"]) || !uuid(payload.requestId) || typeof payload.body !== "string" || payload.body.trim().length < 1 || payload.body.length > 4e3 || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(payload.body)) deny3("INVALID_INPUT");
@@ -22489,16 +22497,16 @@ async function requireAdmin(env, actor, write = false) {
   if (write && !fresh(actor)) deny("ADMIN_FRESH_PASSKEY_REQUIRED", 401);
   if (write && !await first(env.DB, "SELECT 1 ok FROM nexus_passkey_credentials k JOIN session_login_methods slm ON slm.login_method_id=k.login_method_id WHERE slm.session_id=?1 AND k.account_id=?2", actor.session_id, actor.account_id)) deny("ADMIN_FRESH_PASSKEY_REQUIRED", 401);
 }
-async function target(env, actor, id3, version2) {
-  if (!validId(id3) || !Number.isInteger(version2) || version2 < 0) deny("INVALID_INPUT");
+async function target(env, actor, id3, version3) {
+  if (!validId(id3) || !Number.isInteger(version3) || version3 < 0) deny("INVALID_INPUT");
   if (id3 === actor.account_id || await first(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1", id3)) deny("ADMIN_ACCOUNT_PROTECTED", 403);
   const row = await first(env.DB, "SELECT * FROM nexus_alpha_members WHERE account_id=?1", id3);
   if (!row) {
     if (!await first(env.DB, "SELECT id FROM account_subjects WHERE id=?1", id3)) deny("NOT_FOUND", 404);
-    if (version2 !== 0) deny("CONTROL_CONFLICT", 409);
+    if (version3 !== 0) deny("CONTROL_CONFLICT", 409);
     return { state: "unadmitted", version: 0 };
   }
-  if (row.version !== version2) deny("CONTROL_CONFLICT", 409);
+  if (row.version !== version3) deny("CONTROL_CONFLICT", 409);
   return row;
 }
 function validMutation(input, keys2) {
@@ -22545,8 +22553,8 @@ async function operation(env, value) {
   if (path === BASE + "/invites") {
     validMutation(payload, ["ttlMinutes"]);
     if (!Number.isInteger(payload.ttlMinutes) || payload.ttlMinutes < 10 || payload.ttlMinutes > 10080) deny("INVALID_INPUT");
-    const secret = "npi_" + random(), hash4 = await sha(secret), id4 = crypto.randomUUID(), stamp3 = now3(), expiresAt = new Date(Date.now() + payload.ttlMinutes * 6e4).toISOString();
-    await atomic(env, [guard(env.DB, payload.requestId, "before", "1"), query2(env.DB, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,'\u041D\u043E\u0432\u044B\u0439 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A','active',?2,?2)", id4, stamp3), query2(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at) VALUES(?1,'invited',?2,?3,?3)", id4, expiresAt, stamp3), query2(env.DB, "INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)", hash4, id4, expiresAt), query2(env.DB, "INSERT INTO nexus_admin_invites(token_hash,account_id,created_by,state,created_at) VALUES(?1,?2,?3,'ready',?4)", hash4, id4, actor.account_id, stamp3), audit(env.DB, actor, payload.requestId, "invite", id4, stamp3)]);
+    const secret = "npi_" + random(), hash5 = await sha(secret), id4 = crypto.randomUUID(), stamp3 = now3(), expiresAt = new Date(Date.now() + payload.ttlMinutes * 6e4).toISOString();
+    await atomic(env, [guard(env.DB, payload.requestId, "before", "1"), query2(env.DB, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,'\u041D\u043E\u0432\u044B\u0439 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A','active',?2,?2)", id4, stamp3), query2(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at) VALUES(?1,'invited',?2,?3,?3)", id4, expiresAt, stamp3), query2(env.DB, "INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)", hash5, id4, expiresAt), query2(env.DB, "INSERT INTO nexus_admin_invites(token_hash,account_id,created_by,state,created_at) VALUES(?1,?2,?3,'ready',?4)", hash5, id4, actor.account_id, stamp3), audit(env.DB, actor, payload.requestId, "invite", id4, stamp3)]);
     return { ok: true, accountId: id4, invitationToken: secret, expiresAt };
   }
   const match = new RegExp("^" + BASE + "/users/([A-Za-z0-9][A-Za-z0-9._:-]{0,159})/(action|purge-preview|purge)$").exec(path);
@@ -23555,17 +23563,17 @@ async function getRandomValues(array) {
 
 // server-access/node_modules/@simplewebauthn/server/esm/helpers/convertAAGUIDToString.js
 function convertAAGUIDToString(aaguid) {
-  const hex3 = isoUint8Array_exports.toHex(aaguid);
+  const hex4 = isoUint8Array_exports.toHex(aaguid);
   const segments = [
-    hex3.slice(0, 8),
+    hex4.slice(0, 8),
     // 8
-    hex3.slice(8, 12),
+    hex4.slice(8, 12),
     // 4
-    hex3.slice(12, 16),
+    hex4.slice(12, 16),
     // 4
-    hex3.slice(16, 20),
+    hex4.slice(16, 20),
     // 4
-    hex3.slice(20, 32)
+    hex4.slice(20, 32)
     // 8
   ];
   return segments.join("-");
@@ -24545,15 +24553,15 @@ function toHex(array) {
   const hexParts = Array.from(array, (i) => i.toString(16).padStart(2, "0"));
   return hexParts.join("");
 }
-function fromHex(hex3) {
-  if (!hex3) {
+function fromHex(hex4) {
+  if (!hex4) {
     return Uint8Array.from([]);
   }
-  const isValid = hex3.length !== 0 && hex3.length % 2 === 0 && !/[^a-fA-F0-9]/u.test(hex3);
+  const isValid = hex4.length !== 0 && hex4.length % 2 === 0 && !/[^a-fA-F0-9]/u.test(hex4);
   if (!isValid) {
     throw new Error("Invalid hex string");
   }
-  const byteStrings = hex3.match(/.{1,2}/g) ?? [];
+  const byteStrings = hex4.match(/.{1,2}/g) ?? [];
   return Uint8Array.from(byteStrings.map((byte) => parseInt(byte, 16)));
 }
 function concat(arrays) {
@@ -24571,8 +24579,8 @@ function toUTF8String2(array) {
   return decoder.decode(array);
 }
 function fromUTF8String2(utf8String) {
-  const encoder7 = new globalThis.TextEncoder();
-  return encoder7.encode(utf8String);
+  const encoder8 = new globalThis.TextEncoder();
+  return encoder8.encode(utf8String);
 }
 function fromASCIIString(value) {
   return Uint8Array.from(value.split("").map((x) => x.charCodeAt(0)));
@@ -25459,7 +25467,7 @@ async function verifyAttestationPacked(options) {
   const signatureBase = isoUint8Array_exports.concat([authData, clientDataHash]);
   let verified = false;
   if (x5c) {
-    const { subject, basicConstraintsCA, version: version2, notBefore, notAfter, parsedCertificate } = getCertificateInfo(x5c[0]);
+    const { subject, basicConstraintsCA, version: version3, notBefore, notAfter, parsedCertificate } = getCertificateInfo(x5c[0]);
     const { OU, CN, O, C } = subject;
     if (OU !== "Authenticator Attestation") {
       throw new Error('Certificate OU was not "Authenticator Attestation" (Packed|Full)');
@@ -25476,7 +25484,7 @@ async function verifyAttestationPacked(options) {
     if (basicConstraintsCA) {
       throw new Error("Certificate basic constraints CA was not `false` (Packed|Full)");
     }
-    if (version2 !== 2) {
+    if (version3 !== 2) {
       throw new Error("Certificate version was not `3` (ASN.1 value of 2) (Packed|Full)");
     }
     let now5 = /* @__PURE__ */ new Date();
@@ -25967,11 +25975,11 @@ async function verifyAttestationTPM(options) {
     throw new Error("No certificates present in x5c array (TPM)");
   }
   const leafCertInfo = getCertificateInfo(x5c[0]);
-  const { basicConstraintsCA, version: version2, subject, notAfter, notBefore } = leafCertInfo;
+  const { basicConstraintsCA, version: version3, subject, notAfter, notBefore } = leafCertInfo;
   if (basicConstraintsCA) {
     throw new Error("Certificate basic constraints CA was not `false` (TPM)");
   }
-  if (version2 !== 2) {
+  if (version3 !== 2) {
     throw new Error("Certificate version was not `3` (ASN.1 value of 2) (TPM)");
   }
   if (subject.combined.length > 0) {
@@ -26855,7 +26863,7 @@ var deny4 = (code, status) => {
   throw new Rejected2(code, status);
 };
 var response2 = (body, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff" } });
-var providerAllowed = (env, provider) => Object.hasOwn(ISSUERS, provider) && (provider !== "mailru" || env.OAUTH_MAILRU_SECURE_ADAPTER_ENABLED === "true");
+var providerAllowed = (env, provider2) => Object.hasOwn(ISSUERS, provider2) && (provider2 !== "mailru" || env.OAUTH_MAILRU_SECURE_ADAPTER_ENABLED === "true");
 async function ingress2(request, env) {
   if (env.OAUTH_ENABLED !== "true" || typeof env.OAUTH_SERVICE_KEY !== "string" || env.OAUTH_SERVICE_KEY.length < 32 || !env.DB) deny4("OAUTH_UNAVAILABLE", 503);
   const url = new URL(request.url);
@@ -26956,8 +26964,8 @@ async function claim(env, data) {
   if (!row || Number(committed[1].meta?.changes) !== 1) deny4("TRANSACTION_REJECTED", 401);
   return { ok: true, txId: row.id, codeVerifier: row.code_verifier, nonce: row.nonce, intent: row.intent };
 }
-function profileFor(provider, profile) {
-  if (!exact8(profile, ["issuer", "subject", "email", "emailVerified", "displayName"]) || profile.issuer !== ISSUERS[provider] || typeof profile.subject !== "string" || !profile.subject.length || profile.subject.length > 512 || profile.subject !== profile.subject.trim() || /[\x00-\x1f\x7f]/.test(profile.subject) || typeof profile.emailVerified !== "boolean" || typeof profile.displayName !== "string" || !profile.displayName.trim() || profile.displayName.length > 512 || /[\x00-\x1f\x7f]/.test(profile.displayName)) deny4("PROFILE_REJECTED", 401);
+function profileFor(provider2, profile) {
+  if (!exact8(profile, ["issuer", "subject", "email", "emailVerified", "displayName"]) || profile.issuer !== ISSUERS[provider2] || typeof profile.subject !== "string" || !profile.subject.length || profile.subject.length > 512 || profile.subject !== profile.subject.trim() || /[\x00-\x1f\x7f]/.test(profile.subject) || typeof profile.emailVerified !== "boolean" || typeof profile.displayName !== "string" || !profile.displayName.trim() || profile.displayName.length > 512 || /[\x00-\x1f\x7f]/.test(profile.displayName)) deny4("PROFILE_REJECTED", 401);
   let email = null;
   if (profile.email !== null) {
     if (typeof profile.email !== "string" || profile.email.length > 320 || !/^\S+@\S+\.\S+$/.test(profile.email) || /[\x00-\x1f\x7f]/.test(profile.email)) deny4("PROFILE_REJECTED", 401);
@@ -27258,10 +27266,140 @@ function createCloudSessionService({ fetchLegacy = legacy_sync_default.fetch.bin
 }
 var handleCloudSessionRequest = createCloudSessionService();
 
+// server-access/worker/akronikl-service.mjs
+var AKRONIKL_INTERNAL_PATH = "/api/v2/akronikl/internal";
+var encoder5 = new TextEncoder();
+var hex3 = (b) => [...new Uint8Array(b)].map((n) => n.toString(16).padStart(2, "0")).join("");
+var sha5 = async (b) => hex3(await crypto.subtle.digest("SHA-256", b));
+var reply3 = (status, data) => Response.json(data, { status, headers: { "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff" } });
+var fail5 = (code = "CLOUD_VAULT_UNAVAILABLE", status = 503) => {
+  throw Object.assign(Error(code), { status });
+};
+var exact9 = (v, keys2) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === keys2.split(",").sort().join(",");
+var provider = (v) => ["qwen", "openai", "anthropic", "gemini", "kimi", "deepseek", "gigachat", "openrouter"].includes(v);
+var slot = (v) => ["preferences", "chats"].includes(v) || typeof v === "string" && v.startsWith("key:") && provider(v.slice(4));
+var hash4 = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+var version2 = (v) => typeof v === "string" && /^[A-Za-z0-9_-]{22}$/.test(v);
+var cipher = (v, max = 19e5) => typeof v === "string" && v.length >= 40 && v.length <= max && /^[A-Za-z0-9+/]+={0,2}$/.test(v);
+async function verify3(request, env) {
+  const u = new URL(request.url);
+  if (request.method !== "POST" || u.pathname !== AKRONIKL_INTERNAL_PATH || u.search || request.headers.has("cookie") || request.headers.has("authorization") || request.headers.get("content-type") !== "application/json") fail5("CLOUD_REQUEST_DENIED", 401);
+  const stamp3 = request.headers.get("x-nexus-service-timestamp"), nonce = request.headers.get("x-nexus-service-nonce"), signature = request.headers.get("x-nexus-service-signature");
+  if (!/^\d{13}$/.test(stamp3 ?? "") || !/^[a-f0-9]{32}$/.test(nonce ?? "") || !hash4(signature) || Math.abs(Date.now() - Number(stamp3)) > 3e4) fail5("CLOUD_REQUEST_DENIED", 401);
+  const reader = request.body?.getReader();
+  if (!reader) fail5("CLOUD_REQUEST_INVALID", 400);
+  const parts = [];
+  let size = 0;
+  try {
+    for (; ; ) {
+      const { done, value: value2 } = await reader.read();
+      if (done) break;
+      size += value2.length;
+      if (size > 195e4) fail5("CLOUD_REQUEST_INVALID", 413);
+      parts.push(value2);
+    }
+  } finally {
+    await reader.cancel().catch(() => {
+    });
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const b of parts) {
+    bytes.set(b, offset);
+    offset += b.length;
+  }
+  const key = await crypto.subtle.importKey("raw", encoder5.encode(env.AKRONIKL_SERVICE_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+  if (!await crypto.subtle.verify("HMAC", key, Uint8Array.from(signature.match(/../g), (s) => parseInt(s, 16)), encoder5.encode(`v1
+POST
+${AKRONIKL_INTERNAL_PATH}
+${stamp3}
+${nonce}
+${await sha5(bytes)}`))) fail5("CLOUD_REQUEST_DENIED", 401);
+  let value;
+  try {
+    value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  } catch {
+    fail5("CLOUD_REQUEST_INVALID", 400);
+  }
+  if (!exact9(value, "action,expectedAccountId,payload,sessionHash") || !hash4(value.sessionHash) || typeof value.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId)) fail5("CLOUD_REQUEST_DENIED", 401);
+  if (Math.abs(Date.now() - Number(stamp3)) > 3e4) fail5("CLOUD_REQUEST_DENIED", 401);
+  await env.DB.prepare("DELETE FROM nexus_akronikl_nonces WHERE nonce IN(SELECT nonce FROM nexus_akronikl_nonces WHERE expires_at<?1 ORDER BY expires_at LIMIT 128)").bind(Date.now()).run();
+  const n = await env.DB.prepare("INSERT OR IGNORE INTO nexus_akronikl_nonces(nonce,expires_at) VALUES(?1,?2)").bind(nonce, Number(stamp3) + 3e4).run();
+  if (!n.success || n.meta?.changes !== 1) fail5("CLOUD_REQUEST_DENIED", 401);
+  const foundation = await readEligibleAccountFoundation(env.DB, value.sessionHash, void 0, env);
+  if (!foundation) fail5("CLOUD_ACCOUNT_REQUIRED", 401);
+  if (foundation.account.accountId !== value.expectedAccountId) fail5("CLOUD_ACCOUNT_REQUIRED", 409);
+  return value;
+}
+async function handleAkroniklService(request, env) {
+  if (env.AKRONIKL_STATE_ENABLED !== "true" || !env.DB || typeof env.AKRONIKL_SERVICE_KEY !== "string" || env.AKRONIKL_SERVICE_KEY.length < 32) return reply3(404, { code: "CLOUD_VAULT_UNAVAILABLE" });
+  try {
+    const v = await verify3(request, env), id3 = v.expectedAccountId, p = v.payload, now5 = Date.now(), q3 = (s, ...args) => env.DB.prepare(s).bind(...args);
+    await q3("DELETE FROM nexus_akronikl_limits WHERE rowid IN(SELECT rowid FROM nexus_akronikl_limits WHERE expires_at<=?1 LIMIT 128)", now5).run();
+    const cleanup2 = ["lease.release", "lease.drop", "state.remove"].includes(v.action), write = ["state.write", "lease.save"].includes(v.action);
+    for (const [kind, period, max] of cleanup2 ? [["cleanup", 6e4, 30], ["cleanup", 864e5, 1440]] : [["rpc", 6e4, 180], ["rpc", 864e5, 5e3], ...write ? [["write", 6e4, 30]] : []]) {
+      const start = Math.floor(now5 / period), bucket = kind + ":" + period + ":" + start, row = await q3("INSERT INTO nexus_akronikl_limits(account_id,bucket,count,expires_at) VALUES(?1,?2,1,?3) ON CONFLICT(account_id,bucket) DO UPDATE SET count=count+1 WHERE count<?4 RETURNING count", id3, bucket, (start + 1) * period, max).first();
+      if (!row) fail5("CLOUD_RATE_LIMITED", 429);
+    }
+    if (v.action === "state.read" && exact9(p, "slot") && slot(p.slot)) return reply3(200, await q3("SELECT revision,ciphertext FROM nexus_akronikl_state WHERE account_id=?1 AND slot=?2", id3, p.slot).first() ?? { revision: 0, ciphertext: null });
+    if (v.action === "keys.list" && exact9(p, "")) {
+      const { results = [] } = await q3("SELECT slot,ciphertext FROM nexus_akronikl_state WHERE account_id=?1 AND slot LIKE 'key:%' ORDER BY slot", id3).all();
+      return reply3(200, { records: results });
+    }
+    if (v.action === "provider.epoch" && exact9(p, "providerId") && provider(p.providerId)) return reply3(200, { epoch: (await q3("SELECT count FROM nexus_akronikl_limits WHERE account_id=?1 AND bucket=?2", id3, "epoch:" + p.providerId).first())?.count ?? 0 });
+    const keyWrite = typeof p?.slot === "string" && p.slot.startsWith("key:");
+    if (v.action === "state.write" && exact9(p, keyWrite ? "slot,revision,ciphertext,providerEpoch" : "slot,revision,ciphertext") && slot(p.slot) && (!keyWrite || Number.isSafeInteger(p.providerEpoch) && p.providerEpoch >= 0) && Number.isSafeInteger(p.revision) && p.revision >= 0 && cipher(p.ciphertext, p.slot === "chats" ? 19e5 : 2e4)) {
+      const epoch = keyWrite ? p.providerEpoch : null, guard3 = "(?5 IS NULL OR ?5=COALESCE((SELECT count FROM nexus_akronikl_limits WHERE account_id=?1 AND bucket=?6),0))";
+      const row = await q3("INSERT INTO nexus_akronikl_state(account_id,slot,revision,ciphertext) SELECT ?1,?2,1,?3 WHERE ?4=0 AND " + guard3 + " ON CONFLICT(account_id,slot) DO UPDATE SET revision=revision+1,ciphertext=excluded.ciphertext WHERE revision=?4 AND " + guard3 + " RETURNING revision", id3, p.slot, p.ciphertext, p.revision, epoch, "epoch:" + p.slot.slice(4)).first();
+      const updated = row ?? (p.revision > 0 ? await q3("UPDATE nexus_akronikl_state SET revision=revision+1,ciphertext=?3 WHERE account_id=?1 AND slot=?2 AND revision=?4 AND " + guard3 + " RETURNING revision", id3, p.slot, p.ciphertext, p.revision, epoch, "epoch:" + p.slot.slice(4)).first() : null);
+      if (!updated) fail5("CLOUD_SETTINGS_CONFLICT", 409);
+      return reply3(200, updated);
+    }
+    if (v.action === "state.remove" && exact9(p, "slot") && typeof p.slot === "string" && p.slot.startsWith("key:") && slot(p.slot)) {
+      await env.DB.batch([q3("DELETE FROM nexus_akronikl_state WHERE account_id=?1 AND slot=?2", id3, p.slot), q3("DELETE FROM nexus_akronikl_connections WHERE account_id=?1 AND provider_id=?2", id3, p.slot.slice(4)), q3("INSERT INTO nexus_akronikl_limits(account_id,bucket,count,expires_at) VALUES(?1,?2,1,253402300799000) ON CONFLICT(account_id,bucket) DO UPDATE SET count=count+1", id3, "epoch:" + p.slot.slice(4))]);
+      return reply3(200, { removed: true });
+    }
+    if (v.action === "lease.save" && exact9(p, "tokenHash,version,providerId,expiresAt,ciphertext,replaceTokenHash,providerEpoch") && hash4(p.tokenHash) && version2(p.version) && provider(p.providerId) && (p.replaceTokenHash === null || hash4(p.replaceTokenHash)) && Number.isSafeInteger(p.providerEpoch) && p.providerEpoch >= 0 && Number.isSafeInteger(p.expiresAt) && p.expiresAt > now5 && p.expiresAt <= now5 + 18e5 && cipher(p.ciphertext, 2e4)) {
+      await q3("DELETE FROM nexus_akronikl_connections WHERE token_hash IN(SELECT token_hash FROM nexus_akronikl_connections WHERE expires_at<=?1 LIMIT 128)", now5).run();
+      const row = await q3("INSERT INTO nexus_akronikl_connections(token_hash,account_id,session_hash,provider_id,version,expires_at,ciphertext) SELECT ?1,?2,?3,?4,?5,?6,?7 WHERE (SELECT count(*) FROM nexus_akronikl_connections WHERE account_id=?2 AND expires_at>?9 AND NOT(?8 IS NOT NULL AND token_hash=?8 AND session_hash=?3))<8 AND ?10=COALESCE((SELECT count FROM nexus_akronikl_limits WHERE account_id=?2 AND bucket=?11),0) RETURNING token_hash", p.tokenHash, id3, v.sessionHash, p.providerId, p.version, p.expiresAt, p.ciphertext, p.replaceTokenHash, now5, p.providerEpoch, "epoch:" + p.providerId).first();
+      if (!row) fail5("CLOUD_BUSY", 429);
+      return reply3(200, { saved: true });
+    }
+    if (v.action === "lease.read" && exact9(p, "tokenHash") && hash4(p.tokenHash)) return reply3(200, { lease: await q3("SELECT version,ciphertext,expires_at FROM nexus_akronikl_connections WHERE token_hash=?1 AND account_id=?2 AND session_hash=?3 AND expires_at>?4", p.tokenHash, id3, v.sessionHash, now5).first() });
+    if (v.action === "lease.drop" && exact9(p, "tokenHash,version") && hash4(p.tokenHash) && version2(p.version)) {
+      await q3("DELETE FROM nexus_akronikl_connections WHERE token_hash=?1 AND account_id=?2 AND session_hash=?3 AND version=?4", p.tokenHash, id3, v.sessionHash, p.version).run();
+      return reply3(200, { removed: true });
+    }
+    if (v.action === "lease.acquire" && exact9(p, "tokenHash,version,lockId") && hash4(p.tokenHash) && version2(p.version) && hash4(p.lockId)) {
+      const row = await q3("INSERT INTO nexus_akronikl_locks(account_id,token_hash,session_hash,version,busy_until,lock_id) SELECT ?2,?1,?3,?4,?5,?6 WHERE EXISTS(SELECT 1 FROM nexus_akronikl_connections WHERE token_hash=?1 AND account_id=?2 AND session_hash=?3 AND version=?4 AND expires_at>?7) ON CONFLICT(account_id) DO UPDATE SET token_hash=excluded.token_hash,session_hash=excluded.session_hash,version=excluded.version,busy_until=excluded.busy_until,lock_id=excluded.lock_id WHERE busy_until<=?7 RETURNING version", p.tokenHash, id3, v.sessionHash, p.version, now5 + 9e4, p.lockId, now5).first();
+      if (!row) fail5("CLOUD_BUSY", 429);
+      return reply3(200, { acquired: true });
+    }
+    if (v.action === "lease.release" && exact9(p, "tokenHash,version,lockId") && hash4(p.tokenHash) && version2(p.version) && hash4(p.lockId)) {
+      await q3("DELETE FROM nexus_akronikl_locks WHERE token_hash=?1 AND account_id=?2 AND session_hash=?3 AND version=?4 AND lock_id=?5", p.tokenHash, id3, v.sessionHash, p.version, p.lockId).run();
+      return reply3(200, { released: true });
+    }
+    if (v.action === "limit.consume" && exact9(p, "kind") && ["connect", "generate"].includes(p.kind)) {
+      await q3("DELETE FROM nexus_akronikl_limits WHERE rowid IN(SELECT rowid FROM nexus_akronikl_limits WHERE expires_at<=?1 LIMIT 128)", now5).run();
+      for (const [period, max] of [[6e4, p.kind === "connect" ? 4 : 12], [864e5, p.kind === "connect" ? 40 : 200]]) {
+        const start = Math.floor(now5 / period), bucket = p.kind + ":" + period + ":" + start;
+        const row = await q3("INSERT INTO nexus_akronikl_limits(account_id,bucket,count,expires_at) VALUES(?1,?2,1,?3) ON CONFLICT(account_id,bucket) DO UPDATE SET count=count+1 WHERE count<?4 RETURNING count", id3, bucket, (start + 1) * period, max).first();
+        if (!row) fail5("CLOUD_RATE_LIMITED", 429);
+      }
+      return reply3(200, { allowed: true });
+    }
+    fail5("CLOUD_REQUEST_INVALID", 400);
+  } catch (e) {
+    const code = /^CLOUD_[A-Z_]+$/.test(e?.message) ? e.message : "CLOUD_VAULT_UNAVAILABLE";
+    return reply3(e.status ?? 503, { code });
+  }
+}
+
 // server-access/worker/feedback-service.js
 var INTERNAL4 = "/api/v2/feedback/internal";
 var BASE2 = "/api/v2/feedback";
-var encoder5 = new TextEncoder();
+var encoder6 = new TextEncoder();
 var FeedbackError = class extends Error {
   constructor(status, code) {
     super(code);
@@ -27269,14 +27407,14 @@ var FeedbackError = class extends Error {
     this.code = code;
   }
 };
-var fail5 = (status, code) => {
+var fail6 = (status, code) => {
   throw new FeedbackError(status, code);
 };
 var response3 = (body, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff" } });
-var sha5 = async (value) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", typeof value === "string" ? encoder5.encode(value) : value))].map((x) => x.toString(16).padStart(2, "0")).join("");
+var sha6 = async (value) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", typeof value === "string" ? encoder6.encode(value) : value))].map((x) => x.toString(16).padStart(2, "0")).join("");
 async function boundedFeedbackJson(request, max = 32768) {
   const reader = request.body?.getReader();
-  if (!reader) fail5(400, "INVALID_INPUT");
+  if (!reader) fail6(400, "INVALID_INPUT");
   let size = 0;
   const chunks = [];
   try {
@@ -27284,7 +27422,7 @@ async function boundedFeedbackJson(request, max = 32768) {
       const { value, done } = await reader.read();
       if (done) break;
       size += value.length;
-      if (size > max) fail5(413, "INPUT_TOO_LARGE");
+      if (size > max) fail6(413, "INPUT_TOO_LARGE");
       chunks.push(value);
     }
     const data = new Uint8Array(size);
@@ -27296,7 +27434,7 @@ async function boundedFeedbackJson(request, max = 32768) {
     return { bytes: data, value: JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(data)) };
   } catch (error) {
     if (error instanceof FeedbackError) throw error;
-    fail5(400, "INVALID_INPUT");
+    fail6(400, "INVALID_INPUT");
   } finally {
     await reader.cancel().catch(() => {
     });
@@ -27304,34 +27442,34 @@ async function boundedFeedbackJson(request, max = 32768) {
   }
 }
 var string = (value, max, min = 0) => {
-  if (typeof value !== "string" || value.trim().length < min || value.length > max || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)) fail5(400, "INVALID_INPUT");
+  if (typeof value !== "string" || value.trim().length < min || value.length > max || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)) fail6(400, "INVALID_INPUT");
   return value.trim();
 };
 var identifier = (value) => {
   const text5 = string(value, 80);
-  if (text5 && !/^[a-zA-Z0-9._-]+$/.test(text5)) fail5(400, "INVALID_INPUT");
+  if (text5 && !/^[a-zA-Z0-9._-]+$/.test(text5)) fail6(400, "INVALID_INPUT");
   return text5;
 };
 var searchable = (value) => value.normalize("NFKC").toLocaleLowerCase("ru");
 var object = (value) => {
-  if (!value || typeof value !== "object" || Array.isArray(value)) fail5(400, "INVALID_INPUT");
+  if (!value || typeof value !== "object" || Array.isArray(value)) fail6(400, "INVALID_INPUT");
   return value;
 };
 function validateFeedbackInput(value) {
   object(value);
-  if (Object.keys(value).some((x) => !["kind", "type", "body", "publicName", "rating", "courseId", "consent", "context", "requestKey", "version"].includes(x))) fail5(400, "INVALID_INPUT");
+  if (Object.keys(value).some((x) => !["kind", "type", "body", "publicName", "rating", "courseId", "consent", "context", "requestKey", "version"].includes(x))) fail6(400, "INVALID_INPUT");
   const kind = value.kind;
-  if (!["message", "review"].includes(kind)) fail5(400, "INVALID_INPUT");
+  if (!["message", "review"].includes(kind)) fail6(400, "INVALID_INPUT");
   const type = kind === "review" ? "review" : value.type;
-  if (!["bug", "material", "idea", "impression", "review"].includes(type) || kind === "message" && type === "review") fail5(400, "INVALID_INPUT");
+  if (!["bug", "material", "idea", "impression", "review"].includes(type) || kind === "message" && type === "review") fail6(400, "INVALID_INPUT");
   const context = {};
   for (const [key, item2] of Object.entries(object(value.context || {}))) {
-    if (!["courseId", "lessonId", "practicumId", "templateId", "uiLocale", "version"].includes(key)) fail5(400, "INVALID_CONTEXT");
+    if (!["courseId", "lessonId", "practicumId", "templateId", "uiLocale", "version"].includes(key)) fail6(400, "INVALID_CONTEXT");
     context[key] = identifier(item2);
   }
   const rating = value.rating ?? null;
-  if (rating !== null && (!Number.isInteger(rating) || rating < 1 || rating > 5)) fail5(400, "INVALID_INPUT");
-  if (value.consent !== void 0 && typeof value.consent !== "boolean") fail5(400, "INVALID_INPUT");
+  if (rating !== null && (!Number.isInteger(rating) || rating < 1 || rating > 5)) fail6(400, "INVALID_INPUT");
+  if (value.consent !== void 0 && typeof value.consent !== "boolean") fail6(400, "INVALID_INPUT");
   return { kind, type, body: string(value.body, 4e3, 10), publicName: kind === "review" ? string(value.publicName, 80, 1) : "", rating: kind === "review" ? rating : null, courseId: identifier(value.courseId || ""), consent: kind === "review" && value.consent === true, context };
 }
 var query3 = (db, sql2, ...values) => db.prepare(sql2).bind(...values);
@@ -27343,7 +27481,7 @@ async function item(db, id3) {
 }
 async function rate(db, accountId2) {
   const result = await query3(db, `INSERT INTO feedback_rate_limits(account_id,bucket,used) VALUES(?1,?2,1) ON CONFLICT(account_id,bucket) DO UPDATE SET used=used+1 WHERE used<20`, accountId2, Math.floor(Date.now() / 36e5)).run();
-  if (result.meta.changes !== 1) fail5(429, "RATE_LIMITED");
+  if (result.meta.changes !== 1) fail6(429, "RATE_LIMITED");
 }
 function event(db, id3, revision, actor, action, reason, stamp3) {
   return query3(db, `INSERT INTO feedback_events(id,item_id,revision,actor_id,action,reason,created_at) SELECT ?1,?2,?3,?4,?5,?6,?7 WHERE changes()=1`, crypto.randomUUID(), id3, revision, actor, action, reason, stamp3);
@@ -27357,27 +27495,27 @@ async function publicReviews(db, params) {
   return { reviews: list.map((r) => ({ id: r.id, body: r.body, publicName: r.public_name, rating: r.rating, courseId: r.course_id, publishedAt: r.updated_at })), total: totals.count, ratings: totals.ratings, average: totals.average };
 }
 async function verifyEnvelope(request, env) {
-  if (typeof env.FEEDBACK_SERVICE_KEY !== "string" || env.FEEDBACK_SERVICE_KEY.length < 32) fail5(404, "FEEDBACK_UNAVAILABLE");
-  if (request.method !== "POST" || request.headers.has("authorization") || request.headers.has("cookie") || request.headers.get("content-type") !== "application/json" || new URL(request.url).search) fail5(401, "SERVICE_DENIED");
+  if (typeof env.FEEDBACK_SERVICE_KEY !== "string" || env.FEEDBACK_SERVICE_KEY.length < 32) fail6(404, "FEEDBACK_UNAVAILABLE");
+  if (request.method !== "POST" || request.headers.has("authorization") || request.headers.has("cookie") || request.headers.get("content-type") !== "application/json" || new URL(request.url).search) fail6(401, "SERVICE_DENIED");
   const stamp3 = request.headers.get("x-nexus-service-timestamp"), nonce = request.headers.get("x-nexus-service-nonce"), signature = request.headers.get("x-nexus-service-signature");
-  if (!/^\d{13}$/.test(stamp3 || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !/^[a-f0-9]{64}$/.test(signature || "") || Math.abs(Date.now() - Number(stamp3)) > 3e4) fail5(401, "SERVICE_DENIED");
-  const { bytes, value } = await boundedFeedbackJson(request), key = await crypto.subtle.importKey("raw", encoder5.encode(env.FEEDBACK_SERVICE_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+  if (!/^\d{13}$/.test(stamp3 || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !/^[a-f0-9]{64}$/.test(signature || "") || Math.abs(Date.now() - Number(stamp3)) > 3e4) fail6(401, "SERVICE_DENIED");
+  const { bytes, value } = await boundedFeedbackJson(request), key = await crypto.subtle.importKey("raw", encoder6.encode(env.FEEDBACK_SERVICE_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
   const canonical = `v1
 POST
 ${INTERNAL4}
 ${stamp3}
 ${nonce}
-${await sha5(bytes)}`;
-  if (!await crypto.subtle.verify("HMAC", key, Uint8Array.from(signature.match(/../g), (x) => parseInt(x, 16)), encoder5.encode(canonical))) fail5(401, "SERVICE_DENIED");
+${await sha6(bytes)}`;
+  if (!await crypto.subtle.verify("HMAC", key, Uint8Array.from(signature.match(/../g), (x) => parseInt(x, 16)), encoder6.encode(canonical))) fail6(401, "SERVICE_DENIED");
   object(value);
   const envelopeKeys = Object.keys(value).sort().join(","), hasExpectation = envelopeKeys === "expectedAccountId,method,path,payload,sessionHash";
-  if (!(hasExpectation || envelopeKeys === "method,path,payload,sessionHash" && env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED !== "true") || hasExpectation && (typeof value.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId)) || !/^[a-f0-9]{64}$/.test(value.sessionHash || "") || !["GET", "POST", "PATCH"].includes(value.method) || typeof value.path !== "string" || !value.path.startsWith(BASE2 + "/") || value.path.length > 512) fail5(401, "SERVICE_DENIED");
+  if (!(hasExpectation || envelopeKeys === "method,path,payload,sessionHash" && env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED !== "true") || hasExpectation && (typeof value.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId)) || !/^[a-f0-9]{64}$/.test(value.sessionHash || "") || !["GET", "POST", "PATCH"].includes(value.method) || typeof value.path !== "string" || !value.path.startsWith(BASE2 + "/") || value.path.length > 512) fail6(401, "SERVICE_DENIED");
   const added = await query3(env.DB, "INSERT OR IGNORE INTO feedback_service_nonces(nonce,expires_at) VALUES(?1,?2)", nonce, new Date(Number(stamp3) + 3e4).toISOString()).run();
-  if (added.meta.changes !== 1) fail5(401, "SERVICE_DENIED");
+  if (added.meta.changes !== 1) fail6(401, "SERVICE_DENIED");
   await query3(env.DB, "DELETE FROM feedback_service_nonces WHERE expires_at<?1", (/* @__PURE__ */ new Date()).toISOString()).run();
   const foundation = await readEligibleAccountFoundation(env.DB, value.sessionHash, void 0, env);
-  if (!foundation) fail5(401, "SESSION_REQUIRED");
-  if (hasExpectation && foundation.account.accountId !== value.expectedAccountId) fail5(401, "SESSION_REQUIRED");
+  if (!foundation) fail6(401, "SESSION_REQUIRED");
+  if (hasExpectation && foundation.account.accountId !== value.expectedAccountId) fail6(401, "SESSION_REQUIRED");
   return { ...value, actor: foundation.account };
 }
 async function feedbackOperation(db, value, env = {}) {
@@ -27392,13 +27530,13 @@ async function feedbackOperation(db, value, env = {}) {
     return { account: { id: actor.accountId, displayName: actor.displayName }, canModerate: moderator, total: total.count, offset, items: (await rows2(query3(db, joined + " WHERE i.author_id=?1 ORDER BY i.created_at DESC,i.id LIMIT ?2 OFFSET ?3", actor.accountId, limit, offset))).map(authorDto) };
   }
   if (pathname === BASE2 + "/items" && method === "POST") {
-    if (env.COMMUNITY_ENABLED === "true" && await query3(db, "SELECT 1 ok FROM feedback_deleted_items WHERE author_id=?1 AND request_key=?2", actor.accountId, payload?.requestKey || "").first()) fail5(409, "ITEM_DELETED");
+    if (env.COMMUNITY_ENABLED === "true" && await query3(db, "SELECT 1 ok FROM feedback_deleted_items WHERE author_id=?1 AND request_key=?2", actor.accountId, payload?.requestKey || "").first()) fail6(409, "ITEM_DELETED");
     const input = validateFeedbackInput(payload), requestKey = string(payload.requestKey, 80, 10);
-    if (!/^[a-zA-Z0-9-]+$/.test(requestKey)) fail5(400, "INVALID_INPUT");
-    const digest2 = await sha5(JSON.stringify(input));
+    if (!/^[a-zA-Z0-9-]+$/.test(requestKey)) fail6(400, "INVALID_INPUT");
+    const digest2 = await sha6(JSON.stringify(input));
     const duplicate = await query3(db, joined + " WHERE i.author_id=?1 AND i.request_key=?2", actor.accountId, requestKey).first();
     if (duplicate) {
-      if (duplicate.request_hash !== digest2) fail5(409, "REQUEST_CONFLICT");
+      if (duplicate.request_hash !== digest2) fail6(409, "REQUEST_CONFLICT");
       return { item: authorDto(duplicate) };
     }
     await rate(db, actor.accountId);
@@ -27417,15 +27555,15 @@ async function feedbackOperation(db, value, env = {}) {
   const match = pathname.match(/^\/api\/v2\/feedback\/items\/([a-zA-Z0-9-]+)(?:\/(withdraw|moderate))?$/);
   if (match && method === "PATCH") {
     object(payload);
-    if (match[2] === "moderate" && !moderator) fail5(403, "MODERATOR_REQUIRED");
+    if (match[2] === "moderate" && !moderator) fail6(403, "MODERATOR_REQUIRED");
     const current = await item(db, match[1]);
-    if (!current || match[2] !== "moderate" && current.author_id !== actor.accountId) fail5(404, "NOT_FOUND");
-    if (!Number.isInteger(payload.version) || payload.version !== current.version) fail5(409, "STALE_VERSION");
+    if (!current || match[2] !== "moderate" && current.author_id !== actor.accountId) fail6(404, "NOT_FOUND");
+    if (!Number.isInteger(payload.version) || payload.version !== current.version) fail6(409, "STALE_VERSION");
     const stamp3 = (/* @__PURE__ */ new Date()).toISOString();
     let result;
     if (match[2] === "moderate") {
-      if (!moderator) fail5(403, "MODERATOR_REQUIRED");
-      if (Object.keys(payload).some((x) => !["version", "revision", "action", "reason", "status"].includes(x)) || payload.revision !== current.current_revision) fail5(409, "STALE_REVISION");
+      if (!moderator) fail6(403, "MODERATOR_REQUIRED");
+      if (Object.keys(payload).some((x) => !["version", "revision", "action", "reason", "status"].includes(x)) || payload.revision !== current.current_revision) fail6(409, "STALE_REVISION");
       const reason = string(payload.reason || "", 1e3), action = payload.action;
       let status = current.status, featured = current.featured;
       if (action === "approve" && current.kind === "review" && current.status === "pending" && current.consent) {
@@ -27441,29 +27579,29 @@ async function feedbackOperation(db, value, env = {}) {
         featured = action === "feature" ? 1 : 0;
       } else if (action === "triage" && current.kind === "message" && ["triaged", "in-progress", "resolved"].includes(payload.status)) {
         status = payload.status;
-      } else fail5(409, "INVALID_TRANSITION");
+      } else fail6(409, "INVALID_TRANSITION");
       result = await db.batch([query3(db, `UPDATE feedback_items SET status=?1,featured=?2,version=version+1,updated_at=?3 WHERE id=?4 AND version=?5 AND current_revision=?6`, status, featured, stamp3, current.id, payload.version, payload.revision), event(db, current.id, current.current_revision, actor.accountId, action, reason, stamp3)]);
     } else {
-      if (current.author_id !== actor.accountId) fail5(404, "NOT_FOUND");
+      if (current.author_id !== actor.accountId) fail6(404, "NOT_FOUND");
       if (match[2] === "withdraw") {
-        if (current.kind !== "review") fail5(409, "INVALID_TRANSITION");
+        if (current.kind !== "review") fail6(409, "INVALID_TRANSITION");
         result = await db.batch([query3(db, `UPDATE feedback_items SET status='withdrawn',featured=0,version=version+1,updated_at=?1 WHERE id=?2 AND version=?3`, stamp3, current.id, payload.version), event(db, current.id, current.current_revision, actor.accountId, "withdrawn", "", stamp3)]);
       } else {
         const input = validateFeedbackInput(payload);
-        if (input.kind !== current.kind) fail5(400, "INVALID_INPUT");
+        if (input.kind !== current.kind) fail6(400, "INVALID_INPUT");
         await rate(db, actor.accountId);
         const revision = current.current_revision + 1;
         result = await db.batch([query3(db, `UPDATE feedback_items SET current_revision=?1,type=?2,status=?3,featured=0,version=version+1,updated_at=?4 WHERE id=?5 AND version=?6`, revision, input.type, input.kind === "review" ? "pending" : "submitted", stamp3, current.id, payload.version), query3(db, `INSERT INTO feedback_revisions(item_id,revision,body,public_name,rating,course_id,consent,context_json,created_at,search_text) SELECT ?1,?2,?3,?4,?5,?6,?7,?8,?9,?10 WHERE changes()=1`, current.id, revision, input.body, input.publicName, input.rating, input.courseId, +input.consent, JSON.stringify(input.context), stamp3, searchable(input.body)), event(db, current.id, revision, actor.accountId, "revised", "", stamp3)]);
       }
     }
-    if (result[0].meta.changes !== 1) fail5(409, "STALE_VERSION");
+    if (result[0].meta.changes !== 1) fail6(409, "STALE_VERSION");
     return { item: authorDto(await item(db, current.id)) };
   }
   if (pathname === BASE2 + "/moderation" && method === "GET") {
-    if (!moderator) fail5(403, "MODERATOR_REQUIRED");
+    if (!moderator) fail6(403, "MODERATOR_REQUIRED");
     const kind = url.searchParams.get("kind") || "", status = url.searchParams.get("status") || "", course = identifier(url.searchParams.get("course") || "");
     const from = string(url.searchParams.get("from") || "", 10), to = string(url.searchParams.get("to") || "", 10), search = searchable(string(url.searchParams.get("search") || "", 100)), offset = Math.min(1e4, Math.max(0, Math.floor(Number(url.searchParams.get("offset")) || 0)));
-    if ([from, to].some((x) => x && !/^\d{4}-\d{2}-\d{2}$/.test(x))) fail5(400, "INVALID_INPUT");
+    if ([from, to].some((x) => x && !/^\d{4}-\d{2}-\d{2}$/.test(x))) fail6(400, "INVALID_INPUT");
     const where = ` WHERE (?1='' OR i.kind=?1) AND (?2='' OR i.status=?2) AND (?3='' OR r.course_id=?3) AND (?4='' OR substr(i.created_at,1,10)>=?4) AND (?5='' OR substr(i.created_at,1,10)<=?5) AND (?6='' OR instr(r.search_text,?6)>0)`;
     const list = await rows2(query3(db, joined.replace("SELECT i.*", "SELECT a.display_name AS author_name,i.*") + " LEFT JOIN account_subjects a ON a.id=i.author_id" + where + " ORDER BY i.created_at DESC,i.id LIMIT 20 OFFSET ?7", kind, status, course, from, to, search, offset));
     const total = await query3(db, "SELECT count(*) AS count FROM feedback_items i JOIN feedback_revisions r ON r.item_id=i.id AND r.revision=i.current_revision" + where, kind, status, course, from, to, search).first();
@@ -27472,19 +27610,19 @@ async function feedbackOperation(db, value, env = {}) {
   const events = pathname.match(/^\/api\/v2\/feedback\/items\/([a-zA-Z0-9-]+)\/events$/);
   if (events && method === "GET") {
     const current = await item(db, events[1]);
-    if (!current || !moderator && current.author_id !== actor.accountId) fail5(404, "NOT_FOUND");
+    if (!current || !moderator && current.author_id !== actor.accountId) fail6(404, "NOT_FOUND");
     const list = await rows2(query3(db, "SELECT revision,actor_id,action,reason,created_at FROM feedback_events WHERE item_id=?1 ORDER BY created_at,id", current.id));
     return { events: list.map((r) => ({ revision: r.revision, action: r.action, reason: r.reason, createdAt: r.created_at, ...moderator ? { actorId: r.actor_id } : {} })) };
   }
-  fail5(404, "NOT_FOUND");
+  fail6(404, "NOT_FOUND");
 }
 async function handleFeedbackRequest(request, env) {
   const url = new URL(request.url);
   if (!url.pathname.startsWith(BASE2 + "/")) return null;
   try {
-    if (env.FEEDBACK_ENABLED !== "true" || !env.DB) fail5(503, "FEEDBACK_UNAVAILABLE");
+    if (env.FEEDBACK_ENABLED !== "true" || !env.DB) fail6(503, "FEEDBACK_UNAVAILABLE");
     if (url.pathname === BASE2 + "/reviews" && request.method === "GET") return response3(await publicReviews(env.DB, url.searchParams));
-    if (url.pathname !== INTERNAL4) fail5(404, "NOT_FOUND");
+    if (url.pathname !== INTERNAL4) fail6(404, "NOT_FOUND");
     const envelope2 = await verifyEnvelope(request, env);
     return response3(await feedbackOperation(env.DB, envelope2, env));
   } catch (error) {
@@ -27496,7 +27634,7 @@ async function handleFeedbackRequest(request, env) {
 var INTERNAL_PATH = "/api/v2/account/internal/read";
 var MAX_BODY_BYTES = 1024;
 var CLOCK_WINDOW_MS = 3e4;
-var encoder6 = new TextEncoder();
+var encoder7 = new TextEncoder();
 function denied() {
   return { ok: false, status: 401, code: "ACCOUNT_SERVICE_DENIED" };
 }
@@ -27527,8 +27665,8 @@ async function boundedBody(request) {
   }
 }
 async function hexSha256(bytes) {
-  const hash4 = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
-  return Array.from(hash4, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const hash5 = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return Array.from(hash5, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 async function verifyAccountServiceRequest(request, env) {
   const key = env.ACCOUNT_SERVICE_KEY;
@@ -27552,13 +27690,13 @@ ${nonce}
 ${digest2}`;
   const hmacKey = await crypto.subtle.importKey(
     "raw",
-    encoder6.encode(key),
+    encoder7.encode(key),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["verify"]
   );
   const signatureBytes = Uint8Array.from(signature.match(/../g), (pair) => parseInt(pair, 16));
-  if (!await crypto.subtle.verify("HMAC", hmacKey, signatureBytes, encoder6.encode(canonical))) {
+  if (!await crypto.subtle.verify("HMAC", hmacKey, signatureBytes, encoder7.encode(canonical))) {
     return denied();
   }
   let payload;
@@ -27581,32 +27719,34 @@ ${digest2}`;
 }
 
 // server-access/worker/entry.mjs
-var reply3 = (status, code) => Response.json({ error: { code } }, { status, headers: { "cache-control": "no-store", "vary": "*" } });
+var reply4 = (status, code) => Response.json({ error: { code } }, { status, headers: { "cache-control": "no-store", "vary": "*" } });
 var entry_default = { async fetch(request, env, context) {
   const path = new URL(request.url).pathname;
+  if (path === "/api/v2/akronikl/internal") return handleAkroniklService(request, env);
+  if (path.startsWith("/api/v2/akronikl/")) return reply4(404, "NOT_FOUND");
   if (path === "/api/v2/content/feed") return publicContent(request, env);
   if (path === "/api/v2/account/internal/control") return handleAdminService(request, env);
-  if (path.startsWith("/api/v2/account/control") || path.startsWith("/api/v2/account/profile")) return reply3(404, "NOT_FOUND");
+  if (path.startsWith("/api/v2/account/control") || path.startsWith("/api/v2/account/profile")) return reply4(404, "NOT_FOUND");
   if (path === "/api/v2/cloud/internal") return handleCloudSessionRequest(request, env, context);
-  if (path.startsWith("/api/v2/cloud/")) return reply3(404, "NOT_FOUND");
+  if (path.startsWith("/api/v2/cloud/")) return reply4(404, "NOT_FOUND");
   if (path === "/api/v2/account/internal/oauth") return handleOAuthService(request, env);
-  if (path.startsWith("/api/v2/account/oauth/")) return reply3(404, "NOT_FOUND");
+  if (path.startsWith("/api/v2/account/oauth/")) return reply4(404, "NOT_FOUND");
   if (path === "/api/v2/account/internal/passkey") return handlePasskeyService(request, env);
-  if (path.startsWith("/api/v2/account/passkey/")) return reply3(404, "NOT_FOUND");
+  if (path.startsWith("/api/v2/account/passkey/")) return reply4(404, "NOT_FOUND");
   if (path.startsWith("/api/v2/feedback/")) return handleFeedbackRequest(request, env);
   if (path === "/api/v2/account/internal/read") {
-    if (env.ACCOUNT_FOUNDATION_ENABLED !== "true") return reply3(404, "NOT_FOUND");
+    if (env.ACCOUNT_FOUNDATION_ENABLED !== "true") return reply4(404, "NOT_FOUND");
     try {
       const proof = await verifyAccountServiceRequest(request, env);
-      if (!proof.ok) return reply3(proof.status, proof.code);
+      if (!proof.ok) return reply4(proof.status, proof.code);
       const foundation = await readEligibleAccountFoundation(env.DB, proof.sessionHash, void 0, env);
-      if (!foundation) return reply3(401, "ACCOUNT_SESSION_REJECTED");
+      if (!foundation) return reply4(401, "ACCOUNT_SESSION_REJECTED");
       return Response.json(proof.path === "/api/v2/account" ? foundation : { loginMethods: foundation.loginMethods, enrollmentAvailable: false }, { headers: { "cache-control": "no-store", "vary": "*" } });
     } catch {
-      return reply3(503, "ACCOUNT_FOUNDATION_UNAVAILABLE");
+      return reply4(503, "ACCOUNT_FOUNDATION_UNAVAILABLE");
     }
   }
-  if (path === "/api/v2/account" || path === "/api/v2/account/login-methods") return reply3(404, "NOT_FOUND");
+  if (path === "/api/v2/account" || path === "/api/v2/account/login-methods") return reply4(404, "NOT_FOUND");
   return legacy_sync_default.fetch(request, env, context);
 } };
 export {

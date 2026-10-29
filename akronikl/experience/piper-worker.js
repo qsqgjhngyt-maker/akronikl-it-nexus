@@ -1,12 +1,17 @@
 // Public acoustic assets only; user text never goes to a network request.
+import {readPiperChunks} from './piper-asset-loader.js';import {PIPER_PUBLIC_ASSETS} from './piper-assets.js';
+import {installPiperXHR} from './piper-xhr.js';
 const assetBase=new URL('/akronikl/vendor/piper/',self.location.origin),nativeFetch=globalThis.fetch.bind(globalThis);
 const variant=new URL(self.location.href).searchParams.get('voice')??'irina';
+const chunked=new URL(self.location.href).searchParams.get('transport')==='chunks-v1';
+if(chunked)installPiperXHR({scope:self,base:assetBase,fetchResource:nativeFetch});
 if(!['irina','uyut7-pilot5'].includes(variant))throw Error('PIPER_VOICE_INVALID');
 const modelId='ru_RU-'+variant+'-medium',modelBase='https://huggingface.co/diffusionstudio/piper-voices/resolve/main/ru/ru_RU/'+variant+'/medium/';
 globalThis.fetch=(input,init={})=>{
  let url=new URL(typeof input==='string'?input:input.url??input,self.location.href);
  for(const name of [modelId+'.onnx',modelId+'.onnx.json'])if(url.href===modelBase+name)url=new URL('models/'+name,assetBase);
  if(url.origin!==assetBase.origin||!url.pathname.startsWith(assetBase.pathname)||!['GET','HEAD'].includes(init.method??'GET')||init.body)throw Error('PIPER_NETWORK_DENIED');
+ if(chunked){const file=url.pathname.slice(assetBase.pathname.length),record=PIPER_PUBLIC_ASSETS[file];if(!record||url.search||url.hash)throw Error('PIPER_NETWORK_DENIED');if(record.chunks)return readPiperChunks(file,{base:assetBase,fetchResource:nativeFetch,signal:init.signal});}
  return nativeFetch(url,{...init,credentials:'omit',redirect:'error'});
 };
 let session,busy=false;const started=performance.now();

@@ -1,5 +1,6 @@
 import {codeStudioHomeMarkup,bindCodeStudioHome} from '../project-studio/code-studio-home.js';
 import {accountSessionStorage,verifiedAccount} from './account-storage.js';
+import {createLearningProgressReader} from '../akronikl/learning/progress.js';
 import {bindAdministrationNavigation} from './administration-navigation.js';
 import {bindCppLearningPath as bindSharedLearningPath} from './learning-path-controls.js';
 import {glassSelect,visualIcon} from './controls-presentation.js';
@@ -51,9 +52,10 @@ function replaceRoute(page){finalController?.dispose();finalController=null;disp
 const academyViewFilter={category:'all',availability:'all',query:''};
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const route=()=>{const p=new URLSearchParams(location.hash.replace(/^#/,''));return{view:p.get('view')||'home',course:p.get('course'),lesson:p.get('lesson'),tab:p.get('tab')||'overview',practicum:p.get('practicum'),project:p.get('project'),template:p.get('template'),focus:p.get('focus')}};
-const assistantBridge=createLazyAssistantBridge({root,readIdentity:()=>verifiedAccount(),readReady:()=>root.dataset.akroniklRoute===location.hash,readRoute:route,readLocale:()=>prefs.mentorLocale||prefs.uiLocale,readCourseLocale:()=>prefs.courseLocale,readEditor:()=>root.querySelector('#editor')});
+const readLearningProgress=createLearningProgressReader({readIdentity:verifiedAccount,loadCourse:()=>cpp||cppLanding||getCppOutline(),readState:loadState,readResume:(course,state)=>learningResume.continuation(course,state.courses?.cpp?.lessons),readLocale:()=>prefs.mentorLocale||prefs.uiLocale,readLesson:()=>route().course==='cpp'?route().lesson:null});
+const assistantBridge=createLazyAssistantBridge({root,readIdentity:()=>verifiedAccount(),readReady:()=>root.dataset.akroniklRoute===location.hash,readRoute:route,readLocale:()=>prefs.mentorLocale||prefs.uiLocale,readCourseLocale:()=>prefs.courseLocale,readEditor:()=>root.querySelector('#editor'),readLearningProgress});
 addEventListener('nexus:context-invalidated',()=>{delete root.dataset.akroniklRoute});
-const PROJECT_STUDIO_VERSION='0.1.7-alpha.2.4.6-ui1a.10.10.2';
+const PROJECT_STUDIO_VERSION='0.1.7-alpha.2.4.6-ui1a.10.10.2-p4q.4';
 async function loadProjectStudio(){
   if(projectStudioApi)return projectStudioApi;
   const suffix=`?v=${PROJECT_STUDIO_VERSION}`;

@@ -4,6 +4,8 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {withStartupCover} from '../core/startup-intro-cover.js';
+import {staticMime} from '../pwa/static-mime.js';
+import {PIPER_PUBLIC_ASSETS} from '../akronikl/experience/piper-assets.js';
 const {build}=createRequire(new URL('../server-access/package.json',import.meta.url))('esbuild');
 const value=flag=>{const i=process.argv.indexOf(flag);return i>=0?process.argv[i+1]:null},source=path.resolve(value('--source')||fileURLToPath(new URL('../',import.meta.url))),out=path.resolve(value('--out')||path.join(source,'dist-ui1a'));
 if(out===source||source.startsWith(out+path.sep))throw Error('Нельзя писать build поверх исходников');
@@ -48,7 +50,7 @@ if(process.argv.includes('--startup-mobile-restore'))for(const format of ['mp4',
 // и активные root-файлы никогда не перезаписываются этим преобразованием.
 const renderHTML=html=>{
  let result=html.replaceAll(/\.\/releases\/ui1a-[a-z0-9-]+\//g,'./').replaceAll(/\.\/entry-assets\/ui1a-[a-z0-9-]+\//g,'./entry-assets/'+config.assetGeneration+'/');
- for(const ref of ['styles/app.css','core/app.js','core/bootstrap.js','core/startup-intro-launch.js','assets/icons/apple-touch-icon.png'])result=result.replaceAll('./'+ref,'./'+prefix+ref);
+ for(const ref of ['styles/app.css','core/app.js','core/bootstrap.js','core/startup-intro-launch.js','assets/icons/apple-touch-icon.png','assets/brand-mark.svg'])result=result.replaceAll('./'+ref,'./'+prefix+ref);
  if(process.argv.includes('--startup-launch')&&result.includes('id="app"')&&result.includes('core/bootstrap.js')){
   // Даже после переключения root на прежнюю M5 candidate воспроизводится
   // из текущих исходников; immutable старого поколения не переписывается.
@@ -95,14 +97,16 @@ for(const generation of config.retainedPublicGenerations||[]){
 for(const file of ['assets/icons/icon-192.png','assets/icons/icon-512.png','assets/icons/apple-touch-icon.png'])await output(file,await readFile(path.join(source,file)),file);
 const offline=renderHTML(await readFile(path.join(source,'offline.html'),'utf8')).replaceAll('./pwa/','./'+prefix+'pwa/');
 await output('offline.html',Buffer.from(offline),'offline.html: independent public educational shell; local vault unlock required');
-const mime=file=>file.endsWith('.mp4')?'video/mp4':file.endsWith('.webm')?'video/webm':file.endsWith('.jpg')?'image/jpeg':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.md')?'text/markdown':'text/html';
+const mime=staticMime;
 // Сохраняет правило также при будущем удержании прежнего intro-поколения.
 const optional=r=>/^(?:releases\/ui1a-[a-z0-9-]+\/)?intro-media\//.test(r.file);
 const optionalAssets=records.filter(optional).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file)})).sort((a,b)=>a.url<b.url?-1:a.url>b.url?1:0);
 const approved=records.filter(r=>!optional(r)&&!['index.html','nexus-shell.html','version.json','startup-intro.json'].includes(r.file)).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file),...(r.version?{version:r.version}:{})})).sort((a,b)=>a.url<b.url?-1:a.url>b.url?1:0);
-const pwaConfig={generation:config.assetGeneration,version:config.version,assets:approved};
+const lazyAssets=Object.entries(PIPER_PUBLIC_ASSETS).flatMap(([file,r])=>(r.chunks??[{file,bytes:r.bytes,sha256:r.sha256}]).map(c=>({url:'akronikl/vendor/piper/'+c.file,bytes:c.bytes,sha256:c.sha256,mime:r.chunks?'application/octet-stream':r.mime})));
+const pwaConfig={generation:config.assetGeneration,version:config.version,assets:approved,lazyAssets};
 const sw=(await build({absWorkingDir:source,entryPoints:[path.join(source,'pwa/service-worker.js')],bundle:true,platform:'browser',format:'iife',target:'es2022',write:false,define:{__NEXUS_PWA_CONFIG__:JSON.stringify(pwaConfig)},logLevel:'warning'})).outputFiles[0].contents;
 await output('service-worker.js',Buffer.from(sw),'pwa/service-worker.js: exact public manifest bound');
 const bundle={version:config.version,assetGeneration:config.assetGeneration,prefix,files:records.sort((a,b)=>a.file<b.file?-1:a.file>b.file?1:0),publicAuthority:'EXACT PUBLIC STATIC FILES / CANDIDATE OWNER PUBLICATION APPROVAL REQUIRED',publicAssets:approved.length,legacyWorkerIncluded:false,verifiedWorkerIncluded:true,manifestIdentity:JSON.parse(manifest),rootHTMLURLReuse:'Network only; independent public offline shell grants no server proof; personal copies require local phrase'};
 if(optionalAssets.length)Object.assign(bundle,{optionalAssets,optionalMediaPolicy:'NETWORK ONLY / NO SW INSTALL / NO EXPLICIT OFFLINE DOWNLOAD'});
+Object.assign(bundle,{lazyAssets,lazyAssetPolicy:'Exact public Piper weights; verify and persist on demand, excluded from SW install readiness'});
 await writeFile(path.join(out,'BUILD_MANIFEST.json'),JSON.stringify(bundle,null,2)+'\n');console.log(JSON.stringify({out,files:records.length,version:config.version,prefix,serviceWorker:true,optionalAssets:optionalAssets.length}));

@@ -503,6 +503,13 @@ function readIntroPreference(storage) {
     return { value: { schema: 1, enabled: false, simplified: true, seen: INTRO_VERSION }, writable: false };
   }
 }
+function isStudioEntry(hash = "") {
+  const view = new URLSearchParams(String(hash).replace(/^#/, "")).get("view");
+  return view === "project-studio" || view === "code-studio";
+}
+function skipAutomaticIntro({ hash = "", navigationType = "" } = {}) {
+  return navigationType === "reload" || isStudioEntry(hash);
+}
 function readIntroHandoff(storage, now = Date.now()) {
   try {
     const raw = storage.getItem(INTRO_HANDOFF_KEY);
@@ -521,6 +528,10 @@ function releaseIntroCover(suppressAuto = false) {
 }
 var introCoverDismissed = () => document.documentElement.dataset.nexusIntroDismissed === "true";
 function prepareIntroCover() {
+  if (skipAutomaticIntro({ hash: globalThis.location?.hash, navigationType: globalThis.performance?.getEntriesByType?.("navigation")?.[0]?.type })) {
+    releaseIntroCover(true);
+    return false;
+  }
   const cover = document.querySelector("[data-startup-cover]");
   if (!cover) return !introCoverDismissed();
   let enabled = false, handoff = false;
