@@ -1,6 +1,12 @@
 import test from 'node:test';
+import {isStudioEntry} from '../core/startup-intro-policy.js';
 import assert from 'node:assert/strict';
 import {INTRO_KEY,INTRO_VERSION,INTRO_HANDOFF_KEY,readIntroPreference,saveIntroPreference,introVariant,staticIntro,readIntroHandoff,saveIntroHandoff,consumeIntroHandoff} from '../core/startup-intro-policy.js';
+
+test('Прямой вход в рабочую Студию пропускает заставку; Главная и обычные уроки сохраняют её',()=>{
+ for(const hash of ['#view=project-studio','#view=project-studio&project=synthetic','#view=code-studio&language=cpp'])assert.equal(isStudioEntry(hash),true);
+ for(const hash of ['','#view=home','#view=academy','#course=cpp&lesson=cpp.qt-graphical-adapter','#view=projects','#view=project-studio-unknown'])assert.equal(isStudioEntry(hash),false);
+});
 test('Desktop, телефоны и планшеты выбирают кадр по ориентации и ширине',()=>{
  for(const [w,h,want]of [[1920,1080,'desktop'],[844,390,'desktop'],[390,844,'mobile'],[768,1024,'mobile'],[1024,1366,'mobile'],[1366,1024,'desktop'],[1440,2560,'desktop']])assert.equal(introVariant(w,h),want);
 });

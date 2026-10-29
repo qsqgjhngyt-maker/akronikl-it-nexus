@@ -18,6 +18,12 @@ export function saveIntroPreference(storage,value){
  try{storage.setItem(INTRO_KEY,JSON.stringify(value));return true}catch{return false}
 }
 export function introVariant(width,height){return height>width&&width<=1200?'mobile':'desktop'}
+// Прямая ссылка на рабочее место должна сразу открывать редактор.
+// Это только политика заставки; права и настройки пользователя не меняются.
+export function isStudioEntry(hash=''){
+ const view=new URLSearchParams(String(hash).replace(/^#/, '')).get('view');
+ return view==='project-studio'||view==='code-studio';
+}
 export function staticIntro({simplified,reducedMotion,online,connection,deviceMemory,hardwareConcurrency}){
  // Число ядер и оценка 3G не доказывают неспособность декодировать ролик.
  return simplified||reducedMotion||online===false||connection?.saveData===true;

@@ -18,6 +18,7 @@ try{
  const compilerRequests=[];p.on('request',r=>{if(new URL(r.url()).pathname.endsWith('.wasm'))compilerRequests.push(new URL(r.url()).pathname)});
  for(const id of ['cpp.qt-graphical-adapter','cpp.application-build-delivery']){await p.evaluate(id=>location.hash='#course=cpp&lesson='+id,id);await p.locator('[data-gold-lesson="'+id+'"]').waitFor();assert.equal(await p.locator('#editor').count(),0);const a=p.locator('[data-gold-qt-workspace] a');assert.equal(await a.getAttribute('href'),'./#view=project-studio');assert.equal(await a.getAttribute('target'),'_blank');}
  assert.equal(compilerRequests.length,0,'Чтение Qt урока не скачивает компилятор');
+ const popupPromise=f.context.waitForEvent('page');await p.locator('[data-gold-qt-workspace] a').click();const popup=await popupPromise;await popup.locator('.ps-hero').waitFor();await popup.waitForTimeout(500);assert.equal(await popup.locator('[data-startup-intro],[data-startup-cover]').count(),0);await popup.close();
  const start=Number(process.env.NEXUS_M6_GUI_START_INDEX||0),end=Number(process.env.NEXUS_M6_GUI_END_INDEX||unique.size);assert.ok(Number.isInteger(start)&&start>=0&&start<end&&end<=unique.size);
  for(const[index,b]of [...unique.values()].entries()){
   if(index<start||index>=end)continue;

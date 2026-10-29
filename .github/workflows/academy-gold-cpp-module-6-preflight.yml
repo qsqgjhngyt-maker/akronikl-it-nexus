@@ -151,6 +151,10 @@ jobs:
         run: node tests/academy-gold-module6-qt-browser.mjs
       - name: Текущий browser Qt — Run, Stop, данные, ZIP, отказ хранения
         run: node tests/qt-browser-integration.mjs
+      - name: Ширина Студии, кнопки файлов и переход из урока без заставки
+        run: |
+          node --test tests/startup-intro-policy.test.mjs
+          node tests/qt-browser-integration.mjs --layout-only
       - name: Три публичные итоговые заготовки на390px
         run: node tests/course-final-mobile-qt.mjs
       - name: Все учебные Qt bundles, фильтр, данные и сдача исходников
@@ -171,7 +175,7 @@ jobs:
 
   gold-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: ${{ matrix.module == 'm4' && 60 || 45 }}
     strategy:
       fail-fast: false
       matrix:

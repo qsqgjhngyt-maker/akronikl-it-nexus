@@ -34,6 +34,7 @@ async function preserved(page,vaultId){return page.evaluate(async vaultId=>{
 },vaultId)}
 async function openOfflineCopy(generation,vaultId){
  const local=await context.newPage();offline=true;await context.setOffline(true);
+ const pageErrors=[];local.on('pageerror',e=>pageErrors.push(e.message));
  try{
   await local.goto(origin+'/#copy='+vaultId);await local.locator('#localPhrase').fill(phrase);await local.locator('#unlockLocal button').click();await local.locator('#psNewProject').waitFor();
   assert.equal(await local.locator('[data-studio-project] h3').textContent(),'Synthetic preserved project');
@@ -42,7 +43,8 @@ async function openOfflineCopy(generation,vaultId){
   const restored=await local.evaluate(async({generation,vaultId,phrase})=>{const {createVaultStore}=await import('/releases/'+generation+'/pwa/local-vault.js'),store=createVaultStore();let session;try{session=await store.unlock(vaultId,phrase);return session.read()}finally{await session?.lock();await store.close()}},{generation,vaultId,phrase});
   assert.deepEqual(restored,payload,'encrypted source files and course progress must survive byte-exact upgrade/rollback');
   await wait(local,generation);
- }finally{await local.close();await context.setOffline(false);offline=false}
+ }catch(error){await writeFile(resultFile+'.offline-diagnostic.json',JSON.stringify({generation,pageErrors,url:local.url(),ui:await local.locator('body').innerText()},null,2));throw error}
+ finally{await local.close();await context.setOffline(false);offline=false}
 }
 try{
  browser=await chromium.launch({executablePath:process.env.NEXUS_CHROME_PATH,headless:true,args:['--disable-background-networking','--disable-component-update']});context=await browser.newContext();context.on('request',request=>{const u=new URL(request.url());if(['http:','https:'].includes(u.protocol)&&u.origin!==origin)externalRequests.push(request.url())});const page=await context.newPage();await page.goto(origin+'/_fixture.html');const cdp=await context.newCDPSession(page);await cdp.send('ServiceWorker.enable');cdp.on('ServiceWorker.workerErrorReported',e=>{if(offline&&/TypeError: Failed to fetch/.test(e.errorMessage?.errorMessage||''))expectedOfflineFailures.push(e);else workerErrors.push(e)});

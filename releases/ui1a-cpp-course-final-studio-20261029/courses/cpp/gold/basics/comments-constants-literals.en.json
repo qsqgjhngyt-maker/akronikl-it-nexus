@@ -1,0 +1,364 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.cpp-basics",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "lessonId": "cpp.comments-constants-literals",
+  "sessions": 1,
+  "prerequisiteIds": [
+    "cpp.tokens-identifiers-keywords"
+  ],
+  "sourceRefs": [
+    "CPP20-COMMENTS",
+    "CPP20-LITERALS",
+    "CPP20-CONSTEXPR",
+    "CPP20-CONST",
+    "CPP-GUIDELINES"
+  ],
+  "title": "Comments, constants, and literals: meaning instead of magic numbers",
+  "lead": "Write values precisely, name immutable quantities, and use comments to explain decisions.",
+  "why": "minutes * 60 can work while leaving 60 easy to mistake for a limit or setting. Distinguishing literals, named constants, and comments makes changes deliberate and exposes inconsistent units.",
+  "objectives": [
+    "Distinguish a literal, a named object, and an explanatory comment.",
+    "Use const and simple constexpr without confusing immutability with evaluation time.",
+    "Read digit separators, binary notation, char, strings, and basic escape sequences.",
+    "Replace unexplained conversion factors and check the unit contract with several values."
+  ],
+  "prerequisites": [
+    "The first-program scaffold, named int quantities, output, and naming rules from the previous lessons.",
+    "Multiplication and subtraction of small integers. Types are treated next; you do not need to write functions, macros, or templates."
+  ],
+  "concepts": [
+    {
+      "term": "Literal",
+      "definition": "A value written directly in source: 60, 0b1010, 'A', or \"done\"."
+    },
+    {
+      "term": "const",
+      "definition": "For the simple objects in this lesson, prevents changing the value after initialization by ordinary assignment."
+    },
+    {
+      "term": "constexpr",
+      "definition": "In our integer constant declaration, requires a valid constant-expression initializer and makes the object const."
+    },
+    {
+      "term": "Comment",
+      "definition": "A source explanation rather than an executable statement; it must stay accurate when code changes."
+    },
+    {
+      "term": "Magic number",
+      "definition": "A literal whose purpose or unit is unclear where it is used. Not every literal is automatically bad."
+    },
+    {
+      "term": "Escape sequence",
+      "definition": "A notation for a special character within a literal, such as \\n for newline or \\\\ for a backslash."
+    }
+  ],
+  "sections": [
+    {
+      "title": "A literal, an object, and a name are different",
+      "paragraphs": [
+        "In const int lessonMinutes = 25;, 25 is a literal and lessonMinutes is a name; the declaration creates an int object with that initial value. A type determines values and operations. int suffices for the small whole numbers here; a fuller type treatment follows next.",
+        "Two occurrences of 60 may mean seconds per minute and an age limit. Combining them under one name merely because the numbers match is wrong. Choose a name for the domain meaning. secondsPerMinute expresses a minutes-to-seconds factor; generalValue does not."
+      ]
+    },
+    {
+      "title": "const prevents object mutation, not a timing promise",
+      "paragraphs": [
+        "const int lessonMinutes = 25; initializes a simple integer object whose value cannot later be replaced by ordinary assignment such as lessonMinutes = 30;. Initialization supplies the first value; assignment tries to replace an existing one. The negative example below deliberately tests a build error.",
+        "const alone does not require the initial value to be known at compile time: it may be obtained during execution. A fixed number in our example does not turn const into a universal instruction to precompute. We do not introduce runtime input merely to demonstrate this; its rules belong in the standard-I/O lesson."
+      ]
+    },
+    {
+      "title": "constexpr in a small, explicit example",
+      "paragraphs": [
+        "constexpr int secondsPerHour = 60 * 60; requires a valid constant expression as its initializer. The operands are known, the multiplication is permitted, and 3600 fits in int. The object is also const, so later assignment is prohibited. This makes the intention explicit for fixed conversion factors.",
+        "This is a rule about allowed expressions, not an optimizer stopwatch. Do not claim that const is always slower than constexpr or that every occurrence forces a separate build-time operation. We are not writing constexpr functions, #define macros, or metaprograms here."
+      ]
+    },
+    {
+      "title": "Numeric notation: value and readability",
+      "paragraphs": [
+        "1024 and 1'024 denote the same value: an apostrophe within the number separates digits and is not printed. A separator cannot be placed arbitrarily before the first or after the last digit. 1,024 is not the same literal; a comma has other C++ roles. Decimal fractions in source use a dot, as in 2.5.",
+        "The 0b prefix introduces binary notation: 0b1010 = 8 + 2 = 10. Ordinary std::cout output of int remains decimal and prints 10. Hexadecimal uses 0x, but this lesson is not a full number-base course. Avoid 010 when you mean ten: a leading zero introduces octal notation. Prefer decimal notation for ordinary quantities."
+      ]
+    },
+    {
+      "title": "One character, a string, and a backslash",
+      "paragraphs": [
+        "In const char grade = 'A';, char is a character type for one code unit, and single quotes introduce an ordinary character literal. \"A\" in double quotes is a string literal, with a different type and representation. A word does not fit in one char. Ordinary char is not a container for every Unicode character: a Russian letter encoded in UTF-8 can occupy multiple bytes.",
+        "\\n denotes newline, \\t a tab, \\\\ one backslash, and \\\" a quote within a string. The path example escapes the backslash in C:\\temp; otherwise \\t would become a tab. Quotes and backslashes in source are notation rather than an instruction to print every source character. Predict actual stdout instead of copying the source literal."
+      ]
+    },
+    {
+      "title": "Comments explain reasons and constraints",
+      "paragraphs": [
+        "// begins a comment through the end of the line. /* and */ delimit a block comment; block comments do not nest. Inside a string literal, \"//\" is ordinary text. A comment is not executed, but removing it carelessly can join separate tokens. Keep the intended token boundary.",
+        "“Multiply by 60” repeats a visible operation. “The schedule records whole minutes; the report requires seconds” explains a unit contract. A comment about equipment explains why two seats are reserved. When policy changes, review both the comment and value. An obsolete explanation can make a wrong formula seem justified."
+      ]
+    },
+    {
+      "title": "Replacing a magic number without unnecessary abstraction",
+      "paragraphs": [
+        "Record the original result. Determine the factor’s meaning, declare a name, replace corresponding uses, and compare output. Not every zero or newline needs a separate name. Naming helps when it explains a domain rule or prevents inconsistent changes.",
+        "Names do not validate units automatically. After the minutes-to-seconds review, test 0, 15, and 40 minutes again. The diagram connects the domain concept, value notation, and use. It does not prove when a compiler evaluated an expression."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "unit-factor",
+      "title": "A named minutes-to-seconds factor",
+      "purpose": "Separate a fixed conversion factor, lesson duration, and calculated report.",
+      "code": "#include <iostream>\n\nint main() {\n    constexpr int secondsPerMinute = 60;\n    const int lessonMinutes = 25;\n    int durationSeconds = lessonMinutes * secondsPerMinute;\n    std::cout << \"duration_s=\" << durationSeconds << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "duration_s=1500\n",
+      "steps": [
+        "secondsPerMinute is the fixed factor 60, not the lesson duration.",
+        "lessonMinutes is an object initialized to 25 and not later changed.",
+        "25 × 60 = 1500; the label states seconds."
+      ]
+    },
+    {
+      "id": "literal-notation",
+      "title": "Numbers, a character, and escaping",
+      "purpose": "Distinguish literal notation from the printed value.",
+      "code": "#include <iostream>\n\nint main() {\n    const int packetBytes = 1'024;\n    const int enabledFlags = 0b1010;\n    const char grade = 'A';\n    std::cout << packetBytes << ' ' << enabledFlags << ' ' << grade << '\\n';\n    std::cout << \"path=C:\\\\temp\\n\";\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "1024 10 A\npath=C:\\temp\n",
+      "steps": [
+        "Ignore the separator when reading the value: 1'024 means 1024.",
+        "Expand 0b1010 as 8 + 2; std::cout prints 10.",
+        "Read \\\\ as one backslash and \\n as the line ending."
+      ]
+    },
+    {
+      "id": "reason-comment",
+      "title": "A comment explaining what the formula cannot",
+      "purpose": "State the reason for a fixed constraint.",
+      "code": "#include <iostream>\n\nint main() {\n    // Reserve two seats for the demonstration equipment.\n    const int reservedSeats = 2;\n    int availableSeats = 18 - reservedSeats;\n    std::cout << \"available=\" << availableSeats << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "available=16\n",
+      "steps": [
+        "Recover the policy from the comment: equipment uses two seats.",
+        "Explain 18 − 2 = 16 in domain terms.",
+        "State what to review if the reserved-seat count changes."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Notation does not change the value",
+      "action": "Replace 1'024 with 1024 and 0b1010 with 10 in the literal example.",
+      "prediction": "stdout remains unchanged.",
+      "verification": "Save both runs; separators and source notation do not themselves set cout formatting."
+    },
+    {
+      "title": "const protects an intention",
+      "action": "In a copy of the first example, insert lessonMinutes = 30; after the declaration.",
+      "prediction": "Expect a compilation error rather than output 1800.",
+      "verification": "Remove the assignment and repeat the baseline test. To run a different fixed scenario, edit the initializer in source."
+    },
+    {
+      "title": "A comment and a string differ by context",
+      "action": "First change only the explanatory comment in a working example. In a separate edit, change the label inside quotes.",
+      "prediction": "The first edit leaves this stdout unchanged; the second changes it.",
+      "verification": "Check the hypotheses with separate runs and restore the contract."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "The duration change fails to build",
+      "cause": "An assignment attempts to change a const object.",
+      "fix": "For a new fixed scenario edit the initializer; do not remove const without a domain reason."
+    },
+    {
+      "symptom": "An unexpected tab in a path",
+      "cause": "\\t was read as an escape sequence.",
+      "fix": "Write \\\\ for a literal backslash and compare actual stdout."
+    },
+    {
+      "symptom": "Eight appeared instead of ten",
+      "cause": "010 is an octal literal.",
+      "fix": "Use 10 for decimal ten; a leading zero is not decoration."
+    },
+    {
+      "symptom": "The units are unclear",
+      "cause": "The factor 60 lacks a meaningful name, or the label contradicts the formula.",
+      "fix": "Clarify the minutes → seconds contract, name the factor, and test zero and a nonzero case."
+    }
+  ],
+  "diagnosticExamples": [
+    {
+      "id": "const-write",
+      "title": "Intentional: changing a constant",
+      "code": "#include <iostream>\n\nint main() {\n    const int minutes = 15;\n    minutes = 20;\n    std::cout << minutes << '\\n';\n}\n",
+      "expectation": "compile-error",
+      "explanation": "An existing const int cannot be changed by this assignment."
+    },
+    {
+      "id": "char-string",
+      "title": "Intentional: a string in place of char",
+      "code": "#include <iostream>\n\nint main() {\n    const char grade = \"A\";\n    std::cout << grade << '\\n';\n}\n",
+      "expectation": "compile-error",
+      "explanation": "Double quotes produce a string literal. This example needs single quotes for one ordinary character."
+    }
+  ],
+  "practice": [
+    {
+      "level": "basic",
+      "task": "Classify 60, secondsPerMinute, and // unit conversion as literal, name, or comment.",
+      "criteria": "Roles are distinguished without relying on visual length.",
+      "hint": "A name refers to an object; a literal writes a value directly."
+    },
+    {
+      "level": "applied",
+      "task": "Convert 7 minutes to seconds using a named constexpr factor.",
+      "criteria": "Expect duration_s=420, explain the unit, and leave no unexplained 60 in the formula.",
+      "hint": "Lesson duration and conversion factor are distinct roles even though both are integers."
+    },
+    {
+      "level": "transfer",
+      "task": "A plan uses 100 for centimeters per meter and 100 as an attendee limit. Propose two names and explain why they must stay separate.",
+      "criteria": "The names distinguish independent rules, and a comment explains the attendee limit.",
+      "hint": "Equal current values do not imply the same reason for changing."
+    }
+  ],
+  "laboratory": {
+    "title": "A unit contract without magic numbers",
+    "challenge": "Refactor the conversion of 15 minutes to seconds. Preserve stdout, introduce secondsPerMinute and lessonMinutes, and add a comment explaining the unit contract.",
+    "starterCode": "#include <iostream>\n\nint main() {\n    int minutes = 15;\n    int duration = minutes * 60;\n    std::cout << \"duration_s=\" << duration << '\\n';\n    return 0;\n}\n",
+    "starterExpectedStdout": "duration_s=900\n",
+    "referenceCode": "#include <iostream>\n\nint main() {\n    // The schedule records whole minutes; the report uses seconds.\n    constexpr int secondsPerMinute = 60;\n    const int lessonMinutes = 15;\n    int durationSeconds = lessonMinutes * secondsPerMinute;\n    std::cout << \"duration_s=\" << durationSeconds << '\\n';\n    return 0;\n}\n",
+    "cases": [
+      {
+        "stdin": "",
+        "stdout": "duration_s=900\n"
+      }
+    ],
+    "steps": [
+      "Write 15 × 60 = 900 independently of the program.",
+      "Separate the fixed factor from this scenario’s parameter.",
+      "Explain why units are converted, not what * does.",
+      "Test 0, 15, and 40 minutes with the same formula.",
+      "In a separate copy, trigger and repair an assignment-to-const error."
+    ],
+    "rubric": [
+      "Both names express roles and the factor is specified once.",
+      "Explain const versus constexpr without a speed claim.",
+      "Record actual outputs of 0, 900, and 2400 seconds.",
+      "The comment matches the formula; the const diagnostic is separate from the working solution."
+    ],
+    "verificationVariants": [
+      {
+        "id": "zero-minutes",
+        "replace": [
+          {
+            "from": "const int lessonMinutes = 15;",
+            "to": "const int lessonMinutes = 0;"
+          }
+        ],
+        "stdin": "",
+        "stdout": "duration_s=0\n"
+      },
+      {
+        "id": "forty-minutes",
+        "replace": [
+          {
+            "from": "const int lessonMinutes = 15;",
+            "to": "const int lessonMinutes = 40;"
+          }
+        ],
+        "stdin": "",
+        "stdout": "duration_s=2400\n"
+      }
+    ],
+    "artifact": "source-code-and-test-report",
+    "verification": "manual-output-comparison"
+  },
+  "assessment": [
+    {
+      "question": "What does const enforce for our simple integer objects?",
+      "answers": [
+        "Every initial value is evaluated during the build",
+        "Ordinary assignment cannot change the object after initialization",
+        "Every calculation becomes faster"
+      ],
+      "correctIndex": 1,
+      "explanation": "const restricts mutation; it does not generally require a constant-expression initializer."
+    },
+    {
+      "question": "What does int n = 0b1010; std::cout << n; print without format changes?",
+      "answers": [
+        "1010",
+        "10",
+        "0b1010"
+      ],
+      "correctIndex": 1,
+      "explanation": "0b sets source notation; ordinary integer output here is decimal."
+    },
+    {
+      "question": "Why do const int cmPerMeter = 100; and const int attendeeLimit = 100; have different names?",
+      "answers": [
+        "One is a unit rule and the other an independent policy",
+        "C++ forbids equal literals",
+        "They use different number bases"
+      ],
+      "correctIndex": 0,
+      "explanation": "Meaning determines the role: the limit can change independently of the metric system."
+    },
+    {
+      "question": "What does \\n mean in the source string \"A\\n\"?",
+      "answers": [
+        "Two printed characters: backslash and n",
+        "A newline after A",
+        "The zero status of main"
+      ],
+      "correctIndex": 1,
+      "explanation": "The escape denotes a control character inside the literal and is unrelated to return 0."
+    }
+  ],
+  "reflection": [
+    "Why is “multiply by 60” weaker than an explanation of the minutes-to-seconds contract?",
+    "What should you check when replacing a magic factor with a named constant?"
+  ],
+  "bridge": "You can now distinguish notation, naming, and immutability. Next examine what a chosen type can hold, how to initialize it, and which properties depend on the target environment.",
+  "visualization": {
+    "kind": "toolchain",
+    "title": "From a domain unit to a checked result",
+    "description": "A conceptual unit-conversion diagram. It does not measure when const or constexpr is evaluated. Full explanations appear below.",
+    "steps": [
+      {
+        "title": "Contract",
+        "description": "The initial duration is in whole minutes; the result is needed in seconds."
+      },
+      {
+        "title": "Factor",
+        "description": "secondsPerMinute names the factor 60 rather than a particular lesson duration."
+      },
+      {
+        "title": "Initializer",
+        "description": "lessonMinutes is initialized to 25 and remains unchanged in this scenario."
+      },
+      {
+        "title": "Calculation",
+        "description": "25 × 60 = 1500; the result unit is seconds."
+      },
+      {
+        "title": "Check",
+        "description": "Compare duration_s=1500 and repeat the calculation for zero duration."
+      }
+    ]
+  },
+  "locale": "en",
+  "legacyQuiz": {
+    "question": "Why name constants?",
+    "answers": [
+      "To hide code",
+      "To express meaning and remove magic numbers",
+      "To create a loop"
+    ],
+    "correctIndex": 1
+  }
+}

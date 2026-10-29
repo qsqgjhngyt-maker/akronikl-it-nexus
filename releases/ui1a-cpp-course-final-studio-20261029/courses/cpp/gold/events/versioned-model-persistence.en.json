@@ -1,0 +1,433 @@
+{
+  "schemaVersion": 1,
+  "moduleId": "cpp.section.visual-programming",
+  "standardVersion": "academy-gold-1.1",
+  "status": "candidate",
+  "target": "C++20",
+  "runtimeTarget": "wasm-cpp",
+  "lessonId": "cpp.versioned-model-persistence",
+  "locale": "en",
+  "sessions": 4,
+  "learningOrder": 8,
+  "prerequisiteIds": [
+    "cpp.validated-user-commands",
+    "cpp.files",
+    "cpp.exceptions-guarantees"
+  ],
+  "sourceRefs": [
+    "CPP20-FILE",
+    "CPP20-STREAM-STATE",
+    "CPP20-EXCEPT"
+  ],
+  "title": "Model persistence and format versioning",
+  "lead": "Implement a checkable roundtrip and candidate-based loading that preserves the old model on failure.",
+  "why": "Saved data may outlive a program version. A format needs an explicit marker and field definitions. Teaching format EV1 stores an element count and values in 0…100. A future EV2 cannot be guessed to mean EV1: identical numbers might have different meanings. Reject unknown versions before mutation, and treat migration as a separate checkable algorithm.",
+  "objectives": [
+    "Specify the EV1 grammar.",
+    "Explain the swap commit point and preservation of 99.",
+    "Implement load and save.",
+    "Test rejection following an earlier successful load.",
+    "Propose an EV0→EV1 specification and tests."
+  ],
+  "prerequisites": [
+    "Modules 1–5: functions, STL, ownership, testing and multi-file builds.",
+    "Study the linked prerequisite topics below before this lesson."
+  ],
+  "concepts": [
+    {
+      "term": "Serialization",
+      "definition": "Converting a model into an explicitly specified data format."
+    },
+    {
+      "term": "Deserialization",
+      "definition": "Validated reconstruction of a model from a data format."
+    },
+    {
+      "term": "Version marker",
+      "definition": "A marker selecting how a record is interpreted."
+    },
+    {
+      "term": "Roundtrip",
+      "definition": "Checking reconstruction after saving a model."
+    },
+    {
+      "term": "Canonical output",
+      "definition": "A consistent representation used when saving data."
+    },
+    {
+      "term": "Migration",
+      "definition": "An explicit transformation between specified data versions."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition preserved at the boundaries of permitted model operations."
+    },
+    {
+      "term": "Observable behaviour",
+      "definition": "An agreed observation by which a client distinguishes contract satisfaction from a defect."
+    }
+  ],
+  "sections": [
+    {
+      "title": "A format is an interface",
+      "paragraphs": [
+        "Saved data may outlive a program version. A format needs an explicit marker and field definitions. Teaching format EV1 stores an element count and values in 0…100. A future EV2 cannot be guessed to mean EV1: identical numbers might have different meanings. Reject unknown versions before mutation, and treat migration as a separate checkable algorithm.",
+        "EV1 3 1 2 3 declares three values; EV1 2 1 is incomplete, while EV1 0 extra contains unexpected data. Whitespace between tokens is flexible but extra tokens are forbidden. A count limit of eight bounds memory and the teaching scenarios. If a product needs more data, revise the limit and tests explicitly."
+      ]
+    },
+    {
+      "title": "Loading with a strong guarantee",
+      "paragraphs": [
+        "load first validates version and count, then constructs a separate candidate vector. It validates every value before appending it and checks end of input after the last item. Only a completely valid record permits model.swap(candidate). Before swap the model still holds its previous data, so rejection requires no manual restoration of overwritten elements.",
+        "The initial laboratory model contains 99. Every malformed record prints rejected 99, making preservation observable. An additional test should first load another valid model, then reject malformed data and compare against that updated model. This detects an implementation that simply recreates the original 99 on every failure."
+      ]
+    },
+    {
+      "title": "Roundtrip and canonical output",
+      "paragraphs": [
+        "save writes the version, count and values in a fixed order with a final newline. After loading, the program saves to an ostringstream, reloads those bytes into copy and compares vectors. The property load(save(model))==model checks agreement between the operations, but does not replace independently specified expected records.",
+        "Both functions can share a mistake, such as consistently omitting the first element. Also check explicit cases EV1 0 and EV1 3 1 2 3 against exact stdout. Writing to a real stream requires checking open, write and close outcomes. Successful in-memory serialization does not establish that a device has physically persisted a file."
+      ]
+    },
+    {
+      "title": "Nexus filesystem boundaries",
+      "paragraphs": [
+        "Console-run files belong to a per-process virtual filesystem. Creating a file does not automatically create a personal document on a phone. Transfer results through explicit artifact saving into the project and export. The laboratory uses stdin and memory to test the format independently of device access and without hidden writes to a user project.",
+        "Graphical TaskFlow permits a specific taskflow.txt file and uses NXTF1 with different fields. Renaming EV1 to NXTF1 does not make the formats compatible. The shared principle is to validate a bounded candidate and commit it as a whole. A portable archive includes sources and selected data, never the owner’s session, cookies or secrets."
+      ]
+    },
+    {
+      "title": "Compatibility and corruption",
+      "paragraphs": [
+        "Enumerate unknown versions, negative counts, excessive counts, incomplete records, out-of-range values and trailing data. Preserve the previous model for every rejection. Add a valid whitespace variant and compare normalized output. Filenames and user text must not become operating-system commands or unrestricted output paths.",
+        "An independent EV0→EV1 migration requires a documented old format and tests for both versions. Do not automatically interpret a missing marker as a legacy version. Separate established results—parsing, roundtrip and model preservation—from untested properties such as power failure, external disks, concurrent writes and synchronization across devices."
+      ]
+    },
+    {
+      "title": "Laboratory contract: input to observation",
+      "paragraphs": [
+        "The format is EV1 count values, with count=0…8, values=0…100 and whitespace-only trailing input. Failure preserves old model {99} and prints rejected 99. On success save in memory, reload into a copy and compare; stdout is the canonical EV1 record.",
+        "Trace the first reference scenario before running. Exact stdin: \"EV1 3 1 2 3\". Expected stdout: \"EV1 3 1 2 3\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
+      ]
+    },
+    {
+      "title": "Reading a working example",
+      "paragraphs": [
+        "ostringstream produces EV1 and seven. istringstream reads those bytes back. Agreement checks one simple concrete roundtrip. First identify data, ownership and the observable outcome. Then change exactly one initial condition and predict which observation changes. This connects syntax to a contract rather than memorizing finished source text.",
+        "The old vector contains nine. Candidate 1,-2 is rejected before swap. false and nine demonstrate preservation. Compare the second example with the first: what new boundary is covered, and which test distinguishes the correct implementation from a superficially similar mistake? Retain both sources, predictions and actual observations so that the explanation can be reproduced."
+      ]
+    },
+    {
+      "title": "Independent checking and transfer",
+      "paragraphs": [
+        "Propose an EV0→EV1 specification and tests. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Begin with a specification and input bounds; the worked function is a scaffold, not the requirements of another domain. State an independent expectation before execution so that a test is not fitted to accidental output.",
+        "Distinguish process memory, a saved project artifact and device export. Retain a checkable result and an independent trace. Explain the selected contract and supply an independent example. Record decisions, a rejected alternative, checked scenarios and remaining limitations. Independently complete the final assessment control-change task and explain which files, tests and observations it affects. An additional peer or teacher requirement is optional review."
+      ]
+    }
+  ],
+  "workedExamples": [
+    {
+      "id": "roundtrip",
+      "code": "#include <iostream>\n#include <sstream>\nint main() { std::ostringstream out; out << \"EV1 \" << 7; std::istringstream in(out.str()); std::string version; int value = 0; in >> version >> value; std::cout << version << ' ' << value << '\\n'; }\n",
+      "stdin": "",
+      "expectedStdout": "EV1 7\n",
+      "title": "Guided model",
+      "purpose": "Implement a checkable roundtrip and candidate-based loading that preserves the old model on failure.",
+      "steps": [
+        "ostringstream produces EV1 and seven.",
+        "istringstream reads those bytes back.",
+        "Agreement checks one simple concrete roundtrip."
+      ]
+    },
+    {
+      "id": "candidate",
+      "code": "#include <iostream>\n#include <vector>\nbool replace(std::vector<int>& values, std::vector<int> candidate) { for (int x : candidate) if (x < 0) return false; values.swap(candidate); return true; }\nint main() { std::vector<int> values{9}; std::cout << replace(values, {1, -2}) << ' ' << values[0] << '\\n'; }\n",
+      "stdin": "",
+      "expectedStdout": "0 9\n",
+      "title": "Boundary and extension",
+      "purpose": "Implement a checkable roundtrip and candidate-based loading that preserves the old model on failure.",
+      "steps": [
+        "The old vector contains nine.",
+        "Candidate 1,-2 is rejected before swap.",
+        "false and nine demonstrate preservation."
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "title": "Test rejection following an earlier successful load.",
+      "action": "Test rejection following an earlier successful load.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: The format is EV1 count values, with count=0…8, values=0…100 and whitespace-only trailing input. Failure preserves old model {99} and prints rejected 99. On success save in memory, reload into a copy and compare; stdout is the canonical EV1 record. Explain the selected contract and supply an independent example."
+    },
+    {
+      "title": "Propose an EV0→EV1 specification and tests.",
+      "action": "Propose an EV0→EV1 specification and tests.",
+      "prediction": "First record the expected state change and observations.",
+      "verification": "Retain a checkable result: Propose an EV0→EV1 specification and tests. Explain the selected contract and supply an independent example."
+    }
+  ],
+  "diagnostics": [
+    {
+      "symptom": "State changed after rejection.",
+      "cause": "Mutation happened before validation or violated the invariant.",
+      "fix": "Identify the laboratory commit point and check it with a separate rejection trace."
+    },
+    {
+      "symptom": "An old revision or wrong target is running.",
+      "cause": "Build inputs are wrong or the changed project was not rebuilt.",
+      "fix": "Check entryFile, includeRoots and translationUnits and run the saved copy."
+    },
+    {
+      "symptom": "One successful example is treated as complete verification.",
+      "cause": "Rejected, empty and independent cases have not been checked.",
+      "fix": "Distinguish process memory, a saved project artifact and device export."
+    }
+  ],
+  "practice": [
+    {
+      "task": "Specify the EV1 grammar.",
+      "criteria": "The EV1 grammar specifies a marker, count 0…8, exactly count values 0…100 and whitespace-only trailing input; show one valid and three invalid records.",
+      "level": "basic",
+      "hint": "The element-count limit and trailing-input rule belong to the format rather than incidental cin behaviour."
+    },
+    {
+      "task": "Explain the swap commit point and preservation of 99.",
+      "criteria": "Identify model.swap(candidate) as the sole commit point; trace an incomplete record while preserving 99 without clearing the old model.",
+      "level": "basic",
+      "hint": "A separate vector is built before commit. Where is model first modified?"
+    },
+    {
+      "task": "Implement load and save.",
+      "criteria": "load validates the complete format before swap; save produces canonical EV1, roundtrip equals the original model and malformed cases preserve the old one.",
+      "level": "applied",
+      "hint": "Do not compare strings alone: load the saved text into another model and compare values."
+    },
+    {
+      "task": "Test rejection following an earlier successful load.",
+      "criteria": "The test first accepts a model other than 99, then rejects a corrupt record and compares with that accepted model; it detects reset-to 99.",
+      "level": "applied",
+      "hint": "The guarantee concerns the state immediately before the call rather than the program's initial value."
+    },
+    {
+      "task": "Propose an EV0→EV1 specification and tests.",
+      "criteria": "Specify both grammars and an unambiguous EV0→EV1 conversion; test old, new, unknown and corrupt formats without partial commit.",
+      "level": "transfer",
+      "hint": "Do not guess the version from numbers. Read the marker before selecting the algorithm."
+    },
+    {
+      "task": "Distinguish process memory, a saved project artifact and device export.",
+      "criteria": "Distinguish process FS, a saved project file and device export; Stop→Run and reimport establish which step actually retained data.",
+      "level": "transfer",
+      "hint": "A file existing in the current process does not establish retention in the project VFS."
+    }
+  ],
+  "laboratory": {
+    "title": "Laboratory: Model persistence and format versioning",
+    "challenge": "The format is EV1 count values, with count=0…8, values=0…100 and whitespace-only trailing input. Failure preserves old model {99} and prints rejected 99. On success save in memory, reload into a copy and compare; stdout is the canonical EV1 record.",
+    "target": "wasm-cpp",
+    "starterCode": "#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nbool load(std::istream& in, std::vector<int>& model) {\n  /* TODO: validate the whole candidate before swap. */ return false;\n}\nvoid save(std::ostream& out, const std::vector<int>& values) { out << \"EV1 \" << values.size(); for (int x : values) out << ' ' << x; out << '\\n'; }\nint main() {\n  std::vector<int> model{99};\n  if (!load(std::cin, model)) { std::cout << \"rejected \" << model[0] << '\\n'; return 0; }\n  std::ostringstream bytes; save(bytes, model); std::istringstream input(bytes.str()); std::vector<int> copy;\n  if (!load(input, copy) || copy != model) return 1;\n  std::cout << bytes.str();\n}\n",
+    "referenceCode": "#include <iostream>\n#include <vector>\n#include <string>\n#include <sstream>\nbool load(std::istream& in, std::vector<int>& model) {\n  std::string version; int count;\n  if (!(in >> version >> count) || version != \"EV1\" || count < 0 || count > 8) return false;\n  std::vector<int> candidate;\n  for (int i = 0; i < count; ++i) { int x; if (!(in >> x) || x < 0 || x > 100) return false; candidate.push_back(x); }\n  in >> std::ws; if (!in.eof()) return false;\n  model.swap(candidate); return true;\n}\nvoid save(std::ostream& out, const std::vector<int>& values) { out << \"EV1 \" << values.size(); for (int x : values) out << ' ' << x; out << '\\n'; }\nint main() {\n  std::vector<int> model{99};\n  if (!load(std::cin, model)) { std::cout << \"rejected \" << model[0] << '\\n'; return 0; }\n  std::ostringstream bytes; save(bytes, model); std::istringstream input(bytes.str()); std::vector<int> copy;\n  if (!load(input, copy) || copy != model) return 1;\n  std::cout << bytes.str();\n}\n",
+    "starterFiles": {},
+    "referenceFiles": {},
+    "metadata": {},
+    "starterExpectedStdout": "rejected 99\n",
+    "cases": [
+      {
+        "stdin": "EV1 3 1 2 3",
+        "stdout": "EV1 3 1 2 3\n"
+      },
+      {
+        "stdin": "EV1 0",
+        "stdout": "EV1 0\n"
+      },
+      {
+        "stdin": "EV2 1 7",
+        "stdout": "rejected 99\n"
+      },
+      {
+        "stdin": "EV1 2 1",
+        "stdout": "rejected 99\n"
+      },
+      {
+        "stdin": "EV1 1 -1",
+        "stdout": "rejected 99\n"
+      },
+      {
+        "stdin": "EV1 1 101",
+        "stdout": "rejected 99\n"
+      },
+      {
+        "stdin": "EV1 0 extra",
+        "stdout": "rejected 99\n"
+      },
+      {
+        "stdin": "EV1 9",
+        "stdout": "rejected 99\n"
+      }
+    ],
+    "steps": [
+      "Preserve your work and create a separate project for experiments.",
+      "Open Task and Code Studio and copy the starter and listed files.",
+      "Implement load and save.",
+      "Before running, record the expected transitions and outcome of every case.",
+      "Execute every reference case and retain actual observations.",
+      "Test rejection following an earlier successful load.",
+      "Add an independent case and explain its boundary.",
+      "Save sources, the protocol and an explanation of limitations."
+    ],
+    "rubric": [
+      "The full input and output contract is satisfied.",
+      "Invariants and lifetimes are explained; rejection preserves the model.",
+      "Ordinary, empty, boundary and failure scenarios are covered.",
+      "Test rejection following an earlier successful load.",
+      "An independent extension and test are supplied, rather than only a reference copy.",
+      "Sources, actual observations and limits of conclusions are retained."
+    ],
+    "artifact": "A personal project and verification protocol using synthetic data.",
+    "verification": "manual-output-comparison",
+    "catalogGoal": "Implement a checkable roundtrip and candidate-based loading that preserves the old model on failure.",
+    "catalogProof": "A personal project and verification protocol using synthetic data."
+  },
+  "assessment": [
+    {
+      "question": "Starting from model{99}, load receives EV1 2 1. What should it do?",
+      "answers": [
+        "Accept{1}, automatically lowering count.",
+        "Retain partial model{1,99}.",
+        "Reject the record and retain{99}."
+      ],
+      "correctIndex": 2,
+      "explanation": "Two values were declared but only one supplied. An incomplete candidate cannot be committed."
+    },
+    {
+      "question": "Why is EV1 0 extra rejected while EV1 0 followed by a newline is accepted?",
+      "answers": [
+        "Only whitespace is permitted after the values.",
+        "An empty model is forbidden with any trailing input.",
+        "The word extra counts as a zero value."
+      ],
+      "correctIndex": 0,
+      "explanation": "count 0 is valid but does not remove complete-input validation. Whitespace is not an additional record field."
+    },
+    {
+      "question": "Which experiment actually checks a model roundtrip?",
+      "answers": [
+        "Print the same buffer twice without loading.",
+        "Check only the filename.",
+        "Save, load into another model and compare values."
+      ],
+      "correctIndex": 2,
+      "explanation": "A roundtrip must exercise both conversions. Identical repeated prints do not test deserialization."
+    },
+    {
+      "question": "An unknown EV2 record arrives. May it be treated as EV1 because its numbers look similar?",
+      "answers": [
+        "Yes, if the current model is still empty.",
+        "No: a version specification and explicit migration path are required.",
+        "Yes, if its first value is 0."
+      ],
+      "correctIndex": 1,
+      "explanation": "Identical-looking fields may have different meanings in a new version. Similar syntax does not establish semantic compatibility."
+    },
+    {
+      "question": "Which negative test detects reset-to 99 instead of a strong guarantee?",
+      "answers": [
+        "First load{7} successfully, then reject corrupt input and expect{7}.",
+        "Only reject corrupt input starting from{99}.",
+        "Only save{99} without reading."
+      ],
+      "correctIndex": 0,
+      "explanation": "The first test separates current and startup state. Starting from{99}, both algorithms could appear correct."
+    }
+  ],
+  "readinessCheck": [
+    {
+      "question": "A parser converted the start of a string, but x remains. What must be checked before commit?",
+      "answers": [
+        "Only whether the model has its startup value.",
+        "Complete consumption of permitted input.",
+        "Only the presence of at least one digit."
+      ],
+      "correctIndex": 1,
+      "explanation": "A validated prefix is not a validated complete record. Trailing input is part of the format contract."
+    },
+    {
+      "question": "Does creating a file in Code Studio process FS prove retention after a new run?",
+      "answers": [
+        "No: explicitly save the result into the project and test a new run.",
+        "Yes: each file descriptor automatically creates a Cloud snapshot.",
+        "Yes: the.txt extension guarantees persistence."
+      ],
+      "correctIndex": 0,
+      "explanation": "Process FS, project VFS and synchronization are distinct storage boundaries. Their transitions require verification."
+    },
+    {
+      "question": "Which model should a failed strongly guaranteed load retain?",
+      "answers": [
+        "The partially parsed candidate.",
+        "The model immediately preceding load.",
+        "An empty model regardless of previous data."
+      ],
+      "correctIndex": 1,
+      "explanation": "The candidate may be discarded while the observable object retains its pre-state. Failure does not require clearing it."
+    }
+  ],
+  "reflection": [
+    "Explain the swap commit point and preservation of 99.",
+    "Which check distinguishes a superficially similar incorrect implementation?",
+    "Distinguish process memory, a saved project artifact and device export."
+  ],
+  "bridge": "Next: Event testing and reproducible traces. Preserve your project and experiment results.",
+  "visualization": {
+    "kind": "journey",
+    "title": "Model persistence and format versioning",
+    "description": "A stepwise conceptual model; actual verification runs in the stated Studio target.",
+    "steps": [
+      {
+        "title": "A format is an interface",
+        "description": "Saved data may outlive a program version. A format needs an explicit marker and field definitions. Teaching format EV1 stores an element count and values in 0…100. A future EV2 cannot be guessed to mean EV1: identical numbers might have different meanings. Reject unknown versions before mutation, and treat migration as a separate checkable algorithm."
+      },
+      {
+        "title": "Loading with a strong guarantee",
+        "description": "load first validates version and count, then constructs a separate candidate vector. It validates every value before appending it and checks end of input after the last item. Only a completely valid record permits model.swap(candidate). Before swap the model still holds its previous data, so rejection requires no manual restoration of overwritten elements."
+      },
+      {
+        "title": "Roundtrip and canonical output",
+        "description": "save writes the version, count and values in a fixed order with a final newline. After loading, the program saves to an ostringstream, reloads those bytes into copy and compares vectors. The property load(save(model))==model checks agreement between the operations, but does not replace independently specified expected records."
+      },
+      {
+        "title": "Nexus filesystem boundaries",
+        "description": "Console-run files belong to a per-process virtual filesystem. Creating a file does not automatically create a personal document on a phone. Transfer results through explicit artifact saving into the project and export. The laboratory uses stdin and memory to test the format independently of device access and without hidden writes to a user project."
+      },
+      {
+        "title": "Compatibility and corruption",
+        "description": "Enumerate unknown versions, negative counts, excessive counts, incomplete records, out-of-range values and trailing data. Preserve the previous model for every rejection. Add a valid whitespace variant and compare normalized output. Filenames and user text must not become operating-system commands or unrestricted output paths."
+      }
+    ]
+  },
+  "prerequisiteLessons": [
+    {
+      "lessonId": "cpp.validated-user-commands",
+      "title": "Command validation and state preservation"
+    },
+    {
+      "lessonId": "cpp.files",
+      "title": "Working with Files"
+    },
+    {
+      "lessonId": "cpp.exceptions-guarantees",
+      "title": "Exceptions and error guarantees"
+    }
+  ],
+  "legacyQuiz": {
+    "question": "When is the candidate committed?",
+    "answers": [
+      "After complete validation including end of input.",
+      "After the first number.",
+      "Before reading the version."
+    ],
+    "correctIndex": 0,
+    "explanation": "swap completes preparation of the entire model."
+  }
+}
