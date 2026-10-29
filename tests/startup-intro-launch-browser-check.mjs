@@ -96,7 +96,9 @@ try{
     await s.page.evaluate(hash=>location.hash=hash,hash);if(surface==='shell')await ready(s);const before=await preserved();
     for(const hard of [false,true]){await reloadWithoutIntro(s,hard);if(surface==='shell')await ready(s);assert.deepEqual(await preserved(),before);reloads.push({width,surface,hash,hard,status:'PASS',videoRequested:false,sourceAndProgressPreserved:true})}
    }
-   if(surface==='shell'){await s.page.evaluate(()=>location.hash='#view=home');await ready(s);await s.page.locator('#visualSettings summary').click();await s.page.locator('#nexusSettingsPanel [data-intro-preview]').click()}
+   // Общая оболочка ещё принадлежит прежнему уроку до обработки hashchange.
+   // Ждём именно Главную, иначе её render заменит уже открытое меню настроек.
+   if(surface==='shell'){await s.page.evaluate(()=>location.hash='#view=home');await s.page.locator('#visualHomeTitle').waitFor();await s.page.locator('#visualSettings summary').click();await s.page.locator('#nexusSettingsPanel [data-intro-preview]').click()}
    else{await s.page.locator('[data-entry-launch-settings]').click();await s.page.locator('[data-entry-intro-settings] [data-intro-preview]').click()}
    await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);await freshOpening(s);await s.context.close();
   }
