@@ -2,6 +2,7 @@ import {readFileSync} from 'node:fs';import {readFile} from 'node:fs/promises';i
 import {ENTRY_SHELL_URL} from './entry-gate.mjs';
 import {GATEWAY_ORIGIN} from './account-read.mjs';
 import {staticMime} from '../../pwa/static-mime.js';
+import {withEarlyIntro} from '../../core/startup-intro-early-html.js';
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const mime=staticMime;
 export function createPublishedAssets({env={},root=fileURLToPath(new URL('../frontend/',import.meta.url)),fetchImpl=fetch,origin=GATEWAY_ORIGIN}={}){
@@ -10,7 +11,7 @@ export function createPublishedAssets({env={},root=fileURLToPath(new URL('../fro
  if(index.version!==1||!/^ui1a-p4q-[a-z0-9-]+$/.test(index.generation)||!Array.isArray(index.files))throw Error('PUBLIC_BUILD_INVALID');
  for(const r of index.files){if(typeof r.path!=='string'||!/^\/[A-Za-z0-9._/@+-]+(?:\/[A-Za-z0-9._@+-]+)*$/.test(r.path)||r.path.split('/').some(p=>p==='..'||p==='.')||!Number.isSafeInteger(r.bytes)||r.bytes>2400000||!/^[a-f0-9]{64}$/.test(r.sha256)||files.has(r.path))throw Error('PUBLIC_BUILD_INVALID');files.set(r.path,r);}
  const shell=readFileSync(path.join(root,'nexus-shell.html')),shellRecord=index.shell;if(shell.length!==shellRecord?.bytes||hash(shell)!==shellRecord.sha256)throw Error('PUBLIC_BUILD_INVALID');
- return Object.freeze({fetchImpl:async(url,init)=>url===ENTRY_SHELL_URL?new Response(shell,{headers:{'content-type':'text/html; charset=utf-8','content-length':String(shell.length)}}):fetchImpl(url,init),async handle(req,res){
+ return Object.freeze({decorateEntryHTML:html=>files.has('/releases/'+index.generation+'/core/startup-intro-early.js')?withEarlyIntro(html,index.generation):html,fetchImpl:async(url,init)=>url===ENTRY_SHELL_URL?new Response(shell,{headers:{'content-type':'text/html; charset=utf-8','content-length':String(shell.length)}}):fetchImpl(url,init),async handle(req,res){
   let url;try{url=new URL(req.url,origin);}catch{return false;}const r=files.get(url.pathname);if(!r)return false;
   if(url.origin!==origin||req.headers.host!==new URL(origin).host||url.hash||url.search.length>512){res.writeHead(403,{'cache-control':'no-store','vary':'*'});res.end();return true;}
   if(!['GET','HEAD'].includes(req.method)){res.writeHead(405,{'cache-control':'no-store','vary':'*'});res.end();return true;}

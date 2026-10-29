@@ -6216,6 +6216,15 @@ function staticMime(file) {
   return { js: "text/javascript", mjs: "text/javascript", wasm: "application/wasm", css: "text/css", json: "application/json", webmanifest: "application/manifest+json", html: "text/html", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", svg: "image/svg+xml", mp4: "video/mp4", webm: "video/webm", wav: "audio/wav", md: "text/markdown", txt: "text/plain", woff: "font/woff", woff2: "font/woff2", ttf: "font/ttf", pfb: "application/x-font-type1", icc: "application/vnd.iccprofile", bcmap: "application/octet-stream", bin: "application/octet-stream" }[extension] ?? (file.slice(file.lastIndexOf("/") + 1).includes(".") ? "application/octet-stream" : "text/plain");
 }
 
+// core/startup-intro-early-html.js
+function withEarlyIntro(html, generation) {
+  if (!/^ui1a-[a-z0-9-]+$/.test(generation)) throw Error("INTRO_GENERATION_INVALID");
+  html = html.replace(/<script\b[^>]*\bdata-startup-intro-early\b[^>]*><\/script>/g, "").replace(/<link\b(?=[^>]*\brel=["'](?:modulepreload|preload)["'])(?=[^>]*\bhref=["']\/releases\/ui1a-[a-z0-9-]+\/(?:core\/startup-intro\.js|styles\/startup-intro\.css)["'])[^>]*>/g, "");
+  const base = "/releases/" + generation + "/";
+  const tags = '<link rel="modulepreload" fetchpriority="high" href="' + base + 'core/startup-intro.js"><link rel="preload" as="style" href="' + base + 'styles/startup-intro.css"><script type="module" async fetchpriority="high" data-startup-intro-early src="' + base + 'core/startup-intro-early.js"></script>';
+  return html.replace(/<script\b[^>]*\bsrc=["'](?:\.\/|\/)?releases\/ui1a-[a-z0-9-]+\/core\/startup-intro-launch\.js["'][^>]*><\/script>/g, "").replace("</head>", tags + "</head>");
+}
+
 // server-access/bff/published-assets.mjs
 var hash3 = (b) => createHash17("sha256").update(b).digest("hex");
 var mime = staticMime;
@@ -6229,7 +6238,7 @@ function createPublishedAssets({ env = {}, root = fileURLToPath(new URL("../fron
   }
   const shell = readFileSync(path5.join(root, "nexus-shell.html")), shellRecord = index.shell;
   if (shell.length !== shellRecord?.bytes || hash3(shell) !== shellRecord.sha256) throw Error("PUBLIC_BUILD_INVALID");
-  return Object.freeze({ fetchImpl: async (url, init) => url === ENTRY_SHELL_URL ? new Response(shell, { headers: { "content-type": "text/html; charset=utf-8", "content-length": String(shell.length) } }) : fetchImpl(url, init), async handle(req, res) {
+  return Object.freeze({ decorateEntryHTML: (html) => files.has("/releases/" + index.generation + "/core/startup-intro-early.js") ? withEarlyIntro(html, index.generation) : html, fetchImpl: async (url, init) => url === ENTRY_SHELL_URL ? new Response(shell, { headers: { "content-type": "text/html; charset=utf-8", "content-length": String(shell.length) } }) : fetchImpl(url, init), async handle(req, res) {
     let url;
     try {
       url = new URL(req.url, origin);
@@ -8042,8 +8051,9 @@ async function createStudioBffHandler({ env = process.env, fetchImpl = fetch } =
 var akronikl = await createNexusCloudHandler({ env: process.env });
 var passkey = createPasskeyHandler({ env: process.env });
 var existing = createCombinedHandler({ env: process.env });
-var landingBody = readFileSync2(new URL("../public/entry.html", import.meta.url));
 var publishedAssets = createPublishedAssets({ env: process.env });
+var rawLandingBody = readFileSync2(new URL("../public/entry.html", import.meta.url));
+var landingBody = publishedAssets.decorateEntryHTML ? Buffer.from(publishedAssets.decorateEntryHTML(rawLandingBody.toString("utf8"))) : rawLandingBody;
 var entryGate = createEntryGateHandler({ env: process.env, landingBody, fetchImpl: publishedAssets.fetchImpl });
 var cloud = createCloudSessionHandler({ env: process.env });
 var oauth = createOAuthHandler({ env: process.env });

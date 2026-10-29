@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {withStartupCover} from '../core/startup-intro-cover.js';
+import {withEarlyIntro} from '../core/startup-intro-early-html.js';
 import {staticMime} from '../pwa/static-mime.js';
 import {PIPER_PUBLIC_ASSETS} from '../akronikl/experience/piper-assets.js';
 const {build}=createRequire(new URL('../server-access/package.json',import.meta.url))('esbuild');
@@ -36,7 +37,7 @@ if(value('--generation')){
  if(versionMetadata.releaseCandidate)Object.assign(versionMetadata.releaseCandidate,{version:config.version,assetGeneration:config.assetGeneration});
 }
 const versionBytes=value('--generation')?Buffer.from(JSON.stringify(versionMetadata,null,2)+'\n'):await readFile(path.join(source,'version.json'));
-for(const file of files){const b=file==='version.json'?versionBytes:await readFile(path.join(source,file));await output(prefix+file,b,file);if(process.argv.includes('--startup-smooth')&&file.startsWith('intro-media/cinematic-v4/'))await output(file,b,'Публичный CDN: '+file)}
+for(const file of files){const b=file==='version.json'?versionBytes:file==='core/startup-intro.js'?(await build({absWorkingDir:source,entryPoints:[path.join(source,file)],bundle:true,platform:'browser',format:'esm',target:'es2022',write:false,logLevel:'warning'})).outputFiles[0].contents:await readFile(path.join(source,file));await output(prefix+file,b,file);if(process.argv.includes('--startup-smooth')&&file.startsWith('intro-media/cinematic-v4/'))await output(file,b,'Публичный CDN: '+file)}
 // Полный комплект курса сохраняет и стабильные CDN URL заставки. Эти медиа
 // по-прежнему исключаются из обязательного public graph Service Worker.
 if(config.publication?.module==='cpp-course-final')for(const file of files.filter(f=>f.startsWith('intro-media/'))){if(!records.some(r=>r.file===file))await output(file,await readFile(path.join(source,file)),'Стабильный публичный CDN: '+file)}
@@ -58,7 +59,8 @@ const renderHTML=html=>{
   result=result.replace('const target=event.target;const resource=',"const target=event.target;if(target?.closest?.('[data-startup-intro]')||target?.matches?.('[data-startup-intro-style]'))return;const resource=");
  }
  result=result.replaceAll(/(\.\/releases\/ui1a-[a-z0-9-]+\/(?:core\/(?:app|bootstrap)\.js|styles\/app\.css))\?v=[^"'<>\s]+/g,'$1?v='+config.version);
- return (process.argv.includes('--startup-first-paint')||process.argv.includes('--startup-smooth'))?withStartupCover(result):result;
+ result=(process.argv.includes('--startup-first-paint')||process.argv.includes('--startup-smooth'))?withStartupCover(result):result;
+ return withEarlyIntro(result,config.assetGeneration);
 };
 let index=renderHTML(await readFile(path.join(source,'index.html'),'utf8'));
 index=index.replace('href="./manifest.webmanifest"','href="./manifest.webmanifest?v='+config.version+'"');
