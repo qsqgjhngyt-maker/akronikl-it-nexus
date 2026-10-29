@@ -28,7 +28,8 @@ export async function nexusChatFixture({root,privateDir,createAdapter,onOutcome,
     const leaf=u.pathname.slice('/akronikl/vendor/piper/'.length);
     if(!piperAssets||req.method!=='GET'||! /^(?:runtime\.js|piper_phonemize\.(?:data|wasm)|ort\/ort-wasm-[a-z0-9.-]+\.(?:mjs|wasm)|models\/ru_RU-(?:irina|uyut7-pilot4)-medium\.onnx(?:\.json)?)$/u.test(leaf))throw Error('QA_PATH_DENIED');
     const base=await realpath(piperAssets),file=await realpath(path.join(base,leaf));if(!file.startsWith(base+path.sep))throw Error('QA_PATH_DENIED');
-    res.writeHead(200,{'content-type':leaf.endsWith('.wasm')?'application/wasm':leaf.endsWith('.js')||leaf.endsWith('.mjs')?'text/javascript':leaf.endsWith('.json')?'application/json':'application/octet-stream'});res.end(await readFile(file));return;
+    const payload=await readFile(file);row.assetBytes=payload.length;row.assetSha256=createHash('sha256').update(payload).digest('hex');
+    res.writeHead(200,{'content-type':leaf.endsWith('.wasm')?'application/wasm':leaf.endsWith('.js')||leaf.endsWith('.mjs')?'text/javascript':leaf.endsWith('.json')?'application/json':'application/octet-stream'});res.end(payload);return;
    }
    if(u.pathname.startsWith('/api/')){
     // Private Gateway ingress is synthesized in this loopback TLS server; not in browser code.
