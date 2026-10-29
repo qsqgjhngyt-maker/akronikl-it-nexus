@@ -1,6 +1,6 @@
 // Точный новый changeset над закрытыми M6 receipts. Старые receipts не меняются.
 import assert from'node:assert/strict';import{readFile}from'node:fs/promises';import{execFileSync}from'node:child_process';import{createHash}from'node:crypto';
-const RECEIPT_SHA256='9ac9799595cb02eceb17f2c1b6d0dbbc0a386416e1c3002c30f9ce5fa03fc9d6';
+const RECEIPT_SHA256='f85d524b461f4944b17b6073431350a48f77957fe1ee494788957ad8517e00dd';
 export const COMPLETION_BASE='330d29dde2c4a5c8ef136f5b8b40ce7a9179aa49';
 export const COMPLETION_RECEIPT='docs/ru/03-content/CPP_COURSE_COMPLETION_SCOPE.json';
 const self='tools/cpp-course-completion-scope.mjs',git=(...a)=>execFileSync('git',a,{maxBuffer:128*1024*1024,stdio:['ignore','pipe','pipe']}),list=b=>b.toString().split('\n').filter(Boolean),sha=b=>createHash('sha256').update(b).digest('hex');

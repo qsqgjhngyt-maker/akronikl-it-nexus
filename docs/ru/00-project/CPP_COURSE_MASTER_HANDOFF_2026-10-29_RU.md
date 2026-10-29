@@ -1,6 +1,6 @@
-# 00 — C++ Gold Standard: приёмка курса закрыта
+# 00 — C++ Gold Standard: официальный выпуск1.0 закрыт
 
-29.10.2026. **STATUS: FULL LIVE PASS курса; официальный выпуск READY.** Актуальная фиксация для области C++/Studio/COURSE-FINAL. Она заменяет прежние планы этой области; синхронизируемый MASTER в sources/ не изменяется.
+29.10.2026. **STATUS: PASS / FULL LIVE PASS. Приёмка05/07 и официальный выпуск1.0 закрыты.** Актуальная фиксация для области C++/Studio/COURSE-FINAL. Она заменяет прежние планы этой области; синхронизируемый MASTER в sources/ не изменяется.
 
 **WHAT WAS PROVED:** 67 Gold-тем RU/EN в шести модулях, лабораторные, накопительные практикумы и словарь реализованы. Итоговая самостоятельная работа содержит три варианта,12 практических комплектов, три больших проекта и контрольное изменение. Всё выполняется в Nexus Studio; ZIP/CMake/CTest сохраняют переносимость. Browser Qt выбран вместо платного runner при дополнительном бюджете0₽. Новые GUI-шаблоны имеют GPLv3 и corresponding source. Преподавательские аккаунты PLANNED; автоматический результат самостоятельной работы имеет `codeVerifiedServer=false`, `credentialEligible=false`.
 
@@ -18,8 +18,10 @@ Backend0018 применён additive при первой публикации, 
 
 На опубликованной…10.10.2 владелец подтвердил: «ПК и телефон: заставки нет, итоговая страница открывается». Физическая приёмка07 и итоговая05 закрыты. Текущий main59ea19f: полный CI40832481917 —8/8 SUCCESS; короткий CI40832481536 —32refresh/9unit; contract/D1/native40832481614 SUCCESS; Pages40832481152 SUCCESS. Исторические FAIL сохранены в evidence. Акт CPP_COURSE_PUBLICATION_EVIDENCE.json фиксирует отдельные версии физической проверки данных и последнего refresh.
 
-**WHAT REMAINS:** создать и проверить официальный cpp-gold-course-v1.0.0 с7 release-assets. На момент этого акта тег и Release ещё не созданы; готовность не выдаётся за завершённый выпуск.
+Официальный [cpp-gold-course-v1.0.0](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/releases/tag/cpp-gold-course-v1.0.0) создан и проверен. Тег на main4afa3617a620a7bcb12efab876d8b97fb4ec0060, workflow40838871185 SUCCESS;7 assets проверены. Акт приёмки внутри релиза является снимком READY до создания тега, а фактическое закрытие выпуска — CPP_COURSE_RELEASE_1_0_RU.md и OFFICIAL_RELEASE_VERIFICATION.json. Официальные ZIP SHA находятся в PACKAGES_OFFICIAL.json; подготовительные Windows SHA сохраняются как история. Для настоящего rollback ZIP проверены все8 файлов из2d33f0e.
+
+**WHAT REMAINS:** обязательных работ текущего выпуска нет.
 
 **ROUTING CHECK:**00 →05/07 →02/03 →04;01 — неизменность Identity/backend. Материал04: browser/native Qt при бюджете0₽, GPL-воспроизводимость, CAS/черновики, границы доверия оценки и измеряемый rollback. Evidence: `docs/ru/03-content/evidence/cpp-course-refresh-20261029/`, отчёты `CPP_COURSE_REFRESH_FIX_RU.md`, `CPP_COURSE_FINAL_ACCEPTANCE_0507_RU.md`, `CPP_COURSE_CI_READINESS_RU.md`. Сообщения в другие чаты автоматически не отправлялись.
 
-**NEXT RECOMMENDED BRANCH:**05/07 — завершение приёмки и релиз. **RECOMMENDED MODE:** очень высокий для публикации; высокий для итоговой документации.
+**NEXT RECOMMENDED BRANCH:**00 — фиксация завершённого milestone и сопровождение курса. **RECOMMENDED MODE:** очень высокий для публикации; высокий для итоговой документации.

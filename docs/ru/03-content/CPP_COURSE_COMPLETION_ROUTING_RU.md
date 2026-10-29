@@ -1,3 +1,16 @@
+# Актуальная маршрутизация29.10.2026 — официальный выпуск завершён
+
+🔀 CROSS-BRANCH SYNC REQUIRED
+Источник:03/05/07. Результат: C++ Gold1.0 выпущен; приёмка05/07 FULL LIVE PASS. Куда по приоритету:00 →05/07 →04 →02/03/01. Почему: закрыть roadmap milestone и сохранить доказательства выпуска. Когда: сейчас. Что передать и готовый текст для вставки:
+
+«Официальный [cpp-gold-course-v1.0.0](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/releases/tag/cpp-gold-course-v1.0.0) опубликован на main4afa3617a620a7bcb12efab876d8b97fb4ec0060; workflow40838871185 SUCCESS. Все7 release-assets проверены, настоящий8root rollback сверён с2d33f0e; официальные SHA в PACKAGES_OFFICIAL.json. Приёмка05/07 FULL LIVE PASS: владелец на ПК/телефоне подтвердил…10.10.1 Студию/Run/данные и…10.10.2 отсутствие заставки при refresh/доступную итоговую страницу. Принятый main59ea19f CI40832481917 —8/8 SUCCESS,32refresh/9unit и contract/D1/native PASS; продукт/tag4afa и последующие записи выпуска равны принятому продукту.67RU/EN тем/6модулей,3варианта/12комплектов и3проекта реализованы; stable67/legacy40 IDs сохранены. PERF75/593926B, Qt9/GPL66, дополнительный бюджет0₽. codeVerifiedServer=false, credentialEligible=false; преподаватели PLANNED, педагогический эффект не измерен.00 — закрыть C++ milestone по акту и CPP_COURSE_RELEASE_1_0_RU.md;05/07 — release ledger/evidence/дефект refresh CLOSED;04 — browser Qt/GPL/CAS/оценивание/rollback и Windows/Linux ZIP metadata;02/03/01 — сохранить действующие контракты и сопровождать курс».
+
+Что потом:00 фиксирует закрытие milestone; дальнейшие изменения выполняются отдельными задачами. Сообщения в другие чаты автоматически не отправлены.
+
+---
+
+История предыдущих фиксаций:
+
 # Актуальная маршрутизация29.10.2026 — приёмка05/07 закрыта
 
 🔀 CROSS-BRANCH SYNC REQUIRED

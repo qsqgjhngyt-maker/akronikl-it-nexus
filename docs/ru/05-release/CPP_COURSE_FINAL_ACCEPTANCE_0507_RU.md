@@ -1,6 +1,6 @@
 # C++ Gold Standard — итоговая приёмка 05/07
 
-29.10.2026. **STATUS: FULL LIVE PASS. Приёмка05 и07 закрыта.** Официальный выпуск подготовлен к созданию; фактические тег и Release будут проверены отдельным этапом.
+29.10.2026. **STATUS: FULL LIVE PASS. Приёмка05 и07 закрыта.** Официальный [cpp-gold-course-v1.0.0](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/releases/tag/cpp-gold-course-v1.0.0) создан; workflow40838871185 SUCCESS, все7 assets проверены.
 
 05:67 Gold-тем RU/EN в шести модулях,12 практических комплектов итоговой работы, три варианта и три больших проекта реализованы. Стабильные67 текущих и40 legacy ID сохранены. Новые Qt GUI-шаблоны имеют GPLv3 и соответствующие исходники. Закрытые ключи теории, эталонные решения и личные работы в публичную поставку не входят.
 
@@ -14,4 +14,4 @@ NEXUS-PERF-01:75модулей/593926B при600000; outline26769/30000, laborat
 
 FULL/PATCH/rollback перечитаны; пакеты и SHA в evidence/cpp-course-refresh-20261029/PACKAGES.json. Откат8root возвращает frontend…10.10.1/main2d33f0e, личное хранилище и итоговые работы сохраняются. Backend при refresh не разворачивался. Дополнительный бюджет0₽.
 
-**WHAT REMAINS:** создать разрешённый официальный cpp-gold-course-v1.0.0 и проверить фактические7 release-assets, их SHA256 и workflow. Готовность и завершённый выпуск различаются. **ROUTING CHECK:**00 →05/07 →02/03/01 →04. **NEXT RECOMMENDED BRANCH:**05 — официальный выпуск. **RECOMMENDED MODE:**очень высокий. Полный акт: CPP_COURSE_PUBLICATION_EVIDENCE.json.
+**WHAT REMAINS:** обязательных работ текущего выпуска нет. **ROUTING CHECK:**00 →05/07 →02/03/01 →04. **NEXT RECOMMENDED BRANCH:**00 — закрытие milestone. **RECOMMENDED MODE:**высокий для фиксации. Акт до создания тега — CPP_COURSE_PUBLICATION_EVIDENCE.json; фактический выпуск и официальные SHA — CPP_COURSE_RELEASE_1_0_RU.md и OFFICIAL_RELEASE_VERIFICATION.json.

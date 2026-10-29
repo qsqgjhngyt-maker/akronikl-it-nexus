@@ -20,10 +20,12 @@
 
 Фактическая доставка29.10.2026: PR56/main3ff1571, Pages40827817246 — build/deploy SUCCESS. Gateway/version и102HTTP-файла побайтно совпали с manifest, включая изменённые startup policy/cover и9runtime/66GPL source-files. Никакие credentials или личные работы при проверке не читались. Evidence: PUBLIC_DELIVERY.json.
 
-**WHAT REMAINS:** официальный course Release; приёмка05/07 закрыта. **ROUTING CHECK:**00 →05/07 →07,01 — факт неизменности auth-контракта. **NEXT RECOMMENDED BRANCH:**05/07. **RECOMMENDED MODE:**очень высокий на публикации и выпуске.
+**WHAT REMAINS:** нет; приёмка05/07 и официальный course Release закрыты. **ROUTING CHECK:**00 →05/07 →07,01 — факт неизменности auth-контракта. **NEXT RECOMMENDED BRANCH:**05/07. **RECOMMENDED MODE:**очень высокий на публикации и выпуске.
 
 Дополнительный повтор в main3ff1571, run40827817746/job123294803777, остановился на ручном просмотре после перехода на Главную: общий shell был принят за готовность нового маршрута, последующий render заменил открытое меню. Это FAIL теста, не замалчиваемый успешным feature-повтором. Проверка теперь ждёт #visualHomeTitle перед открытием настроек; локальный повтор16refresh PASS на прежних product bytes. Отдельный короткий CI с двумя новыми профилями2407b05/run40831691000 —32refresh/9unit SUCCESS. Исторический отказ не переименован в PASS. Отказ и границы сохранены в FAILED_ATTEMPTS.json.
 
 Отдельный production browser PASS4: настоящая страница входа…10.10.2,390/1440px,обычный и жёсткий reload. Видео не запрашивается, начальный слой снят. API/assets не подменялись, production writes0. Это пустые анонимные Chrome-профили; настоящая авторизация и физические устройства этим экспериментом не проверяются. Evidence: LIVE_REFRESH_GUEST.json.
 
 Физическое закрытие29.10.2026: «ПК и телефон: заставки нет, итоговая страница открывается». Дефект CPP-07-P2-REFRESH CLOSED. Полный текущий main CI — CI_MAIN_59.json; итоговый акт — CPP_COURSE_PUBLICATION_EVIDENCE.json.
+
+Официальный выпуск проверен: [cpp-gold-course-v1.0.0](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/releases/tag/cpp-gold-course-v1.0.0), workflow40838871185 SUCCESS,7 assets PASS. Фактические хеши опубликованных ZIP — PACKAGES_OFFICIAL.json; акт подготовки сохраняет Windows SHA.
