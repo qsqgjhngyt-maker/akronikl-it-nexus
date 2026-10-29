@@ -10,19 +10,19 @@ export function createSpeechController({windowRef=globalThis.window,isCurrent=()
  const nativeSupported=!!engine&&typeof Utterance==='function',supported=()=>nativeSupported||!!localSpeaker;
  const voices=()=>{let available=[];try{if(nativeSupported)available=engine.getVoices().filter(v=>v.localService===true&&typeof v.voiceURI==='string');}catch{}return [...(localSpeaker?[localSpeaker.voice]:[]),...available];};
  const publish=value=>{state=value;try{onChange(snapshot());}catch{}};
- const snapshot=()=>Object.freeze({supported:supported(),available:prefs.voiceURI==='uyut7:narrator'?!!localSpeaker:voices().length>0,state,preferences:prefs});
+ const snapshot=()=>Object.freeze({supported:supported(),available:['uyut7:narrator','kitsune:piper-irina'].includes(prefs.voiceURI)?!!localSpeaker:voices().length>0,state,preferences:prefs});
  function stop(){generation++;localJob?.cancel();localJob=null;if(nativeSupported&&current)engine.cancel();current=null;publish('idle');}
  function read(value){
   if(dead||!isCurrent()){stop();return false;}
   const available=voices(),matching=available.filter(v=>v.lang?.toLowerCase().split('-')[0]===locale);
-  const voice=available.find(v=>v.voiceURI===prefs.voiceURI)||(prefs.voiceURI==='uyut7:narrator'?null:matching.find(v=>v.default)||matching[0]);
+  const voice=available.find(v=>v.voiceURI===prefs.voiceURI)||(['uyut7:narrator','kitsune:piper-irina'].includes(prefs.voiceURI)?null:matching.find(v=>v.default)||matching[0]);
   if(!supported()||!voice){publish('unavailable');return false;}
   if(typeof value!=='string'||!value.trim()||value.length>12000){publish('error');return false;}
-  stop();if(nativeSupported&&engine.paused)engine.resume();armed=true;const ticket=generation,chunks=voice.kind==='local-server'?localSpeechChunks(value):value.match(/[\s\S]{1,180}(?:\s|$)|[\s\S]{1,180}/gu)||[];let at=0;
+  stop();if(nativeSupported&&engine.paused)engine.resume();armed=true;const ticket=generation,chunks=['local-server','local-browser'].includes(voice.kind)?localSpeechChunks(value):value.match(/[\s\S]{1,180}(?:\s|$)|[\s\S]{1,180}/gu)||[];let at=0;
   function next(){
    if(dead||ticket!==generation||!isCurrent()){if(ticket===generation)stop();return;}
    if(at===chunks.length){current=null;publish('idle');return;}
-   if(voice.kind==='local-server'){
+   if(['local-server','local-browser'].includes(voice.kind)){
     publish('loading');localJob=localSpeaker.speak(chunks[at++],{onstart(){if(ticket!==generation)return;if(!isCurrent())stop();else publish('speaking');},onend(){if(ticket===generation){localJob=null;next();}},onerror(){if(ticket===generation){generation++;localJob?.cancel();localJob=null;publish('error');}}});localJob.setRate(prefs.rate);return;
    }
    const u=new Utterance(chunks[at++]);u.voice=voice;u.lang=voice.lang;u.rate=prefs.rate;current=u;
@@ -37,7 +37,7 @@ export function createSpeechController({windowRef=globalThis.window,isCurrent=()
  if(nativeSupported)engine.addEventListener?.('voiceschanged',changed);
  return Object.freeze({snapshot,voices,read,stop,arm(){if(!dead)armed=true;},auto(value){return prefs.auto&&armed?read(value):false;},
   configure(value,language=locale){stop();prefs=speechPreferences(value);locale=language==='en'?'en':'ru';publish('idle');},
-  setLocalSpeaker(value){if(value!==null&&(value?.voice?.voiceURI!=='uyut7:narrator'||typeof value.speak!=='function'))throw Error('SPEECH_SETTINGS_INVALID');stop();if(localSpeaker!==value)localSpeaker?.dispose?.();localSpeaker=value;publish('idle');},
+  setLocalSpeaker(value){if(value!==null&&(!['uyut7:narrator','kitsune:piper-irina'].includes(value?.voice?.voiceURI)||typeof value.speak!=='function'))throw Error('SPEECH_SETTINGS_INVALID');stop();if(localSpeaker!==value)localSpeaker?.dispose?.();localSpeaker=value;publish('idle');},
   pause(){if(state==='speaking'&&(current||localJob)){if(localJob)localJob.pause();else engine.pause();publish('paused');}},resume(){if(state==='paused'&&(current||localJob)){if(localJob)localJob.resume();else engine.resume();publish('speaking');}},
   dispose(){if(dead)return;stop();dead=true;armed=false;localSpeaker?.dispose?.();localSpeaker=null;engine?.removeEventListener?.('voiceschanged',changed);}
  });

@@ -8,7 +8,7 @@ import {pathToFileURL} from 'node:url';
 import {fixture} from '../../tests/helpers/auth-fixture.mjs';
 import {GATEWAY_ORIGIN} from '../../server-access/bff/account-read.mjs';
 import {createNexusCloudHandler,createNexusCloudVault} from '../../server-access/bff/akronikl-cloud.mjs';
-export async function nexusChatFixture({root,privateDir,createAdapter,onOutcome,generationEnabled=true,localSpeech=null,persistent=false,vaultMasterKey=null,fullApp=false}={}){
+export async function nexusChatFixture({root,privateDir,createAdapter,onOutcome,generationEnabled=true,localSpeech=null,piperAssets=null,persistent=false,vaultMasterKey=null,fullApp=false}={}){
  root=path.resolve(root);
  await mkdir(privateDir,{recursive:true});const openssl=process.env.NEXUS_OPENSSL??'C:/Program Files/Git/usr/bin/openssl.exe',key=path.join(privateDir,'tls.key'),cert=path.join(privateDir,'tls.crt'),host=new URL(GATEWAY_ORIGIN).hostname;
  const cmd=args=>spawnSync(openssl,args,{windowsHide:true,stdio:['ignore','pipe','ignore']});
@@ -24,6 +24,12 @@ export async function nexusChatFixture({root,privateDir,createAdapter,onOutcome,
   const u=new URL(req.url,GATEWAY_ORIGIN),row={path:u.pathname,method:req.method,status:null};network.push(row);res.setHeader('cache-control','no-store');res.setHeader('vary','*');res.once('finish',()=>row.status=res.statusCode);
   try{
    if(req.headers.host!==host){res.writeHead(421);res.end();return;}
+   if(u.pathname.startsWith('/akronikl/vendor/piper/')){
+    const leaf=u.pathname.slice('/akronikl/vendor/piper/'.length);
+    if(!piperAssets||req.method!=='GET'||! /^(?:runtime\.js|piper_phonemize\.(?:data|wasm)|ort\/ort-wasm-[a-z0-9.-]+\.(?:mjs|wasm)|models\/ru_RU-irina-medium\.onnx(?:\.json)?)$/u.test(leaf))throw Error('QA_PATH_DENIED');
+    const base=await realpath(piperAssets),file=await realpath(path.join(base,leaf));if(!file.startsWith(base+path.sep))throw Error('QA_PATH_DENIED');
+    res.writeHead(200,{'content-type':leaf.endsWith('.wasm')?'application/wasm':leaf.endsWith('.js')||leaf.endsWith('.mjs')?'text/javascript':leaf.endsWith('.json')?'application/json':'application/octet-stream'});res.end(await readFile(file));return;
+   }
    if(u.pathname.startsWith('/api/')){
     // Private Gateway ingress is synthesized in this loopback TLS server; not in browser code.
     const marker=u.pathname.includes('/passkey/')?'passkeyIngressContract':'accountReadContract';

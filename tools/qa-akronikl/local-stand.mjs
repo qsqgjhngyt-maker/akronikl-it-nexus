@@ -2,6 +2,7 @@
 import {mkdir,writeFile} from 'node:fs/promises';import {randomBytes,createHash} from 'node:crypto';import path from 'node:path';import {pathToFileURL} from 'node:url';
 import {nexusChatFixture} from './nexus-chat-fixture.mjs';import {createCloudVault} from './cloud-vault.mjs';import {createLocalSpeechProvider} from './local-speech.mjs';
 import {createCloudAdapter} from './cloud-adapters.mjs';import {createQwenTestBudget} from './qwen-test-budget.mjs';
+import {PIPER_VOICE} from '../../akronikl/experience/piper-voice.js';
 export async function createLocalStand({root,privateDir,playwrightModule,chromePath,speechConfig=null,cloudConfig=null,onOutcome=null,headless=false,persistent=true,powerShellPath=process.env.NEXUS_STAND_POWERSHELL??'powershell.exe'}={}){
  await mkdir(privateDir,{recursive:true});
  if(cloudConfig!==null&&(Object.keys(cloudConfig).join(',')!=='enabled'||cloudConfig.enabled!==true))throw Error('CLOUD_CONFIG_INVALID');
@@ -10,14 +11,16 @@ export async function createLocalStand({root,privateDir,playwrightModule,chromeP
  let saved=persistent?await secrets.readState(owner,'preferences'):{revision:0,value:null},material=saved.value??{masterKey:randomBytes(32).toString('base64'),credentials:[]};
  if(!/^[A-Za-z0-9+/]{43}=$/.test(material.masterKey)||!Array.isArray(material.credentials))throw Error('STAND_SECRETS_INVALID');
  if(persistent&&!saved.value)saved=await secrets.writeState(owner,'preferences',material,saved.revision);
- const speech=speechConfig?createLocalSpeechProvider({...speechConfig,referenceFile:path.join(root,'akronikl/experience/voices/uyut7-narrator.wav'),privateDirectory:path.join(privateDir,'speech')}):null;
+ const browserPiper=speechConfig?.engine==='piper-browser';
+ if(browserPiper&&(!path.isAbsolute(speechConfig.assetsDirectory??'')||!persistent))throw Error('SPEECH_CONFIG_INVALID');
+ const speech=browserPiper?Object.freeze({voice:PIPER_VOICE,status:()=>({engine:'piper-browser',readyScope:'per-account browser worker',externalModelCalls:0,downloads:0}),warmup:async()=>{},synthesize:async()=>{throw Error('SPEECH_UNAVAILABLE');},close:async()=>{}}):speechConfig?createLocalSpeechProvider({...speechConfig,referenceFile:path.join(root,'akronikl/experience/voices/uyut7-narrator.wav'),privateDirectory:path.join(privateDir,'speech')}):null;
  // Preload only public acoustic weights while the isolated UI starts. User text still requires Nexus authorization.
  if(speech)void speech.warmup().catch(()=>{});
  let adapterCalls=0,fixture,context,cdp,authenticator,page,closing=false,secretQueue=Promise.resolve(),persistenceError=null;const errors=[];
  function mergeCredentials(values){const byId=new Map(material.credentials.map(c=>[c.credentialId,c]));for(const c of values){const before=byId.get(c.credentialId);if(c.privateKey||before)byId.set(c.credentialId,{...before,...c,privateKey:c.privateKey||before.privateKey,signCount:Math.max(before?.signCount??0,c.signCount??0)});}material.credentials=[...byId.values()];}
  function saveSecrets(){if(!persistent)return Promise.resolve();const task=secretQueue.then(async()=>{saved=await secrets.writeState(owner,'preferences',structuredClone(material),saved.revision);persistenceError=null;});secretQueue=task.catch(()=>{persistenceError='STAND_PERSISTENCE_FAILED';});return task;}
  try{
-  fixture=await nexusChatFixture({root,privateDir,generationEnabled:cloudEnabled,persistent,vaultMasterKey:material.masterKey,localSpeech:speech,fullApp:true,onOutcome,createAdapter(options){
+  fixture=await nexusChatFixture({root,privateDir,generationEnabled:cloudEnabled,persistent,vaultMasterKey:material.masterKey,localSpeech:speech,piperAssets:browserPiper?speechConfig.assetsDirectory:null,fullApp:true,onOutcome,createAdapter(options){
    if(!cloudEnabled)throw Error('MODEL_CALL_FORBIDDEN');
    const s=options.selection;if(s.providerId!=='qwen'||s.modelId!=='qwen3.8-flash'||s.options.region!=='singapore'||s.options.workspaceId)throw Error('CLOUD_REQUEST_REJECTED');
    adapterCalls++;return createCloudAdapter({...options,qwenMaxOutputTokens:192,fetchUpstream:budget.fetch});

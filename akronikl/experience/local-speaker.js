@@ -1,10 +1,10 @@
 export const NARRATOR=Object.freeze({voiceURI:'uyut7:narrator',name:'Рассказчик «Уют-7» · Kitsune, ускоренный',lang:'ru-RU',localService:true,kind:'local-server'});
-export function createLocalSpeaker({request,windowRef=globalThis.window,isCurrent=()=>true}={}){
+export function createLocalSpeaker({request,windowRef=globalThis.window,isCurrent=()=>true,voice=NARRATOR}={}){
  if(typeof request!=='function'||typeof windowRef?.Audio!=='function')throw Error('SPEECH_UNAVAILABLE');
  const cache=new Map(),jobs=new Set();let disposed=false,cacheBytes=0;
  const valid=()=>{try{return !disposed&&isCurrent()===true;}catch{return false;}};
  function dispose(){disposed=true;cache.clear();cacheBytes=0;for(const job of [...jobs])job.cancel();}
- return Object.freeze({voice:NARRATOR,dispose,speak(text,{onstart,onend,onerror}={}){
+ return Object.freeze({voice,dispose,speak(text,{onstart,onend,onerror}={}){
   const controller=new AbortController();let audio=null,url=null,dead=false,rate=1;
   const cleanup=()=>{jobs.delete(job);if(url){windowRef.URL.revokeObjectURL(url);url=null;}};
   const job=Object.freeze({cancel(){dead=true;controller.abort();if(audio){audio.pause();audio.removeAttribute('src');audio.load();}cleanup();},pause(){audio?.pause();},resume(){if(audio&&valid()&&!dead)void audio.play().catch(()=>{if(!dead)onerror?.();});},setRate(value){rate=value;if(audio)audio.playbackRate=value;}});jobs.add(job);
