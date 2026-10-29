@@ -2,7 +2,7 @@
 import {mkdir,writeFile} from 'node:fs/promises';import {randomBytes,createHash} from 'node:crypto';import path from 'node:path';import {pathToFileURL} from 'node:url';
 import {nexusChatFixture} from './nexus-chat-fixture.mjs';import {createCloudVault} from './cloud-vault.mjs';import {createLocalSpeechProvider} from './local-speech.mjs';
 import {createCloudAdapter} from './cloud-adapters.mjs';import {createQwenTestBudget} from './qwen-test-budget.mjs';
-import {PIPER_VOICE} from '../../akronikl/experience/piper-voice.js';
+import {PIPER_VOICE,PIPER_NARRATOR} from '../../akronikl/experience/piper-voice.js';
 export async function createLocalStand({root,privateDir,playwrightModule,chromePath,speechConfig=null,cloudConfig=null,onOutcome=null,headless=false,persistent=true,powerShellPath=process.env.NEXUS_STAND_POWERSHELL??'powershell.exe'}={}){
  await mkdir(privateDir,{recursive:true});
  if(cloudConfig!==null&&(Object.keys(cloudConfig).join(',')!=='enabled'||cloudConfig.enabled!==true))throw Error('CLOUD_CONFIG_INVALID');
@@ -12,8 +12,9 @@ export async function createLocalStand({root,privateDir,playwrightModule,chromeP
  if(!/^[A-Za-z0-9+/]{43}=$/.test(material.masterKey)||!Array.isArray(material.credentials))throw Error('STAND_SECRETS_INVALID');
  if(persistent&&!saved.value)saved=await secrets.writeState(owner,'preferences',material,saved.revision);
  const browserPiper=speechConfig?.engine==='piper-browser';
+ if(browserPiper&&speechConfig.voice!==undefined&&!['irina','uyut7'].includes(speechConfig.voice))throw Error('SPEECH_CONFIG_INVALID');
  if(browserPiper&&(!path.isAbsolute(speechConfig.assetsDirectory??'')||!persistent))throw Error('SPEECH_CONFIG_INVALID');
- const speech=browserPiper?Object.freeze({voice:PIPER_VOICE,status:()=>({engine:'piper-browser',readyScope:'per-account browser worker',externalModelCalls:0,downloads:0}),warmup:async()=>{},synthesize:async()=>{throw Error('SPEECH_UNAVAILABLE');},close:async()=>{}}):speechConfig?createLocalSpeechProvider({...speechConfig,referenceFile:path.join(root,'akronikl/experience/voices/uyut7-narrator.wav'),privateDirectory:path.join(privateDir,'speech')}):null;
+ const speech=browserPiper?Object.freeze({voice:speechConfig.voice==='uyut7'?PIPER_NARRATOR:PIPER_VOICE,status:()=>({engine:'piper-browser',readyScope:'per-account browser worker',externalModelCalls:0,downloads:0}),warmup:async()=>{},synthesize:async()=>{throw Error('SPEECH_UNAVAILABLE');},close:async()=>{}}):speechConfig?createLocalSpeechProvider({...speechConfig,referenceFile:path.join(root,'akronikl/experience/voices/uyut7-narrator.wav'),privateDirectory:path.join(privateDir,'speech')}):null;
  // Preload only public acoustic weights while the isolated UI starts. User text still requires Nexus authorization.
  if(speech)void speech.warmup().catch(()=>{});
  let adapterCalls=0,fixture,context,cdp,authenticator,page,closing=false,secretQueue=Promise.resolve(),persistenceError=null;const errors=[];
