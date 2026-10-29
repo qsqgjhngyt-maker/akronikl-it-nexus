@@ -31,7 +31,7 @@ async function session({frontend=candidate,surface='shell',width=1440,height=900
   new MutationObserver(()=>{if(!window.__introAt&&document.querySelector('[data-startup-intro]'))window.__introAt=performance.now();if(!window.__appAt&&document.querySelector('#app .visual-shell'))window.__appAt=performance.now()}).observe(document,{childList:true,subtree:true});
  },{key,handoff,pref,hidden,noLocks,lowDevice,online,oauth,graph:RUNTIME_GRAPH_ID,codec});
  await context.route('**/*',async route=>{try{
-  const req=route.request(),u=new URL(req.url()),cdn=u.origin==='https://qsqgjhngyt-maker.github.io'&&!u.search&&/^\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/.test(u.pathname);if(u.origin!==origin&&!cdn){errors.push('Внешний запрос '+u.origin);return route.abort()}
+  const req=route.request(),u=new URL(req.url()),cdn=u.origin==='https://qsqgjhngyt-maker.github.io'&&!u.search&&/^\/akronikl-it-nexus\/intro-media\/(?:(?:cinematic-v4|cinematic-v6)\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/.test(u.pathname);if(u.origin!==origin&&!cdn){errors.push('Внешний запрос '+u.origin);return route.abort()}
   if(logout&&req.method()==='POST'&&u.pathname==='/api/v2/account/passkey/logout'){state.guest=true;state.surface='entry';record.syntheticLogouts++;return route.fulfill({status:200,contentType:'application/json',body:'{}'})}
   if(!['GET','HEAD'].includes(req.method())){record.writes.push(u.pathname);return route.abort()}
   if(u.pathname.startsWith('/api/')){

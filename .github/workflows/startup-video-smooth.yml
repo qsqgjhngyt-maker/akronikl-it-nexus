@@ -1,0 +1,90 @@
+name: Заставка — проверка плавности без публикации
+on:
+  push:
+    branches: [fix/startup-video-smooth-20261029]
+    paths:
+      - '.github/workflows/startup-video-smooth.yml'
+      - 'core/startup-intro*.js'
+      - 'styles/startup-intro.css'
+      - 'tests/startup-intro*.mjs'
+      - 'tests/startup-video*'
+      - 'tools/startup-video*'
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+concurrency:
+  group: startup-video-smooth-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      NEXUS_INTRO_WORK: /tmp/nexus-intro-smooth
+      NEXUS_FRONTEND_DIR: /tmp/nexus-intro-smooth/build
+      NEXUS_BASELINE_DIR: /tmp/nexus-intro-smooth/build
+      NEXUS_NATIVE_EVIDENCE: /tmp/nexus-intro-smooth/evidence/refresh
+      NEXUS_PLAYWRIGHT_MODULE: /tmp/nexus-intro-browser/node_modules/playwright/index.mjs
+      NEXUS_CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Подготовить инструменты тестирования
+        run: |
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/nexus-intro-browser --no-save playwright@1.56.1
+          python3 -m venv /tmp/nexus-intro-python
+          /tmp/nexus-intro-python/bin/pip install playwright==1.56.0
+          command -v ffmpeg >/dev/null || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+          test -x "$NEXUS_CHROME_PATH"
+      - name: Сохранить исходное поведение и собрать два оптимизированных ролика
+        run: |
+          mkdir -p /tmp/nexus-intro-smooth/before/core /tmp/nexus-intro-smooth/before/styles /tmp/nexus-intro-smooth/evidence
+          for file in startup-intro.js startup-intro-assets.js startup-intro-mobile.js startup-intro-buffer.js startup-intro-sequence.js; do
+            git show 75e24e195919e7c3d39659ba804e977d51ef5591:core/$file > /tmp/nexus-intro-smooth/before/core/$file
+          done
+          git show 75e24e195919e7c3d39659ba804e977d51ef5591:styles/startup-intro.css > /tmp/nexus-intro-smooth/before/styles/startup-intro.css
+          python3 tools/startup-video-apply.py
+          python3 tools/startup-video-optimize.py | tee /tmp/nexus-intro-smooth/evidence/media.log
+          cp intro-media/cinematic-v6/MANIFEST.json /tmp/nexus-intro-smooth/evidence/media-manifest.json
+      - name: Синтаксис, настоящий ESM import и контракты сохранности
+        run: |
+          node --check core/startup-intro.js
+          node --check core/startup-intro-buffer.js
+          node --input-type=module -e "await import('./core/startup-intro.js'); console.log('ESM import PASS')"
+          node --test tests/startup-intro-policy.test.mjs tests/startup-intro-smooth.test.mjs tests/startup-intro-build.test.mjs tests/startup-intro-retention.test.mjs | tee /tmp/nexus-intro-smooth/evidence/unit.log
+      - name: Сравнить до и после при одинаковой скорости сети
+        run: /tmp/nexus-intro-python/bin/python tests/startup-video-benchmark.py | tee /tmp/nexus-intro-smooth/evidence/benchmark.log
+      - name: Проверить пропуск, ошибку файла, уменьшение движения и поворот
+        run: /tmp/nexus-intro-python/bin/python tests/startup-video-benchmark.py --failures | tee /tmp/nexus-intro-smooth/evidence/failures.log
+      - name: Собрать новое immutable поколение и проверить 32 обновления страницы
+        run: |
+          node tools/build-ui1a-release.mjs --out "$NEXUS_FRONTEND_DIR" --generation ui1a-startup-video-v6-20261029 --version 0.1.7-alpha.2.4.6-ui1a.10.10.3 --retain-active
+          node tests/startup-intro-launch-browser-check.mjs --refresh-only
+      - name: Подготовить проверенный changeset только в рабочей ветке
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node tools/startup-video-stage.mjs
+          git config user.name 'Akronikl'
+          git config user.email '249936410+qsqgjhngyt-maker@users.noreply.github.com'
+          git add -- core/startup-intro.js tests/startup-intro-launch-browser-check.mjs intro-media/cinematic-v6 releases/ui1a-startup-video-v6-20261029 entry-assets/ui1a-startup-video-v6-20261029 index.html nexus-shell.html offline.html version.json service-worker.js startup-intro.json BUILD_MANIFEST.json release-candidate.json docs/ru/07-ui/STARTUP_VIDEO_V6_20261029.md docs/ru/07-ui/startup-video-v6-evidence
+          git diff --cached --stat
+          git commit -m 'производительность: собрать проверенную плавную заставку для ПК и телефонов'
+          git -c credential.helper= -c 'credential.helper=!f() { echo username=x-access-token; echo "password=$GH_TOKEN"; }; f' push origin HEAD:refs/heads/fix/startup-video-smooth-20261029
+          git rev-parse HEAD > /tmp/nexus-intro-smooth/evidence/validated-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: startup-video-evidence-${{ github.sha }}
+          path: /tmp/nexus-intro-smooth/evidence
+          retention-days: 14
