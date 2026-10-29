@@ -6,11 +6,11 @@ export function speechPreferences(value={auto:false,voiceURI:'',rate:1}){
 export function localSpeechChunks(value){const first=value.match(/^[\s\S]{1,60}(?:\s|$)|^[\s\S]{1,60}/u)?.[0]??'';return first?[first,...(value.slice(first.length).match(/[\s\S]{1,100}(?:\s|$)|[\s\S]{1,100}/gu)??[])]:[];}
 export function createSpeechController({windowRef=globalThis.window,isCurrent=()=>true,onChange=()=>{}}={}){
  const engine=windowRef?.speechSynthesis,Utterance=windowRef?.SpeechSynthesisUtterance;
- let prefs=speechPreferences(),locale='ru',state='idle',generation=0,dead=false,armed=false,current=null,localSpeaker=null,localJob=null;
- const nativeSupported=!!engine&&typeof Utterance==='function',supported=()=>nativeSupported||!!localSpeaker;
- const voices=()=>{let available=[];try{if(nativeSupported)available=engine.getVoices().filter(v=>v.localService===true&&typeof v.voiceURI==='string');}catch{}return [...(localSpeaker?[localSpeaker.voice]:[]),...available];};
+ let prefs=speechPreferences(),locale='ru',state='idle',generation=0,dead=false,armed=false,current=null,localSpeakers=[],localJob=null;
+ const nativeSupported=!!engine&&typeof Utterance==='function',supported=()=>nativeSupported||localSpeakers.length>0;
+ const voices=()=>{let available=[];try{if(nativeSupported)available=engine.getVoices().filter(v=>v.localService===true&&typeof v.voiceURI==='string');}catch{}return [...localSpeakers.map(s=>s.voice),...available];};
  const publish=value=>{state=value;try{onChange(snapshot());}catch{}};
- const snapshot=()=>Object.freeze({supported:supported(),available:['uyut7:narrator','kitsune:piper-irina','kitsune:piper-uyut7'].includes(prefs.voiceURI)?localSpeaker?.voice?.voiceURI===prefs.voiceURI:voices().length>0,state,preferences:prefs});
+ const snapshot=()=>Object.freeze({supported:supported(),available:['uyut7:narrator','kitsune:piper-irina','kitsune:piper-uyut7'].includes(prefs.voiceURI)?localSpeakers.some(s=>s.voice.voiceURI===prefs.voiceURI):voices().length>0,state,preferences:prefs});
  function stop(){generation++;localJob?.cancel();localJob=null;if(nativeSupported&&current)engine.cancel();current=null;publish('idle');}
  function read(value){
   if(dead||!isCurrent()){stop();return false;}
@@ -23,7 +23,8 @@ export function createSpeechController({windowRef=globalThis.window,isCurrent=()
    if(dead||ticket!==generation||!isCurrent()){if(ticket===generation)stop();return;}
    if(at===chunks.length){current=null;publish('idle');return;}
    if(['local-server','local-browser'].includes(voice.kind)){
-    publish('loading');localJob=localSpeaker.speak(chunks[at++],{onstart(){if(ticket!==generation)return;if(!isCurrent())stop();else publish('speaking');},onend(){if(ticket===generation){localJob=null;next();}},onerror(){if(ticket===generation){generation++;localJob?.cancel();localJob=null;publish('error');}}});localJob.setRate(prefs.rate);return;
+    const speaker=localSpeakers.find(s=>s.voice.voiceURI===voice.voiceURI);if(!speaker){publish('unavailable');return;}
+    publish('loading');localJob=speaker.speak(chunks[at++],{onstart(){if(ticket!==generation)return;if(!isCurrent())stop();else publish('speaking');},onend(){if(ticket===generation){localJob=null;next();}},onerror(){if(ticket===generation){generation++;localJob?.cancel();localJob=null;publish('error');}}});localJob.setRate(prefs.rate);return;
    }
    const u=new Utterance(chunks[at++]);u.voice=voice;u.lang=voice.lang;u.rate=prefs.rate;current=u;
    u.onstart=()=>{if(ticket===generation){if(!isCurrent())stop();else publish('speaking');}};
@@ -34,11 +35,15 @@ export function createSpeechController({windowRef=globalThis.window,isCurrent=()
   next();return true;
  }
  function changed(){if(!dead)publish(state);}
+ function setLocalSpeakers(values){
+  if(!Array.isArray(values)||values.length>3||values.some(s=>!['uyut7:narrator','kitsune:piper-irina','kitsune:piper-uyut7'].includes(s?.voice?.voiceURI)||typeof s.speak!=='function')||new Set(values.map(s=>s.voice.voiceURI)).size!==values.length)throw Error('SPEECH_SETTINGS_INVALID');
+  stop();for(const previous of localSpeakers)if(!values.includes(previous))previous.dispose?.();localSpeakers=[...values];publish('idle');
+ }
  if(nativeSupported)engine.addEventListener?.('voiceschanged',changed);
  return Object.freeze({snapshot,voices,read,stop,arm(){if(!dead)armed=true;},auto(value){return prefs.auto&&armed?read(value):false;},
   configure(value,language=locale){stop();prefs=speechPreferences(value);locale=language==='en'?'en':'ru';publish('idle');},
-  setLocalSpeaker(value){if(value!==null&&(!['uyut7:narrator','kitsune:piper-irina','kitsune:piper-uyut7'].includes(value?.voice?.voiceURI)||typeof value.speak!=='function'))throw Error('SPEECH_SETTINGS_INVALID');stop();if(localSpeaker!==value)localSpeaker?.dispose?.();localSpeaker=value;publish('idle');},
+  setLocalSpeaker(value){setLocalSpeakers(value===null?[]:[value]);},setLocalSpeakers,
   pause(){if(state==='speaking'&&(current||localJob)){if(localJob)localJob.pause();else engine.pause();publish('paused');}},resume(){if(state==='paused'&&(current||localJob)){if(localJob)localJob.resume();else engine.resume();publish('speaking');}},
-  dispose(){if(dead)return;stop();dead=true;armed=false;localSpeaker?.dispose?.();localSpeaker=null;engine?.removeEventListener?.('voiceschanged',changed);}
+  dispose(){if(dead)return;stop();dead=true;armed=false;for(const speaker of localSpeakers)speaker.dispose?.();localSpeakers=[];engine?.removeEventListener?.('voiceschanged',changed);}
  });
 }

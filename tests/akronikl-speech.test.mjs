@@ -9,3 +9,19 @@ test('text chunks preserve every character and configured rate',()=>{const f=fix
 test('account invalidation/dispose prevent speech and late callbacks',()=>{const f=fixture();let current=true;const s=createSpeechController({...f,isCurrent:()=>current});s.read('FIRST');current=false;f.utterances[0].onend();assert.equal(s.read('OTHER ACCOUNT'),false);s.dispose();assert.equal(s.read('AFTER DISPOSE'),false);assert.equal(f.utterances.length,1);});
 test('unavailable speech and synthesis errors are visible, not simulated audio',()=>{const none=createSpeechController({windowRef:{}});assert.equal(none.read('hello'),false);assert.equal(none.snapshot().state,'unavailable');const f=fixture(),s=createSpeechController(f);s.read('hello');f.utterances[0].onerror();assert.equal(s.snapshot().state,'error');s.dispose();});
 test('pause/resume and old preference migration preserve safe defaults',()=>{const f=fixture(),s=createSpeechController(f);s.read('hello');s.pause();assert.equal(s.snapshot().state,'paused');s.resume();assert.equal(s.snapshot().state,'speaking');assert.deepEqual(cloudPreferences().speech,{auto:false,voiceURI:'',rate:1});assert.throws(()=>speechPreferences({auto:true,voiceURI:'x',rate:99}));s.dispose();});
+
+test('two narrators route exactly by selected voice and stop late chunks on switching',()=>{
+ const jobs=[],disposed=[];const speaker=(voiceURI,kind)=>({voice:{voiceURI,kind,lang:'ru-RU',localService:true},speak(text,events){const job={voiceURI,text,events,cancelled:false,cancel(){this.cancelled=true},setRate(){}};jobs.push(job);return job;},dispose(){disposed.push(voiceURI);}});
+ const fast=speaker('kitsune:piper-uyut7','local-browser'),original=speaker('uyut7:narrator','local-server'),s=createSpeechController({windowRef:{}});
+ s.setLocalSpeakers([fast,original]);assert.deepEqual(s.voices().map(v=>v.voiceURI),[fast.voice.voiceURI,original.voice.voiceURI]);
+ s.configure({auto:false,voiceURI:fast.voice.voiceURI,rate:1});assert.equal(s.read('Первый текст. '.repeat(30)),true);const old=jobs[0];
+ s.configure({auto:false,voiceURI:original.voice.voiceURI,rate:1});assert.equal(old.cancelled,true);s.read('Прежний рассказчик.');old.events.onend();assert.equal(jobs.length,2);assert.equal(jobs[1].voiceURI,original.voice.voiceURI);
+ s.setLocalSpeakers([fast]);assert.equal(jobs[1].cancelled,true);assert.deepEqual(disposed,[original.voice.voiceURI]);assert.equal(s.read('Недоступный выбранный голос.'),false);assert.equal(jobs.length,2);
+ s.dispose();assert.deepEqual(disposed,[original.voice.voiceURI,fast.voice.voiceURI]);
+});
+
+test('invalid narrator lists cannot replace a working speaker',()=>{
+ let disposed=0;const p={voice:{voiceURI:'uyut7:narrator',kind:'local-server',lang:'ru-RU'},speak(){return {cancel(){},setRate(){}}},dispose(){disposed++;}},s=createSpeechController({windowRef:{}});s.setLocalSpeakers([p]);
+ for(const value of [[p,p],[{...p,voice:{voiceURI:'untrusted'}}],[{voice:p.voice}]])assert.throws(()=>s.setLocalSpeakers(value),/SPEECH_SETTINGS_INVALID/);
+ assert.equal(disposed,0);assert.equal(s.voices().length,1);s.dispose();assert.equal(disposed,1);
+});

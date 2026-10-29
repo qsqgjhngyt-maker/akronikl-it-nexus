@@ -1,4 +1,4 @@
-export const NARRATOR=Object.freeze({voiceURI:'uyut7:narrator',name:'Рассказчик «Уют-7» · Kitsune, ускоренный',lang:'ru-RU',localService:true,kind:'local-server'});
+export const NARRATOR=Object.freeze({voiceURI:'uyut7:narrator',name:'Прежний рассказчик «Уют-7» · локальный Qwen',lang:'ru-RU',localService:true,kind:'local-server'});
 export function createLocalSpeaker({request,windowRef=globalThis.window,isCurrent=()=>true,voice=NARRATOR}={}){
  if(typeof request!=='function'||typeof windowRef?.Audio!=='function')throw Error('SPEECH_UNAVAILABLE');
  const cache=new Map(),jobs=new Set();let disposed=false,cacheBytes=0;

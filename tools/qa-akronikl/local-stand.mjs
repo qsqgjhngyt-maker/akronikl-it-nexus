@@ -11,10 +11,12 @@ export async function createLocalStand({root,privateDir,playwrightModule,chromeP
  let saved=persistent?await secrets.readState(owner,'preferences'):{revision:0,value:null},material=saved.value??{masterKey:randomBytes(32).toString('base64'),credentials:[]};
  if(!/^[A-Za-z0-9+/]{43}=$/.test(material.masterKey)||!Array.isArray(material.credentials))throw Error('STAND_SECRETS_INVALID');
  if(persistent&&!saved.value)saved=await secrets.writeState(owner,'preferences',material,saved.revision);
- const browserPiper=speechConfig?.engine==='piper-browser';
+ const hybridSpeech=speechConfig?.engine==='piper-and-qwen',browserPiper=speechConfig?.engine==='piper-browser'||hybridSpeech;
  if(browserPiper&&speechConfig.voice!==undefined&&!['irina','uyut7'].includes(speechConfig.voice))throw Error('SPEECH_CONFIG_INVALID');
  if(browserPiper&&(!path.isAbsolute(speechConfig.assetsDirectory??'')||!persistent))throw Error('SPEECH_CONFIG_INVALID');
- const speech=browserPiper?Object.freeze({voice:speechConfig.voice==='uyut7'?PIPER_NARRATOR:PIPER_VOICE,status:()=>({engine:'piper-browser',readyScope:'per-account browser worker',externalModelCalls:0,downloads:0}),warmup:async()=>{},synthesize:async()=>{throw Error('SPEECH_UNAVAILABLE');},close:async()=>{}}):speechConfig?createLocalSpeechProvider({...speechConfig,referenceFile:path.join(root,'akronikl/experience/voices/uyut7-narrator.wav'),privateDirectory:path.join(privateDir,'speech')}):null;
+ const qwenSpeech=hybridSpeech?createLocalSpeechProvider({...speechConfig.qwen,referenceFile:path.join(root,'akronikl/experience/voices/uyut7-narrator.wav'),privateDirectory:path.join(privateDir,'speech')}):null;
+ const piperVoice=speechConfig?.voice==='uyut7'?PIPER_NARRATOR:PIPER_VOICE;
+ const speech=hybridSpeech?Object.freeze({voice:piperVoice,voices:[piperVoice,qwenSpeech.voice],status:()=>({engine:'piper-and-qwen',readyScope:'Piper per-account browser worker; Qwen local GPU worker',qwen:qwenSpeech.status(),externalModelCalls:0,downloads:0}),warmup:()=>qwenSpeech.warmup(),synthesize:(text,options)=>qwenSpeech.synthesize(text,options),close:()=>qwenSpeech.close()}):browserPiper?Object.freeze({voice:piperVoice,status:()=>({engine:'piper-browser',readyScope:'per-account browser worker',externalModelCalls:0,downloads:0}),warmup:async()=>{},synthesize:async()=>{throw Error('SPEECH_UNAVAILABLE');},close:async()=>{}}):speechConfig?createLocalSpeechProvider({...speechConfig,referenceFile:path.join(root,'akronikl/experience/voices/uyut7-narrator.wav'),privateDirectory:path.join(privateDir,'speech')}):null;
  // Preload only public acoustic weights while the isolated UI starts. User text still requires Nexus authorization.
  if(speech)void speech.warmup().catch(()=>{});
  let adapterCalls=0,fixture,context,cdp,authenticator,page,closing=false,secretQueue=Promise.resolve(),persistenceError=null;const errors=[];
