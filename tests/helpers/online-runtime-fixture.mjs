@@ -30,6 +30,9 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
    const bytes=await readFile(file);res.writeHead(200,{'content-type':mime(name),'cache-control':'public, max-age=0'});res.end(bytes);
   }catch{res.writeHead(404);res.end('SYNTHETIC_NOT_FOUND');}
  });
+ // Предварительные TLS-соединения Chrome ещё не являются HTTP requests и
+ // не закрываются closeAllConnections(). Учитываем только сокеты этого стенда.
+ const sockets=new Set();server.on('connection',socket=>{sockets.add(socket);socket.once('close',()=>sockets.delete(socket))});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const hostname=new URL(GATEWAY_ORIGIN).hostname;
  const browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH,args:['--disable-background-networking','--no-proxy-server','--ignore-certificate-errors','--host-resolver-rules=MAP '+hostname+' 127.0.0.1:'+server.address().port,...chromiumArgs]});
@@ -51,5 +54,5 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
   while(Date.now()<until){last=await page.evaluate(()=>new Promise(resolve=>{const worker=navigator.serviceWorker.controller;if(!worker)return resolve(null);const channel=new MessageChannel(),timer=setTimeout(()=>resolve(null),10000);channel.port1.onmessage=e=>{clearTimeout(timer);channel.port1.close();resolve(e.data)};worker.postMessage({type:'nexus-pwa-status'},[channel.port2]);}));if(last?.publicReady===true)return last;await page.waitForTimeout(100);}
   throw Error('ONLINE_PUBLIC_PWA_NOT_READY '+JSON.stringify({last,errors,workerEvents}));
  }
- return{page,context,requests,errors,workerEvents,origin:GATEWAY_ORIGIN,waitReady,async close(){await context.close();await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}};
+ return{page,context,requests,errors,workerEvents,origin:GATEWAY_ORIGIN,waitReady,async close(){await context.close();await browser.close();server.closeAllConnections();const pending=sockets.size;for(const socket of sockets)socket.destroy();await new Promise(resolve=>server.close(resolve));return{pendingTlsSocketsClosed:pending}}};
 }

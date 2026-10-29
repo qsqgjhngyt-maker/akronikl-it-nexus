@@ -1,0 +1,45 @@
+name: C++ — отменить только устаревшие проверки этой feature
+on:
+  push:
+    branches: [feature/academy-gold-standard-cpp-module-6]
+permissions:
+  contents: read
+jobs:
+  obsolete:
+    if: github.repository == 'qsqgjhngyt-maker/akronikl-it-nexus'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Освободить очередь, не меняя main, release или результат текущего CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACCEPTED_HEAD: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import os,json,subprocess
+          repo=os.environ['GITHUB_REPOSITORY'];branch='feature/academy-gold-standard-cpp-module-6';head=os.environ['ACCEPTED_HEAD']
+          def api(path,*args):return subprocess.check_output(['gh','api',path,*args],text=True)
+          actual=json.loads(api(f'repos/{repo}/git/ref/heads/{branch}'))['object']['sha']
+          if actual!=head:
+            print('Новый коммит уже заменил этот запуск; очередь не меняется.')
+            raise SystemExit(0)
+          allowed={'.github/workflows/'+p for p in ['academy-gold-cpp-module-6-preflight.yml','cpp-course-final.yml','academy-gold-cpp-m4-acceptance.yml','academy-gold-cpp-m5-acceptance.yml','academy-gold-cpp-module-5-preflight.yml','cp11-content-contract.yml']}
+          # Остальные названия допускаются только из точного списка учебных workflows.
+          allowed_names={'Академия C++ Gold — модуль 1','Академия C++ Gold — Module 2, runtime и регрессия Module 1','C++ Modules 3/4 — точная тестовая публикация и откат'}
+          cancelled=[]
+          for page in range(1,4):
+            runs=json.loads(api(f'repos/{repo}/actions/runs','--method','GET','-f','branch='+branch,'-f','per_page=100','-f','page='+str(page)))['workflow_runs']
+            for run in runs:
+              if run['head_branch']!=branch or run['head_sha']==head or run['status'] not in ['queued','in_progress']:continue
+              if run['path'].split('@')[0] not in allowed and run['name'] not in allowed_names:continue
+              # Ещё раз проверяем ref перед каждой отменой: более новый head не затрагиваем.
+              if json.loads(api(f'repos/{repo}/git/ref/heads/{branch}'))['object']['sha']!=head:raise SystemExit(0)
+              result=subprocess.run(['gh','api',f'repos/{repo}/actions/runs/{run["id"]}/cancel','--method','POST'],capture_output=True,text=True)
+              if result.returncode==0:cancelled.append(run['id'])
+              else:print('Запуск уже завершён либо отмена не выполнена:',run['id'])
+            if len(runs)<100:break
+          print(json.dumps({'cancelledObsoleteRuns':cancelled,'currentHeadUntouched':head,'mainOrReleaseChanged':False,'cancelledIsNotPass':True},ensure_ascii=False))
+          PY
