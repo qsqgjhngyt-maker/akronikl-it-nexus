@@ -41,7 +41,10 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
+      - name: Выбрать точный контракт текущего курса либо исторический M4
+        id: course_route
+        run: node tools/startup-intro-ci-route.mjs
       - name: Инструменты и изолированная QA сборка, без публикации
         run: |
           npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
@@ -50,6 +53,7 @@ jobs:
           node tools/build-ui1a-release.mjs --out /tmp/nexus-m4-acceptance-build
           node tools/prepare-academy-gold-runtime-fixture.mjs
       - name: Точный продукт a3e3488, зависимости, прогресс и NEXUS-PERF-01
+        if: steps.course_route.outputs.kind != 'cpp-course-completion'
         run: |
           node tools/check-academy-gold-m4-acceptance.mjs
           node tools/check-academy-gold-module4-dependencies.mjs
@@ -60,10 +64,20 @@ jobs:
           node tools/check-academy-gold-module2-dependencies.mjs
           node tools/check-academy-gold-module2-quality.mjs
       - name: Module 1, Identity, Cloud, Offline и загрузка без повторов
+        if: steps.course_route.outputs.kind != 'cpp-course-completion'
         run: |
           node tools/check-academy-gold-regression.mjs
           node tools/check-academy-gold-integration.mjs
           node --test tests/academy-gold-m4-loading-acceptance.test.mjs tests/academy-gold-m4-editorial-scope.test.mjs tests/academy-gold-module3-navigation.test.mjs tests/runtime-files.test.mjs
+      - name: Точный полный курс, прежние IDs, Identity/Cloud/Offline и NEXUS-PERF-01
+        if: steps.course_route.outputs.kind == 'cpp-course-completion'
+        env:
+          NEXUS_M6_EVIDENCE: /tmp/nexus-current-m4-integration
+          NEXUS_GOLD_EVIDENCE: /tmp/nexus-current-m4-regression
+        run: |
+          node tools/check-academy-gold-module6-integration.mjs
+          node tools/check-cpp-course-perf.mjs
+          node tools/check-academy-gold-regression.mjs
       - name: Старт, меню и основные экраны на точной сборке
         env:
           NEXUS_NATIVE_EVIDENCE: academy-gold-m4-acceptance/startup
@@ -72,7 +86,7 @@ jobs:
         env:
           NEXUS_NATIVE_EVIDENCE: academy-gold-m4-acceptance/navigation
         run: |
-          if [ "$(node -p "JSON.parse(require('fs').readFileSync('release-candidate.json')).publication.module")" = cpp-module-5 ]; then
+          if [ "${{ steps.course_route.outputs.kind }}" = cpp-course-completion ] || [ "$(node -p "JSON.parse(require('fs').readFileSync('release-candidate.json')).publication.module")" = cpp-module-5 ]; then
             node tests/academy-gold-m5-navigation-acceptance.mjs
           else
             node tests/academy-gold-m4-navigation-acceptance.mjs
@@ -95,5 +109,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: academy-gold-m4-acceptance-${{ github.sha }}
-          path: academy-gold-m4-acceptance/
+          path: |
+            academy-gold-m4-acceptance/
+            /tmp/nexus-current-m4-integration/
+            /tmp/nexus-current-m4-regression/
           retention-days: 30
