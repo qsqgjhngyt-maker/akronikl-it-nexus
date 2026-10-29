@@ -15,7 +15,8 @@ async function readBody(req,limit=32768){
  const parts=[];let bytes=0;for await(const p of req){bytes+=p.length;if(bytes>limit)throw Error('CLOUD_REQUEST_INVALID');parts.push(p);}
  try{return JSON.parse(Buffer.concat(parts).toString('utf8'));}catch{throw Error('CLOUD_REQUEST_INVALID');}
 }
-export async function createCloudSettingsHost({root,origin:initialOrigin,serveStatic=false,secureCookies=true,createAdapter=options=>createCloudAdapter(options),onOutcome=null,vault=createCloudVault(),resolveAccount=null,personalPreview=false,ttlMs=30*60*1000,now=()=>Date.now()}={}){
+export async function createCloudSettingsHost({root,origin:initialOrigin,serveStatic=false,secureCookies=true,generationEnabled=true,localSpeech=null,createAdapter=options=>createCloudAdapter(options),onOutcome=null,vault=createCloudVault(),resolveAccount=null,personalPreview=false,ttlMs=30*60*1000,now=()=>Date.now()}={}){
+ if(typeof generationEnabled!=='boolean')throw Error('CLOUD_CONFIG_INVALID');
  if(resolveAccount!==null&&typeof resolveAccount!=='function')throw Error('CLOUD_CONFIG_INVALID');
  const identity=resolveAccount??(()=>personalPreview?'local-personal-preview':null);
  async function account(req){let id;try{id=await identity(req);}catch{}if(typeof id!=='string'||!id||id.length>200)throw Error('CLOUD_ACCOUNT_REQUIRED');return id;}
@@ -40,13 +41,21 @@ export async function createCloudSettingsHost({root,origin:initialOrigin,serveSt
   if(url.pathname.startsWith(PREFIX)){
    let accountId;try{accountId=await account(req);}catch{json(res,401,{code:'CLOUD_ACCOUNT_REQUIRED'});return;}
    const stillAccount=async()=>{if(await account(req)!==accountId)throw Error('CLOUD_ACCOUNT_REQUIRED');};
-   if(req.method==='GET'&&url.pathname===PREFIX+'/ready'){let s;try{s=session(req,accountId);}catch{}json(res,200,{available:true,identityScope:resolveAccount?'authenticated-account':'local-personal-preview',connected:!!s,...(s?{providerId:s.selection.providerId,modelId:s.selection.modelId}:{}),generationTested:false});return;}
+   if(req.method==='GET'&&url.pathname===PREFIX+'/ready'){let s;try{s=session(req,accountId);}catch{}json(res,200,{available:generationEnabled,generationEnabled,stateAvailable:true,localSpeechVoice:localSpeech?.voice??null,identityScope:resolveAccount?'authenticated-account':'local-personal-preview',connected:!!s,...(s?{providerId:s.selection.providerId,modelId:s.selection.modelId}:{}),generationTested:false});return;}
    if(req.method==='GET'&&url.pathname===PREFIX+'/saved'){try{const connections=await vault.list(scopedOwner(owner(req),accountId));await stillAccount();json(res,200,{connections});}catch(e){json(res,e.message==='CLOUD_ACCOUNT_REQUIRED'?401:502,{code:e.message==='CLOUD_ACCOUNT_REQUIRED'?e.message:'CLOUD_VAULT_UNAVAILABLE'});}return;}
-   if(req.method==='GET'&&[PREFIX+'/preferences',PREFIX+'/chats'].includes(url.pathname)){try{const data=await vault.readState(scopedOwner(owner(req),accountId),url.pathname.endsWith('/chats')?'chats':'preferences');await stillAccount();json(res,200,data);}catch{json(res,502,{code:'CLOUD_VAULT_UNAVAILABLE'});}return;}
+   if(req.method==='GET'&&[PREFIX+'/preferences',PREFIX+'/chats'].includes(url.pathname)){try{const data=await vault.readState(scopedOwner(owner(req),accountId),url.pathname.endsWith('/chats')?'chats':'preferences');await stillAccount();json(res,200,data);}catch(e){json(res,e.message==='CLOUD_ACCOUNT_REQUIRED'?401:502,{code:e.message==='CLOUD_ACCOUNT_REQUIRED'?'CLOUD_ACCOUNT_REQUIRED':'CLOUD_VAULT_UNAVAILABLE'});}return;}
    if(req.method!=='POST'||req.headers.origin!==origin||req.headers['content-type']?.split(';')[0]!=='application/json'){json(res,403,{code:'CLOUD_REQUEST_DENIED'});return;}
+   // State-only mode cannot read a key, instantiate an adapter or run a probe.
+   if(!generationEnabled&&[PREFIX+'/connect',PREFIX+'/generate',PREFIX+'/chat'].includes(url.pathname)){req.resume();json(res,403,{code:'CLOUD_GENERATION_DISABLED'});return;}
    const controller=new AbortController();pending.add(controller);pendingAccounts.set(controller,accountId);pendingBindings.set(controller,binding(req));const abort=()=>{if(!res.writableEnded){cancellations++;controller.abort();}};req.once('aborted',abort);res.once('close',abort);
    let fresh=null;
    try{
+    if(url.pathname===PREFIX+'/speech'){
+     if(!localSpeech)throw Error('SPEECH_UNAVAILABLE');
+     const data=await readBody(req,10000);if(!data||Object.keys(data).join(',')!=='text'||typeof data.text!=='string'||!data.text.trim()||data.text.length>240)throw Error('SPEECH_REQUEST_INVALID');
+     const result=await localSpeech.synthesize(data.text,{signal:controller.signal});controller.signal.throwIfAborted();await stillAccount();
+     res.writeHead(200,{'Content-Type':'audio/wav','Content-Length':result.audio.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(result.audio);return;
+    }
     if([PREFIX+'/preferences',PREFIX+'/chats'].includes(url.pathname)){const data=await readBody(req,3500000);if(Object.keys(data).sort().join(',')!=='revision,value')throw Error('CLOUD_SETTINGS_INVALID');const value=url.pathname.endsWith('/chats')?validateChatTree(data.value):cloudPreferences(data.value);const result=await vault.writeState(scopedOwner(owner(req),accountId),url.pathname.endsWith('/chats')?'chats':'preferences',value,data.revision);await stillAccount();json(res,200,result);return;}
     if(url.pathname===PREFIX+'/connect'){
      if(pending.size>4)throw Error('CLOUD_BUSY');sweep();if(sessions.size>=64)throw Error('CLOUD_BUSY');
@@ -70,8 +79,8 @@ export async function createCloudSettingsHost({root,origin:initialOrigin,serveSt
     }
     throw Error('CLOUD_REQUEST_INVALID');
    }catch(e){
-    const code=controller.signal.aborted?'CLOUD_REQUEST_CANCELLED':/^(?:CLOUD|CHAT)_[A-Z_]+$/u.test(e?.message)?e.message:'CLOUD_SERVICE_UNAVAILABLE';
-    if(!res.destroyed&&!res.writableEnded)json(res,code==='CLOUD_AUTH_FAILED'||code==='CLOUD_NOT_CONNECTED'||code==='CLOUD_ACCOUNT_REQUIRED'?401:code==='CLOUD_ACCESS_DENIED'?403:code==='CLOUD_SETTINGS_CONFLICT'?409:code==='CLOUD_BUSY'||code==='CLOUD_RATE_LIMITED'?429:code==='CLOUD_KEY_INVALID'||code==='CLOUD_CONFIG_INVALID'||code==='CLOUD_MODEL_INVALID'||code==='CLOUD_PROVIDER_INVALID'||code==='CLOUD_REQUEST_INVALID'?400:502,{code});
+    const code=controller.signal.aborted?'CLOUD_REQUEST_CANCELLED':/^(?:CLOUD|CHAT|SPEECH)_[A-Z_]+$/u.test(e?.message)?e.message:'CLOUD_SERVICE_UNAVAILABLE';
+    if(!res.destroyed&&!res.writableEnded)json(res,code==='CLOUD_AUTH_FAILED'||code==='CLOUD_NOT_CONNECTED'||code==='CLOUD_ACCOUNT_REQUIRED'?401:code==='CLOUD_ACCESS_DENIED'?403:code==='CLOUD_SETTINGS_CONFLICT'?409:code==='SPEECH_BUSY'||code==='CLOUD_BUSY'||code==='CLOUD_RATE_LIMITED'?429:code==='SPEECH_REQUEST_INVALID'||code==='CLOUD_KEY_INVALID'||code==='CLOUD_CONFIG_INVALID'||code==='CLOUD_MODEL_INVALID'||code==='CLOUD_PROVIDER_INVALID'||code==='CLOUD_REQUEST_INVALID'?400:502,{code});
    }finally{fresh?.dispose();pending.delete(controller);pendingAccounts.delete(controller);pendingBindings.delete(controller);req.removeListener('aborted',abort);res.removeListener('close',abort);}return;
   }
   if(req.method!=='GET'){json(res,405,{code:'METHOD_DENIED'});return;}
@@ -86,7 +95,7 @@ export async function createCloudSettingsHost({root,origin:initialOrigin,serveSt
   }catch{json(res,404,{code:'NOT_FOUND'});}
  };
  const sweepTimer=setInterval(sweep,60000);sweepTimer.unref();
- return Object.freeze({handle,setOrigin(value){origin=value;cookieName='akronikl_cloud_'+new URL(value).port;},revokeBinding(value){if(!value)return;for(const [p,b]of pendingBindings)if(b===value)p.abort();for(const [sessionId,s]of sessions)if(s.binding===value)drop(sessionId);},revokeAccount(id){for(const [p,accountId]of pendingAccounts)if(accountId===id)p.abort();for(const [sessionId,s]of sessions)if(s.accountId===id)drop(sessionId);},status(){sweep();return {sessions:sessions.size,pending:pending.size,requests,connections,cancellations,remoteComputeStoppedProven:false};},close(){clearInterval(sweepTimer);for(const p of pending)p.abort();for(const id of sessions.keys())drop(id);}});
+ return Object.freeze({handle,setOrigin(value){origin=value;cookieName='akronikl_cloud_'+new URL(value).port;},revokeBinding(value){if(!value)return;for(const [p,b]of pendingBindings)if(b===value)p.abort();for(const [sessionId,s]of sessions)if(s.binding===value)drop(sessionId);},revokeAccount(id){for(const [p,accountId]of pendingAccounts)if(accountId===id)p.abort();for(const [sessionId,s]of sessions)if(s.accountId===id)drop(sessionId);},status(){sweep();return {sessions:sessions.size,pending:pending.size,requests,connections,cancellations,remoteComputeStoppedProven:false,...(localSpeech?{localSpeech:localSpeech.status?.()}: {})};},close(){clearInterval(sweepTimer);for(const p of pending)p.abort();for(const id of sessions.keys())drop(id);return localSpeech?.close?.();}});
 }
 export async function startCloudSettingsServer(options={}){
  const host=await createCloudSettingsHost({...options,origin:'http://127.0.0.1:0',serveStatic:true,secureCookies:false});

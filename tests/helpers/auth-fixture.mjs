@@ -11,11 +11,12 @@ import {createAccountReadHandler,GATEWAY_ORIGIN,WORKER_ORIGIN} from '../../serve
 import {createEntryGateHandler,ENTRY_SHELL_URL} from '../../server-access/bff/entry-gate.mjs';
 import {createOAuthHandler} from '../../server-access/bff/oauth.mjs';
 import {createAccountControlHandler} from '../../server-access/bff/account-control.mjs';
-export async function fixture(frontend,{oauth=false,control=false}={}){
- const db=new DatabaseSync(':memory:');db.exec('PRAGMA foreign_keys=ON');
+export async function fixture(frontend,{oauth=false,control=false,databaseFile=null}={}){
+ const db=new DatabaseSync(databaseFile??':memory:');db.exec('PRAGMA foreign_keys=ON');
  const migrations=['cloudflare/nexus-sync-worker/migrations/0002_nexus_account_tokens.sql','cloudflare/nexus-sync-worker/migrations/0004_identity_v2_session_foundation.sql',...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service'].map(x=>'server-access/migrations/'+x+'.sql')];
  if(control){migrations.unshift('cloudflare/nexus-sync-worker/migrations/0001_sync_team_foundation.sql');migrations.splice(2,0,'cloudflare/nexus-sync-worker/migrations/0003_d1_only_project_snapshots.sql');migrations.push('server-access/migrations/0012_alpha_administration.sql','server-access/migrations/0013_account_avatars.sql','server-access/migrations/0014_community_content.sql')}
- for(const file of migrations)db.exec(await readFile(new URL('../../'+file,import.meta.url),'utf8'));
+ if(databaseFile)db.exec('CREATE TABLE IF NOT EXISTS qa_fixture_migrations(name TEXT PRIMARY KEY)');
+ for(const file of migrations){if(databaseFile&&db.prepare('SELECT 1 FROM qa_fixture_migrations WHERE name=?').get(file))continue;db.exec(await readFile(new URL('../../'+file,import.meta.url),'utf8'));if(databaseFile)db.prepare('INSERT INTO qa_fixture_migrations(name) VALUES(?)').run(file);}
  const statement=(sql,args=[])=>{
   const s=db.prepare(sql);
   return{
@@ -34,8 +35,8 @@ export async function fixture(frontend,{oauth=false,control=false}={}){
  const env={DB,PASSKEY_ENABLED:'true',PASSKEY_PROXY_ENABLED:'true',PRIVATE_GATEWAY_CONFIRMED:'true',PASSKEY_ORIGIN:GATEWAY_ORIGIN,PASSKEY_RP_ID:new URL(GATEWAY_ORIGIN).hostname,PASSKEY_WORKER_ORIGIN:WORKER_ORIGIN,PASSKEY_SERVICE_KEY:'SYNTHETIC_PASSKEY_SERVICE_KEY_ONLY_20261020',ACCOUNT_SERVICE_KEY:'SYNTHETIC_ACCOUNT_SERVICE_KEY_ONLY_20261020',ACCOUNT_INTERNAL_READ_ENABLED:'true',ACCOUNT_FOUNDATION_ENABLED:'true',ACCOUNT_READ_ENABLED:'true',NEXUS_ENTRY_GATE_ENABLED:'true'};
  if(oauth)Object.assign(env,{OAUTH_ENABLED:'true',OAUTH_PROXY_ENABLED:'true',OAUTH_SERVICE_KEY:'SYNTHETIC_OAUTH_SERVICE_KEY_ONLY_20261020',YANDEX_CLIENT_ID:'synthetic-yandex-client',YANDEX_CLIENT_SECRET:'SYNTHETIC_YANDEX_SECRET',COOKIE_INGRESS_V3_ENABLED:'true'});
  const invitation='npi_'+'I'.repeat(43),sha=x=>createHash('sha256').update(x).digest('hex');
- const now=new Date().toISOString();db.prepare("INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES('synthetic-owner','Synthetic','active',?,?)").run(now,now);
- db.prepare("INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?,'synthetic-owner','bootstrap',?)").run(sha(invitation),new Date(Date.now()+600000).toISOString());
+ const now=new Date().toISOString();db.prepare("INSERT OR IGNORE INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES('synthetic-owner','Synthetic','active',?,?)").run(now,now);
+ db.prepare("INSERT OR IGNORE INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?,'synthetic-owner','bootstrap',?)").run(sha(invitation),new Date(Date.now()+600000).toISOString());
  const asset=path=>readFile(new URL(path,frontend));
  const fetchImpl=async(url,options)=>{
   const target=new URL(url);
@@ -69,7 +70,7 @@ export async function fixture(frontend,{oauth=false,control=false}={}){
  }
  function enableControl(){
   if(!control)throw Error('CONTROL_FIXTURE_NOT_REQUESTED');
-  db.prepare("INSERT INTO nexus_admin_grants(account_id,status,created_at) VALUES('synthetic-owner','active',?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO nexus_admin_grants(account_id,status,created_at) VALUES('synthetic-owner','active',?)").run(new Date().toISOString());
   db.exec('UPDATE nexus_alpha_settings SET enforced=1,max_testers=3 WHERE id=1');
   Object.assign(env,{COMMUNITY_ENABLED:'true',CONTENT_ENABLED:'true',CONTENT_PROXY_ENABLED:'true',FEEDBACK_ENABLED:'true',FEEDBACK_PROXY_ENABLED:'true',FEEDBACK_SERVICE_KEY:'SYNTHETIC_FEEDBACK_SERVICE_KEY_ONLY_20261020',ADMIN_CONTROL_ENABLED:'true',ACCOUNT_CONTROL_PROXY_ENABLED:'true',ALPHA_ADMISSION_ENABLED:'true',ADMIN_PURGE_ENABLED:'true',COOKIE_INGRESS_V3_ENABLED:'true',ADMIN_SERVICE_KEY:'SYNTHETIC_CONTROL_SERVICE_KEY_ONLY_20261020'});
  }

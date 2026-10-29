@@ -1,0 +1,33 @@
+// Local test environment only. It never uses production services or physical passkeys.
+import {mkdir,writeFile} from 'node:fs/promises';import {randomBytes,createHash} from 'node:crypto';import path from 'node:path';import {pathToFileURL} from 'node:url';
+import {nexusChatFixture} from './nexus-chat-fixture.mjs';import {createCloudVault} from './cloud-vault.mjs';import {createLocalSpeechProvider} from './local-speech.mjs';
+export async function createLocalStand({root,privateDir,playwrightModule,chromePath,speechConfig=null,headless=false,persistent=true}={}){
+ await mkdir(privateDir,{recursive:true});
+ const secrets=createCloudVault({file:path.join(privateDir,'stand-secrets.dpapi')}),owner=createHash('sha256').update('isolated-local-stand').digest('base64url');
+ let saved=persistent?await secrets.readState(owner,'preferences'):{revision:0,value:null},material=saved.value??{masterKey:randomBytes(32).toString('base64'),credentials:[]};
+ if(!/^[A-Za-z0-9+/]{43}=$/.test(material.masterKey)||!Array.isArray(material.credentials))throw Error('STAND_SECRETS_INVALID');
+ if(persistent&&!saved.value)saved=await secrets.writeState(owner,'preferences',material,saved.revision);
+ const speech=speechConfig?createLocalSpeechProvider({...speechConfig,referenceFile:path.join(root,'akronikl/experience/voices/uyut7-narrator.wav'),privateDirectory:path.join(privateDir,'speech')}):null;
+ let adapterCalls=0,fixture,context,cdp,authenticator,page,closing=false,secretQueue=Promise.resolve(),persistenceError=null;const errors=[];
+ function mergeCredentials(values){const byId=new Map(material.credentials.map(c=>[c.credentialId,c]));for(const c of values){const before=byId.get(c.credentialId);if(c.privateKey||before)byId.set(c.credentialId,{...before,...c,privateKey:c.privateKey||before.privateKey,signCount:Math.max(before?.signCount??0,c.signCount??0)});}material.credentials=[...byId.values()];}
+ function saveSecrets(){if(!persistent)return Promise.resolve();const task=secretQueue.then(async()=>{saved=await secrets.writeState(owner,'preferences',structuredClone(material),saved.revision);persistenceError=null;});secretQueue=task.catch(()=>{persistenceError='STAND_PERSISTENCE_FAILED';});return task;}
+ try{
+  fixture=await nexusChatFixture({root,privateDir,generationEnabled:false,persistent,vaultMasterKey:material.masterKey,localSpeech:speech,fullApp:true,createAdapter(){adapterCalls++;throw Error('MODEL_CALL_FORBIDDEN');}});if(material.credentials.length)fixture.enableRegistration();
+  const {chromium}=await import(pathToFileURL(playwrightModule));
+  context=await chromium.launchPersistentContext(path.join(privateDir,'browser-profile'),{headless,executablePath:chromePath,serviceWorkers:'block',viewport:{width:1366,height:900},args:['--disable-background-networking','--disable-sync','--disable-component-update','--disable-extensions','--no-proxy-server','--ignore-certificate-errors-spki-list='+fixture.spki,'--host-resolver-rules=MAP * 127.0.0.1:'+fixture.port]});
+  // Playwright also blocks at the request layer; DNS mapping protects Chrome background traffic.
+  await context.route('**/*',route=>{const u=new URL(route.request().url());return u.origin===fixture.origin?route.continue():route.abort('blockedbyclient');});
+  page=context.pages()[0]??await context.newPage();page.setDefaultTimeout(30000);page.on('pageerror',e=>errors.push(e.message));cdp=await context.newCDPSession(page);await cdp.send('WebAuthn.enable');
+  ({authenticatorId:authenticator}=await cdp.send('WebAuthn.addVirtualAuthenticator',{options:{protocol:'ctap2',transport:'internal',hasResidentKey:true,hasUserVerification:true,isUserVerified:true,automaticPresenceSimulation:true}}));
+  for(const credential of material.credentials.filter(c=>!material.activeIds?.length||material.activeIds.includes(c.credentialId)))await cdp.send('WebAuthn.addCredential',{authenticatorId:authenticator,credential});
+  const credentialEvent=({credential})=>{mergeCredentials([credential]);void saveSecrets().catch(()=>{});};for(const event of ['WebAuthn.credentialAdded','WebAuthn.credentialUpdated','WebAuthn.credentialAsserted'])cdp.on(event,credentialEvent);
+  await page.goto(fixture.origin+'/account/access/');
+  if(!material.credentials.length){
+   if(fixture.backend.db.prepare('SELECT count(*) n FROM nexus_passkey_credentials').get().n)throw Error('STAND_CREDENTIALS_MISSING');
+   await page.locator('details').evaluate(n=>n.open=true);await page.locator('#invitation').fill(fixture.backend.invitation);await page.locator('#register').click();
+  }else await page.locator('#login').click();
+  async function persistCredentials(){if(!persistent)return;const values=(await cdp.send('WebAuthn.getCredentials',{authenticatorId:authenticator})).credentials;mergeCredentials(values);material.activeIds=values.map(c=>c.credentialId);await saveSecrets();}
+  await page.waitForURL('**/index.html**');await persistCredentials();await page.locator('[data-akronikl-open]').waitFor();fixture.enableRegistration();
+  return {fixture,context,page,cdp,get authenticator(){return authenticator;},async replaceAuthenticator(credentials=[]){await persistCredentials();await cdp.send('WebAuthn.removeVirtualAuthenticator',{authenticatorId:authenticator});({authenticatorId:authenticator}=await cdp.send('WebAuthn.addVirtualAuthenticator',{options:{protocol:'ctap2',transport:'internal',hasResidentKey:true,hasUserVerification:true,isUserVerified:true,automaticPresenceSimulation:true}}));for(const credential of credentials)await cdp.send('WebAuthn.addCredential',{authenticatorId:authenticator,credential});},persistCredentials,status:()=>({mode:'local-test',cloudGeneration:false,adapterCalls,modelApiCalls:0,persistenceError,speech:speech?.status()??null}),async close(){if(closing)return;closing=true;try{if(context.browser()?.isConnected())await persistCredentials();await secretQueue;if(persistenceError)throw Error(persistenceError);}finally{await context.close().catch(()=>{});await fixture.close();}}};
+ }catch(error){await writeFile(path.join(privateDir,'START_FAILURE.json'),JSON.stringify({failure:String(error),url:page?.url(),pageErrors:errors,body:await page?.locator('body').innerText().catch(()=>null),network:fixture?.network,serverErrors:fixture?.errors},null,2)).catch(()=>{});await context?.close().catch(()=>{});await fixture?.close().catch(()=>{});if(!fixture)await speech?.close().catch(()=>{});throw error;}
+}

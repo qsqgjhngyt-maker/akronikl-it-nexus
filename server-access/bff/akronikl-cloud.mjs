@@ -26,10 +26,11 @@ export function createNexusCloudVault(env){
   unprotect:async bytes=>{if(bytes.length<28)throw Error();const d=createDecipheriv('aes-256-gcm',key,bytes.subarray(0,12));d.setAuthTag(bytes.subarray(-16));return Buffer.concat([d.update(bytes.subarray(12,-16)),d.final()]);}};
  return createCloudVault({file:path.resolve(env.AKRONIKL_VAULT_FILE),codec,protection:'AES-256-GCM server secret'});
 }
-export async function createNexusCloudHandler({env={},fetchImpl=fetch,vault,createAdapter,onOutcome}={}){
- if(env.AKRONIKL_CLOUD_ENABLED!=='true')return Object.freeze({handle:async()=>false,close(){},revokeAccount(){}});
+export async function createNexusCloudHandler({env={},fetchImpl=fetch,vault,createAdapter,onOutcome,localSpeech=null}={}){
+ const generationEnabled=env.AKRONIKL_CLOUD_ENABLED==='true';
+ if(!generationEnabled&&env.AKRONIKL_STATE_ENABLED!=='true')return Object.freeze({handle:async()=>false,close(){},revokeAccount(){}});
  const resolveAccount=createNexusAccountResolver({env,fetchImpl});
- const host=await createCloudSettingsHost({origin:GATEWAY_ORIGIN,secureCookies:true,resolveAccount,vault:vault??createNexusCloudVault(env),...(createAdapter?{createAdapter}:{}),onOutcome});
+ const host=await createCloudSettingsHost({origin:GATEWAY_ORIGIN,secureCookies:true,resolveAccount,vault:vault??createNexusCloudVault(env),generationEnabled,localSpeech,...(createAdapter?{createAdapter}:{}),onOutcome});
  return Object.freeze({...host,async handle(req,res){
   if(req.url==='/api/v2/account/passkey/logout'&&req.method==='POST'){
    let session;try{session=readV2CookieContext(req,'passkeyIngressContract',{env})?.get('__Host-nexus_session');}catch{}

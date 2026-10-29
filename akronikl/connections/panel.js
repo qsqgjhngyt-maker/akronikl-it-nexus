@@ -35,7 +35,7 @@ export function mountConnectionPanel({parent,documentRef,controller,locale='ru',
   const gpuNote=make('p',t.gpu,root),cloudNote=make('p',t.cloud,root);cloudNote.className='akronikl-note';
   let dead=false;
   const display=s=>{
-    if(dead)return;select.value=s.profileId;cloudFields.display(s);
+    if(dead)return;select.value=s.profileId;cloudFields.display(s);for(const o of select.options){if(o.value==='external'){o.hidden=!s.cloudAvailable;o.disabled=!s.cloudAvailable;}}localNote.textContent=s.personalStateAvailable&&!s.cloudAvailable?(locale==='en'?'Cloud AI is off on this stand. Help, speech, saved preferences and history are available.':'Облачный ИИ на этом стенде выключен. Доступны справка, озвучка, сохранение настроек и истории.'):t.note;
     const cloud=s.profileId==='external';
     status.textContent=cloud&&s.code==='MODEL_LOADING'?(locale==='en'?'Checking the key and model access…':'Проверяю ключ и доступ к модели…'):cloud&&s.code==='MODEL_NOT_LOADED'?(locale==='en'?'Cloud model disconnected. Connect when ready.':'Облачная модель отключена. Нажмите «Подключить».'):t.states[s.cleanupFailed?'CLEANUP_FAILED':cloud&&s.code==='MODEL_LOAD_FAILED'?'CLOUD_UNAVAILABLE':s.code]||t.states.MODEL_LOAD_FAILED;
     localNote.hidden=cloud;fileLabel.hidden=true;cloudNote.textContent=s.cloudSettingsAvailable?(locale==='en'?'Choose a provider and model, enter a key once and connect. Questions and explicitly allowed context are sent to that provider.':'Выберите провайдера и модель, один раз вставьте API-ключ и подключитесь. Вопросы и явно разрешённый контекст отправляются выбранному провайдеру.'):s.cloudAvailable?(locale==='en'?'Cloud mode sends your question, follow-up context, course excerpts and only explicitly allowed selected code/diagnostics. No API key is entered in this window.':'В облачном режиме отправляются вопрос, контекст продолжения, выдержки курса и только явно разрешённый выделенный код/диагностика. Ключ в этом окне вводить не нужно.'):t.cloud;
@@ -45,7 +45,7 @@ export function mountConnectionPanel({parent,documentRef,controller,locale='ru',
     disconnect.disabled=s.phase==='closed'||s.profileId==='sources'&&s.pendingResources===0&&s.cleanupTasks===0;
     check.hidden=!cloud||s.cloudSettingsAvailable;load.hidden=!cloud;
     load.textContent=cloud&&s.cloudSettingsAvailable?(locale==='en'?'Connect':'Подключить'):t.load;load.dataset.akCloudConnect='';
-    gpuNote.hidden=s.profileId!=='local-webgpu';
+    gpuNote.hidden=s.profileId!=='local-webgpu';cloudNote.hidden=!s.cloudAvailable;
   };
   const unsub=controller.subscribe(display);
   select.addEventListener('change',()=>{cloudFields.clearSecret();file.value='';try{controller.select(select.value);}catch{}display(controller.snapshot());});
