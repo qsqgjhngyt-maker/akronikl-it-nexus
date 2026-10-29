@@ -61,15 +61,48 @@ async function session({frontend=candidate,surface='shell',width=1440,height=900
   record.requests.push({file,bytes:bytes.length,movie});return route.fulfill({status:200,headers,body:bytes});
  }catch(e){try{await route.fulfill({status:404,body:''})}catch{}}});
  const page=await context.newPage();current=page;page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));
- return {page,context,state,record,async open(hash='#view=home'){await page.goto(origin+'/'+hash,{waitUntil:'domcontentloaded'})}};
+ return {page,context,state,record,prefix:'/'+manifest.prefix.replace(/\/$/,''),async open(hash='#view=home'){await page.goto(origin+'/'+hash,{waitUntil:'domcontentloaded'})}};
 }
 const layer=s=>s.page.locator('[data-startup-intro]');
 const playing=s=>s.page.waitForFunction(()=>document.querySelector('[data-startup-intro]')?.dataset.playback==='video');
 const ready=s=>s.page.locator('#app .visual-shell').waitFor();
 const ended=s=>layer(s).waitFor({state:'detached',timeout:25000});
 const shot=(s,name)=>s.page.screenshot({path:path.join(out,name+'.png')});
+async function reloadWithoutIntro(s,hard=false){
+ const before=s.record.requests.filter(r=>r.movie).length,pref=await s.page.evaluate(k=>localStorage.getItem(k),key);
+ if(hard){const cdp=await s.context.newCDPSession(s.page);try{await Promise.all([s.page.waitForNavigation({waitUntil:'domcontentloaded'}),cdp.send('Page.reload',{ignoreCache:true})])}finally{await cdp.detach()}}
+ else await s.page.reload({waitUntil:'domcontentloaded'});
+ await s.page.locator(s.state.surface==='entry'?'[data-entry-launch-settings]':'[data-intro-settings]').first().waitFor({state:'attached'});await s.page.waitForTimeout(450);
+ assert.equal(await s.page.evaluate(()=>performance.getEntriesByType('navigation')[0].type),'reload');
+ assert.equal(await s.page.locator('[data-startup-intro],[data-startup-cover]').count(),0);
+ assert.equal(s.record.requests.filter(r=>r.movie).length,before,'Reload must not request video');
+ assert.equal(await s.page.evaluate(k=>localStorage.getItem(k),key),pref,'Reload must preserve the preference');
+}
+async function freshOpening(s){
+ const page=await s.context.newPage(),fresh={...s,page};page.on('pageerror',e=>errors.push(e.message));
+ try{await page.goto(s.page.url());await playing(fresh);await page.locator('.nexus-intro-skip').click();await ended(fresh)}finally{await page.close()}
+}
 try{
  browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH,args:['--disable-background-networking']});
+ await check('Refresh: ПК/телефон, вошедший Nexus/вход, обычное и жёсткое обновление без видео; явный просмотр доступен',async()=>{
+  const reloads=[];
+  for(const width of [390,1440])for(const surface of ['shell','entry']){
+   const s=await session({width,height:900,surface,guest:surface==='entry'});await s.open();await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);await s.page.waitForTimeout(100);
+   if(surface==='shell'){
+    await ready(s);await s.page.evaluate(async prefix=>{const{patchLesson}=await import(prefix+'/core/storage.js'),{createProject,createCheckpoint}=await import(prefix+'/project-studio/project-store.js');patchLesson('cpp.programming-process',{completed:true,code:'// SYNTHETIC REFRESH KEEP',stdin:'17'});createProject({id:'synthetic-refresh-keep',title:'SYNTHETIC refresh',files:[{path:'main.cpp',content:'// KEEP SOURCE',languageId:'cpp'}]});createCheckpoint('synthetic-refresh-keep','SYNTHETIC checkpoint')},s.prefix);
+   }
+   const preserved=async()=>s.page.evaluate(async({prefix,surface})=>{const pref=localStorage.getItem('akronikl:it-nexus:startup-intro:v1');if(surface==='entry')return{pref};const{lessonState}=await import(prefix+'/core/storage.js'),{getProject}=await import(prefix+'/project-studio/project-store.js'),l=lessonState('cpp.programming-process'),p=getProject('synthetic-refresh-keep');return{pref,lesson:{completed:l.completed,code:l.code,stdin:l.stdin},project:{title:p.title,workspace:p.workspace,checkpoints:p.checkpoints}}},{prefix:s.prefix,surface});
+   for(const hash of surface==='shell'?['#view=home','#view=academy','#course=cpp&lesson=cpp.visual-event-model']:['#view=home']){
+    await s.page.evaluate(hash=>location.hash=hash,hash);if(surface==='shell')await ready(s);const before=await preserved();
+    for(const hard of [false,true]){await reloadWithoutIntro(s,hard);if(surface==='shell')await ready(s);assert.deepEqual(await preserved(),before);reloads.push({width,surface,hash,hard,status:'PASS',videoRequested:false,sourceAndProgressPreserved:true})}
+   }
+   if(surface==='shell'){await s.page.evaluate(()=>location.hash='#view=home');await ready(s);await s.page.locator('#visualSettings summary').click();await s.page.locator('#nexusSettingsPanel [data-intro-preview]').click()}
+   else{await s.page.locator('[data-entry-launch-settings]').click();await s.page.locator('[data-entry-intro-settings] [data-intro-preview]').click()}
+   await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);await freshOpening(s);await s.context.close();
+  }
+  assert.equal(reloads.length,16);await writeFile(path.join(out,'REFRESH_CASES.json'),JSON.stringify({status:'PASS',reloads,newOpeningAndExplicitPreview:true,physicalDevices:false,productionRequests:0},null,2)+'\n');
+ });
+ if(!process.argv.includes('--refresh-only')){
  await check('Поведение принятой базы при фоновом обновлении #app зафиксировано',async()=>{
   const s=await session({frontend:baseline,pref:{schema:1,enabled:true,simplified:false,seen:''}});await s.open();await playing(s);
   await s.page.evaluate(()=>{(document.querySelector('video[data-current]')||document.querySelector('video')).pause();const app=document.querySelector('#app');app.replaceChildren(...app.childNodes)});
@@ -102,19 +135,19 @@ try{
  });
  await check('Пропуск полупрозрачный сразу; настройка старой просмотренной версии не подавляет новое открытие',async()=>{
   const s=await session();await s.open();await layer(s).waitFor();assert.equal(await s.page.locator('.nexus-intro-skip').evaluate(n=>getComputedStyle(n).opacity),'0.55');await s.page.locator('.nexus-intro-skip').click();await ended(s);
-  await s.page.reload();await playing(s);await s.page.keyboard.press('Escape');await ended(s);await s.context.close();
+  await reloadWithoutIntro(s);await freshOpening(s);await s.context.close();
  });
  await check('Переход entry→Continue→Nexus не запускает второй ролик; следующее открытие запускает',async()=>{
   const s=await session({surface:'entry'});await s.open();await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);await s.page.getByText('Вы вошли. Ваше пространство готово.',{exact:true}).waitFor();
   s.state.surface='shell';await s.page.locator('[data-login]').click();await ready(s);await s.page.waitForTimeout(450);assert.equal(await layer(s).count(),0);
   assert.equal(await s.page.evaluate(k=>sessionStorage.getItem(k),handoff),null);
-  await s.page.reload();await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);await s.context.close();
+  await reloadWithoutIntro(s);await freshOpening(s);await s.context.close();
  });
  for(const button of ['switch','logout'])await check('Настоящая кнопка '+button+': выход на entry без видео; новое открытие снова показывает заставку',async()=>{
   const s=await session({logout:true});await s.open('#view=account');await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);await s.page.locator('[data-unified-account]').waitFor();
   const before=s.record.requests.filter(r=>r.movie).length;await s.page.locator('[data-unified-account] [data-unified-logout]').nth(button==='switch'?0:1).click();await s.page.waitForURL(origin+'/account/entry/');await s.page.locator('[data-entry-launch-settings]').waitFor();await s.page.waitForTimeout(400);
   assert.equal(s.record.syntheticLogouts,1);assert.equal(await layer(s).count(),0);assert.equal(s.record.requests.filter(r=>r.movie).length,before);assert.equal(await s.page.evaluate(k=>sessionStorage.getItem(k),handoff),null);assert.equal(await s.page.evaluate(k=>JSON.parse(localStorage.getItem(k)).enabled,key),true);
-  await s.page.reload();await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);await s.context.close();
+  await reloadWithoutIntro(s);await freshOpening(s);await s.context.close();
  });
  await check('OAuth return внутри запуска не включает заставку после авторизации',async()=>{
   const s=await session({oauth:true});await s.open('#view=home&nexusLogin=oauth');await ready(s);await s.page.waitForTimeout(450);assert.equal(await layer(s).count(),0);await s.context.close();
@@ -126,7 +159,7 @@ try{
   await s.page.locator('.nexus-appearance-dialog [data-intro-preview]').click();await layer(s).waitFor();await s.page.locator('.nexus-intro-skip').click();await ended(s);
   await s.page.locator('.nexus-appearance-dialog [data-intro-enabled]').check();await s.page.locator('.nexus-appearance-dialog [data-intro-simplified]').uncheck();await s.page.locator('[data-appearance-close]').click();
   await s.page.evaluate(()=>location.hash='#view=account');await s.page.locator('[data-unified-account]').waitFor();assert.equal(await s.page.locator('[data-unified-account] [data-intro-settings]').count(),0);
-  await s.page.reload();await playing(s);await s.page.locator('.nexus-intro-skip').click();await ended(s);
+  await reloadWithoutIntro(s);await freshOpening(s);
   await s.page.setViewportSize({width:390,height:844});await s.page.evaluate(()=>location.hash='#view=home');await s.page.locator('.visual-home').waitFor();await s.page.locator('#visualSettings summary').click();
   await s.page.locator('#nexusSettingsPanel [data-intro-enabled]').scrollIntoViewIfNeeded();const box=await s.page.locator('#nexusSettingsPanel').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=391);await shot(s,'mobile-settings-menu');
   await s.page.locator('#nexusSettingsPanel [data-intro-enabled]').uncheck();await s.page.reload();await ready(s);await s.page.waitForTimeout(450);assert.equal(await layer(s).count(),0);await s.context.close();
@@ -159,6 +192,7 @@ try{
   const median=a=>a.sort((a,b)=>a-b)[Math.floor(a.length/2)];
   for(const view of ['home','academy','code-studio']){const old=median(measurements.filter(x=>x.view===view&&x.build==='baseline').map(x=>x.readyMs)),now=median(measurements.filter(x=>x.view===view&&x.build==='candidate').map(x=>x.readyMs));assert.ok(now<=old*1.25+80,'Задержка bootstrap '+view+': '+old+'→'+now)}
  });
+ }
  assert.deepEqual(errors,[]);assert.equal(sessions.some(s=>s.writes.length),false);
 }catch(e){fatal={message:e.message,stack:e.stack};console.error(e);if(current&&!current.isClosed())await current.screenshot({path:path.join(out,'failure.png')}).catch(()=>{})}
 finally{await browser?.close();await writeFile(path.join(out,'RESULT.json'),JSON.stringify({status:fatal?'FAIL':'PASS',rows,fatal,errors,sessions,measurements,syntheticAccount:true,actualBrowserDecoder:true,physical:false,production:false},null,2)+'\n');if(fatal)process.exitCode=1}

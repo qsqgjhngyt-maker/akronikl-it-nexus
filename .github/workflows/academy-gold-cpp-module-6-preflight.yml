@@ -149,12 +149,19 @@ jobs:
         run: node tools/check-academy-gold-module6-qt.mjs
       - name: Настоящее окно Qt и изменённый C++
         run: node tests/academy-gold-module6-qt-browser.mjs
+      - name: Холодный offline-кэш с задержкой35секунд — без подмены publicReady
+        run: node tests/online-pwa-readiness-budget.mjs
       - name: Текущий browser Qt — Run, Stop, данные, ZIP, отказ хранения
         run: node tests/qt-browser-integration.mjs
       - name: Ширина Студии, кнопки файлов и переход из урока без заставки
         run: |
           node --test tests/startup-intro-policy.test.mjs
           node tests/qt-browser-integration.mjs --layout-only
+      - name: Обновление страницы без заставки на ПК и телефоне
+        env:
+          NEXUS_NATIVE_EVIDENCE: /tmp/nexus-m6-qt/intro-refresh
+          NEXUS_BASELINE_DIR: /tmp/nexus-m6-app-build
+        run: node tests/startup-intro-launch-browser-check.mjs --refresh-only
       - name: Три публичные итоговые заготовки на390px
         run: node tests/course-final-mobile-qt.mjs
       - name: Все учебные Qt bundles, фильтр, данные и сдача исходников

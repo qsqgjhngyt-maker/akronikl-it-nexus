@@ -24,6 +24,11 @@ export function isStudioEntry(hash=''){
  const view=new URLSearchParams(String(hash).replace(/^#/, '')).get('view');
  return view==='project-studio'||view==='code-studio';
 }
+// Обновление продолжает текущую работу. Источник — браузерный Navigation Timing,
+// без чтения Account, credentials или изменения настройки показа.
+export function skipAutomaticIntro({hash='',navigationType=''}={}){
+ return navigationType==='reload'||isStudioEntry(hash);
+}
 export function staticIntro({simplified,reducedMotion,online,connection,deviceMemory,hardwareConcurrency}){
  // Число ядер и оценка 3G не доказывают неспособность декодировать ролик.
  return simplified||reducedMotion||online===false||connection?.saveData===true;
