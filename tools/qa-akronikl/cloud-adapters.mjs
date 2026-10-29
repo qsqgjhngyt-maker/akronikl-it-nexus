@@ -23,8 +23,9 @@ function parseFinal(raw,labels){
  if(typeof raw!=='string'||!raw||raw.length>10000||/<\/?think(?:ing)?>/iu.test(raw))throw Error('CLOUD_RESPONSE_INVALID');let r;try{r=JSON.parse(raw);}catch{throw Error('CLOUD_RESPONSE_INVALID');}
  if(!r||Object.keys(r).sort().join(',')!=='answer,citations'||typeof r.answer!=='string'||!r.answer.trim()||r.answer.length>6000||!Array.isArray(r.citations)||!r.citations.length||r.citations.some(c=>!labels.includes(c))||new Set(r.citations).size!==r.citations.length)throw Error('CLOUD_RESPONSE_INVALID');return r;
 }
-export function createCloudAdapter({selection,apiKey,fetchUpstream=globalThis.fetch,onOutcome=null,timeoutMs=45000,now=()=>Date.now()}={}){
+export function createCloudAdapter({selection,apiKey,fetchUpstream=globalThis.fetch,onOutcome=null,timeoutMs=45000,now=()=>Date.now(),qwenMaxOutputTokens=1024}={}){
  const config=cloudSelection(selection);if(!validApiKey(apiKey)||typeof fetchUpstream!=='function'||!Number.isSafeInteger(timeoutMs)||timeoutMs<20||timeoutMs>45000)throw Error('CLOUD_KEY_INVALID');
+ if(!Number.isSafeInteger(qwenMaxOutputTokens)||qwenMaxOutputTokens<96||qwenMaxOutputTokens>2048)throw Error('CLOUD_CONFIG_INVALID');
  let key=apiKey,access=null,expires=0,disposed=false,busy=false,current=null;
  async function send(url,init,signal){const r=await fetchUpstream(url,{...init,signal,redirect:'error',cache:'no-store'});if(!r.ok||r.redirected){await r.body?.cancel().catch(()=>{});throw httpError(r.status);}return r;}
  async function gigaToken(signal){
@@ -40,7 +41,7 @@ export function createCloudAdapter({selection,apiKey,fetchUpstream=globalThis.fe
   try{
    const {providerId:id,modelId:model}=config,schema=responseSchema(data.allowedCitations),messages=conversation?providerConversationMessages(data.messages,id):data.messages;
    let url=origins[id],headers={'Content-Type':'application/json',Authorization:'Bearer '+key},body;
-   if(id==='qwen'){url=qwenEndpoint(config.options);body={model,messages,stream:false,enable_thinking:/^qwen3\.[78]-(?:plus|max|flash)(?:-|$)/u.test(model),...(/^qwen3\.[78]-(?:plus|max|flash)(?:-|$)/u.test(model)?{thinking_budget:1024}:{}),max_tokens:/^qwen3\.[78]-(?:plus|max|flash)(?:-|$)/u.test(model)?3072:conversation?2048:1024,temperature:.2,response_format:{type:'json_schema',json_schema:{name:'akronikl_answer',strict:true,schema}}};}
+   if(id==='qwen'){url=qwenEndpoint(config.options);body={model,messages,stream:false,enable_thinking:false,preserve_thinking:false,max_tokens:qwenMaxOutputTokens,temperature:.2,response_format:{type:'json_schema',json_schema:{name:'akronikl_answer',strict:true,schema}}};}
    else if(id==='openai'){body={model,instructions:messages[0].content,input:messages.slice(1),store:false,max_output_tokens:1024,text:{format:{type:'json_schema',name:'akronikl_answer',strict:true,schema:{...schema,properties:{...schema.properties,citations:{type:'array',items:{type:'string',enum:data.allowedCitations}}}}}}};}
    else if(id==='anthropic'){headers['anthropic-version']='2026-10-21';if(config.options.workspaceId)headers['anthropic-workspace-id']=config.options.workspaceId;body={model,system:messages[0].content,messages:messages.slice(1),max_tokens:1024,output_config:{format:{type:'json_schema',schema:{...schema,properties:{...schema.properties,citations:{type:'array',items:{type:'string',enum:data.allowedCitations}}}}}}};}
    else if(id==='gemini'){url+=encodeURIComponent(model.replace(/^models\//u,''))+':generateContent';headers={'Content-Type':'application/json','x-goog-api-key':key};body={systemInstruction:{parts:[{text:messages[0].content}]},contents:messages.slice(1).map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content},...(m.images??[]).map(a=>({inlineData:{mimeType:a.mime,data:a.data}}))]})),generationConfig:{maxOutputTokens:2048,responseMimeType:'application/json',responseJsonSchema:schema}};}
