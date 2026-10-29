@@ -8,7 +8,7 @@ import {runInNewContext} from 'node:vm';
 const root=path.resolve(import.meta.dirname,'..');
 test('Порядок retained generations не меняет bytes manifest, SW и payload',async()=>{
  const temp=await mkdtemp(path.join(tmpdir(),'nexus-build-order-')),source=path.join(temp,'source'),a=path.join(temp,'a'),b=path.join(temp,'b');await mkdir(source);
- const dirs=['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa','releases','entry-assets','server-access/public'];
+ const dirs=['core','effects','styles','locales','courses','assets','sandbox','project-studio','course-final','sync','collaboration','akronikl','feedback','pwa','releases','entry-assets','server-access/public'];
  for(const f of dirs){await mkdir(path.dirname(path.join(source,f)),{recursive:true});await cp(path.join(root,f),path.join(source,f),{recursive:true});}
  try{await cp(path.join(root,'intro-media'),path.join(source,'intro-media'),{recursive:true})}catch(error){if(error.code!=='ENOENT')throw error}
  for(const f of ['index.html','nexus-shell.html','offline.html','version.json','manifest.webmanifest','release-candidate.json'])await cp(path.join(root,f),path.join(source,f));
