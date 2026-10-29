@@ -1,3 +1,9 @@
+# Официальный выпуск29.10.2026 завершён
+
+STATUS: PASS / FULL LIVE PASS. [cpp-gold-course-v1.0.0](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/releases/tag/cpp-gold-course-v1.0.0) создан на main4afa3617a620a7bcb12efab876d8b97fb4ec0060; workflow40838871185 SUCCESS,7 assets проверены. Приёмка05/07 закрыта после подтверждений владельца ПК/телефона. Официальный rollback ZIP SHA `f449e75f153d257e8812bd1aba37a184d08cfd486e7fb37cd62b998bd5471cbf`,8root из2d33f0e проверены. CPP_COURSE_RELEASE_1_0_RU.md и OFFICIAL_RELEASE_VERIFICATION.json — фактическая финальная фиксация. Акт в release assets является снимком принятой готовности до создания тега. Ниже сохранена история подготовительных состояний и Windows-пакетов.
+
+---
+
 # Приёмка курса закрыта29.10.2026
 
 STATUS: FULL LIVE PASS курса. Физическое подтверждение владельца на…10.10.2: «ПК и телефон: заставки нет, итоговая страница открывается». На…10.10.1 ранее подтверждены запуск, ширина Студии и сохранность аккаунта/прогресса/кода/проектов. Main59ea19f full CI8/8,32refresh/9unit, contract/D1/native и Pages SUCCESS. Product bytes по сравнению с main3ff1571 неизменны. Акт CPP_COURSE_PUBLICATION_EVIDENCE.json; официальный выпуск пока READY и будет проверен отдельным этапом. Действующий откат8root к2d33f0e, SHA2566dc40e2a7a90eaf0856b6a4bf2785398df87e64ffa055c9bde01ef3759205a70, PWA5 PASS. Ниже история до окончательного ответа владельца.
