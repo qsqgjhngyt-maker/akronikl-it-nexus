@@ -1,7 +1,7 @@
 // Public metadata only. No credentials, network, custom URLs or inferred access.
 const entry=(id,label,modelId,models,keyUrl,docs)=>Object.freeze({id,label,modelId,models:Object.freeze(models),keyUrl,docs});
 export const CLOUD_PROVIDERS=Object.freeze([
- entry('qwen','Qwen / Alibaba','qwen3.7-plus',['qwen3.7-plus','qwen3.7-flash'],'https://modelstudio.console.alibabacloud.com/','https://www.alibabacloud.com/help/en/model-studio/qwen-structured-output'),
+ entry('qwen','Qwen / Alibaba','qwen3.7-plus',['qwen3.7-plus','qwen3.7-flash','qwen3.8-flash','qwen3.8-max'],'https://modelstudio.console.alibabacloud.com/','https://www.alibabacloud.com/help/en/model-studio/qwen-structured-output'),
  entry('openai','OpenAI / ChatGPT API','gpt-6-astra',['gpt-6-astra'],'https://platform.openai.com/api-keys','https://developers.openai.com/api/docs/guides/text'),
  entry('anthropic','Claude / Anthropic','claude-sonnet-5-5',['claude-sonnet-5-5','claude-haiku-5-5','claude-opus-5-5'],'https://platform.claude.com/settings/keys','https://platform.claude.com/docs/en/api/messages/create'),
  entry('kimi','Kimi / Moonshot','kimi-k2.6',['kimi-k2.6','kimi-k3'],'https://platform.kimi.ai/','https://www.kimi.ai/help/kimi-api/api-troubleshooting'),

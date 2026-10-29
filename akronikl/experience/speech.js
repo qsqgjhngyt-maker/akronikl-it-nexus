@@ -3,6 +3,7 @@ export function speechPreferences(value={auto:false,voiceURI:'',rate:1}){
  if(!value||Object.keys(value).sort().join(',')!=='auto,rate,voiceURI'||typeof value.auto!=='boolean'||typeof value.voiceURI!=='string'||value.voiceURI.length>240||!Number.isFinite(value.rate)||value.rate<.7||value.rate>1.5)throw Error('SPEECH_SETTINGS_INVALID');
  return Object.freeze({...value});
 }
+export function localSpeechChunks(value){const first=value.match(/^[\s\S]{1,60}(?:\s|$)|^[\s\S]{1,60}/u)?.[0]??'';return first?[first,...(value.slice(first.length).match(/[\s\S]{1,100}(?:\s|$)|[\s\S]{1,100}/gu)??[])]:[];}
 export function createSpeechController({windowRef=globalThis.window,isCurrent=()=>true,onChange=()=>{}}={}){
  const engine=windowRef?.speechSynthesis,Utterance=windowRef?.SpeechSynthesisUtterance;
  let prefs=speechPreferences(),locale='ru',state='idle',generation=0,dead=false,armed=false,current=null,localSpeaker=null,localJob=null;
@@ -17,7 +18,7 @@ export function createSpeechController({windowRef=globalThis.window,isCurrent=()
   const voice=available.find(v=>v.voiceURI===prefs.voiceURI)||(prefs.voiceURI==='uyut7:narrator'?null:matching.find(v=>v.default)||matching[0]);
   if(!supported()||!voice){publish('unavailable');return false;}
   if(typeof value!=='string'||!value.trim()||value.length>12000){publish('error');return false;}
-  stop();if(nativeSupported&&engine.paused)engine.resume();armed=true;const ticket=generation,chunks=value.match(/[\s\S]{1,180}(?:\s|$)|[\s\S]{1,180}/gu)||[];let at=0;
+  stop();if(nativeSupported&&engine.paused)engine.resume();armed=true;const ticket=generation,chunks=voice.kind==='local-server'?localSpeechChunks(value):value.match(/[\s\S]{1,180}(?:\s|$)|[\s\S]{1,180}/gu)||[];let at=0;
   function next(){
    if(dead||ticket!==generation||!isCurrent()){if(ticket===generation)stop();return;}
    if(at===chunks.length){current=null;publish('idle');return;}
@@ -36,8 +37,8 @@ export function createSpeechController({windowRef=globalThis.window,isCurrent=()
  if(nativeSupported)engine.addEventListener?.('voiceschanged',changed);
  return Object.freeze({snapshot,voices,read,stop,arm(){if(!dead)armed=true;},auto(value){return prefs.auto&&armed?read(value):false;},
   configure(value,language=locale){stop();prefs=speechPreferences(value);locale=language==='en'?'en':'ru';publish('idle');},
-  setLocalSpeaker(value){if(value!==null&&(value?.voice?.voiceURI!=='uyut7:narrator'||typeof value.speak!=='function'))throw Error('SPEECH_SETTINGS_INVALID');stop();localSpeaker=value;publish('idle');},
+  setLocalSpeaker(value){if(value!==null&&(value?.voice?.voiceURI!=='uyut7:narrator'||typeof value.speak!=='function'))throw Error('SPEECH_SETTINGS_INVALID');stop();if(localSpeaker!==value)localSpeaker?.dispose?.();localSpeaker=value;publish('idle');},
   pause(){if(state==='speaking'&&(current||localJob)){if(localJob)localJob.pause();else engine.pause();publish('paused');}},resume(){if(state==='paused'&&(current||localJob)){if(localJob)localJob.resume();else engine.resume();publish('speaking');}},
-  dispose(){if(dead)return;stop();dead=true;armed=false;engine?.removeEventListener?.('voiceschanged',changed);}
+  dispose(){if(dead)return;stop();dead=true;armed=false;localSpeaker?.dispose?.();localSpeaker=null;engine?.removeEventListener?.('voiceschanged',changed);}
  });
 }

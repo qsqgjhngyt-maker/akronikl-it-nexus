@@ -1,10 +1,18 @@
-export const NARRATOR=Object.freeze({voiceURI:'uyut7:narrator',name:'Рассказчик «Уют-7» · Kitsune локально',lang:'ru-RU',localService:true,kind:'local-server'});
-export function createLocalSpeaker({request,windowRef=globalThis.window}={}){
+export const NARRATOR=Object.freeze({voiceURI:'uyut7:narrator',name:'Рассказчик «Уют-7» · Kitsune, ускоренный',lang:'ru-RU',localService:true,kind:'local-server'});
+export function createLocalSpeaker({request,windowRef=globalThis.window,isCurrent=()=>true}={}){
  if(typeof request!=='function'||typeof windowRef?.Audio!=='function')throw Error('SPEECH_UNAVAILABLE');
- return Object.freeze({voice:NARRATOR,speak(text,{onstart,onend,onerror}={}){
+ const cache=new Map(),jobs=new Set();let disposed=false,cacheBytes=0;
+ const valid=()=>{try{return !disposed&&isCurrent()===true;}catch{return false;}};
+ function dispose(){disposed=true;cache.clear();cacheBytes=0;for(const job of [...jobs])job.cancel();}
+ return Object.freeze({voice:NARRATOR,dispose,speak(text,{onstart,onend,onerror}={}){
   const controller=new AbortController();let audio=null,url=null,dead=false,rate=1;
-  const cleanup=()=>{if(url){windowRef.URL.revokeObjectURL(url);url=null;}};
-  void(async()=>{try{const blob=await request(text,{signal:controller.signal});if(dead)return;url=windowRef.URL.createObjectURL(blob);audio=new windowRef.Audio(url);audio.preload='auto';audio.playbackRate=rate;audio.onplaying=()=>{if(!dead)onstart?.();};audio.onended=()=>{if(!dead){cleanup();onend?.();}};audio.onerror=()=>{if(!dead){cleanup();onerror?.();}};await audio.play();}catch{if(!dead){cleanup();onerror?.();}}})();
-  return Object.freeze({cancel(){dead=true;controller.abort();if(audio){audio.pause();audio.removeAttribute('src');audio.load();}cleanup();},pause(){audio?.pause();},resume(){if(audio)void audio.play().catch(()=>onerror?.());},setRate(value){rate=value;if(audio)audio.playbackRate=value;}});
+  const cleanup=()=>{jobs.delete(job);if(url){windowRef.URL.revokeObjectURL(url);url=null;}};
+  const job=Object.freeze({cancel(){dead=true;controller.abort();if(audio){audio.pause();audio.removeAttribute('src');audio.load();}cleanup();},pause(){audio?.pause();},resume(){if(audio&&valid()&&!dead)void audio.play().catch(()=>{if(!dead)onerror?.();});},setRate(value){rate=value;if(audio)audio.playbackRate=value;}});jobs.add(job);
+  void(async()=>{try{
+   if(!valid())throw Error('SPEECH_CONTEXT_CHANGED');let blob=cache.get(text);
+   if(blob){cache.delete(text);cache.set(text,blob);}else{blob=await request(text,{signal:controller.signal});if(dead)return;if(!valid()){dispose();return;}if(blob.size<=6000000){while(cache.size>=8||cacheBytes+blob.size>8000000){const [key,value]=cache.entries().next().value??[];if(key===undefined)break;cache.delete(key);cacheBytes-=value.size;}cache.set(text,blob);cacheBytes+=blob.size;}}
+   if(dead)return;if(!valid()){dispose();return;}url=windowRef.URL.createObjectURL(blob);audio=new windowRef.Audio(url);audio.preload='auto';audio.playbackRate=rate;audio.onplaying=()=>{if(!dead){if(!valid()){dispose();return;}onstart?.();}};audio.onended=()=>{if(!dead){cleanup();if(valid())onend?.();else dispose();}};audio.onerror=()=>{if(!dead){cleanup();onerror?.();}};await audio.play();
+  }catch{if(!dead){cleanup();if(!valid())dispose();onerror?.();}}})();
+  return job;
  }});
 }
