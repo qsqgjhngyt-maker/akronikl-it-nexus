@@ -1,6 +1,7 @@
 // Public acoustic assets only; user text never goes to a network request.
 import {readPiperChunks} from './piper-asset-loader.js';import {PIPER_PUBLIC_ASSETS} from './piper-assets.js';
 import {installPiperXHR} from './piper-xhr.js';
+import {createPiperPhonemizerCache} from './piper-phonemizer-cache.js';
 import {pronunciationIds,pronunciationText} from './piper-pronunciation.js';
 import {cleanPiperPcm} from './piper-audio.js';
 import {piperPacePlan} from './piper-pace.js';
@@ -9,7 +10,8 @@ if(!['same-origin','yandex-public-v1'].includes(assetSource))throw Error('PIPER_
 const assetBase=assetSource==='yandex-public-v1'?new URL('https://storage.yandexcloud.net/akronikl-p4q-public-voice-20261029-2634b701/piper-v1/'):new URL('/akronikl/vendor/piper/',self.location.origin),nativeFetch=globalThis.fetch.bind(globalThis);
 const variant=new URL(self.location.href).searchParams.get('voice')??'irina';
 const chunked=new URL(self.location.href).searchParams.get('transport')==='chunks-v1';
-if(chunked)installPiperXHR({scope:self,base:assetBase,fetchResource:nativeFetch});
+const readPhonemizer=createPiperPhonemizerCache({base:assetBase,fetchResource:nativeFetch,chunked});
+installPiperXHR({scope:self,base:assetBase,fetchResource:nativeFetch,readResource:readPhonemizer});
 if(!['irina','uyut7-pilot5','uyut7-pilot5-pace','uyut7-pilot6-pace'].includes(variant))throw Error('PIPER_VOICE_INVALID');
 if(variant==='uyut7-pilot5-pace'&&(assetSource!=='same-origin'||chunked))throw Error('PIPER_TRIAL_REQUIRES_LOCAL_ASSETS');
 const audioOptions=variant.startsWith('uyut7-')?{scales:variant.endsWith('-pace')?[.3,1.02,0]:[.5,1.02,.65],processPcm:cleanPiperPcm,...(variant.endsWith('-pace')?{phonemePace:(ids,map)=>piperPacePlan(ids,map).pace}:{})}:{};
@@ -20,7 +22,9 @@ globalThis.fetch=(input,init={})=>{
  let url=new URL(typeof input==='string'?input:input.url??input,self.location.href);
  for(const name of [modelId+'.onnx',modelId+'.onnx.json'])if(url.href===modelBase+name)url=new URL('models/'+name,assetBase);
  if(url.origin!==assetBase.origin||!url.pathname.startsWith(assetBase.pathname)||!['GET','HEAD'].includes(init.method??'GET')||init.body)throw Error('PIPER_NETWORK_DENIED');
- if(chunked){const file=url.pathname.slice(assetBase.pathname.length),record=PIPER_PUBLIC_ASSETS[file];if(!record||url.search||url.hash)throw Error('PIPER_NETWORK_DENIED');if(record.chunks)return readPiperChunks(file,{base:assetBase,fetchResource:nativeFetch,signal:init.signal});}
+ const file=url.pathname.slice(assetBase.pathname.length);
+ if(['piper_phonemize.data','piper_phonemize.wasm'].includes(file)){if(url.search||url.hash||(init.method??'GET')!=='GET')throw Error('PIPER_NETWORK_DENIED');return readPhonemizer(file,{signal:init.signal});}
+ if(chunked){const record=PIPER_PUBLIC_ASSETS[file];if(!record||url.search||url.hash)throw Error('PIPER_NETWORK_DENIED');if(record.chunks)return readPiperChunks(file,{base:assetBase,fetchResource:nativeFetch,signal:init.signal});}
  return nativeFetch(url,{...init,credentials:'omit',redirect:'error'});
 };
 let session,busy=false;const started=performance.now();
