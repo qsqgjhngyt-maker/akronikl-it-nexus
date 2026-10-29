@@ -42,8 +42,9 @@ try:
     losses={k:float(v.detach().cpu()) for k,v in trainer.callback_metrics.items() if hasattr(v,'numel') and v.numel()==1}
     if any(not torch.isfinite(torch.tensor(v)) for v in losses.values()):raise RuntimeError('NONFINITE_TRAINING_METRIC')
     state.update(status='TRAINING',globalStep=step,epoch=trainer.current_epoch,elapsedSeconds=time.monotonic()-began,losses=losses,peakGpuMiB=torch.cuda.max_memory_allocated()/1024**2);save();print(json.dumps({'step':step,'epoch':trainer.current_epoch,'seconds':round(state['elapsedSeconds'],1),'losses':losses}),flush=True)
-   if step>=self.saved+500:trainer.save_checkpoint(run/f'step-{step:06d}.ckpt');self.saved=step
+   if step>=self.saved+200:trainer.save_checkpoint(run/f'step-{step:06d}.ckpt');self.saved=step
  trainer=Trainer(accelerator='gpu',devices=1,precision='32-true',max_steps=2000,max_epochs=100,max_time='00:00:45:00',default_root_dir=run,logger=CSVLogger(run,'metrics'),callbacks=[Progress()],enable_checkpointing=False,enable_progress_bar=False,enable_model_summary=False,num_sanity_val_steps=1,limit_val_batches=2,log_every_n_steps=5,check_val_every_n_epoch=1,deterministic=False)
+ faulthandler.cancel_dump_traceback_later();faulthandler.enable(all_threads=True)
  trainer.fit(model,datamodule=data);trainer.save_checkpoint(run/'last.ckpt');state.update(status='PILOT_FINISHED_NOT_ACCEPTED',globalStep=int(trainer.global_step),epoch=trainer.current_epoch,elapsedSeconds=time.monotonic()-began,checkpoint=str(run/'last.ckpt'));save()
 except BaseException:
  state.update(status='FAIL',elapsedSeconds=time.monotonic()-began,failure=traceback.format_exc()[-14000:]);save();raise

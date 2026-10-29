@@ -12,7 +12,11 @@ globalThis.fetch=(input,init={})=>{
 let session,busy=false;const started=performance.now();
 const digest=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(n=>n.toString(16).padStart(2,'0')).join('');
 try{
- const {TtsSession}=await import('/akronikl/vendor/piper/runtime.js');
+ const {TtsSession,PATH_MAP}=await import('/akronikl/vendor/piper/runtime.js');
+ if(variant==='uyut7'){
+  if(!PATH_MAP||typeof PATH_MAP!=='object')throw Error('PIPER_CUSTOM_VOICE_UNAVAILABLE');
+  PATH_MAP[modelId]='ru/ru_RU/uyut7/medium/ru_RU-uyut7-medium.onnx';
+ }
  session=new TtsSession({voiceId:modelId,allowLocalModels:true,fallbackStrategy:'local',wasmPaths:{onnxWasm:new URL('ort/',assetBase).href,piperWasm:new URL('piper_phonemize.wasm',assetBase).href,piperData:new URL('piper_phonemize.data',assetBase).href}});
  await session.waitReady;const loaded=performance.now();const warm=await session.predict('Готово.');if(!(warm instanceof Blob)||warm.size<44)throw Error('PIPER_WARMUP_FAILED');
  postMessage({ready:true,model:modelId,localOnly:true,timings:{loadMs:loaded-started,warmupMs:performance.now()-loaded,totalMs:performance.now()-started}});
