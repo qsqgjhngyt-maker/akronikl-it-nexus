@@ -33,7 +33,7 @@ export async function createNexusCloudHandler({env={},fetchImpl=fetch,vault,crea
  if(!generationEnabled&&env.AKRONIKL_STATE_ENABLED!=='true')return Object.freeze({handle:async()=>false,close(){},revokeAccount(){}});
  const resolveAccount=createNexusAccountResolver({env,fetchImpl});
  const durable=env.AKRONIKL_STORAGE==='d1'?createNexusDurableStore({env,fetchImpl}):null;
- const speech=localSpeech??(env.AKRONIKL_PIPER_ENABLED==='true'?{voice:PIPER_NARRATOR,voices:[PIPER_NARRATOR],assetTransport:'chunks-v1'}:null);
+ const speech=localSpeech??(env.AKRONIKL_PIPER_ENABLED==='true'?{voice:PIPER_NARRATOR,voices:[PIPER_NARRATOR],assetTransport:env.AKRONIKL_PIPER_ASSET_SOURCE==='yandex-public-v1'?'chunks-yandex-v1':'chunks-v1'}:null);
  const host=await createCloudSettingsHost({origin:GATEWAY_ORIGIN,secureCookies:true,resolveAccount,vault:vault??durable?.vault??createNexusCloudVault(env),generationEnabled,localSpeech:speech,...(durable?{sessionStore:durable.leases,beforeModelCall:durable.beforeModelCall,maxStateBytes:1400000,maxChatBytes:1900000}:{}),...(createAdapter?{createAdapter}:{}),onOutcome});
  return Object.freeze({...host,async handle(req,res){
   if(req.url==='/api/v2/account/passkey/logout'&&req.method==='POST'){

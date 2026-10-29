@@ -1,7 +1,9 @@
 // Public acoustic assets only; user text never goes to a network request.
 import {readPiperChunks} from './piper-asset-loader.js';import {PIPER_PUBLIC_ASSETS} from './piper-assets.js';
 import {installPiperXHR} from './piper-xhr.js';
-const assetBase=new URL('/akronikl/vendor/piper/',self.location.origin),nativeFetch=globalThis.fetch.bind(globalThis);
+const assetSource=new URL(self.location.href).searchParams.get('source')??'same-origin';
+if(!['same-origin','yandex-public-v1'].includes(assetSource))throw Error('PIPER_ASSET_SOURCE_INVALID');
+const assetBase=assetSource==='yandex-public-v1'?new URL('https://storage.yandexcloud.net/akronikl-p4q-public-voice-20261029-2634b701/piper-v1/'):new URL('/akronikl/vendor/piper/',self.location.origin),nativeFetch=globalThis.fetch.bind(globalThis);
 const variant=new URL(self.location.href).searchParams.get('voice')??'irina';
 const chunked=new URL(self.location.href).searchParams.get('transport')==='chunks-v1';
 if(chunked)installPiperXHR({scope:self,base:assetBase,fetchResource:nativeFetch});
@@ -17,7 +19,7 @@ globalThis.fetch=(input,init={})=>{
 let session,busy=false;const started=performance.now();
 const digest=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(n=>n.toString(16).padStart(2,'0')).join('');
 try{
- const {TtsSession,PATH_MAP}=await import('/akronikl/vendor/piper/runtime.js');
+ const {TtsSession,PATH_MAP}=await import(new URL('runtime.js',assetBase).href);
  if(variant==='uyut7-pilot5'){
   if(!PATH_MAP||typeof PATH_MAP!=='object')throw Error('PIPER_CUSTOM_VOICE_UNAVAILABLE');
   PATH_MAP[modelId]='ru/ru_RU/uyut7-pilot5/medium/ru_RU-uyut7-pilot5-medium.onnx';

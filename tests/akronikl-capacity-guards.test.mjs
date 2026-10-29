@@ -5,7 +5,7 @@ test('history capacity reserves an answer before a paid request and leaves the d
 });
 test('offline authority accepts only fixed voice worker queries, never API or arbitrary queries',()=>{
  const origin='https://nexus.invalid',record={url:'/releases/ui1a-p4q-test/akronikl/experience/piper-worker.js',mime:'text/javascript'},request=query=>new Request(origin+record.url+query);
- assert.equal(publicRecord(request('?voice=uyut7-pilot5&transport=chunks-v1'),origin,[record],'v'),record);for(const query of ['?voice=attacker','?voice=uyut7-pilot5&key=secret','?voice=uyut7-pilot5&voice=irina'])assert.equal(publicRecord(request(query),origin,[record],'v'),null);assert.equal(publicRecord(new Request(origin+'/api/akronikl/cloud/chats'),origin,[record],'v'),null);
+ assert.equal(publicRecord(request('?voice=uyut7-pilot5&transport=chunks-v1'),origin,[record],'v'),record);assert.equal(publicRecord(request('?voice=uyut7-pilot5&transport=chunks-v1&source=yandex-public-v1'),origin,[record],'v'),record);for(const query of ['?voice=uyut7-pilot5&transport=chunks-v1&source=https://attacker.invalid','?voice=attacker','?voice=uyut7-pilot5&key=secret','?voice=uyut7-pilot5&voice=irina'])assert.equal(publicRecord(request(query),origin,[record],'v'),null);assert.equal(publicRecord(new Request(origin+'/api/akronikl/cloud/chats'),origin,[record],'v'),null);
 });
 test('document worker, WASM, font and audio MIME match their actual public delivery',()=>{
  for(const [file,mime]of [['pdf.worker.mjs','text/javascript'],['decoder.wasm','application/wasm'],['font.ttf','font/ttf'],['font.pfb','application/x-font-type1'],['uyut7.wav','audio/wav'],['LICENSE','text/plain'],['brand-mark.svg','image/svg+xml']])assert.equal(staticMime(file),mime);

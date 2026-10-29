@@ -5720,7 +5720,7 @@ async function createCloudSettingsHost({ root, origin: initialOrigin, serveStati
           s = await session(req, accountId2);
         } catch {
         }
-        json2(res, 200, { available: generationEnabled, generationEnabled, stateAvailable: true, maxChatStateBytes: Math.min(3e6, maxStateBytes - 1e5), piperAssetTransport: localSpeech?.assetTransport ?? "direct", localSpeechVoice: localSpeech?.voice ?? null, localSpeechVoices: localSpeech?.voices ?? (localSpeech?.voice ? [localSpeech.voice] : []), identityScope: resolveAccount ? "authenticated-account" : "local-personal-preview", connected: !!s, ...s ? { providerId: s.selection.providerId, modelId: s.selection.modelId } : {}, generationTested: false });
+        json2(res, 200, { available: generationEnabled, generationEnabled, stateAvailable: true, maxChatStateBytes: Math.min(3e6, maxStateBytes - 1e5), piperAssetTransport: localSpeech?.assetTransport === "chunks-yandex-v1" && req.headers["x-akronikl-piper-transport"] !== "yandex-public-v1" ? "chunks-v1" : localSpeech?.assetTransport ?? "direct", localSpeechVoice: localSpeech?.voice ?? null, localSpeechVoices: localSpeech?.voices ?? (localSpeech?.voice ? [localSpeech.voice] : []), identityScope: resolveAccount ? "authenticated-account" : "local-personal-preview", connected: !!s, ...s ? { providerId: s.selection.providerId, modelId: s.selection.modelId } : {}, generationTested: false });
         return;
       }
       if (req.method === "GET" && url.pathname === PREFIX2 + "/saved") {
@@ -6154,7 +6154,7 @@ async function createNexusCloudHandler({ env = {}, fetchImpl = fetch, vault, cre
   } });
   const resolveAccount = createNexusAccountResolver({ env, fetchImpl });
   const durable = env.AKRONIKL_STORAGE === "d1" ? createNexusDurableStore({ env, fetchImpl }) : null;
-  const speech = localSpeech ?? (env.AKRONIKL_PIPER_ENABLED === "true" ? { voice: PIPER_NARRATOR, voices: [PIPER_NARRATOR], assetTransport: "chunks-v1" } : null);
+  const speech = localSpeech ?? (env.AKRONIKL_PIPER_ENABLED === "true" ? { voice: PIPER_NARRATOR, voices: [PIPER_NARRATOR], assetTransport: env.AKRONIKL_PIPER_ASSET_SOURCE === "yandex-public-v1" ? "chunks-yandex-v1" : "chunks-v1" } : null);
   const host = await createCloudSettingsHost({ origin: GATEWAY_ORIGIN, secureCookies: true, resolveAccount, vault: vault ?? durable?.vault ?? createNexusCloudVault(env), generationEnabled, localSpeech: speech, ...durable ? { sessionStore: durable.leases, beforeModelCall: durable.beforeModelCall, maxStateBytes: 14e5, maxChatBytes: 19e5 } : {}, ...createAdapter ? { createAdapter } : {}, onOutcome });
   return Object.freeze({ ...host, async handle(req, res) {
     if (req.url === "/api/v2/account/passkey/logout" && req.method === "POST") {
