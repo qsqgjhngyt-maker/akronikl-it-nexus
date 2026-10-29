@@ -49,3 +49,16 @@
 
 /* Второй мобильный декодер заранее загружает следующую часть вне кадра. */
 .nexus-intro[data-variant=mobile] .nexus-intro-visual video:not([data-current]){visibility:hidden}
+
+/* Кадр загрузки виден сразу на ПК и телефоне; видео плавно появляется поверх. */
+.nexus-intro:not([data-playback]) .nexus-intro-visual{opacity:1}
+.nexus-intro:not([data-playback]) .nexus-intro-visual img{opacity:1}
+.nexus-intro:not([data-playback]) .nexus-intro-visual video{opacity:0}
+.nexus-intro-visual video{transition:opacity 1200ms ease-in-out}
+.nexus-intro[data-playback=video] .nexus-intro-visual video{opacity:1}
+/* Во время дозагрузки сохраняем текущий кадр; повторного мигания poster нет. */
+.nexus-intro[data-buffering=true] .nexus-intro-caption{display:block}
+.nexus-intro[data-buffering=true] .nexus-intro-caption::after{content:"Загружаем видео…";font:12px system-ui;color:#b9cada}
+
+/* Постер остаётся под первым кадром до завершения fade-in, без тёмного провала. */
+.nexus-intro[data-playback=video] .nexus-intro-visual img{opacity:1;transition:none}

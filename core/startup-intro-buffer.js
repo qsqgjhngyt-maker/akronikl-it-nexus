@@ -1,25 +1,43 @@
-// Короткий начальный запас, а не ожидание загрузки всего файла/приложения.
-// Нативный плеер сохраняет один decoder и обычные HTTP Range requests.
-export function waitForIntroBuffer(video,signal){
- const source=video.src,started=performance.now();let lastEnd=0,lastProgress=started,timer,done=false;
+// Непрерывный запас от текущего кадра: дальний диапазон не скрывает пробел.
+export function introBufferedAhead(video){
+ const time=Number(video.currentTime)||0;
+ try{for(let i=0;i<video.buffered.length;i++){
+  if(video.buffered.start(i)<=time+.05&&video.buffered.end(i)>time)return video.buffered.end(i)-time;
+ }}catch{/* Диапазоны могут измениться во время смены src. */}
+ return 0;
+}
+// Ограниченное ожидание. Отмена/смена src полностью удаляет обработчики.
+export function waitForIntroBuffer(video,signal,{minimum=1.5,timeout=6000,minReadyState=2,minWaitMs=0}={}){
+ const source=video.src;let lastTick=performance.now(),visibleMs=0,lastAhead=0,lastProgress=0,timer,done=false;
  return new Promise(resolve=>{
-  const events=['loadedmetadata','loadeddata','progress','canplay','canplaythrough','error','emptied'];
-  const finish=value=>{if(done)return;done=true;clearTimeout(timer);for(const event of events)video.removeEventListener(event,check);document.removeEventListener('visibilitychange',check);signal?.removeEventListener('abort',abort);resolve(value)};
+  const events=['loadedmetadata','loadeddata','progress','canplay','canplaythrough','suspend','error','emptied'];
+  const finish=value=>{if(done)return;done=true;clearTimeout(timer);for(const event of events)video.removeEventListener(event,check);document.removeEventListener('visibilitychange',visibility);signal?.removeEventListener('abort',abort);resolve(value)};
   const abort=()=>finish(false);
   const check=()=>{
-   clearTimeout(timer);if(done)return;if(signal?.aborted||video.src!==source||video.error){finish(false);return}if(document.hidden)return;
-   const now=performance.now(),duration=video.duration;let end=0;for(let i=0;i<video.buffered.length;i++)if(video.buffered.start(i)<=video.currentTime+.05)end=Math.max(end,video.buffered.end(i));
-   if(end>lastEnd+.02){lastEnd=end;lastProgress=now}
-   const ahead=Math.max(0,end-video.currentTime),elapsed=Math.max(.1,(now-started)/1000),rate=end/elapsed;
-   const projected=rate>0?(duration-end)/rate:Infinity;
-   const complete=Number.isFinite(duration)&&end>=duration-.08;
-   const reserve=ahead>=Math.min(2.5,duration*.35)&&projected<=duration*.9;
-   // Некоторые браузеры ограничивают preload. Если они остановили его с уже
-   // декодированным кадром, передаём управление штатному media engine.
-   const nativePreloadCap=video.readyState>=2&&ahead>.05&&now-lastProgress>=1100;
-   if(video.readyState>=2&&(complete||reserve||nativePreloadCap)){finish(true);return}
-   timer=setTimeout(check,120);
+   clearTimeout(timer);if(done)return;
+   if(signal?.aborted||video.src!==source||video.error){finish(false);return}
+   const now=performance.now(),delta=Math.max(0,now-lastTick);lastTick=now;
+   if(document.hidden)return;
+   // Не засчитываем пребывание в фоновой вкладке как время загрузки.
+   visibleMs+=delta;
+   const ahead=introBufferedAhead(video),time=Number(video.currentTime)||0,duration=Number(video.duration),remaining=duration-time;
+   if(ahead>lastAhead+.02){lastAhead=ahead;lastProgress=visibleMs}
+   const finite=Number.isFinite(remaining)&&remaining>0,complete=finite&&ahead>=remaining-.08;
+   const reserve=finite?Math.min(minimum,remaining):minimum;
+   const rate=ahead/Math.max(.1,visibleMs/1000);
+   const predicted=finite&&rate>0?Math.max(0,remaining-ahead)/rate:Infinity;
+   const sustained=ahead>=reserve&&(video.readyState>=4||(finite&&predicted<=remaining*.8));
+   // NETWORK_IDLE + HAVE_FUTURE_DATA: реальный лимит preload, не сетевая пауза.
+   // Запаса в 50 мс больше недостаточно для запуска.
+   const nativeCap=video.networkState===1&&video.readyState>=3&&ahead>=Math.min(.75,finite?remaining:.75)&&visibleMs-lastProgress>=1100;
+   if(visibleMs>=minWaitMs&&video.readyState>=minReadyState&&(complete||sustained||nativeCap)){finish(true);return}
+   if(visibleMs>=timeout){finish(false);return}
+   timer=setTimeout(check,100);
   };
-  for(const event of events)video.addEventListener(event,check);document.addEventListener('visibilitychange',check);signal?.addEventListener('abort',abort,{once:true});check();
+  const visibility=()=>{lastTick=performance.now();check()};
+  // Используется отдельный обработчик, чтобы фоновая пауза не увеличила счётчик.
+  for(const event of events)video.addEventListener(event,check);
+  document.addEventListener('visibilitychange',visibility);
+  signal?.addEventListener('abort',abort,{once:true});check();
  });
 }
