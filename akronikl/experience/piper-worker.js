@@ -1,7 +1,7 @@
 // Public acoustic assets only; user text never goes to a network request.
 const assetBase=new URL('/akronikl/vendor/piper/',self.location.origin),nativeFetch=globalThis.fetch.bind(globalThis);
 const variant=new URL(self.location.href).searchParams.get('voice')??'irina';
-if(!['irina','uyut7'].includes(variant))throw Error('PIPER_VOICE_INVALID');
+if(!['irina','uyut7-pilot3'].includes(variant))throw Error('PIPER_VOICE_INVALID');
 const modelId='ru_RU-'+variant+'-medium',modelBase='https://huggingface.co/diffusionstudio/piper-voices/resolve/main/ru/ru_RU/'+variant+'/medium/';
 globalThis.fetch=(input,init={})=>{
  let url=new URL(typeof input==='string'?input:input.url??input,self.location.href);
@@ -13,9 +13,9 @@ let session,busy=false;const started=performance.now();
 const digest=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(n=>n.toString(16).padStart(2,'0')).join('');
 try{
  const {TtsSession,PATH_MAP}=await import('/akronikl/vendor/piper/runtime.js');
- if(variant==='uyut7'){
+ if(variant==='uyut7-pilot3'){
   if(!PATH_MAP||typeof PATH_MAP!=='object')throw Error('PIPER_CUSTOM_VOICE_UNAVAILABLE');
-  PATH_MAP[modelId]='ru/ru_RU/uyut7/medium/ru_RU-uyut7-medium.onnx';
+  PATH_MAP[modelId]='ru/ru_RU/uyut7-pilot3/medium/ru_RU-uyut7-pilot3-medium.onnx';
  }
  session=new TtsSession({voiceId:modelId,allowLocalModels:true,fallbackStrategy:'local',wasmPaths:{onnxWasm:new URL('ort/',assetBase).href,piperWasm:new URL('piper_phonemize.wasm',assetBase).href,piperData:new URL('piper_phonemize.data',assetBase).href}});
  await session.waitReady;const loaded=performance.now();const warm=await session.predict('Готово.');if(!(warm instanceof Blob)||warm.size<44)throw Error('PIPER_WARMUP_FAILED');

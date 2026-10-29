@@ -1,6 +1,6 @@
 import {createLocalSpeaker} from './local-speaker.js';import {PIPER_VOICE} from './piper-voice.js';
-export function createPiperSpeaker({windowRef=globalThis.window,isCurrent=()=>true,voice=PIPER_VOICE,createWorker=()=>{const url=new URL('./piper-worker.js',import.meta.url);url.searchParams.set('voice',voice.modelId==='ru_RU-uyut7-medium'?'uyut7':'irina');return new windowRef.Worker(url,{type:'module'});},timeoutMs=120000}={}){
- if(!['ru_RU-irina-medium','ru_RU-uyut7-medium'].includes(voice.modelId))throw Error('SPEECH_UNAVAILABLE');
+export function createPiperSpeaker({windowRef=globalThis.window,isCurrent=()=>true,voice=PIPER_VOICE,createWorker=()=>{const url=new URL('./piper-worker.js',import.meta.url);url.searchParams.set('voice',voice.modelId==='ru_RU-uyut7-pilot3-medium'?'uyut7-pilot3':'irina');return new windowRef.Worker(url,{type:'module'});},timeoutMs=120000}={}){
+ if(!['ru_RU-irina-medium','ru_RU-uyut7-pilot3-medium'].includes(voice.modelId))throw Error('SPEECH_UNAVAILABLE');
  let worker=null,ready=null,rejectReady=null,pending=null,closed=false,loadTimer=null,sequence=0;
  const counts={processStarts:0,requests:0,generated:0,cancelled:0,externalModelCalls:0,downloads:0};let timings=null,lastSynthesisMs=null;
  const hash=async text=>[...new Uint8Array(await windowRef.crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(n=>n.toString(16).padStart(2,'0')).join('');
