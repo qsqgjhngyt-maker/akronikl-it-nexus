@@ -18,6 +18,15 @@ let sequence=0;
 const emit=()=>listeners.forEach(fn=>{try{fn({...state})}catch{}});
 const patchState=update=>{Object.assign(state,update);emit()};
 const needsModernCpp=source=>MODERN_CPP_PATTERNS.some(pattern=>pattern.test(String(source||'')));
+// Только подсказка inspect; фактическая граница проверяется вызовом runtime ABI.
+export function mayRequireThreads(request={}){
+  if(request.metadata?.requiredCapabilities?.includes('threads'))return true;
+  const files={...(request.files||{}),[request.entryFile||'main.cpp']:request.source||''};
+  return Object.entries(files).some(([name,source])=>/\.(?:c|cc|cpp|cxx|h|hpp|hxx)$/i.test(name)&&(()=>{
+    const code=String(source).replace(/R"([^()\s\\]{0,16})\([\s\S]*?\)\1"|\/\/(?:\\\r?\n|[^\n])*|\/\*[\s\S]*?\*\/|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'/g,' ');
+    return /#\s*include\s*<\s*(?:thread|future)\s*>|\bstd\s*::\s*(?:thread|jthread|async)\b/.test(code);
+  })());
+}
 const workerSupported=()=>typeof Worker!=='undefined'&&typeof WebAssembly!=='undefined'&&typeof URL!=='undefined';
 
 function resetWorker(reason='reset'){
@@ -94,7 +103,7 @@ function ensureWorker(){
       error.anxProvider=wasmRuntimeProvider;
       error.anxCapability=entry.capability;
       error.anxCompilerOutput=String(message.compilerOutput||message.raw||'');
-      error.anxProviderLimit=['WASM_TOOLCHAIN_UNAVAILABLE','WASM_ENVIRONMENT_UNAVAILABLE','WASM_CPP_EXCEPTIONS_UNSUPPORTED','WASM_COMPILER_TIMEOUT','WASM_FILE_QUOTA','WASM_FILE_PATH_INVALID'].includes(error.code);
+      error.anxProviderLimit=['WASM_TOOLCHAIN_UNAVAILABLE','WASM_ENVIRONMENT_UNAVAILABLE','WASM_CPP_EXCEPTIONS_UNSUPPORTED','WASM_THREADS_UNSUPPORTED','WASM_COMPILER_TIMEOUT','WASM_FILE_QUOTA','WASM_FILE_PATH_INVALID'].includes(error.code);
       patchState({status:message.state==='ready'?'ready':'error',phase:error.anxPhase,percent:null,compilerReady:Boolean(message.compilerReady),lastError:error.message});
       if(error.code==='WASM_TOOLCHAIN_UNAVAILABLE'){
         try{worker?.terminate()}catch{}
@@ -153,14 +162,14 @@ export const wasmRuntimeProvider={
     const projectSource=runtimeProjectSource(request);
     const modern=request.languageId==='cpp'&&needsModernCpp(projectSource);
     const multiFile=projectFiles>1;
-    const cpp=request.languageId==='cpp',eh=nativeCppExceptionsAvailable();
-    const support=cpp&&!eh?RUNTIME_SUPPORT.BEST_EFFORT:RUNTIME_SUPPORT.GUARANTEED;
+    const cpp=request.languageId==='cpp',eh=nativeCppExceptionsAvailable(),threads=mayRequireThreads(request);
+    const support=cpp&&!eh||threads?RUNTIME_SUPPORT.BEST_EFFORT:RUNTIME_SUPPORT.GUARANTEED;
     return{
       support,
       confidence:support,
-      features:[...(cpp?[{id:'cpp.exceptions',labelRu:'Исключения C++',labelEn:'C++ exceptions',support:eh?RUNTIME_SUPPORT.GUARANTEED:RUNTIME_SUPPORT.UNSUPPORTED}]:[]),...(modern?[{id:'cpp.modern-runtime',labelRu:'Modern C++ / STL',labelEn:'Modern C++ / STL',support}]:[]),...(multiFile?[{id:'project.multi-file',labelRu:'многофайловая сборка',labelEn:'multi-file build',support}]:[])],
-      bestEffort:cpp&&!eh?['cpp-without-exceptions']:[],
-      requires:cpp&&!eh?['native-wasm-final-eh-for-cpp-exceptions']:[],
+      features:[...(threads?[{id:'cpp.os-threads',labelRu:'Потоки ОС',labelEn:'OS threads',support:RUNTIME_SUPPORT.UNSUPPORTED}]:[]),...(cpp?[{id:'cpp.exceptions',labelRu:'Исключения C++',labelEn:'C++ exceptions',support:eh?RUNTIME_SUPPORT.GUARANTEED:RUNTIME_SUPPORT.UNSUPPORTED}]:[]),...(modern?[{id:'cpp.modern-runtime',labelRu:'Modern C++ / STL',labelEn:'Modern C++ / STL',support}]:[]),...(multiFile?[{id:'project.multi-file',labelRu:'многофайловая сборка',labelEn:'multi-file build',support}]:[])],
+      bestEffort:[...(cpp&&!eh?['cpp-without-exceptions']:[]),...(threads?['cpp.os-threads']:[])],
+      requires:[...(cpp&&!eh?['native-wasm-final-eh-for-cpp-exceptions']:[]),...(threads?['os-threads-capable-target']:[])],
       reasons:[...(cpp?[eh?'cpp-native-exceptions':'browser-lacks-native-cpp-exceptions']:[]),multiFile?'multi-file-wasm-required':modern?'modern-cpp-preferred':'wasm-toolchain-capable'],
       scoreHint:multiFile?180:(modern?110:-90)
     };

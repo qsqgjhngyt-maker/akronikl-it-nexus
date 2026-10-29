@@ -1,0 +1,10 @@
+// Проверка реальной квоты; это не проверка учебного C++ или оценка проекта.
+import{runDockerBuild}from'../studio-build/docker-runner.mjs';import{mkdir,writeFile,readdir}from'node:fs/promises';import path from'node:path';import assert from'node:assert/strict';
+const out=path.resolve(process.env.NEXUS_M6_EVIDENCE||'academy-gold-m6-isolation'),image=process.env.NEXUS_QT_IMAGE;await mkdir(out,{recursive:true});const records=[];
+const prefix='cmake_minimum_required(VERSION 3.16)\nproject(OutputLimit NONE)\nenable_testing()\nadd_test(NAME control COMMAND /bin/true)\n';
+for(const[id,body,expected]of[
+ ['tmpfs-96mb','execute_process(COMMAND /bin/sh -c "dd if=/dev/zero of=/output/overflow bs=1048576 count=120 2>/dev/null" RESULT_VARIABLE result)\nif(result EQUAL 0)\nmessage(FATAL_ERROR "Quota not enforced")\nendif()\nfile(REMOVE /output/overflow)\nmessage(STATUS "NEXUS_QUOTA_ENFORCED")\n',null],
+ ['oversized-export','execute_process(COMMAND /bin/dd if=/dev/zero of=/output/program.data bs=1048576 count=65)\n','BUILD_ARTIFACT_QUOTA'],
+ ['symlink-export','execute_process(COMMAND /bin/ln -s /etc/passwd /output/program.js)\n','BUILD_ARTIFACT_INVALID']
+]){const root=path.join(out,id),workspace={entryFile:'src/main.cpp',files:[{path:'src/main.cpp',content:'int main(){return 0;}'},{path:'CMakeLists.txt',content:prefix+body}]};let actual;try{const r=await runDockerBuild({workspace,root,image,mode:'tests'});assert.equal(r.status,'passed',r.stderr);assert.match(r.stdout,/100% tests passed/);if(id==='tmpfs-96mb')assert.match(r.stdout,/NEXUS_QUOTA_ENFORCED/);actual=null;}catch(e){actual=e.code||e.message}assert.equal(actual,expected,id);assert.deepEqual(await readdir(path.join(root,'output')),[],id+' must not write oversized or linked data to the host');records.push({id,status:'PASS',expectedError:expected,hostOutputFiles:0});console.log('PASS '+id);}
+await writeFile(path.join(out,'ISOLATION.json'),JSON.stringify({status:'PASS',actualDocker:true,temporaryOutputQuotaMiB:96,maxFileTransferMiB:64,writableHostMounts:0,records,productionRequests:0,realUserData:false},null,2)+'\n');

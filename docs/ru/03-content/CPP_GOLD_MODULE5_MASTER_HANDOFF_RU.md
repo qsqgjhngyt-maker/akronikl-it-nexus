@@ -1,3 +1,17 @@
+# M5 Test.2 — завершение тестовой публикации шапки локальной копии
+
+27.10.2026. STATUS:PASS / FULL LIVE PASS по владельцу на ПК и телефоне. Эта новая подтверждённая фиксация дополняет MASTER30.09 и записи ниже; sources остаются read-only. Main d76d1613a1fbf6726d453e40366c306ea502d4c7 /PR39, source eafe3278fffdfe4276e84c8f5b051b4a2dfb9489, версия …10.9-test.2. Дерево 1e4ae0840ef6ba2eb0a93f618ba2b81ee9b54b7f совпало с feature; официальный Release/тег не создан.
+
+WHAT WAS PROVED:M5-07-P2-01 CLOSED LIVE; шапка54layouts/keyboard/touch44PASS. ENTRY-GRAPH-P1 сохранён, BFF bbard7va4tkt9a3hvted /sha256:f1fc8e6faf945d12295a28ea0c72af394e756f4a59c307b5aa65cd942a75ced1 и конфигурация прежние. Все14workflow/40jobs SUCCESS, включая новые полные M1–5browser matrices. NEXUS-PERF-01 75/591219PASS. Public556requests/552exact assets/3guardsPASS; единственный503 восстановился одним retry с сохранением FAIL. Владелец:«ПК и телефон: всё работает, данные на месте». Обычный вход после публикации и actual updater …10.9-test.2 проверены в доступной вкладке; личные работы не читались.
+
+WHAT REMAINS:обязательных действий по этой тестовой публикации нет. Откат3397fe34a8edb3271248fd8a55b3aa330175e689 /веткаv2 подготовлен и проверен, сохраняет4409immutable и текущий BFF, не применялся. Старые d26/cc6 и первоначальные ZIP не опубликованы. Полевые timings/учебная эффективность не измерены. M6 и официальный релиз отдельно.
+
+ROUTING CHECK:07→05→00;01/02/04. Полный отчёт CPP_GOLD_MODULE5_HEADER_PUBLICATION_RU.md, ledger CPP_MODULE5_HEADER_PUBLICATION_EVIDENCE.json, готовые сообщения CPP_MODULE5_HEADER_PUBLICATION_ROUTING_RU.md. Отправки в другие чаты нет. NEXT RECOMMENDED BRANCH:00. RECOMMENDED MODE:высокий; auth/deployment — очень высокий.
+
+---
+
+## История до публикации Test.2
+
 # Module 5: исправления 05/07 и входа/выхода — 27.10.2026
 
 STATUS:PASS в заявленных границах. Новая подтверждённая фиксация дополняет MASTER30.09 и прежние записи ниже. Source `1dd56caddc17617c592b69f4ea8719cd20bb29f0` в feature. Main `5e0e290c9bf74dde87f3169b9d7e122952fd0c57`, frontend …10.9-test.1 и официальный релиз не менялись; synced sources остаются read-only.

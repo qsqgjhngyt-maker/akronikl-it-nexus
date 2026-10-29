@@ -1,0 +1,6 @@
+// Явный публичный allowlist; ни .git, ни node_modules, ни учётные данные.
+import{mkdir,copyFile,writeFile,lstat}from'node:fs/promises';import path from'node:path';
+const root=path.resolve(import.meta.dirname,'..'),out=path.resolve(process.argv[process.argv.indexOf('--out')+1]||'');if(!process.argv.includes('--out')||out===root||out.startsWith(root+path.sep))throw Error('EXTERNAL_NEW_FIXTURE_REQUIRED');await mkdir(out);
+const files=['tests/course-final-bridge-limit.mjs','server-access/bff/assessment.mjs','course-final/contract.js','course-final/transport-contract.js','course-final/automatic-policy.js','project-studio/project-transfer.js','project-studio/project-templates.js','sandbox/code-workspace.js','sandbox/virtual-files.js','server-access/image/bff/server.mjs',...['index.html','entry.html','entry.css','page.js','passkey-client.js','entry.js','galaxy.js','oauth-client.js'].map(f=>'server-access/image/public/'+f)];
+for(const file of files){if(!(await lstat(path.join(root,file))).isFile())throw Error('REGULAR_PUBLIC_SOURCE_REQUIRED');await mkdir(path.dirname(path.join(out,file)),{recursive:true});await copyFile(path.join(root,file),path.join(out,file))}
+await writeFile(path.join(out,'package.json'),'{"type":"module"}\n');console.log(JSON.stringify({status:'PREPARED',publicInputFiles:files.length,privateDataIncluded:false}));

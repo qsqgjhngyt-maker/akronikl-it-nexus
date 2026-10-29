@@ -17,7 +17,7 @@ if(process.argv.includes('--startup-fast'))config.retainedPublicGenerations=[...
 if(process.argv.includes('--startup-mobile-restore'))config.retainedPublicGenerations=[...new Set([...(config.retainedPublicGenerations||[]),'ui1a-startup-fast-opening-20261029'])];
 if(value('--generation')&&value('--version'))Object.assign(config,{assetGeneration:value('--generation'),version:value('--version')});
 if(!/^ui1a-[a-z0-9-]+$/.test(config.assetGeneration))throw Error('Неверный generation ID');
-const folders=['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa'];
+const folders=['core','effects','styles','locales','courses','assets','sandbox','project-studio','course-final','sync','collaboration','akronikl','feedback','pwa'];
 const files=[];async function walk(dir,prefix=''){for(const e of await readdir(path.join(source,dir,prefix),{withFileTypes:true})){const f=path.posix.join(dir,prefix,e.name);if(e.isDirectory())await walk(dir,path.posix.join(prefix,e.name));else if(e.isFile())files.push(f);else throw Error('Недопустимый source entry')}}for(const dir of folders)await walk(dir);files.push('version.json');files.sort();
 // Необязательное медиа не входит в public authority Service Worker.
 try{await stat(path.join(source,'intro-media'));await walk('intro-media')}catch(error){if(error.code!=='ENOENT')throw error}
@@ -35,6 +35,9 @@ if(value('--generation')){
 }
 const versionBytes=value('--generation')?Buffer.from(JSON.stringify(versionMetadata,null,2)+'\n'):await readFile(path.join(source,'version.json'));
 for(const file of files){const b=file==='version.json'?versionBytes:await readFile(path.join(source,file));await output(prefix+file,b,file);if(process.argv.includes('--startup-smooth')&&file.startsWith('intro-media/cinematic-v4/'))await output(file,b,'Публичный CDN: '+file)}
+// Полный комплект курса сохраняет и стабильные CDN URL заставки. Эти медиа
+// по-прежнему исключаются из обязательного public graph Service Worker.
+if(config.publication?.module==='cpp-course-final')for(const file of files.filter(f=>f.startsWith('intro-media/'))){if(!records.some(r=>r.file===file))await output(file,await readFile(path.join(source,file)),'Стабильный публичный CDN: '+file)}
 // Прежние мобильные части уже опубликованы: повторная поставка тех же bytes
 // в необязательный CDN-каталог, вне обязательного SW install.
 if(process.argv.includes('--startup-mobile-restore'))for(const format of ['mp4','webm'])for(let i=0;i<4;i++){
@@ -59,6 +62,11 @@ let index=renderHTML(await readFile(path.join(source,'index.html'),'utf8'));
 index=index.replace('href="./manifest.webmanifest"','href="./manifest.webmanifest?v='+config.version+'"');
 await output('index.html',Buffer.from(index),'index.html: generation path rendering');await output('manifest.webmanifest',manifest,'manifest.webmanifest: identity preserved');await output('version.json',versionBytes,'version.json');
 if(process.argv.includes('--startup-launch'))await output('startup-intro.json',Buffer.from(JSON.stringify({schema:1,module:'/'+prefix+'core/startup-intro.js'})+'\n'),'Публичная конфигурация заставки; NETWORK ONLY');
+else try{
+ const bytes=await readFile(path.join(source,'startup-intro.json')),intro=JSON.parse(bytes);
+ if(intro.schema!==1||!/^\/releases\/ui1a-[a-z0-9-]+\/core\/startup-intro\.js$/.test(intro.module))throw Error('Неверная существующая конфигурация заставки');
+ await output('startup-intro.json',Buffer.from(JSON.stringify({schema:1,module:'/'+prefix+'core/startup-intro.js'})+'\n'),'Конфигурация заставки указывает на проверяемое новое поколение; NETWORK ONLY');
+}catch(error){if(error.code!=='ENOENT')throw error}
 try{
  const shell=renderHTML(await readFile(path.join(source,'nexus-shell.html'),'utf8'));
  await output('nexus-shell.html',Buffer.from(shell),'nexus-shell.html: Account bootstrap');
@@ -90,7 +98,7 @@ await output('offline.html',Buffer.from(offline),'offline.html: independent publ
 const mime=file=>file.endsWith('.mp4')?'video/mp4':file.endsWith('.webm')?'video/webm':file.endsWith('.jpg')?'image/jpeg':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.json')?'application/json':file.endsWith('.webmanifest')?'application/manifest+json':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.md')?'text/markdown':'text/html';
 // Сохраняет правило также при будущем удержании прежнего intro-поколения.
 const optional=r=>/^(?:releases\/ui1a-[a-z0-9-]+\/)?intro-media\//.test(r.file);
-const optionalAssets=records.filter(optional).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file)}));
+const optionalAssets=records.filter(optional).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file)})).sort((a,b)=>a.url<b.url?-1:a.url>b.url?1:0);
 const approved=records.filter(r=>!optional(r)&&!['index.html','nexus-shell.html','version.json','startup-intro.json'].includes(r.file)).map(r=>({url:r.file,sha256:r.sha256,bytes:r.bytes,mime:mime(r.file),...(r.version?{version:r.version}:{})})).sort((a,b)=>a.url<b.url?-1:a.url>b.url?1:0);
 const pwaConfig={generation:config.assetGeneration,version:config.version,assets:approved};
 const sw=(await build({absWorkingDir:source,entryPoints:[path.join(source,'pwa/service-worker.js')],bundle:true,platform:'browser',format:'iife',target:'es2022',write:false,define:{__NEXUS_PWA_CONFIG__:JSON.stringify(pwaConfig)},logLevel:'warning'})).outputFiles[0].contents;

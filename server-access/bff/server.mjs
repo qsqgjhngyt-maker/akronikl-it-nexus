@@ -7,6 +7,7 @@ import {createEntryGateHandler} from './entry-gate.mjs';
 import {createCloudSessionHandler} from './cloud-session.mjs';
 import {createOAuthHandler} from './oauth.mjs';
 import {createAccountControlHandler} from './account-control.mjs';
+import {createStudioBffHandler} from '../../studio-build/bff.mjs';
 const passkey=createPasskeyHandler({env:process.env}),existing=createCombinedHandler({env:process.env});
 const landingBody=readFileSync(new URL('../public/entry.html',import.meta.url));
 const entryGate=createEntryGateHandler({env:process.env,landingBody});
@@ -14,6 +15,7 @@ const cloud=createCloudSessionHandler({env:process.env});
 const oauth=createOAuthHandler({env:process.env});
 const control=createAccountControlHandler({env:process.env});
 const content=createContentHandler({env:process.env});
+const studio=await createStudioBffHandler({env:process.env});
 const assets=new Map([
  ['/account/entry/',['text/html; charset=utf-8',landingBody]],
  ['/account/entry/entry.css',['text/css; charset=utf-8',readFileSync(new URL('../public/entry.css',import.meta.url))]],
@@ -29,6 +31,7 @@ const server=http.createServer({maxHeaderSize:16384},async(req,res)=>{
  res.setHeader('vary','*');
  try{
   if(await entryGate(req,res))return;
+  if(await studio(req,res))return;
   if(await content(req,res))return;
   if(await control(req,res))return;
   if(await cloud(req,res))return;
@@ -45,4 +48,4 @@ const server=http.createServer({maxHeaderSize:16384},async(req,res)=>{
  }catch{if(!res.headersSent)res.writeHead(500,{'cache-control':'no-store','vary':'*'});res.end()}
 });
 server.requestTimeout=15000;server.headersTimeout=10000;server.listen(Number(process.env.PORT||8080),'0.0.0.0');
-for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>{server.close(()=>process.exit(0));setTimeout(()=>process.exit(1),5000).unref()});
+for(const signal of ['SIGTERM','SIGINT'])process.once(signal,()=>{const timer=setTimeout(()=>process.exit(1),15000).unref(),closed=Promise.resolve(studio.close?.()).then(()=>true,()=>false);server.close(async()=>{const ok=await closed;clearTimeout(timer);process.exit(ok?0:1)});});

@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {getCppOutline,getCppCourse} from '../core/course-registry.js';
 
 const projectRoot = new URL('../',import.meta.url);
-const fixtures = ['courses/cpp/manifest.json','courses/cpp/curriculum.json', 'courses/cpp/data/lessons.ru.json','courses/cpp/data/lessons.en.json','courses/cpp/data/practicums.ru.json','courses/cpp/data/projects.ru.json','courses/cpp/data/gold-laboratories.json'];
+const fixtures = ['courses/cpp/manifest.json','courses/cpp/curriculum.json', 'courses/cpp/data/lessons.ru.json','courses/cpp/data/lessons.en.json','courses/cpp/data/practicums.ru.json','courses/cpp/data/projects.ru.json','courses/cpp/data/gold-laboratories.json','courses/cpp/data/gold-laboratories-m6.json'];
 const fileSizes = Object.fromEntries(await Promise.all(fixtures.map(async p=>[p,(await fs.stat(fileURLToPath(new URL(p, projectRoot)))).size])));
 const requests=[];
 globalThis.fetch = async (url,opts={})=>{
@@ -20,7 +20,7 @@ globalThis.fetch = async (url,opts={})=>{
 test('HOME obtains only minimal verified C++ outline',async()=>{
  const outline=await getCppOutline();
  assert.equal(outline.manifest.id,'cpp');
- assert.equal(outline.curriculum.lessons.length,56);
+ assert.equal(outline.curriculum.lessons.length,67);
  assert.deepEqual(new Set(requests),new Set(fixtures.slice(0,2)));
  assert.equal(requests.length,2);
  assert.ok(requests.reduce((s,p)=>s+fileSizes[p],0)<=30000,'Outline including the versioned additions must remain <=30KB');
@@ -31,10 +31,10 @@ test('Opening full C++ after HOME preserves all data, IDs and reuses verified ou
  const full=await getCppCourse();
  assert.strictEqual(full.manifest,outline.manifest);
  assert.strictEqual(full.curriculum,outline.curriculum);
- assert.equal(full.lessonsRu.lessons.length,56);
- assert.equal(full.lessonsEn.lessons.length,19);
+ assert.equal(full.lessonsRu.lessons.length,67);
+ assert.equal(full.lessonsEn.lessons.length,30);
  assert.deepEqual(new Set(requests),new Set(fixtures));
- assert.equal(requests.length,7,'No duplicate metadata request');
+ assert.equal(requests.length,8,'No duplicate metadata request');
  const lessonIds=outline.curriculum.lessons.map(x=>x.id);
  assert.deepEqual(full.curriculum.lessons.map(x=>x.id),lessonIds,'Stable C++ lesson IDs');
 });
@@ -43,7 +43,7 @@ test('Repeated full load does not introduce extra network I/O',async()=>{
  const first=await getCppCourse();
  const second=await getCppCourse();
  assert.strictEqual(first,second);
- assert.equal(requests.length,7);
+ assert.equal(requests.length,8);
 });
 
 test('Gold metadata failure is retried without poisoning the outline or caching an incomplete course',async()=>{
@@ -51,7 +51,7 @@ test('Gold metadata failure is retried without poisoning the outline or caching 
  globalThis.fetch=async url=>{const path=String(url).slice(projectRoot.href.length);calls.push(path);if(fail&&path==='courses/cpp/data/gold-laboratories.json'){fail=false;throw Error('synthetic metadata failure')}return{ok:true,json:async()=>JSON.parse(await fs.readFile(new URL(path,projectRoot),'utf8'))}};
  const other=await import('../core/course-registry.js?lab-index-retry');
  await assert.rejects(other.getCppCourse(),/synthetic metadata failure/);
- const full=await other.getCppCourse();assert.equal(Object.keys(full.goldLaboratories).length,55);
+ const full=await other.getCppCourse();assert.equal(Object.keys(full.goldLaboratories).length,67);
  assert.equal(calls.filter(p=>p==='courses/cpp/data/gold-laboratories.json').length,2);assert.equal(calls.filter(p=>p==='courses/cpp/manifest.json').length,1);
 });
 
@@ -90,7 +90,7 @@ test('Simultaneous Home / Code Hub entry deduplicates all in-flight C++ resource
  ]);
  assert.strictEqual(full1,full2);
  assert.strictEqual(full1.manifest,o.manifest);
- assert.equal(calls.length,7);
+ assert.equal(calls.length,8);
  assert.deepEqual(new Set(calls),new Set(fixtures));
 });
 

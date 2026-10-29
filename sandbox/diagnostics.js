@@ -53,7 +53,7 @@ export function parseRuntimeError(error,source='',options={}){
   const compatibilityRetryFailed=error?.anxCompatibilityRetry===true;
   const missingStdLibrary=missingStandardLibrary(evidence,source);
   const noStaticErrors=!analysis||analysis.issues?.filter(x=>x.level==='error').length===0;
-  const explicitProviderLimit=error?.anxProviderLimit===true||['WASM_TOOLCHAIN_UNAVAILABLE','WASM_ENVIRONMENT_UNAVAILABLE','WASM_COMPILER_TIMEOUT','WASM_CPP_EXCEPTIONS_UNSUPPORTED'].includes(error?.code);
+  const explicitProviderLimit=error?.anxProviderLimit===true||['WASM_TOOLCHAIN_UNAVAILABLE','WASM_ENVIRONMENT_UNAVAILABLE','WASM_COMPILER_TIMEOUT','WASM_CPP_EXCEPTIONS_UNSUPPORTED','WASM_THREADS_UNSUPPORTED'].includes(error?.code);
   const providerLimit=explicitProviderLimit||(noStaticErrors&&(((parseLike||compatibilityRetryFailed)&&bestEffort.length>0)||Boolean(missingStdLibrary)));
   const line=providerLimit?null:detectedLine;
   const column=providerLimit?null:detectedColumn;
@@ -66,7 +66,9 @@ export function parseRuntimeError(error,source='',options={}){
     const wasmProviderLimit=String(error?.code||'').startsWith('WASM_');
     title=wasmProviderLimit?(locale==='en'?'Modern C++ Runtime limitation':'Ограничение Modern C++ Runtime'):(locale==='en'?'Browser Runtime limitation':'Ограничение Browser Runtime');
     const featureText=labels(bestEffort,locale);
-    if(error?.code==='WASM_TOOLCHAIN_UNAVAILABLE'||error?.code==='WASM_ENVIRONMENT_UNAVAILABLE'){
+    if(error?.code==='WASM_THREADS_UNSUPPORTED'){
+      explanation=locale==='en'?'This browser target cannot create OS threads. Use a threads-capable target. Your C++ source and project are preserved.':'Этот браузерный target не поддерживает создание потоков ОС. Используйте target с поддержкой threads. Исходный C++ и проект сохранены.';
+    }else if(error?.code==='WASM_TOOLCHAIN_UNAVAILABLE'||error?.code==='WASM_ENVIRONMENT_UNAVAILABLE'){
       explanation=locale==='en'
         ?'The Modern C++ provider could not load its pinned Clang/WASI toolchain. This is an environment or network limitation, not proof that the learner source is invalid. Retry when the runtime assets are reachable.'
         :'Modern C++ provider не смог загрузить закреплённый Clang/WASI toolchain. Это ограничение среды или сети, а не доказательство ошибки исходного кода ученика. Повторите запуск, когда runtime-assets будут доступны.';

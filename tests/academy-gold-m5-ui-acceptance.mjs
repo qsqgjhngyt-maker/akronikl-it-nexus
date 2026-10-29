@@ -9,6 +9,7 @@ import {goldLessonRoute} from './helpers/gold-lesson-route.mjs';
 import {checkGlossaryDrawer} from './helpers/glossary-drawer-checks.mjs';
 import {GOLD_OOP_LESSONS} from '../core/academy-gold-catalog.js';
 const f=await nativeOfflineFixture('module5-gold'),online=await onlineRuntimeFixture(),prefix='/releases/'+f.generation,all=await module5GoldLessons();
+const totalLessons=JSON.parse(await readFile(new URL('../courses/cpp/curriculum.json',import.meta.url))).lessons.length;
 const previousIds=JSON.parse(await readFile(new URL('../courses/cpp/curriculum.json',import.meta.url),'utf8')).lessons.slice(0,50).map(l=>l.id);
 const checks=[],widths=[320,360,390,768,1366,1440],phrase='SYNTHETIC module five local phrase';let local,vaultId,fatal;
 const check=async(name,action)=>{const start=performance.now();const detail=await action();checks.push({name,status:'PASS',ms:Math.round(performance.now()-start),detail});console.log('PASS '+name);};
@@ -79,7 +80,7 @@ try{
    assert.equal(await local.locator('#editor').inputValue(),personal(g.lessonId));
   }return{questions,answerSubmissions:questions*2,manualProgress:true};
  });
- await check('50/56 и исторические 40/40 видны online и в холодной локальной копии',async()=>{for(const p of [online.page,local]){await p.evaluate(()=>{location.hash='#course=cpp'});await p.locator('[data-legacy-completion]').waitFor();assert.ok((await p.locator('[data-legacy-completion]').textContent()).includes('40/40'));assert.ok((await p.locator('body').textContent()).includes('50/56'));}});
+ await check('50 завершённых тем и исторические40/40 видны online и в холодной локальной копии',async()=>{for(const p of [online.page,local]){await p.evaluate(()=>{location.hash='#course=cpp'});await p.locator('[data-legacy-completion]').waitFor();assert.ok((await p.locator('[data-legacy-completion]').textContent()).includes('40/40'));assert.ok((await p.locator('body').textContent()).includes('50/'+totalLessons));}});
  await check('Синтетический проект и все 9 состояний сохранены в зашифрованной копии',async()=>{
   const data=await local.evaluate(async({prefix,id,phrase})=>{const {createVaultStore}=await import(prefix+'/pwa/local-vault.js'),s=await createVaultStore().unlock(id,phrase),data=s.read();await s.lock();return data;},{prefix,id:vaultId,phrase});
   assert.deepEqual(data.projects,payload.projects);

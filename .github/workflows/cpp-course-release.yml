@@ -1,0 +1,35 @@
+name: Официальный релиз полного курса C++
+on:
+  push:
+    tags: ['cpp-gold-course-v*']
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Только принятый main, законченный LIVE и точный публичный комплект
+        env:
+          COURSE_RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          git merge-base --is-ancestor HEAD origin/main
+          node tools/verify-cpp-course-release.mjs
+      - name: Создать официальный релиз с проверенными пакетами
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COURSE_RELEASE_TAG: ${{ github.ref_name }}
+        run: >-
+          gh release create "$COURSE_RELEASE_TAG"
+          --verify-tag --target "$GITHUB_SHA"
+          --title "C++ Gold Standard — полный курс 1.0"
+          --notes-file docs/ru/05-release/CPP_COURSE_RELEASE_NOTES_RU.md
+          /tmp/nexus-cpp-release/*

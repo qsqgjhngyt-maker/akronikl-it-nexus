@@ -1,3 +1,4 @@
+import{bindIntroTransport}from'./intro-transport.mjs';
 // Настоящий bootstrap/app/SW/Worker на canonical origin, физически только loopback.
 import https from 'node:https';
 import assert from 'node:assert/strict';
@@ -29,6 +30,9 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
    const bytes=await readFile(file);res.writeHead(200,{'content-type':mime(name),'cache-control':'public, max-age=0'});res.end(bytes);
   }catch{res.writeHead(404);res.end('SYNTHETIC_NOT_FOUND');}
  });
+ // Предварительные TLS-соединения Chrome ещё не являются HTTP requests и
+ // не закрываются closeAllConnections(). Учитываем только сокеты этого стенда.
+ const sockets=new Set();server.on('connection',socket=>{sockets.add(socket);socket.once('close',()=>sockets.delete(socket))});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const hostname=new URL(GATEWAY_ORIGIN).hostname;
  const browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH,args:['--disable-background-networking','--no-proxy-server','--ignore-certificate-errors','--host-resolver-rules=MAP '+hostname+' 127.0.0.1:'+server.address().port,...chromiumArgs]});
@@ -37,13 +41,7 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
  await context.route('**/*',async route=>new URL(route.request().url()).origin===GATEWAY_ORIGIN?route.continue():route.abort());
  // Четыре публичных video URL читаются из точной QA-сборки, без live CDN.
  // Все прочие внешние запросы по-прежнему запрещены; errors не фильтруются.
- await context.route('https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/**',async route=>{
-  const req=route.request(),u=new URL(req.url()),headers=await req.allHeaders();
-  assert.match(u.href,/^https:\/\/qsqgjhngyt-maker\.github\.io\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/);
-  assert.equal(req.method(),'GET');assert.equal(Boolean(headers.cookie||headers.authorization),false,'Публичное видео не получает credentials');
-  const file=u.pathname.replace('/akronikl-it-nexus/','');requests.push({path:u.pathname,method:req.method(),publicMediaFixture:true});
-  await route.fulfill({status:200,headers:{'content-type':file.endsWith('.mp4')?'video/mp4':'video/webm','access-control-allow-origin':'*','cache-control':'no-store'},body:await readFile(path.join(frontend,file))});
- });
+ await bindIntroTransport(context,{frontend,requests});
  await bindRuntimeTransport(context);
  await context.route('https://felixhao28.github.io/JSCPP/dist/JSCPP.es5.min.js',async route=>route.fulfill({status:200,contentType:'application/javascript',body:await readFile(process.env.NEXUS_JSCPP_FIXTURE)}));
  const page=await context.newPage();page.setDefaultTimeout(45000);page.on('pageerror',e=>errors.push(e.message));
@@ -56,5 +54,5 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
   while(Date.now()<until){last=await page.evaluate(()=>new Promise(resolve=>{const worker=navigator.serviceWorker.controller;if(!worker)return resolve(null);const channel=new MessageChannel(),timer=setTimeout(()=>resolve(null),10000);channel.port1.onmessage=e=>{clearTimeout(timer);channel.port1.close();resolve(e.data)};worker.postMessage({type:'nexus-pwa-status'},[channel.port2]);}));if(last?.publicReady===true)return last;await page.waitForTimeout(100);}
   throw Error('ONLINE_PUBLIC_PWA_NOT_READY '+JSON.stringify({last,errors,workerEvents}));
  }
- return{page,context,requests,errors,workerEvents,origin:GATEWAY_ORIGIN,waitReady,async close(){await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}};
+ return{page,context,requests,errors,workerEvents,origin:GATEWAY_ORIGIN,waitReady,async close(){await context.close();await browser.close();server.closeAllConnections();const pending=sockets.size;for(const socket of sockets)socket.destroy();await new Promise(resolve=>server.close(resolve));return{pendingTlsSocketsClosed:pending}}};
 }

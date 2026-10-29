@@ -52,9 +52,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/lib/encoder.js
+// server-access/node_modules/jpeg-js/lib/encoder.js
 var require_encoder = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/lib/encoder.js"(exports, module) {
+  "server-access/node_modules/jpeg-js/lib/encoder.js"(exports, module) {
     var btoa = btoa || function(buf) {
       return Buffer.from(buf).toString("base64");
     };
@@ -678,17 +678,17 @@ var require_encoder = __commonJS({
       function initCategoryNumber() {
         var nrlower = 1;
         var nrupper = 2;
-        for (var cat = 1; cat <= 15; cat++) {
+        for (var cat2 = 1; cat2 <= 15; cat2++) {
           for (var nr = nrlower; nr < nrupper; nr++) {
-            category[32767 + nr] = cat;
+            category[32767 + nr] = cat2;
             bitcode[32767 + nr] = [];
-            bitcode[32767 + nr][1] = cat;
+            bitcode[32767 + nr][1] = cat2;
             bitcode[32767 + nr][0] = nr;
           }
           for (var nrneg = -(nrupper - 1); nrneg <= -nrlower; nrneg++) {
-            category[32767 + nrneg] = cat;
+            category[32767 + nrneg] = cat2;
             bitcode[32767 + nrneg] = [];
-            bitcode[32767 + nrneg][1] = cat;
+            bitcode[32767 + nrneg][1] = cat2;
             bitcode[32767 + nrneg][0] = nrupper - 1 + nrneg;
           }
           nrlower <<= 1;
@@ -1118,8 +1118,8 @@ var require_encoder = __commonJS({
     }
     function encode(imgData, qu) {
       if (typeof qu === "undefined") qu = 50;
-      var encoder = new JPEGEncoder(qu);
-      var data = encoder.encode(imgData, qu);
+      var encoder2 = new JPEGEncoder(qu);
+      var data = encoder2.encode(imgData, qu);
       return {
         data,
         width: imgData.width,
@@ -1129,9 +1129,9 @@ var require_encoder = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/lib/decoder.js
+// server-access/node_modules/jpeg-js/lib/decoder.js
 var require_decoder = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/lib/decoder.js"(exports, module) {
+  "server-access/node_modules/jpeg-js/lib/decoder.js"(exports, module) {
     var JpegImage = (function jpegImage() {
       "use strict";
       var dctZigZag = new Int32Array([
@@ -1635,9 +1635,9 @@ var require_decoder = __commonJS({
         return a < 0 ? 0 : a > 255 ? 255 : a;
       }
       constructor.prototype = {
-        load: function load(path2) {
+        load: function load(path6) {
           var xhr = new XMLHttpRequest();
-          xhr.open("GET", path2, true);
+          xhr.open("GET", path6, true);
           xhr.responseType = "arraybuffer";
           xhr.onload = (function() {
             var data = new Uint8Array(xhr.response || xhr.mozResponseArrayBuffer);
@@ -2191,9 +2191,9 @@ var require_decoder = __commonJS({
   }
 });
 
-// ../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/index.js
+// server-access/node_modules/jpeg-js/index.js
 var require_jpeg_js = __commonJS({
-  "../nexus-alpha10-closure-2026-10-21/server-access/node_modules/jpeg-js/index.js"(exports, module) {
+  "server-access/node_modules/jpeg-js/index.js"(exports, module) {
     var encode = require_encoder();
     var decode = require_decoder();
     module.exports = {
@@ -2265,9 +2265,9 @@ var syntheticF = "__Host-nexus_oauth_flow=nof_" + "B".repeat(43);
 var syntheticP = "__Host-nexus_passkey_flow=npf_" + "C".repeat(43);
 for (const [name, pairs] of [["S", [syntheticS]], ["F", [syntheticF]], ["P", [syntheticP]], ["SPF", [syntheticS, syntheticP, syntheticF]]]) SYNTHETIC_CONTEXTS.set(pairs.sort().join("; "), "v2_cookie_mismatch_expected_" + name);
 var reject = (reason) => {
-  const error2 = Error("INGRESS_REJECTED");
-  error2.cookieContextReason = reason;
-  throw error2;
+  const error3 = Error("INGRESS_REJECTED");
+  error3.cookieContextReason = reason;
+  throw error3;
 };
 function count(req, name) {
   if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2 !== 0) return reject("v2_raw_headers");
@@ -2297,16 +2297,16 @@ function readV2CookieContext(req, marker, { env = {} } = {}) {
   if (count(req, CONTEXT_HEADER) !== 1) return reject("v2_context_count");
   const raw = req.headers?.[CONTEXT_HEADER];
   if (typeof raw !== "string" || !raw.length || raw.length > 8192 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) return reject("v2_context_base64");
-  let text5, data;
-  const bytes = Buffer.from(raw, "base64");
-  if (bytes.length > 6144 || bytes.toString("base64") !== raw) return reject("v2_context_base64");
+  let text7, data;
+  const bytes2 = Buffer.from(raw, "base64");
+  if (bytes2.length > 6144 || bytes2.toString("base64") !== raw) return reject("v2_context_base64");
   try {
-    text5 = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+    text7 = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes2);
   } catch {
     return reject("v2_context_utf8");
   }
   try {
-    data = JSON.parse(text5);
+    data = JSON.parse(text7);
   } catch {
     return reject("v2_context_json");
   }
@@ -2314,7 +2314,7 @@ function readV2CookieContext(req, marker, { env = {} } = {}) {
   if (data[marker] === "v1") return void 0;
   if (data[marker] === "v3") {
     if (env.COOKIE_INGRESS_V3_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true") return reject("v3_disabled");
-    if (Object.keys(data).length !== 1 || !Object.hasOwn(data, marker) || text5.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 2) return reject("v3_context_shape");
+    if (Object.keys(data).length !== 1 || !Object.hasOwn(data, marker) || text7.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 2) return reject("v3_context_shape");
     const rawContext = req.rawHeaders.filter((_, i) => i % 2 === 1 && req.rawHeaders[i - 1].toLowerCase() === CONTEXT_HEADER);
     if (rawContext[0] !== raw) return reject("v3_header_inconsistent");
     const actual2 = req.headers?.cookie, present2 = actual2 !== void 0, cookieCount2 = count(req, "cookie");
@@ -2328,7 +2328,7 @@ function readV2CookieContext(req, marker, { env = {} } = {}) {
     if (!/^[\x20-\x7e]+$/.test(actual2)) return reject("v3_raw_cookie_syntax");
     return parseCookies(actual2, "v3_raw_cookie_syntax", "v3_protected_duplicate").values;
   }
-  if (data[marker] !== "v2" || Object.keys(data).sort().join(",") !== [marker, "cookieHeader"].sort().join(",") || text5.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 4 || typeof data.cookieHeader !== "string") return reject("v2_context_shape");
+  if (data[marker] !== "v2" || Object.keys(data).sort().join(",") !== [marker, "cookieHeader"].sort().join(",") || text7.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 4 || typeof data.cookieHeader !== "string") return reject("v2_context_shape");
   const actual = req.headers?.cookie, present = actual !== void 0, cookieCount = count(req, "cookie");
   if (!present && cookieCount !== 0 || present && (cookieCount !== 1 || typeof actual !== "string")) return reject("v2_cookie_header_count");
   if (data.cookieHeader === "-") {
@@ -2373,9 +2373,9 @@ function sessionFromContext(req) {
   const raw = req.headers["x-yc-apigateway-operation-context"];
   if (typeof raw !== "string" || raw.length === 0 || raw.length > 4096 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) return null;
   try {
-    const bytes = Buffer.from(raw, "base64");
-    if (bytes.toString("base64") !== raw) return null;
-    const decoded = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+    const bytes2 = Buffer.from(raw, "base64");
+    if (bytes2.toString("base64") !== raw) return null;
+    const decoded = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes2);
     const context2 = JSON.parse(decoded);
     if (!context2 || typeof context2 !== "object" || Array.isArray(context2) || Object.keys(context2).length !== 2 || !Object.hasOwn(context2, "accountReadContract") || !Object.hasOwn(context2, "sessionCookie")) return null;
     if (context2.accountReadContract !== "v1" || typeof context2.sessionCookie !== "string" || !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(context2.sessionCookie)) return null;
@@ -2445,10 +2445,10 @@ async function boundedJson(response) {
       chunks.push(value);
     }
     return JSON.parse(Buffer.concat(chunks).toString("utf8"));
-  } catch (error2) {
+  } catch (error3) {
     await reader.cancel().catch(() => {
     });
-    throw error2;
+    throw error3;
   } finally {
     reader.releaseLock();
   }
@@ -2457,7 +2457,7 @@ function text2(value, max) {
   if (typeof value !== "string" || value.length > max) throw new Error("\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 DTO");
   return value;
 }
-function safeDto(body, path2) {
+function safeDto(body, path6) {
   if (body?.enrollmentAvailable !== false || !Array.isArray(body.loginMethods) || body.loginMethods.length > 100) throw new Error("\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 DTO");
   const loginMethods = body.loginMethods.map((method) => {
     if (!["oauth", "password", "passkey"].includes(method.kind) || !["pending", "active", "disabled"].includes(method.status)) throw new Error("\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 DTO");
@@ -2470,7 +2470,7 @@ function safeDto(body, path2) {
     };
   });
   const dto = { loginMethods, enrollmentAvailable: false };
-  if (path2 === "/api/v2/account") {
+  if (path6 === "/api/v2/account") {
     if (body.account?.status !== "active") throw new Error("\u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 DTO");
     dto.account = {
       accountId: text2(body.account.accountId, 256),
@@ -2569,17 +2569,17 @@ var partCount = (length) => Math.ceil(length / PART_CHARS);
 var partLength = (length, index) => Math.min(PART_CHARS, length - index * PART_CHARS);
 var validMeta = (m) => exact2(m, ["id", "mime", "encodedLength", "bytes", "width", "height", "totalParts"]) && digestId(m.id) && m.mime === "image/jpeg" && Number.isInteger(m.bytes) && m.bytes >= 4 && m.bytes <= MAX_BYTES && m.encodedLength === 4 * Math.ceil(m.bytes / 3) && m.totalParts === partCount(m.encodedLength) && m.totalParts >= 1 && m.totalParts <= MAX_PARTS && dimension(m.width) && dimension(m.height);
 var metaOf = (m) => ({ id: m.id, mime: m.mime, encodedLength: m.data.length, bytes: Math.floor(m.data.length / 4) * 3 - (m.data.endsWith("==") ? 2 : m.data.endsWith("=") ? 1 : 0), width: m.width, height: m.height, totalParts: partCount(m.data.length) });
-function jpegSizeMatches(bytes, width, height) {
-  if (bytes.length < 4 || bytes[0] !== 255 || bytes[1] !== 216 || bytes.at(-2) !== 255 || bytes.at(-1) !== 217) return false;
+function jpegSizeMatches(bytes2, width, height) {
+  if (bytes2.length < 4 || bytes2[0] !== 255 || bytes2[1] !== 216 || bytes2.at(-2) !== 255 || bytes2.at(-1) !== 217) return false;
   let i = 2;
-  while (i + 3 < bytes.length) {
-    if (bytes[i++] !== 255) return false;
-    while (bytes[i] === 255) i++;
-    const marker = bytes[i++];
+  while (i + 3 < bytes2.length) {
+    if (bytes2[i++] !== 255) return false;
+    while (bytes2[i] === 255) i++;
+    const marker = bytes2[i++];
     if (marker === 218 || marker === 217) return false;
-    const n = bytes[i] << 8 | bytes[i + 1];
-    if (n < 2 || i + n > bytes.length) return false;
-    if ([192, 193, 194].includes(marker)) return n >= 8 && bytes[i + 2] === 8 && (bytes[i + 3] << 8 | bytes[i + 4]) === height && (bytes[i + 5] << 8 | bytes[i + 6]) === width;
+    const n = bytes2[i] << 8 | bytes2[i + 1];
+    if (n < 2 || i + n > bytes2.length) return false;
+    if ([192, 193, 194].includes(marker)) return n >= 8 && bytes2[i + 2] === 8 && (bytes2[i + 3] << 8 | bytes2[i + 4]) === height && (bytes2[i + 5] << 8 | bytes2[i + 6]) === width;
     i += n;
   }
   return false;
@@ -2600,11 +2600,11 @@ var reject2 = () => {
 };
 function scope(envelope, rpc, signal) {
   const controller = new AbortController(), combined = AbortSignal.any([signal || AbortSignal.timeout(12e3), controller.signal]);
-  return { signal: combined, async call(payload, path2 = MEDIA_PARTS_PATH) {
+  return { signal: combined, async call(payload, path6 = MEDIA_PARTS_PATH) {
     combined.throwIfAborted();
-    const result = await rpc({ ...envelope, path: path2, method: "POST", payload }, { signal: combined, limit: MAX_ENVELOPE });
+    const result2 = await rpc({ ...envelope, path: path6, method: "POST", payload }, { signal: combined, limit: MAX_ENVELOPE });
     combined.throwIfAborted();
-    return result;
+    return result2;
   }, async pool(indices, fn) {
     let next = 0, firstError;
     const run = async () => {
@@ -2637,26 +2637,26 @@ async function uploadPhotoParts(envelope, rpc, { signal } = {}) {
     const r = await s.call({ requestId: randomUUID(), phase: "part", uploadId, index, data, sha256: digest3 });
     if (!exact2(r, ["ok", "uploadId", "index", "sha256"]) || r.ok !== true || r.uploadId !== uploadId || r.index !== index || r.sha256 !== digest3) reject2();
   });
-  const result = await s.call({ requestId: randomUUID(), phase: "commit", uploadId, sha256: m.id });
-  if (!exact2(result, ["ok", "media"]) || result.ok !== true || !exact2(result.media, ["id", "mime", "width", "height"]) || result.media.id !== m.id || result.media.mime !== m.mime || result.media.width !== m.width || result.media.height !== m.height) reject2();
-  return result;
+  const result2 = await s.call({ requestId: randomUUID(), phase: "commit", uploadId, sha256: m.id });
+  if (!exact2(result2, ["ok", "media"]) || result2.ok !== true || !exact2(result2.media, ["id", "mime", "width", "height"]) || result2.media.id !== m.id || result2.media.mime !== m.mime || result2.media.width !== m.width || result2.media.height !== m.height) reject2();
+  return result2;
 }
 var sameMeta = (a, b) => validMeta(a) && Object.keys(b).every((k) => a[k] === b[k]);
 async function readPhotoParts(envelope, mediaId, rpc, { publishedOnly = false, signal } = {}) {
   if (!digestId(mediaId)) throw new MediaPartsError("INVALID_INPUT", 400);
-  const s = scope(envelope, rpc, signal), path2 = publishedOnly ? PUBLIC_MEDIA_PARTS_PATH : MEDIA_PARTS_PATH, parts = [];
+  const s = scope(envelope, rpc, signal), path6 = publishedOnly ? PUBLIC_MEDIA_PARTS_PATH : MEDIA_PARTS_PATH, parts = [];
   let meta;
   const read = async (index) => {
-    const result = await s.call({ requestId: randomUUID(), phase: "read", mediaId, index }, path2), p = result?.part;
-    if (!exact2(result, ["part"]) || !exact2(p, ["meta", "index", "data", "sha256"]) || !validMeta(p.meta) || p.meta.id !== mediaId || p.index !== index || typeof p.data !== "string" || p.data.length !== partLength(p.meta.encodedLength, index) || !digestId(p.sha256) || sha(p.data) !== p.sha256 || Buffer.from(p.data, "base64").toString("base64") !== p.data || index < p.meta.totalParts - 1 && p.data.includes("=")) reject2();
+    const result2 = await s.call({ requestId: randomUUID(), phase: "read", mediaId, index }, path6), p = result2?.part;
+    if (!exact2(result2, ["part"]) || !exact2(p, ["meta", "index", "data", "sha256"]) || !validMeta(p.meta) || p.meta.id !== mediaId || p.index !== index || typeof p.data !== "string" || p.data.length !== partLength(p.meta.encodedLength, index) || !digestId(p.sha256) || sha(p.data) !== p.sha256 || Buffer.from(p.data, "base64").toString("base64") !== p.data || index < p.meta.totalParts - 1 && p.data.includes("=")) reject2();
     if (meta && !sameMeta(p.meta, meta)) reject2();
     meta ??= p.meta;
     parts[index] = p.data;
   };
   await read(0);
   await s.pool(Array.from({ length: meta.totalParts - 1 }, (_, i) => i + 1), read);
-  const data = parts.join(""), bytes = Buffer.from(data, "base64");
-  if (data.length !== meta.encodedLength || bytes.length !== meta.bytes || bytes.toString("base64") !== data || sha(bytes) !== mediaId || !jpegSizeMatches(bytes, meta.width, meta.height)) reject2();
+  const data = parts.join(""), bytes2 = Buffer.from(data, "base64");
+  if (data.length !== meta.encodedLength || bytes2.length !== meta.bytes || bytes2.toString("base64") !== data || sha(bytes2) !== mediaId || !jpegSizeMatches(bytes2, meta.width, meta.height)) reject2();
   return { media: { id: mediaId, mime: meta.mime, data, width: meta.width, height: meta.height } };
 }
 
@@ -2669,28 +2669,28 @@ var fail = () => {
 };
 function sanitizeBlogImage(value) {
   if (typeof value !== "string" || value.length > 131072 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) fail();
-  const bytes = Buffer2.from(value, "base64");
-  if (bytes.toString("base64") !== value || bytes.length > 98304 || bytes[0] !== 255 || bytes[1] !== 216) fail();
+  const bytes2 = Buffer2.from(value, "base64");
+  if (bytes2.toString("base64") !== value || bytes2.length > 98304 || bytes2[0] !== 255 || bytes2[1] !== 216) fail();
   let n = 2, width, height;
-  while (n < bytes.length) {
-    if (bytes[n++] !== 255) fail();
-    while (bytes[n] === 255) n++;
-    const marker = bytes[n++];
+  while (n < bytes2.length) {
+    if (bytes2[n++] !== 255) fail();
+    while (bytes2[n] === 255) n++;
+    const marker = bytes2[n++];
     if (marker === 218) break;
-    if (marker === 217 || marker === 0 || marker === 216 || marker >= 208 && marker <= 215 || n + 2 > bytes.length) fail();
-    const size = bytes.readUInt16BE(n);
-    if (size < 2 || n + size > bytes.length) fail();
+    if (marker === 217 || marker === 0 || marker === 216 || marker >= 208 && marker <= 215 || n + 2 > bytes2.length) fail();
+    const size = bytes2.readUInt16BE(n);
+    if (size < 2 || n + size > bytes2.length) fail();
     if ([192, 193, 194].includes(marker)) {
-      if (width || size < 8 || bytes[n + 2] !== 8) fail();
-      height = bytes.readUInt16BE(n + 3);
-      width = bytes.readUInt16BE(n + 5);
+      if (width || size < 8 || bytes2[n + 2] !== 8) fail();
+      height = bytes2.readUInt16BE(n + 3);
+      width = bytes2.readUInt16BE(n + 5);
       if (!width || !height || width > 1600 || height > 1600) fail();
     }
     n += size;
   }
   if (!width || !height) fail();
   try {
-    const decoded = import_jpeg_js.default.decode(bytes, { useTArray: true, formatAsRGBA: true, tolerantDecoding: false, maxResolutionInMP: 3, maxMemoryUsageInMB: 64 });
+    const decoded = import_jpeg_js.default.decode(bytes2, { useTArray: true, formatAsRGBA: true, tolerantDecoding: false, maxResolutionInMP: 3, maxMemoryUsageInMB: 64 });
     if (decoded.width !== width || decoded.height !== height) fail();
     for (const quality of [80, 65, 50, 35]) {
       const out = Buffer2.from(import_jpeg_js.default.encode({ data: decoded.data, width, height }, quality).data);
@@ -2741,8 +2741,8 @@ function sanitizeAvatar(value) {
     decoded = import_jpeg_js2.default.decode(input, { useTArray: true, formatAsRGBA: true, tolerantDecoding: false, maxResolutionInMP: 1, maxMemoryUsageInMB: 32 });
     if (decoded.width !== dimensions.width || decoded.height !== dimensions.height) deny("AVATAR_INVALID");
     encoded = import_jpeg_js2.default.encode({ data: decoded.data, width: decoded.width, height: decoded.height }, 80).data;
-  } catch (error2) {
-    if (error2 instanceof AvatarError) throw error2;
+  } catch (error3) {
+    if (error3 instanceof AvatarError) throw error3;
     deny("AVATAR_INVALID");
   }
   if (encoded.length > MAX_JPEG) deny("AVATAR_TOO_LARGE", 413);
@@ -2750,7 +2750,7 @@ function sanitizeAvatar(value) {
 }
 
 // server-access/bff/account-control.mjs
-import { createHash as createHash5, createHmac as createHmac2, randomBytes as randomBytes2 } from "node:crypto";
+import { createHash as createHash6, createHmac as createHmac2, randomBytes as randomBytes2 } from "node:crypto";
 
 // server-access/bff/media-http2.mjs
 import http2 from "node:http2";
@@ -2760,11 +2760,11 @@ import tls from "node:tls";
 import { openSync, readSync, closeSync } from "node:fs";
 var number = (value) => Number.isSafeInteger(value) && value >= 0 && value <= 4294967295 ? value : 0;
 var WIRE_FIELDS = Object.freeze(["v", "tcp", "tls", "finished", "written", "read", "writeq", "h2q", "kernel", "ktx", "krx", "kstate", "retrans"]);
-function parseOwnTCPRow(text5, port, remotePort = 443) {
-  if (typeof text5 !== "string" || text5.length > 65536 || !Number.isInteger(port) || port < 1 || port > 65535 || !Number.isInteger(remotePort) || remotePort < 1 || remotePort > 65535) return null;
+function parseOwnTCPRow(text7, port, remotePort = 443) {
+  if (typeof text7 !== "string" || text7.length > 65536 || !Number.isInteger(port) || port < 1 || port > 65535 || !Number.isInteger(remotePort) || remotePort < 1 || remotePort > 65535) return null;
   const suffix = ":" + port.toString(16).padStart(4, "0").toUpperCase();
   const remoteSuffix = ":" + remotePort.toString(16).padStart(4, "0").toUpperCase();
-  const matches = text5.split("\n").map((v) => v.trim().split(/\s+/)).filter((v) => v[1]?.endsWith(suffix) && v[2]?.endsWith(remoteSuffix));
+  const matches = text7.split("\n").map((v) => v.trim().split(/\s+/)).filter((v) => v[1]?.endsWith(suffix) && v[2]?.endsWith(remoteSuffix));
   if (matches.length !== 1) return null;
   const row = matches[0];
   if (!/^[0-9A-F]{2}$/i.test(row[3]) || !/^([0-9A-F]{8}):([0-9A-F]{8})$/i.test(row[4]) || !/^[0-9A-F]{8}$/i.test(row[6])) return null;
@@ -2785,9 +2785,9 @@ function socketProgress(socket, state, session, stream) {
       let fd;
       try {
         fd = openSync("/proc/net/tcp", "r");
-        const bytes = Buffer.alloc(65536), size = readSync(fd, bytes, 0, bytes.length, null);
-        if (size < bytes.length) {
-          const row = parseOwnTCPRow(bytes.subarray(0, size).toString("ascii"), socket.localPort, socket.remotePort);
+        const bytes2 = Buffer.alloc(65536), size = readSync(fd, bytes2, 0, bytes2.length, null);
+        if (size < bytes2.length) {
+          const row = parseOwnTCPRow(bytes2.subarray(0, size).toString("ascii"), socket.localPort, socket.remotePort);
           if (row) Object.assign(out, row);
         }
       } catch {
@@ -2813,7 +2813,7 @@ var path = "/api/v2/account/internal/control";
 var hostname = new URL(WORKER_ORIGIN).hostname;
 var inputError = () => Object.assign(Error("MEDIA_TRANSPORT_INPUT"), { code: "NEXUS_MEDIA_INPUT" });
 var networkCodes = /* @__PURE__ */ new Set(["ENOTFOUND", "EAI_AGAIN", "ECONNRESET", "EPIPE", "ENETUNREACH", "EHOSTUNREACH", "ECONNREFUSED", "ETIMEDOUT", "ABORT_ERR", "DEPTH_ZERO_SELF_SIGNED_CERT", "SELF_SIGNED_CERT_IN_CHAIN", "UNABLE_TO_VERIFY_LEAF_SIGNATURE", "UNABLE_TO_GET_ISSUER_CERT_LOCALLY", "ERR_TLS_CERT_ALTNAME_INVALID", "CERT_HAS_EXPIRED", "NEXUS_MEDIA_H2_REQUIRED", "ERR_HTTP2_SESSION_ERROR", "ERR_HTTP2_STREAM_ERROR", "ERR_HTTP2_GOAWAY_SESSION"]);
-var failed = (error2, state) => Object.assign(Error("MEDIA_TRANSPORT_FAILED", { cause: { code: networkCodes.has(error2?.code) ? error2.code : "NEXUS_NATIVE_NETWORK" } }), { nexusPhase: !state.tcp ? state.lookup ? "tcp" : "dns" : !state.tls ? "tls" : !state.finished ? "upload" : "response" });
+var failed = (error3, state) => Object.assign(Error("MEDIA_TRANSPORT_FAILED", { cause: { code: networkCodes.has(error3?.code) ? error3.code : "NEXUS_NATIVE_NETWORK" } }), { nexusPhase: !state.tcp ? state.lookup ? "tcp" : "dns" : !state.tls ? "tls" : !state.finished ? "upload" : "response" });
 function requestMediaHTTP2(url, options) {
   if (url !== WORKER_ORIGIN + path || options?.method !== "POST" || options.credentials !== "omit" || options.cache !== "no-store" || options.redirect !== "error" || typeof options.body !== "string" || !(options.signal instanceof AbortSignal)) return Promise.reject(inputError());
   const body = Buffer.from(options.body), headers = options.headers;
@@ -2834,8 +2834,8 @@ function requestMediaHTTP2(url, options) {
       session?.destroy();
       socket?.destroy();
     };
-    const stop = (error2) => {
-      const safe = failed(error2, state);
+    const stop = (error3) => {
+      const safe = failed(error3, state);
       if (options.captureWire === true) safe.nexusWire = capture();
       if (!resolved) {
         reject3(safe);
@@ -2851,8 +2851,8 @@ function requestMediaHTTP2(url, options) {
     try {
       session = http2.connect(WORKER_ORIGIN, { maxHeaderListPairs: 32, maxSessionMemory: 16, settings: { enablePush: false, maxHeaderListSize: 16384 }, createConnection: () => {
         socket = tls.connect({ host: hostname, port: 443, servername: hostname, ALPNProtocols: ["h2"], rejectUnauthorized: true, family: 4, autoSelectFamily: false });
-        socket.once("lookup", (error2) => {
-          if (!error2) state.lookup = true;
+        socket.once("lookup", (error3) => {
+          if (!error3) state.lookup = true;
         });
         socket.once("connect", () => {
           state.tcp = true;
@@ -2930,8 +2930,8 @@ function requestMediaHTTP2(url, options) {
                       controller.close();
                       destroy();
                     } else controller.enqueue(part.value);
-                  } catch (error2) {
-                    if (!cancelled) controller.error(failed(error2, state));
+                  } catch (error3) {
+                    if (!cancelled) controller.error(failed(error3, state));
                     destroy();
                   }
                 },
@@ -2947,8 +2947,8 @@ function requestMediaHTTP2(url, options) {
               resolve({ status: incoming[":status"], redirected: false, headers: forwarded, body: web, nativeEncodingRejected: forwarded.has("content-encoding") && forwarded.get("content-encoding") !== "identity", get nexusWire() {
                 return lastWire;
               } });
-            } catch (error2) {
-              stop(error2);
+            } catch (error3) {
+              stop(error3);
             }
           });
           let offset = 0;
@@ -2960,21 +2960,21 @@ function requestMediaHTTP2(url, options) {
             }
             const end = Math.min(offset + 1024, body.length), chunk = body.subarray(offset, end);
             offset = end;
-            stream.write(chunk, (error2) => {
-              if (error2) {
-                stop(error2);
+            stream.write(chunk, (error3) => {
+              if (error3) {
+                stop(error3);
                 return;
               }
               if (!stopped && !stream.destroyed && !options.signal.aborted) sendTimer = setTimeout(send, 2);
             });
           };
           send();
-        } catch (error2) {
-          stop(error2);
+        } catch (error3) {
+          stop(error3);
         }
       });
-    } catch (error2) {
-      stop(error2);
+    } catch (error3) {
+      stop(error3);
     }
   });
 }
@@ -3070,9 +3070,9 @@ function validateToken(token) {
 }
 function jwtJSON(segment) {
   requireThat(typeof segment === "string" && segment.length > 0 && /^[A-Za-z0-9_-]+$/.test(segment));
-  const bytes = Buffer.from(segment, "base64url");
-  requireThat(bytes.toString("base64url") === segment);
-  const value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  const bytes2 = Buffer.from(segment, "base64url");
+  requireThat(bytes2.toString("base64url") === segment);
+  const value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes2));
   requireThat(plain(value));
   return value;
 }
@@ -3080,14 +3080,14 @@ async function googleProfile(token, config, nonce, fetchImpl) {
   requireThat(typeof token.id_token === "string" && token.id_token.length <= 16384);
   const pieces = token.id_token.split(".");
   requireThat(pieces.length === 3);
-  const header = jwtJSON(pieces[0]), claims = jwtJSON(pieces[1]);
-  requireThat(header.alg === "RS256" && text3(header.kid, 128) && Object.keys(header).every((key2) => ["alg", "kid", "typ"].includes(key2)) && (header.typ === void 0 || header.typ === "JWT"));
+  const header2 = jwtJSON(pieces[0]), claims = jwtJSON(pieces[1]);
+  requireThat(header2.alg === "RS256" && text3(header2.kid, 128) && Object.keys(header2).every((key2) => ["alg", "kid", "typ"].includes(key2)) && (header2.typ === void 0 || header2.typ === "JWT"));
   requireThat(/^[A-Za-z0-9_-]+$/.test(pieces[2]));
   const signature = Buffer.from(pieces[2], "base64url");
   requireThat(signature.toString("base64url") === pieces[2]);
   const jwks = await json(fetchImpl, "https://www.googleapis.com/oauth2/v3/certs", { method: "GET", headers: { accept: "application/json" } });
   requireThat(Array.isArray(jwks.keys) && jwks.keys.length > 0 && jwks.keys.length <= 20);
-  const candidates = jwks.keys.filter((key2) => key2?.kid === header.kid);
+  const candidates = jwks.keys.filter((key2) => key2?.kid === header2.kid);
   requireThat(candidates.length === 1);
   const jwk = candidates[0];
   requireThat(jwk.kty === "RSA" && (jwk.use === void 0 || jwk.use === "sig") && (jwk.alg === void 0 || jwk.alg === "RS256") && text3(jwk.n, 2048) && text3(jwk.e, 16) && !Object.hasOwn(jwk, "d"));
@@ -3134,10 +3134,592 @@ async function exchangeOAuthProfile({ provider, env, code, state, deviceId, code
   return { issuer: "https://id.vk.ru", subject: tokenSubject, email: email(data.user.email), emailVerified: false, displayName: display([data.user.first_name, data.user.last_name].filter((x) => typeof x === "string").join(" "), "\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C VK") };
 }
 
+// server-access/bff/assessment.mjs
+import { Buffer as Buffer4 } from "node:buffer";
+import { createHash as createHash5 } from "node:crypto";
+
+// sandbox/code-workspace.js
+var normalizePath = (value) => {
+  const raw = String(value || "").trim().replace(/\\/g, "/").replace(/^\.\//, "");
+  if (!raw) return "main.cpp";
+  const parts = [];
+  for (const part of raw.split("/")) {
+    if (!part || part === ".") continue;
+    if (part === "..") {
+      parts.pop();
+      continue;
+    }
+    parts.push(part.replace(/[\0<>:"|?*]/g, "_"));
+  }
+  return parts.join("/") || "main.cpp";
+};
+var inferLanguageFromPath = (path6) => {
+  const ext = (String(path6).split(".").pop() || "").toLowerCase();
+  if (["cc", "cpp", "cxx", "c++", "hpp", "hh", "hxx", "h++"].includes(ext)) return "cpp";
+  if (ext === "c" || ext === "h") return "c";
+  if (ext === "py") return "python";
+  if (["js", "mjs", "cjs"].includes(ext)) return "javascript";
+  if (["ts", "tsx"].includes(ext)) return "typescript";
+  if (ext === "rs") return "rust";
+  if (ext === "go") return "go";
+  if (ext === "java") return "java";
+  if (ext === "cs") return "csharp";
+  return null;
+};
+var normalizedSeed = (files, safeEntry, languageId) => {
+  const source = Array.isArray(files) && files.length ? files : [{ path: safeEntry, content: "" }];
+  const out = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const item of source) {
+    const path6 = normalizePath(item?.path || safeEntry);
+    if (seen.has(path6)) continue;
+    seen.add(path6);
+    out.push({ path: path6, content: String(item?.content ?? ""), languageId: item?.languageId || inferLanguageFromPath(path6) || languageId, readOnly: Boolean(item?.readOnly) });
+  }
+  if (!seen.has(safeEntry)) out.unshift({ path: safeEntry, content: "", languageId: inferLanguageFromPath(safeEntry) || languageId, readOnly: false });
+  return out;
+};
+function createCodeWorkspace({ languageId = "cpp", entryFile = "main.cpp", files = null, activeFile = null } = {}) {
+  const map = /* @__PURE__ */ new Map();
+  const listeners = /* @__PURE__ */ new Set();
+  const safeEntry = normalizePath(entryFile);
+  for (const file of normalizedSeed(files, safeEntry, languageId)) map.set(file.path, file);
+  let active = map.has(normalizePath(activeFile || "")) ? normalizePath(activeFile) : safeEntry;
+  let revision = 0;
+  const emit = (type, payload = {}) => {
+    revision++;
+    const snapshot = api.snapshot();
+    for (const fn of listeners) fn({ type, payload, revision, snapshot });
+  };
+  const get = (path6) => map.get(normalizePath(path6));
+  const api = {
+    get languageId() {
+      return languageId;
+    },
+    get entryFile() {
+      return safeEntry;
+    },
+    get activeFile() {
+      return active;
+    },
+    get revision() {
+      return revision;
+    },
+    listFiles() {
+      return [...map.values()].map((file) => ({ ...file }));
+    },
+    getFile(path6 = active) {
+      const file = get(path6);
+      return file ? { ...file } : null;
+    },
+    hasFile(path6) {
+      return map.has(normalizePath(path6));
+    },
+    addFile(path6, content2 = "", options = {}) {
+      const safe = normalizePath(path6);
+      if (map.has(safe)) throw new Error(`Workspace file already exists: ${safe}`);
+      map.set(safe, { path: safe, content: String(content2), languageId: options.languageId || inferLanguageFromPath(safe) || languageId, readOnly: Boolean(options.readOnly) });
+      emit("file-added", { path: safe });
+      return api.getFile(safe);
+    },
+    removeFile(path6) {
+      const safe = normalizePath(path6);
+      if (safe === safeEntry) throw new Error("The workspace entry file cannot be removed.");
+      const removed = map.delete(safe);
+      if (!removed) return false;
+      if (active === safe) active = safeEntry;
+      emit("file-removed", { path: safe });
+      return true;
+    },
+    renameFile(path6, nextPath) {
+      const safe = normalizePath(path6), next = normalizePath(nextPath);
+      const file = map.get(safe);
+      if (!file) throw new Error(`Workspace file not found: ${safe}`);
+      if (map.has(next) && next !== safe) throw new Error(`Workspace file already exists: ${next}`);
+      if (safe === safeEntry) throw new Error("The workspace entry file cannot be renamed.");
+      map.delete(safe);
+      map.set(next, { ...file, path: next, languageId: inferLanguageFromPath(next) || file.languageId });
+      if (active === safe) active = next;
+      emit("file-renamed", { from: safe, to: next });
+      return api.getFile(next);
+    },
+    setActiveFile(path6) {
+      const safe = normalizePath(path6);
+      if (!map.has(safe)) throw new Error(`Workspace file not found: ${safe}`);
+      if (active === safe) return api.getFile(safe);
+      active = safe;
+      emit("active-file", { path: safe });
+      return api.getFile(safe);
+    },
+    updateFile(path6, content2) {
+      const safe = normalizePath(path6), file = map.get(safe);
+      if (!file) throw new Error(`Workspace file not found: ${safe}`);
+      if (file.readOnly) throw new Error(`Workspace file is read-only: ${safe}`);
+      const next = String(content2 ?? "");
+      if (file.content === next) return api.getFile(safe);
+      map.set(safe, { ...file, content: next });
+      emit("file-updated", { path: safe });
+      return api.getFile(safe);
+    },
+    setActiveContent(content2) {
+      return api.updateFile(active, content2);
+    },
+    replaceFiles(files2, { activeFile: activeFile2 = safeEntry } = {}) {
+      map.clear();
+      for (const file of normalizedSeed(files2, safeEntry, languageId)) map.set(file.path, file);
+      const requested = normalizePath(activeFile2);
+      active = map.has(requested) ? requested : safeEntry;
+      emit("workspace-replaced", { activeFile: active });
+      return api.snapshot();
+    },
+    applyRuntimeFiles(files2, base = {}) {
+      const entries = Object.entries(files2 || {});
+      let total = 0;
+      if (entries.length > 128) throw Error("RUNTIME_FILE_QUOTA");
+      for (const [path6, content2] of entries) {
+        if (!path6 || path6.length > 256 || /[\\\x00-\x1f:]/.test(path6) || path6.startsWith("/") || path6.split("/").some((p) => !p || [".", "..", "__proto__", "constructor", "prototype", ".runno"].includes(p))) throw Error("RUNTIME_FILE_PATH_INVALID");
+        if (typeof content2 !== "string" || inferLanguageFromPath(path6) || path6 === safeEntry || map.get(path6)?.readOnly) throw Error("RUNTIME_FILE_PROTECTED");
+        const bytes2 = new TextEncoder().encode(content2).length;
+        total += bytes2;
+        if (bytes2 > 512 * 1024 || total > 2 * 1024 * 1024) throw Error("RUNTIME_FILE_QUOTA");
+        if (map.has(path6) ? !Object.hasOwn(base, path6) || map.get(path6).content !== base[path6] : Object.hasOwn(base, path6)) throw Error("RUNTIME_FILE_CONFLICT");
+      }
+      for (const [path6, content2] of entries) map.set(path6, { ...map.get(path6) || { path: path6, languageId, readOnly: false }, content: content2 });
+      if (entries.length) emit("runtime-files-applied", { paths: entries.map(([p]) => p) });
+      return api.snapshot();
+    },
+    runtimeFiles() {
+      return Object.fromEntries([...map.values()].map((file) => [file.path, file.content]));
+    },
+    runtimeRequest(stdin = "") {
+      const entry = map.get(safeEntry);
+      return { languageId, source: String(entry?.content ?? ""), stdin: String(stdin ?? ""), files: api.runtimeFiles(), entryFile: safeEntry, metadata: { entryFile: safeEntry, activeFile: active, workspaceRevision: revision } };
+    },
+    subscribe(fn) {
+      if (typeof fn !== "function") return () => {
+      };
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    },
+    snapshot() {
+      return { languageId, entryFile: safeEntry, activeFile: active, revision, files: [...map.values()].map((file) => ({ ...file })) };
+    },
+    serialize() {
+      return JSON.stringify(api.snapshot());
+    }
+  };
+  return api;
+}
+
+// sandbox/virtual-files.js
+var safePath = (value) => String(value || "").trim().replace(/\\/g, "/").replace(/^\/+/, "").replace(/^\.\//, "");
+function normalizeVirtualFilePath(value) {
+  const raw = safePath(value);
+  if (!raw) return "";
+  const parts = [];
+  for (const part of raw.split("/")) {
+    if (!part || part === ".") continue;
+    if (part === "..") continue;
+    parts.push(part);
+  }
+  return parts.join("/");
+}
+function flatFilesToVirtualTree(files = {}) {
+  const root = {};
+  for (const [name, value] of Object.entries(files || {})) {
+    const safe = normalizeVirtualFilePath(name);
+    if (!safe) continue;
+    const parts = safe.split("/");
+    let node = root;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i];
+      const current = node[part];
+      if (current instanceof Uint8Array || typeof current === "string") throw new Error(`Virtual filesystem path conflicts with file: ${parts.slice(0, i + 1).join("/")}`);
+      node = current && typeof current === "object" ? current : node[part] = {};
+    }
+    const leaf = parts.at(-1);
+    if (node[leaf] && typeof node[leaf] === "object" && !(node[leaf] instanceof Uint8Array)) throw new Error(`Virtual filesystem path conflicts with directory: ${safe}`);
+    node[leaf] = value;
+  }
+  return root;
+}
+
+// project-studio/project-transfer.js
+var IMPORT_LIMITS = Object.freeze({ files: 64, fileBytes: 262144, totalBytes: 1048576, jsonBytes: 2097152 });
+var bytes = (s) => new TextEncoder().encode(s).length;
+var bad2 = (code) => {
+  throw Object.assign(Error(code), { code });
+};
+function strictProjectPath(value) {
+  if (typeof value !== "string" || !value || value.length > 240 || value !== value.normalize("NFC") || /^[/.\\]|[\\\u0000-\u001f\u007f<>:"|?*]/.test(value)) bad2("PATH");
+  if (value.split("/").some((p) => !p || [".", "..", "__proto__", "constructor", "prototype"].includes(p) || p !== p.trim())) bad2("PATH");
+  return value;
+}
+function validateProjectWorkspace(value) {
+  if (!value || value.languageId !== void 0 && value.languageId !== "cpp" || !Array.isArray(value.files) || !value.files.length || value.files.length > IMPORT_LIMITS.files) bad2("FORMAT");
+  const seen = /* @__PURE__ */ new Set();
+  let total = 0;
+  const files = value.files.map((file) => {
+    const path6 = strictProjectPath(file?.path);
+    if (seen.has(path6)) bad2("DUPLICATE");
+    seen.add(path6);
+    if (typeof file.content !== "string" || file.content.includes("\0")) bad2("FORMAT");
+    const n = bytes(file.content);
+    if (n > IMPORT_LIMITS.fileBytes || (total += n) > IMPORT_LIMITS.totalBytes) bad2("SIZE");
+    if (!/\.(cpp|cc|cxx|c\+\+|h|hpp|hh|hxx|txt|md|json)$/i.test(path6)) bad2("FORMAT");
+    return { path: path6, content: file.content, languageId: "cpp", readOnly: false };
+  });
+  const entry = strictProjectPath(value.entryFile || chooseEntry(files));
+  if (!seen.has(entry) || !/\.(cpp|cc|cxx|c\+\+)$/i.test(entry)) bad2("ENTRY");
+  try {
+    flatFilesToVirtualTree(Object.fromEntries(files.map((f) => [f.path, f.content])));
+  } catch {
+    bad2("PATH_CONFLICT");
+  }
+  const active = value.activeFile && seen.has(value.activeFile) ? value.activeFile : entry;
+  return createCodeWorkspace({ languageId: "cpp", entryFile: entry, activeFile: active, files }).snapshot();
+}
+function chooseEntry(files) {
+  const mains = files.filter((f) => /(^|\/)main\.(cpp|cc|cxx|c\+\+)$/i.test(f.path));
+  if (mains.length === 1) return mains[0].path;
+  const cpp = files.filter((f) => /\.(cpp|cc|cxx|c\+\+)$/i.test(f.path));
+  if (cpp.length === 1) return cpp[0].path;
+  bad2("ENTRY");
+}
+
+// course-final/automatic-policy.js
+var AUTOMATIC_POLICY = "automatic-self-study-v1";
+var AUTOMATIC_PROFILE = "nexus-cpp-final-checks-v1";
+var THEORY_IDS = Object.freeze([...Array.from({ length: 12 }, (_, i) => "C" + String(i + 1).padStart(2, "0")), ...Array.from({ length: 8 }, (_, i) => "D" + String(i + 1).padStart(2, "0"))]);
+var PRACTICAL_CHECKS = Object.freeze({
+  P1: Object.freeze({ build: 3, validRecords: 3, boundaries: 3, invalidRecords: 3, atomicFailure: 3 }),
+  P2: Object.freeze({ build: 3, indexOrder: 3, knownKey: 3, absentKey: 3, duplicates: 3 }),
+  P3: Object.freeze({ build: 3, independentOwnership: 3, moveReuse: 3, invalidReplacement: 3, atomicFailure: 3 }),
+  P4: Object.freeze({ build: 3, guiAction: 3, rejectedAction: 3, saveRoundTrip: 3, atomicLoad: 3 })
+});
+var PROJECT_CHECKS = Object.freeze(Object.fromEntries([
+  "build",
+  "createValid",
+  "createBoundary",
+  "rejectInvalid",
+  "rejectDuplicate",
+  "actionValid",
+  "actionBoundary",
+  "rejectActionAtomic",
+  "unknownIdAtomic",
+  "stableOrder",
+  "filterSubset",
+  "filterRestores",
+  "saveRoundTrip",
+  "badLoadAtomic",
+  "futureVersionAtomic",
+  "guiAdd",
+  "guiAction",
+  "guiReject",
+  "guiRestore",
+  "portableRoundTrip"
+].map((id2) => [id2, 5])));
+var DEFENSE_CHECKS = Object.freeze({ build: 25, newBehavior: 25, boundary: 25, regression: 25 });
+var PROJECT_REQUIRED = Object.freeze(["build", "rejectActionAtomic", "unknownIdAtomic", "saveRoundTrip", "badLoadAtomic", "futureVersionAtomic", "guiAdd", "guiAction", "guiReject", "guiRestore", "portableRoundTrip"]);
+var DEFENSE_CHALLENGES = Object.freeze({ taskflow: "taskflow.reopen.v1", finance: "finance.transfer-limit.v1", logscope: "logscope.component-filter.v1" });
+var exact3 = (o, keys) => !!o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).length === keys.length && keys.every((k) => Object.hasOwn(o, k));
+var hash = (h) => typeof h === "string" && /^[a-f0-9]{64}$/.test(h);
+var fail2 = () => {
+  throw Object.assign(Error("ASSESSMENT_AUTOMATIC_INVALID"), { code: "ASSESSMENT_AUTOMATIC_INVALID" });
+};
+function checks(value, maxima) {
+  if (!exact3(value, Object.keys(maxima)) || Object.values(value).some((v) => typeof v !== "boolean")) fail2();
+  return value;
+}
+function observation(value, maxima) {
+  if (value === null) return null;
+  if (!exact3(value, ["sourceHash", "checks"]) || !hash(value.sourceHash)) fail2();
+  checks(value.checks, maxima);
+  return value;
+}
+function validateAutomaticEvidence(value, { trackId, validateSource }) {
+  if (!exact3(value, ["profile", "practical", "project", "defense"]) || value.profile !== AUTOMATIC_PROFILE || !exact3(value.practical, Object.keys(PRACTICAL_CHECKS))) fail2();
+  for (const [id2, maxima] of Object.entries(PRACTICAL_CHECKS)) observation(value.practical[id2], maxima);
+  observation(value.project, PROJECT_CHECKS);
+  const d = value.defense;
+  if (d !== null) {
+    if (!exact3(d, ["source", "sourceHash", "baselineHash", "challengeId", "checks"]) || !hash(d.sourceHash) || !hash(d.baselineHash) || d.challengeId !== DEFENSE_CHALLENGES[trackId]) fail2();
+    validateSource(d.source);
+    checks(d.checks, DEFENSE_CHECKS);
+  }
+  return value;
+}
+var emptyChecks = (maxima) => Object.fromEntries(Object.keys(maxima).map((k) => [k, false]));
+function stableJSON(value) {
+  if (Array.isArray(value)) return "[" + value.map(stableJSON).join(",") + "]";
+  if (value && typeof value === "object") return "{" + Object.keys(value).sort().map((k) => JSON.stringify(k) + ":" + stableJSON(value[k])).join(",") + "}";
+  return JSON.stringify(value);
+}
+function sourceIdentity(project, { codeOnly = false } = {}) {
+  const files = project.workspace.files.filter((f) => !codeOnly || /\.(?:c|cc|cpp|cxx|h|hh|hpp|hxx)$/i.test(f.path)).map((f) => ({ path: f.path, content: f.content })).sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+  return stableJSON(codeOnly ? files : { entryFile: project.workspace.entryFile, files, manifest: project.manifest });
+}
+function validAutomaticResult(value) {
+  try {
+    if (!exact3(value, ["exam", "project", "defense", "weighted", "status", "policyVersion", "empiricallyValidated", "authority", "credentialEligible", "theoryVerifiedServer", "codeVerifiedServer", "breakdown", "blockingReasons"]) || !exact3(value.breakdown, ["theory", "practical", "practicalChecks", "project", "defense"]) || !exact3(value.breakdown.theory, THEORY_IDS) || Object.values(value.breakdown.theory).some((n) => n !== 0 && n !== 2) || !exact3(value.breakdown.practical, Object.keys(PRACTICAL_CHECKS)) || !exact3(value.breakdown.practicalChecks, Object.keys(PRACTICAL_CHECKS))) return false;
+    for (const [id2, points] of Object.entries(value.breakdown.practical)) {
+      const out = checks(value.breakdown.practicalChecks[id2], PRACTICAL_CHECKS[id2]), expected = out.build ? Object.entries(PRACTICAL_CHECKS[id2]).reduce((sum, [key, max]) => sum + (out[key] ? max : 0), 0) : 0;
+      if (points !== expected) return false;
+    }
+    checks(value.breakdown.project, PROJECT_CHECKS);
+    checks(value.breakdown.defense, DEFENSE_CHECKS);
+    const exam = Object.values(value.breakdown.theory).reduce((a, b) => a + b, 0) + Object.values(value.breakdown.practical).reduce((a, b) => a + b, 0), project = value.breakdown.project.build ? Object.values(value.breakdown.project).filter(Boolean).length * 5 : 0;
+    const changed = Array.isArray(value.blockingReasons) && !value.blockingReasons.includes("defense-code-unchanged");
+    const defense = changed && value.breakdown.defense.build ? Object.values(value.breakdown.defense).filter(Boolean).length * 25 : 0;
+    const allowed = ["exam-theory-minimum", ...Object.keys(PRACTICAL_CHECKS).map((k) => "exam-" + k + "-minimum"), "practical-gui-build", ...PROJECT_REQUIRED.map((k) => "project-" + k), "defense-code-unchanged", "defense-control-change", "defense-boundary", "defense-regression"];
+    if (!Array.isArray(value.blockingReasons) || value.blockingReasons.length > allowed.length || new Set(value.blockingReasons).size !== value.blockingReasons.length || value.blockingReasons.some((k) => !allowed.includes(k))) return false;
+    for (const k of PROJECT_REQUIRED) if (value.blockingReasons.includes("project-" + k) === value.breakdown.project[k]) return false;
+    if (value.blockingReasons.includes("exam-theory-minimum") !== Object.values(value.breakdown.theory).reduce((a, b) => a + b, 0) < 24) return false;
+    if (value.blockingReasons.includes("practical-gui-build") === value.breakdown.practicalChecks.P4.build) return false;
+    for (const [k, n] of Object.entries(value.breakdown.practical)) if (value.blockingReasons.includes("exam-" + k + "-minimum") !== n < 9) return false;
+    for (const [k, reason] of Object.entries({ newBehavior: "defense-control-change", boundary: "defense-boundary", regression: "defense-regression" })) if (value.blockingReasons.includes(reason) === value.breakdown.defense[k]) return false;
+    const status = exam >= 60 && project >= 60 && defense >= 60 && value.blockingReasons.length === 0 ? "passed" : "requires-revision";
+    return value.exam === exam && value.project === project && value.defense === defense && value.weighted === Math.round((0.4 * exam + 0.5 * project + 0.1 * defense) * 100) / 100 && value.status === status && value.policyVersion === AUTOMATIC_POLICY && value.empiricallyValidated === false && value.authority === "automatic-self-study" && value.credentialEligible === false && value.theoryVerifiedServer === true && value.codeVerifiedServer === false;
+  } catch {
+    return false;
+  }
+}
+
+// course-final/contract.js
+var ASSESSMENT_ID = "cpp.course-final.v1";
+var TASK_VERSION = "1.0.0";
+var RUBRIC_VERSION = "1.0.0";
+var FINAL_LIMITS = Object.freeze({ chunkBytes: 32768, bundleBytes: 6 * 1024 * 1024, uploadsPerAttempt: 8, answerChars: 12e3, totalAnswerChars: 64e3, reportChars: 16e3, ownerBytes: 24 * 1024 * 1024, globalBytes: 128 * 1024 * 1024 });
+var PROJECT_RUBRIC = Object.freeze({ correctness: 30, tests: 20, resources: 15, design: 15, algorithms: 10, reproducibility: 10 });
+var DEFENSE_RUBRIC = Object.freeze({ model: 30, diagnosis: 25, controlChange: 30, tradeoffs: 15 });
+var QUESTION_MAX = Object.freeze(Object.fromEntries([...Array.from({ length: 12 }, (_, i) => ["C" + String(i + 1).padStart(2, "0"), 2]), ...Array.from({ length: 8 }, (_, i) => ["D" + String(i + 1).padStart(2, "0"), 2]), ...Array.from({ length: 4 }, (_, i) => ["P" + (i + 1), 15])]));
+var TRACK_IDS = Object.freeze(["taskflow", "finance", "logscope"]);
+var fail3 = (code) => {
+  throw Object.assign(Error(code), { code });
+};
+var exact4 = (x, keys) => x && typeof x === "object" && !Array.isArray(x) && Object.keys(x).length === keys.length && keys.every((k) => Object.hasOwn(x, k));
+var text4 = (x, max, min = 0) => typeof x === "string" && x.length >= min && x.length <= max && !x.includes("\0");
+function submissionProject(value) {
+  if (!exact4(value, ["title", "workspace", "manifest"]) || !text4(value.title, 120, 1) || !exact4(value.manifest, ["sourceRoots", "includeRoots", "testRoots"])) fail3("ASSESSMENT_BUNDLE_INVALID");
+  const workspace = validateProjectWorkspace(value.workspace);
+  for (const roots of Object.values(value.manifest)) if (!Array.isArray(roots) || roots.length > 64 || roots.some((p) => typeof p !== "string" || !p || p.split("/").some((x) => ["", "..", "__proto__", "constructor", "prototype"].includes(x)) || /^[\\/]|[\\\0-\x1f:]/.test(p))) fail3("ASSESSMENT_BUNDLE_INVALID");
+  return { title: value.title, workspace, manifest: value.manifest };
+}
+function validateSubmissionBundle(bundle, { variant, trackId, mode = "automatic" }) {
+  const automatic = mode === "automatic";
+  if (!automatic && mode !== "expert") fail3("ASSESSMENT_BUNDLE_INVALID");
+  if (!exact4(bundle, ["schemaVersion", "assessmentId", "taskVersion", "rubricVersion", "variant", "answers", "practical", "project", "report", ...automatic ? ["automatic"] : []]) || bundle.schemaVersion !== (automatic ? 2 : 1) || bundle.assessmentId !== ASSESSMENT_ID || bundle.taskVersion !== TASK_VERSION || bundle.rubricVersion !== RUBRIC_VERSION || bundle.variant !== variant || !["A", "B", "C"].includes(variant) || !TRACK_IDS.includes(trackId) || !text4(bundle.report, FINAL_LIMITS.reportChars)) fail3("ASSESSMENT_BUNDLE_INVALID");
+  const keys = Object.keys(QUESTION_MAX).filter((id2) => !id2.startsWith("P"));
+  if (!exact4(bundle.answers, keys)) fail3("ASSESSMENT_BUNDLE_INVALID");
+  let chars = 0;
+  for (const answer of Object.values(bundle.answers)) {
+    const reflection = automatic ? answer?.reflection : answer;
+    if (automatic && (!exact4(answer, ["optionId", "reflection"]) || answer.optionId !== null && !["o1", "o2", "o3", "o4"].includes(answer.optionId))) fail3("ASSESSMENT_BUNDLE_INVALID");
+    if (!text4(reflection, FINAL_LIMITS.answerChars) || (chars += reflection.length) > FINAL_LIMITS.totalAnswerChars) fail3("ASSESSMENT_BUNDLE_INVALID");
+  }
+  if (!exact4(bundle.practical, ["P1", "P2", "P3", "P4"]) || !exact4(bundle.project, ["trackId", "source"]) || bundle.project.trackId !== trackId) fail3("ASSESSMENT_BUNDLE_INVALID");
+  for (const p of Object.values(bundle.practical)) if (p !== null) submissionProject(p);
+  if (bundle.project.source !== null) submissionProject(bundle.project.source);
+  if (automatic) {
+    if (!exact4(bundle.answers, THEORY_IDS)) fail3("ASSESSMENT_BUNDLE_INVALID");
+    validateAutomaticEvidence(bundle.automatic, { trackId, validateSource: submissionProject });
+    for (const key of Object.keys(bundle.practical)) if (bundle.automatic.practical[key] !== null && bundle.practical[key] === null) fail3("ASSESSMENT_BUNDLE_INVALID");
+    if (bundle.automatic.project !== null && bundle.project.source === null || bundle.automatic.defense !== null && bundle.project.source === null) fail3("ASSESSMENT_BUNDLE_INVALID");
+  }
+  const serialized = JSON.stringify(bundle);
+  if (new TextEncoder().encode(serialized).length > FINAL_LIMITS.bundleBytes) fail3("ASSESSMENT_BUNDLE_TOO_LARGE");
+  if (/(?:nxs_|nxk_)[A-Za-z0-9_-]{24,256}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(serialized)) fail3("ASSESSMENT_SENSITIVE_DATA");
+  return bundle;
+}
+function scoreGroup(value, maxima) {
+  if (!exact4(value, Object.keys(maxima))) fail3("ASSESSMENT_REVIEW_INVALID");
+  let total = 0;
+  for (const [key, max] of Object.entries(maxima)) {
+    const n = value[key];
+    if (!Number.isFinite(n) || n < 0 || n > max || !Number.isInteger(n * 2)) fail3("ASSESSMENT_REVIEW_INVALID");
+    total += n;
+  }
+  return total;
+}
+function calculateReview(value) {
+  if (!exact4(value, ["exam", "project", "defense", "feedback", "defenseMode", "defenseEvidence", "guiObserved", "authorshipVerified", "controlChangeVerified", "blockingReasons"]) || !text4(value.feedback, 12e3, 20) || !text4(value.defenseEvidence, 4e3, 20) || !["live", "written"].includes(value.defenseMode) || ["guiObserved", "authorshipVerified", "controlChangeVerified"].some((k) => typeof value[k] !== "boolean") || !Array.isArray(value.blockingReasons) || value.blockingReasons.length > 8 || value.blockingReasons.some((s) => !text4(s, 1e3, 1))) fail3("ASSESSMENT_REVIEW_INVALID");
+  const exam = scoreGroup(value.exam, QUESTION_MAX), project = scoreGroup(value.project, PROJECT_RUBRIC), defense = scoreGroup(value.defense, DEFENSE_RUBRIC);
+  const weighted = Math.round((0.4 * exam + 0.5 * project + 0.1 * defense) * 100) / 100;
+  const passed = exam >= 60 && project >= 60 && defense >= 60 && value.guiObserved && value.authorshipVerified && value.controlChangeVerified && value.blockingReasons.length === 0;
+  return { exam, project, defense, weighted, status: passed ? "passed" : "requires-revision", policyVersion: "pilot-40-50-10-v1", empiricallyValidated: false };
+}
+
+// course-final/transport-contract.js
+var ASSESSMENT_PATH = "/api/v2/account/control/assessment";
+var ASSESSMENT_ERROR_CODES = Object.freeze(["ASSESSMENT_UNAVAILABLE", "ASSESSMENT_INPUT_INVALID", "ASSESSMENT_RESPONSE_INVALID", "ASSESSMENT_BUNDLE_INVALID", "ASSESSMENT_BUNDLE_TOO_LARGE", "ASSESSMENT_SENSITIVE_DATA", "ASSESSMENT_STATE_INVALID", "ASSESSMENT_INCOMPLETE", "ASSESSMENT_PART_INVALID", "ASSESSMENT_PART_CONFLICT", "ASSESSMENT_QUOTA", "ASSESSMENT_ATTEMPT_LIMIT", "ASSESSMENT_UPLOAD_LIMIT", "ASSESSMENT_PARENT_REQUIRED", "ASSESSMENT_SELF_REVIEW", "ASSESSMENT_REVIEW_INVALID", "ASSESSMENT_AUTOMATIC_INVALID", "ASSESSMENT_KEYS_UNAVAILABLE"]);
+var uuid2 = (value) => typeof value === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value);
+var hash2 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+var exact5 = (value, keys) => !!value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === keys.length && keys.every((k) => Object.hasOwn(value, k));
+var accountId = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value);
+var integer = (n, min, max) => Number.isSafeInteger(n) && n >= min && n <= max;
+var text5 = (v, max, min = 0) => typeof v === "string" && v.length >= min && v.length <= max && !v.includes("\0");
+var fail4 = () => {
+  throw Object.assign(Error("ASSESSMENT_INPUT_INVALID"), { code: "ASSESSMENT_INPUT_INVALID" });
+};
+var layouts = { capabilities: [], list: ["cursor"], queue: ["cursor"], unassigned: ["cursor"], detail: ["attemptId"], "review-detail": ["attemptId", "reviewId"], "appeal-detail": ["attemptId", "appealId"], open: ["requestId", "trackId", "parentAttemptId"], track: ["requestId", "attemptId", "expectedVersion", "trackId"], begin: ["requestId", "attemptId", "snapshotHash", "totalBytes", "chunkCount"], put: ["requestId", "attemptId", "uploadId", "index", "data", "sha256"], manifest: ["attemptId", "uploadId"], parts: ["attemptId", "uploadId", "offset"], submit: ["requestId", "attemptId", "uploadId"], checkpoint: ["requestId", "attemptId", "uploadId"], withdraw: ["requestId", "attemptId", "expectedVersion", "reason"], assign: ["requestId", "attemptId", "expectedVersion", "reviewerId"], review: ["requestId", "attemptId", "expectedVersion", "previousReviewId", "review"], appeal: ["requestId", "attemptId", "reviewId", "text"], interrupt: ["requestId", "attemptId", "expectedVersion", "reason"] };
+function validateAssessmentRequest(value) {
+  if (!value || !Object.hasOwn(layouts, value.phase) || !exact5(value, ["phase", ...layouts[value.phase]])) fail4();
+  for (const key of ["requestId", "attemptId", "uploadId", "reviewId", "appealId"]) if (Object.hasOwn(value, key) && !uuid2(value[key])) fail4();
+  for (const key of ["cursor", "parentAttemptId", "previousReviewId"]) if (Object.hasOwn(value, key) && value[key] !== null && !uuid2(value[key])) fail4();
+  if (Object.hasOwn(value, "reviewerId") && !accountId(value.reviewerId)) fail4();
+  if (Object.hasOwn(value, "expectedVersion") && !integer(value.expectedVersion, 1, 1e6)) fail4();
+  if (Object.hasOwn(value, "trackId") && !TRACK_IDS.includes(value.trackId)) fail4();
+  if (value.phase === "begin" && (!hash2(value.snapshotHash) || !integer(value.totalBytes, 1, FINAL_LIMITS.bundleBytes) || value.chunkCount !== Math.ceil(value.totalBytes / FINAL_LIMITS.chunkBytes))) fail4();
+  if (value.phase === "put" && (!integer(value.index, 0, 191) || !hash2(value.sha256) || typeof value.data !== "string" || value.data.length > 43692 || value.data.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value.data))) fail4();
+  if (value.phase === "parts" && !integer(value.offset, 0, 191)) fail4();
+  if (value.phase === "review") calculateReview(value.review);
+  if (value.phase === "appeal" && !text5(value.text, 4e3, 1)) fail4();
+  if (["interrupt", "withdraw"].includes(value.phase) && !text5(value.reason, 1e3, 1)) fail4();
+  return value;
+}
+function result(value) {
+  return value === null || validAutomaticResult(value) || exact5(value, ["exam", "project", "defense", "weighted", "status", "policyVersion", "empiricallyValidated"]) && [value.exam, value.project, value.defense, value.weighted].every((n) => Number.isFinite(n) && n >= 0 && n <= 100) && ["passed", "requires-revision"].includes(value.status) && value.policyVersion === "pilot-40-50-10-v1" && value.empiricallyValidated === false;
+}
+function validAttempt(a) {
+  return exact5(a, ["id", "accountId", "mode", "variant", "trackId", "ordinal", "parentAttemptId", "status", "reviewerId", "snapshotHash", "uploadId", "latestReviewId", "createdAt", "submittedAt", "version", "result", "interruptReason"]) && uuid2(a.id) && accountId(a.accountId) && ["automatic", "expert"].includes(a.mode) && ["A", "B", "C"].includes(a.variant) && TRACK_IDS.includes(a.trackId) && integer(a.ordinal, 1, 1e3) && (a.parentAttemptId === null || uuid2(a.parentAttemptId)) && ["draft", "submitted", "reviewed", "assessed", "interrupted"].includes(a.status) && (a.reviewerId === null || accountId(a.reviewerId)) && (a.snapshotHash === null || hash2(a.snapshotHash)) && (a.uploadId === null || uuid2(a.uploadId)) && (a.latestReviewId === null || uuid2(a.latestReviewId)) && text5(a.createdAt, 64, 1) && (a.submittedAt === null || text5(a.submittedAt, 64, 1)) && integer(a.version, 1, 1e6) && result(a.result) && (a.mode !== "automatic" || a.reviewerId === null && a.latestReviewId === null && (a.result === null || validAutomaticResult(a.result))) && (a.status !== "assessed" || a.mode === "automatic" && a.result !== null) && (a.interruptReason === null || text5(a.interruptReason, 1e3));
+}
+function upload(u) {
+  return exact5(u, ["id", "snapshotHash", "totalBytes", "chunkCount"]) && uuid2(u.id) && hash2(u.snapshotHash) && integer(u.totalBytes, 1, FINAL_LIMITS.bundleBytes) && u.chunkCount === Math.ceil(u.totalBytes / FINAL_LIMITS.chunkBytes);
+}
+function review(r) {
+  if (r === null) return true;
+  if (!exact5(r, ["id", "attemptId", "reviewerId", "previousReviewId", "rubric", "result", "createdAt"]) || !uuid2(r.id) || !uuid2(r.attemptId) || !accountId(r.reviewerId) || r.previousReviewId !== null && !uuid2(r.previousReviewId) || !text5(r.createdAt, 64, 1)) return false;
+  try {
+    return JSON.stringify(calculateReview(r.rubric)) === JSON.stringify(r.result);
+  } catch {
+    return false;
+  }
+}
+var appeal = (a) => a === null || exact5(a, ["id", "attemptId", "reviewId", "text", "createdAt"]) && uuid2(a.id) && uuid2(a.attemptId) && uuid2(a.reviewId) && text5(a.text, 4e3, 1) && text5(a.createdAt, 64, 1);
+function validateAssessmentDTO(data, phase, expected) {
+  let valid = false;
+  if (phase === "capabilities") valid = exact5(data, ["enabled", "assessmentId", "taskVersion", "rubricVersion", "canAssign", "canReview", "limits", "policy", "mode"]) && typeof data.enabled === "boolean" && data.assessmentId === ASSESSMENT_ID && data.taskVersion === TASK_VERSION && data.rubricVersion === RUBRIC_VERSION && typeof data.canAssign === "boolean" && typeof data.canReview === "boolean" && JSON.stringify(data.limits) === JSON.stringify(FINAL_LIMITS) && ["automatic", "expert"].includes(data.mode) && data.policy === (data.mode === "automatic" ? AUTOMATIC_POLICY : "pilot-40-50-10-v1") && (data.mode !== "automatic" || !data.canAssign && !data.canReview);
+  else if (["list", "queue", "unassigned"].includes(phase)) valid = exact5(data, ["items", "nextCursor"]) && Array.isArray(data.items) && data.items.length <= 25 && data.items.every(validAttempt) && (data.nextCursor === null || uuid2(data.nextCursor)) && (phase !== "list" || data.items.every((a) => a.accountId === expected)) && (phase !== "queue" || data.items.every((a) => a.reviewerId === expected));
+  else if (phase === "detail") valid = exact5(data, ["attempt", "review", "history", "appeals", "latestAppeal"]) && validAttempt(data.attempt) && review(data.review) && Array.isArray(data.history) && data.history.length <= 16 && data.history.every((r) => exact5(r, ["id", "createdAt", "result"]) && uuid2(r.id) && text5(r.createdAt, 64, 1) && result(r.result)) && Array.isArray(data.appeals) && data.appeals.length <= 16 && data.appeals.every((a) => exact5(a, ["id", "reviewId", "createdAt"]) && uuid2(a.id) && uuid2(a.reviewId) && text5(a.createdAt, 64, 1)) && appeal(data.latestAppeal);
+  else if (phase === "review-detail") valid = exact5(data, ["review"]) && review(data.review);
+  else if (phase === "appeal-detail") valid = exact5(data, ["appeal"]) && appeal(data.appeal);
+  else if (["open", "track", "submit", "checkpoint", "withdraw", "assign", "interrupt"].includes(phase)) valid = exact5(data, ["attempt"]) && validAttempt(data.attempt);
+  else if (phase === "review") valid = exact5(data, ["attempt", "review"]) && validAttempt(data.attempt) && review(data.review);
+  else if (phase === "appeal") valid = exact5(data, ["attempt", "appeal"]) && validAttempt(data.attempt) && appeal(data.appeal);
+  else if (phase === "begin") valid = exact5(data, ["attempt", "upload"]) && validAttempt(data.attempt) && upload(data.upload);
+  else if (phase === "put") valid = exact5(data, ["ok", "index", "sha256"]) && data.ok === true && integer(data.index, 0, 191) && hash2(data.sha256);
+  else if (phase === "manifest") valid = exact5(data, ["attempt", "upload", "parts"]) && validAttempt(data.attempt) && upload(data.upload) && Array.isArray(data.parts) && data.parts.length <= 192 && data.parts.every((r) => exact5(r, ["index", "bytes", "sha256"]) && integer(r.index, 0, data.upload.chunkCount - 1) && integer(r.bytes, 1, 32768) && hash2(r.sha256));
+  else if (phase === "parts") valid = exact5(data, ["uploadId", "offset", "parts"]) && uuid2(data.uploadId) && integer(data.offset, 0, 191) && Array.isArray(data.parts) && data.parts.length <= 5 && data.parts.every((r) => exact5(r, ["index", "bytes", "sha256", "data"]) && integer(r.index, 0, 191) && integer(r.bytes, 1, 32768) && hash2(r.sha256) && typeof r.data === "string" && r.data.length <= 43692 && /^[A-Za-z0-9+/]+={0,2}$/.test(r.data));
+  if (!valid) throw Object.assign(Error("ASSESSMENT_RESPONSE_INVALID"), { code: "ASSESSMENT_RESPONSE_INVALID" });
+  return data;
+}
+
+// server-access/bff/assessment.mjs
+var AssessmentBridgeError = class extends Error {
+  constructor(code, status = 400) {
+    super(code);
+    this.code = code;
+    this.status = status;
+  }
+};
+var fail5 = (code, status) => {
+  throw new AssessmentBridgeError(code, status);
+};
+var sha2 = (b) => createHash5("sha256").update(b).digest("hex");
+var disabledAssessment = () => ({ enabled: false, assessmentId: ASSESSMENT_ID, taskVersion: TASK_VERSION, rubricVersion: RUBRIC_VERSION, canAssign: false, canReview: false, limits: FINAL_LIMITS, policy: AUTOMATIC_POLICY, mode: "automatic" });
+function automaticProof(bundle) {
+  const e = bundle.automatic, practical = {};
+  const checked = (source, observation2, maxima) => {
+    if (observation2 === null) return emptyChecks(maxima);
+    if (source === null || sha2(sourceIdentity(source)) !== observation2.sourceHash) fail5("ASSESSMENT_AUTOMATIC_INVALID");
+    return observation2.checks;
+  };
+  for (const [id2, maxima] of Object.entries(PRACTICAL_CHECKS)) practical[id2] = checked(bundle.practical[id2], e.practical[id2], maxima);
+  const project = checked(bundle.project.source, e.project, PROJECT_CHECKS), d = e.defense;
+  let defense = emptyChecks(DEFENSE_CHECKS), codeChanged = false;
+  if (d !== null) {
+    if (sha2(sourceIdentity(bundle.project.source)) !== d.baselineHash || sha2(sourceIdentity(d.source)) !== d.sourceHash) fail5("ASSESSMENT_AUTOMATIC_INVALID");
+    defense = d.checks;
+    codeChanged = sourceIdentity(bundle.project.source, { codeOnly: true }) !== sourceIdentity(d.source, { codeOnly: true });
+  }
+  return { policy: AUTOMATIC_POLICY, choices: Object.fromEntries(Object.entries(bundle.answers).map(([key, a]) => [key, a.optionId])), practical, project, defense, codeChanged };
+}
+function bound(data, p, expected) {
+  if (data.attempt) {
+    const a = data.attempt;
+    if (p.attemptId && a.id !== p.attemptId) fail5("ASSESSMENT_RESPONSE_INVALID", 502);
+    if (["open", "track", "begin", "submit", "checkpoint", "withdraw", "appeal"].includes(p.phase) && a.accountId !== expected) fail5("ASSESSMENT_RESPONSE_INVALID", 502);
+    if (["detail", "manifest"].includes(p.phase) && a.accountId !== expected && a.reviewerId !== expected) fail5("ASSESSMENT_RESPONSE_INVALID", 502);
+  }
+  if (p.phase === "parts" && (data.uploadId !== p.uploadId || data.offset !== p.offset)) fail5("ASSESSMENT_RESPONSE_INVALID", 502);
+  if (p.phase === "put" && (data.index !== p.index || data.sha256 !== p.sha256)) fail5("ASSESSMENT_RESPONSE_INVALID", 502);
+  if (p.phase === "begin" && (data.upload.snapshotHash !== p.snapshotHash || data.upload.totalBytes !== p.totalBytes || data.upload.chunkCount !== p.chunkCount)) fail5("ASSESSMENT_RESPONSE_INVALID", 502);
+  return data;
+}
+async function assessmentBridge(payload, rpc, { expectedAccountId, signal = AbortSignal.timeout(12e3) } = {}) {
+  try {
+    validateAssessmentRequest(payload);
+  } catch {
+    fail5("ASSESSMENT_INPUT_INVALID");
+  }
+  const call = async (p) => {
+    signal.throwIfAborted();
+    const data2 = await rpc(p, { signal: AbortSignal.any([signal, AbortSignal.timeout(12e3)]) });
+    signal.throwIfAborted();
+    try {
+      return bound(validateAssessmentDTO(data2, p.phase, expectedAccountId), p, expectedAccountId);
+    } catch (error3) {
+      if (error3 instanceof AssessmentBridgeError) throw error3;
+      fail5("ASSESSMENT_RESPONSE_INVALID", 502);
+    }
+  };
+  if (!["submit", "checkpoint"].includes(payload.phase)) return call(payload);
+  const { attemptId, uploadId } = payload, manifest = await call({ phase: "manifest", attemptId, uploadId }), { attempt: a, upload: u, parts } = manifest;
+  if (a.accountId !== expectedAccountId) fail5("NOT_FOUND", 404);
+  if (a.status !== "draft") {
+    if (a.uploadId === u.id && a.snapshotHash === u.snapshotHash) return { attempt: a };
+    fail5("ASSESSMENT_STATE_INVALID", 409);
+  }
+  if (parts.length !== u.chunkCount || parts.some((r, i) => r.index !== i || r.bytes !== (i === u.chunkCount - 1 ? u.totalBytes - i * FINAL_LIMITS.chunkBytes : FINAL_LIMITS.chunkBytes))) fail5("ASSESSMENT_INCOMPLETE", 409);
+  const chunks = [];
+  for (let start = 0; start < u.chunkCount; start += 20) {
+    const offsets = Array.from({ length: Math.min(4, Math.ceil((u.chunkCount - start) / 5)) }, (_, i) => start + i * 5);
+    const pages = await Promise.all(offsets.map((offset) => call({ phase: "parts", attemptId, uploadId, offset })));
+    for (const [p, page] of pages.entries()) {
+      const offset = offsets[p];
+      if (page.parts.length !== Math.min(5, u.chunkCount - offset)) fail5("ASSESSMENT_INCOMPLETE", 409);
+      for (const [index, row] of page.parts.entries()) {
+        const i = offset + index, bytes3 = Buffer4.from(row.data, "base64");
+        if (row.index !== i || row.bytes !== parts[i].bytes || row.sha256 !== parts[i].sha256 || bytes3.length !== row.bytes || bytes3.toString("base64") !== row.data || sha2(bytes3) !== row.sha256) fail5("ASSESSMENT_PART_INVALID", 409);
+        chunks.push(bytes3);
+      }
+    }
+  }
+  const bytes2 = Buffer4.concat(chunks, u.totalBytes);
+  if (sha2(bytes2) !== u.snapshotHash) fail5("ASSESSMENT_BUNDLE_INVALID");
+  let bundle;
+  try {
+    const text7 = new TextDecoder("utf-8", { fatal: true }).decode(bytes2);
+    bundle = JSON.parse(text7);
+    if (text7 !== JSON.stringify(bundle)) fail5("ASSESSMENT_BUNDLE_INVALID");
+    validateSubmissionBundle(bundle, { variant: a.variant, trackId: a.trackId, mode: a.mode });
+  } catch (error3) {
+    fail5(["ASSESSMENT_SENSITIVE_DATA", "ASSESSMENT_AUTOMATIC_INVALID"].includes(error3.code) ? error3.code : "ASSESSMENT_BUNDLE_INVALID");
+  }
+  const completeness = { answers: Object.fromEntries(Object.entries(bundle.answers).map(([key, text7]) => [key, a.mode === "automatic" ? text7.optionId !== null : !!text7.trim()])), practical: Object.fromEntries(Object.entries(bundle.practical).map(([key, value]) => [key, value !== null])), project: bundle.project.source !== null };
+  const automatic = a.mode === "automatic" ? automaticProof(bundle) : null;
+  const data = await rpc({ phase: "certify", intent: payload.phase, requestId: payload.requestId, attemptId, uploadId, snapshotHash: u.snapshotHash, totalBytes: u.totalBytes, expectedVersion: a.version, completeness, automatic }, { signal: AbortSignal.any([signal, AbortSignal.timeout(12e3)]) });
+  try {
+    return bound(validateAssessmentDTO(data, payload.phase, expectedAccountId), payload, expectedAccountId);
+  } catch {
+    fail5("ASSESSMENT_RESPONSE_INVALID", 502);
+  }
+}
+
 // server-access/bff/account-control.mjs
 var INTERNAL = "/api/v2/account/internal/control";
 var BASE = "/api/v2/account/control";
-var sha2 = (value) => createHash5("sha256").update(value).digest("hex");
+var sha3 = (value) => createHash6("sha256").update(value).digest("hex");
 var count2 = (req, name) => {
   if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2) return -1;
   let n = 0;
@@ -3154,13 +3736,14 @@ var Rejected = class extends Error {
     this.status = status;
   }
 };
-var fail2 = (code, status) => {
+var fail6 = (code, status) => {
   throw new Rejected(code, status);
 };
-var exact3 = (o, keys) => !!o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).sort().join(",") === [...keys].sort().join(",");
+var exact6 = (o, keys) => !!o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).sort().join(",") === [...keys].sort().join(",");
 var id = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value);
 var safeText = (value, max) => typeof value === "string" && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value);
 var safeCodes = /* @__PURE__ */ new Set(["SESSION_REQUIRED", "ACCOUNT_SESSION_CHANGED", "ADMIN_REQUIRED", "ADMIN_FRESH_PASSKEY_REQUIRED", "ADMIN_ACCOUNT_PROTECTED", "INVALID_INPUT", "INVALID_STATE", "RESTORE_WITHOUT_LOGIN_METHOD", "NOT_FOUND", "CONTROL_CONFLICT", "CONTROL_WRITE_UNCONFIRMED", "CONTROL_UNAVAILABLE", "ALPHA_CONTROL_UNAVAILABLE", "ALPHA_ACCESS_CLOSED", "ALPHA_CAPACITY_REACHED", "ALPHA_LIMIT_BELOW_OCCUPIED", "REMOVE_BEFORE_PURGE", "PURGE_NOT_ENABLED", "PURGE_SCHEMA_REVIEW_REQUIRED", "SHARED_PROJECT_TRANSFER_REQUIRED", "PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED", "PURGE_APPROVAL_REJECTED", "PURGE_CONFIRMATION_REQUIRED", "AVATAR_INVALID", "AVATAR_DIMENSIONS", "AVATAR_TOO_LARGE", "USERNAME_UNAVAILABLE", "RATE_LIMITED", "BLOG_IMAGE_INVALID", "CONTENT_MEDIA_UNAVAILABLE", "CONTENT_MEDIA_QUOTA", "CONTENT_EDITOR_UPDATE_REQUIRED", "CONTENT_MEDIA_PARTS_UNAVAILABLE", "CONTENT_MEDIA_PARTS_REQUIRED", "CONTENT_MEDIA_PARTS_CONFLICT", "CONTENT_MEDIA_PARTS_INCOMPLETE"]);
+for (const code of ASSESSMENT_ERROR_CODES) safeCodes.add(code);
 var reply2 = (res, status, body, extra = {}) => {
   const data = JSON.stringify(body);
   res.writeHead(status, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(data), "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", ...extra });
@@ -3171,22 +3754,22 @@ async function bounded(stream) {
   const chunks = [];
   let size = 0;
   for await (const b of stream) {
-    const bytes = Buffer.from(b);
-    size += bytes.length;
-    if (size > 262144) fail2("INPUT_TOO_LARGE", 413);
-    chunks.push(bytes);
+    const bytes2 = Buffer.from(b);
+    size += bytes2.length;
+    if (size > 262144) fail6("INPUT_TOO_LARGE", 413);
+    chunks.push(bytes2);
   }
   return parsedBody(chunks, size);
 }
 function parsedBody(chunks, size) {
-  let text5, value;
+  let text7, value;
   try {
-    text5 = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks, size));
-    value = JSON.parse(text5);
+    text7 = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks, size));
+    value = JSON.parse(text7);
   } catch {
-    fail2("INVALID_INPUT");
+    fail6("INVALID_INPUT");
   }
-  if (!value || typeof value !== "object" || Array.isArray(value) || text5 !== JSON.stringify(value)) fail2("INVALID_INPUT");
+  if (!value || typeof value !== "object" || Array.isArray(value) || text7 !== JSON.stringify(value)) fail6("INVALID_INPUT");
   return value;
 }
 async function boundedMediaResponse(stream, signal, limit = 262144) {
@@ -3214,10 +3797,10 @@ async function boundedMediaResponse(stream, signal, limit = 262144) {
         done = true;
         break;
       }
-      const bytes = Buffer.from(part.value);
-      size += bytes.length;
-      if (size > limit) fail2("INPUT_TOO_LARGE", 413);
-      chunks.push(bytes);
+      const bytes2 = Buffer.from(part.value);
+      size += bytes2.length;
+      if (size > limit) fail6("INPUT_TOO_LARGE", 413);
+      chunks.push(bytes2);
     }
     return parsedBody(chunks, size);
   };
@@ -3230,25 +3813,25 @@ async function boundedMediaResponse(stream, signal, limit = 262144) {
     reader.releaseLock();
   }
 }
-function validateDTO(data, path2, expected) {
-  const valid = () => fail2("CONTROL_UNAVAILABLE", 502);
-  if (path2 === "/api/v2/account/profile" || path2.startsWith("/api/v2/account/profile/avatar")) {
-    if (!exact3(data, ["accountId", "username", "displayName", "avatar", "avatarVersion"]) || data.accountId !== expected || !safeText(data.displayName, 512) || data.username !== null && !/^[a-z][a-z0-9._-]{2,31}$/.test(data.username) || !Number.isInteger(data.avatarVersion) || data.avatarVersion < 0 || data.avatar !== null && (typeof data.avatar !== "string" || data.avatar.length > 131100 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data.avatar))) valid();
-  } else if (path2 === BASE + "/capabilities") {
-    if (!exact3(data, ["canManage", "canModerate", "canPurge", "freshPasskey"]) || Object.values(data).some((v) => typeof v !== "boolean")) valid();
-  } else if (path2.startsWith(BASE + "/users?") || path2 === BASE + "/users") {
-    if (!exact3(data, ["users", "total", "offset", "settings", "counts"]) || !Array.isArray(data.users) || data.users.length > 50 || !Number.isInteger(data.total) || !Number.isInteger(data.offset) || !exact3(data.settings, ["registrationMode", "maxTesters", "limitEnabled", "version"]) || !exact3(data.counts, ["active", "occupied", "reserved"]) || typeof data.settings.limitEnabled !== "boolean" || !["open", "invite_only"].includes(data.settings.registrationMode) || !Number.isInteger(data.settings.maxTesters) || data.settings.maxTesters < 1 || data.settings.maxTesters > 1e4 || !Number.isInteger(data.settings.version) || data.settings.version < 1 || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
-    for (const u of data.users) if (!exact3(u, ["accountId", "username", "displayName", "state", "version", "createdAt", "lastLoginAt", "activeSessions", "reason", "protected"]) || !id(u.accountId) || !safeText(u.displayName, 512) || u.username !== null && !safeText(u.username, 32) || !["active", "blocked", "removed", "invited", "unadmitted", "administrator"].includes(u.state) || !Number.isInteger(u.version) || !Number.isInteger(u.activeSessions) || typeof u.protected !== "boolean" || !safeText(u.reason, 200)) valid();
-  } else if (path2 === BASE + "/content?mediaStatus=1") {
-    if (!exact3(data, ["mediaAvailability"]) || !exact3(data.mediaAvailability, ["enabled", "maxBytes", "maxDimension"]) || typeof data.mediaAvailability.enabled !== "boolean" || data.mediaAvailability.maxBytes !== 98304 || data.mediaAvailability.maxDimension !== 1600) valid();
-  } else if (path2.startsWith(BASE + "/content?media=") || path2 === BASE + "/content" && exact3(data, ["ok", "media"])) {
-    const m = data.media, read = path2.includes("?");
-    if (!exact3(data, read ? ["media"] : ["ok", "media"]) || !read && data.ok !== true || !exact3(m, read ? ["id", "mime", "data", "width", "height"] : ["id", "mime", "width", "height"]) || !/^[a-f0-9]{64}$/.test(m.id) || m.mime !== "image/jpeg" || ![m.width, m.height].every((n) => Number.isInteger(n) && n >= 1 && n <= 1600) || read && (m.id !== new URL(path2, GATEWAY_ORIGIN).searchParams.get("media") || typeof m.data !== "string" || m.data.length > 131072 || !/^[A-Za-z0-9+/]+={0,2}$/.test(m.data))) valid();
-  } else if (path2 === BASE + "/content" && !exact3(data, ["ok"])) {
-    if (!exact3(data, ["posts", "home"]) || !Array.isArray(data.posts) || data.posts.length > 100 || !exact3(data.home, ["draft", "published", "version"])) valid();
+function validateDTO(data, path6, expected) {
+  const valid = () => fail6("CONTROL_UNAVAILABLE", 502);
+  if (path6 === "/api/v2/account/profile" || path6.startsWith("/api/v2/account/profile/avatar")) {
+    if (!exact6(data, ["accountId", "username", "displayName", "avatar", "avatarVersion"]) || data.accountId !== expected || !safeText(data.displayName, 512) || data.username !== null && !/^[a-z][a-z0-9._-]{2,31}$/.test(data.username) || !Number.isInteger(data.avatarVersion) || data.avatarVersion < 0 || data.avatar !== null && (typeof data.avatar !== "string" || data.avatar.length > 131100 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data.avatar))) valid();
+  } else if (path6 === BASE + "/capabilities") {
+    if (!exact6(data, ["canManage", "canModerate", "canPurge", "freshPasskey"]) || Object.values(data).some((v) => typeof v !== "boolean")) valid();
+  } else if (path6.startsWith(BASE + "/users?") || path6 === BASE + "/users") {
+    if (!exact6(data, ["users", "total", "offset", "settings", "counts"]) || !Array.isArray(data.users) || data.users.length > 50 || !Number.isInteger(data.total) || !Number.isInteger(data.offset) || !exact6(data.settings, ["registrationMode", "maxTesters", "limitEnabled", "version"]) || !exact6(data.counts, ["active", "occupied", "reserved"]) || typeof data.settings.limitEnabled !== "boolean" || !["open", "invite_only"].includes(data.settings.registrationMode) || !Number.isInteger(data.settings.maxTesters) || data.settings.maxTesters < 1 || data.settings.maxTesters > 1e4 || !Number.isInteger(data.settings.version) || data.settings.version < 1 || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
+    for (const u of data.users) if (!exact6(u, ["accountId", "username", "displayName", "state", "version", "createdAt", "lastLoginAt", "activeSessions", "reason", "protected"]) || !id(u.accountId) || !safeText(u.displayName, 512) || u.username !== null && !safeText(u.username, 32) || !["active", "blocked", "removed", "invited", "unadmitted", "administrator"].includes(u.state) || !Number.isInteger(u.version) || !Number.isInteger(u.activeSessions) || typeof u.protected !== "boolean" || !safeText(u.reason, 200)) valid();
+  } else if (path6 === BASE + "/content?mediaStatus=1") {
+    if (!exact6(data, ["mediaAvailability"]) || !exact6(data.mediaAvailability, ["enabled", "maxBytes", "maxDimension"]) || typeof data.mediaAvailability.enabled !== "boolean" || data.mediaAvailability.maxBytes !== 98304 || data.mediaAvailability.maxDimension !== 1600) valid();
+  } else if (path6.startsWith(BASE + "/content?media=") || path6 === BASE + "/content" && exact6(data, ["ok", "media"])) {
+    const m = data.media, read = path6.includes("?");
+    if (!exact6(data, read ? ["media"] : ["ok", "media"]) || !read && data.ok !== true || !exact6(m, read ? ["id", "mime", "data", "width", "height"] : ["id", "mime", "width", "height"]) || !/^[a-f0-9]{64}$/.test(m.id) || m.mime !== "image/jpeg" || ![m.width, m.height].every((n) => Number.isInteger(n) && n >= 1 && n <= 1600) || read && (m.id !== new URL(path6, GATEWAY_ORIGIN).searchParams.get("media") || typeof m.data !== "string" || m.data.length > 131072 || !/^[A-Za-z0-9+/]+={0,2}$/.test(m.data))) valid();
+  } else if (path6 === BASE + "/content" && !exact6(data, ["ok"])) {
+    if (!exact6(data, ["posts", "home"]) || !Array.isArray(data.posts) || data.posts.length > 100 || !exact6(data.home, ["draft", "published", "version"])) valid();
     const bounded2 = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v);
     const article = (v) => {
-      if (!exact3(v, ["title", "summary", "body"]) || !bounded2(v.title, 160) || !bounded2(v.summary, 500) || !bounded2(v.body, 2e4)) return false;
+      if (!exact6(v, ["title", "summary", "body"]) || !bounded2(v.title, 160) || !bounded2(v.summary, 500) || !bounded2(v.body, 2e4)) return false;
       try {
         decodeBlogLayout(v.body);
         return true;
@@ -3258,28 +3841,28 @@ function validateDTO(data, path2, expected) {
     };
     for (const key of ["draft", "published"]) if (!data.home[key] || typeof data.home[key] !== "object" || Array.isArray(data.home[key]) || Object.entries(data.home[key]).some(([k, v]) => !Object.hasOwn(HOME_SLOTS, k) || !bounded2(v, HOME_SLOTS[k].max))) valid();
     if (!Number.isInteger(data.home.version) || data.home.version < 1) valid();
-    for (const post of data.posts) if (!exact3(post, ["id", "slug", "draft", "published", "state", "version", "publishedAt"]) || !id(post.id) || !safeText(post.slug, 80) || !["draft", "published", "archived"].includes(post.state) || !Number.isInteger(post.version) || !article(post.draft) || post.published !== null && !article(post.published) || post.publishedAt !== null && !safeText(post.publishedAt, 64)) valid();
-  } else if (path2 === BASE + "/audit") {
-    if (!exact3(data, ["events"]) || !Array.isArray(data.events) || data.events.length > 100) valid();
-    for (const e of data.events) if (!exact3(e, ["action", "targetId", "createdAt"]) || !safeText(e.action, 32) || e.targetId !== null && !id(e.targetId) || !safeText(e.createdAt, 64)) valid();
-  } else if (path2 === BASE + "/invites") {
-    if (!exact3(data, ["ok", "accountId", "invitationToken", "expiresAt"]) || data.ok !== true || !id(data.accountId) || !/^npi_[A-Za-z0-9_-]{43}$/.test(data.invitationToken) || !safeText(data.expiresAt, 64)) valid();
-  } else if (path2.endsWith("/purge-preview")) {
-    if (!exact3(data, ["approvalToken", "expiresAt", "counts", "confirmation", "serverDataOnly"]) || !/^npa_[A-Za-z0-9_-]{43}$/.test(data.approvalToken) || !safeText(data.expiresAt, 64) || !safeText(data.confirmation, 180) || data.serverDataOnly !== true || !exact3(data.counts, ["projects", "workspaces", "feedback", "keys", "providers"]) || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
-  } else if (path2.endsWith("/purge")) {
-    if (!exact3(data, ["ok", "deletedServerData", "localCopiesRemotelyErased"]) || data.ok !== true || data.deletedServerData !== true || data.localCopiesRemotelyErased !== false) valid();
-  } else if (path2 === BASE + "/providers") {
-    if (!exact3(data, ["authorized"]) || data.authorized !== true) valid();
-  } else if (!exact3(data, ["ok"]) || data.ok !== true) valid();
+    for (const post of data.posts) if (!exact6(post, ["id", "slug", "draft", "published", "state", "version", "publishedAt"]) || !id(post.id) || !safeText(post.slug, 80) || !["draft", "published", "archived"].includes(post.state) || !Number.isInteger(post.version) || !article(post.draft) || post.published !== null && !article(post.published) || post.publishedAt !== null && !safeText(post.publishedAt, 64)) valid();
+  } else if (path6 === BASE + "/audit") {
+    if (!exact6(data, ["events"]) || !Array.isArray(data.events) || data.events.length > 100) valid();
+    for (const e of data.events) if (!exact6(e, ["action", "targetId", "createdAt"]) || !safeText(e.action, 32) || e.targetId !== null && !id(e.targetId) || !safeText(e.createdAt, 64)) valid();
+  } else if (path6 === BASE + "/invites") {
+    if (!exact6(data, ["ok", "accountId", "invitationToken", "expiresAt"]) || data.ok !== true || !id(data.accountId) || !/^npi_[A-Za-z0-9_-]{43}$/.test(data.invitationToken) || !safeText(data.expiresAt, 64)) valid();
+  } else if (path6.endsWith("/purge-preview")) {
+    if (!exact6(data, ["approvalToken", "expiresAt", "counts", "confirmation", "serverDataOnly"]) || !/^npa_[A-Za-z0-9_-]{43}$/.test(data.approvalToken) || !safeText(data.expiresAt, 64) || !safeText(data.confirmation, 180) || data.serverDataOnly !== true || !(exact6(data.counts, ["projects", "workspaces", "feedback", "keys", "providers"]) || exact6(data.counts, ["projects", "workspaces", "feedback", "keys", "providers", "courseFinalAttempts", "courseFinalBytes"])) || Object.values(data.counts).some((v) => !Number.isSafeInteger(v) || v < 0)) valid();
+  } else if (path6.endsWith("/purge")) {
+    if (!exact6(data, ["ok", "deletedServerData", "localCopiesRemotelyErased"]) || data.ok !== true || data.deletedServerData !== true || data.localCopiesRemotelyErased !== false) valid();
+  } else if (path6 === BASE + "/providers") {
+    if (!exact6(data, ["authorized"]) || data.authorized !== true) valid();
+  } else if (!exact6(data, ["ok"]) || data.ok !== true) valid();
   return data;
 }
-function mediaTransportCode(error2, signal, phase) {
+function mediaTransportCode(error3, signal, phase) {
   if (signal.aborted) {
     if (phase === "body") return "BLOG_MEDIA_UPSTREAM_BODY_TIMEOUT";
     const nativePhases = { dns: "BLOG_MEDIA_UPSTREAM_DNS_TIMEOUT", tcp: "BLOG_MEDIA_UPSTREAM_CONNECT_TIMEOUT", tls: "BLOG_MEDIA_UPSTREAM_TLS_TIMEOUT", upload: "BLOG_MEDIA_UPSTREAM_UPLOAD_TIMEOUT", response: "BLOG_MEDIA_UPSTREAM_RESPONSE_TIMEOUT" };
-    return nativePhases[error2?.nexusPhase] || "BLOG_MEDIA_UPSTREAM_REQUEST_TIMEOUT";
+    return nativePhases[error3?.nexusPhase] || "BLOG_MEDIA_UPSTREAM_REQUEST_TIMEOUT";
   }
-  const code = error2?.cause?.code || error2?.code;
+  const code = error3?.cause?.code || error3?.code;
   if (["UND_ERR_SOCKET", "ECONNRESET", "EPIPE"].includes(code)) return phase === "body" ? "BLOG_MEDIA_UPSTREAM_BODY_SOCKET_CLOSED" : "BLOG_MEDIA_UPSTREAM_SOCKET_CLOSED";
   if (phase === "body") return "BLOG_MEDIA_UPSTREAM_BODY_READ_FAILED";
   if (["ENOTFOUND", "EAI_AGAIN"].includes(code)) return "BLOG_MEDIA_UPSTREAM_DNS_FAILED";
@@ -3290,44 +3873,44 @@ function mediaTransportCode(error2, signal, phase) {
 }
 async function controlService(env, fetchImpl, envelope, { mediaDiagnostics = false, mediaFetchImpl = fetchImpl, captureWire = false, signal: sharedSignal, limit = 262144 } = {}) {
   const failWire = (code, status, meta) => {
-    const error2 = new Rejected(code, status);
-    if (captureWire) error2.nexusWire = wireHeaders(meta);
-    throw error2;
+    const error3 = new Rejected(code, status);
+    if (captureWire) error3.nexusWire = wireHeaders(meta);
+    throw error3;
   };
   const body = JSON.stringify(envelope), timestamp = String(Date.now()), nonce = randomBytes2(16).toString("hex");
-  const signature = createHmac2("sha256", env.ADMIN_SERVICE_KEY).update(["v1", "POST", INTERNAL, timestamp, nonce, sha2(body)].join("\n")).digest("hex");
-  if (Buffer.byteLength(body) > limit) fail2("INPUT_TOO_LARGE", 413);
+  const signature = createHmac2("sha256", env.ADMIN_SERVICE_KEY).update(["v1", "POST", INTERNAL, timestamp, nonce, sha3(body)].join("\n")).digest("hex");
+  if (Buffer.byteLength(body) > limit) fail6("INPUT_TOO_LARGE", 413);
   const signal = sharedSignal || AbortSignal.timeout(12e3);
   signal.throwIfAborted();
   let upstream;
   try {
     upstream = await (mediaDiagnostics ? mediaFetchImpl : fetchImpl)(WORKER_ORIGIN + INTERNAL, { method: "POST", credentials: "omit", cache: "no-store", redirect: "error", signal, headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": timestamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": signature }, body, ...captureWire ? { captureWire: true } : {} });
-  } catch (error2) {
-    if (mediaDiagnostics) failWire(mediaTransportCode(error2, signal, "headers"), 502, error2.nexusWire);
-    throw error2;
+  } catch (error3) {
+    if (mediaDiagnostics) failWire(mediaTransportCode(error3, signal, "headers"), 502, error3.nexusWire);
+    throw error3;
   }
   if (upstream.nativeEncodingRejected) {
     await upstream.body?.cancel().catch(() => {
     });
-    fail2("BLOG_MEDIA_UPSTREAM_ENCODING_REJECTED", 502);
+    fail6("BLOG_MEDIA_UPSTREAM_ENCODING_REJECTED", 502);
   }
   const rejected = upstream.redirected || upstream.status >= 300 && upstream.status < 400 ? "REDIRECT" : !/^application\/json(?:\s*;|$)/i.test(upstream.headers.get("content-type") || "") ? "MIME" : upstream.headers.has("set-cookie") ? "COOKIE" : upstream.headers.get("cache-control") !== "no-store" ? "CACHE" : !hasVaryWildcard(upstream.headers.get("vary")) ? "VARY" : null;
   if (rejected) {
     await upstream.body?.cancel().catch(() => {
     });
-    fail2(mediaDiagnostics ? "BLOG_MEDIA_UPSTREAM_" + rejected + "_REJECTED" : "CONTROL_UNAVAILABLE", 502);
+    fail6(mediaDiagnostics ? "BLOG_MEDIA_UPSTREAM_" + rejected + "_REJECTED" : "CONTROL_UNAVAILABLE", 502);
   }
   let data;
   try {
     data = await (mediaDiagnostics ? boundedMediaResponse(upstream.body, signal, limit) : bounded(upstream.body));
-  } catch (error2) {
-    if (mediaDiagnostics && limit === 12e3 && error2 instanceof Rejected && error2.code === "INPUT_TOO_LARGE") fail2("BLOG_MEDIA_UPSTREAM_DTO_REJECTED", 502);
-    if (mediaDiagnostics && !(error2 instanceof Rejected)) fail2(mediaTransportCode(error2, signal, "body"), 502);
-    throw error2;
+  } catch (error3) {
+    if (mediaDiagnostics && limit === 12e3 && error3 instanceof Rejected && error3.code === "INPUT_TOO_LARGE") fail6("BLOG_MEDIA_UPSTREAM_DTO_REJECTED", 502);
+    if (mediaDiagnostics && !(error3 instanceof Rejected)) fail6(mediaTransportCode(error3, signal, "body"), 502);
+    throw error3;
   }
   if (upstream.status !== 200) {
     const code = safeCodes.has(data.error?.code) ? data.error.code : "CONTROL_UNAVAILABLE", status = [400, 401, 403, 404, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502;
-    if (mediaDiagnostics && code === "CONTROL_UNAVAILABLE" && upstream.status >= 500) fail2("BLOG_MEDIA_UPSTREAM_HTTP_" + ([500, 502, 503, 504].includes(upstream.status) ? upstream.status : "5XX"), status);
+    if (mediaDiagnostics && code === "CONTROL_UNAVAILABLE" && upstream.status >= 500) fail6("BLOG_MEDIA_UPSTREAM_HTTP_" + ([500, 502, 503, 504].includes(upstream.status) ? upstream.status : "5XX"), status);
     failWire(code, status, upstream.nexusWire);
   }
   return data;
@@ -3338,69 +3921,83 @@ function createAccountControlHandler({ env = {}, fetchImpl = fetch, mediaFetchIm
     if (typeof req.url !== "string" || !/^\/api\/v2\/account\/(?:control(?:\/|\?|$)|profile(?:\/|\?|$))/.test(req.url)) return false;
     let diagnostic = false;
     try {
-      if (env.ACCOUNT_CONTROL_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.ADMIN_SERVICE_KEY !== "string" || env.ADMIN_SERVICE_KEY.length < 32) fail2("CONTROL_UNAVAILABLE", 503);
-      if (req.url.length > 512) fail2("INVALID_INPUT");
-      const url = new URL(req.url, GATEWAY_ORIGIN), path2 = url.pathname;
-      if (path2 === BASE + "/content/media-parts") fail2("NOT_FOUND", 404);
-      if (url.hash || req.url.split("?")[0] !== path2 || !["GET", "POST"].includes(req.method) || path2.startsWith("/api/v2/account/profile") && url.search) fail2("INVALID_INPUT");
-      if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || count2(req, "host") !== 1 || count2(req, "authorization") !== 0 || req.headers.origin !== void 0 && req.headers.origin !== GATEWAY_ORIGIN || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") fail2("ORIGIN_REJECTED", 403);
+      if (env.ACCOUNT_CONTROL_PROXY_ENABLED !== "true" || env.PRIVATE_GATEWAY_CONFIRMED !== "true" || typeof env.ADMIN_SERVICE_KEY !== "string" || env.ADMIN_SERVICE_KEY.length < 32) fail6("CONTROL_UNAVAILABLE", 503);
+      if (req.url.length > 512) fail6("INVALID_INPUT");
+      const url = new URL(req.url, GATEWAY_ORIGIN), path6 = url.pathname;
+      if (path6 === BASE + "/content/media-parts") fail6("NOT_FOUND", 404);
+      if (url.hash || req.url.split("?")[0] !== path6 || !["GET", "POST"].includes(req.method) || path6.startsWith("/api/v2/account/profile") && url.search) fail6("INVALID_INPUT");
+      if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || count2(req, "host") !== 1 || count2(req, "authorization") !== 0 || req.headers.origin !== void 0 && req.headers.origin !== GATEWAY_ORIGIN || req.headers["sec-fetch-site"] !== void 0 && req.headers["sec-fetch-site"] !== "same-origin") fail6("ORIGIN_REJECTED", 403);
       const expected = req.headers["x-nexus-account-expectation"];
-      if (count2(req, "x-nexus-account-expectation") !== 1 || !id(expected)) fail2("ACCOUNT_EXPECTATION_REQUIRED", 400);
-      if (req.method === "POST" && (req.headers.origin !== GATEWAY_ORIGIN || count2(req, "origin") !== 1 || req.headers["content-type"] !== "application/json" || count2(req, "content-type") !== 1 || req.headers["x-nexus-account-control"] !== "1" || count2(req, "x-nexus-account-control") !== 1)) fail2("WRITE_ORIGIN_REQUIRED", 403);
+      if (count2(req, "x-nexus-account-expectation") !== 1 || !id(expected)) fail6("ACCOUNT_EXPECTATION_REQUIRED", 400);
+      if (req.method === "POST" && (req.headers.origin !== GATEWAY_ORIGIN || count2(req, "origin") !== 1 || req.headers["content-type"] !== "application/json" || count2(req, "content-type") !== 1 || req.headers["x-nexus-account-control"] !== "1" || count2(req, "x-nexus-account-control") !== 1)) fail6("WRITE_ORIGIN_REQUIRED", 403);
       const cookies2 = readV2CookieContext(req, "accountControlContract", { env });
-      if (!cookies2) fail2("INGRESS_REJECTED", 401);
+      if (!cookies2) fail6("INGRESS_REJECTED", 401);
       const session = cookies2.get("__Host-nexus_session");
-      if (!session) fail2("SESSION_REQUIRED", 401);
-      if (!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail2("INGRESS_REJECTED", 401);
+      if (!session) fail6("SESSION_REQUIRED", 401);
+      if (!/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail6("INGRESS_REJECTED", 401);
       const partsSignal = env.BFF_CONTENT_MEDIA_PARTS_ENABLED === "true" ? AbortSignal.timeout(12e3) : void 0;
       const payload = req.method === "POST" ? await bounded(req) : null;
+      if (path6 === ASSESSMENT_PATH) {
+        if (req.method !== "POST" || url.search) fail6("ASSESSMENT_INPUT_INVALID");
+        try {
+          validateAssessmentRequest(payload);
+        } catch {
+          fail6("ASSESSMENT_INPUT_INVALID");
+        }
+        if (env.BFF_COURSE_FINAL_ENABLED !== "true") {
+          if (payload.phase === "capabilities") return reply2(res, 200, disabledAssessment());
+          fail6("ASSESSMENT_UNAVAILABLE", 503);
+        }
+        const rpc2 = (body, options) => service(env, fetchImpl, { path: ASSESSMENT_PATH, method: "POST", payload: body, sessionHash: sha3(session), expectedAccountId: expected }, options);
+        return reply2(res, 200, await assessmentBridge(payload, rpc2, { expectedAccountId: expected }));
+      }
       let prepared = payload;
-      if (path2 === "/api/v2/account/profile/avatar" && req.method === "POST") {
-        if (!exact3(payload, ["requestId", "version", "jpegBase64"])) fail2("INVALID_INPUT");
-        const before = await service(env, fetchImpl, { path: "/api/v2/account/profile", method: "GET", payload: null, sessionHash: sha2(session), expectedAccountId: expected });
+      if (path6 === "/api/v2/account/profile/avatar" && req.method === "POST") {
+        if (!exact6(payload, ["requestId", "version", "jpegBase64"])) fail6("INVALID_INPUT");
+        const before = await service(env, fetchImpl, { path: "/api/v2/account/profile", method: "GET", payload: null, sessionHash: sha3(session), expectedAccountId: expected });
         validateDTO(before, "/api/v2/account/profile", expected);
-        if (before.avatarVersion !== payload.version) fail2("CONTROL_CONFLICT", 409);
+        if (before.avatarVersion !== payload.version) fail6("CONTROL_CONFLICT", 409);
         try {
           prepared = { ...payload, jpegBase64: sanitizeAvatar(payload.jpegBase64) };
-        } catch (error2) {
-          if (error2 instanceof AvatarError) fail2(error2.code, error2.status);
-          throw error2;
+        } catch (error3) {
+          if (error3 instanceof AvatarError) fail6(error3.code, error3.status);
+          throw error3;
         }
       }
-      if (path2 === BASE + "/content" && req.method === "POST" && payload?.target === "media") {
+      if (path6 === BASE + "/content" && req.method === "POST" && payload?.target === "media") {
         try {
-          if (!exact3(payload.content, ["jpegBase64"])) fail2("INVALID_INPUT");
+          if (!exact6(payload.content, ["jpegBase64"])) fail6("INVALID_INPUT");
           prepared = { ...payload, content: sanitizeBlogImage(payload.content.jpegBase64) };
         } catch {
-          fail2("BLOG_IMAGE_INVALID");
+          fail6("BLOG_IMAGE_INVALID");
         }
       }
-      const mediaDiagnostics = path2 === BASE + "/content" && req.method === "POST" && prepared?.target === "media";
+      const mediaDiagnostics = path6 === BASE + "/content" && req.method === "POST" && prepared?.target === "media";
       diagnostic = mediaDiagnostics && expected === "synthetic-photo-transport-no-account" && session.startsWith("nxs_SYNTHETIC_NOT_A_SESSION_");
-      const envelope = { path: req.url, method: req.method, payload: prepared, sessionHash: sha2(session), expectedAccountId: expected };
+      const envelope = { path: req.url, method: req.method, payload: prepared, sessionHash: sha3(session), expectedAccountId: expected };
       const parts = env.BFF_CONTENT_MEDIA_PARTS_ENABLED === "true";
       const rpc = (value, options) => service(env, fetchImpl, value, { mediaDiagnostics: true, mediaFetchImpl, ...options });
       let data;
       if (parts && mediaDiagnostics) data = await uploadPhotoParts(envelope, rpc, { signal: partsSignal });
-      else if (parts && path2 === BASE + "/content" && req.method === "GET" && url.searchParams.has("media")) {
-        if ([...url.searchParams.keys()].join(",") !== "media" || url.searchParams.getAll("media").length !== 1) fail2("INVALID_INPUT");
+      else if (parts && path6 === BASE + "/content" && req.method === "GET" && url.searchParams.has("media")) {
+        if ([...url.searchParams.keys()].join(",") !== "media" || url.searchParams.getAll("media").length !== 1) fail6("INVALID_INPUT");
         data = await readPhotoParts(envelope, url.searchParams.get("media"), rpc, { signal: partsSignal });
       } else data = await service(env, fetchImpl, envelope, { mediaDiagnostics, mediaFetchImpl, captureWire: diagnostic });
       let dto;
       try {
         dto = validateDTO(data, req.url, expected);
-      } catch (error2) {
-        if (mediaDiagnostics && error2 instanceof Rejected && error2.code === "CONTROL_UNAVAILABLE") fail2("BLOG_MEDIA_UPSTREAM_DTO_REJECTED", 502);
-        throw error2;
+      } catch (error3) {
+        if (mediaDiagnostics && error3 instanceof Rejected && error3.code === "CONTROL_UNAVAILABLE") fail6("BLOG_MEDIA_UPSTREAM_DTO_REJECTED", 502);
+        throw error3;
       }
-      if (path2 === BASE + "/providers") {
+      if (path6 === BASE + "/providers") {
         const configured = new Set(configuredOAuthProviders(env).map((p) => p.id));
         return reply2(res, 200, { providers: [["yandex", "\u042F\u043D\u0434\u0435\u043A\u0441 ID", ["YANDEX_CLIENT_ID", "YANDEX_CLIENT_SECRET"]], ["google", "Google", ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]], ["vk", "VK ID", ["VK_CLIENT_ID"]]].map(([id2, label, names]) => ({ id: id2, label, configured: configured.has(id2), missing: names.filter((n) => typeof env[n] !== "string" || !env[n] || /[\x00-\x20\x7f]/.test(env[n])), callbackURL: oauthCallbackURL(id2) })) });
       }
-      if (path2 === BASE + "/content" && req.method === "GET" && Array.isArray(dto.posts)) return reply2(res, 200, { ...dto, posts: dto.posts.map((p) => ({ ...p, draft: compatibleArticle(p.draft, { editor: true }), published: p.published ? compatibleArticle(p.published, { editor: true }) : null })) });
+      if (path6 === BASE + "/content" && req.method === "GET" && Array.isArray(dto.posts)) return reply2(res, 200, { ...dto, posts: dto.posts.map((p) => ({ ...p, draft: compatibleArticle(p.draft, { editor: true }), published: p.published ? compatibleArticle(p.published, { editor: true }) : null })) });
       return reply2(res, 200, dto);
-    } catch (error2) {
-      return reply2(res, error2 instanceof Rejected ? error2.status : error2.name === "MediaPartsError" ? error2.status : error2.message === "INGRESS_REJECTED" ? 401 : 502, { error: { code: error2 instanceof Rejected || error2.name === "MediaPartsError" ? error2.code : error2.message === "INGRESS_REJECTED" ? "INGRESS_REJECTED" : "CONTROL_UNAVAILABLE" } }, diagnostic && error2 instanceof Rejected ? error2.nexusWire || {} : {});
+    } catch (error3) {
+      return reply2(res, error3 instanceof Rejected ? error3.status : error3 instanceof AssessmentBridgeError ? error3.status : error3.name === "MediaPartsError" ? error3.status : error3.message === "INGRESS_REJECTED" ? 401 : 502, { error: { code: error3 instanceof Rejected || error3 instanceof AssessmentBridgeError && safeCodes.has(error3.code) || error3.name === "MediaPartsError" ? error3.code : error3.message === "INGRESS_REJECTED" ? "INGRESS_REJECTED" : "CONTROL_UNAVAILABLE" } }, diagnostic && error3 instanceof Rejected ? error3.nexusWire || {} : {});
     }
   };
 }
@@ -3458,8 +4055,8 @@ function createContentHandler({ env = {}, fetchImpl = fetch, mediaFetchImpl = fe
       for (const p of data.posts) if (!keys(p, [...url.searchParams.has("slug") ? ["slug", "title", "summary", "body", "publishedAt"] : ["slug", "title", "summary", "publishedAt"], ...p.cover !== void 0 ? ["cover"] : []]) || typeof p.slug !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p.slug) || typeof p.title !== "string" || p.title.length > 160 || typeof p.summary !== "string" || p.summary.length > 500 || typeof p.publishedAt !== "string" || p.publishedAt.length > 64 || p.body !== void 0 && (typeof p.body !== "string" || p.body.length > 2e4) || p.cover !== void 0 && !validLayoutImage(p.cover)) throw Error();
       for (const p of data.posts) if (p.body !== void 0) decodeBlogLayout(p.body);
       return reply8(200, { ...data, posts: data.posts.map((p) => p.body === void 0 ? p : compatibleArticle(p)) });
-    } catch (error2) {
-      return reply8([400, 404, 429, 503].includes(error2?.status) ? error2.status : 502, { error: { code: "CONTENT_UNAVAILABLE" } });
+    } catch (error3) {
+      return reply8([400, 404, 429, 503].includes(error3?.status) ? error3.status : 502, { error: { code: "CONTENT_UNAVAILABLE" } });
     }
   };
 }
@@ -3468,7 +4065,7 @@ function createContentHandler({ env = {}, fetchImpl = fetch, mediaFetchImpl = fe
 import { readFileSync } from "node:fs";
 
 // server-access/bff/passkey.mjs
-import { createHash as createHash6, createHmac as createHmac3, randomBytes as randomBytes3 } from "node:crypto";
+import { createHash as createHash7, createHmac as createHmac3, randomBytes as randomBytes3 } from "node:crypto";
 import { isIP } from "node:net";
 var INTERNAL2 = "/api/v2/account/internal/passkey";
 var routes = /* @__PURE__ */ new Map([
@@ -3483,7 +4080,7 @@ var routes = /* @__PURE__ */ new Map([
   ["/api/v2/account/passkey/revoke", ["POST", "revoke"]],
   ["/api/v2/account/passkey/logout", ["POST", "logout"]]
 ]);
-var digest2 = (value) => createHash6("sha256").update(value).digest("hex");
+var digest2 = (value) => createHash7("sha256").update(value).digest("hex");
 var reply3 = (res, status, body, cookies2 = []) => {
   const data = JSON.stringify(body);
   res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "content-length": Buffer.byteLength(data), ...cookies2.length ? { "set-cookie": cookies2 } : {} });
@@ -3505,10 +4102,10 @@ function context(req, env) {
   if (count3(req, "x-yc-apigateway-operation-context") !== 1) throw Error("INGRESS_REJECTED");
   const value = req.headers["x-yc-apigateway-operation-context"];
   if (typeof value !== "string" || value.length > 4096 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) throw Error("INGRESS_REJECTED");
-  const bytes = Buffer.from(value, "base64");
-  if (bytes.toString("base64") !== value) throw Error("INGRESS_REJECTED");
-  const text5 = new TextDecoder("utf-8", { fatal: true }).decode(bytes), data = JSON.parse(text5);
-  if (!data || Object.keys(data).sort().join(",") !== "flowCookie,passkeyIngressContract,sessionCookie" || text5.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.passkeyIngressContract !== "v1" || typeof data.flowCookie !== "string" || typeof data.sessionCookie !== "string") throw Error("INGRESS_REJECTED");
+  const bytes2 = Buffer.from(value, "base64");
+  if (bytes2.toString("base64") !== value) throw Error("INGRESS_REJECTED");
+  const text7 = new TextDecoder("utf-8", { fatal: true }).decode(bytes2), data = JSON.parse(text7);
+  if (!data || Object.keys(data).sort().join(",") !== "flowCookie,passkeyIngressContract,sessionCookie" || text7.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.passkeyIngressContract !== "v1" || typeof data.flowCookie !== "string" || typeof data.sessionCookie !== "string") throw Error("INGRESS_REJECTED");
   const optional = (value2) => ["", "-"].includes(value2) ? null : value2;
   const flow = optional(data.flowCookie), session = optional(data.sessionCookie);
   if (flow && !/^npf_[A-Za-z0-9_-]{43}$/.test(flow) || session && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) throw Error("INGRESS_REJECTED");
@@ -3645,15 +4242,15 @@ ${digest2(body)}`;
       }
       if (op === "revoke" && data.ok === true) return reply3(res, 200, { ok: true });
       throw Error("UPSTREAM_INVALID");
-    } catch (error2) {
-      const code = ["INPUT_TOO_LARGE", "INVALID_INPUT", "INGRESS_REJECTED"].includes(error2.message) ? error2.message : error2 instanceof SyntaxError ? "INVALID_INPUT" : "PASSKEY_UNAVAILABLE";
+    } catch (error3) {
+      const code = ["INPUT_TOO_LARGE", "INVALID_INPUT", "INGRESS_REJECTED"].includes(error3.message) ? error3.message : error3 instanceof SyntaxError ? "INVALID_INPUT" : "PASSKEY_UNAVAILABLE";
       return reply3(res, code === "INPUT_TOO_LARGE" ? 413 : code === "INGRESS_REJECTED" ? 401 : code === "INVALID_INPUT" ? 400 : 502, { error: { code } });
     }
   };
 }
 
 // server-access/bff/feedback.mjs
-import { createHash as createHash7, createHmac as createHmac4, randomBytes as randomBytes4 } from "node:crypto";
+import { createHash as createHash8, createHmac as createHmac4, randomBytes as randomBytes4 } from "node:crypto";
 var INTERNAL3 = "/api/v2/feedback/internal";
 var reply4 = (res, status, body) => {
   const data = JSON.stringify(body);
@@ -3696,10 +4293,10 @@ function createFeedbackHandler({ env = {}, fetchImpl = fetch } = {}) {
     const origin = env.FEEDBACK_GATEWAY_ORIGIN || GATEWAY_ORIGIN, host = new URL(origin).host;
     if (req.headers.host !== host || req.headers.origin && req.headers.origin !== origin || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin" || req.headers.authorization) return reply4(res, 403, { error: { code: "ORIGIN_REJECTED" } });
     if (!["GET", "POST", "PATCH"].includes(req.method)) return reply4(res, 405, { error: { code: "METHOD_NOT_ALLOWED" } });
-    const path2 = new URL(req.url, origin);
-    if (path2.pathname.includes("%") || !/^\/api\/v2\/feedback\/(reviews|me|items|moderation|items\/[a-zA-Z0-9-]+(?:\/(withdraw|moderate|events|delete|conversation|replies(?:\/[a-zA-Z0-9-]+\/delete)?))?)$/.test(path2.pathname) || path2.pathname !== req.url.split("?")[0]) return reply4(res, 404, { error: { code: "NOT_FOUND" } });
-    if (req.method !== "GET" && (req.headers.origin !== origin || req.headers["x-nexus-feedback-write"] !== "1" || req.headers["content-type"] !== "application/json" || path2.search)) return reply4(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
-    const isPublic = path2.pathname === "/api/v2/feedback/reviews" && req.method === "GET";
+    const path6 = new URL(req.url, origin);
+    if (path6.pathname.includes("%") || !/^\/api\/v2\/feedback\/(reviews|me|items|moderation|items\/[a-zA-Z0-9-]+(?:\/(withdraw|moderate|events|delete|conversation|replies(?:\/[a-zA-Z0-9-]+\/delete)?))?)$/.test(path6.pathname) || path6.pathname !== req.url.split("?")[0]) return reply4(res, 404, { error: { code: "NOT_FOUND" } });
+    if (req.method !== "GET" && (req.headers.origin !== origin || req.headers["x-nexus-feedback-write"] !== "1" || req.headers["content-type"] !== "application/json" || path6.search)) return reply4(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
+    const isPublic = path6.pathname === "/api/v2/feedback/reviews" && req.method === "GET";
     let session = null;
     if (!isPublic) {
       try {
@@ -3720,8 +4317,8 @@ function createFeedbackHandler({ env = {}, fetchImpl = fetch } = {}) {
         upstream = await fetchImpl(WORKER_ORIGIN + req.url, { method: "GET", redirect: "error", signal: AbortSignal.timeout(5e3), headers: { accept: "application/json" } });
       } else {
         if (typeof env.FEEDBACK_SERVICE_KEY !== "string" || env.FEEDBACK_SERVICE_KEY.length < 32) return reply4(res, 503, { error: { code: "FEEDBACK_UNAVAILABLE" } });
-        const payload = req.method === "GET" ? null : await readBody(req, 2e4), body = JSON.stringify({ method: req.method, path: req.url, payload, sessionHash: createHash7("sha256").update(session).digest("hex"), ...hasExpectation ? { expectedAccountId } : {} });
-        const stamp = String(Date.now()), nonce = randomBytes4(16).toString("hex"), digest3 = createHash7("sha256").update(body).digest("hex"), canonical = `v1
+        const payload = req.method === "GET" ? null : await readBody(req, 2e4), body = JSON.stringify({ method: req.method, path: req.url, payload, sessionHash: createHash8("sha256").update(session).digest("hex"), ...hasExpectation ? { expectedAccountId } : {} });
+        const stamp = String(Date.now()), nonce = randomBytes4(16).toString("hex"), digest3 = createHash8("sha256").update(body).digest("hex"), canonical = `v1
 POST
 ${INTERNAL3}
 ${stamp}
@@ -3734,14 +4331,14 @@ ${digest3}`;
       const allowedCodes = ["INVALID_INPUT", "INVALID_CONTEXT", "INPUT_TOO_LARGE", "RATE_LIMITED", "STALE_VERSION", "STALE_REVISION", "REQUEST_CONFLICT", "ITEM_DELETED", "INVALID_TRANSITION", "NOT_FOUND", "MODERATOR_REQUIRED", "SESSION_REQUIRED", "FEEDBACK_UNAVAILABLE"];
       if (!upstream.ok) return reply4(res, [400, 401, 403, 404, 409, 413, 429, 503].includes(upstream.status) ? upstream.status : 502, { error: { code: allowedCodes.includes(data?.error?.code) ? data.error.code : "FEEDBACK_UNAVAILABLE" } });
       return reply4(res, 200, data);
-    } catch (error2) {
-      return reply4(res, error2.message === "BODY_TOO_LARGE" ? 413 : error2 instanceof SyntaxError ? 400 : 502, { error: { code: error2.message === "BODY_TOO_LARGE" ? "INPUT_TOO_LARGE" : error2 instanceof SyntaxError ? "INVALID_INPUT" : "FEEDBACK_UNAVAILABLE" } });
+    } catch (error3) {
+      return reply4(res, error3.message === "BODY_TOO_LARGE" ? 413 : error3 instanceof SyntaxError ? 400 : 502, { error: { code: error3.message === "BODY_TOO_LARGE" ? "INPUT_TOO_LARGE" : error3 instanceof SyntaxError ? "INVALID_INPUT" : "FEEDBACK_UNAVAILABLE" } });
     }
   };
 }
 
 // server-access/bff/yc6-probe-handler.mjs
-import { createHash as createHash8, randomBytes as randomBytes5, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash9, randomBytes as randomBytes5, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 var PROBE_COOKIE_NAME = "__Host-nexus_probe";
 var PROBE_MAX_AGE_SECONDS = 300;
 function sendJson(res, status, body, extraHeaders = {}) {
@@ -3757,7 +4354,7 @@ function sendJson(res, status, body, extraHeaders = {}) {
 }
 function createProbeValue() {
   const nonce = randomBytes5(24).toString("base64url");
-  const checksum = createHash8("sha256").update(`yc6:${nonce}`).digest("base64url").slice(0, 24);
+  const checksum = createHash9("sha256").update(`yc6:${nonce}`).digest("base64url").slice(0, 24);
   return `v1.${nonce}.${checksum}`;
 }
 function validateProbeValue(value) {
@@ -3772,7 +4369,7 @@ function validateProbeValue(value) {
   if (!nonce || !checksum) {
     return false;
   }
-  const expectedChecksum = createHash8("sha256").update(`yc6:${nonce}`).digest("base64url").slice(0, 24);
+  const expectedChecksum = createHash9("sha256").update(`yc6:${nonce}`).digest("base64url").slice(0, 24);
   return checksum === expectedChecksum;
 }
 function decodeGatewayOperationContext(req) {
@@ -3927,7 +4524,7 @@ function createCombinedHandler(options) {
 }
 
 // server-access/bff/entry-gate.mjs
-import { createHash as createHash9, createHmac as createHmac5, randomBytes as randomBytes6 } from "node:crypto";
+import { createHash as createHash10, createHmac as createHmac5, randomBytes as randomBytes6 } from "node:crypto";
 var ENTRY_SHELL_URL = "https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/nexus-shell.html";
 var PATHS2 = /* @__PURE__ */ new Set(["/", "/index.html", "/nexus-shell.html"]);
 var INTERNAL_PATH2 = "/api/v2/account/internal/read";
@@ -3983,10 +4580,10 @@ async function boundedBytes(response, max, type) {
     }
     if (!length || declared !== null && (!encoded || encoded.toLowerCase() === "identity") && Number(declared) !== length) throw Error("\u041D\u0435\u043F\u043E\u043B\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442 upstream");
     return Buffer.concat(chunks, length);
-  } catch (failure) {
+  } catch (failure2) {
     await reader.cancel().catch(() => {
     });
-    throw failure;
+    throw failure2;
   } finally {
     reader.releaseLock();
   }
@@ -3994,15 +4591,15 @@ async function boundedBytes(response, max, type) {
 function exactKeys(value, names) {
   return value !== null && typeof value === "object" && !Array.isArray(value) && Object.keys(value).sort().join(",") === [...names].sort().join(",");
 }
-function text4(value, max, nonempty = false) {
+function text6(value, max, nonempty = false) {
   return typeof value === "string" && value.length <= max && (!nonempty || value.length > 0);
 }
 function isActiveAccountDTO(body) {
-  if (!exactKeys(body, ["account", "loginMethods", "enrollmentAvailable"]) || body.enrollmentAvailable !== false || !exactKeys(body.account, ["accountId", "displayName", "status"]) || body.account.status !== "active" || !text4(body.account.accountId, 256, true) || !text4(body.account.displayName, 512) || !Array.isArray(body.loginMethods) || body.loginMethods.length === 0 || body.loginMethods.length > 100) return false;
+  if (!exactKeys(body, ["account", "loginMethods", "enrollmentAvailable"]) || body.enrollmentAvailable !== false || !exactKeys(body.account, ["accountId", "displayName", "status"]) || body.account.status !== "active" || !text6(body.account.accountId, 256, true) || !text6(body.account.displayName, 512) || !Array.isArray(body.loginMethods) || body.loginMethods.length === 0 || body.loginMethods.length > 100) return false;
   const ids = /* @__PURE__ */ new Set();
   let active = false;
   for (const method of body.loginMethods) {
-    if (!exactKeys(method, ["id", "kind", "status", "createdAt", "disabledAt"]) || !text4(method.id, 256, true) || ids.has(method.id) || !["oauth", "password", "passkey"].includes(method.kind) || !["pending", "active", "disabled"].includes(method.status) || !text4(method.createdAt, 64, true) || !(method.disabledAt === null || text4(method.disabledAt, 64, true))) return false;
+    if (!exactKeys(method, ["id", "kind", "status", "createdAt", "disabledAt"]) || !text6(method.id, 256, true) || ids.has(method.id) || !["oauth", "password", "passkey"].includes(method.kind) || !["pending", "active", "disabled"].includes(method.status) || !text6(method.createdAt, 64, true) || !(method.disabledAt === null || text6(method.disabledAt, 64, true))) return false;
     ids.add(method.id);
     if (method.status === "active" && method.disabledAt === null) active = true;
   }
@@ -4012,9 +4609,9 @@ function createEntryGateHandler({ env = {}, fetchImpl = fetch, landingBody: land
   const landing = Buffer.isBuffer(landingBody2) ? Buffer.from(landingBody2) : null;
   return async (req, res) => {
     if (env.NEXUS_ENTRY_GATE_ENABLED !== "true" || typeof req.url !== "string") return false;
-    const path2 = req.url.split("?")[0];
-    if (!PATHS2.has(path2)) return false;
-    if (req.url !== path2) return error(req, res, 400, "ENTRY_TARGET_REJECTED");
+    const path6 = req.url.split("?")[0];
+    if (!PATHS2.has(path6)) return false;
+    if (req.url !== path6) return error(req, res, 400, "ENTRY_TARGET_REJECTED");
     if (!["GET", "HEAD"].includes(req.method)) {
       return error(req, res, 405, "METHOD_NOT_ALLOWED", { Allow: "GET, HEAD" });
     }
@@ -4027,20 +4624,20 @@ function createEntryGateHandler({ env = {}, fetchImpl = fetch, landingBody: land
     if (env.PRIVATE_GATEWAY_CONFIRMED !== "true" || env.ACCOUNT_READ_ENABLED !== "true" || typeof env.ACCOUNT_SERVICE_KEY !== "string" || env.ACCOUNT_SERVICE_KEY.length < 32 || !landing || !landing.length || landing.length > MAX_HTML_BYTES) {
       return error(req, res, 503, "ENTRY_GATE_UNAVAILABLE");
     }
-    const publicOrDenied = (status, code) => path2 === "/nexus-shell.html" ? error(req, res, status, code) : reply5(req, res, 200, landing, "text/html; charset=utf-8");
+    const publicOrDenied = (status, code) => path6 === "/nexus-shell.html" ? error(req, res, status, code) : reply5(req, res, 200, landing, "text/html; charset=utf-8");
     const session = sessionFromIngress(req, { env });
     if (!session) return publicOrDenied(401, "AUTHENTICATION_REQUIRED");
     try {
-      const body = JSON.stringify({ path: "/api/v2/account", sessionHash: createHash9("sha256").update(session).digest("hex") });
+      const body = JSON.stringify({ path: "/api/v2/account", sessionHash: createHash10("sha256").update(session).digest("hex") });
       const stamp = String(Date.now());
       const nonce = randomBytes6(16).toString("hex");
-      const hash = createHash9("sha256").update(body).digest("hex");
+      const hash4 = createHash10("sha256").update(body).digest("hex");
       const signature = createHmac5("sha256", env.ACCOUNT_SERVICE_KEY).update(`v1
 POST
 ${INTERNAL_PATH2}
 ${stamp}
 ${nonce}
-${hash}`).digest("hex");
+${hash4}`).digest("hex");
       const account = await fetchImpl(WORKER_ORIGIN + INTERNAL_PATH2, {
         method: "POST",
         body,
@@ -4088,7 +4685,7 @@ ${hash}`).digest("hex");
 }
 
 // server-access/bff/cloud-session.mjs
-import { createHash as createHash10, createHmac as createHmac6, randomBytes as randomBytes7 } from "node:crypto";
+import { createHash as createHash11, createHmac as createHmac6, randomBytes as randomBytes7 } from "node:crypto";
 var BASE2 = "/api/v2/cloud";
 var INTERNAL4 = BASE2 + "/internal";
 var MAX_REQUEST = 155e4;
@@ -4105,9 +4702,9 @@ var reply6 = (res, status, body) => {
   res.end(data);
   return true;
 };
-function legacyPath(method, path2) {
-  if (typeof path2 !== "string" || path2.length > 2048 || !path2.startsWith(BASE2 + "/") || /[?#\\]/.test(path2)) return null;
-  const rest = path2.slice(BASE2.length);
+function legacyPath(method, path6) {
+  if (typeof path6 !== "string" || path6.length > 2048 || !path6.startsWith(BASE2 + "/") || /[?#\\]/.test(path6)) return null;
+  const rest = path6.slice(BASE2.length);
   if (method === "GET" && (rest === "/me" || rest === "/projects")) return "/api/v1" + rest;
   const match = /^\/projects\/([^/]+)(\/audit)?$/.exec(rest);
   if (!match || !["GET", "PUT"].includes(method) || match[2] && method !== "GET") return null;
@@ -4161,8 +4758,8 @@ function createCloudSessionHandler({ env = {}, fetchImpl = fetch } = {}) {
     if (req.headers.host !== new URL(GATEWAY_ORIGIN).host || req.headers.origin && req.headers.origin !== GATEWAY_ORIGIN || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin" || req.headers.authorization)
       return reply6(res, 403, { error: { code: "ORIGIN_REJECTED" } });
     if (!["GET", "PUT"].includes(req.method)) return reply6(res, 405, { error: { code: "METHOD_NOT_ALLOWED" } });
-    const path2 = legacyPath(req.method, req.url);
-    if (!path2) return reply6(res, 404, { error: { code: "NOT_FOUND" } });
+    const path6 = legacyPath(req.method, req.url);
+    if (!path6) return reply6(res, 404, { error: { code: "NOT_FOUND" } });
     if (req.method === "PUT" && (req.headers.origin !== GATEWAY_ORIGIN || req.headers["x-nexus-cloud-request"] !== "1" || req.headers["content-type"] !== "application/json"))
       return reply6(res, 403, { error: { code: "WRITE_ORIGIN_REQUIRED" } });
     const sessionCookie2 = sessionFromIngress(req, { env });
@@ -4174,9 +4771,9 @@ function createCloudSessionHandler({ env = {}, fetchImpl = fetch } = {}) {
       const payload = req.method === "GET" ? null : await readNodeBody(req, MAX_REQUEST);
       if (req.method === "PUT" && (!payload || typeof payload !== "object" || Array.isArray(payload)))
         return reply6(res, 400, { error: { code: "INVALID_INPUT" } });
-      const body = JSON.stringify({ method: req.method, path: path2, payload, sessionCookie: sessionCookie2, expectedAccountId });
+      const body = JSON.stringify({ method: req.method, path: path6, payload, sessionCookie: sessionCookie2, expectedAccountId });
       const stamp = String(Date.now()), nonce = randomBytes7(16).toString("hex");
-      const digest3 = createHash10("sha256").update(body).digest("hex");
+      const digest3 = createHash11("sha256").update(body).digest("hex");
       const canonical = `v1
 POST
 ${INTERNAL4}
@@ -4214,18 +4811,18 @@ ${digest3}`;
         );
       }
       return reply6(res, 200, data);
-    } catch (error2) {
-      const status = error2?.message === "INPUT_TOO_LARGE" ? 413 : error2?.message === "INVALID_INPUT" ? 400 : 502;
+    } catch (error3) {
+      const status = error3?.message === "INPUT_TOO_LARGE" ? 413 : error3?.message === "INVALID_INPUT" ? 400 : 502;
       return reply6(res, status, { error: { code: status === 413 ? "INPUT_TOO_LARGE" : status === 400 ? "INVALID_INPUT" : "CLOUD_UNAVAILABLE" } });
     }
   };
 }
 
 // server-access/bff/oauth.mjs
-import { createHash as createHash11, createHmac as createHmac7, randomBytes as randomBytes8, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
+import { createHash as createHash12, createHmac as createHmac7, randomBytes as randomBytes8, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
 var PREFIX = "/api/v2/account/oauth/";
 var INTERNAL5 = "/api/v2/account/internal/oauth";
-var sha3 = (value) => createHash11("sha256").update(value).digest("hex");
+var sha4 = (value) => createHash12("sha256").update(value).digest("hex");
 var random = () => randomBytes8(32).toString("base64url");
 var count4 = (req, name) => {
   if (!Array.isArray(req.rawHeaders) || req.rawHeaders.length % 2 !== 0) return -1;
@@ -4314,79 +4911,79 @@ function syntheticIngressProbe(req) {
   return pairs.length > 0 && pairs.length <= 3 && new Set(pairs).size === pairs.length && pairs.every((value) => SYNTHETIC_COOKIE_PAIRS.has(value));
 }
 function ingress(req, env) {
-  const fail3 = (reason) => {
-    const error2 = new Rejected2("INGRESS_REJECTED", 401);
-    error2.probeReason = reason;
-    throw error2;
+  const fail9 = (reason) => {
+    const error3 = new Rejected2("INGRESS_REJECTED", 401);
+    error3.probeReason = reason;
+    throw error3;
   };
-  if (count4(req, "x-yc-apigateway-operation-context") !== 1) fail3("context_count");
+  if (count4(req, "x-yc-apigateway-operation-context") !== 1) fail9("context_count");
   const raw = req.headers["x-yc-apigateway-operation-context"];
-  if (typeof raw !== "string" || raw.length > 8192 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) fail3("base64");
-  const bytes = Buffer.from(raw, "base64");
-  if (bytes.toString("base64") !== raw) fail3("base64");
-  let text5, data;
+  if (typeof raw !== "string" || raw.length > 8192 || !/^[A-Za-z0-9+/]+={0,2}$/.test(raw)) fail9("base64");
+  const bytes2 = Buffer.from(raw, "base64");
+  if (bytes2.toString("base64") !== raw) fail9("base64");
+  let text7, data;
   try {
-    text5 = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    text7 = new TextDecoder("utf-8", { fatal: true }).decode(bytes2);
   } catch {
-    fail3("utf8");
+    fail9("utf8");
   }
   try {
-    data = JSON.parse(text5);
+    data = JSON.parse(text7);
   } catch {
-    fail3("json");
+    fail9("json");
   }
   if (data?.oauthIngressContract === "v2" || data?.oauthIngressContract === "v3") {
     let v2;
     try {
       v2 = readV2CookieContext(req, "oauthIngressContract", { env });
-    } catch (error2) {
-      fail3(INGRESS_PROBE_REASONS.has(error2.cookieContextReason) ? error2.cookieContextReason : "v2_rejected");
+    } catch (error3) {
+      fail9(INGRESS_PROBE_REASONS.has(error3.cookieContextReason) ? error3.cookieContextReason : "v2_rejected");
     }
     if (v2 === void 0) deny2("INGRESS_REJECTED", 401);
     const session2 = v2.get("__Host-nexus_session") ?? null, flow2 = v2.get("__Host-nexus_oauth_flow") ?? null;
-    if (session2 !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session2)) fail3("session_format");
-    if (flow2 !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow2)) fail3("flow_format");
+    if (session2 !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session2)) fail9("session_format");
+    if (flow2 !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow2)) fail9("flow_format");
     return { session: session2, flow: flow2 };
   }
-  if (raw.length > 4096) fail3("base64");
-  if (!data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).sort().join(",") !== "oauthFlowCookie,oauthIngressContract,sessionCookie" || text5.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.oauthIngressContract !== "v1" || typeof data.sessionCookie !== "string" || typeof data.oauthFlowCookie !== "string") fail3(data?.oauthIngressContract === "v1" ? "shape" : "shape_other");
+  if (raw.length > 4096) fail9("base64");
+  if (!data || typeof data !== "object" || Array.isArray(data) || Object.keys(data).sort().join(",") !== "oauthFlowCookie,oauthIngressContract,sessionCookie" || text7.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 6 || data.oauthIngressContract !== "v1" || typeof data.sessionCookie !== "string" || typeof data.oauthFlowCookie !== "string") fail9(data?.oauthIngressContract === "v1" ? "shape" : "shape_other");
   const optional = (value) => value === "-" ? null : value;
   const session = optional(data.sessionCookie), flow = optional(data.oauthFlowCookie);
-  if (session !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail3("session_format");
-  if (flow !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow)) fail3("flow_format");
+  if (session !== null && !/^nxs_[A-Za-z0-9_-]{24,256}$/.test(session)) fail9("session_format");
+  if (flow !== null && !/^nof_[A-Za-z0-9_-]{43}$/.test(flow)) fail9("flow_format");
   if (req.headers.cookie !== void 0) {
-    if (count4(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) fail3("cookie_count");
+    if (count4(req, "cookie") !== 1 || typeof req.headers.cookie !== "string" || req.headers.cookie.length > 8192) fail9("cookie_count");
     const found = {};
     for (const part of req.headers.cookie.split(";")) {
       const pair = part.trim(), at = pair.indexOf("=");
-      if (at < 1) fail3("syntax");
+      if (at < 1) fail9("syntax");
       const name = pair.slice(0, at), value = pair.slice(at + 1);
-      if (!/^[!#$%&'*+.^_`|~A-Za-z0-9-]+$/.test(name) || !/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value)) fail3("syntax");
+      if (!/^[!#$%&'*+.^_`|~A-Za-z0-9-]+$/.test(name) || !/^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$/.test(value)) fail9("syntax");
       if (["__Host-nexus_session", "__Host-nexus_oauth_flow"].includes(name)) {
-        if (Object.hasOwn(found, name)) fail3("syntax");
+        if (Object.hasOwn(found, name)) fail9("syntax");
         found[name] = value;
       }
     }
     const fromCookie = found["__Host-nexus_session"] ?? null, fromFlow = found["__Host-nexus_oauth_flow"] ?? null;
-    if (!(fromCookie === null && session === null) && !same(fromCookie, session)) fail3("session_mismatch");
-    if (!(fromFlow === null && flow === null) && !same(fromFlow, flow)) fail3("flow_mismatch");
-  } else if (count4(req, "cookie") !== 0) fail3("cookie_count");
+    if (!(fromCookie === null && session === null) && !same(fromCookie, session)) fail9("session_mismatch");
+    if (!(fromFlow === null && flow === null) && !same(fromFlow, flow)) fail9("flow_mismatch");
+  } else if (count4(req, "cookie") !== 0) fail9("cookie_count");
   return { session, flow };
 }
 async function boundedJSON(source, max, flatIntent = false) {
   let length = 0;
   const parts = [];
   for await (const part of source) {
-    const bytes = Buffer.from(part);
-    length += bytes.length;
+    const bytes2 = Buffer.from(part);
+    length += bytes2.length;
     if (length > max) deny2("INPUT_TOO_LARGE", 413);
-    parts.push(bytes);
+    parts.push(bytes2);
   }
   let value;
   try {
-    const text5 = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts, length));
-    value = JSON.parse(text5);
-    if (flatIntent && text5.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 2) deny2("INVALID_INPUT");
+    const text7 = new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(parts, length));
+    value = JSON.parse(text7);
+    if (flatIntent && text7.match(/"(?:[^"\\]|\\.)*"/g)?.length !== 2) deny2("INVALID_INPUT");
   } catch {
     deny2("INVALID_INPUT");
   }
@@ -4400,7 +4997,7 @@ POST
 ${INTERNAL5}
 ${timestamp}
 ${nonce}
-${sha3(body)}`).digest("hex");
+${sha4(body)}`).digest("hex");
   const upstream = await fetchImpl(WORKER_ORIGIN + INTERNAL5, { method: "POST", credentials: "omit", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(2500), body, headers: { accept: "application/json", "content-type": "application/json", "x-nexus-service-timestamp": timestamp, "x-nexus-service-nonce": nonce, "x-nexus-service-signature": signature } });
   if (upstream.redirected || !/^application\/json(?:\s*;|$)/i.test(upstream.headers.get("content-type") || "")) {
     await upstream.body?.cancel();
@@ -4446,8 +5043,8 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
         } else if (expectedAccountId !== void 0 || expectationHeaders !== 0) deny2("INVALID_INPUT");
         if (input.intent === "link" && !context2.session) deny2("FRESH_PASSKEY_REQUIRED", 401);
         const state2 = random(), codeVerifier = random(), nonce = random(), flow = "nof_" + random();
-        const result = await service2(env, fetchImpl, { op: "begin", provider, intent: input.intent, stateHash: sha3(state2), flowHash: sha3(flow), codeVerifier, nonce, ...input.intent === "link" ? { sessionHash: sha3(context2.session), expectedAccountId } : {} });
-        if (typeof result.txId !== "string" || result.txId.length > 80 || typeof result.expiresAt !== "string") deny2("OAUTH_UNAVAILABLE", 502);
+        const result2 = await service2(env, fetchImpl, { op: "begin", provider, intent: input.intent, stateHash: sha4(state2), flowHash: sha4(flow), codeVerifier, nonce, ...input.intent === "link" ? { sessionHash: sha4(context2.session), expectedAccountId } : {} });
+        if (typeof result2.txId !== "string" || result2.txId.length > 80 || typeof result2.expiresAt !== "string") deny2("OAUTH_UNAVAILABLE", 502);
         return reply7(res, 200, { authorizationURL: oauthAuthorizationURL({ provider, env, state: state2, codeVerifier, nonce }) }, [flowCookie(flow, 600)]);
       }
       if (!context2.flow) deny2("FLOW_REQUIRED", 401);
@@ -4459,20 +5056,1802 @@ function createOAuthHandler({ env = {}, fetchImpl = fetch } = {}) {
       const code = params.get("code"), state = params.get("state"), deviceId = params.get("device_id");
       if (typeof code !== "string" || !code.length || code.length > 4096 || /[\x00-\x20\x7f]/.test(code) || !/^[A-Za-z0-9_-]{43}$/.test(state || "") || provider === "vk" && (typeof deviceId !== "string" || !deviceId.length || deviceId.length > 512 || /[\x00-\x20\x7f]/.test(deviceId))) deny2("INVALID_INPUT");
       if (params.has("iss") && !["https://accounts.google.com", "accounts.google.com"].includes(params.get("iss"))) deny2("PROVIDER_REJECTED", 401);
-      const claim = await service2(env, fetchImpl, { op: "claim", provider, stateHash: sha3(state), flowHash: sha3(context2.flow) });
+      const claim = await service2(env, fetchImpl, { op: "claim", provider, stateHash: sha4(state), flowHash: sha4(context2.flow) });
       if (typeof claim.txId !== "string" || claim.txId.length > 80 || !["login", "link"].includes(claim.intent) || typeof claim.codeVerifier !== "string" || !/^[A-Za-z0-9._~-]{43,128}$/.test(claim.codeVerifier) || typeof claim.nonce !== "string" || !/^[A-Za-z0-9_-]{22,128}$/.test(claim.nonce)) deny2("OAUTH_UNAVAILABLE", 502);
       const profile = await exchangeOAuthProfile({ provider, env, code, state, deviceId, codeVerifier: claim.codeVerifier, nonce: claim.nonce, fetchImpl });
-      const completed = await service2(env, fetchImpl, { op: "complete", txId: claim.txId, flowHash: sha3(context2.flow), profile });
+      const completed = await service2(env, fetchImpl, { op: "complete", txId: claim.txId, flowHash: sha4(context2.flow), profile });
       if (!/^nxs_[A-Za-z0-9_-]{43}$/.test(completed.sessionSecret || "")) deny2("OAUTH_UNAVAILABLE", 502);
       return reply7(res, 303, null, [sessionCookie(completed.sessionSecret), flowCookie("", 0)], { location: GATEWAY_ORIGIN + (claim.intent === "link" ? "/#nexusLogin=oauth&view=account&tab=security" : "/#nexusLogin=oauth") });
-    } catch (error2) {
-      const known = error2 instanceof Rejected2;
-      const probeReason = known && error2.code === "INGRESS_REJECTED" && INGRESS_PROBE_REASONS.has(error2.probeReason) && syntheticIngressProbe(req) ? error2.probeReason : null;
-      const status = known ? error2.status : error2.message === "PROVIDER_REJECTED" ? 401 : 502, code = known ? error2.code : error2.message === "PROVIDER_REJECTED" ? "PROVIDER_REJECTED" : "OAUTH_UNAVAILABLE", cookies2 = callback ? [flowCookie("", 0)] : [];
+    } catch (error3) {
+      const known2 = error3 instanceof Rejected2;
+      const probeReason = known2 && error3.code === "INGRESS_REJECTED" && INGRESS_PROBE_REASONS.has(error3.probeReason) && syntheticIngressProbe(req) ? error3.probeReason : null;
+      const status = known2 ? error3.status : error3.message === "PROVIDER_REJECTED" ? 401 : 502, code = known2 ? error3.code : error3.message === "PROVIDER_REJECTED" ? "PROVIDER_REJECTED" : "OAUTH_UNAVAILABLE", cookies2 = callback ? [flowCookie("", 0)] : [];
       if (callback && htmlCallbackError(req, res, status, code, cookies2)) return true;
       return reply7(res, status, { error: { code, ...probeReason ? { probeReason } : {} } }, cookies2);
     }
   };
+}
+
+// studio-build/service.mjs
+import { mkdir as mkdir2, writeFile as writeFile2, readFile, readdir, rename as rename2 } from "node:fs/promises";
+import path5 from "node:path";
+import { randomUUID as randomUUID3, randomBytes as randomBytes10 } from "node:crypto";
+
+// studio-build/project.mjs
+import { createHash as createHash13 } from "node:crypto";
+var exact7 = (x, keys) => x && typeof x === "object" && !Array.isArray(x) && Object.keys(x).every((k) => keys.includes(k));
+var sourceHash = (value) => createHash13("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex");
+function applicationConfig(workspace) {
+  const f = workspace.files.find((f2) => f2.path === "nexus-application.json");
+  if (!f) return null;
+  let c;
+  try {
+    c = JSON.parse(f.content);
+  } catch {
+    throw Error("APPLICATION_CONFIG_INVALID");
+  }
+  ;
+  if (!exact7(c, ["schemaVersion", "target", "outputDataFiles", "targets"]) || c.schemaVersion !== 1 || c.target !== "qt-wasm" || !Array.isArray(c.outputDataFiles) || c.outputDataFiles.length > 8) throw Error("APPLICATION_CONFIG_INVALID");
+  for (const f2 of c.outputDataFiles) if (strictProjectPath(f2) !== f2 || !/^taskflow\.txt$|^data\/[\p{L}\p{N}._/-]+\.(?:txt|json)$/u.test(f2)) throw Error("APPLICATION_DATA_PATH_INVALID");
+  if (c.targets) {
+    if (!exact7(c.targets, ["console", "tests", "gui"])) throw Error("APPLICATION_TARGET_INVALID");
+    for (const a of Object.values(c.targets)) if (!Array.isArray(a) || !a.length || a.length > 64 || a.some((p) => !workspace.files.some((f2) => f2.path === p) || !/\.(?:cpp|cc|cxx)$/.test(p))) throw Error("APPLICATION_TARGET_INVALID");
+  }
+  return c;
+}
+function projectSnapshot(input) {
+  if (!exact7(input, ["projectId", "title", "workspace", "assignmentId"]) || typeof input.projectId !== "string" || !/^[-a-zA-Z0-9._]{1,160}$/.test(input.projectId) || typeof input.title !== "string" || input.title.length > 120 || /[\u0000-\u001f]/.test(input.title) || input.assignmentId !== void 0 && input.assignmentId !== "cpp.taskflow-capstone.v1") throw Error("STUDIO_INPUT_INVALID");
+  const workspace = validateProjectWorkspace(input.workspace);
+  workspace.files.sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+  const c = applicationConfig(workspace);
+  if (!c) throw Error("APPLICATION_CONFIG_REQUIRED");
+  const data = { schemaVersion: 1, projectId: input.projectId, title: input.title, assignmentId: input.assignmentId || null, workspace };
+  return { ...data, hash: sourceHash(data), fileHashes: workspace.files.map((f) => ({ path: f.path, sha256: sourceHash(f.content) })) };
+}
+
+// studio-build/docker-runner.mjs
+import { spawn } from "node:child_process";
+import { mkdir, writeFile } from "node:fs/promises";
+import path2 from "node:path";
+import { randomBytes as randomBytes9, createHash as createHash14 } from "node:crypto";
+
+// project-studio/application-license.js
+var APPLICATION_GPL_V3 = `                    GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
+
+ Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+                            Preamble
+
+  The GNU General Public License is a free, copyleft license for
+software and other kinds of works.
+
+  The licenses for most software and other practical works are designed
+to take away your freedom to share and change the works.  By contrast,
+the GNU General Public License is intended to guarantee your freedom to
+share and change all versions of a program--to make sure it remains free
+software for all its users.  We, the Free Software Foundation, use the
+GNU General Public License for most of our software; it applies also to
+any other work released this way by its authors.  You can apply it to
+your programs, too.
+
+  When we speak of free software, we are referring to freedom, not
+price.  Our General Public Licenses are designed to make sure that you
+have the freedom to distribute copies of free software (and charge for
+them if you wish), that you receive source code or can get it if you
+want it, that you can change the software or use pieces of it in new
+free programs, and that you know you can do these things.
+
+  To protect your rights, we need to prevent others from denying you
+these rights or asking you to surrender the rights.  Therefore, you have
+certain responsibilities if you distribute copies of the software, or if
+you modify it: responsibilities to respect the freedom of others.
+
+  For example, if you distribute copies of such a program, whether
+gratis or for a fee, you must pass on to the recipients the same
+freedoms that you received.  You must make sure that they, too, receive
+or can get the source code.  And you must show them these terms so they
+know their rights.
+
+  Developers that use the GNU GPL protect your rights with two steps:
+(1) assert copyright on the software, and (2) offer you this License
+giving you legal permission to copy, distribute and/or modify it.
+
+  For the developers' and authors' protection, the GPL clearly explains
+that there is no warranty for this free software.  For both users' and
+authors' sake, the GPL requires that modified versions be marked as
+changed, so that their problems will not be attributed erroneously to
+authors of previous versions.
+
+  Some devices are designed to deny users access to install or run
+modified versions of the software inside them, although the manufacturer
+can do so.  This is fundamentally incompatible with the aim of
+protecting users' freedom to change the software.  The systematic
+pattern of such abuse occurs in the area of products for individuals to
+use, which is precisely where it is most unacceptable.  Therefore, we
+have designed this version of the GPL to prohibit the practice for those
+products.  If such problems arise substantially in other domains, we
+stand ready to extend this provision to those domains in future versions
+of the GPL, as needed to protect the freedom of users.
+
+  Finally, every program is threatened constantly by software patents.
+States should not allow patents to restrict development and use of
+software on general-purpose computers, but in those that do, we wish to
+avoid the special danger that patents applied to a free program could
+make it effectively proprietary.  To prevent this, the GPL assures that
+patents cannot be used to render the program non-free.
+
+  The precise terms and conditions for copying, distribution and
+modification follow.
+
+                       TERMS AND CONDITIONS
+
+  0. Definitions.
+
+  "This License" refers to version 3 of the GNU General Public License.
+
+  "Copyright" also means copyright-like laws that apply to other kinds of
+works, such as semiconductor masks.
+
+  "The Program" refers to any copyrightable work licensed under this
+License.  Each licensee is addressed as "you".  "Licensees" and
+"recipients" may be individuals or organizations.
+
+  To "modify" a work means to copy from or adapt all or part of the work
+in a fashion requiring copyright permission, other than the making of an
+exact copy.  The resulting work is called a "modified version" of the
+earlier work or a work "based on" the earlier work.
+
+  A "covered work" means either the unmodified Program or a work based
+on the Program.
+
+  To "propagate" a work means to do anything with it that, without
+permission, would make you directly or secondarily liable for
+infringement under applicable copyright law, except executing it on a
+computer or modifying a private copy.  Propagation includes copying,
+distribution (with or without modification), making available to the
+public, and in some countries other activities as well.
+
+  To "convey" a work means any kind of propagation that enables other
+parties to make or receive copies.  Mere interaction with a user through
+a computer network, with no transfer of a copy, is not conveying.
+
+  An interactive user interface displays "Appropriate Legal Notices"
+to the extent that it includes a convenient and prominently visible
+feature that (1) displays an appropriate copyright notice, and (2)
+tells the user that there is no warranty for the work (except to the
+extent that warranties are provided), that licensees may convey the
+work under this License, and how to view a copy of this License.  If
+the interface presents a list of user commands or options, such as a
+menu, a prominent item in the list meets this criterion.
+
+  1. Source Code.
+
+  The "source code" for a work means the preferred form of the work
+for making modifications to it.  "Object code" means any non-source
+form of a work.
+
+  A "Standard Interface" means an interface that either is an official
+standard defined by a recognized standards body, or, in the case of
+interfaces specified for a particular programming language, one that
+is widely used among developers working in that language.
+
+  The "System Libraries" of an executable work include anything, other
+than the work as a whole, that (a) is included in the normal form of
+packaging a Major Component, but which is not part of that Major
+Component, and (b) serves only to enable use of the work with that
+Major Component, or to implement a Standard Interface for which an
+implementation is available to the public in source code form.  A
+"Major Component", in this context, means a major essential component
+(kernel, window system, and so on) of the specific operating system
+(if any) on which the executable work runs, or a compiler used to
+produce the work, or an object code interpreter used to run it.
+
+  The "Corresponding Source" for a work in object code form means all
+the source code needed to generate, install, and (for an executable
+work) run the object code and to modify the work, including scripts to
+control those activities.  However, it does not include the work's
+System Libraries, or general-purpose tools or generally available free
+programs which are used unmodified in performing those activities but
+which are not part of the work.  For example, Corresponding Source
+includes interface definition files associated with source files for
+the work, and the source code for shared libraries and dynamically
+linked subprograms that the work is specifically designed to require,
+such as by intimate data communication or control flow between those
+subprograms and other parts of the work.
+
+  The Corresponding Source need not include anything that users
+can regenerate automatically from other parts of the Corresponding
+Source.
+
+  The Corresponding Source for a work in source code form is that
+same work.
+
+  2. Basic Permissions.
+
+  All rights granted under this License are granted for the term of
+copyright on the Program, and are irrevocable provided the stated
+conditions are met.  This License explicitly affirms your unlimited
+permission to run the unmodified Program.  The output from running a
+covered work is covered by this License only if the output, given its
+content, constitutes a covered work.  This License acknowledges your
+rights of fair use or other equivalent, as provided by copyright law.
+
+  You may make, run and propagate covered works that you do not
+convey, without conditions so long as your license otherwise remains
+in force.  You may convey covered works to others for the sole purpose
+of having them make modifications exclusively for you, or provide you
+with facilities for running those works, provided that you comply with
+the terms of this License in conveying all material for which you do
+not control copyright.  Those thus making or running the covered works
+for you must do so exclusively on your behalf, under your direction
+and control, on terms that prohibit them from making any copies of
+your copyrighted material outside their relationship with you.
+
+  Conveying under any other circumstances is permitted solely under
+the conditions stated below.  Sublicensing is not allowed; section 10
+makes it unnecessary.
+
+  3. Protecting Users' Legal Rights From Anti-Circumvention Law.
+
+  No covered work shall be deemed part of an effective technological
+measure under any applicable law fulfilling obligations under article
+11 of the WIPO copyright treaty adopted on 20 December 1996, or
+similar laws prohibiting or restricting circumvention of such
+measures.
+
+  When you convey a covered work, you waive any legal power to forbid
+circumvention of technological measures to the extent such circumvention
+is effected by exercising rights under this License with respect to
+the covered work, and you disclaim any intention to limit operation or
+modification of the work as a means of enforcing, against the work's
+users, your or third parties' legal rights to forbid circumvention of
+technological measures.
+
+  4. Conveying Verbatim Copies.
+
+  You may convey verbatim copies of the Program's source code as you
+receive it, in any medium, provided that you conspicuously and
+appropriately publish on each copy an appropriate copyright notice;
+keep intact all notices stating that this License and any
+non-permissive terms added in accord with section 7 apply to the code;
+keep intact all notices of the absence of any warranty; and give all
+recipients a copy of this License along with the Program.
+
+  You may charge any price or no price for each copy that you convey,
+and you may offer support or warranty protection for a fee.
+
+  5. Conveying Modified Source Versions.
+
+  You may convey a work based on the Program, or the modifications to
+produce it from the Program, in the form of source code under the
+terms of section 4, provided that you also meet all of these conditions:
+
+    a) The work must carry prominent notices stating that you modified
+    it, and giving a relevant date.
+
+    b) The work must carry prominent notices stating that it is
+    released under this License and any conditions added under section
+    7.  This requirement modifies the requirement in section 4 to
+    "keep intact all notices".
+
+    c) You must license the entire work, as a whole, under this
+    License to anyone who comes into possession of a copy.  This
+    License will therefore apply, along with any applicable section 7
+    additional terms, to the whole of the work, and all its parts,
+    regardless of how they are packaged.  This License gives no
+    permission to license the work in any other way, but it does not
+    invalidate such permission if you have separately received it.
+
+    d) If the work has interactive user interfaces, each must display
+    Appropriate Legal Notices; however, if the Program has interactive
+    interfaces that do not display Appropriate Legal Notices, your
+    work need not make them do so.
+
+  A compilation of a covered work with other separate and independent
+works, which are not by their nature extensions of the covered work,
+and which are not combined with it such as to form a larger program,
+in or on a volume of a storage or distribution medium, is called an
+"aggregate" if the compilation and its resulting copyright are not
+used to limit the access or legal rights of the compilation's users
+beyond what the individual works permit.  Inclusion of a covered work
+in an aggregate does not cause this License to apply to the other
+parts of the aggregate.
+
+  6. Conveying Non-Source Forms.
+
+  You may convey a covered work in object code form under the terms
+of sections 4 and 5, provided that you also convey the
+machine-readable Corresponding Source under the terms of this License,
+in one of these ways:
+
+    a) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by the
+    Corresponding Source fixed on a durable physical medium
+    customarily used for software interchange.
+
+    b) Convey the object code in, or embodied in, a physical product
+    (including a physical distribution medium), accompanied by a
+    written offer, valid for at least three years and valid for as
+    long as you offer spare parts or customer support for that product
+    model, to give anyone who possesses the object code either (1) a
+    copy of the Corresponding Source for all the software in the
+    product that is covered by this License, on a durable physical
+    medium customarily used for software interchange, for a price no
+    more than your reasonable cost of physically performing this
+    conveying of source, or (2) access to copy the
+    Corresponding Source from a network server at no charge.
+
+    c) Convey individual copies of the object code with a copy of the
+    written offer to provide the Corresponding Source.  This
+    alternative is allowed only occasionally and noncommercially, and
+    only if you received the object code with such an offer, in accord
+    with subsection 6b.
+
+    d) Convey the object code by offering access from a designated
+    place (gratis or for a charge), and offer equivalent access to the
+    Corresponding Source in the same way through the same place at no
+    further charge.  You need not require recipients to copy the
+    Corresponding Source along with the object code.  If the place to
+    copy the object code is a network server, the Corresponding Source
+    may be on a different server (operated by you or a third party)
+    that supports equivalent copying facilities, provided you maintain
+    clear directions next to the object code saying where to find the
+    Corresponding Source.  Regardless of what server hosts the
+    Corresponding Source, you remain obligated to ensure that it is
+    available for as long as needed to satisfy these requirements.
+
+    e) Convey the object code using peer-to-peer transmission, provided
+    you inform other peers where the object code and Corresponding
+    Source of the work are being offered to the general public at no
+    charge under subsection 6d.
+
+  A separable portion of the object code, whose source code is excluded
+from the Corresponding Source as a System Library, need not be
+included in conveying the object code work.
+
+  A "User Product" is either (1) a "consumer product", which means any
+tangible personal property which is normally used for personal, family,
+or household purposes, or (2) anything designed or sold for incorporation
+into a dwelling.  In determining whether a product is a consumer product,
+doubtful cases shall be resolved in favor of coverage.  For a particular
+product received by a particular user, "normally used" refers to a
+typical or common use of that class of product, regardless of the status
+of the particular user or of the way in which the particular user
+actually uses, or expects or is expected to use, the product.  A product
+is a consumer product regardless of whether the product has substantial
+commercial, industrial or non-consumer uses, unless such uses represent
+the only significant mode of use of the product.
+
+  "Installation Information" for a User Product means any methods,
+procedures, authorization keys, or other information required to install
+and execute modified versions of a covered work in that User Product from
+a modified version of its Corresponding Source.  The information must
+suffice to ensure that the continued functioning of the modified object
+code is in no case prevented or interfered with solely because
+modification has been made.
+
+  If you convey an object code work under this section in, or with, or
+specifically for use in, a User Product, and the conveying occurs as
+part of a transaction in which the right of possession and use of the
+User Product is transferred to the recipient in perpetuity or for a
+fixed term (regardless of how the transaction is characterized), the
+Corresponding Source conveyed under this section must be accompanied
+by the Installation Information.  But this requirement does not apply
+if neither you nor any third party retains the ability to install
+modified object code on the User Product (for example, the work has
+been installed in ROM).
+
+  The requirement to provide Installation Information does not include a
+requirement to continue to provide support service, warranty, or updates
+for a work that has been modified or installed by the recipient, or for
+the User Product in which it has been modified or installed.  Access to a
+network may be denied when the modification itself materially and
+adversely affects the operation of the network or violates the rules and
+protocols for communication across the network.
+
+  Corresponding Source conveyed, and Installation Information provided,
+in accord with this section must be in a format that is publicly
+documented (and with an implementation available to the public in
+source code form), and must require no special password or key for
+unpacking, reading or copying.
+
+  7. Additional Terms.
+
+  "Additional permissions" are terms that supplement the terms of this
+License by making exceptions from one or more of its conditions.
+Additional permissions that are applicable to the entire Program shall
+be treated as though they were included in this License, to the extent
+that they are valid under applicable law.  If additional permissions
+apply only to part of the Program, that part may be used separately
+under those permissions, but the entire Program remains governed by
+this License without regard to the additional permissions.
+
+  When you convey a copy of a covered work, you may at your option
+remove any additional permissions from that copy, or from any part of
+it.  (Additional permissions may be written to require their own
+removal in certain cases when you modify the work.)  You may place
+additional permissions on material, added by you to a covered work,
+for which you have or can give appropriate copyright permission.
+
+  Notwithstanding any other provision of this License, for material you
+add to a covered work, you may (if authorized by the copyright holders of
+that material) supplement the terms of this License with terms:
+
+    a) Disclaiming warranty or limiting liability differently from the
+    terms of sections 15 and 16 of this License; or
+
+    b) Requiring preservation of specified reasonable legal notices or
+    author attributions in that material or in the Appropriate Legal
+    Notices displayed by works containing it; or
+
+    c) Prohibiting misrepresentation of the origin of that material, or
+    requiring that modified versions of such material be marked in
+    reasonable ways as different from the original version; or
+
+    d) Limiting the use for publicity purposes of names of licensors or
+    authors of the material; or
+
+    e) Declining to grant rights under trademark law for use of some
+    trade names, trademarks, or service marks; or
+
+    f) Requiring indemnification of licensors and authors of that
+    material by anyone who conveys the material (or modified versions of
+    it) with contractual assumptions of liability to the recipient, for
+    any liability that these contractual assumptions directly impose on
+    those licensors and authors.
+
+  All other non-permissive additional terms are considered "further
+restrictions" within the meaning of section 10.  If the Program as you
+received it, or any part of it, contains a notice stating that it is
+governed by this License along with a term that is a further
+restriction, you may remove that term.  If a license document contains
+a further restriction but permits relicensing or conveying under this
+License, you may add to a covered work material governed by the terms
+of that license document, provided that the further restriction does
+not survive such relicensing or conveying.
+
+  If you add terms to a covered work in accord with this section, you
+must place, in the relevant source files, a statement of the
+additional terms that apply to those files, or a notice indicating
+where to find the applicable terms.
+
+  Additional terms, permissive or non-permissive, may be stated in the
+form of a separately written license, or stated as exceptions;
+the above requirements apply either way.
+
+  8. Termination.
+
+  You may not propagate or modify a covered work except as expressly
+provided under this License.  Any attempt otherwise to propagate or
+modify it is void, and will automatically terminate your rights under
+this License (including any patent licenses granted under the third
+paragraph of section 11).
+
+  However, if you cease all violation of this License, then your
+license from a particular copyright holder is reinstated (a)
+provisionally, unless and until the copyright holder explicitly and
+finally terminates your license, and (b) permanently, if the copyright
+holder fails to notify you of the violation by some reasonable means
+prior to 60 days after the cessation.
+
+  Moreover, your license from a particular copyright holder is
+reinstated permanently if the copyright holder notifies you of the
+violation by some reasonable means, this is the first time you have
+received notice of violation of this License (for any work) from that
+copyright holder, and you cure the violation prior to 30 days after
+your receipt of the notice.
+
+  Termination of your rights under this section does not terminate the
+licenses of parties who have received copies or rights from you under
+this License.  If your rights have been terminated and not permanently
+reinstated, you do not qualify to receive new licenses for the same
+material under section 10.
+
+  9. Acceptance Not Required for Having Copies.
+
+  You are not required to accept this License in order to receive or
+run a copy of the Program.  Ancillary propagation of a covered work
+occurring solely as a consequence of using peer-to-peer transmission
+to receive a copy likewise does not require acceptance.  However,
+nothing other than this License grants you permission to propagate or
+modify any covered work.  These actions infringe copyright if you do
+not accept this License.  Therefore, by modifying or propagating a
+covered work, you indicate your acceptance of this License to do so.
+
+  10. Automatic Licensing of Downstream Recipients.
+
+  Each time you convey a covered work, the recipient automatically
+receives a license from the original licensors, to run, modify and
+propagate that work, subject to this License.  You are not responsible
+for enforcing compliance by third parties with this License.
+
+  An "entity transaction" is a transaction transferring control of an
+organization, or substantially all assets of one, or subdividing an
+organization, or merging organizations.  If propagation of a covered
+work results from an entity transaction, each party to that
+transaction who receives a copy of the work also receives whatever
+licenses to the work the party's predecessor in interest had or could
+give under the previous paragraph, plus a right to possession of the
+Corresponding Source of the work from the predecessor in interest, if
+the predecessor has it or can get it with reasonable efforts.
+
+  You may not impose any further restrictions on the exercise of the
+rights granted or affirmed under this License.  For example, you may
+not impose a license fee, royalty, or other charge for exercise of
+rights granted under this License, and you may not initiate litigation
+(including a cross-claim or counterclaim in a lawsuit) alleging that
+any patent claim is infringed by making, using, selling, offering for
+sale, or importing the Program or any portion of it.
+
+  11. Patents.
+
+  A "contributor" is a copyright holder who authorizes use under this
+License of the Program or a work on which the Program is based.  The
+work thus licensed is called the contributor's "contributor version".
+
+  A contributor's "essential patent claims" are all patent claims
+owned or controlled by the contributor, whether already acquired or
+hereafter acquired, that would be infringed by some manner, permitted
+by this License, of making, using, or selling its contributor version,
+but do not include claims that would be infringed only as a
+consequence of further modification of the contributor version.  For
+purposes of this definition, "control" includes the right to grant
+patent sublicenses in a manner consistent with the requirements of
+this License.
+
+  Each contributor grants you a non-exclusive, worldwide, royalty-free
+patent license under the contributor's essential patent claims, to
+make, use, sell, offer for sale, import and otherwise run, modify and
+propagate the contents of its contributor version.
+
+  In the following three paragraphs, a "patent license" is any express
+agreement or commitment, however denominated, not to enforce a patent
+(such as an express permission to practice a patent or covenant not to
+sue for patent infringement).  To "grant" such a patent license to a
+party means to make such an agreement or commitment not to enforce a
+patent against the party.
+
+  If you convey a covered work, knowingly relying on a patent license,
+and the Corresponding Source of the work is not available for anyone
+to copy, free of charge and under the terms of this License, through a
+publicly available network server or other readily accessible means,
+then you must either (1) cause the Corresponding Source to be so
+available, or (2) arrange to deprive yourself of the benefit of the
+patent license for this particular work, or (3) arrange, in a manner
+consistent with the requirements of this License, to extend the patent
+license to downstream recipients.  "Knowingly relying" means you have
+actual knowledge that, but for the patent license, your conveying the
+covered work in a country, or your recipient's use of the covered work
+in a country, would infringe one or more identifiable patents in that
+country that you have reason to believe are valid.
+
+  If, pursuant to or in connection with a single transaction or
+arrangement, you convey, or propagate by procuring conveyance of, a
+covered work, and grant a patent license to some of the parties
+receiving the covered work authorizing them to use, propagate, modify
+or convey a specific copy of the covered work, then the patent license
+you grant is automatically extended to all recipients of the covered
+work and works based on it.
+
+  A patent license is "discriminatory" if it does not include within
+the scope of its coverage, prohibits the exercise of, or is
+conditioned on the non-exercise of one or more of the rights that are
+specifically granted under this License.  You may not convey a covered
+work if you are a party to an arrangement with a third party that is
+in the business of distributing software, under which you make payment
+to the third party based on the extent of your activity of conveying
+the work, and under which the third party grants, to any of the
+parties who would receive the covered work from you, a discriminatory
+patent license (a) in connection with copies of the covered work
+conveyed by you (or copies made from those copies), or (b) primarily
+for and in connection with specific products or compilations that
+contain the covered work, unless you entered into that arrangement,
+or that patent license was granted, prior to 28 March 2007.
+
+  Nothing in this License shall be construed as excluding or limiting
+any implied license or other defenses to infringement that may
+otherwise be available to you under applicable patent law.
+
+  12. No Surrender of Others' Freedom.
+
+  If conditions are imposed on you (whether by court order, agreement or
+otherwise) that contradict the conditions of this License, they do not
+excuse you from the conditions of this License.  If you cannot convey a
+covered work so as to satisfy simultaneously your obligations under this
+License and any other pertinent obligations, then as a consequence you may
+not convey it at all.  For example, if you agree to terms that obligate you
+to collect a royalty for further conveying from those to whom you convey
+the Program, the only way you could satisfy both those terms and this
+License would be to refrain entirely from conveying the Program.
+
+  13. Use with the GNU Affero General Public License.
+
+  Notwithstanding any other provision of this License, you have
+permission to link or combine any covered work with a work licensed
+under version 3 of the GNU Affero General Public License into a single
+combined work, and to convey the resulting work.  The terms of this
+License will continue to apply to the part which is the covered work,
+but the special requirements of the GNU Affero General Public License,
+section 13, concerning interaction through a network will apply to the
+combination as such.
+
+  14. Revised Versions of this License.
+
+  The Free Software Foundation may publish revised and/or new versions of
+the GNU General Public License from time to time.  Such new versions will
+be similar in spirit to the present version, but may differ in detail to
+address new problems or concerns.
+
+  Each version is given a distinguishing version number.  If the
+Program specifies that a certain numbered version of the GNU General
+Public License "or any later version" applies to it, you have the
+option of following the terms and conditions either of that numbered
+version or of any later version published by the Free Software
+Foundation.  If the Program does not specify a version number of the
+GNU General Public License, you may choose any version ever published
+by the Free Software Foundation.
+
+  If the Program specifies that a proxy can decide which future
+versions of the GNU General Public License can be used, that proxy's
+public statement of acceptance of a version permanently authorizes you
+to choose that version for the Program.
+
+  Later license versions may give you additional or different
+permissions.  However, no additional obligations are imposed on any
+author or copyright holder as a result of your choosing to follow a
+later version.
+
+  15. Disclaimer of Warranty.
+
+  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
+OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
+IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
+ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+
+  16. Limitation of Liability.
+
+  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
+THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
+GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
+USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
+DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
+PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
+EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+  17. Interpretation of Sections 15 and 16.
+
+  If the disclaimer of warranty and limitation of liability provided
+above cannot be given local legal effect according to their terms,
+reviewing courts shall apply local law that most closely approximates
+an absolute waiver of all civil liability in connection with the
+Program, unless a warranty or assumption of liability accompanies a
+copy of the Program in return for a fee.
+
+                     END OF TERMS AND CONDITIONS
+
+            How to Apply These Terms to Your New Programs
+
+  If you develop a new program, and you want it to be of the greatest
+possible use to the public, the best way to achieve this is to make it
+free software which everyone can redistribute and change under these terms.
+
+  To do so, attach the following notices to the program.  It is safest
+to attach them to the start of each source file to most effectively
+state the exclusion of warranty; and each file should have at least
+the "copyright" line and a pointer to where the full notice is found.
+
+    <one line to give the program's name and a brief idea of what it does.>
+    Copyright (C) <year>  <name of author>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Also add information on how to contact you by electronic and paper mail.
+
+  If the program does terminal interaction, make it output a short
+notice like this when it starts in an interactive mode:
+
+    <program>  Copyright (C) <year>  <name of author>
+    This program comes with ABSOLUTELY NO WARRANTY; for details type \`show w'.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions; type \`show c' for details.
+
+The hypothetical commands \`show w' and \`show c' should show the appropriate
+parts of the General Public License.  Of course, your program's commands
+might be different; for a GUI interface, you would use an "about box".
+
+  You should also get your employer (if you work as a programmer) or school,
+if any, to sign a "copyright disclaimer" for the program, if necessary.
+For more information on this, and how to apply and follow the GNU GPL, see
+<http://www.gnu.org/licenses/>.
+
+  The GNU General Public License does not permit incorporating your program
+into proprietary programs.  If your program is a subroutine library, you
+may consider it more useful to permit linking proprietary applications with
+the library.  If this is what you want to do, use the GNU Lesser General
+Public License instead of this License.  But first, please read
+<http://www.gnu.org/philosophy/why-not-lgpl.html>.
+`;
+
+// project-studio/application-template.js
+var header = String.raw`#pragma once
+#include <string>
+#include <vector>
+#include <iosfwd>
+struct Task { int id; std::string title; bool done=false; };
+class TaskModel {
+  std::vector<Task> tasks_; int next_=1;
+public:
+  int add(std::string title);
+  void complete(int id);
+  const std::vector<Task>& tasks()const noexcept{return tasks_;}
+  void save(std::ostream&)const;
+  void load(std::istream&);
+};
+`;
+var model = String.raw`#include "task_model.hpp"
+#include <stdexcept>
+#include <algorithm>
+#include <iomanip>
+#include <istream>
+#include <ostream>
+namespace { bool valid(const std::string&s){return !s.empty()&&s.size()<=256&&s.find_first_not_of(" \t")!=std::string::npos&&s.find_first_of("\r\n")==std::string::npos;} }
+int TaskModel::add(std::string title){
+  if(!valid(title))throw std::invalid_argument("Enter a non-empty title (up to 256 bytes)");
+  if(tasks_.size()>=200)throw std::length_error("Task limit reached");
+  if(next_>1000000)throw std::length_error("ID limit reached");
+  tasks_.push_back({next_,std::move(title),false});return next_++;
+}
+void TaskModel::complete(int id){auto it=std::find_if(tasks_.begin(),tasks_.end(),[id](const Task&t){return t.id==id;});if(it==tasks_.end())throw std::out_of_range("Task not found");it->done=true;}
+void TaskModel::save(std::ostream&out)const{out<<"NXTF1 "<<next_<<' '<<tasks_.size()<<'\n';for(const auto&t:tasks_)out<<t.id<<' '<<t.done<<' '<<std::quoted(t.title)<<'\n';if(!out)throw std::runtime_error("Cannot save tasks");}
+void TaskModel::load(std::istream&in){
+  std::string version;int next=0,count=0;if(!(in>>version>>next>>count)||version!="NXTF1"||next<1||next>1000001||count<0||count>200)throw std::runtime_error("Unsupported or invalid task file");
+  std::vector<Task> candidate;for(int i=0;i<count;++i){Task t;int done=-1;if(!(in>>t.id>>done>>std::quoted(t.title))||t.id<1||t.id>=next||done<0||done>1||!valid(t.title)||std::any_of(candidate.begin(),candidate.end(),[&](const Task&x){return x.id==t.id;}))throw std::runtime_error("Invalid task record");t.done=done;candidate.push_back(std::move(t));}
+  in>>std::ws;if(!in.eof())throw std::runtime_error("Unexpected task data");tasks_=std::move(candidate);next_=next;
+}
+`;
+var cli = String.raw`#include "task_model.hpp"
+#include <iostream>
+#include <stdexcept>
+int main(){TaskModel model;std::string title;while(std::getline(std::cin,title)){try{int id=model.add(title);std::cout<<id<<": "<<model.tasks().back().title<<'\n';}catch(const std::exception&e){std::cout<<"error: "<<e.what()<<'\n';}}return 0;}
+`;
+var tests = String.raw`#include "task_model.hpp"
+#include <sstream>
+#include <iostream>
+#include <stdexcept>
+void require(bool value){if(!value)throw std::runtime_error("test failed");}
+int main(){try{
+ TaskModel m;require(m.tasks().empty());require(m.add("learn C++")==1);m.complete(1);require(m.tasks()[0].done);
+ bool caught=false;try{m.add("   ");}catch(const std::invalid_argument&){caught=true;}require(caught&&m.tasks().size()==1);
+ caught=false;try{m.complete(999);}catch(const std::out_of_range&){caught=true;}require(caught);
+ std::ostringstream out;m.save(out);TaskModel copy;std::istringstream in(out.str());copy.load(in);require(copy.tasks().size()==1&&copy.tasks()[0].title=="learn C++"&&copy.tasks()[0].done);require(copy.add("next")==2);
+ for(const char*bad:{"NXTF2 2 1\n1 0 \"x\"\n","NXTF1 3 2\n1 0 \"x\"\n1 0 \"y\"\n","NXTF1 2 1\n1 3 \"x\"\n","NXTF1 1 0 extra"}){caught=false;try{std::istringstream invalid(bad);copy.load(invalid);}catch(const std::runtime_error&){caught=true;}require(caught&&copy.tasks().size()==2);}
+ std::cout<<"TaskFlow tests: PASS\n";return 0;
+ }catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;}}
+`;
+var gui = String.raw`#include "task_model.hpp"
+#include <QApplication>
+#include <QAccessible>
+#include <QWidget>
+#include <QVBoxLayout>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QListWidget>
+#include <QLabel>
+#include <QFile>
+#include <memory>
+#include <sstream>
+#include <iostream>
+class TaskWindow:public QWidget {
+ TaskModel model_;QLineEdit*input_;QListWidget*list_;QLabel*status_;
+ void refresh(){list_->clear();for(const auto&t:model_.tasks()) {auto*item=new QListWidgetItem(QString(t.done?"[done] ":"[ ] ")+QString::fromUtf8(t.title.data(),int(t.title.size())),list_);item->setData(Qt::UserRole,t.id);}std::cout<<"NEXUS_TASKS "<<model_.tasks().size()<<std::endl;}
+ void add(){try{const auto text=input_->text().toUtf8();model_.add(std::string(text.constData(),std::size_t(text.size())));input_->clear();status_->setText("Saved in the running application");refresh();}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}}
+public:
+ TaskWindow(){setWindowTitle("TaskFlow — C++ in Nexus");resize(460,420);auto*layout=new QVBoxLayout(this);layout->addWidget(new QLabel("TaskFlow",this));input_=new QLineEdit(this);input_->setPlaceholderText("Enter a task");input_->setAccessibleName("Task title");layout->addWidget(input_);auto*button=new QPushButton("Add task",this);layout->addWidget(button);list_=new QListWidget(this);layout->addWidget(list_);status_=new QLabel("Ready",this);status_->setWordWrap(true);layout->addWidget(status_);
+  connect(button,&QPushButton::clicked,this,[this]{add();});connect(input_,&QLineEdit::returnPressed,this,[this]{add();});
+  auto*done=new QPushButton("Complete selected",this);layout->addWidget(done);connect(done,&QPushButton::clicked,this,[this]{try{if(!list_->currentItem())throw std::runtime_error("Select a task");model_.complete(list_->currentItem()->data(Qt::UserRole).toInt());refresh();}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});
+  auto*save=new QPushButton("Save application data",this);layout->addWidget(save);connect(save,&QPushButton::clicked,this,[this]{try{std::ostringstream out;model_.save(out);QFile f("/taskflow.txt");if(!f.open(QIODevice::WriteOnly)||f.write(QByteArray::fromStdString(out.str()))<0)throw std::runtime_error("Cannot write data");status_->setText("Application data saved");}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}});
+  QFile f("/taskflow.txt");if(f.open(QIODevice::ReadOnly)){try{const auto bytes=f.read(65537);if(bytes.size()>65536)throw std::runtime_error("Data file is too large");std::istringstream in(bytes.toStdString());model_.load(in);}catch(const std::exception&e){status_->setText(QString::fromUtf8(e.what()));}}refresh();input_->setFocus();
+ }
+};
+int main(int argc,char**argv){static auto app=std::make_unique<QApplication>(argc,argv);
+#ifdef __EMSCRIPTEN__
+ QAccessible::setActive(true);
+#endif
+ static auto window=std::make_unique<TaskWindow>();window->show();QAccessible::setRootObject(window.get());
+#ifndef __EMSCRIPTEN__
+ return app->exec();
+#else
+ return 0;
+#endif
+}
+`;
+var cmake = String.raw`cmake_minimum_required(VERSION 3.16)
+project(TaskFlow LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_library(task_model src/task_model.cpp)
+target_include_directories(task_model PUBLIC include)
+if(EMSCRIPTEN)
+ target_compile_options(task_model PUBLIC -fexceptions)
+ target_link_options(task_model INTERFACE -fexceptions)
+endif()
+add_executable(taskflow_cli src/main.cpp)
+target_link_libraries(taskflow_cli PRIVATE task_model)
+enable_testing()
+add_executable(taskflow_tests tests/task_model_test.cpp)
+target_link_libraries(taskflow_tests PRIVATE task_model)
+add_test(NAME task_model COMMAND taskflow_tests)
+option(NEXUS_GUI "Build the Qt GUI" OFF)
+if(EMSCRIPTEN)
+ set(NEXUS_GUI ON)
+endif()
+if(NEXUS_GUI)
+ find_package(Qt6 6.8 REQUIRED COMPONENTS Widgets)
+ qt_add_executable(program MANUAL_FINALIZATION src/gui.cpp)
+ target_link_libraries(program PRIVATE task_model Qt6::Widgets)
+ if(EMSCRIPTEN)
+  target_compile_options(program PRIVATE -fexceptions)
+  target_link_options(program PRIVATE -fexceptions -sDISABLE_EXCEPTION_CATCHING=0 -sDYNAMIC_EXECUTION=0 "-sEXPORTED_RUNTIME_METHODS=['FS']" -sALLOW_MEMORY_GROWTH=1)
+ endif()
+ qt_finalize_executable(program)
+endif()
+`;
+var readme = `# TaskFlow \u2014 \u043F\u0435\u0440\u0435\u043D\u043E\u0441\u0438\u043C\u044B\u0439 \u0443\u0447\u0435\u0431\u043D\u044B\u0439 \u043F\u0440\u043E\u0435\u043A\u0442 C++20
+
+\u0412 Nexus: \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u0443\u0439\u0442\u0435, \u0441\u043E\u0431\u0438\u0440\u0430\u0439\u0442\u0435, \u0437\u0430\u043F\u0443\u0441\u043A\u0430\u0439\u0442\u0435 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435, \u0432\u044B\u043F\u043E\u043B\u043D\u044F\u0439\u0442\u0435 \u0442\u0435\u0441\u0442\u044B \u0438 \u0441\u0434\u0430\u0432\u0430\u0439\u0442\u0435 \u0440\u0430\u0431\u043E\u0442\u0443 \u0432\u043D\u0443\u0442\u0440\u0438 Project Studio. \u042D\u0442\u043E\u0442 \u0441\u0442\u0430\u0440\u0442\u043E\u0432\u044B\u0439 \u043F\u0440\u0438\u043C\u0435\u0440 \u0434\u0435\u043C\u043E\u043D\u0441\u0442\u0440\u0438\u0440\u0443\u0435\u0442 \u0430\u0440\u0445\u0438\u0442\u0435\u043A\u0442\u0443\u0440\u0443; \u0438\u0442\u043E\u0433\u043E\u0432\u043E\u0435 \u0437\u0430\u0434\u0430\u043D\u0438\u0435 \u043F\u043E\u0442\u0440\u0435\u0431\u0443\u0435\u0442 \u0441\u0430\u043C\u043E\u0441\u0442\u043E\u044F\u0442\u0435\u043B\u044C\u043D\u043E\u0433\u043E \u0440\u0430\u0441\u0448\u0438\u0440\u0435\u043D\u0438\u044F.
+
+\u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u0430\u044F \u0432\u043D\u0435\u0448\u043D\u044F\u044F \u0441\u0431\u043E\u0440\u043A\u0430 \u043C\u043E\u0434\u0435\u043B\u0438, CLI \u0438 \u0442\u0435\u0441\u0442\u043E\u0432 (Qt \u043D\u0435 \u0442\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F):
+
+    cmake -S . -B build -DNEXUS_GUI=OFF
+    cmake --build build
+    ctest --test-dir build --output-on-failure
+
+\u0413\u0440\u0430\u0444\u0438\u0447\u0435\u0441\u043A\u0438\u0439 target \u0442\u0440\u0435\u0431\u0443\u0435\u0442 Qt6.8.3; \u0434\u043B\u044F WebAssembly \u2014 \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u044E\u0449\u0435\u0433\u043E Emscripten3.1.56. \u041E\u0431\u044B\u0447\u043D\u0430\u044F desktop Qt \u0441\u0431\u043E\u0440\u043A\u0430: \u0434\u043E\u0431\u0430\u0432\u044C\u0442\u0435 -DNEXUS_GUI=ON \u0438 CMAKE_PREFIX_PATH \u0432\u0430\u0448\u0435\u0433\u043E Qt. \u0412 Nexus toolchain \u0432\u044B\u0431\u0438\u0440\u0430\u0435\u0442\u0441\u044F \u0441\u0440\u0435\u0434\u043E\u0439.
+
+\u0418\u0441\u0445\u043E\u0434\u043D\u0438\u043A\u0438, \u0442\u0435\u0441\u0442\u044B \u0438 \u0434\u0430\u043D\u043D\u044B\u0435 \u043F\u0440\u043E\u0435\u043A\u0442\u0430 \u043D\u0435 \u0442\u0440\u0435\u0431\u0443\u044E\u0442 Nexus-\u0441\u0435\u0441\u0441\u0438\u0438 \u0434\u043B\u044F \u0432\u043D\u0435\u0448\u043D\u0435\u0439 \u0441\u0431\u043E\u0440\u043A\u0438. \u0424\u0430\u0439\u043B taskflow.txt \u0438\u043C\u0435\u0435\u0442 \u0432\u0435\u0440\u0441\u0438\u044E NXTF1; \u043E\u0448\u0438\u0431\u043A\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u044E\u0442 \u0442\u0435\u043A\u0443\u0449\u0443\u044E \u043C\u043E\u0434\u0435\u043B\u044C. \u041D\u0435 \u0437\u0430\u043C\u0435\u043D\u044F\u0439\u0442\u0435 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044E\u0449\u0438\u0435 \u043B\u0438\u0447\u043D\u044B\u0435 \u0440\u0430\u0431\u043E\u0442\u044B \u043F\u0440\u0438 \u0438\u043C\u043F\u043E\u0440\u0442\u0435 \u2014 \u0441\u043E\u0437\u0434\u0430\u0439\u0442\u0435 \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u044B\u0439 \u043F\u0440\u043E\u0435\u043A\u0442.
+`;
+function taskFlowApplicationTemplate() {
+  return { title: "TaskFlow \u2014 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 C++", description: "\u041F\u0435\u0440\u0435\u043D\u043E\u0441\u0438\u043C\u0430\u044F \u043C\u043E\u0434\u0435\u043B\u044C, \u0442\u0435\u0441\u0442\u044B \u0438 \u0433\u0440\u0430\u0444\u0438\u0447\u0435\u0441\u043A\u0438\u0439 \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441.", languageId: "cpp", entryFile: "src/main.cpp", sourceRoots: ["src"], includeRoots: ["include"], testRoots: ["tests"], files: Object.entries({ "include/task_model.hpp": header, "src/task_model.cpp": model, "src/main.cpp": cli, "src/gui.cpp": gui, "tests/task_model_test.cpp": tests, "CMakeLists.txt": cmake, "README.md": readme + "\n## \u041B\u0438\u0446\u0435\u043D\u0437\u0438\u044F / License\n\n\u041D\u043E\u0432\u044B\u0439 \u0443\u0447\u0435\u0431\u043D\u044B\u0439 GUI-\u0448\u0430\u0431\u043B\u043E\u043D \u2014 GPL-3.0-only; \u043F\u043E\u043B\u043D\u044B\u0439 \u0442\u0435\u043A\u0441\u0442 \u0432 COPYING.txt. \u041F\u0440\u0438 \u043F\u0435\u0440\u0435\u0434\u0430\u0447\u0435 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u044F \u043F\u043E\u043B\u0443\u0447\u0430\u0442\u0435\u043B\u044F\u043C \u043F\u0440\u0435\u0434\u043E\u0441\u0442\u0430\u0432\u043B\u044F\u044E\u0442\u0441\u044F \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u044E\u0449\u0438\u0435 \u0438\u0441\u0445\u043E\u0434\u043D\u0438\u043A\u0438 \u0438 \u043F\u0440\u0430\u0432\u0430 GPLv3. \u041B\u0438\u0447\u043D\u044B\u0435 \u0440\u0430\u0431\u043E\u0442\u044B \u0430\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0432 GitHub \u043D\u0435 \u043F\u0443\u0431\u043B\u0438\u043A\u0443\u044E\u0442\u0441\u044F. / This new educational GUI template is GPL-3.0-only; see COPYING.txt. Provide corresponding source and GPLv3 rights when conveying the application. Private student work is not automatically published.\n", "COPYING.txt": APPLICATION_GPL_V3, "nexus-application.json": JSON.stringify({ schemaVersion: 1, target: "qt-wasm", outputDataFiles: ["taskflow.txt"], targets: { gui: ["src/gui.cpp", "src/task_model.cpp"], console: ["src/main.cpp", "src/task_model.cpp"], tests: ["tests/task_model_test.cpp", "src/task_model.cpp"] } }, null, 2) + "\n" }).map(([path6, content2]) => ({ path: path6, content: content2, languageId: "cpp" })), manifest: { application: { schemaVersion: 1, target: "qt-wasm", outputDataFiles: ["taskflow.txt"] }, sourceRoots: ["src"], includeRoots: ["include"], testRoots: ["tests"] } };
+}
+
+// studio-build/docker-runner.mjs
+var BUILD_LIMITS = Object.freeze({ timeoutMs: 18e4, logBytes: 128 * 1024, artifactBytes: 64 * 1024 * 1024, totalArtifactBytes: 96 * 1024 * 1024, memory: "2g", cpus: "2", pids: 128 });
+var hash3 = (b) => createHash14("sha256").update(b).digest("hex");
+var failure = (code) => Object.assign(Error(code), { code });
+var safeEnv = () => Object.fromEntries(["PATH", "Path", "SystemRoot", "HOME", "USERPROFILE", "DOCKER_CONFIG", "DOCKER_HOST", "DOCKER_CONTEXT", "DOCKER_TLS_VERIFY", "DOCKER_CERT_PATH"].filter((k) => process.env[k]).map((k) => [k, process.env[k]]));
+function command(args, { signal, timeoutMs = BUILD_LIMITS.timeoutMs, maxBytes = BUILD_LIMITS.logBytes, binary = false } = {}) {
+  return new Promise((resolve, reject3) => {
+    const p = spawn("docker", args, { env: safeEnv(), windowsHide: true, stdio: ["ignore", "pipe", "pipe"] }), out = [], err = [];
+    let bytes2 = 0, limited = false, timedOut = false;
+    const collect = (chunks, b) => {
+      if (limited) return;
+      bytes2 += b.length;
+      if (bytes2 > maxBytes) {
+        limited = true;
+        p.kill();
+        return;
+      }
+      chunks.push(b);
+    };
+    p.stdout.on("data", (b) => collect(out, b));
+    p.stderr.on("data", (b) => collect(err, b));
+    const stop = () => p.kill(), timer = setTimeout(() => {
+      timedOut = true;
+      stop();
+    }, timeoutMs);
+    signal?.addEventListener("abort", stop, { once: true });
+    p.once("error", reject3);
+    p.once("close", (code) => {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", stop);
+      const data = Buffer.concat(out);
+      resolve({ code, stdout: binary ? data : data.toString(), stderr: Buffer.concat(err).toString(), limited, timedOut, aborted: !!signal?.aborted });
+    });
+    if (signal?.aborted) stop();
+  });
+}
+function dockerBuildCommand(mode) {
+  const native = 'cmake -S /input -B /work/build -G Ninja -DNEXUS_GUI=OFF -DCMAKE_CXX_FLAGS="-fsanitize=undefined -fno-sanitize-recover=all" && cmake --build /work/build --parallel 2 && ctest --test-dir /work/build --output-on-failure --no-tests=error';
+  const gui2 = 'cp -a /emsdk/upstream/emscripten/cache /work/.emscripten_cache && /opt/qt/6.8.3/wasm_singlethread/bin/qt-cmake -S /input -B /work/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS_RELEASE="-O0 -DNDEBUG" && cmake --build /work/build --target program --parallel 2 && for f in program.js program.wasm program.data qtloader.js qtlogo.svg; do if [ -f "/work/build/$f" ]; then cp "/work/build/$f" /output/; fi; done';
+  const assessment = "g++ -std=c++20 -fsanitize=undefined -fno-sanitize-recover=all -I/input/include /input/src/task_model.cpp /trusted/task_model_test.cpp -o /work/assessment && /work/assessment";
+  if (!["qt-wasm", "tests", "assessment"].includes(mode)) throw failure("BUILD_TARGET_INVALID");
+  return "set -eu; " + (mode === "assessment" ? assessment : mode === "tests" ? native : gui2);
+}
+function dockerBuildArgs({ name, image, input, mode, trusted }) {
+  if (!/^nexus-build-[a-f0-9]{24}$/.test(name) || typeof image !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9_./:@-]*$/.test(image)) throw failure("BUILD_CONFIG_INVALID");
+  dockerBuildCommand(mode);
+  const args = ["run", "--detach", "--pull=never", "--name", name, "--network", "none", "--read-only", "--cap-drop", "ALL", "--security-opt", "no-new-privileges", "--pids-limit", String(BUILD_LIMITS.pids), "--memory", BUILD_LIMITS.memory, "--cpus", BUILD_LIMITS.cpus, "--user", "1000:1000", "--tmpfs", "/work:rw,exec,nosuid,size=1536m,mode=1777", "--tmpfs", "/tmp:rw,exec,nosuid,size=256m,mode=1777", "--tmpfs", "/output:rw,noexec,nosuid,nodev,size=96m,mode=1777", "--mount", "type=bind,source=" + input + ",target=/input,readonly"];
+  if (mode === "assessment") {
+    if (!trusted) throw failure("BUILD_CONFIG_INVALID");
+    args.push("--mount", "type=bind,source=" + trusted + ",target=/trusted,readonly");
+  }
+  return [...args, "-e", "EM_CACHE=/work/cache", "-e", "HOME=/work", image, "sleep", "infinity"];
+}
+async function runDockerBuild({ workspace, root, image, mode = "qt-wasm", signal }) {
+  const w = validateProjectWorkspace(workspace);
+  if (!w.files.some((f) => f.path === "CMakeLists.txt")) throw failure("BUILD_MANIFEST_REQUIRED");
+  const input = path2.resolve(root, "input"), output = path2.resolve(root, "output");
+  await mkdir(input, { recursive: true, mode: 493 });
+  await mkdir(output, { recursive: true, mode: 448 });
+  for (const f of w.files) {
+    const p = path2.join(input, f.path);
+    await mkdir(path2.dirname(p), { recursive: true, mode: 493 });
+    await writeFile(p, f.content, { flag: "wx", mode: 420 });
+  }
+  let trusted;
+  if (mode === "assessment") {
+    trusted = path2.resolve(root, "trusted");
+    await mkdir(trusted, { mode: 493 });
+    await writeFile(path2.join(trusted, "task_model_test.cpp"), taskFlowApplicationTemplate().files.find((f) => f.path === "tests/task_model_test.cpp").content, { flag: "wx", mode: 420 });
+  }
+  const name = "nexus-build-" + randomBytes9(12).toString("hex"), started = Date.now(), artifacts = [];
+  let result2, total = 0;
+  const budget = (cap) => {
+    const left = BUILD_LIMITS.timeoutMs - (Date.now() - started);
+    if (left <= 0) throw failure("BUILD_TIMEOUT");
+    return Math.min(cap || left, left);
+  };
+  try {
+    const identity = await command(["image", "inspect", image, "--format", "{{.Id}}"], { timeoutMs: budget(1e4), signal });
+    if (identity.code !== 0) throw failure("STUDIO_SDK_UNAVAILABLE");
+    const launch = await command(dockerBuildArgs({ name, image, input, mode, trusted }), { timeoutMs: budget(1e4), signal });
+    if (launch.code !== 0) throw failure("BUILD_CONTAINER_FAILED");
+    result2 = await command(["exec", name, "/emsdk/docker/entrypoint.sh", "sh", "-c", dockerBuildCommand(mode)], { timeoutMs: budget(), signal });
+    result2.imageId = identity.stdout.trim();
+    if (mode === "assessment" && result2.code === 0 && result2.stdout.trim() !== "TaskFlow tests: PASS") result2.code = 1;
+    if (result2.code === 0 && !result2.limited && !result2.aborted && !result2.timedOut) {
+      const listing = await command(["exec", name, "/bin/ls", "-1A", "/output"], { timeoutMs: budget(5e3), signal });
+      if (listing.code !== 0 || listing.limited) throw failure("BUILD_ARTIFACT_INVALID");
+      for (const file of listing.stdout.trim().split("\n").filter(Boolean)) {
+        if (!/^(?:program\.(?:js|wasm|data)|qtloader\.js|qtlogo\.svg)$/.test(file)) throw failure("BUILD_ARTIFACT_INVALID");
+        const check = await command(["exec", name, "/bin/sh", "-c", 'test -f "$1" && test ! -L "$1"', "--", "/output/" + file], { timeoutMs: budget(5e3), signal });
+        if (check.code !== 0) throw failure("BUILD_ARTIFACT_INVALID");
+        const data = await command(["exec", name, "/bin/cat", "/output/" + file], { timeoutMs: budget(3e4), signal, binary: true, maxBytes: Math.min(BUILD_LIMITS.artifactBytes, BUILD_LIMITS.totalArtifactBytes - total) });
+        if (data.limited) throw failure("BUILD_ARTIFACT_QUOTA");
+        if (data.code !== 0 || data.timedOut || data.aborted) throw failure("BUILD_ARTIFACT_COPY_FAILED");
+        total += data.stdout.length;
+        await writeFile(path2.join(output, file), data.stdout, { flag: "wx", mode: 384 });
+        artifacts.push({ name: file, bytes: data.stdout.length, sha256: hash3(data.stdout) });
+      }
+      if (mode === "qt-wasm" && !["program.js", "program.wasm", "qtloader.js"].every((n) => artifacts.some((a) => a.name === n))) throw failure("BUILD_ARTIFACT_MISSING");
+    }
+  } finally {
+    await command(["rm", "-f", name], { timeoutMs: 1e4 }).catch(() => {
+    });
+  }
+  return { status: signal?.aborted || result2.aborted ? "cancelled" : result2.code === 0 && !result2.limited && !result2.timedOut ? "passed" : "failed", mode, exitCode: result2.code, stdout: result2.stdout, stderr: result2.stderr, outputLimited: result2.limited, timedOut: result2.timedOut, elapsedMs: Date.now() - started, imageId: result2.imageId, artifacts, limits: BUILD_LIMITS };
+}
+
+// project-studio/project-build.js
+var normalize = (value) => String(value || "").trim().replace(/\\/g, "/").replace(/^\/+/, "").replace(/\/+$/, "");
+var isSource = (path6, languageId = "cpp") => String(languageId).toLowerCase() === "c" ? /\.c$/i.test(path6) : /\.(?:cc|cpp|cxx|c\+\+)$/i.test(path6);
+var underRoot = (path6, root) => {
+  const p = normalize(path6), r = normalize(root);
+  return !!r && (r === "." || p === r || p.startsWith(`${r}/`));
+};
+var unique = (values) => [...new Set(values.filter(Boolean))];
+function createProjectBuildPlan(project = {}, mode = "run") {
+  const manifest = project.manifest || {};
+  const workspace = project.workspace || {};
+  const languageId = project.languageId || manifest.languageId || workspace.languageId || "cpp";
+  const entryFile = normalize(manifest.entryFile || workspace.entryFile || (languageId === "c" ? "main.c" : "main.cpp"));
+  const files = Array.isArray(workspace.files) ? workspace.files : [];
+  const sourceRoots = unique((manifest.sourceRoots || ["src"]).map(normalize));
+  const includeRoots = unique((manifest.includeRoots || ["include"]).map(normalize));
+  const testRoots = unique((manifest.testRoots || ["tests"]).map(normalize));
+  const fileMap = Object.fromEntries(files.map((file) => [normalize(file.path), String(file.content ?? "")]).filter(([path6]) => path6));
+  const sourceFiles = Object.keys(fileMap).filter((path6) => isSource(path6, languageId));
+  const production = sourceFiles.filter((path6) => sourceRoots.some((root) => underRoot(path6, root)) && !testRoots.some((root) => underRoot(path6, root)));
+  if (isSource(entryFile, languageId) && fileMap[entryFile] !== void 0 && !production.includes(entryFile)) production.unshift(entryFile);
+  const tests2 = sourceFiles.filter((path6) => testRoots.some((root) => underRoot(path6, root)));
+  let translationUnits = mode === "tests" ? unique([...production.filter((path6) => path6 !== entryFile), ...tests2]) : unique(production);
+  if (fileMap["nexus-application.json"]) {
+    try {
+      const c = JSON.parse(fileMap["nexus-application.json"]), selected = c.targets?.[mode === "tests" ? "tests" : "console"];
+      if (Array.isArray(selected) && selected.length && selected.every((p) => typeof p === "string" && sourceFiles.includes(p))) translationUnits = unique(selected);
+    } catch {
+    }
+  }
+  return { mode, languageId, entryFile, sourceRoots, includeRoots, testRoots, translationUnits, files: fileMap };
+}
+
+// project-studio/portable-archive.js
+var encoder = new TextEncoder();
+var crcTable = Uint32Array.from({ length: 256 }, (_, i) => {
+  for (let k = 0; k < 8; k++) i = i & 1 ? 3988292384 ^ i >>> 1 : i >>> 1;
+  return i >>> 0;
+});
+var crc = (bytes2) => {
+  let n = 4294967295;
+  for (const b of bytes2) n = crcTable[(n ^ b) & 255] ^ n >>> 8;
+  return (n ^ 4294967295) >>> 0;
+};
+var cat = (chunks) => {
+  const out = new Uint8Array(chunks.reduce((n, b) => n + b.length, 0));
+  let p = 0;
+  for (const b of chunks) {
+    out.set(b, p);
+    p += b.length;
+  }
+  return out;
+};
+var cmakeArg = (s) => {
+  if (/[;$]/.test(s)) throw Error("PORTABLE_CMAKE_PATH_UNSUPPORTED");
+  let n = "=";
+  while (s.includes("]" + n + "]")) n += "=";
+  return "[" + n + "[" + s + "]" + n + "]";
+};
+function portableSourceFiles(project) {
+  const workspace = validateProjectWorkspace(project.workspace), files = Object.fromEntries(workspace.files.map((f) => [f.path, f.content]));
+  if (!Object.hasOwn(files, "CMakeLists.txt")) {
+    const plan = createProjectBuildPlan({ ...project, workspace }, "run");
+    if (!plan.translationUnits.length) throw Error("PORTABLE_NO_SOURCES");
+    files["CMakeLists.txt"] = "cmake_minimum_required(VERSION 3.16)\nproject(NexusProject LANGUAGES CXX)\nset(CMAKE_CXX_STANDARD 20)\nset(CMAKE_CXX_STANDARD_REQUIRED ON)\nadd_executable(program\n" + plan.translationUnits.map((x) => " " + cmakeArg(x)).join("\n") + "\n)\n" + (plan.includeRoots.length ? "target_include_directories(program PRIVATE " + plan.includeRoots.map(cmakeArg).join(" ") + ")\n" : "");
+  }
+  if (!Object.hasOwn(files, "README.md")) files["README.md"] = "# C++20 project\n\nAdditional external build:\n\n    cmake -S . -B build\n    cmake --build build\n\nNexus account/session is not required. Source files are preserved.\n";
+  return files;
+}
+function portableProjectArchive(project) {
+  const entries = Object.entries(portableSourceFiles(project)).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0), local = [], central = [];
+  let offset = 0;
+  for (const [name, text7] of entries) {
+    const file = encoder.encode(name), data = encoder.encode(text7), c2 = crc(data), h = new Uint8Array(30), v2 = new DataView(h.buffer);
+    v2.setUint32(0, 67324752, true);
+    v2.setUint16(4, 20, true);
+    v2.setUint16(6, 2048, true);
+    v2.setUint16(12, 33, true);
+    v2.setUint32(14, c2, true);
+    v2.setUint32(18, data.length, true);
+    v2.setUint32(22, data.length, true);
+    v2.setUint16(26, file.length, true);
+    local.push(h, file, data);
+    const z = new Uint8Array(46), w = new DataView(z.buffer);
+    w.setUint32(0, 33639248, true);
+    w.setUint16(4, 20, true);
+    w.setUint16(6, 20, true);
+    w.setUint16(8, 2048, true);
+    w.setUint16(14, 33, true);
+    w.setUint32(16, c2, true);
+    w.setUint32(20, data.length, true);
+    w.setUint32(24, data.length, true);
+    w.setUint16(28, file.length, true);
+    w.setUint32(42, offset, true);
+    central.push(z, file);
+    offset += h.length + file.length + data.length;
+  }
+  const c = cat(central), end = new Uint8Array(22), v = new DataView(end.buffer);
+  v.setUint32(0, 101010256, true);
+  v.setUint16(8, entries.length, true);
+  v.setUint16(10, entries.length, true);
+  v.setUint32(12, c.length, true);
+  v.setUint32(16, offset, true);
+  return cat([...local, c, end]);
+}
+
+// studio-build/preview.mjs
+function previewHeaders(type = "text/html; charset=utf-8", parentOrigin = "self") {
+  return { "content-type": type, "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "access-control-allow-origin": "*", "cross-origin-resource-policy": "cross-origin", "permissions-policy": "camera=(), microphone=(), geolocation=(), publickey-credentials-get=(), publickey-credentials-create=()", "content-security-policy": `sandbox allow-scripts; default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; style-src 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors ${parentOrigin === "self" ? "'self'" : new URL(parentOrigin).origin}` };
+}
+var previewHTML = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>C++ application \u2014 Nexus</title><style>html,body{margin:0;height:100%;background:#122035;color:#eef5ff;font:14px sans-serif}#screen{width:100%;height:100%;overflow:hidden}#status{position:absolute;top:4px;left:8px;pointer-events:none}</style></head><body><div id="screen"></div><div id="status">Nexus \xB7 loading application\u2026</div><script src="qtloader.js"></script><script src="program.js"></script><script src="nexus-preview.js"></script></body></html>';
+function installQtAccessibleControls(shadow) {
+  if (shadow.querySelector("[data-nexus-a11y-focus]")) return;
+  const ring = document.createElement("div");
+  ring.dataset.nexusA11yFocus = "";
+  ring.setAttribute("aria-hidden", "true");
+  ring.style.cssText = "position:fixed;pointer-events:none;z-index:2147483647;box-sizing:border-box;border:3px solid #087e8b;outline:2px solid #fff;border-radius:4px;display:none";
+  shadow.append(ring);
+  let focused = null;
+  const proxy = (node) => node instanceof Element && node.closest(".qt-window-a11y-container") && node.matches('input:not([type="hidden"]),button,textarea') ? node : null;
+  const draw = () => {
+    if (!document.hasFocus() || !focused?.isConnected || focused.disabled || focused.getAttribute("aria-hidden") === "true") {
+      ring.style.display = "none";
+      return;
+    }
+    const r = focused.getBoundingClientRect(), left = Math.max(2, r.left), top = Math.max(2, r.top), right = Math.min(innerWidth - 2, r.right), bottom = Math.min(innerHeight - 2, r.bottom);
+    Object.assign(ring.style, { display: right > left && bottom > top ? "block" : "none", left: left + "px", top: top + "px", width: Math.max(0, right - left) + "px", height: Math.max(0, bottom - top) + "px" });
+  };
+  const observer = new MutationObserver(draw);
+  shadow.addEventListener("focusin", (event) => {
+    focused = proxy(event.composedPath()[0]);
+    observer.disconnect();
+    if (focused) observer.observe(focused, { attributes: true, attributeFilter: ["style", "disabled", "aria-hidden"] });
+    draw();
+  });
+  shadow.addEventListener("focusout", () => {
+    focused = null;
+    observer.disconnect();
+    ring.style.display = "none";
+  });
+  const activate = (event) => {
+    const control2 = proxy(event.composedPath()[0]);
+    if (!control2?.matches('input[type="checkbox"]') || control2.disabled || control2.getAttribute("aria-hidden") === "true" || ![" ", "Enter"].includes(event.key)) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (event.type === "keydown" && !event.repeat && !event.isComposing && !event.altKey && !event.ctrlKey && !event.metaKey) {
+      control2.click();
+      if (control2.isConnected && !control2.disabled) {
+        control2.focus({ preventScroll: true });
+        focused = control2;
+        draw();
+      }
+    }
+  };
+  shadow.addEventListener("keydown", activate, true);
+  shadow.addEventListener("keyup", activate, true);
+  const hide = () => {
+    ring.style.display = "none";
+  };
+  addEventListener("resize", draw);
+  addEventListener("scroll", draw, true);
+  addEventListener("focus", draw);
+  addEventListener("blur", hide);
+  addEventListener("pagehide", () => {
+    observer.disconnect();
+    removeEventListener("resize", draw);
+    removeEventListener("scroll", draw, true);
+    removeEventListener("focus", draw);
+    removeEventListener("blur", hide);
+  }, { once: true });
+}
+function previewScript({ parentOrigin, snapshotHash, outputDataFiles }) {
+  return `'use strict';
+${installQtAccessibleControls.toString()}
+const expectedParent=${JSON.stringify(parentOrigin)},snapshotHash=${JSON.stringify(snapshotHash)},allowed=${JSON.stringify(outputDataFiles)},nonce=new URLSearchParams(location.hash.slice(1)).get('run');let instance=null,started=false,outputBytes=0;const encoder=new TextEncoder();
+const send=(type,value)=>parent.postMessage({type,nonce,snapshotHash,...value},expectedParent),text=value=>String(value).slice(0,32768);function output(v,error=false){const value=text(v);outputBytes+=encoder.encode(value).length;if(outputBytes<=65536)send('nexus-preview-output',{text:value,error});}
+
+function snapshot(){if(!instance)return;try{const files={};for(const name of allowed){try{const value=instance.FS.readFile('/'+name,{encoding:'utf8'});if(encoder.encode(value).length>65536)throw Error('Application data limit');files[name]=value;}catch(e){if(e.errno!==44)throw e}}send('nexus-preview-data',{files})}catch(e){send('nexus-preview-error',{message:text(e.message)})}}
+addEventListener('message',async e=>{if(e.source!==parent||e.origin!==expectedParent||!e.data||e.data.nonce!==nonce)return;const d=e.data;
+if(d.type==='nexus-preview-start'&&!started){started=true;try{const data=d.files||{};for(const name of Object.keys(data))if(!allowed.includes(name)||typeof data[name]!=='string'||new TextEncoder().encode(data[name]).length>65536)throw Error('Invalid application data');instance=await qtLoad({qt:{entryFunction:window.program_entry,containerElements:[document.querySelector('#screen')],onLoaded(){document.querySelector('#status').hidden=true;let attempts=0;const activate=()=>{const shadow=document.querySelector('#qt-shadow-container')?.shadowRoot;const button=shadow?.querySelector('.hidden-visually-read-by-screen-reader');if(button){button.click();installQtAccessibleControls(shadow);for(const input of shadow.querySelectorAll('input,textarea'))if(!input.getAttribute('aria-label')&&input.textContent.trim())input.setAttribute('aria-label',input.textContent.trim())}else if(++attempts<20)setTimeout(activate,50)};setTimeout(activate,0);send('nexus-preview-running',{})},onExit(){send('nexus-preview-exited',{})}},print:v=>output(v),printErr:v=>output(v,true),preRun:[m=>{const close=m.FS.close;let scheduled=false;m.FS.close=function(stream){const name=(stream.path?.startsWith('/')?stream.path.slice(1):stream.path),writing=(stream.flags&3)!==0;const result=close.call(this,stream);if(writing&&allowed.includes(name)&&!scheduled){scheduled=true;setTimeout(()=>{scheduled=false;snapshot()},0)}return result;};for(const[name,value]of Object.entries(data)){const parts=name.split('/');if(parts.length>1)m.FS.mkdirTree('/'+parts.slice(0,-1).join('/'));m.FS.writeFile('/'+name,value)}}]});}catch(e){document.querySelector('#status').textContent='Application could not start';send('nexus-preview-error',{message:text(e.message)})}}
+if(d.type==='nexus-preview-snapshot')snapshot();
+});send('nexus-preview-ready',{});
+`;
+}
+
+// studio-build/artifacts.mjs
+import { open, realpath, lstat } from "node:fs/promises";
+import { constants } from "node:fs";
+import path3 from "node:path";
+import { createHash as createHash15 } from "node:crypto";
+import { gzip } from "node:zlib";
+import { promisify } from "node:util";
+var compress = promisify(gzip);
+var fail7 = (code, status = 503) => Object.assign(Error(code), { code, status });
+var ARTIFACT_LIMITS = Object.freeze({ fileBytes: 64 * 1024 * 1024, active: 4, activePerJob: 2, bufferBytes: 192 * 1024 * 1024, requestsPerJobMinute: 120, bytesPerJobMinute: 128 * 1024 * 1024, bytesPerMinute: 512 * 1024 * 1024, sendTimeoutMs: 18e4 });
+var known = /^(?:program\.(?:js|wasm|data)|qtloader\.js|qtlogo\.svg)$/;
+function artifactRecord(artifacts, name) {
+  if (!known.test(name)) throw fail7("STUDIO_NOT_FOUND", 404);
+  const rows = artifacts?.filter((a2) => a2.name === name);
+  if (!rows?.length) throw fail7("STUDIO_NOT_FOUND", 404);
+  const a = rows[0];
+  if (rows.length !== 1 || !Number.isSafeInteger(a.bytes) || a.bytes < 0 || a.bytes > ARTIFACT_LIMITS.fileBytes || !/^[a-f0-9]{64}$/.test(a.sha256 || "")) throw fail7("STUDIO_ARTIFACT_INVALID");
+  return a;
+}
+async function verifiedArtifact(directory, record) {
+  artifactRecord([record], record?.name);
+  let handle;
+  try {
+    const base = await realpath(directory), file = path3.join(base, record.name);
+    if (!(await lstat(file)).isFile() || await realpath(file) !== file) throw fail7("STUDIO_ARTIFACT_INVALID");
+    handle = await open(file, constants.O_RDONLY | (constants.O_NOFOLLOW || 0));
+    const stat2 = await handle.stat();
+    if (!stat2.isFile() || stat2.size !== record.bytes || stat2.nlink !== 1) throw fail7("STUDIO_ARTIFACT_INVALID");
+    const bytes2 = Buffer.alloc(record.bytes);
+    let offset = 0;
+    while (offset < bytes2.length) {
+      const r = await handle.read(bytes2, offset, bytes2.length - offset, offset);
+      if (!r.bytesRead) throw fail7("STUDIO_ARTIFACT_INVALID");
+      offset += r.bytesRead;
+    }
+    if ((await handle.read(Buffer.alloc(1), 0, 1, offset)).bytesRead || createHash15("sha256").update(bytes2).digest("hex") !== record.sha256) throw fail7("STUDIO_ARTIFACT_INVALID");
+    return bytes2;
+  } catch (e) {
+    if (e.code === "STUDIO_ARTIFACT_INVALID") throw e;
+    throw fail7("STUDIO_ARTIFACT_UNAVAILABLE");
+  } finally {
+    await handle?.close();
+  }
+}
+function createArtifactDelivery({ limits = {}, now = () => Date.now() } = {}) {
+  const cap = { ...ARTIFACT_LIMITS, ...limits };
+  let active = 0, buffered = 0, windowStart = now(), minuteBytes = 0;
+  const jobs = /* @__PURE__ */ new Map();
+  function reserve(id2, bytes2) {
+    const time = now();
+    if (time - windowStart >= 6e4) {
+      windowStart = time;
+      minuteBytes = 0;
+      for (const [key, j2] of jobs) if (!j2.active) jobs.delete(key);
+    }
+    let j = jobs.get(id2);
+    if (!j) {
+      j = { active: 0, requests: 0, bytes: 0, window: windowStart };
+      jobs.set(id2, j);
+    }
+    if (j.window !== windowStart) {
+      j.requests = 0;
+      j.bytes = 0;
+      j.window = windowStart;
+    }
+    const memory = 2 * bytes2 + 256 * 1024;
+    if (active >= cap.active || j.active >= cap.activePerJob || buffered + memory > cap.bufferBytes) throw fail7("STUDIO_DOWNLOAD_BUSY", 429);
+    if (j.requests >= cap.requestsPerJobMinute || j.bytes + bytes2 > cap.bytesPerJobMinute || minuteBytes + bytes2 > cap.bytesPerMinute) throw fail7("STUDIO_DOWNLOAD_LIMIT", 429);
+    j.active++;
+    j.requests++;
+    j.bytes += bytes2;
+    active++;
+    buffered += memory;
+    minuteBytes += bytes2;
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      j.active--;
+      active--;
+      buffered -= memory;
+    };
+  }
+  async function send(req, res, bytes2, headers) {
+    if (res.destroyed) throw fail7("STUDIO_DOWNLOAD_CANCELLED", 499);
+    let body = bytes2;
+    const accept = String(req.headers["accept-encoding"] || "");
+    const encodings = accept.split(",").map((s) => s.trim().split(";").map((t) => t.trim()));
+    const gzipAllowed = encodings.some(([name, ...params]) => name.toLowerCase() === "gzip" && !params.some((p) => /^q\s*=\s*0(?:\.0*)?$/i.test(p)));
+    if (gzipAllowed && bytes2.length >= 1024) {
+      body = await compress(bytes2, { level: 6, maxOutputLength: bytes2.length + 128 * 1024 });
+      headers = { ...headers, "content-encoding": "gzip" };
+    }
+    if (res.destroyed) throw fail7("STUDIO_DOWNLOAD_CANCELLED", 499);
+    res.writeHead(200, { ...headers, "content-length": body.length, vary: "Accept-Encoding" });
+    if (typeof res.once !== "function") {
+      res.end(body);
+      return;
+    }
+    await new Promise((resolve) => {
+      let timer;
+      const done = () => {
+        clearTimeout(timer);
+        res.removeListener("finish", done);
+        res.removeListener("close", done);
+        res.removeListener("error", done);
+        resolve();
+      };
+      res.once("finish", done);
+      res.once("close", done);
+      res.once("error", done);
+      timer = setTimeout(() => {
+        res.destroy();
+        done();
+      }, cap.sendTimeoutMs);
+      timer.unref?.();
+      res.end(body);
+    });
+  }
+  return { async guard(id2, bytes2, action) {
+    const release = reserve(id2, bytes2);
+    try {
+      return await action();
+    } finally {
+      release();
+    }
+  }, send, activeJobs: () => new Set([...jobs].filter(([, j]) => j.active).map(([id2]) => id2)), stats: () => ({ active, buffered }) };
+}
+
+// studio-build/queue.mjs
+function createBuildQueue({ concurrency = 2 } = {}) {
+  if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 8) throw Error("STUDIO_QUEUE_CONFIG_INVALID");
+  const waiting = [];
+  let running = 0;
+  function drain() {
+    while (running < concurrency && waiting.length) {
+      const entry = waiting.shift();
+      running++;
+      Promise.resolve().then(entry.run).then(entry.resolve, entry.reject).finally(() => {
+        running--;
+        drain();
+      });
+    }
+  }
+  return { schedule(id2, run) {
+    return new Promise((resolve, reject3) => {
+      waiting.push({ id: id2, run, resolve, reject: reject3 });
+      drain();
+    });
+  }, position(id2) {
+    const i = waiting.findIndex((e) => e.id === id2);
+    return i < 0 ? 0 : i + 1;
+  }, stats: () => ({ running, waiting: waiting.length }) };
+}
+
+// studio-build/storage.mjs
+import { open as open2, rename, unlink, stat, statfs, lstat as lstat2, realpath as realpath2 } from "node:fs/promises";
+import path4 from "node:path";
+import { randomUUID as randomUUID2 } from "node:crypto";
+var fail8 = (code, status = 507) => Object.assign(Error(code), { code, status });
+var STORAGE_LIMITS = Object.freeze({ sourceBytes: 8 * 1024 ** 3, accountSourceBytes: 1024 ** 3, artifactBytes: 512 * 1024 ** 2, artifactRetentionMs: 24 * 36e5, minimumFreeBytes: 512 * 1024 ** 2, records: 2e4, metadataReserve: 256 * 1024 });
+async function durableJSON(file, value, { exclusive = false } = {}) {
+  const temp = file + "." + randomUUID2() + ".tmp";
+  let handle;
+  try {
+    handle = await open2(exclusive ? file : temp, "wx", 384);
+    await handle.writeFile(JSON.stringify(value));
+    await handle.sync();
+    await handle.close();
+    handle = null;
+    if (!exclusive) await rename(temp, file);
+    if (process.platform !== "win32") {
+      const dir = await open2(path4.dirname(file), "r");
+      try {
+        await dir.sync();
+      } finally {
+        await dir.close();
+      }
+    }
+  } catch (e) {
+    await handle?.close().catch(() => {
+    });
+    if (!exclusive) await unlink(temp).catch(() => {
+    });
+    throw e;
+  }
+}
+async function createStudioStorage({ root, jobs, limits = {}, now = () => Date.now() } = {}) {
+  const cap = { ...STORAGE_LIMITS, ...limits }, owners = /* @__PURE__ */ new Map();
+  let used = 0, reserved = 0;
+  const charge = (owner, bytes2) => {
+    used += bytes2;
+    owners.set(owner, (owners.get(owner) || 0) + bytes2);
+  };
+  for (const j of jobs.values()) {
+    let size = 0;
+    try {
+      size = (await stat(path4.join(root, j.id, "snapshot.json"))).size;
+    } catch {
+    }
+    charge(j.owner, size + cap.metadataReserve);
+  }
+  async function reserve(owner, bytes2) {
+    const cost = bytes2 + cap.metadataReserve;
+    if (jobs.size + reserved >= cap.records || used + cost > cap.sourceBytes || (owners.get(owner) || 0) + cost > cap.accountSourceBytes) throw fail8("STUDIO_SOURCE_QUOTA", 429);
+    reserved++;
+    charge(owner, cost);
+    let held = true;
+    const release = () => {
+      if (held) {
+        held = false;
+        reserved--;
+        charge(owner, -cost);
+      }
+    };
+    try {
+      const disk = await statfs(root);
+      if (Number(disk.bavail) * Number(disk.bsize) < cap.minimumFreeBytes + cost) throw fail8("STUDIO_DISK_RESERVE");
+    } catch (e) {
+      release();
+      if (e.code === "STUDIO_DISK_RESERVE") throw e;
+      throw fail8("STUDIO_STORAGE_UNAVAILABLE");
+    }
+    return { commit() {
+      if (held) {
+        held = false;
+        reserved--;
+      }
+    }, release };
+  }
+  async function trimArtifacts({ persist, pinned = /* @__PURE__ */ new Set() } = {}) {
+    const rows = [...jobs.values()].filter((j) => j.kind === "build" && j.mode === "qt-wasm" && j.result?.artifacts?.length && !j.artifactsEvictedAt && j.finishedAt).map((j) => ({ j, size: j.result.artifacts.reduce((n, a) => n + (Number.isSafeInteger(a.bytes) ? a.bytes : 0), 0) })).sort((a, b) => Date.parse(a.j.finishedAt) - Date.parse(b.j.finishedAt));
+    let total = rows.reduce((n, r) => n + r.size, 0), evicted = 0;
+    for (const { j, size } of rows) {
+      if (pinned.has(j.id) || j.preview?.expiresAt > now()) continue;
+      if (total <= cap.artifactBytes && now() - Date.parse(j.finishedAt) < cap.artifactRetentionMs) continue;
+      const directory = path4.resolve(root, j.id, "execution/output"), expected = path4.join(await realpath2(root), j.id, "execution", "output");
+      try {
+        if (await realpath2(directory) !== expected) throw fail8("STUDIO_CACHE_PATH_INVALID");
+        for (const a of j.result.artifacts) {
+          if (!/^(?:program\.(?:js|wasm|data)|qtloader\.js|qtlogo\.svg)$/.test(a.name)) throw fail8("STUDIO_CACHE_PATH_INVALID");
+          const file = path4.join(directory, a.name);
+          try {
+            const s = await lstat2(file);
+            if (s.isDirectory()) throw fail8("STUDIO_CACHE_PATH_INVALID");
+            await unlink(file);
+          } catch (e) {
+            if (e.code !== "ENOENT") throw e;
+          }
+        }
+      } catch (e) {
+        if (e.code !== "ENOENT") throw e;
+      }
+      const next = { ...j, preview: null, artifactsEvictedAt: new Date(now()).toISOString() };
+      await persist(next);
+      Object.assign(j, next);
+      total -= size;
+      evicted++;
+    }
+    return { cachedBytes: total, evicted };
+  }
+  return { reserve, trimArtifacts, usage: (owner) => ({ sourceBytesCharged: owners.get(owner) || 0, accountSourceLimit: cap.accountSourceBytes, maxRecords: cap.records }), limits: cap };
+}
+
+// studio-build/service.mjs
+var error2 = (code, status = 400) => Object.assign(Error(code), { code, status });
+var privateHeaders = { "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer" };
+var idPattern = /^[a-f0-9-]{36}$/;
+async function createStudioService({ root, image, authenticate = async () => null, runner = runDockerBuild, ready = async () => !!image, allowedOrigin, previewOrigin, reviewerAssignments = {}, deliveryLimits, storageLimits, queueLimits = {} } = {}) {
+  if (!root || !allowedOrigin || !previewOrigin) throw Error("STUDIO_CONFIG_INVALID");
+  const parentURL = new URL(allowedOrigin), previewURL = new URL(previewOrigin);
+  if (previewURL.protocol !== "https:" || previewURL.origin !== previewOrigin || previewURL.hostname.split(".").slice(-2).join(".") === parentURL.hostname.split(".").slice(-2).join(".")) throw Error("STUDIO_PREVIEW_ORIGIN_INVALID");
+  const store = path5.resolve(root), jobs = /* @__PURE__ */ new Map(), pending = /* @__PURE__ */ new Map(), creating = /* @__PURE__ */ new Set();
+  let storageFailed = false;
+  await mkdir2(store, { recursive: true, mode: 448 });
+  for (const name of await readdir(store)) {
+    if (!idPattern.test(name)) continue;
+    try {
+      const j = JSON.parse(await readFile(path5.join(store, name, "job.json"), "utf8"));
+      if (j.id !== name || typeof j.owner !== "string") throw Error();
+      if (["queued", "running"].includes(j.status)) {
+        j.status = "interrupted";
+        j.message = "\u0421\u0431\u043E\u0440\u043A\u0430 \u043F\u0440\u0435\u0440\u0432\u0430\u043D\u0430 \u043F\u0435\u0440\u0435\u0437\u0430\u043F\u0443\u0441\u043A\u043E\u043C \u0441\u0435\u0440\u0432\u0438\u0441\u0430; \u0438\u0441\u0445\u043E\u0434\u043D\u0438\u043A\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u044B.";
+      }
+      jobs.set(j.id, j);
+    } catch (e) {
+      if (e.code !== "ENOENT") throw Error("STUDIO_STORE_INVALID");
+    }
+  }
+  const delivery = createArtifactDelivery({ limits: deliveryLimits });
+  const persist = async (job) => {
+    const dir = path5.join(store, job.id);
+    await mkdir2(dir, { recursive: true, mode: 448 });
+    await durableJSON(path5.join(dir, "job.json"), job);
+  };
+  const queue = createBuildQueue(queueLimits), maxPending = queueLimits.maxPending ?? 32;
+  if (!Number.isInteger(maxPending) || maxPending < 2 || maxPending > 128) throw Error("STUDIO_QUEUE_CONFIG_INVALID");
+  const storage = await createStudioStorage({ root: store, jobs, limits: storageLimits });
+  let maintenance = Promise.resolve(), cacheMaintenanceHealthy = true;
+  const maintain = () => {
+    maintenance = maintenance.catch(() => {
+    }).then(() => storage.trimArtifacts({ persist, pinned: /* @__PURE__ */ new Set([...pending.keys(), ...delivery.activeJobs()]) })).then(() => {
+      cacheMaintenanceHealthy = true;
+    }).catch(() => {
+      cacheMaintenanceHealthy = false;
+    });
+    return maintenance;
+  };
+  const view = async (j) => {
+    let result2 = j.result || null;
+    if (j.resultLogHash) {
+      const full = JSON.parse(await readFile(path5.join(store, j.id, "result.json"), "utf8"));
+      if (sourceHash(full) !== j.resultLogHash) throw error2("STUDIO_RESULT_INVALID", 503);
+      result2 = full;
+    }
+    return { id: j.id, projectId: j.projectId, kind: j.kind, status: j.status, queuePosition: j.status === "queued" ? queue.position(j.id) : 0, snapshotHash: j.snapshotHash, fileHashes: j.fileHashes, createdAt: j.createdAt, finishedAt: j.finishedAt || null, result: result2, message: j.message || null, review: j.review || null, assessment: j.assessment || null, artifactsEvictedAt: j.artifactsEvictedAt || null, previewUrl: j.status === "passed" && j.preview?.expiresAt > Date.now() ? previewOrigin + "/api/v2/studio/artifacts/" + j.id + "/" + j.preview.token + "/index.html" : null };
+  };
+  const assignments = (account) => Object.hasOwn(reviewerAssignments, account.accountId) && Array.isArray(reviewerAssignments[account.accountId]) ? reviewerAssignments[account.accountId] : [];
+  const permittedReview = (account, j) => j.kind === "submission" && assignments(account).includes(j.assignmentId);
+  const allowedJob = (account, id2, { review: review2 = false } = {}) => {
+    const j = jobs.get(id2);
+    if (!j || j.owner !== account.accountId && !(review2 && permittedReview(account, j))) throw error2("STUDIO_NOT_FOUND", 404);
+    return j;
+  };
+  async function body(req) {
+    const chunks = [];
+    let bytes2 = 0;
+    for await (const chunk of req) {
+      const b = Buffer.from(chunk);
+      bytes2 += b.length;
+      if (bytes2 > 2 * 1024 * 1024) throw error2("STUDIO_PAYLOAD_LIMIT", 413);
+      chunks.push(b);
+    }
+    try {
+      return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)));
+    } catch {
+      throw error2("STUDIO_INPUT_INVALID");
+    }
+  }
+  const reply8 = (res, status, data) => {
+    res.writeHead(status, { ...privateHeaders, "content-type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify(data));
+  };
+  async function create(account, input, kind, mode) {
+    if (creating.has(account.accountId)) throw error2("STUDIO_JOB_BUSY", 409);
+    creating.add(account.accountId);
+    try {
+      const snapshot = projectSnapshot(input);
+      if (kind === "submission" && snapshot.assignmentId !== "cpp.taskflow-capstone.v1") throw error2("ASSIGNMENT_REQUIRED");
+      if ([...jobs.values()].some((j) => j.owner === account.accountId && ["queued", "running"].includes(j.status))) throw error2("STUDIO_JOB_BUSY", 409);
+      if (pending.size + creating.size > maxPending) throw error2("STUDIO_SERVER_BUSY", 429);
+      const own = [...jobs.values()].filter((j) => j.owner === account.accountId && Date.parse(j.createdAt) > Date.now() - 36e5);
+      if (own.length >= 60) throw error2("STUDIO_RATE_LIMIT", 429);
+      const reservation = await storage.reserve(account.accountId, Buffer.byteLength(JSON.stringify(snapshot)));
+      let id2, job;
+      try {
+        id2 = randomUUID3();
+        job = { id: id2, owner: account.accountId, projectId: snapshot.projectId, kind, mode, snapshotHash: snapshot.hash, fileHashes: snapshot.fileHashes, assignmentId: snapshot.assignmentId, status: "queued", createdAt: (/* @__PURE__ */ new Date()).toISOString() };
+        await mkdir2(path5.join(store, id2), { mode: 448 });
+        await durableJSON(path5.join(store, id2, "snapshot.json"), snapshot);
+        jobs.set(id2, job);
+        await persist(job);
+        reservation.commit();
+      } catch (e) {
+        reservation.release();
+        throw e;
+      }
+      const controller = new AbortController();
+      const task = queue.schedule(id2, async () => {
+        try {
+          if (controller.signal.aborted) {
+            job.status = "cancelled";
+            return;
+          }
+          job.status = "running";
+          await persist(job);
+          job.result = await runner({ workspace: snapshot.workspace, root: path5.join(store, id2, "execution"), image, mode: kind === "submission" ? "assessment" : mode, signal: controller.signal });
+          job.status = controller.signal.aborted ? "cancelled" : job.result.status;
+          if (mode === "qt-wasm" && job.status === "passed") job.preview = { token: randomBytes10(32).toString("hex"), expiresAt: Date.now() + 12e4 };
+          await durableJSON(path5.join(store, id2, "result.json"), job.result);
+          job.resultLogHash = sourceHash(job.result);
+          const { stdout, stderr, ...summary } = job.result;
+          job.result = summary;
+          if (kind === "submission") job.assessment = { scope: "project-tests-only", testsVersion: "taskflow-model-v1", automatedStatus: job.status, finalGrade: null, humanReview: "required", note: "\u0410\u0432\u0442\u043E\u0442\u0435\u0441\u0442\u044B \u043D\u0435 \u0437\u0430\u043C\u0435\u043D\u044F\u044E\u0442 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0443 \u0430\u0440\u0445\u0438\u0442\u0435\u043A\u0442\u0443\u0440\u044B \u0438 \u0437\u0430\u0449\u0438\u0442\u0443." };
+        } catch (e) {
+          job.status = controller.signal.aborted ? "cancelled" : "failed";
+          job.message = typeof e.code === "string" ? e.code : "STUDIO_BUILD_FAILED";
+        } finally {
+          job.finishedAt = (/* @__PURE__ */ new Date()).toISOString();
+          try {
+            await persist(job);
+          } catch {
+            storageFailed = true;
+            job.status = "storage-error";
+            job.message = "STUDIO_STORAGE_UNAVAILABLE";
+          } finally {
+            pending.delete(id2);
+            await maintain();
+          }
+        }
+      });
+      pending.set(id2, { controller, task });
+      return await view(job);
+    } finally {
+      creating.delete(account.accountId);
+    }
+  }
+  async function readSnapshot(id2) {
+    const j = jobs.get(id2);
+    if (!j) throw error2("STUDIO_NOT_FOUND", 404);
+    const value = JSON.parse(await readFile(path5.join(store, id2, "snapshot.json"), "utf8"));
+    const { hash: hash4, fileHashes, ...data } = value;
+    if (sourceHash(data) !== hash4 || hash4 !== j.snapshotHash || JSON.stringify(fileHashes) !== JSON.stringify(j.fileHashes)) throw error2("STUDIO_SNAPSHOT_INVALID", 503);
+    return value;
+  }
+  async function previewHandler(req, res) {
+    try {
+      if (req.headers.host !== previewURL.host || !req.url?.startsWith("/api/v2/studio/artifacts/")) throw error2("STUDIO_NOT_FOUND", 404);
+      const parts = req.url.slice("/api/v2/studio/artifacts/".length).split("/"), j = jobs.get(parts[0]);
+      if (req.method !== "GET" || parts.length !== 3 || !j || j.status !== "passed" || !j.preview || j.preview.token !== parts[1] || j.preview.expiresAt <= Date.now()) throw error2("STUDIO_NOT_FOUND", 404);
+      const name = parts[2];
+      if (name === "index.html") {
+        await delivery.guard(j.id, Buffer.byteLength(previewHTML), () => delivery.send(req, res, Buffer.from(previewHTML), previewHeaders(void 0, allowedOrigin)));
+        return true;
+      }
+      if (name === "nexus-preview.js") {
+        await delivery.guard(j.id, 2 * 1024 * 1024, async () => {
+          const s = await readSnapshot(j.id), script = previewScript({ parentOrigin: allowedOrigin, snapshotHash: j.snapshotHash, outputDataFiles: applicationConfig(s.workspace).outputDataFiles });
+          await delivery.send(req, res, Buffer.from(script), previewHeaders("text/javascript; charset=utf-8", allowedOrigin));
+        });
+        return true;
+      }
+      const record = artifactRecord(j.result.artifacts, name);
+      await delivery.guard(j.id, record.bytes, async () => {
+        const bytes2 = await verifiedArtifact(path5.join(store, j.id, "execution/output"), record);
+        await delivery.send(req, res, bytes2, previewHeaders(name.endsWith(".wasm") ? "application/wasm" : name.endsWith(".js") ? "text/javascript" : name.endsWith(".svg") ? "image/svg+xml" : "application/octet-stream", allowedOrigin));
+      });
+      return true;
+    } catch (e) {
+      if (!res.headersSent) reply8(res, e.status || 404, { error: { code: e.code || "STUDIO_NOT_FOUND" } });
+    }
+    return true;
+  }
+  async function handler(req, res) {
+    if (!req.url?.startsWith("/api/v2/studio/")) return false;
+    try {
+      if (req.url.startsWith("/api/v2/studio/artifacts/")) throw error2("STUDIO_NOT_FOUND", 404);
+      const u = new URL(req.url, allowedOrigin);
+      if (u.origin !== allowedOrigin || u.search || u.hash || req.headers.host !== new URL(allowedOrigin).host || req.headers.origin && req.headers.origin !== allowedOrigin || req.headers["sec-fetch-site"] && req.headers["sec-fetch-site"] !== "same-origin" || req.headers.authorization) throw error2("STUDIO_ORIGIN_REJECTED", 403);
+      if (storageFailed) throw error2("STUDIO_STORAGE_UNAVAILABLE", 503);
+      if (!image) {
+        reply8(res, 503, { error: { code: "STUDIO_NOT_CONFIGURED" } });
+        return true;
+      }
+      const account = await authenticate(req);
+      if (!account || account.status !== "active" || typeof account.accountId !== "string" || !account.accountId || account.accountId.length > 256) throw error2("SESSION_REQUIRED", 401);
+      if (req.headers["x-nexus-expected-account-id"] !== account.accountId) throw error2("STUDIO_ACCOUNT_CHANGED", 409);
+      if (req.method === "POST" && req.headers.origin !== allowedOrigin) throw error2("STUDIO_ORIGIN_REJECTED", 403);
+      const route = u.pathname.slice("/api/v2/studio/".length).split("/");
+      if (req.method === "GET" && route.length === 1 && route[0] === "capabilities") {
+        reply8(res, 200, { enabled: await ready(), targets: ["qt-wasm", "tests"], previewOrigin, reviewAssignments: assignments(account), submission: "project-tests-and-human-review", buildWaitMs: 18e5, queueCapacity: maxPending, quotas: storage.usage(account.accountId), cacheMaintenanceHealthy });
+        return true;
+      }
+      if (req.method === "GET" && ["submissions", "review"].includes(route[0]) && (route.length === 1 || route.length === 3 && route[1] === "page" && idPattern.test(route[2]))) {
+        const list = [...jobs.values()].filter((j) => route[0] === "review" ? permittedReview(account, j) : j.kind === "submission" && j.owner === account.accountId).sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id));
+        let start = 0;
+        if (route.length === 3) {
+          start = list.findIndex((j) => j.id === route[2]) + 1;
+          if (start === 0) throw error2("STUDIO_NOT_FOUND", 404);
+        }
+        const page = list.slice(start, start + 25);
+        reply8(res, 200, { items: await Promise.all(page.map(view)), nextCursor: start + 25 < list.length ? page.at(-1).id : null });
+        return true;
+      }
+      if (req.method === "POST" && route.length === 1 && ["builds", "submissions"].includes(route[0])) {
+        const data = await body(req), mode = data.mode;
+        delete data.mode;
+        if (!["qt-wasm", "tests"].includes(mode) || route[0] === "submissions" && mode !== "tests") throw error2("BUILD_TARGET_INVALID");
+        reply8(res, 202, await create(account, data, route[0] === "submissions" ? "submission" : "build", mode));
+        return true;
+      }
+      if (["builds", "submissions"].includes(route[0]) && idPattern.test(route[1] || "")) {
+        const j = allowedJob(account, route[1], { review: route[0] === "submissions" });
+        if (route[0] === "submissions" && j.kind !== "submission") throw error2("STUDIO_NOT_FOUND", 404);
+        if (req.method === "GET" && route.length === 2) {
+          reply8(res, 200, await view(j));
+          return true;
+        }
+        if (req.method === "GET" && route[2] === "source" && route.length === 3) {
+          const s = await readSnapshot(j.id);
+          res.writeHead(200, { ...privateHeaders, "content-type": "application/zip", "content-disposition": 'attachment; filename="source.zip"' });
+          res.end(portableProjectArchive({ title: s.title, workspace: s.workspace }));
+          return true;
+        }
+        if (req.method === "POST" && route[2] === "cancel" && route.length === 3) {
+          if (j.owner !== account.accountId) throw error2("STUDIO_NOT_FOUND", 404);
+          pending.get(j.id)?.controller.abort();
+          j.preview = null;
+          await persist(j);
+          reply8(res, 200, { ok: true });
+          return true;
+        }
+        if (req.method === "POST" && route[2] === "review" && route.length === 3) {
+          if (j.owner === account.accountId || !permittedReview(account, j)) throw error2("STUDIO_REVIEW_FORBIDDEN", 403);
+          const b = await body(req), max = { correctness: 30, tests: 20, resources: 15, design: 15, algorithms: 10, reproducibility: 10 };
+          if (j.review || !j.finishedAt) throw error2("STUDIO_REVIEW_STATE", 409);
+          if (!b || Object.keys(b).some((k) => !["rubric", "feedback", "defenseVerified"].includes(k)) || !b.rubric || Object.keys(b.rubric).length !== 6 || Object.entries(max).some(([k, m]) => !Number.isInteger(b.rubric[k]) || b.rubric[k] < 0 || b.rubric[k] > m) || typeof b.feedback !== "string" || !b.feedback.trim() || b.feedback.length > 4e3 || typeof b.defenseVerified !== "boolean") throw error2("STUDIO_REVIEW_INVALID");
+          const total = Object.values(b.rubric).reduce((a, b2) => a + b2, 0);
+          if (total >= 60 && (j.status !== "passed" || !b.defenseVerified)) throw error2("STUDIO_REVIEW_PREREQUISITE");
+          await readSnapshot(j.id);
+          const updated = { ...j, review: { ...b, total, reviewer: account.accountId, at: (/* @__PURE__ */ new Date()).toISOString(), snapshotHash: j.snapshotHash }, assessment: { ...j.assessment, finalGrade: total, humanReview: "completed" } };
+          if (j.review || j.reviewing) throw error2("STUDIO_REVIEW_STATE", 409);
+          j.reviewing = true;
+          try {
+            await persist(updated);
+            Object.assign(j, updated);
+          } finally {
+            delete j.reviewing;
+          }
+          reply8(res, 200, await view(j));
+          return true;
+        }
+      }
+      throw error2("STUDIO_NOT_FOUND", 404);
+    } catch (e) {
+      if (!res.headersSent) reply8(res, e.status || 400, { error: { code: e.code || "STUDIO_INPUT_INVALID" } });
+    }
+    return true;
+  }
+  return { handler, jobs, async revokeAccount(accountId2) {
+    for (const j of jobs.values()) if (j.owner === accountId2 && j.kind === "build") {
+      pending.get(j.id)?.controller.abort();
+      if (j.preview) {
+        j.preview = null;
+        await persist(j);
+      }
+    }
+  }, async idle() {
+    await Promise.all([...pending.values()].map((x) => x.task));
+    await maintenance;
+  }, async close() {
+    for (const p of pending.values()) p.controller.abort();
+    await this.idle();
+  }, snapshot: readSnapshot, previewHandler, maintain };
+}
+
+// studio-build/bff.mjs
+import { spawn as spawn2 } from "node:child_process";
+import { createServer } from "node:http";
+function sdkReady(image) {
+  return new Promise((resolve) => {
+    const p = spawn2("docker", ["image", "inspect", image, "--format", "{{.Id}}"], { windowsHide: true, stdio: "ignore" }), timer = setTimeout(() => {
+      p.kill();
+      resolve(false);
+    }, 5e3);
+    p.once("error", () => {
+      clearTimeout(timer);
+      resolve(false);
+    });
+    p.once("close", (code) => {
+      clearTimeout(timer);
+      resolve(code === 0);
+    });
+  });
+}
+function studioAuthenticator({ env, fetchImpl = fetch }) {
+  const read = createAccountReadHandler({ env, fetchImpl });
+  return async (req) => {
+    let status = 0, data = "";
+    await read({ ...req, headers: req.headers, rawHeaders: req.rawHeaders, url: "/api/v2/account", method: "GET" }, { writeHead(n) {
+      status = n;
+    }, end(b) {
+      data += String(b || "");
+    } });
+    if (status !== 200) return null;
+    try {
+      return JSON.parse(data).account || null;
+    } catch {
+      return null;
+    }
+  };
+}
+async function createStudioBffHandler({ env = process.env, fetchImpl = fetch } = {}) {
+  if (env.NEXUS_STUDIO_BUILD_ENABLED !== "true") return async (req, res) => {
+    if (!req.url?.startsWith("/api/v2/studio/")) return false;
+    res.writeHead(503, { "cache-control": "no-store", "vary": "*", "content-type": "application/json" });
+    res.end(JSON.stringify({ error: { code: "STUDIO_NOT_CONFIGURED" } }));
+    return true;
+  };
+  const port = Number(env.NEXUS_STUDIO_PREVIEW_PORT);
+  if (!env.NEXUS_STUDIO_DATA_DIR || !env.NEXUS_STUDIO_SDK_IMAGE || !env.NEXUS_STUDIO_PREVIEW_ORIGIN || !Number.isInteger(port) || port < 1024 || port > 65535) throw Error("STUDIO_CONFIG_INVALID");
+  let reviewers = /* @__PURE__ */ Object.create(null);
+  if (env.NEXUS_STUDIO_REVIEWERS_JSON) {
+    const raw = JSON.parse(env.NEXUS_STUDIO_REVIEWERS_JSON);
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw Error("STUDIO_REVIEW_CONFIG_INVALID");
+    for (const [id2, assignments] of Object.entries(raw)) {
+      if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(id2) || !Array.isArray(assignments) || assignments.some((a) => a !== "cpp.taskflow-capstone.v1")) throw Error("STUDIO_REVIEW_CONFIG_INVALID");
+      reviewers[id2] = assignments;
+    }
+  }
+  const authenticate = studioAuthenticator({ env, fetchImpl }), service3 = await createStudioService({ root: env.NEXUS_STUDIO_DATA_DIR, image: env.NEXUS_STUDIO_SDK_IMAGE, allowedOrigin: GATEWAY_ORIGIN, previewOrigin: env.NEXUS_STUDIO_PREVIEW_ORIGIN, authenticate, reviewerAssignments: reviewers, ready: () => sdkReady(env.NEXUS_STUDIO_SDK_IMAGE) });
+  const previewServer = createServer((req, res) => void service3.previewHandler(req, res));
+  previewServer.requestTimeout = 15e3;
+  previewServer.headersTimeout = 1e4;
+  await new Promise((resolve, reject3) => {
+    previewServer.once("error", reject3);
+    previewServer.listen(port, "127.0.0.1", resolve);
+  });
+  const handle = async (req, res) => {
+    if (req.url === "/api/v2/account/passkey/logout" && req.method === "POST") {
+      try {
+        const a = await authenticate(req);
+        if (a?.status === "active") await service3.revokeAccount(a.accountId);
+      } catch {
+      }
+      return false;
+    }
+    return service3.handler(req, res);
+  };
+  handle.close = async () => {
+    await service3.close();
+    previewServer.closeAllConnections();
+    await new Promise((resolve) => previewServer.close(resolve));
+  };
+  return handle;
 }
 
 // server-access/bff/server.mjs
@@ -4484,6 +6863,7 @@ var cloud = createCloudSessionHandler({ env: process.env });
 var oauth = createOAuthHandler({ env: process.env });
 var control = createAccountControlHandler({ env: process.env });
 var content = createContentHandler({ env: process.env });
+var studio = await createStudioBffHandler({ env: process.env });
 var assets = /* @__PURE__ */ new Map([
   ["/account/entry/", ["text/html; charset=utf-8", landingBody]],
   ["/account/entry/entry.css", ["text/css; charset=utf-8", readFileSync(new URL("../public/entry.css", import.meta.url))]],
@@ -4498,6 +6878,7 @@ var server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
   res.setHeader("vary", "*");
   try {
     if (await entryGate(req, res)) return;
+    if (await studio(req, res)) return;
     if (await content(req, res)) return;
     if (await control(req, res)) return;
     if (await cloud(req, res)) return;
@@ -4525,7 +6906,11 @@ var server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
 server.requestTimeout = 15e3;
 server.headersTimeout = 1e4;
 server.listen(Number(process.env.PORT || 8080), "0.0.0.0");
-for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => {
-  server.close(() => process.exit(0));
-  setTimeout(() => process.exit(1), 5e3).unref();
+for (const signal of ["SIGTERM", "SIGINT"]) process.once(signal, () => {
+  const timer = setTimeout(() => process.exit(1), 15e3).unref(), closed = Promise.resolve(studio.close?.()).then(() => true, () => false);
+  server.close(async () => {
+    const ok = await closed;
+    clearTimeout(timer);
+    process.exit(ok ? 0 : 1);
+  });
 });

@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 test('Медиа текущего и удержанного intro-поколения не входит в обязательный public graph',async()=>{
  const temp=await mkdtemp(path.join(tmpdir(),'nexus-intro-build-')),source=path.join(temp,'source'),out=path.join(temp,'build');
  const put=async(f,b)=>{await mkdir(path.dirname(path.join(source,f)),{recursive:true});await writeFile(path.join(source,f),b)};
- for(const f of ['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa','entry-assets/ui1a-old'])await mkdir(path.join(source,f),{recursive:true});
+ for(const f of ['core','effects','styles','locales','courses','assets','sandbox','project-studio','course-final','sync','collaboration','akronikl','feedback','pwa','entry-assets/ui1a-old'])await mkdir(path.join(source,f),{recursive:true});
  await put('release-candidate.json',JSON.stringify({version:'1.0.0',assetGeneration:'ui1a-now',retainedPublicGenerations:['ui1a-old']}));
  await put('version.json',JSON.stringify({version:'1.0.0',releaseCandidate:{assetGeneration:'ui1a-now'}}));await put('manifest.webmanifest','{}');await put('index.html','<html></html>');await put('offline.html','<html></html>');
  for(const icon of ['icon-192.png','icon-512.png','apple-touch-icon.png'])await put('assets/icons/'+icon,'synthetic icon');

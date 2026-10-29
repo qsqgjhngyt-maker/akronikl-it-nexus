@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 test('Новый candidate сохраняет активное поколение; его прежнее видео не попадает в SW-install',async()=>{
  const temp=await mkdtemp(path.join(tmpdir(),'nexus-intro-retain-')),source=path.join(temp,'source'),out=path.join(temp,'build');
  const put=async(f,b)=>{await mkdir(path.dirname(path.join(source,f)),{recursive:true});await writeFile(path.join(source,f),b)};
- for(const f of ['core','effects','styles','locales','courses','assets','sandbox','project-studio','sync','collaboration','akronikl','feedback','pwa','entry-assets/ui1a-active'])await mkdir(path.join(source,f),{recursive:true});
+ for(const f of ['core','effects','styles','locales','courses','assets','sandbox','project-studio','course-final','sync','collaboration','akronikl','feedback','pwa','entry-assets/ui1a-active'])await mkdir(path.join(source,f),{recursive:true});
  await put('release-candidate.json',JSON.stringify({version:'1.0.0',assetGeneration:'ui1a-active',retainedPublicGenerations:[]}));
  await put('version.json',JSON.stringify({version:'1.0.0',releaseCandidate:{assetGeneration:'ui1a-active'}}));
  for(const f of ['index.html','offline.html'])await put(f,'<html></html>');await put('manifest.webmanifest','{}');
