@@ -26,7 +26,7 @@ export async function nexusChatFixture({root,privateDir,createAdapter,onOutcome,
    if(req.headers.host!==host){res.writeHead(421);res.end();return;}
    if(u.pathname.startsWith('/akronikl/vendor/piper/')){
     const leaf=u.pathname.slice('/akronikl/vendor/piper/'.length);
-    if(!piperAssets||req.method!=='GET'||! /^(?:runtime\.js|piper_phonemize\.(?:data|wasm)|ort\/ort-wasm-[a-z0-9.-]+\.(?:mjs|wasm)|models\/ru_RU-(?:irina|uyut7-pilot3)-medium\.onnx(?:\.json)?)$/u.test(leaf))throw Error('QA_PATH_DENIED');
+    if(!piperAssets||req.method!=='GET'||! /^(?:runtime\.js|piper_phonemize\.(?:data|wasm)|ort\/ort-wasm-[a-z0-9.-]+\.(?:mjs|wasm)|models\/ru_RU-(?:irina|uyut7-pilot4)-medium\.onnx(?:\.json)?)$/u.test(leaf))throw Error('QA_PATH_DENIED');
     const base=await realpath(piperAssets),file=await realpath(path.join(base,leaf));if(!file.startsWith(base+path.sep))throw Error('QA_PATH_DENIED');
     res.writeHead(200,{'content-type':leaf.endsWith('.wasm')?'application/wasm':leaf.endsWith('.js')||leaf.endsWith('.mjs')?'text/javascript':leaf.endsWith('.json')?'application/json':'application/octet-stream'});res.end(await readFile(file));return;
    }
