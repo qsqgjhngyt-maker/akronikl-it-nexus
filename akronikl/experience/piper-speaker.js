@@ -17,12 +17,15 @@ export function createPiperSpeaker({windowRef=globalThis.window,isCurrent=()=>tr
    };
   });void ready.catch(()=>{});return ready;
  }
- let busy=false;
+ let busy=false,activeRequest=null;
  async function request(text,{signal}={}){
-  if(!current())throw Error('SPEECH_UNAVAILABLE');signal?.throwIfAborted();if(busy)throw Error('SPEECH_BUSY');busy=true;counts.requests++;
+  if(!current())throw Error('SPEECH_UNAVAILABLE');signal?.throwIfAborted();
+  if(activeRequest?.signal?.aborted)await activeRequest.done;
+  signal?.throwIfAborted();if(!current())throw Error('SPEECH_UNAVAILABLE');if(busy)throw Error('SPEECH_BUSY');busy=true;counts.requests++;
+  let release;const token=activeRequest={signal,done:new Promise(resolve=>release=resolve)};
   let timer,abort;const cancelled=new Promise((_,reject)=>{abort=()=>{counts.cancelled++;stop();reject(Error('SPEECH_CANCELLED'));};signal?.addEventListener('abort',abort,{once:true});timer=setTimeout(abort,timeoutMs);});
   try{const result=await Promise.race([(async()=>{await start();signal?.throwIfAborted();if(!current())throw Error('SPEECH_UNAVAILABLE');const textSha256=await hash(text);signal?.throwIfAborted();if(!current())throw Error('SPEECH_UNAVAILABLE');return new Promise((resolve,reject)=>{const id=String(++sequence);pending={id,hash:textSha256,resolve,reject};worker.postMessage({id,text,textSha256});});})(),cancelled]);if(!current())throw Error('SPEECH_UNAVAILABLE');return result;}
-  finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);busy=false;}
+  finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);if(activeRequest===token){activeRequest=null;busy=false;}release();}
  }
  const speaker=createLocalSpeaker({request,windowRef,isCurrent,voice});void start().catch(()=>{});
  return Object.freeze({...speaker,status:()=>({...counts,ready:!!worker&&!!timings,busy,timings,lastSynthesisMs}),dispose(){if(closed)return;closed=true;speaker.dispose();stop();}});
