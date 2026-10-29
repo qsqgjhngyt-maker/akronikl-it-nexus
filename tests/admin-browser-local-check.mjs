@@ -4,6 +4,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
 import {fixture} from './helpers/auth-fixture.mjs';
+import {sessionContinuityBrowserScenarios} from './helpers/session-continuity-browser-scenarios.mjs';
 import {assistantPreferencesBrowserScenarios} from './helpers/assistant-preferences-browser-scenarios.mjs';
 import {conversationFilesBrowserScenarios} from './helpers/conversation-files-browser-scenarios.mjs';
 import {accountKeyBrowserScenarios} from './helpers/account-key-browser-scenarios.mjs';
@@ -108,6 +109,7 @@ try{
  });
  await accountKeyBrowserScenarios({owner,tester,testerId,f,generation,check});
  await assistantPreferencesBrowserScenarios({owner,tester,f,check});
+ if(process.env.NEXUS_BROWSER_FOCUS==='session'){await sessionContinuityBrowserScenarios({tester,testerId,f,check});}else{
  await conversationFilesBrowserScenarios({owner,tester,f,check});
  await check('blocking from admin UI revokes the tester session; next navigation is denied',async()=>{
   await owner.page.locator('[data-admin-refresh]').click();
@@ -197,7 +199,8 @@ try{
   assert.equal(f.db.prepare('SELECT id FROM account_subjects WHERE id=?').get(selfId),undefined);assert.equal(f.db.prepare('SELECT count(*) n FROM nexus_akronikl_state WHERE account_id=?').get(selfId).n,0);assert.equal(f.db.prepare('SELECT count(*) n FROM nexus_akronikl_state WHERE account_id=?').get(ownerId).n,1);assert.equal(await self.page.evaluate(async()=> (await fetch('/api/v2/account',{cache:'no-store',credentials:'same-origin'})).status),401);
   assert.deepEqual(await self.page.evaluate(({selfId,ownerId})=>{const prefix=id=>'akronikl:it-nexus:account-store:v1:'+encodeURIComponent(id)+':';return[localStorage.getItem(prefix(selfId)+'self-sentinel'),localStorage.getItem(prefix(ownerId)+'other-sentinel'),localStorage.getItem('unrelated-vault-marker')];},{selfId,ownerId}),[null,'KEEP_ME','KEEP_VAULT']);assert.deepEqual(f.db.prepare('PRAGMA foreign_key_check').all(),[]);
  });
- assert.ok(externalURLs.every(url=>['https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/cinematic-v4/desktop.mp4','https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/cinematic-v3/mobile/mp4/part-000.mp4'].includes(url)));assert.deepEqual(errors,[]);assert.deepEqual(unknown,[]);
+ }
+ assert.ok(externalURLs.every(url=>['https://storage.yandexcloud.net/akronikl-p4q-public-intro-20261029-5c91ede9/intro-media/cinematic-v6/desktop.mp4','https://storage.yandexcloud.net/akronikl-p4q-public-intro-20261029-5c91ede9/intro-media/cinematic-v6/desktop-lite.mp4','https://storage.yandexcloud.net/akronikl-p4q-public-intro-20261029-5c91ede9/intro-media/cinematic-v6/mobile-lite.mp4','https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/cinematic-v4/desktop.mp4','https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/cinematic-v3/mobile/mp4/part-000.mp4'].includes(url)));assert.deepEqual(errors,[]);assert.deepEqual(unknown,[]);
  const result={status:'PASS',checks,boundaries,externalRequests:0,blockedOptionalIntroRequests:external,cloudProviderRequests:0,syntheticModelCalls:f.modelCalls(),realAccounts:false,authenticator:'virtual CTAP2 with real verification',unknownStaticPaths:unknown,pageErrors:errors};
  await writeFile(process.env.NEXUS_BROWSER_RESULT,JSON.stringify(result,null,2)+'\n',{flag:'wx'});
 }catch(error){

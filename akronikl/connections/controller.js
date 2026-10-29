@@ -32,6 +32,7 @@ export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocal
     try{await cloudBroker.forget(id);if(!current())return Object.freeze({status:'closed'});saved=saved.filter(x=>x.providerId!==id);savedStatus='ready';savedOperation=null;emit();await refreshCloudSaved();return Object.freeze({status:'deleted',providerId:id});}
     catch{if(current()){savedOperation=null;savedStatus='error';savedError='CLOUD_VAULT_UNAVAILABLE';emit();}return Object.freeze({status:'error',code:'CLOUD_VAULT_UNAVAILABLE'});}
   }
+  async function restoreCloud(value){try{return await cloudBroker.resume(value);}catch(error){if(error.message==='CLOUD_NOT_CONNECTED'&&cloudBroker.accountBound&&cloudBroker.restoreSaved)return cloudBroker.restoreSaved(value);throw error;}}
   async function run(file,connect,{resume=false}={}){
     if(!ensure())return state();
     if(selected==='sources')return emit();
@@ -53,7 +54,7 @@ export function createModelConnections({isCurrent,loadLocal,inspect=inspectLocal
         if(!connect){phase='checked';code=external?'CLOUD_READY':'READY_TO_LOAD';return;}
         if(!external&&(!(file instanceof Blob)||file.size<1024)){phase='error';code='LOCAL_FILE_REJECTED';return;}
         pendingResources++;emit();
-        try{loaded=external?resume?await cloudBroker.resume({...selection,signal:controller.signal}):await cloudBroker.connect(cloudBroker.settings?{...selection,apiKey:file?.apiKey,remember:file?.remember,useSaved:file?.useSaved,signal:controller.signal}:{signal:controller.signal}):await loadLocal(file,{signal:controller.signal,profile:id});}finally{pendingResources--;}
+        try{loaded=external?resume?await restoreCloud({...selection,signal:controller.signal}):await cloudBroker.connect(cloudBroker.settings?{...selection,apiKey:file?.apiKey,remember:file?.remember,useSaved:file?.useSaved,signal:controller.signal}:{signal:controller.signal}):await loadLocal(file,{signal:controller.signal,profile:id});}finally{pendingResources--;}
         if(!active()){cleanup(loaded,resume&&retainedClose);return;}
         if(!loaded||!(external?loaded.kind==='cloud'&&loaded.transport==='trusted-broker':loaded.kind==='local'&&loaded.transport==='in-process')||external&&cloudBroker.settings&&loaded.connectionVerified!==true||loaded.modelId!==(external&&cloudBroker.settings?selection.modelId:modelProfile(id).modelId)||typeof loaded.generate!=='function'||typeof loaded.dispose!=='function'){
           cleanup(loaded);phase='error';code='MODEL_LOAD_FAILED';return;

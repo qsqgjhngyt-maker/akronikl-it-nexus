@@ -5801,7 +5801,7 @@ async function createCloudSettingsHost({ root, origin: initialOrigin, serveStati
           sweep();
           if (sessions.size >= 64) throw Error("CLOUD_BUSY");
           const data = await readBody2(req);
-          if (!data || Object.keys(data).some((k) => !["providerId", "modelId", "options", "apiKey", "remember", "useSaved", "resume"].includes(k)) || data.remember !== void 0 && typeof data.remember !== "boolean" || data.useSaved !== void 0 && typeof data.useSaved !== "boolean" || data.resume !== void 0 && data.resume !== true) throw Error("CLOUD_REQUEST_INVALID");
+          if (!data || Object.keys(data).some((k) => !["providerId", "modelId", "options", "apiKey", "remember", "useSaved", "resume", "restoreSaved"].includes(k)) || data.remember !== void 0 && typeof data.remember !== "boolean" || data.useSaved !== void 0 && typeof data.useSaved !== "boolean" || data.resume !== void 0 && data.resume !== true || data.restoreSaved !== void 0 && data.restoreSaved !== true) throw Error("CLOUD_REQUEST_INVALID");
           const selection = cloudSelection({ providerId: data.providerId, modelId: data.modelId, options: data.options ?? {} });
           if (data.resume === true) {
             if (Object.keys(data).sort().join(",") !== "modelId,options,providerId,resume") throw Error("CLOUD_REQUEST_INVALID");
@@ -5812,20 +5812,28 @@ async function createCloudSettingsHost({ root, origin: initialOrigin, serveStati
             json2(res, 200, { connected: true, verified: true, connectionVersion: s.version, providerId: selection.providerId, modelId: selection.modelId });
             return;
           }
+          const restoring = data.restoreSaved === true;
+          if (restoring && (!resolveAccount || Object.keys(data).sort().join(",") !== "modelId,options,providerId,restoreSaved")) throw Error("CLOUD_REQUEST_INVALID");
           const providerEpoch = await (sessionStore?.providerEpoch?.(selection.providerId) ?? 0);
           controller.signal.throwIfAborted();
           let owned = owner(req), key = data.apiKey;
-          if (!key && data.useSaved) key = (await vault.get(scopedOwner(owned, accountId2), selection.providerId))?.apiKey;
+          if (restoring) {
+            const saved = await vault.get(scopedOwner(owned, accountId2), selection.providerId);
+            if (!saved || JSON.stringify(cloudSelection({ providerId: saved.providerId, modelId: saved.modelId, options: saved.options })) !== JSON.stringify(selection)) throw Error("CLOUD_NOT_CONNECTED");
+            key = saved.apiKey;
+          } else if (!key && data.useSaved) key = (await vault.get(scopedOwner(owned, accountId2), selection.providerId))?.apiKey;
           if (!validApiKey(key)) throw Error("CLOUD_KEY_INVALID");
           fresh = createAdapter({ selection, apiKey: key, onOutcome });
           data.apiKey = "";
-          await beforeModelCall("connect");
-          connections++;
-          await fresh.complete(probe, { signal: controller.signal });
+          if (!restoring) {
+            await beforeModelCall("connect");
+            connections++;
+            await fresh.complete(probe, { signal: controller.signal });
+          }
           controller.signal.throwIfAborted();
           await stillAccount();
-          const remembered = data.remember === true;
-          if (remembered) {
+          const remembered = restoring || data.remember === true;
+          if (remembered && !restoring) {
             if (!resolveAccount) owned ??= randomBytes10(32).toString("base64url");
             await vault.put(scopedOwner(owned, accountId2), { ...selection, apiKey: key }, { providerEpoch });
           }
@@ -5850,7 +5858,7 @@ async function createCloudSettingsHost({ root, origin: initialOrigin, serveStati
           sessions.set(id2, { version, adapter: fresh, selection, owner: owned, accountId: accountId2, binding: binding(req), used: now(), busy: false, controller: null });
           fresh = null;
           newLease = null;
-          json2(res, 200, { connected: true, verified: true, remembered, connectionVersion: version, providerId: selection.providerId, modelId: selection.modelId }, { "Set-Cookie": [cookie(id2), ...remembered && !resolveAccount ? [ownerCookie(owned)] : []] });
+          json2(res, 200, { connected: true, verified: true, remembered, ...restoring ? { restored: true } : {}, connectionVersion: version, providerId: selection.providerId, modelId: selection.modelId }, { "Set-Cookie": [cookie(id2), ...remembered && !resolveAccount ? [ownerCookie(owned)] : []] });
           return;
         }
         if (url.pathname === PREFIX2 + "/forget") {
@@ -8074,7 +8082,7 @@ var server = http.createServer({ maxHeaderSize: 16384 }, async (req, res) => {
         res.end();
         return;
       }
-      res.writeHead(200, { "content-type": contentType, "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; media-src 'self' https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'", "permissions-policy": "publickey-credentials-create=(self), publickey-credentials-get=(self)" });
+      res.writeHead(200, { "content-type": contentType, "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "content-security-policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; media-src 'self' https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/ https://storage.yandexcloud.net/akronikl-p4q-public-intro-20261029-5c91ede9/intro-media/cinematic-v6/; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'", "permissions-policy": "publickey-credentials-create=(self), publickey-credentials-get=(self)" });
       res.end(content2);
       return;
     }
