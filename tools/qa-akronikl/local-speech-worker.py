@@ -119,6 +119,7 @@ while True:
         if cancelled.is_set():
             raise SpeechCancelled()
         synthesis_started = time.perf_counter()
+        print(json.dumps({"started": request["id"]}), flush=True)
         with contextlib.redirect_stdout(sys.stderr), torch.inference_mode():
             print("LOCAL_SPEECH_STAGE_SYNTHESIS", file=sys.stderr, flush=True)
             torch.manual_seed(1729)

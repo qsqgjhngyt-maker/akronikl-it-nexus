@@ -28,13 +28,14 @@ export function createLocalSpeechProvider({python,modelDirectory,referenceFile,p
    if(child!==process)return;buffer+=chunk.toString('utf8');if(buffer.length>9000000){void stop('SPEECH_AUDIO_INVALID').catch(()=>{});return;}
    let end;while((end=buffer.indexOf('\n'))>=0){const line=buffer.slice(0,end);buffer=buffer.slice(end+1);let message;try{message=JSON.parse(line);}catch{void stop('SPEECH_AUDIO_INVALID').catch(()=>{});continue;}
     if(Object.hasOwn(message,'ready')){clearTimeout(loadTimer);if(message.ready===true&&message.localOnly===true&&message.inputEncoding==='utf-8'&&message.protocolVersion===2){loaded=true;loadTimings=timing(message.timings);readyResolve();}else void stop().catch(()=>{});continue;}
+    if(message.started){if(job?.id===message.started)job.started=true;continue;}
     if(!job||message.id!==job.id)continue;const active=job;job=null;
     if(message.code){if(message.code==='SPEECH_CANCELLED')counts.cooperativeCancels++;active.reject(Error(message.code==='SPEECH_CANCELLED'?'SPEECH_CANCELLED':'SPEECH_SYNTHESIS_FAILED'));continue;}
     try{const wav=Buffer.from(message.audio,'base64');if(message.textSha256!==active.textHash||wav.length>6000000||wav.toString('ascii',0,4)!=='RIFF'||wav.toString('ascii',8,12)!=='WAVE'||!(message.duration>0)||!Number.isInteger(message.codecFrames)||message.codecFrames<1||message.codecFrames>=511)throw Error();counts.generated++;lastTimings=timing(message.timings);active.resolve({audio:wav,duration:message.duration,sampleRate:message.sampleRate,codecFrames:message.codecFrames,textSha256:message.textSha256,timings:lastTimings});}catch{active.reject(Error('SPEECH_AUDIO_INVALID'));}
    }
   });return ready;
  }
- return Object.freeze({voice:NARRATOR,status:()=>({...counts,busy,resident:!!child,warming:!!child&&!loaded,ready:loaded,cleanupFailed,fastMode,loadTimings,lastTimings}),
+ return Object.freeze({voice:NARRATOR,status:()=>({...counts,busy,generating:job?.started===true,resident:!!child,warming:!!child&&!loaded,ready:loaded,cleanupFailed,fastMode,loadTimings,lastTimings}),
   async warmup(){if(stopping)await stopping;await start();return {ready:true,timings:loadTimings};},
   async synthesize(text,{signal}={}){
    if(typeof text!=='string'||!text.trim()||text.length>240||text.includes('\0'))throw Error('SPEECH_REQUEST_INVALID');if(closed||cleanupFailed)throw Error('SPEECH_UNAVAILABLE');signal?.throwIfAborted();
