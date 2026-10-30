@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a2",
+  "topicId": "1c-enterprise.a2.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Catalogs: items, references and matching names",
+  "minutes": 100,
+  "goal": "Work with customers and services while distinguishing identity, presentation and editable objects, without creating accidental duplicates.",
+  "prerequisites": [
+    "A2.1; a separate workspace copy with three customers and two services."
+  ],
+  "outcomes": [
+    "Distinguish catalog type, item, reference and presentation.",
+    "Find a customer by code and verify a document relationship.",
+    "Explain idempotent seeding and the limits of name-based lookup."
+  ],
+  "sections": [
+    [
+      "Catalog structure and particular records",
+      "A catalog defines similarly structured data. Customers is a configuration object; C001 and C002 are particular catalog items. Each learning item has a code and description; a service also has an hourly rate. A list displays item presentations. A list row is not an additional customer. Filtering and sorting change the visible set or order without creating or deleting records.",
+      "Inspect all three items: C001 is Training customer Alpha, C002 is Training customer Beta, and C003 is also Training customer Alpha. The repeated description is intentional. Treating matching names as identical records can connect a document to the wrong customer. Check the code and reference first. Matching presentation proves neither duplication nor matching identity."
+    ],
+    [
+      "Reference versus editable object",
+      "A reference identifies one particular item. A document can store and compare it without copying all customer attributes. An editable object is obtained when changing values and writing them. Modifying a local object field and persisting that object are different events. Reading through a fresh object or a new session checks persistence rather than merely observing a form buffer.",
+      "A row number, selected cell or displayed description cannot replace a reference. Sorting can move the same customer to another position. The first A2 request stores a reference to C001; identically named C003 must not replace it automatically. Native case A2.reference-links checks the relationship. Snapshots record identifiers to detect object substitution during restoration."
+    ],
+    [
+      "Lookup by code and safe creation",
+      "The learning function КлиентПоКоду first looks up the specified code. An empty reference causes creation, assignment and writing; an existing item is returned without overwriting its description. Repeating the seed operation should therefore neither increase customer count nor reset someone’s edits. In a real system, key selection would require explicit uniqueness and concurrency decisions.",
+      "This is a sequential file-mode workspace, not proven multiuser synchronization. Another session could theoretically insert the same key between lookup and writing; A2 does not study that case. Name-based lookup is not a universal duplicate check either: different customers may legitimately share a description. Never turn repeated names into an instruction to delete records."
+    ],
+    [
+      "Accept the result precisely",
+      "Reconcile customer counts and codes, the two document references and service rates S001=600 and S002=900. Checks must detect wrong data, not merely an absence of crashes. Three rows without codes are weak evidence because the record set or relationships could have changed. For a renaming experiment, first create a separate copy, predict reference behavior and reopen the document afterward.",
+      "In user practice, choose a customer through the reference field. Typing a name into a comment does not establish a relationship. The browser learning table explains a record set but changes no 1C catalog. Distinguish model outcomes from actual forms or native-gate observations in your protocol. Saving a Nexus note likewise does not persist an infobase item."
+    ]
+  ],
+  "diagram": "a2identity",
+  "walkthrough": [
+    {
+      "action": "Compare C001 and C003 in the catalog.",
+      "expected": "Descriptions match; codes and references differ."
+    },
+    {
+      "action": "Open A200001 and identify its referenced customer.",
+      "expected": "It is C001, not an arbitrary item named Alpha."
+    },
+    {
+      "action": "Compare SEED and REPEAT_SEED.",
+      "expected": "Three customers, two services; identity snapshots match."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Lookup must preserve an existing item",
+      "source": "КлиентПоКоду(\"C001\", \"Учебный клиент Альфа\")",
+      "expected": "A repeated call returns the original C001 reference.",
+      "explanation": "Creation runs only for an empty reference; an existing description is not reassigned."
+    },
+    {
+      "title": "Matching presentation",
+      "source": "C001.Наименование = C003.Наименование; C001.Ссылка <> C003.Ссылка",
+      "expected": "Both statements hold.",
+      "explanation": "Reference comparison checks identity; text comparison checks an attribute value."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Explain type, item, reference and description using C001.",
+      "criteria": "Identify the schema, particular record, identity and display text separately."
+    },
+    {
+      "level": "Applied",
+      "task": "Check both document relationships and service rates; record a table without identifiers from personal infobases.",
+      "criteria": "A200001→C001/S001/600; A200002→C002/S002/900."
+    },
+    {
+      "level": "Advanced",
+      "task": "Design a C001 renaming experiment on a separate copy. What should remain unchanged?",
+      "criteria": "The document reference and customer identity; verify presentation by reopening while preserving the source."
+    }
+  ],
+  "lab": {
+    "title": "Three customers without false merging",
+    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "steps": [
+      "Open your dedicated A2 copy and the customer catalog.",
+      "Record all three codes/descriptions and explain matching names.",
+      "Reconcile customer and service codes through the two document reference fields.",
+      "Repeat seeding only in the gate workspace and compare snapshots and counts.",
+      "Preserve a relationship table and distinguish manual observations from AUTOMATED PASS."
+    ],
+    "expected": [
+      "Three customers, two services; C001≠C003 despite matching descriptions.",
+      "Repeated seeding creates no duplicates and preserves references."
+    ],
+    "evidence": [
+      "Code→description→document table.",
+      "SEED/REPEAT_SEED snapshots and the multiuser-testing limitation."
+    ],
+    "negative": "Do not merge or delete C001/C003 because their names match. Relationship checks must detect an incorrect customer choice."
+  },
+  "mistakes": [
+    [
+      "“Row two always identifies the same customer.”",
+      "Position depends on list presentation; use the reference/code."
+    ],
+    [
+      "“Repeating seed should reset earlier attribute values.”",
+      "Idempotent preparation must not silently overwrite existing work."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "C001 and C003 share a description. What follows?",
+      "options": [
+        "They are necessarily one record",
+        "Delete one",
+        "Check identity separately"
+      ],
+      "correct": 2,
+      "explanation": "A description is a presentation, not a universal key."
+    },
+    {
+      "question": "What does the document Customer field hold?",
+      "options": [
+        "An item reference",
+        "A list-row number",
+        "Only comment text"
+      ],
+      "correct": 0,
+      "explanation": "The relationship identifies a particular record."
+    },
+    {
+      "question": "What should repeated seeding do here?",
+      "options": [
+        "Create three more customers",
+        "Return existing references without duplicates",
+        "Clear learner edits"
+      ],
+      "correct": 1,
+      "explanation": "Creation is limited to missing codes."
+    }
+  ],
+  "review": [
+    "Show how a reference differs from a name.",
+    "Explain this workspace’s idempotency boundary.",
+    "Next: documents and states."
+  ],
+  "sources": [
+    "catalogs",
+    "documents",
+    "cli",
+    "training"
+  ],
+  "contentRevision": "0.3.0-a2p2",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.a2p2.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_A2P2_EN.md",
+  "nativeCaseIds": [
+    "A2.identity-not-presentation",
+    "A2.reference-links",
+    "A2.customer-count",
+    "A2.service-count"
+  ],
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
+    "sourcePolicy": "primary-source-links-and-observed-native-results",
+    "studentAuthorshipVerified": false
+  }
+}

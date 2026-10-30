@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p2",
+  "topicId": "onec.p2.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "BSL tokens, variables and expression evaluation",
+  "minutes": 110,
+  "goal": "Read and change a short BSL algorithm, predict its evaluation and verify it in the official platform rather than a browser imitation.",
+  "prerequisites": [
+    "P1; your own A2/P2 workspace copy. A completion is not required."
+  ],
+  "outcomes": [
+    "Distinguish identifiers, keywords, literals and operators.",
+    "Explain assignment and comparison in context.",
+    "Check operator precedence and equivalent Russian/English keyword variants."
+  ],
+  "sections": [
+    [
+      "Text becomes an algorithm in a particular module",
+      "A token is a meaningful piece of source: a name, number, string, keyword or operator. In Итог = Первое + Второе; the names identify variables, plus selects an operation and the semicolon terminates the statement. Quoting 30 produces string literal \"30\"; without quotes it is a number. Similar-looking text does not establish identical values or permitted operations. A comment explains intent but performs no calculation.",
+      "The source belongs to the learning configuration’s managed application module. The platform invokes its startup handler, which calls the checks. A .bsl file alone does not launch an application: configuration, execution context and a function call are required. The test block targets the managed thick client. Moving manager calls into a thin client or JavaScript requires a separate environment decision."
+    ],
+    [
+      "A variable holds a value; an expression produces one",
+      "Assignment evaluates the right-hand side and stores its result in the left-hand variable. A BSL variable’s type follows its current value; input types still need deliberate control. Naming a variable Minutes does not turn text into a number. Trace state explicitly: inputs 30 and 45 make ДобавитьМинуты return 75. That returned value is not yet persisted in an infobase document.",
+      "The equals sign has different contextual roles. A standalone Итог = 75; assigns, while Итог = 75 inside a check compares. Read the surrounding construction rather than one symbol. Distinguish evaluation, returning from a function and writing an object. Each mechanism needs its own check; a correct printed result does not establish all platform behavior."
+    ],
+    [
+      "Predict evaluation order first",
+      "In 4 + 2 * 3, multiplication happens first and the result is 10. Parentheses in (4 + 2) * 3 change grouping and produce 18. Tested BSL division 3 / 2 yields 1.5, so assumptions about integer division from another language are unsafe. The platform checks all three expectations in P2.1.* cases. Preserve intermediate values to locate the first divergence.",
+      "Plus also concatenates strings: \"REQ-\" + \"001\" yields \"REQ-001\". This neither adds business identifiers nor creates a document. Select operations according to type and meaning. Here the addition function assumes numeric inputs; it implements no general user-text parser. P2.2 examines those boundaries so a useful small function is not mistaken for complete real-data validation."
+    ],
+    [
+      "Two keyword spellings, one testable meaning",
+      "Функция/Возврат/КонецФункции and Function/Return/EndFunction can express the same algorithm. Our module separately calls ДобавитьМинуты and AddMinutes with 30 and 45, obtaining 75. Your function names, metadata attributes and string values are not translated automatically. An English lesson interface does not turn the Клиенты catalog name into a different configuration object.",
+      "After predicting results, run the native gate and inspect its six P2.1 cases. A separate negative copy replaces addition with subtraction. Syntax checking accepts it, but actual case P2.1.russian-keywords reports FAIL. This separates valid grammar from meeting a requirement. Preserve the original module, expected 75 and successful protocol rather than making the incorrect copy the new reference."
+    ]
+  ],
+  "diagram": "p2expression",
+  "walkthrough": [
+    {
+      "action": "Mark function tokens and trace 30+45 manually.",
+      "expected": "Two parameters, addition and return value 75."
+    },
+    {
+      "action": "Compare 4+2*3, (4+2)*3 and 3/2.",
+      "expected": "10, 18 and 1.5, covered by separate native checks."
+    },
+    {
+      "action": "Compare normal execution with SEMANTIC_REJECTION.",
+      "expected": "The correct module passes; syntactically valid subtraction fails."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Expression grouping",
+      "source": "4 + 2 * 3; (4 + 2) * 3; 3 / 2",
+      "expected": "10; 18; 1.5.",
+      "explanation": "Parentheses change grouping; division does not discard the fractional part."
+    },
+    {
+      "title": "Two actual calls",
+      "source": "ДобавитьМинуты(30, 45); AddMinutes(30, 45)",
+      "expected": "Both return 75.",
+      "explanation": "The native module contains two functions and two case IDs, not a JavaScript translation of a result."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Identify literals and operations in 30, \"30\", \"REQ-\"+\"001\" and 3/2.",
+      "criteria": "Number, string, string concatenation and numeric division yielding 1.5."
+    },
+    {
+      "level": "Applied",
+      "task": "Trace 4+2*3 and its parenthesized variant; reconcile native cases.",
+      "criteria": "Record intermediate 6→10 and 6→18, source/hash and actual case IDs."
+    },
+    {
+      "level": "Advanced",
+      "task": "Explain why replacing + with - passes CheckConfig but must fail acceptance.",
+      "criteria": "Grammar is valid but the 30+45=75 requirement is violated; retain the negative copy separately."
+    }
+  ],
+  "lab": {
+    "title": "Prediction and actual evaluation",
+    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "steps": [
+      "Read p2-expressions.bsl and locate its functions in the full module.",
+      "Write the six expected P2.1 results before running.",
+      "Run the native gate in a new directory and find P2.1.* in SEED.txt.cases.txt.",
+      "Compare check-semantic with SEMANTIC_REJECTION.txt.",
+      "Retain positive and negative results with an explanation; preserve the reference source."
+    ],
+    "expected": [
+      "Six P2.1 cases pass.",
+      "Actual execution detects the semantic mutation."
+    ],
+    "evidence": [
+      "Prediction table, source hash and SEED cases.",
+      "SEMANTIC_REJECTION.txt and the separate-copy difference."
+    ],
+    "negative": "CheckConfig=0 without the required value does not establish correctness. Preserve the incorrect copy’s FAIL."
+  },
+  "mistakes": [
+    [
+      "“A variable name determines its type.”",
+      "Type follows the current value; validate inputs."
+    ],
+    [
+      "“Editor highlighting executed the code.”",
+      "Execution requires the platform, context and invocation."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What is 4+2*3?",
+      "options": [
+        "18",
+        "10",
+        "12"
+      ],
+      "correct": 1,
+      "explanation": "Multiplication is evaluated before addition."
+    },
+    {
+      "question": "What does syntactically valid code with a wrong result establish?",
+      "options": [
+        "Complete correctness",
+        "Document preservation",
+        "Only the limited syntax check"
+      ],
+      "correct": 2,
+      "explanation": "The requirement needs its own observed result."
+    },
+    {
+      "question": "Does translating keywords automatically translate metadata names?",
+      "options": [
+        "No",
+        "Yes",
+        "Only GUIDs"
+      ],
+      "correct": 0,
+      "explanation": "Identifiers and string values are separate program elements."
+    }
+  ],
+  "review": [
+    "Explain the path from text to value.",
+    "Distinguish syntax PASS from result PASS.",
+    "Next: types and empty values."
+  ],
+  "sources": [
+    "cli",
+    "training",
+    "platform-architecture",
+    "bsl-language"
+  ],
+  "contentRevision": "0.3.0-a2p2",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.a2p2.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_A2P2_EN.md",
+  "nativeCaseIds": [
+    "P2.1.precedence",
+    "P2.1.parentheses",
+    "P2.1.division",
+    "P2.1.concatenation",
+    "P2.1.russian-keywords",
+    "P2.1.english-keywords"
+  ],
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
+    "sourcePolicy": "primary-source-links-and-observed-native-results",
+    "studentAuthorshipVerified": false
+  },
+  "codeFile": "native/examples-a2p2/p2-expressions.bsl"
+}

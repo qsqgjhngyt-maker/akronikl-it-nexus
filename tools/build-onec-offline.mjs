@@ -3,8 +3,9 @@ export async function buildOnecOffline(output){
  const root=fileURLToPath(new URL('../',import.meta.url)),base=path.join(root,'courses/onec-education'),out=path.resolve(output);
  try{await fs.access(out);throw Error('OUTPUT_EXISTS')}catch(error){if(error.code!=='ENOENT')throw error;}
  await fs.mkdir(out,{recursive:true});
- const data={};for(const course of ['onec','1c-enterprise']){const c=JSON.parse(await fs.readFile(path.join(root,`courses/${course}/curriculum.json`),'utf8'));data[`../${course}/curriculum.json`]=c;for(const t of c.modules[0].topics)for(const locale of ['ru','en']){const f=t.content[locale];data[`../${course}/${f}`]=JSON.parse(await fs.readFile(path.join(root,`courses/${course}/${f}`),'utf8'));}}
- for(const f of ['shared.v1.json','supplement.v1.json','service-desk.v1.json','sources.v1.json'])data[f]=JSON.parse(await fs.readFile(path.join(base,f),'utf8'));
+ const data={};for(const course of ['onec','1c-enterprise']){const c=JSON.parse(await fs.readFile(path.join(root,`courses/${course}/curriculum.json`),'utf8'));data[`../${course}/curriculum.json`]=c;for(const t of c.modules.filter(m=>m.status==='IMPLEMENTED').flatMap(m=>m.topics))for(const locale of ['ru','en']){const f=t.content[locale];data[`../${course}/${f}`]=JSON.parse(await fs.readFile(path.join(root,`courses/${course}/${f}`),'utf8'));}}
+ for(const f of ['shared.v1.json','shared.a2p2.v1.json','supplement.v1.json','service-desk.v1.json','service-desk.a2p2.v1.json','sources.v1.json'])data[f]=JSON.parse(await fs.readFile(path.join(base,f),'utf8'));
+ for(const key of Object.keys(data).filter(k=>k.endsWith('.json'))){const l=data[key];if(l?.codeFile&&!Object.hasOwn(data,l.codeFile))data[l.codeFile]=await fs.readFile(path.join(base,l.codeFile),'utf8');}
  data['native/service-desk/Ext/ManagedApplicationModule.bsl']=await fs.readFile(path.join(base,'native/service-desk/Ext/ManagedApplicationModule.bsl'),'utf8');
  data['native/README_RU.md']=await fs.readFile(path.join(base,'native/README_RU.md'),'utf8');
  const model=(await fs.readFile(path.join(base,'model.mjs'),'utf8')).replace(/^export /gm,''),app=(await fs.readFile(path.join(base,'candidate.mjs'),'utf8')).replace(/^import .*?;\r?\n/,'');
@@ -14,8 +15,8 @@ export async function buildOnecOffline(output){
  html=html.replace('<link rel="stylesheet" href="./candidate.css">',`<style>${css}</style>`).replace('<script type="module" src="./candidate.mjs"></script>',`<script type="module">${script}</script>`).replace('<meta charset="utf-8">',`<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-${hash}'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">`);
  await fs.writeFile(path.join(out,'onec-offline.html'),html);
  await fs.cp(path.join(base,'native'),path.join(out,'native'),{recursive:true});
- await fs.mkdir(path.join(out,'tools'));await fs.copyFile(path.join(root,'tools/check-onec-native.ps1'),path.join(out,'tools/check-onec-native.ps1'));
- await fs.writeFile(path.join(out,'README_RU.txt'),'Откройте onec-offline.html в браузере. Теория, вопросы и модели работают без сети. Локальный самоотчёт этого файла отделён от online-происхождения. Платформа 1С не входит в пакет. native/ содержит оригинальные метаданные и модуль; tools/check-onec-native.ps1 поддерживает этот переносимый набор. Сначала прочитайте native/README_RU.md.\n');
+ await fs.mkdir(path.join(out,'tools'));await fs.copyFile(path.join(root,'tools/check-onec-native.ps1'),path.join(out,'tools/check-onec-native.ps1'));await fs.copyFile(path.join(root,'tools/check-onec-native-next.ps1'),path.join(out,'tools/check-onec-native-next.ps1'));
+ await fs.writeFile(path.join(out,'README_RU.txt'),'Откройте onec-offline.html в браузере. Теория, вопросы и модели работают без сети. Локальный самоотчёт этого файла отделён от online-происхождения. Платформа 1С не входит в пакет. native/ содержит оригинальные метаданные и модуль; tools/check-onec-native.ps1 поддерживает этот переносимый набор. A1/P1: native/README_RU.md; A2/P2: native/README_A2P2_RU.md. Нужен новый каталог каждой попытки.\n');
  const bytes=Buffer.byteLength(html);if(bytes>650000)throw Error('OFFLINE_PACKAGE_BUDGET_EXCEEDED');
  const result={status:'IMPLEMENTED',htmlBytes:bytes,sha256:createHash('sha256').update(html).digest('hex'),networkRequiredForTheory:false,platformIncluded:false,accountProgressIntegrated:false};
  await fs.writeFile(path.join(out,'MANIFEST.json'),JSON.stringify(result,null,2)+'\n');return result;

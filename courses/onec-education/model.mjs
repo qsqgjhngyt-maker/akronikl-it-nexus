@@ -8,9 +8,9 @@ export function gradeQuiz(quiz,answers){
  return{correct,total:quiz.length,passed:correct===quiz.length,kind:'local-self-check',codeVerifiedServer:false,credentialEligible:false};
 }
 export function progressFor(curriculum,state){
- const ids=curriculum.modules.filter(m=>m.status==='IMPLEMENTED').flatMap(m=>m.topics.map(t=>t.topicId));
- const done=ids.filter(id=>state.lessons?.[id]?.completed===true).length;
- return{done,total:ids.length,pct:ids.length?Math.round(done/ids.length*100):0,scope:'implemented-module-only',wholeCourseComplete:false};
+ const topics=curriculum.modules.filter(m=>m.status==='IMPLEMENTED').flatMap(m=>m.topics.filter(t=>t.status==='IMPLEMENTED'));
+ const done=topics.filter(t=>{const entry=state.lessons?.[t.topicId];return entry?.completed===true&&(t.progressPolicy!=='current-revision-required'||entry.completionRevision===t.contentRevision);}).length;
+ return{done,total:topics.length,pct:topics.length?Math.round(done/topics.length*100):0,scope:'implemented-modules-only',wholeCourseComplete:false};
 }
 export function createCandidateStore(storage,courseId,curriculum=null){
  const key=courseKey(courseId);

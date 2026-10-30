@@ -4,7 +4,7 @@ import{createCandidateStore,courseKey,copyProject,gradeQuiz,progressFor}from'../
 const bundle=loadConsolidatedBundle(),clone=()=>structuredClone(bundle);
 const candidateStore=(storage,id)=>createCandidateStore(storage,id,bundle.courses.find(c=>c.courseId===id));
 function bad(change,code){const b=clone();change(b);const r=validateConsolidatedBundle(b);assert.equal(r.ok,false);assert.match(r.errors.join('\n'),code);}
-test('Все 95 исходных тем рассмотрены; 80 ID сохранены, 4 темы добавлены PLANNED',()=>{const r=validateConsolidatedBundle(bundle);assert.equal(r.ok,true,r.errors.join('\n'));assert.equal(r.stats.canonicalTopics,84);});
+test('Все 95 исходных тем рассмотрены; 80 ID сохранены, четыре добавления сохранены, A2/P2 разработаны',()=>{const r=validateConsolidatedBundle(bundle);assert.equal(r.ok,true,r.errors.join('\n'));assert.equal(r.stats.canonicalTopics,84);});
 test('Пропущенная или продублированная тема сравнения отклоняется',()=>{bad(b=>b.mapping.entries.pop(),/EXHAUSTIVE_95_MAPPING/);bad(b=>b.mapping.entries[1]=b.mapping.entries[0],/EXHAUSTIVE_95_MAPPING/);});
 test('Архив #62 защищён hashes; исходная функция сохраняется точно',()=>{bad(b=>b.sourceFiles['authoring/onec/lessons.json']+=' ',/SOURCE62_HASH/);bad(b=>b.nativeModule=b.nativeModule.replace('Минуты \* ТарифЗаЧас / 60','0'),/EXACT_SERVICE_COST_FUNCTION/);});
 test('Третий Course ID, чужая тема и потеря исходного ID отклоняются',()=>{bad(b=>b.courses[0].courseId='onec-programming',/CANONICAL_COURSE_IDS/);bad(b=>b.lessons[0].courseId='1c-enterprise',/LESSON_COURSE_SCOPE/);bad(b=>b.courses[0].modules[0].topics[0].topicId='onec.p1.renamed',/BASELINE_TOPIC_PRESERVED/);});
@@ -27,7 +27,7 @@ test('Новая копия не использует ID источника и �
 test('REVIEW-02: неизвестная и PLANNED тема не создают attempt/completion; старые записи не очищаются',()=>{
  const old={schemaVersion:1,courseId:'onec',lessons:{'onec.p1.not-in-curriculum':{completed:true,attempts:[{at:'prior',grade:{kind:'local-self-check',passed:true}}]}},projects:[{id:'old-project',note:'original',origin:{sourceProjectId:'source',credit:'none'}}]},raw=JSON.stringify(old),map=new Map([[courseKey('onec'),raw]]),storage={getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v)},store=candidateStore(storage,'onec'),grade=gradeQuiz([{correct:0}],[0]);
  assert.deepEqual(store.read(),old);assert.equal(progressFor(bundle.courses[0],store.read()).done,0);
- for(const [id,error]of [['onec.p1.not-in-curriculum',/UNKNOWN_TOPIC/],['onec.p2.topic-1',/TOPIC_NOT_IMPLEMENTED/],['1c-enterprise.a1.orientation',/FOREIGN_TOPIC/]]){
+ for(const [id,error]of [['onec.p1.not-in-curriculum',/UNKNOWN_TOPIC/],['onec.p3.topic-1',/TOPIC_NOT_IMPLEMENTED/],['1c-enterprise.a1.orientation',/FOREIGN_TOPIC/]]){
   assert.throws(()=>store.attempt(id,grade,[0]),error);assert.throws(()=>store.complete(id,true),error);assert.equal(map.get(courseKey('onec')),raw);
  }
  store.attempt('onec.p1.architecture',grade,[0]);assert.deepEqual(store.read().lessons['onec.p1.not-in-curriculum'],old.lessons['onec.p1.not-in-curriculum']);assert.deepEqual(store.read().projects,old.projects);
