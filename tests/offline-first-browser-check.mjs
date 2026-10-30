@@ -1,3 +1,4 @@
+import {staticMime} from '../pwa/static-mime.js';
 // Нативные SW/IDB/редактор/компилятор, отдельный синтетический профиль. Не физический LIVE.
 import assert from 'node:assert/strict';
 import http from 'node:http';
@@ -15,7 +16,7 @@ assert.ok(Number.isSafeInteger(course.lessonCount)&&course.lessonCount>0);
 const phrase='SYNTHETIC local copy phrase only 2026',checks=[],failures=[],requests=[],pageErrors=[];
 let context,offline=false,vaultId,branchId;
 const source='#include <iostream>\n#include <vector>\n#include "calc.hpp"\nint main(){std::vector<int> v{2,3,5};int n=0;for(int x:v)n+=x;std::cout<<"NEXUS_OFFLINE "<<n<<" "<<calc()<<"\\n";}';
-const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.webp')?'image/webp':f.endsWith('.md')?'text/markdown':'text/html';
+const mime=staticMime;
 const server=http.createServer(async(req,res)=>{
  if(offline){req.socket.destroy();return}
  try{

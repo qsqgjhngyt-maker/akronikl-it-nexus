@@ -1,3 +1,4 @@
+import {staticMime} from '../pwa/static-mime.js';
 // Реальные HTTPS/SW/WebAuthn/BFF/SQLite, весь DNS браузера направлен в loopback.
 // Одноразовый TLS key и виртуальный authenticator не являются credentials владельца.
 import assert from 'node:assert/strict';
@@ -31,7 +32,7 @@ const key='SYNTHETIC_OFFLINE_CLOUD_HMAC_KEY_ONLY_2026';
 const env={DB,CLOUD_SESSION_ENABLED:'true',CLOUD_SERVICE_KEY:key,AUTH_MODE:'nexus-token',ALPHA_ADMISSION_ENABLED:'true'};
 let cloudCalls=0,offline=false,context,vaultId,projectId;
 const cloud=createCloudSessionHandler({env:{CLOUD_SESSION_PROXY_ENABLED:'true',PRIVATE_GATEWAY_CONFIRMED:'true',CLOUD_SERVICE_KEY:key},fetchImpl:async(url,options)=>{assert.equal(url,WORKER_ORIGIN+'/api/v2/cloud/internal');return worker.fetch(new Request(url,options),env,{})}});
-const mime=f=>f.endsWith('.mp4')?'video/mp4':f.endsWith('.webm')?'video/webm':f.endsWith('.jpg')?'image/jpeg':f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.webp')?'image/webp':f.endsWith('.md')?'text/markdown':'text/html';
+const mime=staticMime;
 const checks=[],failures=[],requests=[],errors=[],deniedInfrastructure=[],appRequests=[];
 const runtimeNames=['clang-bundle.js','runno-entry.js','llvm.core.wasm','llvm.core2.wasm','llvm.core3.wasm','llvm.core4.wasm','llvm-resources.tar'];
 const server=https.createServer({key:await readFile(path.join(tls,'key.pem')),cert:await readFile(path.join(tls,'cert.pem'))},async(req,res)=>{
@@ -49,6 +50,13 @@ const server=https.createServer({key:await readFile(path.join(tls,'key.pem')),ce
   }
   if(u.host!==host){deniedInfrastructure.push({host:u.host,path:u.pathname});res.writeHead(421,{'cache-control':'no-store'});return res.end()}
   const chunks=[];for await(const c of req)chunks.push(c);const body=Buffer.concat(chunks);
+  if(u.pathname==='/api/akronikl/cloud/preferences'){
+   assert.equal(req.method,'GET');
+   const session=await f.dispatch(origin+'/api/v2/account',{method:'GET',headers:req.headers});
+   assert.ok(session,'Synthetic session check required');
+   res.writeHead(session.status,{'content-type':'application/json','cache-control':'no-store',vary:'*'});
+   return res.end(session.status===200?JSON.stringify({revision:0,value:null}):session.body);
+  }
   if(u.pathname==='/favicon.ico'){res.writeHead(204);return res.end()}
   if(u.pathname==='/api/v2/account/oauth/providers'){res.writeHead(200,{'content-type':'application/json','cache-control':'no-store',vary:'*'});return res.end('{"providers":[]}')}
   if(u.pathname.startsWith('/api/v2/cloud/')){

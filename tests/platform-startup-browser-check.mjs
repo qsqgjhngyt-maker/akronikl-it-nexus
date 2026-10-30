@@ -1,3 +1,4 @@
+import {staticMime} from '../pwa/static-mime.js';
 // Real entry -> bootstrap -> app -> routed views in Chromium. Account/feed DTOs
 // are synthetic; every network request is intercepted and no live API is used.
 // Without NEXUS_FRONTEND_DIR, versioned shell URLs serve source files. With it,
@@ -24,7 +25,7 @@ const account={account:{accountId:'synthetic-startup',displayName:'Synthetic sta
 const post={slug:'dobro-pozhalovat-v-nexus',title:'Synthetic published article',summary:'Startup navigation fixture',body:'## Synthetic section\n\nA public article for real app navigation.',publishedAt:'2026-10-23T00:00:00Z'};
 const checks=[],errors=[],consoleErrors=[],missingAssets=[],externalRequests=[],sessions=[],moduleSha256={};
 let browser,page;
-const mime=file=>({'.js':'text/javascript','.json':'application/json','.css':'text/css','.webmanifest':'application/manifest+json','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.woff2':'font/woff2'}[path.extname(file)]||'text/html');
+ const mime=staticMime;
 const check=async(name,fn)=>{const started=performance.now();const metrics=await fn();checks.push({name,status:'PASS',durationMs:Math.round(performance.now()-started),...metrics});console.log('PASS '+name)};
 async function evidenceScreenshot(target,name){
  if(!process.env.NEXUS_NATIVE_EVIDENCE)return;
@@ -61,7 +62,8 @@ async function session({width=1366}={}){
   if(url.pathname.startsWith('/api/')){
    record.api.push({path:url.pathname,method:request.method()});
    let body,status=200;
-   if(url.pathname==='/api/v2/account')body=account;
+   if(url.pathname==='/api/akronikl/cloud/preferences')body={revision:0,value:null};
+   else if(url.pathname==='/api/v2/account')body=account;
    else if(url.pathname==='/api/v2/account/profile')body={...account.account,username:null,avatar:null,avatarVersion:0};
    else if(url.pathname==='/api/v2/account/oauth/providers')body={providers:[]};
    else if(url.pathname==='/api/v2/account/control/capabilities')body={canManage:false,canModerate:false,canPurge:false,freshPasskey:false};

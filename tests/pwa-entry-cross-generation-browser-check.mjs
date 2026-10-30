@@ -1,3 +1,4 @@
+import {staticMime} from '../pwa/static-mime.js';
 // Настоящие Chrome/SW/entry/bootstrap/logout, только loopback и synthetic session.
 import assert from'node:assert/strict';import https from'node:https';import path from'node:path';
 import{readFile,writeFile,mkdir}from'node:fs/promises';import{execFileSync}from'node:child_process';
@@ -14,7 +15,7 @@ const bundles={before:oldEntry,'fixed-previous-sdk':Buffer.from(await compile(tr
 await writeFile(path.join(out,'candidate-entry.js'),bundles['fixed-current-sdk']);
 const{chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));const rows=[];let fatal;
 const account={account:{accountId:'synthetic-entry-graph',displayName:'SYNTHETIC Entry Graph',status:'active'},loginMethods:[{id:'synthetic-method',kind:'passkey',status:'active',createdAt:'2026-10-24T00:00:00Z',disabledAt:null}],enrollmentAvailable:false};
-const mime=f=>({'.js':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.webp':'image/webp','.webmanifest':'application/manifest+json','.md':'text/markdown'}[path.extname(f)]||'text/html');
+ const mime=staticMime;
 const variants=Object.keys(bundles);
 cases:for(const variant of variants)for(const width of[390,1366]){
  let signedIn=true,logoutCount=0,qaLogins=0,entryAccountReads=0,browser,server,page;const requests=[],errors=[];
@@ -27,6 +28,7 @@ cases:for(const variant of variants)for(const width of[390,1366]){
     if(u.pathname==='/__qa/session'&&req.method==='POST'){signedIn=true;qaLogins++;return json(200,{ok:true});}
     if(u.pathname.startsWith('/api/')){
      if(req.method!=='GET')return json(403,{error:{code:'SYNTHETIC_DENIED'}});
+     if(u.pathname==='/api/akronikl/cloud/preferences')return json(200,{revision:0,value:null});
      if(u.pathname==='/api/v2/account'){if(logoutCount)entryAccountReads++;return json(signedIn?200:401,signedIn?account:{error:{code:'SESSION_REQUIRED'}});}
      if(u.pathname==='/api/v2/account/profile')return json(200,{...account.account,username:null,avatar:null,avatarVersion:0});
      if(u.pathname==='/api/v2/account/control/capabilities')return json(200,{canManage:false,canModerate:false,canPurge:false,freshPasskey:false});

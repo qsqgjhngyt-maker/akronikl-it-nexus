@@ -16,5 +16,10 @@ const sw=await readFile(path.join(out,'service-worker.js'),'utf8');assert.ok(sw.
 assert.ok(!sw.includes('url: "nexus-shell.html"'));assert.ok(!sw.includes('url: "index.html"'));
 const hash=b=>createHash('sha256').update(b).digest('hex');for(const r of manifest.files)assert.equal(hash(await readFile(path.join(out,r.file))),r.sha256,r.file);
 for(const path of ['core/app.js','core/i18n.js','sandbox/workers/wasm-runtime-worker.js','project-studio/project-studio.js','courses/cpp/curriculum.json','styles/app.css'])assert.ok(manifest.files.some(r=>r.file==='releases/'+config.assetGeneration+'/'+path),path);
-const app=await readFile(path.join(root,'core/app.js'),'utf8');assert.ok(app.includes("PROJECT_STUDIO_VERSION='"+config.version+"'"));assert.ok(!app.includes('serviceWorker.register('));
+const app=await readFile(path.join(root,'core/app.js'),'utf8');
+// Project Studio retains a component cache suffix inside the versioned build.
+const projectVersion=app.match(/const PROJECT_STUDIO_VERSION='([^']+)';/)?.[1];
+assert.ok(projectVersion===config.version||projectVersion?.startsWith(config.version)&&/^-p4q\.[1-9][0-9]*$/.test(projectVersion.slice(config.version.length)),'Project Studio cache version');
+for(const file of ['project-store.js','project-templates.js','project-studio.js'])assert.ok(app.includes('import(`../project-studio/'+file+'${suffix}`)'));
+assert.ok(!app.includes('serviceWorker.register('));
 console.log('UI1A_VERSIONED_BUILD_PASS',manifest.files.length,'assets; PWA identity preserved; verified worker, no private authority');

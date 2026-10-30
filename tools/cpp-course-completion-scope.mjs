@@ -39,5 +39,5 @@ export async function courseCompletionScope(){
   const relativePaths=x=>typeof x==='string'?x.replaceAll('QFile f("/taskflow.txt")','QFile f("taskflow.txt")'):Array.isArray(x)?x.map(relativePaths):x&&typeof x==='object'?Object.fromEntries(Object.entries(x).map(([k,v])=>[k,relativePaths(v)])):x;
   assert.deepEqual(eraseText(b),eraseText(portableQt?relativePaths(a):a),row.file+' executable/identity contract');
  }
- cached={...s,historicalCppReceiptVerified:true,currentP4QScopeVerified:!!overlay,currentStage:overlay?'P4Q_TESTER_RELEASE':s.stage,admittedPaths:[...new Set([...rows.keys(),...incoming,...overlayPaths])],historicalBytes:file=>rows.has(file)?beforeBlobs.get(baseTree.get(file)):readFile(file)};return cached;
+ cached={...s,historicalCppReceiptVerified:true,currentP4QScopeVerified:!!overlay,currentStage:overlay?'P4Q_TESTER_RELEASE':s.stage,admittedPaths:[...new Set([...rows.keys(),...incoming,...overlayPaths])],historicalBytes:file=>rows.has(file)?beforeBlobs.get(baseTree.get(file)):overlayPaths.has(file)?git('show',P4Q_RELEASE_BASE+':'+file):readFile(file)};return cached;
 }

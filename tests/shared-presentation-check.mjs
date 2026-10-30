@@ -34,7 +34,10 @@ for(const collapsed of [false,true])for(const active of ['home','academy','proje
  const current=nexusShellMarkup('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active,ctx);
  const tools=current.match(/<span class="side-nav-label">[\s\S]*?<\/button>(?=<\/nav>)/)?.[0];
  assert.ok(tools?.includes('href="#view=code-studio"')&&tools.includes('data-interface-update-check'));
- assert.equal(current.replace(tools,''),baseline('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active).replaceAll('0.1.7-alpha.2.4.6-ui1a.10.1',version));
+ // The owner-approved P4-Q logo replaces only the old ANX brand contents.
+ const brand='<img class="nexus-brand-image" src="'+new URL('../assets/brand-mark.svg',import.meta.url).href+'" alt="" aria-hidden="true" decoding="async">';
+ assert.ok(current.includes('<span class="brand-mark">'+brand+'</span>'));
+ assert.equal(current.replace(tools,''),baseline('<p>SYNTHETIC_BODY &lt;x&gt;</p>',active).replaceAll('0.1.7-alpha.2.4.6-ui1a.10.1',version).replace('<span class="brand-mark">ANX</span>','<span class="brand-mark">'+brand+'</span>'));
 }
 const app=await readFile(new URL('../core/app.js',import.meta.url),'utf8');
 assert.ok(app.includes('nexusShellMarkup(body,active,{prefs,t,route,langSelect,fxSelect,accountChipMarkup,visualIcon})'));
