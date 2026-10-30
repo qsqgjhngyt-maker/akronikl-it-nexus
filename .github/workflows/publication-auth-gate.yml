@@ -1,0 +1,25 @@
+name: Publication auth contract (real login receipts still required)
+on:
+  push:
+    branches: [main, feature/akronikl-p4q-corpus-20261028]
+    paths: ['tools/*auth*.mjs', 'tools/publication-primary-gate.mjs', 'tests/publication-primary-gate.test.mjs', 'tests/admin-transition-compatibility.test.mjs', 'tests/individual-trial-access.test.mjs', 'server-access/worker/**', 'server-access/migrations/**', 'tools/publication-auth-driver/**', 'tools/publication-revision-config.mjs', 'tools/auth-canary-proxy.cjs', 'tests/publication-auth*.mjs', '.github/workflows/publication-auth-gate.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    env:
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/publication-auth-driver/node_modules/playwright/index.mjs
+      NEXUS_CHROME_BIN: /usr/bin/google-chrome
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm ci --prefix tools/publication-auth-driver --ignore-scripts
+      - run: npm ci --prefix server-access --ignore-scripts
+      - run: node --test tests/publication-auth*.test.mjs tests/publication-primary-gate.test.mjs tests/admin-transition-compatibility.test.mjs tests/individual-trial-access.test.mjs
+      - name: Explain publication boundary
+        run: echo 'Contract tests do not authorize publication. The selected owner-authorized publication path requires real passkey, Yandex and Google evidence, exact image startup and artifact bindings. The primary-address path additionally checks owner confirmation, server receipts and rollback compatibility.'

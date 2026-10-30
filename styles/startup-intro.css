@@ -1,6 +1,6 @@
 .nexus-intro{position:fixed;inset:0;z-index:1000;isolation:isolate;overflow:hidden;contain:layout paint;box-sizing:border-box;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;outline:none;background:#02060b;color:var(--text,#f5f8ff);opacity:1}
 .nexus-intro::backdrop{background:#02060b;opacity:1}
-.nexus-intro-visual{position:absolute;inset:0;z-index:-1;opacity:0;transition:opacity 1200ms ease-in-out}
+.nexus-intro-visual{position:absolute;inset:0;z-index:0;opacity:0;transition:opacity 1200ms ease-in-out}
 .nexus-intro-visual img,.nexus-intro-visual video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center}
 .nexus-intro-visual img{opacity:0;transition:opacity 250ms ease}
 .nexus-intro[data-playback=poster] .nexus-intro-visual img{opacity:1}
@@ -49,3 +49,19 @@
 
 /* Второй мобильный декодер заранее загружает следующую часть вне кадра. */
 .nexus-intro[data-variant=mobile] .nexus-intro-visual video:not([data-current]){visibility:hidden}
+
+/* Кадр загрузки виден сразу на ПК и телефоне; видео плавно появляется поверх. */
+.nexus-intro:not([data-playback]) .nexus-intro-visual{opacity:1}
+.nexus-intro:not([data-playback]) .nexus-intro-visual img{opacity:1}
+.nexus-intro:not([data-playback]) .nexus-intro-visual video{opacity:0}
+.nexus-intro-visual video{transition:opacity 1200ms ease-in-out}
+.nexus-intro[data-playback=video] .nexus-intro-visual video{opacity:1}
+/* Во время дозагрузки сохраняем текущий кадр; повторного мигания poster нет. */
+.nexus-intro[data-buffering=true] .nexus-intro-caption{display:block}
+.nexus-intro[data-buffering=true] .nexus-intro-caption::after{content:"Загружаем видео…";font:12px system-ui;color:#b9cada}
+
+/* Постер остаётся под первым кадром до завершения fade-in, без тёмного провала. */
+.nexus-intro[data-playback=video] .nexus-intro-visual img{opacity:1;transition:none}
+
+/* Safari: keep media above the dialog background, with controls above media. */
+.nexus-intro-top{position:relative;z-index:2}.nexus-intro-caption,.nexus-intro-wordmark{z-index:1}

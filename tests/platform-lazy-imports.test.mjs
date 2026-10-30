@@ -20,15 +20,19 @@ async function graph(){
  }
  await walk('core/app.js');
  let bytes=0;for(const file of seen)bytes+=(await fs.stat(path.join(root,file))).size;
- return {modules:seen.size,bytes};
+ return {modules:seen.size,bytes,files:seen};
 }
 test('Large tools no longer belong to the critical Home static import graph',async()=>{
  const result=await graph();
- assert.ok(result.modules<=75,'Unexpected startup module count');
- assert.ok(result.bytes<=600000,'Unexpected startup source size');
+ // P4-Q adds progress, presence, the brand image and account self-deletion.
+ // Measured source graph: 79 modules / 629956 bytes (previously 75 / 593926).
+ // These are source budgets, not a claim about measured launch latency.
+ assert.ok(result.modules<=80,'Unexpected startup module count: '+result.modules);
+ assert.ok(result.bytes<=640000,'Unexpected startup source size: '+result.bytes);
  for(const module of heavy){
   assert.ok(app.includes("import('"+module+"')"),'Missing dynamic import: '+module);
   assert.ok(!app.includes('from '+String.fromCharCode(39)+module+String.fromCharCode(39)),'Heavy static import retained: '+module);
+  assert.ok(!result.files.has(path.posix.normalize(path.posix.join('core',module))),'Heavy transitive startup import: '+module);
  }
 });
 test('Heavy routes load dependencies before render/bind',()=>{

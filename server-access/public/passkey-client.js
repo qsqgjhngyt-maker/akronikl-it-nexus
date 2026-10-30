@@ -64,7 +64,12 @@ export async function login({onStage=()=>{},signal}={}){
 }
 export const listKeys=()=>request('/keys');
 export const revokeKey=methodId=>request('/revoke',{methodId});
-export const logout=({signal}={})=>request('/logout',{},{signal});
+export const logout=({signal}={})=>{
+ // Stop private UI/audio immediately, including when the network response is slow.
+ // Session confirmation/navigation remain owned by the existing logout caller.
+ if(typeof globalThis.dispatchEvent==='function')globalThis.dispatchEvent(new Event('nexus:session-ending'));
+ return request('/logout',{},{signal});
+};
 const names={PASSKEY_UNAVAILABLE:'Вход пока не подключён. Попробуйте позже.',ENROLLMENT_REQUIRED:'Приглашение недействительно или уже использовано.',FRESH_LOGIN_REQUIRED:'Повторите вход ключом, затем добавьте или отключите ключ.',LAST_KEY_OR_NOT_FOUND:'Последний действующий ключ нельзя отключить. Сначала добавьте запасной.',PASSKEY_REJECTED:'Ключ не прошёл проверку. Повторите вход.',CHALLENGE_REJECTED:'Время подтверждения истекло. Начните заново.',SESSION_REQUIRED:'Сначала войдите ключом.',RATE_LIMITED:'Слишком много попыток. Подождите минуту.',ISSUANCE_UNCONFIRMED:'Не удалось подтвердить вход. Начните заново.'};
 const english={PASSKEY_UNAVAILABLE:'Sign-in is not connected yet. Try again later.',ENROLLMENT_REQUIRED:'The invitation is invalid or has already been used.',FRESH_LOGIN_REQUIRED:'Sign in again before adding or disabling a key.',LAST_KEY_OR_NOT_FOUND:'You cannot disable the last active key. Add a backup key first.',PASSKEY_REJECTED:'The key could not be verified. Sign in again.',CHALLENGE_REJECTED:'Confirmation expired. Start again.',SESSION_REQUIRED:'Sign in with your key first.',RATE_LIMITED:'Too many attempts. Wait a minute.',ISSUANCE_UNCONFIRMED:'Sign-in could not be confirmed. Start again.'};
 Object.assign(names,{USERNAME_UNAVAILABLE:'Этот логин уже занят. Выберите другой.',PROFILE_INPUT_REQUIRED:'Укажите корректный уникальный логин и отображаемое имя.',ALPHA_ACCESS_CLOSED:'Доступ к Nexus закрыт.',ALPHA_CONTROL_UNAVAILABLE:'Проверка доступа временно недоступна.',INGRESS_REJECTED:'Сервер отклонил передачу Cookie. Вход не завершён.',FLOW_REQUIRED:'Сервер не получил подтверждение начала входа. Обновите страницу.',PASSKEY_RESPONSE_INVALID:'Сервер вернул некорректный ответ. Вход не подтверждён.',PASSKEY_CANCELLED:'Подтверждение отменено. Можно попробовать ещё раз.'});

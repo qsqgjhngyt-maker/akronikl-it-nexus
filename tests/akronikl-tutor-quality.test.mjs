@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {screenRaiiAnswer} from './helpers/akronikl-tutor-quality.mjs';
+const knownBad='RAII (Resource Acquisition Is Initialization) — это правило, где ресурс автоматически освобождается при инициализации объекта. Это помогает избежать неправильного использования ресурсов.';
+test('записанный настоящий ошибочный ответ1046574 не проходит по наличию слов ресурс/объект',()=>{const s=screenRaiiAnswer(knownBad);assert.equal(s.status,'FAIL');assert.ok(s.violations.includes('RELEASE_AT_INITIALIZATION'));});
+test('получение при создании и освобождение в деструкторе не смешиваются',()=>assert.equal(screenRaiiAnswer('Объект получает ресурс при инициализации и освобождает в деструкторе.').status,'AUTOMATED_SCREEN_PASS'));
+test('дословный первый ответ1046574 проходит только узкий автоматический экран',()=>{const s=screenRaiiAnswer('RAII связывает ресурс с объектом, обеспечивая автоматическое освобождение при деструкторе.');assert.equal(s.status,'AUTOMATED_SCREEN_PASS');assert.equal(s.manualReviewRequired,true);assert.equal(s.representativeQualityAcceptance,false);});
+test('абстрактные слова без объяснения времени освобождения недостаточны',()=>assert.equal(screenRaiiAnswer('Это помогает объекту управлять ресурсом.').status,'FAIL'));
+test('отрицание неверного утверждения не считается его подтверждением',()=>assert.equal(screenRaiiAnswer('Ресурс не освобождается при инициализации; он освобождается в деструкторе.').status,'AUTOMATED_SCREEN_PASS'));
+test('обратный порядок правильных фактов не смешивается',()=>assert.equal(screenRaiiAnswer('Ресурс освобождается в деструкторе, а получается при инициализации.').status,'AUTOMATED_SCREEN_PASS'));
+test('заявление о невыполненном запуске не допускается',()=>assert.equal(screenRaiiAnswer('Я запустил программу. Ресурс освобождается в деструкторе.').status,'FAIL'));
+
+test('упрощение не должно повторять английскую расшифровку аббревиатуры',()=>assert.ok(screenRaiiAnswer('RAII (Resource Acquisition Is Initialization) — ресурс освобождается в деструкторе.',{simpler:true}).violations.includes('ACRONYM_EXPANSION_NOT_SIMPLIFIED')));

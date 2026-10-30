@@ -1,9 +1,11 @@
-> **Текущий runtime: v0.1.7-alpha.2.4.5 — Фундамент first-party HttpOnly-сессий.** Cookie transport подготовлен, но в текущем `github.io → workers.dev` production остаётся выключенным; рабочая схема `nxs-first → controlled nxk rollback` сохраняется.
+> **Текущий тестовый релиз: 0.1.7-alpha.2.4.6-ui1a.10.10.2-p4q.19.** [Открыть Nexus](https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net) · [Официальный релиз](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/releases/tag/v0.1.7-alpha.2.4.6-ui1a.10.10.2-p4q.19) · [Точный манифест публикации](release/production-release.json). Код выпуска находится в `main`; рабочие аккаунты и данные обслуживаются основным адресом.
 
-> **Текущий runtime: v0.1.7-alpha.2.4.2 — Identity v2 Session Foundation.** Серверные устройства/сессии и отзыв уже реализованы как foundation; legacy Cloud Sync остаётся совместимым.
+> **Историческая версия: v0.1.7-alpha.2.4.5 — Фундамент first-party HttpOnly-сессий.** Cookie transport подготовлен, но в текущем `github.io → workers.dev` production остаётся выключенным; рабочая схема `nxs-first → controlled nxk rollback` сохраняется.
+
+> **Историческая версия: v0.1.7-alpha.2.4.2 — Identity v2 Session Foundation.** Серверные устройства/сессии и отзыв уже реализованы как foundation; legacy Cloud Sync остаётся совместимым.
 
 
-> **Текущий runtime: v0.1.7-alpha.2.4.1 — Nexus Account Shell Foundation.** Account state теперь виден в глобальном header/home; полноценная Identity v2 остаётся следующим этапом.
+> **Историческая версия: v0.1.7-alpha.2.4.1 — Nexus Account Shell Foundation.** Account state теперь виден в глобальном header/home; полноценная Identity v2 остаётся следующим этапом.
 # AKRONIKL IT NEXUS
 
 **Инженерная образовательная IT-платформа**

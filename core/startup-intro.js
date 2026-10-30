@@ -1,13 +1,11 @@
 import {INTRO_KEY,readIntroPreference,saveIntroPreference,introVariant,staticIntro,readIntroHandoff,saveIntroHandoff,consumeIntroHandoff} from './startup-intro-policy.js';
 import {prepareIntroCover,releaseIntroCover,introCoverDismissed} from './startup-intro-cover.js';
-import {INTRO_ASSETS as INTRO_MEDIA,INTRO_VIDEO_BASE,introVideoURL} from './startup-intro-assets.js';
-import {IntroSequence} from './startup-intro-sequence.js';
-import {mobileIntroURL} from './startup-intro-mobile.js';
-import {waitForIntroBuffer} from './startup-intro-buffer.js';
+import {INTRO_ASSETS as INTRO_MEDIA,INTRO_VIDEO_BASE,introVideoURL,introMediaQuality} from './startup-intro-assets.js';
+import {waitForIntroBuffer,introBufferedAhead} from './startup-intro-buffer.js';
 import {installIntroEntryReturn,consumeIntroEntryReturn} from './startup-intro-entry-return.js';
 
 let installed=false,active=null,stylesReady,mediaBase=INTRO_VIDEO_BASE;
-const media=name=>new URL('../intro-media/'+INTRO_MEDIA[name.split('.')[0]].version+'/'+name,import.meta.url).href;
+const media=name=>new URL('../intro-media/'+INTRO_MEDIA[name.startsWith('mobile')?'mobile':'desktop'].version+'/'+name,import.meta.url).href;
 const preference=()=>{try{return readIntroPreference(localStorage)}catch{return readIntroPreference({getItem(){throw Error()}})}};
 const persist=value=>{try{return saveIntroPreference(localStorage,value)}catch{return false}};
 const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -31,20 +29,16 @@ function showIntro({preview=false}={}){
   const label=document.createElement('div');label.className='nexus-intro-wordmark';label.setAttribute('aria-hidden','true');label.innerHTML='<svg viewBox="0 0 240 210" focusable="false"><defs><linearGradient id="nx-logo-white" x2=".9" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#c4e0ee"/></linearGradient><linearGradient id="nx-logo-cyan" x2=".1" y2="1"><stop stop-color="#d4effb"/><stop offset=".55" stop-color="#66c9ed"/><stop offset="1" stop-color="#0096d5"/></linearGradient></defs><path fill="url(#nx-logo-white)" d="M22 163 84 40Q95 18 112 18q18 0 30 23l29 57-32 18-29-57q-4-7-8 1l-37 74Z"/><path fill="url(#nx-logo-white)" d="m142 140 29-17 42 83h-32q-13 0-19-12Z"/><path fill="url(#nx-logo-cyan)" d="M9 206q-1-25 28-42c60-32 159-55 190-112-2 43-37 67-79 90L50 206Z"/></svg><strong>AKRONIKL</strong><span>IT NEXUS</span>';root.append(label);
  };wordmark();
  const makePlayer=()=>{
-  if(variant==='mobile'){
-   // Первая часть начинает показ до фоновой загрузки следующей.
-   const player=new IntroSequence(visual),next=player.slots[1];for(const slot of player.slots)slot.crossOrigin='anonymous';next.preload='none';
-   player.slots[0].addEventListener('playing',()=>{if(!player.stopped){next.preload='auto'}},{once:true});return player;
-  }
-  const v=document.createElement('video');v.dataset.current='';v.crossOrigin='anonymous';v.muted=true;v.defaultMuted=true;v.playsInline=true;v.preload='auto';v.disablePictureInPicture=true;v.tabIndex=-1;v.setAttribute('aria-hidden','true');visual.append(v);return v;
+  const v=document.createElement('video');v.dataset.current='';v.crossOrigin='anonymous';v.muted=true;v.defaultMuted=true;v.playsInline=true;v.autoplay=true;v.setAttribute('muted','');v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.preload='auto';v.disablePictureInPicture=true;v.tabIndex=-1;v.setAttribute('aria-hidden','true');visual.append(v);return v;
  };
- let video=makePlayer(),playerEvents=new AbortController(),frameCallback,preparingSource='';
- const syncLogo=()=>{root.dataset.logoVisible=String(variant==='mobile'&&Number.isFinite(video.duration)&&video.currentTime>=Math.max(0,video.duration-2))};
- const trackFrame=()=>{syncLogo();if(!closing&&video.requestVideoFrameCallback)frameCallback=video.requestVideoFrameCallback(trackFrame)};
- const stopVideo=()=>{if(frameCallback!==undefined)video.cancelVideoFrameCallback?.(frameCallback);frameCallback=undefined;video.pause();video.removeAttribute('src');video.load()};
+ let quality=introMediaQuality(navigator,variant);root.dataset.quality=quality;
+ let video=makePlayer(),playerEvents=new AbortController(),preparingSource='';
+ // У логотипа только два состояния. Не переписываем DOM на каждом кадре.
+ const syncLogo=()=>{const value=String(variant==='mobile'&&Number.isFinite(video.duration)&&video.currentTime>=Math.max(0,video.duration-2));if(root.dataset.logoVisible!==value)root.dataset.logoVisible=value};
+ const stopVideo=()=>{video.pause();video.removeAttribute('src');video.load()};
  const cleanup=()=>{
   if(removed)return;removed=true;bindings.abort();controls.abort();playerEvents.abort();for(const id of timers)clearTimeout(id);timers.clear();
-  if(frameCallback!==undefined)video.cancelVideoFrameCallback?.(frameCallback);stopVideo();active=null;root.close();root.remove();delete document.documentElement.dataset.nexusIntroActive;dispatchEvent(new Event('nexus:intro-statechange'));dispatchEvent(new CustomEvent('nexus:intro-finished',{detail:completion}));
+  stopVideo();active=null;root.close();root.remove();delete document.documentElement.dataset.nexusIntroActive;dispatchEvent(new Event('nexus:intro-statechange'));dispatchEvent(new CustomEvent('nexus:intro-finished',{detail:completion}));
  };
  const finish=(reason='skip',immediate=false)=>{
   if(removed)return;
@@ -69,38 +63,55 @@ function showIntro({preview=false}={}){
  addEventListener('nexus:session-ended',()=>finish('session-ended',true),{signal});
  const fallback=()=>{
   if(closing||root.dataset.playback==='poster')return;
-  cancel(startupDeadline);cancel(stallDeadline);cancel(limit);stopVideo();root.dataset.playback='poster';status.textContent='Nexus готов к работе';later(()=>finish('fallback'),variant==='mobile'&&!preview?120:1400);
+  cancel(startupDeadline);cancel(stallDeadline);cancel(limit);playerEvents.abort();stopVideo();root.dataset.playback='poster';delete root.dataset.buffering;if(poster)setPoster(variant+'.jpg');status.textContent='Nexus готов к работе';later(()=>finish('fallback'),variant==='mobile'&&!preview?900:1400);
  };
  let poster;
- const setPoster=()=>{
-  const mobile=variant==='mobile';poster.style.visibility=mobile?'hidden':'';
-  poster.src=mobile?new URL('../intro-media/cinematic-v5/mobile-start.jpg',import.meta.url).href:media(variant+'.jpg');
+ const setPoster=(name=variant+'-start.jpg')=>{
+  const mobile=variant==='mobile';poster.style.visibility='';
+  poster.src=media(name);
   if(mobile){const source=poster.src;Promise.resolve(poster.decode?.()).then(()=>{if(!removed&&poster.src===source)poster.style.visibility=''}).catch(()=>{if(poster.src===source)poster.remove()})}
  };
  if(navigator.onLine!==false){poster=document.createElement('img');poster.alt='';poster.fetchPriority=variant==='mobile'?'auto':'low';poster.addEventListener('error',()=>poster.remove(),{once:true,signal});visual.prepend(poster);setPoster()}
  document.body.append(root);root.showModal();document.documentElement.dataset.nexusIntroActive='true';dispatchEvent(new Event('nexus:intro-statechange'));releaseIntroCover();root.addEventListener('cancel',e=>{e.preventDefault();finish('escape')},{signal:controls.signal});
  // Фоновые render, focus и изменение # при bootstrap не закрывают сцену.
  if(staticIntro({...setting,reducedMotion:reduced(),online:navigator.onLine,connection:navigator.connection})){fallback();return}
- const choose=variant=>[['mp4','video/mp4; codecs="'+INTRO_MEDIA[variant].mp4Codec+'"'],['webm','video/webm; codecs="vp9"']].find(([,type])=>video.canPlayType(type));
+ const choose=variant=>[['mp4','video/mp4; codecs="'+(quality==='lite'?'avc1.4D401F':INTRO_MEDIA[variant].mp4Codec)+'"'],['webm','video/webm; codecs="vp9"']].find(([,type])=>video.canPlayType(type))??(video.canPlayType('video/mp4')?['mp4','video/mp4']:null);
  let selected=choose(variant);if(!selected){fallback();return}
- const play=()=>{
+ const play=({recover=false}={})=>{
   if(closing||document.hidden||root.dataset.playback==='poster')return;
-  if(played||variant==='mobile'){video.play()?.catch(e=>{if(e.name!=='AbortError')fallback()});return}
-  const target=video,source=target.src;if(preparingSource===source)return;preparingSource=source;
-  void waitForIntroBuffer(target,playerEvents.signal).then(ready=>{if(preparingSource===source)preparingSource='';if(ready&&target===video&&!closing&&!document.hidden&&video.src===source&&root.dataset.playback!=='poster')video.play()?.catch(e=>{if(e.name!=='AbortError')fallback()})});
+  if(preparingSource)return;
+  const targetVideo=video,targetSignal=playerEvents.signal;
+  const nativePlay=()=>{try{const attempt=targetVideo.play();attempt?.catch(e=>{if(closing||targetSignal.aborted||video!==targetVideo||e.name==='AbortError')return;fallback();});}catch{fallback();}};
+  // Safari may only preload metadata until play() is requested. Do not wait for a buffer before the first native play.
+  if(!recover){nativePlay();return;}
+  const target=video,source=target.src,attemptSignal=playerEvents.signal;preparingSource=source;
+  if(recover){target.pause();root.dataset.buffering='true'}
+  void waitForIntroBuffer(target,attemptSignal,{minimum:recover?1.5:1.25,timeout:recover?3500:6000,minReadyState:recover?3:2,minWaitMs:recover?200:0}).then(ready=>{
+   if(preparingSource===source)preparingSource='';
+   if(attemptSignal.aborted||target!==video||closing||document.hidden||video.src!==source||root.dataset.playback==='poster')return;
+   if(!ready){fallback();return}
+   nativePlay();
+  });
  };
  const armLimit=()=>{if(visibleAt)return;visibleAt=performance.now();limit=later(()=>finish('deadline'),Math.max(0,budget))};
  const bindPlayer=()=>{
   const signal=playerEvents.signal;
   for(const type of ['timeupdate','seeked','loadedmetadata'])video.addEventListener(type,syncLogo,{signal});
-  if(video.requestVideoFrameCallback)frameCallback=video.requestVideoFrameCallback(trackFrame);
   video.addEventListener('error',fallback,{signal});video.addEventListener('ended',()=>finish('ended'),{signal});
-  video.addEventListener('playing',()=>{played=true;cancel(startupDeadline);cancel(stallDeadline);root.dataset.playback='video';status.textContent='';armLimit()},{signal});
+  video.addEventListener('playing',()=>{played=true;cancel(startupDeadline);cancel(stallDeadline);root.dataset.playback='video';delete root.dataset.buffering;status.textContent='';armLimit()},{signal});
   video.addEventListener('waiting',()=>{
-   cancel(stallDeadline);stallDeadline=later(()=>{if(!closing&&!document.hidden&&video.readyState<3)fallback()},10000);
+   if(!played||closing||document.hidden)return;
+   cancel(stallDeadline);
+   // waiting бывает и при декодировании уже загруженных кадров.
+   // Не создаём цикл pause/play: сначала даём нативному плееру восстановиться.
+   stallDeadline=later(()=>{
+    if(closing||document.hidden||video.readyState>=3)return;
+    if(introBufferedAhead(video)<.75)play({recover:true});
+    else stallDeadline=later(()=>{if(!closing&&!document.hidden&&video.readyState<3)fallback()},3500);
+   },250);
   },{signal});
  };bindPlayer();
- const sourceURL=()=>variant==='mobile'?mobileIntroURL(selected[0],mediaBase):introVideoURL(variant,selected[0],mediaBase);
+ const sourceURL=()=>introVideoURL(variant,selected[0],mediaBase,quality);
  document.addEventListener('visibilitychange',()=>{
   if(document.hidden){video.pause();if(visibleAt)budget-=performance.now()-visibleAt;visibleAt=0;cancel(limit);cancel(stallDeadline);cancel(startupDeadline)}
   else{if(!played)startupDeadline=later(fallback,8000);armLimit();play()}
@@ -111,11 +122,11 @@ function showIntro({preview=false}={}){
   const next=introVariant(innerWidth,innerHeight);if(next===variant||closing||root.dataset.playback==='poster')return;
   const fraction=Number.isFinite(video.duration)&&video.duration>0?Math.min(.94,video.currentTime/video.duration):0;
   stopVideo();playerEvents.abort();for(const element of visual.querySelectorAll('video'))element.remove();
-  variant=next;root.dataset.variant=next;video=makePlayer();playerEvents=new AbortController();played=false;preparingSource='';delete root.dataset.playback;bindPlayer();cancel(startupDeadline);cancel(stallDeadline);startupDeadline=later(fallback,8000);wordmark();syncLogo();if(poster)setPoster();selected=choose(next);if(!selected){fallback();return}
+  variant=next;root.dataset.variant=next;quality=introMediaQuality(navigator,variant);root.dataset.quality=quality;video=makePlayer();playerEvents=new AbortController();played=false;preparingSource='';delete root.dataset.playback;bindPlayer();cancel(startupDeadline);cancel(stallDeadline);startupDeadline=later(fallback,8000);wordmark();syncLogo();if(poster)setPoster();selected=choose(next);if(!selected){fallback();return}
   video.addEventListener('loadedmetadata',()=>{if(fraction)video.currentTime=fraction*video.duration;play()},{once:true,signal});
   video.src=sourceURL();play();
  },{signal});
- startupDeadline=later(fallback,8000);armLimit();video.src=sourceURL();requestAnimationFrame(()=>requestAnimationFrame(play));
+ startupDeadline=later(fallback,8000);armLimit();video.src=sourceURL();play();
 }
 function controlsMarkup(){
  return '<legend>Запуск приложения</legend><label class="nexus-switch"><span>Показывать заставку при открытии</span><input type="checkbox" data-intro-enabled></label><label class="nexus-switch"><span>Упрощённый запуск</span><input type="checkbox" data-intro-simplified></label><p>Заставка появляется при открытии Nexus. Выбор сохраняется на этом устройстве.</p><button type="button" class="btn" data-intro-preview>Посмотреть заставку</button><p role="status" data-intro-save-status></p>';

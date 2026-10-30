@@ -1,7 +1,8 @@
 // Private BFF -> Worker control plane. An admin grant never comes from request fields.
 import {Buffer} from 'node:buffer';
-import {AlphaError,alphaSettings} from './alpha-admission.mjs';
+import {AlphaError,alphaSettings,alphaAccess} from './alpha-admission.mjs';
 import {preparePurge,executePurge} from './admin-purge.mjs';
+import {selfDeleteOperation} from './self-delete.mjs';
 import {profileOperation} from './profile-service.mjs';
 import {teamPermission} from './community-service.mjs';
 import {contentOperation} from './content-service.mjs';
@@ -22,7 +23,8 @@ export const validId=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9._:-
 export const validRequestId=value=>typeof value==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value);
 const reply=(body,status=200)=>Response.json(body,{status,headers:{'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer'}});
 export async function controlActor(env,sessionHash){
- return first(env.DB,"SELECT s.id session_id,s.subject_id account_id,s.created_at,lm.kind FROM account_sessions s JOIN account_subjects a ON a.id=s.subject_id AND a.status='active' JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active' JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active' WHERE s.secret_hash=?1 AND s.status='active' AND s.auth_strength='account-method-v1' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2",sessionHash,now());
+ const actor=await first(env.DB,"SELECT s.id session_id,s.subject_id account_id,s.created_at,lm.kind FROM account_sessions s JOIN account_subjects a ON a.id=s.subject_id AND a.status='active' JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active' JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active' WHERE s.secret_hash=?1 AND s.status='active' AND s.auth_strength='account-method-v1' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2",sessionHash,now());
+ return actor&&await alphaAccess(env,actor.account_id)?actor:null;
 }
 export const fresh=actor=>actor?.kind==='passkey'&&Number.isFinite(Date.parse(actor.created_at))&&Date.now()-Date.parse(actor.created_at)>=0&&Date.now()-Date.parse(actor.created_at)<300000;
 async function envelope(request,env){
@@ -39,7 +41,7 @@ async function envelope(request,env){
  const key=await crypto.subtle.importKey('raw',encoder.encode(env.ADMIN_SERVICE_KEY),{name:'HMAC',hash:'SHA-256'},false,['verify']);
  if(!await crypto.subtle.verify('HMAC',key,Buffer.from(signature,'hex'),encoder.encode(canonical)))deny('SERVICE_DENIED',401);
  let data;try{data=JSON.parse(body)}catch{deny('INVALID_INPUT')}
- if(!exact(data,['path','method','payload','sessionHash','expectedAccountId']))deny('INVALID_INPUT');
+ if(!exact(data,['path','method','payload','sessionHash','expectedAccountId'])&&!(exact(data,['path','method','payload','sessionHash','expectedAccountId','dtoVersion'])&&data.dtoVersion===2))deny('INVALID_INPUT');
  const publicParts=data.path===PUBLIC_MEDIA_PARTS_PATH;
  if(publicParts){
   // Только authenticated service -> published-only read. Не создаёт Account actor/grant.
@@ -115,10 +117,11 @@ async function target(env,actor,id,version){
 }
 function validMutation(input,keys){if(!exact(input,['requestId',...keys])||!validRequestId(input.requestId))deny('INVALID_INPUT')}
 async function operation(env,value){
- const {actor,method,payload}=value,url=new URL(value.path,'https://nexus.invalid'),path=url.pathname;
+ const {actor,method,payload}=value,modern=value.dtoVersion===2,url=new URL(value.path,'https://nexus.invalid'),path=url.pathname;
  if(path===PUBLIC_MEDIA_PARTS_PATH)return mediaPartsOperation(env,value,{publishedOnly:true});
  if(path.startsWith('/api/v2/account/profile'))return profileOperation(env,value);
  if(!await alphaSettings(env))deny('ALPHA_CONTROL_UNAVAILABLE',503);
+ if([BASE+'/self-delete-capabilities',BASE+'/self-delete-preview',BASE+'/self-delete'].includes(path)&&!url.search)return selfDeleteOperation(env,value);
  if(path===ASSESSMENT_PATH&&!url.search)return assessmentOperation(env,value,{requireAdmin});
  if(path===BASE+'/capabilities'&&method==='GET'&&!url.search){
   const canManage=!!await first(env.DB,"SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'",actor.account_id);
@@ -137,31 +140,66 @@ async function operation(env,value){
   const state=url.searchParams.get('state')||'all',offset=Number(url.searchParams.get('offset')||0);
   if(!['all','active','blocked','removed','invited','unadmitted'].includes(state)||!Number.isInteger(offset)||offset<0||offset>100000)deny('INVALID_INPUT');
   const filter=" WHERE (?1='all' OR COALESCE(m.state,'unadmitted')=?1)";
-  const from=' FROM account_subjects a LEFT JOIN nexus_alpha_members m ON m.account_id=a.id LEFT JOIN nexus_account_profiles p ON p.account_id=a.id';
+  const from=' FROM account_subjects a LEFT JOIN nexus_alpha_members m ON m.account_id=a.id LEFT JOIN nexus_account_profiles p ON p.account_id=a.id LEFT JOIN nexus_admin_invites i ON i.account_id=a.id LEFT JOIN nexus_passkey_invites pi ON pi.token_hash=i.token_hash';
   const total=await first(env.DB,'SELECT count(*) n'+from+filter,state);
-  const list=await rows(query(env.DB,"SELECT a.id,a.display_name,a.status,a.created_at,p.username,m.state,m.version,m.reason,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active') administrator,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id) protected_account,(SELECT max(created_at) FROM account_sessions s WHERE s.subject_id=a.id) last_login,(SELECT count(*) FROM account_sessions s WHERE s.subject_id=a.id AND s.status='active' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2) active_sessions"+from+filter+' ORDER BY a.created_at DESC,a.id LIMIT 50 OFFSET ?3',state,now(),offset));
-  const settings=await first(env.DB,'SELECT registration_mode,max_testers,limit_enabled,version FROM nexus_alpha_settings WHERE id=1'),occupied=await first(env.DB,'SELECT count(*) n FROM nexus_alpha_occupied'),active=await first(env.DB,"SELECT count(*) n FROM nexus_alpha_members WHERE state='active' AND account_id NOT IN(SELECT account_id FROM nexus_admin_grants WHERE status='active')");
-  return {users:list.map(r=>({accountId:r.id,username:r.username||null,displayName:r.display_name,state:r.administrator?'administrator':r.state||'unadmitted',version:r.version||0,createdAt:r.created_at,lastLoginAt:r.last_login||null,activeSessions:r.active_sessions,reason:r.reason||'',protected:!!r.protected_account})),total:total.n,offset,settings:{registrationMode:settings.registration_mode,maxTesters:settings.max_testers,limitEnabled:settings.limit_enabled===1,version:settings.version},counts:{active:active.n,occupied:occupied.n,reserved:occupied.n-active.n}};
+  const list=await rows(query(env.DB,"SELECT a.id,a.display_name,a.status,a.created_at,p.username,m.state,m.version,m.reason,m.trial_minutes,m.first_login_at,m.access_expires_at,i.created_at invitation_created_at,pi.expires_at invitation_expires_at,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active') administrator,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id) protected_account,(SELECT max(created_at) FROM account_sessions s WHERE s.subject_id=a.id) last_login,(SELECT count(*) FROM account_sessions s WHERE s.subject_id=a.id AND s.status='active' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2) active_sessions"+from+filter+' ORDER BY a.created_at DESC,a.id LIMIT 50 OFFSET ?3',state,now(),offset));
+  const settings=await first(env.DB,'SELECT registration_mode,max_testers,limit_enabled,default_trial_minutes,default_invitation_minutes,version FROM nexus_alpha_settings WHERE id=1'),occupied=await first(env.DB,'SELECT count(*) n FROM nexus_alpha_occupied'),active=await first(env.DB,"SELECT count(*) n FROM nexus_alpha_members WHERE state='active' AND (access_expires_at IS NULL OR access_expires_at>strftime('%Y-%m-%dT%H:%M:%fZ','now')) AND account_id NOT IN(SELECT account_id FROM nexus_admin_grants WHERE status='active')");
+  const result={users:list.map(r=>({accountId:r.id,username:r.username||null,displayName:r.display_name,state:r.administrator?'administrator':r.state||'unadmitted',version:r.version||0,createdAt:r.created_at,lastLoginAt:r.last_login||null,activeSessions:r.active_sessions,reason:r.reason||'',protected:!!r.protected_account,invitationCreatedAt:r.invitation_created_at||null,invitationExpiresAt:r.invitation_expires_at||null,trialMinutes:r.trial_minutes??null,firstLoginAt:r.first_login_at||null,accessExpiresAt:r.access_expires_at||null})),total:total.n,offset,settings:{registrationMode:settings.registration_mode,maxTesters:settings.max_testers,limitEnabled:settings.limit_enabled===1,version:settings.version,defaultTrialMinutes:settings.default_trial_minutes,defaultInvitationMinutes:settings.default_invitation_minutes},counts:{active:active.n,occupied:occupied.n,reserved:occupied.n-active.n}};
+  if(!modern){for(const u of result.users)for(const key of ['invitationCreatedAt','invitationExpiresAt','trialMinutes','firstLoginAt','accessExpiresAt'])delete u[key];delete result.settings.defaultTrialMinutes;delete result.settings.defaultInvitationMinutes;}
+  return result;
  }
  if(path===BASE+'/audit'&&method==='GET'&&!url.search)return {events:await rows(query(env.DB,'SELECT action,target_id targetId,created_at createdAt FROM nexus_admin_audit ORDER BY created_at DESC,id DESC LIMIT 100'))};
  if(method!=='POST'||url.search)deny('NOT_FOUND',404);
  if(path===BASE+'/settings'){
-  validMutation(payload,['version','maxTesters','limitEnabled','registrationMode']);
+  const defaults=modern&&Object.hasOwn(payload||{},'defaultTrialMinutes');
+  validMutation(payload,['version','maxTesters','limitEnabled','registrationMode',...(defaults?['defaultTrialMinutes','defaultInvitationMinutes']:[])]);
+  if(defaults&&(payload.defaultTrialMinutes!==null&&(!Number.isInteger(payload.defaultTrialMinutes)||payload.defaultTrialMinutes<60||payload.defaultTrialMinutes>525600)||!Number.isInteger(payload.defaultInvitationMinutes)||payload.defaultInvitationMinutes<10||payload.defaultInvitationMinutes>10080))deny('INVALID_INPUT');
   if(typeof payload.limitEnabled!=='boolean'||!Number.isInteger(payload.version)||payload.version<1||!Number.isInteger(payload.maxTesters)||payload.maxTesters<1||payload.maxTesters>10000||!['open','invite_only'].includes(payload.registrationMode))deny('INVALID_INPUT');
   const stamp=now();
-  await atomic(env,[guard(env.DB,payload.requestId,'before','EXISTS(SELECT 1 FROM nexus_alpha_settings WHERE id=1 AND version=?3)',[payload.version]),query(env.DB,'UPDATE nexus_alpha_settings SET registration_mode=?1,max_testers=?2,limit_enabled=?4,version=version+1 WHERE id=1 AND version=?3',payload.registrationMode,payload.maxTesters,payload.version,payload.limitEnabled?1:0),audit(env.DB,actor,payload.requestId,'settings',null,stamp)]);
+  await atomic(env,[guard(env.DB,payload.requestId,'before','EXISTS(SELECT 1 FROM nexus_alpha_settings WHERE id=1 AND version=?3)',[payload.version]),query(env.DB,'UPDATE nexus_alpha_settings SET registration_mode=?1,max_testers=?2,limit_enabled=?4,default_trial_minutes=CASE WHEN ?5=1 THEN ?6 ELSE default_trial_minutes END,default_invitation_minutes=CASE WHEN ?5=1 THEN ?7 ELSE default_invitation_minutes END,version=version+1 WHERE id=1 AND version=?3',payload.registrationMode,payload.maxTesters,payload.version,payload.limitEnabled?1:0,defaults?1:0,defaults?payload.defaultTrialMinutes:null,defaults?payload.defaultInvitationMinutes:null),audit(env.DB,actor,payload.requestId,'settings',null,stamp)]);
   return {ok:true};
  }
  if(path===BASE+'/invites'){
-  validMutation(payload,['ttlMinutes']);
-  if(!Number.isInteger(payload.ttlMinutes)||payload.ttlMinutes<10||payload.ttlMinutes>10080)deny('INVALID_INPUT');
-  const secret='npi_'+random(),hash=await sha(secret),id=crypto.randomUUID(),stamp=now(),expiresAt=new Date(Date.now()+payload.ttlMinutes*60000).toISOString();
-  await atomic(env,[guard(env.DB,payload.requestId,'before','1'),query(env.DB,"INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,'Новый участник','active',?2,?2)",id,stamp),query(env.DB,"INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at) VALUES(?1,'invited',?2,?3,?3)",id,expiresAt,stamp),query(env.DB,"INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)",hash,id,expiresAt),query(env.DB,"INSERT INTO nexus_admin_invites(token_hash,account_id,created_by,state,created_at) VALUES(?1,?2,?3,'ready',?4)",hash,id,actor.account_id,stamp),audit(env.DB,actor,payload.requestId,'invite',id,stamp)]);
+  if(!modern){validMutation(payload,['ttlMinutes']);payload.trialMinutes=null;}
+  if(exact(payload,['requestId','ttlMinutes']))payload.trialMinutes='default';
+  validMutation(payload,['ttlMinutes','trialMinutes']);
+  if(payload.trialMinutes!=='default'&&payload.trialMinutes!==null&&(!Number.isInteger(payload.trialMinutes)||payload.trialMinutes<60||payload.trialMinutes>525600))deny('INVALID_INPUT');
+  if(payload.ttlMinutes!=='default'&&(!Number.isInteger(payload.ttlMinutes)||payload.ttlMinutes<10||payload.ttlMinutes>10080))deny('INVALID_INPUT');
+  const defaults=await alphaSettings(env),ttlMinutes=payload.ttlMinutes==='default'?defaults.default_invitation_minutes:payload.ttlMinutes,trialMinutes=payload.trialMinutes==='default'?defaults.default_trial_minutes:payload.trialMinutes;
+  const secret='npi_'+random(),hash=await sha(secret),id=crypto.randomUUID(),stamp=now(),expiresAt=new Date(Date.now()+ttlMinutes*60000).toISOString();
+  await atomic(env,[guard(env.DB,payload.requestId,'before','1'),query(env.DB,"INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,'Новый участник','active',?2,?2)",id,stamp),query(env.DB,"INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at,trial_minutes) VALUES(?1,'invited',?2,?3,?3,?4)",id,expiresAt,stamp,trialMinutes),query(env.DB,"INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)",hash,id,expiresAt),query(env.DB,"INSERT INTO nexus_admin_invites(token_hash,account_id,created_by,state,created_at) VALUES(?1,?2,?3,'ready',?4)",hash,id,actor.account_id,stamp),audit(env.DB,actor,payload.requestId,'invite',id,stamp)]);
   return {ok:true,accountId:id,invitationToken:secret,expiresAt};
  }
- const match=new RegExp('^'+BASE+'/users/([A-Za-z0-9][A-Za-z0-9._:-]{0,159})/(action|purge-preview|purge)$').exec(path);
+ const match=new RegExp('^'+BASE+'/users/([A-Za-z0-9][A-Za-z0-9._:-]{0,159})/(action|purge-preview|purge|trial|invitation)$').exec(path);
  if(!match)deny('NOT_FOUND',404);
  const id=match[1];
+ if(['trial','invitation'].includes(match[2])&&!modern)deny('NOT_FOUND',404);
+ if(match[2]==='invitation'){
+  validMutation(payload,['version','mode','minutes']);
+  if(!['set','extend'].includes(payload.mode)||!Number.isInteger(payload.minutes)||payload.minutes<10||payload.minutes>10080)deny('INVALID_INPUT');
+  const member=await target(env,actor,id,payload.version);
+  const invite=await first(env.DB,"SELECT i.token_hash,p.expires_at FROM nexus_admin_invites i JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash WHERE i.account_id=?1 AND i.state='ready' AND p.consumed_at IS NULL",id);
+  if(member.state!=='invited'||!invite)deny('INVALID_STATE',409);
+  const stamp=now(),until=new Date((payload.mode==='extend'?Math.max(Date.parse(invite.expires_at),Date.parse(stamp)):Date.parse(stamp))+payload.minutes*60000).toISOString();
+  await atomic(env,[guard(env.DB,payload.requestId,'before',"EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3 AND version=?4 AND state='invited') AND EXISTS(SELECT 1 FROM nexus_admin_invites i JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash WHERE i.account_id=?3 AND i.state='ready' AND p.consumed_at IS NULL) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3)",[id,payload.version]),query(env.DB,'UPDATE nexus_passkey_invites SET expires_at=?1 WHERE token_hash=?2 AND consumed_at IS NULL',until,invite.token_hash),query(env.DB,'UPDATE nexus_alpha_members SET reserved_until=?1,version=version+1,updated_at=?2 WHERE account_id=?3 AND version=?4',until,stamp,id,payload.version),audit(env.DB,actor,payload.requestId,'settings',id,stamp)]);
+  return {ok:true};
+ }
+ if(match[2]==='trial'){
+  validMutation(payload,['version','mode','minutes']);
+  if(!['set','extend'].includes(payload.mode)||payload.minutes!==null&&(!Number.isInteger(payload.minutes)||payload.minutes<60||payload.minutes>525600)||payload.mode==='extend'&&payload.minutes===null)deny('INVALID_INPUT');
+  const member=await target(env,actor,id,payload.version);
+  if(!['active','invited'].includes(member.state))deny('INVALID_STATE',409);
+  const stamp=now(),hasLogin=!!member.first_login_at||!!await first(env.DB,'SELECT 1 ok WHERE EXISTS(SELECT 1 FROM account_sessions WHERE subject_id=?1) OR EXISTS(SELECT 1 FROM account_tokens WHERE subject_id=?1)',id);
+  let duration=payload.minutes,firstLogin=member.first_login_at,until=null;
+  if(payload.mode==='extend'){
+   if(member.trial_minutes===null)deny('INVALID_STATE',409);
+   duration=member.trial_minutes+payload.minutes;
+   if(duration>525600)deny('INVALID_INPUT');
+   if(hasLogin){firstLogin=firstLogin||stamp;until=new Date(Math.max(Date.parse(member.access_expires_at)||0,Date.parse(stamp))+payload.minutes*60000).toISOString();}
+  }else if(duration!==null&&hasLogin){firstLogin=firstLogin||stamp;until=new Date(Date.parse(stamp)+duration*60000).toISOString();}
+  await atomic(env,[guard(env.DB,payload.requestId,'before','EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3 AND version=?4) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3) AND (?5=1 OR (NOT EXISTS(SELECT 1 FROM account_sessions WHERE subject_id=?3) AND NOT EXISTS(SELECT 1 FROM account_tokens WHERE subject_id=?3)))',[id,payload.version,hasLogin?1:0]),query(env.DB,'UPDATE nexus_alpha_members SET trial_minutes=?1,first_login_at=?2,access_expires_at=?3,version=version+1,updated_at=?4 WHERE account_id=?5 AND version=?6',duration,firstLogin,until,stamp,id,payload.version),audit(env.DB,actor,payload.requestId,'settings',id,stamp)]);
+  return {ok:true};
+ }
  if(match[2]==='action'){
   validMutation(payload,['version','action']);
   if(!['block','remove','restore','revoke-invite','admit'].includes(payload.action))deny('INVALID_INPUT');

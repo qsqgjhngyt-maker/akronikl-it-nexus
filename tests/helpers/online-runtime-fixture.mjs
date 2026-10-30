@@ -1,3 +1,4 @@
+import {staticMime} from '../../pwa/static-mime.js';
 import{bindIntroTransport}from'./intro-transport.mjs';
 // Настоящий bootstrap/app/SW/Worker на canonical origin, физически только loopback.
 import https from 'node:https';
@@ -12,13 +13,14 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
  const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE));
  const account={account:{accountId:'synthetic-runtime-online',displayName:'Synthetic Runtime',status:'active'},loginMethods:[{id:'synthetic-key',kind:'passkey',status:'active',createdAt:'2026-10-24T00:00:00Z',disabledAt:null}],enrollmentAvailable:false};
  const requests=[],errors=[],workerEvents=[];
- const mime=f=>({'.js':'text/javascript','.json':'application/json','.css':'text/css','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.md':'text/markdown','.mp4':'video/mp4','.webm':'video/webm','.jpg':'image/jpeg'}[path.extname(f)]||'text/html');
+ const mime=staticMime;
  const server=https.createServer({key:await readFile(path.join(cache,'qa-key.pem')),cert:await readFile(path.join(cache,'qa-cert.pem'))},async(req,res)=>{
   requests.push({path:new URL(req.url,GATEWAY_ORIGIN).pathname,method:req.method});
   try{const u=new URL(req.url,GATEWAY_ORIGIN);if(req.method!=='GET'){res.writeHead(403);return res.end('SYNTHETIC_WRITE_DENIED');}
    if(u.pathname==='/favicon.ico'){res.writeHead(204);return res.end();}
    if(u.pathname.startsWith('/api/')){let dto,status=200;
-    if(u.pathname==='/api/v2/account')dto=account;
+    if(u.pathname==='/api/akronikl/cloud/preferences')dto={revision:0,value:null};
+    else if(u.pathname==='/api/v2/account')dto=account;
     else if(u.pathname==='/api/v2/account/profile')dto={...account.account,username:null,avatar:null,avatarVersion:0};
     else if(u.pathname==='/api/v2/account/control/capabilities')dto={canManage:false,canModerate:false,canPurge:false,freshPasskey:false};
     else if(u.pathname==='/api/v2/content/feed')dto={posts:[],home:{}};

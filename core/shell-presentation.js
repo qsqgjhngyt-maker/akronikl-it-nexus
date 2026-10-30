@@ -1,3 +1,4 @@
+import {brandMarkMarkup} from '../core/brand-mark.js';
 // Общая разметка online/offline; права, данные и события передаются владельцами.
 const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 export function nexusShellMarkup(body,active,{prefs,t,route,langSelect,fxSelect,accountChipMarkup,visualIcon}){
@@ -12,7 +13,7 @@ export function nexusShellMarkup(body,active,{prefs,t,route,langSelect,fxSelect,
     <a class="nexus-skip-link" href="#nexusContent" data-nexus-skip>${e(t('shell.skip'))}</a>
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
     <aside class="sidebar glass-panel" id="sidebar">
-      <div class="sidebar-head"><a class="brand" href="#view=home"><span class="brand-mark">ANX</span><span class="brand-copy"><strong>AKRONIKL</strong><small>IT NEXUS</small></span></a><button id="sidebarCollapse" class="icon-btn sidebar-collapse" title="${e(collapsedLabel)}" aria-label="${e(collapsedLabel)}">‹</button></div>
+      <div class="sidebar-head"><a class="brand" href="#view=home"><span class="brand-mark">${brandMarkMarkup()}</span><span class="brand-copy"><strong>AKRONIKL</strong><small>IT NEXUS</small></span></a><button id="sidebarCollapse" class="icon-btn sidebar-collapse" title="${e(collapsedLabel)}" aria-label="${e(collapsedLabel)}">‹</button></div>
       <nav class="side-nav" aria-label="${e(t('visual.shell.navigation'))}">${nav.map(([id,key])=>`<a href="#view=${id}" class="${primaryActive===id?'active':''}" title="${e(t(key))}" ${primaryActive===id&&route().view!=='account'?'aria-current="page"':''}><span>${icon(id)}</span><b>${e(t(key))}</b></a>`).join('')}<a href="#view=blog" class="${primaryActive==='blog'?'active':''}"><span>${visualIcon('book')}</span><b>${prefs.uiLocale==='en'?'Blog':'Блог'}</b></a><span class="side-nav-label">${e(t('nav.tools'))}</span><a href="#view=code-studio" class="${primaryActive==='code-studio'?'active':''}" ${primaryActive==='code-studio'?'aria-current="page"':''}><span>${icon('code-studio')}</span><b>${e(t('nav.code-studio'))}</b></a><button type="button" class="nexus-update-nav" data-interface-update-check title="${prefs.uiLocale==='en'?'Check for updates':'Проверить обновление'}"><span>${icon('settings')}</span><b>${prefs.uiLocale==='en'?'Check for updates':'Проверить обновление'}</b></button></nav>
       <div class="side-mission"><strong>NEXUS</strong><span>${e(t('footer.mission'))}</span><small>v0.1.7-alpha.2.4.6-ui1a.10.10.2</small></div>
     </aside>

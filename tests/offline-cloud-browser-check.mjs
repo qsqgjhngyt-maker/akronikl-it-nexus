@@ -1,3 +1,6 @@
+import {staticMime} from '../pwa/static-mime.js';
+import {INTRO_VIDEO_BASE} from '../core/startup-intro-assets.js';
+import {createHash} from 'node:crypto';
 // Реальные HTTPS/SW/WebAuthn/BFF/SQLite, весь DNS браузера направлен в loopback.
 // Одноразовый TLS key и виртуальный authenticator не являются credentials владельца.
 import assert from 'node:assert/strict';
@@ -18,7 +21,7 @@ const frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR),out=path.resolve(pro
 await mkdir(out,{recursive:false});
 const temp=await mkdtemp(path.join(tmpdir(),'nx-e2e-')),tls=path.join(temp,'tls'),profile=path.join(temp,'profile');
 const cert=spawnSync(process.env.NEXUS_PYTHON_PATH,[fileURLToPath(new URL('helpers/make-local-cert.py',import.meta.url)),tls],{encoding:'utf8',windowsHide:true});assert.equal(cert.status,0,cert.stderr);
-const generation=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))).assetGeneration;
+const buildManifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),generation=buildManifest.assetGeneration;
 const origin='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net',host=new URL(origin).host;
 const phrase='SYNTHETIC offline phrase for browser 2026',f=await fixture(pathToFileURL(frontend+path.sep),{control:true});
 const statement=(sql,args=[])=>({
@@ -31,13 +34,21 @@ const key='SYNTHETIC_OFFLINE_CLOUD_HMAC_KEY_ONLY_2026';
 const env={DB,CLOUD_SESSION_ENABLED:'true',CLOUD_SERVICE_KEY:key,AUTH_MODE:'nexus-token',ALPHA_ADMISSION_ENABLED:'true'};
 let cloudCalls=0,offline=false,context,vaultId,projectId;
 const cloud=createCloudSessionHandler({env:{CLOUD_SESSION_PROXY_ENABLED:'true',PRIVATE_GATEWAY_CONFIRMED:'true',CLOUD_SERVICE_KEY:key},fetchImpl:async(url,options)=>{assert.equal(url,WORKER_ORIGIN+'/api/v2/cloud/internal');return worker.fetch(new Request(url,options),env,{})}});
-const mime=f=>f.endsWith('.mp4')?'video/mp4':f.endsWith('.webm')?'video/webm':f.endsWith('.jpg')?'image/jpeg':f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.png')?'image/png':f.endsWith('.webp')?'image/webp':f.endsWith('.md')?'text/markdown':'text/html';
+const mime=staticMime;
 const checks=[],failures=[],requests=[],errors=[],deniedInfrastructure=[],appRequests=[];
+const currentIntro=new URL(INTRO_VIDEO_BASE),isCurrentIntro=r=>r.host===currentIntro.host&&r.method==='GET'&&r.path.startsWith(currentIntro.pathname)&&/^(?:desktop|mobile)(?:-lite)?\.(?:mp4|webm)$/.test(r.path.slice(currentIntro.pathname.length));
 const runtimeNames=['clang-bundle.js','runno-entry.js','llvm.core.wasm','llvm.core2.wasm','llvm.core3.wasm','llvm.core4.wasm','llvm-resources.tar'];
 const server=https.createServer({key:await readFile(path.join(tls,'key.pem')),cert:await readFile(path.join(tls,'cert.pem'))},async(req,res)=>{
  if(offline){req.socket.destroy();return}
  try{
   const u=new URL(req.url,'https://'+req.headers.host);requests.push({host:u.host,path:u.pathname,method:req.method});
+  if(u.href.startsWith(INTRO_VIDEO_BASE)){
+   const name=u.href.slice(INTRO_VIDEO_BASE.length);assert.match(name,/^(?:desktop|mobile)(?:-lite)?\.(?:mp4|webm)$/);
+   assert.equal(req.method,'GET');assert.equal(Boolean(req.headers.cookie||req.headers.authorization),false);
+   const file='intro-media/cinematic-v6/'+name,row=buildManifest.files.find(r=>r.file===file);assert.ok(row);
+   const bytes=await readFile(path.join(frontend,row.file));assert.equal(bytes.length,row.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),row.sha256);
+   res.writeHead(200,{'content-type':staticMime(file),'access-control-allow-origin':'*','cache-control':'no-store'});return res.end(bytes);
+  }
   // Только новые публичные media bytes, также через loopback, без live CDN.
   if(u.host==='qsqgjhngyt-maker.github.io'&&/^\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/.test(u.pathname)&&!u.search){
    assert.equal(req.method,'GET');assert.equal(Boolean(req.headers.cookie||req.headers.authorization),false,'Публичное видео не получает session credentials');
@@ -49,6 +60,13 @@ const server=https.createServer({key:await readFile(path.join(tls,'key.pem')),ce
   }
   if(u.host!==host){deniedInfrastructure.push({host:u.host,path:u.pathname});res.writeHead(421,{'cache-control':'no-store'});return res.end()}
   const chunks=[];for await(const c of req)chunks.push(c);const body=Buffer.concat(chunks);
+  if(u.pathname==='/api/akronikl/cloud/preferences'){
+   assert.equal(req.method,'GET');
+   const session=await f.dispatch(origin+'/api/v2/account',{method:'GET',headers:req.headers});
+   assert.ok(session,'Synthetic session check required');
+   res.writeHead(session.status,{'content-type':'application/json','cache-control':'no-store',vary:'*'});
+   return res.end(session.status===200?JSON.stringify({revision:0,value:null}):session.body);
+  }
   if(u.pathname==='/favicon.ico'){res.writeHead(204);return res.end()}
   if(u.pathname==='/api/v2/account/oauth/providers'){res.writeHead(200,{'content-type':'application/json','cache-control':'no-store',vary:'*'});return res.end('{"providers":[]}')}
   if(u.pathname.startsWith('/api/v2/cloud/')){
@@ -125,9 +143,12 @@ try{
   assert.deepEqual(f.db.prepare('SELECT snapshot_json FROM project_snapshots WHERE project_id=?').get(projectId),before);
   const exists=await page.evaluate(async({generation,vaultId,phrase})=>{const {createVaultStore}=await import('/releases/'+generation+'/pwa/local-vault.js'),s=await createVaultStore().unlock(vaultId,phrase);const has=Object.keys(s.read().projects).length>0;await s.lock();return has},{generation,vaultId,phrase});assert.equal(exists,true);
  });
- assert.deepEqual(errors,[]);assert.ok(appRequests.every(r=>[host,'cdn.jsdelivr.net'].includes(r.host)||(r.host==='qsqgjhngyt-maker.github.io'&&r.method==='GET'&&/^\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/.test(r.path))));
+ assert.deepEqual(errors,[]);assert.ok(appRequests.every(r=>[host,'cdn.jsdelivr.net'].includes(r.host)||isCurrentIntro(r)||(r.host==='qsqgjhngyt-maker.github.io'&&r.method==='GET'&&/^\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/.test(r.path))));
  const knownBackground=new Set(['update.googleapis.com','www.gstatic.com','accounts.google.com','www.google.com','content-autofill.googleapis.com','android.clients.google.com']);
- assert.ok(deniedInfrastructure.every(r=>knownBackground.has(r.host)),'Unexpected browser infrastructure host; review before acceptance');
+ // Observed in Chrome CI: Optimization Guide probes its model metadata.
+ // It remains denied by the loopback server; no external request is allowed.
+ const unexpectedInfrastructure=deniedInfrastructure.filter(r=>!knownBackground.has(r.host)&&!(r.host==='optimizationguide-pa.googleapis.com'&&r.path==='/v1:GetModels'));
+ assert.deepEqual(unexpectedInfrastructure,[],'Unexpected browser infrastructure host; review before acceptance');
 }catch(error){failures.push({message:error.message,stack:error.stack,ui:await page?.evaluate(()=>document.querySelector('[data-local-status]')?.textContent||document.body.textContent.slice(0,2000)).catch(()=>null)});await page?.screenshot({path:path.join(out,'FAILURE.png'),fullPage:true}).catch(()=>{});console.error(error.stack)}
 finally{
  try{await context?.close()}catch{}await new Promise(resolve=>server.close(resolve));f.close();

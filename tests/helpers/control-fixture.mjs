@@ -6,7 +6,7 @@ export const sha=value=>createHash('sha256').update(value).digest('hex');
 export async function controlFixture(){
  const db=new DatabaseSync(':memory:');db.exec('PRAGMA foreign_keys=ON');
  const files=['0001_sync_team_foundation','0002_nexus_account_tokens','0003_d1_only_project_snapshots','0004_identity_v2_session_foundation'].map(x=>'cloudflare/nexus-sync-worker/migrations/'+x+'.sql');
- files.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content','0015_blog_media'].map(x=>'server-access/migrations/'+x+'.sql'));
+ files.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content','0015_blog_media','0020_individual_trial_access'].map(x=>'server-access/migrations/'+x+'.sql'));
  for(const file of files)db.exec(await readFile(new URL('../../'+file,import.meta.url),'utf8'));
  const statement=(sql,args=[])=>{
   const s=db.prepare(sql);
@@ -43,8 +43,8 @@ export async function controlFixture(){
  }
  const owner=seed('synthetic-owner',{admin:true});
  db.exec('UPDATE nexus_alpha_settings SET enforced=1 WHERE id=1');
- function signed(path,{actor=owner,method='GET',payload=null,nonce=randomBytes(16).toString('hex'),timestamp=String(Date.now()),headers={}}={}){
-  const body=JSON.stringify({path,method,payload,sessionHash:sha(actor.secret),expectedAccountId:actor.id});
+ function signed(path,{actor=owner,method='GET',payload=null,nonce=randomBytes(16).toString('hex'),timestamp=String(Date.now()),headers={},dtoVersion=2}={}){
+  const body=JSON.stringify({path,method,payload,sessionHash:sha(actor.secret),expectedAccountId:actor.id,...(dtoVersion===2?{dtoVersion:2}:{})});
   const signature=createHmac('sha256',env.ADMIN_SERVICE_KEY).update(['v1','POST','/api/v2/account/internal/control',timestamp,nonce,sha(body)].join('\n')).digest('hex');
   return new Request('https://synthetic-worker.invalid/api/v2/account/internal/control',{method:'POST',body,headers:{'content-type':'application/json','x-nexus-service-timestamp':timestamp,'x-nexus-service-nonce':nonce,'x-nexus-service-signature':signature,...headers}});
  }

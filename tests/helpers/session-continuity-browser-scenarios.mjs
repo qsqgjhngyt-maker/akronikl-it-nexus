@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+export async function sessionContinuityBrowserScenarios({tester,testerId,f,check}){
+ const page=tester.page,open=async()=>{await page.locator('[data-akronikl-open]:visible,#askAkronikl:visible').first().click();await page.locator('[data-akronikl-panel] [data-ak-state-sync][data-state=saved]').waitFor();return page.locator('[data-akronikl-panel]')};
+ let p;
+ await check('foreground return preserves the project DOM, account and AI connection and slides its idle deadline',async()=>{
+  p=await open();await p.locator('[data-akronikl-connection-status][data-connection-phase=connected]').waitFor({state:'attached'});const calls=f.modelCalls(),session=f.db.prepare("SELECT id FROM account_sessions WHERE subject_id=? AND status='active' ORDER BY created_at DESC LIMIT 1").get(testerId).id;
+  f.db.prepare('UPDATE account_sessions SET idle_expires_at=?,last_seen_at=? WHERE id=?').run(new Date(Date.now()+90000).toISOString(),new Date(Date.now()-28*60000).toISOString(),session);
+  await page.evaluate(()=>{const input=document.createElement('textarea');input.dataset.qaUnsavedProject='';input.value='SYNTHETIC_UNSAVED_PROJECT';document.querySelector('#app').append(input);Object.defineProperty(document,'hidden',{configurable:true,value:true});Object.defineProperty(document,'visibilityState',{configurable:true,value:'hidden'});document.dispatchEvent(new Event('visibilitychange'));});
+  const checked=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/v2/account'&&r.status()===200);await page.evaluate(()=>{delete document.hidden;delete document.visibilityState;document.dispatchEvent(new Event('visibilitychange'));window.dispatchEvent(new Event('focus'));});await checked;
+  assert.equal(await page.locator('[data-qa-unsaved-project]').inputValue(),'SYNTHETIC_UNSAVED_PROJECT');assert.equal(await p.count(),1);assert.equal(f.modelCalls(),calls);assert.ok(Date.parse(f.db.prepare('SELECT idle_expires_at FROM account_sessions WHERE id=?').get(session).idle_expires_at)>Date.now()+29*60000);await p.locator('[data-akronikl-close]').click();
+ });
+ await check('new passkey login restores the saved model without provider calls; explicit disconnect then immediate close stays disconnected',async()=>{
+  const calls=f.modelCalls();await page.evaluate(async()=>{await fetch('/api/v2/account/passkey/logout',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json','x-nexus-passkey-write':'1'},body:'{}'});await(await import('/account/access/passkey-client.js')).login();});await page.reload();p=await open();await p.locator('[data-akronikl-connection-status][data-connection-phase=connected]').waitFor({state:'attached'});assert.equal(f.modelCalls(),calls);
+  await p.locator('[data-akronikl-settings]').click();await p.locator('[aria-controls=ak-settings-model]').click();await p.getByRole('button',{name:'Отключить модель',exact:true}).click();await p.locator('[data-akronikl-close]').click();p=await open();await p.locator('[data-akronikl-settings]').click();await p.locator('[aria-controls=ak-settings-model]').click();assert.equal(await p.locator('[data-akronikl-model-profile]').inputValue(),'sources');assert.equal(f.modelCalls(),calls);await p.locator('[data-akronikl-close]').click();
+ });
+}

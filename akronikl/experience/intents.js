@@ -1,0 +1,42 @@
+// Ограниченная маршрутизация формулировок. Не исполняет текст или команды модели.
+import {DESTINATIONS, HELP_TOPICS} from '../platform/catalog.js';
+export function resolveMessage(value) {
+  if(typeof value!=='string'||!value.trim()||value.length>1500||/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value))return {kind:'invalid'};
+  const text=value.normalize('NFKC').trim().replace(/^(?:акроникл|akronikl)[,!:—\s]+/iu,'');
+  const n=text.toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/[?!.,]+$/u,'').replace(/\s+/gu,' ');
+  if(/^(?:где я остановился|где я остановилась|where did i leave off)$/u.test(n))return {kind:'resume'};
+  if(/^(?:мой прогресс|наши успехи|что (?:у нас )?(?:сегодня )?на повестке дня|с чего (?:сегодня )?начн[её]м|что дальше|что мне делать дальше|my progress|what next|what shall we start with today)$/u.test(n))return {kind:'progress',text:n};
+  if(/^(?:что (?:мы )?(?:сейчас )?изучаем|какая (?:сейчас )?тема|какой (?:сейчас )?урок|what are we (?:studying|learning)(?: now)?|current lesson)$/u.test(n))return {kind:'study'};
+  if(/^(?:что мне (?:нужно )?сделать в этом задании|что требуется в этом задании|what (?:should|do) i (?:need to )?do (?:in|for) this (?:task|assignment))$/u.test(n))return {kind:'task'};
+  if(/^(?:покажи контекст|показать контекст|мой контекст|show context)$/u.test(n))return {kind:'context'};
+  if(/^(?:помоги найти лабораторную(?: работу)?|найди лабораторную(?: работу)?|help me find a lab)$/u.test(n))return {kind:'platform',request:{kind:'navigate',destinationId:'labs'}};
+  if(/^(?:где мои проекты|where are my projects)$/u.test(n))return {kind:'platform',request:{kind:'navigate',destinationId:'projects'}};
+  if(/^(?:где я(?: сейчас)?|текущий раздел|where am i|current screen|что доступно|разделы nexus|куда можно перейти|list sections|available sections)$/u.test(n)||
+    /^(?:открой|открыть|перейди в|перейди к|open|go to|сохрани|сохранить|удали|удалить|запусти|выйди|опубликуй|save|delete|run|logout|publish)(?:\s|$)/u.test(n)||
+    HELP_TOPICS.some(t=>t.aliases.includes(n)))return {kind:'platform',request:{kind:'text',text:n}};
+  if(/^(?:объясни (?:эту тему |текущую тему |этот урок )?(?:попроще|проще|простыми словами)(?: и (?:покажи|дай|приведи) (?:короткий |небольшой |простой )?пример)?|не понял(?:а)?|explain (?:this (?:topic|lesson) )?(?:more simply|simply)(?: and (?:show|give)(?: me)? (?:an? |a short |a small )?example)?|simpler)$/u.test(n))
+    return {kind:'tutor',intent:'simpler',followUp:true,text};
+  if(/^(?:покажи|дай|приведи) (?:небольшой |другой |простой )?пример$|^(?:show|give)(?: me)? (?:an? |another )?example$/u.test(n))return {kind:'tutor',intent:'example',followUp:true,text};
+  if(/(?:задач[ауи]|упражнени[ея])(?:\s|$)|\b(?:practice task|exercise)\b/u.test(n))return {kind:'tutor',intent:'practice',followUp:true,text};
+  if(/(?:почему|что означает|объясни).*(?:ошибк|error)|(?:ошибк|error).*(?:код|программ|code)|^why.*code/u.test(n))return {kind:'diagnostic',text};
+  if(/^(?:разбери|разобрать|объясни).*(?:код|фрагмент)|^(?:explain|review).*code/u.test(n))return {kind:'tutor',intent:'code',followUp:false,text};
+  if(/^(?:дай|подскажи).*(?:подсказк)|^give.*hint/u.test(n))return {kind:'tutor',intent:'hint',followUp:true,text};
+  if(/^(?:найди|найти|поиск|find|search)(?:\s|$)/u.test(n))return {kind:'search',text:text.replace(/^(?:найди|найти|поиск|find|search)\s*/iu,'')};
+  return {kind:'tutor',intent:'explain',followUp:false,text};
+}
+export function visibleDestinations(){return DESTINATIONS.filter(d=>!['restricted','planned'].includes(d.access));}
+
+// Only explicit Nexus requests use the local guide in conversation mode.
+// Ordinary search, discussion and code pasted by the user belong to the chat model.
+export function isLocalNexusRequest(message){
+ if(['resume','study','task','context'].includes(message?.kind))return true;
+ if(message?.kind==='progress')return !message.text||/^(?:мой прогресс|наши успехи|my progress|что (?:у нас )?(?:сегодня )?на повестке дня)$/u.test(message.text);
+ if(message?.kind!=='platform')return false;
+ if(message.request?.kind==='navigate')return true;
+ const n=message.request?.text??'';
+ if(['где я','где я сейчас','текущий раздел','where am i','current screen','что доступно','разделы nexus','куда можно перейти','list sections','available sections'].includes(n))return true;
+ if(HELP_TOPICS.some(t=>t.id!=='navigation'&&t.aliases.includes(n)))return true;
+ const nav=/^(?:открой|открыть|перейди в|перейди к|open|go to) (.+)$/u.exec(n);
+ if(nav&&DESTINATIONS.some(d=>d.aliases.includes(nav[1])))return true;
+ return /^(?:выйди|logout)$/u.test(n)||/^(?:сохрани|сохранить|удали|удалить|запусти|опубликуй|save|delete|run|publish) (?:(?:все|этот|мой|текущий|all|this|my|current)(?: the)? )?(?:проекты?|аккаунт|nexus|projects?|account)(?:\s|$)/u.test(n);
+}

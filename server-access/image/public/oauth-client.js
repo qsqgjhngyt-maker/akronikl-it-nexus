@@ -170,7 +170,7 @@ async function request(path, options = {}) {
     signal?.removeEventListener("abort", abort);
   }
 }
-async function bindProviderButtons(container, { intent = "login", expectedAccountId, onStatus = () => {
+async function bindProviderButtons(container, { intent = "login", expectedAccountId, allowedProviders, onStatus = () => {
 }, acquire = () => true, release = () => {
 } } = {}) {
   if (!container || location.origin !== ORIGIN || !["login", "link"].includes(intent)) return;
@@ -204,6 +204,7 @@ async function bindProviderButtons(container, { intent = "login", expectedAccoun
     onStatus("\u0412\u044B \u0432\u0435\u0440\u043D\u0443\u043B\u0438\u0441\u044C \u0441\u043E \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B \u0432\u0445\u043E\u0434\u0430. \u0414\u043B\u044F \u043D\u043E\u0432\u043E\u0439 \u043F\u043E\u043F\u044B\u0442\u043A\u0438 \u043D\u0430\u0436\u043C\u0438\u0442\u0435 \u0441\u043F\u043E\u0441\u043E\u0431 \u0432\u0445\u043E\u0434\u0430 \u0441\u043D\u043E\u0432\u0430.");
   });
   for (const supplied of data.providers) {
+    if (allowedProviders && !allowedProviders.includes(supplied?.id)) continue;
     const definition = providers.get(supplied?.id);
     if (!definition || container.querySelector(`[data-provider="${supplied.id}"]`)) continue;
     const button = document.createElement("button");

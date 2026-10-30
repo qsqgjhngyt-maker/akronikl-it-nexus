@@ -13,7 +13,8 @@ export function publicRecord(request,origin,records,version){
  // Fragment идентифицирует одноразовую навигацию opaque 3D loader. Authority всё ещё
  // только exact manifest record с прежними bytes/SHA256/CSP; другие hash URL запрещены.
  if(u.hash&&!(record&&u.origin===origin&&request.mode==='navigate'&&record.mime==='text/html'&&/^\/releases\/ui1a-[a-z0-9-]+\/pwa\/graphics-frame\.html$/.test(u.pathname)&&/^#[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(u.hash)))return null;
- if(u.search&&!(u.origin===origin&&u.search==='?v='+(record?.version||version)))return null;
+ const piperQuery=record&&u.origin===origin&&/\/akronikl\/experience\/piper-worker\.js$/.test(u.pathname)&&['?voice=uyut7-pilot5&transport=chunks-v1&source=yandex-public-v1','?voice=uyut7-pilot5&transport=chunks-v1','?voice=uyut7-pilot5','?voice=irina'].includes(u.search);
+ if(u.search&&!piperQuery&&!(u.origin===origin&&u.search==='?v='+(record?.version||version)))return null;
  return record||null;
 }
 export async function verifyBytes(record,bytes){

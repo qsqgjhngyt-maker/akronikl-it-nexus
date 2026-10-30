@@ -75,7 +75,7 @@ export async function communityBrowserScenarios({owner,tester,testerId,f,origin,
   await form.locator('[name=summary]').fill('Новый блог Nexus');
   await articleBody(form,'<img src=x onerror="window.UNSAFE_CONTENT=true">\nСинтетическая статья');
   await form.locator('[data-preview]').click();
-  assert.equal(await owner.page.locator('[data-content-preview] img').count(),0);
+  assert.equal(await owner.page.locator('[data-content-preview] img[src="x"]').count(),0);
   assert.equal(await owner.page.evaluate(()=>window.UNSAFE_CONTENT),undefined);
   await form.locator('button[type=submit]').click();
   await form.locator('button[type=submit]').evaluate(b=>b.click());
@@ -87,7 +87,7 @@ export async function communityBrowserScenarios({owner,tester,testerId,f,origin,
   await tester.page.reload();await tester.page.getByText('Синтетическая заметка',{exact:true}).waitFor();
   await tester.page.locator('[data-blog-feed] .blog-read').click();
   await tester.page.getByText('Синтетическая статья',{exact:false}).waitFor();
-  assert.equal(await tester.page.locator('[data-blog-feed] img').count(),0);
+  assert.equal(await tester.page.locator('[data-blog-feed] img[src="x"]').count(),0);
   assert.equal(await tester.page.evaluate(()=>window.UNSAFE_CONTENT),undefined);
  });
  await check('article unpublish is authoritative; prepared draft never publishes or overwrites an existing article',async()=>{

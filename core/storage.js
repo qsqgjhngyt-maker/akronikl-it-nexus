@@ -1,4 +1,4 @@
-import {accountLocalStorage} from './account-storage.js';
+import {accountLocalStorage,verifiedAccount,accountStorageLocked} from './account-storage.js';
 
 const STATE_KEY='akronikl:it-nexus:state:v1';const PREFS_KEY='akronikl:it-nexus:prefs:v1';
 // Неизменяемый состав исторической программы. Не индекс будущего curriculum.
@@ -24,8 +24,9 @@ function parse(raw,fallback){try{return raw?JSON.parse(raw):fallback}catch{retur
 export function loadState(){return {...defaultState(),...parse(accountLocalStorage().getItem(STATE_KEY),defaultState())}}
 export function saveState(state){const next={...state,updatedAt:new Date().toISOString()};accountLocalStorage().setItem(STATE_KEY,JSON.stringify(next));return next}
 export function updateState(mutator){const s=loadState();return saveState(mutator(s)||s)}
-export function loadPrefs(){return {...defaultPrefs(),...parse(localStorage.getItem(PREFS_KEY),{})}}
-export function savePrefs(p){const n={...defaultPrefs(),...p};localStorage.setItem(PREFS_KEY,JSON.stringify(n));return n}
+function preferenceStore(){if(accountStorageLocked())throw Object.assign(Error('VERIFIED_ACCOUNT_REQUIRED'),{code:'VERIFIED_ACCOUNT_REQUIRED'});return verifiedAccount()?accountLocalStorage():localStorage}
+export function loadPrefs(){return {...defaultPrefs(),...parse(preferenceStore().getItem(PREFS_KEY),{})}}
+export function savePrefs(p){const n={...defaultPrefs(),...p};preferenceStore().setItem(PREFS_KEY,JSON.stringify(n));return n}
 export function storageKeys(){return{state:STATE_KEY,prefs:PREFS_KEY}}
 export function lessonState(id){return loadState().courses?.cpp?.lessons?.[id]||{}}
 export function patchLesson(id,patch){return updateState(s=>{s.courses??={};s.courses.cpp??={courseId:'cpp'};s.courses.cpp.lessons??={};s.courses.cpp.lessons[id]={...(s.courses.cpp.lessons[id]||{}),...patch};return s})}

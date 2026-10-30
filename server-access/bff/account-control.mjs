@@ -25,6 +25,7 @@ const id=value=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.t
 const safeText=(value,max)=>typeof value==='string'&&value.length<=max&&!/[\u0000-\u001f\u007f]/.test(value);
 const safeCodes=new Set(['SESSION_REQUIRED','ACCOUNT_SESSION_CHANGED','ADMIN_REQUIRED','ADMIN_FRESH_PASSKEY_REQUIRED','ADMIN_ACCOUNT_PROTECTED','INVALID_INPUT','INVALID_STATE','RESTORE_WITHOUT_LOGIN_METHOD','NOT_FOUND','CONTROL_CONFLICT','CONTROL_WRITE_UNCONFIRMED','CONTROL_UNAVAILABLE','ALPHA_CONTROL_UNAVAILABLE','ALPHA_ACCESS_CLOSED','ALPHA_CAPACITY_REACHED','ALPHA_LIMIT_BELOW_OCCUPIED','REMOVE_BEFORE_PURGE','PURGE_NOT_ENABLED','PURGE_SCHEMA_REVIEW_REQUIRED','SHARED_PROJECT_TRANSFER_REQUIRED','PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED','PURGE_APPROVAL_REJECTED','PURGE_CONFIRMATION_REQUIRED','AVATAR_INVALID','AVATAR_DIMENSIONS','AVATAR_TOO_LARGE','USERNAME_UNAVAILABLE','RATE_LIMITED','BLOG_IMAGE_INVALID','CONTENT_MEDIA_UNAVAILABLE','CONTENT_MEDIA_QUOTA','CONTENT_EDITOR_UPDATE_REQUIRED','CONTENT_MEDIA_PARTS_UNAVAILABLE','CONTENT_MEDIA_PARTS_REQUIRED','CONTENT_MEDIA_PARTS_CONFLICT','CONTENT_MEDIA_PARTS_INCOMPLETE']);
 for(const code of ASSESSMENT_ERROR_CODES)safeCodes.add(code);
+for(const code of ['SELF_DELETE_UNAVAILABLE','SELF_DELETE_FRESH_LOGIN_REQUIRED'])safeCodes.add(code);
 const reply=(res,status,body,extra={})=>{const data=JSON.stringify(body);res.writeHead(status,{'content-type':'application/json; charset=utf-8','content-length':Buffer.byteLength(data),'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer',...extra});res.end(data);return true};
 async function bounded(stream){
  const chunks=[];let size=0;
@@ -50,11 +51,13 @@ function validateDTO(data,path,expected){
  const valid=()=>fail('CONTROL_UNAVAILABLE',502);
  if(path==='/api/v2/account/profile'||path.startsWith('/api/v2/account/profile/avatar')){
   if(!exact(data,['accountId','username','displayName','avatar','avatarVersion'])||data.accountId!==expected||!safeText(data.displayName,512)||data.username!==null&&!/^[a-z][a-z0-9._-]{2,31}$/.test(data.username)||!Number.isInteger(data.avatarVersion)||data.avatarVersion<0||data.avatar!==null&&(typeof data.avatar!=='string'||data.avatar.length>131100||!/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(data.avatar)))valid();
+ }else if(path===BASE+'/self-delete-capabilities'){
+  if(!exact(data,['accountId','canDelete','protected','freshLogin','version','hasPasskey','providers'])||data.accountId!==expected||!['canDelete','protected','freshLogin','hasPasskey'].every(k=>typeof data[k]==='boolean')||!Number.isSafeInteger(data.version)||data.version<0||!Array.isArray(data.providers)||data.providers.length>3||new Set(data.providers).size!==data.providers.length||data.providers.some(p=>!['google','yandex','vk'].includes(p)))valid();
  }else if(path===BASE+'/capabilities'){
   if(!exact(data,['canManage','canModerate','canPurge','freshPasskey'])||Object.values(data).some(v=>typeof v!=='boolean'))valid();
  }else if(path.startsWith(BASE+'/users?')||path===BASE+'/users'){
-  if(!exact(data,['users','total','offset','settings','counts'])||!Array.isArray(data.users)||data.users.length>50||!Number.isInteger(data.total)||!Number.isInteger(data.offset)||!exact(data.settings,['registrationMode','maxTesters','limitEnabled','version'])||!exact(data.counts,['active','occupied','reserved'])||typeof data.settings.limitEnabled!=='boolean'||!['open','invite_only'].includes(data.settings.registrationMode)||!Number.isInteger(data.settings.maxTesters)||data.settings.maxTesters<1||data.settings.maxTesters>10000||!Number.isInteger(data.settings.version)||data.settings.version<1||Object.values(data.counts).some(v=>!Number.isInteger(v)||v<0))valid();
-  for(const u of data.users)if(!exact(u,['accountId','username','displayName','state','version','createdAt','lastLoginAt','activeSessions','reason','protected'])||!id(u.accountId)||!safeText(u.displayName,512)||u.username!==null&&!safeText(u.username,32)||!['active','blocked','removed','invited','unadmitted','administrator'].includes(u.state)||!Number.isInteger(u.version)||!Number.isInteger(u.activeSessions)||typeof u.protected!=='boolean'||!safeText(u.reason,200))valid();
+  if(!exact(data,['users','total','offset','settings','counts'])||!Array.isArray(data.users)||data.users.length>50||!Number.isInteger(data.total)||!Number.isInteger(data.offset)||!exact(data.settings,['registrationMode','maxTesters','limitEnabled','version','defaultTrialMinutes','defaultInvitationMinutes'])||!exact(data.counts,['active','occupied','reserved'])||(data.settings.defaultTrialMinutes!==null&&(!Number.isInteger(data.settings.defaultTrialMinutes)||data.settings.defaultTrialMinutes<60||data.settings.defaultTrialMinutes>525600))||!Number.isInteger(data.settings.defaultInvitationMinutes)||data.settings.defaultInvitationMinutes<10||data.settings.defaultInvitationMinutes>10080||typeof data.settings.limitEnabled!=='boolean'||!['open','invite_only'].includes(data.settings.registrationMode)||!Number.isInteger(data.settings.maxTesters)||data.settings.maxTesters<1||data.settings.maxTesters>10000||!Number.isInteger(data.settings.version)||data.settings.version<1||Object.values(data.counts).some(v=>!Number.isInteger(v)||v<0))valid();
+  for(const u of data.users)if(!exact(u,['accountId','username','displayName','state','version','createdAt','lastLoginAt','activeSessions','reason','protected','invitationCreatedAt','invitationExpiresAt','trialMinutes','firstLoginAt','accessExpiresAt'])||!id(u.accountId)||!safeText(u.displayName,512)||u.username!==null&&!safeText(u.username,32)||!['active','blocked','removed','invited','unadmitted','administrator'].includes(u.state)||!Number.isInteger(u.version)||!Number.isInteger(u.activeSessions)||typeof u.protected!=='boolean'||!safeText(u.reason,200)||u.trialMinutes!==null&&(!Number.isInteger(u.trialMinutes)||u.trialMinutes<60||u.trialMinutes>525600)||['invitationCreatedAt','invitationExpiresAt','firstLoginAt','accessExpiresAt'].some(k=>u[k]!==null&&(!safeText(u[k],64)||!Number.isFinite(Date.parse(u[k])))))valid();
  }else if(path===BASE+'/content?mediaStatus=1'){
   if(!exact(data,['mediaAvailability'])||!exact(data.mediaAvailability,['enabled','maxBytes','maxDimension'])||typeof data.mediaAvailability.enabled!=='boolean'||data.mediaAvailability.maxBytes!==98304||data.mediaAvailability.maxDimension!==1600)valid();
  }else if(path.startsWith(BASE+'/content?media=')||path===BASE+'/content'&&exact(data,['ok','media'])){
@@ -71,9 +74,11 @@ function validateDTO(data,path,expected){
   for(const e of data.events)if(!exact(e,['action','targetId','createdAt'])||!safeText(e.action,32)||e.targetId!==null&&!id(e.targetId)||!safeText(e.createdAt,64))valid();
  }else if(path===BASE+'/invites'){
   if(!exact(data,['ok','accountId','invitationToken','expiresAt'])||data.ok!==true||!id(data.accountId)||!/^npi_[A-Za-z0-9_-]{43}$/.test(data.invitationToken)||!safeText(data.expiresAt,64))valid();
- }else if(path.endsWith('/purge-preview')){
-  if(!exact(data,['approvalToken','expiresAt','counts','confirmation','serverDataOnly'])||!/^npa_[A-Za-z0-9_-]{43}$/.test(data.approvalToken)||!safeText(data.expiresAt,64)||!safeText(data.confirmation,180)||data.serverDataOnly!==true||!(exact(data.counts,['projects','workspaces','feedback','keys','providers'])||exact(data.counts,['projects','workspaces','feedback','keys','providers','courseFinalAttempts','courseFinalBytes']))||Object.values(data.counts).some(v=>!Number.isSafeInteger(v)||v<0))valid();
- }else if(path.endsWith('/purge')){
+ }else if(path.endsWith('/purge-preview')||path===BASE+'/self-delete-preview'){
+  const base=['projects','workspaces','feedback','keys','providers'],course=['courseFinalAttempts','courseFinalBytes'],assistant=['assistantRecords','assistantConnections'];
+  const shapes=[base,[...base,...course],[...base,...assistant],[...base,...course,...assistant],[...base,...assistant,'assistantApiKeys'],[...base,...course,...assistant,'assistantApiKeys']];
+  if(!exact(data,['approvalToken','expiresAt','counts','confirmation','serverDataOnly'])||!(path===BASE+'/self-delete-preview'?/^nps_[A-Za-z0-9_-]{43}$/:/^npa_[A-Za-z0-9_-]{43}$/).test(data.approvalToken)||!safeText(data.expiresAt,64)||!safeText(data.confirmation,180)||data.serverDataOnly!==true||!shapes.some(keys=>exact(data.counts,keys))||Object.values(data.counts).some(v=>!Number.isSafeInteger(v)||v<0))valid();
+ }else if(path.endsWith('/purge')||path===BASE+'/self-delete'){
   if(!exact(data,['ok','deletedServerData','localCopiesRemotelyErased'])||data.ok!==true||data.deletedServerData!==true||data.localCopiesRemotelyErased!==false)valid();
  }else if(path===BASE+'/providers'){
   if(!exact(data,['authorized'])||data.authorized!==true)valid();
@@ -98,7 +103,8 @@ function mediaTransportCode(error,signal,phase){
 }
 export async function controlService(env,fetchImpl,envelope,{mediaDiagnostics=false,mediaFetchImpl=fetchImpl,captureWire=false,signal:sharedSignal,limit=262144}={}){
  const failWire=(code,status,meta)=>{const error=new Rejected(code,status);if(captureWire)error.nexusWire=wireHeaders(meta);throw error};
- const body=JSON.stringify(envelope),timestamp=String(Date.now()),nonce=randomBytes(16).toString('hex');
+ const modern=/^\/api\/v2\/account\/control\/(?:users(?:\?|$)|settings$|invites$|users\/[^/]+\/(?:trial|invitation)$)/.test(envelope.path);
+ const body=JSON.stringify(modern?{...envelope,dtoVersion:2}:envelope),timestamp=String(Date.now()),nonce=randomBytes(16).toString('hex');
    const signature=createHmac('sha256',env.ADMIN_SERVICE_KEY).update(['v1','POST',INTERNAL,timestamp,nonce,sha(body)].join('\n')).digest('hex');
    if(Buffer.byteLength(body)>limit)fail('INPUT_TOO_LARGE',413);
    const signal=sharedSignal||AbortSignal.timeout(12000);
@@ -116,7 +122,7 @@ export async function controlService(env,fetchImpl,envelope,{mediaDiagnostics=fa
  return data;
 }
 const service=controlService;
-export function createAccountControlHandler({env={},fetchImpl=fetch,mediaFetchImpl=fetchImpl===fetch?requestMediaHTTP2:fetchImpl}={}){
+export function createAccountControlHandler({env={},fetchImpl=fetch,mediaFetchImpl=fetchImpl===fetch?requestMediaHTTP2:fetchImpl,onAccountDeleted=()=>{}}={}){
  return async(req,res)=>{
   if(typeof req.url!=='string'||!/^\/api\/v2\/account\/(?:control(?:\/|\?|$)|profile(?:\/|\?|$))/.test(req.url))return false;
   let diagnostic=false;
@@ -174,6 +180,10 @@ export function createAccountControlHandler({env={},fetchImpl=fetch,mediaFetchIm
     return reply(res,200,{providers:[['yandex','Яндекс ID',['YANDEX_CLIENT_ID','YANDEX_CLIENT_SECRET']],['google','Google',['GOOGLE_CLIENT_ID','GOOGLE_CLIENT_SECRET']],['vk','VK ID',['VK_CLIENT_ID']]].map(([id,label,names])=>({id,label,configured:configured.has(id),missing:names.filter(n=>typeof env[n]!=='string'||!env[n]||/[\x00-\x20\x7f]/.test(env[n])),callbackURL:oauthCallbackURL(id)}))});
    }
    if(path===BASE+'/content'&&req.method==='GET'&&Array.isArray(dto.posts))return reply(res,200,{...dto,posts:dto.posts.map(p=>({...p,draft:compatibleArticle(p.draft,{editor:true}),published:p.published?compatibleArticle(p.published,{editor:true}):null}))});
+   if(path===BASE+'/self-delete'&&req.method==='POST'){
+    onAccountDeleted(expected);
+    return reply(res,200,dto);
+   }
    return reply(res,200,dto);
   }catch(error){return reply(res,error instanceof Rejected?error.status:error instanceof AssessmentBridgeError?error.status:error.name==='MediaPartsError'?error.status:error.message==='INGRESS_REJECTED'?401:502,{error:{code:error instanceof Rejected||error instanceof AssessmentBridgeError&&safeCodes.has(error.code)||error.name==='MediaPartsError'?error.code:error.message==='INGRESS_REJECTED'?'INGRESS_REJECTED':'CONTROL_UNAVAILABLE'}},diagnostic&&error instanceof Rejected?error.nexusWire||{}:{})}
  };

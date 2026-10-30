@@ -1,0 +1,9 @@
+import fs from 'node:fs';import path from 'node:path';import {execFileSync} from 'node:child_process';import {createRequire} from 'node:module';import {createHash} from 'node:crypto';
+const require=createRequire(import.meta.url),dir=path.resolve('dependencies/phonemizer/package/build'),create=require(path.join(dir,'piper_phonemize.js')),python=path.resolve('private/piper-training-env/Scripts/python.exe');
+const hash=b=>createHash('sha256').update(b).digest('hex'),binary=fs.readFileSync(path.join(dir,'piper_phonemize.wasm'));
+for(const name of ['piper_phonemize.wasm','piper_phonemize.data'])if(hash(fs.readFileSync(path.join(dir,name)))!==hash(fs.readFileSync(path.join('..','dependencies/piper-runtime-1.1.1',name))))throw Error('BROWSER_PHONEMIZER_DIFFERS');
+const rows=JSON.parse(execFileSync(python,['prepare-teacher5-dataset.py','read'],{encoding:'utf8',windowsHide:true,timeout:180000,maxBuffer:4*1024*1024}));
+globalThis.fetch=()=>{throw Error('TEACHER_PREPROCESS_NETWORK_DISABLED');};const result=[];
+for(const row of rows){let payload;const module=await create({wasmBinary:binary,locateFile:n=>path.join(dir,n),print:s=>{try{const p=JSON.parse(s);if(p.phoneme_ids)payload=p;}catch{}},printErr:()=>{}});module.callMain(['-l','ru','--input',JSON.stringify([{text:row.text}]),'--espeak_data','/espeak-ng-data']);if(!Array.isArray(payload?.phoneme_ids))throw Error('NO_TEACHER_WASM_IDS');result.push({...row,ids:payload.phoneme_ids,phonemes:payload.phonemes});global.gc?.();}
+const destination='private/teacher5/WASM_TRAIN_PHONEMES.json',serialized=JSON.stringify(result);if(fs.existsSync(destination)){if(fs.readFileSync(destination,'utf8')!==serialized)throw Error('EXISTING_TEACHER_WASM_ROWS_CHANGED');}else fs.writeFileSync(destination,serialized,{flag:'wx'});
+console.log(execFileSync(python,['prepare-teacher5-dataset.py','finish'],{encoding:'utf8',windowsHide:true,timeout:180000,maxBuffer:1024*1024}).trim());

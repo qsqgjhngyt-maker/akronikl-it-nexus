@@ -3,6 +3,7 @@ import {SERVER_ACCOUNT_ORIGIN} from './server-account-origin.js';
 import {cloudMe} from '../sync/cloud-sync.js';
 import {adminAccountMarkup,bindAccountControl} from './account-control.js';
 import {bindAccountProfile} from './account-profile.js';
+import {selfDeleteMarkup,bindSelfDelete} from './account-self-delete.js';
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 export function unifiedAccountMarkup(locale,tab){
  const en=locale==='en',a=verifiedAccount();
@@ -13,7 +14,7 @@ export function unifiedAccountMarkup(locale,tab){
  const learning=`<section class="account-panel glass-panel"><h2>${en?'Your learning':'Ваше обучение'}</h2><p>${en?'Progress is stored separately for this account on this device. Cross-device course progress is not yet synchronized.':'Прогресс хранится отдельно для этого аккаунта на этом устройстве. Синхронизация учебного прогресса между устройствами пока не подключена.'}</p><a class="btn primary" href="#course=cpp">${en?'Continue C++':'Продолжить C++'}</a></section>`;
  const devices=`<section class="account-panel glass-panel"><h2>${en?'This session':'Текущий вход'}</h2><p>${en?'Nexus and Nexus Cloud use the same protected server session. Switching accounts ends this session before opening another account.':'Nexus и Nexus Cloud используют одну защищённую серверную сессию. При смене аккаунта сначала завершается текущая сессия.'}</p><a class="btn" href="${SERVER_ACCOUNT_ORIGIN}/account/access/">${en?'Passkeys on your devices':'Ключи доступа на устройствах'}</a></section>`;
  const overview=`<div class="account-grid"><section class="account-panel glass-panel"><span class="eyebrow">PROFILE</span><h2>${esc(a.displayName)}</h2><p>${en?'Signed in to Nexus. Learning, projects, feedback and Cloud belong to this account.':'Вы вошли в Nexus. Обучение, проекты, отзывы и облако используют этот аккаунт.'}</p><div class="account-actions"><button class="btn" data-unified-logout>${en?'Switch account':'Сменить аккаунт'}</button><button class="btn danger" data-unified-logout>${en?'Sign out':'Выйти'}</button></div><p data-unified-logout-status role="status"></p></section>${cloud}</div>`;
- return `<section class="account-page" data-nexus-account data-unified-account><div class="account-page-head glass-panel"><div><span class="eyebrow">NEXUS ACCOUNT</span><h1>${en?'Your space in Nexus':'Ваше пространство Nexus'}</h1><p>${esc(a.displayName)} · ${en?'Signed in':'Вход выполнен'}</p></div></div><nav class="account-tabs" aria-label="${en?'Account sections':'Разделы аккаунта'}">${sections.map(([id,label])=>`<a href="#view=account&tab=${id}" class="${id===current?'active':''}" aria-current="${id===current?'page':'false'}">${label}</a>`).join('')}</nav>${({overview,cloud,security,learning,devices,admin:adminAccountMarkup(en)})[current]}</section>`;
+ return `<section class="account-page" data-nexus-account data-unified-account><div class="account-page-head glass-panel"><div><span class="eyebrow">NEXUS ACCOUNT</span><h1>${en?'Your space in Nexus':'Ваше пространство Nexus'}</h1><p>${esc(a.displayName)} · ${en?'Signed in':'Вход выполнен'}</p></div></div><nav class="account-tabs" aria-label="${en?'Account sections':'Разделы аккаунта'}">${sections.map(([id,label])=>`<a href="#view=account&tab=${id}" class="${id===current?'active':''}" aria-current="${id===current?'page':'false'}">${label}</a>`).join('')}</nav>${({overview,cloud,security:security+selfDeleteMarkup(en),learning,devices,admin:adminAccountMarkup(en)})[current]}</section>`;
 }
 export async function endUnifiedSession(){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
@@ -25,7 +26,7 @@ export async function endUnifiedSession(){
 }
 export function bindUnifiedAccount(locale='ru'){
  const en=locale==='en';
- bindAccountProfile(locale);void bindAccountControl(locale);
+ bindAccountProfile(locale);void bindAccountControl(locale);bindSelfDelete(locale);
  for(const node of document.querySelectorAll('[data-unified-logout]'))node.addEventListener('click',async()=>{node.disabled=true;try{await endUnifiedSession()}catch{const message=document.querySelector('[data-unified-logout-status]');if(message)message.textContent=en?'Could not confirm sign-out. Try again.':'Не удалось подтвердить выход. Попробуйте ещё раз.';node.disabled=false}});
  const check=async()=>{const status=document.querySelector('[data-unified-cloud-status]');if(!status)return;try{await cloudMe();if(status.isConnected)status.textContent=en?'Nexus Cloud is ready. No separate sign-in required.':'Nexus Cloud доступен. Повторный вход не требуется.'}catch{if(status.isConnected)status.textContent=en?'Cloud access could not be checked. Your local projects remain saved.':'Не удалось проверить облако. Локальные проекты сохранены.'}};
  document.querySelector('[data-unified-cloud-check]')?.addEventListener('click',check);check();

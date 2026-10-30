@@ -1,3 +1,12 @@
+# 0.1.7-alpha.2.4.6-ui1a.10.10.2-p4q.19 · P4-Q для тестировщиков
+
+- Помощник, личные API-подключения, история, вложения и вставка скриншотов.
+- Озвучка Piper «Уют-7», автоозвучка и самозагружающийся установщик локальной Qwen TTS.
+- Сохранение сессий, оба ролика запуска, управление пользователями и независимое продление сроков приглашения и доступа.
+- Рабочая публикация, проверенные артефакты и сохранённый откат: [манифест](release/production-release.json).
+
+Предыдущие записи сохранены ниже.
+
 - 0.1.7-alpha.2.4.5 — Фундамент first-party HttpOnly-сессий: безопасный `__Host`/HttpOnly foundation с two-key gate; текущий GitHub Pages production остаётся cookie-disabled.
 - 0.1.7-alpha.2.4.4 — Переход Cloud Sync на приоритет серверных сессий: полная LIVE-проверка пройдена; PULL/PUSH via nxs, stale-session fallback, Android/iPhone regression, D1 proof.
 - 0.1.7-alpha.2.4.3.2 — Identity Session UI State Refresh Hotfix: FULL LIVE PASS; no-F5 session revoke fallback + controlled device revoke confirmed.
@@ -10,6 +19,6 @@
 
 # CHANGELOG v0.1.7-alpha.2.3
 
-Current release: **v0.1.7-alpha.2.3 — Architecture & AI Research Baseline**.
+Historical release: **v0.1.7-alpha.2.3 — Architecture & AI Research Baseline**.
 
 See [`CHANGELOG_v0.1.7-alpha.2.3.md`](CHANGELOG_v0.1.7-alpha.2.3.md). Historical changelogs are preserved alongside it.

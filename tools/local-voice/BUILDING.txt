@@ -1,0 +1,14 @@
+Windows self-downloading installer
+
+The committed download-lock.json pins public publisher artifacts. No weights, wheels or complete runtime are hosted by Nexus.
+
+Set NEXUS_VOICE_SDK_SITE to an existing verified SDK site-packages containing pure sox 1.5.0 and its dist-info. Set NEXUS_VC_REDIST_DIR to the licensed Visual Studio x64 Microsoft.VC143.CRT release directory. NEXUS_VOICE_NOTICES points to reviewed plain-text license notices.
+
+Build in a NEW directory:
+node tools/local-voice/build-thin-installer.mjs tools/local-voice/download-lock.json <new-directory>
+
+The build verifies Microsoft CRT signatures and embeds the pinned download configuration. Test only in a separate installation directory. Tests must not install global programs or redownload model weights when a verified local cache exists. Preserve initial failures.
+
+Publication uploads only application.zip and Akronikl-Qwen-TTS-Setup.exe (both under 10 MB), refuses different existing immutable objects, and verifies complete public readback. A changed application requires a new version, public prefix, UI URL and local build header; never overwrite an existing published installer.
+
+Legacy build-portable.py/build-installer.mjs are local prototype reproduction tools. Their full archives are not the selected distribution and cannot be uploaded by publish-installer.mjs.

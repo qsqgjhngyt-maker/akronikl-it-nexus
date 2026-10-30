@@ -1,0 +1,33 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {webcrypto,createHash} from 'node:crypto';
+import {readLocalSpeechStream} from '../akronikl/experience/local-speech-stream.js';import {createStreamingLocalSpeaker} from '../akronikl/experience/streaming-speaker.js';
+import {localVoiceClient} from '../akronikl/experience/local-voice-client.js';
+const tick=()=>new Promise(r=>setImmediate(r));
+function wav(samples=24){const b=Buffer.alloc(44+samples*2);b.write('RIFF');b.writeUInt32LE(b.length-8,4);b.write('WAVEfmt ',8);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(24000,24);b.writeUInt32LE(48000,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(samples*2,40);return b;}
+const text='Личная фраза.',hash=createHash('sha256').update(text).digest('hex');
+const packet=(seq=0)=>({chunk:true,seq,offsetSamples:seq*24,samples:24,sampleRate:24000,textSha256:hash,audio:wav().toString('base64')});
+const done=()=>({done:true,sampleRate:24000,textSha256:hash,duration:.002,audio:wav(48).toString('base64')});
+const response=values=>new Response(values.map(v=>JSON.stringify(v)).join('\n')+'\n',{headers:{'content-type':'application/x-ndjson'}});
+test('stream reader delivers ordered new PCM only and retains a complete private replay WAV',async()=>{const chunks=[];const blob=await readLocalSpeechStream(response([packet(0),packet(1),done()]),{text,cryptoRef:webcrypto,isCurrent:()=>true,onChunk:p=>chunks.push(p)});assert.equal(chunks.length,2);assert.equal(blob.size,wav(48).length);assert.deepEqual(chunks.map(c=>c.offsetSamples),[0,24]);});
+test('wrong digest, sequence, incomplete final and identity change fail before another packet is delivered',async()=>{
+ for(const values of [[{...packet(),textSha256:'0'.repeat(64)}],[packet(1)],[packet(0),{...done(),duration:1}],[packet(0)]])await assert.rejects(readLocalSpeechStream(response(values),{text,cryptoRef:webcrypto,isCurrent:()=>true,onChunk(){}}),/SPEECH_AUDIO_INVALID/);
+ let current=true,n=0;await assert.rejects(readLocalSpeechStream(response([packet(),packet(1),done()]),{text,cryptoRef:webcrypto,isCurrent:()=>current,onChunk(){n++;current=false;}}),/PAIR_REQUIRED/);assert.equal(n,1);
+});
+function env(){const sources=[],audios=[],contexts=[];class Context{constructor(){this.currentTime=0;this.destination={};contexts.push(this)}resume(){return Promise.resolve()}suspend(){return Promise.resolve()}close(){this.closed=true;return Promise.resolve()}decodeAudioData(){return Promise.resolve({duration:1,numberOfChannels:1})}createBufferSource(){const s={connect(){},disconnect(){},start(at){s.at=at},stop(){s.stopped=true}};sources.push(s);return s;}}return{sources,audios,contexts,windowRef:{AudioContext:Context,Audio:class{play(){audios.push(this);queueMicrotask(()=>this.onplaying?.());return Promise.resolve()}pause(){this.stopped=true}removeAttribute(){}load(){}},URL:{createObjectURL:()=> 'blob:private',revokeObjectURL(){}}}};}
+test('real-time player starts chunks before completion, does not replay final audio and drops late cancelled packets',async()=>{
+ const e=env();let emit,finish,signal,starts=0,ends=0;const s=createStreamingLocalSpeaker({...e,request:async(t,o)=>{emit=o.onChunk;signal=o.signal;return new Promise(r=>finish=r);}}),job=s.speak(text,{onstart:()=>starts++,onend:()=>ends++});job.setRate(1);await tick();emit({audio:wav().buffer});await tick();assert.equal(e.sources.length,1);assert.equal(e.audios.length,0);finish(new Blob([wav(48)]));await tick();assert.equal(e.audios.length,0);e.contexts[0].currentTime=2;e.sources[0].onended();assert.equal(ends,1);s.dispose();assert.equal(signal.aborted,false); // Completed requests need no cancellation; the audio context must close.
+assert.equal(e.contexts[0].closed,true);
+ const f=env();let late;const other=createStreamingLocalSpeaker({...f,request:async(t,o)=>{late=o.onChunk;return new Promise(()=>{});}}),cancel=other.speak(text);await tick();cancel.cancel();late({audio:wav().buffer});await tick();assert.equal(f.sources.length,0);other.dispose();
+});
+test('non-default rate preserves native pitch handling; lookahead is queued until current generation finishes',async()=>{
+ const e=env(),calls=[],finish=[];const s=createStreamingLocalSpeaker({...e,request:(t,o)=>{calls.push(t);return new Promise(r=>finish.push(r));}}),job=s.speak('A');job.setRate(1.2);s.prepare('B');await tick();assert.deepEqual(calls,['A']);finish[0](new Blob([wav()]));await tick();await tick();assert.deepEqual(calls,['A','B']);assert.equal(e.sources.length,0);assert.equal(e.audios.length,1);assert.equal(e.audios[0].playbackRate,1.2);s.dispose();
+});
+test('final response cannot end speech while another packet is decoding or end it twice',async()=>{
+ const e=env();let emit,complete,release,decodes=0,ended=0;const Base=e.windowRef.AudioContext;
+ e.windowRef.AudioContext=class extends Base{decodeAudioData(){decodes++;return decodes===2?new Promise(r=>release=()=>r({duration:1})):Promise.resolve({duration:1});}};
+ const s=createStreamingLocalSpeaker({...e,request:async(t,o)=>{emit=o.onChunk;return new Promise(r=>complete=r);}});s.speak('A',{onend:()=>ended++});await tick();emit({audio:wav().buffer});emit({audio:wav().buffer});await tick();complete(new Blob([wav(48)]));await tick();e.sources[0].onended();assert.equal(ended,0);release();await tick();assert.equal(e.sources.length,2);e.sources[1].onended();assert.equal(ended,1);await tick();assert.equal(ended,1);s.dispose();
+});
+test('a pre-stream capability loss recovers via complete speech and refreshes without another pairing',async()=>{
+ const paths=[],win=new EventTarget();win.AudioContext=class{};win.Audio=class{};const identity={accountId:'owner-A'};
+ const client=localVoiceClient({windowRef:win,readIdentity:()=>identity,fetchResource:async(url,init)=>{const p=new URL(url).pathname;paths.push(p);if(p==='/pair')return Response.json({paired:true,token:'Q'.repeat(43),voice:{voiceURI:'uyut7:narrator'}});if(p==='/ready')return Response.json({paired:true,streaming:true,voice:{voiceURI:'uyut7:narrator'}});if(p==='/speech-stream')return Response.json({code:'SPEECH_STREAM_UNAVAILABLE'},{status:409});if(p==='/speech')return new Response(wav(),{headers:{'content-type':'audio/wav'}});return Response.json({unpaired:true});}});
+ await client.pair('12345678');const s=client.speaker();await s.prepare('A').promise;await s.prepare('B').promise;assert.equal(paths.filter(p=>p==='/pair').length,1);assert.equal(paths.filter(p=>p==='/speech').length,2);assert.equal(paths.filter(p=>p==='/ready').length,2);client.dispose();
+});

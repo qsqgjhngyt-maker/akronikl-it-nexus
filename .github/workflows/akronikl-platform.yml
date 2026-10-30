@@ -1,0 +1,83 @@
+name: Akronikl — общеплатформенные команды, без публикации
+on:
+  push:
+    branches: [feature/akronikl-platform-guide-20261027]
+    paths:
+      - '.github/workflows/akronikl-platform.yml'
+      - 'akronikl/**'
+      - 'core/app.js'
+      - 'core/bootstrap.js'
+      - 'pwa/offline-entry.js'
+      - 'tests/akronikl-*'
+      - 'tests/helpers/akronikl-*'
+      - 'tools/build-akronikl-knowledge.mjs'
+permissions:
+  contents: read
+concurrency:
+  group: akronikl-platform-feature
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXUS_SOURCE_COMMIT: ${{ github.sha }}
+      NEXUS_FRONTEND_DIR: /tmp/akp1-build
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+      NEXUS_CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Точный source и адресная регрессия
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence-akp1
+          git rev-parse HEAD > evidence-akp1/SOURCE_COMMIT.txt
+          git archive --format=zip HEAD > evidence-akp1/source.zip
+          (cd evidence-akp1 && sha256sum source.zip > SOURCE_SHA256.txt)
+          node --test tests/akronikl-core.test.mjs tests/akronikl-knowledge.test.mjs tests/akronikl-security.test.mjs tests/akronikl-ui.test.mjs tests/akronikl-ui-lifecycle.test.mjs tests/akronikl-ui-readiness.test.mjs tests/akronikl-account-boundary.test.mjs tests/akronikl-platform.test.mjs tests/akronikl-focus-cycle.test.mjs | tee evidence-akp1/core-ui.tap
+          node --test tests/platform-startup-load.test.mjs tests/platform-startup-views.test.mjs tests/platform-lazy-imports.test.mjs | tee evidence-akp1/startup.tap
+          node tests/auth-bootstrap-check.mjs | tee evidence-akp1/bootstrap.txt
+          node tests/account-storage-isolation-check.mjs | tee evidence-akp1/account.txt
+          node tests/module-import-smoke-check.mjs | tee evidence-akp1/imports.txt
+          node tools/build-akronikl-knowledge.mjs --check | tee evidence-akp1/knowledge.json
+      - name: Изолированная сборка и закреплённые зависимости
+        id: build
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: evidence-akp1/build
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --prefix server-access --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tools/qa-browser-driver --ignore-scripts --no-audit --no-fund
+          test -x /usr/bin/google-chrome
+          VERSION=$(node -p "JSON.parse(require('fs').readFileSync('version.json')).version")
+          node tools/build-ui1a-release.mjs --out "$NEXUS_FRONTEND_DIR" --generation ui1a-akp1-20261027 --version "$VERSION"
+          node tools/check-akronikl-built-candidate.mjs
+          cp "$NEXUS_FRONTEND_DIR/BUILD_MANIFEST.json" evidence-akp1/build/
+      - name: Клавиатура, команды, контекст и компонент UI
+        if: always() && steps.build.outcome == 'success'
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: evidence-akp1/component
+        run: node tests/akronikl-component-browser-check.mjs
+      - name: Настоящее приложение, серверная проверка виртуального ключа и личная копия
+        if: always() && steps.build.outcome == 'success'
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: evidence-akp1/authorized
+        run: node tests/akronikl-authorized-browser-check.mjs
+      - name: Настоящий SW и холодный публичный офлайн
+        if: always() && steps.build.outcome == 'success'
+        env:
+          NEXUS_AKRONIKL_EVIDENCE: evidence-akp1/offline
+        run: node tests/akronikl-built-offline-browser-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akronikl-platform-evidence
+          path: evidence-akp1
+          retention-days: 30

@@ -1,3 +1,4 @@
+import {staticMime} from '../pwa/static-mime.js';
 import{bindIntroTransport}from'./helpers/intro-transport.mjs';
 import{createStudioService}from'../studio-build/service.mjs';
 // Настоящий bootstrap/app/SW/Worker на canonical origin, физически только loopback.
@@ -14,14 +15,15 @@ export async function module6ApplicationFixture({chromiumArgs=[]}={}){
  const account={account:{accountId:'synthetic-runtime-online',displayName:'Synthetic Runtime',status:'active'},loginMethods:[{id:'synthetic-key',kind:'passkey',status:'active',createdAt:'2026-10-24T00:00:00Z',disabledAt:null}],enrollmentAvailable:false};
  const previewOrigin='https://nexus-cpp-preview.invalid';const requests=[],errors=[],workerEvents=[];const actorFor=req=>req.headers['x-nexus-qa-actor']==='synthetic-teacher'?'synthetic-teacher':'synthetic-runtime-online';
  const studio=await createStudioService({root:process.env.NEXUS_STUDIO_TEST_STORE,image:process.env.NEXUS_QT_IMAGE,allowedOrigin:GATEWAY_ORIGIN,previewOrigin,authenticate:async req=>({accountId:actorFor(req),status:'active',displayName:'SYNTHETIC '+actorFor(req)}),ready:async()=>true,reviewerAssignments:{'synthetic-teacher':['cpp.taskflow-capstone.v1']}});
- const mime=f=>({'.js':'text/javascript','.json':'application/json','.css':'text/css','.webmanifest':'application/manifest+json','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.md':'text/markdown'}[path.extname(f)]||'text/html');
+ const mime=staticMime;
  const tls={key:await readFile(path.join(cache,'qa-key.pem')),cert:await readFile(path.join(cache,'qa-cert.pem'))};const previewServer=https.createServer(tls,(req,res)=>void studio.previewHandler(req,res));await new Promise(resolve=>previewServer.listen(0,'127.0.0.1',resolve));
  const server=https.createServer(tls,async(req,res)=>{
   requests.push({path:new URL(req.url,GATEWAY_ORIGIN).pathname,method:req.method});
   try{const actor=actorFor(req),u=new URL(req.url,GATEWAY_ORIGIN);if(await studio.handler(req,res))return;if(req.method!=='GET'){res.writeHead(403);return res.end('SYNTHETIC_WRITE_DENIED');}
    if(u.pathname==='/favicon.ico'){res.writeHead(204);return res.end();}
    if(u.pathname.startsWith('/api/')){let dto,status=200;
-    if(u.pathname==='/api/v2/account')dto={...account,account:{...account.account,accountId:actor,displayName:'SYNTHETIC '+actor}};
+    if(u.pathname==='/api/akronikl/cloud/preferences')dto={revision:0,value:null};
+    else if(u.pathname==='/api/v2/account')dto={...account,account:{...account.account,accountId:actor,displayName:'SYNTHETIC '+actor}};
     else if(u.pathname==='/api/v2/account/profile')dto={...account.account,accountId:actor,displayName:'SYNTHETIC '+actor,username:null,avatar:null,avatarVersion:0};
     else if(u.pathname==='/api/v2/account/control/capabilities')dto={canManage:false,canModerate:false,canPurge:false,freshPasskey:false};
     else if(u.pathname==='/api/v2/content/feed')dto={posts:[],home:{}};

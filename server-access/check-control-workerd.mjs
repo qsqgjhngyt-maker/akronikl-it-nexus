@@ -29,7 +29,7 @@ async function passkey(op,input={},flowHash='c'.repeat(64)){
 try{
  db=await mf.getD1Database('DB');
  const migrations=['0001_sync_team_foundation','0002_nexus_account_tokens','0003_d1_only_project_snapshots','0004_identity_v2_session_foundation'].map(n=>'../cloudflare/nexus-sync-worker/migrations/'+n+'.sql');
- migrations.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content','0015_blog_media'].map(n=>'migrations/'+n+'.sql'));
+ migrations.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content','0015_blog_media','0020_individual_trial_access'].map(n=>'migrations/'+n+'.sql'));
  await check('actual D1 applies all additive candidate migrations locally',async()=>{
   // D1Database.exec splits on newlines; preserve SQL statements/triggers in one source-only line.
   for(const name of migrations){

@@ -1,3 +1,4 @@
+import {alphaAccess} from './alpha-admission.mjs';
 const VERSION = '0.1.7-alpha.2.4.5-first-party-cookie-foundation';
 const MAX_SNAPSHOT_BYTES = 1500000;
 const SESSION_IDLE_MINUTES = 60;
@@ -444,7 +445,7 @@ async function authenticateSessionBearer(rawToken, env) {
     .bind(tokenHash, stamp)
     .first();
 
-  if (!row) {
+  if (!row || !await alphaAccess(env,row.subject_id)) {
     throw new ApiError(
       401,
       'INVALID_SESSION',
@@ -623,7 +624,7 @@ async function authenticate(request, env) {
       .bind(tokenHash)
       .first();
 
-    if (!row) {
+    if (!row || !await alphaAccess(env,row.subject_id)) {
       throw new ApiError(
         401,
         'INVALID_TOKEN',

@@ -445,7 +445,7 @@ function __addDisposableResource(env, value, async) {
   return value;
 }
 function __disposeResources(env) {
-  function fail6(e) {
+  function fail7(e) {
     env.error = env.hasError ? new _SuppressedError(e, env.error, "An error was suppressed during disposal.") : e;
     env.hasError = true;
   }
@@ -457,12 +457,12 @@ function __disposeResources(env) {
         if (r.dispose) {
           var result = r.dispose.call(r.value);
           if (r.async) return s |= 2, Promise.resolve(result).then(next, function(e) {
-            fail6(e);
+            fail7(e);
             return next();
           });
         } else s |= 1;
       } catch (e) {
-        fail6(e);
+        fail7(e);
       }
     }
     if (s === 1) return env.hasError ? Promise.reject(env.error) : Promise.resolve();
@@ -2881,8 +2881,8 @@ ${values.join("\n")}` : `${blockName} :`;
         assertBigInt();
         const bigIntValue = BigInt(value);
         const writer = new ViewWriter();
-        const hex3 = bigIntValue.toString(16).replace(/^-/, "");
-        const view = new Uint8Array(pvtsutils__namespace.Convert.FromHex(hex3));
+        const hex4 = bigIntValue.toString(16).replace(/^-/, "");
+        const view = new Uint8Array(pvtsutils__namespace.Convert.FromHex(hex4));
         if (bigIntValue < 0) {
           const first4 = new Uint8Array(view.length + (view[0] & 128 ? 1 : 0));
           first4[0] |= 128;
@@ -9516,15 +9516,15 @@ var require_Reflect = __commonJS({
             throw new TypeError();
           if (!IsUndefined(propertyKey))
             propertyKey = ToPropertyKey(propertyKey);
-          var provider = GetMetadataProvider(
+          var provider2 = GetMetadataProvider(
             target2,
             propertyKey,
             /*Create*/
             false
           );
-          if (IsUndefined(provider))
+          if (IsUndefined(provider2))
             return false;
-          return provider.OrdinaryDeleteMetadata(metadataKey, target2, propertyKey);
+          return provider2.OrdinaryDeleteMetadata(metadataKey, target2, propertyKey);
         }
         exporter("deleteMetadata", deleteMetadata);
         function DecorateConstructor(decorators, target2) {
@@ -9561,15 +9561,15 @@ var require_Reflect = __commonJS({
           return false;
         }
         function OrdinaryHasOwnMetadata(MetadataKey, O, P) {
-          var provider = GetMetadataProvider(
+          var provider2 = GetMetadataProvider(
             O,
             P,
             /*Create*/
             false
           );
-          if (IsUndefined(provider))
+          if (IsUndefined(provider2))
             return false;
-          return ToBoolean(provider.OrdinaryHasOwnMetadata(MetadataKey, O, P));
+          return ToBoolean(provider2.OrdinaryHasOwnMetadata(MetadataKey, O, P));
         }
         function OrdinaryGetMetadata(MetadataKey, O, P) {
           var hasOwn2 = OrdinaryHasOwnMetadata(MetadataKey, O, P);
@@ -9581,24 +9581,24 @@ var require_Reflect = __commonJS({
           return void 0;
         }
         function OrdinaryGetOwnMetadata(MetadataKey, O, P) {
-          var provider = GetMetadataProvider(
+          var provider2 = GetMetadataProvider(
             O,
             P,
             /*Create*/
             false
           );
-          if (IsUndefined(provider))
+          if (IsUndefined(provider2))
             return;
-          return provider.OrdinaryGetOwnMetadata(MetadataKey, O, P);
+          return provider2.OrdinaryGetOwnMetadata(MetadataKey, O, P);
         }
         function OrdinaryDefineOwnMetadata(MetadataKey, MetadataValue, O, P) {
-          var provider = GetMetadataProvider(
+          var provider2 = GetMetadataProvider(
             O,
             P,
             /*Create*/
             true
           );
-          provider.OrdinaryDefineOwnMetadata(MetadataKey, MetadataValue, O, P);
+          provider2.OrdinaryDefineOwnMetadata(MetadataKey, MetadataValue, O, P);
         }
         function OrdinaryMetadataKeys(O, P) {
           var ownKeys2 = OrdinaryOwnMetadataKeys(O, P);
@@ -9631,16 +9631,16 @@ var require_Reflect = __commonJS({
           return keys2;
         }
         function OrdinaryOwnMetadataKeys(O, P) {
-          var provider = GetMetadataProvider(
+          var provider2 = GetMetadataProvider(
             O,
             P,
             /*create*/
             false
           );
-          if (!provider) {
+          if (!provider2) {
             return [];
           }
-          return provider.OrdinaryOwnMetadataKeys(O, P);
+          return provider2.OrdinaryOwnMetadataKeys(O, P);
         }
         function Type(x) {
           if (x === null)
@@ -9828,27 +9828,27 @@ var require_Reflect = __commonJS({
             setProvider
           };
           return registry;
-          function registerProvider(provider) {
+          function registerProvider(provider2) {
             if (!Object.isExtensible(registry)) {
               throw new Error("Cannot add provider to a frozen registry.");
             }
             switch (true) {
-              case fallback === provider:
+              case fallback === provider2:
                 break;
               case IsUndefined(first4):
-                first4 = provider;
+                first4 = provider2;
                 break;
-              case first4 === provider:
+              case first4 === provider2:
                 break;
               case IsUndefined(second):
-                second = provider;
+                second = provider2;
                 break;
-              case second === provider:
+              case second === provider2:
                 break;
               default:
                 if (rest === void 0)
                   rest = new _Set();
-                rest.add(provider);
+                rest.add(provider2);
                 break;
             }
           }
@@ -9866,10 +9866,10 @@ var require_Reflect = __commonJS({
                     if (!next) {
                       return void 0;
                     }
-                    var provider = IteratorValue(next);
-                    if (provider.isProviderFor(O, P)) {
+                    var provider2 = IteratorValue(next);
+                    if (provider2.isProviderFor(O, P)) {
                       IteratorClose(iterator);
-                      return provider;
+                      return provider2;
                     }
                   }
                 }
@@ -9882,34 +9882,34 @@ var require_Reflect = __commonJS({
           }
           function getProvider(O, P) {
             var providerMap = targetProviderMap.get(O);
-            var provider;
+            var provider2;
             if (!IsUndefined(providerMap)) {
-              provider = providerMap.get(P);
+              provider2 = providerMap.get(P);
             }
-            if (!IsUndefined(provider)) {
-              return provider;
+            if (!IsUndefined(provider2)) {
+              return provider2;
             }
-            provider = getProviderNoCache(O, P);
-            if (!IsUndefined(provider)) {
+            provider2 = getProviderNoCache(O, P);
+            if (!IsUndefined(provider2)) {
               if (IsUndefined(providerMap)) {
                 providerMap = new _Map();
                 targetProviderMap.set(O, providerMap);
               }
-              providerMap.set(P, provider);
+              providerMap.set(P, provider2);
             }
-            return provider;
+            return provider2;
           }
-          function hasProvider(provider) {
-            if (IsUndefined(provider))
+          function hasProvider(provider2) {
+            if (IsUndefined(provider2))
               throw new TypeError();
-            return first4 === provider || second === provider || !IsUndefined(rest) && rest.has(provider);
+            return first4 === provider2 || second === provider2 || !IsUndefined(rest) && rest.has(provider2);
           }
-          function setProvider(O, P, provider) {
-            if (!hasProvider(provider)) {
+          function setProvider(O, P, provider2) {
+            if (!hasProvider(provider2)) {
               throw new Error("Metadata provider not registered.");
             }
             var existingProvider = getProvider(O, P);
-            if (existingProvider !== provider) {
+            if (existingProvider !== provider2) {
               if (!IsUndefined(existingProvider)) {
                 return false;
               }
@@ -9918,7 +9918,7 @@ var require_Reflect = __commonJS({
                 providerMap = new _Map();
                 targetProviderMap.set(O, providerMap);
               }
-              providerMap.set(P, provider);
+              providerMap.set(P, provider2);
             }
             return true;
           }
@@ -9943,7 +9943,7 @@ var require_Reflect = __commonJS({
         }
         function CreateMetadataProvider(registry) {
           var metadata2 = new _WeakMap();
-          var provider = {
+          var provider2 = {
             isProviderFor: function(O, P) {
               var targetMetadata = metadata2.get(O);
               if (IsUndefined(targetMetadata))
@@ -9956,8 +9956,8 @@ var require_Reflect = __commonJS({
             OrdinaryOwnMetadataKeys: OrdinaryOwnMetadataKeys2,
             OrdinaryDeleteMetadata
           };
-          metadataRegistry.registerProvider(provider);
-          return provider;
+          metadataRegistry.registerProvider(provider2);
+          return provider2;
           function GetOrCreateMetadataMap(O, P, Create) {
             var targetMetadata = metadata2.get(O);
             var createdTargetMetadata = false;
@@ -9974,7 +9974,7 @@ var require_Reflect = __commonJS({
                 return void 0;
               metadataMap = new _Map();
               targetMetadata.set(P, metadataMap);
-              if (!registry.setProvider(O, P, provider)) {
+              if (!registry.setProvider(O, P, provider2)) {
                 targetMetadata.delete(P);
                 if (createdTargetMetadata) {
                   metadata2.delete(O);
@@ -10073,7 +10073,7 @@ var require_Reflect = __commonJS({
         function CreateFallbackProvider(reflect) {
           var defineMetadata2 = reflect.defineMetadata, hasOwnMetadata2 = reflect.hasOwnMetadata, getOwnMetadata2 = reflect.getOwnMetadata, getOwnMetadataKeys2 = reflect.getOwnMetadataKeys, deleteMetadata2 = reflect.deleteMetadata;
           var metadataOwner = new _WeakMap();
-          var provider = {
+          var provider2 = {
             isProviderFor: function(O, P) {
               var metadataPropertySet = metadataOwner.get(O);
               if (!IsUndefined(metadataPropertySet) && metadataPropertySet.has(P)) {
@@ -10095,7 +10095,7 @@ var require_Reflect = __commonJS({
             OrdinaryOwnMetadataKeys: getOwnMetadataKeys2,
             OrdinaryDeleteMetadata: deleteMetadata2
           };
-          return provider;
+          return provider2;
         }
         function GetMetadataProvider(O, P, Create) {
           var registeredProvider = metadataRegistry.getProvider(O, P);
@@ -13566,8 +13566,8 @@ var require_class_provider = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isClassProvider = void 0;
-    function isClassProvider(provider) {
-      return !!provider.useClass;
+    function isClassProvider(provider2) {
+      return !!provider2.useClass;
     }
     exports.isClassProvider = isClassProvider;
   }
@@ -13579,8 +13579,8 @@ var require_factory_provider = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isFactoryProvider = void 0;
-    function isFactoryProvider(provider) {
-      return !!provider.useFactory;
+    function isFactoryProvider(provider2) {
+      return !!provider2.useFactory;
     }
     exports.isFactoryProvider = isFactoryProvider;
   }
@@ -13678,8 +13678,8 @@ var require_token_provider = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isTokenProvider = void 0;
-    function isTokenProvider(provider) {
-      return !!provider.useToken;
+    function isTokenProvider(provider2) {
+      return !!provider2.useToken;
     }
     exports.isTokenProvider = isTokenProvider;
   }
@@ -13691,8 +13691,8 @@ var require_value_provider = __commonJS({
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.isValueProvider = void 0;
-    function isValueProvider(provider) {
-      return provider.useValue != void 0;
+    function isValueProvider(provider2) {
+      return provider2.useValue != void 0;
     }
     exports.isValueProvider = isValueProvider;
   }
@@ -13736,8 +13736,8 @@ var require_provider = __commonJS({
     var value_provider_1 = require_value_provider();
     var token_provider_1 = require_token_provider();
     var factory_provider_1 = require_factory_provider();
-    function isProvider(provider) {
-      return class_provider_1.isClassProvider(provider) || value_provider_1.isValueProvider(provider) || token_provider_1.isTokenProvider(provider) || factory_provider_1.isFactoryProvider(provider);
+    function isProvider(provider2) {
+      return class_provider_1.isClassProvider(provider2) || value_provider_1.isValueProvider(provider2) || token_provider_1.isTokenProvider(provider2) || factory_provider_1.isFactoryProvider(provider2);
     }
     exports.isProvider = isProvider;
   }
@@ -13909,15 +13909,15 @@ var require_dependency_container = __commonJS({
       }
       register(token, providerOrConstructor, options = { lifecycle: lifecycle_1.default.Transient }) {
         this.ensureNotDisposed();
-        let provider;
+        let provider2;
         if (!provider_1.isProvider(providerOrConstructor)) {
-          provider = { useClass: providerOrConstructor };
+          provider2 = { useClass: providerOrConstructor };
         } else {
-          provider = providerOrConstructor;
+          provider2 = providerOrConstructor;
         }
-        if (providers_1.isTokenProvider(provider)) {
+        if (providers_1.isTokenProvider(provider2)) {
           const path = [token];
-          let tokenProvider = provider;
+          let tokenProvider = provider2;
           while (tokenProvider != null) {
             const currentToken = tokenProvider.useToken;
             if (path.includes(currentToken)) {
@@ -13933,11 +13933,11 @@ var require_dependency_container = __commonJS({
           }
         }
         if (options.lifecycle === lifecycle_1.default.Singleton || options.lifecycle == lifecycle_1.default.ContainerScoped || options.lifecycle == lifecycle_1.default.ResolutionScoped) {
-          if (providers_1.isValueProvider(provider) || providers_1.isFactoryProvider(provider)) {
+          if (providers_1.isValueProvider(provider2) || providers_1.isFactoryProvider(provider2)) {
             throw new Error(`Cannot use lifecycle "${lifecycle_1.default[options.lifecycle]}" with ValueProviders or FactoryProviders`);
           }
         }
-        this._registry.set(token, { provider, options });
+        this._registry.set(token, { provider: provider2, options });
         return this;
       }
       registerType(from, to) {
@@ -14292,8 +14292,8 @@ var require_registry3 = __commonJS({
     function registry(registrations = []) {
       return function(target2) {
         registrations.forEach((_a) => {
-          var { token, options } = _a, provider = tslib_1.__rest(_a, ["token", "options"]);
-          return dependency_container_1.instance.register(token, provider, options);
+          var { token, options } = _a, provider2 = tslib_1.__rest(_a, ["token", "options"]);
+          return dependency_container_1.instance.register(token, provider2, options);
         });
         return target2;
       };
@@ -15560,8 +15560,8 @@ var require_x509_cjs = __commonJS({
         switch (alg.name.toLowerCase()) {
           case ECDSA.toLowerCase():
             if ("hash" in alg) {
-              const hash4 = typeof alg.hash === "string" ? alg.hash : alg.hash.name;
-              switch (hash4.toLowerCase()) {
+              const hash5 = typeof alg.hash === "string" ? alg.hash : alg.hash.name;
+              switch (hash5.toLowerCase()) {
                 case "sha-1":
                   return asn1Ecc__namespace.ecdsaWithSHA1;
                 case "sha-256":
@@ -15899,8 +15899,8 @@ var require_x509_cjs = __commonJS({
             if (j2 === 8) {
               row.push("");
             }
-            const hex3 = view[i++].toString(16).padStart(2, "0");
-            row.push(hex3);
+            const hex4 = view[i++].toString(16).padStart(2, "0");
+            row.push(hex4);
           }
           res.push(`${pad}${row.join(" ")}`);
         }
@@ -16324,7 +16324,7 @@ var require_x509_cjs = __commonJS({
               if (!matches) {
                 throw new Error("Cannot parse GUID value. Value doesn't match to regular expression");
               }
-              const hex3 = matches.slice(1).map((o, i) => {
+              const hex4 = matches.slice(1).map((o, i) => {
                 if (i < 3) {
                   return pvtsutils.Convert.ToHex(new Uint8Array(pvtsutils.Convert.FromHex(o)).reverse());
                 }
@@ -16333,7 +16333,7 @@ var require_x509_cjs = __commonJS({
               name = new asn1X509__namespace.GeneralName({
                 otherName: new asn1X509__namespace.OtherName({
                   typeId: id_GUID,
-                  value: asn1Schema.AsnConvert.serialize(new asn1Schema.OctetString(pvtsutils.Convert.FromHex(hex3)))
+                  value: asn1Schema.AsnConvert.serialize(new asn1Schema.OctetString(pvtsutils.Convert.FromHex(hex4)))
                 })
               });
               break;
@@ -17308,8 +17308,8 @@ var require_x509_cjs = __commonJS({
     };
     var RsaAlgorithm_1;
     exports.RsaAlgorithm = RsaAlgorithm_1 = class RsaAlgorithm {
-      static createPssParams(hash4, saltLength) {
-        const hashAlgorithm = RsaAlgorithm_1.getHashAlgorithm(hash4);
+      static createPssParams(hash5, saltLength) {
+        const hashAlgorithm = RsaAlgorithm_1.getHashAlgorithm(hash5);
         if (!hashAlgorithm) {
           return null;
         }
@@ -17336,15 +17336,15 @@ var require_x509_cjs = __commonJS({
         switch (alg.name.toLowerCase()) {
           case "rsassa-pkcs1-v1_5":
             if ("hash" in alg) {
-              let hash4;
+              let hash5;
               if (typeof alg.hash === "string") {
-                hash4 = alg.hash;
+                hash5 = alg.hash;
               } else if (alg.hash && typeof alg.hash === "object" && "name" in alg.hash && typeof alg.hash.name === "string") {
-                hash4 = alg.hash.name.toUpperCase();
+                hash5 = alg.hash.name.toUpperCase();
               } else {
                 throw new Error("Cannot get hash algorithm name");
               }
-              switch (hash4.toLowerCase()) {
+              switch (hash5.toLowerCase()) {
                 case "sha-1":
                   return new asn1X509.AlgorithmIdentifier({
                     algorithm: asn1Rsa__namespace.id_sha1WithRSAEncryption,
@@ -19421,6 +19421,56 @@ var require_cjs13 = __commonJS({
   }
 });
 
+// server-access/worker/alpha-admission.mjs
+var query = (db, sql2, ...args) => db.prepare(sql2).bind(...args);
+var AlphaError = class extends Error {
+  constructor(code, status = 403) {
+    super(code);
+    this.code = code;
+    this.status = status;
+  }
+};
+var validUsername = (value) => typeof value === "string" && /^[a-z][a-z0-9._-]{2,31}$/.test(value) && !(/* @__PURE__ */ new Set(["admin", "administrator", "root", "owner", "system", "support", "nexus", "api", "security", "login"])).has(value);
+var validDisplayName = (value) => typeof value === "string" && value === value.trim() && value.length >= 1 && value.length <= 80 && !/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/.test(value);
+async function alphaSettings(env) {
+  if (env.ALPHA_ADMISSION_ENABLED !== "true") return null;
+  try {
+    const settings = await query(env.DB, "SELECT * FROM nexus_alpha_settings WHERE id=1").first();
+    if (!settings || settings.enforced !== 1) throw new Error();
+    return settings;
+  } catch {
+    throw new AlphaError("ALPHA_CONTROL_UNAVAILABLE", 503);
+  }
+}
+async function alphaAccess(env, accountId2) {
+  const settings = await alphaSettings(env);
+  if (!settings) return true;
+  if (await query(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", accountId2).first()) return true;
+  return !!await query(env.DB, "SELECT 1 ok FROM nexus_alpha_members WHERE account_id=?1 AND state='active' AND (access_expires_at IS NULL OR access_expires_at>?2)", accountId2, (/* @__PURE__ */ new Date()).toISOString()).first();
+}
+async function oauthAdmissionCommands(env, accountId2, stamp3) {
+  const settings = await alphaSettings(env);
+  if (!settings) return [];
+  if (await query(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", accountId2).first()) return [];
+  const member = await query(env.DB, "SELECT state FROM nexus_alpha_members WHERE account_id=?1", accountId2).first();
+  if (member) {
+    if (member.state !== "active" || !await alphaAccess(env, accountId2)) throw new AlphaError("ALPHA_ACCESS_CLOSED");
+    return [];
+  }
+  if (settings.registration_mode !== "open") throw new AlphaError("ALPHA_INVITATION_REQUIRED");
+  const occupied = await query(env.DB, "SELECT count(*) n FROM nexus_alpha_occupied").first();
+  if (settings.limit_enabled === 1 && occupied.n >= settings.max_testers) throw new AlphaError("ALPHA_CAPACITY_REACHED", 409);
+  return [query(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,created_at,updated_at) SELECT ?1,'active',?2,?2 WHERE (SELECT registration_mode FROM nexus_alpha_settings WHERE id=1)='open' AND (SELECT version FROM nexus_alpha_settings WHERE id=1)=?3", accountId2, stamp3, settings.version)];
+}
+async function managedInvitation(env, tokenHash) {
+  if (env.ALPHA_ADMISSION_ENABLED !== "true") return null;
+  const settings = await alphaSettings(env);
+  const row = await query(env.DB, "SELECT i.*,p.expires_at,p.consumed_at,m.state AS member_state FROM nexus_admin_invites i JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash JOIN nexus_alpha_members m ON m.account_id=i.account_id WHERE i.token_hash=?1", tokenHash).first();
+  if (!row || row.state !== "ready" || row.member_state !== "invited" || row.consumed_at || row.expires_at <= (/* @__PURE__ */ new Date()).toISOString()) throw new AlphaError("ENROLLMENT_REQUIRED");
+  if (row.kind === "public" && (env.PUBLIC_PASSKEY_REGISTRATION_ENABLED !== "true" || settings.registration_mode !== "open")) throw new AlphaError("REGISTRATION_CLOSED");
+  return row;
+}
+
 // server-access/worker/legacy-sync.js
 var VERSION = "0.1.7-alpha.2.4.5-first-party-cookie-foundation";
 var MAX_SNAPSHOT_BYTES = 15e5;
@@ -19754,7 +19804,7 @@ async function authenticateSessionBearer(rawToken, env) {
         AND x.absolute_expires_at > ?2
       LIMIT 1
     `).bind(tokenHash, stamp3).first();
-  if (!row) {
+  if (!row || !await alphaAccess(env, row.subject_id)) {
     throw new ApiError(
       401,
       "INVALID_SESSION",
@@ -19888,7 +19938,7 @@ async function authenticate(request, env) {
           AND s.status = 'active'
         LIMIT 1
       `).bind(tokenHash).first();
-    if (!row) {
+    if (!row || !await alphaAccess(env, row.subject_id)) {
       throw new ApiError(
         401,
         "INVALID_TOKEN",
@@ -21028,7 +21078,7 @@ async function putProject(env, actor, projectId, payload) {
     existing.current_revision
   ) : 0) + 1;
   const stamp3 = now();
-  const hash4 = await sha256(serialized);
+  const hash5 = await sha256(serialized);
   const locator = `d1:${projectId}:${revision}`;
   const statements = [];
   if (!existing) {
@@ -21074,7 +21124,7 @@ async function putProject(env, actor, projectId, payload) {
         ),
         revision,
         locator,
-        hash4,
+        hash5,
         stamp3,
         stamp3
       ),
@@ -21122,7 +21172,7 @@ async function putProject(env, actor, projectId, payload) {
         ),
         revision,
         locator,
-        hash4,
+        hash5,
         stamp3,
         projectId,
         workspaceId
@@ -21153,7 +21203,7 @@ async function putProject(env, actor, projectId, payload) {
       projectId,
       revision,
       serialized,
-      hash4,
+      hash5,
       sizeBytes,
       actor.subjectId,
       stamp3
@@ -21179,7 +21229,7 @@ async function putProject(env, actor, projectId, payload) {
       projectId,
       revision,
       locator,
-      hash4,
+      hash5,
       actor.subjectId,
       stamp3
     ),
@@ -21196,7 +21246,7 @@ async function putProject(env, actor, projectId, payload) {
         revisionAfter: revision,
         metadata: {
           storage: "d1",
-          hash: hash4,
+          hash: hash5,
           sizeBytes,
           changedFiles: fileChanges,
           changeCount: fileChanges.length
@@ -21211,7 +21261,7 @@ async function putProject(env, actor, projectId, payload) {
     ok: true,
     projectId,
     revision,
-    hash: hash4,
+    hash: hash5,
     sizeBytes,
     storage: "d1-only",
     updatedAt: stamp3
@@ -21559,68 +21609,60 @@ import { Buffer as Buffer6 } from "node:buffer";
 // server-access/worker/admin-service.mjs
 import { Buffer as Buffer5 } from "node:buffer";
 
-// server-access/worker/alpha-admission.mjs
-var query = (db, sql2, ...args) => db.prepare(sql2).bind(...args);
-var AlphaError = class extends Error {
-  constructor(code, status = 403) {
-    super(code);
-    this.code = code;
-    this.status = status;
+// server-access/worker/self-delete.mjs
+var BASE = "/api/v2/account/control/";
+var SQL_NOW = "strftime('%Y-%m-%dT%H:%M:%fZ','now')";
+var SELF_SESSION_SQL = `EXISTS(SELECT 1 FROM account_sessions s
+ JOIN account_subjects a ON a.id=s.subject_id AND a.status='active'
+ JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active'
+ JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id
+ JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active'
+ WHERE s.id=?7 AND s.subject_id=?3 AND s.status='active' AND s.revoked_at IS NULL
+ AND s.auth_strength='account-method-v1' AND s.idle_expires_at>${SQL_NOW} AND s.absolute_expires_at>${SQL_NOW}
+ AND julianday(s.created_at)<=julianday('now') AND julianday(s.created_at)>julianday('now','-5 minutes')
+ AND ((lm.kind='passkey' AND EXISTS(SELECT 1 FROM nexus_passkey_credentials k WHERE k.account_id=a.id AND k.login_method_id=lm.id))
+ OR (lm.kind='oauth' AND EXISTS(SELECT 1 FROM oauth_identities oi JOIN nexus_oauth_receipts r
+ ON r.account_id=oi.account_id AND r.login_method_id=oi.login_method_id AND r.provider=oi.provider
+ AND r.issuer=oi.issuer AND r.provider_subject=oi.provider_subject
+ WHERE oi.account_id=a.id AND oi.login_method_id=lm.id AND r.session_id=s.id AND r.device_id=d.id))))`;
+async function selfDeleteOperation(env, value) {
+  const { actor, method, payload } = value, path = value.path;
+  if (!(path === BASE + "self-delete-capabilities" && method === "GET" || [BASE + "self-delete-preview", BASE + "self-delete"].includes(path) && method === "POST")) deny("NOT_FOUND", 404);
+  if (env.ACCOUNT_SELF_DELETE_ENABLED !== "true") deny("SELF_DELETE_UNAVAILABLE", 503);
+  const protectedAccount = !!await first(env.DB, "SELECT 1 FROM nexus_admin_grants WHERE account_id=?1", actor.account_id);
+  const member = await first(env.DB, "SELECT version FROM nexus_alpha_members WHERE account_id=?1 AND state='active'", actor.account_id);
+  const freshLogin = !!await first(env.DB, "SELECT 1 ok WHERE " + SELF_SESSION_SQL.replaceAll("?7", "?2").replaceAll("?3", "?1"), actor.account_id, actor.session_id);
+  if (path === BASE + "self-delete-capabilities" && method === "GET") {
+    const hasPasskey = !!await first(env.DB, "SELECT 1 FROM nexus_passkey_credentials k JOIN login_methods lm ON lm.id=k.login_method_id AND lm.account_id=k.account_id AND lm.status='active' WHERE k.account_id=?1", actor.account_id);
+    const providers = await rows(query2(env.DB, "SELECT DISTINCT oi.provider FROM oauth_identities oi JOIN login_methods lm ON lm.id=oi.login_method_id AND lm.account_id=oi.account_id AND lm.status='active' WHERE oi.account_id=?1 AND oi.provider IN('google','yandex','vk') ORDER BY oi.provider", actor.account_id));
+    return { accountId: actor.account_id, canDelete: !!member && !protectedAccount, protected: protectedAccount, freshLogin, version: member?.version || 0, hasPasskey, providers: providers.map((p) => p.provider) };
   }
-};
-var validUsername = (value) => typeof value === "string" && /^[a-z][a-z0-9._-]{2,31}$/.test(value) && !(/* @__PURE__ */ new Set(["admin", "administrator", "root", "owner", "system", "support", "nexus", "api", "security", "login"])).has(value);
-var validDisplayName = (value) => typeof value === "string" && value === value.trim() && value.length >= 1 && value.length <= 80 && !/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/.test(value);
-async function alphaSettings(env) {
-  if (env.ALPHA_ADMISSION_ENABLED !== "true") return null;
-  try {
-    const settings = await query(env.DB, "SELECT * FROM nexus_alpha_settings WHERE id=1").first();
-    if (!settings || settings.enforced !== 1) throw new Error();
-    return settings;
-  } catch {
-    throw new AlphaError("ALPHA_CONTROL_UNAVAILABLE", 503);
-  }
-}
-async function alphaAccess(env, accountId2) {
-  const settings = await alphaSettings(env);
-  if (!settings) return true;
-  if (await query(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", accountId2).first()) return true;
-  return !!await query(env.DB, "SELECT 1 ok FROM nexus_alpha_members WHERE account_id=?1 AND state='active'", accountId2).first();
-}
-async function oauthAdmissionCommands(env, accountId2, stamp3) {
-  const settings = await alphaSettings(env);
-  if (!settings) return [];
-  if (await query(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", accountId2).first()) return [];
-  const member = await query(env.DB, "SELECT state FROM nexus_alpha_members WHERE account_id=?1", accountId2).first();
-  if (member) {
-    if (member.state !== "active") throw new AlphaError("ALPHA_ACCESS_CLOSED");
-    return [];
-  }
-  if (settings.registration_mode !== "open") throw new AlphaError("ALPHA_INVITATION_REQUIRED");
-  const occupied = await query(env.DB, "SELECT count(*) n FROM nexus_alpha_occupied").first();
-  if (settings.limit_enabled === 1 && occupied.n >= settings.max_testers) throw new AlphaError("ALPHA_CAPACITY_REACHED", 409);
-  return [query(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,created_at,updated_at) SELECT ?1,'active',?2,?2 WHERE (SELECT registration_mode FROM nexus_alpha_settings WHERE id=1)='open' AND (SELECT version FROM nexus_alpha_settings WHERE id=1)=?3", accountId2, stamp3, settings.version)];
-}
-async function managedInvitation(env, tokenHash) {
-  if (env.ALPHA_ADMISSION_ENABLED !== "true") return null;
-  const settings = await alphaSettings(env);
-  const row = await query(env.DB, "SELECT i.*,p.expires_at,p.consumed_at,m.state AS member_state FROM nexus_admin_invites i JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash JOIN nexus_alpha_members m ON m.account_id=i.account_id WHERE i.token_hash=?1", tokenHash).first();
-  if (!row || row.state !== "ready" || row.member_state !== "invited" || row.consumed_at || row.expires_at <= (/* @__PURE__ */ new Date()).toISOString()) throw new AlphaError("ENROLLMENT_REQUIRED");
-  if (row.kind === "public" && (env.PUBLIC_PASSKEY_REGISTRATION_ENABLED !== "true" || settings.registration_mode !== "open")) throw new AlphaError("REGISTRATION_CLOSED");
-  return row;
+  if (protectedAccount) deny("ADMIN_ACCOUNT_PROTECTED", 403);
+  if (!member) deny("INVALID_STATE", 409);
+  if (!freshLogin) deny("SELF_DELETE_FRESH_LOGIN_REQUIRED", 401);
+  const preview = path === BASE + "self-delete-preview";
+  if (method !== "POST" || !exact2(payload, preview ? ["requestId", "version"] : ["requestId", "version", "approvalToken", "confirmation"]) || !validRequestId(payload.requestId) || !Number.isSafeInteger(payload.version) || payload.version < 1) deny("INVALID_INPUT");
+  if (payload.version !== member.version) deny("CONTROL_CONFLICT", 409);
+  return preview ? preparePurge(env, value, actor.account_id, { self: true }) : executePurge(env, value, actor.account_id, { self: true });
 }
 
 // server-access/worker/admin-purge.mjs
 var ASSESSMENT_TABLES = "nexus_assessment_usage nexus_assessment_nonces nexus_assessment_write_guards nexus_assessment_audit nexus_assessment_owners nexus_assessment_attempts nexus_assessment_uploads nexus_assessment_parts nexus_assessment_reviews nexus_assessment_appeals nexus_assessment_answer_keys nexus_assessment_auto_results".split(" ");
+var AKRONIKL_TABLES = ["nexus_akronikl_state", "nexus_akronikl_connections", "nexus_akronikl_limits", "nexus_akronikl_locks"];
+var AKRONIKL_SCHEMA = [...AKRONIKL_TABLES, "nexus_akronikl_nonces"];
 var KNOWN = new Set("workspaces workspace_members projects project_members project_access_policies project_revisions project_checkpoints project_invites audit_events project_snapshots account_subjects account_tokens account_devices account_sessions identity_security_events login_methods oauth_identities session_login_methods account_service_nonces nexus_passkey_users nexus_passkey_invites nexus_passkey_challenges nexus_passkey_credentials nexus_passkey_audit nexus_passkey_receipts nexus_passkey_service_nonces nexus_passkey_rate_limits feedback_permissions feedback_items feedback_revisions feedback_events feedback_rate_limits feedback_service_nonces nexus_oauth_service_nonces nexus_oauth_rate_limits nexus_oauth_transactions nexus_oauth_account_policies nexus_oauth_allowed_emails nexus_oauth_receipts nexus_oauth_verified_emails nexus_admin_grants nexus_alpha_settings nexus_alpha_members nexus_account_profiles nexus_admin_invites nexus_invite_enrollments nexus_admin_nonces nexus_admin_rate_limits nexus_admin_write_guards nexus_admin_audit nexus_admin_purge_approvals nexus_account_avatars nexus_admin_purge_links nexus_community_write_guards nexus_community_audit feedback_deleted_items feedback_replies nexus_content_posts nexus_content_home nexus_content_audit nexus_content_media nexus_content_media_audit nexus_content_media_uploads nexus_content_media_parts".split(" "));
 var PROJECTS = "SELECT id FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1)";
 var SCOPE = "SELECT json_object('schema',COALESCE((SELECT group_concat(v,'|') FROM(SELECT name||':'||COALESCE(sql,'') v FROM sqlite_master WHERE type IN('table','trigger','view') AND name NOT LIKE 'sqlite_%' ORDER BY type,name)),''),'memberVersion',(SELECT version FROM nexus_alpha_members WHERE account_id=?1),'accountUpdated',(SELECT updated_at FROM account_subjects WHERE id=?1),'projects',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||current_revision||':'||updated_at v FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1) ORDER BY id)),''),'feedback',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM feedback_items WHERE author_id=?1 ORDER BY id)),''),'feedbackReplies',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM feedback_replies WHERE author_id=?1 OR item_id IN(SELECT id FROM feedback_items WHERE author_id=?1) ORDER BY id)),''),'workspaces',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||updated_at v FROM workspaces WHERE owner_subject_id=?1 ORDER BY id)),''),'sharedRows',(SELECT count(*) FROM workspace_members WHERE workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1) AND subject_id<>?1)+(SELECT count(*) FROM project_members WHERE project_id IN(SELECT id FROM projects WHERE owner_subject_id=?1 OR workspace_id IN(SELECT id FROM workspaces WHERE owner_subject_id=?1)) AND subject_id<>?1),'keys',(SELECT count(*) FROM nexus_passkey_credentials WHERE account_id=?1),'identities',(SELECT count(*) FROM oauth_identities WHERE account_id=?1),'sessions',(SELECT count(*) FROM account_sessions WHERE subject_id=?1),'avatarVersion',COALESCE((SELECT version FROM nexus_account_avatars WHERE account_id=?1),0)) AS value";
-async function scope(env, id3) {
+async function scope(env, id3, { self: self2 = false } = {}) {
   const tables = await rows(query2(env.DB, "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT IN('d1_migrations','_cf_KV','_cf_METADATA')"));
-  if (tables.some((t) => !KNOWN.has(t.name) && !ASSESSMENT_TABLES.includes(t.name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
+  if (tables.some((t) => !KNOWN.has(t.name) && !ASSESSMENT_TABLES.includes(t.name) && !AKRONIKL_SCHEMA.includes(t.name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
+  const hasAkronikl = tables.some((t) => AKRONIKL_SCHEMA.includes(t.name));
+  if (hasAkronikl && !AKRONIKL_SCHEMA.every((name) => tables.some((t) => t.name === name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
   const hasAssessment = tables.some((t) => ASSESSMENT_TABLES.includes(t.name));
   if (hasAssessment && !ASSESSMENT_TABLES.every((name) => tables.some((t) => t.name === name))) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
   const hasMedia = tables.some((t) => t.name === "nexus_content_media");
   let scopeSQL = hasMedia ? SCOPE.replace("'avatarVersion'", "'blogMediaReferences',(SELECT count(*) FROM nexus_content_media WHERE created_by=?1)+(SELECT count(*) FROM nexus_content_media_audit WHERE actor_id=?1),'avatarVersion'") : SCOPE;
+  if (hasAkronikl) scopeSQL = scopeSQL.replace("'avatarVersion'", "'assistantState',COALESCE((SELECT group_concat(v,'|') FROM(SELECT slot||':'||revision v FROM nexus_akronikl_state WHERE account_id=?1 ORDER BY slot)),''),'assistantConnections',COALESCE((SELECT group_concat(v,'|') FROM(SELECT token_hash||':'||version||':'||expires_at||':'||busy_until v FROM nexus_akronikl_connections WHERE account_id=?1 ORDER BY token_hash)),''),'assistantLimits',COALESCE((SELECT group_concat(v,'|') FROM(SELECT bucket||':'||count v FROM nexus_akronikl_limits WHERE account_id=?1 ORDER BY bucket)),''),'avatarVersion'");
   if (hasAssessment) {
     if (await first(env.DB, "SELECT 1 ok FROM nexus_assessment_reviews WHERE reviewer_id=?1 AND account_id<>?1 LIMIT 1", id3)) deny("PURGE_SCHEMA_REVIEW_REQUIRED", 409);
     const refs = "'assessmentState',json_object('ownerBytes',COALESCE((SELECT bytes FROM nexus_assessment_owners WHERE account_id=?1),0),'owned',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version||':'||status||':'||COALESCE(snapshot_hash,'') v FROM nexus_assessment_attempts WHERE account_id=?1 ORDER BY id)),''),'uploads',COALESCE((SELECT group_concat(v,'|') FROM(SELECT u.id||':'||u.snapshot_hash v FROM nexus_assessment_uploads u JOIN nexus_assessment_attempts a ON a.id=u.attempt_id WHERE a.account_id=?1 ORDER BY u.id)),''),'assigned',COALESCE((SELECT group_concat(v,'|') FROM(SELECT id||':'||version v FROM nexus_assessment_attempts WHERE reviewer_id=?1 AND account_id<>?1 ORDER BY id)),''),'authoredReviews',(SELECT count(*) FROM nexus_assessment_reviews WHERE reviewer_id=?1 AND account_id<>?1)),'avatarVersion'";
@@ -21635,31 +21677,40 @@ async function scope(env, id3) {
   if (shared.n) deny("SHARED_PROJECT_TRANSFER_REQUIRED", 409);
   const external = await first(env.DB, "SELECT (SELECT count(*) FROM projects WHERE id IN(" + PROJECTS + ") AND latest_r2_key IS NOT NULL AND latest_r2_key NOT LIKE 'd1:%')+(SELECT count(*) FROM project_revisions WHERE project_id IN(" + PROJECTS + ") AND r2_key NOT LIKE 'd1:%') n", id3);
   if (external.n) deny("PURGE_EXTERNAL_STORAGE_REVIEW_REQUIRED", 409);
-  const member = await first(env.DB, "SELECT m.version,p.username FROM nexus_alpha_members m LEFT JOIN nexus_account_profiles p ON p.account_id=m.account_id WHERE m.account_id=?1 AND m.state='removed'", id3);
-  if (!member) deny("REMOVE_BEFORE_PURGE", 409);
+  const member = await first(env.DB, "SELECT m.version,p.username FROM nexus_alpha_members m LEFT JOIN nexus_account_profiles p ON p.account_id=m.account_id WHERE m.account_id=?1 AND m.state=?2", id3, self2 ? "active" : "removed");
+  if (!member) deny(self2 ? "INVALID_STATE" : "REMOVE_BEFORE_PURGE", 409);
+  if (await first(env.DB, "SELECT 1 FROM nexus_admin_grants WHERE account_id=?1", id3)) deny("ADMIN_ACCOUNT_PROTECTED", 403);
+  if (hasAkronikl) scopeSQL = scopeSQL.replace("'avatarVersion'", "'assistantLock',COALESCE((SELECT lock_id||':'||busy_until FROM nexus_akronikl_locks WHERE account_id=?1),''),'avatarVersion'");
   const encoded = (await first(env.DB, scopeSQL, id3)).value;
   const counts = await first(env.DB, "SELECT (SELECT count(*) FROM projects WHERE id IN(" + PROJECTS + ")) projects,(SELECT count(*) FROM workspaces WHERE owner_subject_id=?1) workspaces,(SELECT count(*) FROM feedback_items WHERE author_id=?1) feedback,(SELECT count(*) FROM nexus_passkey_credentials WHERE account_id=?1) keys,(SELECT count(*) FROM oauth_identities WHERE account_id=?1) providers", id3);
   if (hasAssessment) Object.assign(counts, await first(env.DB, "SELECT (SELECT count(*) FROM nexus_assessment_attempts WHERE account_id=?1) courseFinalAttempts,COALESCE((SELECT bytes FROM nexus_assessment_owners WHERE account_id=?1),0) courseFinalBytes", id3));
-  return { scopeSQL, member, encoded, hash: await sha(encoded), counts, hasAssessment };
+  if (hasAkronikl) Object.assign(counts, await first(env.DB, "SELECT (SELECT count(*) FROM nexus_akronikl_state WHERE account_id=?1) assistantRecords,(SELECT count(*) FROM nexus_akronikl_connections WHERE account_id=?1) assistantConnections,(SELECT count(*) FROM nexus_akronikl_state WHERE account_id=?1 AND slot LIKE 'key:%') assistantApiKeys", id3));
+  return { scopeSQL, member, encoded, hash: await sha(encoded), counts, hasAssessment, hasAkronikl };
 }
-async function preparePurge(env, value, id3) {
-  const plan = await scope(env, id3), approval = "npa_" + random(), expiresAt = new Date(Date.now() + 12e4).toISOString();
-  await query2(env.DB, "INSERT INTO nexus_admin_purge_approvals(token_hash,actor_id,session_id,target_id,target_version,scope_hash,expires_at) VALUES(?1,?2,?3,?4,?5,?6,?7)", await sha(approval), value.actor.account_id, value.actor.session_id, id3, plan.member.version, plan.hash, expiresAt).run();
+async function preparePurge(env, value, id3, { self: self2 = false } = {}) {
+  if (self2 && id3 !== value.actor.account_id) deny("INVALID_INPUT");
+  const plan = await scope(env, id3, { self: self2 }), approval = (self2 ? "nps_" : "npa_") + random(), expiresAt = new Date(Date.now() + 12e4).toISOString();
+  if (plan.member.version !== value.payload.version) deny("CONTROL_CONFLICT", 409);
+  const insert = query2(env.DB, "INSERT INTO nexus_admin_purge_approvals(token_hash,actor_id,session_id,target_id,target_version,scope_hash,expires_at) VALUES(?1,?2,?3,?4,?5,?6,?7)", await sha(approval), value.actor.account_id, value.actor.session_id, id3, plan.member.version, plan.hash, expiresAt);
+  if (self2) await atomic(env, [query2(env.DB, "DELETE FROM nexus_admin_purge_approvals WHERE actor_id=?1 AND target_id=?1", id3), insert]);
+  else await insert.run();
   return { approvalToken: approval, expiresAt, counts: plan.counts, confirmation: "DELETE " + (plan.member.username || id3), serverDataOnly: true };
 }
-async function executePurge(env, value, id3) {
+async function executePurge(env, value, id3, { self: self2 = false } = {}) {
   const { payload, actor } = value;
-  if (typeof payload.approvalToken !== "string" || !/^npa_[A-Za-z0-9_-]{43}$/.test(payload.approvalToken) || typeof payload.confirmation !== "string") deny("INVALID_INPUT");
-  const approvalHash = await sha(payload.approvalToken), stamp3 = (/* @__PURE__ */ new Date()).toISOString(), plan = await scope(env, id3);
+  if (self2 && id3 !== actor.account_id) deny("INVALID_INPUT");
+  if (typeof payload.approvalToken !== "string" || !(self2 ? /^nps_[A-Za-z0-9_-]{43}$/ : /^npa_[A-Za-z0-9_-]{43}$/).test(payload.approvalToken) || typeof payload.confirmation !== "string") deny("INVALID_INPUT");
+  const approvalHash = await sha(payload.approvalToken), stamp3 = (/* @__PURE__ */ new Date()).toISOString(), plan = await scope(env, id3, { self: self2 });
   const approval = await first(env.DB, "SELECT * FROM nexus_admin_purge_approvals WHERE token_hash=?1", approvalHash);
   if (!approval || approval.actor_id !== actor.account_id || approval.session_id !== actor.session_id || approval.target_id !== id3 || approval.target_version !== payload.version || approval.consumed_at || approval.expires_at <= stamp3 || approval.scope_hash !== plan.hash) deny("PURGE_APPROVAL_REJECTED", 409);
   if (payload.confirmation !== "DELETE " + (plan.member.username || id3)) deny("PURGE_CONFIRMATION_REQUIRED", 400);
   const q3 = (sql2, ...args) => query2(env.DB, sql2, ...args);
   const commands = [
-    guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3 AND state='removed' AND version=?4) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3) AND EXISTS(SELECT 1 FROM nexus_admin_purge_approvals WHERE token_hash=?5 AND actor_id=?6 AND session_id=?7 AND consumed_at IS NULL AND expires_at>?8)", [id3, payload.version, approvalHash, actor.account_id, actor.session_id, stamp3]),
+    guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3 AND state='" + (self2 ? "active" : "removed") + "' AND version=?4) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3) AND EXISTS(SELECT 1 FROM nexus_admin_purge_approvals WHERE token_hash=?5 AND actor_id=?6 AND session_id=?7 AND target_id=?3 AND target_version=?4 AND consumed_at IS NULL AND expires_at>" + SQL_NOW + ")" + (self2 ? " AND ?3=?6 AND " + SELF_SESSION_SQL : ""), [id3, payload.version, approvalHash, actor.account_id, actor.session_id]),
     // Snapshot is rechecked within this transaction before deleting anything.
     q3("INSERT INTO nexus_admin_write_guards(request_id,phase,valid) VALUES(?2,'after',((" + plan.scopeSQL.replaceAll("?1", "?3").replace(" AS value", "") + ")=?1))", plan.encoded, payload.requestId, id3),
     q3("UPDATE nexus_admin_purge_approvals SET consumed_at=?1 WHERE token_hash=?2", stamp3, approvalHash),
+    ...plan.hasAkronikl ? AKRONIKL_TABLES.map((table) => q3("DELETE FROM " + table + " WHERE account_id=?1", id3)) : [],
     ...plan.hasAssessment ? [
       q3("DELETE FROM nexus_assessment_audit WHERE actor_id=?1 OR attempt_id IN(SELECT id FROM nexus_assessment_attempts WHERE account_id=?1)", id3),
       q3("UPDATE nexus_assessment_attempts SET reviewer_id=NULL,version=version+1 WHERE reviewer_id=?1 AND account_id<>?1", id3),
@@ -21716,7 +21767,7 @@ async function executePurge(env, value, id3) {
     q3("DELETE FROM nexus_alpha_members WHERE account_id=?1", id3),
     q3("DELETE FROM account_subjects WHERE id=?1", id3),
     q3("DELETE FROM nexus_admin_purge_links WHERE request_id=?1", payload.requestId),
-    audit(env.DB, actor, payload.requestId, "purge", id3, stamp3)
+    ...!self2 ? [audit(env.DB, actor, payload.requestId, "purge", id3, stamp3)] : []
   ];
   await atomic(env, commands);
   return { ok: true, deletedServerData: true, localCopiesRemotelyErased: false };
@@ -21833,10 +21884,10 @@ async function communityOperation(env, value) {
   }
   if (match[3]) {
     if (!exact3(payload, ["requestId", "version"]) || !uuid(payload.requestId) || !Number.isInteger(payload.version)) deny3("INVALID_INPUT");
-    const reply4 = await q(db, "SELECT * FROM feedback_replies WHERE id=?1 AND item_id=?2", match[3], id3).first();
-    if (!reply4 || reply4.author_id !== actorId && !team) deny3("NOT_FOUND", 404);
-    if (reply4.version !== payload.version || reply4.deleted_at) deny3("STALE_VERSION", 409);
-    await atomic2(db, [guard3(payload.requestId, "EXISTS(SELECT 1 FROM feedback_replies WHERE id=?6 AND item_id=?5 AND version=?7 AND deleted_at IS NULL AND (author_id=?2 OR " + PERMISSION + "))", [reply4.id, payload.version]), q(db, "UPDATE feedback_replies SET body=NULL,deleted_at=?1,version=version+1 WHERE id=?2", stamp3, reply4.id), audit3(payload.requestId, "delete-reply")]);
+    const reply5 = await q(db, "SELECT * FROM feedback_replies WHERE id=?1 AND item_id=?2", match[3], id3).first();
+    if (!reply5 || reply5.author_id !== actorId && !team) deny3("NOT_FOUND", 404);
+    if (reply5.version !== payload.version || reply5.deleted_at) deny3("STALE_VERSION", 409);
+    await atomic2(db, [guard3(payload.requestId, "EXISTS(SELECT 1 FROM feedback_replies WHERE id=?6 AND item_id=?5 AND version=?7 AND deleted_at IS NULL AND (author_id=?2 OR " + PERMISSION + "))", [reply5.id, payload.version]), q(db, "UPDATE feedback_replies SET body=NULL,deleted_at=?1,version=version+1 WHERE id=?2", stamp3, reply5.id), audit3(payload.requestId, "delete-reply")]);
     return { ok: true, deleted: true };
   }
   if (!exact3(payload, ["requestId", "body"]) || !uuid(payload.requestId) || typeof payload.body !== "string" || payload.body.trim().length < 1 || payload.body.length > 4e3 || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(payload.body)) deny3("INVALID_INPUT");
@@ -22129,7 +22180,7 @@ var stamp = () => (/* @__PURE__ */ new Date()).toISOString();
 var j = (value) => JSON.stringify(value);
 function guard2(env, actor, id3, phase, condition, args = []) {
   const n = 3 + args.length, time = stamp(), freshAdmin = phase === "assessment-admin";
-  const session = `EXISTS(SELECT 1 FROM account_sessions s JOIN account_subjects a ON a.id=s.subject_id AND a.status='active' JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active' JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active' WHERE s.id=?${n} AND s.subject_id=?${n + 1} AND s.status='active' AND s.auth_strength='account-method-v1' AND s.revoked_at IS NULL AND s.idle_expires_at>?${n + 2} AND s.absolute_expires_at>?${n + 2} AND (EXISTS(SELECT 1 FROM nexus_alpha_members m WHERE m.account_id=a.id AND m.state='active') OR EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active'))${freshAdmin ? ` AND lm.kind='passkey' AND s.created_at>=?${n + 3} AND s.created_at<=?${n + 2} AND EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active') AND EXISTS(SELECT 1 FROM nexus_passkey_credentials k WHERE k.login_method_id=lm.id AND k.account_id=a.id)` : ""})`;
+  const session = `EXISTS(SELECT 1 FROM account_sessions s JOIN account_subjects a ON a.id=s.subject_id AND a.status='active' JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active' JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active' WHERE s.id=?${n} AND s.subject_id=?${n + 1} AND s.status='active' AND s.auth_strength='account-method-v1' AND s.revoked_at IS NULL AND s.idle_expires_at>?${n + 2} AND s.absolute_expires_at>?${n + 2} AND (EXISTS(SELECT 1 FROM nexus_alpha_members m WHERE m.account_id=a.id AND m.state='active' AND (m.access_expires_at IS NULL OR m.access_expires_at>?${n + 2})) OR EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active'))${freshAdmin ? ` AND lm.kind='passkey' AND s.created_at>=?${n + 3} AND s.created_at<=?${n + 2} AND EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active') AND EXISTS(SELECT 1 FROM nexus_passkey_credentials k WHERE k.login_method_id=lm.id AND k.account_id=a.id)` : ""})`;
   return query2(env.DB, "INSERT INTO nexus_assessment_write_guards(request_id,phase,valid) VALUES(?1,?2,((" + condition + ") AND " + session + "))", id3, phase, ...args, actor.session_id, actor.account_id, time, ...freshAdmin ? [new Date(Date.now() - 3e5).toISOString()] : []);
 }
 var audit2 = (db, actor, id3, action, attemptId, time) => query2(db, "INSERT INTO nexus_assessment_audit(id,actor_id,action,attempt_id,created_at) VALUES(?1,?2,?3,?4,?5)", id3, actor.account_id, action, attemptId, time);
@@ -22190,7 +22241,7 @@ async function assessmentOperation(env, value, { requireAdmin: requireAdmin2 }) 
     deny("ASSESSMENT_INPUT_INVALID");
   }
   const admin = !!await first(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", actor.account_id);
-  if (!admin && !await first(env.DB, "SELECT 1 ok FROM nexus_alpha_members WHERE account_id=?1 AND state='active'", actor.account_id)) deny("SESSION_REQUIRED", 401);
+  if (!admin && !await first(env.DB, "SELECT 1 ok FROM nexus_alpha_members WHERE account_id=?1 AND state='active' AND (access_expires_at IS NULL OR access_expires_at>?2)", actor.account_id, stamp())) deny("SESSION_REQUIRED", 401);
   const expert = env.COURSE_FINAL_EXPERT_ENABLED === "true", mode = expert ? "expert" : "automatic";
   if (!expert && ["queue", "unassigned", "assign", "review", "review-detail", "appeal", "appeal-detail"].includes(p.phase)) deny("ASSESSMENT_UNAVAILABLE", 503);
   const caps = async () => ({ enabled: true, assessmentId: ASSESSMENT_ID, taskVersion: TASK_VERSION, rubricVersion: RUBRIC_VERSION, canAssign: expert && admin, canReview: expert && !!await first(env.DB, "SELECT 1 ok FROM nexus_assessment_attempts WHERE reviewer_id=?1 AND assessment_mode='expert' LIMIT 1", actor.account_id), limits: FINAL_LIMITS, policy: expert ? "pilot-40-50-10-v1" : AUTOMATIC_POLICY, mode });
@@ -22339,7 +22390,7 @@ async function assessmentOperation(env, value, { requireAdmin: requireAdmin2 }) 
       if (a.assessment_mode !== "expert") deny("ASSESSMENT_STATE_INVALID", 409);
       if (a.account_id === p.reviewerId) deny("ASSESSMENT_SELF_REVIEW", 403);
       if (!["submitted", "reviewed"].includes(a.status)) deny("ASSESSMENT_STATE_INVALID", 409);
-      if (!await first(env.DB, "SELECT 1 ok FROM account_subjects s LEFT JOIN nexus_alpha_members m ON m.account_id=s.id WHERE s.id=?1 AND s.status='active' AND (m.state='active' OR EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=s.id AND g.status='active'))", p.reviewerId)) deny("NOT_FOUND", 404);
+      if (!await first(env.DB, "SELECT 1 ok FROM account_subjects s LEFT JOIN nexus_alpha_members m ON m.account_id=s.id WHERE s.id=?1 AND s.status='active' AND ((m.state='active' AND (m.access_expires_at IS NULL OR m.access_expires_at>?2)) OR EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=s.id AND g.status='active'))", p.reviewerId, stamp())) deny("NOT_FOUND", 404);
     } else if (["reviewed", "assessed"].includes(a.status)) deny("ASSESSMENT_STATE_INVALID", 409);
     const time = stamp();
     await transaction(env, [guard2(env, actor, p.requestId, "assessment-admin", "EXISTS(SELECT 1 FROM nexus_assessment_attempts WHERE id=?3 AND version=?4)", [a.id, a.version]), p.phase === "assign" ? query2(env.DB, "UPDATE nexus_assessment_attempts SET reviewer_id=?1,version=version+1 WHERE id=?2", p.reviewerId, a.id) : query2(env.DB, "UPDATE nexus_assessment_attempts SET status='interrupted',interrupt_reason=?1,version=version+1 WHERE id=?2", p.reason, a.id), audit2(env.DB, actor, p.requestId, "assessment-" + p.phase, a.id, time)]);
@@ -22376,7 +22427,7 @@ async function assessmentOperation(env, value, { requireAdmin: requireAdmin2 }) 
 
 // server-access/worker/admin-service.mjs
 var INTERNAL = "/api/v2/account/internal/control";
-var BASE = "/api/v2/account/control";
+var BASE2 = "/api/v2/account/control";
 var encoder = new TextEncoder();
 var now3 = () => (/* @__PURE__ */ new Date()).toISOString();
 var query2 = (db, sql2, ...args) => db.prepare(sql2).bind(...args);
@@ -22392,7 +22443,8 @@ var validId = (value) => typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:
 var validRequestId = (value) => typeof value === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value);
 var reply = (body, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer" } });
 async function controlActor(env, sessionHash) {
-  return first(env.DB, "SELECT s.id session_id,s.subject_id account_id,s.created_at,lm.kind FROM account_sessions s JOIN account_subjects a ON a.id=s.subject_id AND a.status='active' JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active' JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active' WHERE s.secret_hash=?1 AND s.status='active' AND s.auth_strength='account-method-v1' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2", sessionHash, now3());
+  const actor = await first(env.DB, "SELECT s.id session_id,s.subject_id account_id,s.created_at,lm.kind FROM account_sessions s JOIN account_subjects a ON a.id=s.subject_id AND a.status='active' JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active' JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active' WHERE s.secret_hash=?1 AND s.status='active' AND s.auth_strength='account-method-v1' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2", sessionHash, now3());
+  return actor && await alphaAccess(env, actor.account_id) ? actor : null;
 }
 var fresh = (actor) => actor?.kind === "passkey" && Number.isFinite(Date.parse(actor.created_at)) && Date.now() - Date.parse(actor.created_at) >= 0 && Date.now() - Date.parse(actor.created_at) < 3e5;
 async function envelope(request, env) {
@@ -22429,7 +22481,7 @@ async function envelope(request, env) {
   } catch {
     deny("INVALID_INPUT");
   }
-  if (!exact2(data, ["path", "method", "payload", "sessionHash", "expectedAccountId"])) deny("INVALID_INPUT");
+  if (!exact2(data, ["path", "method", "payload", "sessionHash", "expectedAccountId"]) && !(exact2(data, ["path", "method", "payload", "sessionHash", "expectedAccountId", "dtoVersion"]) && data.dtoVersion === 2)) deny("INVALID_INPUT");
   const publicParts = data.path === PUBLIC_MEDIA_PARTS_PATH;
   if (publicParts) {
     if (env.CONTENT_MEDIA_PARTS_ENABLED !== "true") deny("CONTENT_MEDIA_PARTS_UNAVAILABLE", 503);
@@ -22489,28 +22541,29 @@ async function requireAdmin(env, actor, write = false) {
   if (write && !fresh(actor)) deny("ADMIN_FRESH_PASSKEY_REQUIRED", 401);
   if (write && !await first(env.DB, "SELECT 1 ok FROM nexus_passkey_credentials k JOIN session_login_methods slm ON slm.login_method_id=k.login_method_id WHERE slm.session_id=?1 AND k.account_id=?2", actor.session_id, actor.account_id)) deny("ADMIN_FRESH_PASSKEY_REQUIRED", 401);
 }
-async function target(env, actor, id3, version2) {
-  if (!validId(id3) || !Number.isInteger(version2) || version2 < 0) deny("INVALID_INPUT");
+async function target(env, actor, id3, version3) {
+  if (!validId(id3) || !Number.isInteger(version3) || version3 < 0) deny("INVALID_INPUT");
   if (id3 === actor.account_id || await first(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1", id3)) deny("ADMIN_ACCOUNT_PROTECTED", 403);
   const row = await first(env.DB, "SELECT * FROM nexus_alpha_members WHERE account_id=?1", id3);
   if (!row) {
     if (!await first(env.DB, "SELECT id FROM account_subjects WHERE id=?1", id3)) deny("NOT_FOUND", 404);
-    if (version2 !== 0) deny("CONTROL_CONFLICT", 409);
+    if (version3 !== 0) deny("CONTROL_CONFLICT", 409);
     return { state: "unadmitted", version: 0 };
   }
-  if (row.version !== version2) deny("CONTROL_CONFLICT", 409);
+  if (row.version !== version3) deny("CONTROL_CONFLICT", 409);
   return row;
 }
 function validMutation(input, keys2) {
   if (!exact2(input, ["requestId", ...keys2]) || !validRequestId(input.requestId)) deny("INVALID_INPUT");
 }
 async function operation(env, value) {
-  const { actor, method, payload } = value, url = new URL(value.path, "https://nexus.invalid"), path = url.pathname;
+  const { actor, method, payload } = value, modern = value.dtoVersion === 2, url = new URL(value.path, "https://nexus.invalid"), path = url.pathname;
   if (path === PUBLIC_MEDIA_PARTS_PATH) return mediaPartsOperation(env, value, { publishedOnly: true });
   if (path.startsWith("/api/v2/account/profile")) return profileOperation(env, value);
   if (!await alphaSettings(env)) deny("ALPHA_CONTROL_UNAVAILABLE", 503);
+  if ([BASE2 + "/self-delete-capabilities", BASE2 + "/self-delete-preview", BASE2 + "/self-delete"].includes(path) && !url.search) return selfDeleteOperation(env, value);
   if (path === ASSESSMENT_PATH && !url.search) return assessmentOperation(env, value, { requireAdmin });
-  if (path === BASE + "/capabilities" && method === "GET" && !url.search) {
+  if (path === BASE2 + "/capabilities" && method === "GET" && !url.search) {
     const canManage = !!await first(env.DB, "SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'", actor.account_id);
     return { canManage, canModerate: await teamPermission(env.DB, actor.account_id, env), canPurge: canManage && env.ADMIN_PURGE_ENABLED === "true", freshPasskey: canManage && fresh(actor) };
   }
@@ -22520,38 +22573,86 @@ async function operation(env, value) {
     if (await first(env.DB, "SELECT 1 FROM nexus_alpha_members WHERE account_id=?1 AND state IN('blocked','removed')", actor.account_id)) deny("ADMIN_REQUIRED", 403);
     return mediaPartsOperation(env, value);
   }
-  if (path === BASE + "/content") return contentOperation(env, value);
-  if (path === BASE + "/providers" && method === "GET" && !url.search) return { authorized: true };
-  if (path === BASE + "/users" && method === "GET") {
+  if (path === BASE2 + "/content") return contentOperation(env, value);
+  if (path === BASE2 + "/providers" && method === "GET" && !url.search) return { authorized: true };
+  if (path === BASE2 + "/users" && method === "GET") {
     if ([...url.searchParams.keys()].some((k) => !["state", "offset"].includes(k)) || [...url.searchParams.keys()].some((k) => url.searchParams.getAll(k).length !== 1)) deny("INVALID_INPUT");
     const state = url.searchParams.get("state") || "all", offset = Number(url.searchParams.get("offset") || 0);
     if (!["all", "active", "blocked", "removed", "invited", "unadmitted"].includes(state) || !Number.isInteger(offset) || offset < 0 || offset > 1e5) deny("INVALID_INPUT");
     const filter = " WHERE (?1='all' OR COALESCE(m.state,'unadmitted')=?1)";
-    const from = " FROM account_subjects a LEFT JOIN nexus_alpha_members m ON m.account_id=a.id LEFT JOIN nexus_account_profiles p ON p.account_id=a.id";
+    const from = " FROM account_subjects a LEFT JOIN nexus_alpha_members m ON m.account_id=a.id LEFT JOIN nexus_account_profiles p ON p.account_id=a.id LEFT JOIN nexus_admin_invites i ON i.account_id=a.id LEFT JOIN nexus_passkey_invites pi ON pi.token_hash=i.token_hash";
     const total = await first(env.DB, "SELECT count(*) n" + from + filter, state);
-    const list = await rows(query2(env.DB, "SELECT a.id,a.display_name,a.status,a.created_at,p.username,m.state,m.version,m.reason,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active') administrator,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id) protected_account,(SELECT max(created_at) FROM account_sessions s WHERE s.subject_id=a.id) last_login,(SELECT count(*) FROM account_sessions s WHERE s.subject_id=a.id AND s.status='active' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2) active_sessions" + from + filter + " ORDER BY a.created_at DESC,a.id LIMIT 50 OFFSET ?3", state, now3(), offset));
-    const settings = await first(env.DB, "SELECT registration_mode,max_testers,limit_enabled,version FROM nexus_alpha_settings WHERE id=1"), occupied = await first(env.DB, "SELECT count(*) n FROM nexus_alpha_occupied"), active = await first(env.DB, "SELECT count(*) n FROM nexus_alpha_members WHERE state='active' AND account_id NOT IN(SELECT account_id FROM nexus_admin_grants WHERE status='active')");
-    return { users: list.map((r) => ({ accountId: r.id, username: r.username || null, displayName: r.display_name, state: r.administrator ? "administrator" : r.state || "unadmitted", version: r.version || 0, createdAt: r.created_at, lastLoginAt: r.last_login || null, activeSessions: r.active_sessions, reason: r.reason || "", protected: !!r.protected_account })), total: total.n, offset, settings: { registrationMode: settings.registration_mode, maxTesters: settings.max_testers, limitEnabled: settings.limit_enabled === 1, version: settings.version }, counts: { active: active.n, occupied: occupied.n, reserved: occupied.n - active.n } };
+    const list = await rows(query2(env.DB, "SELECT a.id,a.display_name,a.status,a.created_at,p.username,m.state,m.version,m.reason,m.trial_minutes,m.first_login_at,m.access_expires_at,i.created_at invitation_created_at,pi.expires_at invitation_expires_at,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active') administrator,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id) protected_account,(SELECT max(created_at) FROM account_sessions s WHERE s.subject_id=a.id) last_login,(SELECT count(*) FROM account_sessions s WHERE s.subject_id=a.id AND s.status='active' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2) active_sessions" + from + filter + " ORDER BY a.created_at DESC,a.id LIMIT 50 OFFSET ?3", state, now3(), offset));
+    const settings = await first(env.DB, "SELECT registration_mode,max_testers,limit_enabled,default_trial_minutes,default_invitation_minutes,version FROM nexus_alpha_settings WHERE id=1"), occupied = await first(env.DB, "SELECT count(*) n FROM nexus_alpha_occupied"), active = await first(env.DB, "SELECT count(*) n FROM nexus_alpha_members WHERE state='active' AND (access_expires_at IS NULL OR access_expires_at>strftime('%Y-%m-%dT%H:%M:%fZ','now')) AND account_id NOT IN(SELECT account_id FROM nexus_admin_grants WHERE status='active')");
+    const result = { users: list.map((r) => ({ accountId: r.id, username: r.username || null, displayName: r.display_name, state: r.administrator ? "administrator" : r.state || "unadmitted", version: r.version || 0, createdAt: r.created_at, lastLoginAt: r.last_login || null, activeSessions: r.active_sessions, reason: r.reason || "", protected: !!r.protected_account, invitationCreatedAt: r.invitation_created_at || null, invitationExpiresAt: r.invitation_expires_at || null, trialMinutes: r.trial_minutes ?? null, firstLoginAt: r.first_login_at || null, accessExpiresAt: r.access_expires_at || null })), total: total.n, offset, settings: { registrationMode: settings.registration_mode, maxTesters: settings.max_testers, limitEnabled: settings.limit_enabled === 1, version: settings.version, defaultTrialMinutes: settings.default_trial_minutes, defaultInvitationMinutes: settings.default_invitation_minutes }, counts: { active: active.n, occupied: occupied.n, reserved: occupied.n - active.n } };
+    if (!modern) {
+      for (const u of result.users) for (const key of ["invitationCreatedAt", "invitationExpiresAt", "trialMinutes", "firstLoginAt", "accessExpiresAt"]) delete u[key];
+      delete result.settings.defaultTrialMinutes;
+      delete result.settings.defaultInvitationMinutes;
+    }
+    return result;
   }
-  if (path === BASE + "/audit" && method === "GET" && !url.search) return { events: await rows(query2(env.DB, "SELECT action,target_id targetId,created_at createdAt FROM nexus_admin_audit ORDER BY created_at DESC,id DESC LIMIT 100")) };
+  if (path === BASE2 + "/audit" && method === "GET" && !url.search) return { events: await rows(query2(env.DB, "SELECT action,target_id targetId,created_at createdAt FROM nexus_admin_audit ORDER BY created_at DESC,id DESC LIMIT 100")) };
   if (method !== "POST" || url.search) deny("NOT_FOUND", 404);
-  if (path === BASE + "/settings") {
-    validMutation(payload, ["version", "maxTesters", "limitEnabled", "registrationMode"]);
+  if (path === BASE2 + "/settings") {
+    const defaults = modern && Object.hasOwn(payload || {}, "defaultTrialMinutes");
+    validMutation(payload, ["version", "maxTesters", "limitEnabled", "registrationMode", ...defaults ? ["defaultTrialMinutes", "defaultInvitationMinutes"] : []]);
+    if (defaults && (payload.defaultTrialMinutes !== null && (!Number.isInteger(payload.defaultTrialMinutes) || payload.defaultTrialMinutes < 60 || payload.defaultTrialMinutes > 525600) || !Number.isInteger(payload.defaultInvitationMinutes) || payload.defaultInvitationMinutes < 10 || payload.defaultInvitationMinutes > 10080)) deny("INVALID_INPUT");
     if (typeof payload.limitEnabled !== "boolean" || !Number.isInteger(payload.version) || payload.version < 1 || !Number.isInteger(payload.maxTesters) || payload.maxTesters < 1 || payload.maxTesters > 1e4 || !["open", "invite_only"].includes(payload.registrationMode)) deny("INVALID_INPUT");
     const stamp3 = now3();
-    await atomic(env, [guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_settings WHERE id=1 AND version=?3)", [payload.version]), query2(env.DB, "UPDATE nexus_alpha_settings SET registration_mode=?1,max_testers=?2,limit_enabled=?4,version=version+1 WHERE id=1 AND version=?3", payload.registrationMode, payload.maxTesters, payload.version, payload.limitEnabled ? 1 : 0), audit(env.DB, actor, payload.requestId, "settings", null, stamp3)]);
+    await atomic(env, [guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_settings WHERE id=1 AND version=?3)", [payload.version]), query2(env.DB, "UPDATE nexus_alpha_settings SET registration_mode=?1,max_testers=?2,limit_enabled=?4,default_trial_minutes=CASE WHEN ?5=1 THEN ?6 ELSE default_trial_minutes END,default_invitation_minutes=CASE WHEN ?5=1 THEN ?7 ELSE default_invitation_minutes END,version=version+1 WHERE id=1 AND version=?3", payload.registrationMode, payload.maxTesters, payload.version, payload.limitEnabled ? 1 : 0, defaults ? 1 : 0, defaults ? payload.defaultTrialMinutes : null, defaults ? payload.defaultInvitationMinutes : null), audit(env.DB, actor, payload.requestId, "settings", null, stamp3)]);
     return { ok: true };
   }
-  if (path === BASE + "/invites") {
-    validMutation(payload, ["ttlMinutes"]);
-    if (!Number.isInteger(payload.ttlMinutes) || payload.ttlMinutes < 10 || payload.ttlMinutes > 10080) deny("INVALID_INPUT");
-    const secret = "npi_" + random(), hash4 = await sha(secret), id4 = crypto.randomUUID(), stamp3 = now3(), expiresAt = new Date(Date.now() + payload.ttlMinutes * 6e4).toISOString();
-    await atomic(env, [guard(env.DB, payload.requestId, "before", "1"), query2(env.DB, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,'\u041D\u043E\u0432\u044B\u0439 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A','active',?2,?2)", id4, stamp3), query2(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at) VALUES(?1,'invited',?2,?3,?3)", id4, expiresAt, stamp3), query2(env.DB, "INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)", hash4, id4, expiresAt), query2(env.DB, "INSERT INTO nexus_admin_invites(token_hash,account_id,created_by,state,created_at) VALUES(?1,?2,?3,'ready',?4)", hash4, id4, actor.account_id, stamp3), audit(env.DB, actor, payload.requestId, "invite", id4, stamp3)]);
+  if (path === BASE2 + "/invites") {
+    if (!modern) {
+      validMutation(payload, ["ttlMinutes"]);
+      payload.trialMinutes = null;
+    }
+    if (exact2(payload, ["requestId", "ttlMinutes"])) payload.trialMinutes = "default";
+    validMutation(payload, ["ttlMinutes", "trialMinutes"]);
+    if (payload.trialMinutes !== "default" && payload.trialMinutes !== null && (!Number.isInteger(payload.trialMinutes) || payload.trialMinutes < 60 || payload.trialMinutes > 525600)) deny("INVALID_INPUT");
+    if (payload.ttlMinutes !== "default" && (!Number.isInteger(payload.ttlMinutes) || payload.ttlMinutes < 10 || payload.ttlMinutes > 10080)) deny("INVALID_INPUT");
+    const defaults = await alphaSettings(env), ttlMinutes = payload.ttlMinutes === "default" ? defaults.default_invitation_minutes : payload.ttlMinutes, trialMinutes = payload.trialMinutes === "default" ? defaults.default_trial_minutes : payload.trialMinutes;
+    const secret = "npi_" + random(), hash5 = await sha(secret), id4 = crypto.randomUUID(), stamp3 = now3(), expiresAt = new Date(Date.now() + ttlMinutes * 6e4).toISOString();
+    await atomic(env, [guard(env.DB, payload.requestId, "before", "1"), query2(env.DB, "INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,'\u041D\u043E\u0432\u044B\u0439 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A','active',?2,?2)", id4, stamp3), query2(env.DB, "INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at,trial_minutes) VALUES(?1,'invited',?2,?3,?3,?4)", id4, expiresAt, stamp3, trialMinutes), query2(env.DB, "INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)", hash5, id4, expiresAt), query2(env.DB, "INSERT INTO nexus_admin_invites(token_hash,account_id,created_by,state,created_at) VALUES(?1,?2,?3,'ready',?4)", hash5, id4, actor.account_id, stamp3), audit(env.DB, actor, payload.requestId, "invite", id4, stamp3)]);
     return { ok: true, accountId: id4, invitationToken: secret, expiresAt };
   }
-  const match = new RegExp("^" + BASE + "/users/([A-Za-z0-9][A-Za-z0-9._:-]{0,159})/(action|purge-preview|purge)$").exec(path);
+  const match = new RegExp("^" + BASE2 + "/users/([A-Za-z0-9][A-Za-z0-9._:-]{0,159})/(action|purge-preview|purge|trial|invitation)$").exec(path);
   if (!match) deny("NOT_FOUND", 404);
   const id3 = match[1];
+  if (["trial", "invitation"].includes(match[2]) && !modern) deny("NOT_FOUND", 404);
+  if (match[2] === "invitation") {
+    validMutation(payload, ["version", "mode", "minutes"]);
+    if (!["set", "extend"].includes(payload.mode) || !Number.isInteger(payload.minutes) || payload.minutes < 10 || payload.minutes > 10080) deny("INVALID_INPUT");
+    const member = await target(env, actor, id3, payload.version);
+    const invite = await first(env.DB, "SELECT i.token_hash,p.expires_at FROM nexus_admin_invites i JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash WHERE i.account_id=?1 AND i.state='ready' AND p.consumed_at IS NULL", id3);
+    if (member.state !== "invited" || !invite) deny("INVALID_STATE", 409);
+    const stamp3 = now3(), until = new Date((payload.mode === "extend" ? Math.max(Date.parse(invite.expires_at), Date.parse(stamp3)) : Date.parse(stamp3)) + payload.minutes * 6e4).toISOString();
+    await atomic(env, [guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3 AND version=?4 AND state='invited') AND EXISTS(SELECT 1 FROM nexus_admin_invites i JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash WHERE i.account_id=?3 AND i.state='ready' AND p.consumed_at IS NULL) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3)", [id3, payload.version]), query2(env.DB, "UPDATE nexus_passkey_invites SET expires_at=?1 WHERE token_hash=?2 AND consumed_at IS NULL", until, invite.token_hash), query2(env.DB, "UPDATE nexus_alpha_members SET reserved_until=?1,version=version+1,updated_at=?2 WHERE account_id=?3 AND version=?4", until, stamp3, id3, payload.version), audit(env.DB, actor, payload.requestId, "settings", id3, stamp3)]);
+    return { ok: true };
+  }
+  if (match[2] === "trial") {
+    validMutation(payload, ["version", "mode", "minutes"]);
+    if (!["set", "extend"].includes(payload.mode) || payload.minutes !== null && (!Number.isInteger(payload.minutes) || payload.minutes < 60 || payload.minutes > 525600) || payload.mode === "extend" && payload.minutes === null) deny("INVALID_INPUT");
+    const member = await target(env, actor, id3, payload.version);
+    if (!["active", "invited"].includes(member.state)) deny("INVALID_STATE", 409);
+    const stamp3 = now3(), hasLogin = !!member.first_login_at || !!await first(env.DB, "SELECT 1 ok WHERE EXISTS(SELECT 1 FROM account_sessions WHERE subject_id=?1) OR EXISTS(SELECT 1 FROM account_tokens WHERE subject_id=?1)", id3);
+    let duration = payload.minutes, firstLogin = member.first_login_at, until = null;
+    if (payload.mode === "extend") {
+      if (member.trial_minutes === null) deny("INVALID_STATE", 409);
+      duration = member.trial_minutes + payload.minutes;
+      if (duration > 525600) deny("INVALID_INPUT");
+      if (hasLogin) {
+        firstLogin = firstLogin || stamp3;
+        until = new Date(Math.max(Date.parse(member.access_expires_at) || 0, Date.parse(stamp3)) + payload.minutes * 6e4).toISOString();
+      }
+    } else if (duration !== null && hasLogin) {
+      firstLogin = firstLogin || stamp3;
+      until = new Date(Date.parse(stamp3) + duration * 6e4).toISOString();
+    }
+    await atomic(env, [guard(env.DB, payload.requestId, "before", "EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=?3 AND version=?4) AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=?3) AND (?5=1 OR (NOT EXISTS(SELECT 1 FROM account_sessions WHERE subject_id=?3) AND NOT EXISTS(SELECT 1 FROM account_tokens WHERE subject_id=?3)))", [id3, payload.version, hasLogin ? 1 : 0]), query2(env.DB, "UPDATE nexus_alpha_members SET trial_minutes=?1,first_login_at=?2,access_expires_at=?3,version=version+1,updated_at=?4 WHERE account_id=?5 AND version=?6", duration, firstLogin, until, stamp3, id3, payload.version), audit(env.DB, actor, payload.requestId, "settings", id3, stamp3)]);
+    return { ok: true };
+  }
   if (match[2] === "action") {
     validMutation(payload, ["version", "action"]);
     if (!["block", "remove", "restore", "revoke-invite", "admit"].includes(payload.action)) deny("INVALID_INPUT");
@@ -23555,17 +23656,17 @@ async function getRandomValues(array) {
 
 // server-access/node_modules/@simplewebauthn/server/esm/helpers/convertAAGUIDToString.js
 function convertAAGUIDToString(aaguid) {
-  const hex3 = isoUint8Array_exports.toHex(aaguid);
+  const hex4 = isoUint8Array_exports.toHex(aaguid);
   const segments = [
-    hex3.slice(0, 8),
+    hex4.slice(0, 8),
     // 8
-    hex3.slice(8, 12),
+    hex4.slice(8, 12),
     // 4
-    hex3.slice(12, 16),
+    hex4.slice(12, 16),
     // 4
-    hex3.slice(16, 20),
+    hex4.slice(16, 20),
     // 4
-    hex3.slice(20, 32)
+    hex4.slice(20, 32)
     // 8
   ];
   return segments.join("-");
@@ -24545,15 +24646,15 @@ function toHex(array) {
   const hexParts = Array.from(array, (i) => i.toString(16).padStart(2, "0"));
   return hexParts.join("");
 }
-function fromHex(hex3) {
-  if (!hex3) {
+function fromHex(hex4) {
+  if (!hex4) {
     return Uint8Array.from([]);
   }
-  const isValid = hex3.length !== 0 && hex3.length % 2 === 0 && !/[^a-fA-F0-9]/u.test(hex3);
+  const isValid = hex4.length !== 0 && hex4.length % 2 === 0 && !/[^a-fA-F0-9]/u.test(hex4);
   if (!isValid) {
     throw new Error("Invalid hex string");
   }
-  const byteStrings = hex3.match(/.{1,2}/g) ?? [];
+  const byteStrings = hex4.match(/.{1,2}/g) ?? [];
   return Uint8Array.from(byteStrings.map((byte) => parseInt(byte, 16)));
 }
 function concat(arrays) {
@@ -24571,8 +24672,8 @@ function toUTF8String2(array) {
   return decoder.decode(array);
 }
 function fromUTF8String2(utf8String) {
-  const encoder7 = new globalThis.TextEncoder();
-  return encoder7.encode(utf8String);
+  const encoder8 = new globalThis.TextEncoder();
+  return encoder8.encode(utf8String);
 }
 function fromASCIIString(value) {
   return Uint8Array.from(value.split("").map((x) => x.charCodeAt(0)));
@@ -25459,7 +25560,7 @@ async function verifyAttestationPacked(options) {
   const signatureBase = isoUint8Array_exports.concat([authData, clientDataHash]);
   let verified = false;
   if (x5c) {
-    const { subject, basicConstraintsCA, version: version2, notBefore, notAfter, parsedCertificate } = getCertificateInfo(x5c[0]);
+    const { subject, basicConstraintsCA, version: version3, notBefore, notAfter, parsedCertificate } = getCertificateInfo(x5c[0]);
     const { OU, CN, O, C } = subject;
     if (OU !== "Authenticator Attestation") {
       throw new Error('Certificate OU was not "Authenticator Attestation" (Packed|Full)');
@@ -25476,7 +25577,7 @@ async function verifyAttestationPacked(options) {
     if (basicConstraintsCA) {
       throw new Error("Certificate basic constraints CA was not `false` (Packed|Full)");
     }
-    if (version2 !== 2) {
+    if (version3 !== 2) {
       throw new Error("Certificate version was not `3` (ASN.1 value of 2) (Packed|Full)");
     }
     let now5 = /* @__PURE__ */ new Date();
@@ -25967,11 +26068,11 @@ async function verifyAttestationTPM(options) {
     throw new Error("No certificates present in x5c array (TPM)");
   }
   const leafCertInfo = getCertificateInfo(x5c[0]);
-  const { basicConstraintsCA, version: version2, subject, notAfter, notBefore } = leafCertInfo;
+  const { basicConstraintsCA, version: version3, subject, notAfter, notBefore } = leafCertInfo;
   if (basicConstraintsCA) {
     throw new Error("Certificate basic constraints CA was not `false` (TPM)");
   }
-  if (version2 !== 2) {
+  if (version3 !== 2) {
     throw new Error("Certificate version was not `3` (ASN.1 value of 2) (TPM)");
   }
   if (subject.combined.length > 0) {
@@ -26855,7 +26956,7 @@ var deny4 = (code, status) => {
   throw new Rejected2(code, status);
 };
 var response2 = (body, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff" } });
-var providerAllowed = (env, provider) => Object.hasOwn(ISSUERS, provider) && (provider !== "mailru" || env.OAUTH_MAILRU_SECURE_ADAPTER_ENABLED === "true");
+var providerAllowed = (env, provider2) => Object.hasOwn(ISSUERS, provider2) && (provider2 !== "mailru" || env.OAUTH_MAILRU_SECURE_ADAPTER_ENABLED === "true");
 async function ingress2(request, env) {
   if (env.OAUTH_ENABLED !== "true" || typeof env.OAUTH_SERVICE_KEY !== "string" || env.OAUTH_SERVICE_KEY.length < 32 || !env.DB) deny4("OAUTH_UNAVAILABLE", 503);
   const url = new URL(request.url);
@@ -26956,8 +27057,8 @@ async function claim(env, data) {
   if (!row || Number(committed[1].meta?.changes) !== 1) deny4("TRANSACTION_REJECTED", 401);
   return { ok: true, txId: row.id, codeVerifier: row.code_verifier, nonce: row.nonce, intent: row.intent };
 }
-function profileFor(provider, profile) {
-  if (!exact8(profile, ["issuer", "subject", "email", "emailVerified", "displayName"]) || profile.issuer !== ISSUERS[provider] || typeof profile.subject !== "string" || !profile.subject.length || profile.subject.length > 512 || profile.subject !== profile.subject.trim() || /[\x00-\x1f\x7f]/.test(profile.subject) || typeof profile.emailVerified !== "boolean" || typeof profile.displayName !== "string" || !profile.displayName.trim() || profile.displayName.length > 512 || /[\x00-\x1f\x7f]/.test(profile.displayName)) deny4("PROFILE_REJECTED", 401);
+function profileFor(provider2, profile) {
+  if (!exact8(profile, ["issuer", "subject", "email", "emailVerified", "displayName"]) || profile.issuer !== ISSUERS[provider2] || typeof profile.subject !== "string" || !profile.subject.length || profile.subject.length > 512 || profile.subject !== profile.subject.trim() || /[\x00-\x1f\x7f]/.test(profile.subject) || typeof profile.emailVerified !== "boolean" || typeof profile.displayName !== "string" || !profile.displayName.trim() || profile.displayName.length > 512 || /[\x00-\x1f\x7f]/.test(profile.displayName)) deny4("PROFILE_REJECTED", 401);
   let email = null;
   if (profile.email !== null) {
     if (typeof profile.email !== "string" || profile.email.length > 320 || !/^\S+@\S+\.\S+$/.test(profile.email) || /[\x00-\x1f\x7f]/.test(profile.email)) deny4("PROFILE_REJECTED", 401);
@@ -27258,10 +27359,140 @@ function createCloudSessionService({ fetchLegacy = legacy_sync_default.fetch.bin
 }
 var handleCloudSessionRequest = createCloudSessionService();
 
+// server-access/worker/akronikl-service.mjs
+var AKRONIKL_INTERNAL_PATH = "/api/v2/akronikl/internal";
+var encoder5 = new TextEncoder();
+var hex3 = (b) => [...new Uint8Array(b)].map((n) => n.toString(16).padStart(2, "0")).join("");
+var sha5 = async (b) => hex3(await crypto.subtle.digest("SHA-256", b));
+var reply3 = (status, data) => Response.json(data, { status, headers: { "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff" } });
+var fail5 = (code = "CLOUD_VAULT_UNAVAILABLE", status = 503) => {
+  throw Object.assign(Error(code), { status });
+};
+var exact9 = (v, keys2) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === keys2.split(",").sort().join(",");
+var provider = (v) => ["qwen", "openai", "anthropic", "gemini", "kimi", "deepseek", "gigachat", "openrouter"].includes(v);
+var slot = (v) => ["preferences", "chats"].includes(v) || typeof v === "string" && v.startsWith("key:") && provider(v.slice(4));
+var hash4 = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+var version2 = (v) => typeof v === "string" && /^[A-Za-z0-9_-]{22}$/.test(v);
+var cipher = (v, max = 19e5) => typeof v === "string" && v.length >= 40 && v.length <= max && /^[A-Za-z0-9+/]+={0,2}$/.test(v);
+async function verify3(request, env) {
+  const u = new URL(request.url);
+  if (request.method !== "POST" || u.pathname !== AKRONIKL_INTERNAL_PATH || u.search || request.headers.has("cookie") || request.headers.has("authorization") || request.headers.get("content-type") !== "application/json") fail5("CLOUD_REQUEST_DENIED", 401);
+  const stamp3 = request.headers.get("x-nexus-service-timestamp"), nonce = request.headers.get("x-nexus-service-nonce"), signature = request.headers.get("x-nexus-service-signature");
+  if (!/^\d{13}$/.test(stamp3 ?? "") || !/^[a-f0-9]{32}$/.test(nonce ?? "") || !hash4(signature) || Math.abs(Date.now() - Number(stamp3)) > 3e4) fail5("CLOUD_REQUEST_DENIED", 401);
+  const reader = request.body?.getReader();
+  if (!reader) fail5("CLOUD_REQUEST_INVALID", 400);
+  const parts = [];
+  let size = 0;
+  try {
+    for (; ; ) {
+      const { done, value: value2 } = await reader.read();
+      if (done) break;
+      size += value2.length;
+      if (size > 195e4) fail5("CLOUD_REQUEST_INVALID", 413);
+      parts.push(value2);
+    }
+  } finally {
+    await reader.cancel().catch(() => {
+    });
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const b of parts) {
+    bytes.set(b, offset);
+    offset += b.length;
+  }
+  const key = await crypto.subtle.importKey("raw", encoder5.encode(env.AKRONIKL_SERVICE_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+  if (!await crypto.subtle.verify("HMAC", key, Uint8Array.from(signature.match(/../g), (s) => parseInt(s, 16)), encoder5.encode(`v1
+POST
+${AKRONIKL_INTERNAL_PATH}
+${stamp3}
+${nonce}
+${await sha5(bytes)}`))) fail5("CLOUD_REQUEST_DENIED", 401);
+  let value;
+  try {
+    value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+  } catch {
+    fail5("CLOUD_REQUEST_INVALID", 400);
+  }
+  if (!exact9(value, "action,expectedAccountId,payload,sessionHash") || !hash4(value.sessionHash) || typeof value.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId)) fail5("CLOUD_REQUEST_DENIED", 401);
+  if (Math.abs(Date.now() - Number(stamp3)) > 3e4) fail5("CLOUD_REQUEST_DENIED", 401);
+  await env.DB.prepare("DELETE FROM nexus_akronikl_nonces WHERE nonce IN(SELECT nonce FROM nexus_akronikl_nonces WHERE expires_at<?1 ORDER BY expires_at LIMIT 128)").bind(Date.now()).run();
+  const n = await env.DB.prepare("INSERT OR IGNORE INTO nexus_akronikl_nonces(nonce,expires_at) VALUES(?1,?2)").bind(nonce, Number(stamp3) + 3e4).run();
+  if (!n.success || n.meta?.changes !== 1) fail5("CLOUD_REQUEST_DENIED", 401);
+  const foundation = await readEligibleAccountFoundation(env.DB, value.sessionHash, void 0, env);
+  if (!foundation) fail5("CLOUD_ACCOUNT_REQUIRED", 401);
+  if (foundation.account.accountId !== value.expectedAccountId) fail5("CLOUD_ACCOUNT_REQUIRED", 409);
+  return value;
+}
+async function handleAkroniklService(request, env) {
+  if (env.AKRONIKL_STATE_ENABLED !== "true" || !env.DB || typeof env.AKRONIKL_SERVICE_KEY !== "string" || env.AKRONIKL_SERVICE_KEY.length < 32) return reply3(404, { code: "CLOUD_VAULT_UNAVAILABLE" });
+  try {
+    const v = await verify3(request, env), id3 = v.expectedAccountId, p = v.payload, now5 = Date.now(), q3 = (s, ...args) => env.DB.prepare(s).bind(...args);
+    await q3("DELETE FROM nexus_akronikl_limits WHERE rowid IN(SELECT rowid FROM nexus_akronikl_limits WHERE expires_at<=?1 LIMIT 128)", now5).run();
+    const cleanup2 = ["lease.release", "lease.drop", "state.remove"].includes(v.action), write = ["state.write", "lease.save"].includes(v.action);
+    for (const [kind, period, max] of cleanup2 ? [["cleanup", 6e4, 30], ["cleanup", 864e5, 1440]] : [["rpc", 6e4, 180], ["rpc", 864e5, 5e3], ...write ? [["write", 6e4, 30]] : []]) {
+      const start = Math.floor(now5 / period), bucket = kind + ":" + period + ":" + start, row = await q3("INSERT INTO nexus_akronikl_limits(account_id,bucket,count,expires_at) VALUES(?1,?2,1,?3) ON CONFLICT(account_id,bucket) DO UPDATE SET count=count+1 WHERE count<?4 RETURNING count", id3, bucket, (start + 1) * period, max).first();
+      if (!row) fail5("CLOUD_RATE_LIMITED", 429);
+    }
+    if (v.action === "state.read" && exact9(p, "slot") && slot(p.slot)) return reply3(200, await q3("SELECT revision,ciphertext FROM nexus_akronikl_state WHERE account_id=?1 AND slot=?2", id3, p.slot).first() ?? { revision: 0, ciphertext: null });
+    if (v.action === "keys.list" && exact9(p, "")) {
+      const { results = [] } = await q3("SELECT slot,ciphertext FROM nexus_akronikl_state WHERE account_id=?1 AND slot LIKE 'key:%' ORDER BY slot", id3).all();
+      return reply3(200, { records: results });
+    }
+    if (v.action === "provider.epoch" && exact9(p, "providerId") && provider(p.providerId)) return reply3(200, { epoch: (await q3("SELECT count FROM nexus_akronikl_limits WHERE account_id=?1 AND bucket=?2", id3, "epoch:" + p.providerId).first())?.count ?? 0 });
+    const keyWrite = typeof p?.slot === "string" && p.slot.startsWith("key:");
+    if (v.action === "state.write" && exact9(p, keyWrite ? "slot,revision,ciphertext,providerEpoch" : "slot,revision,ciphertext") && slot(p.slot) && (!keyWrite || Number.isSafeInteger(p.providerEpoch) && p.providerEpoch >= 0) && Number.isSafeInteger(p.revision) && p.revision >= 0 && cipher(p.ciphertext, p.slot === "chats" ? 19e5 : 2e4)) {
+      const epoch = keyWrite ? p.providerEpoch : null, guard3 = "(?5 IS NULL OR ?5=COALESCE((SELECT count FROM nexus_akronikl_limits WHERE account_id=?1 AND bucket=?6),0))";
+      const row = await q3("INSERT INTO nexus_akronikl_state(account_id,slot,revision,ciphertext) SELECT ?1,?2,1,?3 WHERE ?4=0 AND " + guard3 + " ON CONFLICT(account_id,slot) DO UPDATE SET revision=revision+1,ciphertext=excluded.ciphertext WHERE revision=?4 AND " + guard3 + " RETURNING revision", id3, p.slot, p.ciphertext, p.revision, epoch, "epoch:" + p.slot.slice(4)).first();
+      const updated = row ?? (p.revision > 0 ? await q3("UPDATE nexus_akronikl_state SET revision=revision+1,ciphertext=?3 WHERE account_id=?1 AND slot=?2 AND revision=?4 AND " + guard3 + " RETURNING revision", id3, p.slot, p.ciphertext, p.revision, epoch, "epoch:" + p.slot.slice(4)).first() : null);
+      if (!updated) fail5("CLOUD_SETTINGS_CONFLICT", 409);
+      return reply3(200, updated);
+    }
+    if (v.action === "state.remove" && exact9(p, "slot") && typeof p.slot === "string" && p.slot.startsWith("key:") && slot(p.slot)) {
+      await env.DB.batch([q3("DELETE FROM nexus_akronikl_state WHERE account_id=?1 AND slot=?2", id3, p.slot), q3("DELETE FROM nexus_akronikl_connections WHERE account_id=?1 AND provider_id=?2", id3, p.slot.slice(4)), q3("INSERT INTO nexus_akronikl_limits(account_id,bucket,count,expires_at) VALUES(?1,?2,1,253402300799000) ON CONFLICT(account_id,bucket) DO UPDATE SET count=count+1", id3, "epoch:" + p.slot.slice(4))]);
+      return reply3(200, { removed: true });
+    }
+    if (v.action === "lease.save" && exact9(p, "tokenHash,version,providerId,expiresAt,ciphertext,replaceTokenHash,providerEpoch") && hash4(p.tokenHash) && version2(p.version) && provider(p.providerId) && (p.replaceTokenHash === null || hash4(p.replaceTokenHash)) && Number.isSafeInteger(p.providerEpoch) && p.providerEpoch >= 0 && Number.isSafeInteger(p.expiresAt) && p.expiresAt > now5 && p.expiresAt <= now5 + 18e5 && cipher(p.ciphertext, 2e4)) {
+      await q3("DELETE FROM nexus_akronikl_connections WHERE token_hash IN(SELECT token_hash FROM nexus_akronikl_connections WHERE expires_at<=?1 LIMIT 128)", now5).run();
+      const row = await q3("INSERT INTO nexus_akronikl_connections(token_hash,account_id,session_hash,provider_id,version,expires_at,ciphertext) SELECT ?1,?2,?3,?4,?5,?6,?7 WHERE (SELECT count(*) FROM nexus_akronikl_connections WHERE account_id=?2 AND expires_at>?9 AND NOT(?8 IS NOT NULL AND token_hash=?8 AND session_hash=?3))<8 AND ?10=COALESCE((SELECT count FROM nexus_akronikl_limits WHERE account_id=?2 AND bucket=?11),0) RETURNING token_hash", p.tokenHash, id3, v.sessionHash, p.providerId, p.version, p.expiresAt, p.ciphertext, p.replaceTokenHash, now5, p.providerEpoch, "epoch:" + p.providerId).first();
+      if (!row) fail5("CLOUD_BUSY", 429);
+      return reply3(200, { saved: true });
+    }
+    if (v.action === "lease.read" && exact9(p, "tokenHash") && hash4(p.tokenHash)) return reply3(200, { lease: await q3("SELECT version,ciphertext,expires_at FROM nexus_akronikl_connections WHERE token_hash=?1 AND account_id=?2 AND session_hash=?3 AND expires_at>?4", p.tokenHash, id3, v.sessionHash, now5).first() });
+    if (v.action === "lease.drop" && exact9(p, "tokenHash,version") && hash4(p.tokenHash) && version2(p.version)) {
+      await q3("DELETE FROM nexus_akronikl_connections WHERE token_hash=?1 AND account_id=?2 AND session_hash=?3 AND version=?4", p.tokenHash, id3, v.sessionHash, p.version).run();
+      return reply3(200, { removed: true });
+    }
+    if (v.action === "lease.acquire" && exact9(p, "tokenHash,version,lockId") && hash4(p.tokenHash) && version2(p.version) && hash4(p.lockId)) {
+      const row = await q3("INSERT INTO nexus_akronikl_locks(account_id,token_hash,session_hash,version,busy_until,lock_id) SELECT ?2,?1,?3,?4,?5,?6 WHERE EXISTS(SELECT 1 FROM nexus_akronikl_connections WHERE token_hash=?1 AND account_id=?2 AND session_hash=?3 AND version=?4 AND expires_at>?7) ON CONFLICT(account_id) DO UPDATE SET token_hash=excluded.token_hash,session_hash=excluded.session_hash,version=excluded.version,busy_until=excluded.busy_until,lock_id=excluded.lock_id WHERE busy_until<=?7 RETURNING version", p.tokenHash, id3, v.sessionHash, p.version, now5 + 9e4, p.lockId, now5).first();
+      if (!row) fail5("CLOUD_BUSY", 429);
+      return reply3(200, { acquired: true });
+    }
+    if (v.action === "lease.release" && exact9(p, "tokenHash,version,lockId") && hash4(p.tokenHash) && version2(p.version) && hash4(p.lockId)) {
+      await q3("DELETE FROM nexus_akronikl_locks WHERE token_hash=?1 AND account_id=?2 AND session_hash=?3 AND version=?4 AND lock_id=?5", p.tokenHash, id3, v.sessionHash, p.version, p.lockId).run();
+      return reply3(200, { released: true });
+    }
+    if (v.action === "limit.consume" && exact9(p, "kind") && ["connect", "generate"].includes(p.kind)) {
+      await q3("DELETE FROM nexus_akronikl_limits WHERE rowid IN(SELECT rowid FROM nexus_akronikl_limits WHERE expires_at<=?1 LIMIT 128)", now5).run();
+      for (const [period, max] of [[6e4, p.kind === "connect" ? 4 : 12], [864e5, p.kind === "connect" ? 40 : 200]]) {
+        const start = Math.floor(now5 / period), bucket = p.kind + ":" + period + ":" + start;
+        const row = await q3("INSERT INTO nexus_akronikl_limits(account_id,bucket,count,expires_at) VALUES(?1,?2,1,?3) ON CONFLICT(account_id,bucket) DO UPDATE SET count=count+1 WHERE count<?4 RETURNING count", id3, bucket, (start + 1) * period, max).first();
+        if (!row) fail5("CLOUD_RATE_LIMITED", 429);
+      }
+      return reply3(200, { allowed: true });
+    }
+    fail5("CLOUD_REQUEST_INVALID", 400);
+  } catch (e) {
+    const code = /^CLOUD_[A-Z_]+$/.test(e?.message) ? e.message : "CLOUD_VAULT_UNAVAILABLE";
+    return reply3(e.status ?? 503, { code });
+  }
+}
+
 // server-access/worker/feedback-service.js
 var INTERNAL4 = "/api/v2/feedback/internal";
-var BASE2 = "/api/v2/feedback";
-var encoder5 = new TextEncoder();
+var BASE3 = "/api/v2/feedback";
+var encoder6 = new TextEncoder();
 var FeedbackError = class extends Error {
   constructor(status, code) {
     super(code);
@@ -27269,14 +27500,14 @@ var FeedbackError = class extends Error {
     this.code = code;
   }
 };
-var fail5 = (status, code) => {
+var fail6 = (status, code) => {
   throw new FeedbackError(status, code);
 };
 var response3 = (body, status = 200) => Response.json(body, { status, headers: { "cache-control": "no-store", "vary": "*", "x-content-type-options": "nosniff" } });
-var sha5 = async (value) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", typeof value === "string" ? encoder5.encode(value) : value))].map((x) => x.toString(16).padStart(2, "0")).join("");
+var sha6 = async (value) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", typeof value === "string" ? encoder6.encode(value) : value))].map((x) => x.toString(16).padStart(2, "0")).join("");
 async function boundedFeedbackJson(request, max = 32768) {
   const reader = request.body?.getReader();
-  if (!reader) fail5(400, "INVALID_INPUT");
+  if (!reader) fail6(400, "INVALID_INPUT");
   let size = 0;
   const chunks = [];
   try {
@@ -27284,7 +27515,7 @@ async function boundedFeedbackJson(request, max = 32768) {
       const { value, done } = await reader.read();
       if (done) break;
       size += value.length;
-      if (size > max) fail5(413, "INPUT_TOO_LARGE");
+      if (size > max) fail6(413, "INPUT_TOO_LARGE");
       chunks.push(value);
     }
     const data = new Uint8Array(size);
@@ -27296,7 +27527,7 @@ async function boundedFeedbackJson(request, max = 32768) {
     return { bytes: data, value: JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(data)) };
   } catch (error) {
     if (error instanceof FeedbackError) throw error;
-    fail5(400, "INVALID_INPUT");
+    fail6(400, "INVALID_INPUT");
   } finally {
     await reader.cancel().catch(() => {
     });
@@ -27304,34 +27535,34 @@ async function boundedFeedbackJson(request, max = 32768) {
   }
 }
 var string = (value, max, min = 0) => {
-  if (typeof value !== "string" || value.trim().length < min || value.length > max || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)) fail5(400, "INVALID_INPUT");
+  if (typeof value !== "string" || value.trim().length < min || value.length > max || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)) fail6(400, "INVALID_INPUT");
   return value.trim();
 };
 var identifier = (value) => {
   const text5 = string(value, 80);
-  if (text5 && !/^[a-zA-Z0-9._-]+$/.test(text5)) fail5(400, "INVALID_INPUT");
+  if (text5 && !/^[a-zA-Z0-9._-]+$/.test(text5)) fail6(400, "INVALID_INPUT");
   return text5;
 };
 var searchable = (value) => value.normalize("NFKC").toLocaleLowerCase("ru");
 var object = (value) => {
-  if (!value || typeof value !== "object" || Array.isArray(value)) fail5(400, "INVALID_INPUT");
+  if (!value || typeof value !== "object" || Array.isArray(value)) fail6(400, "INVALID_INPUT");
   return value;
 };
 function validateFeedbackInput(value) {
   object(value);
-  if (Object.keys(value).some((x) => !["kind", "type", "body", "publicName", "rating", "courseId", "consent", "context", "requestKey", "version"].includes(x))) fail5(400, "INVALID_INPUT");
+  if (Object.keys(value).some((x) => !["kind", "type", "body", "publicName", "rating", "courseId", "consent", "context", "requestKey", "version"].includes(x))) fail6(400, "INVALID_INPUT");
   const kind = value.kind;
-  if (!["message", "review"].includes(kind)) fail5(400, "INVALID_INPUT");
+  if (!["message", "review"].includes(kind)) fail6(400, "INVALID_INPUT");
   const type = kind === "review" ? "review" : value.type;
-  if (!["bug", "material", "idea", "impression", "review"].includes(type) || kind === "message" && type === "review") fail5(400, "INVALID_INPUT");
+  if (!["bug", "material", "idea", "impression", "review"].includes(type) || kind === "message" && type === "review") fail6(400, "INVALID_INPUT");
   const context = {};
   for (const [key, item2] of Object.entries(object(value.context || {}))) {
-    if (!["courseId", "lessonId", "practicumId", "templateId", "uiLocale", "version"].includes(key)) fail5(400, "INVALID_CONTEXT");
+    if (!["courseId", "lessonId", "practicumId", "templateId", "uiLocale", "version"].includes(key)) fail6(400, "INVALID_CONTEXT");
     context[key] = identifier(item2);
   }
   const rating = value.rating ?? null;
-  if (rating !== null && (!Number.isInteger(rating) || rating < 1 || rating > 5)) fail5(400, "INVALID_INPUT");
-  if (value.consent !== void 0 && typeof value.consent !== "boolean") fail5(400, "INVALID_INPUT");
+  if (rating !== null && (!Number.isInteger(rating) || rating < 1 || rating > 5)) fail6(400, "INVALID_INPUT");
+  if (value.consent !== void 0 && typeof value.consent !== "boolean") fail6(400, "INVALID_INPUT");
   return { kind, type, body: string(value.body, 4e3, 10), publicName: kind === "review" ? string(value.publicName, 80, 1) : "", rating: kind === "review" ? rating : null, courseId: identifier(value.courseId || ""), consent: kind === "review" && value.consent === true, context };
 }
 var query3 = (db, sql2, ...values) => db.prepare(sql2).bind(...values);
@@ -27343,7 +27574,7 @@ async function item(db, id3) {
 }
 async function rate(db, accountId2) {
   const result = await query3(db, `INSERT INTO feedback_rate_limits(account_id,bucket,used) VALUES(?1,?2,1) ON CONFLICT(account_id,bucket) DO UPDATE SET used=used+1 WHERE used<20`, accountId2, Math.floor(Date.now() / 36e5)).run();
-  if (result.meta.changes !== 1) fail5(429, "RATE_LIMITED");
+  if (result.meta.changes !== 1) fail6(429, "RATE_LIMITED");
 }
 function event(db, id3, revision, actor, action, reason, stamp3) {
   return query3(db, `INSERT INTO feedback_events(id,item_id,revision,actor_id,action,reason,created_at) SELECT ?1,?2,?3,?4,?5,?6,?7 WHERE changes()=1`, crypto.randomUUID(), id3, revision, actor, action, reason, stamp3);
@@ -27357,27 +27588,27 @@ async function publicReviews(db, params) {
   return { reviews: list.map((r) => ({ id: r.id, body: r.body, publicName: r.public_name, rating: r.rating, courseId: r.course_id, publishedAt: r.updated_at })), total: totals.count, ratings: totals.ratings, average: totals.average };
 }
 async function verifyEnvelope(request, env) {
-  if (typeof env.FEEDBACK_SERVICE_KEY !== "string" || env.FEEDBACK_SERVICE_KEY.length < 32) fail5(404, "FEEDBACK_UNAVAILABLE");
-  if (request.method !== "POST" || request.headers.has("authorization") || request.headers.has("cookie") || request.headers.get("content-type") !== "application/json" || new URL(request.url).search) fail5(401, "SERVICE_DENIED");
+  if (typeof env.FEEDBACK_SERVICE_KEY !== "string" || env.FEEDBACK_SERVICE_KEY.length < 32) fail6(404, "FEEDBACK_UNAVAILABLE");
+  if (request.method !== "POST" || request.headers.has("authorization") || request.headers.has("cookie") || request.headers.get("content-type") !== "application/json" || new URL(request.url).search) fail6(401, "SERVICE_DENIED");
   const stamp3 = request.headers.get("x-nexus-service-timestamp"), nonce = request.headers.get("x-nexus-service-nonce"), signature = request.headers.get("x-nexus-service-signature");
-  if (!/^\d{13}$/.test(stamp3 || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !/^[a-f0-9]{64}$/.test(signature || "") || Math.abs(Date.now() - Number(stamp3)) > 3e4) fail5(401, "SERVICE_DENIED");
-  const { bytes, value } = await boundedFeedbackJson(request), key = await crypto.subtle.importKey("raw", encoder5.encode(env.FEEDBACK_SERVICE_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+  if (!/^\d{13}$/.test(stamp3 || "") || !/^[a-f0-9]{32}$/.test(nonce || "") || !/^[a-f0-9]{64}$/.test(signature || "") || Math.abs(Date.now() - Number(stamp3)) > 3e4) fail6(401, "SERVICE_DENIED");
+  const { bytes, value } = await boundedFeedbackJson(request), key = await crypto.subtle.importKey("raw", encoder6.encode(env.FEEDBACK_SERVICE_KEY), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
   const canonical = `v1
 POST
 ${INTERNAL4}
 ${stamp3}
 ${nonce}
-${await sha5(bytes)}`;
-  if (!await crypto.subtle.verify("HMAC", key, Uint8Array.from(signature.match(/../g), (x) => parseInt(x, 16)), encoder5.encode(canonical))) fail5(401, "SERVICE_DENIED");
+${await sha6(bytes)}`;
+  if (!await crypto.subtle.verify("HMAC", key, Uint8Array.from(signature.match(/../g), (x) => parseInt(x, 16)), encoder6.encode(canonical))) fail6(401, "SERVICE_DENIED");
   object(value);
   const envelopeKeys = Object.keys(value).sort().join(","), hasExpectation = envelopeKeys === "expectedAccountId,method,path,payload,sessionHash";
-  if (!(hasExpectation || envelopeKeys === "method,path,payload,sessionHash" && env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED !== "true") || hasExpectation && (typeof value.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId)) || !/^[a-f0-9]{64}$/.test(value.sessionHash || "") || !["GET", "POST", "PATCH"].includes(value.method) || typeof value.path !== "string" || !value.path.startsWith(BASE2 + "/") || value.path.length > 512) fail5(401, "SERVICE_DENIED");
+  if (!(hasExpectation || envelopeKeys === "method,path,payload,sessionHash" && env.FEEDBACK_ACCOUNT_EXPECTATION_REQUIRED !== "true") || hasExpectation && (typeof value.expectedAccountId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.expectedAccountId)) || !/^[a-f0-9]{64}$/.test(value.sessionHash || "") || !["GET", "POST", "PATCH"].includes(value.method) || typeof value.path !== "string" || !value.path.startsWith(BASE3 + "/") || value.path.length > 512) fail6(401, "SERVICE_DENIED");
   const added = await query3(env.DB, "INSERT OR IGNORE INTO feedback_service_nonces(nonce,expires_at) VALUES(?1,?2)", nonce, new Date(Number(stamp3) + 3e4).toISOString()).run();
-  if (added.meta.changes !== 1) fail5(401, "SERVICE_DENIED");
+  if (added.meta.changes !== 1) fail6(401, "SERVICE_DENIED");
   await query3(env.DB, "DELETE FROM feedback_service_nonces WHERE expires_at<?1", (/* @__PURE__ */ new Date()).toISOString()).run();
   const foundation = await readEligibleAccountFoundation(env.DB, value.sessionHash, void 0, env);
-  if (!foundation) fail5(401, "SESSION_REQUIRED");
-  if (hasExpectation && foundation.account.accountId !== value.expectedAccountId) fail5(401, "SESSION_REQUIRED");
+  if (!foundation) fail6(401, "SESSION_REQUIRED");
+  if (hasExpectation && foundation.account.accountId !== value.expectedAccountId) fail6(401, "SESSION_REQUIRED");
   return { ...value, actor: foundation.account };
 }
 async function feedbackOperation(db, value, env = {}) {
@@ -27386,19 +27617,19 @@ async function feedbackOperation(db, value, env = {}) {
   if (extension !== void 0) return extension;
   const url = new URL(path, "https://nexus.invalid"), pathname = url.pathname;
   const moderator = await teamPermission(db, actor.accountId, env);
-  if (pathname === BASE2 + "/me" && method === "GET") {
+  if (pathname === BASE3 + "/me" && method === "GET") {
     const limit = Math.min(20, Math.max(1, Math.floor(Number(url.searchParams.get("limit")) || 20))), offset = Math.min(1e4, Math.max(0, Math.floor(Number(url.searchParams.get("offset")) || 0)));
     const total = await query3(db, "SELECT count(*) AS count FROM feedback_items WHERE author_id=?1", actor.accountId).first();
     return { account: { id: actor.accountId, displayName: actor.displayName }, canModerate: moderator, total: total.count, offset, items: (await rows2(query3(db, joined + " WHERE i.author_id=?1 ORDER BY i.created_at DESC,i.id LIMIT ?2 OFFSET ?3", actor.accountId, limit, offset))).map(authorDto) };
   }
-  if (pathname === BASE2 + "/items" && method === "POST") {
-    if (env.COMMUNITY_ENABLED === "true" && await query3(db, "SELECT 1 ok FROM feedback_deleted_items WHERE author_id=?1 AND request_key=?2", actor.accountId, payload?.requestKey || "").first()) fail5(409, "ITEM_DELETED");
+  if (pathname === BASE3 + "/items" && method === "POST") {
+    if (env.COMMUNITY_ENABLED === "true" && await query3(db, "SELECT 1 ok FROM feedback_deleted_items WHERE author_id=?1 AND request_key=?2", actor.accountId, payload?.requestKey || "").first()) fail6(409, "ITEM_DELETED");
     const input = validateFeedbackInput(payload), requestKey = string(payload.requestKey, 80, 10);
-    if (!/^[a-zA-Z0-9-]+$/.test(requestKey)) fail5(400, "INVALID_INPUT");
-    const digest2 = await sha5(JSON.stringify(input));
+    if (!/^[a-zA-Z0-9-]+$/.test(requestKey)) fail6(400, "INVALID_INPUT");
+    const digest2 = await sha6(JSON.stringify(input));
     const duplicate = await query3(db, joined + " WHERE i.author_id=?1 AND i.request_key=?2", actor.accountId, requestKey).first();
     if (duplicate) {
-      if (duplicate.request_hash !== digest2) fail5(409, "REQUEST_CONFLICT");
+      if (duplicate.request_hash !== digest2) fail6(409, "REQUEST_CONFLICT");
       return { item: authorDto(duplicate) };
     }
     await rate(db, actor.accountId);
@@ -27417,15 +27648,15 @@ async function feedbackOperation(db, value, env = {}) {
   const match = pathname.match(/^\/api\/v2\/feedback\/items\/([a-zA-Z0-9-]+)(?:\/(withdraw|moderate))?$/);
   if (match && method === "PATCH") {
     object(payload);
-    if (match[2] === "moderate" && !moderator) fail5(403, "MODERATOR_REQUIRED");
+    if (match[2] === "moderate" && !moderator) fail6(403, "MODERATOR_REQUIRED");
     const current = await item(db, match[1]);
-    if (!current || match[2] !== "moderate" && current.author_id !== actor.accountId) fail5(404, "NOT_FOUND");
-    if (!Number.isInteger(payload.version) || payload.version !== current.version) fail5(409, "STALE_VERSION");
+    if (!current || match[2] !== "moderate" && current.author_id !== actor.accountId) fail6(404, "NOT_FOUND");
+    if (!Number.isInteger(payload.version) || payload.version !== current.version) fail6(409, "STALE_VERSION");
     const stamp3 = (/* @__PURE__ */ new Date()).toISOString();
     let result;
     if (match[2] === "moderate") {
-      if (!moderator) fail5(403, "MODERATOR_REQUIRED");
-      if (Object.keys(payload).some((x) => !["version", "revision", "action", "reason", "status"].includes(x)) || payload.revision !== current.current_revision) fail5(409, "STALE_REVISION");
+      if (!moderator) fail6(403, "MODERATOR_REQUIRED");
+      if (Object.keys(payload).some((x) => !["version", "revision", "action", "reason", "status"].includes(x)) || payload.revision !== current.current_revision) fail6(409, "STALE_REVISION");
       const reason = string(payload.reason || "", 1e3), action = payload.action;
       let status = current.status, featured = current.featured;
       if (action === "approve" && current.kind === "review" && current.status === "pending" && current.consent) {
@@ -27441,29 +27672,29 @@ async function feedbackOperation(db, value, env = {}) {
         featured = action === "feature" ? 1 : 0;
       } else if (action === "triage" && current.kind === "message" && ["triaged", "in-progress", "resolved"].includes(payload.status)) {
         status = payload.status;
-      } else fail5(409, "INVALID_TRANSITION");
+      } else fail6(409, "INVALID_TRANSITION");
       result = await db.batch([query3(db, `UPDATE feedback_items SET status=?1,featured=?2,version=version+1,updated_at=?3 WHERE id=?4 AND version=?5 AND current_revision=?6`, status, featured, stamp3, current.id, payload.version, payload.revision), event(db, current.id, current.current_revision, actor.accountId, action, reason, stamp3)]);
     } else {
-      if (current.author_id !== actor.accountId) fail5(404, "NOT_FOUND");
+      if (current.author_id !== actor.accountId) fail6(404, "NOT_FOUND");
       if (match[2] === "withdraw") {
-        if (current.kind !== "review") fail5(409, "INVALID_TRANSITION");
+        if (current.kind !== "review") fail6(409, "INVALID_TRANSITION");
         result = await db.batch([query3(db, `UPDATE feedback_items SET status='withdrawn',featured=0,version=version+1,updated_at=?1 WHERE id=?2 AND version=?3`, stamp3, current.id, payload.version), event(db, current.id, current.current_revision, actor.accountId, "withdrawn", "", stamp3)]);
       } else {
         const input = validateFeedbackInput(payload);
-        if (input.kind !== current.kind) fail5(400, "INVALID_INPUT");
+        if (input.kind !== current.kind) fail6(400, "INVALID_INPUT");
         await rate(db, actor.accountId);
         const revision = current.current_revision + 1;
         result = await db.batch([query3(db, `UPDATE feedback_items SET current_revision=?1,type=?2,status=?3,featured=0,version=version+1,updated_at=?4 WHERE id=?5 AND version=?6`, revision, input.type, input.kind === "review" ? "pending" : "submitted", stamp3, current.id, payload.version), query3(db, `INSERT INTO feedback_revisions(item_id,revision,body,public_name,rating,course_id,consent,context_json,created_at,search_text) SELECT ?1,?2,?3,?4,?5,?6,?7,?8,?9,?10 WHERE changes()=1`, current.id, revision, input.body, input.publicName, input.rating, input.courseId, +input.consent, JSON.stringify(input.context), stamp3, searchable(input.body)), event(db, current.id, revision, actor.accountId, "revised", "", stamp3)]);
       }
     }
-    if (result[0].meta.changes !== 1) fail5(409, "STALE_VERSION");
+    if (result[0].meta.changes !== 1) fail6(409, "STALE_VERSION");
     return { item: authorDto(await item(db, current.id)) };
   }
-  if (pathname === BASE2 + "/moderation" && method === "GET") {
-    if (!moderator) fail5(403, "MODERATOR_REQUIRED");
+  if (pathname === BASE3 + "/moderation" && method === "GET") {
+    if (!moderator) fail6(403, "MODERATOR_REQUIRED");
     const kind = url.searchParams.get("kind") || "", status = url.searchParams.get("status") || "", course = identifier(url.searchParams.get("course") || "");
     const from = string(url.searchParams.get("from") || "", 10), to = string(url.searchParams.get("to") || "", 10), search = searchable(string(url.searchParams.get("search") || "", 100)), offset = Math.min(1e4, Math.max(0, Math.floor(Number(url.searchParams.get("offset")) || 0)));
-    if ([from, to].some((x) => x && !/^\d{4}-\d{2}-\d{2}$/.test(x))) fail5(400, "INVALID_INPUT");
+    if ([from, to].some((x) => x && !/^\d{4}-\d{2}-\d{2}$/.test(x))) fail6(400, "INVALID_INPUT");
     const where = ` WHERE (?1='' OR i.kind=?1) AND (?2='' OR i.status=?2) AND (?3='' OR r.course_id=?3) AND (?4='' OR substr(i.created_at,1,10)>=?4) AND (?5='' OR substr(i.created_at,1,10)<=?5) AND (?6='' OR instr(r.search_text,?6)>0)`;
     const list = await rows2(query3(db, joined.replace("SELECT i.*", "SELECT a.display_name AS author_name,i.*") + " LEFT JOIN account_subjects a ON a.id=i.author_id" + where + " ORDER BY i.created_at DESC,i.id LIMIT 20 OFFSET ?7", kind, status, course, from, to, search, offset));
     const total = await query3(db, "SELECT count(*) AS count FROM feedback_items i JOIN feedback_revisions r ON r.item_id=i.id AND r.revision=i.current_revision" + where, kind, status, course, from, to, search).first();
@@ -27472,19 +27703,19 @@ async function feedbackOperation(db, value, env = {}) {
   const events = pathname.match(/^\/api\/v2\/feedback\/items\/([a-zA-Z0-9-]+)\/events$/);
   if (events && method === "GET") {
     const current = await item(db, events[1]);
-    if (!current || !moderator && current.author_id !== actor.accountId) fail5(404, "NOT_FOUND");
+    if (!current || !moderator && current.author_id !== actor.accountId) fail6(404, "NOT_FOUND");
     const list = await rows2(query3(db, "SELECT revision,actor_id,action,reason,created_at FROM feedback_events WHERE item_id=?1 ORDER BY created_at,id", current.id));
     return { events: list.map((r) => ({ revision: r.revision, action: r.action, reason: r.reason, createdAt: r.created_at, ...moderator ? { actorId: r.actor_id } : {} })) };
   }
-  fail5(404, "NOT_FOUND");
+  fail6(404, "NOT_FOUND");
 }
 async function handleFeedbackRequest(request, env) {
   const url = new URL(request.url);
-  if (!url.pathname.startsWith(BASE2 + "/")) return null;
+  if (!url.pathname.startsWith(BASE3 + "/")) return null;
   try {
-    if (env.FEEDBACK_ENABLED !== "true" || !env.DB) fail5(503, "FEEDBACK_UNAVAILABLE");
-    if (url.pathname === BASE2 + "/reviews" && request.method === "GET") return response3(await publicReviews(env.DB, url.searchParams));
-    if (url.pathname !== INTERNAL4) fail5(404, "NOT_FOUND");
+    if (env.FEEDBACK_ENABLED !== "true" || !env.DB) fail6(503, "FEEDBACK_UNAVAILABLE");
+    if (url.pathname === BASE3 + "/reviews" && request.method === "GET") return response3(await publicReviews(env.DB, url.searchParams));
+    if (url.pathname !== INTERNAL4) fail6(404, "NOT_FOUND");
     const envelope2 = await verifyEnvelope(request, env);
     return response3(await feedbackOperation(env.DB, envelope2, env));
   } catch (error) {
@@ -27496,7 +27727,7 @@ async function handleFeedbackRequest(request, env) {
 var INTERNAL_PATH = "/api/v2/account/internal/read";
 var MAX_BODY_BYTES = 1024;
 var CLOCK_WINDOW_MS = 3e4;
-var encoder6 = new TextEncoder();
+var encoder7 = new TextEncoder();
 function denied() {
   return { ok: false, status: 401, code: "ACCOUNT_SERVICE_DENIED" };
 }
@@ -27527,8 +27758,8 @@ async function boundedBody(request) {
   }
 }
 async function hexSha256(bytes) {
-  const hash4 = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
-  return Array.from(hash4, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const hash5 = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return Array.from(hash5, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 async function verifyAccountServiceRequest(request, env) {
   const key = env.ACCOUNT_SERVICE_KEY;
@@ -27552,13 +27783,13 @@ ${nonce}
 ${digest2}`;
   const hmacKey = await crypto.subtle.importKey(
     "raw",
-    encoder6.encode(key),
+    encoder7.encode(key),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["verify"]
   );
   const signatureBytes = Uint8Array.from(signature.match(/../g), (pair) => parseInt(pair, 16));
-  if (!await crypto.subtle.verify("HMAC", hmacKey, signatureBytes, encoder6.encode(canonical))) {
+  if (!await crypto.subtle.verify("HMAC", hmacKey, signatureBytes, encoder7.encode(canonical))) {
     return denied();
   }
   let payload;
@@ -27580,33 +27811,56 @@ ${digest2}`;
   return { ok: true, path: payload.path, sessionHash: payload.sessionHash };
 }
 
+// server-access/worker/session-activity.mjs
+async function touchEligibleAccountSession(db, sessionHash, stamp3 = (/* @__PURE__ */ new Date()).toISOString(), env = {}) {
+  const time = Date.parse(stamp3);
+  if (!Number.isFinite(time)) throw Error("SESSION_STAMP_INVALID");
+  const next = new Date(time + 30 * 60 * 1e3).toISOString();
+  const admission = env.ALPHA_ADMISSION_ENABLED === "true" ? `AND EXISTS(SELECT 1 FROM nexus_alpha_settings WHERE id=1 AND enforced=1)
+ AND (EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=s.id AND status='active')
+ OR EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=s.id AND state='active' AND (access_expires_at IS NULL OR access_expires_at>?2)))` : "";
+  const row = await db.prepare(`UPDATE account_sessions SET
+ last_seen_at=MAX(last_seen_at,?2),idle_expires_at=MIN(absolute_expires_at,MAX(idle_expires_at,?3))
+ WHERE secret_hash=?1 AND status='active' AND revoked_at IS NULL
+ AND auth_strength='account-method-v1' AND idle_expires_at>?2 AND absolute_expires_at>?2
+ AND EXISTS(SELECT 1 FROM account_subjects s
+ JOIN account_devices d ON d.id=account_sessions.device_id AND d.subject_id=s.id AND d.status='active'
+ JOIN session_login_methods slm ON slm.session_id=account_sessions.id AND slm.account_id=s.id
+ JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=s.id AND lm.status='active'
+ WHERE s.id=account_sessions.subject_id AND s.status='active' ${admission})
+ RETURNING subject_id`).bind(sessionHash, stamp3, next).first();
+  return row?.subject_id ?? null;
+}
+
 // server-access/worker/entry.mjs
-var reply3 = (status, code) => Response.json({ error: { code } }, { status, headers: { "cache-control": "no-store", "vary": "*" } });
+var reply4 = (status, code) => Response.json({ error: { code } }, { status, headers: { "cache-control": "no-store", "vary": "*" } });
 var entry_default = { async fetch(request, env, context) {
   const path = new URL(request.url).pathname;
+  if (path === "/api/v2/akronikl/internal") return handleAkroniklService(request, env);
+  if (path.startsWith("/api/v2/akronikl/")) return reply4(404, "NOT_FOUND");
   if (path === "/api/v2/content/feed") return publicContent(request, env);
   if (path === "/api/v2/account/internal/control") return handleAdminService(request, env);
-  if (path.startsWith("/api/v2/account/control") || path.startsWith("/api/v2/account/profile")) return reply3(404, "NOT_FOUND");
+  if (path.startsWith("/api/v2/account/control") || path.startsWith("/api/v2/account/profile")) return reply4(404, "NOT_FOUND");
   if (path === "/api/v2/cloud/internal") return handleCloudSessionRequest(request, env, context);
-  if (path.startsWith("/api/v2/cloud/")) return reply3(404, "NOT_FOUND");
+  if (path.startsWith("/api/v2/cloud/")) return reply4(404, "NOT_FOUND");
   if (path === "/api/v2/account/internal/oauth") return handleOAuthService(request, env);
-  if (path.startsWith("/api/v2/account/oauth/")) return reply3(404, "NOT_FOUND");
+  if (path.startsWith("/api/v2/account/oauth/")) return reply4(404, "NOT_FOUND");
   if (path === "/api/v2/account/internal/passkey") return handlePasskeyService(request, env);
-  if (path.startsWith("/api/v2/account/passkey/")) return reply3(404, "NOT_FOUND");
+  if (path.startsWith("/api/v2/account/passkey/")) return reply4(404, "NOT_FOUND");
   if (path.startsWith("/api/v2/feedback/")) return handleFeedbackRequest(request, env);
   if (path === "/api/v2/account/internal/read") {
-    if (env.ACCOUNT_FOUNDATION_ENABLED !== "true") return reply3(404, "NOT_FOUND");
+    if (env.ACCOUNT_FOUNDATION_ENABLED !== "true") return reply4(404, "NOT_FOUND");
     try {
       const proof = await verifyAccountServiceRequest(request, env);
-      if (!proof.ok) return reply3(proof.status, proof.code);
+      if (!proof.ok) return reply4(proof.status, proof.code);
       const foundation = await readEligibleAccountFoundation(env.DB, proof.sessionHash, void 0, env);
-      if (!foundation) return reply3(401, "ACCOUNT_SESSION_REJECTED");
+      if (!foundation || await touchEligibleAccountSession(env.DB, proof.sessionHash, void 0, env) !== foundation.account.accountId) return reply4(401, "ACCOUNT_SESSION_REJECTED");
       return Response.json(proof.path === "/api/v2/account" ? foundation : { loginMethods: foundation.loginMethods, enrollmentAvailable: false }, { headers: { "cache-control": "no-store", "vary": "*" } });
     } catch {
-      return reply3(503, "ACCOUNT_FOUNDATION_UNAVAILABLE");
+      return reply4(503, "ACCOUNT_FOUNDATION_UNAVAILABLE");
     }
   }
-  if (path === "/api/v2/account" || path === "/api/v2/account/login-methods") return reply3(404, "NOT_FOUND");
+  if (path === "/api/v2/account" || path === "/api/v2/account/login-methods") return reply4(404, "NOT_FOUND");
   return legacy_sync_default.fetch(request, env, context);
 } };
 export {

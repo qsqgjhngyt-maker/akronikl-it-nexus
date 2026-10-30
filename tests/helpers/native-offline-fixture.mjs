@@ -1,3 +1,4 @@
+import {staticMime} from '../../pwa/static-mime.js';
 import http from 'node:http';
 import path from 'node:path';
 import {readFile,mkdir,mkdtemp,writeFile} from 'node:fs/promises';
@@ -7,7 +8,7 @@ export async function nativeOfflineFixture(name){
  const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE)),frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR),out=path.resolve(process.env.NEXUS_NATIVE_EVIDENCE);
  await mkdir(out,{recursive:false});const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),generation=manifest.assetGeneration,profile=await mkdtemp(path.join(tmpdir(),'nx-'+name+'-'));
  let context,page,networkDown=false;const errors=[],requests=[];
- const mime=f=>f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.json')?'application/json':f.endsWith('.webmanifest')?'application/manifest+json':f.endsWith('.png')?'image/png':f.endsWith('.webp')?'image/webp':f.endsWith('.svg')?'image/svg+xml':f.endsWith('.md')?'text/markdown':'text/html';
+ const mime=staticMime;
  const server=http.createServer(async(req,res)=>{if(networkDown){req.socket.destroy();return}try{const u=new URL(req.url,'http://127.0.0.1');if(/^\/(api|account)\//.test(u.pathname)){res.writeHead(401,{'content-type':'application/json','cache-control':'no-store',vary:'*'});return res.end('{"error":{"code":"SYNTHETIC_NO_SESSION"}}')}const f=u.pathname==='/'?'offline.html':u.pathname.slice(1),target=path.resolve(frontend,f);if(!target.startsWith(frontend+path.sep))throw Error('PATH');let b=await readFile(target);if(f==='version.json'){const metadata=JSON.parse(b);metadata.releaseCandidate={assetGeneration:generation};b=Buffer.from(JSON.stringify(metadata))}res.writeHead(200,{'content-type':mime(f),'cache-control':f==='service-worker.js'?'no-store':'public, max-age=0'});res.end(b)}catch{res.writeHead(404);res.end()}});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
  async function launch(){context=await chromium.launchPersistentContext(profile,{headless:true,executablePath:process.env.NEXUS_CHROME_PATH,...(networkDown?{proxy:{server:'http://127.0.0.1:9'}}:{}),args:['--disable-background-networking','--disable-sync','--no-first-run']});context.on('request',r=>{const u=new URL(r.url());requests.push({origin:u.origin,path:u.pathname,method:r.method()})});context.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));page=await context.newPage();page.setDefaultTimeout(30000);return page}

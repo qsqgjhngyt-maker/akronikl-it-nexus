@@ -1,0 +1,50 @@
+// Public acoustic assets only; user text never goes to a network request.
+import {readPiperChunks} from './piper-asset-loader.js';import {PIPER_PUBLIC_ASSETS} from './piper-assets.js';
+import {installPiperXHR} from './piper-xhr.js';
+import {createPiperPhonemizerCache} from './piper-phonemizer-cache.js';
+import {pronunciationIds,pronunciationText} from './piper-pronunciation.js';
+import {cleanPiperPcm} from './piper-audio.js';
+import {piperPacePlan} from './piper-pace.js';
+const assetSource=new URL(self.location.href).searchParams.get('source')??'same-origin';
+if(!['same-origin','yandex-public-v1'].includes(assetSource))throw Error('PIPER_ASSET_SOURCE_INVALID');
+const assetBase=assetSource==='yandex-public-v1'?new URL('https://storage.yandexcloud.net/akronikl-p4q-public-voice-20261029-2634b701/piper-v1/'):new URL('/akronikl/vendor/piper/',self.location.origin),nativeFetch=globalThis.fetch.bind(globalThis);
+const variant=new URL(self.location.href).searchParams.get('voice')??'irina';
+const chunked=new URL(self.location.href).searchParams.get('transport')==='chunks-v1';
+const readPhonemizer=createPiperPhonemizerCache({base:assetBase,fetchResource:nativeFetch,chunked});
+installPiperXHR({scope:self,base:assetBase,fetchResource:nativeFetch,readResource:readPhonemizer});
+if(!['irina','uyut7-pilot5','uyut7-pilot5-pace','uyut7-pilot6-pace'].includes(variant))throw Error('PIPER_VOICE_INVALID');
+if(variant==='uyut7-pilot5-pace'&&(assetSource!=='same-origin'||chunked))throw Error('PIPER_TRIAL_REQUIRES_LOCAL_ASSETS');
+const audioOptions=variant.startsWith('uyut7-')?{scales:variant.endsWith('-pace')?[.3,1.02,0]:[.5,1.02,.65],processPcm:cleanPiperPcm,...(variant.endsWith('-pace')?{phonemePace:(ids,map)=>piperPacePlan(ids,map).pace}:{})}:{};
+// Keep Cyrillic in ru; selecting en-us globally would spell Russian as letter names.
+const optionsFor=text=>variant.startsWith('uyut7-')?{...audioOptions,language:/[а-яё]/iu.test(text)?'ru':/[a-z]/iu.test(text)?'en-us':'ru'}:audioOptions;
+const modelId='ru_RU-'+variant+'-medium',modelBase='https://huggingface.co/diffusionstudio/piper-voices/resolve/main/ru/ru_RU/'+variant+'/medium/';
+globalThis.fetch=(input,init={})=>{
+ let url=new URL(typeof input==='string'?input:input.url??input,self.location.href);
+ for(const name of [modelId+'.onnx',modelId+'.onnx.json'])if(url.href===modelBase+name)url=new URL('models/'+name,assetBase);
+ if(url.origin!==assetBase.origin||!url.pathname.startsWith(assetBase.pathname)||!['GET','HEAD'].includes(init.method??'GET')||init.body)throw Error('PIPER_NETWORK_DENIED');
+ const file=url.pathname.slice(assetBase.pathname.length);
+ if(['piper_phonemize.data','piper_phonemize.wasm'].includes(file)){if(url.search||url.hash||(init.method??'GET')!=='GET')throw Error('PIPER_NETWORK_DENIED');return readPhonemizer(file,{signal:init.signal});}
+ if(chunked){const record=PIPER_PUBLIC_ASSETS[file];if(!record||url.search||url.hash)throw Error('PIPER_NETWORK_DENIED');if(record.chunks)return readPiperChunks(file,{base:assetBase,fetchResource:nativeFetch,signal:init.signal});}
+ return nativeFetch(url,{...init,credentials:'omit',redirect:'error'});
+};
+let session,busy=false;const started=performance.now();
+const digest=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(n=>n.toString(16).padStart(2,'0')).join('');
+try{
+ const {TtsSession,PATH_MAP}=await import('./piper-runtime-prosody.js');
+ if(variant.startsWith('uyut7-')){
+  if(!PATH_MAP||typeof PATH_MAP!=='object')throw Error('PIPER_CUSTOM_VOICE_UNAVAILABLE');
+  PATH_MAP[modelId]='ru/ru_RU/'+variant+'/medium/'+modelId+'.onnx';
+ }
+ session=new TtsSession({voiceId:modelId,allowLocalModels:true,fallbackStrategy:'local',wasmPaths:{onnxWasm:new URL('ort/',assetBase).href,piperWasm:new URL('piper_phonemize.wasm',assetBase).href,piperData:new URL('piper_phonemize.data',assetBase).href}});
+ await session.waitReady;const loaded=performance.now();const warm=await session.predict('Готово.',undefined,optionsFor('Готово.'));if(!(warm instanceof Blob)||warm.size<44)throw Error('PIPER_WARMUP_FAILED');
+ postMessage({ready:true,model:modelId,localOnly:true,timings:{loadMs:loaded-started,warmupMs:performance.now()-loaded,totalMs:performance.now()-started}});
+}catch{postMessage({ready:false,code:'SPEECH_UNAVAILABLE'});throw Error('PIPER_INITIALIZATION_FAILED');}
+self.onmessage=async({data})=>{
+ if(!data||Object.keys(data).sort().join(',')!=='id,text,textSha256'||typeof data.id!=='string'||typeof data.text!=='string'||!data.text.trim()||data.text.length>240||data.text.includes('\0'))return;
+ if(busy){postMessage({id:data.id,code:'SPEECH_BUSY'});return;}busy=true;
+ try{
+  const textSha256=await digest(data.text);if(data.textSha256!==textSha256)throw Error('TEXT_CHANGED');const at=performance.now();
+  const blob=await session.predict(pronunciationText(data.text),(payload,map)=>pronunciationIds(data.text,payload,map),optionsFor(data.text)),audio=await blob.arrayBuffer();if(audio.byteLength<44||audio.byteLength>6000000)throw Error('AUDIO_INVALID');
+  postMessage({id:data.id,audio,textSha256,synthesisMs:performance.now()-at},[audio]);
+ }catch{postMessage({id:data.id,code:'SPEECH_SYNTHESIS_FAILED'});}finally{busy=false;}
+};

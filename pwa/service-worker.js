@@ -4,7 +4,7 @@ import {publicRecord,verifyResponse,assetResponse,failure} from './policy.js';
 import {RUNTIME_GRAPH_ID,RUNTIME_RESOURCES} from './runtime-manifest.js';
 const config=__NEXUS_PWA_CONFIG__,store=createAssetStore(),origin=self.location.origin;
 const base=new URL(self.registration.scope).pathname;
-const publicAssets=config.assets.map(r=>({...r,url:new URL(r.url,self.registration.scope).pathname})),records=[...publicAssets,...RUNTIME_RESOURCES];
+const publicAssets=config.assets.map(r=>({...r,url:new URL(r.url,self.registration.scope).pathname})),records=[...publicAssets,...(config.lazyAssets??[]).map(r=>({...r,url:new URL(r.url,self.registration.scope).pathname})),...RUNTIME_RESOURCES];
 let publicCheck;
 const checkPublic=()=>publicCheck??=(store.ready(config.generation,publicAssets).finally(()=>{publicCheck=null}));
 const resolveURL=record=>new URL(record.url,origin).href;

@@ -1,0 +1,10 @@
+// Two additional question controls; these files never enter the training manifest.
+import {readFile,writeFile,mkdir,access} from 'node:fs/promises';import path from 'node:path';import {pathToFileURL} from 'node:url';import {createHash} from 'node:crypto';
+const directory=path.resolve('private/teacher5-question-controls'),proof='evidence/TEACHER5_QUESTION_CONTROLS.json';
+try{await access(directory);throw Error('REFUSE_CONTROL_OVERWRITE');}catch(e){if(e.code!=='ENOENT')throw e;}await mkdir(directory);
+const source=JSON.parse(await readFile('evidence/SOURCE_candidate-77.json','utf8')),{createLocalSpeechProvider}=await import(pathToFileURL(path.join(source.qa,'tools/qa-akronikl/local-speech.mjs'))),config=JSON.parse(await readFile('../state-only-round-20261029/private/speech-config.json','utf8'));
+const provider=createLocalSpeechProvider({...config,fastMode:true,referenceFile:path.join(source.qa,'akronikl/experience/voices/uyut7-narrator.wav'),privateDirectory:directory});
+const state={status:'GENERATING_LOCAL_QUESTION_CONTROLS',cloudCalls:0,usedInTraining:false,asrVerified:false,humanAccepted:false,samples:[]};const save=()=>writeFile(proof,JSON.stringify(state,null,2)+'\n');await save();
+try{await provider.warmup();for(const text of ['Почему здесь нужно сначала раскрыть скобки, а потом выполнять остальные действия?','Что изменится в ответе, если мы поменяем знак перед скобками?']){const r=await provider.synthesize(text,{signal:AbortSignal.timeout(60000)}),file=path.join(directory,'question-'+(state.samples.length+1)+'.wav');await writeFile(file,r.audio,{flag:'wx'});state.samples.push({text,textSha256:r.textSha256,wavSha256:createHash('sha256').update(r.audio).digest('hex'),file,duration:r.duration});await save();}state.status='LOCAL_QUESTION_CONTROLS_GENERATED_NOT_QUALITY_ACCEPTED';}
+catch(e){state.status='FAIL';state.failure=String(e);process.exitCode=1;}
+finally{await provider.close().catch(e=>{state.status='FAIL';state.cleanupError=String(e);process.exitCode=1;});state.afterClose=provider.status();await save();console.log(JSON.stringify({status:state.status,samples:state.samples.length,cloudCalls:0}));}

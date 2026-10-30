@@ -1,8 +1,8 @@
 name: Build access BFF image (no cloud credentials)
 on:
   push:
-    branches: [main]
-    paths: ['server-access/**', '.github/workflows/build-access-bff.yml']
+    branches: [main, feature/akronikl-p4q-corpus-20261028]
+    paths: ['server-access/**', 'tools/check-access-image-start.mjs', 'tools/publication-auth*.mjs', '.github/workflows/build-access-bff.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,6 +12,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Generate the reviewed network bootstrap from the lockfile
+        run: |
+          npm ci --prefix server-access --ignore-scripts
+          node server-access/build-worker.mjs
+          node server-access/build-bff.mjs
       - name: Проверить запрет Cache.put для реального ответа BFF
         env:
           CHROME_BIN: /usr/bin/google-chrome
@@ -27,6 +35,7 @@ jobs:
       - name: Build audited BFF image
         run: |
           docker build --platform linux/amd64 -t nexus-access-bff:${GITHUB_SHA} server-access/image
+          node tools/check-access-image-start.mjs nexus-access-bff:${GITHUB_SHA} image-startup-evidence.json
           docker save nexus-access-bff:${GITHUB_SHA} -o nexus-access-bff.tar
           sha256sum nexus-access-bff.tar > nexus-access-bff.tar.sha256
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -36,4 +45,5 @@ jobs:
             nexus-access-bff.tar
             nexus-access-bff.tar.sha256
             cache-boundary-evidence.json
+            image-startup-evidence.json
           retention-days: 2
