@@ -145,7 +145,10 @@ try{
  });
  assert.deepEqual(errors,[]);assert.ok(appRequests.every(r=>[host,'cdn.jsdelivr.net'].includes(r.host)||isCurrentIntro(r)||(r.host==='qsqgjhngyt-maker.github.io'&&r.method==='GET'&&/^\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/.test(r.path))));
  const knownBackground=new Set(['update.googleapis.com','www.gstatic.com','accounts.google.com','www.google.com','content-autofill.googleapis.com','android.clients.google.com']);
- assert.ok(deniedInfrastructure.every(r=>knownBackground.has(r.host)),'Unexpected browser infrastructure host; review before acceptance');
+ // Observed in Chrome CI: Optimization Guide probes its model metadata.
+ // It remains denied by the loopback server; no external request is allowed.
+ const unexpectedInfrastructure=deniedInfrastructure.filter(r=>!knownBackground.has(r.host)&&!(r.host==='optimizationguide-pa.googleapis.com'&&r.path==='/v1:GetModels'));
+ assert.deepEqual(unexpectedInfrastructure,[],'Unexpected browser infrastructure host; review before acceptance');
 }catch(error){failures.push({message:error.message,stack:error.stack,ui:await page?.evaluate(()=>document.querySelector('[data-local-status]')?.textContent||document.body.textContent.slice(0,2000)).catch(()=>null)});await page?.screenshot({path:path.join(out,'FAILURE.png'),fullPage:true}).catch(()=>{});console.error(error.stack)}
 finally{
  try{await context?.close()}catch{}await new Promise(resolve=>server.close(resolve));f.close();
