@@ -1,12 +1,14 @@
 import {build} from 'esbuild';
 import {mkdir,copyFile,writeFile,readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
+import {buildNetworkBootstrap} from './build-network-bootstrap.mjs';
 const root=new URL('./',import.meta.url),out=new URL('./image/',root);
 const absWorkingDir=fileURLToPath(new URL('../',root));
 const undiciLicense=await readFile(new URL('node_modules/undici/LICENSE',root),'utf8');
 await mkdir(new URL('bff/',out),{recursive:true});await mkdir(new URL('public/',out),{recursive:true});
 await build({absWorkingDir,entryPoints:[fileURLToPath(new URL('bff/server.mjs',root))],outfile:fileURLToPath(new URL('bff/server.mjs',out)),bundle:true,platform:'node',format:'esm',target:'node22',banner:{js:'/*! undici 7.29.1\n'+undiciLicense.replaceAll('*/','* /')+' */\n'+"import {createRequire as __nexusRequireFactory} from 'node:module'; const require=__nexusRequireFactory(import.meta.url);"},logLevel:'warning'});
+await buildNetworkBootstrap();
 for(const name of ['index.html','entry.html','entry.css'])await copyFile(new URL('public/'+name,root),new URL('public/'+name,out));
 await copyFile(new URL('../assets/brand-mark.svg',root),new URL('public/brand-mark.svg',out));
 for(const name of ['page.js','passkey-client.js','entry.js','galaxy.js','oauth-client.js'])await build({absWorkingDir,entryPoints:[fileURLToPath(new URL('public/'+name,root))],outfile:fileURLToPath(new URL('public/'+name,out)),bundle:true,platform:'browser',format:'esm',target:'es2022',external:['/account/access/passkey-client.js'],logLevel:'warning'});
-await writeFile(new URL('Dockerfile',out),'FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402\nWORKDIR /app\nCOPY bff/server.mjs ./bff/server.mjs\nCOPY public/ ./public/\nENV NODE_ENV=production\nUSER node\nCMD ["node","bff/server.mjs"]\n');
+await writeFile(new URL('Dockerfile',out),'FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402\nWORKDIR /app\nCOPY bff/ ./bff/\nCOPY public/ ./public/\nENV NODE_ENV=production\nUSER node\nCMD ["node","bff/network-bootstrap.mjs"]\n');

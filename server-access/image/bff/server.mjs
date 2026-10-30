@@ -2850,7 +2850,7 @@ function requestMediaHTTP2(url, options) {
     }
     try {
       session = http2.connect(WORKER_ORIGIN, { maxHeaderListPairs: 32, maxSessionMemory: 16, settings: { enablePush: false, maxHeaderListSize: 16384 }, createConnection: () => {
-        socket = tls.connect({ host: hostname, port: 443, servername: hostname, ALPNProtocols: ["h2"], rejectUnauthorized: true, family: 4, autoSelectFamily: false });
+        socket = tls.connect({ host: hostname, port: 443, servername: hostname, ALPNProtocols: ["h2"], rejectUnauthorized: true, ecdhCurve: "X25519:P-256", family: 4, autoSelectFamily: false });
         socket.once("lookup", (error3) => {
           if (!error3) state.lookup = true;
         });

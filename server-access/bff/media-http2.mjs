@@ -22,7 +22,7 @@ export function requestMediaHTTP2(url,options){
   if(options.signal.aborted){onAbort();return}
   try{
    session=http2.connect(WORKER_ORIGIN,{maxHeaderListPairs:32,maxSessionMemory:16,settings:{enablePush:false,maxHeaderListSize:16384},createConnection:()=>{
-    socket=tls.connect({host:hostname,port:443,servername:hostname,ALPNProtocols:['h2'],rejectUnauthorized:true,family:4,autoSelectFamily:false});
+    socket=tls.connect({host:hostname,port:443,servername:hostname,ALPNProtocols:['h2'],rejectUnauthorized:true,ecdhCurve:'X25519:P-256',family:4,autoSelectFamily:false});
     socket.once('lookup',error=>{if(!error)state.lookup=true});socket.once('connect',()=>{state.tcp=true});
     socket.once('secureConnect',()=>{state.tls=true;if(!socket.authorized||socket.alpnProtocol!=='h2')stop(Object.assign(Error('MEDIA_H2_REQUIRED'),{code:'NEXUS_MEDIA_H2_REQUIRED'}));else if(!socket.setMaxSendFragment(1024))stop(inputError())});
     socket.on('error',stop);return socket;
