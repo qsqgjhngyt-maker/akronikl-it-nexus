@@ -1,4 +1,6 @@
 import {staticMime} from '../pwa/static-mime.js';
+import {INTRO_VIDEO_BASE} from '../core/startup-intro-assets.js';
+import {createHash} from 'node:crypto';
 // Реальные HTTPS/SW/WebAuthn/BFF/SQLite, весь DNS браузера направлен в loopback.
 // Одноразовый TLS key и виртуальный authenticator не являются credentials владельца.
 import assert from 'node:assert/strict';
@@ -19,7 +21,7 @@ const frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR),out=path.resolve(pro
 await mkdir(out,{recursive:false});
 const temp=await mkdtemp(path.join(tmpdir(),'nx-e2e-')),tls=path.join(temp,'tls'),profile=path.join(temp,'profile');
 const cert=spawnSync(process.env.NEXUS_PYTHON_PATH,[fileURLToPath(new URL('helpers/make-local-cert.py',import.meta.url)),tls],{encoding:'utf8',windowsHide:true});assert.equal(cert.status,0,cert.stderr);
-const generation=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))).assetGeneration;
+const buildManifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),generation=buildManifest.assetGeneration;
 const origin='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net',host=new URL(origin).host;
 const phrase='SYNTHETIC offline phrase for browser 2026',f=await fixture(pathToFileURL(frontend+path.sep),{control:true});
 const statement=(sql,args=[])=>({
@@ -39,6 +41,13 @@ const server=https.createServer({key:await readFile(path.join(tls,'key.pem')),ce
  if(offline){req.socket.destroy();return}
  try{
   const u=new URL(req.url,'https://'+req.headers.host);requests.push({host:u.host,path:u.pathname,method:req.method});
+  if(u.href.startsWith(INTRO_VIDEO_BASE)){
+   const name=u.href.slice(INTRO_VIDEO_BASE.length);assert.match(name,/^(?:desktop|mobile)(?:-lite)?\.(?:mp4|webm)$/);
+   assert.equal(req.method,'GET');assert.equal(Boolean(req.headers.cookie||req.headers.authorization),false);
+   const file='intro-media/cinematic-v6/'+name,row=buildManifest.files.find(r=>r.file===file);assert.ok(row);
+   const bytes=await readFile(path.join(frontend,row.file));assert.equal(bytes.length,row.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),row.sha256);
+   res.writeHead(200,{'content-type':staticMime(file),'access-control-allow-origin':'*','cache-control':'no-store'});return res.end(bytes);
+  }
   // Только новые публичные media bytes, также через loopback, без live CDN.
   if(u.host==='qsqgjhngyt-maker.github.io'&&/^\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/.test(u.pathname)&&!u.search){
    assert.equal(req.method,'GET');assert.equal(Boolean(req.headers.cookie||req.headers.authorization),false,'Публичное видео не получает session credentials');
