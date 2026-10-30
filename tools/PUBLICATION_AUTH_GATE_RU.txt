@@ -1,0 +1,78 @@
+Обязательная проверка перед следующей публикацией Nexus
+
+Работа ведётся в feature/akronikl-p4q-corpus-20261028. main, теги и официальный
+Release не меняются. Production может использовать образ из feature по digest.
+
+1. Собрать неизменяемый linux/amd64 образ и сохранить commit, digest реестра и
+   SHA256 PUBLISHED_FILES.json. Новый bootstrap обязательно создаётся из lockfile.
+   check-access-image-start.mjs проверяет настоящий запуск без внешней сети:
+   access HTML200, анонимный account401, работающий network-bootstrap.
+   Это STARTUP_PASS_NOT_LOGIN, а не успешная авторизация.
+
+2. publication-auth-cloud.mjs create OPTIONS.json создаёт закрытый временный
+   контейнер с точным образом и прежними ссылками на секреты. Payload секретов
+   не читается. OPTIONS содержит imageDigest, sourceCommit,
+   frontendManifestSha256, out и при изменении gateway targetGatewaySpecFile.
+   Оба полных состояния gateway закрепляются ДО ручных входов. Любое третье
+   состояние блокируется. Нельзя подставлять новое состояние после проверки.
+   Переменные NEXUS_YC_BIN и NEXUS_WORKER_READBACK_MODULE указывают на локальные
+   YC CLI и уже используемый read-only adapter владельца (api/query/readWorkerContent).
+
+3. check-publication-auth-live.mjs PLAN OUT получает настоящие options/start,
+   content200 и anonymous401. Квитанция явно НЕ означает завершённого входа.
+   Временные challenge/flow записи допустимы; платные модели не вызываются.
+
+4. check-publication-logins.mjs PLAN OUT открывает отдельный Chrome. Владелец
+   САМ входит сначала ключом доступа, затем Яндексом и Google, в тот же аккаунт.
+   NEXUS_PLAYWRIGHT_MODULE указывает на установленный tools/publication-auth-driver
+   /node_modules/playwright/index.mjs, NEXUS_CHROME_BIN — на Chrome.
+   Каждый вход начинается без сессии, требует настоящего verify200 или реального
+   посещения провайдера и callback303, затем account200, reload200, logout401.
+   Завершается только созданная в QA сессия; основной профиль браузера не используется.
+   Пароли/коды/ключи владелец вводит только в браузере. Куки, IdP URL с code/state,
+   токены, ответы профиля, traces и screenshots в отчёты не сохраняются.
+   В отчёте остаётся только SHA256 идентификатора аккаунта с солью candidateId.
+
+   Собственный CDP Fetch перехватывает КАЖДЫЙ redirect hop. Запросы Nexus идут
+   только в закрытый контейнер; ответы возвращаются по исходному URL, сохраняя
+   __Host cookies на Nexus. API fetch не следует редиректам. IAM заголовок
+   остаётся только на приватном запросе и не передаётся провайдерам.
+   Service Worker выключен только в одноразовом QA контексте.
+   Прокси запрещает создание/привязку/удаление аккаунтов, изменения настроек,
+   администрирование и генерацию ИИ. OAuth start принимает только intent:login.
+
+5. Перед публикацией установить NEXUS_AUTH_PLAN, NEXUS_AUTH_CANDIDATE,
+   NEXUS_AUTH_LIVE_RECEIPT, NEXUS_AUTH_LOGIN_RECEIPT, NEXUS_AUTH_STARTUP_RECEIPT.
+   Замороженный build binding обязан включать commit, imageDigest,
+   frontendManifestSha256, authArtifactSha256. Старые evidence JSON дополнять
+   задним числом нельзя: новый кандидат получает новый каталог и новые квитанции.
+   guardPublicationMutation получает ожидаемые значения от замороженной сборки,
+   проверяет все три полных входа, совпадение аккаунта, возраст <=30 минут,
+   свежий cloud readback частного контейнера, Worker/settings/schema и gateway.
+   Свежесть повторно проверяется ПОСЛЕ сетевого readback. Ошибка/отсутствие любого
+   способа или файла блокирует даже write-ahead маркер и саму cloud mutation.
+   Результат контрактных тестов/CI сам по себе публикацию не разрешает.
+
+6. install-publication-auth-guard.mjs установил этот guard в локальные активные
+   deploy-auth.mjs (deploy) и deploy-v20.mjs (gateway и bff), сохранив .bak.
+   Старые source-locked драйверы не переиспользуют квитанции для новой сборки.
+   Аварийный rollback не требует новых входов: он сохраняет проверку feature-ветки,
+   принадлежности текущей ревизии, digest, gateway, прежнего snapshot/config
+   и readback восстановления. Только rollback не зависит от текущего HEAD/dirty.
+   После проверки/переключения временный контейнер удаляется с проверкой владельца
+   и отсутствия чужих ревизий; удаление подтверждается отдельным readback.
+
+Факты 30.10.2026:
+- 24 узких контрактных/браузерных проверки PASS. Синтетические браузерные проверки
+  проверяют транспорт, а не реальную авторизацию Google/Яндекс/ключом.
+- Текущий production образ и заново собранный BFF проходят offline startup smoke.
+- Пять опубликованных модулей последних исправлений голоса совпадают с feature.
+  Повторное переключение сервера для восстановления озвучки не требуется.
+- Три полных живых входа НЕ завершены. Адрес созданного частного контейнера
+  недоступен с данного компьютера: Node fetch UND_ERR_CONNECT_TIMEOUT,
+  HTTPS IPv4 с проверкой сертификата REQUEST_TIMEOUT, Chrome navigation timeout.
+  Живые проверки остаются BLOCKED, общий допуск на следующую публикацию не выдан.
+- Временный контейнер удалён; отсутствие подтверждено. Production не переключался,
+  main и официальный Release не изменялись, расходы токенов ИИ — 0.
+- Первоначальные FAIL и повторные результаты хранятся в соседнем рабочем каталоге
+  publication-auth-20261030; они не заменены удачными результатами.
