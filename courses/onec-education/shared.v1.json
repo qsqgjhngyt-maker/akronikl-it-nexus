@@ -1,0 +1,250 @@
+{
+  "schemaVersion": 1,
+  "id": "onec.shared.v1",
+  "version": "1.0.0",
+  "progressCredit": "none",
+  "prerequisites": [
+    {
+      "id": "onec.shared.v1.synthetic-data",
+      "title": {
+        "ru": "Только вымышленные данные",
+        "en": "Synthetic data only"
+      },
+      "check": {
+        "ru": "Названия, суммы, люди и обращения придуманы; нет реальных телефонов, паролей и документов.",
+        "en": "Names, amounts, people and requests are invented; no real phones, passwords or documents."
+      }
+    },
+    {
+      "id": "onec.shared.v1.files-and-copies",
+      "title": {
+        "ru": "Файлы и отдельные копии",
+        "en": "Files and separate copies"
+      },
+      "check": {
+        "ru": "Умею создать новый каталог и отличить копию от исходника; не работаю с production.",
+        "en": "I can create a new folder and distinguish a copy from its source; I do not use production."
+      }
+    }
+  ],
+  "glossary": [
+    {
+      "id": "platform",
+      "title": {
+        "ru": "Платформа",
+        "en": "Platform"
+      },
+      "definition": {
+        "ru": "Исполняющая и проектирующая среда: общие механизмы работы прикладных решений.",
+        "en": "Execution and design environment providing shared application mechanisms."
+      }
+    },
+    {
+      "id": "configuration",
+      "title": {
+        "ru": "Конфигурация",
+        "en": "Configuration"
+      },
+      "definition": {
+        "ru": "Описание прикладного решения: метаданные, модули, формы, права и другие объекты.",
+        "en": "Application definition: metadata, modules, forms, rights and other objects."
+      }
+    },
+    {
+      "id": "infobase",
+      "title": {
+        "ru": "Информационная база",
+        "en": "Infobase"
+      },
+      "definition": {
+        "ru": "Конфигурация базы данных, прикладные данные и служебная информация конкретного экземпляра.",
+        "en": "Database configuration, application data and service information of a specific instance."
+      }
+    },
+    {
+      "id": "metadata",
+      "title": {
+        "ru": "Метаданные",
+        "en": "Metadata"
+      },
+      "definition": {
+        "ru": "Описания типов объектов и их свойств; не строки справочника.",
+        "en": "Definitions of object types and properties, not catalog rows."
+      }
+    },
+    {
+      "id": "reference",
+      "title": {
+        "ru": "Ссылка",
+        "en": "Reference"
+      },
+      "definition": {
+        "ru": "Идентичность объекта; изменение представления не создаёт новую идентичность.",
+        "en": "Object identity; changing presentation does not create a new identity."
+      }
+    },
+    {
+      "id": "posting",
+      "title": {
+        "ru": "Проведение",
+        "en": "Posting"
+      },
+      "definition": {
+        "ru": "Прикладная операция отражения документа в учёте; её эффекты задаёт конфигурация.",
+        "en": "An application operation reflecting a document in accounting; effects are defined by the configuration."
+      }
+    },
+    {
+      "id": "designer",
+      "title": {
+        "ru": "Конфигуратор",
+        "en": "Designer"
+      },
+      "definition": {
+        "ru": "Официальная среда разработки, входящая в платформу.",
+        "en": "Official development environment included with the platform."
+      }
+    },
+    {
+      "id": "edt",
+      "title": {
+        "ru": "EDT",
+        "en": "EDT"
+      },
+      "definition": {
+        "ru": "Отдельная среда разработки на Eclipse; запуск решения требует платформы.",
+        "en": "Separate Eclipse-based development environment; running an application requires the platform."
+      }
+    },
+    {
+      "id": "bsl",
+      "title": {
+        "ru": "Встроенный язык / BSL",
+        "en": "Built-in language / BSL"
+      },
+      "definition": {
+        "ru": "Язык программных модулей; доступные объекты зависят от среды и контекста.",
+        "en": "Module language; available objects depend on environment and execution context."
+      }
+    }
+  ],
+  "diagrams": {
+    "layers": {
+      "title": {
+        "ru": "Три слоя системы",
+        "en": "Three system layers"
+      },
+      "nodes": [
+        {
+          "id": "platform",
+          "label": {
+            "ru": "Платформа",
+            "en": "Platform"
+          },
+          "detail": {
+            "ru": "Общие механизмы исполнения; одна версия может открывать разные базы.",
+            "en": "Shared execution mechanisms; one version can open different infobases."
+          }
+        },
+        {
+          "id": "configuration",
+          "label": {
+            "ru": "Конфигурация",
+            "en": "Configuration"
+          },
+          "detail": {
+            "ru": "Правила и структура прикладного решения; изменение требует проверки обновления.",
+            "en": "Application rules and structure; changes require update verification."
+          }
+        },
+        {
+          "id": "data",
+          "label": {
+            "ru": "Данные базы",
+            "en": "Infobase data"
+          },
+          "detail": {
+            "ru": "Конкретные заявки и клиенты. Выгрузка конфигурации не сохраняет эти записи.",
+            "en": "Specific requests and customers. Configuration export does not preserve these records."
+          }
+        }
+      ],
+      "edges": [
+        [
+          "platform",
+          "configuration"
+        ],
+        [
+          "configuration",
+          "data"
+        ]
+      ]
+    },
+    "lifecycle": {
+      "title": {
+        "ru": "Путь изменения",
+        "en": "Change lifecycle"
+      },
+      "nodes": [
+        {
+          "id": "edit",
+          "label": {
+            "ru": "Изменить на копии",
+            "en": "Edit a copy"
+          },
+          "detail": {
+            "ru": "Рабочая конфигурация в среде разработки.",
+            "en": "Working configuration in the development environment."
+          }
+        },
+        {
+          "id": "check",
+          "label": {
+            "ru": "Проверить",
+            "en": "Check"
+          },
+          "detail": {
+            "ru": "Структура, синтаксис, риски изменения данных; не доказательство педагогического эффекта.",
+            "en": "Structure, syntax and data-change risks; no claim of teaching effectiveness."
+          }
+        },
+        {
+          "id": "update",
+          "label": {
+            "ru": "Обновить конфигурацию БД",
+            "en": "Update database configuration"
+          },
+          "detail": {
+            "ru": "Применить структуру к конкретной базе; сначала сохранить возможность восстановления.",
+            "en": "Apply structure to a specific infobase; first preserve a recovery path."
+          }
+        },
+        {
+          "id": "run",
+          "label": {
+            "ru": "Запустить и сверить",
+            "en": "Run and reconcile"
+          },
+          "detail": {
+            "ru": "Проверить ожидаемое и отрицательное поведение, сохранить evidence.",
+            "en": "Check expected and negative behavior and preserve evidence."
+          }
+        }
+      ],
+      "edges": [
+        [
+          "edit",
+          "check"
+        ],
+        [
+          "check",
+          "update"
+        ],
+        [
+          "update",
+          "run"
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p1",
+  "topicId": "onec.p1.lifecycle",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Metadata, update lifecycle and first BSL",
+  "minutes": 100,
+  "goal": "Trace a source change to actual output and check positive and negative cases.",
+  "prerequisites": [
+    "P1.1–P1.2; ability to follow a sequence. P2 studies syntax in depth."
+  ],
+  "outcomes": [
+    "Distinguish working and database configurations.",
+    "Read arrays, structures and a loop in the first example.",
+    "Explain how a test rejects incorrect behavior."
+  ],
+  "sections": [
+    [
+      "A change has multiple states",
+      "Editing a file does not change a running infobase. Load and check the development configuration, apply it to database configuration, then launch the application and reconcile behavior. Skipping a link leads to a common mistake: reading new source while executing the previous configuration.",
+      "The kit places the module at Ext/ManagedApplicationModule.bsl. The platform invokes ПриНачалеРаботыСистемы when a managed application starts. It registers no real documents: the array stores three structures in process memory. Exiting does not turn those values into a request table."
+    ],
+    [
+      "Read the example through its data flow",
+      "A structure groups named values Код, Минуты and Статус. An array stores a sequence of structures. The For Each loop visits three elements, checks each status and adds minutes to the running sum, initially zero. After the loop, count and sum are checked: 3 and 105. Work grows in proportion to the element count.",
+      "Focus on data flow before memorizing syntax. Identify how the second request contributes 45 minutes. Removing it must change both count and total. If a modified experiment leaves output unchanged, check whether the new module was loaded and database configuration updated. Saved editor text does not establish that."
+    ],
+    [
+      "Checks need negative cases",
+      "ДопустимыйСтатус accepts only New, In progress and Closed in their source Russian strings. Separate checks reject an empty string and Оплачена. Two negative inputs do not prove all future rules, but they catch overly broad behavior such as accepting every nonempty string.",
+      "ПроверитьУсловие raises an exception on a false condition, so PASS follows successful checks rather than appearing independently. The native gate also tests configuration analysis using a syntactically broken separate copy. Never change expected values merely to obtain green results: first explain the changed requirement and necessary checks."
+    ],
+    [
+      "Output and measurable limits",
+      "The expected line records item count, minute total and negative-case count. Automation passes its result-file path as a startup parameter inside the new test directory. A manual launch without that parameter displays the message and leaves the application available for observation.",
+      "This demonstrates official BSL execution and one reproducible learning computation. It does not demonstrate persisted requests, transactions, Mastery or learner independence. Preserve source and actual output together; either alone leaves uncertainty about the program that ran."
+    ]
+  ],
+  "diagram": "lifecycle",
+  "codeFile": "native/service-desk/Ext/ManagedApplicationModule.bsl",
+  "walkthrough": [
+    {
+      "action": "Trace the loop manually.",
+      "expected": "Running sums 30, 75, 105; count 3."
+    },
+    {
+      "action": "Test empty string and Оплачена.",
+      "expected": "Both are False; the three allowed strings are True."
+    },
+    {
+      "action": "Load, update and launch the module.",
+      "expected": "PASS appears only after successful checks."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Explain array, structure, loop and validation function.",
+      "criteria": "Separate collection storage, named fields, traversal and allowed-value restriction."
+    },
+    {
+      "level": "Applied",
+      "task": "Predict adding a 15-minute request; implement a new attempt on a copy.",
+      "criteria": "4 requests and 120 minutes; update justified checks while preserving the original attempt."
+    },
+    {
+      "level": "Advanced",
+      "task": "Propose a test for a status with an extra space.",
+      "criteria": "Current exact-comparison contract rejects it. Normalization needs a separate decision and tests."
+    }
+  ],
+  "lab": {
+    "title": "First native BSL and a counterexample",
+    "environment": "Managed application module, official thick client, file infobase.",
+    "steps": [
+      "Read the complete source and predict intermediate sums.",
+      "Run the accepted version using the native gate.",
+      "Preserve actual output and module hash.",
+      "For the extension exercise, create a separate copy and predict changed output before editing inputs.",
+      "If output stays unchanged, compare module and database configuration."
+    ],
+    "expected": [
+      "Original: 3/105/2 and PASS.",
+      "New attempt preserves the original and has predeclared criteria."
+    ],
+    "evidence": [
+      "BSL_RESULT.txt",
+      "Trace table and separate diff for the extra attempt."
+    ],
+    "negative": "Preserve errors and a causal hypothesis; do not mark PASS on failure."
+  },
+  "mistakes": [
+    [
+      "“An array is an infobase table”",
+      "It is a temporary in-memory value, not a persisted document."
+    ],
+    [
+      "“Paid sounds related, so accept it”",
+      "Allowed values are explicit; changing them requires a decision and tests."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Before verifying an edited module, you must…",
+      "options": [
+        "Only rename .bsl",
+        "Load and apply the checked change to the infobase",
+        "Clear learner progress"
+      ],
+      "correct": 1,
+      "explanation": "Execute the new state rather than merely display a file."
+    },
+    {
+      "question": "What is the sum after the second element?",
+      "options": [
+        "75",
+        "45",
+        "105"
+      ],
+      "correct": 0,
+      "explanation": "45 is added to 30."
+    },
+    {
+      "question": "Rejecting an empty status establishes…",
+      "options": [
+        "Every course rule",
+        "The learner passed a protected exam",
+        "One specific negative case"
+      ],
+      "correct": 2,
+      "explanation": "Keep the exact test boundary."
+    }
+  ],
+  "review": [
+    "Explain the route from source to execution.",
+    "Explain the negative tests.",
+    "Next: tools and diagnostics."
+  ],
+  "sources": [
+    "cli",
+    "training",
+    "edt"
+  ]
+}

@@ -1,0 +1,41 @@
+name: 1С — две траектории, кандидат A1/P1
+on:
+  push:
+    branches: [feature/onec-dual-gold-foundation-20261030]
+  pull_request:
+    branches: [main]
+    paths: ['courses/onec/**', 'courses/1c-enterprise/**', 'courses/onec-education/**', 'tests/onec-*', 'tools/*onec*', 'docs/ru/03-content/onec/**', '.github/workflows/onec-education-candidate.yml']
+permissions:
+  contents: read
+concurrency:
+  group: onec-candidate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Контракты, C++, Studio, PWA и сохранность
+        env:
+          ONEC_REGRESSION_EVIDENCE: ${{ runner.temp }}/onec-evidence/regression
+        run: node tools/check-onec-regression.mjs
+      - name: Изолированные браузерные зависимости
+        run: |
+          npm install --prefix "$RUNNER_TEMP/onec-qa" playwright@1.62.1 --no-audit --no-fund
+          "$RUNNER_TEMP/onec-qa/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Desktop, mobile emulation и холодный offline
+        env:
+          ONEC_EVIDENCE: ${{ runner.temp }}/onec-evidence/browser
+        run: NEXUS_PLAYWRIGHT_MODULE="$RUNNER_TEMP/onec-qa/node_modules/playwright/index.mjs" node tests/onec-browser.mjs
+      - name: Evidence кандидата без публикации
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: onec-candidate-evidence
+          path: ${{ runner.temp }}/onec-evidence

@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a1",
+  "topicId": "1c-enterprise.a1.interface",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Navigation, objects and a learning request",
+  "minutes": 65,
+  "goal": "Read an interface as a view of a domain model and verify meaning instead of guessing from window appearance.",
+  "prerequisites": [
+    "A1.1 and A1.2."
+  ],
+  "outcomes": [
+    "Distinguish a list, catalog item, document and report.",
+    "Trace a request from a row to related records.",
+    "Check filters and totals against synthetic inputs."
+  ],
+  "sections": [
+    [
+      "The configuration shapes the interface",
+      "Sections, commands and forms differ between applications. A universal instruction such as “press the third button on the left” ages quickly. Identify the purpose: a request list shows records, a request form shows one object, a report processes selected data. An empty list can indicate no records, a filter or restricted access. Test these hypotheses separately.",
+      "A1 provides a Nexus model with three requests. It supports learning to read rows and totals on a phone without an installed platform. The model is explicitly labeled and is not a 1C window. An actual empty infobase contains none of these documents; do not search for menus its configuration has not defined."
+    ],
+    [
+      "Catalogs, documents and references",
+      "Catalogs commonly hold relatively stable domain objects such as customers and services. Documents commonly represent events or operations over time. This is a useful starting point, while exact behavior remains configuration-specific. “Alpha” is a customer presentation; the relation should preserve object identity, not merely a copied name string. Two customers can share a presentation.",
+      "REQ-001 and REQ-003 refer to one invented customer. Renaming that customer should not create a second identity. Repeatedly typing names instead of retaining references causes inconsistent spelling and grouping. A2 examines items and references in the official environment; here, learn to recognize the relationship in a data set."
+    ],
+    [
+      "Filters change the visible set",
+      "Search helps locate a record; a filter specifies membership conditions. Conditions can combine, so record every active restriction before diagnosing a result. Status = New selects only REQ-001. Customer = Alpha selects REQ-001 and REQ-003. Durations total 105 minutes for all requests and 60 for Alpha. These are arithmetic control values, not measured service productivity.",
+      "A zero-valued row and no row are different observations. A report omitting closed requests does not prove deletion. Remove filters, locate the source document and inspect report settings first. Sorting changes presentation order; it does not by itself change the sum of selected values."
+    ],
+    [
+      "Verify a user scenario",
+      "Start with known input data and a goal, such as finding Alpha’s requests and explaining their states. Verify identifiers as well as row count: two wrong records still produce a count of two. Then inspect an empty selection to distinguish no results from a loading error.",
+      "Model controls select statuses and show request details. This trains navigation without persisting 1C data. Candidate notes are separate per course; moving to P does not automatically award A1 completion. Identify the observation source in your protocol: Nexus model or official platform."
+    ]
+  ],
+  "diagram": "layers",
+  "walkthrough": [
+    {
+      "action": "Select customer Alpha in the model.",
+      "expected": "REQ-001 and REQ-003, totaling 60 minutes."
+    },
+    {
+      "action": "Select In progress.",
+      "expected": "REQ-002, 45 minutes."
+    },
+    {
+      "action": "Clear filters and reorder rows.",
+      "expected": "Three requests again; total remains 105 minutes."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "For each request, identify its record, customer relation and status value.",
+      "criteria": "Do not confuse presentation text with customer identity."
+    },
+    {
+      "level": "Applied",
+      "task": "Tabulate every status and All.",
+      "criteria": "New: 1/30; In progress: 1/45; Closed: 1/30; All: 3/105."
+    },
+    {
+      "level": "Advanced",
+      "task": "Design a check finding different records with the same name.",
+      "criteria": "Use identity/code in addition to presentation."
+    }
+  ],
+  "lab": {
+    "title": "Observe navigation without confusing environments",
+    "environment": "Nexus provides the model; official A1 infobase supplies mode/About observations. Keep both parts of the protocol separate.",
+    "steps": [
+      "Select each model status and record exact IDs and minute totals.",
+      "Open REQ-002 and identify values versus relations.",
+      "Record the official application name; if empty, explicitly state that no applied documents exist.",
+      "Compare the observations and explain why Nexus does not prove the documents exist in 1C."
+    ],
+    "expected": [
+      "Four correct control sets.",
+      "Clear separation of model and actual infobase."
+    ],
+    "evidence": [
+      "Filter table.",
+      "Observation-source protocol."
+    ],
+    "negative": "Do not add arbitrary objects to an empty infobase to imitate the model without instructions."
+  },
+  "mistakes": [
+    [
+      "“Two rows proves correctness”",
+      "Check IDs and values, then count."
+    ],
+    [
+      "“Sorting reduced the total”",
+      "Inspect filters and metric meaning."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Customer = Alpha selects…",
+      "options": [
+        "Only REQ-002",
+        "REQ-001 and REQ-003",
+        "All three requests"
+      ],
+      "correct": 1,
+      "explanation": "Alpha is related to the first and third model requests."
+    },
+    {
+      "question": "Ordinary sorting changes…",
+      "options": [
+        "Row order",
+        "Customer identity",
+        "Posting rules"
+      ],
+      "correct": 0,
+      "explanation": "Presentation order does not change source values."
+    },
+    {
+      "question": "Documents shown in the Nexus model prove…",
+      "options": [
+        "They already exist in your 1C infobase",
+        "The platform executed BSL",
+        "Only the supplied model contents"
+      ],
+      "correct": 2,
+      "explanation": "1C data requires a separate real observation."
+    }
+  ],
+  "review": [
+    "Recall the control totals without hints.",
+    "Explain list versus object.",
+    "Next: creating and copying an infobase."
+  ],
+  "sources": [
+    "training",
+    "edt"
+  ]
+}

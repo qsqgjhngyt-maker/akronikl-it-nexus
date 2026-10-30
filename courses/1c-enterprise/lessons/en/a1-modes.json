@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a1",
+  "topicId": "1c-enterprise.a1.modes",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Modes, roles and change boundaries",
+  "minutes": 60,
+  "goal": "Choose a mode for a task and distinguish user settings, records and configuration changes.",
+  "prerequisites": [
+    "A1.1: platform, configuration and data."
+  ],
+  "outcomes": [
+    "Explain 1C:Enterprise mode and Designer.",
+    "Classify a change before performing it.",
+    "Prepare a safe handoff to a developer."
+  ],
+  "sections": [
+    [
+      "Mode describes work; role describes permissions",
+      "1C:Enterprise mode runs an application. Users open lists, enter records, build reports and perform permitted operations. Designer supports development and administration: metadata, modules, forms and maintenance operations. Being able to open Designer does not establish that every change is safe. Access, competence and agreed scope are different questions.",
+      "A role determines permitted application operations. A form may hide a button for convenience, but a hidden button alone does not prove access control. Training edition omits some authentication mechanisms. We can study least privilege, while full sign-in and user-separation checks require an environment that actually supports them."
+    ],
+    [
+      "Three classes of change",
+      "Changing data means entering an invented request or fixing its description. A user setting changes a filter or column selection when the application exposes that option. Configuration changes add an attribute to the request type, change its type or introduce an event handler. The distinction follows the effect, not the number of clicks. A single Designer action may affect the structure of every record.",
+      "Suppose a consultant wants only open requests. If an existing filter supports this, a setting is enough. Storing a closure reason absent from the model may need a configuration change. Do not start by adding a field: first check whether an existing attribute already serves the purpose, how it is filled and which reports use it. This avoids unnecessary complexity."
+    ],
+    [
+      "Development has its own lifecycle",
+      "An edited working configuration and the database configuration are different states. Saving an application definition does not ensure that a running session already uses the new rule. A developer checks the change, updates the database configuration and separately verifies execution. A1 establishes this sequence; hands-on configuration starts in A4.",
+      "Before an update, preserve a recoverable copy. Changing an attribute type can affect stored values; an empty-looking form does not establish preservation. Agree on expected effects, then verify existing records, negative cases and recovery on a copy. The interactive diagram illustrates this process without performing an update."
+    ],
+    [
+      "Hand off a reproducible task",
+      "A useful developer request contains context, expected behavior, observed behavior and reproduction steps. “1C is broken” does not identify a test. “Filtering Status = New in the learning infobase also shows REQ-002 with status In progress” provides a checkable case. Include a synthetic example and state whether the problem remains after clearing other filters.",
+      "Do not send passwords, licensing details or a full production archive. Our course needs only a synthetic set, platform version, configuration name and chosen mode. When a task exceeds your authority, preserve a reproducible example and stop the change. This is a professional outcome, not a failure."
+    ]
+  ],
+  "diagram": "lifecycle",
+  "walkthrough": [
+    {
+      "action": "Show only New requests.",
+      "expected": "Try an existing user filter before considering metadata changes."
+    },
+    {
+      "action": "Store a new Closure reason field.",
+      "expected": "Clarify the model; request configuration work if no suitable attribute exists."
+    },
+    {
+      "action": "Correct a typo in one learning record.",
+      "expected": "This changes data when only a value changes."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Classify column width, a new request, an attribute type change and a report parameter.",
+      "criteria": "Setting, data, configuration, setting; qualify this by application capabilities."
+    },
+    {
+      "level": "Applied",
+      "task": "Write a filter bug report using three synthetic requests.",
+      "criteria": "Include steps, expected IDs, actual IDs and environment version."
+    },
+    {
+      "level": "Advanced",
+      "task": "Explain why hiding a button differs from checking rights.",
+      "criteria": "Identify UI, operation authorization and a negative case; do not claim training-edition proof."
+    }
+  ],
+  "lab": {
+    "title": "Map modes and changes",
+    "environment": "Dedicated file-based learning infobase; A1 does not require changing metadata.",
+    "steps": [
+      "Open one learning infobase in 1C:Enterprise mode and record an available user task.",
+      "Close the session; open the same infobase in Designer and locate the configuration tree.",
+      "Make no changes; map the modes and prepare four task cards from different change classes.",
+      "Return to 1C:Enterprise mode and verify that the infobase opens."
+    ],
+    "expected": [
+      "Correctly distinguish two modes of the same infobase.",
+      "Four task cards explaining mode selection."
+    ],
+    "evidence": [
+      "Task map.",
+      "Reopening protocol with no changes."
+    ],
+    "negative": "If a mode is unavailable, record the fact and version; do not bypass access restrictions."
+  },
+  "mistakes": [
+    [
+      "“No button means the operation is forbidden”",
+      "Verify the operation itself in an appropriate environment."
+    ],
+    [
+      "“Saving configuration already updates the infobase”",
+      "Check database configuration and verify behavior separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Changing column width is usually…",
+      "options": [
+        "A schema change",
+        "A user setting",
+        "Document posting"
+      ],
+      "correct": 1,
+      "explanation": "When exposed by the application, it does not change metadata."
+    },
+    {
+      "question": "Adding an attribute to a document type is…",
+      "options": [
+        "Configuration work",
+        "Only data entry",
+        "Automatic platform updating"
+      ],
+      "correct": 0,
+      "explanation": "It changes the object-type definition."
+    },
+    {
+      "question": "Before a structural change, you should…",
+      "options": [
+        "Delete the previous infobase",
+        "Give every user every permission",
+        "Agree effects and verify recovery on a copy"
+      ],
+      "correct": 2,
+      "explanation": "Schema changes can affect existing data."
+    }
+  ],
+  "review": [
+    "Compare mode, role and competence.",
+    "Explain the three change classes with your own examples.",
+    "Next: navigation and objects."
+  ],
+  "sources": [
+    "training",
+    "edt",
+    "community"
+  ]
+}
