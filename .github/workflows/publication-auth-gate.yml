@@ -1,8 +1,8 @@
 name: Publication auth contract (real login receipts still required)
 on:
   push:
-    branches: [feature/akronikl-p4q-corpus-20261028]
-    paths: ['tools/*auth*.mjs', 'tools/publication-auth-driver/**', 'tools/publication-revision-config.mjs', 'tools/auth-canary-proxy.cjs', 'tests/publication-auth*.mjs', '.github/workflows/publication-auth-gate.yml']
+    branches: [main, feature/akronikl-p4q-corpus-20261028]
+    paths: ['tools/*auth*.mjs', 'tools/publication-primary-gate.mjs', 'tests/publication-primary-gate.test.mjs', 'tests/admin-transition-compatibility.test.mjs', 'tests/individual-trial-access.test.mjs', 'server-access/worker/**', 'server-access/migrations/**', 'tools/publication-auth-driver/**', 'tools/publication-revision-config.mjs', 'tools/auth-canary-proxy.cjs', 'tests/publication-auth*.mjs', '.github/workflows/publication-auth-gate.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,6 +19,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci --prefix tools/publication-auth-driver --ignore-scripts
-      - run: node --test tests/publication-auth*.test.mjs
+      - run: npm ci --prefix server-access --ignore-scripts
+      - run: node --test tests/publication-auth*.test.mjs tests/publication-primary-gate.test.mjs tests/admin-transition-compatibility.test.mjs tests/individual-trial-access.test.mjs
       - name: Explain publication boundary
-        run: echo 'Contract tests do not authorize publication. Exact candidate startup, live transport and real passkey, Yandex, Google login receipts are mandatory at the cloud mutation boundary.'
+        run: echo 'Contract tests do not authorize publication. The selected owner-authorized publication path requires real passkey, Yandex and Google evidence, exact image startup and artifact bindings. The primary-address path additionally checks owner confirmation, server receipts and rollback compatibility.'

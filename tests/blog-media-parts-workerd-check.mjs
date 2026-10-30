@@ -32,7 +32,7 @@ try{
  await start();
  await check('fresh D1 additive migration and synthetic seed; production compatibility 2026-09-23',async()=>{
   const names=['0001_sync_team_foundation','0002_nexus_account_tokens','0003_d1_only_project_snapshots','0004_identity_v2_session_foundation'].map(n=>'../cloudflare/nexus-sync-worker/migrations/'+n+'.sql');
-  names.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content','0015_blog_media','0016_blog_media_parts'].map(n=>'../server-access/migrations/'+n+'.sql'));
+  names.push(...['0005_login_methods_registry','0006_account_lifecycle_hardening','0007_identity_owner_and_issuance_guards','0008_account_service_nonces','0009_passkeys','0010_feedback','0011_oauth_service','0012_alpha_administration','0013_account_avatars','0014_community_content','0015_blog_media','0016_blog_media_parts','0020_individual_trial_access'].map(n=>'../server-access/migrations/'+n+'.sql'));
   for(const name of names){const sql=(await readFile(new URL(name,import.meta.url),'utf8')).split(/\r?\n/).filter(l=>!l.trimStart().startsWith('--')).join(' ');await db.exec(sql)}
   for(const table of ['account_subjects','login_methods','nexus_passkey_users','nexus_passkey_credentials','account_devices','account_sessions','session_login_methods','nexus_admin_grants'])for(const row of f.db.prepare('SELECT * FROM '+table).all()){
    const keys=Object.keys(row);await db.prepare('INSERT INTO '+table+'('+keys.join(',')+') VALUES('+keys.map(()=>'?').join(',')+')').bind(...Object.values(row)).run();

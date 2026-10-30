@@ -3823,8 +3823,8 @@ function validateDTO(data, path10, expected) {
   } else if (path10 === BASE + "/capabilities") {
     if (!exact6(data, ["canManage", "canModerate", "canPurge", "freshPasskey"]) || Object.values(data).some((v) => typeof v !== "boolean")) valid();
   } else if (path10.startsWith(BASE + "/users?") || path10 === BASE + "/users") {
-    if (!exact6(data, ["users", "total", "offset", "settings", "counts"]) || !Array.isArray(data.users) || data.users.length > 50 || !Number.isInteger(data.total) || !Number.isInteger(data.offset) || !exact6(data.settings, ["registrationMode", "maxTesters", "limitEnabled", "version"]) || !exact6(data.counts, ["active", "occupied", "reserved"]) || typeof data.settings.limitEnabled !== "boolean" || !["open", "invite_only"].includes(data.settings.registrationMode) || !Number.isInteger(data.settings.maxTesters) || data.settings.maxTesters < 1 || data.settings.maxTesters > 1e4 || !Number.isInteger(data.settings.version) || data.settings.version < 1 || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
-    for (const u of data.users) if (!exact6(u, ["accountId", "username", "displayName", "state", "version", "createdAt", "lastLoginAt", "activeSessions", "reason", "protected"]) || !id(u.accountId) || !safeText(u.displayName, 512) || u.username !== null && !safeText(u.username, 32) || !["active", "blocked", "removed", "invited", "unadmitted", "administrator"].includes(u.state) || !Number.isInteger(u.version) || !Number.isInteger(u.activeSessions) || typeof u.protected !== "boolean" || !safeText(u.reason, 200)) valid();
+    if (!exact6(data, ["users", "total", "offset", "settings", "counts"]) || !Array.isArray(data.users) || data.users.length > 50 || !Number.isInteger(data.total) || !Number.isInteger(data.offset) || !exact6(data.settings, ["registrationMode", "maxTesters", "limitEnabled", "version", "defaultTrialMinutes", "defaultInvitationMinutes"]) || !exact6(data.counts, ["active", "occupied", "reserved"]) || data.settings.defaultTrialMinutes !== null && (!Number.isInteger(data.settings.defaultTrialMinutes) || data.settings.defaultTrialMinutes < 60 || data.settings.defaultTrialMinutes > 525600) || !Number.isInteger(data.settings.defaultInvitationMinutes) || data.settings.defaultInvitationMinutes < 10 || data.settings.defaultInvitationMinutes > 10080 || typeof data.settings.limitEnabled !== "boolean" || !["open", "invite_only"].includes(data.settings.registrationMode) || !Number.isInteger(data.settings.maxTesters) || data.settings.maxTesters < 1 || data.settings.maxTesters > 1e4 || !Number.isInteger(data.settings.version) || data.settings.version < 1 || Object.values(data.counts).some((v) => !Number.isInteger(v) || v < 0)) valid();
+    for (const u of data.users) if (!exact6(u, ["accountId", "username", "displayName", "state", "version", "createdAt", "lastLoginAt", "activeSessions", "reason", "protected", "invitationCreatedAt", "invitationExpiresAt", "trialMinutes", "firstLoginAt", "accessExpiresAt"]) || !id(u.accountId) || !safeText(u.displayName, 512) || u.username !== null && !safeText(u.username, 32) || !["active", "blocked", "removed", "invited", "unadmitted", "administrator"].includes(u.state) || !Number.isInteger(u.version) || !Number.isInteger(u.activeSessions) || typeof u.protected !== "boolean" || !safeText(u.reason, 200) || u.trialMinutes !== null && (!Number.isInteger(u.trialMinutes) || u.trialMinutes < 60 || u.trialMinutes > 525600) || ["invitationCreatedAt", "invitationExpiresAt", "firstLoginAt", "accessExpiresAt"].some((k) => u[k] !== null && (!safeText(u[k], 64) || !Number.isFinite(Date.parse(u[k]))))) valid();
   } else if (path10 === BASE + "/content?mediaStatus=1") {
     if (!exact6(data, ["mediaAvailability"]) || !exact6(data.mediaAvailability, ["enabled", "maxBytes", "maxDimension"]) || typeof data.mediaAvailability.enabled !== "boolean" || data.mediaAvailability.maxBytes !== 98304 || data.mediaAvailability.maxDimension !== 1600) valid();
   } else if (path10.startsWith(BASE + "/content?media=") || path10 === BASE + "/content" && exact6(data, ["ok", "media"])) {
@@ -3882,7 +3882,8 @@ async function controlService(env, fetchImpl, envelope, { mediaDiagnostics = fal
     if (captureWire) error3.nexusWire = wireHeaders(meta);
     throw error3;
   };
-  const body = JSON.stringify(envelope), timestamp = String(Date.now()), nonce = randomBytes2(16).toString("hex");
+  const modern = /^\/api\/v2\/account\/control\/(?:users(?:\?|$)|settings$|invites$|users\/[^/]+\/(?:trial|invitation)$)/.test(envelope.path);
+  const body = JSON.stringify(modern ? { ...envelope, dtoVersion: 2 } : envelope), timestamp = String(Date.now()), nonce = randomBytes2(16).toString("hex");
   const signature = createHmac2("sha256", env.ADMIN_SERVICE_KEY).update(["v1", "POST", INTERNAL, timestamp, nonce, sha3(body)].join("\n")).digest("hex");
   if (Buffer.byteLength(body) > limit) fail6("INPUT_TOO_LARGE", 413);
   const signal = sharedSignal || AbortSignal.timeout(12e3);
@@ -5592,6 +5593,150 @@ function validateChatTree(value) {
   return structuredClone(value);
 }
 
+// akronikl/experience/math-speech.js
+var greek = { alpha: ["\u0430\u043B\u044C\u0444\u0430", "alpha"], beta: ["\u0431\u0435\u0442\u0430", "beta"], gamma: ["\u0433\u0430\u043C\u043C\u0430", "gamma"], delta: ["\u0434\u0435\u043B\u044C\u0442\u0430", "delta"], epsilon: ["\u044D\u043F\u0441\u0438\u043B\u043E\u043D", "epsilon"], theta: ["\u0442\u0435\u0442\u0430", "theta"], lambda: ["\u043B\u044F\u043C\u0431\u0434\u0430", "lambda"], mu: ["\u043C\u044E", "mu"], nu: ["\u043D\u044E", "nu"], xi: ["\u043A\u0441\u0438", "xi"], pi: ["\u043F\u0438", "pi"], rho: ["\u0440\u043E", "rho"], sigma: ["\u0441\u0438\u0433\u043C\u0430", "sigma"], tau: ["\u0442\u0430\u0443", "tau"], phi: ["\u0444\u0438", "phi"], chi: ["\u0445\u0438", "chi"], psi: ["\u043F\u0441\u0438", "psi"], omega: ["\u043E\u043C\u0435\u0433\u0430", "omega"] };
+var greekKeys = Object.keys(greek);
+
+// akronikl/experience/speech-text.js
+var terms = new Map(Object.entries({
+  "C++": "\u0441\u0438 \u043F\u043B\u044E\u0441 \u043F\u043B\u044E\u0441",
+  "C#": "\u0441\u0438 \u0448\u0430\u0440\u043F",
+  "F#": "\u044D\u0444 \u0448\u0430\u0440\u043F",
+  "C": "\u0441\u0438",
+  "JavaScript": "\u0434\u0436\u0430\u0432\u0430 \u0441\u043A\u0440\u0438\u043F\u0442",
+  "TypeScript": "\u0442\u0430\u0439\u043F \u0441\u043A\u0440\u0438\u043F\u0442",
+  "Python": "\u043F\u0430\u0439\u0442\u043E\u043D",
+  "Java": "\u0434\u0436\u0430\u0432\u0430",
+  "Rust": "\u0440\u0430\u0441\u0442",
+  "Kotlin": "\u043A\u043E\u0442\u043B\u0438\u043D",
+  "Swift": "\u0441\u0432\u0438\u0444\u0442",
+  "Go": "\u0433\u043E\u0443",
+  "PHP": "\u043F\u0438 \u044D\u0439\u0447 \u043F\u0438",
+  "HTML": "\u044D\u0439\u0447 \u0442\u0438 \u044D\u043C \u044D\u043B",
+  "CSS": "\u0441\u0438 \u044D\u0441 \u044D\u0441",
+  "SQL": "\u044D\u0441 \u043A\u044C\u044E \u044D\u043B",
+  "JSON": "\u0434\u0436\u0435\u0439\u0441\u043E\u043D",
+  "XML": "\u044D\u043A\u0441 \u044D\u043C \u044D\u043B",
+  "API": "\u044D\u0439 \u043F\u0438 \u0430\u0439",
+  "SDK": "\u044D\u0441 \u0434\u0438 \u043A\u0435\u0439",
+  "HTTP": "\u044D\u0439\u0447 \u0442\u0438 \u0442\u0438 \u043F\u0438",
+  "HTTPS": "\u044D\u0439\u0447 \u0442\u0438 \u0442\u0438 \u043F\u0438 \u044D\u0441",
+  "URL": "\u044E \u0430\u0440 \u044D\u043B",
+  "URI": "\u044E \u0430\u0440 \u0430\u0439",
+  "UTF": "\u044E \u0442\u0438 \u044D\u0444",
+  "UTF-8": "\u044E \u0442\u0438 \u044D\u0444 \u0432\u043E\u0441\u0435\u043C\u044C",
+  "CPU": "\u0441\u0438 \u043F\u0438 \u044E",
+  "GPU": "\u0434\u0436\u0438 \u043F\u0438 \u044E",
+  "RAM": "\u0440\u044D\u043C",
+  "SSD": "\u044D\u0441 \u044D\u0441 \u0434\u0438",
+  "TCP": "\u0442\u0438 \u0441\u0438 \u043F\u0438",
+  "IP": "\u0430\u0439 \u043F\u0438",
+  "RAII": "\u0430\u0440 \u044D\u0439 \u0430\u0439 \u0430\u0439",
+  "STL": "\u044D\u0441 \u0442\u0438 \u044D\u043B",
+  "OOP": "\u043E\u0443 \u043E\u0443 \u043F\u0438",
+  "\u041E\u041E\u041F": "\u043E \u043E \u043F",
+  "Git": "\u0433\u0438\u0442",
+  "GitHub": "\u0433\u0438\u0442 \u0445\u0430\u0431",
+  "Docker": "\u0434\u043E\u043A\u0435\u0440",
+  "Linux": "\u043B\u0438\u043D\u0443\u043A\u0441",
+  "Windows": "\u0432\u0438\u043D\u0434\u043E\u0443\u0441",
+  "React": "\u0440\u0435\u0430\u043A\u0442",
+  "Node.js": "\u043D\u043E\u0443\u0434 \u0434\u0436\u0435\u0439 \u044D\u0441",
+  "npm": "\u044D\u043D \u043F\u0438 \u044D\u043C",
+  "Qwen": "\u043A\u0432\u0435\u043D",
+  "Piper": "\u043F\u0430\u0439\u043F\u0435\u0440",
+  "Ctrl": "\u043A\u043E\u043D\u0442\u0440\u043E\u043B",
+  "Enter": "\u044D\u043D\u0442\u0435\u0440",
+  "Esc": "\u044D\u0441\u043A\u0435\u0439\u043F",
+  "Tab": "\u0442\u0430\u0431",
+  "Shift": "\u0448\u0438\u0444\u0442"
+}));
+var codeWords = new Map(Object.entries({
+  std: "\u044D\u0441 \u0442\u0438 \u0434\u0438",
+  vector: "\u0432\u0435\u043A\u0442\u043E\u0440",
+  int: "\u0438\u043D\u0442",
+  long: "\u043B\u043E\u043D\u0433",
+  short: "\u0448\u043E\u0440\u0442",
+  char: "\u0447\u0430\u0440",
+  bool: "\u0431\u0443\u043B",
+  float: "\u0444\u043B\u043E\u0443\u0442",
+  double: "\u0434\u0430\u0431\u043B",
+  void: "\u0432\u043E\u0439\u0434",
+  auto: "\u0430\u0443\u0442\u043E",
+  const: "\u043A\u043E\u043D\u0441\u0442",
+  static: "\u0441\u0442\u0430\u0442\u0438\u043A",
+  unsigned: "\u0430\u043D\u0441\u0430\u0439\u043D\u0434",
+  signed: "\u0441\u0430\u0439\u043D\u0434",
+  string: "\u0441\u0442\u0440\u0438\u043D\u0433",
+  size_t: "\u0441\u0430\u0439\u0437 \u0442\u0438",
+  if: "\u0438\u0444",
+  else: "\u044D\u043B\u0441",
+  for: "\u0444\u043E\u0440",
+  while: "\u0432\u0430\u0439\u043B",
+  do: "\u0434\u0443",
+  return: "\u0440\u0435\u0442\u0451\u0440\u043D",
+  break: "\u0431\u0440\u0435\u0439\u043A",
+  continue: "\u043A\u043E\u043D\u0442\u0438\u043D\u044C\u044E",
+  switch: "\u0441\u0432\u0438\u0442\u0447",
+  case: "\u043A\u0435\u0439\u0441",
+  default: "\u0434\u0435\u0444\u043E\u043B\u0442",
+  class: "\u043A\u043B\u0430\u0441\u0441",
+  struct: "\u0441\u0442\u0440\u0430\u043A\u0442",
+  enum: "\u044D\u043D\u0443\u043C",
+  public: "\u043F\u0430\u0431\u043B\u0438\u043A",
+  private: "\u043F\u0440\u0430\u0439\u0432\u0438\u0442",
+  protected: "\u043F\u0440\u043E\u0442\u0435\u043A\u0442\u0435\u0434",
+  virtual: "\u0432\u0451\u0440\u0447\u0443\u0430\u043B",
+  override: "\u043E\u0432\u044D\u0440\u0440\u0430\u0439\u0434",
+  new: "\u043D\u044C\u044E",
+  delete: "\u0434\u0438\u043B\u0438\u0442",
+  this: "\u0437\u0438\u0441",
+  nullptr: "\u043D\u0430\u043B\u043B \u043F\u043E\u0439\u043D\u0442\u0435\u0440",
+  null: "\u043D\u0430\u043B\u043B",
+  true: "\u0442\u0440\u0443",
+  false: "\u0444\u043E\u043B\u0441",
+  namespace: "\u043D\u0435\u0439\u043C \u0441\u043F\u0435\u0439\u0441",
+  using: "\u044E\u0437\u0438\u043D\u0433",
+  template: "\u0442\u0435\u043C\u043F\u043B\u0435\u0439\u0442",
+  typename: "\u0442\u0430\u0439\u043F \u043D\u0435\u0439\u043C",
+  include: "\u0438\u043D\u043A\u043B\u0443\u0434",
+  cout: "\u0441\u0438 \u0430\u0443\u0442",
+  cin: "\u0441\u0438 \u0438\u043D",
+  endl: "\u044D\u043D\u0434 \u044D\u043B",
+  main: "\u043C\u044D\u0439\u043D",
+  printf: "\u043F\u0440\u0438\u043D\u0442 \u044D\u0444",
+  scanf: "\u0441\u043A\u0430\u043D \u044D\u0444",
+  unique_ptr: "\u044E\u043D\u0438\u043A \u043F\u043E\u0439\u043D\u0442\u0435\u0440",
+  shared_ptr: "\u0448\u044D\u0440\u0434 \u043F\u043E\u0439\u043D\u0442\u0435\u0440",
+  weak_ptr: "\u0432\u0438\u043A \u043F\u043E\u0439\u043D\u0442\u0435\u0440",
+  push_back: "\u043F\u0443\u0448 \u0431\u044D\u043A",
+  emplace_back: "\u044D\u043C\u043F\u043B\u0435\u0439\u0441 \u0431\u044D\u043A",
+  begin: "\u0431\u0438\u0433\u0438\u043D",
+  end: "\u044D\u043D\u0434",
+  size: "\u0441\u0430\u0439\u0437",
+  def: "\u0434\u044D\u0444",
+  print: "\u043F\u0440\u0438\u043D\u0442",
+  import: "\u0438\u043C\u043F\u043E\u0440\u0442",
+  from: "\u0444\u0440\u043E\u043C",
+  async: "\u044D\u0439\u0441\u0438\u043D\u043A",
+  await: "\u044D\u0432\u0435\u0439\u0442",
+  function: "\u0444\u0430\u043D\u043A\u0448\u043D",
+  let: "\u043B\u0435\u0442",
+  var: "\u0432\u0430\u0440",
+  console: "\u043A\u043E\u043D\u0441\u043E\u043B\u044C",
+  log: "\u043B\u043E\u0433",
+  try: "\u0442\u0440\u0430\u0439",
+  catch: "\u043A\u044D\u0442\u0447",
+  throw: "\u0442\u0440\u043E\u0443",
+  select: "\u0441\u0435\u043B\u0435\u043A\u0442",
+  where: "\u0432\u044D\u0440",
+  insert: "\u0438\u043D\u0441\u0451\u0440\u0442",
+  update: "\u0430\u043F\u0434\u0435\u0439\u0442",
+  values: "\u0432\u044D\u043B\u044C\u044E\u0437",
+  value: "\u0432\u044D\u043B\u044C\u044E"
+}));
+var termPattern = new RegExp("(?<![\\p{L}\\p{N}_])(" + [...terms.keys()].sort((a, b) => b.length - a.length).map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")(?![\\p{L}\\p{N}_])", "gu");
+
 // akronikl/experience/speech.js
 function speechPreferences(value = { auto: false, voiceURI: "", rate: 1 }) {
   if (!value || !["auto,rate,voiceURI", "auto,greeting,rate,voiceURI"].includes(Object.keys(value).sort().join(",")) || typeof value.auto !== "boolean" || value.greeting !== void 0 && typeof value.greeting !== "boolean" || typeof value.voiceURI !== "string" || value.voiceURI.length > 240 || !Number.isFinite(value.rate) || value.rate < 0.7 || value.rate > 1.5) throw Error("SPEECH_SETTINGS_INVALID");
@@ -6129,7 +6274,7 @@ ${sha5(body)}`).digest("hex");
 
 // akronikl/experience/piper-voice.js
 var PIPER_VOICE = Object.freeze({ voiceURI: "kitsune:piper-irina", name: "Kitsune Math \xB7 Piper Irina", lang: "ru-RU", localService: true, kind: "local-browser", modelId: "ru_RU-irina-medium" });
-var PIPER_NARRATOR = Object.freeze({ voiceURI: "kitsune:piper-uyut7", name: "\u0411\u044B\u0441\u0442\u0440\u044B\u0439 \u0440\u0430\u0441\u0441\u043A\u0430\u0437\u0447\u0438\u043A \xAB\u0423\u044E\u0442-7\xBB \xB7 Piper", lang: "ru-RU", localService: true, kind: "local-browser", modelId: "ru_RU-uyut7-pilot5-medium" });
+var PIPER_NARRATOR = Object.freeze({ voiceURI: "kitsune:piper-uyut7", name: "\u0411\u044B\u0441\u0442\u0440\u044B\u0439 \u0440\u0430\u0441\u0441\u043A\u0430\u0437\u0447\u0438\u043A \xAB\u0423\u044E\u0442-7\xBB \xB7 Piper", lang: "ru-RU", localService: true, kind: "local-browser", modelId: "ru_RU-uyut7-pilot6-pace-medium" });
 
 // server-access/bff/akronikl-cloud.mjs
 function createNexusAccountResolver(options = {}) {
