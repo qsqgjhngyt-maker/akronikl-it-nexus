@@ -37,3 +37,5 @@ NEXUS_1C_P1|requests=3|minutes=105|negative=2|PASS
 Исходники `courses/cpp` на базовом main также совпадают с принятой документационной фиксацией C++ `75e24e195919e7c3d39659ba804e977d51ef5591`. Ничего из выпущенного курса этой веткой не менялось.
 
 История исправлений и ограничения содержательной ревизии: QUALITY_REVIEW_RU.md. Юридические пробелы: LICENSING_RUNTIME_RU.md. Gate статуса всего milestone остаётся PARTIAL до договорённых внешних проверок и интеграционной приёмки.
+
+GitHub: draft PR #63, source SHA `10f0aab27c3b707a7beba86f0dc24d0e9cc1a526`. Новый CI SUCCESS на push/PR. Прежний publication lane завершился FAIL по `P4-Q release branch`; общий PR не объявляется зелёным. Также требуется согласовать пересечение с параллельным PR #62. Точные run IDs, ссылки и ограничения: GITHUB_CHECKPOINT_RU.md и evidence/GITHUB_CI.json.

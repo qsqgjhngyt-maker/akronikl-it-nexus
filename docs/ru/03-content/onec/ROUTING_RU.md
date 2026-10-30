@@ -31,3 +31,5 @@
 > Есть материал ВКР: разделение образовательных траекторий при общем versioned content, evidence hierarchy visualization/static/native, negative-control CheckConfig и восстановление, безопасное копирование проекта. Сохранить причины решений/альтернативы/до-после/security/метрики и ограничения из ADR_ONEC_RU.md. Рост знаний, авторство и field p95 не измерены.
 
 Что потом: вернуться в 03, принять согласованный интеграционный этап и продолжить A2/P2. MASTER HANDOFF — scoped update этого milestone, не переписывание исторического handoff и не новый статус всего production.
+
+Дополнение по реальному GitHub checkpoint: PR #63 / source `10f0aab27c3b707a7beba86f0dc24d0e9cc1a526`, новый CI push/PR SUCCESS. Legacy publication CI FAIL на `P4-Q release branch`; нужен 00/05 review нового bounded CI route. Появился параллельный PR #62 с другим предлагаемым P Course ID `onec-programming` вместо `onec`; нужны решение об ID и единый curriculum source of truth. Ничего из #62 не изменялось. Сначала согласовать кандидаты и gates, затем продолжать активную интеграцию.

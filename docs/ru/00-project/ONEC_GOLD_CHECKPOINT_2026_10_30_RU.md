@@ -2,7 +2,7 @@
 
 **STATUS: PARTIAL.** Реализация кандидата IMPLEMENTED; выполненные тесты имеют AUTOMATED PASS. LIVE/FULL LIVE PASS и готовность полных курсов не заявляются.
 
-База main: `d8721e06a2b1ac953aa18694c07559c62d388700`. Feature: `feature/onec-dual-gold-foundation-20261030`. Точный GitHub candidate SHA/PR и CI фиксируются в итоговом evidence после создания PR; это не разрешение слияния.
+База main: `d8721e06a2b1ac953aa18694c07559c62d388700`. Feature: `feature/onec-dual-gold-foundation-20261030`. [Draft PR #63](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/pull/63), проверенный source SHA `10f0aab27c3b707a7beba86f0dc24d0e9cc1a526`. Это не разрешение слияния.
 
 **TWO CURRICULA:** P1–P12 (`onec`, 48 тем) и A1–A8 (`1c-enterprise`, 32 темы). У каждого собственные IDs, prerequisites, результаты и аттестация. Вход в P напрямую разрешён. Остальные 72 темы остаются PLANNED.
 
@@ -19,6 +19,8 @@
 **RISKS / WHAT REMAINS:** полные EULA community/EDT/точной training-поставки; независимая предметная экспертиза; training build; физические Android/iPhone/Windows и Safari/WebKit; согласование lazy routes, account-private adapter, Project Studio copying и PWA resources. До этого текущие карточки planned сохраняются. Официальный C++ 1.0 и production не менялись.
 
 **ROUTING CHECK:** 00 → 02/07 для точного integration proposal; 05 для evidence review; 04 для материала ВКР. 01 подключить при изменении private/offline/runtime contracts; 06 — только при отдельной исследовательской задаче. Полные готовые тексты: `docs/ru/03-content/onec/ROUTING_RU.md`.
+
+**GITHUB CI:** новый 1С workflow SUCCESS на push `41085874227` и PR `41085917304`. Общий PR не зелёный: legacy workflow `41085916096` отклоняет новую ветку по `P4-Q release branch`. Его release scope не изменялся. Кроме того, появился параллельный PR #62 с P Course ID `onec-programming`; здесь предложен `onec`. До активной интеграции 00 должен согласовать единый ID и source of truth двух curriculum-кандидатов. Подробности: `docs/ru/03-content/onec/GITHUB_CHECKPOINT_RU.md`.
 
 **NEXT RECOMMENDED BRANCH:** 00 → 02/07 → 03. Сначала приёмка кандидата и согласованный integration step, затем A2/P2.
 
