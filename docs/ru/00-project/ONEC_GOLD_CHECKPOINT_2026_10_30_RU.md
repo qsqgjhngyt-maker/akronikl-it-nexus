@@ -1,5 +1,7 @@
 # 00 — два курса 1С: согласованный кандидат
 
+Актуализация 31.10.2026: review 03/05, исправлены membership и инструкция A1.3 RU/EN, пакеты 0.2.1-review. По прямому решению владельца ordinary content отделён от historical publication; receipts/allowlist/старые команды сохранены. 25 локальных regression groups, 13 browser groups, 50 unit checks; GitHub CI нового HEAD фиксируется в PR #63. Продукт PARTIAL/NOT PUBLISHED, main/production/merge не выполнялись. Подробности: REVIEW_0305_RU.md и P4Q_GATE_REVIEW_RU.md в docs/ru/03-content/onec. Ниже сохранена хронология.
+
 Актуальное решение MASTER 00 от 30.10.2026: основным остаётся PR #63; единые ID `onec`/`1c-enterprise`. Консолидация #62 выполнена одним исполнителем в той же feature, source SHA `ff18e15cab5dd9340302976720ad70060249ac05`; после проверок #62 закрыт как superseded с сохранением исходной ветки/архива. Канонический curriculum: 84 темы, все 80 прежних ID сохранены, 4 добавления PLANNED; первые 8 уроков RU/EN дополнены выборочно. Итоговый CI/evidence/closure receipt: `docs/ru/03-content/onec/CONSOLIDATION_RECEIPT_RU.md`. Карта 95 исходных тем: `CONSOLIDATION_RU.md`. Новый native report содержит также 5 вызовов исходной ServiceCost-функции до/после restore. Исторический P4-Q gate не меняется. Общая production/LIVE приёмка остаётся PARTIAL; A2/P2 независимо не разрабатываются.
 
 ## Историческая исходная фиксация до консолидации

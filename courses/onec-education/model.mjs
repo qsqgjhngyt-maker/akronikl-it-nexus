@@ -12,12 +12,19 @@ export function progressFor(curriculum,state){
  const done=ids.filter(id=>state.lessons?.[id]?.completed===true).length;
  return{done,total:ids.length,pct:ids.length?Math.round(done/ids.length*100):0,scope:'implemented-module-only',wholeCourseComplete:false};
 }
-export function createCandidateStore(storage,courseId){
+export function createCandidateStore(storage,courseId,curriculum=null){
  const key=courseKey(courseId);
+ if(curriculum&&(curriculum.courseId!==courseId||!Array.isArray(curriculum.modules)))throw Error('INVALID_CURRICULUM');
+ const topics=curriculum?new Map(curriculum.modules.flatMap(m=>m.topics.map(t=>[t.topicId,m.status==='IMPLEMENTED'&&t.status==='IMPLEMENTED']))):null;
  function read(){const raw=storage.getItem(key);if(!raw)return{schemaVersion:1,courseId,lessons:{},projects:[]};let state;try{state=JSON.parse(raw)}catch{throw Error('SAVED_DATA_UNREADABLE')}
   if(state?.schemaVersion!==1||state.courseId!==courseId||!state.lessons||typeof state.lessons!=='object'||Array.isArray(state.lessons)||!Array.isArray(state.projects))throw Error('SAVED_DATA_INVALID');return state;}
  function save(change){const next=change(clone(read()));storage.setItem(key,JSON.stringify(next));return next;}
- function lessonId(id){if(typeof id!=='string'||!id.startsWith(courseId+'.')||!/^[a-z0-9.-]+$/.test(id))throw Error('FOREIGN_TOPIC');}
+ function lessonId(id){
+  if(typeof id!=='string'||!id.startsWith(courseId+'.')||!/^[a-z0-9.-]+$/.test(id))throw Error('FOREIGN_TOPIC');
+  if(!topics)throw Error('CURRICULUM_REQUIRED');
+  if(!topics.has(id))throw Error('UNKNOWN_TOPIC');
+  if(!topics.get(id))throw Error('TOPIC_NOT_IMPLEMENTED');
+ }
  return{read,
   attempt(id,grade,answers,metadata={}){
    lessonId(id);if(grade?.kind!=='local-self-check')throw Error('INVALID_GRADE');

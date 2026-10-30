@@ -1,3 +1,4 @@
+import {routePublicationWorkflow,WORKFLOW} from '../tools/content-publication-route.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -18,7 +19,8 @@ test('Новый Content/Identity/Cloud файл и обход пути откл
 test('Маршрутизация оставляет оригинальные команды и fail-closed проверку перед выбором набора',async()=>{
  for(const [file,lanes]of Object.entries(WORKFLOWS)){
   const before=execFileSync('git',['show',BASE+':'+file],{cwd:ROOT,encoding:'utf8'}),after=routeWorkflow(before,lanes);
-  assert.equal(after,(await readFile(new URL('../'+file,import.meta.url),'utf8')));
+  const actual=await readFile(new URL('../'+file,import.meta.url),'utf8'),pin=/NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA: '([a-f0-9]{40})'/.exec(actual)?.[1];
+  assert.equal((file===WORKFLOW?routePublicationWorkflow(after,pin):after).replaceAll('\r\n','\n'),actual.replaceAll('\r\n','\n'));
   for(const line of before.replaceAll('\r\n','\n').split('\n').filter(l=>/^          (?:node |git |npm )/.test(l)))assert.ok(after.includes(line),'Потеряна команда '+line);
   assert.equal((after.match(/id: startup_intro/g)||[]).length,Object.keys(lanes).length);
   assert.ok(after.includes('node tools/startup-intro-ci-route.mjs'));
