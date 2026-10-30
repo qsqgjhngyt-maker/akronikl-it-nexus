@@ -69,6 +69,7 @@ export function validateBundle(bundle) {
     const {roadmap, shared, lessons, schema} = bundle;
     issue(roadmap.schemaVersion === 1 && roadmap.version === '0.1.0', 'Версия исходной модели', errors);
     issue(roadmap.productionIntegration === 'not-implemented', 'Нельзя объявлять интеграцию production', errors);
+    issue(['skillGraph','learningEvents','masteryModel'].every(k => roadmap.futureExtensions?.[k] === 'not-implemented'), 'Недоказанные будущие слои обучения', errors);
     issue(JSON.stringify(roadmap.courses.map(c => c.courseId).sort()) === JSON.stringify([...COURSE_IDS].sort()), 'Два разных Course ID обязательны', errors);
     const sourceRows = [...shared.sources, ...(lessons.additionalSources || [])];
     const sources = new Set(sourceRows.map(s => s.id));
@@ -178,7 +179,7 @@ export function clonePrototypeProject(source, targetCourse, newId) {
 }
 
 export function previewHTML(bundle) {
-  const data = JSON.stringify({roadmap:bundle.roadmap, shared:bundle.shared, lessons:bundle.lessons.lessons}).replaceAll('<','\\u003c').replaceAll('\u2028','\\u2028').replaceAll('\u2029','\\u2029');
+  const data = JSON.stringify({roadmap:bundle.roadmap, shared:bundle.shared, lessons:bundle.lessons.lessons,lessonsSourceRows:bundle.lessons.additionalSources || []}).replaceAll('<','\\u003c').replaceAll('\u2028','\\u2028').replaceAll('\u2029','\\u2029');
   const script = `const DATA=${data};
 const course=document.getElementById('course'),locale=document.getElementById('locale'),body=document.getElementById('lesson'),outline=document.getElementById('outline');
 const el=(tag,text)=>{const x=document.createElement(tag);if(text!==undefined)x.textContent=text;return x};
@@ -199,11 +200,11 @@ if(l.bslExample){const pre=el('pre'),code=el('code',l.bslExample.source);pre.app
 body.append(el('h2',lang==='ru'?'Типичные ошибки':'Common mistakes'));for(const e of b.mistakes){body.append(el('h3',e.symptom),el('p',e.cause),el('p',e.fix))}
 body.append(el('h2',lang==='ru'?'Самопроверка — без зачёта курса':'Self-check — no course credit'));for(const [i,q] of b.quiz.entries()){const field=el('fieldset'),legend=el('legend',q.question);field.append(legend);for(const [j,a] of q.answers.entries()){const label=el('label'),radio=el('input');radio.type='radio';radio.name='q'+i;radio.value=String(j);label.append(radio,document.createTextNode(a));field.append(label)}const check=el('button',lang==='ru'?'Проверить':'Check'),feedback=el('p');check.type='button';feedback.setAttribute('role','status');check.addEventListener('click',()=>{const selected=field.querySelector('input:checked');feedback.textContent=!selected?(lang==='ru'?'Выберите ответ.':'Select an answer.'):(Number(selected.value)===q.correctIndex?(lang==='ru'?'Верно. ':'Correct. '):(lang==='ru'?'Попробуйте ещё раз. ':'Try again. '))+q.explanation});field.append(check,feedback);body.append(field)}
 body.append(el('h2',lang==='ru'?'Итоги':'Summary'),list(b.recap),el('p',b.next));
-const sources=[...DATA.shared.sources,...DATA.lessonsSourceRows||[]];const sourceList=el('ul');for(const id of l.sourceRefs){const s=sources.find(s=>s.id===id);const li=el('li',s?s.title:id);if(s){const a=el('a',lang==='ru'?' — источник (нужна сеть)':' — source (network required)');a.href=s.url;a.rel='noopener noreferrer';a.target='_blank';li.append(a)}sourceList.append(li)}body.append(el('h2',lang==='ru'?'Источники':'Sources'),sourceList);
+const sources=[...DATA.shared.sources,...(DATA.lessonsSourceRows||[])];const sourceList=el('ul');for(const id of l.sourceRefs){const s=sources.find(s=>s.id===id);const li=el('li',s?s.title:id);if(s){const a=el('a',lang==='ru'?' — источник (нужна сеть)':' — source (network required)');a.href=s.url;a.rel='noopener noreferrer';a.target='_blank';li.append(a)}sourceList.append(li)}body.append(el('h2',lang==='ru'?'Источники':'Sources'),sourceList);
 for(const m of c.modules){const d=el('details');d.append(el('summary',m.title[lang]),el('p',m.outcome[lang]),el('p',m.evidence[lang]),list(m.topics.map(t=>t[lang==='ru'?1:2])));outline.append(d)}
 }
 course.addEventListener('change',render);locale.addEventListener('change',render);render();`;
-  const correctedScript = script.replace('lessons:bundle.lessons.lessons', 'lessons:bundle.lessons.lessons');
+  const correctedScript = script;
   const digest = createHash('sha256').update(correctedScript).digest('base64');
   return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-${digest}'; style-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; form-action 'none'"><title>Nexus · 1С · учебный кандидат</title><style>
 :root{font-family:system-ui,sans-serif;color:#172b3a;background:#f3f5f7}*{box-sizing:border-box}body{margin:0}header{background:#142f3e;color:white;padding:22px}header p{max-width:1000px;margin:auto;line-height:1.6}.controls{display:flex;gap:16px;flex-wrap:wrap;padding:20px;max-width:1120px;margin:auto}label{display:block}select{font:inherit;max-width:100%;min-height:44px;padding:8px}.controls label:first-child{flex:1;min-width:200px}.controls select{width:100%}main{max-width:1120px;margin:auto;padding:0 20px 50px}article{max-width:860px;background:white;border:1px solid #d2dbe0;border-radius:14px;padding:28px;margin:auto}h1{font-size:clamp(26px,4vw,38px);line-height:1.15}h2{font-size:22px;margin-top:32px}h3{font-size:18px}p,li{line-height:1.75}li{margin:8px 0}button{font:inherit;min-height:44px;padding:10px 16px;margin:6px;border:1px solid #58778a;border-radius:9px;background:#eaf1f5;cursor:pointer}button[aria-pressed=true]{background:#174c63;color:white}button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #dc8900;outline-offset:3px}fieldset{border:1px solid #b5c6d0;margin:20px 0;padding:16px;border-radius:10px}fieldset label{padding:10px}input[type=radio]{margin-right:12px}pre{overflow:auto;background:#edf1f4;padding:14px;font:14px/1.6 monospace}#shared-model{background:#eef4f7;border-radius:10px;padding:14px}#shared-model button{min-width:140px}#outline{max-width:860px;margin:24px auto}details{padding:12px;border-bottom:1px solid #bfccd4}summary{cursor:pointer;font-weight:600}a{color:#174f80}footer{max-width:860px;margin:20px auto;font-size:14px} @media(max-width:600px){article{padding:18px}main{padding:0 10px 30px}fieldset{padding:10px}h2{font-size:20px}}
@@ -237,6 +238,8 @@ export function buildCandidate(outputDirectory, root = ROOT) {
   }
   put('content/schemas/content-package-v1.schema.json', fs.readFileSync(path.join(root,'content/schemas/content-package-v1.schema.json'),'utf8'));
   put('tools/content-contract-lib.mjs',fs.readFileSync(path.join(root,'tools/content-contract-lib.mjs'),'utf8'));
+  // Точные неизменённые зависимости для воспроизведения тестов вне репозитория.
+  for (const relative of ['sandbox/languages.js','courses/catalog.json']) put(relative,fs.readFileSync(path.join(root,relative),'utf8'));
   for (const l of bundle.lessons.lessons) if(l.bslExample) put(`examples/${l.bslExample.filename}`,l.bslExample.source);
   put('environment-record.template.json',{schemaVersion:1,platformBuild:null,operatingSystem:null,architecture:null,licenseProfile:null,compatibilityMode:null,configurationRevision:null,sourceSha256:null,callContext:null,actualOutput:null,executionVerified:false,secretsAllowed:false});
   put('preview.html', previewHTML(bundle));
