@@ -90,6 +90,18 @@ test('Сборка создаёт проверяемые файлы и не до
   const manifest=JSON.parse(fs.readFileSync(path.join(out,'BUILD_MANIFEST.json'),'utf8'));
   for(const row of manifest.files){const bytes=fs.readFileSync(path.join(out,row.path));assert.equal(bytes.length,row.bytes);assert.equal(createHash('sha256').update(bytes).digest('hex'),row.sha256)}
   for(const c of bundle.roadmap.courses){const p=JSON.parse(fs.readFileSync(path.join(out,'courses',c.courseId,'content-package.json'),'utf8'));for(const rel of [p.sourceCompatibility.catalogPath,p.sourceCompatibility.manifestPath,p.sourceCompatibility.curriculumPath,p.sourceCompatibility.provenancePath,...Object.values(p.sourceCompatibility.contentPaths)])assert.ok(fs.existsSync(path.join(out,rel)),rel)}
+  for(const relative of ['sandbox/languages.js','courses/catalog.json'])assert.deepEqual(fs.readFileSync(path.join(out,relative)),fs.readFileSync(path.join(ROOT,relative)));
   assert.throws(()=>buildCandidate(out),/OUTPUT_ALREADY_EXISTS/);assert.throws(()=>buildCandidate(ROOT),/SEPARATE_FROM_SOURCE/);
  }finally{fs.rmSync(temp,{recursive:true,force:true})}
+});
+test('Все sourceRefs включены в данные превью с действительными HTTPS ссылками',()=>{
+ const html=previewHTML(bundle);const script=html.match(/<script>([\s\S]*)<\/script>/)[1];
+ const prefix='const DATA=',end=script.indexOf(';\nconst course=');
+ assert.ok(end>0);const data=JSON.parse(script.slice(prefix.length,end));
+ const sources=new Map([...data.shared.sources,...data.lessonsSourceRows].map(s=>[s.id,s]));
+ for(const l of data.lessons)for(const id of l.sourceRefs)assert.equal(new URL(sources.get(id)?.url).protocol,'https:',id);
+ assert.equal(data.lessonsSourceRows.length,4);assert.ok(Buffer.byteLength(html)<300000);
+});
+test('Недоказанные Skill Graph, Learning Events и Mastery не проходят gate',()=>{
+ for(const field of ['skillGraph','learningEvents','masteryModel'])bad(b=>{b.roadmap.futureExtensions[field]='implemented'},/Недоказанные/);
 });
