@@ -1,6 +1,6 @@
 // Current owner-approved P4-Q overlay; historical C++ acceptance stays immutable.
 import assert from 'node:assert/strict';import{readFile}from'node:fs/promises';import{execFileSync}from'node:child_process';import{createHash}from'node:crypto';
-const RECEIPT_SHA256='28a8c57f8701d0b93583fe6e66ac5b2e5362a9666d9f7eacf5ce4d458c466edd';
+const RECEIPT_SHA256='5bf254888010aa30f009e74172fe64483c78b76057d979fb6699f39ce073f6f9';
 export const P4Q_RELEASE_BASE='75e24e195919e7c3d39659ba804e977d51ef5591',P4Q_RELEASE_RECEIPT='release/P4Q_RELEASE_SCOPE.json';
 const self='tools/p4q-release-scope.mjs',git=(...a)=>execFileSync('git',a,{stdio:['ignore','pipe','pipe'],maxBuffer:128*1024*1024}),sha=b=>createHash('sha256').update(b).digest('hex');
 export const p4qFileHash=(file,bytes)=>sha(file===self?Buffer.from(bytes.toString().replace(/const RECEIPT_SHA256='[a-f0-9]{64}';/,"const RECEIPT_SHA256='"+'0'.repeat(64)+"';")):bytes);
