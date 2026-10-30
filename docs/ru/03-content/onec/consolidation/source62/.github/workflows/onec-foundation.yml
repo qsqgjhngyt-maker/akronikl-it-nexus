@@ -1,0 +1,85 @@
+name: 1С — Foundation кандидаты без публикации
+
+on:
+  push:
+    branches: ['feature/onec-education-foundation-20261030']
+    paths: ['authoring/onec/**', '.github/workflows/onec-foundation.yml']
+  pull_request:
+    branches: [main]
+    paths: ['authoring/onec/**', '.github/workflows/onec-foundation.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BASELINE_SHA: d8721e06a2b1ac953aa18694c07559c62d388700
+      CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Проверить точный additive-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/onec-evidence"
+          git fetch --no-tags --depth=1 origin "$BASELINE_SHA"
+          git diff --name-status "$BASELINE_SHA" "$CANDIDATE_SHA" | tee "$RUNNER_TEMP/onec-evidence/DIFF.txt"
+          while IFS=$'\t' read -r status file; do
+            test "$status" = A || { echo "Запрещено изменение существующего файла: $file"; exit 1; }
+            case "$file" in
+              authoring/onec/*|.github/workflows/onec-foundation.yml) ;;
+              *) echo "Вне области 1C-0: $file"; exit 1 ;;
+            esac
+          done < "$RUNNER_TEMP/onec-evidence/DIFF.txt"
+          printf 'BASELINE=%s\nCANDIDATE=%s\n' "$BASELINE_SHA" "$CANDIDATE_SHA" > "$RUNNER_TEMP/onec-evidence/REVISIONS.txt"
+          echo 'PASS: исходники production не изменены'
+      - name: Проверить две программы и негативные случаи
+        shell: bash
+        run: |
+          set -euo pipefail
+          node authoring/onec/foundation.mjs 2>&1 | tee "$RUNNER_TEMP/onec-evidence/VALIDATION.log"
+          node --test authoring/onec/foundation.test.mjs 2>&1 | tee "$RUNNER_TEMP/onec-evidence/TESTS.tap"
+      - name: Ограниченная существующая регрессия — не полный C++ gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            node tools/validate-content.mjs
+            node --test tests/content-contract.test.mjs
+            node tests/programming-language-catalog-check.mjs
+            node tests/shared-learning-views-check.mjs
+          } 2>&1 | tee "$RUNNER_TEMP/onec-evidence/EXISTING_REGRESSION.log"
+      - name: Собрать отдельный учебный кандидат
+        shell: bash
+        run: |
+          set -euo pipefail
+          node authoring/onec/foundation.mjs --out "$RUNNER_TEMP/onec-candidate" | tee "$RUNNER_TEMP/onec-evidence/BUILD.log"
+          test "$(wc -c < "$RUNNER_TEMP/onec-candidate/preview.html")" -le 300000
+          cp -R "$RUNNER_TEMP/onec-evidence" "$RUNNER_TEMP/onec-candidate/evidence"
+          git diff --exit-code
+          echo 'PASS: только авторский кандидат; BSL/native исполнение NOT RUN'
+      - name: Сохранить кандидат и evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: onec-foundation-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/onec-candidate/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Сохранить журналы, включая ошибки
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: onec-foundation-logs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/onec-evidence/
+          retention-days: 30
+          if-no-files-found: warn

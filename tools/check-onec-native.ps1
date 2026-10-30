@@ -36,6 +36,10 @@ function Run-Probe([string]$Name,[string]$Base){
  if(-not(Test-Path $resultFile)){throw 'Вывод BSL отсутствует.'}
  $actual=(Get-Content -LiteralPath $resultFile -Raw).Trim()
  if($actual -ne 'NEXUS_1C_P1|requests=3|minutes=105|negative=2|PASS'){throw 'Вывод BSL не соответствует ожидаемому.'}
+ $costFile=$resultFile+'.service-cost.txt'
+ if(-not(Test-Path -LiteralPath $costFile)){throw 'Вывод ServiceCost отсутствует.'}
+ $cost=(Get-Content -LiteralPath $costFile -Raw).Trim()
+ if($cost -ne 'NEXUS_1C_SERVICE_COST|normal=3|boundary=2|PASS'){throw 'ServiceCost не соответствует ожидаемому.'}
  return $actual
 }
 try{
@@ -56,7 +60,7 @@ try{
  Invoke-Native 'load-negative' @('DESIGNER','/F',('"'+$negative+'"'),'/LoadConfigFromFiles',('"'+$badSource+'"'))
  Invoke-Native 'check-negative' @('DESIGNER','/F',('"'+$negative+'"'),'/CheckConfig','-ThinClient','-ThickClientManagedApplication','-Server') $true
  $sourceHashes=Get-ChildItem -LiteralPath $nativeSource -Recurse -File | ForEach-Object {[pscustomobject]@{path=$_.FullName.Substring($nativeSource.Length+1).Replace('\','/');sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()}}
- $report=[pscustomobject]@{status='AUTOMATED PASS';version=$nativeVersion;environment='official-platform-local-file-base';actual=$actual;restoredActual=$restoredActual;negativeSyntaxRejected=$true;steps=$steps;sourceHashes=$sourceHashes;persistedBusinessRecordsTested=$false;licensingCredentialsCollected=$false;serverDeployed=$false;productionUsed=$false;physicalMobileTested=$false}
+ $report=[pscustomobject]@{status='AUTOMATED PASS';version=$nativeVersion;environment='official-platform-local-file-base';actual=$actual;restoredActual=$restoredActual;serviceCostActual=(Get-Content -LiteralPath (Join-Path $nativeOutput 'BSL_RESULT.txt.service-cost.txt') -Raw).Trim();serviceCostRestored=(Get-Content -LiteralPath (Join-Path $nativeOutput 'RESTORED_BSL_RESULT.txt.service-cost.txt') -Raw).Trim();serviceCostCases=5;environmentRecord=[pscustomobject]@{operatingSystem=[Environment]::OSVersion.VersionString;runnerArchitecture=[System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString();platformArchitecture='NOT_INSPECTED';licenseProfile='NOT_INSPECTED';compatibilityMode='Version8_3_27';configurationRevision='0.1.0';callContext='ManagedApplicationModule, official thick client, file infobase';secretsAllowed=$false};negativeSyntaxRejected=$true;steps=$steps;sourceHashes=$sourceHashes;persistedBusinessRecordsTested=$false;licensingCredentialsCollected=$false;serverDeployed=$false;productionUsed=$false;physicalMobileTested=$false}
  $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $nativeOutput 'NATIVE_RESULT.json') -Encoding utf8
  $report | ConvertTo-Json -Depth 8
 }catch{

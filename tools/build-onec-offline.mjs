@@ -4,7 +4,7 @@ export async function buildOnecOffline(output){
  try{await fs.access(out);throw Error('OUTPUT_EXISTS')}catch(error){if(error.code!=='ENOENT')throw error;}
  await fs.mkdir(out,{recursive:true});
  const data={};for(const course of ['onec','1c-enterprise']){const c=JSON.parse(await fs.readFile(path.join(root,`courses/${course}/curriculum.json`),'utf8'));data[`../${course}/curriculum.json`]=c;for(const t of c.modules[0].topics)for(const locale of ['ru','en']){const f=t.content[locale];data[`../${course}/${f}`]=JSON.parse(await fs.readFile(path.join(root,`courses/${course}/${f}`),'utf8'));}}
- for(const f of ['shared.v1.json','service-desk.v1.json','sources.v1.json'])data[f]=JSON.parse(await fs.readFile(path.join(base,f),'utf8'));
+ for(const f of ['shared.v1.json','supplement.v1.json','service-desk.v1.json','sources.v1.json'])data[f]=JSON.parse(await fs.readFile(path.join(base,f),'utf8'));
  data['native/service-desk/Ext/ManagedApplicationModule.bsl']=await fs.readFile(path.join(base,'native/service-desk/Ext/ManagedApplicationModule.bsl'),'utf8');
  data['native/README_RU.md']=await fs.readFile(path.join(base,'native/README_RU.md'),'utf8');
  const model=(await fs.readFile(path.join(base,'model.mjs'),'utf8')).replace(/^export /gm,''),app=(await fs.readFile(path.join(base,'candidate.mjs'),'utf8')).replace(/^import .*?;\r?\n/,'');

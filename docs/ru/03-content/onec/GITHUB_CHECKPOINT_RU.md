@@ -1,5 +1,7 @@
 # GitHub checkpoint: PR #63
 
+> Исторический снимок до консолидации. Новое решение MASTER 00 закрепляет `onec`/`1c-enterprise` и основной #63; актуальная карта и evidence — в CONSOLIDATION_RU.md. Следующие CI IDs относятся к прежнему source snapshot и не заменяют новые проверки.
+
 Кандидат: [draft PR #63](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/pull/63), ветка `feature/onec-dual-gold-foundation-20261030`. Source commit: `10f0aab27c3b707a7beba86f0dc24d0e9cc1a526`. Tree: `f3f7e19b5d18f7be4b47069e492a74d2ecdd1313` — совпадает с локальным проверенным деревом. После этого снимка допускается только документационная фиксация текущих результатов; payload и executable source остаются теми же.
 
 Новый CI 1С:

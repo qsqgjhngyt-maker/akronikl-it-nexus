@@ -24,3 +24,9 @@ NATIVE_RESULT.json contains the version, operation exit codes, source hashes and
 Without an installation, use theory, diagrams and self-checks. They do not execute 1C; your unperformed native lab remains NOT RUN.
 
 Obtain installers from official sources and accept their terms personally. Free acquisition does not establish redistribution rights. P1 requires neither a deployed server nor a paid service.
+
+## PR #62 consolidation into #63
+
+The original service-cost function is retained with its numeric preconditions. Original cases (30/600→300, 60/900→900, 0/600→0) are supplemented by boundaries (1440/0→0, 1440/100000→2400000). The native gate calls the function and writes `NEXUS_1C_SERVICE_COST|normal=3|boundary=2|PASS` separately to `BSL_RESULT.txt.service-cost.txt`; restored execution uses `RESTORED_BSL_RESULT.txt.service-cost.txt`. The previous BSL_RESULT.txt format stays compatible.
+
+This function neither validates arbitrary input nor defines financial rounding policy. Those are separate P2/P3 tasks. Unknown licensing profile and platform architecture remain NOT_INSPECTED in the environment record. Historical native reports from before consolidation are retained separately.
