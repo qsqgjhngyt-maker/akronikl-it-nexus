@@ -41,7 +41,7 @@ async function envelope(request,env){
  const key=await crypto.subtle.importKey('raw',encoder.encode(env.ADMIN_SERVICE_KEY),{name:'HMAC',hash:'SHA-256'},false,['verify']);
  if(!await crypto.subtle.verify('HMAC',key,Buffer.from(signature,'hex'),encoder.encode(canonical)))deny('SERVICE_DENIED',401);
  let data;try{data=JSON.parse(body)}catch{deny('INVALID_INPUT')}
- if(!exact(data,['path','method','payload','sessionHash','expectedAccountId']))deny('INVALID_INPUT');
+ if(!exact(data,['path','method','payload','sessionHash','expectedAccountId'])&&!(exact(data,['path','method','payload','sessionHash','expectedAccountId','dtoVersion'])&&data.dtoVersion===2))deny('INVALID_INPUT');
  const publicParts=data.path===PUBLIC_MEDIA_PARTS_PATH;
  if(publicParts){
   // Только authenticated service -> published-only read. Не создаёт Account actor/grant.
@@ -117,7 +117,7 @@ async function target(env,actor,id,version){
 }
 function validMutation(input,keys){if(!exact(input,['requestId',...keys])||!validRequestId(input.requestId))deny('INVALID_INPUT')}
 async function operation(env,value){
- const {actor,method,payload}=value,url=new URL(value.path,'https://nexus.invalid'),path=url.pathname;
+ const {actor,method,payload}=value,modern=value.dtoVersion===2,url=new URL(value.path,'https://nexus.invalid'),path=url.pathname;
  if(path===PUBLIC_MEDIA_PARTS_PATH)return mediaPartsOperation(env,value,{publishedOnly:true});
  if(path.startsWith('/api/v2/account/profile'))return profileOperation(env,value);
  if(!await alphaSettings(env))deny('ALPHA_CONTROL_UNAVAILABLE',503);
@@ -144,12 +144,14 @@ async function operation(env,value){
   const total=await first(env.DB,'SELECT count(*) n'+from+filter,state);
   const list=await rows(query(env.DB,"SELECT a.id,a.display_name,a.status,a.created_at,p.username,m.state,m.version,m.reason,m.trial_minutes,m.first_login_at,m.access_expires_at,i.created_at invitation_created_at,pi.expires_at invitation_expires_at,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id AND g.status='active') administrator,EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=a.id) protected_account,(SELECT max(created_at) FROM account_sessions s WHERE s.subject_id=a.id) last_login,(SELECT count(*) FROM account_sessions s WHERE s.subject_id=a.id AND s.status='active' AND s.revoked_at IS NULL AND s.idle_expires_at>?2 AND s.absolute_expires_at>?2) active_sessions"+from+filter+' ORDER BY a.created_at DESC,a.id LIMIT 50 OFFSET ?3',state,now(),offset));
   const settings=await first(env.DB,'SELECT registration_mode,max_testers,limit_enabled,default_trial_minutes,default_invitation_minutes,version FROM nexus_alpha_settings WHERE id=1'),occupied=await first(env.DB,'SELECT count(*) n FROM nexus_alpha_occupied'),active=await first(env.DB,"SELECT count(*) n FROM nexus_alpha_members WHERE state='active' AND (access_expires_at IS NULL OR access_expires_at>strftime('%Y-%m-%dT%H:%M:%fZ','now')) AND account_id NOT IN(SELECT account_id FROM nexus_admin_grants WHERE status='active')");
-  return {users:list.map(r=>({accountId:r.id,username:r.username||null,displayName:r.display_name,state:r.administrator?'administrator':r.state||'unadmitted',version:r.version||0,createdAt:r.created_at,lastLoginAt:r.last_login||null,activeSessions:r.active_sessions,reason:r.reason||'',protected:!!r.protected_account,invitationCreatedAt:r.invitation_created_at||null,invitationExpiresAt:r.invitation_expires_at||null,trialMinutes:r.trial_minutes??null,firstLoginAt:r.first_login_at||null,accessExpiresAt:r.access_expires_at||null})),total:total.n,offset,settings:{registrationMode:settings.registration_mode,maxTesters:settings.max_testers,limitEnabled:settings.limit_enabled===1,version:settings.version,defaultTrialMinutes:settings.default_trial_minutes,defaultInvitationMinutes:settings.default_invitation_minutes},counts:{active:active.n,occupied:occupied.n,reserved:occupied.n-active.n}};
+  const result={users:list.map(r=>({accountId:r.id,username:r.username||null,displayName:r.display_name,state:r.administrator?'administrator':r.state||'unadmitted',version:r.version||0,createdAt:r.created_at,lastLoginAt:r.last_login||null,activeSessions:r.active_sessions,reason:r.reason||'',protected:!!r.protected_account,invitationCreatedAt:r.invitation_created_at||null,invitationExpiresAt:r.invitation_expires_at||null,trialMinutes:r.trial_minutes??null,firstLoginAt:r.first_login_at||null,accessExpiresAt:r.access_expires_at||null})),total:total.n,offset,settings:{registrationMode:settings.registration_mode,maxTesters:settings.max_testers,limitEnabled:settings.limit_enabled===1,version:settings.version,defaultTrialMinutes:settings.default_trial_minutes,defaultInvitationMinutes:settings.default_invitation_minutes},counts:{active:active.n,occupied:occupied.n,reserved:occupied.n-active.n}};
+  if(!modern){for(const u of result.users)for(const key of ['invitationCreatedAt','invitationExpiresAt','trialMinutes','firstLoginAt','accessExpiresAt'])delete u[key];delete result.settings.defaultTrialMinutes;delete result.settings.defaultInvitationMinutes;}
+  return result;
  }
  if(path===BASE+'/audit'&&method==='GET'&&!url.search)return {events:await rows(query(env.DB,'SELECT action,target_id targetId,created_at createdAt FROM nexus_admin_audit ORDER BY created_at DESC,id DESC LIMIT 100'))};
  if(method!=='POST'||url.search)deny('NOT_FOUND',404);
  if(path===BASE+'/settings'){
-  const defaults=Object.hasOwn(payload||{},'defaultTrialMinutes');
+  const defaults=modern&&Object.hasOwn(payload||{},'defaultTrialMinutes');
   validMutation(payload,['version','maxTesters','limitEnabled','registrationMode',...(defaults?['defaultTrialMinutes','defaultInvitationMinutes']:[])]);
   if(defaults&&(payload.defaultTrialMinutes!==null&&(!Number.isInteger(payload.defaultTrialMinutes)||payload.defaultTrialMinutes<60||payload.defaultTrialMinutes>525600)||!Number.isInteger(payload.defaultInvitationMinutes)||payload.defaultInvitationMinutes<10||payload.defaultInvitationMinutes>10080))deny('INVALID_INPUT');
   if(typeof payload.limitEnabled!=='boolean'||!Number.isInteger(payload.version)||payload.version<1||!Number.isInteger(payload.maxTesters)||payload.maxTesters<1||payload.maxTesters>10000||!['open','invite_only'].includes(payload.registrationMode))deny('INVALID_INPUT');
@@ -158,6 +160,7 @@ async function operation(env,value){
   return {ok:true};
  }
  if(path===BASE+'/invites'){
+  if(!modern){validMutation(payload,['ttlMinutes']);payload.trialMinutes=null;}
   if(exact(payload,['requestId','ttlMinutes']))payload.trialMinutes='default';
   validMutation(payload,['ttlMinutes','trialMinutes']);
   if(payload.trialMinutes!=='default'&&payload.trialMinutes!==null&&(!Number.isInteger(payload.trialMinutes)||payload.trialMinutes<60||payload.trialMinutes>525600))deny('INVALID_INPUT');
@@ -170,6 +173,7 @@ async function operation(env,value){
  const match=new RegExp('^'+BASE+'/users/([A-Za-z0-9][A-Za-z0-9._:-]{0,159})/(action|purge-preview|purge|trial|invitation)$').exec(path);
  if(!match)deny('NOT_FOUND',404);
  const id=match[1];
+ if(['trial','invitation'].includes(match[2])&&!modern)deny('NOT_FOUND',404);
  if(match[2]==='invitation'){
   validMutation(payload,['version','mode','minutes']);
   if(!['set','extend'].includes(payload.mode)||!Number.isInteger(payload.minutes)||payload.minutes<10||payload.minutes>10080)deny('INVALID_INPUT');

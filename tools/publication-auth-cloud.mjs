@@ -23,6 +23,15 @@ export async function workerSnapshot(){
  const form=await response.formData(),entry=form.get('entry.js');need(entry,'WORKER_ENTRY_MISSING');
  return {source:sha(Buffer.from(await entry.arrayBuffer())),settings:hashConfig(settings),schema:hashConfig(schema.flatMap(r=>r.results??[]))};
 }
+export async function readPrimaryPublicationSurface(){
+ need(process.env.NEXUS_WORKER_READBACK_MODULE,'WORKER_READBACK_MODULE_REQUIRED');
+ const {api,query,readWorkerContent}=await import(pathToFileURL(resolve(process.env.NEXUS_WORKER_READBACK_MODULE)).href);
+ const prefix='/accounts/59d8152fe41bf5e4bc8cdade5ade6e30/workers/scripts/akronikl-nexus-sync';
+ const [settings,response,schema]=await Promise.all([api(prefix+'/settings'),readWorkerContent(),query("SELECT name,type,sql FROM sqlite_schema WHERE type IN('table','index','trigger','view') ORDER BY type,name")]);
+ const entry=(await response.formData()).get('entry.js');need(entry,'WORKER_ENTRY_MISSING');
+ const current=activeRevision(),main=execFileSync('git',['ls-remote','origin','refs/heads/main'],{cwd:resolve(fileURLToPath(new URL('../',import.meta.url))),encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:30000}).trim().split(/\s/)[0];
+ return {containerId:FIXED.container,gatewayId:FIXED.gateway,imageDigest:current.image.image_digest,gatewayFingerprint:gatewayFingerprint(productionSpec()),workerSha256:sha(Buffer.from(await entry.arrayBuffer())),workerSettingsSha256:hashConfig(settings),schemaSha256:hashConfig(schema.flatMap(r=>r.results??[])),main};
+}
 const proxyBytes=()=>readFile(new URL('./auth-canary-proxy.cjs',import.meta.url));
 export const proxyCommand=bytes=>['-e',"eval(atob('"+bytes.toString('base64')+"'));module.exports.start()"];
 function runtimeHash(revision){const p=projectRevision({...revision,container_id:FIXED.container});delete p.description;return hashConfig(p);}

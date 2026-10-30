@@ -103,7 +103,8 @@ function mediaTransportCode(error,signal,phase){
 }
 export async function controlService(env,fetchImpl,envelope,{mediaDiagnostics=false,mediaFetchImpl=fetchImpl,captureWire=false,signal:sharedSignal,limit=262144}={}){
  const failWire=(code,status,meta)=>{const error=new Rejected(code,status);if(captureWire)error.nexusWire=wireHeaders(meta);throw error};
- const body=JSON.stringify(envelope),timestamp=String(Date.now()),nonce=randomBytes(16).toString('hex');
+ const modern=/^\/api\/v2\/account\/control\/(?:users(?:\?|$)|settings$|invites$|users\/[^/]+\/(?:trial|invitation)$)/.test(envelope.path);
+ const body=JSON.stringify(modern?{...envelope,dtoVersion:2}:envelope),timestamp=String(Date.now()),nonce=randomBytes(16).toString('hex');
    const signature=createHmac('sha256',env.ADMIN_SERVICE_KEY).update(['v1','POST',INTERNAL,timestamp,nonce,sha(body)].join('\n')).digest('hex');
    if(Buffer.byteLength(body)>limit)fail('INPUT_TOO_LARGE',413);
    const signal=sharedSignal||AbortSignal.timeout(12000);

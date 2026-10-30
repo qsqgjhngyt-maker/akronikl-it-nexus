@@ -92,7 +92,7 @@ export async function bindAccountControl(){
  }
  async function load(){
   const data=await request('/users?state='+encodeURIComponent(filter.value)+'&offset='+offset);
-  if(!current())return;latest=data;table.replaceChildren();
+  if(!current())return;if(!Object.hasOwn(data.settings||{},'defaultTrialMinutes')||!Object.hasOwn(data.settings||{},'defaultInvitationMinutes')){panel.querySelector('[data-admin-content]').hidden=true;message('Эта версия администрирования обновилась. Обновите страницу Nexus.');return;}latest=data;table.replaceChildren();
   panel.querySelector('[data-admin-counts]').textContent=(data.settings.limitEnabled?'Занято '+data.counts.occupied+' из '+data.settings.maxTesters+' мест.':'Без ограничения числа пользователей.')+' Допущено пользователей: '+data.counts.active+', зарезервировано: '+data.counts.reserved+'.';
   settings.elements.limit.value=String(data.settings.maxTesters);settings.elements.mode.value=data.settings.registrationMode;settings.elements.capacity.value=data.settings.limitEnabled?'limited':'unlimited';settings.elements.limit.disabled=!data.settings.limitEnabled;
   durationValue(settings,'defaultTrial','defaultTrialHours','[data-default-trial-custom]',data.settings.defaultTrialMinutes);durationValue(settings,'defaultInvitation','defaultInvitationHours','[data-default-invitation-custom]',data.settings.defaultInvitationMinutes);

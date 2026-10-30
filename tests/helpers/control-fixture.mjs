@@ -43,8 +43,8 @@ export async function controlFixture(){
  }
  const owner=seed('synthetic-owner',{admin:true});
  db.exec('UPDATE nexus_alpha_settings SET enforced=1 WHERE id=1');
- function signed(path,{actor=owner,method='GET',payload=null,nonce=randomBytes(16).toString('hex'),timestamp=String(Date.now()),headers={}}={}){
-  const body=JSON.stringify({path,method,payload,sessionHash:sha(actor.secret),expectedAccountId:actor.id});
+ function signed(path,{actor=owner,method='GET',payload=null,nonce=randomBytes(16).toString('hex'),timestamp=String(Date.now()),headers={},dtoVersion=2}={}){
+  const body=JSON.stringify({path,method,payload,sessionHash:sha(actor.secret),expectedAccountId:actor.id,...(dtoVersion===2?{dtoVersion:2}:{})});
   const signature=createHmac('sha256',env.ADMIN_SERVICE_KEY).update(['v1','POST','/api/v2/account/internal/control',timestamp,nonce,sha(body)].join('\n')).digest('hex');
   return new Request('https://synthetic-worker.invalid/api/v2/account/internal/control',{method:'POST',body,headers:{'content-type':'application/json','x-nexus-service-timestamp':timestamp,'x-nexus-service-nonce':nonce,'x-nexus-service-signature':signature,...headers}});
  }
