@@ -7,6 +7,7 @@ await build({entryPoints:[path.join(feature,'tools/local-voice/main.mjs')],outfi
 for(const name of ['local-speech-worker.py','qwen-greedy-predictor.py'])await copyFile(path.join(feature,'tools/qa-akronikl',name),path.join(out,name));
 await copyFile(path.join(feature,'akronikl/experience/voices/uyut7-narrator.wav'),path.join(out,'uyut7-narrator.wav'));
 for(const name of ['START.cmd','README_RU.txt'])await copyFile(path.join(feature,'tools/local-voice',name),path.join(out,name));
+const uninstall=await readFile(path.join(feature,'tools/local-voice/Uninstall.ps1'),'utf8');await writeFile(path.join(out,'Uninstall.ps1'),'\uFEFF'+uninstall.replace(/^\uFEFF/u,''));
 const ps=await readFile(path.join(feature,'tools/local-voice/Start.ps1'),'utf8');await writeFile(path.join(out,'Start.ps1'),'\uFEFF'+ps.replace(/^\uFEFF/u,''));
-const names=['local-voice.mjs','local-speech-worker.py','qwen-greedy-predictor.py','uyut7-narrator.wav','Start.ps1','START.cmd','README_RU.txt'],files=[];for(const file of names){const b=await readFile(path.join(out,file));files.push({file,bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')});}
+const names=['local-voice.mjs','local-speech-worker.py','qwen-greedy-predictor.py','uyut7-narrator.wav','Start.ps1','START.cmd','README_RU.txt','Uninstall.ps1'],files=[];for(const file of names){const b=await readFile(path.join(out,file));files.push({file,bytes:b.length,sha256:createHash('sha256').update(b).digest('hex')});}
 await writeFile(path.join(out,'PACKAGE_MANIFEST.json'),JSON.stringify({kind:'LOCAL_TEST_NOT_OFFICIAL_RELEASE',modelWeightsIncluded:false,apiKeysIncluded:false,automaticDownloads:false,files},null,2)+'\n');console.log(JSON.stringify({out,files:files.length,bytes:files.reduce((n,f)=>n+f.bytes,0)}));

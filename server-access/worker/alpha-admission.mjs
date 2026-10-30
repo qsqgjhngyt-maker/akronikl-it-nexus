@@ -15,14 +15,14 @@ export async function alphaSettings(env){
 export async function alphaAccess(env,accountId){
  const settings=await alphaSettings(env);if(!settings)return true;
  if(await query(env.DB,"SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'",accountId).first())return true;
- return !!await query(env.DB,"SELECT 1 ok FROM nexus_alpha_members WHERE account_id=?1 AND state='active'",accountId).first();
+ return !!await query(env.DB,"SELECT 1 ok FROM nexus_alpha_members WHERE account_id=?1 AND state='active' AND (access_expires_at IS NULL OR access_expires_at>?2)",accountId,new Date().toISOString()).first();
 }
 // New OAuth admission is appended to the existing atomic issuance transaction.
 export async function oauthAdmissionCommands(env,accountId,stamp){
  const settings=await alphaSettings(env);if(!settings)return [];
  if(await query(env.DB,"SELECT 1 ok FROM nexus_admin_grants WHERE account_id=?1 AND status='active'",accountId).first())return [];
  const member=await query(env.DB,'SELECT state FROM nexus_alpha_members WHERE account_id=?1',accountId).first();
- if(member){if(member.state!=='active')throw new AlphaError('ALPHA_ACCESS_CLOSED');return []}
+ if(member){if(member.state!=='active'||!await alphaAccess(env,accountId))throw new AlphaError('ALPHA_ACCESS_CLOSED');return []}
  if(settings.registration_mode!=='open')throw new AlphaError('ALPHA_INVITATION_REQUIRED');
  const occupied=await query(env.DB,'SELECT count(*) n FROM nexus_alpha_occupied').first();
  if(settings.limit_enabled===1&&occupied.n>=settings.max_testers)throw new AlphaError('ALPHA_CAPACITY_REACHED',409);

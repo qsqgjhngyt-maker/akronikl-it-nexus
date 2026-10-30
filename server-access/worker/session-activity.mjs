@@ -4,7 +4,7 @@ export async function touchEligibleAccountSession(db,sessionHash,stamp=new Date(
  const next=new Date(time+30*60*1000).toISOString();
  const admission=env.ALPHA_ADMISSION_ENABLED==='true'?`AND EXISTS(SELECT 1 FROM nexus_alpha_settings WHERE id=1 AND enforced=1)
  AND (EXISTS(SELECT 1 FROM nexus_admin_grants WHERE account_id=s.id AND status='active')
- OR EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=s.id AND state='active'))`:'';
+ OR EXISTS(SELECT 1 FROM nexus_alpha_members WHERE account_id=s.id AND state='active' AND (access_expires_at IS NULL OR access_expires_at>?2)))`:'';
  const row=await db.prepare(`UPDATE account_sessions SET
  last_seen_at=MAX(last_seen_at,?2),idle_expires_at=MIN(absolute_expires_at,MAX(idle_expires_at,?3))
  WHERE secret_hash=?1 AND status='active' AND revoked_at IS NULL
