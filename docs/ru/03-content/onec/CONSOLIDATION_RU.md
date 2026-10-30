@@ -2,7 +2,7 @@
 
 Решение MASTER 00 от 30.10.2026: один исполнитель в `feature/onec-dual-gold-foundation-20261030`, образовательный владелец — 03 CONTENT PRODUCTION. Новая параллельная ветка/PR не создаются. Course ID утверждены: `onec` и `1c-enterprise`. `onec-programming` сохраняется только как исходное имя в архиве/provenance #62, без третьего курса, runtime alias или автоматического переноса зачёта.
 
-**STATUS:** консолидация IMPLEMENTED; выполненные проверки AUTOMATED PASS фиксируются в новом evidence. Готовность полного курса и активной production-интеграции остаётся PARTIAL. Исторический P4-Q publication gate рассматривается отдельно и не ослабляется.
+**STATUS: PASS в пределах консолидации / IMPLEMENTED / AUTOMATED PASS.** Итоговый GitHub/closure receipt: [CONSOLIDATION_RECEIPT_RU.md](CONSOLIDATION_RECEIPT_RU.md). Готовность полного курса и активной production-интеграции остаётся PARTIAL. Исторический P4-Q publication gate рассматривается отдельно и не ослабляется.
 
 ## COMPARISON #62 vs #63
 
