@@ -1,6 +1,6 @@
 # Учебный стенд и модули A2/P2
 
-31.10.2026. **STATUS: IMPLEMENTED / AUTOMATED PASS в пределах кандидата; полный продукт PARTIAL / NOT PUBLISHED.** Один рабочий поток, существующий Draft PR #63. Main, production, merge и официальный Release не изменялись.
+31.10.2026. **STATUS: PASS приёмки A2/P2 в пределах кандидата; полный продукт PARTIAL / NOT PUBLISHED.** Содержимое IMPLEMENTED, автоматические проверки AUTOMATED PASS, стандартные формы локального Windows стенда LIVE PASS. [Акт приёмки и завершённый CI](ACCEPTANCE_A2P2_RU.md). Один рабочий поток, существующий Draft PR #63. Main, production, merge и официальный Release не изменялись.
 
 Входной SHA: `8330fd232856fc4076929ddade6e81cfaa8c0e4f`. Итоговый commit и его CI фиксируются в PR metadata; старые CI-результаты не выдаются за проверку нового HEAD. Старые материалы A1/P1 и предыдущие evidence остаются историей.
 
@@ -71,7 +71,7 @@ Evidence: [a2p2/evidence](a2p2/evidence), `RESULT.json`, hashes, native/portable
 ## Остаток и ограничения
 
 - Training 8.3.27.1508, полные EULA/community/EDT и license profile не закрыты. Дистрибутивы и сторонние tools не распространяются.
-- Ручной desktop UI протокол форм 1С, физические Android/iPhone, WebKit/assistive technology и field p95 NOT RUN. Batch-успех не выдаётся за эти проверки.
+- Ручной desktop UI протокол стандартных форм закрыт отдельно: отмена 60→45, сохранение/reopen 60, затем новый native-сеанс копии 90 и источника 75; [протокол](acceptance-a2p2/UI_RESULT.json). Физические Android/iPhone, WebKit/assistive technology и field p95 NOT RUN.
 - Native gate относится к thick-client/file-base среде. Сервер, concurrency, транзакции/проведение/регистры не доказаны.
 - Academy/account-private/Studio/PWA adapters не подключены. Подсветка/JS не считаются 1С исполнением. Production course cards остаются PLANNED.
 - Независимая предметная/security/педагогическая экспертиза, измеренный образовательный эффект и авторство ученика не доказаны. Required-check settings main не прочитаны из-за API 403 и не менялись.
@@ -88,9 +88,9 @@ Evidence: [a2p2/evidence](a2p2/evidence), `RESULT.json`, hashes, native/portable
 
 Почему: изменён образовательный объём и доказаны сохранение/копирование прикладных данных; внешние contracts не менялись.
 
-Когда: после CI итогового HEAD, перед новым крупным этапом или merge/release решением.
+Когда: сейчас, после 3/3 SUCCESS исходного SHA edc59ced8510f527fab67c5f070f7192fbcad6d9. Актуальный текст передачи — в акте ACCEPTANCE_A2P2_RU.md; proposal Studio — STUDIO_INTEGRATION_PROPOSAL_RU.md.
 
-Готовый текст: «A2/P2 разработаны в единственном #63: 9 новых RU/EN уроков, всего 17/34; все 84 Topic ID сохранены, 67 тем PLANNED. Официальная 1С 8.3.27.2214 записала 3 клиента/2 услуги/2 документа; repeat/reopen/restore сохранили identity, копия 90 при исходнике 75. 46 cases ×7 положительных сеансов плюс semantic-negative, syntax-negative и output guard; portable повторён. 60 unit/25 regression/15 browser groups локально PASS. New revision не присваивается legacy attempts; исходные A1/P1 и contracts сохранены. Main/production/merge/Release не выполнялись. Полный продукт PARTIAL; training/EULA, manual UI, physical mobile, Studio/account integration и independent review остаются gates. Итоговый SHA/CI/artifacts — в PR metadata».
+Готовый текст: «A2/P2 приняты в единственном #63: 9 новых RU/EN уроков, всего 17/34; все 84 Topic ID сохранены, 67 тем PLANNED. Исходный SHA edc59ced8510f527fab67c5f070f7192fbcad6d9, CI 3/3 SUCCESS. Официальная 1С 8.3.27.2214 записала 3 клиента/2 услуги/2 документа; repeat/reopen/restore сохранили identity, копия 90 при исходнике 75. Portable native gate 46 cases ×7 положительных сеансов плюс semantic/syntax negatives и output guard. Дополнительно стандартные формы LIVE PASS на отдельной копии: отказ от сохранения оставляет 45, сохранение/reopen удерживает 60; два новых native-сеанса подтверждают копию 90 и источник 75. 60 unit/25 regression/15 browser groups PASS. New revision не присваивается legacy attempts; исходные A1/P1 и contracts сохранены. Studio proposal S1 подготовлен, PLANNED до согласования 02/01/07/00. Main/production/merge/Release не выполнялись. Полный продукт PARTIAL; training/EULA, physical mobile/WebKit/p95, интеграция и independent review остаются gates».
 
 Есть ли материал для диплома? **Да:** сохранность identity при restore, независимость workspace и данных, revision-aware progression без очистки истории, syntax vs semantic negative controls, границы native и браузерного evidence. Педагогический эффект не утверждается.
 
