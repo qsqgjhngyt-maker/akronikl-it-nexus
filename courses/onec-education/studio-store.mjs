@@ -5,6 +5,7 @@ import {getProject,listProjects,putProject} from '../../project-studio/project-s
 import {STUDIO_PROFILE,title,validateOnecWorkspace,onecExportSources} from './studio-profile.mjs';
 const clone=v=>JSON.parse(JSON.stringify(v));
 const deny=()=>{throw Error('ONEC_PRIVATE_ACCESS_REQUIRED')};
+const workspaceAccess=(p,w,action)=>{const subjectId=onecAccount();for(const f of w.files)if(!evaluateProjectAccess(p.access,{subjectId,path:f.path,action}).allowed)deny()};
 export function onecAccount(){
  const a=verifiedAccount();if(!a)throw Error('VERIFIED_ACCOUNT_REQUIRED');
  // Старый store допускает fallback при parse error; S1 не записывает поверх повреждения.
@@ -28,15 +29,17 @@ export function createOnecWork({title:label,workspace,origin={kind:'user'},metad
 }
 export function saveOnecWork(id,workspace){
  const p=ownedOnec(id,'edit'),clean=validateOnecWorkspace(workspace,{metadataEditable:p.manifest.onec.metadataEditable});
+ workspaceAccess(p,clean,'edit');
  if(clean.entryFile!==p.workspace.entryFile)throw Error('ENTRY');
  for(const f of p.workspace.files.filter(f=>f.readOnly))if(!clean.files.some(n=>n.path===f.path&&n.content===f.content&&n.readOnly))throw Error('READ_ONLY');
  clean.revision=Math.max(p.workspace.revision+1,clean.revision);return putProject({...p,workspace:clean});
 }
 export function copyOnecWork(id,{workspace=null,targetBinding=null,metadataEditable=false}={}){
  const p=ownedOnec(id),input=workspace||p.workspace;
+ workspaceAccess(p,validateOnecWorkspace(input,{metadataEditable}),'view');
  // Source и его checkpoint/progress остаются. Копия получает текущие права, без credit.
  return createOnecWork({title:p.title.slice(0,108)+' · копия',workspace:input,metadataEditable,origin:{...p.origin,...(targetBinding||{}),kind:'work-copy',sourceProjectId:p.id,sourceCourseId:p.origin.courseId||null,sourceRevision:p.workspace.revision,credit:'none'}});
 }
 export function checkpointOnecWork(id,label){const p=ownedOnec(id,'edit');return putProject({...p,checkpoints:[{id:crypto.randomUUID(),label:title(label),createdAt:new Date().toISOString(),workspace:clone(p.workspace)},...p.checkpoints]})}
 export function copyOnecCheckpoint(id,checkpointId){const p=ownedOnec(id);const cp=p.checkpoints.find(c=>c.id===checkpointId);if(!cp)throw Error('CHECKPOINT');return copyOnecWork(id,{workspace:cp.workspace})}
-export function exportOnecWork(id,workspace){const p=ownedOnec(id);return onecExportSources(p,workspace||p.workspace)}
+export function exportOnecWork(id,workspace){const p=ownedOnec(id),w=workspace||p.workspace;workspaceAccess(p,validateOnecWorkspace(w,{metadataEditable:p.manifest.onec.metadataEditable}),'view');return onecExportSources(p,w)}

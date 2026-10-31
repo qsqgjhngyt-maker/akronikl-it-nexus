@@ -28,6 +28,8 @@ XML шаблона защищены от изменения в текущей к
 
 Каждая операция проверяет текущий аккаунт, владение, local-only профиль и разрешения ACL для проекта и файлов; явный DENY имеет приоритет. Блокировка контекста закрывает доступ к прежней работе. Импорт сохраняет прежние лимиты Studio: 64 файла, 262144 bytes/file, 1048576 bytes текста, 2097152 bytes JSON. Отклоняются traversal, absolute/Windows paths, некорректный UTF-8, NUL, опасные prototype names, duplicate, file/directory conflicts, двоичные расширения и XML DOCTYPE/ENTITY. XML остаётся текстом, внешние сущности не загружаются.
 
+Финальный ACL review дополнительно проверяет все входящие пути workspace, включая новые несохранённые файлы: DENY на папку блокирует их сохранение, копирование и экспорт до записи. Отрицательные cases включены в S1 unit suite.
+
 Из действующего Studio изменён только `project-studio/project-studio.js`: lazy входы в S1 launcher/editor и отдельная onec ветка без C++ runtime. Store, transfer, build, sandbox/code-studio, runtime-router, Identity, OAuth, BFF, Worker/D1 и PWA contracts побайтно сохранены. Реализация S1 лежит в `courses/onec-education/studio*.mjs/css/json`. Статус языка в общем каталоге остаётся planned; S1 явно обозначает доступность редактора отдельно от исполнения.
 
 ## Проверки и evidence
