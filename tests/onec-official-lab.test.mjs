@@ -1,4 +1,5 @@
 import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs/promises';import os from'node:os';import path from'node:path';import{createHash}from'node:crypto';import{prepareOfficialLab,officialLabConfiguration}from'../courses/onec-education/runtime/official-lab.mjs';
+import './onec-native-run.test.mjs';
 import{spawnSync}from'node:child_process';import{fileURLToPath}from'node:url';
 import{attachTrainingMedia}from'../courses/onec-education/runtime/training-media.mjs';
 const minimal=()=>({languageId:'onec',entryFile:'Ext/ManagedApplicationModule.bsl',revision:7,files:[{path:'Configuration.xml',content:'<MetaDataObject/>'},{path:'Ext/ManagedApplicationModule.bsl',content:'// original synthetic work'}]});

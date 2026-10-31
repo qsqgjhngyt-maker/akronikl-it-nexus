@@ -182,12 +182,19 @@ public static class NexusTrainingRunner {
   } catch(Exception error){report.reason=error.Message;Log("Проверка не принята: "+error.Message);}
   report.steps=Steps.ToArray();using(FileStream file=new FileStream(Path.Combine(attempt,"TRAINING_RESULT.json"),FileMode.CreateNew,FileAccess.Write))new DataContractJsonSerializer(typeof(TrainingResult)).WriteObject(file,report);Log("Протокол внутри guest: "+attempt+"\\TRAINING_RESULT.json");return report;
  }
+ static int PreparePlatform(LabJob job){
+  TrainingLock locked=Resource<TrainingLock>("NexusTrainingLock");attempt=Path.Combine(@"C:\NexusGuest","runtime-"+requestedJob);NexusLabBootstrap.Require(!Directory.Exists(attempt),"RUNTIME_EXISTS");Directory.CreateDirectory(attempt);
+  TrainingResult report=new TrainingResult{status="FAIL",runtimeJobId=requestedJob,sourceWorkId=job.workId,sourceRevision=job.sourceRevision,sourceSnapshotSha256=job.sourceSnapshotSha256,platformVersion=locked.version};
+  int code=79;try{Install(locked);report.status="PREPARED / official platform only; no learner execution";code=30;}catch(Exception error){report.reason=error.Message;}
+  report.steps=Steps.ToArray();using(FileStream file=new FileStream(Path.Combine(attempt,"TRAINING_RESULT.json"),FileMode.CreateNew,FileAccess.Write))new DataContractJsonSerializer(typeof(TrainingResult)).WriteObject(file,report);return code;
+ }
  [STAThread] public static int Main(string[] args){
   bool probe=args.Length==1&&args[0]=="--host-refusal-probe";
   try {
    NexusLabBootstrap.GuardGuest();NexusLabBootstrap.Require(!probe,"HOST_PROBE_MUST_REFUSE");Dictionary<string,byte[]> source;LabJob job=NexusLabBootstrap.ReadJob(out source);NexusLabBootstrap.Require(job.sourceSnapshotSha256==ExpectedSource,"TRUSTED_REFERENCE_ONLY");
-   if(args.Length==2&&(args[0]=="--batch"||args[0]=="--show-result")){
+   if(args.Length==2&&(args[0]=="--batch"||args[0]=="--show-result"||args[0]=="--prepare-platform")){
     Guid id;NexusLabBootstrap.Require(Guid.TryParseExact(args[1],"D",out id),"JOB_ID");requestedJob=id.ToString();
+    if(args[0]=="--prepare-platform")return PreparePlatform(job);
     if(args[0]=="--batch"){
      TrainingResult result=Execute(job,source);if(result.status.StartsWith("AUTOMATED PASS",StringComparison.Ordinal))return 0;
      string reason=result.reason??"";string[] known={"AUTHENTICODE","SIGNER_PIN","MEDIA_HASH","VC_INSTALL","MSI_INSTALL","PLATFORM_NOT_FOUND","PLATFORM_HASH","PLATFORM_VERSION","ONEC_STEP_FAILED","TIMEOUT","ASSERTIONS_FAILED","CASE_IDS_FAILED","SYNTAX_REJECTION","SEMANTIC_REJECTION","CANCELLED"};
