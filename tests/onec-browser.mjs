@@ -74,3 +74,5 @@ try{
 }finally{await browser.close();await new Promise(r=>server.close(r));}
 // S1 проверяется отдельным synthetic account/storage fixture; CI не получает реальную сессию.
 await import('./onec-studio-browser.mjs');
+
+await import('./onec-assistant-browser.mjs');
