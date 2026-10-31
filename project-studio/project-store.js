@@ -89,9 +89,15 @@ export function linkProjectOwnerToAccount(projectId,subjectId){
 
 export function applyCloudProject(remoteProject,{serverRevision=0,syncedAt=now(),provider='cloudflare'}={}){
   if(!remoteProject?.id)throw new Error('Cloud project id is required.');
+  if(['localRevision','revision'].some(k=>remoteProject.sync?.[k]!==undefined&&!Number.isSafeInteger(remoteProject.sync[k])))throw Error('CLOUD_LOCAL_REVISION_INVALID');
   const db=loadProjectDb();const existing=db.projects?.[remoteProject.id];
   const normalized=normalizeProject(clone(remoteProject));
-  normalized.sync={...normalizeSync(normalized),mode:'cloud',provider,status:'synced',serverRevision:Number(serverRevision||0),baseServerRevision:Number(serverRevision||0),lastSyncedAt:syncedAt,conflict:null};
+  const revisions=[Number(existing?.sync?.localRevision??0),Number(normalized.sync.localRevision??0)];
+  if(revisions.some(v=>!Number.isSafeInteger(v)||v<0)||Math.max(...revisions)>=Number.MAX_SAFE_INTEGER)throw Error('CLOUD_LOCAL_REVISION_INVALID');
+  // Принятый remote snapshot тоже меняет локальный source. Старый редактор не
+  // должен совпасть с его revision даже при одинаковом счётчике на сервере.
+  const localRevision=Math.max(...revisions)+1;
+  normalized.sync={...normalizeSync(normalized),revision:localRevision,localRevision,mode:'cloud',provider,status:'synced',serverRevision:Number(serverRevision||0),baseServerRevision:Number(serverRevision||0),lastSyncedAt:syncedAt,conflict:null};
   normalized.createdAt=normalized.createdAt||existing?.createdAt||syncedAt;normalized.updatedAt=normalized.updatedAt||syncedAt;
   db.projects[normalized.id]=normalized;saveProjectDb(db);return clone(normalized);
 }

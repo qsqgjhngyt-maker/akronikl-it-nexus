@@ -4,7 +4,7 @@
 
 STATUS: PARTIAL публикационной готовности. Все 84 темы/168 RU/EN двух направлений onec/1c-enterprise и итоговые 3×24/4 практики/3 проекта на курс IMPLEMENTED в едином PR #63. Старые IDs/работы/progress/attempts/provenance сохранены. Полезные материалы #62 и исходная карта 95→84 остаются в архиве, новых конкурирующих веток нет.
 
-AUTOMATED PASS: 37 regression groups/139 unit, 38 browsergroups; official native8.3.27.2214: 70 core+3 HTTP/8 сеансов/source440copy455/restore/negativecontrols. S1-R06 устранён для текущих общих writers; требуется backup/reload прежних вкладок. NEXUS-PERF-01 сохранён 80/634232 при caps80/640000. Публичная PWA проверена только на неопубликованной loopback preview; private Studio Cold Offline/LIVE не заявлен.
+AUTOMATED PASS: 37 regression groups/140 unit, 38 browsergroups; official native8.3.27.2214: 70 core+3 HTTP/8 сеансов/source440copy455/restore/negativecontrols. S1-R06 устранён для текущих общих writers; требуется backup/reload прежних вкладок. NEXUS-PERF-01 сохранён 80/634989 при caps80/640000. Публичная PWA проверена только на неопубликованной loopback preview; private Studio Cold Offline/LIVE не заявлен.
 
 WHAT REMAINS: S2 license/guest/isolation/provider, непроверенные platform labs, independent content/security/pedagogy, real-account/physical/WebKit/accessibility/field p95, будущая отдельная release приёмка. Каталог PLANNED до допуска. Main/production/merge/Release не выполнялись. GitHubSHA/CIartifactdigest фиксируются в текущем описании PR #63 после workflow, не подменяются старым результатом.
 
