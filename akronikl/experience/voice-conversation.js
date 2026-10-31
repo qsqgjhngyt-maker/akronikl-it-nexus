@@ -15,7 +15,7 @@ export function createVoiceConversation({isCurrent,contextKey,listen,abortListen
    try{const response=await answer(text,{signal});if(!current(t)){if(active&&epoch===t)stop();return false;}if(typeof response!=='string'||!response.trim()||response.length>12000)throw Error('VOICE_REPLY_UNAVAILABLE');publish('speaking');await speak(response,{signal});if(!current(t)){if(active&&epoch===t)stop();return false;}await arm(t);return current(t);}catch{if(current(t))fail();return false;}
   },
   empty(){const t=epoch;if(!current(t)||!['preparing','listening'].includes(state))return;abortListening();publish('waiting');clearTimeout(retry);retry=setTimeout(()=>{retry=null;void arm(t);},Math.max(100,retryDelay));},
-  captureState(value){if(active&&['permission-denied','language-unavailable','error','limit'].includes(value))fail();},
+  captureState(value){if(active&&['permission-denied','language-unavailable','error','limit','timeout'].includes(value))fail();},
   stop(){stop();},dispose(){if(dead)return;stop();dead=true;}
  });
 }
