@@ -18,7 +18,7 @@ STATUS: AUTOMATED PASS технического сценария S6 / PARTIAL о
 
 Полная локальная регрессия:41 группа,268 unit tests. Chromium:49 browser checks; WebKit26.5 Windows:49 проверок, собранных из course21 + Studio22 + assistant6. Все168 локализаций на desktop и трёх мобильных размерах; итоговые варианты; холодный offline; сохранение/копии/экспорт/reload; несовпадающие ревизии, повторный/подменённый протокол, quota/corrupt history; общий C++ writer и исключение чужой записи. Это эмуляция устройств. NEXUS-PERF-01:80 static modules/634989bytes при caps80/640000; полевой p95 не измерен.
 
-Изменились ровно три уже закреплённых файла: course-specific Studio и два browser tests. Их прежние/новые SHA перечислены в EXACT_SCOPE_DELTA. Остальные34 позиции сохранены. Новый trusted scope привязывается отдельным ancestor commit; workflow pin обновляется отдельным коммитом. Исторические P4-Q security/release gates и защищённые backend/IAM/catalog/runtime provider contracts не ослабляются. Content-review означает отсутствие запроса исторической публикации, а не допуск Release.
+Изменились ровно четыре уже закреплённых файла: course-specific Studio/CSS и два browser tests. Их прежние/новые SHA перечислены в EXACT_SCOPE_DELTA. Остальные33 позиции сохранены. Новый trusted scope привязывается отдельным ancestor commit; workflow pin обновляется отдельным коммитом. Исторические P4-Q security/release gates и защищённые backend/IAM/catalog/runtime provider contracts не ослабляются. Content-review означает отсутствие запроса исторической публикации, а не допуск Release.
 
 ## Граница доверия
 
@@ -62,3 +62,7 @@ STATUS: AUTOMATED PASS технического сценария S6 / PARTIAL о
 Есть ли здесь материал для диплома? Да:см. ADR — числовой канал вместо host output, readonly/source preservation, local report trust, MSIX chain, Job Object и VM boundary, failed experiments, измеренные latency и ограничения. Педагогический эффект и fieldp95 не выдумываются.
 
 NEXT RECOMMENDED BRANCH:03/05 с review02/01/07. RECOMMENDED MODE:очень высокий для security/release, высокий для content.
+
+## CI follow-up: ширина320px
+
+Первый опубликованный S6 HEAD990383c прошёл три исторических content-review workflows;два candidate jobs отказали на существующей проверке document width320px в UbuntuChromium. Все168 уроков/offline/итоги и21 из22Studio checks до этого прошли;assistant в этих jobs ещё не запускался. Это не P4-Q/security отказ и не общий PASS. Локальные WindowsChrome/WebKit этот дефект не воспроизвели. Добавлены явные min/max width и перенос для новых native select/file controls;ожидаемая ширина и запреты не изменены. К прежнему assertion добавлена диагностика выходящих за viewport элементов. Последующий exact-head CI обязан подтвердить исправление;новая квитанция сохраняет обе неуспешные попытки.
