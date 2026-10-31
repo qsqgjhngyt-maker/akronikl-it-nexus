@@ -6,9 +6,11 @@ import {blankCppProjectTemplate} from '../project-studio/project-templates.js';
 import {importedProjectInput,exportProjectSources} from '../project-studio/project-transfer.js';
 import {createProjectBuildPlan} from '../project-studio/project-build.js';
 import {validateOnecWorkspace,onecImportInput,readOnecImport,bindingFor} from '../courses/onec-education/studio-profile.mjs';
-import {createOnecWork,ownedOnec,saveOnecWork,copyOnecWork,checkpointOnecWork,copyOnecCheckpoint,exportOnecWork} from '../courses/onec-education/studio-store.mjs';
+import {createOnecWork,ownedOnec,saveOnecWork as saveRaw,copyOnecWork,checkpointOnecWork as checkpointRaw,copyOnecCheckpoint,exportOnecWork} from '../courses/onec-education/studio-store.mjs';
 import {verifyBootstrap,classifyContentChanges,SCOPE_FILE} from '../tools/content-publication-route.mjs';
 const sample=()=>({languageId:'onec',entryFile:'Ext/Module.bsl',files:[{path:'Ext/Module.bsl',content:'Сообщить("Учебный стенд");'},{path:'Configuration.xml',content:'<Configuration/>'},{path:'Extra.os',content:'Сообщить(1);'}]});
+const saveOnecWork=(id,w)=>saveRaw(id,w,{expectedLocalRevision:ownedOnec(id).sync.localRevision});
+const checkpointOnecWork=(id,label)=>checkpointRaw(id,label,{expectedLocalRevision:ownedOnec(id).sync.localRevision});
 let fixture,p,cpp,beforeCpp;const progressKeys=['akronikl:it-nexus:onec-candidate:v1:onec','akronikl:it-nexus:onec-candidate:v1:1c-enterprise'];
 test('Без проверенного контекста аккаунта создание запрещено',()=>assert.throws(()=>createOnecWork({title:'A',workspace:sample()}),/VERIFIED_ACCOUNT_REQUIRED/));
 test('Профиль создаёт личную работу 1С атомарно в прежнем account store, C++ не меняется',()=>{

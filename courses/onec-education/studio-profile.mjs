@@ -5,13 +5,13 @@ const fail=code=>{throw Object.assign(Error(code),{code})};
 const size=s=>new TextEncoder().encode(s).length;
 export const STUDIO_PROFILE='onec-editor-s1';
 export const NATIVE_FILES=Object.freeze(['Configuration.xml','Catalogs/Клиенты.xml','Catalogs/Услуги.xml','Enums/СтатусыЗаявки.xml','Documents/ЗаявкаУслуги.xml','Documents/ЗаявкаУслуги/Ext/ObjectModule.bsl','Ext/ManagedApplicationModule.bsl','Languages/Русский.xml','Subsystems/УчебнаяСлужба.xml']);
-export function title(value){if(typeof value!=='string'||!value.trim()||value.length>120||/[\u0000-\u001f\u007f]/.test(value))fail('TITLE');return value.trim()}
+export function title(value){if(typeof value!=='string'||!value.isWellFormed()||!value.trim()||value.length>120||/[\u0000-\u001f\u007f]/.test(value))fail('TITLE');return value.trim()}
 export function validateOnecWorkspace(value,{metadataEditable=false}={}){
  if(!value||value.languageId!=='onec'||!Array.isArray(value.files)||!value.files.length||value.files.length>IMPORT_LIMITS.files)fail('FORMAT');
  const seen=new Set();let total=0;
  const files=value.files.map(f=>{
-  const path=strictProjectPath(f?.path);if(seen.has(path))fail('DUPLICATE');seen.add(path);
-  if(!/\.(bsl|os|xml|md|txt|json)$/i.test(path)||typeof f.content!=='string'||/[\u0000\uFFFD]/.test(f.content))fail('FORMAT');
+  const path=strictProjectPath(f?.path);if(!path.isWellFormed())fail('PATH');if(seen.has(path))fail('DUPLICATE');seen.add(path);
+  if(!/\.(bsl|os|xml|md|txt|json)$/i.test(path)||typeof f.content!=='string'||!f.content.isWellFormed()||/[\u0000\uFFFD]/.test(f.content))fail('FORMAT');
   if(/\.xml$/i.test(path)&&/<!\s*(DOCTYPE|ENTITY)\b/i.test(f.content))fail('XML_ENTITY');
   const n=size(f.content);if(n>IMPORT_LIMITS.fileBytes||(total+=n)>IMPORT_LIMITS.totalBytes)fail('SIZE');
   return{path,content:f.content,languageId:'onec',readOnly:/\.xml$/i.test(path)&&!metadataEditable};
@@ -27,7 +27,8 @@ export function onecImportInput(value){
 }
 export async function readOnecImport(file){
  if(!file||!Number.isSafeInteger(file.size)||file.size<0||file.size>IMPORT_LIMITS.jsonBytes)fail('SIZE');
- let value;try{value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await file.arrayBuffer()))}catch{fail('FORMAT')}
+ const bytes=await file.arrayBuffer();if(bytes.byteLength>IMPORT_LIMITS.jsonBytes)fail('SIZE');
+ let value;try{value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes))}catch{fail('FORMAT')}
  return onecImportInput(value);
 }
 export function onecExportSources(project,workspace=project.workspace){

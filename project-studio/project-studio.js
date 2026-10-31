@@ -18,7 +18,7 @@ let activeEditor=null;
 globalThis.addEventListener?.('beforeunload',event=>{if(activeEditor?.dirty()&&activeEditor.current()){event.preventDefault();event.returnValue=''}});
 registerUpdateParticipant({isDirty:()=>!!(activeEditor?.current()&&activeEditor.dirty())});
 export function prepareProjectNavigation(){
- if(!activeEditor?.current())return true;
+ if(!activeEditor?.current()){activeEditor?.dispose?.();activeEditor=null;return true;}
  if(activeEditor.dirty()&&!activeEditor.save()){
   if(!confirm(activeEditor.en?'Changes could not be saved. Leave this editor and discard the unsaved changes? Export the sources to keep them.':'Изменения не удалось сохранить. Покинуть редактор и потерять несохранённые изменения? Чтобы сохранить код, останьтесь и экспортируйте исходники.')){
    history.replaceState(null,'',location.pathname+location.search+activeEditor.hash);return false;
