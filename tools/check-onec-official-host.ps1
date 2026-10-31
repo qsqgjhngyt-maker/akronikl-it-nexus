@@ -1,7 +1,12 @@
 param([string]$PlatformPath='C:\Program Files\1cv8\8.3.27.2214\bin\1cv8.exe')
 $ErrorActionPreference='Stop'
 $hostAdmin=([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-$sandboxCommands=@(Get-Command WindowsSandbox.exe,wsb.exe -ErrorAction SilentlyContinue|Select-Object Name,Source)
+$sandboxCommands=@()
+foreach($labSandboxName in @('WindowsSandbox.exe','wsb.exe')){
+ $labResolvedCommand=Get-Command $labSandboxName -CommandType Application -ErrorAction SilentlyContinue|Select-Object -First 1
+ $labSandboxPath=if($labResolvedCommand){$labResolvedCommand.Source}else{Join-Path ([Environment]::SystemDirectory) $labSandboxName}
+ if(Test-Path -LiteralPath $labSandboxPath -PathType Leaf){$sandboxCommands += [pscustomobject]@{Name=$labSandboxName;Source=$labSandboxPath;Discovery=if($labResolvedCommand){'PATH'}else{'SystemDirectory'}}}
+}
 $platformFound=Test-Path -LiteralPath $PlatformPath -PathType Leaf
 $signatureStatus=if($platformFound){[string](Get-AuthenticodeSignature -LiteralPath $PlatformPath).Status}else{'NOT_FOUND'}
 $platformVersion=if($platformFound){(Get-Item -LiteralPath $PlatformPath).VersionInfo.ProductVersion}else{$null}

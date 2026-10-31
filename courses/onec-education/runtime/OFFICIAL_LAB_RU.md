@@ -15,4 +15,19 @@ pwsh -File tools/check-onec-official-host.ps1
 
 Конфигурация [Windows Sandbox](https://learn.microsoft.com/en-us/windows/security/application-security/application-isolation/windows-sandbox/windows-sandbox-configure-using-wsb-file): сеть, vGPU, clipboard, audio/video/printer отключены;4GiB RAM; единственный mapped folder — отдельный input с ReadOnly=true. Host-output mapping отсутствует. Результаты остаются внутри guest; автоматическое извлечение/зачёт не реализованы. Перед закрытием оператор должен сохранить нужный протокол разрешённым способом. Guest script отказывается работать на обычном host, проверяет manifest, отдельное право guest, подпись/версию установленной внутри guest платформы и запускает новую базу. Каждый запуск создаёт новый каталог; результаты ученика остаются недоверенными. Изменение guestUseConfirmed в JSON само по себе не является правом на ПО.
 
-На текущем компьютере Windows Sandbox command/package не найдены, текущий процесс не Windows admin; состояние optional feature без admin не объявляется Disabled. ОС не менялась, перезагрузка не выполнялась. Пакет IMPLEMENTED и автоматически проверен, физический guest launch — BLOCKED_HOST_SANDBOX_UNAVAILABLE. Наличие Docker Linux этого не устраняет. Ученический код на обычном host не запускается. Дальнейшая настройка ОС/guest должна выполняться уполномоченным оператором с подтверждёнными правами, до LIVE PASS публикация runtime не готова.
+31.10.2026 владелец включил Windows Sandbox штатной командой с NoRestart и перезагрузил Windows. Физический отдельный desktop и подключение NexusInput проверены; попытка создать папку в input получила отказ доступа. Прежний BLOCKED_HOST_SANDBOX_UNAVAILABLE относится к историческому S3. Проверка launcher теперь ищет и системное расположение при отсутствии команды в PATH. Текущий процесс по-прежнему не Windows admin; неизвестное состояние optional feature не выдаётся за Disabled.
+
+Первый фактический запуск также доказал PSSecurityException: штатная гостевая Windows запрещает .ps1. Политика не меняется. Автоматический startup больше не использует этот script. Без отдельного native-модуля пакет открывает WELCOME.html и сообщает BOOTSTRAP_REQUIRED; это не успешная проверка исходников. Старый Start-OfficialLab.ps1 сохранён как операторский исторический runner; в стандартном guest он не принят.
+
+## Собственный проверяющий модуль
+
+Исходник NexusLabBootstrap.cs и check-onec-lab-bootstrap-build.ps1 собирают собственное .NET Framework приложение. Нужен уже установленный compiler; автоматической установки нет. Бинарник не поставляется в Git. Сборка создаётся в новом каталоге, BUILD_RESULT связывает SHA исходника и бинарника. Это локальный build record, не удалённая аттестация.
+
+```powershell
+pwsh -File tools/check-onec-lab-bootstrap-build.ps1 -OutputDirectory <новый-каталог-сборки>
+node tools/check-onec-official-lab.mjs export.json <новый-пакет> <каталог-сборки>/NexusLabBootstrap.exe
+```
+
+Третий аргумент — только путь доверенного операторского модуля. Export JSON не может выбирать executable. Перед упаковкой проверяются имя/тип/размер файла, SHA бинарника и соответствие исходнику того же checkout. Модуль запускается только внутри guest из C:\NexusInput: проверяет guest identity/VM, фактический отказ записи, ограниченный manifest, пути/reparse points, размеры и SHA файлов/снимка. Проверенные bytes хранятся в памяти до записи, затем создаётся новая UUID-копия и проверяются её hashes. Прежние копии не перезаписываются; на обычном host модуль отказывается до доступа к workspace. Реальная host-refusal проверка выполнена; фактический результат guest/copy см. evidence S4.
+
+Этот модуль пока проверяет и копирует исходники. Он **не исполняет 1С/BSL**, не проверяет лицензию автоматически, не извлекает результат на host, не выставляет зачёт и не пишет progress. Receipt остаётся внутри guest. Полный официальный запуск требует отдельной законной установки и принятого runtime runner. Наличие live desktop не закрывает эти условия. PowerShell security policy, сетевые ограничения и read-only mapping не ослабляются. Работа продолжается в одном PR63; main/production/merge/Release не меняются.
