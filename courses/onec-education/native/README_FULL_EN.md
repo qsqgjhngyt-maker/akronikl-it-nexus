@@ -1,5 +1,7 @@
 # Full-course native 1C reference stand
 
+Confirmed supplement, 2026-11-01: the [advanced stand](README_ADVANCED_EN.md) passed native data composition, an open managed form, roles/RLS and denied writes in official training 8.3.27.1508 inside an isolated Windows environment. It is separate from the original reference below. See the [PC evidence report](../../../docs/ru/03-content/onec/pc-acceptance-20261101/REPORT_RU.md) for evidence and limitations.
+
 This original Training Service Desk `1.0.0-rc.1` contains customers,services,requests,periodic rates,turnovers and balances. The package contains no platform binaries,licenses or proprietary configurations. Use synthetic data and separate work copies.
 
 ## What execution proves

@@ -77,3 +77,5 @@ try{
 await import('./onec-studio-browser.mjs');
 
 await import('./onec-assistant-browser.mjs');
+
+await import('./onec-platform-browser.mjs');

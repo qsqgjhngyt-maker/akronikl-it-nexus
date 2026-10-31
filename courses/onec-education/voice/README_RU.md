@@ -1,5 +1,7 @@
 # Локальная ИИ-модель распознавания речи
 
+Дополнение01.11.2026: явно выбираемая личная [Windows CPU-сборка](WINDOWS_RU.md) того же закреплённого движка/моделей проверена на RU/EN QA и настоящем USB capture/stop. Это не Docker isolation и не принятая естественная беседа. Прежний Docker-вариант ниже сохранён.
+
 Кандидат PR63, без изменения BFF/Identity/production. Модель — Whisper small multilingual; движок whisper.cpp v1.9.5; выделение речи — Silero VAD v6.2.0. Версии, источники, размеры и SHA256 закреплены в `asr-lock.json`. Обе модельные карточки и движок имеют MIT; при передаче нужно сохранять notices и лицензии. [Whisper](https://github.com/openai/whisper), [whisper.cpp](https://github.com/ggml-org/whisper.cpp/tree/v1.9.5), [веса](https://huggingface.co/ggerganov/whisper.cpp/tree/5359861c739e955e79d9a303bcbc70fb988958b1), [VAD](https://huggingface.co/ggml-org/whisper-vad/tree/9ffd54a1e1ee413ddf265af9913beaf518d1639b).
 
 Это отдельная модель speech-to-text. Разговорная модель получает уже распознанный текст по существующим настройкам чата. Справка по курсу работает без разговорной модели. Выбор локального Whisper не включает платный API и не переключает звук в облако при ошибке.
