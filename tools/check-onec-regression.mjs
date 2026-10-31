@@ -1,6 +1,7 @@
 import{spawnSync}from'node:child_process';import fs from'node:fs';import path from'node:path';
 const out=path.resolve(process.env.ONEC_REGRESSION_EVIDENCE||'onec-regression-evidence');fs.mkdirSync(out,{recursive:true});
 const commands=[
+ ['ONEC_STUDIO_UNIT',['--test','tests/onec-studio.test.mjs']],
  ['CONTENT_REVIEW_GENERIC',['tools/check-content-review.mjs']],['CONTENT_ROUTE_UNIT',['--test','tests/content-publication-route.test.mjs']],['INTRO_ROUTE_REGRESSION',['--test','tests/startup-intro-contract.test.mjs']],
  ['CP11',['tools/validate-content.mjs']],['CP11_UNIT',['--test','tests/content-contract.test.mjs']],['ONEC_UNIT',['--test','tests/onec-content.test.mjs']],['CONSOLIDATION_GATE',['tools/check-onec-consolidation.mjs']],['CONSOLIDATION_UNIT',['--test','tests/onec-consolidation.test.mjs']],
  ...['production-entry-syntax-check','benchmark-content-check','lesson-standard-freeze-check','programming-language-catalog-check','public-content-check','shared-learning-views-check','module-import-smoke-check','code-studio-foundation-check','project-studio-foundation-check','offline-learning-check','pwa-policy-check','cloud-sync-client-transport-check','cloud-sync-session-first-migration-check','cloud-sync-ui-check','cloud-unified-client-check'].map(name=>[name,[`tests/${name}.mjs`]]),
