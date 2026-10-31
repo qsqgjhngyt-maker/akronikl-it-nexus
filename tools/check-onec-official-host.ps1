@@ -7,6 +7,11 @@ foreach($labSandboxName in @('WindowsSandbox.exe','wsb.exe')){
  $labSandboxPath=if($labResolvedCommand){$labResolvedCommand.Source}else{Join-Path ([Environment]::SystemDirectory) $labSandboxName}
  if(Test-Path -LiteralPath $labSandboxPath -PathType Leaf){$sandboxCommands += [pscustomobject]@{Name=$labSandboxName;Source=$labSandboxPath;Discovery=if($labResolvedCommand){'PATH'}else{'SystemDirectory'}}}
 }
+$labSandboxPackage=Get-AppxPackage -Name 'MicrosoftWindows.WindowsSandbox' -ErrorAction SilentlyContinue|Sort-Object Version -Descending|Select-Object -First 1
+if($labSandboxPackage -and $labSandboxPackage.InstallLocation -like 'C:\Program Files\WindowsApps\MicrosoftWindows.WindowsSandbox_*__cw5n1h2txyewy'){
+ $labPackageCli=Join-Path $labSandboxPackage.InstallLocation 'wsb.exe'
+ if((Test-Path -LiteralPath $labPackageCli -PathType Leaf) -and -not($sandboxCommands|Where-Object {$_.Name -eq 'wsb.exe'})){$sandboxCommands += [pscustomobject]@{Name='wsb.exe';Source=$labPackageCli;Discovery='RegisteredMicrosoftPackage'}}
+}
 $platformFound=Test-Path -LiteralPath $PlatformPath -PathType Leaf
 $signatureStatus=if($platformFound){[string](Get-AuthenticodeSignature -LiteralPath $PlatformPath).Status}else{'NOT_FOUND'}
 $platformVersion=if($platformFound){(Get-Item -LiteralPath $PlatformPath).VersionInfo.ProductVersion}else{$null}

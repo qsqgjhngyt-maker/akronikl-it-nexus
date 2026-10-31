@@ -1,0 +1,17 @@
+import fs from'node:fs/promises';import{createReadStream,constants}from'node:fs';import path from'node:path';import{createHash}from'node:crypto';
+const locked=JSON.parse(await fs.readFile(new URL('./training-media-8.3.27.1508.lock.json',import.meta.url),'utf8'));
+async function digest(file){const h=createHash('sha256');for await(const b of createReadStream(file))h.update(b);return h.digest('hex');}
+export async function attachTrainingMedia({labDirectory,mediaDirectory,buildDirectory}={}){
+ const lab=path.resolve(labDirectory),input=path.join(lab,'input'),media=path.resolve(mediaDirectory),build=path.resolve(buildDirectory),job=JSON.parse(await fs.readFile(path.join(input,'job.json'),'utf8'));
+ if(job.sourceSnapshotSha256!=='af19d9dab9679256247d30ec587fdb392e6ee62010489c5ec488deee155ae17b'||job.platformIncluded!==false||job.hostExecutionAllowed!==false)throw Error('TRUSTED_REFERENCE_ONLY');
+ const native=path.join(build,'NexusTrainingRunner.exe'),record=JSON.parse(await fs.readFile(path.join(build,'TRAINING_BUILD_RESULT.json'),'utf8'));
+ const bindings=[['bootstrapSourceSha256',new URL('./NexusLabBootstrap.cs',import.meta.url)],['runnerSourceSha256',new URL('./NexusTrainingRunner.cs',import.meta.url)],['trainingLockSha256',new URL('./training-media-8.3.27.1508.lock.json',import.meta.url)],['specSha256',new URL('../native/full-spec.v1.json',import.meta.url)]];
+ for(const [key,file]of bindings)if(await digest(file)!==record[key])throw Error('TRAINING_BUILD_SOURCE_INTEGRITY');
+ const nativeStat=await fs.lstat(native);if(!nativeStat.isFile()||nativeStat.isSymbolicLink()||nativeStat.size>1048576||await digest(native)!==record.binarySha256||record.hostExecutionAllowed!==false||record.arbitraryLearnerCodeAdmission!==false||record.securityPolicyChanged!==false)throw Error('TRAINING_BUILD_BINARY_INTEGRITY');
+ for(const row of locked.files){if(path.basename(row.name)!==row.name)throw Error('TRAINING_MEDIA_NAME');const file=path.join(media,row.name),stat=await fs.lstat(file);if(!stat.isFile()||stat.isSymbolicLink()||stat.size!==row.bytes||await digest(file)!==row.sha256)throw Error('TRAINING_MEDIA_INTEGRITY');}
+ const target=path.join(input,'TrainingMedia'),runner=path.join(input,'NexusTrainingRunner.exe');for(const file of [target,runner]){try{await fs.lstat(file);throw Error('OUTPUT_EXISTS');}catch(e){if(e.code!=='ENOENT')throw e;}}
+ await fs.mkdir(target);for(const row of locked.files)await fs.copyFile(path.join(media,row.name),path.join(target,row.name),constants.COPYFILE_EXCL);await fs.copyFile(native,runner,constants.COPYFILE_EXCL);
+ for(const row of locked.files)if(await digest(path.join(target,row.name))!==row.sha256)throw Error('TRAINING_COPY_INTEGRITY');if(await digest(runner)!==record.binarySha256)throw Error('TRAINING_COPY_INTEGRITY');
+ const result={schemaVersion:1,status:'PREPARED / private operator media, no execution',product:locked.product,version:locked.version,archiveSha256:locked.archiveSha256,runtimeBinarySha256:record.binarySha256,sourceSnapshotSha256:job.sourceSnapshotSha256,sourceWorkId:job.workId,sourceRevision:job.sourceRevision,files:locked.files.map(r=>({name:r.name,bytes:r.bytes,sha256:r.sha256})),guestWillVerifyAuthenticode:true,hostExecutionAllowed:false,hostInstallPerformed:false,platformExecuted:false,standalonePersonalLearningOnly:true,sharedRuntimeLicenseAdmission:false,progressWritten:false,codeVerifiedServer:false,credentialEligible:false};
+ await fs.writeFile(path.join(lab,'TRAINING_PREPARATION_RESULT.json'),JSON.stringify(result,null,2)+'\n',{flag:'wx'});return result;
+}

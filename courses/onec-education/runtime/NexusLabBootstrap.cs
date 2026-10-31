@@ -32,9 +32,9 @@ using System.Windows.Forms;
 public static class NexusLabBootstrap {
  const string Input = @"C:\NexusInput";
  static readonly UTF8Encoding Utf8 = new UTF8Encoding(false, true);
- static string Digest(byte[] data) { using (SHA256 h=SHA256.Create()) return BitConverter.ToString(h.ComputeHash(data)).Replace("-", "").ToLowerInvariant(); }
- static void Require(bool value, string code) { if (!value) throw new InvalidOperationException(code); }
- static void GuardGuest() {
+ internal static string Digest(byte[] data) { using (SHA256 h=SHA256.Create()) return BitConverter.ToString(h.ComputeHash(data)).Replace("-", "").ToLowerInvariant(); }
+ internal static void Require(bool value, string code) { if (!value) throw new InvalidOperationException(code); }
+ internal static void GuardGuest() {
   Require(String.Equals(Environment.UserName,"WDAGUtilityAccount",StringComparison.OrdinalIgnoreCase),"GUEST_IDENTITY_REQUIRED");
   Require(String.Equals(AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\'),Input,StringComparison.OrdinalIgnoreCase),"GUEST_INPUT_REQUIRED");
   bool vm=false;
@@ -62,7 +62,7 @@ public static class NexusLabBootstrap {
   foreach (string segment in segments) { walk=Path.Combine(walk,segment); Require(!Reparse(walk),"SOURCE_REPARSE"); }
   return full;
  }
- static LabJob ReadJob(out Dictionary<string,byte[]> verified) {
+ internal static LabJob ReadJob(out Dictionary<string,byte[]> verified) {
   string file=Path.Combine(Input,"job.json"); Require(!Reparse(file)&&new FileInfo(file).Length<=65536,"MANIFEST_LIMIT");
   LabJob job; using (FileStream stream=File.OpenRead(file)) job=(LabJob)new DataContractJsonSerializer(typeof(LabJob)).ReadObject(stream);
   Guid id; Require(job!=null && job.schemaVersion==1 && Guid.TryParse(job.jobId,out id),"MANIFEST_SCHEMA");
@@ -80,7 +80,7 @@ public static class NexusLabBootstrap {
   }
   rows.Append(']'); Require(Digest(Utf8.GetBytes(rows.ToString()))==job.sourceSnapshotSha256,"SNAPSHOT_HASH"); return job;
  }
- static string CreateCopy(LabJob job, Dictionary<string,byte[]> verified) {
+ internal static string CreateCopy(LabJob job, Dictionary<string,byte[]> verified) {
   string attempt=Path.Combine(@"C:\NexusGuest","attempt-"+Guid.NewGuid().ToString("N")); Require(!Directory.Exists(attempt),"ATTEMPT_EXISTS");
   Directory.CreateDirectory(attempt); Require(!Reparse(attempt),"COPY_REPARSE");
   foreach (KeyValuePair<string,byte[]> item in verified) {

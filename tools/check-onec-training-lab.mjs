@@ -1,0 +1,3 @@
+import{attachTrainingMedia}from'../courses/onec-education/runtime/training-media.mjs';
+const[labDirectory,mediaDirectory,buildDirectory]=process.argv.slice(2);if(!labDirectory||!mediaDirectory||!buildDirectory)throw Error('Укажите подготовленный lab, распакованный официальный media и собственный build. Только отдельная учебная VM, не host install.');
+const r=await attachTrainingMedia({labDirectory,mediaDirectory,buildDirectory});console.log(JSON.stringify({status:r.status,version:r.version,sourceSnapshotSha256:r.sourceSnapshotSha256,hostInstallPerformed:false,platformExecuted:false,sharedRuntimeLicenseAdmission:false}));
