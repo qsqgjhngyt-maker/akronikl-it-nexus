@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p6",
+  "topicId": "onec.p6.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Turnovers and recorders",
+  "minutes": 120,
+  "goal": "Distinguish turnover and balance registers and reconcile an interval report.",
+  "prerequisites": [
+    "onec.p5; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Distinguish turnover and balance registers and reconcile an interval report.",
+    "Generate turnovers for two services.",
+    "Count distinct documents."
+  ],
+  "sections": [
+    [
+      "Accumulation without a balance",
+      "Delivered services often need volume during a period, not an end-of-day obligation. A turnover register stores numeric facts for aggregation by dimensions. Do not invent receipt/expense semantics merely because balance registers are familiar. First ask whether the resource has a meaningful balance and explain it concretely.",
+      "Choose a register from the data question. “Which rate applied?” needs keyed temporal state;“how much was delivered this week?” needs turnover;“what obligation remains?” needs balance. Similar-looking fields do not imply equal mechanisms or invariants. Write a small independent example for each and explain why another register type would answer the wrong question."
+    ],
+    [
+      "Interval and granularity",
+      "A weekly 60-minute turnover differs from a 20-minute closing obligation. Specify boundaries and grouping. One document with two services may create two records, so movement count differs from document count. Count recorder identities when the question asks for documents.",
+      "Dimensions define slices, resources measured quantities, and recorders provenance where supported. Adding a dimension changes keys and granularity:customer totals may split by service. Define old-data treatment and grand-total reconciliation before restructuring. New granularity is more than another displayed column; it changes writes, uniqueness and the interpretation of historical records."
+    ],
+    [
+      "A repeat does not create another fact",
+      "Reposting replaces the current recorder’s set. Appending without replacement makes report volume grow after every correction. Test one two-line document, repost, line change and reversal. Reconcile by service and grand total while preserving document sources.",
+      "Time boundaries belong in specifications. State uses an as-of moment, turnover an interval, and movements an agreed period. Test before the first fact, exactly at a change and after it. Equal totals without matching identities do not prove correctness:errors for different customers can cancel numerically while allocations remain wrong."
+    ],
+    [
+      "Empty periods and boundaries",
+      "Test an empty period and records exactly at agreed boundaries. Including a whole final day must follow an explicit rule, not accidental parameter precision. Do not change document dates to force a match: correct the report condition in a separate copy.",
+      "Trace totals back to original facts. Preserve recorder-level records, independent arithmetic and reversal results. Reposting one document must not affect unrelated sets. For accounting models, test both side equality and analytic meaning. Array exercises demonstrate algorithms but do not replace actual execution of the corresponding platform mechanism. Record that distinction in the evidence and acceptance scope."
+    ]
+  ],
+  "diagram": "p6-2",
+  "walkthrough": [
+    {
+      "action": "Generate turnovers for two services.",
+      "expected": "75 and 15, total 90."
+    },
+    {
+      "action": "Count distinct documents.",
+      "expected": "Count is not replaced by row count."
+    },
+    {
+      "action": "Repeat posting and test an empty period.",
+      "expected": "No duplication; empty period gives the agreed zero/empty set."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "D1:S1=30,S2=15;D2:S1=45 → оборотS1=75,S2=15",
+      "expected": "Grand turnover 90; three records can belong to two documents.",
+      "explanation": "Movement count differs from distinct recorder count."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Повторите проведение и пустой период.",
+      "expected": "No duplication; empty period gives the agreed zero/empty set.",
+      "explanation": "Movement count differs from distinct recorder count."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Generate turnovers for two services.",
+      "criteria": "75 and 15, total 90."
+    },
+    {
+      "level": "Applied",
+      "task": "Count distinct documents.",
+      "criteria": "Count is not replaced by row count."
+    },
+    {
+      "level": "Advanced",
+      "task": "Design one turnover report and a separate obligation report.",
+      "criteria": "Questions, registers, intervals and units are distinguished."
+    }
+  ],
+  "lab": {
+    "title": "Distinguish turnover and balance registers and reconcile an interval report.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Generate turnovers for two services.",
+      "Count distinct documents.",
+      "Repeat posting and test an empty period.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "75 and 15, total 90.",
+      "Count is not replaced by row count.",
+      "No duplication; empty period gives the agreed zero/empty set."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Grand turnover 90; three records can belong to two documents.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "No duplication; empty period gives the agreed zero/empty set."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Does record count always equal document count?",
+      "options": [
+        "No",
+        "Yes",
+        "Only for services"
+      ],
+      "correct": 0,
+      "explanation": "A recorder can have multiple rows."
+    },
+    {
+      "question": "Weekly turnover is",
+      "options": [
+        "The closing balance",
+        "An interval amount",
+        "A document number"
+      ],
+      "correct": 1,
+      "explanation": "Aggregate the resource over the agreed interval."
+    },
+    {
+      "question": "Reposting doubled the total:",
+      "options": [
+        "This is success",
+        "This is always required",
+        "The effect-replacement policy is broken"
+      ],
+      "correct": 2,
+      "explanation": "A repeat is not a new business fact."
+    }
+  ],
+  "review": [
+    "Distinguish turnover and balance registers and reconcile an interval report.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "information-register",
+    "accumulation-register"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p6",
+    "locale": "en"
+  }
+}

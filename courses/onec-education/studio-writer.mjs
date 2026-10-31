@@ -1,12 +1,6 @@
-// Координация S1 между вкладками. Общий legacy Project Store этот lock не принимает.
+// S1 использует общий account writer; другие редакторы не обходят lease.
 import {onecAccount} from './studio-store.mjs';
-const manager=()=>{const locks=globalThis.navigator?.locks;if(!locks?.request)throw Error('S1_WRITER_UNAVAILABLE');return locks};
-const key=id=>'nexus:onec-s1:writer:'+encodeURIComponent(id);
-const context=id=>{if(onecAccount()!==id)throw Error('ACCOUNT_STORAGE_CONTEXT_CHANGED')};
-export function withOnecWriter(fn){const id=onecAccount();return manager().request(key(id),{ifAvailable:true},lock=>{if(!lock)throw Error('S1_WRITER_BUSY');context(id);return fn()})}
-export function leaseOnecWriter({granted,unavailable}){
- let closed=false,release=null;const id=onecAccount(),abort=new AbortController();
- const dispose=()=>{closed=true;abort.abort();release?.()};
- try{manager().request(key(id),{signal:abort.signal},lock=>{if(closed)return;context(id);return new Promise(resolve=>{release=resolve;if(closed){resolve();return}try{granted()}catch(error){resolve();throw error}})}).catch(error=>{if(!closed)unavailable(error)})}catch(error){unavailable(error)}
- return{dispose};
-}
+import {withProjectWriter,leaseProjectWriter} from '../../project-studio/project-writer.js';
+const mapped=e=>{if(e.message==='PROJECT_WRITER_BUSY')return Error('S1_WRITER_BUSY');if(e.message==='PROJECT_WRITER_UNAVAILABLE')return Error('S1_WRITER_UNAVAILABLE');return e};
+export function withOnecWriter(fn){onecAccount();if(!globalThis.navigator?.locks?.request)throw Error('S1_WRITER_UNAVAILABLE');try{return withProjectWriter(()=>{onecAccount();return fn()},{allowReentry:false}).catch(e=>{throw mapped(e)})}catch(e){throw mapped(e)}}
+export function leaseOnecWriter({granted,unavailable}){onecAccount();return leaseProjectWriter({granted:()=>{onecAccount();granted()},unavailable:e=>unavailable(mapped(e))})}

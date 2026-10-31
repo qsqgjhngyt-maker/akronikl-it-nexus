@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a3",
+  "topicId": "1c-enterprise.a3.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Standard reports and reconciliation",
+  "minutes": 120,
+  "goal": "Reconcile a report with source documents and explain scope-related discrepancies.",
+  "prerequisites": [
+    "1c-enterprise.a 2; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
+  ],
+  "outcomes": [
+    "Reconcile a report with source documents and explain scope-related discrepancies.",
+    "Calculate the three-document total manually.",
+    "Reconcile the Alpha report."
+  ],
+  "sections": [
+    [
+      "A report answers a specific question",
+      "Define the question before running a report: customer minutes for a period, open-request count or service cost. These require different resources and conditions. Record generation time, interval, status and units. An attractive title does not prove the correct documents were used; inspect the dataset and source of each total field.",
+      "Operators verify persisted outcomes, not just entered values. Prepare an identity/customer/status/minute control table before starting. Refer to it after each action rather than remembering the last screen. Hidden filters matter:an absent visible row does not mean deletion. A reliable workflow explains both what changed and which source records must remain unchanged."
+    ],
+    [
+      "Calculate the control sum independently",
+      "For a small teaching set, use a 12-request table and mark predicate matches manually. Sum included durations and compare with the report. Do not derive the control table by exporting the same potentially defective report: a lost row then disappears from both sides. The source document list is the independent reference, not report appearance.",
+      "Freeze period, units and selected customer reference for reproducibility. Equal names can represent distinct synthetic entities. Sorting changes order, filtering visible membership, and grouping presentation granularity. Conflating these operations produces wrong explanations despite a technically error-free interface. Always name the operation and identify its expected effect on identities, count and totals before applying it."
+    ],
+    [
+      "Check scope before arithmetic",
+      "For a discrepancy, inspect period, statuses, deletion marks, grouping and units first. Then compare identities for duplicates or omissions. Rechecking arithmetic is pointless when one view uses hours and another minutes. Never alter documents merely to force matching totals: preserve the discrepancy and identify its earliest cause.",
+      "Use safe, discriminating negative cases. Negative duration tests input rules; incompatible filters test empty results; an omitted experimental-report row tests reconciliation independence. Do not corrupt source work. Each experiment uses a new copy, an expected rejection and a reread confirming prior records survived. Follow rejection with a valid input to show the workflow remains usable."
+    ],
+    [
+      "Make the result reproducible",
+      "Preserve parameters and document identities, reopen the report and compare. If data may have changed, record both observation times and dataset membership. Use a fixed set in the teaching copy. Include one deliberately wrong filter: verification should explain its discrepancy instead of merely showing PASS for the correct variant.",
+      "A control sum supplements rather than replaces identities. Different requests can have identical minute totals. Record conditions, keys, count, sum and discrepancy explanation. If records changed between observations, state time and changes. Do not alter source documents merely to force agreement between reports with different scopes; first make the question and data interval equivalent."
+    ]
+  ],
+  "diagram": "a3-3",
+  "walkthrough": [
+    {
+      "action": "Calculate the three-document total manually.",
+      "expected": "90 minutes and three identities."
+    },
+    {
+      "action": "Reconcile the Alpha report.",
+      "expected": "75 minutes fromR01 andR02, excludingR03."
+    },
+    {
+      "action": "Compare 90 with 1.5hours without changing data.",
+      "expected": "The values agree after unit conversion; documents were not altered."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Документы:[30,45,15]; Все=90; КлиентАльфа=75",
+      "expected": "All-customer report 90; Alpha filter 75: consistent results for different scopes.",
+      "explanation": "Reconciliation starts with equal parameters and units, then checks arithmetic."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Сравните90 с1,5часа без смены данных.",
+      "expected": "The values agree after unit conversion; documents were not altered.",
+      "explanation": "Reconciliation starts with equal parameters and units, then checks arithmetic."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Calculate the three-document total manually.",
+      "criteria": "90 minutes and three identities."
+    },
+    {
+      "level": "Applied",
+      "task": "Reconcile the Alpha report.",
+      "criteria": "75 minutes fromR01 andR02, excludingR03."
+    },
+    {
+      "level": "Advanced",
+      "task": "Write a discrepancy report for 12 documents.",
+      "criteria": "It contains parameters, identities, independent calculation, cause and recheck."
+    }
+  ],
+  "lab": {
+    "title": "Reconcile a report with source documents and explain scope-related discrepancies.",
+    "environment": "Official 1C 8.3.27.x, new training-service-desk copy. Command labels depend on the configuration interface; verify outcomes against data. Training-edition limits are explicit.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Calculate the three-document total manually.",
+      "Reconcile the Alpha report.",
+      "Compare 90 with 1.5hours without changing data.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "90 minutes and three identities.",
+      "75 minutes fromR01 andR02, excludingR03.",
+      "The values agree after unit conversion; documents were not altered."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "All-customer report 90; Alpha filter 75: consistent results for different scopes.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The values agree after unit conversion; documents were not altered."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What should be reconciled first?",
+      "options": [
+        "Heading color",
+        "Scope and units",
+        "Name length"
+      ],
+      "correct": 1,
+      "explanation": "Different scopes can have different correct totals."
+    },
+    {
+      "question": "An independent check comes from",
+      "options": [
+        "Source documents",
+        "A copy of the same report",
+        "A random number"
+      ],
+      "correct": 0,
+      "explanation": "Otherwise the omission is repeated in the check."
+    },
+    {
+      "question": "90minutes and 1.5hours are",
+      "options": [
+        "Different amounts",
+        "An infobase error",
+        "The same amount in different units"
+      ],
+      "correct": 2,
+      "explanation": "Convert values to a common unit first."
+    }
+  ],
+  "review": [
+    "Reconcile a report with source documents and explain scope-related discrepancies.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "training",
+    "designer",
+    "catalogs",
+    "documents",
+    "form-elements"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "1c-enterprise.a3",
+    "locale": "en"
+  }
+}

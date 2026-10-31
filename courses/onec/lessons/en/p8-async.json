@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p8",
+  "topicId": "onec.p8.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Asynchrony and cancellation",
+  "minutes": 120,
+  "goal": "Handle asynchronous confirmation, cancellation and stale replies without duplicate writes.",
+  "prerequisites": [
+    "onec.p7; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Handle asynchronous confirmation, cancellation and stale replies without duplicate writes.",
+    "AnswerYes and execute one operation.",
+    "AnswerNo and close the form."
+  ],
+  "sections": [
+    [
+      "Continuations run later",
+      "An asynchronous dialog returns control before the user answers. Decision-dependent logic belongs in its continuation rather than the next line as if synchronous. Meanwhile, the form may close, data may change or another request may start. Include those states in the operation contract.",
+      "A managed form is an interaction boundary, not the only data source. Values occupy form buffers, objects and persisted records at different times. Trace read, edit, transfer and write to identify unsaved snapshots. Refresh must not silently replace user input with another request’s state. Distinguish visible values from accepted business state throughout the workflow."
+    ],
+    [
+      "Bind confirmation to intent",
+      "Preserve request identity and the confirmed snapshot. Before acting, check form and intent validity. An oldYesmust not authorize a new request; double-clicking must not create a duplicate. Use explicitpending/accepted/cancelledstate instead of one flag that conflates attempts.",
+      "Context determines available operations and required inputs. Pure calculations need numbers; document reads need identity and an available server environment; focus handling needsUI. Do not pass whole forms instead of designing minimal contracts. Specify serialized inputs, outputs and reliable-side validation independently of client hints. Context availability and permission authorization remain separate concerns."
+    ],
+    [
+      "Cancellation has observable effects",
+      "No, dialog close and form cancellation must not initiate a write. Once a server operation has committed, localUIcancel need not reverse it: show actual state and a verification route. A closed window does not prove server-effect cancellation. Distinguish timeout and environment unavailability.",
+      "Bind asynchronous actions to a specific intent/version. Users can close forms, edit data or start another operation while awaiting replies. Late responses must validate relevance before acting. UIcancellation does not promise rollback of committed server work. Separate pending, accepted, unknown, rejected and canceled states with distinct verification scenarios rather than one ambiguous success flag."
+    ],
+    [
+      "Tests control event ordering",
+      "TestYes, No, double-click, response after close and two replies arriving in reverse order. Tie each to its ownIDand state. One fast success does not test asynchrony: use a controlled delay in a safe stand and verify no late write. An explanatory event diagram is notBSLexecution.",
+      "Test both expected and unexpected event ordering:delays, double-clicks, cancel and closing with unsaved input. Reconcile effect count and database state through fresh reads. File-mode compilation of client directives proves only that context; it does not measure network routing, physical mobile acceptance or isolatedStudioBSLexecution. Record these boundaries so successful checks are not overstated."
+    ]
+  ],
+  "diagram": "p8-3",
+  "walkthrough": [
+    {
+      "action": "AnswerYes and execute one operation.",
+      "expected": "Exactly one confirmed effect perID."
+    },
+    {
+      "action": "AnswerNo and close the form.",
+      "expected": "No write and no false success."
+    },
+    {
+      "action": "Deliver an old reply after a new request.",
+      "expected": "The stale reply is rejected; new intent is not replaced."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "// В модуле управляемой формы\nОповещение = Новый ОписаниеОповещения(\"ПослеПодтверждения\", ЭтотОбъект);\nПоказатьВопрос(Оповещение, \"Продолжить?\", РежимДиалогаВопрос.ДаНет);",
+      "expected": "Handle the response inПослеПодтверждения; the next line does not imply consent.",
+      "explanation": "Implement the continuation with result and request-validity checks."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Доставьте старый ответ после нового запроса.",
+      "expected": "The stale reply is rejected; new intent is not replaced.",
+      "explanation": "Implement the continuation with result and request-validity checks."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "AnswerYes and execute one operation.",
+      "criteria": "Exactly one confirmed effect perID."
+    },
+    {
+      "level": "Applied",
+      "task": "AnswerNo and close the form.",
+      "criteria": "No write and no false success."
+    },
+    {
+      "level": "Advanced",
+      "task": "Build a reverse-reply-order and double-click test.",
+      "criteria": "IDs, states, effect count and late events are checked."
+    }
+  ],
+  "lab": {
+    "title": "Handle asynchronous confirmation, cancellation and stale replies without duplicate writes.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "AnswerYes and execute one operation.",
+      "AnswerNo and close the form.",
+      "Deliver an old reply after a new request.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Exactly one confirmed effect perID.",
+      "No write and no false success.",
+      "The stale reply is rejected; new intent is not replaced."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Handle the response inПослеПодтверждения; the next line does not imply consent.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The stale reply is rejected; new intent is not replaced."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Does the next line afterShowQuery implyYes?",
+      "options": [
+        "Yes",
+        "No",
+        "For all clients"
+      ],
+      "correct": 1,
+      "explanation": "The result arrives through a continuation."
+    },
+    {
+      "question": "A stale reply should",
+      "options": [
+        "Confirm new intent",
+        "Always write",
+        "Be checked byIDand validity"
+      ],
+      "correct": 2,
+      "explanation": "Event order can change."
+    },
+    {
+      "question": "Does closingUIprove rollback of a server commit?",
+      "options": [
+        "No",
+        "Always",
+        "If fast"
+      ],
+      "correct": 0,
+      "explanation": "Check committed operation state separately."
+    }
+  ],
+  "review": [
+    "Handle asynchronous confirmation, cancellation and stale replies without duplicate writes.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "form-editor"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p8",
+    "locale": "en"
+  }
+}

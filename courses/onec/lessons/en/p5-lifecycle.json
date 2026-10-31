@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p5",
+  "topicId": "onec.p5.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Document lifecycle",
+  "minutes": 120,
+  "goal": "Describe a document lifecycle and distinguish writing, posting and deletion marking.",
+  "prerequisites": [
+    "onec.p4; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Describe a document lifecycle and distinguish writing, posting and deletion marking.",
+    "Write a valid request without posting.",
+    "Post in a configuration with movements."
+  ],
+  "sections": [
+    [
+      "Documents have state",
+      "A new object exists in memory before its first write. A written document has persisted fields and identity. A posted document additionally passed its configured accounting processing. Deletion marking is not physical deletion. Define commands and invariants for each state rather than treating UI as the lifecycle model.",
+      "Specify the complete document effect:its fields, dependent records, movements and external outcome. Separate preparation from acceptance. Checking one table cannot detect partial execution:a saved request without its movement may look individually valid while violating the accepted-order meaning. Define cross-object invariants before selecting handlers or adding transaction boundaries."
+    ],
+    [
+      "A number does not replace identity",
+      "Numbers serve people, but numbering scope and periodicity depend on configuration. Use references for exact reopening. Two similar requests are not automatically duplicates. External request IDs need an explicit uniqueness policy; displayed document numbers alone are not a redelivery strategy.",
+      "Handlers run within platform-defined contexts; event names alone do not prove actual order. Trace entry, validation, cancellation and write. User messages are insufficient because they can precede final outcomes. Confirm through a fresh persisted-state read after completion and, for important cases, a new session. This distinguishes displayed intentions from committed business facts."
+    ],
+    [
+      "Verify accounting effects separately",
+      "Posting may be unavailable in a starter configuration. EvenPosted=True does not specify required register records. Define business meaning and affected registers first, then link states to expected records. Document reports and movement reports answer different questions.",
+      "Repeating one intent differs from a new command with similar data. After an unknown outcome, do not automatically create another document; check the agreed prior-result key. Reposting an existing document replaces its own effect while preserving other recorders. Intent deduplication and movement replacement are distinct repeatability concerns requiring separate test cases."
+    ],
+    [
+      "Test through a new session",
+      "Create, write without posting and reread. Then post in a suitable template, check movements and reverse posting. Reopen a session and compare states and identities. Name the exact configuration: posting results do not retroactively prove the earlyA2/P 2 stand supports posting.",
+      "Inject failures only on a separate instance at a deliberate point. Snapshot before the first modification and inspect every affected dataset after rejection. Then repeat without failure and verify no residue. Preserve a safe failed-experiment record before any cleanup; it explains cause and regression rather than concealing the defect behind a later successful attempt."
+    ]
+  ],
+  "diagram": "p5-0",
+  "walkthrough": [
+    {
+      "action": "Write a valid request without posting.",
+      "expected": "Identity and fields persist; no accounting effect is assumed."
+    },
+    {
+      "action": "Post in a configuration with movements.",
+      "expected": "The flag and specific movements agree."
+    },
+    {
+      "action": "Reverse posting and reopen.",
+      "expected": "The document remains; the accounting effect is removed under the defined rule."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Док = Документы.ЗаявкаУслуги.СоздатьДокумент();\n// заполнить обязательные поля\nДок.Записать(РежимЗаписиДокумента.Запись);",
+      "expected": "Fields persist; this call does not request posting.",
+      "explanation": "Required fields and metadata prerequisites apply; this is not a standalone script."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Отмените проведение и откройте документ заново.",
+      "expected": "The document remains; the accounting effect is removed under the defined rule.",
+      "explanation": "Required fields and metadata prerequisites apply; this is not a standalone script."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Write a valid request without posting.",
+      "criteria": "Identity and fields persist; no accounting effect is assumed."
+    },
+    {
+      "level": "Applied",
+      "task": "Post in a configuration with movements.",
+      "criteria": "The flag and specific movements agree."
+    },
+    {
+      "level": "Advanced",
+      "task": "Draw a state machine with rejections and reposting.",
+      "criteria": "Every transition has a condition and expected data state."
+    }
+  ],
+  "lab": {
+    "title": "Describe a document lifecycle and distinguish writing, posting and deletion marking.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Write a valid request without posting.",
+      "Post in a configuration with movements.",
+      "Reverse posting and reopen.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Identity and fields persist; no accounting effect is assumed.",
+      "The flag and specific movements agree.",
+      "The document remains; the accounting effect is removed under the defined rule."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Fields persist; this call does not request posting.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The document remains; the accounting effect is removed under the defined rule."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Is writing always posting?",
+      "options": [
+        "No",
+        "Yes",
+        "Only for dates"
+      ],
+      "correct": 0,
+      "explanation": "Posting has a separate mode and logic."
+    },
+    {
+      "question": "Exact document reopening uses",
+      "options": [
+        "Color",
+        "Reference",
+        "Row number"
+      ],
+      "correct": 1,
+      "explanation": "The reference identifies the instance."
+    },
+    {
+      "question": "Deletion marking is",
+      "options": [
+        "Always full deletion",
+        "Posting",
+        "A separate state"
+      ],
+      "correct": 2,
+      "explanation": "References and deletion follow separate rules."
+    }
+  ],
+  "review": [
+    "Describe a document lifecycle and distinguish writing, posting and deletion marking.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p5",
+    "locale": "en"
+  }
+}

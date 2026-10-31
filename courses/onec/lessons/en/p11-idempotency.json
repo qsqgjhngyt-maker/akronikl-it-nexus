@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p11",
+  "topicId": "onec.p11.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Retries and idempotency",
+  "minutes": 120,
+  "goal": "Handle redelivery and same-requestIDpayload conflicts without duplicate documents.",
+  "prerequisites": [
+    "onec.p10; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Handle redelivery and same-requestIDpayload conflicts without duplicate documents.",
+    "Processjob-001once.",
+    "Repeat the samepayload."
+  ],
+  "sections": [
+    [
+      "Delivery can repeat",
+      "A sender may miss the reply to an accepted request. Redelivery with the samerequestIDshould return the agreed result without another document. This differs from deduplicating similar names. Define the key’s sender/operation scope and retention policy.",
+      "Integration crosses independently failing participants. Replies can be lost after acceptance, servers can reject business rules, and schedules can repeat work. Contracts need intent identity, state, limits and unknown-outcome resolution as well as body format. Specify those cases before choosingHTTP, serialization or job APIs. A successful transport call alone cannot establish the business outcome."
+    ],
+    [
+      "Bind key to content",
+      "Store requestID, canonical payload semantics or hash, state and result reference. The sameIDwith different amounts is a conflict, not permission to overwrite the first request. DifferentJSONkey order can have identical semantics; define hashing rules explicitly.",
+      "Serialized input remains untrusted data. After parsing, validate schema version, required fields, types, ranges and size. Resolve external customer keys through an agreed mapping, not similar names. Never execute input or permit arbitrary addresses. A fixed local mock and synthetic payload suffice for the lab without real secrets or public external services."
+    ],
+    [
+      "Acceptance and result are atomic",
+      "Processing registry and created document need transactional consistency. MarkingDonebefore a failed write makes retries return a nonexistent result. Writing without registeringIDduplicates on retry. Concurrent repeats need key protection; external effects need a separate protocol.",
+      "Repeatability binds acceptance registry and result. Equal key/content returns the prior document; different content conflicts. CommitDoneand document consistently to avoid false success or duplication after failures. External effects need their own protocol. Batch continuation points likewise commit with results rather than prematurely skipping work. Test failure between these steps, not only clean completion."
+    ],
+    [
+      "Include unknown outcomes",
+      "Test first call, exact retry, payload conflict, mid-step failure and concurrent repeats. After timeout, retry the sameIDand query state. Do not automatically create a newIDfor the same intent. Tie every reply to the original operation and persisted document.",
+      "Control replies and ordering:success, schema rejection, temporary error, timeout, retry and cancel. Mocks prove the simulated peer contract; actualBSLclients prove platformAPIexecution. Manual procedure calls do not prove scheduling. Separate these outcomes, retain safe caseIDs, and verify no extra documents after retries/failures, including a fresh session and an independent state reconciliation."
+    ]
+  ],
+  "diagram": "p11-2",
+  "walkthrough": [
+    {
+      "action": "Processjob-001once.",
+      "expected": "R 1 is created andID→R 1 persisted."
+    },
+    {
+      "action": "Repeat the samepayload.",
+      "expected": "R 1 is returned; document count is unchanged."
+    },
+    {
+      "action": "Repeat theIDwithminutes45.",
+      "expected": "CONFLICT; the original 30 is preserved."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "ID=job-001,payload{minutes:30}→R1\nтотжеID,тотжеpayload→R1\nтотжеID,minutes45→CONFLICT",
+      "expected": "One documentR1; the conflict does not change its 30 minutes.",
+      "explanation": "The table specifies the contract; implement registry, transactions and locks in the chosen stand."
+    },
+    {
+      "title": "Boundary case",
+      "source": "ПовторитеIDсminutes45.",
+      "expected": "CONFLICT; the original 30 is preserved.",
+      "explanation": "The table specifies the contract; implement registry, transactions and locks in the chosen stand."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Processjob-001once.",
+      "criteria": "R 1 is created andID→R 1 persisted."
+    },
+    {
+      "level": "Applied",
+      "task": "Repeat the samepayload.",
+      "criteria": "R 1 is returned; document count is unchanged."
+    },
+    {
+      "level": "Advanced",
+      "task": "Inject failure between registry/document operations and prove atomicity.",
+      "criteria": "NoDonewithout result or unprotected document; retry is safe."
+    }
+  ],
+  "lab": {
+    "title": "Handle redelivery and same-requestIDpayload conflicts without duplicate documents.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Processjob-001once.",
+      "Repeat the samepayload.",
+      "Repeat theIDwithminutes45.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "R 1 is created andID→R 1 persisted.",
+      "R 1 is returned; document count is unchanged.",
+      "CONFLICT; the original 30 is preserved."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "One documentR1; the conflict does not change its 30 minutes.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "CONFLICT; the original 30 is preserved."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "SameIDwith a newpayload is",
+      "options": [
+        "Always a new request",
+        "A silent replacement",
+        "A contract conflict"
+      ],
+      "correct": 2,
+      "explanation": "Do not overwrite the first accepted intent."
+    },
+    {
+      "question": "An exact repeat should return",
+      "options": [
+        "The same result without duplication",
+        "A new document",
+        "A randomID"
+      ],
+      "correct": 0,
+      "explanation": "The key binds retry to the prior operation."
+    },
+    {
+      "question": "IsDonebefore document writing safe?",
+      "options": [
+        "Always",
+        "No",
+        "For small data"
+      ],
+      "correct": 1,
+      "explanation": "Registry and result need atomic consistency."
+    }
+  ],
+  "review": [
+    "Handle redelivery and same-requestIDpayload conflicts without duplicate documents.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "job-mechanism",
+    "scheduled-job",
+    "safe-eval"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p11",
+    "locale": "en"
+  }
+}

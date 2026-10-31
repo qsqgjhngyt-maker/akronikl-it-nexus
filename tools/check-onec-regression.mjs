@@ -1,6 +1,10 @@
 import{spawnSync}from'node:child_process';import fs from'node:fs';import path from'node:path';
 const out=path.resolve(process.env.ONEC_REGRESSION_EVIDENCE||'onec-regression-evidence');fs.mkdirSync(out,{recursive:true});
 const commands=[
+ ['ONEC_HISTORICAL_ROUTE_UNIT',['--test','tests/onec-historical-routing.test.mjs']],['CPP_SHARED_STARTUP_UNIT',['--test','tests/platform-lazy-imports.test.mjs','tests/platform-startup-load.test.mjs','tests/cpp-stream-state-routing.test.mjs']],
+ ['ONEC_PWA_FRAGMENT_UNIT',['--test','tests/onec-pwa-fragment.test.mjs']],
+ ['CPP_FINAL_CLIENT_UNIT',['--test','tests/course-final-client.test.mjs']],['CPP_FINAL_CONTRACT_UNIT',['--test','tests/course-final-contract.test.mjs']],['CPP_FINAL_AUTOMATIC_UNIT',['--test','tests/course-final-automatic.test.mjs']],['GRAPHICS_OFFLINE',['tests/offline-graphics-adapter-check.mjs']],
+ ['ONEC_COMPLETE_UNIT',['--test','tests/onec-complete.test.mjs']],['ONEC_PROJECT_WRITER_UNIT',['--test','tests/onec-writer.test.mjs']],['ONEC_NATIVE_FULL_EVIDENCE',['--test','tests/onec-native-full.test.mjs']],
  ['ONEC_STUDIO_REVIEW_UNIT',['--test','tests/onec-studio-review.test.mjs']],
  ['ONEC_STUDIO_UNIT',['--test','tests/onec-studio.test.mjs']],
  ['CONTENT_REVIEW_GENERIC',['tools/check-content-review.mjs']],['CONTENT_ROUTE_UNIT',['--test','tests/content-publication-route.test.mjs']],['INTRO_ROUTE_REGRESSION',['--test','tests/startup-intro-contract.test.mjs']],

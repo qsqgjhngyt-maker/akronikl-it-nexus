@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p7",
+  "topicId": "onec.p7.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Temporary and virtual tables",
+  "minutes": 120,
+  "goal": "Use temporary and virtual tables appropriately and verify their parameters.",
+  "prerequisites": [
+    "onec.p6; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Use temporary and virtual tables appropriately and verify their parameters.",
+    "Build the intermediate set.",
+    "Reconcile the final sum."
+  ],
+  "sections": [
+    [
+      "Intermediate sets need contracts",
+      "A temporary table stores intermediate results within an execution context and can support reuse. It is not a persistent catalog. Specify fields, keys and expected multiplicity. Materializing all columns or all source rows can hurt performance; select only required data with justified filtering.",
+      "Every query starts with a set specification:row granularity, required fields, scope, identities and multiplicity. Reconcile a small source set manually. Syntax correctness cannot detect lost customers or multiplied sums. Inspect identities and types before totals, which may match accidentally when two defects compensate. Keep this independent oracle beside every query revision."
+    ],
+    [
+      "Virtual tables compute a view",
+      "Balance, Turnovers andSliceLast expose register semantics. Period and dimension parameters participate in the computation. Filtering afterwards is not always semantically or operationally equivalent to a virtual-table parameter. Establish correctness on a small set before comparing plans and measurements.",
+      "Parameters separate structure/values without defining business meaning automatically. References, names and external codes differ. Dates carry time and agreed boundaries. Choose dynamic fields from a structural allowlist, not user text. Specify each parameter’s type, empty-value policy and an example yielding zero rows without changing data. This tests the contract rather than parser acceptance alone."
+    ],
+    [
+      "Manager lifetime",
+      "A shared temporary-table manager can expose an intermediate set to multiple queries. Another query without that context need not see it. A global manager is not an eternal cache of other users’data. Define creation, use and disposal; repeat tests from a known state.",
+      "Joins and aggregation affect multiplicity differently. Joining two detail sets can multiply rows; grouping can hide the cause behind one wrong sum. Inspect intermediate membership before resources. Respect virtual-table semantics/parameters and temporary-table context/lifetime. Neither mechanism is a universal optimization trick. Explain which problem it solves and verify equivalent values before measuring speed."
+    ],
+    [
+      "Test stages separately",
+      "First reconcile temporary rows with source data, then final aggregation with an independent total. For virtual tables, test before the first movement and at a change boundary. Include empty sets. Faster execution with different identities or values is not a valid optimization.",
+      "Compare performance only after equivalence. Freeze data, versions, call count, cache conditions and repeated timing. A small local experiment does not establish field p95. Reject speedups caused by dropped rows or permission checks. Preserve rejected variants, reasons and the correct baseline so later optimization does not repeat a known defect. Report observed metrics without broadening their scope."
+    ]
+  ],
+  "diagram": "p7-2",
+  "walkthrough": [
+    {
+      "action": "Build the intermediate set.",
+      "expected": "Fields and identities match the contract."
+    },
+    {
+      "action": "Reconcile the final sum.",
+      "expected": "The same sum as the independent direct dataset."
+    },
+    {
+      "action": "Repeat with an empty set and fresh context.",
+      "expected": "No stale rows remain from the previous run."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "ВЫБРАТЬ З.Клиент, З.Минуты ПОМЕСТИТЬ ВыбранныеЗаявки\nИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Минуты >= 0;\nВЫБРАТЬ СУММА(В.Минуты) КАК Минуты ИЗ ВыбранныеЗаявки КАК В",
+      "expected": "Reconcile the intermediate set and total separately; the batch returns its query results.",
+      "explanation": "INTOdoes not create a persistent infobase table; read batch results with the appropriateAPI."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Повторите с пустым набором и новым контекстом.",
+      "expected": "No stale rows remain from the previous run.",
+      "explanation": "INTOdoes not create a persistent infobase table; read batch results with the appropriateAPI."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Build the intermediate set.",
+      "criteria": "Fields and identities match the contract."
+    },
+    {
+      "level": "Applied",
+      "task": "Reconcile the final sum.",
+      "criteria": "The same sum as the independent direct dataset."
+    },
+    {
+      "level": "Advanced",
+      "task": "Compare a dimension predicate as a virtual-table parameter and afterwards.",
+      "criteria": "Semantics and measured cost are proven separately, not inferred from text length."
+    }
+  ],
+  "lab": {
+    "title": "Use temporary and virtual tables appropriately and verify their parameters.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Build the intermediate set.",
+      "Reconcile the final sum.",
+      "Repeat with an empty set and fresh context.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Fields and identities match the contract.",
+      "The same sum as the independent direct dataset.",
+      "No stale rows remain from the previous run."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Reconcile the intermediate set and total separately; the batch returns its query results.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "No stale rows remain from the previous run."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "A temporary table is",
+      "options": [
+        "A permanent catalog",
+        "An intermediate set",
+        "A license file"
+      ],
+      "correct": 1,
+      "explanation": "Its lifetime follows execution context."
+    },
+    {
+      "question": "Balance parameters matter to",
+      "options": [
+        "Color only",
+        "Button names",
+        "Computation meaning and cost"
+      ],
+      "correct": 2,
+      "explanation": "Check outcome and performance."
+    },
+    {
+      "question": "Speedup with different data is",
+      "options": [
+        "Not a proven correct optimization",
+        "Always success",
+        "A replacement oracle"
+      ],
+      "correct": 0,
+      "explanation": "Preserve result equivalence first."
+    }
+  ],
+  "review": [
+    "Use temporary and virtual tables appropriately and verify their parameters.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "query-mechanism",
+    "query-language",
+    "accumulation-register"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p7",
+    "locale": "en"
+  }
+}

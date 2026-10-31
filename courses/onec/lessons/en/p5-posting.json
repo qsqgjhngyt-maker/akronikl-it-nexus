@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p5",
+  "topicId": "onec.p5.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Posting and reversing posting",
+  "minutes": 120,
+  "goal": "Implement posting effects and prove correct reversal.",
+  "prerequisites": [
+    "onec.p4; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Implement posting effects and prove correct reversal.",
+    "Post a 30-minute document.",
+    "Change to 45 and repost."
+  ],
+  "sections": [
+    [
+      "The document is the recorder",
+      "A movement explains which document caused an accounting fact. A service desk can track minute obligations by customer. A record contains period, dimensions, resource and recorder. A document’sMinutes field is not itself a movement. Agree on sign and meaning before implementing a handler.",
+      "Specify the complete document effect:its fields, dependent records, movements and external outcome. Separate preparation from acceptance. Checking one table cannot detect partial execution:a saved request without its movement may look individually valid while violating the accepted-order meaning. Define cross-object invariants before selecting handlers or adding transaction boundaries."
+    ],
+    [
+      "Rebuild the movement set",
+      "Build movements from current document data inPosting and control record-set writing. Reposting replaces that recorder’s effect rather than appending a duplicate. Changing 30 to 45 yields 45, not 75. Do not manually add the prior document amount to the new record set.",
+      "Handlers run within platform-defined contexts; event names alone do not prove actual order. Trace entry, validation, cancellation and write. User messages are insufficient because they can precede final outcomes. Confirm through a fresh persisted-state read after completion and, for important cases, a new session. This distinguishes displayed intentions from committed business facts."
+    ],
+    [
+      "Reversal removes effects, not the document",
+      "After reversal, the document remains while its accounting effect is removed or compensated under the model. Metadata and handlers determine behavior. Inspect recorder-filtered records and register totals, not onlyPosted. A starter stand without posting needs a new versioned template for this exercise.",
+      "Repeating one intent differs from a new command with similar data. After an unknown outcome, do not automatically create another document; check the agreed prior-result key. Reposting an existing document replaces its own effect while preserving other recorders. Intent deduplication and movement replacement are distinct repeatability concerns requiring separate test cases."
+    ],
+    [
+      "Rejection must be atomic",
+      "If required movement data is missing, reject before accepting effects. A negative case checks both document and movements. An unset flag with partially modified register data is not a correct rejection. Transactional checks cover every side effect, not one table alone.",
+      "Inject failures only on a separate instance at a deliberate point. Snapshot before the first modification and inspect every affected dataset after rejection. Then repeat without failure and verify no residue. Preserve a safe failed-experiment record before any cleanup; it explains cause and regression rather than concealing the defect behind a later successful attempt."
+    ]
+  ],
+  "diagram": "p5-2",
+  "walkthrough": [
+    {
+      "action": "Post a 30-minute document.",
+      "expected": "One 30-minute effect with the correct recorder."
+    },
+    {
+      "action": "Change to 45 and repost.",
+      "expected": "Effect 45, not 75; no recorder duplicates."
+    },
+    {
+      "action": "Reverse posting.",
+      "expected": "The effect is removed; document and source are preserved."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "// Контекст: ОбработкаПроведения документа с регистромТрудозатраты\nДвижения.Трудозатраты.Очистить();\nДвижения.Трудозатраты.Записывать = Истина;\nДвижение = Движения.Трудозатраты.Добавить();\nДвижение.Период = Дата;\nДвижение.Клиент = Клиент;\nДвижение.Минуты = Минуты;",
+      "expected": "Expect one agreed current-recorder effect; a balance register also requiresRecordType.",
+      "explanation": "Register names and fields are mandatory metadata prerequisites."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Отмените проведение.",
+      "expected": "The effect is removed; document and source are preserved.",
+      "explanation": "Register names and fields are mandatory metadata prerequisites."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Post a 30-minute document.",
+      "criteria": "One 30-minute effect with the correct recorder."
+    },
+    {
+      "level": "Applied",
+      "task": "Change to 45 and repost.",
+      "criteria": "Effect 45, not 75; no recorder duplicates."
+    },
+    {
+      "level": "Advanced",
+      "task": "Reject after preparing data and prove no partial movements remain.",
+      "criteria": "Document, record set and grand total are compared before/after."
+    }
+  ],
+  "lab": {
+    "title": "Implement posting effects and prove correct reversal.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Post a 30-minute document.",
+      "Change to 45 and repost.",
+      "Reverse posting.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "One 30-minute effect with the correct recorder.",
+      "Effect 45, not 75; no recorder duplicates.",
+      "The effect is removed; document and source are preserved."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Expect one agreed current-recorder effect; a balance register also requiresRecordType.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The effect is removed; document and source are preserved."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Is theMinutes attribute itself a movement?",
+      "options": [
+        "No",
+        "Yes",
+        "After sorting"
+      ],
+      "correct": 0,
+      "explanation": "A movement belongs to a separate accounting mechanism."
+    },
+    {
+      "question": "Reposting 30→45 should produce",
+      "options": [
+        "75",
+        "45",
+        "30"
+      ],
+      "correct": 1,
+      "explanation": "The recorder effect is replaced."
+    },
+    {
+      "question": "Reversal must be checked through",
+      "options": [
+        "Only an icon",
+        "Only the heading",
+        "Movements and document"
+      ],
+      "correct": 2,
+      "explanation": "A visible flag does not prove effect removal."
+    }
+  ],
+  "review": [
+    "Implement posting effects and prove correct reversal.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p5",
+    "locale": "en"
+  }
+}

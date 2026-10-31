@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p7",
+  "topicId": "onec.p7.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Selection and parameters",
+  "minutes": 120,
+  "goal": "Build a parameterized request query and reconcile results by reference.",
+  "prerequisites": [
+    "onec.p6; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Build a parameterized request query and reconcile results by reference.",
+    "SelectAlpha from the 30, 45, 15set.",
+    "Test interval start and end."
+  ],
+  "sections": [
+    [
+      "A query expresses a set",
+      "1C query language addresses the metadata model, not arbitrarySQLfor modifying internal tables. SELECT chooses fields, FROM defines the source, andWHERE defines conditions. Begin with expected identities and values rather than selecting everything and hoping to understand later.",
+      "Every query starts with a set specification:row granularity, required fields, scope, identities and multiplicity. Reconcile a small source set manually. Syntax correctness cannot detect lost customers or multiplied sums. Inspect identities and types before totals, which may match accidentally when two defects compensate. Keep this independent oracle beside every query revision."
+    ],
+    [
+      "Pass values as parameters",
+      "Do not concatenate customer names or dates into query text. SetParameter supplies a typed value separately from structure. A customer reference is not its display string. A parameter cannot stand in for an arbitrary field name: choose structure from an allowlist and keep user values parameterized.",
+      "Parameters separate structure/values without defining business meaning automatically. References, names and external codes differ. Dates carry time and agreed boundaries. Choose dynamic fields from a structural allowlist, not user text. Specify each parameter’s type, empty-value policy and an example yielding zero rows without changing data. This tests the contract rather than parser acceptance alone."
+    ],
+    [
+      "Periods have precise boundaries",
+      "UseDate>=Start ANDDate<End for an agreed half-open interval. IncludeStart and excludeEnd. A daily query must account for document time. Ordinary rows do not expose a last-second error; add records exactly on both boundaries.",
+      "Joins and aggregation affect multiplicity differently. Joining two detail sets can multiply rows; grouping can hide the cause behind one wrong sum. Inspect intermediate membership before resources. Respect virtual-table semantics/parameters and temporary-table context/lifetime. Neither mechanism is a universal optimization trick. Explain which problem it solves and verify equivalent values before measuring speed."
+    ],
+    [
+      "Result and cursor differ",
+      "Execute returns a query result; Select creates traversal; Unload materializes a value table. Choose by volume and needed operations. An empty result is not inherently an error. Reconcile identities, types, count and sum, then verify reading did not modify documents.",
+      "Compare performance only after equivalence. Freeze data, versions, call count, cache conditions and repeated timing. A small local experiment does not establish field p95. Reject speedups caused by dropped rows or permission checks. Preserve rejected variants, reasons and the correct baseline so later optimization does not repeat a known defect. Report observed metrics without broadening their scope."
+    ]
+  ],
+  "diagram": "p7-0",
+  "walkthrough": [
+    {
+      "action": "SelectAlpha from the 30, 45, 15set.",
+      "expected": "Two identities and 75 minutes, excludingBeta15."
+    },
+    {
+      "action": "Test interval start and end.",
+      "expected": "Start included, end excluded under the contract."
+    },
+    {
+      "action": "Pass an absent reference and quote-containing text as values.",
+      "expected": "No matches/type rejection; query structure does not change."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Запрос = Новый Запрос;\nЗапрос.Текст = \"ВЫБРАТЬ З.Ссылка, З.Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Клиент = &Клиент\";\nЗапрос.УстановитьПараметр(\"Клиент\", Клиент);\nРезультат = Запрос.Выполнить();",
+      "expected": "Only documents for the given customer reference; the parameter is not inserted into text.",
+      "explanation": "The table and attributes require matching configuration metadata."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Передайте отсутствующую ссылку и текст скавычками как значение.",
+      "expected": "No matches/type rejection; query structure does not change.",
+      "explanation": "The table and attributes require matching configuration metadata."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "SelectAlpha from the 30, 45, 15set.",
+      "criteria": "Two identities and 75 minutes, excludingBeta15."
+    },
+    {
+      "level": "Applied",
+      "task": "Test interval start and end.",
+      "criteria": "Start included, end excluded under the contract."
+    },
+    {
+      "level": "Advanced",
+      "task": "Add an optional filter without arbitrary user-text concatenation.",
+      "criteria": "Structure is constrained, values parameterized, ordinary and empty sets reconciled."
+    }
+  ],
+  "lab": {
+    "title": "Build a parameterized request query and reconcile results by reference.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "SelectAlpha from the 30, 45, 15set.",
+      "Test interval start and end.",
+      "Pass an absent reference and quote-containing text as values.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Two identities and 75 minutes, excludingBeta15.",
+      "Start included, end excluded under the contract.",
+      "No matches/type rejection; query structure does not change."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Only documents for the given customer reference; the parameter is not inserted into text.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "No matches/type rejection; query structure does not change."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "A customer value is supplied",
+      "options": [
+        "As a correctly typed parameter",
+        "AsSQLtext from a name",
+        "As a pixel"
+      ],
+      "correct": 0,
+      "explanation": "Separate structure from values."
+    },
+    {
+      "question": "IsDate=End included in>=Start AND<End?",
+      "options": [
+        "Yes",
+        "No",
+        "Depends on color"
+      ],
+      "correct": 1,
+      "explanation": "The right boundary is excluded."
+    },
+    {
+      "question": "Is an empty result always an error?",
+      "options": [
+        "Yes",
+        "Only at night",
+        "No"
+      ],
+      "correct": 2,
+      "explanation": "No matches can be correct."
+    }
+  ],
+  "review": [
+    "Build a parameterized request query and reconcile results by reference.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "query-mechanism",
+    "query-language",
+    "accumulation-register"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p7",
+    "locale": "en"
+  }
+}

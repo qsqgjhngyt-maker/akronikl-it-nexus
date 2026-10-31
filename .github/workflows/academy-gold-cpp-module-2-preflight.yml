@@ -16,7 +16,66 @@ on:
 permissions:
   contents: read
 jobs:
+  content_scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      kind: ${{ steps.scope.outputs.kind }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Определить область по доверенному source, без релизного допуска
+        id: scope
+        env:
+          NEXUS_ROUTE_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          NEXUS_ROUTE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          NEXUS_ROUTE_BRANCH: ${{ github.head_ref || github.ref_name }}
+          NEXUS_ROUTE_PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          export NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA=$(git show "$NEXUS_ROUTE_HEAD:.github/workflows/academy-gold-cpp-module-3-publication.yml" | tr -d '\r' | sed -nE "s/^ +NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA: '([a-f0-9]{40})'$/\1/p")
+          [[ "$NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$NEXUS_ROUTE_BASE" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$NEXUS_ROUTE_HEAD" =~ ^[0-9a-f]{40}$ ]]
+          if git cat-file -e "$NEXUS_ROUTE_BASE:tools/content-publication-route.mjs" 2>/dev/null; then
+            export NEXUS_ROUTE_TRUSTED="$NEXUS_ROUTE_BASE"
+          else
+            export NEXUS_ROUTE_TRUSTED="$NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA"
+          fi
+          git show "$NEXUS_ROUTE_TRUSTED:tools/content-publication-route.mjs" > "$RUNNER_TEMP/nexus-content-route.mjs"
+          node "$RUNNER_TEMP/nexus-content-route.mjs"
+      - name: Сохранить решение маршрутизации
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: content-publication-scope-${{ github.sha }}
+          path: content-publication-scope.json
+  content_review:
+    needs: content_scope
+    if: needs.content_scope.outputs.kind == 'content-review'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Проверить Content Contract, без publication или deployment
+        run: |
+          node tools/validate-content.mjs
+          node tools/check-content-review.mjs
+          node --test tests/content-contract.test.mjs
+          node tools/check-onec-regression.mjs
   preflight:
+    needs: content_scope
+    if: needs.content_scope.outputs.kind == 'historical-release'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -89,6 +148,8 @@ jobs:
           path: academy-gold-m2-evidence/
           retention-days: 30
   module2-gold:
+    needs: content_scope
+    if: needs.content_scope.outputs.kind == 'historical-release'
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
@@ -157,6 +218,8 @@ jobs:
           path: academy-gold-module2/
           retention-days: 30
   module1-regression:
+    needs: content_scope
+    if: needs.content_scope.outputs.kind == 'historical-release'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:

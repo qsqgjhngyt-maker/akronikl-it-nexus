@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p4",
+  "topicId": "onec.p4.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Object, selection and manager",
+  "minutes": 120,
+  "goal": "Choose manager, selection or object by operation without unnecessary reads or writes.",
+  "prerequisites": [
+    "onec.p3; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Choose manager, selection or object by operation without unnecessary reads or writes.",
+    "Traverse three known customers.",
+    "Edit one card through its object."
+  ],
+  "sections": [
+    [
+      "Managers operate on a type",
+      "Catalogs.Customers provides type-wide creation and lookup operations.GetObject belongs to a particular reference; a selection traverses items. A manager is not an already-loaded array of objects: traversal and reads follow the API’s rules.",
+      "Model changes as well as creation. Customers can be renamed, services repriced, and requests can retain earlier agreed terms. List these events separately to identify catalog data, document snapshots and historical facts. This prevents silently updating every linked request when only current presentation or a current service offering should change."
+    ],
+    [
+      "A cursor needs advancing",
+      "AfterSelect, advance withNext in a loop. Read fields from the current position, not before the first advance. Test an empty selection separately: zero iterations should produce the agreed empty result. Traversed count alone does not prove there were no hidden conditions.",
+      "Internal identity and external code solve different problems. References connect infobase objects; codes support imported correspondence. Define uniqueness scope, case handling and absence policy. Two systems can reuse one code for different customers, requiring sender scope or a mapping table. A name search alone cannot resolve this ambiguity safely or justify replacing an existing entity."
+    ],
+    [
+      "Modification needs an object",
+      "For one card, obtain the object, validate current data andWrite. Bulk edits during traversal need care: changing selection conditions may affect later membership. In the starter exercise, collect references first and modify them in a separate controlled pass.",
+      "Keep empty references, missing items and deletion-marked objects distinct and define each outcome. An old request must not silently point to a newly created lookalike after reseeding. Compare identities and document relationships before/after; use labels only for human readability. A valid-looking card can otherwise conceal broken history or a duplicate entity."
+    ],
+    [
+      "Operations need an observable trace",
+      "For reporting reads, compare identities and call counts with no writes. For one-card editing, compare only expected fields. Include empty sets and repeated execution. This shows the API choice follows the task rather than an accidental chain of unnecessary object accesses.",
+      "Use an ordinary customer, an equal-named second customer and a request-free third customer. Test lookup, rename, reseed and selection. This set exposes implementations that only work when labels happen to be unique. Reopen the source separately afterwards:independent copies are proven by preserved records, not different labels in a launcher list."
+    ]
+  ],
+  "diagram": "p4-3",
+  "walkthrough": [
+    {
+      "action": "Traverse three known customers.",
+      "expected": "Three identities, no data writes."
+    },
+    {
+      "action": "Edit one card through its object.",
+      "expected": "Only the agreed field changes."
+    },
+    {
+      "action": "Check an empty selection.",
+      "expected": "Zero iterations; no read from a nonexistent current row."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Выборка = Справочники.Клиенты.Выбрать();\nКоличество = 0;\nПока Выборка.Следующий() Цикл\n    Количество = Количество + 1;\nКонецЦикла;",
+      "expected": "The traversed customer count; 0 for an empty set.",
+      "explanation": "Advance before reading; traversal creates no items."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Проверьте пустую выборку.",
+      "expected": "Zero iterations; no read from a nonexistent current row.",
+      "explanation": "Advance before reading; traversal creates no items."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Traverse three known customers.",
+      "criteria": "Three identities, no data writes."
+    },
+    {
+      "level": "Applied",
+      "task": "Edit one card through its object.",
+      "criteria": "Only the agreed field changes."
+    },
+    {
+      "level": "Advanced",
+      "task": "Compare two APIs for a bulk report and identify redundant calls.",
+      "criteria": "Same dataset, call counts and a justified choice are recorded."
+    }
+  ],
+  "lab": {
+    "title": "Choose manager, selection or object by operation without unnecessary reads or writes.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Traverse three known customers.",
+      "Edit one card through its object.",
+      "Check an empty selection.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Three identities, no data writes.",
+      "Only the agreed field changes.",
+      "Zero iterations; no read from a nonexistent current row."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "The traversed customer count; 0 for an empty set.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Zero iterations; no read from a nonexistent current row."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Before reading a selection’s current row, use",
+      "options": [
+        "Next",
+        "Write",
+        "Delete"
+      ],
+      "correct": 0,
+      "explanation": "Advance the cursor first."
+    },
+    {
+      "question": "Editing a card needs",
+      "options": [
+        "Only presentation",
+        "An object and write",
+        "Row color"
+      ],
+      "correct": 1,
+      "explanation": "Reference and editable object have different roles."
+    },
+    {
+      "question": "An empty selection should",
+      "options": [
+        "Create a customer",
+        "Give falsePASS",
+        "Execute zero iterations"
+      ],
+      "correct": 2,
+      "explanation": "An empty set is an independent boundary."
+    }
+  ],
+  "review": [
+    "Choose manager, selection or object by operation without unnecessary reads or writes.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p4",
+    "locale": "en"
+  }
+}

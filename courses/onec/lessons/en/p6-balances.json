@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p6",
+  "topicId": "onec.p6.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Accumulation register: balances",
+  "minutes": 120,
+  "goal": "Build a minute-obligation balance and reconcile receipts, expenses and balance.",
+  "prerequisites": [
+    "onec.p5; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Build a minute-obligation balance and reconcile receipts, expenses and balance.",
+    "Write receipt 30 andexpense 10.",
+    "Check another customer."
+  ],
+  "sections": [
+    [
+      "Dimensions say where; resources say how much",
+      "For service obligations, customer is a dimension and minutes a resource. Receipt 30 increases obligation; expense 10 reduces it. Sign follows business meaning, not whether an event is good or bad. Balance 20 derives from movements; manually maintaining it in a card too creates two sources of truth.",
+      "Choose a register from the data question. “Which rate applied?” needs keyed temporal state;“how much was delivered this week?” needs turnover;“what obligation remains?” needs balance. Similar-looking fields do not imply equal mechanisms or invariants. Write a small independent example for each and explain why another register type would answer the wrong question."
+    ],
+    [
+      "Recorders explain origin",
+      "Each movement links to a document, explaining the balance. Movement period and document date can have distinct meanings under configuration rules. A total screenshot without drill-down is insufficient. Preserve recorder identity and compare recorder-filtered sets when reposting.",
+      "Dimensions define slices, resources measured quantities, and recorders provenance where supported. Adding a dimension changes keys and granularity:customer totals may split by service. Define old-data treatment and grand-total reconciliation before restructuring. New granularity is more than another displayed column; it changes writes, uniqueness and the interpretation of historical records."
+    ],
+    [
+      "Balance depends on time",
+      "After receipt 30 atD1, balance is 30; after expense 10 atD2, it is 20. Specify boundary inclusion and time precision. Period turnover and point-in-time balance are different quantities. Before the first movement, expect the agreed zero rather than a stale report result.",
+      "Time boundaries belong in specifications. State uses an as-of moment, turnover an interval, and movements an agreed period. Test before the first fact, exactly at a change and after it. Equal totals without matching identities do not prove correctness:errors for different customers can cancel numerically while allocations remain wrong."
+    ],
+    [
+      "An invariant detects duplicate writes",
+      "Opening+receipts−expenses=closing. Verify independently, then repost the receipt. A duplicated 30 must not turn 20 into 50. Add another customer and check dimension isolation. Prohibiting negative balance needs an explicit business rule and reliable concurrent checking inP10.",
+      "Trace totals back to original facts. Preserve recorder-level records, independent arithmetic and reversal results. Reposting one document must not affect unrelated sets. For accounting models, test both side equality and analytic meaning. Array exercises demonstrate algorithms but do not replace actual execution of the corresponding platform mechanism. Record that distinction in the evidence and acceptance scope."
+    ]
+  ],
+  "diagram": "p6-1",
+  "walkthrough": [
+    {
+      "action": "Write receipt 30 andexpense 10.",
+      "expected": "Balance 20 with two explanatory documents."
+    },
+    {
+      "action": "Check another customer.",
+      "expected": "Its movements do not alter the first balance."
+    },
+    {
+      "action": "Repost the receipt.",
+      "expected": "Balance 20; no duplicated effect."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "// В обработчике документа;регистр остатковОбязательства\nДв = Движения.Обязательства.Добавить();\nДв.ВидДвижения = ВидДвиженияНакопления.Приход;\nДв.Период = Дата; Дв.Клиент = Клиент; Дв.Минуты = 30;",
+      "expected": "After a separate expense 10, balance 20; reposting the receipt does not increase it.",
+      "explanation": "Register metadata, recorder and record-set writing policy are required."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Перепроведите приход.",
+      "expected": "Balance 20; no duplicated effect.",
+      "explanation": "Register metadata, recorder and record-set writing policy are required."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Write receipt 30 andexpense 10.",
+      "criteria": "Balance 20 with two explanatory documents."
+    },
+    {
+      "level": "Applied",
+      "task": "Check another customer.",
+      "criteria": "Its movements do not alter the first balance."
+    },
+    {
+      "level": "Advanced",
+      "task": "Reconcile balances beforeD1, betweenD1/D2 and afterD2.",
+      "criteria": "0, 30, 20 with explicit boundaries and identities."
+    }
+  ],
+  "lab": {
+    "title": "Build a minute-obligation balance and reconcile receipts, expenses and balance.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Write receipt 30 andexpense 10.",
+      "Check another customer.",
+      "Repost the receipt.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Balance 20 with two explanatory documents.",
+      "Its movements do not alter the first balance.",
+      "Balance 20; no duplicated effect."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "After a separate expense 10, balance 20; reposting the receipt does not increase it.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Balance 20; no duplicated effect."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Receipt 30−expense 10 gives",
+      "options": [
+        "40",
+        "20",
+        "30"
+      ],
+      "correct": 1,
+      "explanation": "Signs follow the obligation model."
+    },
+    {
+      "question": "Customer dimension supports",
+      "options": [
+        "Fonts",
+        "Row numbering",
+        "Separate balances"
+      ],
+      "correct": 2,
+      "explanation": "Another customer must not change this result."
+    },
+    {
+      "question": "Reposting should",
+      "options": [
+        "Preserve one recorder effect",
+        "Double the receipt",
+        "Delete the customer"
+      ],
+      "correct": 0,
+      "explanation": "Verify movement idempotency."
+    }
+  ],
+  "review": [
+    "Build a minute-obligation balance and reconcile receipts, expenses and balance.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "information-register",
+    "accumulation-register"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p6",
+    "locale": "en"
+  }
+}

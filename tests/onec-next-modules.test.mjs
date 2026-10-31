@@ -3,11 +3,11 @@ import{createCandidateStore,courseKey,progressFor,gradeQuiz,copyProject}from'../
 import{validateSchema}from'../tools/content-contract-lib.mjs';
 const read=p=>fs.readFileSync(p,'utf8').replace(/^\uFEFF/,''),json=p=>JSON.parse(read(p)),old='8330fd232856fc4076929ddade6e81cfaa8c0e4f',ids=['onec','1c-enterprise'],curricula=ids.map(id=>json(`courses/${id}/curriculum.json`)),base='courses/onec-education/',doc='docs/ru/03-content/onec/a2p2/evidence/',spec=json(base+'native/a2p2-spec.v1.json'),native=json(doc+'NATIVE_A2P2_RESULT.json'),cases=read(doc+'SEED.txt.cases.txt').trim().split(/\r?\n/).map(l=>l.split('|')[0]),lessons=curricula.flatMap(c=>c.modules[1].topics.flatMap(t=>['ru','en'].map(locale=>json(`courses/${c.courseId}/${t.content[locale]}`))));
 const memory=initial=>{const map=new Map(initial||[]);return{map,getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v)}};
-test('A2/P2: все 84 прежних ID/порядки сохранены; только второй модуль повышен до IMPLEMENTED',()=>{
+test('A2/P2: все 84 прежних ID/порядки сохранены; A1/P1 и A2/P2 сохранены при полном наполнении',()=>{
  const identityShape=c=>c.modules.map(m=>[m.moduleId,m.topics.map(t=>[t.topicId,t.order])]);
  for(const c of curricula){const previous=JSON.parse(execFileSync('git',['show',old+`:courses/${c.courseId}/curriculum.json`],{encoding:'utf8'}));assert.deepEqual(identityShape(c),identityShape(previous));
- for(const [i,m]of c.modules.entries()){assert.equal(m.status,i<2?'IMPLEMENTED':'PLANNED');if(i!==1)assert.deepEqual(m,previous.modules[i]);else assert.ok(m.topics.every(t=>t.contentRevision==='0.3.0-a2p2'&&t.progressPolicy==='current-revision-required'));}}
- assert.equal(curricula.flatMap(c=>c.modules.filter(m=>m.status==='IMPLEMENTED').flatMap(m=>m.topics)).length,17);
+ for(const [i,m]of c.modules.entries()){assert.equal(m.status,'IMPLEMENTED');if(i===0)assert.deepEqual(m,previous.modules[i]);else assert.ok(m.topics.every(t=>t.contentRevision===(i===1?'0.3.0-a2p2':'1.0.0-rc.1')&&t.progressPolicy==='current-revision-required'));}}
+ assert.equal(curricula.flatMap(c=>c.modules.filter(m=>m.status==='IMPLEMENTED').flatMap(m=>m.topics)).length,84);
 });
 test('A1/P1: все 16 payload и исходный native kit не изменены',()=>{const paths=curricula.flatMap(c=>c.modules[0].topics.flatMap(t=>Object.values(t.content).map(p=>`courses/${c.courseId}/${p}`)));paths.push(base+'shared.v1.json',base+'service-desk.v1.json',base+'native/service-desk');assert.equal(execFileSync('git',['diff','--name-only',old,'--',...paths],{encoding:'utf8'}).trim(),'');});
 test('A2/P2: 18 локализаций имеют самостоятельную теорию, два примера, три уровня практики и наблюдаемые native cases',()=>{
@@ -28,7 +28,7 @@ test('BSL excerpts are exact executed source; nine new diagrams are explanatory 
 });
 test('Старый progress и работы сохраняются; новый A2/P2 не получает зачёт из legacy completion',()=>{
  const c=curricula[0],oldLessons=Object.fromEntries(c.modules[0].topics.map(t=>[t.topicId,{completed:true,attempts:[{at:'prior',grade:{kind:'local-self-check',passed:true}}]}])),id=c.modules[1].topics[0].topicId;oldLessons[id]={completed:true,attempts:[{at:'legacy',grade:{kind:'local-self-check',passed:true}}]};const saved={schemaVersion:1,courseId:'onec',lessons:oldLessons,projects:[{id:'preserve',note:'original',origin:{sourceCourseId:'1c-enterprise',sourceProjectId:'source',credit:'none'}}]},raw=JSON.stringify(saved),m=memory([[courseKey('onec'),raw],['account-sentinel','untouched']]),store=createCandidateStore(m,'onec',c);
- assert.deepEqual(store.read(),saved);assert.equal(m.getItem(courseKey('onec')),raw);assert.deepEqual([progressFor(c,store.read()).done,progressFor(c,store.read()).total],[4,9]);assert.throws(()=>store.complete(id,true,'0.3.0-a2p2'),/CURRENT_REVISION_ATTEMPT_REQUIRED/);assert.equal(m.getItem(courseKey('onec')),raw);
+ assert.deepEqual(store.read(),saved);assert.equal(m.getItem(courseKey('onec')),raw);assert.deepEqual([progressFor(c,store.read()).done,progressFor(c,store.read()).total],[4,52]);assert.throws(()=>store.complete(id,true,'0.3.0-a2p2'),/CURRENT_REVISION_ATTEMPT_REQUIRED/);assert.equal(m.getItem(courseKey('onec')),raw);
  store.attempt(id,gradeQuiz([{correct:0}],[0]),[0],{attemptId:'new-p2',contentRevision:'0.3.0-a2p2'});store.complete(id,true,'0.3.0-a2p2');assert.equal(progressFor(c,store.read()).done,5);assert.deepEqual(store.read().lessons[id].attempts[0],oldLessons[id].attempts[0]);assert.deepEqual(store.read().projects,saved.projects);assert.equal(m.getItem('account-sentinel'),'untouched');assert.equal(progressFor(c,store.read()).wholeCourseComplete,false);
 });
 test('CP-1.1 activity mappings cover all authored lessons without replacing prior project or inventing Mastery',()=>{

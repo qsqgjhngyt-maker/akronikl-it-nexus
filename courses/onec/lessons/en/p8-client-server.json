@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p8",
+  "topicId": "onec.p8.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Client and server",
+  "minutes": 120,
+  "goal": "Separate client reactions from server work and reduce transferred data.",
+  "prerequisites": [
+    "onec.p7; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Separate client reactions from server work and reduce transferred data.",
+    "MapUI→server→data.",
+    "Check an allowed call."
+  ],
+  "sections": [
+    [
+      "Clients handle interaction",
+      "Button handling, focus and dialogs belong toUI. Infobase access and reliable rules belong in an available server context. Thick and thin clients differ; local success does not prove a distributed design. Specify the target client and permitted operations before implementation.",
+      "A managed form is an interaction boundary, not the only data source. Values occupy form buffers, objects and persisted records at different times. Trace read, edit, transfer and write to identify unsaved snapshots. Refresh must not silently replace user input with another request’s state. Distinguish visible values from accepted business state throughout the workflow."
+    ],
+    [
+      "The boundary carries a contract",
+      "Do not send every customer to obtain one total. A server method receives minimal typed inputs and returns required data. The client cannot provide trusted permission or price decisions; the server checks its own conditions. Test serialization and parameter types separately from arithmetic correctness.",
+      "Context determines available operations and required inputs. Pure calculations need numbers; document reads need identity and an available server environment; focus handling needsUI. Do not pass whole forms instead of designing minimal contracts. Specify serialized inputs, outputs and reliable-side validation independently of client hints. Context availability and permission authorization remain separate concerns."
+    ],
+    [
+      "A file infobase is not a network",
+      "File mode can teach client/server directives but does not fully reproduce network latency, clusters or parallel sessions. Separate compilation-contextPASSfrom distributedLIVE. Counting source lines or one local process is not measured network-call reduction.",
+      "Bind asynchronous actions to a specific intent/version. Users can close forms, edit data or start another operation while awaiting replies. Late responses must validate relevance before acting. UIcancellation does not promise rollback of committed server work. Separate pending, accepted, unknown, rejected and canceled states with distinct verification scenarios rather than one ambiguous success flag."
+    ],
+    [
+      "An availability matrix checks context",
+      "For each method, list caller, parameters and returned data. Test an allowed call and an unavailable operation in the wrong context. Count calls for an ordinary action. Do not fix context errors by enabling every capability indiscriminately; reduce dependencies to what is necessary.",
+      "Test both expected and unexpected event ordering:delays, double-clicks, cancel and closing with unsaved input. Reconcile effect count and database state through fresh reads. File-mode compilation of client directives proves only that context; it does not measure network routing, physical mobile acceptance or isolatedStudioBSLexecution. Record these boundaries so successful checks are not overstated."
+    ]
+  ],
+  "diagram": "p8-1",
+  "walkthrough": [
+    {
+      "action": "MapUI→server→data.",
+      "expected": "Each operation has context and minimal parameters."
+    },
+    {
+      "action": "Check an allowed call.",
+      "expected": "The result crosses the agreed type contract."
+    },
+    {
+      "action": "Check prohibited client access.",
+      "expected": "Denial/context failure is recorded, not bypassed with full permissions."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "&НаКлиенте\nПроцедура Пересчитать(Команда)\n    // вызвать узкий серверный контракт и обновитьUI\nКонецПроцедуры",
+      "expected": "The client handler contains no hidden arbitrary database access.",
+      "explanation": "This is a separation skeleton; test the real server method and types in their context."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Проверьте запрещённый клиентский доступ.",
+      "expected": "Denial/context failure is recorded, not bypassed with full permissions.",
+      "explanation": "This is a separation skeleton; test the real server method and types in their context."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "MapUI→server→data.",
+      "criteria": "Each operation has context and minimal parameters."
+    },
+    {
+      "level": "Applied",
+      "task": "Check an allowed call.",
+      "criteria": "The result crosses the agreed type contract."
+    },
+    {
+      "level": "Advanced",
+      "task": "Compare one action using1andNserver calls on identical data.",
+      "criteria": "Correctness, call count and actual environment are reported separately."
+    }
+  ],
+  "lab": {
+    "title": "Separate client reactions from server work and reduce transferred data.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "MapUI→server→data.",
+      "Check an allowed call.",
+      "Check prohibited client access.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Each operation has context and minimal parameters.",
+      "The result crosses the agreed type contract.",
+      "Denial/context failure is recorded, not bypassed with full permissions."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "The client handler contains no hidden arbitrary database access.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Denial/context failure is recorded, not bypassed with full permissions."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Does file mode prove network latency?",
+      "options": [
+        "Yes",
+        "No",
+        "For every screen"
+      ],
+      "correct": 1,
+      "explanation": "Test distributed deployment separately."
+    },
+    {
+      "question": "For one total, prefer transferring",
+      "options": [
+        "The whole database",
+        "A password",
+        "Minimal parameters and result"
+      ],
+      "correct": 2,
+      "explanation": "Keep the boundary narrow."
+    },
+    {
+      "question": "Is a client-supplied price trusted?",
+      "options": [
+        "No; validate under the contract",
+        "Always",
+        "If attractive"
+      ],
+      "correct": 0,
+      "explanation": "ClientUIis not a trust boundary."
+    }
+  ],
+  "review": [
+    "Separate client reactions from server work and reduce transferred data.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "form-editor"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p8",
+    "locale": "en"
+  }
+}

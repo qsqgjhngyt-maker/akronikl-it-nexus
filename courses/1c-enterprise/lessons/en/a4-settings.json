@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a4",
+  "topicId": "1c-enterprise.a4.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Settings versus configuration",
+  "minutes": 120,
+  "goal": "Choose a setting or configuration change by requirement scope and verify reversibility.",
+  "prerequisites": [
+    "1c-enterprise.a 3; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
+  ],
+  "outcomes": [
+    "Choose a setting or configuration change by requirement scope and verify reversibility.",
+    "Set a sort order without Designer.",
+    "Specify adding Priority without modifying the source."
+  ],
+  "sections": [
+    [
+      "One request can have several solutions",
+      "“Show only open requests” is usually addressed by a filter or list variant. A required field absent from the model needs configuration work. Check existing capabilities first, then assess effects on other users and persisted data. Code changes for a personal sort order increase maintenance cost without adding business capability.",
+      "Begin by asking whether an existing setting solves the request. A personal list variant needs no storage change; an absent required attribute needs a model and rules. Record the chosen mechanism and rejected alternative. This lets maintainers understand the decision without repeating experiments and avoids unnecessary implementation scope."
+    ],
+    [
+      "A setting has scope",
+      "A personal variant must not silently become mandatory behavior for everyone. Record its owner, scope and reset procedure. Verify that another user or fresh copy does not inherit it without reason. If training edition limits users, test scope as a documented model rather than claiming a multi-user native test.",
+      "Field types determine operations and boundaries. A string identifier preserves leading zeros, a number supports arithmetic, and a reference supports identity. Specify ordinary, empty and maximum-value examples before applying. Define old-record behavior separately:new fields must not silently rewrite the meaning of an accepted request. Check both existing and newly created documents."
+    ],
+    [
+      "Schema changes need a plan",
+      "Configuration can change storage structure and document behavior. It needs a reason, copy, comparison, checks and rollback. Never update the working source merely to see what happens. Define the new field and treatment of old records first; then experiment on a separate copy and verify reopening.",
+      "Applying a change differs from saving development text. Compare editable and database configurations, review the intended diff and restructuring warnings. Update a separate copy and repeat user workflows. A technically valid schema can behave incorrectly, so combine configuration checking with input, writing, reports and fresh reads of old data. One layer does not establish the others."
+    ],
+    [
+      "A decision must be testable",
+      "For each request, state the simplest sufficient mechanism and its evidence. Verify a filter by identities; verify a new field by type, persistence and old-data behavior. Replace subjective “more convenient” with a concrete user scenario. Preserve rejected alternatives and reasons so later maintenance does not repeat the discussion.",
+      "Rollback preserves data state as well as code. Renaming a removed field back cannot recover lost values. Verify backup by restoring to a fresh directory and reconciling control records. Keep source and upgraded work as separate instances. If a warning exceeds agreed scope, do not approve blindly; preserve it and investigate on the copy."
+    ]
+  ],
+  "diagram": "a4-1",
+  "walkthrough": [
+    {
+      "action": "Set a sort order without Designer.",
+      "expected": "Document membership and data are unchanged."
+    },
+    {
+      "action": "Specify adding Priority without modifying the source.",
+      "expected": "Type, default, old records and rollback are specified."
+    },
+    {
+      "action": "Reset the personal variant.",
+      "expected": "The default view returns without deleting documents."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Требование: сортировать по дате↓ → вариант списка\nТребование: хранить обязательный Приоритет → реквизит+проверка",
+      "expected": "The first leaves schema unchanged; the second needs a separate copy change.",
+      "explanation": "Scope follows changes to data and rules, not request length."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Сбросьте личный вариант.",
+      "expected": "The default view returns without deleting documents.",
+      "explanation": "Scope follows changes to data and rules, not request length."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Set a sort order without Designer.",
+      "criteria": "Document membership and data are unchanged."
+    },
+    {
+      "level": "Applied",
+      "task": "Specify adding Priority without modifying the source.",
+      "criteria": "Type, default, old records and rollback are specified."
+    },
+    {
+      "level": "Advanced",
+      "task": "Classify five requests: filter, column, required field, new document, personal variant.",
+      "criteria": "Each has a mechanism, scope, risk and acceptance scenario."
+    }
+  ],
+  "lab": {
+    "title": "Choose a setting or configuration change by requirement scope and verify reversibility.",
+    "environment": "Official 1C 8.3.27.x, new training-service-desk copy. Command labels depend on the configuration interface; verify outcomes against data. Training-edition limits are explicit.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Set a sort order without Designer.",
+      "Specify adding Priority without modifying the source.",
+      "Reset the personal variant.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Document membership and data are unchanged.",
+      "Type, default, old records and rollback are specified.",
+      "The default view returns without deleting documents."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "The first leaves schema unchanged; the second needs a separate copy change.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The default view returns without deleting documents."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "A personal sort order is usually changed through",
+      "options": [
+        "Schema migration",
+        "List settings",
+        "Deleting the infobase"
+      ],
+      "correct": 1,
+      "explanation": "Existing presentation settings suffice."
+    },
+    {
+      "question": "A new required field requires",
+      "options": [
+        "Only color",
+        "Only sorting",
+        "A model, rules and old-data checks"
+      ],
+      "correct": 2,
+      "explanation": "Storage and behavior need a contract."
+    },
+    {
+      "question": "Resetting a variant should",
+      "options": [
+        "Restore the view without deleting documents",
+        "Erase requests",
+        "Create a customer"
+      ],
+      "correct": 0,
+      "explanation": "View settings are separate from data."
+    }
+  ],
+  "review": [
+    "Choose a setting or configuration change by requirement scope and verify reversibility.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "training",
+    "designer",
+    "catalogs",
+    "documents",
+    "form-elements"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "1c-enterprise.a4",
+    "locale": "en"
+  }
+}

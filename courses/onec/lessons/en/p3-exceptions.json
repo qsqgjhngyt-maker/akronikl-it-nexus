@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p3",
+  "topicId": "onec.p3.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Exceptions and diagnosable failures",
+  "minutes": 120,
+  "goal": "Distinguish expected rejection from a defect while preserving the original diagnostic.",
+  "prerequisites": [
+    "onec.p2; P2: types, branching, loops and numeric boundaries."
+  ],
+  "outcomes": [
+    "Distinguish expected rejection from a defect while preserving the original diagnostic.",
+    "Trace control before and after an exception.",
+    "Add a safe case ID to a diagnostic."
+  ],
+  "sections": [
+    [
+      "Exceptions change control flow",
+      "Try/Except catches an error within a defined region. Execution does not automatically continue through the remaining Try statements after a failure. This separates computation from failure handling, but an overly broad region obscures the defect. Catch where you can restore state, add context or show a meaningful message.",
+      "The service-desk calculation may be called from a card, document and report. Separate formulas let one fix leave two old implementations behind. A common computation contract avoids that divergence but needs explicit inputs. List every caller and verify equal units, parameter meaning and result type rather than merely matching function names."
+    ],
+    [
+      "Bad inputs and programming defects",
+      "A negative duration is an expected contract violation; calling a nonexistent method is a defect. Both can raise exceptions but require different responses. Explain the first with the field name; preserve the second for a developer. Do not return zero from a catch-all handler: zero resembles a successful cost and corrupts later totals.",
+      "Describe a function by inputs, preconditions, result and permitted changes. Cost uses numeric minutes/rate, admissible ranges, a rounded number and unchanged input collections. This description selects tests before implementation. If failure returns another type, callers must know explicitly or an error can accidentally participate in arithmetic. A stable contract makes substitution and review possible."
+    ],
+    [
+      "Context without data leakage",
+      "A diagnostic usually needs a case ID, operation and safe description, not a password, token or full customer database. ErrorInfo contains technical details whose access must be restricted. Use a synthetic identifier and distinguish user-facing text from the technical protocol. Preserve the original cause and add contextual text separately.",
+      "Checking mutation needs more than comparing variable names:two variables can refer to one collection. Snapshot important fields and nested elements before execution, then compare the source afterwards. Run another function on the same input to expose hidden contamination. Keep each test’s setup independent so changing test order cannot alter the outcome."
+    ],
+    [
+      "Test the failure path",
+      "A negative test proves more than a displayed message: forbidden state changes must be absent. Record document count and total, submit negative minutes and compare state afterwards. Also submit a valid input after rejection: the system must remain usable. The same principle applies later to transactions and redelivered exchange messages.",
+      "A semantic negative control differs from a syntax error. Replacing addition with subtraction may compile but must change a named assertion’s result. Keep compilation and executed assertions as separate outcomes. Unavailable platforms, timeouts and incomplete case lists cannot confirm missing results. Preserve original and mutated source hashes and identify the particular assertion that detects the defect."
+    ]
+  ],
+  "diagram": "p3-3",
+  "walkthrough": [
+    {
+      "action": "Check valid duration 30.",
+      "expected": "Calculation succeeds; the handler is not counted as the success path."
+    },
+    {
+      "action": "Submit negative minutes.",
+      "expected": "Rejection with a reason code; record count and total remain unchanged."
+    },
+    {
+      "action": "Call a nonexistent method in a copy.",
+      "expected": "The defect is recorded separately, not disguised as zero cost."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Попытка\n    ВызватьИсключение \"NEXUS_INVALID_MINUTES\";\nИсключение\n    Диагностика = ОписаниеОшибки();\nКонецПопытки;",
+      "expected": "Control enters the handler; the cause is preserved in the diagnostic.",
+      "explanation": "Do not replace failure with a successful 0 or publish raw diagnostics containing secrets."
+    },
+    {
+      "title": "Boundary case",
+      "source": "В копии вызовите несуществующий метод.",
+      "expected": "The defect is recorded separately, not disguised as zero cost.",
+      "explanation": "Do not replace failure with a successful 0 or publish raw diagnostics containing secrets."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Trace control before and after an exception.",
+      "criteria": "Skipped Try statements are marked."
+    },
+    {
+      "level": "Applied",
+      "task": "Add a safe case ID to a diagnostic.",
+      "criteria": "No secrets or real customer data; the cause is preserved."
+    },
+    {
+      "level": "Advanced",
+      "task": "Test usability after rejection.",
+      "criteria": "The next valid input succeeds without manual data cleanup."
+    }
+  ],
+  "lab": {
+    "title": "Distinguish expected rejection from a defect while preserving the original diagnostic.",
+    "environment": "Official 1C 8.3.27.x, separate file training infobase, thick managed client; common modules are checked in their declared contexts. Record each native run separately.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Check valid duration 30.",
+      "Submit negative minutes.",
+      "Call a nonexistent method in a copy.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Calculation succeeds; the handler is not counted as the success path.",
+      "Rejection with a reason code; record count and total remain unchanged.",
+      "The defect is recorded separately, not disguised as zero cost."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Control enters the handler; the cause is preserved in the diagnostic.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The defect is recorded separately, not disguised as zero cost."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Does the rest of Try continue after an error?",
+      "options": [
+        "No",
+        "Always",
+        "Only in UI"
+      ],
+      "correct": 0,
+      "explanation": "Control moves to the handler."
+    },
+    {
+      "question": "Why is Return 0 for every error dangerous?",
+      "options": [
+        "Long code",
+        "Failure resembles success",
+        "Many comments"
+      ],
+      "correct": 1,
+      "explanation": "Zero can be a legitimate business result."
+    },
+    {
+      "question": "What should a negative write test check?",
+      "options": [
+        "Only button text",
+        "Form color",
+        "Rejection and absence of data changes"
+      ],
+      "correct": 2,
+      "explanation": "A message without preservation is insufficient."
+    }
+  ],
+  "review": [
+    "Distinguish expected rejection from a defect while preserving the original diagnostic.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "cli"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p3",
+    "locale": "en"
+  }
+}

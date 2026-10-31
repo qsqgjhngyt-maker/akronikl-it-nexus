@@ -1,3 +1,4 @@
+import {withProjectWriter} from '../project-studio/project-writer.js';
 import {verifiedAccount} from '../core/account-storage.js';
 import {isCurrentProjectOwner} from '../core/identity.js';
 import {loadState,saveState} from '../core/storage.js';
@@ -42,6 +43,7 @@ export async function bindOfflineCenter(){
   const session=await store.unlock(fields.get('vaultId'),fields.get('localPhrase'));
   try{
    const account=await prove(),payload=session.read();
+   await withProjectWriter(async()=>{
    const plan=transferPlan(payload,account,loadState(),listProjects(),{vaultId:session.id,revision:session.revision});
    for(const item of plan.projects){
     const p=item.data;
@@ -54,6 +56,7 @@ export async function bindOfflineCenter(){
    }
    if(!plan.alreadyApplied)saveState(plan.state);
    status.textContent=plan.alreadyApplied?'Эта версия уже перенесена.':('Изменения перенесены. Отдельных конфликтов: '+plan.conflicts.length+'. Исходная офлайн-копия сохранена. Cloud PUSH/PULL запускаются только вами.');
+   });
   }finally{await session.lock()}
  });
  try{await refresh()}catch{status.textContent='Локальное хранилище недоступно. Данные аккаунта не изменены.'}

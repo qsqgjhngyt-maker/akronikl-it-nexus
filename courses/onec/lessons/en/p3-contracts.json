@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p3",
+  "topicId": "onec.p3.module-tests",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Isolated function tests and contracts",
+  "minutes": 120,
+  "goal": "Build an isolated calculation test set that detects a semantic mutation.",
+  "prerequisites": [
+    "onec.p2; P2: types, branching, loops and numeric boundaries."
+  ],
+  "outcomes": [
+    "Build an isolated calculation test set that detects a semantic mutation.",
+    "Specify five independent expectations.",
+    "Implement assertions and a safe summary."
+  ],
+  "sections": [
+    [
+      "Derive tests from promises",
+      "Before implementation, specify input, expected type, exact value and permitted changes. Include ordinary minutes, zero, an upper boundary, an omitted argument and a wrong type. Do not derive expected results by copying the same function formula: calculate small expectations independently so one defect is not reproduced in both implementation and oracle.",
+      "The service-desk calculation may be called from a card, document and report. Separate formulas let one fix leave two old implementations behind. A common computation contract avoids that divergence but needs explicit inputs. List every caller and verify equal units, parameter meaning and result type rather than merely matching function names."
+    ],
+    [
+      "Isolation removes accidental dependencies",
+      "A pure function needs neither a form, customer database nor current date. Each test creates its own inputs instead of depending on a previous attempt. A shared structure mutated by one case contaminates later cases. Change case order and repeat the suite. Supply clocks and external values through explicit dependencies when needed.",
+      "Describe a function by inputs, preconditions, result and permitted changes. Cost uses numeric minutes/rate, admissible ranges, a rounded number and unchanged input collections. This description selects tests before implementation. If failure returns another type, callers must know explicitly or an error can accidentally participate in arithmetic. A stable contract makes substitution and review possible."
+    ],
+    [
+      "Negative controls test the test",
+      "A suite that passes correct code has not yet demonstrated sensitivity. In a separate copy, replace addition with subtraction or remove a range check. The program may still compile, but a specific case must fail. Preserve source, mutant, hashes and both summaries; never corrupt the accepted source merely for a demonstration.",
+      "Checking mutation needs more than comparing variable names:two variables can refer to one collection. Snapshot important fields and nested elements before execution, then compare the source afterwards. Run another function on the same input to expose hidden contamination. Keep each test’s setup independent so changing test order cannot alter the outcome."
+    ],
+    [
+      "PASS has a bounded scope",
+      "PASS means named assertions held on the recorded version and input set. It does not prove learner authorship, absence of all defects or client-server behavior. Separate syntax checking, actual execution and assertion outcomes. Incomplete output, timeout or unavailable licensing are distinct states, not zero errors and not success.",
+      "A semantic negative control differs from a syntax error. Replacing addition with subtraction may compile but must change a named assertion’s result. Keep compilation and executed assertions as separate outcomes. Unavailable platforms, timeouts and incomplete case lists cannot confirm missing results. Preserve original and mutated source hashes and identify the particular assertion that detects the defect."
+    ]
+  ],
+  "diagram": "p3-4",
+  "walkthrough": [
+    {
+      "action": "Run ordinary, zero and boundary inputs.",
+      "expected": "Each case has an ID, fresh input and exact expectation."
+    },
+    {
+      "action": "Repeat cases in reverse order.",
+      "expected": "Results are identical; input collections are uncontaminated."
+    },
+    {
+      "action": "Change the formula only in a separate mutant.",
+      "expected": "Syntax passes; a semantic case detects the wrong value."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Ожидание = 600;\nФакт = ЦенаМинут(30, 1200);\nЕсли Факт <> Ожидание Тогда\n    ВызватьИсключение \"P3.cost-30\";\nКонецЕсли;",
+      "expected": "The ordinary case passes; a mutated formula must fail that same case.",
+      "explanation": "Expected 600 is independent; comparing a function with itself proves nothing."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Измените формулу только в отдельном мутанте.",
+      "expected": "Syntax passes; a semantic case detects the wrong value.",
+      "explanation": "Expected 600 is independent; comparing a function with itself proves nothing."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Specify five independent expectations.",
+      "criteria": "Ordinary, zero, boundary, omission and wrong type are covered."
+    },
+    {
+      "level": "Applied",
+      "task": "Implement assertions and a safe summary.",
+      "criteria": "An incomplete case list is not PASS."
+    },
+    {
+      "level": "Advanced",
+      "task": "Demonstrate sensitivity to two different mutations.",
+      "criteria": "Both are detected; source hashes and honest outcomes are preserved."
+    }
+  ],
+  "lab": {
+    "title": "Build an isolated calculation test set that detects a semantic mutation.",
+    "environment": "Official 1C 8.3.27.x, separate file training infobase, thick managed client; common modules are checked in their declared contexts. Record each native run separately.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Run ordinary, zero and boundary inputs.",
+      "Repeat cases in reverse order.",
+      "Change the formula only in a separate mutant.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Each case has an ID, fresh input and exact expectation.",
+      "Results are identical; input collections are uncontaminated.",
+      "Syntax passes; a semantic case detects the wrong value."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "The ordinary case passes; a mutated formula must fail that same case.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Syntax passes; a semantic case detects the wrong value."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Where should the test expectation come from?",
+      "options": [
+        "From an independent specification",
+        "From calling the same function",
+        "From editor color"
+      ],
+      "correct": 0,
+      "explanation": "Otherwise the oracle repeats the implementation defect."
+    },
+    {
+      "question": "What does a semantic mutant demonstrate?",
+      "options": [
+        "Authorship",
+        "Sensitivity of the named case",
+        "All possible inputs"
+      ],
+      "correct": 1,
+      "explanation": "Evidence is bounded to the specific defect and suite."
+    },
+    {
+      "question": "A timeout is",
+      "options": [
+        "PASS",
+        "A zero result",
+        "A distinct incomplete outcome"
+      ],
+      "correct": 2,
+      "explanation": "Assertions cannot be confirmed without a result."
+    }
+  ],
+  "review": [
+    "Build an isolated calculation test set that detects a semantic mutation.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "cli"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p3",
+    "locale": "en"
+  }
+}

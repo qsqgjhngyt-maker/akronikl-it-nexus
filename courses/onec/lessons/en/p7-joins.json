@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p7",
+  "topicId": "onec.p7.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Joins and grouping",
+  "minutes": 120,
+  "goal": "Explain join multiplicity and preserve customers without requests.",
+  "prerequisites": [
+    "onec.p6; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Explain join multiplicity and preserve customers without requests.",
+    "Inspect joined rows before grouping.",
+    "Group by customer reference."
+  ],
+  "sections": [
+    [
+      "Predict cardinality before querying",
+      "A customer with two requests yields two joined rows. Joining another two detail rows can produce four. Aggregating that multiplication is wrong even when syntax is valid. Draw 1: Nrelationships and define result granularity before writing the query: customer, request or document line.",
+      "Every query starts with a set specification:row granularity, required fields, scope, identities and multiplicity. Reconcile a small source set manually. Syntax correctness cannot detect lost customers or multiplied sums. Inspect identities and types before totals, which may match accidentally when two defects compensate. Keep this independent oracle beside every query revision."
+    ],
+    [
+      "Left joins preserve absence",
+      "A left join preserves all customers. Missing right-side fields areNULL, not an empty reference orUndefined. AWHEREcondition on the right table can discard these rows and defeat the intended behavior. Place conditions according to meaning rather than brevity.",
+      "Parameters separate structure/values without defining business meaning automatically. References, names and external codes differ. Dates carry time and agreed boundaries. Choose dynamic fields from a structural allowlist, not user text. Specify each parameter’s type, empty-value policy and an example yielding zero rows without changing data. This tests the contract rather than parser acceptance alone."
+    ],
+    [
+      "Grouping selects granularity",
+      "GROUPBYCustomer collapses documents into customer totals. Name and reference differ: grouping by name can merge distinct customers. DISTINCTis not a universal cure for a bad join; it can hide the defect and discard legitimate equal rows. Fix relationships and aggregation granularity.",
+      "Joins and aggregation affect multiplicity differently. Joining two detail sets can multiply rows; grouping can hide the cause behind one wrong sum. Inspect intermediate membership before resources. Respect virtual-table semantics/parameters and temporary-table context/lifetime. Neither mechanism is a universal optimization trick. Explain which problem it solves and verify equivalent values before measuring speed."
+    ],
+    [
+      "Choose discriminating data",
+      "UseAlpha with 30/45, Beta with 15, andGamma without requests. Expect 75, 15, and agreed zero/missing resource. Add another customer with the same name but a different reference. Reconcile identities and raw joined rows to detect lost empty groups and accidental merging.",
+      "Compare performance only after equivalence. Freeze data, versions, call count, cache conditions and repeated timing. A small local experiment does not establish field p95. Reject speedups caused by dropped rows or permission checks. Preserve rejected variants, reasons and the correct baseline so later optimization does not repeat a known defect. Report observed metrics without broadening their scope."
+    ]
+  ],
+  "diagram": "p7-1",
+  "walkthrough": [
+    {
+      "action": "Inspect joined rows before grouping.",
+      "expected": "Multiplicity is explained by each request."
+    },
+    {
+      "action": "Group by customer reference.",
+      "expected": "75, 15, 0; the request-free customer remains."
+    },
+    {
+      "action": "Add a wrong right-sideWHEREfilter in a copy.",
+      "expected": "The check detects the loss ofGamma."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "ВЫБРАТЬ К.Ссылка, ЕСТЬNULL(СУММА(З.Минуты), 0) КАК Минуты\nИЗ Справочник.Клиенты КАК К\nЛЕВОЕ СОЕДИНЕНИЕ Документ.ЗаявкаУслуги КАК З ПО З.Клиент = К.Ссылка\nСГРУППИРОВАТЬ ПО К.Ссылка",
+      "expected": "Alpha 75, Beta 15, Gamma 0 for the agreed source dataset.",
+      "explanation": "Zero replaces aNULLresource after the left join, not an absent customer."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Внесите неверный правый фильтр вГДЕ на копии.",
+      "expected": "The check detects the loss ofGamma.",
+      "explanation": "Zero replaces aNULLresource after the left join, not an absent customer."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Inspect joined rows before grouping.",
+      "criteria": "Multiplicity is explained by each request."
+    },
+    {
+      "level": "Applied",
+      "task": "Group by customer reference.",
+      "criteria": "75, 15, 0; the request-free customer remains."
+    },
+    {
+      "level": "Advanced",
+      "task": "Join a second detail table and prevent multiplication before summing.",
+      "criteria": "Cardinality, preaggregation and final reconciliation are explained."
+    }
+  ],
+  "lab": {
+    "title": "Explain join multiplicity and preserve customers without requests.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Inspect joined rows before grouping.",
+      "Group by customer reference.",
+      "Add a wrong right-sideWHEREfilter in a copy.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Multiplicity is explained by each request.",
+      "75, 15, 0; the request-free customer remains.",
+      "The check detects the loss ofGamma."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Alpha 75, Beta 15, Gamma 0 for the agreed source dataset.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The check detects the loss ofGamma."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "NULLin a left join is",
+      "options": [
+        "A missing right-side value",
+        "Always an empty reference",
+        "A customer name"
+      ],
+      "correct": 0,
+      "explanation": "Do not conflateNULLwith other empty values."
+    },
+    {
+      "question": "Customers should be grouped by",
+      "options": [
+        "Name",
+        "Reference",
+        "Page number"
+      ],
+      "correct": 1,
+      "explanation": "Equal names do not imply equal entities."
+    },
+    {
+      "question": "DoesDISTINCTalways fix a badJOIN?",
+      "options": [
+        "Yes",
+        "For numbers",
+        "No"
+      ],
+      "correct": 2,
+      "explanation": "It can hide defects and remove legitimate rows."
+    }
+  ],
+  "review": [
+    "Explain join multiplicity and preserve customers without requests.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "query-mechanism",
+    "query-language",
+    "accumulation-register"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p7",
+    "locale": "en"
+  }
+}

@@ -1,63 +1,19 @@
-# 1С EDUCATION — кандидат двух траекторий A1–A2/P1–P2
+# Два полных курса 1С — интеграционный кандидат
 
-Решение владельца/MASTER 00: 30.10.2026. Рабочая область: 03 CONTENT PRODUCTION. База разработки: `d8721e06a2b1ac953aa18694c07559c62d388700`. Это актуальный main после P4-Q, а не устаревший сентябрьский frontend snapshot. Опубликованный C++ Gold Standard 1.0 сохраняется.
+Актуальная фиксация 31.10.2026: [полный отчёт](full-course-20261031/REPORT_RU.md). **IMPLEMENTED84 темы/168 RU/EN; общая готовность к публикации PARTIAL.** Единственный кандидат — Draft PR #63; main/production/merge/Release не меняются.
 
-**Статус: IMPLEMENTED / AUTOMATED PASS в пределах кандидата. Общая приёмка: PARTIAL.** Main, production и существующие runtime/UI/Identity contracts не изменены. Слияние и официальный выпуск не поручались.
+P: onec, 12 модулей/52 темы, «Программирование на 1С: Предприятие 8 — от основ до профессиональной разработки». A: 1c-enterprise, 8 модулей/32 темы, «Основы использования и конфигурирования 1С: Предприятие». Итог каждого: 3 варианта×24 вопроса, 4 практики, 3 проекта на выбор. Runtime/авторство/сертификация не подтверждаются локальной самопроверкой.
 
-Актуальный milestone: [A2P2_RU.md](A2P2_RU.md), native/progress/browser/evidence и оставшиеся gates.
+Открытие: курсы через courses/onec-education/index.html на статическом HTTP сервере; ссылки candidateRoute в manifest. Полный Studio шаблон открывается из лабораторной или общего Project Studio, сохраняет отдельные работы и provenance; Run не выполняет BSL. Нативные инструкции: native/README_RU.md, native/README_A2P2_RU.md, native/README_FULL_RU.md в каталоге courses/onec-education/. Текущая reference проверка — официальная 8.3.27.2214, не training8.3.27.1508.
 
-## Консолидация по решению MASTER 00
+Воспроизводимые проверки из корня repo:
 
-Основной кандидат — только PR #63. Единые Course ID `onec`/`1c-enterprise`; текущая версия пакетов `0.3.0-a2p2`. Карта всех 95 исходных тем #62, выборочный перенос практики и точный архив: [CONSOLIDATION_RU.md](CONSOLIDATION_RU.md). Итог — 84 темы, 80 прежних ID сохранены. Shared v1 и REQ-fixture побайтно прежние; новые общие лаборатории находятся в `supplement.v1.json`, а новые попытки сохраняют ревизию без переписывания прежних сохранений.
-
-Итоговый review 03/05: [REVIEW_0305_RU.md](REVIEW_0305_RU.md). Разделение наполнения и выпуска: [P4Q_GATE_REVIEW_RU.md](P4Q_GATE_REVIEW_RU.md). A1.3 имеет новую ревизию; прежние попытки сохраняются.
-
-## Что реализовано
-
-- Самостоятельный P: Course ID `onec`, язык `onec`, существующие aliases `1c`,`bsl`, расширения `.bsl`/`.os`. Полная программа P1–P12: 52 стабильных Topic ID (48 прежних + 4 сохранённых добавления).
-- Самостоятельный A: Course ID `1c-enterprise`. Полная программа A1–A8: 32 стабильных Topic ID.
-- Реализованы A1/A2 по 4 урока, P1 — 4 и P2 — 5: всего 17 уроков/34 RU/EN payloads. Остальные 67 тем PLANNED.
-- Общий версионированный справочник/диаграммы/предпосылки v1 без переноса completion между курсами. Schema CP-1.1 остаётся побайтно прежней; два новых пакета проходят её generic validator.
-- Проверяемый изолированный UI кандидата, вопросы и история попыток, отдельный локальный самоотчёт по каждому курсу, заметки проекта и безопасное копирование с новым ID/provenance без переноса прогресса.
-- Сохранён исходный A1/P1 native kit; отдельный A2/P2 реально хранит справочники/документы, проверяет повторные сеансы/restore/изменение копии и syntax/semantic negative controls.
-- Автономный пакет теории/моделей/самопроверки с исходниками лабораторной. Платформа 1С и чужие конфигурации не включаются.
-
-## Как открыть для проверки
-
-Из корня checkout запустите любой локальный статический сервер, привязанный к loopback. Откройте:
-
-`/courses/onec-education/index.html#course=1c-enterprise`
-
-`/courses/onec-education/index.html#course=onec`
-
-Открытие HTML двойным щелчком в исходниках не заменяет сервер: браузер может запрещать ESM/fetch. Для автономного открытия создайте пакет:
-
-```text
-node tools/build-onec-offline.mjs НОВЫЙ_КАТАЛОГ_ПАКЕТА
-```
-
-Затем откройте `onec-offline.html` в этой папке. Сборщик отказывается использовать существующий каталог. Прогресс file-origin автономного пакета отделён от прогресса loopback-origin. Автоматический перенос и облачная синхронизация пока не реализованы; исходные данные не удаляются.
-
-## Где находятся данные
-
-`courses/onec/{manifest,curriculum,content-package}.json` и `courses/1c-enterprise/{manifest,curriculum,content-package}.json` — канонические структуры. Учебные тексты находятся только в собственных `lessons/ru` и `lessons/en`. Общие определения — `courses/onec-education/shared.v1.json`; проект — `service-desk.v1.json`; источники — `sources.v1.json`.
-
-Локальные ключи кандидата: `akronikl:it-nexus:onec-candidate:v1:onec` и `akronikl:it-nexus:onec-candidate:v1:1c-enterprise`. Это отдельный кандидат, не приватный account-storage runtime. В рабочий аккаунт или Learning Events эти данные не пишутся. Основные state, legacy C++ и Project Studio не мигрируют.
-
-## Проверки
-
-```text
+~~~text
 node tools/check-onec-regression.mjs
-node --test tests/onec-content.test.mjs
 node tests/onec-browser.mjs
-```
+node tools/build-onec-offline.mjs <НОВЫЙ_КАТАЛОГ>
+~~~
 
-Для браузерного теста задайте путь `NEXUS_PLAYWRIGHT_MODULE` к Playwright 1.62.1, а при использовании установленного Chrome — `NEXUS_CHROME_PATH`. `ONEC_EVIDENCE` и `ONEC_REGRESSION_EVIDENCE` направляйте в новые папки вне checkout. Новый workflow выполняет те же проверки без deployment permissions.
+Для browser нужны Playwright1.62.1 (NEXUS_PLAYWRIGHT_MODULE) и при необходимости NEXUS_CHROME_PATH. ONEC_EVIDENCE/ONEC_REGRESSION_EVIDENCE направляйте вне checkout. Новый каталог native/offline обязателен: прежняя работа не перезаписывается. Платформа 1С и платные services не включаются в архив. Переносимый HTML, его локальный progress и аккаунтное хранилище Studio имеют разные origins/границы; Cloud backup не добавлен, сохраните экспорт.
 
-Нативная лабораторная A1/P1: `courses/onec-education/native/README_RU.md`; A2/P2: `courses/onec-education/native/README_A2P2_RU.md`. Она требует уже установленную официальную платформу и новый каталог эксперимента. Платные ресурсы и сервер не нужны.
-
-## Что ещё не принято
-
-Активные маршруты `#course=onec` и `#course=1c-enterprise` в основном приложении, приватный прогресс аккаунта, Cloud Sync, включение в действующий SEC-PWA-контур и Project Studio adapter требуют отдельного согласования 00/02/07/01. Кандидат не меняет существующие карточки PLANNED на AVAILABLE. Полные EULA community/EDT и точной training-поставки имеют перечисленные в аудите пробелы. Физические Android/iPhone, Safari/WebKit и независимая предметная рецензия — NOT RUN.
-
-Открывать новые runtime/provider contracts в этой ветке без маршрутизации запрещено. Следующий шаг — приёмка этого конкретного кандидата и согласование интеграции, затем согласованный Studio contract и A3/P3 в одном потоке.
+История:[консолидация 95→84](CONSOLIDATION_RU.md), [A2/P2](A2P2_RU.md), [review03/05 и P4-Q](P4Q_GATE_REVIEW_RU.md), [S1review](STUDIO_S1_REVIEW_RU.md). Эти акты сохраняют прежний объём, актуальное закрытие R06 и новые риски находятся в полном отчёте. Воспроизводимые доказательства и хеши — full-course-20261031/. Каталог остаётся PLANNED до приёмки S2 и полного releasegate. Оставшиеся внешние условия:[runtime readiness](full-course-20261031/RUNTIME_READINESS_RU.md).

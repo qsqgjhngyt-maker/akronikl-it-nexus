@@ -5,6 +5,7 @@ const fail=code=>{throw Object.assign(Error(code),{code})};
 const size=s=>new TextEncoder().encode(s).length;
 export const STUDIO_PROFILE='onec-editor-s1';
 export const NATIVE_FILES=Object.freeze(['Configuration.xml','Catalogs/Клиенты.xml','Catalogs/Услуги.xml','Enums/СтатусыЗаявки.xml','Documents/ЗаявкаУслуги.xml','Documents/ЗаявкаУслуги/Ext/ObjectModule.bsl','Ext/ManagedApplicationModule.bsl','Languages/Русский.xml','Subsystems/УчебнаяСлужба.xml']);
+export const FULL_NATIVE_FILES=Object.freeze([...NATIVE_FILES,'InformationRegisters/ТарифыУслуг.xml','AccumulationRegisters/Трудозатраты.xml','AccumulationRegisters/Обязательства.xml']);
 export function title(value){if(typeof value!=='string'||!value.isWellFormed()||!value.trim()||value.length>120||/[\u0000-\u001f\u007f]/.test(value))fail('TITLE');return value.trim()}
 export function validateOnecWorkspace(value,{metadataEditable=false}={}){
  if(!value||value.languageId!=='onec'||!Array.isArray(value.files)||!value.files.length||value.files.length>IMPORT_LIMITS.files)fail('FORMAT');
@@ -38,8 +39,8 @@ export function onecExportSources(project,workspace=project.workspace){
 }
 export function bindingFor(curriculum,topicId){
  if(!['onec','1c-enterprise'].includes(curriculum?.courseId))fail('COURSE');
- const module=curriculum.modules.find(m=>m.status==='IMPLEMENTED'&&['onec.p2','1c-enterprise.a2'].includes(m.moduleId||m.id)&&m.topics.some(t=>t.topicId===topicId&&t.status==='IMPLEMENTED'));
+ const module=curriculum.modules.find(m=>m.status==='IMPLEMENTED'&&m.topics.some(t=>t.topicId===topicId&&t.status==='IMPLEMENTED'));
  // Curriculum использует id в зависимости от CP версии; topic binding всегда явный.
  const topic=module?.topics.find(t=>t.topicId===topicId);if(!topic)fail('TOPIC');
- return{courseId:curriculum.courseId,topicId,moduleId:module.moduleId||module.id,contentRevision:topic.contentRevision,configurationRevision:'0.2.0-a2p2'};
+ return{courseId:curriculum.courseId,topicId,moduleId:module.moduleId||module.id,contentRevision:topic.contentRevision,configurationRevision:curriculum.modules.indexOf(module)>=2?'1.0.0-rc.1':'0.2.0-a2p2'};
 }

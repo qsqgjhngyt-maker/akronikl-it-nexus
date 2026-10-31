@@ -3,9 +3,11 @@ import {loadLocalIdentity,activePrincipalId,personalWorkspaceId} from '../core/i
 import {createPrivateAccessModel,accessSummary} from '../collaboration/access-control.js';
 import {appendAuditEvent,listAuditEvents} from '../collaboration/audit-log.js';
 import {queueProjectSync} from '../sync/sync-queue.js';
+import {assertProjectWriter} from './project-writer.js';
 
 const PROJECTS_KEY='akronikl:it-nexus:projects:v1';
 const DB_SCHEMA_VERSION=2;
+const DB_SNAPSHOT=Symbol('project-db-source');
 
 const now=()=>new Date().toISOString();
 const clone=value=>JSON.parse(JSON.stringify(value));
@@ -57,12 +59,15 @@ function migrateDb(raw){
 }
 
 export function loadProjectDb(){
-  const raw=parse(storage()?.getItem(PROJECTS_KEY),defaultDb());
-  const {db,changed}=migrateDb(raw);
-  if(changed)storage()?.setItem(PROJECTS_KEY,JSON.stringify({...db,updatedAt:db.updatedAt||now()}));
+  const source=storage().getItem(PROJECTS_KEY);let raw;
+  try{raw=source===null?defaultDb():JSON.parse(source)}catch{throw Error('PROJECT_DB_UNREADABLE')}
+  if(!raw||(raw.schemaVersion!==undefined&&![1,2].includes(raw.schemaVersion))||!raw.projects||typeof raw.projects!=='object'||Array.isArray(raw.projects)||Object.entries(raw.projects).some(([id,p])=>['__proto__','prototype','constructor'].includes(id)||!p||p.id!==id||typeof p.title!=='string'||!p.title.trim()))throw Error('PROJECT_DB_INVALID');
+  const {db}=migrateDb(raw);
+  // Чтение никогда не записывает migration поверх повреждений или чужих изменений.
+  Object.defineProperty(db,DB_SNAPSHOT,{value:{source,account:verifiedAccount().accountId},enumerable:true,configurable:true});
   return db;
 }
-export function saveProjectDb(db){const next={...db,schemaVersion:DB_SCHEMA_VERSION,updatedAt:now()};storage()?.setItem(PROJECTS_KEY,JSON.stringify(next));return next}
+export function saveProjectDb(db){assertProjectWriter();const captured=db?.[DB_SNAPSHOT],store=storage();if(!captured||captured.account!==verifiedAccount().accountId)throw Error('PROJECT_DB_SNAPSHOT_REQUIRED');if(store.getItem(PROJECTS_KEY)!==captured.source)throw Error('PROJECT_DB_CHANGED');const next={...db,schemaVersion:DB_SCHEMA_VERSION,updatedAt:now()},bytes=JSON.stringify(next);store.setItem(PROJECTS_KEY,bytes);Object.defineProperty(next,DB_SNAPSHOT,{value:{source:bytes,account:captured.account},enumerable:true,configurable:true});return next}
 export function listProjects(){return Object.values(loadProjectDb().projects).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||''))).map(clone)}
 export function getProject(id){const item=loadProjectDb().projects?.[id];return item?clone(item):null}
 
@@ -94,6 +99,7 @@ export function applyCloudProject(remoteProject,{serverRevision=0,syncedAt=now()
 export function putProject(project){
   if(!project?.id)throw new Error('Project id is required.');
   const db=loadProjectDb();const prev=db.projects[project.id];const stamp=now();
+  if(prev&&Number(project.sync?.localRevision??project.sync?.revision)!==Number(prev.sync?.localRevision??prev.sync?.revision??0))throw Error('PROJECT_REVISION_CHANGED');
   const base=normalizeProject({...clone(project),access:project.access||prev?.access});
   const previousRevision=Number(prev?.sync?.localRevision??prev?.sync?.revision??0);
   const localRevision=previousRevision+1;
@@ -105,8 +111,9 @@ export function putProject(project){
   return clone(next);
 }
 
-export function patchProject(id,patch){
+export function patchProject(id,patch,{expectedLocalRevision}={}){
   const current=getProject(id);if(!current)throw new Error(`Project not found: ${id}`);
+  if(expectedLocalRevision!==undefined&&current.sync.localRevision!==expectedLocalRevision)throw Error('PROJECT_REVISION_CHANGED');
   const next={...current,...clone(patch)};
   if(patch?.manifest)next.manifest={...current.manifest,...clone(patch.manifest)};
   if(patch?.workspace)next.workspace=clone(patch.workspace);
