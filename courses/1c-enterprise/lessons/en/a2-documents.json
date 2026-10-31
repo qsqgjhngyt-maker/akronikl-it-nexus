@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a2",
+  "topicId": "1c-enterprise.a2.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Documents: creation, persistence and request state",
+  "minutes": 110,
+  "goal": "Create and verify a learning document, distinguishing form edits, persisted attributes and posting, and explain rejected writes.",
+  "prerequisites": [
+    "A2.1–A2.2; customer and service references."
+  ],
+  "outcomes": [
+    "Reconcile document number, date, references, minutes and state.",
+    "Explain writing versus posting in this specific workspace.",
+    "Test invalid input without destroying source documents."
+  ],
+  "sections": [
+    [
+      "A document represents a particular event",
+      "Unlike the customer catalog, a document represents one service request. It has a number, date, customer reference, service reference, duration, state and comment. Its number is useful for lookup but does not replace its reference. In the fixed dataset, A200001 points to C001/S001 with 30 minutes; A200002 points to C002/S002 with 45. Dates are explicit so the test does not depend on the current day.",
+      "Do not infer real business rules from this learning model. It defines no invoices, payments, employee time accounting or material consumption. The total 75 is solely the sum of two document duration fields. Calling it revenue would require decisions about rates, currency, rounding and accounting meaning. Always state the unit, selected records and calculation rule alongside a result."
+    ],
+    [
+      "An open form, writing and reading again",
+      "Creating a document produces a new object; editing a form changes its editable state. Writing invokes object rules and persists an admissible state. Before a successful write, an on-screen value does not prove persistence. Close and reopen the document, or start a new session. The native gate does this in its separate REOPEN operation, reading the original total 75 from persisted objects.",
+      "A “saved” message or an open window is insufficient evidence. Verify the intended number and relationships, minutes, state and document count after reading again. An empty list may result from a filter and does not by itself establish a failed write. First identify the infobase, object and record selection, then compare expected and observed values."
+    ],
+    [
+      "Writing is different from posting",
+      "Posting can reflect an operation according to configuration rules, for example by creating register records. A2 explicitly disables posting in metadata. Both documents are saved with Posted=False. The first nevertheless has business state New and the second In progress. The request state is a separate enumeration attribute; it is neither the posting flag nor evidence of payment.",
+      "Do not “repair” the absence of posting by enabling it casually. That would need register design, movement algorithms and negative checks as a new stage. A2’s correct result is precisely persisted, unposted documents. Native case A2.saved-not-posted and the business-state check are considered together to prevent confusing the two meanings."
+    ],
+    [
+      "Rejected writing is observable behavior",
+      "The object module rejects an empty customer or service, minutes outside 0..1440, and an empty state before writing. A rejection must prevent persistence of the invalid new document. The gate tests two particular cases: an empty customer and negative minutes. After catching rejection it counts the documents again; two must remain. An error message without a state check would not prove that invalid data was absent.",
+      "Zero minutes is permitted here while an empty customer reference is not: field meaning determines the rule. This example does not cover arbitrary text or financial rounding. Experiment on a separate copy and preserve rejection evidence instead of changing expectations to match an accidental result. Before creating an additional valid document, choose a distinct number and references and predict the new total. Preserve A200001/A200002."
+    ]
+  ],
+  "diagram": "a2document",
+  "walkthrough": [
+    {
+      "action": "Reconcile A200001 and A200002 after reopening.",
+      "expected": "30+45=75; references C001/S001 and C002/S002."
+    },
+    {
+      "action": "Compare business states with the posting flag.",
+      "expected": "New/In progress, both documents unposted."
+    },
+    {
+      "action": "Inspect the two rejected-write results.",
+      "expected": "Writing was rejected and document count remained 2."
+    }
+  ],
+  "examples": [
+    {
+      "title": "A persisted request",
+      "source": "A200002: C002 → S002; minutes=45; state=ВРаботе; posted=false",
+      "expected": "This is a persisted, unposted request.",
+      "explanation": "Business state is not synonymous with writing or posting."
+    },
+    {
+      "title": "An invalid write",
+      "source": "new request: customer=<empty>; service=S001; minutes=30",
+      "expected": "Rejected; there are still two documents.",
+      "explanation": "The criterion includes both rejection and absence of an extra record."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Identify number, date, reference, business state and posting flag in a request.",
+      "criteria": "Keep each meaning distinct; duration is measured in minutes."
+    },
+    {
+      "level": "Applied",
+      "task": "On a new copy, create your own valid 15-minute request with a distinct number.",
+      "criteria": "Reopening yields three documents and 90 minutes; preserve the two-document source. The fixed-dataset gate is intentionally unsuitable for this modified copy."
+    },
+    {
+      "level": "Advanced",
+      "task": "Design additional checks for 0, 1440, 1441 and an empty service.",
+      "criteria": "The first two boundaries are allowed; 1441 and an empty reference are rejected. Verify post-write state for every attempt."
+    }
+  ],
+  "lab": {
+    "title": "Documents and rejection while preserving the source",
+    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "steps": [
+      "Write the expected two-document table for your dedicated work.",
+      "Reconcile attributes in a new session and record total 75.",
+      "Inspect the gate cases for an empty customer and negative minutes.",
+      "Restore another copy for your own additional document with a distinct number.",
+      "Retain a separate protocol; never alter fixed-gate expectations to conceal added data."
+    ],
+    "expected": [
+      "Documents persist without posting.",
+      "Invalid new writes are rejected; the source dataset remains unchanged."
+    ],
+    "evidence": [
+      "Number→references→minutes→state→posting table.",
+      "A2.*rejected cases and before/after counts.",
+      "A separate workspace ID and protocol for your own request."
+    ],
+    "negative": "Preserve errors in the protocol. Do not disable BeforeWrite or enable posting to make an invalid document pass."
+  },
+  "mistakes": [
+    [
+      "“In progress means posted.”",
+      "They are separate fields and mechanisms."
+    ],
+    [
+      "“An error appeared, so invalid data cannot exist.”",
+      "Read again and verify counts and particular records."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What does Posted=False mean in A2?",
+      "options": [
+        "The document cannot persist",
+        "It can persist; posting is disabled",
+        "The customer was deleted"
+      ],
+      "correct": 1,
+      "explanation": "The workspace persists documents without register movements."
+    },
+    {
+      "question": "Which check establishes rejection of an invalid write?",
+      "options": [
+        "Only a message",
+        "Only a closed form",
+        "Rejection and unchanged document count"
+      ],
+      "correct": 2,
+      "explanation": "Check both behavior and persisted state."
+    },
+    {
+      "question": "How should you add your own request safely?",
+      "options": [
+        "Use a separate copy and distinct number",
+        "Overwrite A200001",
+        "Clear earlier documents"
+      ],
+      "correct": 0,
+      "explanation": "Keep source work and its criteria reviewable."
+    }
+  ],
+  "review": [
+    "Explain form state, persistence and posting.",
+    "Show invalid-write evidence.",
+    "Next: navigating between lists and objects."
+  ],
+  "sources": [
+    "documents",
+    "catalogs",
+    "bsl-language",
+    "cli"
+  ],
+  "contentRevision": "0.3.0-a2p2",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.a2p2.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_A2P2_EN.md",
+  "nativeCaseIds": [
+    "A2.saved-not-posted",
+    "A2.business-state-not-posting",
+    "A2.empty-reference-rejected",
+    "A2.negative-minutes-rejected",
+    "A2.failed-writes-preserved-count"
+  ],
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
+    "sourcePolicy": "primary-source-links-and-observed-native-results",
+    "studentAuthorshipVerified": false
+  }
+}

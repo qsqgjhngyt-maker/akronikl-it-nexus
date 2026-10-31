@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p8",
+  "topicId": "onec.p8.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Directives and calls",
+  "minutes": 120,
+  "goal": "Choose form context directives by data dependencies and call cost.",
+  "prerequisites": [
+    "onec.p7; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Choose form context directives by data dependencies and call cost.",
+    "Call with 30, 1200.",
+    "Compare explicit inputs across contexts."
+  ],
+  "sections": [
+    [
+      "Directives select execution context",
+      "AtClient selects client execution; AtServer uses the form’s server context; AtServerNoContext does not automatically receive it. Method names do not select execution location. Compiler and runtime availability follow actual directives and module type.",
+      "A managed form is an interaction boundary, not the only data source. Values occupy form buffers, objects and persisted records at different times. Trace read, edit, transfer and write to identify unsaved snapshots. Refresh must not silently replace user input with another request’s state. Distinguish visible values from accepted business state throughout the workflow."
+    ],
+    [
+      "No-context calls need explicit inputs",
+      "A pure calculation can use a no-context server method with explicit minutes/rate. Reading form attributes there reveals a hidden dependency to remove. Passing the whole form is not parameter design. A no-context call alone does not prove speedup without data-volume measurements.",
+      "Context determines available operations and required inputs. Pure calculations need numbers; document reads need identity and an available server environment; focus handling needsUI. Do not pass whole forms instead of designing minimal contracts. Specify serialized inputs, outputs and reliable-side validation independently of client hints. Context availability and permission authorization remain separate concerns."
+    ],
+    [
+      "Use context deliberately",
+      "A form-state operation may legitimately need context. Do not move everything toNoContext as a slogan. Separate data acquisition, pure computation andUIupdates. A matrix shows what can be tested without a window and what actually requires form state.",
+      "Bind asynchronous actions to a specific intent/version. Users can close forms, edit data or start another operation while awaiting replies. Late responses must validate relevance before acting. UIcancellation does not promise rollback of committed server work. Separate pending, accepted, unknown, rejected and canceled states with distinct verification scenarios rather than one ambiguous success flag."
+    ],
+    [
+      "Include a wrong-context check",
+      "Compare two calculation versions with identical explicit inputs. In an experimental copy, access a form attribute fromNoContext and detect the dependency. Do not hide it in a global variable. Test missing input and repeats so prior form state cannot influence the next result.",
+      "Test both expected and unexpected event ordering:delays, double-clicks, cancel and closing with unsaved input. Reconcile effect count and database state through fresh reads. File-mode compilation of client directives proves only that context; it does not measure network routing, physical mobile acceptance or isolatedStudioBSLexecution. Record these boundaries so successful checks are not overstated."
+    ]
+  ],
+  "diagram": "p8-2",
+  "walkthrough": [
+    {
+      "action": "Call with 30, 1200.",
+      "expected": "600 independent of current form state."
+    },
+    {
+      "action": "Compare explicit inputs across contexts.",
+      "expected": "Results agree; transfer differences are described."
+    },
+    {
+      "action": "Add a prohibited hidden dependency in a copy.",
+      "expected": "The failure is detected; the fix introduces a parameter, not global state."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "&НаСервереБезКонтекста\nФункция СтоимостьБезФормы(Минуты, Тариф)\n    Возврат Окр(Минуты * Тариф / 60, 2);\nКонецФункции",
+      "expected": "30, 1200→600 without reading form attributes.",
+      "explanation": "The public version validates types/ranges; the directive does not replace validation."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Добавьте запрещённую скрытую зависимость в копии.",
+      "expected": "The failure is detected; the fix introduces a parameter, not global state.",
+      "explanation": "The public version validates types/ranges; the directive does not replace validation."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Call with 30, 1200.",
+      "criteria": "600 independent of current form state."
+    },
+    {
+      "level": "Applied",
+      "task": "Compare explicit inputs across contexts.",
+      "criteria": "Results agree; transfer differences are described."
+    },
+    {
+      "level": "Advanced",
+      "task": "Identify a method that needs context and justify its minimal boundary.",
+      "criteria": "Choice follows data and tests rather than directive names."
+    }
+  ],
+  "lab": {
+    "title": "Choose form context directives by data dependencies and call cost.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Call with 30, 1200.",
+      "Compare explicit inputs across contexts.",
+      "Add a prohibited hidden dependency in a copy.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "600 independent of current form state.",
+      "Results agree; transfer differences are described.",
+      "The failure is detected; the fix introduces a parameter, not global state."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "30, 1200→600 without reading form attributes.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The failure is detected; the fix introduces a parameter, not global state."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "DoesNoContext automatically see form attributes?",
+      "options": [
+        "No",
+        "Always",
+        "Only by name"
+      ],
+      "correct": 0,
+      "explanation": "Pass dependencies explicitly."
+    },
+    {
+      "question": "Does a directive replace input validation?",
+      "options": [
+        "Yes",
+        "No",
+        "For numbers"
+      ],
+      "correct": 1,
+      "explanation": "Execution location differs from value contract."
+    },
+    {
+      "question": "Is a contextual call always wrong?",
+      "options": [
+        "Yes",
+        "For every form",
+        "No"
+      ],
+      "correct": 2,
+      "explanation": "The choice depends on required state."
+    }
+  ],
+  "review": [
+    "Choose form context directives by data dependencies and call cost.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "form-editor"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p8",
+    "locale": "en"
+  }
+}

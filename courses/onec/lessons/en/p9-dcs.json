@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p9",
+  "topicId": "onec.p9.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Data set and resources",
+  "minutes": 120,
+  "goal": "Build a data composition schema and reconcile resources against independent source documents.",
+  "prerequisites": [
+    "onec.p8; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Build a data composition schema and reconcile resources against independent source documents.",
+    "Reconcile raw dataset rows.",
+    "Generate groups and grand total."
+  ],
+  "sections": [
+    [
+      "A schema describes data",
+      "DCS separates data description, settings, layout and output. A schema defines datasets, fields, relationships and parameters. TheMinutes resource specifies aggregation rather than merely a numeric column. Define dataset granularity and a three-document expectation before using a designer.",
+      "Define the question and granularity before composition. Customer-minute sums, average document cost and open-request counts need distinct resources/denominators. Similar-looking reports are not interchangeable. Use uneven groups and independent calculations to expose averaging/grouping errors that symmetric toy examples can hide. Check underlying identities before interpreting the final visual representation."
+    ],
+    [
+      "Resources depend on granularity",
+      "An already customer-grouped dataset can be summed again only with correct multiplicity. A bad join doubles resources beforeDCS. Check raw query rows before report groupings. A computed field with a nice name cannot repair lost or extra records.",
+      "Schema describes available data, settings select retrieval/presentation, and output produces a result. Changing one level does not silently authorize changing another. Record parameters, variant, time and units. Saved settings usually are not frozen data snapshots; new documents can legitimately change the same variant. Preserve membership and observed values for reproducibility as well as the configuration of the report."
+    ],
+    [
+      "Settings differ from the source set",
+      "One schema can support multiple report variants. Users change available fields, filters and groupings without silently gaining forbidden data scope. Check permissions and dataset restrictions separately. Preserve variant and parameters so another reviewer reproduces the same question.",
+      "External components and exports cross distinct boundaries. Processors execute code and need provenance, authority and environment checks. Printed files present data under edition constraints. In-memory generation is not actual saving or printing. Explain unavailable capabilities honestly; circumventing platform limits is not an acceptable educational workaround. Preserve source records when output fails or cancellation occurs."
+    ],
+    [
+      "Accept from source evidence",
+      "For 30/45/15, expect 90 minutes and customer groups 75/15. Reconcile detail and grand total, then include a request-free customer and empty period. Change one record in a copy and regenerate. A prior saved result does not prove a fresh run; show parameters, time and membership.",
+      "Trace each report row to source facts. Verify membership/units, then aggregation/presentation. A deliberately wrong filter in a copy must alter the expected result and be detected. Repeat ordinary, empty and boundary datasets after correction. This demonstrates test sensitivity rather than merely generating a plausible screen once without a runtime error."
+    ]
+  ],
+  "diagram": "p9-0",
+  "walkthrough": [
+    {
+      "action": "Reconcile raw dataset rows.",
+      "expected": "Three source documents without multiplication."
+    },
+    {
+      "action": "Generate groups and grand total.",
+      "expected": "75, 15 and 90 in minutes."
+    },
+    {
+      "action": "Test an empty period and request-free customer.",
+      "expected": "Agreed empty/zero result, not a stale total."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Набор: Клиент,Минуты; Ресурс: СУММА(Минуты); Группировка: Клиент",
+      "expected": "75+15=90 for 30, 45, 15 without duplicates.",
+      "explanation": "This is a schema specification; test actualDCSin a createdReportobject."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Проверьте пустой период и клиента без заявок.",
+      "expected": "Agreed empty/zero result, not a stale total.",
+      "explanation": "This is a schema specification; test actualDCSin a createdReportobject."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Reconcile raw dataset rows.",
+      "criteria": "Three source documents without multiplication."
+    },
+    {
+      "level": "Applied",
+      "task": "Generate groups and grand total.",
+      "criteria": "75, 15 and 90 in minutes."
+    },
+    {
+      "level": "Advanced",
+      "task": "Create a second variant from the same schema and prove settings independence.",
+      "criteria": "Both parameter sets and expected identities are preserved."
+    }
+  ],
+  "lab": {
+    "title": "Build a data composition schema and reconcile resources against independent source documents.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Reconcile raw dataset rows.",
+      "Generate groups and grand total.",
+      "Test an empty period and request-free customer.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Three source documents without multiplication.",
+      "75, 15 and 90 in minutes.",
+      "Agreed empty/zero result, not a stale total."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "75+15=90 for 30, 45, 15 without duplicates.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Agreed empty/zero result, not a stale total."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "DoesDCSautomatically fix wrongJOINmultiplicity?",
+      "options": [
+        "No",
+        "Yes",
+        "For every resource"
+      ],
+      "correct": 0,
+      "explanation": "Check the source set first."
+    },
+    {
+      "question": "TheMinutesresource defines",
+      "options": [
+        "Color",
+        "Agreed aggregation",
+        "A secret"
+      ],
+      "correct": 1,
+      "explanation": "A number needs meaning and units."
+    },
+    {
+      "question": "One schema can have",
+      "options": [
+        "Only one view",
+        "Only a certificate",
+        "Multiple variants"
+      ],
+      "correct": 2,
+      "explanation": "Schema and settings are separate."
+    }
+  ],
+  "review": [
+    "Build a data composition schema and reconcile resources against independent source documents.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "dcs",
+    "training-download",
+    "safe-eval"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p9",
+    "locale": "en"
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p10",
+  "topicId": "onec.p10.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Profiling and optimization",
+  "minutes": 120,
+  "goal": "Choose a measurable operation and optimize without losing correctness or platform budgets.",
+  "prerequisites": [
+    "onec.p9; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Choose a measurable operation and optimize without losing correctness or platform budgets.",
+    "Measure one-operation baseline.",
+    "Change one bottleneck."
+  ],
+  "sections": [
+    [
+      "Metrics answer a question",
+      "Form-open time, server calls, memory and query time are different metrics. Define measurement boundaries, volume and environment. “Feels faster” is not acceptance. Use a small synthetic benchmark and explicitly distinguish it from field latency.",
+      "Engineering quality follows invariants, not absence of exceptions. Balance uses admissible amounts, permissions authorized scope, diagnostics explainable failure without leaks. Specify what survives errors and concurrent actions. Positive cases prove utility; negative cases prove boundaries. Denying everything is not a universally correct security implementation. Evidence needs both operational success and correctly bounded rejection."
+    ],
+    [
+      "Profiles locate bottlenecks",
+      "Collect baseline, then identify dominant operations. Optimizing a negligible function may not affect users. Count calls and repeated computations. Avoid changing algorithm, data andUIat once; sequential changes identify causes and permit rollback.",
+      "Transactions, locks and authorization solve different problems. Atomicity coordinates one operation, locking interacting operations, and rights constrain subjects. None proves the others. Identify decision point, read data and authorized actor for each failure scenario. Choose minimal protection rather than enabling every capability or broadening privileges. A context compile check is not a multi-user access proof."
+    ],
+    [
+      "Control comparison conditions",
+      "Use equal data/versions, repeated runs and an agreed cache policy. Check values before speed. Removing permission or preservation checks is not optimization. One local timing is not p95, and small-data success does not prove million-row scaling.",
+      "Measurement/observability must preserve privacy. Use synthetic IDs, bounded logs and defined metrics. Passwords/tokens are unnecessary even for leak demonstrations; use canaries. One timing is not p95, and one profile result does not cover every role/configuration combination. Keep raw diagnostics restricted and publish only sufficient sanitized evidence tied to the actual test environment."
+    ],
+    [
+      "Budgets and rollback",
+      "Record budget, observed result and rejection conditions. Preserve regressions and return to the accepted version without deleting work. NEXUS-PERF-01startup limits remain independent of teaching benchmarks. Test offline compression too: smaller files must preserve lesson access and progress.",
+      "Security acceptance needs discriminating tests in a permitted environment. Races need two controlled sessions, roles allowed work plus bypass attempts, and isolation denial of a specific resource. Preserve traces/post-failure state and repeat a successful control. Unsupported environments yieldNOTRUN; static analysis or diagrams cannot automatically fill that evidence gap. Report the remaining gate explicitly."
+    ]
+  ],
+  "diagram": "p10-3",
+  "walkthrough": [
+    {
+      "action": "Measure one-operation baseline.",
+      "expected": "Conditions and units are explicit."
+    },
+    {
+      "action": "Change one bottleneck.",
+      "expected": "All control values agree."
+    },
+    {
+      "action": "Repeat measurements and check regressions.",
+      "expected": "Variability and limits are recorded; security checks remain."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "baseline→profile→onechange→correctness→repeatmeasure→decision",
+      "expected": "Accept measured improvement with equivalent results and preserved gates.",
+      "explanation": "Do not invent numbers; fill the table from actual measurements."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Повторите измерения и проверьте регрессию.",
+      "expected": "Variability and limits are recorded; security checks remain.",
+      "explanation": "Do not invent numbers; fill the table from actual measurements."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Measure one-operation baseline.",
+      "criteria": "Conditions and units are explicit."
+    },
+    {
+      "level": "Applied",
+      "task": "Change one bottleneck.",
+      "criteria": "All control values agree."
+    },
+    {
+      "level": "Advanced",
+      "task": "Document a rejected optimization that speeds up an incorrect report.",
+      "criteria": "Identity differences are shown and the correct version preserved."
+    }
+  ],
+  "lab": {
+    "title": "Choose a measurable operation and optimize without losing correctness or platform budgets.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Measure one-operation baseline.",
+      "Change one bottleneck.",
+      "Repeat measurements and check regressions.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Conditions and units are explicit.",
+      "All control values agree.",
+      "Variability and limits are recorded; security checks remain."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Accept measured improvement with equivalent results and preserved gates.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Variability and limits are recorded; security checks remain."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "May optimization remove permission checks for speed?",
+      "options": [
+        "No",
+        "Always",
+        "For small databases"
+      ],
+      "correct": 0,
+      "explanation": "Correctness and security belong to the contract."
+    },
+    {
+      "question": "One local timing is",
+      "options": [
+        "Fieldp 95",
+        "One observation",
+        "Proven scaling"
+      ],
+      "correct": 1,
+      "explanation": "Do not broaden a metric without data."
+    },
+    {
+      "question": "Compare first",
+      "options": [
+        "Color",
+        "Names",
+        "Result correctness"
+      ],
+      "correct": 2,
+      "explanation": "A fast wrong answer is rejected."
+    }
+  ],
+  "review": [
+    "Choose a measurable operation and optimize without losing correctness or platform budgets.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "safe-eval",
+    "managed-locks",
+    "admin-tools"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p10",
+    "locale": "en"
+  }
+}

@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a5",
+  "topicId": "1c-enterprise.a5.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Service catalog",
+  "minutes": 120,
+  "goal": "Create a service catalog with stable codes and duplicate checks.",
+  "prerequisites": [
+    "1c-enterprise.a 4; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
+  ],
+  "outcomes": [
+    "Create a service catalog with stable codes and duplicate checks.",
+    "CreateS1 andS2 with different codes.",
+    "RepeatS1 input."
+  ],
+  "sections": [
+    [
+      "Code differs from name",
+      "A code supports agreed lookup/exchange rules; a name serves people; a reference supplies internal identity. Services can have similar names, so check code and meaning before adding one. Do not create a duplicate merely because a text search missed a row hidden by a filter.",
+      "Start assembly with one complete operator route:select customer/service, enter duration, save and find the request again. Add report variants andUIimprovements afterwards. This ties objects to actions and exposes missing references or fields early, rather than accumulating disconnected screens. Every object should support a named workflow and a measurable persistence check."
+    ],
+    [
+      "Rates can change over time",
+      "A current rate in a card suffices for the initial model but does not describe price history. If an old request must preserve the agreed cost, store its applied rate in the document. P6 introduces periodic prices. Do not silently recalculate old documents from today’s card without a separate business rule.",
+      "Catalogs represent reusable entities; documents represent individual requests. One customer can have many requests and one service many customers. Test that multiplicity synthetically. Creating a new equal-named customer for every request breaks the model even when totals match. Check catalog counts and reference identity separately from arithmetic and appearance."
+    ],
+    [
+      "Duplicates need a criterion",
+      "The teaching set uses unique service codes. Repeating the seed must find existing items rather than insert duplicates. A name lookup alone is not a uniqueness policy. Stop and explain ambiguous matches. Automatically deleting one similar-looking item can destroy document references.",
+      "Usable forms do not replace write rules. Invalid minutes must reject through alternative input routes, and correcting one field must preserve other input. After rejection, perform a valid operation, close and reopen the document. This verifies bothUIutility and durable state rather than merely the ability to display an error."
+    ],
+    [
+      "Verify repeatability",
+      "Create Consultation andSetup with codesS1, S2, then repeat the same-code input. Compare counts and references, not only labels. RenameS1 in a copy and reopen a linked request. Keep source and test copy distinct so rate experiments do not alter earlier work.",
+      "A complete teaching system explains each reported number through source documents and an independent small-data sum. Change one document in a fresh copy and verify recalculation, then reread the source to prove independence. Bind changes and snapshots to work IDs. Matching an infobase name never authorizes overwriting a prior submission."
+    ]
+  ],
+  "diagram": "a5-1",
+  "walkthrough": [
+    {
+      "action": "CreateS1 andS2 with different codes.",
+      "expected": "Two items with independent keys."
+    },
+    {
+      "action": "RepeatS1 input.",
+      "expected": "Count 2 and the sameS1 reference."
+    },
+    {
+      "action": "Try a code collision with a different meaning.",
+      "expected": "A conflict is reported; the existing service is not overwritten."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "S1=Консультация; S2=Настройка; повторS1",
+      "expected": "There remain 2 services; repeatedS1 uses its prior reference.",
+      "explanation": "Repeating a code is not an instruction to create another item."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Попробуйте конфликт кода с другим смыслом.",
+      "expected": "A conflict is reported; the existing service is not overwritten.",
+      "explanation": "Repeating a code is not an instruction to create another item."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "CreateS1 andS2 with different codes.",
+      "criteria": "Two items with independent keys."
+    },
+    {
+      "level": "Applied",
+      "task": "RepeatS1 input.",
+      "criteria": "Count 2 and the sameS1 reference."
+    },
+    {
+      "level": "Advanced",
+      "task": "Design a rate change without altering an old request’s agreed cost.",
+      "criteria": "Current and applied rates are distinguished; an old document is checked."
+    }
+  ],
+  "lab": {
+    "title": "Create a service catalog with stable codes and duplicate checks.",
+    "environment": "Official 1C 8.3.27.x, new training-service-desk copy. Command labels depend on the configuration interface; verify outcomes against data. Training-edition limits are explicit.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "CreateS1 andS2 with different codes.",
+      "RepeatS1 input.",
+      "Try a code collision with a different meaning.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Two items with independent keys.",
+      "Count 2 and the sameS1 reference.",
+      "A conflict is reported; the existing service is not overwritten."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "There remain 2 services; repeatedS1 uses its prior reference.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "A conflict is reported; the existing service is not overwritten."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "A service’s internal identity is",
+      "options": [
+        "Its reference",
+        "Its font",
+        "Its position"
+      ],
+      "correct": 0,
+      "explanation": "Presentation does not replace a key."
+    },
+    {
+      "question": "Under the policy, repeatingS1 should",
+      "options": [
+        "Create a duplicate",
+        "Find the existing item",
+        "DeleteS2"
+      ],
+      "correct": 1,
+      "explanation": "The dataset must be repeatable."
+    },
+    {
+      "question": "Does the current rate describe all history?",
+      "options": [
+        "Yes",
+        "Always for documents",
+        "No"
+      ],
+      "correct": 2,
+      "explanation": "History and fixed prices need an explicit model."
+    }
+  ],
+  "review": [
+    "Create a service catalog with stable codes and duplicate checks.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "training",
+    "designer",
+    "catalogs",
+    "documents",
+    "form-elements"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "1c-enterprise.a5",
+    "locale": "en"
+  }
+}

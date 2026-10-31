@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a2",
+  "topicId": "1c-enterprise.a2.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Navigation: lists, object forms and a verifiable work history",
+  "minutes": 105,
+  "goal": "Build a repeatable user workflow and distinguish list presentation, form buffers and persisted object state.",
+  "prerequisites": [
+    "A2.1–A2.3; your own learning-infobase copy."
+  ],
+  "outcomes": [
+    "Navigate from a list to the intended object and related customer.",
+    "Explain combined filters and diagnose an empty list.",
+    "Record actions and verify writing through reopening."
+  ],
+  "sections": [
+    [
+      "Lists show selections; forms establish object context",
+      "A list supports finding and comparing objects. An object form displays the selected object’s attributes; a selection form returns a reference to another field. These are different tasks even when windows look similar. For requests, first verify the number, then customer and service references. “The second row” is not a stable way to identify A200002 because ordering can change.",
+      "The platform can generate standard forms from metadata. Our original workspace contains the TrainingService subsystem, catalogs and request document; available commands depend on platform settings and permissions. Record workflows by object and operation names rather than button coordinates. If a command is unavailable, record that observation and check the mode and solution. Do not import another vendor configuration just to obtain a familiar screen."
+    ],
+    [
+      "Filters combine rather than replace each other",
+      "In the learning dataset, A200001 belongs to C001 and is New; A200002 belongs to C002 and is In progress. Filtering by C001 leaves one document and 30 minutes. Adding In progress produces an empty intersection. That is an expected result of two conditions, not lost data. To see A200002, clear the customer filter before selecting its state. Clearing both filters restores two requests and 75 minutes.",
+      "Sorting changes order but not the selected set’s total. Distinguish an empty table from loading failure or denied access. Inspect active filters, operating mode and data source. The A2 browser model uses the same synthetic composition for reasoning practice; it does not query your infobase. Its behavior cannot establish LIVE PASS for the actual 1C user interface."
+    ],
+    [
+      "Following references and unsaved edits",
+      "When opening a customer from a document, check code C001 rather than only the Alpha description. The other Alpha, C003, demonstrates why context matters. Navigating back or reopening an item through history opens a known object; navigation is not a write command. Edits can remain in an open form buffer. To cancel deliberately, close without saving and reopen the object to inspect its persisted state.",
+      "History behavior and command positions depend on the interface. Your protocol can simply record the source object, action, destination and rereading method. Navigation history is different from data change history. The latter requires a separately configured mechanism. A2 does not claim enabled infobase version history, user auditing or cloud learning-event logging."
+    ],
+    [
+      "Accept A2 as a connected workflow",
+      "The closing workflow starts with a separate work record, visits customers and two requests, verifies filters and references, and ends with fresh reading. Include an empty-intersection negative case and explain it using the data. Perform write experiments on a separate copy: the source must remain 75 while the changed copy yields 90. Label form observations separately from native-gate results because they exercise different mechanisms.",
+      "Attach an action table, safe screenshots or observed values, a work identifier and limitations. A screenshot lacking filters and an object number is difficult to assess. Nexus completion remains local self-report: it preserves an attempt but verifies neither authorship nor actual infobase state automatically. A3 will deepen search and data quality; P can be studied without transferring A completion."
+    ]
+  ],
+  "diagram": "a2navigation",
+  "walkthrough": [
+    {
+      "action": "Filter by Alpha/C001, then add In progress.",
+      "expected": "First 1/30, then an empty intersection 0/0."
+    },
+    {
+      "action": "Clear the customer filter, then clear state after checking.",
+      "expected": "In progress: A200002/45; without filters: 2/75."
+    },
+    {
+      "action": "Open the referenced customer and return using the document number.",
+      "expected": "Reference context is retained; reopening reads the record state."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Intersection of conditions",
+      "source": "Customer=C001 AND State=ВРаботе → ∅",
+      "expected": "0 documents, 0 minutes.",
+      "explanation": "Each attribute value occurs separately, but not together in one source record."
+    },
+    {
+      "title": "History does not persist a buffer",
+      "source": "Open A200002 → edit buffer → cancel → reopen",
+      "expected": "After cancellation, the source work still holds 45.",
+      "explanation": "This is a manual interface-acceptance scenario; batch evidence is not represented as mouse-driven execution."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Distinguish list, selection and object forms.",
+      "criteria": "Identify record-set lookup, reference selection and particular attribute editing."
+    },
+    {
+      "level": "Applied",
+      "task": "Build a four-row table: all, C001, In progress, C001+In progress.",
+      "criteria": "2/75; 1/30; 1/45; 0/0, with document numbers for each set."
+    },
+    {
+      "level": "Advanced",
+      "task": "Design a “missing request” diagnosis without deleting or overwriting data.",
+      "criteria": "Check infobase, filters, code/number, permissions and rereading; separate hypotheses from observations."
+    }
+  ],
+  "lab": {
+    "title": "A2 workflow and an observable action history",
+    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "steps": [
+      "In your copy, record list→document→customer→document navigation.",
+      "Apply four filter selections and preserve numbers, counts and totals.",
+      "On another copy, edit a form buffer and check cancellation through reopening.",
+      "Attach native persistence-gate evidence separately.",
+      "Close A2 with a work ID, relationships, records, negative case and limitations."
+    ],
+    "expected": [
+      "The workflow is repeatable by object names rather than coordinates.",
+      "Explain the empty intersection and preserve the source."
+    ],
+    "evidence": [
+      "Action table and four control selections.",
+      "Safe observations for performed manual cases; mark unperformed ones NOT RUN.",
+      "Reference your native protocol and working copy."
+    ],
+    "negative": "Do not infer deletion from an empty filtered list. Clear conditions and read again in the same dedicated infobase."
+  },
+  "mistakes": [
+    [
+      "“Navigation history audits attribute changes.”",
+      "They are separate mechanisms; infobase auditing is not claimed."
+    ],
+    [
+      "“Repeating browser-model clicks proves the 1C workflow.”",
+      "The model has no infobase connection; native and manual checks need their own evidence."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Why does C001 + In progress produce an empty list?",
+      "options": [
+        "No record satisfies both conditions",
+        "Documents were deleted",
+        "The platform is not installed"
+      ],
+      "correct": 0,
+      "explanation": "C001 belongs to a New request; In progress belongs to C002."
+    },
+    {
+      "question": "What can reopening an object verify?",
+      "options": [
+        "Learner authorship",
+        "The actual persisted state",
+        "Posting of every document"
+      ],
+      "correct": 1,
+      "explanation": "With the correct infobase and reference, it checks a fresh record read."
+    },
+    {
+      "question": "How should a workflow be recorded for another interface?",
+      "options": [
+        "Only coordinates",
+        "Only button colors",
+        "Objects, actions and expected values"
+      ],
+      "correct": 2,
+      "explanation": "The protocol remains assessable when command positions change."
+    }
+  ],
+  "review": [
+    "Present the complete A2 protocol.",
+    "Distinguish model, batch and manual observations.",
+    "Next: A3 or independent P2 practice."
+  ],
+  "sources": [
+    "form-elements",
+    "catalogs",
+    "documents",
+    "cli"
+  ],
+  "contentRevision": "0.3.0-a2p2",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.a2p2.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_A2P2_EN.md",
+  "nativeCaseIds": [
+    "A2.reference-links",
+    "A2.persisted-total"
+  ],
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
+    "sourcePolicy": "primary-source-links-and-observed-native-results",
+    "studentAuthorshipVerified": false
+  }
+}

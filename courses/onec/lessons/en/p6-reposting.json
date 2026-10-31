@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p6",
+  "topicId": "onec.p6.reposting",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Reposting and duplicate movement prevention",
+  "minutes": 120,
+  "goal": "Prove absence of duplicate movements after repetition, changes and reversal.",
+  "prerequisites": [
+    "onec.p5; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Prove absence of duplicate movements after repetition, changes and reversal.",
+    "PostR1=30, R2=15.",
+    "RepeatR1 and change it to 45."
+  ],
+  "sections": [
+    [
+      "A repeatable transformation",
+      "Posting transforms the current document into a movement set. Identical input should yield an equivalent set regardless of repetition. Compare dimensions, resources, periods and recorder—not merely one total. Opposite duplicates can cancel numerically while leaving invalid records.",
+      "Choose a register from the data question. “Which rate applied?” needs keyed temporal state;“how much was delivered this week?” needs turnover;“what obligation remains?” needs balance. Similar-looking fields do not imply equal mechanisms or invariants. Write a small independent example for each and explain why another register type would answer the wrong question."
+    ],
+    [
+      "A change replaces the prior effect",
+      "Changing 30→45 replaces the recorder’s old effect under the agreed policy. Appending 45 gives 75 incorrectly. For multiline documents, test a removed line: its old movement must disappear. Define behavior for an empty document too.",
+      "Dimensions define slices, resources measured quantities, and recorders provenance where supported. Adding a dimension changes keys and granularity:customer totals may split by service. Define old-data treatment and grand-total reconciliation before restructuring. New granularity is more than another displayed column; it changes writes, uniqueness and the interpretation of historical records."
+    ],
+    [
+      "Failures must not mix versions",
+      "Failure between removing old and writing new records must not leave a partial effect. Inject failure only in a new copy and test atomicity. Reread document/register in a fresh session. Transactions and locks address different concerns: one change’s consistency versus interacting concurrent changes.",
+      "Time boundaries belong in specifications. State uses an as-of moment, turnover an interval, and movements an agreed period. Test before the first fact, exactly at a change and after it. Equal totals without matching identities do not prove correctness:errors for different customers can cancel numerically while allocations remain wrong."
+    ],
+    [
+      "Use a matrix beyond the happy path",
+      "Use post 30, repeat 30, change 45, remove a line, reverse, repost. Record counts and movement identities at every step. Include another recorder to expose accidental deletion of someone else’s set. Preserve both the current invariant and independent earlier documents.",
+      "Trace totals back to original facts. Preserve recorder-level records, independent arithmetic and reversal results. Reposting one document must not affect unrelated sets. For accounting models, test both side equality and analytic meaning. Array exercises demonstrate algorithms but do not replace actual execution of the corresponding platform mechanism. Record that distinction in the evidence and acceptance scope."
+    ]
+  ],
+  "diagram": "p6-4",
+  "walkthrough": [
+    {
+      "action": "PostR1=30, R2=15.",
+      "expected": "Total 45 with independent recorders."
+    },
+    {
+      "action": "RepeatR1 and change it to 45.",
+      "expected": "First 45, then 60; not duplicate-driven 75/90."
+    },
+    {
+      "action": "ReverseR1 and inject failure on a fresh copy.",
+      "expected": "R2 remains 15; failure leaves no partial version."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "R1:30→30→45→отмена;R2:15неизменно",
+      "expected": "Totals 45→45→60→15; R2 is never removed.",
+      "explanation": "Totals includeR1+R2; repeatingR1 does not add another 30."
+    },
+    {
+      "title": "Boundary case",
+      "source": "ОтменитеR1 и испытайте сбой на новой копии.",
+      "expected": "R2 remains 15; failure leaves no partial version.",
+      "explanation": "Totals includeR1+R2; repeatingR1 does not add another 30."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "PostR1=30, R2=15.",
+      "criteria": "Total 45 with independent recorders."
+    },
+    {
+      "level": "Applied",
+      "task": "RepeatR1 and change it to 45.",
+      "criteria": "First 45, then 60; not duplicate-driven 75/90."
+    },
+    {
+      "level": "Advanced",
+      "task": "Add a two-line document and remove one line before reposting.",
+      "criteria": "The removed line’s old movement disappears; other sets remain."
+    }
+  ],
+  "lab": {
+    "title": "Prove absence of duplicate movements after repetition, changes and reversal.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "PostR1=30, R2=15.",
+      "RepeatR1 and change it to 45.",
+      "ReverseR1 and inject failure on a fresh copy.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Total 45 with independent recorders.",
+      "First 45, then 60; not duplicate-driven 75/90.",
+      "R2 remains 15; failure leaves no partial version."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Totals 45→45→60→15; R2 is never removed.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "R2 remains 15; failure leaves no partial version."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "RepeatingR1=30 withR2=15 gives",
+      "options": [
+        "45",
+        "75",
+        "60"
+      ],
+      "correct": 0,
+      "explanation": "A repeat does not create another fact."
+    },
+    {
+      "question": "Deleting all register records forR1 is",
+      "options": [
+        "Required",
+        "Dangerous to other recorders",
+        "Always safe"
+      ],
+      "correct": 1,
+      "explanation": "Replacement is scoped to its own set."
+    },
+    {
+      "question": "Does a correct sum rule out duplicates?",
+      "options": [
+        "Yes",
+        "For numbers",
+        "No; reconcile the set"
+      ],
+      "correct": 2,
+      "explanation": "Compensating duplicates can hide."
+    }
+  ],
+  "review": [
+    "Prove absence of duplicate movements after repetition, changes and reversal.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "information-register",
+    "accumulation-register"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p6",
+    "locale": "en"
+  }
+}

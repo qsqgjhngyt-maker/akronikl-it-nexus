@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a5",
+  "topicId": "1c-enterprise.a5.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Simple service desk model",
+  "minutes": 120,
+  "goal": "Build a minimal service-desk model distinguishing customer, service and request facts.",
+  "prerequisites": [
+    "1c-enterprise.a 4; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
+  ],
+  "outcomes": [
+    "Build a minimal service-desk model distinguishing customer, service and request facts.",
+    "Draw three entities and two relationships.",
+    "CreateC1, S1, R1 on a copy."
+  ],
+  "sections": [
+    [
+      "An entity follows its lifecycle",
+      "A customer exists before and after individual requests; a service describes an offering; a request records an occurrence in time. Repeating customer text in each request creates duplicates and widespread edits after a name change. A catalog reference separates persistent identity from recurring operations.",
+      "Start assembly with one complete operator route:select customer/service, enter duration, save and find the request again. Add report variants andUIimprovements afterwards. This ties objects to actions and exposes missing references or fields early, rather than accumulating disconnected screens. Every object should support a named workflow and a measurable persistence check."
+    ],
+    [
+      "Minimal fields must still be sufficient",
+      "The teaching core needs customer and service codes/names plus a document with references, date, minutes and status. Real phone numbers, addresses and identity documents are unnecessary. Associate each field with a workflow and persistence criterion; otherwise the model grows without testable benefit.",
+      "Catalogs represent reusable entities; documents represent individual requests. One customer can have many requests and one service many customers. Test that multiplicity synthetically. Creating a new equal-named customer for every request breaks the model even when totals match. Check catalog counts and reference identity separately from arithmetic and appearance."
+    ],
+    [
+      "A rule connects objects",
+      "A request selects an existing customer and service; an enumeration supplies allowed statuses. Deleting a referenced customer is not an isolated list cleanup. Specify inactive-customer and historical-document behavior. The foundation course can use marking and reference checks without claiming an industrial archival mechanism.",
+      "Usable forms do not replace write rules. Invalid minutes must reject through alternative input routes, and correcting one field must preserve other input. After rejection, perform a valid operation, close and reopen the document. This verifies bothUIutility and durable state rather than merely the ability to display an error."
+    ],
+    [
+      "A workflow checks cohesion",
+      "Follow createcustomer→createservice→createrequest→findrequest→obtaintotal. Record identity and successful reread at each step. Change the customer’s displayed name and confirm the request still references the same item. This tests model cohesion rather than merely collecting attractive screens.",
+      "A complete teaching system explains each reported number through source documents and an independent small-data sum. Change one document in a fresh copy and verify recalculation, then reread the source to prove independence. Bind changes and snapshots to work IDs. Matching an infobase name never authorizes overwriting a prior submission."
+    ]
+  ],
+  "diagram": "a5-0",
+  "walkthrough": [
+    {
+      "action": "Draw three entities and two relationships.",
+      "expected": "The request references customer and service, not text matches."
+    },
+    {
+      "action": "CreateC1, S1, R1 on a copy.",
+      "expected": "ReopeningR1 preserves keys and 30 minutes."
+    },
+    {
+      "action": "RenameC1 without duplicating it.",
+      "expected": "R1 points to the same key; customer count does not grow."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "КлиентC1 ← ЗаявкаR1 → УслугаS1; R1.Минуты=30",
+      "expected": "R1 stores two references and 30 minutes; C1’s name can change without replacing its reference.",
+      "explanation": "A catalog represents a reusable entity; a document represents an event."
+    },
+    {
+      "title": "Boundary case",
+      "source": "ПереименуйтеC1 без создания дубля.",
+      "expected": "R1 points to the same key; customer count does not grow.",
+      "explanation": "A catalog represents a reusable entity; a document represents an event."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Draw three entities and two relationships.",
+      "criteria": "The request references customer and service, not text matches."
+    },
+    {
+      "level": "Applied",
+      "task": "CreateC1, S1, R1 on a copy.",
+      "criteria": "ReopeningR1 preserves keys and 30 minutes."
+    },
+    {
+      "level": "Advanced",
+      "task": "Add a Priority requirement and justify its location.",
+      "criteria": "The field belongs to the request; type and old-record checks are specified."
+    }
+  ],
+  "lab": {
+    "title": "Build a minimal service-desk model distinguishing customer, service and request facts.",
+    "environment": "Official 1C 8.3.27.x, new training-service-desk copy. Command labels depend on the configuration interface; verify outcomes against data. Training-edition limits are explicit.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Draw three entities and two relationships.",
+      "CreateC1, S1, R1 on a copy.",
+      "RenameC1 without duplicating it.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "The request references customer and service, not text matches.",
+      "ReopeningR1 preserves keys and 30 minutes.",
+      "R1 points to the same key; customer count does not grow."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "R1 stores two references and 30 minutes; C1’s name can change without replacing its reference.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "R1 points to the same key; customer count does not grow."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Where is an individual request fact stored?",
+      "options": [
+        "In a request document",
+        "In a customer name",
+        "In a service color"
+      ],
+      "correct": 0,
+      "explanation": "An event has its own identity and date."
+    },
+    {
+      "question": "Why references instead of repeated names?",
+      "options": [
+        "For fonts",
+        "For stable identity",
+        "To hide minutes"
+      ],
+      "correct": 1,
+      "explanation": "Names may change while keys remain."
+    },
+    {
+      "question": "What data does the teaching desk need?",
+      "options": [
+        "Real identity documents",
+        "Someone else’s customer database",
+        "A minimal synthetic dataset"
+      ],
+      "correct": 2,
+      "explanation": "The workflow is testable without real data."
+    }
+  ],
+  "review": [
+    "Build a minimal service-desk model distinguishing customer, service and request facts.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "training",
+    "designer",
+    "catalogs",
+    "documents",
+    "form-elements"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "1c-enterprise.a5",
+    "locale": "en"
+  }
+}

@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p3",
+  "topicId": "onec.p3.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Array, Structure and Map",
+  "minutes": 120,
+  "goal": "Choose an array, structure or map by the operations required for training requests.",
+  "prerequisites": [
+    "onec.p2; P2: types, branching, loops and numeric boundaries."
+  ],
+  "outcomes": [
+    "Choose an array, structure or map by the operations required for training requests.",
+    "Match three collection types to three operations.",
+    "Group minutes by customer references."
+  ],
+  "sections": [
+    [
+      "Order, named fields and keys",
+      "An array stores a sequence with zero-based indices, useful for traversing request lines. A structure describes a small record with known property names, such as Minutes and Rate. A map associates an admissible key with a value, such as a customer reference with an accumulated total. Choose by required operations rather than storing everything in one familiar type.",
+      "The service-desk calculation may be called from a card, document and report. Separate formulas let one fix leave two old implementations behind. A common computation contract avoids that divergence but needs explicit inputs. List every caller and verify equal units, parameter meaning and result type rather than merely matching function names."
+    ],
+    [
+      "Missing properties are a separate outcome",
+      "A structure’s Property method checks field existence and retrieves its value. Directly reading an absent property causes an error. Existence does not prove value validity: Minutes may be negative. Check existence, type and range in that order so a failure identifies the violated condition. Agree in advance what Undefined means as a map value.",
+      "Describe a function by inputs, preconditions, result and permitted changes. Cost uses numeric minutes/rate, admissible ranges, a rounded number and unchanged input collections. This description selects tests before implementation. If failure returns another type, callers must know explicitly or an error can accidentally participate in arithmetic. A stable contract makes substitution and review possible."
+    ],
+    [
+      "Use identity as the key",
+      "Two customers can share a name but have different references. Grouping by name silently combines their totals. Use references or an explicitly defined stable external code for customer calculations; keep names as presentation. Include equal names with different keys and repeated use of one key with a new value in the test.",
+      "Checking mutation needs more than comparing variable names:two variables can refer to one collection. Snapshot important fields and nested elements before execution, then compare the source afterwards. Run another function on the same input to expose hidden contamination. Keep each test’s setup independent so changing test order cannot alter the outcome."
+    ],
+    [
+      "Collection copies and input preservation",
+      "Assigning a collection to another variable does not guarantee an independent copy of nested objects. Build a new array and explicitly create new structures if their contents will change. Verify source fields after computing the result. Avoid removing elements from the traversed source without a proven algorithm: select the desired elements into a new collection first.",
+      "A semantic negative control differs from a syntax error. Replacing addition with subtraction may compile but must change a named assertion’s result. Keep compilation and executed assertions as separate outcomes. Unavailable platforms, timeouts and incomplete case lists cannot confirm missing results. Preserve original and mutated source hashes and identify the particular assertion that detects the defect."
+    ]
+  ],
+  "diagram": "p3-2",
+  "walkthrough": [
+    {
+      "action": "Create an array 30, 45, 0 and compute its sum.",
+      "expected": "Three elements and total 75; order and input are preserved."
+    },
+    {
+      "action": "Group two equal names with different keys.",
+      "expected": "Two independent keyed totals, not one name-based total."
+    },
+    {
+      "action": "Check a structure missing a required field.",
+      "expected": "Missing-field rejection precedes calculation; the source structure is unchanged."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Данные = Новый Структура(\"Минуты,Тариф\", 30, 1200);\nМинуты = Неопределено;\nЕсть = Данные.Свойство(\"Минуты\", Минуты);",
+      "expected": "Есть=True, Минуты=30; an absent field is checked separately.",
+      "explanation": "Property checks presence, not range. The first array element has index 0."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Проверьте структуру без обязательного поля.",
+      "expected": "Missing-field rejection precedes calculation; the source structure is unchanged.",
+      "explanation": "Property checks presence, not range. The first array element has index 0."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Match three collection types to three operations.",
+      "criteria": "Index, property name and key are distinguished."
+    },
+    {
+      "level": "Applied",
+      "task": "Group minutes by customer references.",
+      "criteria": "Repeated keys accumulate; different keys remain distinct."
+    },
+    {
+      "level": "Advanced",
+      "task": "Transform data without mutating nested source structures.",
+      "criteria": "All source-field snapshots match before and after."
+    }
+  ],
+  "lab": {
+    "title": "Choose an array, structure or map by the operations required for training requests.",
+    "environment": "Official 1C 8.3.27.x, separate file training infobase, thick managed client; common modules are checked in their declared contexts. Record each native run separately.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Create an array 30, 45, 0 and compute its sum.",
+      "Group two equal names with different keys.",
+      "Check a structure missing a required field.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Three elements and total 75; order and input are preserved.",
+      "Two independent keyed totals, not one name-based total.",
+      "Missing-field rejection precedes calculation; the source structure is unchanged."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Есть=True, Минуты=30; an absent field is checked separately.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Missing-field rejection precedes calculation; the source structure is unchanged."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "First array index?",
+      "options": [
+        "0",
+        "1",
+        "Depends on length"
+      ],
+      "correct": 0,
+      "explanation": "Array indexing starts at zero."
+    },
+    {
+      "question": "What does Property check?",
+      "options": [
+        "Price is positive",
+        "The field exists",
+        "A form is open"
+      ],
+      "correct": 1,
+      "explanation": "Validate the value separately."
+    },
+    {
+      "question": "How should customers sharing a name be grouped?",
+      "options": [
+        "By name",
+        "By row color",
+        "By stable key/reference"
+      ],
+      "correct": 2,
+      "explanation": "Presentation is not identity."
+    }
+  ],
+  "review": [
+    "Choose an array, structure or map by the operations required for training requests.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "cli"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p3",
+    "locale": "en"
+  }
+}

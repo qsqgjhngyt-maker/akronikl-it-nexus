@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p4",
+  "topicId": "onec.p4.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Catalogs and references",
+  "minutes": 120,
+  "goal": "Distinguish a catalog reference, editable object and persisted record.",
+  "prerequisites": [
+    "onec.p3; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Distinguish a catalog reference, editable object and persisted record.",
+    "FindC001 and compare reference/object types.",
+    "Change the name, write and reread."
+  ],
+  "sections": [
+    [
+      "A reference is not an edit buffer",
+      "A reference identifies an item; obtaining its object provides editable state. Changing an object field in memory does not prove persistence. Two objects may reflect different read times. Do not save a stale object after another change without an agreed conflict strategy.",
+      "Model changes as well as creation. Customers can be renamed, services repriced, and requests can retain earlier agreed terms. List these events separately to identify catalog data, document snapshots and historical facts. This prevents silently updating every linked request when only current presentation or a current service offering should change."
+    ],
+    [
+      "An empty reference is not an unknown string",
+      "A typed empty reference differs fromUndefined and an empty-name string. Existence checks follow the API and business rule. FindByCode does not create an absent item. Handle absence beforeGetObject so diagnostics identify the missing customer rather than a later incidental error.",
+      "Internal identity and external code solve different problems. References connect infobase objects; codes support imported correspondence. Define uniqueness scope, case handling and absence policy. Two systems can reuse one code for different customers, requiring sender scope or a mapping table. A name search alone cannot resolve this ambiguity safely or justify replacing an existing entity."
+    ],
+    [
+      "Attribute reads have a cost",
+      "Reference access looks simple, but mass traversal can cause many calls. An object suits one card; reports across many rows often need a query selecting required fields. Do not infer performance from code appearance: count calls and measure equal datasets first. P7 examines queries in detail.",
+      "Keep empty references, missing items and deletion-marked objects distinct and define each outcome. An old request must not silently point to a newly created lookalike after reseeding. Compare identities and document relationships before/after; use labels only for human readability. A valid-looking card can otherwise conceal broken history or a duplicate entity."
+    ],
+    [
+      "Persistence needs a fresh read",
+      "Find an item, change its name through the object, write it and obtain a fresh object. Compare identity and value. Test an absent code without implicit creation. Preserve before/after snapshots and verify a linked request still references the same customer.",
+      "Use an ordinary customer, an equal-named second customer and a request-free third customer. Test lookup, rename, reseed and selection. This set exposes implementations that only work when labels happen to be unique. Reopen the source separately afterwards:independent copies are proven by preserved records, not different labels in a launcher list."
+    ]
+  ],
+  "diagram": "p4-1",
+  "walkthrough": [
+    {
+      "action": "FindC001 and compare reference/object types.",
+      "expected": "Their distinct roles are recorded."
+    },
+    {
+      "action": "Change the name, write and reread.",
+      "expected": "The same identity with a new value."
+    },
+    {
+      "action": "Look up an absent code.",
+      "expected": "The empty reference is handled; item count is unchanged."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Ссылка = Справочники.Клиенты.НайтиПоКоду(\"C001\");\nЕсли Не Ссылка.Пустая() Тогда\n    Объект = Ссылка.ПолучитьОбъект();\nКонецЕсли;",
+      "expected": "An existing reference yields an object; absence is handled before editing.",
+      "explanation": "The excerpt neither writes automatically nor creates an absent customer."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Найдите отсутствующий код.",
+      "expected": "The empty reference is handled; item count is unchanged.",
+      "explanation": "The excerpt neither writes automatically nor creates an absent customer."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "FindC001 and compare reference/object types.",
+      "criteria": "Their distinct roles are recorded."
+    },
+    {
+      "level": "Applied",
+      "task": "Change the name, write and reread.",
+      "criteria": "The same identity with a new value."
+    },
+    {
+      "level": "Advanced",
+      "task": "Compare object reads with selecting required report fields.",
+      "criteria": "Convenience, call count and measured cost are distinguished."
+    }
+  ],
+  "lab": {
+    "title": "Distinguish a catalog reference, editable object and persisted record.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "FindC001 and compare reference/object types.",
+      "Change the name, write and reread.",
+      "Look up an absent code.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Their distinct roles are recorded.",
+      "The same identity with a new value.",
+      "The empty reference is handled; item count is unchanged."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "An existing reference yields an object; absence is handled before editing.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The empty reference is handled; item count is unchanged."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Is an in-memory object edit already persisted?",
+      "options": [
+        "No",
+        "Always",
+        "Only with Export"
+      ],
+      "correct": 0,
+      "explanation": "Check writing and rereading separately."
+    },
+    {
+      "question": "An absent code should be",
+      "options": [
+        "Ignored",
+        "Handled explicitly",
+        "Replaced with a name"
+      ],
+      "correct": 1,
+      "explanation": "Lookup does not decide the creation policy."
+    },
+    {
+      "question": "For a bulk report, compare",
+      "options": [
+        "Only function names",
+        "Code color",
+        "Call count and a query"
+      ],
+      "correct": 2,
+      "explanation": "Hidden reads can createN+1."
+    }
+  ],
+  "review": [
+    "Distinguish a catalog reference, editable object and persisted record.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p4",
+    "locale": "en"
+  }
+}

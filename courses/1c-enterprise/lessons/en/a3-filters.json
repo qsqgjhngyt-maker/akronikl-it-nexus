@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a3",
+  "topicId": "1c-enterprise.a3.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Search and filters",
+  "minutes": 120,
+  "goal": "Reconcile search and compound filters against an independent list of expected references.",
+  "prerequisites": [
+    "1c-enterprise.a 2; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
+  ],
+  "outcomes": [
+    "Reconcile search and compound filters against an independent list of expected references.",
+    "Apply only the Alpha filter.",
+    "Add New status using AND."
+  ],
+  "sections": [
+    [
+      "Search locates; filters define a set",
+      "Text search commonly depends on presentation and selected columns; a filter defines a field predicate. Finding one row does not establish completeness. For “Alpha’s active requests,” select the customer by reference and state the status condition. List expected identities beforehand so you check set membership as well as row count.",
+      "Operators verify persisted outcomes, not just entered values. Prepare an identity/customer/status/minute control table before starting. Refer to it after each action rather than remembering the last screen. Hidden filters matter:an absent visible row does not mean deletion. A reliable workflow explains both what changed and which source records must remain unchanged."
+    ],
+    [
+      "Combine conditions explicitly",
+      "Customer=Alpha AND Status=New intersects two sets. OR broadens the result and can include another customer’s requests. Mark each condition separately before taking the intersection. This reveals a wrong union even if its total accidentally matches. Preserve the conditions, not merely the visible page of the list.",
+      "Freeze period, units and selected customer reference for reproducibility. Equal names can represent distinct synthetic entities. Sorting changes order, filtering visible membership, and grouping presentation granularity. Conflating these operations produces wrong explanations despite a technically error-free interface. Always name the operation and identify its expected effect on identities, count and totals before applying it."
+    ],
+    [
+      "Periods define boundaries",
+      "A document date may contain time. A half-open interval from one day’s start to the next is clearer than an implicit “end of day.” Check records exactly on both boundaries. Filtering document date is not necessarily filtering modification or posting time: use the required field and name it in the verification report.",
+      "Use safe, discriminating negative cases. Negative duration tests input rules; incompatible filters test empty results; an omitted experimental-report row tests reconciliation independence. Do not corrupt source work. Each experiment uses a new copy, an expected rejection and a reread confirming prior records survived. Follow rejection with a valid input to show the workflow remains usable."
+    ],
+    [
+      "An empty result is still a result",
+      "Zero rows for deliberately incompatible conditions is a useful test. Clear the filter afterwards and confirm that records were not deleted. Paging and hidden conditions can obstruct reconciliation; record total count, parameters and keys. A display setting changes the visible selection, not the contents of the infobase.",
+      "A control sum supplements rather than replaces identities. Different requests can have identical minute totals. Record conditions, keys, count, sum and discrepancy explanation. If records changed between observations, state time and changes. Do not alter source documents merely to force agreement between reports with different scopes; first make the question and data interval equivalent."
+    ]
+  ],
+  "diagram": "a3-1",
+  "walkthrough": [
+    {
+      "action": "Apply only the Alpha filter.",
+      "expected": "R01, R02; 2 rows, 75 minutes."
+    },
+    {
+      "action": "Add New status using AND.",
+      "expected": "R01; 1 row, 30 minutes."
+    },
+    {
+      "action": "Select a nonexistent customer code, then clear conditions.",
+      "expected": "First 0 rows, then all 3; no data was deleted."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "R01: Альфа/Новая/30; R02: Альфа/Закрыта/45; R03: Бета/Новая/15\nКлиент=Альфа И Статус=Новая",
+      "expected": "Only R01:1 row, 30 minutes.",
+      "explanation": "OR incorrectly includes R02 andR03; count without identities is insufficient."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Выберите несуществующий код клиента, затем снимите условия.",
+      "expected": "First 0 rows, then all 3; no data was deleted.",
+      "explanation": "OR incorrectly includes R02 andR03; count without identities is insufficient."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Apply only the Alpha filter.",
+      "criteria": "R01, R02; 2 rows, 75 minutes."
+    },
+    {
+      "level": "Applied",
+      "task": "Add New status using AND.",
+      "criteria": "R01; 1 row, 30 minutes."
+    },
+    {
+      "level": "Advanced",
+      "task": "Test a filter on 12 requests, including boundary dates and equal names.",
+      "criteria": "Keys and sums are independently calculated; date boundaries are explicit."
+    }
+  ],
+  "lab": {
+    "title": "Reconcile search and compound filters against an independent list of expected references.",
+    "environment": "Official 1C 8.3.27.x, new training-service-desk copy. Command labels depend on the configuration interface; verify outcomes against data. Training-edition limits are explicit.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Apply only the Alpha filter.",
+      "Add New status using AND.",
+      "Select a nonexistent customer code, then clear conditions.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "R01, R02; 2 rows, 75 minutes.",
+      "R01; 1 row, 30 minutes.",
+      "First 0 rows, then all 3; no data was deleted."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Only R01:1 row, 30 minutes.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "First 0 rows, then all 3; no data was deleted."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Alpha AND New returns",
+      "options": [
+        "Only R01",
+        "R01, R02, R03",
+        "Only R02"
+      ],
+      "correct": 0,
+      "explanation": "Both conditions must hold."
+    },
+    {
+      "question": "Zero filtered rows means",
+      "options": [
+        "The infobase was deleted",
+        "No rows matched",
+        "The platform is broken"
+      ],
+      "correct": 1,
+      "explanation": "Clear the filter and verify the source set."
+    },
+    {
+      "question": "What is insufficient to prove a correct filter?",
+      "options": [
+        "Keys and parameters",
+        "An expected list",
+        "Only a row count"
+      ],
+      "correct": 2,
+      "explanation": "Different sets can have equal counts."
+    }
+  ],
+  "review": [
+    "Reconcile search and compound filters against an independent list of expected references.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "training",
+    "designer",
+    "catalogs",
+    "documents",
+    "form-elements"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "1c-enterprise.a3",
+    "locale": "en"
+  }
+}

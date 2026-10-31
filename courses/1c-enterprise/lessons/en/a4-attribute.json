@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a4",
+  "topicId": "1c-enterprise.a4.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Attribute and its type",
+  "minutes": 120,
+  "goal": "Add an attribute on a copy with justified type, default and old-data checks.",
+  "prerequisites": [
+    "1c-enterprise.a 3; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
+  ],
+  "outcomes": [
+    "Add an attribute on a copy with justified type, default and old-data checks.",
+    "Add ExternalNumber on a new copy.",
+    "Save 000042 and reopen the document."
+  ],
+  "sections": [
+    [
+      "A type constrains meaning",
+      "Priority can be an enumeration Low/Normal/High, while an external identifier can be a bounded string. A number is unsuitable for identifiers whose leading zeros matter. Specify admissible values and operations—comparison, ordering, search, calculation—before choosing a type so UI and rules agree with the model.",
+      "Begin by asking whether an existing setting solves the request. A personal list variant needs no storage change; an absent required attribute needs a model and rules. Record the chosen mechanism and rejected alternative. This lets maintainers understand the decision without repeating experiments and avoids unnecessary implementation scope."
+    ],
+    [
+      "Length and precision are requirements",
+      "String length and numeric precision reject unsuitable values but can truncate existing data after a careless change. Test the maximum length and a boundary value. Do not expand fields indefinitely or shrink them without analysis. For duration, explicitly choose integer minutes or fractions rather than relying on display formatting.",
+      "Field types determine operations and boundaries. A string identifier preserves leading zeros, a number supports arithmetic, and a reference supports identity. Specify ordinary, empty and maximum-value examples before applying. Define old-record behavior separately:new fields must not silently rewrite the meaning of an accepted request. Check both existing and newly created documents."
+    ],
+    [
+      "Old records acquire a state",
+      "After adding an attribute, old documents do not automatically acquire meaningful values. Empty and approved defaults can differ. Decide whether old requests can be opened, edited and saved. Test one old and one new document on a copy; do not mass-rewrite source data merely to satisfy a required-field check.",
+      "Applying a change differs from saving development text. Compare editable and database configurations, review the intended diff and restructuring warnings. Update a separate copy and repeat user workflows. A technically valid schema can behave incorrectly, so combine configuration checking with input, writing, reports and fresh reads of old data. One layer does not establish the others."
+    ],
+    [
+      "Comparison records actual scope",
+      "Preserve configuration export and control records first. Compare metadata after the change: one agreed attribute should appear, without lost objects or replaced UUIDs. Verify save, reopen, search by the field and restoration of the prior copy. This demonstrates both the new capability and preservation of previous state.",
+      "Rollback preserves data state as well as code. Renaming a removed field back cannot recover lost values. Verify backup by restoring to a fresh directory and reconciling control records. Keep source and upgraded work as separate instances. If a warning exceeds agreed scope, do not approve blindly; preserve it and investigate on the copy."
+    ]
+  ],
+  "diagram": "a4-2",
+  "walkthrough": [
+    {
+      "action": "Add ExternalNumber on a new copy.",
+      "expected": "The diff contains one field; existing references are preserved."
+    },
+    {
+      "action": "Save 000042 and reopen the document.",
+      "expected": "Six characters; leading zeros are preserved."
+    },
+    {
+      "action": "Enter 13 characters into a length 12 field.",
+      "expected": "The limit is detected and documented; no silent loss is accepted."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "ВнешнийНомер: Строка(12)\nВход: \"000042\"",
+      "expected": "String 000042 is preserved, including leading zeros.",
+      "explanation": "The identifier is not used arithmetically; a numeric type would lose part of its representation."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Введите13 символов при длине12.",
+      "expected": "The limit is detected and documented; no silent loss is accepted.",
+      "explanation": "The identifier is not used arithmetically; a numeric type would lose part of its representation."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Add ExternalNumber on a new copy.",
+      "criteria": "The diff contains one field; existing references are preserved."
+    },
+    {
+      "level": "Applied",
+      "task": "Save 000042 and reopen the document.",
+      "criteria": "Six characters; leading zeros are preserved."
+    },
+    {
+      "level": "Advanced",
+      "task": "Design Priority and old-document behavior.",
+      "criteria": "Type, allowed values, default strategy and before/after checks are specified."
+    }
+  ],
+  "lab": {
+    "title": "Add an attribute on a copy with justified type, default and old-data checks.",
+    "environment": "Official 1C 8.3.27.x, new training-service-desk copy. Command labels depend on the configuration interface; verify outcomes against data. Training-edition limits are explicit.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Add ExternalNumber on a new copy.",
+      "Save 000042 and reopen the document.",
+      "Enter 13 characters into a length 12 field.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "The diff contains one field; existing references are preserved.",
+      "Six characters; leading zeros are preserved.",
+      "The limit is detected and documented; no silent loss is accepted."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "String 000042 is preserved, including leading zeros.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The limit is detected and documented; no silent loss is accepted."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "An identifier 000042 should be stored as",
+      "options": [
+        "A string",
+        "A date",
+        "A boolean"
+      ],
+      "correct": 0,
+      "explanation": "Leading zeros matter."
+    },
+    {
+      "question": "After adding a field, check",
+      "options": [
+        "Only new documents",
+        "Old and new documents",
+        "Only the heading"
+      ],
+      "correct": 1,
+      "explanation": "Old data also needs defined behavior."
+    },
+    {
+      "question": "Shrinking length without analysis is",
+      "options": [
+        "Always safe",
+        "Irrelevant to data",
+        "A risk of value loss"
+      ],
+      "correct": 2,
+      "explanation": "Storage constraints require checking source data."
+    }
+  ],
+  "review": [
+    "Add an attribute on a copy with justified type, default and old-data checks.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "training",
+    "designer",
+    "catalogs",
+    "documents",
+    "form-elements"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "1c-enterprise.a4",
+    "locale": "en"
+  }
+}

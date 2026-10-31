@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a2",
+  "topicId": "1c-enterprise.a2.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Choosing the infobase, mode and a safe working copy",
+  "minutes": 110,
+  "goal": "Prepare your own copy of a real learning solution and prove where changes persist while preserving earlier work.",
+  "prerequisites": [
+    "A1; platform, configuration and data distinctions.",
+    "A dedicated official installation. Never target earlier A1/P1 infobases for loading."
+  ],
+  "outcomes": [
+    "Identify the correct infobase from a complete environment record rather than a shortcut name.",
+    "Distinguish configuration sources, an infobase and a state dump.",
+    "Restore new work, verify its separate directory and retain provenance."
+  ],
+  "sections": [
+    [
+      "Choosing the infobase is part of the task",
+      "A1 used an in-memory model of three requests. The A2/P2 workspace is different: it persists three customers, two services and two documents. Do not carry the earlier 105-minute expectation into A2. Its source documents contain 30 and 45 minutes, totaling 75. Record configuration revision 0.2.0-a2p2 and the complete platform build; matching window titles do not establish matching contents.",
+      "Before starting, record the purpose, a safe directory alias and your work identifier. Never select an organization’s production infobase or an unknown source for this experiment. The course gate creates a previously absent output directory, does not inspect other infobases and adds no startup-list entries. Apply the same rule manually: know the target in advance and keep the source available."
+    ],
+    [
+      "Distinguish the two operating modes",
+      "In 1C:Enterprise mode, a learner works with customers, services and requests through forms. Designer changes the solution definition and performs loading, checking and maintenance. Loading XML in Designer is not ordinary customer entry. After preparing the workspace, open Enterprise mode for user practice. Do not update the database configuration of an arbitrary infobase merely because the command is available.",
+      "The automated gate uses the thick client in managed application mode. A compilation directive restricts the query-based test module to that context. This does not establish execution in a web client, thin client or server cluster. If your environment differs, record the difference and perform a separate check before transferring conclusions. Do not rewrite environment details to resemble the sample."
+    ],
+    [
+      "Sources do not back up application records",
+      "Configuration.xml, object files and BSL define structure and behavior. They can create a new configuration, but do not contain the particular C001–C003 customers or A200001–A200002 documents. An infobase holds record instances; a .dt dump transfers its state. A2 verifies restoration with actual application records, so the mere existence of a dump file is insufficient.",
+      "Restoration into a new infobase should preserve counts, customer references, document numbers and object identity. An object GUID may legitimately match in the source and restored copy. The new work has its own workspace ID and storage location. Replacing every record GUID would defeat state restoration and could break relationships rather than demonstrate independence."
+    ],
+    [
+      "Use a control experiment",
+      "The gate fills source-base, repeats the fill operation and opens a new session. It then restores copy-base, compares identity snapshots and changes only its second document from 45 to 60 minutes. Reopening the copy yields 90; separately reopening the source still yields 75. Together these observations establish independence of the selected instances. A window title containing “copy” does not.",
+      "Keep the source and restored work, safe protocols and differences. Infobases, dumps and private logs remain local. In Nexus, store learning notes separately by course; copying a note creates new work without awarding another course’s completion. Without an installed platform you may study theory and diagrams, but the unperformed native lab remains NOT RUN."
+    ]
+  ],
+  "diagram": "a2workspace",
+  "walkthrough": [
+    {
+      "action": "Choose a new experiment directory and record the version.",
+      "expected": "The directory does not exist; earlier work is recorded only with safe aliases."
+    },
+    {
+      "action": "Run the A2/P2 gate and compare SEED, RESTORED and EDIT_COPY.",
+      "expected": "Both infobases initially yield 75; only the edited copy yields 90."
+    },
+    {
+      "action": "Repeat the command with the same output directory.",
+      "expected": "Rejection occurs before data changes; earlier files and records remain."
+    }
+  ],
+  "examples": [
+    {
+      "title": "A verifiable state chain",
+      "source": "source-base: 75 → dump → copy-base: 75 → edit copy: 90 → source-base: 75",
+      "expected": "Source 75, copy 90.",
+      "explanation": "These are observations from separate sessions. Diagram arrows execute nothing."
+    },
+    {
+      "title": "New work, preserved record identity",
+      "source": "workspace-copy ≠ workspace-source; document GUID(copy) = document GUID(source)",
+      "expected": "Workspace locations/IDs differ; restored record references remain intact.",
+      "explanation": "Do not confuse a work identifier with the identifier of a document inside it."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Classify .bsl, Configuration.xml, .dt, C001 and workspace ID by purpose.",
+      "criteria": "Code; metadata; infobase state; customer business code; separate work identifier."
+    },
+    {
+      "level": "Applied",
+      "task": "Design a protocol that detects editing the source instead of its copy.",
+      "criteria": "Reopen both infobases: source 75, copy 90; retain aliases and identity snapshots."
+    },
+    {
+      "level": "Advanced",
+      "task": "Explain why three customers in both infobases is insufficient restoration evidence.",
+      "criteria": "References, attributes or documents could differ; verify values and relationships as well as counts."
+    }
+  ],
+  "lab": {
+    "title": "My separate A2 workspace",
+    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "steps": [
+      "Read README_A2P2_EN.md; do not load files into earlier A1/P1 work.",
+      "Use the gate with a new output directory and retain NATIVE_A2P2_RESULT.json.",
+      "Compare SEED and RESTORED snapshots, then EDIT_COPY and ORIGINAL_PRESERVED.",
+      "Open your dedicated copy without a startup parameter; no automatic seeding runs.",
+      "Record your work ID, source provenance and untested conditions in course notes."
+    ],
+    "expected": [
+      "3 customers, 2 services, 2 documents; source 75, edited copy 90.",
+      "An existing output directory is rejected; source work remains."
+    ],
+    "evidence": [
+      "Safe environment record and NATIVE_A2P2_RESULT.json.",
+      "Snapshot comparison and a note without personal paths or licensing data."
+    ],
+    "negative": "If the target exists or the source is unknown, stop and choose a new destination. Never restore over the only work copy."
+  },
+  "mistakes": [
+    [
+      "“Every document needs a new GUID after restore.”",
+      "Restoration preserves record identity; the new ID identifies separate work."
+    ],
+    [
+      "“A window labeled 1C is a sufficient environment record.”",
+      "Record the build, configuration, purpose and a safe infobase alias."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What is expected after editing only the copy?",
+      "options": [
+        "Both 90",
+        "Source 75, copy 90",
+        "Source cleared"
+      ],
+      "correct": 1,
+      "explanation": "Separate reopening tests independence."
+    },
+    {
+      "question": "What does a .dt dump transfer?",
+      "options": [
+        "Only BSL",
+        "Only browser settings",
+        "The state of a particular infobase"
+      ],
+      "correct": 2,
+      "explanation": "Confirm it through restoration and reconciliation."
+    },
+    {
+      "question": "An existing output directory means…",
+      "options": [
+        "Choose a new destination",
+        "Silently clear it",
+        "Overwrite the latest attempt"
+      ],
+      "correct": 0,
+      "explanation": "Preserve previous work and evidence."
+    }
+  ],
+  "review": [
+    "Name the two identity levels.",
+    "Explain 75→90 while preserving the source.",
+    "Next: catalogs and references."
+  ],
+  "sources": [
+    "cli",
+    "training",
+    "platform-architecture",
+    "catalogs"
+  ],
+  "contentRevision": "0.3.0-a2p2",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.a2p2.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_A2P2_EN.md",
+  "nativeCaseIds": [
+    "A2.customer-count",
+    "A2.document-count",
+    "A2.persisted-total"
+  ],
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
+    "sourcePolicy": "primary-source-links-and-observed-native-results",
+    "studentAuthorshipVerified": false
+  }
+}

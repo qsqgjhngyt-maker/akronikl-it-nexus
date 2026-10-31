@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p5",
+  "topicId": "onec.p5.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Transaction and refusal",
+  "minutes": 120,
+  "goal": "Verify transactional atomicity of related changes and safe rejection.",
+  "prerequisites": [
+    "onec.p4; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Verify transactional atomicity of related changes and safe rejection.",
+    "Perform two related writes without failure.",
+    "Inject an exception between writes in a copy."
+  ],
+  "sections": [
+    [
+      "One business fact needs one decision",
+      "If a request and dependent record must appear together, do not accept them independently. A transaction groups changes into commit or rollback. It does not make the algorithm correct or replace validation. Identify all affected data and require either complete consistency or the previous state.",
+      "Specify the complete document effect:its fields, dependent records, movements and external outcome. Separate preparation from acceptance. Checking one table cannot detect partial execution:a saved request without its movement may look individually valid while violating the accepted-order meaning. Define cross-object invariants before selecting handlers or adding transaction boundaries."
+    ],
+    [
+      "Boundary and lifetime",
+      "Keep explicit transactions short and finish every path. Do not wait for users, network or long reports while holding a transaction. Some platform operations already have a transactional context; understand the call site before nesting another boundary. A nested start is not an independent backup.",
+      "Handlers run within platform-defined contexts; event names alone do not prove actual order. Trace entry, validation, cancellation and write. User messages are insufficient because they can precede final outcomes. Confirm through a fresh persisted-state read after completion and, for important cases, a new session. This distinguishes displayed intentions from committed business facts."
+    ],
+    [
+      "Preserve the original failure",
+      "On exception, roll back the transaction you started and propagate the failure with safe diagnostics. Do not continue as if successful. Rollback cannot undo actions outside the transaction, especially files and external requests. Those need another coordination and idempotency protocol.",
+      "Repeating one intent differs from a new command with similar data. After an unknown outcome, do not automatically create another document; check the agreed prior-result key. Reposting an existing document replaces its own effect while preserving other recorders. Intent deduplication and movement replacement are distinct repeatability concerns requiring separate test cases."
+    ],
+    [
+      "Choose a failure point",
+      "In a separate copy, inject failure between two related writes. Reopen a session and compare both tables after rejection. Then run the valid operation and expect exactly one effect. A before-state snapshot is essential because test setup itself may have changed the baseline.",
+      "Inject failures only on a separate instance at a deliberate point. Snapshot before the first modification and inspect every affected dataset after rejection. Then repeat without failure and verify no residue. Preserve a safe failed-experiment record before any cleanup; it explains cause and regression rather than concealing the defect behind a later successful attempt."
+    ]
+  ],
+  "diagram": "p5-3",
+  "walkthrough": [
+    {
+      "action": "Perform two related writes without failure.",
+      "expected": "Both consistent effects are present."
+    },
+    {
+      "action": "Inject an exception between writes in a copy.",
+      "expected": "After reopening, both tables match their before-state."
+    },
+    {
+      "action": "Retry a valid request after rejection.",
+      "expected": "One complete effect, without failed-attempt residue."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "НачатьТранзакцию();\nПопытка\n    // связанные записи\n    ЗафиксироватьТранзакцию();\nИсключение\n    ОтменитьТранзакцию();\n    ВызватьИсключение;\nКонецПопытки;",
+      "expected": "Success commits the complete set; failure rolls back related changes.",
+      "explanation": "The skeleton needs concrete operations and awareness of the existing transaction boundary."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Повторите успешный запрос после отказа.",
+      "expected": "One complete effect, without failed-attempt residue.",
+      "explanation": "The skeleton needs concrete operations and awareness of the existing transaction boundary."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Perform two related writes without failure.",
+      "criteria": "Both consistent effects are present."
+    },
+    {
+      "level": "Applied",
+      "task": "Inject an exception between writes in a copy.",
+      "criteria": "After reopening, both tables match their before-state."
+    },
+    {
+      "level": "Advanced",
+      "task": "Explain why a file write does not roll back with the database.",
+      "criteria": "The external boundary is named and a coordination protocol proposed."
+    }
+  ],
+  "lab": {
+    "title": "Verify transactional atomicity of related changes and safe rejection.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Perform two related writes without failure.",
+      "Inject an exception between writes in a copy.",
+      "Retry a valid request after rejection.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Both consistent effects are present.",
+      "After reopening, both tables match their before-state.",
+      "One complete effect, without failed-attempt residue."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Success commits the complete set; failure rolls back related changes.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "One complete effect, without failed-attempt residue."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Does a transaction fix a wrong formula?",
+      "options": [
+        "Yes",
+        "No",
+        "Only for numbers"
+      ],
+      "correct": 1,
+      "explanation": "Atomicity and algorithm correctness differ."
+    },
+    {
+      "question": "Failure between writes requires",
+      "options": [
+        "Continuing as success",
+        "Hiding it",
+        "Rollback and preserved cause"
+      ],
+      "correct": 2,
+      "explanation": "Do not accept partial effects."
+    },
+    {
+      "question": "Does a file outside theDB roll back automatically?",
+      "options": [
+        "No",
+        "Always",
+        "After printing"
+      ],
+      "correct": 0,
+      "explanation": "External effects need a separate protocol."
+    }
+  ],
+  "review": [
+    "Verify transactional atomicity of related changes and safe rejection.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p5",
+    "locale": "en"
+  }
+}

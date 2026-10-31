@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p6",
+  "topicId": "onec.p6.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Information register and periodicity",
+  "minutes": 120,
+  "goal": "Choose rate-register dimensions, resource and periodicity and verify a price as of a date.",
+  "prerequisites": [
+    "onec.p5; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Choose rate-register dimensions, resource and periodicity and verify a price as of a date.",
+    "Write100fromD1 and150fromD2.",
+    "Check an intermediate time andD2."
+  ],
+  "sections": [
+    [
+      "Facts by key",
+      "An information register suits rates by service and time. Service is a dimension, rate a resource, and period adds history. An attribute stores extra description rather than replacing the key. Start from “which rate applied toS1 atD”; one current card price cannot answer the historical question.",
+      "Choose a register from the data question. “Which rate applied?” needs keyed temporal state;“how much was delivered this week?” needs turnover;“what obligation remains?” needs balance. Similar-looking fields do not imply equal mechanisms or invariants. Write a small independent example for each and explain why another register type would answer the wrong question."
+    ],
+    [
+      "Periodicity limits distinguishable states",
+      "Two records for one service in one period follow the key policy. Daily periodicity cannot distinguish two intraday changes under the same key. Do not substitute current time just to bypass a collision. Choose required precision and test exactly at a rate-change boundary.",
+      "Dimensions define slices, resources measured quantities, and recorders provenance where supported. Adding a dimension changes keys and granularity:customer totals may split by service. Define old-data treatment and grand-total reconciliation before restructuring. New granularity is more than another displayed column; it changes writes, uniqueness and the interpretation of historical records."
+    ],
+    [
+      "A slice is not a sum of prices",
+      "Between changes, use the latest applicable rate rather than summing history. SliceLast represents state at a time; record sets represent history. Explicitly return absence or reject when no prior rate exists. Automatic zero can resemble a free service and hide missing data.",
+      "Time boundaries belong in specifications. State uses an as-of moment, turnover an interval, and movements an agreed period. Test before the first fact, exactly at a change and after it. Equal totals without matching identities do not prove correctness:errors for different customers can cancel numerically while allocations remain wrong."
+    ],
+    [
+      "Test history at boundary dates",
+      "Set rate 100 fromD1 and 150 fromD2. Expect absence beforeD1, 100 betweenD1/D2, and 150 at the agreed inclusiveD2 boundary. Reopen and verify. Repeating the same keys must not increase count; editing copy rates must preserve the source.",
+      "Trace totals back to original facts. Preserve recorder-level records, independent arithmetic and reversal results. Reposting one document must not affect unrelated sets. For accounting models, test both side equality and analytic meaning. Array exercises demonstrate algorithms but do not replace actual execution of the corresponding platform mechanism. Record that distinction in the evidence and acceptance scope."
+    ]
+  ],
+  "diagram": "p6-0",
+  "walkthrough": [
+    {
+      "action": "Write100fromD1 and150fromD2.",
+      "expected": "Two historical states for one dimension."
+    },
+    {
+      "action": "Check an intermediate time andD2.",
+      "expected": "100 beforeD2; 150 atD2."
+    },
+    {
+      "action": "Query a time beforeD1.",
+      "expected": "Explicit absence, not a silently free service."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "// Требуется периодический регистрТарифыУслуг с измерениемУслуга\nТарифы = РегистрыСведений.ТарифыУслуг.СрезПоследних(Момент, Новый Структура(\"Услуга\", Услуга));",
+      "expected": "The service state as ofMoment is returned, not the sum of history.",
+      "explanation": "Metadata defines fields and periodicity; handle an empty result separately."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Запросите момент доD1.",
+      "expected": "Explicit absence, not a silently free service.",
+      "explanation": "Metadata defines fields and periodicity; handle an empty result separately."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Write100fromD1 and150fromD2.",
+      "criteria": "Two historical states for one dimension."
+    },
+    {
+      "level": "Applied",
+      "task": "Check an intermediate time andD2.",
+      "criteria": "100 beforeD2; 150 atD2."
+    },
+    {
+      "level": "Advanced",
+      "task": "Add another service and redeliver rates.",
+      "criteria": "Dimensions remain isolated; repeated keys do not duplicate records."
+    }
+  ],
+  "lab": {
+    "title": "Choose rate-register dimensions, resource and periodicity and verify a price as of a date.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Write100fromD1 and150fromD2.",
+      "Check an intermediate time andD2.",
+      "Query a time beforeD1.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Two historical states for one dimension.",
+      "100 beforeD2; 150 atD2.",
+      "Explicit absence, not a silently free service."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "The service state as ofMoment is returned, not the sum of history.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Explicit absence, not a silently free service."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "A rate as of a date is",
+      "options": [
+        "State, not a historical sum",
+        "The sum of all prices",
+        "A service name"
+      ],
+      "correct": 0,
+      "explanation": "Use the applicable fact by key and time."
+    },
+    {
+      "question": "Does daily periodicity distinguish two same-day changes?",
+      "options": [
+        "Always",
+        "Not with service+day alone",
+        "By font"
+      ],
+      "correct": 1,
+      "explanation": "Key precision must fit the task."
+    },
+    {
+      "question": "No price beforeD1:",
+      "options": [
+        "Always 0",
+        "Always 150",
+        "Handle absence under the contract"
+      ],
+      "correct": 2,
+      "explanation": "Do not hide incomplete history."
+    }
+  ],
+  "review": [
+    "Choose rate-register dimensions, resource and periodicity and verify a price as of a date.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "information-register",
+    "accumulation-register"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p6",
+    "locale": "en"
+  }
+}

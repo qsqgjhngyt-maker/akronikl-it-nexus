@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p4",
+  "topicId": "onec.p4.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Domain model and identity",
+  "minutes": 120,
+  "goal": "Design customer identity and duplicate policy independently of display names.",
+  "prerequisites": [
+    "onec.p3; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Design customer identity and duplicate policy independently of display names.",
+    "CreateC001, then repeat seeding.",
+    "RenameC001 with a linked request."
+  ],
+  "sections": [
+    [
+      "Entity and key",
+      "A customer outlives one request. Its internal reference distinguishes it from another item even with the same name. An external code supports imports but needs its own uniqueness scope. Define which event creates a customer and which only updates the existing presentation.",
+      "Model changes as well as creation. Customers can be renamed, services repriced, and requests can retain earlier agreed terms. List these events separately to identify catalog data, document snapshots and historical facts. This prevents silently updating every linked request when only current presentation or a current service offering should change."
+    ],
+    [
+      "Normalization is not a business decision",
+      "Trimming spaces and case normalization can help compare codes but may collapse distinct identifiers. Normalized names do not prove identity. Define a unique teaching codeC001 and reject collisions with a different entity. Repeating an import must not increase item count.",
+      "Internal identity and external code solve different problems. References connect infobase objects; codes support imported correspondence. Define uniqueness scope, case handling and absence policy. Two systems can reuse one code for different customers, requiring sender scope or a mapping table. A name search alone cannot resolve this ambiguity safely or justify replacing an existing entity."
+    ],
+    [
+      "References preserve relationships",
+      "A document stores a customer reference. Renaming should change presentation without breaking requests. Replacing the reference with a string loses relational identity and complicates updates. Key migration needs a mapping and checks of dependent objects; mass renaming alone is insufficient.",
+      "Keep empty references, missing items and deletion-marked objects distinct and define each outcome. An old request must not silently point to a newly created lookalike after reseeding. Compare identities and document relationships before/after; use labels only for human readability. A valid-looking card can otherwise conceal broken history or a duplicate entity."
+    ],
+    [
+      "Verify idempotent creation",
+      "Seed twice and compare references, count and attributes. Add equal names with different codes to expose name-based lookup errors. Concurrent creation under one code needs a transactional solution; single-user repetition does not prove it. P10 addresses that boundary.",
+      "Use an ordinary customer, an equal-named second customer and a request-free third customer. Test lookup, rename, reseed and selection. This set exposes implementations that only work when labels happen to be unique. Reopen the source separately afterwards:independent copies are proven by preserved records, not different labels in a launcher list."
+    ]
+  ],
+  "diagram": "p4-0",
+  "walkthrough": [
+    {
+      "action": "CreateC001, then repeat seeding.",
+      "expected": "One item, the same reference."
+    },
+    {
+      "action": "RenameC001 with a linked request.",
+      "expected": "The request reference is unchanged; presentation updates."
+    },
+    {
+      "action": "Submit the same code with a conflicting identity.",
+      "expected": "The conflict does not overwrite the existing customer."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Клиент = Справочники.Клиенты.НайтиПоКоду(\"C001\");",
+      "expected": "Repeated lookup returns the same reference for an existing unique code.",
+      "explanation": "When absent, explicitly create or reject; the name is not the key."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Введите тот же код с конфликтующим смыслом.",
+      "expected": "The conflict does not overwrite the existing customer.",
+      "explanation": "When absent, explicitly create or reject; the name is not the key."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "CreateC001, then repeat seeding.",
+      "criteria": "One item, the same reference."
+    },
+    {
+      "level": "Applied",
+      "task": "RenameC001 with a linked request.",
+      "criteria": "The request reference is unchanged; presentation updates."
+    },
+    {
+      "level": "Advanced",
+      "task": "Design an import with explicit uniqueness scope and a conflict log.",
+      "criteria": "Repeats are safe; ambiguity is not resolved by deletion; concurrency is separate."
+    }
+  ],
+  "lab": {
+    "title": "Design customer identity and duplicate policy independently of display names.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "CreateC001, then repeat seeding.",
+      "RenameC001 with a linked request.",
+      "Submit the same code with a conflicting identity.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "One item, the same reference.",
+      "The request reference is unchanged; presentation updates.",
+      "The conflict does not overwrite the existing customer."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Repeated lookup returns the same reference for an existing unique code.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The conflict does not overwrite the existing customer."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Are equal-named customers necessarily identical?",
+      "options": [
+        "No",
+        "Yes",
+        "After sorting"
+      ],
+      "correct": 0,
+      "explanation": "Compare identity, not presentation."
+    },
+    {
+      "question": "RepeatingC001 seeding should",
+      "options": [
+        "Always add",
+        "Preserve the reference",
+        "Delete requests"
+      ],
+      "correct": 1,
+      "explanation": "This checks code-based idempotency."
+    },
+    {
+      "question": "Does one repeat prove concurrent uniqueness?",
+      "options": [
+        "Yes",
+        "Always in file mode",
+        "No"
+      ],
+      "correct": 2,
+      "explanation": "Parallel transactions require another test."
+    }
+  ],
+  "review": [
+    "Design customer identity and duplicate policy independently of display names.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p4",
+    "locale": "en"
+  }
+}

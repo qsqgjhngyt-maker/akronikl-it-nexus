@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p2",
+  "topicId": "onec.p2.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Types, Undefined, Null and explicit conversion",
+  "minutes": 115,
+  "goal": "Separate absent values from a valid zero and check input before evaluating it, without relying on variable names or accidental conversion.",
+  "prerequisites": [
+    "P2.1; functions, expressions and the real native gate."
+  ],
+  "outcomes": [
+    "Inspect value types with TypeOf/ТипЗнч.",
+    "Distinguish Undefined, Null, strings, numbers and domain validity.",
+    "Check explicit conversion and a failing conversion case."
+  ],
+  "sections": [
+    [
+      "Value type and field requirements",
+      "BSL’s flexible typing allows a variable to hold different value types over time. A program must still decide what a particular operation permits. For minutes we first check ТипЗнч(Значение)=Тип(\"Число\"), then the range 0..1440. String \"30\" resembles a number but fails this contract. Parsing it requires separate rules rather than silently passing it to arithmetic.",
+      "Separate three questions: the value’s type, whether an operation accepts that type, and whether the value satisfies a domain rule. -1 is a Number but is not an admissible duration here. Zero is also a Number and is permitted. Variable names, highlighting and presentation answer none of these questions. Record type and expected decision separately from displayed text."
+    ],
+    [
+      "Different forms of absence",
+      "Undefined and Null have different types, verified by separate native cases. Undefined can represent an unavailable value; Null also matters in data handling, including future query results. This lesson does not declare them interchangeable, equal to zero or equivalent to JavaScript null. It compares their types; query-specific Null semantics are studied in P7.",
+      "An empty catalog reference is another distinct situation. It retains that catalog’s reference type but identifies no particular customer. A2 disallows it in a request. Empty strings, numeric zero, False and empty references must not be grouped under one vague “empty” rule when field requirements differ. Establish field meaning before choosing a validation function."
+    ],
+    [
+      "ValueIsFilled is not universal validation",
+      "On the tested platform, ЗначениеЗаполнено(0) returns False. Using it as the sole duration validator would reject an allowed zero. ЭтоЧислоМинут instead checks type and range separately. This illustrates meaning-driven validation, not a blanket rejection of ValueIsFilled: it is appropriate for the mandatory customer reference in this workspace.",
+      "A useful input matrix includes zero, an ordinary number, the upper boundary, negative and excessive values, a string and Undefined. Record a distinct expectation for each. A few positive cases cannot reveal zero being mistaken for absence or text passing unnoticed. Test counts are useful only alongside their actual meaning and exercised boundaries."
+    ],
+    [
+      "Conversion is an explicit decision that can fail",
+      "Число(\"12\") returns 12 in the native case. Число(\"не число\") raises an exception; a separate Try/Except block confirms that rejection. Do not continue with a variable’s accidental previous value or declare the input valid after a conversion failure. Parsing failure differs from a domain rejection: even a successfully parsed -1 must still fail the minutes rule.",
+      "Parsing localized fractional text needs a separate input-format contract. No claim is made that every comma, space or currency symbol is accepted identically. P2.5 separates formatting from values; this basic validator expects an already numeric input. Preserve synthetic input, decision and observed exception rather than real user data. This keeps the experiment repeatable and safe."
+    ]
+  ],
+  "diagram": "p2types",
+  "walkthrough": [
+    {
+      "action": "Compare the types of 0, \"30\", Undefined and Null.",
+      "expected": "Number, String and two distinct absence types."
+    },
+    {
+      "action": "Apply ЭтоЧислоМинут to 0, \"30\" and Undefined.",
+      "expected": "True, False, False without implicit text parsing."
+    },
+    {
+      "action": "Reconcile explicit conversion and conversion failure.",
+      "expected": "\"12\"→12; a nonnumeric string is rejected by exception."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Type checking before range checking",
+      "source": "ЭтоЧислоМинут(0); ЭтоЧислоМинут(\"30\"); ЭтоЧислоМинут(Неопределено)",
+      "expected": "True; False; False.",
+      "explanation": "The contract separates parsing from domain validation."
+    },
+    {
+      "title": "Filled versus admissible",
+      "source": "ЗначениеЗаполнено(0) = Ложь; ЭтоЧислоМинут(0) = Истина",
+      "expected": "There is no contradiction: the functions answer different questions.",
+      "explanation": "A mandatory reference and a numeric duration need different rules."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Separate type and decision for 0, -1, \"30\", Undefined and Null.",
+      "criteria": "Zero is valid; -1 is numeric but out of range; the other inputs are nonnumeric for this validator."
+    },
+    {
+      "level": "Applied",
+      "task": "Build a matrix of the nine P2.2 cases and locate each in the native protocol.",
+      "criteria": "Cover types, zero, text, absence, conversion/exception and filled-value behavior."
+    },
+    {
+      "level": "Advanced",
+      "task": "Propose a text-duration contract without changing the current validator.",
+      "criteria": "Specify format, separators, parse failure, range and separate tests; proposed rules remain unimplemented."
+    }
+  ],
+  "lab": {
+    "title": "Type and invalid-input matrix",
+    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "steps": [
+      "Preserve predictions for the nine P2.2 cases.",
+      "Find the native function and inspect its early return for nonnumeric types.",
+      "Run the official gate on a new workspace.",
+      "Reconcile cases, especially zero-is-valid and filled-is-not-validation.",
+      "Explain why nonnumeric text and a negative number fail at different stages."
+    ],
+    "expected": [
+      "Nine P2.2 cases pass.",
+      "Zero remains admissible; text is not disguised as a number."
+    ],
+    "evidence": [
+      "Type→predicate→expected→actual for each input.",
+      "SEED cases and the source hash."
+    ],
+    "negative": "Do not replace a conversion failure with an arbitrary zero; that turns an error or absence into an admissible duration."
+  },
+  "mistakes": [
+    [
+      "“Every empty value is zero.”",
+      "Types and domain rules differ."
+    ],
+    [
+      "“Numeric type establishes valid minutes.”",
+      "The agreed range must also be checked."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What does ЭтоЧислоМинут(\"30\") return?",
+      "options": [
+        "True",
+        "False",
+        "Creates a document"
+      ],
+      "correct": 1,
+      "explanation": "Text parsing is outside this contract."
+    },
+    {
+      "question": "Why is ValueIsFilled not sufficient for minutes?",
+      "options": [
+        "It always returns True",
+        "It executes JavaScript",
+        "Allowed zero is considered unfilled"
+      ],
+      "correct": 2,
+      "explanation": "The domain rule permits zero."
+    },
+    {
+      "question": "Undefined and Null here…",
+      "options": [
+        "Have different types",
+        "Are one type with two names",
+        "Are always numeric zero"
+      ],
+      "correct": 0,
+      "explanation": "Separate native cases verify their types."
+    }
+  ],
+  "review": [
+    "Explain type versus domain validity.",
+    "Defend the zero rule.",
+    "Next: branching on validated input."
+  ],
+  "sources": [
+    "cli",
+    "training",
+    "platform-architecture",
+    "bsl-language"
+  ],
+  "contentRevision": "0.3.0-a2p2",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.a2p2.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_A2P2_EN.md",
+  "nativeCaseIds": [
+    "P2.2.undefined-type",
+    "P2.2.null-type",
+    "P2.2.distinct-empty-types",
+    "P2.2.zero-is-valid",
+    "P2.2.text-is-not-number",
+    "P2.2.undefined-rejected",
+    "P2.2.explicit-conversion",
+    "P2.2.bad-conversion",
+    "P2.2.filled-is-not-validation"
+  ],
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
+    "sourcePolicy": "primary-source-links-and-observed-native-results",
+    "studentAuthorshipVerified": false
+  },
+  "codeFile": "native/examples-a2p2/p2-types.bsl"
+}

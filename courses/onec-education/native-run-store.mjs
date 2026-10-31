@@ -1,0 +1,21 @@
+import {verifiedAccount,accountStoragePrefix} from '../../core/account-storage.js';
+import {onecAccount,ownedOnec,exportOnecWork} from './studio-store.mjs';
+import {createNativeRequest,requestRecord,validateNativeResult,sourceManifest} from './native-run-model.mjs';
+const KEY='akronikl:it-nexus:onec-native-runs:v1',clone=v=>structuredClone(v);
+// Ключ внутри существующего account namespace. Общий IAM allowlist не меняется;
+// clearVerifiedAccountData удаляет его вместе с остальными данными этого аккаунта.
+function context(workId){const owner=onecAccount();return{owner,account:verifiedAccount(),storage:globalThis.localStorage,key:accountStoragePrefix(owner)+KEY+':'+encodeURIComponent(workId)}}
+function current(c){if(onecAccount()!==c.owner||verifiedAccount()!==c.account||globalThis.localStorage!==c.storage)throw Error('NATIVE_ACCOUNT_CHANGED')}
+function read(c){current(c);const raw=c.storage.getItem(c.key);if(raw===null)return{schemaVersion:1,requests:[]};let db;try{db=JSON.parse(raw)}catch{throw Error('NATIVE_HISTORY_UNREADABLE')}if(db?.schemaVersion!==1||!Array.isArray(db.requests)||db.requests.length>200)throw Error('NATIVE_HISTORY_INVALID');const ids=new Set();for(const row of db.requests){try{requestRecord(row.request);if(ids.has(row.request.requestId))throw Error();ids.add(row.request.requestId);if(row.result)validateNativeResult(row.result,row.request)}catch{throw Error('NATIVE_HISTORY_INVALID')}}return db}
+async function locked(c,fn){if(!globalThis.navigator?.locks?.request)throw Error('NATIVE_LOCK_REQUIRED');return navigator.locks.request('nexus-onec-native-runs:'+c.owner,()=>{current(c);return fn()})}
+export async function prepareNativeRequest(workId,workspace,{sourceLocalRevision,mode='check-and-run'}={}){
+ const c=context(workId),p=ownedOnec(workId);if(p.sync.localRevision!==sourceLocalRevision)throw Error('S1_SAVE_CONFLICT');exportOnecWork(workId,workspace); // Прежние ACL/path checks, без записи проекта.
+ const request=await createNativeRequest({workId,workspace,courseId:p.origin.courseId,topicId:p.origin.topicId,sourceRevision:p.workspace.revision,sourceLocalRevision,mode});current(c);
+ return locked(c,()=>{const latest=ownedOnec(workId);if(latest.sync.localRevision!==sourceLocalRevision)throw Error('S1_SAVE_CONFLICT');const db=read(c);if(db.requests.length>=200)throw Error('NATIVE_HISTORY_FULL');if(db.requests.some(r=>r.request.requestId===request.requestId))throw Error('NATIVE_REQUEST_EXISTS');db.requests.push({request:requestRecord(request),createdAt:new Date().toISOString(),result:null});current(c);c.storage.setItem(c.key,JSON.stringify(db));return request});
+}
+export async function importNativeResult(workId,value){
+ const c=context(workId);ownedOnec(workId);const db=read(c),row=db.requests.find(r=>r.request.requestId===value?.requestId&&r.request.workId===workId);if(!row)throw Error('NATIVE_REQUEST_UNKNOWN');const result=validateNativeResult(value,row.request);
+ return locked(c,()=>{ownedOnec(workId);const latest=read(c),target=latest.requests.find(r=>r.request.requestId===result.requestId&&r.request.workId===workId);if(!target)throw Error('NATIVE_REQUEST_UNKNOWN');if(target.result)throw Error('NATIVE_RESULT_ALREADY_IMPORTED');target.result=result;target.importedAt=new Date().toISOString();current(c);c.storage.setItem(c.key,JSON.stringify(latest));return clone(target)});
+}
+export async function listNativeRuns(workId,workspace){const c=context(workId),p=ownedOnec(workId),rows=read(c).requests.filter(r=>r.request.workId===workId),snapshot=await sourceManifest(workspace||p.workspace);current(c);ownedOnec(workId);return rows.map(row=>({...clone(row),currentSnapshot:row.request.sourceSnapshotSha256===snapshot.sourceSnapshotSha256,currentRevision:row.request.sourceRevision===p.workspace.revision&&row.request.sourceLocalRevision===p.sync.localRevision})).reverse()}
+export async function readNativeResultFile(file){if(!file||!Number.isSafeInteger(file.size)||file.size<0||file.size>16384)throw Error('NATIVE_RESULT_SIZE');const bytes=await file.arrayBuffer();if(bytes.byteLength>16384)throw Error('NATIVE_RESULT_SIZE');try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes))}catch{throw Error('NATIVE_RESULT_FORMAT')}}

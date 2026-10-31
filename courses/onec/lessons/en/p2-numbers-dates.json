@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p2",
+  "topicId": "onec.p2.numbers-dates-locales",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Numbers, dates, strings and explicit interchange formats",
+  "minutes": 120,
+  "goal": "Separate values from presentation, verify numeric/date calculations and define boundaries for localized input.",
+  "prerequisites": [
+    "P2.1–P2.4; numeric input contracts and repeatable cases."
+  ],
+  "outcomes": [
+    "Check decimal computation without importing JavaScript assumptions.",
+    "Produce an explicit textual number representation.",
+    "Construct dates from components and explain seconds, calendar meaning and timezone limits."
+  ],
+  "sections": [
+    [
+      "A numeric value differs from its string",
+      "On the tested BSL platform, 0.1+0.2 equals 0.3. This comes from an actual native case, not a browser calculation. Do not import another runtime’s binary or formatting assumptions without testing them. The learning formula Minutes*Rate/60 yields 300 for 30 minutes at an hourly rate of 600. Establish units, evaluation order and input preconditions first.",
+      "УчебнаяСтоимость assumes numeric inputs and is not a general financial calculator. It defines no currency, tax, negative-rate validation or rounding policy. Correct output 300 for one case proves none of those rules. The P2 duration predicate checks type and range, not integrality; fractional-minute policy must likewise be an explicit requirement rather than an implication of the field name."
+    ],
+    [
+      "Separate formatting from parsing",
+      "Формат(12.5, \"ЧДЦ=2; ЧРД=.; ЧГ=0\") produces string \"12.50\" in the native case: two fractional digits, a decimal point and no grouping are explicit. The original value remains numeric; formatting returns a presentation. If another system consumes the text, define an interchange format and check that consumer. Attractive interface output is not automatically an agreed protocol.",
+      "Strings \"12,50\", \"12.50\" and \"12 500\" can depend on input rules and locale. This lesson does not promise identical conversion for arbitrary text. An explicit output format does not automatically make parsing reversible. Specify a parser, allowed separators, error behavior and range. Replacing every comma with a period is not proven support for all locales; enumerate accepted and rejected inputs first."
+    ],
+    [
+      "Construct dates from components and define their meaning",
+      "The native suite constructs Дата(2026,10,31,9,30,0). It checks year, month and day separately, then adds 60 seconds and verifies a difference of 60. Components avoid ambiguous strings such as 03/04/2026, which can mean March or April depending on convention. The exercise uses a fixed date rather than the computer’s changing clock.",
+      "A calendar value alone establishes no UTC or external-timezone agreement. For interchange, define whether it represents local event time, a date-only document attribute or an instant on a shared timeline. Timezone and daylight-saving transitions were not tested in this workspace. Adding 60 seconds successfully at one calendar value does not complete an integration design."
+    ],
+    [
+      "Strings, units and closing the P2 package",
+      "СтрДлина(\"Заявка\") returns 6 in a separate native case. That is not a UTF-8 byte count or a universal guarantee about visible characters in every Unicode sequence. Text length, SHA256 and encoded file size answer different questions. Customer codes C001 and document numbers A200001 are identifiers, not quantities to add arithmetically.",
+      "Close P2 by combining expression, type, branch, loop and representation tables. Its 35 cases form part of a 46-case suite that also exercises A2 relationships and persistence. The gate checks correct code, a syntax defect and a separate semantic mutation. It establishes the listed mechanisms on build 8.3.27.2214, not every platform version, learner authorship or server execution. Preserve your copy, source hash, expectations and output together."
+    ]
+  ],
+  "diagram": "p2values",
+  "walkthrough": [
+    {
+      "action": "Reconcile 0.1+0.2 and the learning service cost.",
+      "expected": "0.3 and 300, both evaluated by BSL."
+    },
+    {
+      "action": "Separate number 12.5 from string \"12.50\".",
+      "expected": "Numeric meaning remains; formatting returns explicitly specified text."
+    },
+    {
+      "action": "Construct the fixed component-based date and add 60 seconds.",
+      "expected": "Year/month/day 2026/10/31; difference 60."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Explicit number presentation",
+      "source": "Формат(12.5, \"ЧДЦ=2; ЧРД=.; ЧГ=0\")",
+      "expected": "String \"12.50\".",
+      "explanation": "This verifies an output format, not a universal input parser."
+    },
+    {
+      "title": "Calendar components",
+      "source": "Начало = Дата(2026,10,31,9,30,0); Разность = (Начало+60)-Начало;",
+      "expected": "A difference of 60 seconds.",
+      "explanation": "The example includes no timezone agreement."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Classify 12.5, \"12.50\", Дата(...) and C001 by type and purpose.",
+      "criteria": "Number, formatted string, calendar value and business code; keep their units distinct."
+    },
+    {
+      "level": "Applied",
+      "task": "Reconcile the six P2.5 cases with expected and actual values.",
+      "criteria": "Explicitly cover decimal sum, cost, formatting, date components, seconds and string length."
+    },
+    {
+      "level": "Advanced",
+      "task": "Propose an interchange format for date/price and list unsupported cases.",
+      "criteria": "Specify timezone/date-only meaning, separators, units, rounding and invalid input; label the new contract PLANNED until tested."
+    }
+  ],
+  "lab": {
+    "title": "Closing P2: values, formats and evidence",
+    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "steps": [
+      "Write the six P2.5 expectations before execution.",
+      "Read the example source and matching assertions in the full module.",
+      "Run the gate on a new workspace and reconcile all 35 P2 cases.",
+      "Attach A2 persistence/copy results separately from pure calculations.",
+      "Export your work note and preserve source hash and environment limitations."
+    ],
+    "expected": [
+      "Six P2.5 cases and all 35 P2 cases pass.",
+      "Distinguish values, presentations, infobase state and evidence limits."
+    ],
+    "evidence": [
+      "Complete P2 matrix, native cases and source hash.",
+      "NATIVE_A2P2_RESULT.json, SEMANTIC_REJECTION and a safe note."
+    ],
+    "negative": "Do not silently guess ambiguous date or money input. Explicitly reject unsupported formats or keep them outside the verified contract."
+  },
+  "mistakes": [
+    [
+      "“Displaying two fractional digits changed the original number.”",
+      "Formatting creates presentation; numeric rounding is a separate operation/policy."
+    ],
+    [
+      "“Adding seconds verifies every timezone.”",
+      "It verifies one calendar example; interchange semantics remain unspecified."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What does the specified Формат(12.5,...) return?",
+      "options": [
+        "A new infobase",
+        "String \"12.50\"",
+        "An untyped number"
+      ],
+      "correct": 1,
+      "explanation": "Explicit parameters define the text presentation."
+    },
+    {
+      "question": "What does date-seconds establish?",
+      "options": [
+        "Server synchronization",
+        "Every timezone rule",
+        "A difference of 60 in the given calendar example"
+      ],
+      "correct": 2,
+      "explanation": "The conclusion is limited to the actual test condition."
+    },
+    {
+      "question": "What do 35 P2 passes establish?",
+      "options": [
+        "The listed native cases passed",
+        "Learner authorship is verified",
+        "Professional development is fully completed"
+      ],
+      "correct": 0,
+      "explanation": "Do not extend status beyond the evidence."
+    }
+  ],
+  "review": [
+    "Present the P2 matrix.",
+    "Name locale and rounding limitations.",
+    "Next: P3 functions and modules, currently PLANNED."
+  ],
+  "sources": [
+    "cli",
+    "training",
+    "platform-architecture",
+    "bsl-language"
+  ],
+  "contentRevision": "0.3.0-a2p2",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.a2p2.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_A2P2_EN.md",
+  "nativeCaseIds": [
+    "P2.5.decimal-sum",
+    "P2.5.cost",
+    "P2.5.explicit-format",
+    "P2.5.date-components",
+    "P2.5.date-seconds",
+    "P2.5.string-length"
+  ],
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
+    "sourcePolicy": "primary-source-links-and-observed-native-results",
+    "studentAuthorshipVerified": false
+  },
+  "codeFile": "native/examples-a2p2/p2-numbers-dates.bsl"
+}

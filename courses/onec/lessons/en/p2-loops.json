@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p2",
+  "topicId": "onec.p2.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Loops: tracing, termination and boundary datasets",
+  "minutes": 120,
+  "goal": "Calculate an aggregate, explain loop termination and check empty or invalid input without modifying source values.",
+  "prerequisites": [
+    "P2.1–P2.3; valid-minute predicates and branching."
+  ],
+  "outcomes": [
+    "Match For, While and For Each to tasks.",
+    "Trace accumulators and counters.",
+    "Explain Break/Continue and verify that the input array remains unchanged."
+  ],
+  "sections": [
+    [
+      "Repetition needs state and a stopping argument",
+      "A loop repeats actions, but a useful algorithm explains what changes and when repetition stops. For suits a known range; For Each traverses collection elements; While checks a condition before each step. The construct alone proves nothing. Explain progress toward termination for While and the finite source collection for traversal.",
+      "СуммаМинут accepts an array of numeric durations. Its initial total is zero and each valid element is added once. For [30,45,0], accumulator states are 0→30→75→75. The array still contains three elements: the function neither removes nor overwrites them. It processes an in-memory array, not automatically every document in the infobase. A2’s separate code checks real persisted documents."
+    ],
+    [
+      "An invariant locates the first wrong step",
+      "After processing the first k elements, the accumulator equals their sum. This invariant also explains an empty array: no step executes and the result remains zero. An arbitrary initial total or skipping the first item can produce a wrong final result without revealing the cause. A k→item→before/after trace locates the first divergence.",
+      "Each element passes ЭтоЧислоМинут before addition. A negative element raises an exception instead of being ignored silently. That is the selected contract: a partial dataset must not resemble a complete valid aggregate. Collecting errors while continuing is another possible design, but it needs a separate result structure and tests. Do not mix strategies without changing the task explicitly."
+    ],
+    [
+      "Boundaries and loop control",
+      "The verified For loop from 1 through 3 visits 1,2,3 and sums to 6. A While counter starting at zero and incrementing while <3 finishes at 3. Termination follows from the counter update, not from hoping someone stops the program. Bound manual experiments in advance; hanging a process is not a useful infinite-loop test.",
+      "Continue skips the remainder of the current iteration; Break ends the loop. A native 1..5 example skips 2 and stops before adding 4, so only 1 and 3 contribute and the result is 4. Five is never considered after Break. This trace distinguishes the commands more precisely than saying both “exit the loop.”"
+    ],
+    [
+      "Evidence coverage and remaining work",
+      "Seven P2.4 cases check aggregation, preserved input count, an empty array, inclusive For bounds, While termination, Continue/Break and rejection of an invalid item. This finite set is not a large-data performance measurement. A simple sum visits elements proportionally to collection size; field p95, server execution and concurrent collection changes are not measured.",
+      "For your own practice, use a separate copy and predict results before running. A printed PASS does not prove the body executed: the initial condition may have been false. Use ordinary, empty and invalid inputs and inspect intermediate state. Preserve a failed trace, then explain the change that fixes its first incorrect iteration without destroying the earlier experiment."
+    ]
+  ],
+  "diagram": "p2loops",
+  "walkthrough": [
+    {
+      "action": "Trace [30,45,0] and an empty array.",
+      "expected": "75 after three steps; 0 with no steps."
+    },
+    {
+      "action": "Compare For 1..3 with While counter<3.",
+      "expected": "Sum 6 and final counter 3, with explicit bounds."
+    },
+    {
+      "action": "Mark skip 2 and break 4 in traversal 1..5.",
+      "expected": "Only 1 and 3 are added, totaling 4."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Accumulator with preserved input",
+      "source": "СуммаМинут([30,45,0]): 0 → 30 → 75 → 75",
+      "expected": "Result 75; three input items remain.",
+      "explanation": "Brackets describe the dataset in this protocol; executable BSL uses New Array and adds items."
+    },
+    {
+      "title": "Rejection instead of a partial total",
+      "source": "СуммаМинут([-1])",
+      "expected": "An exception rather than a valid aggregate.",
+      "explanation": "This is native case invalid-element. Skipping invalid input is not a successful validation under this contract."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Build k/item/before/after totals for [30,45,0].",
+      "criteria": "Three steps, total 75, input values unchanged."
+    },
+    {
+      "level": "Applied",
+      "task": "Identify the defect each of the seven P2.4 cases can detect.",
+      "criteria": "Cover initialization, empty input, bounds, termination, control flow and invalid elements."
+    },
+    {
+      "level": "Advanced",
+      "task": "Propose returning a sum plus an error list and explain the contract change.",
+      "criteria": "Mark partial results explicitly and new tests PLANNED; preserve the existing function and its contract."
+    }
+  ],
+  "lab": {
+    "title": "Tracing a finite traversal",
+    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "steps": [
+      "Record inputs and expected traces before execution.",
+      "Find СуммаМинут and separate For/While cases in the full module.",
+      "Run the gate on a new workspace and reconcile seven P2.4 cases.",
+      "Explain empty and invalid inputs without creating documents.",
+      "Preserve the trace and limitation: in-memory computation, not an infobase benchmark."
+    ],
+    "expected": [
+      "Seven P2.4 cases pass; ordinary total 75, empty total 0.",
+      "An invalid element is rejected and the source array is preserved."
+    ],
+    "evidence": [
+      "Accumulator, counter and loop-control traces.",
+      "P2.4 case IDs, source hash and limitations."
+    ],
+    "negative": "Do not deliberately run an unbounded loop. The negative case uses a finite collection containing an invalid item."
+  },
+  "mistakes": [
+    [
+      "“Continue ends the whole loop.”",
+      "It skips the current step’s remainder; the loop proceeds to its next check."
+    ],
+    [
+      "“An array of three values is three infobase documents.”",
+      "An in-memory collection differs from persisted application objects."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What does СуммаМинут return for an empty array?",
+      "options": [
+        "Undefined",
+        "Always an exception",
+        "0"
+      ],
+      "correct": 2,
+      "explanation": "The accumulator starts at zero and no iterations run."
+    },
+    {
+      "question": "What does Break do?",
+      "options": [
+        "Ends the loop",
+        "Only skips the current item",
+        "Overwrites the array"
+      ],
+      "correct": 0,
+      "explanation": "Subsequent elements are not processed."
+    },
+    {
+      "question": "What explains While termination in the example?",
+      "options": [
+        "The variable name",
+        "The counter increases until <3 becomes false",
+        "BSL highlighting"
+      ],
+      "correct": 1,
+      "explanation": "Initialization and update are tied to the condition."
+    }
+  ],
+  "review": [
+    "Defend the sum invariant.",
+    "Distinguish Continue from Break.",
+    "Next: numbers, dates, strings and formatting."
+  ],
+  "sources": [
+    "cli",
+    "training",
+    "platform-architecture",
+    "bsl-language"
+  ],
+  "contentRevision": "0.3.0-a2p2",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.a2p2.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_A2P2_EN.md",
+  "nativeCaseIds": [
+    "P2.4.foreach-total",
+    "P2.4.input-preserved",
+    "P2.4.empty-array",
+    "P2.4.inclusive-for",
+    "P2.4.while-termination",
+    "P2.4.continue-break",
+    "P2.4.invalid-element"
+  ],
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
+    "sourcePolicy": "primary-source-links-and-observed-native-results",
+    "studentAuthorshipVerified": false
+  },
+  "codeFile": "native/examples-a2p2/p2-loops.bsl"
+}

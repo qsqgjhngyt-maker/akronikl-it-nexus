@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p11",
+  "topicId": "onec.p11.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "JSON, XML and exchange schemas",
+  "minutes": 120,
+  "goal": "ValidateJSON/XMLschema, types and limits without executing input text.",
+  "prerequisites": [
+    "onec.p10; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "ValidateJSON/XMLschema, types and limits without executing input text.",
+    "Parseminutes 30 and 0.",
+    "Round-tripCyrillic text with quotes."
+  ],
+  "sections": [
+    [
+      "Serialization carries data",
+      "JSONcarries values but does not automatically preserve every 1C-specific type. References need agreed external keys, dates a format/timezone, and money precision rules. A customer display name is not identity. Define required fields, types, ranges and protocol version in a schema.",
+      "Integration crosses independently failing participants. Replies can be lost after acceptance, servers can reject business rules, and schedules can repeat work. Contracts need intent identity, state, limits and unknown-outcome resolution as well as body format. Specify those cases before choosingHTTP, serialization or job APIs. A successful transport call alone cannot establish the business outcome."
+    ],
+    [
+      "Parsing is not validation",
+      "Syntactically valid{\"minutes\":\"30\"}can violate a numeric requirement. Do not coerce every input and hide sender defects. Separate parsing, schema validation, business rules and persistence. Handle unknown versions and critical unexpected fields under an explicit policy.",
+      "Serialized input remains untrusted data. After parsing, validate schema version, required fields, types, ranges and size. Resolve external customer keys through an agreed mapping, not similar names. Never execute input or permit arbitrary addresses. A fixed local mock and synthetic payload suffice for the lab without real secrets or public external services."
+    ],
+    [
+      "Bound size and structure",
+      "Check byte limits before expensive parsing and structure depth/count during validation. RejectDOCTYPE/ENTITYin teachingXMLimports; do not enable external entities for convenience. Never pass text toExecute. Regexis not a generalXMLparser, so exercise formats are deliberately constrained.",
+      "Repeatability binds acceptance registry and result. Equal key/content returns the prior document; different content conflicts. CommitDoneand document consistently to avoid false success or duplication after failures. External effects need their own protocol. Batch continuation points likewise commit with results rather than prematurely skipping work. Test failure between these steps, not only clean completion."
+    ],
+    [
+      "Test round trips",
+      "Serialize a synthetic request, parse and compare semantic fields rather thanJSONkey order. IncludeCyrillic, quotes, zero, missing required data, wrong types and oversized input. Rejection must not leave partially created customers/documents. Raw-payload hash and semantic identity are distinct.",
+      "Control replies and ordering:success, schema rejection, temporary error, timeout, retry and cancel. Mocks prove the simulated peer contract; actualBSLclients prove platformAPIexecution. Manual procedure calls do not prove scheduling. Separate these outcomes, retain safe caseIDs, and verify no extra documents after retries/failures, including a fresh session and an independent state reconciliation."
+    ]
+  ],
+  "diagram": "p11-1",
+  "walkthrough": [
+    {
+      "action": "Parseminutes 30 and 0.",
+      "expected": "Numbers remain numeric rather than strings."
+    },
+    {
+      "action": "Round-tripCyrillic text with quotes.",
+      "expected": "Semantic values match."
+    },
+    {
+      "action": "Submit\"30\", a missing field andDOCTYPE.",
+      "expected": "Appropriate rejections precede writing; source is preserved."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Чтение = Новый ЧтениеJSON;\nЧтение.УстановитьСтроку(\"{\"\"minutes\"\":30}\");\nДанные = ПрочитатьJSON(Чтение);\nЧтение.Закрыть();",
+      "expected": "After parsing, validate theminutestype and range separately.",
+      "explanation": "Successful parsing does not authorize arbitrary writes from received data."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Передайте\"30\",пустое поле иDOCTYPE.",
+      "expected": "Appropriate rejections precede writing; source is preserved.",
+      "explanation": "Successful parsing does not authorize arbitrary writes from received data."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Parseminutes 30 and 0.",
+      "criteria": "Numbers remain numeric rather than strings."
+    },
+    {
+      "level": "Applied",
+      "task": "Round-tripCyrillic text with quotes.",
+      "criteria": "Semantic values match."
+    },
+    {
+      "level": "Advanced",
+      "task": "Add schema versioning and input migration without silently changing meaning.",
+      "criteria": "Rules, limits and negative examples are explicit."
+    }
+  ],
+  "lab": {
+    "title": "ValidateJSON/XMLschema, types and limits without executing input text.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Parseminutes 30 and 0.",
+      "Round-tripCyrillic text with quotes.",
+      "Submit\"30\", a missing field andDOCTYPE.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Numbers remain numeric rather than strings.",
+      "Semantic values match.",
+      "Appropriate rejections precede writing; source is preserved."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "After parsing, validate theminutestype and range separately.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Appropriate rejections precede writing; source is preserved."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Does successfulJSONparsing prove schema validity?",
+      "options": [
+        "Yes",
+        "No",
+        "For numbers"
+      ],
+      "correct": 1,
+      "explanation": "Check types and required fields separately."
+    },
+    {
+      "question": "Should received data be executed withExecute?",
+      "options": [
+        "Always",
+        "ForXML",
+        "No"
+      ],
+      "correct": 2,
+      "explanation": "Serialized input remains data."
+    },
+    {
+      "question": "Compare a round trip by",
+      "options": [
+        "Semantic fields",
+        "Always key order",
+        "Color"
+      ],
+      "correct": 0,
+      "explanation": "JSONfield order does not define message identity."
+    }
+  ],
+  "review": [
+    "ValidateJSON/XMLschema, types and limits without executing input text.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "job-mechanism",
+    "scheduled-job",
+    "safe-eval"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p11",
+    "locale": "en"
+  }
+}

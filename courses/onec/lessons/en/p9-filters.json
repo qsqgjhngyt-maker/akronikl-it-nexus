@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p9",
+  "topicId": "onec.p9.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Parameters, filters and grouping",
+  "minutes": 120,
+  "goal": "Design report parameters, filters and grouping without changing total semantics.",
+  "prerequisites": [
+    "onec.p8; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Design report parameters, filters and grouping without changing total semantics.",
+    "Filter rows>30.",
+    "Filter group sums>30."
+  ],
+  "sections": [
+    [
+      "Filter level changes meaning",
+      "Filtering rows before aggregation differs from filtering groups after it. “Requests longer than 30 minutes” is not “customers totaling more than 30.” A customer with two short requests distinguishes them. Settings must express the intended requirement.",
+      "Define the question and granularity before composition. Customer-minute sums, average document cost and open-request counts need distinct resources/denominators. Similar-looking reports are not interchangeable. Use uneven groups and independent calculations to expose averaging/grouping errors that symmetric toy examples can hide. Check underlying identities before interpreting the final visual representation."
+    ],
+    [
+      "Parameters fix computation",
+      "Supply virtual-table period, customer and status with correct types. A dynamic CurrentMonth parameter is convenient operationally but should be fixed for reproducible evidence. Avoid hidden conditions lost on reopening. A saved variant must restore every material value.",
+      "Schema describes available data, settings select retrieval/presentation, and output produces a result. Changing one level does not silently authorize changing another. Record parameters, variant, time and units. Saved settings usually are not frozen data snapshots; new documents can legitimately change the same variant. Preserve membership and observed values for reproducibility as well as the configuration of the report."
+    ],
+    [
+      "Grouping does not change units",
+      "Customer minute sums remain minutes. For a per-document average, specify numerator and denominator; an average of group averages generally differs from the global average. Use customers with unequal request counts as a control. Apply rounding at the declared point.",
+      "External components and exports cross distinct boundaries. Processors execute code and need provenance, authority and environment checks. Printed files present data under edition constraints. In-memory generation is not actual saving or printing. Explain unavailable capabilities honestly; circumventing platform limits is not an acceptable educational workaround. Preserve source records when output fails or cancellation occurs."
+    ],
+    [
+      "Tests distinguish similar reports",
+      "Compare rows>30, groups>30, average and sum on one set. Specify expected identities and values beforehand, then save/reopen the variant. A missing-filter negative control must fail. If every variant accidentally yields one number, the dataset does not distinguish wrong implementations and must expand.",
+      "Trace each report row to source facts. Verify membership/units, then aggregation/presentation. A deliberately wrong filter in a copy must alter the expected result and be detected. Repeat ordinary, empty and boundary datasets after correction. This demonstrates test sensitivity rather than merely generating a plausible screen once without a runtime error."
+    ]
+  ],
+  "diagram": "p9-1",
+  "walkthrough": [
+    {
+      "action": "Filter rows>30.",
+      "expected": "OnlyBeta50."
+    },
+    {
+      "action": "Filter group sums>30.",
+      "expected": "Alpha 40 andBeta50."
+    },
+    {
+      "action": "Remove the filter from an experimental variant.",
+      "expected": "The check detects extra rows instead of accepting similar appearance."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Альфа:[20,20];Бета:[50]\nСтроки>30→Бета50;Группы>30→Альфа40,Бета50",
+      "expected": "Different correct sets; do not silently move a predicate between levels.",
+      "explanation": "Two short requests make the distinction observable."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Уберите фильтр в экспериментальном варианте.",
+      "expected": "The check detects extra rows instead of accepting similar appearance.",
+      "explanation": "Two short requests make the distinction observable."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Filter rows>30.",
+      "criteria": "OnlyBeta50."
+    },
+    {
+      "level": "Applied",
+      "task": "Filter group sums>30.",
+      "criteria": "Alpha 40 andBeta50."
+    },
+    {
+      "level": "Advanced",
+      "task": "Add average per document and explain its difference from average of groups.",
+      "criteria": "Independent calculation with explicit denominators and rounding."
+    }
+  ],
+  "lab": {
+    "title": "Design report parameters, filters and grouping without changing total semantics.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Filter rows>30.",
+      "Filter group sums>30.",
+      "Remove the filter from an experimental variant.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "OnlyBeta50.",
+      "Alpha 40 andBeta50.",
+      "The check detects extra rows instead of accepting similar appearance."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Different correct sets; do not silently move a predicate between levels.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The check detects extra rows instead of accepting similar appearance."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Are rows>30 and group sums>30 equivalent?",
+      "options": [
+        "Yes",
+        "No",
+        "For all customers"
+      ],
+      "correct": 1,
+      "explanation": "Two 20+20rows distinguish the predicates."
+    },
+    {
+      "question": "Is average of averages always the overall average?",
+      "options": [
+        "Yes",
+        "For money",
+        "No"
+      ],
+      "correct": 2,
+      "explanation": "Group sizes can differ."
+    },
+    {
+      "question": "Fixing the period supports",
+      "options": [
+        "Reproducibility",
+        "More permissions",
+        "Disabling validation"
+      ],
+      "correct": 0,
+      "explanation": "A repeat answers the same question."
+    }
+  ],
+  "review": [
+    "Design report parameters, filters and grouping without changing total semantics.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "dcs",
+    "training-download",
+    "safe-eval"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p9",
+    "locale": "en"
+  }
+}

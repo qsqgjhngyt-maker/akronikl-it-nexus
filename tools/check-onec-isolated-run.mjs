@@ -1,0 +1,4 @@
+import fs from'node:fs';import path from'node:path';import{runIsolatedOneScript}from'../courses/onec-education/runtime/docker-onescript.mjs';
+// Только локальный оператор. Никакого HTTP endpoint, Docker socket в браузере или host fallback.
+const [snapshotFile,outputFile]=process.argv.slice(2);if(!snapshotFile||!outputFile||!process.env.ONEC_OSCRIPT_IMAGE_ID)throw Error('Укажите snapshot.json, новый receipt.json и ONEC_OSCRIPT_IMAGE_ID');
+const input=fs.readFileSync(snapshotFile);if(input.length>65536)throw Error('SNAPSHOT_SIZE');const receipt=await runIsolatedOneScript(JSON.parse(input),{imageId:process.env.ONEC_OSCRIPT_IMAGE_ID,dockerPath:process.env.ONEC_DOCKER_PATH||'docker'});fs.writeFileSync(path.resolve(outputFile),JSON.stringify(receipt,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({status:receipt.status,runtime:receipt.runtime,sourceSha256:receipt.sourceSha256,cleanup:receipt.cleanup,automaticGrade:false}));

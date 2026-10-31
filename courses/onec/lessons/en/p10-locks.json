@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p10",
+  "topicId": "onec.p10.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Locks and concurrent changes",
+  "minutes": 120,
+  "goal": "Protect a balance check against concurrent changes and reproduce two-transaction ordering.",
+  "prerequisites": [
+    "onec.p9; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Protect a balance check against concurrent changes and reproduce two-transaction ordering.",
+    "Reproduce the unsafe schedule in a model.",
+    "Protect read and write in a permitted stand."
+  ],
+  "sections": [
+    [
+      "Individually correct, collectively wrong",
+      "Two operations each read balance 10 and spend 7. Each passes alone; combined balance−4breaks the rule. A post-read check without coordinated locking does not prevent the second transaction. Starting a transaction alone does not specify lock scope. Draw read A→readB→write A→writeBbefore choosing anAPI.",
+      "Engineering quality follows invariants, not absence of exceptions. Balance uses admissible amounts, permissions authorized scope, diagnostics explainable failure without leaks. Specify what survives errors and concurrent actions. Positive cases prove utility; negative cases prove boundaries. Denying everything is not a universally correct security implementation. Evidence needs both operational success and correctly bounded rejection."
+    ],
+    [
+      "Locks apply to data",
+      "Managed locking identifies a data space and dimension values. Lock invariant-related data before deciding. Too-wide locks reduce concurrency; too-narrow locks miss conflicts. Scope depends on register, mode and operation; there is no universal line suitable for every solution.",
+      "Transactions, locks and authorization solve different problems. Atomicity coordinates one operation, locking interacting operations, and rights constrain subjects. None proves the others. Identify decision point, read data and authorized actor for each failure scenario. Choose minimal protection rather than enabling every capability or broadening privileges. A context compile check is not a multi-user access proof."
+    ],
+    [
+      "Consistent ordering reduces deadlocks",
+      "Two operations locking A/Bin opposite order can deadlock. Agree on stable-key order and keep transactions short. A timeout is failure, not a successful spend. Retrying needs idempotency and a fresh state read; blindly repeating external effects can duplicate them.",
+      "Measurement/observability must preserve privacy. Use synthetic IDs, bounded logs and defined metrics. Passwords/tokens are unnecessary even for leak demonstrations; use canaries. One timing is not p95, and one profile result does not cover every role/configuration combination. Keep raw diagnostics restricted and publish only sufficient sanitized evidence tied to the actual test environment."
+    ],
+    [
+      "Two sessions need separate evidence",
+      "Single-sessiontrainingcannot prove this scenario. In a permitted multi-session stand, control barriers and record both traces and final balance. From 10, one spend 7 succeeds; the second rereads and rejects, result 3. Test an independent customer to show the lock does not block everything.",
+      "Security acceptance needs discriminating tests in a permitted environment. Races need two controlled sessions, roles allowed work plus bypass attempts, and isolation denial of a specific resource. Preserve traces/post-failure state and repeat a successful control. Unsupported environments yieldNOTRUN; static analysis or diagrams cannot automatically fill that evidence gap. Report the remaining gate explicitly."
+    ]
+  ],
+  "diagram": "p10-0",
+  "walkthrough": [
+    {
+      "action": "Reproduce the unsafe schedule in a model.",
+      "expected": "Show how two individually valid decisions produce−4."
+    },
+    {
+      "action": "Protect read and write in a permitted stand.",
+      "expected": "One spend, balance 3, second rejection."
+    },
+    {
+      "action": "Test timeout and an independent customer.",
+      "expected": "No false success; unrelated scope is not blocked unnecessarily."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "A:read10;B:read10;A:−7;B:−7 → −4\nЗащищённо:Acommit3;Breads3→reject",
+      "expected": "Final 3, one accepted operation, one explained rejection.",
+      "explanation": "This specifies a schedule; test actual managed-lockAPIin the required configuration."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Проверьте таймаут и независимого клиента.",
+      "expected": "No false success; unrelated scope is not blocked unnecessarily.",
+      "explanation": "This specifies a schedule; test actual managed-lockAPIin the required configuration."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Reproduce the unsafe schedule in a model.",
+      "criteria": "Show how two individually valid decisions produce−4."
+    },
+    {
+      "level": "Applied",
+      "task": "Protect read and write in a permitted stand.",
+      "criteria": "One spend, balance 3, second rejection."
+    },
+    {
+      "level": "Advanced",
+      "task": "Build an A/Bdeadlock schedule and address it with consistent ordering.",
+      "criteria": "Traces, order, timeouts and rechecks are documented."
+    }
+  ],
+  "lab": {
+    "title": "Protect a balance check against concurrent changes and reproduce two-transaction ordering.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Reproduce the unsafe schedule in a model.",
+      "Protect read and write in a permitted stand.",
+      "Test timeout and an independent customer.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Show how two individually valid decisions produce−4.",
+      "One spend, balance 3, second rejection.",
+      "No false success; unrelated scope is not blocked unnecessarily."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Final 3, one accepted operation, one explained rejection.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "No false success; unrelated scope is not blocked unnecessarily."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Does a transaction choose the correct managed-lock scope itself?",
+      "options": [
+        "No",
+        "Always",
+        "For every register"
+      ],
+      "correct": 0,
+      "explanation": "Scope follows the invariant and operation."
+    },
+    {
+      "question": "After spending 7 from 10, another 7 should",
+      "options": [
+        "Succeed",
+        "Reject under a no-negative rule",
+        "Rename something"
+      ],
+      "correct": 1,
+      "explanation": "Current balance 3 is insufficient."
+    },
+    {
+      "question": "Does one training session prove a race?",
+      "options": [
+        "Yes",
+        "For minutes",
+        "No"
+      ],
+      "correct": 2,
+      "explanation": "Two controlled executions are needed."
+    }
+  ],
+  "review": [
+    "Protect a balance check against concurrent changes and reproduce two-transaction ordering.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "safe-eval",
+    "managed-locks",
+    "admin-tools"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p10",
+    "locale": "en"
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p4",
+  "topicId": "onec.p4.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Enumerations and attributes",
+  "minutes": 120,
+  "goal": "Choose enumerations and attribute types while separating value sets from transition rules.",
+  "prerequisites": [
+    "onec.p3; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Choose enumerations and attribute types while separating value sets from transition rules.",
+    "Create a request explicitly set toNew.",
+    "Check an allowed transition."
+  ],
+  "sections": [
+    [
+      "Enumerations define finite values",
+      "New, InProgress andClosed are developer-defined states changed through configuration, so an enumeration suits them. User-maintained services suit a catalog. Do not choose enumeration merely because today’s list is short; consider who changes it and how.",
+      "Model changes as well as creation. Customers can be renamed, services repriced, and requests can retain earlier agreed terms. List these events separately to identify catalog data, document snapshots and historical facts. This prevents silently updating every linked request when only current presentation or a current service offering should change."
+    ],
+    [
+      "An empty value needs meaning",
+      "A new request may default toNew; an older missing status may need handling. Never silently treat empty asClosed. Distinguish absence, an allowed enumeration value and a similar-looking string. Strong typing helps, but transition correctness remains an application rule.",
+      "Internal identity and external code solve different problems. References connect infobase objects; codes support imported correspondence. Define uniqueness scope, case handling and absence policy. Two systems can reuse one code for different customers, requiring sender scope or a mapping table. A name search alone cannot resolve this ambiguity safely or justify replacing an existing entity."
+    ],
+    [
+      "Transitions form a directed graph",
+      "New→InProgress andInProgress→Closed may be allowed; Closed→New may require a special command. Enforce the allowed-pair table centrally, not only through button availability. Adding a state requires updating transitions, filters, reports and tests or the new value may be mishandled.",
+      "Keep empty references, missing items and deletion-marked objects distinct and define each outcome. An old request must not silently point to a newly created lookalike after reseeding. Compare identities and document relationships before/after; use labels only for human readability. A valid-looking card can otherwise conceal broken history or a duplicate entity."
+    ],
+    [
+      "Compatibility checks old data",
+      "After changing enumeration values, check existing documents and saved report settings. Renaming an element technically differs from relabeling its synonym. Do not delete an in-use value for cosmetic reasons. Preserve prior references and test an invalid transition without a write.",
+      "Use an ordinary customer, an equal-named second customer and a request-free third customer. Test lookup, rename, reseed and selection. This set exposes implementations that only work when labels happen to be unique. Reopen the source separately afterwards:independent copies are proven by preserved records, not different labels in a launcher list."
+    ]
+  ],
+  "diagram": "p4-2",
+  "walkthrough": [
+    {
+      "action": "Create a request explicitly set toNew.",
+      "expected": "Rereading yields the persisted enumeration value."
+    },
+    {
+      "action": "Check an allowed transition.",
+      "expected": "The new status persists without changing customer or minutes."
+    },
+    {
+      "action": "Check a prohibited reverse transition.",
+      "expected": "Rejection and unchanged status; a hidden button is insufficient."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Статус = Перечисления.СтатусыЗаявки.Новая;",
+      "expected": "The value has an enumeration type rather thanString.",
+      "explanation": "An enumeration restricts values but does not implement the transition graph."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Проверьте запрещённый обратный переход.",
+      "expected": "Rejection and unchanged status; a hidden button is insufficient.",
+      "explanation": "An enumeration restricts values but does not implement the transition graph."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Create a request explicitly set toNew.",
+      "criteria": "Rereading yields the persisted enumeration value."
+    },
+    {
+      "level": "Applied",
+      "task": "Check an allowed transition.",
+      "criteria": "The new status persists without changing customer or minutes."
+    },
+    {
+      "level": "Advanced",
+      "task": "AddNeedsClarification in a copy and update dependent workflows.",
+      "criteria": "Transitions, filters, reports and old documents agree."
+    }
+  ],
+  "lab": {
+    "title": "Choose enumerations and attribute types while separating value sets from transition rules.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Create a request explicitly set toNew.",
+      "Check an allowed transition.",
+      "Check a prohibited reverse transition.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Rereading yields the persisted enumeration value.",
+      "The new status persists without changing customer or minutes.",
+      "Rejection and unchanged status; a hidden button is insufficient."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "The value has an enumeration type rather thanString.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Rejection and unchanged status; a hidden button is insufficient."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Who usually changes enumeration values?",
+      "options": [
+        "The configuration developer",
+        "Anyone through search",
+        "The printer"
+      ],
+      "correct": 0,
+      "explanation": "The set belongs to configuration."
+    },
+    {
+      "question": "Does enumeration automatically implement transitions?",
+      "options": [
+        "Yes",
+        "No",
+        "For three states"
+      ],
+      "correct": 1,
+      "explanation": "Allowed pairs require separate rules."
+    },
+    {
+      "question": "Synonym and technical name are",
+      "options": [
+        "Always identical",
+        "Random colors",
+        "Different properties"
+      ],
+      "correct": 2,
+      "explanation": "Display changes need not change identity."
+    }
+  ],
+  "review": [
+    "Choose enumerations and attribute types while separating value sets from transition rules.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p4",
+    "locale": "en"
+  }
+}

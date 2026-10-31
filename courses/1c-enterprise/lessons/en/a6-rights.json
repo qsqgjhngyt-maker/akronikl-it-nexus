@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a6",
+  "topicId": "1c-enterprise.a6.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Roles and least privilege",
+  "minutes": 120,
+  "goal": "Build a least-privilege matrix and test allowed and denied operations.",
+  "prerequisites": [
+    "1c-enterprise.a 5; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
+  ],
+  "outcomes": [
+    "Build a least-privilege matrix and test allowed and denied operations.",
+    "Describe operator and developer in a matrix.",
+    "Create a request as operator in a permitted stand."
+  ],
+  "sections": [
+    [
+      "Roles describe capabilities",
+      "An operator creates and reads requests; a consultant configures variants; a developer changes configuration. These are teaching roles, not a complete production policy. Specify object, action and data scope per operation. Full access for everyone hides the symptom rather than solving responsibility boundaries.",
+      "Begin administration with responsibility boundaries:operators correct input, developers algorithms, and administrators the permitted environment/recovery. Being able to execute a command does not authorize consequences. Record purpose, source, destination and prohibited changes before acting; record outcome and preservation afterwards. This turns potentially dangerous clicks into a controlled experiment with an explicit acceptance condition."
+    ],
+    [
+      "Visibility is not permission",
+      "Hiding a command can improve UI, but denial must apply to the operation. Another list or programmatic route must not bypass the rule. Denying everything is also incorrect. Alongside each denial, test a necessary allowed operation for the same role.",
+      "A full backup restores data, not merely earlier code. Preserve platform/configuration versions, control identities and totals. Restore only to a fresh destination without someone else’s work. File existence is insufficient:open the restored instance and confirm accepted state survives another session. Recovery evidence names what was checked rather than implying every function was covered."
+    ],
+    [
+      "A check has an environment",
+      "Training edition limits authentication and simultaneous sessions. It can teach role structure and scenarios but does not establish a complete multi-user security PASS. Execute the matrix in a permitted environment with separate teaching users. Never use real credentials or publish a password to simplify reproduction.",
+      "Permission tests must allow required work while denying excess. Login failure alone is not an object-permission test. Pair each negative attempt with an allowed control in a suitable environment. Record training limitations separately:one-user login does not prove multi-user separation or authorize production use. Keep credentials out of logs and use synthetic roles/data."
+    ],
+    [
+      "Denial preserves state",
+      "An operator may not change schema or delete a catalog. Record state before the attempt, observed denial and state afterwards. Login failure does not prove object permissions: first authenticate as the intended role and execute an allowed workflow. Distinguish environment failure, permission denial and business validation.",
+      "Preserve observations before testing hypotheses. Changing version, role and data together destroys causal explanation. Hand off minimal reproduction and sanitized classification while keeping private logs restricted. Repeat the original case and preservation control after fixing. Record failed attempts before cleanup:they can explain accepted limitations and prevent another unsafe experiment."
+    ]
+  ],
+  "diagram": "a6-0",
+  "walkthrough": [
+    {
+      "action": "Describe operator and developer in a matrix.",
+      "expected": "Object, action, scope and expected outcome are explicit."
+    },
+    {
+      "action": "Create a request as operator in a permitted stand.",
+      "expected": "The allowed operation succeeds and persists."
+    },
+    {
+      "action": "Attempt a denied change without granting full access.",
+      "expected": "Denial and unchanged data; in an unsuitable environment recordNOT RUN."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Оператор: ReadЗаявки=yes, WriteЗаявки=yes, ChangeConfiguration=no",
+      "expected": "Request input is allowed; schema modification is denied.",
+      "explanation": "Both sides of the matrix require a suitable environment."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Попробуйте запрещённое изменение,не выдавая полные права.",
+      "expected": "Denial and unchanged data; in an unsuitable environment recordNOT RUN.",
+      "explanation": "Both sides of the matrix require a suitable environment."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Describe operator and developer in a matrix.",
+      "criteria": "Object, action, scope and expected outcome are explicit."
+    },
+    {
+      "level": "Applied",
+      "task": "Create a request as operator in a permitted stand.",
+      "criteria": "The allowed operation succeeds and persists."
+    },
+    {
+      "level": "Advanced",
+      "task": "Test an alternative route around a hidden command.",
+      "criteria": "Denial applies to the operation, not merely the button; include an allowed control."
+    }
+  ],
+  "lab": {
+    "title": "Build a least-privilege matrix and test allowed and denied operations.",
+    "environment": "Official 1C 8.3.27.x, new training-service-desk copy. Command labels depend on the configuration interface; verify outcomes against data. Training-edition limits are explicit.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Describe operator and developer in a matrix.",
+      "Create a request as operator in a permitted stand.",
+      "Attempt a denied change without granting full access.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Object, action, scope and expected outcome are explicit.",
+      "The allowed operation succeeds and persists.",
+      "Denial and unchanged data; in an unsuitable environment recordNOT RUN."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Request input is allowed; schema modification is denied.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Denial and unchanged data; in an unsuitable environment recordNOT RUN."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Does a hidden button guarantee denial?",
+      "options": [
+        "No",
+        "Always",
+        "Only in dark theme"
+      ],
+      "correct": 0,
+      "explanation": "Check operational permissions separately."
+    },
+    {
+      "question": "Does denying everything prove a correct role?",
+      "options": [
+        "Yes",
+        "No",
+        "For every operator"
+      ],
+      "correct": 1,
+      "explanation": "Necessary allowed actions must work."
+    },
+    {
+      "question": "A training matrix without separate users is",
+      "options": [
+        "FULL LIVE PASS",
+        "A server audit",
+        "A bounded teaching model"
+      ],
+      "correct": 2,
+      "explanation": "Do not attribute full-environment properties to a restricted one."
+    }
+  ],
+  "review": [
+    "Build a least-privilege matrix and test allowed and denied operations.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "training",
+    "designer",
+    "catalogs",
+    "documents",
+    "form-elements"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "1c-enterprise.a6",
+    "locale": "en"
+  }
+}

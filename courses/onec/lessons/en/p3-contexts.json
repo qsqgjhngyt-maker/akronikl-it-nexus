@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p3",
+  "topicId": "onec.p3.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Module contexts and exports",
+  "minutes": 120,
+  "goal": "Extract a common-module computation contract and check call availability by context.",
+  "prerequisites": [
+    "onec.p2; P2: types, branching, loops and numeric boundaries."
+  ],
+  "outcomes": [
+    "Extract a common-module computation contract and check call availability by context.",
+    "Map module→data→call for a request calculation.",
+    "Extract the form calculation with explicit minutes and rate."
+  ],
+  "sections": [
+    [
+      "A module belongs to a context",
+      "BSL text belongs to an application, object, form or common module. Placement determines available data: an object module sees the attributes of its object, while a common module does not receive them automatically. Pass minutes and rate explicitly so calculation does not depend on an open form. Identical function names in different modules do not make the functions identical.",
+      "The service-desk calculation may be called from a card, document and report. Separate formulas let one fix leave two old implementations behind. A common computation contract avoids that divergence but needs explicit inputs. List every caller and verify equal units, parameter meaning and result type rather than merely matching function names."
+    ],
+    [
+      "Export defines a call surface",
+      "Export permits calls from an available external context; it does not create an unrestricted network API. A common module has separate client, server and server-call settings. A pure calculation needs only the necessary contexts. A public function validates its inputs even when a screen has already performed similar checks.",
+      "Describe a function by inputs, preconditions, result and permitted changes. Cost uses numeric minutes/rate, admissible ranges, a rounded number and unchanged input collections. This description selects tests before implementation. If failure returns another type, callers must know explicitly or an error can accidentally participate in arithmetic. A stable contract makes substitution and review possible."
+    ],
+    [
+      "Make dependencies visible",
+      "Hidden reads of a current document or global variable make a calculation state-dependent. Tests with identical inputs may then depend on a previous window or execution order. Extract the data transformation first and the object-reading adapter second. If a function accesses the infobase, expose that fact in its contract and test it against a separate record set.",
+      "Checking mutation needs more than comparing variable names:two variables can refer to one collection. Snapshot important fields and nested elements before execution, then compare the source afterwards. Run another function on the same input to expose hidden contamination. Keep each test’s setup independent so changing test order cannot alter the outcome."
+    ],
+    [
+      "Check an availability matrix",
+      "Record caller module, directive, expected outcome and required common-module setting in a matrix. A compile error for an unavailable call is more useful than enabling every flag. Test an allowed call too: denying everything is not a correct implementation. A client context in a file infobase does not prove traversal of a network server.",
+      "A semantic negative control differs from a syntax error. Replacing addition with subtraction may compile but must change a named assertion’s result. Keep compilation and executed assertions as separate outcomes. Unavailable platforms, timeouts and incomplete case lists cannot confirm missing results. Preserve original and mutated source hashes and identify the particular assertion that detects the defect."
+    ]
+  ],
+  "diagram": "p3-0",
+  "walkthrough": [
+    {
+      "action": "Call the function within its module with 30 and 1200.",
+      "expected": "Numeric 600, with no object write."
+    },
+    {
+      "action": "Call it from an allowed external context with Export.",
+      "expected": "The same result; no document is required as a hidden parameter."
+    },
+    {
+      "action": "Remove Export in a separate copy and check the external call.",
+      "expected": "The external call is unavailable; do not enable every context to bypass the error."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Функция Стоимость(Минуты, Тариф) Экспорт\n    Возврат Окр(Минуты * Тариф / 60, 2);\nКонецФункции",
+      "expected": "30 minutes ×1200/hour =600 for valid, checked inputs.",
+      "explanation": "This is a pure calculation body; module settings and input validation are separate."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Уберите Экспорт в отдельной копии и проверьте внешний вызов.",
+      "expected": "The external call is unavailable; do not enable every context to bypass the error.",
+      "explanation": "This is a pure calculation body; module settings and input validation are separate."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Map module→data→call for a request calculation.",
+      "criteria": "Form, object and common module are distinguished."
+    },
+    {
+      "level": "Applied",
+      "task": "Extract the form calculation with explicit minutes and rate.",
+      "criteria": "Two different windows produce the same result for identical inputs."
+    },
+    {
+      "level": "Advanced",
+      "task": "Reduce the exported method surface.",
+      "criteria": "The matrix covers allowed and forbidden calls; the working function is preserved."
+    }
+  ],
+  "lab": {
+    "title": "Extract a common-module computation contract and check call availability by context.",
+    "environment": "Official 1C 8.3.27.x, separate file training infobase, thick managed client; common modules are checked in their declared contexts. Record each native run separately.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Call the function within its module with 30 and 1200.",
+      "Call it from an allowed external context with Export.",
+      "Remove Export in a separate copy and check the external call.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Numeric 600, with no object write.",
+      "The same result; no document is required as a hidden parameter.",
+      "The external call is unavailable; do not enable every context to bypass the error."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "30 minutes ×1200/hour =600 for valid, checked inputs.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The external call is unavailable; do not enable every context to bypass the error."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What does Export do?",
+      "options": [
+        "Allows an available external call",
+        "Always publishes HTTP",
+        "Disables permissions"
+      ],
+      "correct": 0,
+      "explanation": "Export works with module context, not in place of it."
+    },
+    {
+      "question": "What should a pure calculation receive?",
+      "options": [
+        "An open form",
+        "Minutes and rate",
+        "A password"
+      ],
+      "correct": 1,
+      "explanation": "Explicit data removes UI dependence."
+    },
+    {
+      "question": "What does a file infobase not prove?",
+      "options": [
+        "Function availability",
+        "A numeric value",
+        "A network-server route"
+      ],
+      "correct": 2,
+      "explanation": "File and client-server deployments differ."
+    }
+  ],
+  "review": [
+    "Extract a common-module computation contract and check call availability by context.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "cli"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p3",
+    "locale": "en"
+  }
+}

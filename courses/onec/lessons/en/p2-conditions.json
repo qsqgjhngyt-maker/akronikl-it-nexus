@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p2",
+  "topicId": "onec.p2.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Conditions, Boolean expressions and decision tables",
+  "minutes": 115,
+  "goal": "Build a complete decision table for request duration and verify branch order, types and boundaries in real BSL.",
+  "prerequisites": [
+    "P2.1–P2.2; type versus validity and the ЭтоЧислоМинут function."
+  ],
+  "outcomes": [
+    "Translate requirements into nonoverlapping input classes.",
+    "Explain If/ElsIf/Else and And/Or/Not.",
+    "Find a boundary defect through a counterexample rather than random trials."
+  ],
+  "sections": [
+    [
+      "Define the rule before coding",
+      "КлассДлительности has an explicit contract. Nonnumeric inputs and numbers outside 0..1440 are rejected. Zero maps to NoCost; positive values through 60 inclusive is Short; values above 60 through 1440 is Long. This is a learning classification, not a medical, employment or financial standard. Changing class names or boundaries requires changing requirements and tests deliberately.",
+      "Before reading the implementation, build a table for -1, 0, 1, 60, 61, 1440, 1441 and string \"60\", recording types separately. The table reveals missing classes or ambiguous boundaries. An ordinary input such as 30 cannot distinguish the intended algorithm from one that treats 60 as Long or accepts textual input unexpectedly."
+    ],
+    [
+      "Branch ordering changes behavior",
+      "The first branch calls ЭтоЧислоМинут and rejects an invalid input. Zero is handled next, then <=60, then the remaining admissible range. An If/ElsIf chain takes the first matching branch. Reaching the final Else establishes that type and range are valid, the value is nonzero and it exceeds 60. These accumulated facts explain the final branch.",
+      "Placing a broad <=60 branch before the zero case classifies zero as Short. Replacing <= with < makes 60 Long. Both variants can pass syntax checking. Include inputs that distinguish these implementations. For each experiment, record the first incorrect result and its cause instead of adding arbitrary exceptions that conceal an ordering defect."
+    ],
+    [
+      "Boolean expressions and safe preconditions",
+      "Value>=0 And Value<=1440 requires both bounds simultaneously. Or can combine reasons for rejection, while Not reverses a Boolean predicate. Read a compound expression as a claim about a particular input. When combining business rules, decide whether both or at least one must hold before choosing an operator. Parentheses make grouping explicit.",
+      "This implementation returns early on a wrong type before comparing numeric bounds. Correctness does not depend on side effects or guesses about right-hand evaluation. These exercises use True/False; query-specific Null behavior is not imported automatically. If an input can represent a third special meaning, handle it before applying a two-valued decision table."
+    ],
+    [
+      "What the evidence establishes",
+      "The native suite checks -1, 0, 60, 61, 1440, 1441 and string \"60\" in seven separate P2.3 cases. They exercise important current boundaries, not every number, fractional duration or future textual format. The goal is to justify test selection and explain limitations. A PASS count without its actual input set provides less information.",
+      "Proposed properties could include every admissible positive input <=60 being Short, rejected input leaving infobase state unchanged, and repeated calls returning the same class. These remain proposed until tested. This pure function classifies a value and writes no document. A2’s BeforeWrite rules are a separate boundary and cannot be declared verified by classification alone."
+    ]
+  ],
+  "diagram": "p2conditions",
+  "walkthrough": [
+    {
+      "action": "Trace the chain for 0 and 60.",
+      "expected": "Both pass validation, then become NoCost and Short."
+    },
+    {
+      "action": "Compare 60 with 61, then 1440 with 1441.",
+      "expected": "Short/Long; Long/Rejected."
+    },
+    {
+      "action": "Explain string \"60\" before range evaluation.",
+      "expected": "An early return rejects the nonnumeric type."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Boundary table",
+      "source": "[-1, 0, 60, 61, 1440, 1441, \"60\"]",
+      "expected": "Rejected; NoCost; Short; Long; Long; Rejected; Rejected.",
+      "explanation": "Each result corresponds to a particular native case."
+    },
+    {
+      "title": "An ordering counterexample",
+      "source": "if minutes<=60 before if minutes=0",
+      "expected": "Zero would incorrectly become Short.",
+      "explanation": "This predicts a separate mutation; it is not claimed as another performed native test."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Explain And, Or and Not in ordinary words for each condition.",
+      "criteria": "Simultaneous requirements, alternatives and negation; distinguish type from range."
+    },
+    {
+      "level": "Applied",
+      "task": "Justify the seven P2.3 cases: which defect does each detect?",
+      "criteria": "Connect type, lower/upper limits, zero and 60/61 to specific defect hypotheses."
+    },
+    {
+      "level": "Advanced",
+      "task": "Propose a separate 61..120 class and update the decision table without changing the reference.",
+      "criteria": "Preserve old requirements; label new 60/61/120/121 tests PLANNED until executed in separate work."
+    }
+  ],
+  "lab": {
+    "title": "A decision table without a lost boundary",
+    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "steps": [
+      "Record types and expected classes before execution.",
+      "Read КлассДлительности and annotate facts established after each branch.",
+      "Run the native gate and reconcile seven P2.3 cases.",
+      "Propose two counterexamples for wrong ordering or comparison signs.",
+      "Preserve source, expectations, observations and limitations."
+    ],
+    "expected": [
+      "Seven P2.3 cases pass.",
+      "Explain 0, 60/61 and 1440/1441 without overlapping classes."
+    ],
+    "evidence": [
+      "Decision table with types and native case IDs.",
+      "Traces for 0, 60, 61 and \"60\"."
+    ],
+    "negative": "Do not change an expected class merely because reordered branches produce a different answer. Check the original requirement first."
+  },
+  "mistakes": [
+    [
+      "“And and Or are interchangeable.”",
+      "They define different admissible input sets."
+    ],
+    [
+      "“A type check replaces a range check.”",
+      "They are independent conditions of the current contract."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Class for 60?",
+      "options": [
+        "NoCost",
+        "Short",
+        "Long"
+      ],
+      "correct": 1,
+      "explanation": "The Short upper bound is inclusive."
+    },
+    {
+      "question": "Why check type first?",
+      "options": [
+        "To change records",
+        "To post a document",
+        "To avoid numeric comparisons on unsuitable input"
+      ],
+      "correct": 2,
+      "explanation": "The early return establishes a clear numeric precondition."
+    },
+    {
+      "question": "Where does 1441 belong?",
+      "options": [
+        "Rejected",
+        "Long",
+        "Short"
+      ],
+      "correct": 0,
+      "explanation": "It exceeds the agreed range."
+    }
+  ],
+  "review": [
+    "Explain the first matching branch.",
+    "Name distinguishing boundaries.",
+    "Next: repeating calculations with loops."
+  ],
+  "sources": [
+    "cli",
+    "training",
+    "platform-architecture",
+    "bsl-language"
+  ],
+  "contentRevision": "0.3.0-a2p2",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.a2p2.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_A2P2_EN.md",
+  "nativeCaseIds": [
+    "P2.3.negative",
+    "P2.3.zero",
+    "P2.3.inclusive-boundary",
+    "P2.3.next-boundary",
+    "P2.3.maximum",
+    "P2.3.over-maximum",
+    "P2.3.wrong-type"
+  ],
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
+    "sourcePolicy": "primary-source-links-and-observed-native-results",
+    "studentAuthorshipVerified": false
+  },
+  "codeFile": "native/examples-a2p2/p2-conditions.bsl"
+}

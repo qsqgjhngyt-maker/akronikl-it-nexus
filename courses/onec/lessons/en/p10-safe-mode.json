@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p10",
+  "topicId": "onec.p10.safe-mode",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Safe mode and trust in extensions",
+  "minutes": 120,
+  "goal": "Explain safe-mode and extension-admission boundaries without running unknown code on the host.",
+  "prerequisites": [
+    "onec.p9; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Explain safe-mode and extension-admission boundaries without running unknown code on the host.",
+    "Map threats to mechanisms.",
+    "Check your extension on a fresh copy."
+  ],
+  "sections": [
+    [
+      "Mechanisms solve different problems",
+      "Rights constrain user operations, safe mode specific code capabilities, server profiles additional server resources, andVMsan environment boundary. They are not interchangeable. A directive or checkbox does not prove host-file protection against arbitrary configuration modules. Define threat and supported context first.",
+      "Engineering quality follows invariants, not absence of exceptions. Balance uses admissible amounts, permissions authorized scope, diagnostics explainable failure without leaks. Specify what survives errors and concurrent actions. Positive cases prove utility; negative cases prove boundaries. Denying everything is not a universally correct security implementation. Evidence needs both operational success and correctly bounded rejection."
+    ],
+    [
+      "String execution increases risk",
+      "Execute/Evalon user input turns data into a program. Prefer a constrained operation language with explicit validation. Where dynamic execution is required under an official contract, safe mode also needs callable-function restrictions. Do not proposeevalas a universal adapter forStudio code inside a trusted configuration.",
+      "Transactions, locks and authorization solve different problems. Atomicity coordinates one operation, locking interacting operations, and rights constrain subjects. None proves the others. Identify decision point, read data and authorized actor for each failure scenario. Choose minimal protection rather than enabling every capability or broadening privileges. A context compile check is not a multi-user access proof."
+    ],
+    [
+      "Extensions have provenance",
+      "Bind an original teaching extension to a base configuration, version and hash. Check borrowed objects, changed methods and preservation after disabling. Compatibility with one version does not cover all upgrades. Exclude proprietary solutions and never execute unknown files merely to obtainPASS.",
+      "Measurement/observability must preserve privacy. Use synthetic IDs, bounded logs and defined metrics. Passwords/tokens are unnecessary even for leak demonstrations; use canaries. One timing is not p95, and one profile result does not cover every role/configuration combination. Keep raw diagnostics restricted and publish only sufficient sanitized evidence tied to the actual test environment."
+    ],
+    [
+      "Negative tests must be safe",
+      "Use synthetic canaries and a disposable permitted environment without real secrets. Test prohibited files, network, process creation and output limits under the chosen model. Untested boundaries remainPLANNED/NOTRUN. Source hashes prove unchanged bytes, not a complete threat model or protected learner grading.",
+      "Security acceptance needs discriminating tests in a permitted environment. Races need two controlled sessions, roles allowed work plus bypass attempts, and isolation denial of a specific resource. Preserve traces/post-failure state and repeat a successful control. Unsupported environments yieldNOTRUN; static analysis or diagrams cannot automatically fill that evidence gap. Report the remaining gate explicitly."
+    ]
+  ],
+  "diagram": "p10-4",
+  "walkthrough": [
+    {
+      "action": "Map threats to mechanisms.",
+      "expected": "Each has a context and protection boundary."
+    },
+    {
+      "action": "Check your extension on a fresh copy.",
+      "expected": "Base, version, hash and changes are known."
+    },
+    {
+      "action": "Assess unadmitted code without execution.",
+      "expected": "NOT RUN; no real secrets or host work are used."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Данныепользователя → ограниченныйконтракт;неВыполнить(произвольныйтекст)",
+      "expected": "Untrusted input remains data until separate agreed runtime admission.",
+      "explanation": "TheS1editor and static analysis are not an execution sandbox."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Рассмотрите недопущенный код без запуска.",
+      "expected": "NOT RUN; no real secrets or host work are used.",
+      "explanation": "TheS1editor and static analysis are not an execution sandbox."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Map threats to mechanisms.",
+      "criteria": "Each has a context and protection boundary."
+    },
+    {
+      "level": "Applied",
+      "task": "Check your extension on a fresh copy.",
+      "criteria": "Base, version, hash and changes are known."
+    },
+    {
+      "level": "Advanced",
+      "task": "Prepare a negative isolation matrix with admission-rejection criteria.",
+      "criteria": "Rights, SafeModeandVMare distinguished; untested claims do not receivePASS."
+    }
+  ],
+  "lab": {
+    "title": "Explain safe-mode and extension-admission boundaries without running unknown code on the host.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Map threats to mechanisms.",
+      "Check your extension on a fresh copy.",
+      "Assess unadmitted code without execution.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Each has a context and protection boundary.",
+      "Base, version, hash and changes are known.",
+      "NOT RUN; no real secrets or host work are used."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Untrusted input remains data until separate agreed runtime admission.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "NOT RUN; no real secrets or host work are used."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "AreSafeModeandVMidentical?",
+      "options": [
+        "Yes",
+        "No",
+        "For allBSL"
+      ],
+      "correct": 1,
+      "explanation": "They have different boundaries and capabilities."
+    },
+    {
+      "question": "ArbitraryExecuteon input is",
+      "options": [
+        "An ordinary string",
+        "Static analysis",
+        "Execution of an untrusted program"
+      ],
+      "correct": 2,
+      "explanation": "Data becomes code."
+    },
+    {
+      "question": "Untested isolation receives",
+      "options": [
+        "NOT RUN/PLANNED",
+        "FULL PASS",
+        "A certificate"
+      ],
+      "correct": 0,
+      "explanation": "Status requires observed evidence."
+    }
+  ],
+  "review": [
+    "Explain safe-mode and extension-admission boundaries without running unknown code on the host.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "safe-eval",
+    "managed-locks",
+    "admin-tools"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p10",
+    "locale": "en"
+  }
+}

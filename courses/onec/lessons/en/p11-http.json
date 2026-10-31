@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p11",
+  "topicId": "onec.p11.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "HTTP and safe boundaries",
+  "minutes": 120,
+  "goal": "Design a boundedHTTPcontract and test success, rejection and timeout against a local mock.",
+  "prerequisites": [
+    "onec.p10; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Design a boundedHTTPcontract and test success, rejection and timeout against a local mock.",
+    "Call a validhealthmock.",
+    "Return 400 and 500."
+  ],
+  "sections": [
+    [
+      "Exchange is an external boundary",
+      "AnHTTPrequest crosses into another participant’s failures and lifecycle. Specify method, path, body schema, response codes and size limits. A connection is not an accepted request; a 200 with a malformed body also fails the application contract. Do not send real data to public teaching services.",
+      "Integration crosses independently failing participants. Replies can be lost after acceptance, servers can reject business rules, and schedules can repeat work. Contracts need intent identity, state, limits and unknown-outcome resolution as well as body format. Specify those cases before choosingHTTP, serialization or job APIs. A successful transport call alone cannot establish the business outcome."
+    ],
+    [
+      "Policy selects addresses",
+      "A user-suppliedURLmust not grant server code arbitrary internal-network/file access. Use a fixed loopback mock without secrets; it is not a production endpoint. RealHTTPSrequires certificate validation and redirect policy. DisablingTLSvalidation to make tests green is unacceptable.",
+      "Serialized input remains untrusted data. After parsing, validate schema version, required fields, types, ranges and size. Resolve external customer keys through an agreed mapping, not similar names. Never execute input or permit arbitrary addresses. A fixed local mock and synthetic payload suffice for the lab without real secrets or public external services."
+    ],
+    [
+      "Responses can be ambiguous",
+      "A timeout after sending does not reveal whether the remote side accepted the request. Blind retry can duplicate work. Use a requestIDand verification/retry policy. Distinguish transport failure, business 4 xx, temporary 5 xxand schema failure. Log safe IDs rather than tokens or complete payloads.",
+      "Repeatability binds acceptance registry and result. Equal key/content returns the prior document; different content conflicts. CommitDoneand document consistently to avoid false success or duplication after failures. External effects need their own protocol. Batch continuation points likewise commit with results rather than prematurely skipping work. Test failure between these steps, not only clean completion."
+    ],
+    [
+      "Mocks control outcomes",
+      "Prepare valid 200, 400, 500, delay and oversized-body cases. Set expectations before running theBSLclient. The mock inspects method/path but does not replace the 1C platform. Browserfetchor aJSmodel is not execution ofHTTPConnection.",
+      "Control replies and ordering:success, schema rejection, temporary error, timeout, retry and cancel. Mocks prove the simulated peer contract; actualBSLclients prove platformAPIexecution. Manual procedure calls do not prove scheduling. Separate these outcomes, retain safe caseIDs, and verify no extra documents after retries/failures, including a fresh session and an independent state reconciliation."
+    ]
+  ],
+  "diagram": "p11-0",
+  "walkthrough": [
+    {
+      "action": "Call a validhealthmock.",
+      "expected": "Actual 1C confirms method, path, status and body."
+    },
+    {
+      "action": "Return 400 and 500.",
+      "expected": "Outcomes differ; no false accepted request."
+    },
+    {
+      "action": "Delay the reply and exceed the body limit.",
+      "expected": "Timeout/size failures are explicit; logs contain no secrets."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "// Только фиксированный локальный учебныйmock\nСоединение = Новый HTTPСоединение(\"127.0.0.1\", 8765);\nЗапрос = Новый HTTPЗапрос(\"/health\");\nОтвет = Соединение.Получить(Запрос);",
+      "expected": "Check status and agreed body; record mock availability separately.",
+      "explanation": "Do not add arbitrary hosts or secrets; configure timeout and limits in the full version."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Задержите ответ и увеличьте тело сверх лимита.",
+      "expected": "Timeout/size failures are explicit; logs contain no secrets.",
+      "explanation": "Do not add arbitrary hosts or secrets; configure timeout and limits in the full version."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Call a validhealthmock.",
+      "criteria": "Actual 1C confirms method, path, status and body."
+    },
+    {
+      "level": "Applied",
+      "task": "Return 400 and 500.",
+      "criteria": "Outcomes differ; no false accepted request."
+    },
+    {
+      "level": "Advanced",
+      "task": "Add a fixed address policy and a forbidden-redirect test.",
+      "criteria": "No arbitrary network access; the permitted mock remains usable."
+    }
+  ],
+  "lab": {
+    "title": "Design a boundedHTTPcontract and test success, rejection and timeout against a local mock.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Call a validhealthmock.",
+      "Return 400 and 500.",
+      "Delay the reply and exceed the body limit.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Actual 1C confirms method, path, status and body.",
+      "Outcomes differ; no false accepted request.",
+      "Timeout/size failures are explicit; logs contain no secrets."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Check status and agreed body; record mock availability separately.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Timeout/size failures are explicit; logs contain no secrets."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "DoesHTTP200alone establish business success?",
+      "options": [
+        "No",
+        "Yes",
+        "Always forJSON"
+      ],
+      "correct": 0,
+      "explanation": "Validate the body contract."
+    },
+    {
+      "question": "A post-send timeout means",
+      "options": [
+        "Definitely not accepted",
+        "The outcome may be unknown",
+        "Always success"
+      ],
+      "correct": 1,
+      "explanation": "Use idempotency and state verification."
+    },
+    {
+      "question": "For teachingHTTPuse",
+      "options": [
+        "Real tokens",
+        "Any internalURL",
+        "A fixed synthetic mock"
+      ],
+      "correct": 2,
+      "explanation": "Constrain addresses and data."
+    }
+  ],
+  "review": [
+    "Design a boundedHTTPcontract and test success, rejection and timeout against a local mock.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "job-mechanism",
+    "scheduled-job",
+    "safe-eval"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p11",
+    "locale": "en"
+  }
+}

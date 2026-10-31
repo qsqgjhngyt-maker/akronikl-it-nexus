@@ -1,3 +1,4 @@
+import {withProjectWriter} from '../project-studio/project-writer.js';
 import {createCloudflareSyncProvider} from './cloudflare-provider.js';
 import {
   loadCloudflareSyncConfig,
@@ -165,7 +166,8 @@ export async function listCloudProjects(){
   return(await providerFrom().listProjects()).projects||[];
 }
 
-export async function enableProjectCloud(projectId){
+export async function enableProjectCloud(projectId){return withProjectWriter(()=>enableProjectCloudWithWriter(projectId))}
+async function enableProjectCloudWithWriter(projectId){
   const cfg=loadCloudflareSyncConfig();
   if(!cloudflareSyncConfigured())throw new Error('Connect Nexus Cloud first.');
 
@@ -186,7 +188,8 @@ export async function enableProjectCloud(projectId){
   return pushProjectNow(projectId);
 }
 
-export async function pushProjectNow(projectId){
+export async function pushProjectNow(projectId){return withProjectWriter(()=>pushProjectNowWithWriter(projectId))}
+async function pushProjectNowWithWriter(projectId){
   if(!cloudflareSyncConfigured())throw new Error('Cloudflare Sync is not configured.');
 
   let project=getProject(projectId);
@@ -217,14 +220,14 @@ export async function pushProjectNow(projectId){
     updateProjectSyncState(projectId,{
       mode:'cloud',
       provider:'cloudflare',
-      status:'synced',
+      status:getProject(projectId)?.sync?.localRevision===project.sync.localRevision?'synced':'pending',
       serverRevision:result.revision,
       baseServerRevision:result.revision,
       lastSyncedAt:result.updatedAt||now(),
       conflict:null
     });
 
-    clearQueuedProjectSync(projectId);
+    if(getProject(projectId)?.sync?.status==='synced')clearQueuedProjectSync(projectId);
 
     appendAuditEvent(projectId,{
       actorId:cfg.subjectId,
@@ -257,11 +260,14 @@ export async function pushProjectNow(projectId){
   }
 }
 
-export async function pullProjectNow(projectId){
+export async function pullProjectNow(projectId){return withProjectWriter(()=>pullProjectNowWithWriter(projectId))}
+async function pullProjectNowWithWriter(projectId){
   if(!cloudflareSyncConfigured())throw new Error('Cloudflare Sync is not configured.');
 
   const cfg=loadCloudflareSyncConfig();
+  const before=getProject(projectId)?.sync?.localRevision??null;
   const result=await providerFrom().pullProject(projectId);
+  if((getProject(projectId)?.sync?.localRevision??null)!==before)throw Error('LOCAL_PROJECT_CHANGED_DURING_PULL');
 
   if(!result.project)throw new Error('Cloud project snapshot is empty.');
 

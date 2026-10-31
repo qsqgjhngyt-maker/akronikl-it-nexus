@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a4",
+  "topicId": "1c-enterprise.a4.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Metadata tree",
+  "minutes": 120,
+  "goal": "Read the metadata tree as a type schema rather than infobase records.",
+  "prerequisites": [
+    "1c-enterprise.a 3; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
+  ],
+  "outcomes": [
+    "Read the metadata tree as a type schema rather than infobase records.",
+    "Locate Customers, Services, ServiceRequest andRequestStatuses.",
+    "Trace the Customer attribute type."
+  ],
+  "sections": [
+    [
+      "Definition and instance",
+      "Catalogs/Customers defines a type; Alpha and Beta are data instances. Adding an attribute changes the definition for all elements; entering a customer changes data only. This distinction determines the correct mode and backup. Identify whether a change affects schema, a record, presentation or a user variant before acting.",
+      "Begin by asking whether an existing setting solves the request. A personal list variant needs no storage change; an absent required attribute needs a model and rules. Record the chosen mechanism and rejected alternative. This lets maintainers understand the decision without repeating experiments and avoids unnecessary implementation scope."
+    ],
+    [
+      "The tree expresses relationships",
+      "A document’s Customer attribute stores a typed reference, not an arbitrary name string. RequestStatus enumeration defines states; a subsystem groups commands. Trace document→attribute→type→catalog. The path locates a field’s source and helps predict renaming consequences without opening every branch at random.",
+      "Field types determine operations and boundaries. A string identifier preserves leading zeros, a number supports arithmetic, and a reference supports identity. Specify ordinary, empty and maximum-value examples before applying. Define old-record behavior separately:new fields must not silently rewrite the meaning of an accepted request. Check both existing and newly created documents."
+    ],
+    [
+      "Names serve different purposes",
+      "An object name is used in code and configuration structure; its synonym serves the user. Changing Customers’ displayed synonym does not create a catalog or change data references. Renaming the technical name affects references in code and needs verification. An object UUID is not a decorative field to replace arbitrarily.",
+      "Applying a change differs from saving development text. Compare editable and database configurations, review the intended diff and restructuring warnings. Update a separate copy and repeat user workflows. A technically valid schema can behave incorrectly, so combine configuration checking with input, writing, reports and fresh reads of old data. One layer does not establish the others."
+    ],
+    [
+      "Observe before writing",
+      "First inspect the tree without updating the infobase. Record five objects, purposes and dependencies, then identify the same concepts in application mode. Perform any change as a separate copy experiment. Architectural observation then avoids accidental data migration, and a mistaken interpretation can be corrected without losing the source.",
+      "Rollback preserves data state as well as code. Renaming a removed field back cannot recover lost values. Verify backup by restoring to a fresh directory and reconciling control records. Keep source and upgraded work as separate instances. If a warning exceeds agreed scope, do not approve blindly; preserve it and investigate on the copy."
+    ]
+  ],
+  "diagram": "a4-0",
+  "walkthrough": [
+    {
+      "action": "Locate Customers, Services, ServiceRequest andRequestStatuses.",
+      "expected": "Object types and purposes are recorded without changing the infobase."
+    },
+    {
+      "action": "Trace the Customer attribute type.",
+      "expected": "The reference targets the correct catalog and opens an existing item."
+    },
+    {
+      "action": "Change only a synonym in a separate copy.",
+      "expected": "Identity and data remain unchanged; the technical name is not replaced."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "Документ.ЗаявкаУслуги.Клиент → СправочникСсылка.Клиенты",
+      "expected": "The field contains a Customers reference, not a copied name.",
+      "explanation": "The schema defines the allowed type; data contains a specific key."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Измените только синоним в отдельной копии.",
+      "expected": "Identity and data remain unchanged; the technical name is not replaced.",
+      "explanation": "The schema defines the allowed type; data contains a specific key."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Locate Customers, Services, ServiceRequest andRequestStatuses.",
+      "criteria": "Object types and purposes are recorded without changing the infobase."
+    },
+    {
+      "level": "Applied",
+      "task": "Trace the Customer attribute type.",
+      "criteria": "The reference targets the correct catalog and opens an existing item."
+    },
+    {
+      "level": "Advanced",
+      "task": "Map the consequences of changing Customer toString without applying it.",
+      "criteria": "The analysis identifies lost reference semantics and a required migration decision."
+    }
+  ],
+  "lab": {
+    "title": "Read the metadata tree as a type schema rather than infobase records.",
+    "environment": "Official 1C 8.3.27.x, new training-service-desk copy. Command labels depend on the configuration interface; verify outcomes against data. Training-edition limits are explicit.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Locate Customers, Services, ServiceRequest andRequestStatuses.",
+      "Trace the Customer attribute type.",
+      "Change only a synonym in a separate copy.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Object types and purposes are recorded without changing the infobase.",
+      "The reference targets the correct catalog and opens an existing item.",
+      "Identity and data remain unchanged; the technical name is not replaced."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "The field contains a Customers reference, not a copied name.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Identity and data remain unchanged; the technical name is not replaced."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Where is Customer’s type defined?",
+      "options": [
+        "In attribute metadata",
+        "In form color",
+        "In the customer name"
+      ],
+      "correct": 0,
+      "explanation": "Definition differs from a specific value."
+    },
+    {
+      "question": "Does changing a synonym itself create a customer?",
+      "options": [
+        "Yes",
+        "No",
+        "Only when filtering"
+      ],
+      "correct": 1,
+      "explanation": "It changes an object’s displayed label."
+    },
+    {
+      "question": "Should an object UUID be changed for a prettier name?",
+      "options": [
+        "Always",
+        "After sorting",
+        "No"
+      ],
+      "correct": 2,
+      "explanation": "Identity must be preserved."
+    }
+  ],
+  "review": [
+    "Read the metadata tree as a type schema rather than infobase records.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "training",
+    "designer",
+    "catalogs",
+    "documents",
+    "form-elements"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "1c-enterprise.a4",
+    "locale": "en"
+  }
+}

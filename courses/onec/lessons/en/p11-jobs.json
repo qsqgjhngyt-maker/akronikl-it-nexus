@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p11",
+  "topicId": "onec.p11.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Scheduled jobs and observability",
+  "minutes": 120,
+  "goal": "Design a repeatable background job with observable state and safe cancellation.",
+  "prerequisites": [
+    "onec.p10; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Design a repeatable background job with observable state and safe cancellation.",
+    "Process 12 items in batches of 5.",
+    "Fail the second batch and retry."
+  ],
+  "sections": [
+    [
+      "A schedule is not success",
+      "Scheduled jobs trigger procedures; background execution has its own lifecycle and errors. Define input, batch, commit boundary and state. “Every minute” does not mean the prior cycle finished. Prevent overlap by key or handle it through an idempotent design.",
+      "Integration crosses independently failing participants. Replies can be lost after acceptance, servers can reject business rules, and schedules can repeat work. Contracts need intent identity, state, limits and unknown-outcome resolution as well as body format. Specify those cases before choosingHTTP, serialization or job APIs. A successful transport call alone cannot establish the business outcome."
+    ],
+    [
+      "Batches bound work",
+      "Use bounded batches with explicit progress and a persisted continuation point. One long transaction over all history blocks others and complicates recovery. Commit the continuation point with batch results. After failure, retries must neither skip unfinished items nor duplicate accepted ones.",
+      "Serialized input remains untrusted data. After parsing, validate schema version, required fields, types, ranges and size. Resolve external customer keys through an agreed mapping, not similar names. Never execute input or permit arbitrary addresses. A fixed local mock and synthetic payload suffice for the lab without real secrets or public external services."
+    ],
+    [
+      "Observability and cancellation",
+      "Distinguishqueued/running/succeeded/failed/cancelled. A processed counter is not committed success. Check cancellation between safe batches; it does not roll back already committed work. LogjobID, stage, counters and safe error details rather than secrets or full exchange copies.",
+      "Repeatability binds acceptance registry and result. Equal key/content returns the prior document; different content conflicts. CommitDoneand document consistently to avoid false success or duplication after failures. External effects need their own protocol. Batch continuation points likewise commit with results rather than prematurely skipping work. Test failure between these steps, not only clean completion."
+    ],
+    [
+      "Make environment and tests explicit",
+      "File and server deployments have different job behavior; training limits may prevent the exercise. Test normal batches, mid-batch failure, retry, overlap and cancellation in a permitted stand. Manually invoking a function tests its algorithm, not actual scheduled execution. Record those evidence separately.",
+      "Control replies and ordering:success, schema rejection, temporary error, timeout, retry and cancel. Mocks prove the simulated peer contract; actualBSLclients prove platformAPIexecution. Manual procedure calls do not prove scheduling. Separate these outcomes, retain safe caseIDs, and verify no extra documents after retries/failures, including a fresh session and an independent state reconciliation."
+    ]
+  ],
+  "diagram": "p11-3",
+  "walkthrough": [
+    {
+      "action": "Process 12 items in batches of 5.",
+      "expected": "5+5+2with consistent commit points."
+    },
+    {
+      "action": "Fail the second batch and retry.",
+      "expected": "No skipped or duplicate accepted items."
+    },
+    {
+      "action": "Cancel between batches and restart.",
+      "expected": "Committed work remains; remaining work is explicit."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "12элементов,пакет5→commit5→commit5→commit2\nсбойпередвторымcommit→повторсогласованнойточки",
+      "expected": "Each item is accepted once by key; progress agrees with results.",
+      "explanation": "This models batching; it does not prove a running schedule."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Отмените между пакетами и запустите повтор.",
+      "expected": "Committed work remains; remaining work is explicit.",
+      "explanation": "This models batching; it does not prove a running schedule."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Process 12 items in batches of 5.",
+      "criteria": "5+5+2with consistent commit points."
+    },
+    {
+      "level": "Applied",
+      "task": "Fail the second batch and retry.",
+      "criteria": "No skipped or duplicate accepted items."
+    },
+    {
+      "level": "Advanced",
+      "task": "Add overlap protection and separate proof of actual scheduling.",
+      "criteria": "Algorithmic and native-scheduler statuses are not conflated."
+    }
+  ],
+  "lab": {
+    "title": "Design a repeatable background job with observable state and safe cancellation.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Process 12 items in batches of 5.",
+      "Fail the second batch and retry.",
+      "Cancel between batches and restart.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "5+5+2with consistent commit points.",
+      "No skipped or duplicate accepted items.",
+      "Committed work remains; remaining work is explicit."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Each item is accepted once by key; progress agrees with results.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "Committed work remains; remaining work is explicit."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Does a manual call prove scheduling?",
+      "options": [
+        "No",
+        "Yes",
+        "After 12 items"
+      ],
+      "correct": 0,
+      "explanation": "Observe the triggering mechanism."
+    },
+    {
+      "question": "The continuation point is committed",
+      "options": [
+        "Forever before work",
+        "With the consistent batch result",
+        "Only inUI"
+      ],
+      "correct": 1,
+      "explanation": "Otherwise work can be skipped or duplicated."
+    },
+    {
+      "question": "DoesCancelafter commit roll back everything?",
+      "options": [
+        "Always",
+        "For every job",
+        "No"
+      ],
+      "correct": 2,
+      "explanation": "Committed effects differ from cancelling future work."
+    }
+  ],
+  "review": [
+    "Design a repeatable background job with observable state and safe cancellation.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "job-mechanism",
+    "scheduled-job",
+    "safe-eval"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p11",
+    "locale": "en"
+  }
+}

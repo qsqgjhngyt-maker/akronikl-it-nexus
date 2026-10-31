@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p7",
+  "topicId": "onec.p7.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Measurement plan and eliminating N+1",
+  "minutes": 120,
+  "goal": "RemoveN+1using measurements while preserving result equivalence.",
+  "prerequisites": [
+    "onec.p6; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "RemoveN+1using measurements while preserving result equivalence.",
+    "Record baseline identities and call count.",
+    "ReplaceNreads with a combined selection."
+  ],
+  "sections": [
+    [
+      "Convenient access can hide cost",
+      "A100-request loop reading customer and rate can cause many individual calls. A shortCustomer.Descriptionexpression does not prove negligible cost. Map data sources and count calls. One form may tolerate this; bulk reporting may benefit from a combined selection. Measurements decide.",
+      "Every query starts with a set specification:row granularity, required fields, scope, identities and multiplicity. Reconcile a small source set manually. Syntax correctness cannot detect lost customers or multiplied sums. Inspect identities and types before totals, which may match accidentally when two defects compensate. Keep this independent oracle beside every query revision."
+    ],
+    [
+      "Freeze the baseline",
+      "Record version, volume, dataset, cold/warm state and measured operation. Network, cache andUIaffect timing. Do not compare one cold baseline with a warmed new version. A small training infobase demonstrates method, not field p95 or industrial scaling.",
+      "Parameters separate structure/values without defining business meaning automatically. References, names and external codes differ. Dates carry time and agreed boundaries. Choose dynamic fields from a structural allowlist, not user text. Specify each parameter’s type, empty-value policy and an example yielding zero rows without changing data. This tests the contract rather than parser acceptance alone."
+    ],
+    [
+      "Establish equivalence first",
+      "Replace per-item reads with a query selecting required fields and correct relationships. Compare identities, rows, missing values, sums and required order. Losing request-free customers can make a report faster but wrong. Keep a small oracle dataset beside the benchmark so optimization does not change the task.",
+      "Joins and aggregation affect multiplicity differently. Joining two detail sets can multiply rows; grouping can hide the cause behind one wrong sum. Inspect intermediate membership before resources. Respect virtual-table semantics/parameters and temporary-table context/lifetime. Neither mechanism is a universal optimization trick. Explain which problem it solves and verify equivalent values before measuring speed."
+    ],
+    [
+      "Make two distinct conclusions",
+      "Report equivalence separately from call count and timing. Repeated runs reveal variability; one run is not p95. Unmeasured speedup remains a hypothesis. Do not enlargeNexusstartup budgets for the course; NEXUS-PERF-01checks those independently.",
+      "Compare performance only after equivalence. Freeze data, versions, call count, cache conditions and repeated timing. A small local experiment does not establish field p95. Reject speedups caused by dropped rows or permission checks. Preserve rejected variants, reasons and the correct baseline so later optimization does not repeat a known defect. Report observed metrics without broadening their scope."
+    ]
+  ],
+  "diagram": "p7-3",
+  "walkthrough": [
+    {
+      "action": "Record baseline identities and call count.",
+      "expected": "Volume, conditions and result are fixed."
+    },
+    {
+      "action": "ReplaceNreads with a combined selection.",
+      "expected": "Identical values for ordinary, empty and boundary datasets."
+    },
+    {
+      "action": "Test a request-free customer and repeated measurements.",
+      "expected": "The customer remains; variability is reported without false p95."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Main example",
+      "source": "ВариантA:1основнойзапрос+Nчтений;ВариантB:1согласованнаявыборка",
+      "expected": "Call count improves only with confirmed result equivalence.",
+      "explanation": "This is a measurement plan, not an invented benchmark.Record actual timings after execution."
+    },
+    {
+      "title": "Boundary case",
+      "source": "Проверьте клиента без заявок и повторные измерения.",
+      "expected": "The customer remains; variability is reported without false p95.",
+      "explanation": "This is a measurement plan, not an invented benchmark.Record actual timings after execution."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Foundation",
+      "task": "Record baseline identities and call count.",
+      "criteria": "Volume, conditions and result are fixed."
+    },
+    {
+      "level": "Applied",
+      "task": "ReplaceNreads with a combined selection.",
+      "criteria": "Identical values for ordinary, empty and boundary datasets."
+    },
+    {
+      "level": "Advanced",
+      "task": "Write correctness→calls→time→limits and justify acceptance.",
+      "criteria": "All numbers are observed, untested claims are separate, and platform budgets remain."
+    }
+  ],
+  "lab": {
+    "title": "RemoveN+1using measurements while preserving result equivalence.",
+    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "steps": [
+      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
+      "Record baseline identities and call count.",
+      "ReplaceNreads with a combined selection.",
+      "Test a request-free customer and repeated measurements.",
+      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+    ],
+    "expected": [
+      "Volume, conditions and result are fixed.",
+      "Identical values for ordinary, empty and boundary datasets.",
+      "The customer remains; variability is reported without false p95."
+    ],
+    "evidence": [
+      "Input/expected/actual/case-ID table, platform build and source hashes.",
+      "Call count improves only with confirmed result equivalence.",
+      "Work-copy provenance, negative result and source preservation before/after."
+    ],
+    "negative": "The customer remains; variability is reported without false p95."
+  },
+  "mistakes": [
+    [
+      "Treat an expected value as an observed execution.",
+      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+    ],
+    [
+      "Modify the source infobase while experimenting.",
+      "Work on a new copy and verify the source by reopening it separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Is shorter code always faster?",
+      "options": [
+        "No",
+        "Yes",
+        "Always inBSL"
+      ],
+      "correct": 0,
+      "explanation": "Cost depends on operations and calls."
+    },
+    {
+      "question": "Before timing comparison establish",
+      "options": [
+        "A new theme",
+        "Result equivalence",
+        "Replaced expectations"
+      ],
+      "correct": 1,
+      "explanation": "Reject fast but wrong results."
+    },
+    {
+      "question": "Does one run establish p95?",
+      "options": [
+        "Yes",
+        "For 3 rows",
+        "No"
+      ],
+      "correct": 2,
+      "explanation": "Appropriate measurements and sampling are needed."
+    }
+  ],
+  "review": [
+    "RemoveN+1using measurements while preserving result equivalence.",
+    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "query-mechanism",
+    "query-language",
+    "accumulation-register"
+  ],
+  "contentRevision": "1.0.0-rc.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/README_FULL_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p7",
+    "locale": "en"
+  }
+}
