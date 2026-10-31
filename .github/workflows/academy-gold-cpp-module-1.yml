@@ -82,8 +82,6 @@ jobs:
     if: needs.content_scope.outputs.kind == 'content-review'
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      ONEC_REGRESSION_EVIDENCE: ${{ runner.temp }}/onec-content-review-evidence
     steps:
       - uses: actions/checkout@v4
         with:
@@ -93,6 +91,8 @@ jobs:
         with:
           node-version: '24'
       - name: Проверить Content Contract, без publication или deployment
+        env:
+          ONEC_REGRESSION_EVIDENCE: ${{ runner.temp }}/onec-content-review-evidence
         run: |
           node tools/validate-content.mjs
           node tools/check-content-review.mjs
