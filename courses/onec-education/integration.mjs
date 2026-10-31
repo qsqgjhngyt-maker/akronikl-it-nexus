@@ -18,7 +18,9 @@ export function mountOnecIntegration(mount,{locale='ru',isCurrent=()=>true}={}){
   ?(storage.authenticated?'Progress is stored locally for your signed-in account. Offline self-reports remain separate.':'Reading is available. Sign in to preserve progress for your account.')
   :(storage.authenticated?'Прогресс сохраняется локально в вашем аккаунте. Прежние автономные самоотчёты остаются отдельно.':'Материалы доступны для чтения. Войдите, чтобы сохранять прогресс в аккаунте.');
  frame.append(note);
- const root=document.createElement('div');frame.append(root);shadow.append(frame);
+ // Preserve the standalone renderer's responsive root styles inside its own
+ // ShadowRoot. This id cannot collide with the outer platform #app.
+ const root=document.createElement('div');root.id='app';frame.append(root);shadow.append(frame);
  const controller=mountOnecCourse({root,localeSelect:frame.querySelector('select'),storage,isCurrent:active,defaultLocale:locale,listenHash:false,preserveDocumentLanguage:true,normalizeLinks:true,studioBase:''});
  return {ready:Promise.all([cssReady,controller.ready]),dispose(){disposed=true;controller.dispose();}};
 }

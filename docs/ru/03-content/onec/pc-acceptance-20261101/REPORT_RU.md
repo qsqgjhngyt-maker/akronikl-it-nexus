@@ -44,3 +44,7 @@ NEXT: exact-head CI/артефакты и единый milestone MASTER00, за�
 Что потом:вернуться в тот же PR63, без второго implementation-потока. Есть ли здесь материал для диплома? Да:см.ADR, измерения/отказы/границы доказательств; педагогический эффект не выдумывается.
 
 NEXT RECOMMENDED BRANCH:03/05 с review02/01/07. RECOMMENDED MODE:Очень высокий для security/release, Высокий для content.
+
+## CI follow-up: встроенный курс320px
+
+Первый S7 HEADe548247: три historical content-review SUCCESS, два candidate FAIL после41regression/273unit и54browser PASS. Последний55-й сценарий обнаружил overflow общей оболочки на Linux320px. Внутренний root при интеграции не получал id=app, поэтому существующий адаптивный стиль standalone к нему не применялся. Восстановлен id в отдельном ShadowRoot, без коллизии с внешним app. Ожидаемая ширина не изменена; дополнительно проверяется computed overflow-wrap:anywhere и сохраняется диагностика. Chromium/WebKit по6новых сценариев после исправления PASS. Новый exact-head CI должен подтвердить итог; неуспешные runs/artifact digests сохранены в FAILED_CI_e548247.json. Это UI-дефект, не отказ P4-Q/security gate.
