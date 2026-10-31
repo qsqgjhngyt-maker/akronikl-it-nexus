@@ -1,5 +1,5 @@
 // Распознавание средствами браузера. Аудиозапись, getUserMedia и API провайдеров не создаются.
-export function createMicrophone({windowRef=globalThis.window,isCurrent=()=>true,onState=()=>{},onTranscript=()=>{}}={}){
+export function createMicrophone({windowRef=globalThis.window,isCurrent=()=>true,onState=()=>{},onTranscript=()=>{},onEmpty=()=>{}}={}){
  const Recognition=windowRef?.SpeechRecognition||windowRef?.webkitSpeechRecognition;let recognition=null,generation=0,timer=null,dead=false,state='idle';
  const publish=value=>{state=value;onState({state,supported:typeof Recognition==='function'});};
  function stop(){generation++;clearTimeout(timer);const r=recognition;recognition=null;try{r?.abort();}catch{}publish('idle');}
@@ -10,8 +10,8 @@ export function createMicrophone({windowRef=globalThis.window,isCurrent=()=>true
    const current=()=>!dead&&ticket===generation&&recognition===r&&isCurrent();recognition=r;
    r.onstart=()=>{if(current())publish('listening');else stop();};
    r.onresult=event=>{if(!current())return;for(let i=event.resultIndex;i<event.results.length;i++){const result=event.results[i];if(result.isFinal){const text=result[0]?.transcript;if(typeof text!=='string')continue;parts.set(i,text);}}if([...parts.values()].join(' ').length>1500){failed=true;stop();publish('limit');}};
-   r.onerror=event=>{if(!current())return;failed=true;clearTimeout(timer);publish(['not-allowed','service-not-allowed'].includes(event.error)?'permission-denied':event.error==='language-not-supported'?'language-unavailable':'error');};
-   r.onend=()=>{if(!current())return;clearTimeout(timer);recognition=null;const text=[...parts.entries()].sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join(' ').trim();if(!failed){publish('idle');if(text&&isCurrent())onTranscript({text,mode,processing});}};
+   r.onerror=event=>{if(!current())return;failed=event.error!=='no-speech';clearTimeout(timer);publish(event.error==='no-speech'?'idle':['not-allowed','service-not-allowed'].includes(event.error)?'permission-denied':event.error==='language-not-supported'?'language-unavailable':'error');};
+   r.onend=()=>{if(!current())return;clearTimeout(timer);recognition=null;const text=[...parts.entries()].sort((a,b)=>a[0]-b[0]).map(x=>x[1]).join(' ').trim();if(!failed){publish('idle');if(isCurrent()){if(text)onTranscript({text,mode,processing});else onEmpty({mode,processing});}}};
    timer=setTimeout(()=>{if(current()){failed=true;stop();publish('timeout');}},30000);try{publish('starting');r.start();}catch(error){stop();throw error;}
   },finish(){try{recognition?.stop();}catch{stop();}},dispose(){dead=true;stop();}
  });

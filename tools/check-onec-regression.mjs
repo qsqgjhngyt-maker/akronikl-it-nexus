@@ -1,6 +1,7 @@
 import{spawnSync}from'node:child_process';import fs from'node:fs';import path from'node:path';
 const out=path.resolve(process.env.ONEC_REGRESSION_EVIDENCE||'onec-regression-evidence');fs.mkdirSync(out,{recursive:true});
 const commands=[
+ ['ONEC_VOICE_GUEST_UNIT',['--test','tests/onec-asr.test.mjs','tests/onec-voice-session.test.mjs','tests/onec-official-lab.test.mjs']],
  ['ONEC_GUIDE_INDEX',['tools/check-onec-guide.mjs']],['ONEC_ASSISTANT_UNIT',['--test','tests/onec-assistant.test.mjs','tests/onec-microphone.test.mjs']],
  ['ASSISTANT_SHARED_REGRESSION',['--test','tests/akronikl-full-chat.test.mjs','tests/akronikl-knowledge.test.mjs','tests/akronikl-personal-state.test.mjs','tests/akronikl-experience.test.mjs','tests/akronikl-focus-cycle.test.mjs','tests/akronikl-user-modes.test.mjs']],
  ['ONEC_HISTORICAL_ROUTE_UNIT',['--test','tests/onec-historical-routing.test.mjs']],['CPP_SHARED_STARTUP_UNIT',['--test','tests/platform-lazy-imports.test.mjs','tests/platform-startup-load.test.mjs','tests/cpp-stream-state-routing.test.mjs']],
