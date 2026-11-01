@@ -6,152 +6,196 @@
   "topicId": "1c-enterprise.a4.topic-3",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Attribute and its type",
-  "minutes": 120,
-  "goal": "Add an attribute on a copy with justified type, default and old-data checks.",
+  "title": "Your first attribute: a customer training note",
+  "minutes": 90,
+  "goal": "Add one optional string attribute to Клиенты and save the description while understanding the database-update boundary.",
   "prerequisites": [
     "1c-enterprise.a 3; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
   ],
   "outcomes": [
-    "Add an attribute on a copy with justified type, default and old-data checks.",
-    "Add ExternalNumber on a new copy.",
-    "Save 000042 and reopen the document."
+    "Add an attribute rather than a tabular section.",
+    "Distinguish technical name, synonym, String type and length 80.",
+    "Save development without mistaking it for a verified stored item value."
   ],
   "sections": [
     [
-      "A type constrains meaning",
-      "Priority can be an enumeration Low/Normal/High, while an external identifier can be a bounded string. A number is unsuitable for identifiers whose leading zeros matter. Specify admissible values and operations—comparison, ordering, search, calculation—before choosing a type so UI and rules agree with the model.",
-      "Begin by asking whether an existing setting solves the request. A personal list variant needs no storage change; an absent required attribute needs a model and rules. Record the chosen mechanism and rejected alternative. This lets maintainers understand the decision without repeating experiments and avoids unnecessary implementation scope."
+      "Decide who owns the value",
+      "The note describes one customer independently of requests, so it belongs to a Клиенты item. Putting it in a document would give separate notes to that customer’s different requests. That can be another valid need, but is not ours. Do not create another customer entity for one field.",
+      "In the prepared structure Клиенты has no custom attributes; Код and Наименование are standard properties. Use Add in Реквизиты rather than Табличные части. A tabular section stores multiple rows inside one object and is excessive here."
     ],
     [
-      "Length and precision are requirements",
-      "String length and numeric precision reject unsuitable values but can truncate existing data after a careless change. Test the maximum length and a boundary value. Do not expand fields indefinitely or shrink them without analysis. For duration, explicitly choose integer minutes or fractions rather than relying on display formatting.",
-      "Field types determine operations and boundaries. A string identifier preserves leading zeros, a number supports arithmetic, and a reference supports identity. Specify ordinary, empty and maximum-value examples before applying. Define old-record behavior separately: new fields must not silently rewrite the meaning of an accepted request. Check both existing and newly created documents."
+      "A technical name and readable synonym",
+      "Use the technical name УчебнаяЗаметка without spaces. Its synonym Учебная заметка is displayed in the form. The platform may derive the synonym automatically when you leave the name field; still verify it. A synonym change does not alter the purpose or type of stored values.",
+      "If the attribute exists from an earlier attempt, inspect and reuse it instead of adding УчебнаяЗаметка1. Prior work and attempt history matter more than matching an illustration. Resolve a different meaning behind an identical name before proceeding."
     ],
     [
-      "Old records acquire a state",
-      "After adding an attribute, old documents do not automatically acquire meaningful values. Empty and approved defaults can differ. Decide whether old requests can be opened, edited and saved. Test one old and one new document on a copy; do not mass-rewrite source data merely to satisfy a required-field check.",
-      "Applying a change differs from saving development text. Compare editable and database configurations, review the intended diff and restructuring warnings. Update a separate copy and repeat user workflows. A technically valid schema can behave incorrectly, so combine configuration checking with input, writing, reports and fresh reads of old data. One layer does not establish the others."
+      "A string holds text with chosen limits",
+      "Choose Строка and length 80. This stores short text, not a calculation, customer reference or secret. Variable length permits short notes while the maximum bounds input. Leave unlimited length disabled. Check the new attribute’s right-hand Длина, not the standard Наименование length in the central editor.",
+      "Choose limits from need and boundary examples. Plan empty, ordinary, exactly 80-character and over-limit inputs. Do not promise a specific over-limit message: a form may constrain input before writing. Observe actual behavior and compare the persisted length."
     ],
     [
-      "Comparison records actual scope",
-      "Preserve configuration export and control records first. Compare metadata after the change: one agreed attribute should appear, without lost objects or replaced UUIDs. Verify save, reopen, search by the field and restoration of the prior copy. This demonstrates both the new capability and preservation of previous state.",
-      "Rollback preserves data state as well as code. Renaming a removed field back cannot recover lost values. Verify backup by restoring to a fresh directory and reconciling control records. Keep source and upgraded work as separate instances. If a warning exceeds agreed scope, do not approve blindly; preserve it and investigate on the copy."
+      "An empty initial value preserves existing meaning",
+      "Earlier items initially have empty notes until filled. The attribute is optional, so this update does not require rewriting every old customer. An empty note does not mean a missing name, code or reference. Mandatory input and default filling are separate rules introduced deliberately.",
+      "Close the object editor and save the configuration. This saves the development description. Database configuration may still differ, with its update command available and a difference marker at the tree. Next inspect and apply that update, then test the form and persistence. A tree node does not prove a saved Enterprise note."
     ]
   ],
   "diagram": "a4-2",
   "walkthrough": [
     {
-      "action": "Add ExternalNumber on a new copy.",
-      "expected": "The diff contains one field; existing references are preserved."
+      "action": "Owner — Клиенты",
+      "expected": "One value per customer."
     },
     {
-      "action": "Save 000042 and reopen the document.",
-      "expected": "Six characters; leading zeros are preserved."
+      "action": "Name — УчебнаяЗаметка",
+      "expected": "Technical access."
     },
     {
-      "action": "Enter 13 characters into a length 12 field.",
-      "expected": "The limit is detected and documented; no silent loss is accepted."
+      "action": "Type — String, 80",
+      "expected": "Short text."
+    },
+    {
+      "action": "Save — Configuration",
+      "expected": "Database application follows next."
     }
   ],
   "examples": [
     {
-      "title": "Main example",
-      "source": "ВнешнийНомер: Строка(12)\nВход: \"000042\"",
-      "expected": "String 000042 is preserved, including leading zeros.",
-      "explanation": "The identifier is not used arithmetically; a numeric type would lose part of its representation."
+      "title": "A field description before a first value",
+      "source": "Catalog: Клиенты\nAttribute: УчебнаяЗаметка\nSynonym: Учебная заметка\nType: Строка, 80, variable length, optional.",
+      "expected": "One field describes per-customer text; actual data is checked separately.",
+      "explanation": "A shared field description is not one customer’s note.",
+      "trace": [
+        [
+          "Owner",
+          "Клиенты",
+          "One value per customer."
+        ],
+        [
+          "Name",
+          "УчебнаяЗаметка",
+          "Technical access."
+        ],
+        [
+          "Type",
+          "String, 80",
+          "Short text."
+        ],
+        [
+          "Save",
+          "Configuration",
+          "Database application follows next."
+        ]
+      ]
     },
     {
-      "title": "Boundary case",
-      "source": "Введите 13 символов при длине 12.",
-      "expected": "The limit is detected and documented; no silent loss is accepted.",
-      "explanation": "The identifier is not used arithmetically; a numeric type would lose part of its representation."
+      "title": "Repeating should not multiply fields",
+      "source": "УчебнаяЗаметка exists from a previous attempt.",
+      "expected": "Inspect and reuse it instead of adding УчебнаяЗаметка1.",
+      "explanation": "Repeatable learning retains prior development and provenance.",
+      "trace": [
+        [
+          "Inspect",
+          "Existing attribute found",
+          "Verify its purpose."
+        ],
+        [
+          "Continue",
+          "Type and length correct",
+          "Reuse the same object."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Add ExternalNumber on a new copy.",
-      "criteria": "The diff contains one field; existing references are preserved."
+      "level": "Basic",
+      "task": "Explain the catalog, type and optionality choices.",
+      "criteria": "The attribute is not confused with a customer name or tabular rows."
     },
     {
       "level": "Applied",
-      "task": "Save 000042 and reopen the document.",
-      "criteria": "Six characters; leading zeros are preserved."
+      "task": "Create or inspect УчебнаяЗаметка and its synonym/String80 in your copy; save the description.",
+      "criteria": "One correct attribute exists; standard properties unchanged."
     },
     {
       "level": "Advanced",
-      "task": "Design Priority and old-document behavior.",
-      "criteria": "Type, allowed values, default strategy and before/after checks are specified."
+      "task": "Plan empty, ordinary, boundary and over-limit input tests after updating.",
+      "criteria": "Expectations remain distinct from observations; no mandatory mass rewrite of old data."
     }
   ],
   "lab": {
-    "title": "Add an attribute on a copy with justified type, default and old-data checks.",
-    "environment": "Official 1C 8.3.27.x, new training-service-desk copy. Command labels depend on the configuration interface; verify outcomes against data. Training-edition limits are explicit.",
+    "title": "Describe one short optional note",
+    "environment": "Official installed 1C, prepared copy only; no code or Studio.",
     "steps": [
-      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
-      "Add ExternalNumber on a new copy.",
-      "Save 000042 and reopen the document.",
-      "Enter 13 characters into a length 12 field.",
-      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+      "Choose Моя служба — изменения, open configuration, expand Справочники and double-click Клиенты, then select Данные.",
+      "Check for УчебнаяЗаметка. If absent select Реквизиты and use its upper green plus. If present from your attempt, inspect it.",
+      "Enter УчебнаяЗаметка in Имя and leave the field. Verify Учебная заметка in Синоним. Do not rename Клиенты itself.",
+      "Set Тип Строка, Длина 80 and variable length. Leave unlimited length disabled and filling validation at Не проверять. Leave the edited field to apply.",
+      "Close the catalog editor, save with Ctrl+S and verify УчебнаяЗаметка remains while database update is available."
     ],
     "expected": [
-      "The diff contains one field; existing references are preserved.",
-      "Six characters; leading zeros are preserved.",
-      "The limit is detected and documented; no silent loss is accepted."
+      "Реквизиты and standard code/name properties are visible.",
+      "The attribute’s property palette opens on the right.",
+      "The attribute appears in the tree with its readable synonym.",
+      "УчебнаяЗаметка is a nonmandatory 80-character string.",
+      "The attribute is saved; form and value tests follow next."
     ],
     "evidence": [
-      "Input/expected/actual/case-ID table, platform build and source hashes.",
-      "String 000042 is preserved, including leading zeros.",
-      "Work-copy provenance, negative result and source preservation before/after."
+      "Copy identity and the attribute’s name, synonym, type, length and optionality.",
+      "Explicit state: development saved; applying and persisting a value are not yet claimed verified."
     ],
-    "negative": "The limit is detected and documented; no silent loss is accepted."
+    "negative": "A repeated attempt reuses the existing field without a duplicate."
   },
   "mistakes": [
     [
-      "Treat an expected value as an observed execution.",
-      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+      "The customer name length is edited instead of the new attribute’s length.",
+      "Select УчебнаяЗаметка and inspect its right-hand property palette."
     ],
     [
-      "Modify the source infobase while experimenting.",
-      "Work on a new copy and verify the source by reopening it separately."
+      "A tabular section is added to store one customer text.",
+      "Use the catalog’s own Реквизиты section."
+    ],
+    [
+      "A tree node is treated as proof of a stored value.",
+      "Apply the database update and test writing/rereading in the next lesson."
     ]
   ],
   "quiz": [
     {
-      "question": "An identifier 000042 should be stored as",
+      "question": "What is the technical field name?",
       "options": [
-        "A string",
-        "A date",
-        "A boolean"
+        "УчебнаяЗаметка",
+        "Учебный Север",
+        "Клиенты1"
       ],
       "correct": 0,
-      "explanation": "Leading zeros matter."
+      "explanation": "It is an attribute of the existing catalog."
     },
     {
-      "question": "After adding a field, check",
+      "question": "Which type stores our note?",
       "options": [
-        "Only new documents",
-        "Old and new documents",
-        "Only the heading"
+        "Number",
+        "String",
+        "Customer reference"
       ],
       "correct": 1,
-      "explanation": "Old data also needs defined behavior."
+      "explanation": "Text needs a string type."
     },
     {
-      "question": "Shrinking length without analysis is",
+      "question": "What remains to demonstrate after Ctrl+S?",
       "options": [
-        "Always safe",
-        "Irrelevant to data",
-        "A risk of value loss"
+        "Window colour",
+        "Internet access",
+        "Database application and value persistence"
       ],
       "correct": 2,
-      "explanation": "Storage constraints require checking source data."
+      "explanation": "Saving a description does not prove its behavior."
     }
   ],
   "review": [
-    "Add an attribute on a copy with justified type, default and old-data checks.",
-    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+    "Why does the note belong to the catalog?",
+    "What does string length constrain?",
+    "How does configuration saving differ from writing an item?"
   ],
   "sources": [
     "training",
@@ -160,23 +204,220 @@
     "documents",
     "form-elements"
   ],
-  "contentRevision": "1.0.0-rc.1",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.full.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_FULL_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "executionProfile": "official-1c-file",
   "nativeEvidenceStatus": "NOT RUN",
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
     "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "1c-enterprise",
+    "topicId": "1c-enterprise.a4.topic-3",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
   },
   "theoryContext": {
     "kind": "shared-module-reasoning",
     "moduleId": "1c-enterprise.a4",
     "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "metadata",
+      "designer",
+      "configuration",
+      "catalog",
+      "attribute",
+      "form",
+      "reference",
+      "dt"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Copy Designer → Справочники → Клиенты → Данные",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "target",
+          "title": "Verify the copy and existing attributes",
+          "where": "Launcher → copy Designer",
+          "action": "Choose Моя служба — изменения, open configuration, expand Справочники and double-click Клиенты, then select Данные.",
+          "why": "Modify the existing catalog in the copy.",
+          "expected": "Реквизиты and standard code/name properties are visible.",
+          "troubleshooting": "If this is the original, close without changes and select the copy.",
+          "before": "The verified copy from lesson one and the field decision from lesson two; original and .dt retained.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/52-catalog-data-before.jpg",
+              "width": 1426,
+              "height": 746,
+              "sha256": "e55b35f4299c9df5fd4c520b34cac67b7fe0e830d623391f49ac25e68110ba53",
+              "caption": "Данные tab: the upper Реквизиты area is initially empty. The lower Табличные части area serves a different purpose.",
+              "alt": "Данные tab: the upper Реквизиты area is initially empty. The lower Табличные части area serves a different purpose.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 250,
+                "y": 105,
+                "width": 520,
+                "height": 520
+              }
+            }
+          ]
+        },
+        {
+          "id": "add",
+          "title": "Add or inspect the attribute",
+          "where": "Данные → Реквизиты area",
+          "action": "Check for УчебнаяЗаметка. If absent select Реквизиты and use its upper green plus. If present from your attempt, inspect it.",
+          "why": "One agreed need should have one agreed field.",
+          "expected": "The attribute’s property palette opens on the right.",
+          "troubleshooting": "Do not use the lower Добавить табличную часть command.",
+          "before": "Реквизиты and standard code/name properties are visible."
+        },
+        {
+          "id": "name",
+          "title": "Set name and synonym",
+          "where": "Right property palette → Основные",
+          "action": "Enter УчебнаяЗаметка in Имя and leave the field. Verify Учебная заметка in Синоним. Do not rename Клиенты itself.",
+          "why": "Separate code identifiers from readable labels.",
+          "expected": "The attribute appears in the tree with its readable synonym.",
+          "troubleshooting": "If another field uses the name, resolve it instead of adding a numbered duplicate.",
+          "before": "The attribute’s property palette opens on the right."
+        },
+        {
+          "id": "type",
+          "title": "Verify type and length",
+          "where": "The same attribute’s right palette",
+          "action": "Set Тип Строка, Длина 80 and variable length. Leave unlimited length disabled and filling validation at Не проверять. Leave the edited field to apply.",
+          "why": "Store optional short text without altering standard customer fields.",
+          "expected": "УчебнаяЗаметка is a nonmandatory 80-character string.",
+          "troubleshooting": "The central Длина наименования belongs to the standard customer name.",
+          "before": "The attribute appears in the tree with its readable synonym.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/53-note-string-80.jpg",
+              "width": 1426,
+              "height": 746,
+              "sha256": "7f24753014a7e9abba79d24c71dcd729123473f110ec6dc32e693648fa245bd7",
+              "caption": "The right palette shows УчебнаяЗаметка, String, length 80. Central Длина наименования belongs to the standard customer name.",
+              "alt": "The right palette shows УчебнаяЗаметка, String, length 80. Central Длина наименования belongs to the standard customer name.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 1165,
+                "y": 105,
+                "width": 260,
+                "height": 450
+              }
+            }
+          ]
+        },
+        {
+          "id": "save",
+          "title": "Save the development description",
+          "where": "Catalog editor and Designer main window",
+          "action": "Close the catalog editor, save with Ctrl+S and verify УчебнаяЗаметка remains while database update is available.",
+          "why": "Separate development saving from database structure application.",
+          "expected": "The attribute is saved; form and value tests follow next.",
+          "troubleshooting": "If F7 was already applied, record that and proceed to the next checks without recreating the attribute.",
+          "before": "УчебнаяЗаметка is a nonmandatory 80-character string.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/54-saved-before-db-update.jpg",
+              "width": 1426,
+              "height": 746,
+              "sha256": "e86a85655c3e165568467021dd1004dd9f359ad2551b6750b66e61842183acb2",
+              "caption": "Development is saved, while the tree marks a difference from database configuration. Applying F7 is a separate next step.",
+              "alt": "Development is saved, while the tree marks a difference from database configuration. Applying F7 is a separate next step.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 0,
+                "y": 105,
+                "width": 270,
+                "height": 250
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Описание поля до первого значения",
+        "en": "Explore the example: A field description before a first value"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Владелец",
+            "en": "Owner"
+          },
+          "detail": {
+            "ru": "Клиенты → Значение на одного клиента.",
+            "en": "Клиенты → One value per customer."
+          }
+        },
+        {
+          "label": {
+            "ru": "Имя",
+            "en": "Name"
+          },
+          "detail": {
+            "ru": "УчебнаяЗаметка → Техническое обращение.",
+            "en": "УчебнаяЗаметка → Technical access."
+          }
+        },
+        {
+          "label": {
+            "ru": "Тип",
+            "en": "Type"
+          },
+          "detail": {
+            "ru": "Строка, 80 → Короткий текст.",
+            "en": "String, 80 → Short text."
+          }
+        },
+        {
+          "label": {
+            "ru": "Сохранение",
+            "en": "Save"
+          },
+          "detail": {
+            "ru": "Конфигурация → Применение к базе — следующий этап.",
+            "en": "Configuration → Database application follows next."
+          }
+        }
+      ]
+    }
+  },
+  "nativeCaseIds": [],
+  "nativeEvidence": {
+    "status": "LIVE PASS",
+    "environment": "official-platform-local-file-base",
+    "platformVersion": "8.3.27.2214",
+    "scope": "Observed metadata and attribute/update GUI actions only; DT creation/restoration and identity comparison additionally automated, not novice GUI acceptance",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/A4_NATIVE_UI_RESULT.json",
+    "preservationEvidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/ATTRIBUTE_PRESERVATION_RESULT.json",
+    "training1508Verified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false,
+    "caseIds": []
   }
 }
