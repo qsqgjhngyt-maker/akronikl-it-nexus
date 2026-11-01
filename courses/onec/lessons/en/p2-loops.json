@@ -6,151 +6,206 @@
   "topicId": "onec.p2.topic-4",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Loops: tracing, termination and boundary datasets",
+  "title": "Loops: repeat an action and explain every iteration",
   "minutes": 120,
-  "goal": "Calculate an aggregate, explain loop termination and check empty or invalid input without modifying source values.",
+  "goal": "Repeat a finite action, trace an accumulator and test no-iteration input.",
   "prerequisites": [
-    "P2.1–P2.3; valid-minute predicates and branching."
+    "The preceding language lesson; saving, updating and launching your own infobase."
   ],
   "outcomes": [
-    "Match For, While and For Each to tasks.",
-    "Trace accumulators and counters.",
-    "Explain Break/Continue and verify that the input array remains unchanged."
+    "Separate initialization from body updates.",
+    "Trace 0 → 15 → 30 → 45.",
+    "Expose a reset error and explain termination."
   ],
   "sections": [
     [
-      "Repetition needs state and a stopping argument",
-      "A loop repeats actions, but a useful algorithm explains what changes and when repetition stops. For suits a known range; For Each traverses collection elements; While checks a condition before each step. The construct alone proves nothing. Explain progress toward termination for While and the finite source collection for traversal.",
-      "СуммаМинут accepts an array of numeric durations. Its initial total is zero and each valid element is added once. For [30,45,0], accumulator states are 0→30→75→75. The array still contains three elements: the function neither removes nor overwrites them. It processes an in-memory array, not automatically every document in the infobase. A2’s separate code checks real persisted documents."
+      "What repeats",
+      "A loop repeats instructions according to a rule. Для Номер = 1 По 3 assigns counter values 1, 2 and 3 in turn. Each value produces one body execution. КонецЦикла closes the repeated part; the message after it is displayed once after all iterations.",
+      "The body between Цикл and КонецЦикла executes for each counter value. Сообщить afterwards is outside it. Moving the message inside shows intermediate 15, 30 and 45 rather than one total: a different observation even if accumulation is unchanged."
     ],
     [
-      "An invariant locates the first wrong step",
-      "After processing the first k elements, the accumulator equals their sum. This invariant also explains an empty array: no step executes and the result remains zero. An arbitrary initial total or skipping the first item can produce a wrong final result without revealing the cause. A k→item→before/after trace locates the first divergence.",
-      "Each element passes ЭтоЧислоМинут before addition. A negative element raises an exception instead of being ignored silently. That is the selected contract: a partial dataset must not resemble a complete valid aggregate. Collecting errors while continuing is another possible design, but it needs a separate result structure and tests. Do not mix strategies without changing the task explicitly."
+      "The accumulator invariant",
+      "ВсегоМинут accumulates the periods already included. It starts at zero before the loop, then becomes 15, 30 and 45. The invariant “after k iterations the total is 15 × k” explains intermediate states and exposes the first incorrect step.",
+      "Initially zero periods are included and total zero. One iteration includes exactly one period. After k iterations the total therefore covers k periods of 15 minutes. If the trace first differs at iteration two, investigate that transition rather than substituting the final output."
     ],
     [
-      "Boundaries and loop control",
-      "The verified For loop from 1 through 3 visits 1,2,3 and sums to 6. A While counter starting at zero and incrementing while <3 finishes at 3. Termination follows from the counter update, not from hoping someone stops the program. Bound manual experiments in advance; hanging a process is not a useful infinite-loop test.",
-      "Continue skips the remainder of the current iteration; Break ends the loop. A native 1..5 example skips 2 and stops before adding 4, so only 1 and 3 contribute and the result is 4. Five is never considered after Break. This trace distinguishes the commands more precisely than saying both “exit the loop.”"
+      "Counter boundaries and no iterations",
+      "Setting ВсегоМинут = 0 inside the body erases preceding work on every iteration and leaves 15. It is syntactically valid but wrong for the total. Identify initialization and accumulation as different operations.",
+      "Range 1..4 adds four periods; range 1..0 executes no body and retains initial zero. A bound of zero does not create an extra iteration for zero. Пока checks before its body, so an initially false condition can also produce no iterations."
     ],
     [
-      "Evidence coverage and remaining work",
-      "Seven P2.4 cases check aggregation, preserved input count, an empty array, inclusive For bounds, While termination, Continue/Break and rejection of an invalid item. This finite set is not a large-data performance measurement. A simple sum visits elements proportionally to collection size; field p95, server execution and concurrent collection changes are not measured.",
-      "For your own practice, use a separate copy and predict results before running. A printed PASS does not prove the body executed: the initial condition may have been false. Use ordinary, empty and invalid inputs and inspect intermediate state. Preserve a failed trace, then explain the change that fixes its first incorrect iteration without destroying the earlier experiment."
+      "Termination and later collections",
+      "The large engineering module remains supplementary. Execute this lesson’s short fragment with its own input and result. It tests in-memory arithmetic, not document persistence or database speed.",
+      "A finite Пока needs initialization, a test and a change approaching a false condition. Collections come later: Для Каждого traverses elements, but in-memory arithmetic is not automatically a document query. Прервать ends the loop; Продолжить skips the rest of one iteration."
     ]
   ],
   "diagram": "p2loops",
   "walkthrough": [
     {
-      "action": "Trace [30,45,0] and an empty array.",
-      "expected": "75 after three steps; 0 with no steps."
+      "action": "Before the loop — 0",
+      "expected": "No period included."
     },
     {
-      "action": "Compare For 1..3 with While counter<3.",
-      "expected": "Sum 6 and final counter 3, with explicit bounds."
+      "action": "Номер = 1 — 15",
+      "expected": "0 + 15."
     },
     {
-      "action": "Mark skip 2 and break 4 in traversal 1..5.",
-      "expected": "Only 1 and 3 are added, totaling 4."
+      "action": "Номер = 2 — 30",
+      "expected": "15 + 15."
+    },
+    {
+      "action": "Номер = 3 — 45",
+      "expected": "30 + 15."
+    },
+    {
+      "action": "After the loop — 45",
+      "expected": "One final message."
     }
   ],
   "examples": [
     {
-      "title": "Accumulator with preserved input",
-      "source": "СуммаМинут([30,45,0]): 0 → 30 → 75 → 75",
-      "expected": "Result 75; three input items remain.",
-      "explanation": "Brackets describe the dataset in this protocol; executable BSL uses New Array and adds items."
+      "title": "Trace the main example",
+      "source": "ВсегоМинут = 0;\nДля Номер = 1 По 3 Цикл\n    ВсегоМинут = ВсегоМинут + 15;\nКонецЦикла;\nСообщить(ВсегоМинут);",
+      "expected": "The final message is 45.",
+      "explanation": "Three iterations add 15 to an accumulator initialized once before the loop.",
+      "trace": [
+        [
+          "Before the loop",
+          "0",
+          "No period included."
+        ],
+        [
+          "Номер = 1",
+          "15",
+          "0 + 15."
+        ],
+        [
+          "Номер = 2",
+          "30",
+          "15 + 15."
+        ],
+        [
+          "Номер = 3",
+          "45",
+          "30 + 15."
+        ],
+        [
+          "After the loop",
+          "45",
+          "One final message."
+        ]
+      ]
     },
     {
-      "title": "Rejection instead of a partial total",
-      "source": "СуммаМинут([-1])",
-      "expected": "An exception rather than a valid aggregate.",
-      "explanation": "This is native case invalid-element. Skipping invalid input is not a successful validation under this contract."
+      "title": "Reset in the wrong place",
+      "source": "Для Номер = 1 По 3 Цикл\n    ВсегоМинут = 0;\n    ВсегоМинут = ВсегоМинут + 15;\nКонецЦикла;",
+      "expected": "15 rather than 45.",
+      "explanation": "Every iteration restarts accumulation, losing preceding periods.",
+      "trace": [
+        [
+          "First iteration",
+          "0 → 15",
+          "The error is not yet visible."
+        ],
+        [
+          "Second iteration",
+          "15 → 0 → 15",
+          "The earlier total is lost."
+        ],
+        [
+          "Third iteration",
+          "15 → 0 → 15",
+          "The result is wrong."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Build k/item/before/after totals for [30,45,0].",
-      "criteria": "Three steps, total 75, input values unchanged."
+      "level": "Guided",
+      "task": "Write the accumulator before the loop and after each iteration.",
+      "criteria": "0, 15, 30, 45; one output after the loop."
     },
     {
-      "level": "Applied",
-      "task": "Identify the defect each of the seven P2.4 cases can detect.",
-      "criteria": "Cover initialization, empty input, bounds, termination, control flow and invalid elements."
+      "level": "Changed condition",
+      "task": "Change the upper bound from 3 to 4, then to 0.",
+      "criteria": "60 and 0: body execution is absent for ascending range 1..0."
     },
     {
-      "level": "Advanced",
-      "task": "Propose returning a sum plus an error list and explain the contract change.",
-      "criteria": "Mark partial results explicitly and new tests PLANNED; preserve the existing function and its contract."
+      "level": "Independent",
+      "task": "Write a finite Пока loop for four additions of 15 and explain its counter update.",
+      "criteria": "Initialization precedes the loop, the counter advances, total 60; do not run an infinite variant."
     }
   ],
   "lab": {
-    "title": "Tracing a finite traversal",
-    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "title": "Loops: repeat an action and explain every iteration",
+    "environment": "Official locally installed training platform; a separate personal file infobase, no Studio required.",
     "steps": [
-      "Record inputs and expected traces before execution.",
-      "Find СуммаМинут and separate For/While cases in the full module.",
-      "Run the gate on a new workspace and reconcile seven P2.4 cases.",
-      "Explain empty and invalid inputs without creating documents.",
-      "Preserve the trace and limitation: in-memory computation, not an infobase benchmark."
+      "Write the accumulator before the loop and after each iteration.",
+      "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
+      "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
+      "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+      "Change only По 3 to По 4 and execute. Then test По 0 with initial accumulator zero."
     ],
     "expected": [
-      "Seven P2.4 cases pass; ordinary total 75, empty total 0.",
-      "An invalid element is rejected and the source array is preserved."
+      "The final message is 45.",
+      "The intended module is open and the earlier source remains available.",
+      "The exact exercise source is entered in the intended context.",
+      "The final message is 45.",
+      "60 for four iterations and 0 for no iterations."
     ],
     "evidence": [
-      "Accumulator, counter and loop-control traces.",
-      "P2.4 case IDs, source hash and limitations."
+      "Source version, predicted and actual outputs.",
+      "One changed input and a trace explaining its result; no automatic grading claim."
     ],
-    "negative": "Do not deliberately run an unbounded loop. The negative case uses a finite collection containing an invalid item."
+    "negative": "Do not run an infinite loop to test stopping. Use a separate finite reset-counterexample and explain where the total is first lost."
   },
   "mistakes": [
     [
-      "“Continue ends the whole loop.”",
-      "It skips the current step’s remainder; the loop proceeds to its next check."
+      "I reset the accumulator each iteration.",
+      "Initialize before repeating when a total is required."
     ],
     [
-      "“An array of three values is three infobase documents.”",
-      "An in-memory collection differs from persisted application objects."
+      "Продолжить ends the loop.",
+      "It advances to the next iteration; Прервать ends the loop."
     ]
   ],
   "quiz": [
     {
-      "question": "What does СуммаМинут return for an empty array?",
+      "question": "Where should a whole-loop accumulator be initialized?",
       "options": [
-        "Undefined",
-        "Always an exception",
-        "0"
-      ],
-      "correct": 2,
-      "explanation": "The accumulator starts at zero and no iterations run."
-    },
-    {
-      "question": "What does Break do?",
-      "options": [
-        "Ends the loop",
-        "Only skips the current item",
-        "Overwrites the array"
-      ],
-      "correct": 0,
-      "explanation": "Subsequent elements are not processed."
-    },
-    {
-      "question": "What explains While termination in the example?",
-      "options": [
-        "The variable name",
-        "The counter increases until <3 becomes false",
-        "BSL highlighting"
+        "At the end of each iteration",
+        "Before the loop",
+        "After displaying the result"
       ],
       "correct": 1,
-      "explanation": "Initialization and update are tied to the condition."
+      "explanation": "Resetting inside erases the preceding total."
+    },
+    {
+      "question": "What does the main example produce with По 4 instead of По 3?",
+      "options": [
+        "15",
+        "45",
+        "60"
+      ],
+      "correct": 2,
+      "explanation": "Four additions of 15 total 60."
+    },
+    {
+      "question": "How can the reset error be tested safely?",
+      "options": [
+        "A separate finite copy with trace 15 → 0 → 15",
+        "An infinite loop",
+        "Deleting the primary infobase"
+      ],
+      "correct": 0,
+      "explanation": "Use an observable finite counterexample without damaging primary work."
     }
   ],
   "review": [
-    "Defend the sum invariant.",
-    "Distinguish Continue from Break.",
-    "Next: numbers, dates, strings and formatting."
+    "Explain the result without looking at the final message.",
+    "Name an input that would expose the described mistake.",
+    "Preserve the source before moving to the next lesson."
   ],
   "sources": [
     "cli",
@@ -158,26 +213,109 @@
     "platform-architecture",
     "bsl-language"
   ],
-  "contentRevision": "0.3.0-a2p2",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.a2p2.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_A2P2_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "nativeCaseIds": [
-    "P2.4.foreach-total",
-    "P2.4.input-preserved",
-    "P2.4.empty-array",
-    "P2.4.inclusive-for",
-    "P2.4.while-termination",
-    "P2.4.continue-break",
-    "P2.4.invalid-element"
+    "P2.LOOP.3",
+    "P2.LOOP.4",
+    "P2.LOOP.0",
+    "P2.LOOP.RESET.REJECTED"
   ],
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
     "sourcePolicy": "primary-source-links-and-observed-native-results",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "0.3.0-a2p2",
+    "originalCourseId": "onec",
+    "topicId": "onec.p2.topic-4",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten in novice-first order; valid core concepts retained without obsolete probe-first route"
   },
-  "codeFile": "native/examples-a2p2/p2-loops.bsl"
+  "codeFile": "code/pedagogy/loops-first.bsl",
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "variable",
+      "bsl"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Designer → managed application module of your training copy",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "predict",
+          "title": "Predict the result",
+          "where": "Nexus → this lesson’s worked example",
+          "action": "Write the accumulator before the loop and after each iteration.",
+          "why": "An expectation makes a wrong result detectable.",
+          "expected": "The final message is 45.",
+          "troubleshooting": "Use the trace to separate each instruction; do not copy a displayed total without explaining it.",
+          "before": "Your own training infobase opens and its startup handler already works. Preserve the preceding source before replacing this exercise body."
+        },
+        {
+          "id": "prepare-source",
+          "title": "Preserve your preceding work",
+          "where": "Your infobase → Designer → configuration root → managed application module",
+          "action": "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
+          "why": "The next exercise must not destroy the preceding version.",
+          "expected": "The intended module is open and the earlier source remains available.",
+          "troubleshooting": "If you cannot identify the infobase, return to the startup list and check its entry and directory.",
+          "before": "The final message is 45."
+        },
+        {
+          "id": "enter-code",
+          "title": "Enter this example",
+          "where": "Designer → the module text window",
+          "action": "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
+          "why": "Three iterations add 15 to an accumulator initialized once before the loop.",
+          "expected": "The exact exercise source is entered in the intended context.",
+          "troubleshooting": "Check ordinary quotes, semicolons and matching block endings. A syntax rejection is not execution.",
+          "before": "The intended module is open and the earlier source remains available."
+        },
+        {
+          "id": "run-check",
+          "title": "Save, update and execute",
+          "where": "Designer → Ctrl+S → Configuration / Update database configuration (F7) → Debug / Start (F5)",
+          "action": "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+          "why": "Only the installed platform executes this BSL.",
+          "expected": "The final message is 45.",
+          "troubleshooting": "For old output close your client, verify the infobase and update again. For a different value find the first trace step that differs.",
+          "before": "The exact exercise source is entered in the intended context."
+        },
+        {
+          "id": "vary-record",
+          "title": "Change one condition and retain evidence",
+          "where": "The same module, then Enterprise mode and Nexus notes",
+          "action": "Change only По 3 to По 4 and execute. Then test По 0 with initial accumulator zero.",
+          "why": "A changed input tests understanding beyond copying the example.",
+          "expected": "60 for four iterations and 0 for no iterations.",
+          "troubleshooting": "Do not run an infinite loop to test stopping. Use a separate finite reset-counterexample and explain where the total is first lost.",
+          "before": "The final message is 45."
+        }
+      ]
+    }
+  },
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "training1508Verified": false,
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_LANGUAGE_RESULT.json",
+    "caseIds": [
+      "P2.LOOP.3",
+      "P2.LOOP.4",
+      "P2.LOOP.0",
+      "P2.LOOP.RESET.REJECTED"
+    ],
+    "scope": "Exact current lesson source plus explicit input variants; observer assertions, no server grade or student authorship proof."
+  }
 }

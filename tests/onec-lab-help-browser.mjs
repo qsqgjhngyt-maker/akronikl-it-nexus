@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -23,8 +24,10 @@ try{
   const help=page.locator('[data-onec-lab-help][open]');await help.waitFor();await help.scrollIntoViewIfNeeded();
   const before=await page.evaluate(()=>JSON.stringify({...localStorage}));
   assert.equal(await help.locator('.onec-lab-step').count(),8);
-  assert.equal(await help.locator('a[href="https://online.1c.ru/catalog/free/28765768/"]').count(),1);
-  assert.equal(await help.locator('a[href*="learn.microsoft.com"]').count(),1);
+  const prepared=help.locator('[data-onec-prepared-configuration]');assert.equal(await prepared.count(),1);assert.match(await prepared.getAttribute('href'),/native\/downloads\/NexusTrainingServiceDeskV2[.]cf$/);assert.equal(await prepared.getAttribute('download'),'NexusTrainingServiceDeskV2.cf');
+  if(width===1366&&locale==='ru'){const waiting=page.waitForEvent('download');await prepared.click();const download=await waiting,target=path.join(out,'NexusTrainingServiceDeskV2.cf');await download.saveAs(target);const m=JSON.parse(await fs.readFile(path.join(root,'courses/onec-education/native/downloads/CONFIGURATION_MANIFEST.json')));assert.equal(createHash('sha256').update(await fs.readFile(target)).digest('hex'),m.sha256);}
+  assert.equal(await help.locator(':scope > p a[href="https://online.1c.ru/catalog/free/28765768/"]').count(),1);
+  assert.equal(await help.locator('.onec-lab-advanced[open]').count(),0);await help.locator('.onec-lab-advanced > summary').click();assert.equal(await help.locator('.onec-lab-advanced[open]').count(),1);assert.equal(await help.locator('a[href*="learn.microsoft.com"]').count(),1);
   await help.locator('.onec-lab-isolation > summary').click();assert.equal(await help.locator('.onec-lab-isolation[open]').count(),1);
   assert.equal(await help.locator('.onec-lab-isolation li').count(),5);
   await help.locator('.onec-lab-assessment > summary').click();assert.equal(await help.locator('.onec-lab-assessment[open] li').count(),6);

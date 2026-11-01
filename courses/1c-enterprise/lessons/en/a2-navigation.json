@@ -6,152 +6,183 @@
   "topicId": "1c-enterprise.a2.topic-4",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Navigation: lists, object forms and a verifiable work history",
+  "title": "Find your request: list, card, search and continuation",
   "minutes": 105,
-  "goal": "Build a repeatable user workflow and distinguish list presentation, form buffers and persisted object state.",
+  "goal": "Find the intended request and resume your own work after closing the application.",
   "prerequisites": [
-    "A2.1–A2.3; your own learning-infobase copy."
+    "Your first saved 30-minute request and its actual number/customer are known."
   ],
   "outcomes": [
-    "Navigate from a list to the intended object and related customer.",
-    "Explain combined filters and diagnose an empty list.",
-    "Record actions and verify writing through reopening."
+    "Find a document by number and verify its card fields.",
+    "Clear an empty search without creating a duplicate.",
+    "Verify that editing the first request left the second unchanged."
   ],
   "sections": [
     [
-      "Lists show selections; forms establish object context",
-      "A list supports finding and comparing objects. An object form displays the selected object’s attributes; a selection form returns a reference to another field. These are different tasks even when windows look similar. For requests, first verify the number, then customer and service references. “The second row” is not a stable way to identify A200002 because ordering can change.",
-      "The platform can generate standard forms from metadata. Our original workspace contains the TrainingService subsystem, catalogs and request document; available commands depend on platform settings and permissions. Record workflows by object and operation names rather than button coordinates. If a command is unavailable, record that observation and check the mode and solution. Do not import another vendor configuration just to obtain a familiar screen."
+      "A list contains several records",
+      "A list is an overview; a card represents one record. A selected row does not itself mean you are editing that document. Double-click opens it; Create begins a new one. Before editing check the card’s number, date and customer. Similar comment text is insufficient identification.",
+      "Keep the first 30-minute request. Create a separate 45-minute request for your second customer using the same training service and status Новая. Record its actual number. Two distinguishable documents make a wrong selection visible."
     ],
     [
-      "Filters combine rather than replace each other",
-      "In the learning dataset, A200001 belongs to C001 and is New; A200002 belongs to C002 and is In progress. Filtering by C001 leaves one document and 30 minutes. Adding In progress produces an empty intersection. That is an expected result of two conditions, not lost data. To see A200002, clear the customer filter before selecting its state. Clearing both filters restores two requests and 75 minutes.",
-      "Sorting changes order but not the selected set’s total. Distinguish an empty table from loading failure or denied access. Inspect active filters, operating mode and data source. The A2 browser model uses the same synthetic composition for reasoning practice; it does not query your infobase. Its behavior cannot establish LIVE PASS for the actual 1C user interface."
+      "Search reduces the visible list",
+      "List search selects displayed rows; it does not delete other documents. Enter the first request’s exact number, apply search, open the result and compare its number and 30 minutes. Clear search afterwards to show both records.",
+      "For an empty result verify the relevant list rather than application-wide search, then check your infobase, number and other filters. Do not immediately create a duplicate. First establish whether the record is actually absent."
     ],
     [
-      "Following references and unsaved edits",
-      "When opening a customer from a document, check code C001 rather than only the Alpha description. The other Alpha, C003, demonstrates why context matters. Navigating back or reopening an item through history opens a known object; navigation is not a write command. Edits can remain in an open form buffer. To cancel deliberately, close without saving and reopen the object to inspect its persisted state.",
-      "History behavior and command positions depend on the interface. Your protocol can simply record the source object, action, destination and rereading method. Navigation history is different from data change history. The latter requires a separately configured mechanism. A2 does not claim enabled infobase version history, user auditing or cloud learning-event logging."
+      "Verify one change and preserve the other record",
+      "Find the first request by number, append проверена навигация to its comment, write and reopen. The second request must retain 45 minutes and its own comment. This checks more than a changed value in an unclosed form.",
+      "If your version offers navigation history, it may reopen a card. It is not a backup or a general undo facility. Report the route actually used: the list and number are sufficient; no universal History button is required by this lab."
     ],
     [
-      "Accept A2 as a connected workflow",
-      "The closing workflow starts with a separate work record, visits customers and two requests, verifies filters and references, and ends with fresh reading. Include an empty-intersection negative case and explain it using the data. Perform write experiments on a separate copy: the source must remain 75 while the changed copy yields 90. Label form observations separately from native-gate results because they exercise different mechanisms.",
-      "Attach an action table, safe screenshots or observed values, a work identifier and limitations. A screenshot lacking filters and an object number is difficult to assess. Nexus completion remains local self-report: it preserves an attempt but verifies neither authorship nor actual infobase state automatically. A3 will deepen search and data quality; P can be studied without transferring A completion."
+      "Return to the same work tomorrow",
+      "Close your application normally, reopen the same startup entry and find the document by its saved number. Stored state must be readable independently of the preceding window. Save a semantic lesson step in Nexus; that is a learning position, not a mirror of the 1C window.",
+      "The assistant can explain instructions and recall a saved local lesson step. It does not automatically know external windows or unsaved fields. Supply an observation rather than asking it to guess. Reloading Nexus does not itself test external infobase persistence."
     ]
   ],
   "diagram": "a2navigation",
   "walkthrough": [
     {
-      "action": "Filter by Alpha/C001, then add In progress.",
-      "expected": "First 1/30, then an empty intersection 0/0."
+      "action": "Number in list search — Intended row",
+      "expected": "Check the list context."
     },
     {
-      "action": "Clear the customer filter, then clear state after checking.",
-      "expected": "In progress: A200002/45; without filters: 2/75."
+      "action": "Card open — Number and 30 minutes",
+      "expected": "Fields confirm the selection."
     },
     {
-      "action": "Open the referenced customer and return using the document number.",
-      "expected": "Reference context is retained; reopening reads the record state."
+      "action": "Search cleared — Two rows",
+      "expected": "Other records were not deleted."
     }
   ],
   "examples": [
     {
-      "title": "Intersection of conditions",
-      "source": "Customer=C001 AND State=ВРаботе → ∅",
-      "expected": "0 documents, 0 minutes.",
-      "explanation": "Each attribute value occurs separately, but not together in one source record."
+      "title": "Select by number rather than similar text",
+      "source": "First request: 30 minutes.\nSecond request: 45 minutes.\nFind first number → open → verify 30.",
+      "expected": "The first saved request is open.",
+      "explanation": "Several documents can share a customer or comment.",
+      "trace": [
+        [
+          "Number in list search",
+          "Intended row",
+          "Check the list context."
+        ],
+        [
+          "Card open",
+          "Number and 30 minutes",
+          "Fields confirm the selection."
+        ],
+        [
+          "Search cleared",
+          "Two rows",
+          "Other records were not deleted."
+        ]
+      ]
     },
     {
-      "title": "History does not persist a buffer",
-      "source": "Open A200002 → edit buffer → cancel → reopen",
-      "expected": "After cancellation, the source work still holds 45.",
-      "explanation": "This is a manual interface-acceptance scenario; batch evidence is not represented as mouse-driven execution."
+      "title": "An empty search is reversible",
+      "source": "Search for an absent number → empty → clear search",
+      "expected": "Both saved requests reappear.",
+      "explanation": "The visible selection changed; stored records did not.",
+      "trace": [
+        [
+          "Nonmatching condition",
+          "0 visible rows",
+          "No deletion conclusion."
+        ],
+        [
+          "Condition cleared",
+          "Both records visible",
+          "Compare their preceding numbers."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Distinguish list, selection and object forms.",
-      "criteria": "Identify record-set lookup, reference selection and particular attribute editing."
+      "level": "Guided",
+      "task": "Find the first request by number, open it, check fields and clear search.",
+      "criteria": "Exact number and 30 minutes; other documents remain available."
     },
     {
-      "level": "Applied",
-      "task": "Build a four-row table: all, C001, In progress, C001+In progress.",
-      "criteria": "2/75; 1/30; 1/45; 0/0, with document numbers for each set."
+      "level": "Changed condition",
+      "task": "Find the second request, then a deliberately absent number.",
+      "criteria": "Second document has 45 minutes; the empty result is reversible without creating/deleting records."
     },
     {
-      "level": "Advanced",
-      "task": "Design a “missing request” diagnosis without deleting or overwriting data.",
-      "criteria": "Check infobase, filters, code/number, permissions and rereading; separate hypotheses from observations."
+      "level": "Independent",
+      "task": "Change the first comment, restart the application and prove the second record stayed unchanged.",
+      "criteria": "Read both numbers after reopening; only the first record changed."
     }
   ],
   "lab": {
-    "title": "A2 workflow and an observable action history",
-    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "title": "Two requests and safe continuation",
+    "environment": "Personal training documents; Nexus and 1C windows are not synchronized automatically.",
     "steps": [
-      "In your copy, record list→document→customer→document navigation.",
-      "Apply four filter selections and preserve numbers, counts and totals.",
-      "On another copy, edit a form buffer and check cancellation through reopening.",
-      "Attach native persistence-gate evidence separately.",
-      "Close A2 with a work ID, relationships, records, negative case and limitations."
+      "Verify the first 30-minute request. If the second is absent, create a new one for Учебный Юг with your service, 45 minutes, status Новая and comment Второе учебное обращение. Write it and retain both actual numbers.",
+      "Enter its number, apply search (usually Enter), double-click the row and compare number and 30 minutes.",
+      "Append проверена навигация to your comment, write and close. Clear search, open the second by number and inspect its preceding fields.",
+      "Close the card. Search for a deliberately absent number, apply it and obtain no rows. Use × to clear search and find both original records.",
+      "Close your session, reopen the same infobase and read both requests again. In Nexus select your current step and record the next action briefly."
     ],
     "expected": [
-      "The workflow is repeatable by object names rather than coordinates.",
-      "Explain the empty intersection and preserve the source."
+      "Two separate requests contain 30 and 45 minutes.",
+      "The first request is open.",
+      "First comment changed; second retains 45 minutes and its own text.",
+      "Both records remain available by their original numbers.",
+      "Both documents are readable; Nexus position is not claimed as an external-window observation."
     ],
     "evidence": [
-      "Action table and four control selections.",
-      "Safe observations for performed manual cases; mark unperformed ones NOT RUN.",
-      "Reference your native protocol and working copy."
+      "Both actual numbers and fields after reopening.",
+      "Empty search, clearing it and the second request unchanged."
     ],
-    "negative": "Do not infer deletion from an empty filtered list. Clear conditions and read again in the same dedicated infobase."
+    "negative": "Do not delete or recreate documents after an empty search. Clear conditions and verify the intended infobase first."
   },
   "mistakes": [
     [
-      "“Navigation history audits attribute changes.”",
-      "They are separate mechanisms; infobase auditing is not claimed."
+      "Create opens the selected record.",
+      "It begins a new document; open an existing row separately."
     ],
     [
-      "“Repeating browser-model clicks proves the 1C workflow.”",
-      "The model has no infobase connection; native and manual checks need their own evidence."
+      "Navigation history restores all data.",
+      "It is navigation; data backup is a separate mechanism."
     ]
   ],
   "quiz": [
     {
-      "question": "Why does C001 + In progress produce an empty list?",
+      "question": "A search produces no rows. What comes first?",
       "options": [
-        "No record satisfies both conditions",
-        "Documents were deleted",
-        "The platform is not installed"
-      ],
-      "correct": 0,
-      "explanation": "C001 belongs to a New request; In progress belongs to C002."
-    },
-    {
-      "question": "What can reopening an object verify?",
-      "options": [
-        "Learner authorship",
-        "The actual persisted state",
-        "Posting of every document"
-      ],
-      "correct": 1,
-      "explanation": "With the correct infobase and reference, it checks a fresh record read."
-    },
-    {
-      "question": "How should a workflow be recorded for another interface?",
-      "options": [
-        "Only coordinates",
-        "Only button colors",
-        "Objects, actions and expected values"
+        "Create a duplicate",
+        "Delete the infobase",
+        "Clear search and check infobase/filters"
       ],
       "correct": 2,
-      "explanation": "The protocol remains assessable when command positions change."
+      "explanation": "List visibility differs from persisted record existence."
+    },
+    {
+      "question": "How do you edit the earlier request?",
+      "options": [
+        "Find its number and open its row",
+        "Click Create",
+        "Create a customer with the same name"
+      ],
+      "correct": 0,
+      "explanation": "Create starts a different document."
+    },
+    {
+      "question": "What does Nexus automatically know about external 1C?",
+      "options": [
+        "Every unsaved field",
+        "It does not automatically observe the external window",
+        "Every button clicked yesterday"
+      ],
+      "correct": 1,
+      "explanation": "Saved lesson position is not external application monitoring."
     }
   ],
   "review": [
-    "Present the complete A2 protocol.",
-    "Distinguish model, batch and manual observations.",
-    "Next: A3 or independent P2 practice."
+    "How did you identify the edited document?",
+    "Why is an empty search not data loss?",
+    "Next: input checks and meaningful filters."
   ],
   "sources": [
     "form-elements",
@@ -159,20 +190,98 @@
     "documents",
     "cli"
   ],
-  "contentRevision": "0.3.0-a2p2",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.a2p2.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_A2P2_EN.md",
-  "nativeCaseIds": [
-    "A2.reference-links",
-    "A2.persisted-total"
-  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "nativeCaseIds": [],
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
     "sourcePolicy": "primary-source-links-and-observed-native-results",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "0.3.0-a2p2",
+    "originalCourseId": "1c-enterprise",
+    "topicId": "1c-enterprise.a2.topic-4",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "form",
+      "document",
+      "reference",
+      "infobase",
+      "self-report"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Enterprise → request list; Nexus → saved lesson position",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "two-records",
+          "title": "Prepare distinguishable records",
+          "where": "Enterprise → request list",
+          "action": "Verify the first 30-minute request. If the second is absent, create a new one for Учебный Юг with your service, 45 minutes, status Новая and comment Второе учебное обращение. Write it and retain both actual numbers.",
+          "why": "Two records expose a wrong selection.",
+          "expected": "Two separate requests contain 30 and 45 minutes.",
+          "troubleshooting": "If the second customer is missing, return to the customer-card lesson and create it separately; do not rename the first.",
+          "before": "Open the same personal practice infobase as before."
+        },
+        {
+          "id": "find-first",
+          "title": "Find the first request",
+          "where": "Request list → list search field",
+          "action": "Enter its number, apply search (usually Enter), double-click the row and compare number and 30 minutes.",
+          "why": "Bind the action to an identified document.",
+          "expected": "The first request is open.",
+          "troubleshooting": "For no match check infobase, list, number and filters before creating anything.",
+          "before": "Two separate requests contain 30 and 45 minutes."
+        },
+        {
+          "id": "change-one",
+          "title": "Change only its comment",
+          "where": "First request card",
+          "action": "Append проверена навигация to your comment, write and close. Clear search, open the second by number and inspect its preceding fields.",
+          "why": "One edit must not affect its neighbor.",
+          "expected": "First comment changed; second retains 45 minutes and its own text.",
+          "troubleshooting": "For the wrong card cancel the unsaved edit and find the first number.",
+          "before": "The first request is open."
+        },
+        {
+          "id": "empty-search",
+          "title": "Check empty visibility",
+          "where": "The same request list",
+          "action": "Close the card. Search for a deliberately absent number, apply it and obtain no rows. Use × to clear search and find both original records.",
+          "why": "An empty selection is not deletion.",
+          "expected": "Both records remain available by their original numbers.",
+          "troubleshooting": "If absent afterwards, inspect other filters and the infobase before changing data.",
+          "before": "First comment changed; second retains 45 minutes and its own text."
+        },
+        {
+          "id": "return-later",
+          "title": "Continue after reopening",
+          "where": "1C startup list; then Nexus",
+          "action": "Close your session, reopen the same infobase and read both requests again. In Nexus select your current step and record the next action briefly.",
+          "why": "Distinguish persisted records, application navigation and lesson position.",
+          "expected": "Both documents are readable; Nexus position is not claimed as an external-window observation.",
+          "troubleshooting": "If the assistant lacks the actual 1C result, provide an invented-record number and your observation without personal information.",
+          "before": "Both records remain available by their original numbers."
+        }
+      ]
+    }
+  },
+  "nativeEvidence": {
+    "status": "PLANNED",
+    "environment": "official-1c-training",
+    "caseIds": [],
+    "reason": "Новая педагогическая ревизия; прежняя приёмка не переносится автоматически."
   }
 }

@@ -6,151 +6,192 @@
   "topicId": "onec.p2.topic-2",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Types, Undefined, Null and explicit conversion",
+  "title": "Value types: why number 30 differs from text “30”",
   "minutes": 115,
-  "goal": "Separate absent values from a valid zero and check input before evaluating it, without relying on variable names or accidental conversion.",
+  "goal": "Distinguish value types and explicitly convert suitable numeric text.",
   "prerequisites": [
-    "P2.1; functions, expressions and the real native gate."
+    "The preceding language lesson; saving, updating and launching your own infobase."
   ],
   "outcomes": [
-    "Inspect value types with TypeOf/ТипЗнч.",
-    "Distinguish Undefined, Null, strings, numbers and domain validity.",
-    "Check explicit conversion and a failing conversion case."
+    "Observe number and string types through ТипЗнч.",
+    "Preserve source text while obtaining a separate number.",
+    "Distinguish known zero, empty text and an unspecified value."
   ],
   "sections": [
     [
-      "Value type and field requirements",
-      "BSL’s flexible typing allows a variable to hold different value types over time. A program must still decide what a particular operation permits. For minutes we first check ТипЗнч(Значение)=Тип(\"Число\"), then the range 0..1440. String \"30\" resembles a number but fails this contract. Parsing it requires separate rules rather than silently passing it to arithmetic.",
-      "Separate three questions: the value’s type, whether an operation accepts that type, and whether the value satisfies a domain rule. -1 is a Number but is not an admissible duration here. Zero is also a Number and is permitted. Variable names, highlighting and presentation answer none of these questions. Record type and expected decision separately from displayed text."
+      "Type and validity are separate",
+      "A type determines which operations make sense for a value. Number 30 represents a quantity; string \"30\" stores two characters. Similar display does not make them interchangeable. ТипЗнч reports a type without changing the variable; ТекстМинут remains a string afterwards.",
+      "-1 is numeric but invalid as our request duration. Zero is numeric and valid under the chosen rule. A variable name changes neither its type nor the requirement. Record input type, domain validity and expected action separately."
     ],
     [
-      "Different forms of absence",
-      "Undefined and Null have different types, verified by separate native cases. Undefined can represent an unavailable value; Null also matters in data handling, including future query results. This lesson does not declare them interchangeable, equal to zero or equivalent to JavaScript null. It compares their types; query-specific Null semantics are studied in P7.",
-      "An empty catalog reference is another distinct situation. It retains that catalog’s reference type but identifies no particular customer. A2 disallows it in a request. Empty strings, numeric zero, False and empty references must not be grouped under one vague “empty” rule when field requirements differ. Establish field meaning before choosing a validation function."
+      "Explicit conversion preserves meaning",
+      "Число(ТекстМинут) explicitly converts suitable numeric text. Store its result separately to compare the original representation and the new quantity. This promises no universal human-input parser: spaces, separators, units and empty input need an agreed rule.",
+      "ПреобразованныеМинуты = Число(ТекстМинут) obtains a new numeric value while preserving ТекстМинут. Keeping the original representation supports diagnosis and an explanation of acceptance. Do not calculate from arbitrary text with unknown units."
     ],
     [
-      "ValueIsFilled is not universal validation",
-      "On the tested platform, ЗначениеЗаполнено(0) returns False. Using it as the sole duration validator would reject an allowed zero. ЭтоЧислоМинут instead checks type and range separately. This illustrates meaning-driven validation, not a blanket rejection of ValueIsFilled: it is appropriate for the mandatory customer reference in this workspace.",
-      "A useful input matrix includes zero, an ordinary number, the upper boundary, negative and excessive values, a string and Undefined. Record a distinct expectation for each. A few positive cases cannot reveal zero being mistaken for absence or text passing unnoticed. Test counts are useful only alongside their actual meaning and exercised boundaries."
+      "Empty does not mean zero",
+      "Неопределено denotes an unspecified value in its context, not numeric zero or an empty string. An empty string already has a string type; zero already has a number type. ЗначениеЗаполнено can treat zero as unfilled, but that is not automatically the application rule for zero duration. Define the field’s meaning first.",
+      "Record three observations: numeric 0 has a number type; \"\" is a string; Неопределено is not a known duration. A technical filled-value predicate does not choose business rules. Replacing missing data with 0 can produce a plausible total while hiding the cause."
     ],
     [
-      "Conversion is an explicit decision that can fail",
-      "Число(\"12\") returns 12 in the native case. Число(\"не число\") raises an exception; a separate Try/Except block confirms that rejection. Do not continue with a variable’s accidental previous value or declare the input valid after a conversion failure. Parsing failure differs from a domain rejection: even a successfully parsed -1 must still fail the minutes rule.",
-      "Parsing localized fractional text needs a separate input-format contract. No claim is made that every comma, space or currency symbol is accepted identically. P2.5 separates formatting from values; this basic validator expects an already numeric input. Preserve synthetic input, decision and observed exception rather than real user data. This keeps the experiment repeatable and safe."
+      "Conversion boundaries",
+      "Check input type, then range and the intended operation. ТипЗнч output observes a type; result 45 observes arithmetic after conversion. Explain both independently. Handling invalid numeric text is covered with exceptions later; silently turning unknown input into zero hides an error.",
+      "Parsing \"30\" does not establish acceptance of \"30 minutes\", arbitrary separators or empty input. Those need a separate contract and rejection handling. Exception handling is covered later; do not claim universal validation from one accepted input."
     ]
   ],
   "diagram": "p2types",
   "walkthrough": [
     {
-      "action": "Compare the types of 0, \"30\", Undefined and Null.",
-      "expected": "Number, String and two distinct absence types."
+      "action": "Минуты = 30 — Number 30",
+      "expected": "A quantity."
     },
     {
-      "action": "Apply ЭтоЧислоМинут to 0, \"30\" and Undefined.",
-      "expected": "True, False, False without implicit text parsing."
+      "action": "ТекстМинут = \"30\" — Two-character string",
+      "expected": "Appearance does not change type."
     },
     {
-      "action": "Reconcile explicit conversion and conversion failure.",
-      "expected": "\"12\"→12; a nonnumeric string is rejected by exception."
+      "action": "Число(ТекстМинут) — Number 30",
+      "expected": "Explicit conversion."
+    },
+    {
+      "action": "30 + 15 — 45",
+      "expected": "Two numbers are added."
     }
   ],
   "examples": [
     {
-      "title": "Type checking before range checking",
-      "source": "ЭтоЧислоМинут(0); ЭтоЧислоМинут(\"30\"); ЭтоЧислоМинут(Неопределено)",
-      "expected": "True; False; False.",
-      "explanation": "The contract separates parsing from domain validation."
+      "title": "Trace the main example",
+      "source": "Минуты = 30;\nТекстМинут = \"30\";\nСообщить(ТипЗнч(Минуты));\nСообщить(ТипЗнч(ТекстМинут));\nПреобразованныеМинуты = Число(ТекстМинут);\nСообщить(ПреобразованныеМинуты + 15);",
+      "expected": "The messages show number type Число, string type Строка and numeric result 45.",
+      "explanation": "The original text stays a string; a separately converted number participates in addition.",
+      "trace": [
+        [
+          "Минуты = 30",
+          "Number 30",
+          "A quantity."
+        ],
+        [
+          "ТекстМинут = \"30\"",
+          "Two-character string",
+          "Appearance does not change type."
+        ],
+        [
+          "Число(ТекстМинут)",
+          "Number 30",
+          "Explicit conversion."
+        ],
+        [
+          "30 + 15",
+          "45",
+          "Two numbers are added."
+        ]
+      ]
     },
     {
-      "title": "Filled versus admissible",
-      "source": "ЗначениеЗаполнено(0) = Ложь; ЭтоЧислоМинут(0) = Истина",
-      "expected": "There is no contradiction: the functions answer different questions.",
-      "explanation": "A mandatory reference and a numeric duration need different rules."
+      "title": "Zero is a known quantity",
+      "source": "Минуты = 0;\nСообщить(ТипЗнч(Минуты));\nСообщить(Минуты + 15);",
+      "expected": "Число; 15.",
+      "explanation": "A known zero quantity differs from an unspecified value.",
+      "trace": [
+        [
+          "0",
+          "Numeric value",
+          "It participates in arithmetic."
+        ],
+        [
+          "0 + 15",
+          "15",
+          "Zero remains a known value."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Separate type and decision for 0, -1, \"30\", Undefined and Null.",
-      "criteria": "Zero is valid; -1 is numeric but out of range; the other inputs are nonnumeric for this validator."
+      "level": "Guided",
+      "task": "Identify the types of 30, \"30\", 0, \"\" and Неопределено before running.",
+      "criteria": "Number, string, number, string and undefined are distinguished."
     },
     {
-      "level": "Applied",
-      "task": "Build a matrix of the nine P2.2 cases and locate each in the native protocol.",
-      "criteria": "Cover types, zero, text, absence, conversion/exception and filled-value behavior."
+      "level": "Changed condition",
+      "task": "Replace \"30\" with \"20\" and predict the final message.",
+      "criteria": "35 after explicit conversion; the original text remains a string."
     },
     {
-      "level": "Advanced",
-      "task": "Propose a text-duration contract without changing the current validator.",
-      "criteria": "Specify format, separators, parse failure, range and separate tests; proposed rules remain unimplemented."
+      "level": "Independent",
+      "task": "Specify duration input without silently converting errors into zero.",
+      "criteria": "Define accepted type/representation, range and response to unknown formats."
     }
   ],
   "lab": {
-    "title": "Type and invalid-input matrix",
-    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "title": "Value types: why number 30 differs from text “30”",
+    "environment": "Official locally installed training platform; a separate personal file infobase, no Studio required.",
     "steps": [
-      "Preserve predictions for the nine P2.2 cases.",
-      "Find the native function and inspect its early return for nonnumeric types.",
-      "Run the official gate on a new workspace.",
-      "Reconcile cases, especially zero-is-valid and filled-is-not-validation.",
-      "Explain why nonnumeric text and a negative number fail at different stages."
+      "Identify the types of 30, \"30\", 0, \"\" and Неопределено before running.",
+      "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
+      "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
+      "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+      "Replace only \"30\" with \"20\", save, update and execute. Restore the main example after comparing."
     ],
     "expected": [
-      "Nine P2.2 cases pass.",
-      "Zero remains admissible; text is not disguised as a number."
+      "The messages show number type Число, string type Строка and numeric result 45.",
+      "The intended module is open and the earlier source remains available.",
+      "The exact exercise source is entered in the intended context.",
+      "The messages show number type Число, string type Строка and numeric result 45.",
+      "The final output is 35; the types remain number and string."
     ],
     "evidence": [
-      "Type→predicate→expected→actual for each input.",
-      "SEED cases and the source hash."
+      "Source version, predicted and actual outputs.",
+      "One changed input and a trace explaining its result; no automatic grading claim."
     ],
-    "negative": "Do not replace a conversion failure with an arbitrary zero; that turns an error or absence into an admissible duration."
+    "negative": "Text \"thirty minutes\" is outside the specified format. Do not substitute zero; retain the input and explain why explicit rejection is needed."
   },
   "mistakes": [
     [
-      "“Every empty value is zero.”",
-      "Types and domain rules differ."
+      "Matching display means matching types.",
+      "Compare ТипЗнч rather than displayed characters alone."
     ],
     [
-      "“Numeric type establishes valid minutes.”",
-      "The agreed range must also be checked."
+      "Empty or invalid input can always become zero.",
+      "That destroys the distinction between known zero and missing/invalid input."
     ]
   ],
   "quiz": [
     {
-      "question": "What does ЭтоЧислоМинут(\"30\") return?",
+      "question": "Which value has string type?",
       "options": [
-        "True",
-        "False",
-        "Creates a document"
+        "30",
+        "\"30\"",
+        "0"
       ],
       "correct": 1,
-      "explanation": "Text parsing is outside this contract."
+      "explanation": "Quotes denote text; similar display does not make it numeric."
     },
     {
-      "question": "Why is ValueIsFilled not sufficient for minutes?",
+      "question": "What does Число(ТекстМинут) do when its result is assigned elsewhere?",
       "options": [
-        "It always returns True",
-        "It executes JavaScript",
-        "Allowed zero is considered unfilled"
+        "Permanently changes the original variable’s type",
+        "Changes all infobase fields",
+        "Returns a number while the original text remains a string"
       ],
       "correct": 2,
-      "explanation": "The domain rule permits zero."
+      "explanation": "Conversion returns a value; assigning it elsewhere leaves the source string intact."
     },
     {
-      "question": "Undefined and Null here…",
+      "question": "Why should unknown duration not silently become zero?",
       "options": [
-        "Have different types",
-        "Are one type with two names",
-        "Are always numeric zero"
+        "That loses the distinction between known zero and missing/invalid input",
+        "Zero never has a type",
+        "1C always prohibits zero"
       ],
       "correct": 0,
-      "explanation": "Separate native cases verify their types."
+      "explanation": "The domain defines whether zero is valid; absence and error are different states."
     }
   ],
   "review": [
-    "Explain type versus domain validity.",
-    "Defend the zero rule.",
-    "Next: branching on validated input."
+    "Explain the result without looking at the final message.",
+    "Name an input that would expose the described mistake.",
+    "Preserve the source before moving to the next lesson."
   ],
   "sources": [
     "cli",
@@ -158,28 +199,106 @@
     "platform-architecture",
     "bsl-language"
   ],
-  "contentRevision": "0.3.0-a2p2",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.a2p2.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_A2P2_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "nativeCaseIds": [
-    "P2.2.undefined-type",
-    "P2.2.null-type",
-    "P2.2.distinct-empty-types",
-    "P2.2.zero-is-valid",
-    "P2.2.text-is-not-number",
-    "P2.2.undefined-rejected",
-    "P2.2.explicit-conversion",
-    "P2.2.bad-conversion",
-    "P2.2.filled-is-not-validation"
+    "P2.TYPE.30",
+    "P2.TYPE.20"
   ],
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
     "sourcePolicy": "primary-source-links-and-observed-native-results",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "0.3.0-a2p2",
+    "originalCourseId": "onec",
+    "topicId": "onec.p2.topic-2",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten in novice-first order; valid core concepts retained without obsolete probe-first route"
   },
-  "codeFile": "native/examples-a2p2/p2-types.bsl"
+  "codeFile": "code/pedagogy/types-and-conversion.bsl",
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "variable",
+      "bsl",
+      "module"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Designer → managed application module of your training copy",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "predict",
+          "title": "Predict the result",
+          "where": "Nexus → this lesson’s worked example",
+          "action": "Identify the types of 30, \"30\", 0, \"\" and Неопределено before running.",
+          "why": "An expectation makes a wrong result detectable.",
+          "expected": "The messages show number type Число, string type Строка and numeric result 45.",
+          "troubleshooting": "Use the trace to separate each instruction; do not copy a displayed total without explaining it.",
+          "before": "Your own training infobase opens and its startup handler already works. Preserve the preceding source before replacing this exercise body."
+        },
+        {
+          "id": "prepare-source",
+          "title": "Preserve your preceding work",
+          "where": "Your infobase → Designer → configuration root → managed application module",
+          "action": "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
+          "why": "The next exercise must not destroy the preceding version.",
+          "expected": "The intended module is open and the earlier source remains available.",
+          "troubleshooting": "If you cannot identify the infobase, return to the startup list and check its entry and directory.",
+          "before": "The messages show number type Число, string type Строка and numeric result 45."
+        },
+        {
+          "id": "enter-code",
+          "title": "Enter this example",
+          "where": "Designer → the module text window",
+          "action": "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
+          "why": "The original text stays a string; a separately converted number participates in addition.",
+          "expected": "The exact exercise source is entered in the intended context.",
+          "troubleshooting": "Check ordinary quotes, semicolons and matching block endings. A syntax rejection is not execution.",
+          "before": "The intended module is open and the earlier source remains available."
+        },
+        {
+          "id": "run-check",
+          "title": "Save, update and execute",
+          "where": "Designer → Ctrl+S → Configuration / Update database configuration (F7) → Debug / Start (F5)",
+          "action": "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+          "why": "Only the installed platform executes this BSL.",
+          "expected": "The messages show number type Число, string type Строка and numeric result 45.",
+          "troubleshooting": "For old output close your client, verify the infobase and update again. For a different value find the first trace step that differs.",
+          "before": "The exact exercise source is entered in the intended context."
+        },
+        {
+          "id": "vary-record",
+          "title": "Change one condition and retain evidence",
+          "where": "The same module, then Enterprise mode and Nexus notes",
+          "action": "Replace only \"30\" with \"20\", save, update and execute. Restore the main example after comparing.",
+          "why": "A changed input tests understanding beyond copying the example.",
+          "expected": "The final output is 35; the types remain number and string.",
+          "troubleshooting": "Text \"thirty minutes\" is outside the specified format. Do not substitute zero; retain the input and explain why explicit rejection is needed.",
+          "before": "The messages show number type Число, string type Строка and numeric result 45."
+        }
+      ]
+    }
+  },
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "training1508Verified": false,
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_LANGUAGE_RESULT.json",
+    "caseIds": [
+      "P2.TYPE.30",
+      "P2.TYPE.20"
+    ],
+    "scope": "Exact current lesson source plus explicit input variants; observer assertions, no server grade or student authorship proof."
+  }
 }

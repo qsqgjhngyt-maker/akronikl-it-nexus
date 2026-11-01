@@ -6,151 +6,183 @@
   "topicId": "onec.p2.topic-3",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Conditions, Boolean expressions and decision tables",
+  "title": "Conditions: choose an action and check boundaries",
   "minutes": 115,
-  "goal": "Build a complete decision table for request duration and verify branch order, types and boundaries in real BSL.",
+  "goal": "Build a decision table for a known numeric input and test branch ordering and boundaries.",
   "prerequisites": [
-    "P2.1–P2.2; type versus validity and the ЭтоЧислоМинут function."
+    "The preceding language lesson; saving, updating and launching your own infobase."
   ],
   "outcomes": [
-    "Translate requirements into nonoverlapping input classes.",
-    "Explain If/ElsIf/Else and And/Or/Not.",
-    "Find a boundary defect through a counterexample rather than random trials."
+    "Explain first-matching-branch selection.",
+    "Distinguish И from Или.",
+    "Test 0, 60/61 and 1440/1441 while preserving the original version."
   ],
   "sections": [
     [
-      "Define the rule before coding",
-      "КлассДлительности has an explicit contract. Nonnumeric inputs and numbers outside 0..1440 are rejected. Zero maps to NoCost; positive values through 60 inclusive is Short; values above 60 through 1440 is Long. This is a learning classification, not a medical, employment or financial standard. Changing class names or boundaries requires changing requirements and tests deliberately.",
-      "Before reading the implementation, build a table for -1, 0, 1, 60, 61, 1440, 1441 and string \"60\", recording types separately. The table reveals missing classes or ambiguous boundaries. An ordinary input such as 30 cannot distinguish the intended algorithm from one that treats 60 as Long or accepts textual input unexpectedly."
+      "State the rule first",
+      "A condition has a Boolean answer, Истина or Ложь. Reject quantities below zero or above 1440 first. Among valid inputs distinguish zero, then quantities up to and including 60. The input is already known to be numeric; arbitrary text parsing is outside this rule.",
+      "Partition numeric inputs into four disjoint classes: outside 0..1440; exactly 0; 1..60; and above 60 up to 1440. This guides branches and boundaries. The main exercise assumes numeric type; do not promise string-input validation the source does not perform."
     ],
     [
-      "Branch ordering changes behavior",
-      "The first branch calls ЭтоЧислоМинут and rejects an invalid input. Zero is handled next, then <=60, then the remaining admissible range. An If/ElsIf chain takes the first matching branch. Reaching the final Else establishes that type and range are valid, the value is nonzero and it exceeds 60. These accumulated facts explain the final branch.",
-      "Placing a broad <=60 branch before the zero case classifies zero as Short. Replacing <= with < makes 60 Long. Both variants can pass syntax checking. Include inputs that distinguish these implementations. For each experiment, record the first incorrect result and its cause instead of adding arbitrary exceptions that conceal an ordering defect."
+      "The first matching branch",
+      "An Если/ИначеЕсли/Иначе chain chooses its first matching branch. Testing zero before <=60 preserves “Без затрат” (no time spent). With the range first, zero would already select “Короткая” (short), preventing the later zero branch.",
+      "Each branch assigns text to Класс; one message follows КонецЕсли. Later ИначеЕсли branches do not revise the chosen value. A trace includes tests that were never reached, explaining why order matters."
     ],
     [
-      "Boolean expressions and safe preconditions",
-      "Value>=0 And Value<=1440 requires both bounds simultaneously. Or can combine reasons for rejection, while Not reverses a Boolean predicate. Read a compound expression as a claim about a particular input. When combining business rules, decide whether both or at least one must hold before choosing an operator. Parentheses make grouping explicit.",
-      "This implementation returns early on a wrong type before comparing numeric bounds. Correctness does not depend on side effects or guesses about right-hand evaluation. These exercises use True/False; query-specific Null behavior is not imported automatically. If an input can represent a third special meaning, handle it before applying a two-valued decision table."
+      "And, or and negation",
+      "Или is true when at least one of the two limits is violated. A negative quantity and exceeding the upper limit are different invalid cases. Replacing Или with И is wrong: no number is simultaneously below zero and above 1440.",
+      "A И B requires both conditions; A Или B requires at least one; Не negates a Boolean. For a complex expression evaluate simple parts first, then combine them. Use parentheses to make intention explicit rather than depending on guessed precedence."
     ],
     [
-      "What the evidence establishes",
-      "The native suite checks -1, 0, 60, 61, 1440, 1441 and string \"60\" in seven separate P2.3 cases. They exercise important current boundaries, not every number, fractional duration or future textual format. The goal is to justify test selection and explain limitations. A PASS count without its actual input set provides less information.",
-      "Proposed properties could include every admissible positive input <=60 being Short, rejected input leaving infobase state unchanged, and repeated calls returning the same class. These remain proposed until tested. This pure function classifies a value and writes no document. A2’s BeforeWrite rules are a separate boundary and cannot be declared verified by classification alone."
+      "A boundary counterexample",
+      "Test where the answer changes: -1/0, 0/1, 60/61 and 1440/1441. Input 30 alone cannot expose a missing boundary. Record which preceding conditions are false and which becomes true. This explains the branch rather than guessing from the final message.",
+      "Accidental <60 instead of <=60 fails at 60 while input 30 hides the error. Removing the upper rejection may classify 1441 as long. For each suspected mutation choose an input on which correct and incorrect programs differ."
     ]
   ],
   "diagram": "p2conditions",
   "walkthrough": [
     {
-      "action": "Trace the chain for 0 and 60.",
-      "expected": "Both pass validation, then become NoCost and Short."
+      "action": "0 < 0 Или 0 > 1440 — False",
+      "expected": "Continue."
     },
     {
-      "action": "Compare 60 with 61, then 1440 with 1441.",
-      "expected": "Short/Long; Long/Rejected."
+      "action": "0 = 0 — True",
+      "expected": "Select “Без затрат”."
     },
     {
-      "action": "Explain string \"60\" before range evaluation.",
-      "expected": "An early return rejects the nonnumeric type."
+      "action": "Test <= 60 — Not executed",
+      "expected": "A preceding branch already matched."
     }
   ],
   "examples": [
     {
-      "title": "Boundary table",
-      "source": "[-1, 0, 60, 61, 1440, 1441, \"60\"]",
-      "expected": "Rejected; NoCost; Short; Long; Long; Rejected; Rejected.",
-      "explanation": "Each result corresponds to a particular native case."
+      "title": "Trace the main example",
+      "source": "Минуты = 0;\nЕсли Минуты < 0 Или Минуты > 1440 Тогда\n    Класс = \"Недопустимо\";\nИначеЕсли Минуты = 0 Тогда\n    Класс = \"Без затрат\";\nИначеЕсли Минуты <= 60 Тогда\n    Класс = \"Короткая\";\nИначе\n    Класс = \"Длинная\";\nКонецЕсли;\nСообщить(Класс);",
+      "expected": "For Минуты = 0 the message is “Без затрат”.",
+      "explanation": "The invalid-range test is false; the zero test is true and selects the branch.",
+      "trace": [
+        [
+          "0 < 0 Или 0 > 1440",
+          "False",
+          "Continue."
+        ],
+        [
+          "0 = 0",
+          "True",
+          "Select “Без затрат”."
+        ],
+        [
+          "Test <= 60",
+          "Not executed",
+          "A preceding branch already matched."
+        ]
+      ]
     },
     {
-      "title": "An ordering counterexample",
-      "source": "if minutes<=60 before if minutes=0",
-      "expected": "Zero would incorrectly become Short.",
-      "explanation": "This predicts a separate mutation; it is not claimed as another performed native test."
+      "title": "The short-request boundary",
+      "source": "Минуты = 61; // keep the rest of the chain unchanged",
+      "expected": "“Длинная” (long).",
+      "explanation": "61 is valid, nonzero and no longer <=60.",
+      "trace": [
+        [
+          "61 within range",
+          "Valid",
+          "No rejection."
+        ],
+        [
+          "61 <= 60",
+          "False",
+          "Choose final long branch."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Explain And, Or and Not in ordinary words for each condition.",
-      "criteria": "Simultaneous requirements, alternatives and negation; distinguish type from range."
+      "level": "Guided",
+      "task": "Make a decision table for 0, 60 and 61 before execution.",
+      "criteria": "No time spent; short; long, with the first matching branch explained."
     },
     {
-      "level": "Applied",
-      "task": "Justify the seven P2.3 cases: which defect does each detect?",
-      "criteria": "Connect type, lower/upper limits, zero and 60/61 to specific defect hypotheses."
+      "level": "Changed condition",
+      "task": "Test -1, 1, 1440 and 1441 by changing only the first line.",
+      "criteria": "Invalid; short; long; invalid."
     },
     {
-      "level": "Advanced",
-      "task": "Propose a separate 61..120 class and update the decision table without changing the reference.",
-      "criteria": "Preserve old requirements; label new 60/61/120/121 tests PLANNED until executed in separate work."
+      "level": "Independent",
+      "task": "Find counterexamples to replacing Или with И and moving <=60 before zero.",
+      "criteria": "-1/1441 exposes the wrong connective; 0 exposes wrong ordering."
     }
   ],
   "lab": {
-    "title": "A decision table without a lost boundary",
-    "environment": "Official 1C 8.3.27.x, file infobase, thick client in managed application mode. Automation verified 8.3.27.2214; training 8.3.27.1508 remains separately NOT RUN.",
+    "title": "Conditions: choose an action and check boundaries",
+    "environment": "Official locally installed training platform; a separate personal file infobase, no Studio required.",
     "steps": [
-      "Record types and expected classes before execution.",
-      "Read КлассДлительности and annotate facts established after each branch.",
-      "Run the native gate and reconcile seven P2.3 cases.",
-      "Propose two counterexamples for wrong ordering or comparison signs.",
-      "Preserve source, expectations, observations and limitations."
+      "Make a decision table for 0, 60 and 61 before execution.",
+      "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
+      "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
+      "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+      "Change the input to 60, 61, -1 and 1441 in turn. Execute each version and compare with the table."
     ],
     "expected": [
-      "Seven P2.3 cases pass.",
-      "Explain 0, 60/61 and 1440/1441 without overlapping classes."
+      "For Минуты = 0 the message is “Без затрат”.",
+      "The intended module is open and the earlier source remains available.",
+      "The exact exercise source is entered in the intended context.",
+      "For Минуты = 0 the message is “Без затрат”.",
+      "Короткая; Длинная; Недопустимо; Недопустимо."
     ],
     "evidence": [
-      "Decision table with types and native case IDs.",
-      "Traces for 0, 60, 61 and \"60\"."
+      "Source version, predicted and actual outputs.",
+      "One changed input and a trace explaining its result; no automatic grading claim."
     ],
-    "negative": "Do not change an expected class merely because reordered branches produce a different answer. Check the original requirement first."
+    "negative": "For a different result, preserve the failed version and find the first incorrect condition. Do not change the requirement to fit the output."
   },
   "mistakes": [
     [
-      "“And and Or are interchangeable.”",
-      "They define different admissible input sets."
+      "Zero is <=60, so ordering is irrelevant.",
+      "The chain selects its first matching branch."
     ],
     [
-      "“A type check replaces a range check.”",
-      "They are independent conditions of the current contract."
+      "И and Или are interchangeable.",
+      "Simultaneous conditions differ from at least one condition."
     ]
   ],
   "quiz": [
     {
-      "question": "Class for 60?",
+      "question": "What does the shown chain select for 0?",
       "options": [
-        "NoCost",
         "Short",
-        "Long"
-      ],
-      "correct": 1,
-      "explanation": "The Short upper bound is inclusive."
-    },
-    {
-      "question": "Why check type first?",
-      "options": [
-        "To change records",
-        "To post a document",
-        "To avoid numeric comparisons on unsuitable input"
+        "Invalid",
+        "No time spent"
       ],
       "correct": 2,
-      "explanation": "The early return establishes a clear numeric precondition."
+      "explanation": "Zero is checked before <=60."
     },
     {
-      "question": "Where does 1441 belong?",
+      "question": "Why is “Минуты < 0 И Минуты > 1440” unsuitable for rejection?",
       "options": [
-        "Rejected",
-        "Long",
-        "Short"
+        "A number cannot violate both limits simultaneously",
+        "И always means Или",
+        "1440 is a string"
       ],
       "correct": 0,
-      "explanation": "It exceeds the agreed range."
+      "explanation": "One violated limit suffices, so use Или."
+    },
+    {
+      "question": "Which inputs best expose a wrong inclusive boundary at 60?",
+      "options": [
+        "30 and 45",
+        "60 and 61",
+        "10 and 20"
+      ],
+      "correct": 1,
+      "explanation": "Adjacent values lie on opposite sides of the boundary."
     }
   ],
   "review": [
-    "Explain the first matching branch.",
-    "Name distinguishing boundaries.",
-    "Next: repeating calculations with loops."
+    "Explain the result without looking at the final message.",
+    "Name an input that would expose the described mistake.",
+    "Preserve the source before moving to the next lesson."
   ],
   "sources": [
     "cli",
@@ -158,26 +190,115 @@
     "platform-architecture",
     "bsl-language"
   ],
-  "contentRevision": "0.3.0-a2p2",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.a2p2.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_A2P2_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "nativeCaseIds": [
-    "P2.3.negative",
-    "P2.3.zero",
-    "P2.3.inclusive-boundary",
-    "P2.3.next-boundary",
-    "P2.3.maximum",
-    "P2.3.over-maximum",
-    "P2.3.wrong-type"
+    "P2.IF.-1",
+    "P2.IF.0",
+    "P2.IF.1",
+    "P2.IF.60",
+    "P2.IF.61",
+    "P2.IF.1440",
+    "P2.IF.1441"
   ],
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
     "sourcePolicy": "primary-source-links-and-observed-native-results",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "0.3.0-a2p2",
+    "originalCourseId": "onec",
+    "topicId": "onec.p2.topic-3",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten in novice-first order; valid core concepts retained without obsolete probe-first route"
   },
-  "codeFile": "native/examples-a2p2/p2-conditions.bsl"
+  "codeFile": "code/pedagogy/conditions-first.bsl",
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "variable",
+      "bsl"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Designer → managed application module of your training copy",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "predict",
+          "title": "Predict the result",
+          "where": "Nexus → this lesson’s worked example",
+          "action": "Make a decision table for 0, 60 and 61 before execution.",
+          "why": "An expectation makes a wrong result detectable.",
+          "expected": "For Минуты = 0 the message is “Без затрат”.",
+          "troubleshooting": "Use the trace to separate each instruction; do not copy a displayed total without explaining it.",
+          "before": "Your own training infobase opens and its startup handler already works. Preserve the preceding source before replacing this exercise body."
+        },
+        {
+          "id": "prepare-source",
+          "title": "Preserve your preceding work",
+          "where": "Your infobase → Designer → configuration root → managed application module",
+          "action": "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
+          "why": "The next exercise must not destroy the preceding version.",
+          "expected": "The intended module is open and the earlier source remains available.",
+          "troubleshooting": "If you cannot identify the infobase, return to the startup list and check its entry and directory.",
+          "before": "For Минуты = 0 the message is “Без затрат”."
+        },
+        {
+          "id": "enter-code",
+          "title": "Enter this example",
+          "where": "Designer → the module text window",
+          "action": "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
+          "why": "The invalid-range test is false; the zero test is true and selects the branch.",
+          "expected": "The exact exercise source is entered in the intended context.",
+          "troubleshooting": "Check ordinary quotes, semicolons and matching block endings. A syntax rejection is not execution.",
+          "before": "The intended module is open and the earlier source remains available."
+        },
+        {
+          "id": "run-check",
+          "title": "Save, update and execute",
+          "where": "Designer → Ctrl+S → Configuration / Update database configuration (F7) → Debug / Start (F5)",
+          "action": "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+          "why": "Only the installed platform executes this BSL.",
+          "expected": "For Минуты = 0 the message is “Без затрат”.",
+          "troubleshooting": "For old output close your client, verify the infobase and update again. For a different value find the first trace step that differs.",
+          "before": "The exact exercise source is entered in the intended context."
+        },
+        {
+          "id": "vary-record",
+          "title": "Change one condition and retain evidence",
+          "where": "The same module, then Enterprise mode and Nexus notes",
+          "action": "Change the input to 60, 61, -1 and 1441 in turn. Execute each version and compare with the table.",
+          "why": "A changed input tests understanding beyond copying the example.",
+          "expected": "Короткая; Длинная; Недопустимо; Недопустимо.",
+          "troubleshooting": "For a different result, preserve the failed version and find the first incorrect condition. Do not change the requirement to fit the output.",
+          "before": "For Минуты = 0 the message is “Без затрат”."
+        }
+      ]
+    }
+  },
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "training1508Verified": false,
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_LANGUAGE_RESULT.json",
+    "caseIds": [
+      "P2.IF.-1",
+      "P2.IF.0",
+      "P2.IF.1",
+      "P2.IF.60",
+      "P2.IF.61",
+      "P2.IF.1440",
+      "P2.IF.1441"
+    ],
+    "scope": "Exact current lesson source plus explicit input variants; observer assertions, no server grade or student authorship proof."
+  }
 }
