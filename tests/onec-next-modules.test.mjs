@@ -9,7 +9,18 @@ test('A2/P2: все 84 прежних ID/порядки сохранены; A1/P
  for(const [i,m]of c.modules.entries()){assert.equal(m.status,'IMPLEMENTED');if(i===0)assert.deepEqual(m,previous.modules[i]);else assert.ok(m.topics.every(t=>t.contentRevision===(i===1?'0.3.0-a2p2':'1.0.0-rc.1')&&t.progressPolicy==='current-revision-required'));}}
  assert.equal(curricula.flatMap(c=>c.modules.filter(m=>m.status==='IMPLEMENTED').flatMap(m=>m.topics)).length,84);
 });
-test('A1/P1: все 16 payload и исходный native kit не изменены',()=>{const paths=curricula.flatMap(c=>c.modules[0].topics.flatMap(t=>Object.values(t.content).map(p=>`courses/${c.courseId}/${p}`)));paths.push(base+'shared.v1.json',base+'service-desk.v1.json',base+'native/service-desk');assert.equal(execFileSync('git',['diff','--name-only',old,'--',...paths],{encoding:'utf8'}).trim(),'');});
+test('A1/P1: 16 payload сохранены, кроме согласованной замены названий конфигураций; native kit неизменен',()=>{
+ const paths=curricula.flatMap(c=>c.modules[0].topics.flatMap(t=>Object.values(t.content).map(p=>`courses/${c.courseId}/${p}`)));
+ const replacements={
+  ru:['Здесь нет типовой Бухгалтерии, БГУ или ЗГУ, а также чужих данных.','Здесь нет типовых прикладных конфигураций и чужих данных.'],
+  en:['It includes no Accounting, BGU or ZGU configuration and no third-party records.','It includes no proprietary application configurations or third-party records.']
+ };
+ for(const p of paths){const expected=JSON.parse(execFileSync('git',['show',old+':'+p],{encoding:'utf8'}));
+  if(p.endsWith('/p1-infobase.json')){const [before,after]=replacements[expected.locale];assert.ok(expected.sections[0][2].includes(before));expected.sections[0][2]=expected.sections[0][2].replace(before,after);}
+  assert.deepEqual(json(p),expected,p);
+ }
+ assert.equal(execFileSync('git',['diff','--name-only',old,'--',base+'shared.v1.json',base+'service-desk.v1.json',base+'native/service-desk'],{encoding:'utf8'}).trim(),'');
+});
 test('A2/P2: 18 локализаций имеют самостоятельную теорию, два примера, три уровня практики и наблюдаемые native cases',()=>{
  assert.equal(lessons.length,18);const titles=new Set();for(const l of lessons){assert.equal(l.sections.length,4);assert.ok(l.sections.flatMap(s=>s.slice(1)).join(' ').split(/\s+/u).length>=300,'Требуется содержательная теория '+l.topicId);assert.equal(l.examples.length,2);assert.equal(l.exercises.length,3);assert.ok(l.lab.steps.length>=5&&l.lab.evidence.length>=2&&l.lab.negative);assert.ok(l.nativeCaseIds.length>=2&&l.nativeCaseIds.every(id=>cases.includes(id)));assert.equal(l.contentRevision,'0.3.0-a2p2');assert.equal(l.sharedRefs.at(-1),'onec.a2p2.shared.v1@1.0.0');if(l.locale==='ru'){titles.add(l.title);const en=lessons.find(e=>e.topicId===l.topicId&&e.locale==='en');assert.deepEqual(en.nativeCaseIds,l.nativeCaseIds);assert.deepEqual(en.quiz.map(q=>q.correct),l.quiz.map(q=>q.correct));assert.equal(en.lab.steps.length,l.lab.steps.length);}}assert.equal(titles.size,9);
  assert.deepEqual([...new Set(lessons.flatMap(l=>l.nativeCaseIds))].sort(),cases.slice().sort());

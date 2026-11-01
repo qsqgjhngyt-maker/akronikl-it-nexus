@@ -1,5 +1,5 @@
 import{createOnecGuide}from'./guide-model.mjs';
-const ONEC_GUIDE_MANIFEST_SHA='48aa6e0642015f04f7d406bdc5d70cf84ca8b4555427902e7526f6abb0fb02ce';
+const ONEC_GUIDE_MANIFEST_SHA='d7416bb2ef0969ef1ceac4f4c2e80f6ac8c776f89c49f328fbbb7f3d56ca5c09';
 export async function loadOnecGuide(locale,{signal}={}){
  if(!['ru','en'].includes(locale))throw Error('GUIDE_LOCALE');
  const {readBoundedJsonBytes}=await import('../../akronikl/ui/knowledge-loader.js');
@@ -17,6 +17,7 @@ export function mountOnecGuide(root,{locale='ru',courseId='onec',currentTopic=nu
  const form=el('form',root),courseLabel=el('label',form,t('Направление: ','Course: ')),select=el('select',courseLabel);select.dataset.guideCourse='';for(const [id,title]of [['onec',t('Программирование','Programming')],['1c-enterprise',t('Использование и конфигурирование','Use and configuration')]]){const o=el('option',select,title);o.value=id;}select.value=['onec','1c-enterprise'].includes(courseId)?courseId:'onec';
  const queryLabel=el('label',form,t(' Найти в курсе: ',' Find in course: ')),input=el('input',queryLabel);input.maxLength=200;input.dataset.guideQuery='';input.type='search';
  const search=el('button',form,t('Найти','Search'));search.type='submit';const outline=el('button',form,t('Программа','Curriculum'));outline.type='button';outline.dataset.guideOutline='';const next=el('button',form,t('Где я и что дальше?','Where am I and what next?'));next.type='button';next.dataset.guideNext='';
+ const labLink=el('a',root,t('Как выполнить лабораторную: пошаговая инструкция','How to do a lab: step by step'));labLink.dataset.guideLabHelp='';const labUrl=new URL(globalThis.location?.href||candidateBase);labUrl.hash=new URLSearchParams({course:select.value,locale,...(currentTopic?{lesson:currentTopic}:{}),guide:'laboratory'}).toString();labLink.href=labUrl.href;labLink.onclick=event=>{if(navigate&&active()){event.preventDefault();navigate({course:select.value,locale,topic:currentTopic,guide:'laboratory'});}};
  const output=el('div',root);output.dataset.guideResult='';output.setAttribute('role','status');
  const link=(parent,l)=>{const url=new URL(candidateBase);url.hash=new URLSearchParams({course:select.value,locale,lesson:l.topicId}).toString();const a=el('a',parent,l.title);a.href=url.href;if(navigate)a.onclick=e=>{if(active()){e.preventDefault();navigate({course:select.value,locale,topic:l.topicId});}};return a;};
  async function action(kind){const n=++ticket;output.textContent=t('Открываю материалы…','Opening materials…');const selected=select.value,q=input.value;
