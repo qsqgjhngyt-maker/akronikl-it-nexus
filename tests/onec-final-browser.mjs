@@ -1,15 +1,16 @@
 import assert from'node:assert/strict';import fs from'node:fs/promises';import path from'node:path';
+import{goOnec}from'./onec-browser-engine.mjs';
 // Общий набор для HTTP и file://: ответы берутся из авторского test fixture,
 // защищённым экзаменом этот локальный self-check не объявляется.
 export async function checkFinalAssessments({page,base,record,out,cold=false}){
  const prefix=cold?'OFFLINE FINAL: ':'FINAL: ';
  for(const course of ['onec','1c-enterprise']){
   const spec=JSON.parse(await fs.readFile(new URL(`../courses/${course}/final-assessment.json`,import.meta.url))),key='akronikl:it-nexus:onec-final:v1:'+course;
-  await page.goto(base+`#course=${course}&assessment=final`);await page.locator('[data-final-form]').waitFor();
+  await goOnec(page,base+`#course=${course}&assessment=final`);await page.locator('[data-final-form]').waitFor();
   const before=await page.evaluate(()=>Object.fromEntries(['onec','1c-enterprise'].map(id=>[id,localStorage.getItem('akronikl:it-nexus:onec-candidate:v1:'+id)])));
   await record(prefix+course+' · 3 варианта RU/EN, черновики, попытки и портфолио',async()=>{
    for(const locale of ['ru','en'])for(const variant of spec.variants){
-    await page.goto(base+`#course=${course}&locale=${locale}&assessment=final`);await page.locator('[data-final-form]').waitFor();await page.selectOption('[data-final-variant]',variant.id);
+    await goOnec(page,base+`#course=${course}&locale=${locale}&assessment=final`);await page.locator('[data-final-form]').waitFor();await page.selectOption('[data-final-variant]',variant.id);
     assert.equal(await page.locator('[data-final-form] fieldset').count(),24);assert.equal(await page.locator('[data-final-project] option').count(),3);
     const answers=variant.questionIds.map(id=>spec.questions.find(q=>q.id===id).correct);
     for(const [i,a]of answers.entries())await page.check(`input[name="final-${i}"][value="${a}"]`);
@@ -29,10 +30,10 @@ export async function checkFinalAssessments({page,base,record,out,cold=false}){
   });
  }
  await record(prefix+'ошибка quota и повреждённая история: исходник и несохранённое портфолио экспортируются',async()=>{
-  await page.goto(base+'#course=onec&assessment=final');await page.locator('[data-final-form]').waitFor();
+  await goOnec(page,base+'#course=onec&assessment=final');await page.locator('[data-final-form]').waitFor();
   const key='akronikl:it-nexus:onec-final:v1:onec',raw=await page.evaluate(k=>localStorage.getItem(k),key);
-  await page.evaluate(()=>{window.__set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k.includes(':onec-final:'))throw Error('synthetic quota');return window.__set.call(this,k,v)}});
-  await page.locator('[data-final-portfolio]').fill('UNSAVED quota recovery');await page.locator('[data-final-status][data-error=true]').waitFor();assert.equal(await page.evaluate(k=>localStorage.getItem(k),key),raw);
+  await page.evaluate(()=>{window.__finalQuotaRejects=0;window.__set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k.includes(':onec-final:')){window.__finalQuotaRejects++;throw Error('synthetic quota')}return window.__set.call(this,k,v)}});
+  await page.locator('[data-final-portfolio]').fill('UNSAVED quota recovery');await page.waitForFunction(()=>window.__finalQuotaRejects>0);await page.locator('[data-final-status][data-error=true]').waitFor();assert.equal(await page.evaluate(k=>localStorage.getItem(k),key),raw);
   await page.evaluate(k=>{Storage.prototype.setItem=window.__set;localStorage.setItem(k,'broken-history')},key);await page.reload();await page.locator('[data-final-form]').waitFor();await page.locator('[data-final-portfolio]').fill('UNSAVED damaged history');await page.locator('[data-final-attest]').check();await page.locator('[data-final-save-portfolio]').click();await page.locator('[data-final-status][data-error=true]').waitFor();assert.equal(await page.evaluate(k=>localStorage.getItem(k),key),'broken-history');
   const download=page.waitForEvent('download');await page.locator('[data-final-export]').click();const d=await download,file=path.join(out,`${cold?'OFFLINE_':''}FINAL_RECOVERY_EXPORT.json`);await d.saveAs(file);const data=JSON.parse(await fs.readFile(file));assert.equal(data.savedHistoryUnavailable,true);assert.equal(data.unsavedDraft.note,'UNSAVED damaged history');await page.evaluate(({k,v})=>localStorage.setItem(k,v),{k:key,v:raw});
  });
