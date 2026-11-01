@@ -7,9 +7,10 @@ export function gradeQuiz(quiz,answers){
  const correct=quiz.reduce((n,q,i)=>n+(Number.isInteger(answers?.[i])&&answers[i]===q.correct?1:0),0);
  return{correct,total:quiz.length,passed:correct===quiz.length,kind:'local-self-check',codeVerifiedServer:false,credentialEligible:false};
 }
+export function hasRevisionCompletion(entry,revision){return entry?.completed===true&&(entry.completionRevision===revision||entry.completionHistory?.some(item=>item.contentRevision===revision&&item.kind==='self-reported')===true);}
 export function progressFor(curriculum,state){
  const topics=curriculum.modules.filter(m=>m.status==='IMPLEMENTED').flatMap(m=>m.topics.filter(t=>t.status==='IMPLEMENTED'));
- const done=topics.filter(t=>{const entry=state.lessons?.[t.topicId];return entry?.completed===true&&(t.progressPolicy!=='current-revision-required'||entry.completionRevision===t.contentRevision);}).length;
+ const done=topics.filter(t=>{const entry=state.lessons?.[t.topicId];return entry?.completed===true&&(t.progressPolicy!=='current-revision-required'||hasRevisionCompletion(entry,t.contentRevision));}).length;
  return{done,total:topics.length,pct:topics.length?Math.round(done/topics.length*100):0,scope:'implemented-modules-only',wholeCourseComplete:false};
 }
 export function createCandidateStore(storage,courseId,curriculum=null){
@@ -39,7 +40,9 @@ export function createCandidateStore(storage,courseId,curriculum=null){
    if(requiredRevision&&attempt.contentRevision!==requiredRevision)throw Error('CURRENT_REVISION_ATTEMPT_REQUIRED');
    const history=[...(entry.completionHistory||[])];if(entry.completed&&!history.length)history.push({contentRevision:entry.completionRevision||null,kind:'preserved-prior-self-report'});
    history.push({contentRevision:attempt.contentRevision||null,attemptId:attempt.attemptId||null,at:new Date().toISOString(),kind:'self-reported'});
-   s.lessons[id]={...entry,completed:true,completionKind:'self-reported',labAttested:true,completionRevision:attempt.contentRevision||null,completionHistory:history};return s;
+   // Существующий заголовок completion остаётся якорем для предыдущей сборки.
+   // Новая отметка с новой ревизией добавляется в историю, не задним числом в старую попытку.
+   s.lessons[id]={...entry,completed:true,completionKind:'self-reported',labAttested:true,completionRevision:entry.completed?(entry.completionRevision||null):(attempt.contentRevision||null),completionHistory:history};return s;
   });},
   createProject({id,note='',origin=null}){if(typeof id!=='string'||!id.trim()||note.length>20000)throw Error('INVALID_PROJECT');return save(s=>{if(s.projects.some(p=>p.id===id))throw Error('PROJECT_EXISTS');s.projects.push({id,courseId,note,dataPolicy:'synthetic-only',origin:clone(origin),createdAt:new Date().toISOString()});return s;});},
   editProject(id,note){if(typeof note!=='string'||note.length>20000)throw Error('INVALID_NOTE');return save(s=>{const p=s.projects.find(p=>p.id===id);if(!p)throw Error('PROJECT_NOT_FOUND');p.note=note;return s;});}

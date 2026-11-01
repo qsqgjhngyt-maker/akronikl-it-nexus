@@ -1,6 +1,8 @@
 import{spawnSync}from'node:child_process';import fs from'node:fs';import path from'node:path';
 const out=path.resolve(process.env.ONEC_REGRESSION_EVIDENCE||'onec-regression-evidence');fs.mkdirSync(out,{recursive:true});
 const commands=[
+ ['ONEC_PEDAGOGY_V2',['--test','tests/onec-pedagogy.test.mjs','tests/onec-pedagogy-preservation.test.mjs','tests/onec-learning-context.test.mjs','tests/onec-glossary.test.mjs','tests/onec-tutor.test.mjs','tests/onec-offline-data.test.mjs','tests/term-reference.test.mjs']],
+ ['GOLD_SHARED_STYLE',['tools/build-learning-gold-style.mjs']],
  ['ONEC_LAB_HELP_ZIP',['--test','tests/onec-lab-help.test.mjs']],
  ['ONEC_VOICE_GUEST_UNIT',['--test','tests/onec-asr.test.mjs','tests/onec-voice-session.test.mjs','tests/onec-official-lab.test.mjs']],
  ['ONEC_GUIDE_INDEX',['tools/check-onec-guide.mjs']],['ONEC_ASSISTANT_UNIT',['--test','tests/onec-assistant.test.mjs','tests/onec-microphone.test.mjs']],

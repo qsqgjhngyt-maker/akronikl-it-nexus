@@ -1,7 +1,10 @@
 import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';import{execFileSync}from'node:child_process';import{createHash}from'node:crypto';
 import{createCandidateStore,courseKey,progressFor,gradeQuiz,copyProject}from'../courses/onec-education/model.mjs';
 import{validateSchema}from'../tools/content-contract-lib.mjs';
-const read=p=>fs.readFileSync(p,'utf8').replace(/^\uFEFF/,''),json=p=>JSON.parse(read(p)),old='8330fd232856fc4076929ddade6e81cfaa8c0e4f',ids=['onec','1c-enterprise'],curricula=ids.map(id=>json(`courses/${id}/curriculum.json`)),base='courses/onec-education/',doc='docs/ru/03-content/onec/a2p2/evidence/',spec=json(base+'native/a2p2-spec.v1.json'),native=json(doc+'NATIVE_A2P2_RESULT.json'),cases=read(doc+'SEED.txt.cases.txt').trim().split(/\r?\n/).map(l=>l.split('|')[0]),lessons=curricula.flatMap(c=>c.modules[1].topics.flatMap(t=>['ru','en'].map(locale=>json(`courses/${c.courseId}/${t.content[locale]}`))));
+// Историческая приёмка A2/P2 проверяет точный опубликованный исходный материал.
+// Текущую V2 проверяют onec-pedagogy.test и реестр ревизий с сохранением ID.
+const historicHead='a104f89783edd871c4608e8b75a4ebc59cd3c110';
+const read=p=>(/^courses\/(onec|1c-enterprise)\//.test(p)?execFileSync('git',['show',historicHead+':'+p],{encoding:'utf8',maxBuffer:3000000}):fs.readFileSync(p,'utf8')).replace(/^\uFEFF/,''),json=p=>JSON.parse(read(p)),old='8330fd232856fc4076929ddade6e81cfaa8c0e4f',ids=['onec','1c-enterprise'],curricula=ids.map(id=>json(`courses/${id}/curriculum.json`)),base='courses/onec-education/',doc='docs/ru/03-content/onec/a2p2/evidence/',spec=json(base+'native/a2p2-spec.v1.json'),native=json(doc+'NATIVE_A2P2_RESULT.json'),cases=read(doc+'SEED.txt.cases.txt').trim().split(/\r?\n/).map(l=>l.split('|')[0]),lessons=curricula.flatMap(c=>c.modules[1].topics.flatMap(t=>['ru','en'].map(locale=>json(`courses/${c.courseId}/${t.content[locale]}`))));
 const memory=initial=>{const map=new Map(initial||[]);return{map,getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v)}};
 test('A2/P2: все 84 прежних ID/порядки сохранены; A1/P1 и A2/P2 сохранены при полном наполнении',()=>{
  const identityShape=c=>c.modules.map(m=>[m.moduleId,m.topics.map(t=>[t.topicId,t.order])]);

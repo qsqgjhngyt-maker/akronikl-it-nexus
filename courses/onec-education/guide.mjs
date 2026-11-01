@@ -1,5 +1,5 @@
 import{createOnecGuide}from'./guide-model.mjs';
-const ONEC_GUIDE_MANIFEST_SHA='d7416bb2ef0969ef1ceac4f4c2e80f6ac8c776f89c49f328fbbb7f3d56ca5c09';
+const ONEC_GUIDE_MANIFEST_SHA='09274b9a5cdc62734d565ad1d0a2a00ed210ecd00d236b16e121cf40bfaf1510';
 export async function loadOnecGuide(locale,{signal}={}){
  if(!['ru','en'].includes(locale))throw Error('GUIDE_LOCALE');
  const {readBoundedJsonBytes}=await import('../../akronikl/ui/knowledge-loader.js');

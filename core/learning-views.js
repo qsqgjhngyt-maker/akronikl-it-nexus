@@ -1,3 +1,4 @@
+import {termReferenceMarkup} from './nexus-learning-ui.js';
 import {brandMarkMarkup} from '../core/brand-mark.js';
 import {programmingHubMarkup} from './code-hub-presentation.js';
 import {textFor} from './i18n.js';
@@ -103,11 +104,7 @@ function lessonData(id){
   }
   return cpp.lessonsRu.lessons.find(x=>x.id===id);
 }
-function glossaryDrawer(l){
-  const items=glossaryItems(l);if(!items.length)return'';
-  const cards=items.map(x=>`<article class="drawer-term" data-term-card="${e(x.term.toLowerCase())}"><div><code>${e(x.term)}</code>${x.full?`<span>${e(x.full)}</span>`:''}</div><p>${e(x.definition)}</p>${x.example?`<small>${e(x.example)}</small>`:''}</article>`).join('');
-  return `<dialog class="term-drawer glass-panel" id="termDrawer" lang="${prefs.uiLocale==='en'?'en':'ru'}" aria-labelledby="termDrawerTitle" aria-modal="true" aria-hidden="true" hidden inert><header><div><span class="eyebrow">${prefs.uiLocale==='en'?'REFERENCE':'СПРАВОЧНИК'}</span><h2 id="termDrawerTitle">${prefs.uiLocale==='en'?'Terminology reference':'Справочник терминов'}</h2></div><button class="icon-btn" id="closeTerms" aria-label="${prefs.uiLocale==='en'?'Close':'Закрыть'}">×</button></header><div class="drawer-search"><input id="termSearch" type="search" aria-label="${prefs.uiLocale==='en'?'Find a term':'Найти термин'}" placeholder="${prefs.uiLocale==='en'?'Find a term…':'Найти термин…'}" autocomplete="off"><p id="termStatus" role="status" aria-live="polite" aria-atomic="true"></p></div><div class="drawer-scroll" id="termList" lang="${l.gold?.locale||(prefs.courseLocale==='en'&&cpp.lessonsEn?.lessons?.some(item=>item.id===l.id)?'en':'ru')}" tabindex="0" role="region" aria-labelledby="termDrawerTitle">${cards}</div></dialog>`;
-}
+function glossaryDrawer(l){return termReferenceMarkup(glossaryItems(l),{uiLocale:prefs.uiLocale,contentLocale:l.gold?.locale||(prefs.courseLocale==='en'&&cpp.lessonsEn?.lessons?.some(item=>item.id===l.id)?'en':'ru')});}
 function benchmarkView(l){return benchmarkMarkup(l,{uiLocale:prefs.uiLocale,locale:prefs.courseLocale})}
 function lessonView(id){
   const l=lessonData(id);if(!l)return shell(`<section class="placeholder"><h1>${e(t('journey.error.lesson'))}</h1></section>`,'academy');

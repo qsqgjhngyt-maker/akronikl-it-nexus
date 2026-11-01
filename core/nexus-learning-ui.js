@@ -89,3 +89,11 @@ export function bindGlossaryDrawer(root=document){
   drawer.addEventListener('click',event=>{if(backdropDown&&outside(event))close();backdropDown=false},options);
   return ()=>{if(disposed)return;disposed=true;controller.abort();close(false);returnFocus=null};
 }
+
+// Одна разметка справочника для C++ Gold и других курсов Академии.
+const termEscape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+export function termReferenceMarkup(items,{uiLocale='ru',contentLocale=uiLocale}={}){
+ if(!items.length)return'';const e=termEscape,en=uiLocale==='en';
+ const cards=items.map(x=>`<article class="drawer-term" data-term-card="${e(x.term.toLowerCase())}"${x.id?` data-term-card-id="${e(x.id)}"`:''}><div><code>${e(x.term)}</code>${x.full?`<span>${e(x.full)}</span>`:''}</div><p>${e(x.definition)}</p>${x.example?`<small>${e(x.example)}</small>`:''}${x.aliases?.length?`<span hidden>${e(x.aliases.join(' '))}</span>`:''}</article>`).join('');
+ return `<dialog class="term-drawer glass-panel" id="termDrawer" lang="${en?'en':'ru'}" aria-labelledby="termDrawerTitle" aria-modal="true" aria-hidden="true" hidden inert><header><div><span class="eyebrow">${en?'REFERENCE':'СПРАВОЧНИК'}</span><h2 id="termDrawerTitle">${en?'Terminology reference':'Справочник терминов'}</h2></div><button class="icon-btn" id="closeTerms" aria-label="${en?'Close':'Закрыть'}">×</button></header><div class="drawer-search"><input id="termSearch" type="search" aria-label="${en?'Find a term':'Найти термин'}" placeholder="${en?'Find a term…':'Найти термин…'}" autocomplete="off"><p id="termStatus" role="status" aria-live="polite" aria-atomic="true"></p></div><div class="drawer-scroll" id="termList" lang="${e(contentLocale)}" tabindex="0" role="region" aria-labelledby="termDrawerTitle">${cards}</div></dialog>`;
+}

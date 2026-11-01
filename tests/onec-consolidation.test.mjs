@@ -38,8 +38,8 @@ test('Без curriculum запись зачёта закрыта; чтение/�
  store.createProject({id:'note',note:'compatible'});assert.equal(store.read().projects[0].note,'compatible');assert.throws(()=>createCandidateStore(storage,'onec',bundle.courses.find(c=>c.courseId==='1c-enterprise')),/INVALID_CURRICULUM/);
 });
 
-test('Редакционная ревизия A1.3 не присваивается старому самоотчёту задним числом',()=>{
+test('История редакционной A1.3 сохранена; новая педагогическая ревизия не получает старый зачёт',()=>{
  const id='1c-enterprise.a1.interface',key=courseKey('1c-enterprise'),oldAttempt={attemptId:'prior-A',at:'prior',grade:{passed:true,kind:'local-self-check'},answers:[1,0,2],contentRevision:'0.2.0-consolidated'},raw=JSON.stringify({schemaVersion:1,courseId:'1c-enterprise',lessons:{[id]:{completed:true,completionRevision:'0.2.0-consolidated',attempts:[oldAttempt]}},projects:[]}),map=new Map([[key,raw]]),store=candidateStore({getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v)},'1c-enterprise');
- assert.equal(progressFor(bundle.courses.find(c=>c.courseId==='1c-enterprise'),store.read()).done,1);assert.throws(()=>store.complete(id,true,'0.2.1-review'),/CURRENT_REVISION_ATTEMPT_REQUIRED/);assert.equal(map.get(key),raw);
+ assert.equal(progressFor(bundle.courses.find(c=>c.courseId==='1c-enterprise'),store.read()).done,0);assert.equal(store.read().lessons[id].completed,true);assert.equal(store.read().lessons[id].completionRevision,'0.2.0-consolidated');assert.throws(()=>store.complete(id,true,'0.2.1-review'),/CURRENT_REVISION_ATTEMPT_REQUIRED/);assert.equal(map.get(key),raw);
  store.attempt(id,gradeQuiz([{correct:0}],[0]),[0],{attemptId:'review-A',contentRevision:'0.2.1-review'});store.complete(id,true,'0.2.1-review');assert.deepEqual(store.read().lessons[id].attempts[0],oldAttempt);assert.equal(store.read().lessons[id].completionHistory[0].contentRevision,'0.2.0-consolidated');
 });

@@ -75,6 +75,8 @@ export function routePublicationWorkflow(original,bootstrapSha='0'.repeat(40)){
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Закреплённые инструменты автономного учебного пакета
+        run: npm ci --prefix courses/onec-education/build-tools --ignore-scripts --no-audit --no-fund
       - name: Проверить Content Contract, без publication или deployment
         run: |
           node tools/validate-content.mjs

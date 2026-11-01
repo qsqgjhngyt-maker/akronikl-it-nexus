@@ -31,6 +31,9 @@ export function createAssistantBridge(options) {
           invalidate();
           // target прошёл navigation.propose; только канонический маршрут, не URL источника.
           if(target?.kind==='platform' && allowedHash(target.hash)){windowRef.location.hash=target.hash;return true;}
+          if (['onec','1c-enterprise'].includes(target?.courseId) && typeof target.lessonId==='string' && target.lessonId.startsWith(target.courseId+'.') && /^[a-z0-9.-]+$/.test(target.lessonId) && /^(overview|theory-[1-9][0-9]?|examples|walkthrough|practice|lab|diagnostics|review|diagram|step-[a-z0-9-]+)$/.test(target.sectionId||'overview')) {
+            windowRef.location.hash='#'+new URLSearchParams({course:target.courseId,lesson:target.lessonId,section:target.sectionId||'overview'});return true;
+          }
           if (target?.courseId === 'cpp' && /^cpp\.[a-z0-9.-]+$/.test(target.lessonId))
             windowRef.location.hash = '#course=cpp&lesson=' + encodeURIComponent(target.lessonId);
         }});
