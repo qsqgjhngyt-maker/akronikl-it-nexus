@@ -2,11 +2,11 @@ How to do a lab: from installation to an observed result
 
 Study in Nexus and do actual practical work in the official training 1C installed on your PC. Introductory labs need no Studio, JSON requests, source archives or Windows Sandbox. First check which application each step uses.
 
-Training service desk — download configuration
+Download the original training configuration with its report (.cf)
 
-This original training definition (.cf) includes no customer records or 1C platform. Load it only when the lesson calls for the prepared service desk, into a new empty infobase following that lesson. Initial programming exercises can use your own empty infobase without it. Double-clicking .cf does not install 1C.
+This original training definition (.cf) includes no customer records or 1C platform. Load it only when the lesson calls for the prepared service desk, into a new empty infobase following that lesson. Initial programming exercises can use your own empty infobase without it. Double-clicking .cf does not install 1C. The package includes the original customer report for later lessons. Preserve existing work and follow the continuation instructions for your own infobase.
 
-native/downloads/NexusTrainingServiceDeskV2.cf
+native/downloads/NexusTrainingServiceDeskReportsV2.cf
 
 1. Open the task in Nexus
 

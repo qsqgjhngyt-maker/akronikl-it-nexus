@@ -2,6 +2,40 @@ import test from'node:test';import assert from'node:assert/strict';import fs fro
 import{loadConsolidatedBundle}from'../tools/check-onec-consolidation.mjs';import{loadPedagogyLedger,validatePedagogyLessons,pedagogyDigest}from'../tools/check-onec-pedagogy.mjs';
 const b=loadConsolidatedBundle(),ledger=loadPedagogyLedger(),sha=x=>createHash('sha256').update(x).digest('hex');
 
+test('Ранний учебный комплект обновлён только в восстановленной копии: четыре идентичности и поля сохранены',()=>{
+ const d='docs/ru/03-content/onec/pedagogy-v2-20261102/',r=JSON.parse(fs.readFileSync(d+'REPORT_UPGRADE_RESULT.json')),old=JSON.parse(fs.readFileSync('courses/onec-education/native/downloads/CONFIGURATION_MANIFEST.json')),next=JSON.parse(fs.readFileSync('courses/onec-education/native/downloads/REPORT_CONFIGURATION_MANIFEST.json'));
+ assert.equal(r.status,'AUTOMATED PASS');assert.equal(r.fromCfSha256,old.sha256);assert.equal(r.toCfSha256,next.sha256);assert.equal(r.runnerSha256,sha(fs.readFileSync('tools/check-onec-report-upgrade.ps1')));assert.equal(r.catalogItemsPreserved,3);assert.equal(r.documentIdentitiesPreserved,4);assert.equal(r.observedReport,'4|120|3|105');
+ for(const k of['originalBaseUntouchedAfterBackup','backupRestoredIntoNewBase','documentNumbersDatesReferencesDurationsStatusesCommentsMarksAndPostingPreserved','copyStartupRestored'])assert.equal(r[k],true);
+ for(const k of['realAccountUsed','progressWritten','training1508UpgradeVerified','guiUpgradeTested'])assert.equal(r[k],false);assert.equal(r.steps.length,15);assert.ok(r.steps.every(s=>s.exitCode===0));assert.match(r.scope,/unchanged/);
+});
+
+test('A3: GUI доказательства сохраняют различия пустой и заполненной баз и все исходные JPEG',()=>{
+ const d='docs/ru/03-content/onec/pedagogy-v2-20261102/',r=JSON.parse(fs.readFileSync(d+'A3_NATIVE_UI_RESULT.json')),manifest=JSON.parse(fs.readFileSync(d+'NATIVE_SCREENSHOT_MANIFEST.json'));
+ assert.equal(r.status,'LIVE PASS');assert.equal(r.platformVersion,'8.3.27.2214');assert.equal(r.images.length,19);assert.equal(r.list.recordsChangedByPresentation,false);assert.equal(r.list.filter.offRestoredAll,true);assert.deepEqual(r.list.filter.resultDurations,[45]);assert.equal(r.validation.oldThreeNumbersAndDurationsPreserved,true);assert.equal(r.validation.modalOkThenSpecificReason,true);assert.equal(r.continuedReport.totalMinutes,120);assert.equal(r.continuedReport.customerAMinutes,105);
+ for(const p of r.images){const m=manifest.images.find(x=>x.file===p.file);assert.ok(m);assert.equal(p.sha256,m.sha256);assert.equal(sha(fs.readFileSync('courses/onec-education/media/tutorials/v2/'+p.file)),p.sha256);assert.equal(p.observationPhase,Number(p.file.slice(0,2))<=35?'separate-empty-base-control-only':'populated-own-base');}
+ for(const locale of['ru','en'])for(const l of b.lessons.filter(l=>l.moduleId==='1c-enterprise.a3'&&l.locale===locale)){assert.equal(l.nativeEvidence.status,'LIVE PASS');assert.equal(l.nativeEvidence.training1508GuiVerified,false);assert.equal(l.nativeEvidence.progressWritten,false);assert.ok(l.experience.route.steps.some(s=>s.figures?.length));}
+});
+
+test('Новая ревизия не принимает обрезаемую диагностику, прежнюю схему или неуказанное место кода даже при обновлённом hash',()=>{
+ for(const [mutate,error]of[[l=>{l.mistakes=['Длинное предложение вместо пары ошибки и исправления'];},'PEDAGOGY_DIAGNOSTIC_PAIRS'],[l=>{delete l.experience.diagram;},'PEDAGOGY_CURRENT_DIAGRAM'],[l=>{delete l.experience.sourceLabel;},'PEDAGOGY_SOURCE_LOCATION']]){const lessons=structuredClone(b.lessons),copy=structuredClone(ledger),l=lessons.find(l=>l.contentRevision==='2.0.0-pedagogy.1'&&l.codeFile);mutate(l);copy.rows.find(r=>r.topicId===l.topicId).currentLocalizations[l.locale].semanticSha256=pedagogyDigest(l);assert.ok(validatePedagogyLessons(b.courses,lessons,copy).some(x=>x.startsWith(error)),error);}
+});
+
+test('Оригинальный комплект с отчётом: CF и 12 исходников связаны с импортом и реальным запросом учебной 1508',()=>{
+ const base='courses/onec-education/native/',d='docs/ru/03-content/onec/pedagogy-v2-20261102/',m=JSON.parse(fs.readFileSync(base+'downloads/REPORT_CONFIGURATION_MANIFEST.json')),training=JSON.parse(fs.readFileSync(d+'REPORT_TRAINING_CF_RESULT.json')),host=JSON.parse(fs.readFileSync(d+'REPORT_CF_RESULT.json'));
+ assert.equal(m.file,'NexusTrainingServiceDeskReportsV2.cf');const cf=fs.readFileSync(base+'downloads/'+m.file);assert.equal(cf.length,m.bytes);assert.equal(sha(cf),m.sha256);assert.equal(m.sha256,training.cfSha256);assert.equal(m.sha256,host.artifactSha256);assert.equal(m.sourceFiles.length,12);
+ for(const f of m.sourceFiles){assert.ok(!f.path.includes('..'));const bytes=fs.readFileSync(base+'service-desk-reports-v2/'+f.path);assert.equal(bytes.length,f.bytes);assert.equal(sha(bytes),f.sha256);}
+ assert.equal(training.status,'AUTOMATED PASS');assert.equal(training.platformVersion,'8.3.27.1508');for(const k of['cfLoadAndCheckPassed','moduleRoundtripEqual','reportTemplateRoundtripEqual','reportDatasetQueryExecuted','startupFragmentExecutedWithObserver','cleanupVerified'])assert.equal(training[k],true);
+ assert.equal(training.syntheticRows,3);assert.equal(training.totalMinutes,90);assert.equal(training.customerAMinutes,75);assert.equal(training.guestExitCode,0);
+ assert.equal(sha(fs.readFileSync(d+'engineering/VerifyReportCf.cs')),training.verifierSourceSha256);assert.equal(sha(fs.readFileSync(d+'engineering/ReportNativeCheck.bsl')),training.harnessSha256);assert.equal(sha(fs.readFileSync(base+'service-desk-reports-v2/Reports/ЗаявкиПоКлиентам/Templates/ОсновнаяСхемаКомпоновкиДанных/Ext/Template.xml')),training.reportTemplateSha256);
+ for(const k of['visibleMessageObserved','hostOutputMapping','network','hostInstallationChanged','platformRedistributed','codeVerifiedServer','credentialEligible'])assert.equal(training[k],false);for(const k of['applicationDataIncluded','platformRedistributed','credentialsIncluded','training1508UiVerified'])assert.equal(m[k],false);
+});
+
+test('P3: 17 нативных случаев пяти уроков, три точные причины отказа, исходники и связи RUEN закреплены',()=>{
+ const r=JSON.parse(fs.readFileSync('docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_P3_RESULT.json'));assert.equal(r.status,'AUTOMATED PASS');assert.equal(r.cases.length,17);assert.equal(new Set(r.cases.map(c=>c.topicId)).size,5);assert.equal(sha(fs.readFileSync('tools/check-onec-pedagogy-p3.ps1')),r.runnerSha256);assert.equal(r.training1508Verified,false);assert.equal(r.codeVerifiedServer,false);assert.equal(r.progressWritten,false);
+ for(const c of r.cases){assert.equal(c.status,'PASS');assert.equal(sha(fs.readFileSync(c.sourceFile)),c.originalSourceSha256);assert.equal(sha(fs.readFileSync('courses/onec-education/code/pedagogy/common-calculation-first.bsl')),c.commonModuleSourceSha256);assert.match(c.observed,/^PASS[|]/);if(c.expectedRejection){assert.equal(c.rejectionReasonChecked,true);assert.equal(c.assertionAccepted,false);}}
+ assert.equal(r.cases.filter(c=>c.expectedRejection).length,3);for(const topicId of new Set(r.cases.map(c=>c.topicId)))for(const locale of['ru','en'])assert.deepEqual(b.lessons.find(l=>l.topicId===topicId&&l.locale===locale).nativeCaseIds,r.cases.filter(c=>c.topicId===topicId).map(c=>c.id));
+});
+
 test('Оригинальный CF привязан к исходникам, загрузке 2214/1508 и настоящему выполнению стартового фрагмента',()=>{
  const base='courses/onec-education/native/',d='docs/ru/03-content/onec/pedagogy-v2-20261102/',m=JSON.parse(fs.readFileSync(base+'downloads/CONFIGURATION_MANIFEST.json')),host=JSON.parse(fs.readFileSync(d+'BEGINNER_CF_RESULT.json')),training=JSON.parse(fs.readFileSync(d+'BEGINNER_TRAINING_CF_RESULT.json')),bytes=fs.readFileSync(base+'downloads/'+m.file);
  assert.equal(m.file,'NexusTrainingServiceDeskV2.cf');assert.equal(m.bytes,bytes.length);assert.equal(m.sha256,sha(bytes));assert.equal(m.sha256,host.artifactSha256);assert.equal(m.sha256,training.cfSha256);assert.equal(m.sourceDirectory,'../beginner-service-desk');assert.equal(m.sourceFiles.length,9);

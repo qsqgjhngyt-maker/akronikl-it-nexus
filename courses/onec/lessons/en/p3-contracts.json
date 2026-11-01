@@ -6,175 +6,359 @@
   "topicId": "onec.p3.module-tests",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Isolated function tests and contracts",
+  "title": "Function tests: verify a result and prove the test notices an error",
   "minutes": 120,
-  "goal": "Build an isolated calculation test set that detects a semantic mutation.",
+  "goal": "Write explicit checks for a pure function and test their sensitivity on a separately preserved incorrect copy.",
   "prerequisites": [
-    "onec.p2; P2: types, branching, loops and numeric boundaries."
+    "The preceding language lesson; saving, updating and launching your own infobase."
   ],
   "outcomes": [
-    "Build an isolated calculation test set that detects a semantic mutation.",
-    "Specify five independent expectations.",
-    "Implement assertions and a safe summary."
+    "Separate inputs, independent expected results and assertions from implementation.",
+    "Check ordinary input, zero, one hour and rejection of a negative duration.",
+    "Mutate the formula in a copy and observe a failed check without claiming course credit."
   ],
   "sections": [
     [
-      "Derive tests from promises",
-      "Before implementation, specify input, expected type, exact value and permitted changes. Include ordinary minutes, zero, an upper boundary, an omitted argument and a wrong type. Do not derive expected results by copying the same function formula: calculate small expectations independently so one defect is not reproduced in both implementation and oracle.",
-      "The service-desk calculation may be called from a card, document and report. Separate formulas let one fix leave two old implementations behind. A common computation contract avoids that divergence but needs explicit inputs. List every caller and verify equal units, parameter meaning and result type rather than merely matching function names."
+      "A test asks a question with an observable answer",
+      "An “all good” message does not compare anything. ПроверитьРавно accepts the actual value, an independently calculated expectation and a case name. A mismatch raises an exception and prevents the success message. The case name identifies the broken agreement.",
+      "Calculate 600 for 30 minutes at 1200 per hour independently. Calling the same formula twice would allow the same error on both sides. Keep the business example separate from the implementation that must satisfy it."
     ],
     [
-      "Isolation removes accidental dependencies",
-      "A pure function needs neither a form, customer database nor current date. Each test creates its own inputs instead of depending on a previous attempt. A shared structure mutated by one case contaminates later cases. Change case order and repeat the suite. Supply clocks and external values through explicit dependencies when needed.",
-      "Describe a function by inputs, preconditions, result and permitted changes. Cost uses numeric minutes/rate, admissible ranges, a rounded number and unchanged input collections. This description selects tests before implementation. If failure returns another type, callers must know explicitly or an error can accidentally participate in arithmetic. A stable contract makes substitution and review possible."
+      "A small table checks different rules",
+      "Three numeric cases cover an ordinary calculation, allowed zero and a full hour. They do not cover every input or rounding rule. A one-hour case alone cannot expose every unit or rounding error. Choose additional cases from the contract, such as one minute or a fractional rate.",
+      "For the negative input, the rejection flag begins false, becomes true only on an exception, and is asserted afterward. An exception anywhere in a large program is not equivalent to the intended rejection. This exercise deliberately isolates one invalid call; professional tests also identify the expected rejection reason."
     ],
     [
-      "Negative controls test the test",
-      "A suite that passes correct code has not yet demonstrated sensitivity. In a separate copy, replace addition with subtraction or remove a range check. The program may still compile, but a specific case must fail. Preserve source, mutant, hashes and both summaries; never corrupt the accepted source merely for a demonstration.",
-      "Checking mutation needs more than comparing variable names: two variables can refer to one collection. Snapshot important fields and nested elements before execution, then compare the source afterwards. Run another function on the same input to expose hidden contamination. Keep each test’s setup independent so changing test order cannot alter the outcome."
+      "Prove the test can fail",
+      "Preserve the working source. In a separate copy change division by 60 to division by 30. The source can still compile, but the first result becomes 1200 instead of 600. The “полчаса” case must stop execution and the final success message must not appear.",
+      "Restore the original formula and rerun the entire set. If the incorrect copy passes, verify the module and database update, assertion execution and success-message placement. Do not change the expected 600 to 1200 merely to obtain green output."
     ],
     [
-      "PASS has a bounded scope",
-      "PASS means named assertions held on the recorded version and input set. It does not prove learner authorship, absence of all defects or client-server behavior. Separate syntax checking, actual execution and assertion outcomes. Incomplete output, timeout or unavailable licensing are distinct states, not zero errors and not success.",
-      "A semantic negative control differs from a syntax error. Replacing addition with subtraction may compile but must change a named assertion’s result. Keep compilation and executed assertions as separate outcomes. Unavailable platforms, timeouts and incomplete case lists cannot confirm missing results. Preserve original and mutated source hashes and identify the particular assertion that detects the defect."
+      "State the scope of the evidence",
+      "This function neither reads database records nor depends on an open form or writes documents. Small isolated inputs can therefore test it. Rights, document persistence, UI and concurrent access require different scenarios in an appropriate environment.",
+      "Preserve the source, case table, successful result, incorrect copy and observed failure. A Nexus self-report stores the learner’s statement. Local execution alone is not server grading, proof of authorship or an official certificate."
     ]
   ],
   "diagram": "p3-4",
   "walkthrough": [
     {
-      "action": "Run ordinary, zero and boundary inputs.",
-      "expected": "Each case has an ID, fresh input and exact expectation."
+      "action": "Half hour — 600 = 600",
+      "expected": "First check passes."
     },
     {
-      "action": "Repeat cases in reverse order.",
-      "expected": "Results are identical; input collections are uncontaminated."
+      "action": "Zero and hour — 0 = 0; 1200 = 1200",
+      "expected": "Second and third pass."
     },
     {
-      "action": "Change the formula only in a separate mutant.",
-      "expected": "Syntax passes; a semantic case detects the wrong value."
+      "action": "Negative input — An exception is observed",
+      "expected": "Rejection flag is true."
+    },
+    {
+      "action": "Final assertion — Истина = Истина",
+      "expected": "Результат=4; success message."
     }
   ],
   "examples": [
     {
-      "title": "Main example",
-      "source": "Ожидание = 600;\nФакт = ЦенаМинут(30, 1200);\nЕсли Факт <> Ожидание Тогда\n    ВызватьИсключение \"P3.cost-30\";\nКонецЕсли;",
-      "expected": "The ordinary case passes; a mutated formula must fail that same case.",
-      "explanation": "Expected 600 is independent; comparing a function with itself proves nothing."
+      "title": "Trace the main example",
+      "source": "Функция Стоимость(Знач Минуты, Знач ТарифЗаЧас)\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(ТарифЗаЧас) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Ожидались числа\";\n    КонецЕсли;\n    Если Минуты < 0 Или ТарифЗаЧас < 0 Тогда\n        ВызватьИсключение \"Ожидались неотрицательные числа\";\n    КонецЕсли;\n    Возврат Окр(Минуты * ТарифЗаЧас / 60, 2);\nКонецФункции\n\nПроцедура ПроверитьРавно(Факт, Ожидание, Название)\n    Если Факт <> Ожидание Тогда\n        ВызватьИсключение \"Не пройдено: \" + Название;\n    КонецЕсли;\nКонецПроцедуры\n\nПроцедура ПриНачалеРаботыСистемы()\n    ПроверитьРавно(Стоимость(30, 1200), 600, \"полчаса\");\n    ПроверитьРавно(Стоимость(0, 1200), 0, \"ноль минут\");\n    ПроверитьРавно(Стоимость(60, 1200), 1200, \"час\");\n    ОтказНаблюден = Ложь;\n    Попытка\n        Стоимость(-1, 1200);\n    Исключение\n        ОтказНаблюден = Истина;\n    КонецПопытки;\n    ПроверитьРавно(ОтказНаблюден, Истина, \"отрицательная длительность отвергнута\");\n    Результат = 4;\n    Сообщить(\"Пройдены четыре учебные проверки\");\nКонецПроцедуры",
+      "expected": "«Пройдены четыре учебные проверки» appears only after all four assertions succeed.",
+      "explanation": "Three checks compare numeric values; the fourth requires an observed rejection. The success message follows all checks.",
+      "trace": [
+        [
+          "Half hour",
+          "600 = 600",
+          "First check passes."
+        ],
+        [
+          "Zero and hour",
+          "0 = 0; 1200 = 1200",
+          "Second and third pass."
+        ],
+        [
+          "Negative input",
+          "An exception is observed",
+          "Rejection flag is true."
+        ],
+        [
+          "Final assertion",
+          "Истина = Истина",
+          "Результат=4; success message."
+        ]
+      ]
     },
     {
-      "title": "Boundary case",
-      "source": "Измените формулу только в отдельном мутанте.",
-      "expected": "Syntax passes; a semantic case detects the wrong value.",
-      "explanation": "Expected 600 is independent; comparing a function with itself proves nothing."
+      "title": "An error the test must detect",
+      "source": "// Only in a separate copy:\nВозврат Окр(Минуты * ТарифЗаЧас / 30, 2);",
+      "expected": "The first case receives 1200 instead of 600 and stops; no four-check success message.",
+      "explanation": "A program may compile and still be wrong; asserting the result detects this semantic error.",
+      "trace": [
+        [
+          "Mutation",
+          "30 × 1200 / 30",
+          "1200."
+        ],
+        [
+          "Compare",
+          "1200 ≠ 600",
+          "The “полчаса” assertion fails."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Specify five independent expectations.",
-      "criteria": "Ordinary, zero, boundary, omission and wrong type are covered."
+      "level": "Basic",
+      "task": "Calculate the three numeric expectations before running and explain the fourth Boolean expectation.",
+      "criteria": "600, 0, 1200; negative input must be rejected."
     },
     {
       "level": "Applied",
-      "task": "Implement assertions and a safe summary.",
-      "criteria": "An incomplete case list is not PASS."
+      "task": "Add a one-minute case at 1200 per hour without changing previous expectations.",
+      "criteria": "Expected result 20; all original cases remain active."
     },
     {
       "level": "Advanced",
-      "task": "Demonstrate sensitivity to two different mutations.",
-      "criteria": "Both are detected; source hashes and honest outcomes are preserved."
+      "task": "Create a separate division-by-30 copy, record its failure, restore the formula and rerun.",
+      "criteria": "Positive and negative results belong to distinct source versions; the incorrect copy is rejected."
     }
   ],
   "lab": {
-    "title": "Build an isolated calculation test set that detects a semantic mutation.",
-    "environment": "Official 1C 8.3.27.x, separate file training infobase, thick managed client; common modules are checked in their declared contexts. Record each native run separately.",
+    "title": "Function tests: verify a result and prove the test notices an error",
+    "environment": "Official locally installed training platform; a separate personal file infobase, no Studio required.",
     "steps": [
-      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
-      "Run ordinary, zero and boundary inputs.",
-      "Repeat cases in reverse order.",
-      "Change the formula only in a separate mutant.",
-      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+      "Calculate the three numeric expectations before running and explain the fourth Boolean expectation.",
+      "Close only your Enterprise session. Open your training infobase in Designer and open its managed application module from the configuration root. Preserve the entire preceding text separately: this example includes its declarations and one startup handler.",
+      "Replace the text of this training module with the complete main example. The function is outside the procedure. Do not nest the complete example inside the previous handler or keep two handlers with the same name.",
+      "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+      "Run the original set. Preserve a copy and change only the function’s divisor from 60 to 30. After the expected failure restore 60 and rerun everything."
     ],
     "expected": [
-      "Each case has an ID, fresh input and exact expectation.",
-      "Results are identical; input collections are uncontaminated.",
-      "Syntax passes; a semantic case detects the wrong value."
+      "«Пройдены четыре учебные проверки» appears only after all four assertions succeed.",
+      "The intended module is open and the earlier source remains available.",
+      "The exact exercise source is entered in the intended context.",
+      "«Пройдены четыре учебные проверки» appears only after all four assertions succeed.",
+      "The original passes four cases; the mutation stops at “полчаса”; the restored version passes again."
     ],
     "evidence": [
-      "Input/expected/actual/case-ID table, platform build and source hashes.",
-      "The ordinary case passes; a mutated formula must fail that same case.",
-      "Work-copy provenance, negative result and source preservation before/after."
+      "Source version, predicted and actual outputs.",
+      "One changed input and a trace explaining its result; no automatic grading claim."
     ],
-    "negative": "Syntax passes; a semantic case detects the wrong value."
+    "negative": "Do not catch the entire set and then display success. Do not fit expectations to an incorrect formula or claim server assessment."
   },
   "mistakes": [
     [
-      "Treat an expected value as an observed execution.",
-      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+      "Two identical wrong calculations can compare equal.",
+      "Calculate the expectation independently of the tested implementation."
     ],
     [
-      "Modify the source infobase while experimenting.",
-      "Work on a new copy and verify the source by reopening it separately."
+      "Compilation does not prove formula correctness.",
+      "Assert the value and test sensitivity on a deliberately incorrect copy."
+    ],
+    [
+      "A pure-function test does not verify permissions, persistence or authorship.",
+      "Record the evidence scope and test permissions, persistence and UI separately."
     ]
   ],
   "quiz": [
     {
-      "question": "Where should the test expectation come from?",
+      "question": "Where should expected 600 come from?",
       "options": [
-        "From an independent specification",
-        "From calling the same function",
-        "From editor color"
-      ],
-      "correct": 0,
-      "explanation": "Otherwise the oracle repeats the implementation defect."
-    },
-    {
-      "question": "What does a semantic mutant demonstrate?",
-      "options": [
-        "Authorship",
-        "Sensitivity of the named case",
-        "All possible inputs"
+        "Another call to the tested function",
+        "An independent business example",
+        "The incorrect actual output"
       ],
       "correct": 1,
-      "explanation": "Evidence is bounded to the specific defect and suite."
+      "explanation": "The expectation must be independent of implementation."
     },
     {
-      "question": "A timeout is",
+      "question": "What should the division-by-30 copy produce?",
       "options": [
-        "PASS",
-        "A zero result",
-        "A distinct incomplete outcome"
+        "Success",
+        "Automatic expectation changes",
+        "A failed first check"
       ],
       "correct": 2,
-      "explanation": "Assertions cannot be confirmed without a result."
+      "explanation": "The test must notice the incorrect copy."
+    },
+    {
+      "question": "What does a successful local set establish?",
+      "options": [
+        "These cases for this source",
+        "Complete assessment of every skill",
+        "All users’ permissions"
+      ],
+      "correct": 0,
+      "explanation": "Evidence is limited to executed scenarios."
     }
   ],
   "review": [
-    "Build an isolated calculation test set that detects a semantic mutation.",
-    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+    "Explain the result without looking at the final message.",
+    "Name an input that would expose the described mistake.",
+    "Preserve the source before moving to the next lesson."
   ],
   "sources": [
     "bsl-language",
     "platform-architecture",
     "cli"
   ],
-  "contentRevision": "1.0.0-rc.1",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.full.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_FULL_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "executionProfile": "official-1c-file",
   "nativeEvidenceStatus": "NOT RUN",
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
     "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p3.module-tests",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
   },
   "theoryContext": {
     "kind": "shared-module-reasoning",
     "moduleId": "onec.p3",
     "locale": "en"
-  }
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "procedure",
+      "self-report"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Designer → managed application module of your training copy",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "predict",
+          "title": "Predict the result",
+          "where": "Nexus → this lesson’s worked example",
+          "action": "Calculate the three numeric expectations before running and explain the fourth Boolean expectation.",
+          "why": "An expectation makes a wrong result detectable.",
+          "expected": "«Пройдены четыре учебные проверки» appears only after all four assertions succeed.",
+          "troubleshooting": "Use the trace to separate each instruction; do not copy a displayed total without explaining it.",
+          "before": "Your own training infobase opens and its startup handler already works. Preserve the preceding source before replacing this exercise body."
+        },
+        {
+          "id": "prepare-source",
+          "title": "Preserve your preceding work",
+          "where": "Your infobase → Designer → configuration root → managed application module",
+          "action": "Close only your Enterprise session. Open your training infobase in Designer and open its managed application module from the configuration root. Preserve the entire preceding text separately: this example includes its declarations and one startup handler.",
+          "why": "The next exercise must not destroy the preceding version.",
+          "expected": "The intended module is open and the earlier source remains available.",
+          "troubleshooting": "If you cannot identify the infobase, return to the startup list and check its entry and directory.",
+          "before": "«Пройдены четыре учебные проверки» appears only after all four assertions succeed."
+        },
+        {
+          "id": "enter-code",
+          "title": "Enter this example",
+          "where": "Designer → the module text window",
+          "action": "Replace the text of this training module with the complete main example. The function is outside the procedure. Do not nest the complete example inside the previous handler or keep two handlers with the same name.",
+          "why": "Three checks compare numeric values; the fourth requires an observed rejection. The success message follows all checks.",
+          "expected": "The exact exercise source is entered in the intended context.",
+          "troubleshooting": "Check ordinary quotes, semicolons and matching block endings. A syntax rejection is not execution.",
+          "before": "The intended module is open and the earlier source remains available."
+        },
+        {
+          "id": "run-check",
+          "title": "Save, update and execute",
+          "where": "Designer → Ctrl+S → Configuration / Update database configuration (F7) → Debug / Start (F5)",
+          "action": "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+          "why": "Only the installed platform executes this BSL.",
+          "expected": "«Пройдены четыре учебные проверки» appears only after all four assertions succeed.",
+          "troubleshooting": "For old output close your client, verify the infobase and update again. For a different value find the first trace step that differs.",
+          "before": "The exact exercise source is entered in the intended context."
+        },
+        {
+          "id": "vary-record",
+          "title": "Change one condition and retain evidence",
+          "where": "The same module, then Enterprise mode and Nexus notes",
+          "action": "Run the original set. Preserve a copy and change only the function’s divisor from 60 to 30. After the expected failure restore 60 and rerun everything.",
+          "why": "A changed input tests understanding beyond copying the example.",
+          "expected": "The original passes four cases; the mutation stops at “полчаса”; the restored version passes again.",
+          "troubleshooting": "Do not catch the entire set and then display success. Do not fit expectations to an incorrect formula or claim server assessment.",
+          "before": "«Пройдены четыре учебные проверки» appears only after all four assertions succeed."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Разбор основного примера",
+        "en": "Explore the example: Trace the main example"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Полчаса",
+            "en": "Half hour"
+          },
+          "detail": {
+            "ru": "600 = 600 → Первая проверка пройдена.",
+            "en": "600 = 600 → First check passes."
+          }
+        },
+        {
+          "label": {
+            "ru": "Ноль и час",
+            "en": "Zero and hour"
+          },
+          "detail": {
+            "ru": "0 = 0; 1200 = 1200 → Вторая и третья пройдены.",
+            "en": "0 = 0; 1200 = 1200 → Second and third pass."
+          }
+        },
+        {
+          "label": {
+            "ru": "Отрицательный вход",
+            "en": "Negative input"
+          },
+          "detail": {
+            "ru": "Исключение наблюдено → Флаг отказа Истина.",
+            "en": "An exception is observed → Rejection flag is true."
+          }
+        },
+        {
+          "label": {
+            "ru": "Последнее утверждение",
+            "en": "Final assertion"
+          },
+          "detail": {
+            "ru": "Истина = Истина → Результат=4; итоговое сообщение.",
+            "en": "Истина = Истина → Результат=4; success message."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · Complete managed application module"
+  },
+  "nativeCaseIds": [
+    "P3.CONTRACT.POSITIVE",
+    "P3.CONTRACT.MUTATION"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "training1508Verified": false,
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_P3_RESULT.json",
+    "caseIds": [
+      "P3.CONTRACT.POSITIVE",
+      "P3.CONTRACT.MUTATION"
+    ],
+    "scope": "Exact original fragments and explicit variants in own synthetic file infobase; three expected rejection reasons checked; no server grading."
+  },
+  "codeFile": "code/pedagogy/function-contracts-first.bsl"
 }

@@ -13,6 +13,9 @@ export function validatePedagogyLessons(courses,lessons,ledger){
   for(const locale of['ru','en']){const l=lessons.find(l=>l.topicId===t.topicId&&l.locale===locale);if(!l){errors.push('PEDAGOGY_LOCALE '+t.topicId);continue;}
    if(rewritten){const expected=row.currentLocalizations?.[locale];if(!expected||l.contentRevision!==row.currentRevision||pedagogyDigest(l)!==expected.semanticSha256)errors.push('PEDAGOGY_CONTENT_PIN '+t.topicId+' '+locale);
     if(l.experience?.route?.kind!=='installed-1c'||l.experience.route.steps.length<4||l.experience.route.steps.some(s=>!['id','title','where','before','action','why','expected','troubleshooting'].every(k=>typeof s[k]==='string'&&s[k].trim())))errors.push('PEDAGOGY_ROUTE '+t.topicId+' '+locale);
+    if(!Array.isArray(l.mistakes)||l.mistakes.length<2||l.mistakes.some(x=>!Array.isArray(x)||x.length!==2||x.some(v=>typeof v!=='string'||v.trim().length<12)))errors.push('PEDAGOGY_DIAGNOSTIC_PAIRS '+t.topicId+' '+locale);
+    const d=l.experience?.diagram;if(!d||!['ru','en'].every(k=>typeof d.title?.[k]==='string'&&d.title[k].trim())||!Array.isArray(d.nodes)||d.nodes.length<2||d.nodes.some(n=>!['ru','en'].every(k=>typeof n.label?.[k]==='string'&&n.label[k].trim()&&typeof n.detail?.[k]==='string'&&n.detail[k].trim())))errors.push('PEDAGOGY_CURRENT_DIAGRAM '+t.topicId+' '+locale);
+    if(l.codeFile&&!(typeof l.experience?.sourceLabel==='string'&&l.experience.sourceLabel.trim()))errors.push('PEDAGOGY_SOURCE_LOCATION '+t.topicId+' '+locale);
    }else if(l.contentRevision!==row.baselineRevision||pedagogyDigest(l)!==row.locales[locale].semanticSha256)errors.push('UNREVIEWED_PEDAGOGY_REVISION '+t.topicId+' '+locale);
   }
  }

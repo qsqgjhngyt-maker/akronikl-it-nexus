@@ -6,152 +6,198 @@
   "topicId": "1c-enterprise.a3.topic-3",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Sorting and grouping",
+  "title": "Sorting and grouping: change presentation while preserving requests",
   "minutes": 120,
-  "goal": "Distinguish sorting, grouping and data changes in a request list.",
+  "goal": "Order requests by duration, group them by customer and distinguish presentation from data edits and report totals.",
   "prerequisites": [
     "1c-enterprise.a 2; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
   ],
   "outcomes": [
-    "Distinguish sorting, grouping and data changes in a request list.",
-    "Sort minutes ascending and descending.",
-    "Group by customer."
+    "Switch sort direction and reconcile numbers rather than row positions.",
+    "Group by an existing customer and expand hidden details.",
+    "Prepare four sequential project requests for report reconciliation without deleting earlier work."
   ],
   "sections": [
     [
-      "Sorting changes order",
-      "Sorting rearranges rows by a selected key without changing membership or total. Durations 30, 45, 15 sort ascending as 15, 30, 45. Ties need a secondary key such as document number: otherwise their order is not defined by the contract. A row’s current position must never serve as a permanent request identity.",
-      "Operators verify persisted outcomes, not just entered values. Prepare an identity/customer/status/minute control table before starting. Refer to it after each action rather than remembering the last screen. Hidden filters matter: an absent visible row does not mean deletion. A reliable workflow explains both what changed and which source records must remain unchanged."
+      "Sorting changes row order",
+      "Clicking the numeric column header changes list order; another click switches direction. Check actual values rather than guessing a small arrow’s meaning. For 30, 45, 30 and 15, ascending order is 15, 30, 30, 45; descending is 45, 30, 30, 15.",
+      "Document numbers and fields do not change. The second row after sorting may be a different request. Identify your document by its actual number. Equal durations do not guarantee a particular relative order without an additional sort criterion."
     ],
     [
-      "Grouping collapses detail",
-      "Grouping by customer collects requests and can display a sum. It changes granularity: two customer rows are not two documents. With disjoint groups, group totals must equal the source total. Hidden detail has not been deleted; expand a group and verify its document references.",
-      "Freeze period, units and selected customer reference for reproducibility. Equal names can represent distinct synthetic entities. Sorting changes order, filtering visible membership, and grouping presentation granularity. Conflating these operations produces wrong explanations despite a technically error-free interface. Always name the operation and identify its expected effect on identities, count and totals before applying it."
+      "Grouping puts related details under a heading",
+      "Grouping by Клиент places requests linked to the same customer under one heading. This uses a customer reference rather than similar text. Two same-named customer records can form different groups; investigate identity before changing names for cosmetic consistency.",
+      "A plus beside a group expands its details. A collapsed group does not imply missing or deleted documents. Its heading is not an additional request: count document numbers rather than visible bands."
     ],
     [
-      "Totals depend on the selected set",
-      "Apply set conditions before computing the chosen aggregation. Alpha’s 75 cannot be compared with all customers’90 as evidence of a defect. Label each number with period, customer, status and units. A group without documents may appear as an absent row or a zero total depending on report settings; that does not mean the customer vanished.",
-      "Use safe, discriminating negative cases. Negative duration tests input rules; incompatible filters test empty results; an omitted experimental-report row tests reconciliation independence. Do not corrupt source work. Each experiment uses a new copy, an expected rejection and a reread confirming prior records survived. Follow rejection with a valid input to show the workflow remains usable."
+      "Keep one dataset for subsequent lessons",
+      "The sequential route already has 30, 45 and 30 minutes for the first customer, including the corrected request from the preceding lesson. Add one separate 15-minute request for the existing second customer Учебный Юг, using the existing service. Preserve earlier records.",
+      "If you already created that request, reuse its number instead of duplicating it. The basic example has three first-customer requests and one second-customer request. Preserve additional work and recalculate expected groups from your actual table."
     ],
     [
-      "Reconcile permutation and aggregation",
-      "Record identities, count and sum before sorting and verify that only order changes afterwards. For grouping, check each group and grand total. Add tied values to test the secondary key and a customer without requests to test empty-group behavior. This matrix detects lost rows, the wrong aggregate resource and unstable ordering.",
-      "A control sum supplements rather than replaces identities. Different requests can have identical minute totals. Record conditions, keys, count, sum and discrepancy explanation. If records changed between observations, state time and changes. Do not alter source documents merely to force agreement between reports with different scopes; first make the question and data interval equivalent."
+      "Order, group and aggregate are different",
+      "Sorting chooses order, grouping organizes related details and filtering chooses which rows are included. They can act together. Disable your duration filter before sorting, otherwise excluded values remain hidden. Grouped presentation can also affect where a sort is applied.",
+      "A normal list grouping does not promise an automatic duration total in the heading. The next lesson’s separate report calculates count and minutes as aggregates. Here reconcile numbers and manually calculate 105 minutes for the first customer and 15 for the second."
     ]
   ],
   "diagram": "a3-2",
   "walkthrough": [
     {
-      "action": "Sort minutes ascending and descending.",
-      "expected": "Identical identities and total 90, opposite order."
+      "action": "Baseline — Four original numbers",
+      "expected": "30, 45, 30, 15."
     },
     {
-      "action": "Group by customer.",
-      "expected": "75+15=90; detail remains accessible by reference."
+      "action": "Ascending — 15, 30, 30, 45",
+      "expected": "No duration edits."
     },
     {
-      "action": "Add a tied duration and a secondary key.",
-      "expected": "Tie order is reproducible; no request is lost."
+      "action": "Descending — 45, 30, 30, 15",
+      "expected": "Same numbers."
+    },
+    {
+      "action": "Groups — First: 3; second: 1",
+      "expected": "Details remain available."
     }
   ],
   "examples": [
     {
-      "title": "Main example",
-      "source": "Альфа:[30,45]; Бета:[15]\nСортировка Минуты↑; группировка Клиент",
-      "expected": "Order 15, 30, 45; groups Alpha 75, Beta 15; grand total 90.",
-      "explanation": "Three documents remain three documents even when displayed as two groups."
+      "title": "One dataset, several presentations",
+      "source": "First customer: 30, 45, 30. Second: 15.\nAscending: 15, 30, 30, 45.\nDescending: 45, 30, 30, 15.\nBy customer: three documents and one.",
+      "expected": "Order and headings change while four numbers and values are preserved.",
+      "explanation": "Two documents can share duration 30 without being duplicates.",
+      "trace": [
+        [
+          "Baseline",
+          "Four original numbers",
+          "30, 45, 30, 15."
+        ],
+        [
+          "Ascending",
+          "15, 30, 30, 45",
+          "No duration edits."
+        ],
+        [
+          "Descending",
+          "45, 30, 30, 15",
+          "Same numbers."
+        ],
+        [
+          "Groups",
+          "First: 3; second: 1",
+          "Details remain available."
+        ]
+      ]
     },
     {
-      "title": "Boundary case",
-      "source": "Добавьте равную длительность и вторичный ключ.",
-      "expected": "Tie order is reproducible; no request is lost.",
-      "explanation": "Three documents remain three documents even when displayed as two groups."
+      "title": "A collapsed group still retains data",
+      "source": "Click the second customer’s plus sign and inspect its 15-minute detail.",
+      "expected": "The same saved request and number become visible.",
+      "explanation": "Expanding a group shows a detail; it does not create a document.",
+      "trace": [
+        [
+          "Collapsed",
+          "Detail temporarily hidden",
+          "No deletion."
+        ],
+        [
+          "Expanded",
+          "Number and 15 minutes visible",
+          "Compare with baseline."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Sort minutes ascending and descending.",
-      "criteria": "Identical identities and total 90, opposite order."
+      "level": "Basic",
+      "task": "Predict both orders for 30, 45, 30, 15 and explain why both 30-minute documents remain.",
+      "criteria": "Four separate numbers identified; equal field values are not deleted as duplicates."
     },
     {
       "level": "Applied",
-      "task": "Group by customer.",
-      "criteria": "75+15=90; detail remains accessible by reference."
+      "task": "Sort and group your dataset, expand both groups and reconcile every number.",
+      "criteria": "Presentation changes reversibly and original documents remain intact."
     },
     {
       "level": "Advanced",
-      "task": "Find a report that labels group count as document count and correct it.",
-      "criteria": "Group count, document count and minute sum are distinguished."
+      "task": "Distinguish filtering, sorting, grouping and aggregation; prepare an independent table for the report.",
+      "criteria": "Basic totals: first customer three/105, second one/15; additional work accounted for."
     }
   ],
   "lab": {
-    "title": "Distinguish sorting, grouping and data changes in a request list.",
-    "environment": "Official 1C 8.3.27.x, new training-service-desk copy. Command labels depend on the configuration interface; verify outcomes against data. Training-edition limits are explicit.",
+    "title": "Explore request order and customer groups",
+    "environment": "Official training 1C, the same own infobase and existing catalog items; no Studio, code or CF reload required.",
     "steps": [
-      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
-      "Sort minutes ascending and descending.",
-      "Group by customer.",
-      "Add a tied duration and a secondary key.",
-      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+      "Locate the existing second customer Учебный Юг. If no 15-minute training request for this exercise exists, create one with the existing service and Новая, save and record its number. Otherwise reuse it. Record all your numbers and durations.",
+      "Clear search, disable ≥45 and your other filters, and ensure the period includes all prepared request dates.",
+      "Click the header; if actual values decrease, click again. Compare with your predicted order and identify both 30-minute request numbers.",
+      "Click again and compare the reversed order without editing any duration.",
+      "Open Группировка and double-click Клиент on the left. Verify the enabled Клиент field on the right and choose Завершить редактирование.",
+      "Expand both groups, compare every number and duration and manually total 30+45+30=105 and 15 separately. Optionally disable Клиент in grouping settings to restore a flat list."
     ],
     "expected": [
-      "Identical identities and total 90, opposite order.",
-      "75+15=90; detail remains accessible by reference.",
-      "Tie order is reproducible; no request is lost."
+      "The basic sequence has 30, 45, 30 for the first customer and 15 for the second.",
+      "All prepared numbers are available.",
+      "The basic values are 15, 30, 30, 45; both 30-minute documents remain.",
+      "45, 30, 30, 15; the same numbers remain.",
+      "Customer headings appear with groups of three and one in the basic dataset.",
+      "All four numbers are available; grouping created or deleted no documents."
     ],
     "evidence": [
-      "Input/expected/actual/case-ID table, platform build and source hashes.",
-      "Order 15, 30, 45; groups Alpha 75, Beta 15; grand total 90.",
-      "Work-copy provenance, negative result and source preservation before/after."
+      "Numbers, durations and customers before and after presentation changes.",
+      "Both directions, expanded groups and independent synthetic totals."
     ],
-    "negative": "Tie order is reproducible; no request is lost."
+    "negative": "Do not delete equal durations as duplicates or mistake a collapsed group for lost data."
   },
   "mistakes": [
     [
-      "Treat an expected value as an observed execution.",
-      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+      "Sorting changes which document appears in the second row.",
+      "Identify your request by actual number rather than its former position."
     ],
     [
-      "Modify the source infobase while experimenting.",
-      "Work on a new copy and verify the source by reopening it separately."
+      "A collapsed heading hides details without deleting documents.",
+      "Expand the plus sign and reconcile numbers with your baseline."
+    ],
+    [
+      "Normal list grouping is not itself a report with duration aggregates.",
+      "Calculate totals manually, then compare them with the separate report in the next lesson."
     ]
   ],
   "quiz": [
     {
-      "question": "Sorting should change",
+      "question": "What does sorting change?",
       "options": [
-        "The sum",
-        "Identities",
-        "Order"
-      ],
-      "correct": 2,
-      "explanation": "Source membership remains unchanged."
-    },
-    {
-      "question": "How many documents underlie groups 75 and 15?",
-      "options": [
-        "2",
-        "3",
-        "90"
+        "Stored duration",
+        "Display order",
+        "Stored document count"
       ],
       "correct": 1,
-      "explanation": "Groups do not determine detailed-record count."
+      "explanation": "Numbers and fields remain intact."
     },
     {
-      "question": "What determines the order of tied durations?",
+      "question": "What does a plus sign beside a group mean?",
       "options": [
-        "A secondary key",
-        "A random color",
-        "The grand total"
+        "Create a customer",
+        "Documents were deleted",
+        "Details can be expanded"
+      ],
+      "correct": 2,
+      "explanation": "Collapsing controls presentation."
+    },
+    {
+      "question": "Two documents have 30 minutes. What distinguishes their identity?",
+      "options": [
+        "Their identities and numbers",
+        "Duration alone",
+        "Their list positions"
       ],
       "correct": 0,
-      "explanation": "A secondary key makes the requirement explicit."
+      "explanation": "An equal field value does not establish one record."
     }
   ],
   "review": [
-    "Distinguish sorting, grouping and data changes in a request list.",
-    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+    "What verifies preservation after sorting?",
+    "Why do equal durations not prove duplication?",
+    "How do you reveal a collapsed detail?"
   ],
   "sources": [
     "training",
@@ -160,23 +206,237 @@
     "documents",
     "form-elements"
   ],
-  "contentRevision": "1.0.0-rc.1",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.full.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_FULL_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "executionProfile": "official-1c-file",
   "nativeEvidenceStatus": "NOT RUN",
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
     "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "1c-enterprise",
+    "topicId": "1c-enterprise.a3.topic-3",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
   },
   "theoryContext": {
     "kind": "shared-module-reasoning",
     "moduleId": "1c-enterprise.a3",
     "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "document",
+      "reference",
+      "catalog-item"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed Enterprise mode → Заявка услуги list",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "dataset",
+          "title": "Prepare a fourth request without duplication",
+          "where": "Enterprise → Клиенты, then Заявка услуги",
+          "action": "Locate the existing second customer Учебный Юг. If no 15-minute training request for this exercise exists, create one with the existing service and Новая, save and record its number. Otherwise reuse it. Record all your numbers and durations.",
+          "why": "Use multiple first-customer requests and one second-customer request while preserving earlier work.",
+          "expected": "The basic sequence has 30, 45, 30 for the first customer and 15 for the second.",
+          "troubleshooting": "Preserve additional records and include them in your own table rather than deleting them to match a picture.",
+          "before": "Earlier requests and their numbers remain in your own infobase. Search is clear and your numeric filter is disabled."
+        },
+        {
+          "id": "unrestrict",
+          "title": "Check list restrictions",
+          "where": "Search, condition checkboxes and period",
+          "action": "Clear search, disable ≥45 and your other filters, and ensure the period includes all prepared request dates.",
+          "why": "Sorting does not restore rows excluded by an active filter.",
+          "expected": "All prepared numbers are available.",
+          "troubleshooting": "Check restrictions before entering a missing request again.",
+          "before": "The basic sequence has 30, 45, 30 for the first customer and 15 for the second."
+        },
+        {
+          "id": "ascending",
+          "title": "Sort by increasing duration",
+          "where": "ДлительностьМинут column header",
+          "action": "Click the header; if actual values decrease, click again. Compare with your predicted order and identify both 30-minute request numbers.",
+          "why": "Read direction from values and distinguish position from identity.",
+          "expected": "The basic values are 15, 30, 30, 45; both 30-minute documents remain.",
+          "troubleshooting": "Do not demand a fixed order among equal values without a second criterion.",
+          "before": "All prepared numbers are available.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/39-request-sort-ascending.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "76619d842b88273403739c99905a1b1ee9d0f223b70255e79651283e524e6e3f",
+              "caption": "Sorting the separate 30/45/15 test yields 15/30/45. Preserve both 30-minute requests in your own course sequence.",
+              "alt": "Sorting the separate 30/45/15 test yields 15/30/45. Preserve both 30-minute requests in your own course sequence.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 0,
+                "y": 150,
+                "width": 1100,
+                "height": 330
+              }
+            }
+          ]
+        },
+        {
+          "id": "descending",
+          "title": "Reverse the direction",
+          "where": "The same column header",
+          "action": "Click again and compare the reversed order without editing any duration.",
+          "why": "A reversible order change must preserve contents.",
+          "expected": "45, 30, 30, 15; the same numbers remain.",
+          "troubleshooting": "Click the heading rather than selecting a document cell.",
+          "before": "The basic values are 15, 30, 30, 45; both 30-minute documents remain.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/40-request-sort-descending.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "fcd5aee287052e7f55e1d5e501640448877f45d91ba211810fae8fd9e1d29643",
+              "caption": "Reversing gives 45/30/15 for the same three test documents without changing their values.",
+              "alt": "Reversing gives 45/30/15 for the same three test documents without changing their values.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 0,
+                "y": 150,
+                "width": 1100,
+                "height": 330
+              }
+            }
+          ]
+        },
+        {
+          "id": "group",
+          "title": "Group by customer",
+          "where": "Ещё → Настроить список… → Группировка",
+          "action": "Open Группировка and double-click Клиент on the left. Verify the enabled Клиент field on the right and choose Завершить редактирование.",
+          "why": "Select existing customer references as the grouping key.",
+          "expected": "Customer headings appear with groups of three and one in the basic dataset.",
+          "troubleshooting": "Do not substitute a name field without understanding identity. Expand collapsed details with the plus sign.",
+          "before": "45, 30, 30, 15; the same numbers remain.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/41-request-grouping-settings.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "3a65f5a374d2203bb06408e071ece8be5a1c5f56298c009f7b773a926027770a",
+              "caption": "The Группировка tab enables Клиент: a catalog reference, not arbitrary similar text.",
+              "alt": "The Группировка tab enables Клиент: a catalog reference, not arbitrary similar text.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": []
+            }
+          ]
+        },
+        {
+          "id": "reconcile",
+          "title": "Expand and reconcile details",
+          "where": "Grouped list and your table",
+          "action": "Expand both groups, compare every number and duration and manually total 30+45+30=105 and 15 separately. Optionally disable Клиент in grouping settings to restore a flat list.",
+          "why": "Details remain stored; manual totals provide independent expectations for the report.",
+          "expected": "All four numbers are available; grouping created or deleted no documents.",
+          "troubleshooting": "Do not count headings as documents. Include additional requests in your actual totals.",
+          "before": "Customer headings appear with groups of three and one in the basic dataset.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/42-request-grouped-records.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "5e32790e82a2631def5779e4d1653f126b70a2486d26fcc734d5d34161513182",
+              "caption": "The second customer’s 15-minute detail is expanded. Group headings are not additional requests; this test baseline has three documents.",
+              "alt": "The second customer’s 15-minute detail is expanded. Group headings are not additional requests; this test baseline has three documents.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 0,
+                "y": 150,
+                "width": 1100,
+                "height": 330
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Один набор в разных представлениях",
+        "en": "Explore the example: One dataset, several presentations"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Исходный набор",
+            "en": "Baseline"
+          },
+          "detail": {
+            "ru": "Четыре собственных номера → 30, 45, 30, 15.",
+            "en": "Four original numbers → 30, 45, 30, 15."
+          }
+        },
+        {
+          "label": {
+            "ru": "Возрастание",
+            "en": "Ascending"
+          },
+          "detail": {
+            "ru": "15, 30, 30, 45 → Перестановка без изменения минут.",
+            "en": "15, 30, 30, 45 → No duration edits."
+          }
+        },
+        {
+          "label": {
+            "ru": "Убывание",
+            "en": "Descending"
+          },
+          "detail": {
+            "ru": "45, 30, 30, 15 → Тот же набор номеров.",
+            "en": "45, 30, 30, 15 → Same numbers."
+          }
+        },
+        {
+          "label": {
+            "ru": "Группы",
+            "en": "Groups"
+          },
+          "detail": {
+            "ru": "Первый: 3; второй: 1 → Детали доступны после раскрытия.",
+            "en": "First: 3; second: 1 → Details remain available."
+          }
+        }
+      ]
+    }
+  },
+  "nativeCaseIds": [],
+  "nativeEvidence": {
+    "status": "LIVE PASS",
+    "environment": "official-platform-local-file-base",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/A3_NATIVE_UI_RESULT.json",
+    "scope": "Operator observed commands on separate synthetic bases; illustration dataset differences are explicit; no novice study",
+    "training1508GuiVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false,
+    "caseIds": []
   }
 }
