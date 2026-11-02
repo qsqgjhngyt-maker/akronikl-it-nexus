@@ -73,7 +73,7 @@ async function rate(env,data){
   await limit(env,'network:'+data.networkHash,minute,30);
  }
  if(data.emailHash){
-  await limit(env,'email:'+data.emailHash,Math.floor(minute/10),5);
+  await limit(env,'email:'+data.emailHash,Math.floor(minute/10),10);
  }
  await sql(env.DB,'DELETE FROM nexus_password_rate_limits WHERE rowid IN(SELECT rowid FROM nexus_password_rate_limits WHERE bucket<?1 LIMIT 100)',Math.floor(minute/10)-10).run();
 }
