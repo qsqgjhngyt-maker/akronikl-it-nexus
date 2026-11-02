@@ -1,3 +1,5 @@
+import{staticMime}from'../pwa/static-mime.js';
+import{decodeFixturePathname,resolveFixtureFile}from'./helpers/public-fixture-path.mjs';
 // Реальные Chrome/MP4/WebM и собранные документы entry/shell; Account синтетический.
 import assert from 'node:assert/strict';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
@@ -10,7 +12,7 @@ await mkdir(out,{recursive:true});
 const origin='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net',key='akronikl:it-nexus:startup-intro:v1',handoff='akronikl:it-nexus:startup-intro:auth-handoff:v1';
 const rows=[],sessions=[],errors=[],measurements=[];let browser,fatal,current;
 const check=async(name,fn)=>{const t=performance.now();await fn();rows.push({name,status:'PASS',ms:Math.round(performance.now()-t)});console.log('PASS '+name)};
-const mime=f=>({'.js':'text/javascript','.css':'text/css','.json':'application/json','.webmanifest':'application/manifest+json','.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.mp4':'video/mp4','.webm':'video/webm'}[path.extname(f)]||'text/html');
+const mime=staticMime;
 async function session({frontend=candidate,surface='shell',width=1440,height=900,pref={schema:1,enabled:true,simplified:false,seen:'cinematic-v1'},accountDelay=250,guest=false,mediaDelay=0,missing=false,hidden=false,reducedMotion='no-preference',noLocks=false,lowDevice=false,oauth=false,online=true,descriptorBad=false,codec='auto',logout=false}={}){
  const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),state={surface,guest},record={surface,width,height,frontend:path.basename(frontend),requests:[],writes:[],syntheticLogouts:0};sessions.push(record);
  const context=await browser.newContext({viewport:{width,height},reducedMotion});
@@ -31,30 +33,30 @@ async function session({frontend=candidate,surface='shell',width=1440,height=900
   new MutationObserver(()=>{if(!window.__introAt&&document.querySelector('[data-startup-intro]'))window.__introAt=performance.now();if(!window.__appAt&&document.querySelector('#app .visual-shell'))window.__appAt=performance.now()}).observe(document,{childList:true,subtree:true});
  },{key,handoff,pref,hidden,noLocks,lowDevice,online,oauth,graph:RUNTIME_GRAPH_ID,codec});
  await context.route('**/*',async route=>{try{
-  const req=route.request(),u=new URL(req.url()),cdn=u.origin==='https://qsqgjhngyt-maker.github.io'&&!u.search&&/^\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/.test(u.pathname);if(u.origin!==origin&&!cdn){errors.push('Внешний запрос '+u.origin);return route.abort()}
-  if(logout&&req.method()==='POST'&&u.pathname==='/api/v2/account/passkey/logout'){state.guest=true;state.surface='entry';record.syntheticLogouts++;return route.fulfill({status:200,contentType:'application/json',body:'{}'})}
-  if(!['GET','HEAD'].includes(req.method())){record.writes.push(u.pathname);return route.abort()}
-  if(u.pathname.startsWith('/api/')){
+  const req=route.request(),u=new URL(req.url()),pathname=decodeFixturePathname(u.pathname),cdn=u.origin==='https://qsqgjhngyt-maker.github.io'&&!u.search&&/^\/akronikl-it-nexus\/intro-media\/(?:cinematic-v4\/(?:desktop|mobile)\.(?:mp4|webm)|cinematic-v3\/mobile\/(?:mp4\/part-00[0-3]\.mp4|webm\/part-00[0-3]\.webm))$/.test(pathname);if(u.origin!==origin&&!cdn){errors.push('Внешний запрос '+u.origin);return route.abort()}
+  if(logout&&req.method()==='POST'&&pathname==='/api/v2/account/passkey/logout'){state.guest=true;state.surface='entry';record.syntheticLogouts++;return route.fulfill({status:200,contentType:'application/json',body:'{}'})}
+  if(!['GET','HEAD'].includes(req.method())){record.writes.push(pathname);return route.abort()}
+  if(pathname.startsWith('/api/')){
    await new Promise(r=>setTimeout(r,accountDelay));let status=200,body;
-   if(u.pathname==='/api/v2/account'){
+   if(pathname==='/api/v2/account'){
     if(state.guest){status=401;body={error:{code:'SESSION_REQUIRED'}}}
     else body={account:{accountId:'synthetic-launch',displayName:'Проверка запуска',status:'active'},loginMethods:[{id:'synthetic-key',kind:'passkey',status:'active',createdAt:'2026-10-28T00:00:00Z',disabledAt:null}],enrollmentAvailable:false};
-   }else if(u.pathname==='/api/v2/account/profile')body={accountId:'synthetic-launch',displayName:'Проверка запуска',status:'active',username:null,avatar:null,avatarVersion:0};
-   else if(u.pathname==='/api/v2/account/oauth/providers')body={providers:[]};
-   else if(u.pathname==='/api/v2/account/control/capabilities')body={canManage:false,canModerate:false,canPurge:false,freshPasskey:false};
-   else if(u.pathname==='/api/v2/content/feed')body={posts:[],home:{}};
-   else if(u.pathname==='/api/v2/cloud/me')body={account:{accountId:'synthetic-launch',displayName:'Проверка запуска',status:'active'}};
+   }else if(pathname==='/api/v2/account/profile')body={accountId:'synthetic-launch',displayName:'Проверка запуска',status:'active',username:null,avatar:null,avatarVersion:0};
+   else if(pathname==='/api/v2/account/oauth/providers')body={providers:[]};
+   else if(pathname==='/api/v2/account/control/capabilities')body={canManage:false,canModerate:false,canPurge:false,freshPasskey:false};
+   else if(pathname==='/api/v2/content/feed')body={posts:[],home:{}};
+   else if(pathname==='/api/v2/cloud/me')body={account:{accountId:'synthetic-launch',displayName:'Проверка запуска',status:'active'}};
    else{status=403;body={error:{code:'SYNTHETIC_DENIED'}}}
-   record.requests.push({file:u.pathname,api:true,status});return route.fulfill({status,headers:{'content-type':'application/json','cache-control':'no-store',vary:'*'},body:JSON.stringify(body)});
+   record.requests.push({file:pathname,api:true,status});return route.fulfill({status,headers:{'content-type':'application/json','cache-control':'no-store',vary:'*'},body:JSON.stringify(body)});
   }
-  let file=cdn?u.pathname.replace('/akronikl-it-nexus/',''):u.pathname.slice(1),source=frontend;if(cdn){const headers=await req.allHeaders();assert.equal(headers.authorization,undefined);assert.equal(headers.cookie,undefined)}
-  if(['/','/index.html'].includes(u.pathname)){file=state.surface==='entry'?'server-access/public/entry.html':'nexus-shell.html';if(state.surface==='entry')source=root}
-  if(u.pathname==='/account/entry/'){file='server-access/public/entry.html';source=root}
-  if(u.pathname.startsWith('/account/entry/')&&/\.(js|css)$/.test(file))file='entry-assets/'+manifest.assetGeneration+'/'+path.basename(file);
-  if(u.pathname==='/favicon.ico')return route.fulfill({status:204,body:''});
+  let file=cdn?pathname.replace('/akronikl-it-nexus/',''):pathname.slice(1),source=frontend;if(cdn){const headers=await req.allHeaders();assert.equal(headers.authorization,undefined);assert.equal(headers.cookie,undefined)}
+  if(['/','/index.html'].includes(pathname)){file=state.surface==='entry'?'server-access/public/entry.html':'nexus-shell.html';if(state.surface==='entry')source=root}
+  if(pathname==='/account/entry/'){file='server-access/public/entry.html';source=root}
+  if(pathname.startsWith('/account/entry/')&&/\.(js|css)$/.test(file))file='entry-assets/'+manifest.assetGeneration+'/'+path.basename(file);
+  if(pathname==='/favicon.ico')return route.fulfill({status:204,body:''});
   const movie=/\.(mp4|webm)$/.test(file);if(movie&&mediaDelay)await new Promise(r=>setTimeout(r,mediaDelay));
   if(movie&&missing)return route.fulfill({status:404,body:''});
-  let bytes;if(file==='startup-intro.json'&&descriptorBad)bytes=Buffer.from('{"schema":1,"module":"https://outside.invalid/malicious.js"}');else bytes=await readFile(path.resolve(source,file));
+  let bytes;if(file==='startup-intro.json'&&descriptorBad)bytes=Buffer.from('{"schema":1,"module":"https://outside.invalid/malicious.js"}');else bytes=await readFile(resolveFixtureFile(source,file));
   const headers={'content-type':mime(file),'cache-control':file==='service-worker.js'?'no-store':'public,max-age=0','x-content-type-options':'nosniff'};
   if(cdn)headers['access-control-allow-origin']='*';
   if(file==='server-access/public/entry.html')headers['content-security-policy']="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; media-src 'self' https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";

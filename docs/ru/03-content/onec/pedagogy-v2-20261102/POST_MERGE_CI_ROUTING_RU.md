@@ -1,0 +1,18 @@
+# Post-merge CI: отдельная регрессия стенда и исторический P4-Q
+
+STATUS: PARTIAL. Новая сборка опубликована,181 публичная проверка PASS; PR63 слит по разрешению владельца после четырёх успешных PR CI. Source995baa9; main merge0eb4bdcbc05c73ae4f8a312e7bcc0f4279d91b13. Официальный Release ещё не создан.
+
+В дополнительных main workflow обнаружены две независимые причины:
+
+- cpp-course-final41402056738 и invariant-job M6: «Unknown or missing P4-Q changes». Точный исторический release changeset не предназначен для новых курсов. Исходные P4-Q scope/admission остаются неизменными; обычный content review не получает releaseEligible.
+- C++ browser M6 run41402056712 и startup41402056691: тестовые HTTP-стенды читают percent-encoded URL как буквальные пути, а startup MIME-таблица не знает .mjs. Новые корректные учебные файлы1С проявили эти ограничения. Исправление должно сохранить containment, SHA/MIME, API/private denial и реальные compiler/Qt/offline проверки. Нельзя ставить publicReady вручную, убирать неизвестные старые URL или пропускать C++ регрессии.
+
+Публикационный образ проверен отдельно:12980 записей,11850 прежних immutable файлов, полный реальный Chrome PWA install/activate/publicReady, сохранённые старые URL и offline, личный API не кэшируется. Gateway, BFF и Worker/D1 не изменяются этим исправлением. Эта публикационная приёмка не заменяет неуспешный main CI.
+
+Локальный review:14 route/transport tests PASS, включая неизвестный BFF, mode, изменённый scope, traversal/UTF8 и дословное сохранение historical job. Исходные пять M6 unit-файлов и текущий M6 content —45 tests PASS. Неудачная попытка запустить все исторические academy-gold unit wildcard сохранена отдельно: часть тестов требует старые38/45 строк/feature M5; два локальных импорта сначала отсутствовали из-за sparse checkout studio-build. Подключён существующий read-only исходник, импорты и assertions не менялись. В новом CI сохранены исходные M6 units; недействующий wildcard не объявляется PASS. Проверка текущего продукта подтверждает неизменность C++67, Identity/runtime/BFF/Worker/Studio и66 GPL source files относительно принятого main0eb4bdc. Полные compiler/Qt/D1/browser/offline jobs остаются обязательными.
+
+Повтор после обновления только exact-approved заголовков CI:21 route/transport/Intro/legacy test PASS. Оригинальный publication job Intro проверяется дословно; исходный router P4-Q и все publication guards побайтно прежние. Добавленная проверка закрывает однократную передачу CI для чужой ветки и pull_request. Общая регрессия повторяется перед отправкой.
+
+🔀 CROSS-BRANCH SYNC REQUIRED
+
+Источник03/05. Куда по приоритету:05/00,02/07,01,04. Почему: завершение общего CI перед официальным Release; новые курсы не должны повторно объявлять старый выпуск P4-Q. Когда: сейчас, до изменения CI. Готовый текст: «Опубликован полный корпус84/168 на source995baa9, PR63 слит в0eb4bdc после четырёх PR SUCCESS. Main дополнительно запустил старые C++/startup workflow и обнаружил два класса отказа: исторический exact P4-Q scope и ограниченный транспорт тестовых .mjs/UTF8 URL. Работа продолжается в том же потоке без нового PR. Реальные C++/Qt/D1/browser проверки сохраняются. Исторический publication gate сохраняет точный scope и false admission для обычного content review. Будут проверены отрицательные случаи transport/traversal и точная область CI-исправления. Production остаётся на прошедшем проверку образе; откат807558… закреплён и после merge. Официальный Release PARTIAL до закрытия CI. Материал для диплома: граница неизменяемой release provenance и регрессии развивающейся платформы; failure→transport/scope hypothesis→negative controls→повторный current CI». Что потом: вернуться03/05 к единому Release и MASTER handoff.
