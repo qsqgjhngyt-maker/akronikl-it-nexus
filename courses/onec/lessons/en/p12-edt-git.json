@@ -8,35 +8,35 @@
   "status": "IMPLEMENTED",
   "title": "EDT, Git and collaboration",
   "minutes": 180,
-  "goal": "Organize source inEDT/Gitwith review and reproducible builds without secrets or infobase overwrites.",
+  "goal": "Organize source in EDT/Git with review and reproducible builds without secrets or infobase overwrites.",
   "prerequisites": [
     "onec.p11; P1–P3; explicit contracts, types, collections and failure handling."
   ],
   "outcomes": [
-    "Tool version and build route are documented.",
-    "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
-    "Accepted original preserved; rejection and its limits explained."
+    "Distinguish configuration source from infobase data and preserve them separately.",
+    "Read git diff, record one change and identify the exact commit SHA.",
+    "Check the configuration in a new infobase and state the EDT result separately."
   ],
   "sections": [
     [
-      "Source differs from a working infobase",
-      "Gitstores versioned text and documentation, not automatically every 1C datum. EDTprojects andDesignerXMLdumps have distinct conversion rules. Do not mix them as interchangeable files. Record tool version, format and how accepted source creates a fresh teaching infobase.",
-      "Distinguish Designer XML/BSL dump, EDT project and infobase data. Renaming a directory converts no format. For the available primary path retain DT separately and use Configuration → Dump configuration to files into a new empty source directory; do not clean an existing project."
+      "What Git actually stores",
+      "Configuration source describes objects, attributes and handlers. Infobase data consists of particular customers, requests and entered values. Git stores and compares versions of text source; it does not automatically back up every infobase record. This exercise therefore produces two separate items: a source directory for Git and a DT backup containing the accepted infobase state.",
+      "Distinguish Designer XML/BSL exports, an EDT project and an infobase containing data. Renaming a directory converts none of these formats. Complete the available Designer/Git route first. EDT is an additional development environment whose compatibility with the installed platform must be checked separately."
     ],
     [
-      "A branch isolates changes",
-      "Create a feature branch from a knownSHAand make one coherent change with an explained outcome. Studiowork and local infobases must not be targets ofgitcleanor automatic cleanup. Review examines diff, tests and provenance; merging follows the agreed process.",
-      "In the own source directory run git init, git switch -c feature/minutes-hint, git add and a Russian-message commit. Inspect files before adding: own XML/BSL/build notes only, no1CD/DT, profiles, tokens or closed configurations. Record git rev-parse HEAD and platform version."
+      "How to read a change",
+      "A branch is a separate line of changes in a Git repository. A commit records a set of changes; its SHA identifies that exact commit. The git diff command shows changes since the recorded version. Read those differences before committing instead of treating a successful command as proof of correct behavior.",
+      "Change just one hint that belongs to your application. Record where it appears and its original wording. The same workflow should then display the revised wording while objects, customer references and request data remain intact. Unexpected object deletions or replacement UUIDs indicate a different change that needs investigation."
     ],
     [
-      "Conflicts need semantic resolution",
-      "Do not resolve competing handler edits by blindly choosingours/theirs. Preserve both versions and requirements, reconstruct the agreed algorithm and rerun tests. Metadata/UUIDconflicts can affect identity. Do not regenerateIDsmerely to simplify resolution for an existing object.",
-      "Change only the own hint, review git diff and make another commit. Load these files into a new empty infobase through Designer. Check contexts, F7 and runtime. Accepted data do not automatically transfer with sources; verify them separately through DT restoration."
+      "How to build a verifiable new infobase",
+      "A working directory may include edits not recorded in a commit. Run git status --short before testing; empty output means Git sees no uncommitted changes to tracked files or untracked files. Record git rev-parse HEAD and the platform version so another reviewer can identify the source actually tested.",
+      "Create a new empty teaching infobase and load the exported configuration files through Designer. Check the configuration, update the database configuration and start Enterprise. Find the changed hint. Source files do not transfer records from the accepted infobase: verify data preservation separately by restoring its DT into another empty infobase. These are separate checks."
     ],
     [
-      "Builds must repeat",
-      "In a fresh directory, fetch aSHA, create an infobase with a supported tool, check configuration and run workflows. Exclude passwords, licenses, real databases and proprietary configurations. Git success is not native success; retain separate logs/hashes. UntestedEDTcompatibility remainsNOTRUNrather than inheritingDesignerresults.",
-      "Download EDT only officially and match platform compatibility. If absent, confirm Designer/Git and leave EDT NOT RUN. Preserve both conflict changes, explain the semantic merge and retain existing UUIDs rather than recreating objects to hide a diff."
+      "Handling conflicts and EDT",
+      "A conflict means two changes cannot be combined automatically. Preserve both versions, identify the behavior required by each, produce a combined version and rerun both checks. Blindly keeping one side can discard a requirement from the other. First practise this reasoning on a copy of your own text description, retaining the originals.",
+      "If EDT is installed, record its version, the platform version and the supported import route; then verify an actual build of your own project. If EDT is absent or compatibility is untested, mark EDT NOT RUN. The observed Designer/Git result remains valid within its own scope."
     ]
   ],
   "diagram": "p12-1",
@@ -56,43 +56,43 @@
   ],
   "examples": [
     {
-      "title": "Reconcile the complete experiment",
-      "source": "Sources → XML/BSL → Separate from DT.\nGit → Branch/diff/commit → Exact SHA.\nBuild → New infobase from SHA → Checks and limits.",
-      "expected": "New infobase from SHA; Checks and limits.",
-      "explanation": "Distinguish Designer XML/BSL dump, EDT project and infobase data. Renaming a directory converts no format. For the available primary path retain DT separately and use Configuration → Dump configuration to files into a new empty source directory; do not clean an existing project.",
+      "title": "Git inspection commands — terminal commands, not BSL",
+      "source": "git status --short\ngit diff\ngit log -1 --oneline\ngit rev-parse HEAD",
+      "expected": "File state, differences and the last commit identifier are visible.",
+      "explanation": "Read file membership and differences first. Record the full SHA after committing and load that exact source into the new infobase.",
       "trace": [
         [
-          "Sources",
-          "XML/BSL",
-          "Separate from DT."
+          "Before committing",
+          "git diff",
+          "Shows the intended hint change."
         ],
         [
-          "Git",
-          "Branch/diff/commit",
-          "Exact SHA."
+          "After committing",
+          "git rev-parse HEAD",
+          "Identifies the recorded source."
         ],
         [
-          "Build",
-          "New infobase from SHA",
-          "Checks and limits."
+          "New infobase",
+          "Run the revised hint",
+          "Checks application behavior as well as the Git operation."
         ]
       ]
     },
     {
-      "title": "A case that distinguishes the wrong solution",
-      "source": "Rename a Designer dump as an EDT project and claim compatibility without import.",
-      "expected": "Reject compatibility: format/import/build are unverified.",
-      "explanation": "Download EDT only officially and match platform compatibility. If absent, confirm Designer/Git and leave EDT NOT RUN. Preserve both conflict changes, explain the semantic merge and retain existing UUIDs rather than recreating objects to hide a diff.",
+      "title": "Why a directory name does not prove compatibility",
+      "source": "Designer XML/BSL → supported loading → new infobase\nEDT project → supported EDT import → separate build check",
+      "expected": "Renaming a directory without importing does not count as EDT verification.",
+      "explanation": "Content and the supported loading process determine the format. One environment does not prove another works.",
       "trace": [
         [
-          "Separate copy",
-          "Rename a Designer dump as an EDT project and claim compatibility without import.",
-          "Retain the accepted original."
+          "Action",
+          "Only the directory name changes",
+          "The file format remains unchanged."
         ],
         [
-          "Observe",
-          "Reject compatibility: format/import/build are unverified.",
-          "Download EDT only officially and match platform compatibility. If absent, confirm Designer/Git and leave EDT NOT RUN. Preserve both conflict changes, explain the semantic merge and retain existing UUIDs rather than recreating objects to hide a diff."
+          "Check",
+          "EDT has not imported and built the project",
+          "EDT remains NOT RUN."
         ]
       ]
     }
@@ -100,40 +100,40 @@
   "exercises": [
     {
       "level": "Basic",
-      "task": "Explain the checked boundary using the first trace. Record sourceSHAand project format.",
-      "criteria": "Tool version and build route are documented."
+      "task": "Identify source and data in your own work and explain git diff.",
+      "criteria": "Distinguish configuration source from infobase data and preserve them separately."
     },
     {
       "level": "Applied",
-      "task": "Perform the stated available experiment and retain actual observations. Resolve two edits on a copy.",
-      "criteria": "Actual input/output and exact own source identified; unperformed stages marked NOT RUN."
+      "task": "Change one hint, commit it and test that exact source in a new infobase.",
+      "criteria": "Read git diff, record one change and identify the exact commit SHA."
     },
     {
       "level": "Advanced",
-      "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. Rename a Designer dump as an EDT project and claim compatibility without import.",
-      "criteria": "Accepted original preserved; rejection and its limits explained."
+      "task": "Retain two text versions with distinct requirements, combine them and explain both checks; state EDT status.",
+      "criteria": "Check the configuration in a new infobase and state the EDT result separately."
     }
   ],
   "lab": {
     "title": "EDT, Git and collaboration",
     "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
     "steps": [
-      "Keep the earlier source and DT backup; restore into a new empty directory and verify its path. Distinguish Designer XML/BSL dump, EDT project and infobase data. Renaming a directory converts no format. For the available primary path retain DT separately and use Configuration → Dump configuration to files into a new empty source directory; do not clean an existing project.",
-      "In the own source directory run git init, git switch -c feature/minutes-hint, git add and a Russian-message commit. Inspect files before adding: own XML/BSL/build notes only, no1CD/DT, profiles, tokens or closed configurations. Record git rev-parse HEAD and platform version.",
-      "Change only the own hint, review git diff and make another commit. Load these files into a new empty infobase through Designer. Check contexts, F7 and runtime. Accepted data do not automatically transfer with sources; verify them separately through DT restoration.",
-      "Download EDT only officially and match platform compatibility. If absent, confirm Designer/Git and leave EDT NOT RUN. Preserve both conflict changes, explain the semantic merge and retain existing UUIDs rather than recreating objects to hide a diff. Rename a Designer dump as an EDT project and claim compatibility without import."
+      "Close Enterprise for your accepted infobase. In Designer choose Administration → Dump infobase (Администрирование → Выгрузить информационную базу) and save a DT outside the source directory. Use Configuration → Dump configuration to files (Конфигурация → Выгрузить конфигурацию в файлы) into a new empty directory. Record the infobase, backup and source locations.",
+      "Open a terminal in that new source directory. Run git init and git switch -c feature/minutes-hint. Read git status --short: include only your own XML/BSL and study documentation. Run git add -- ., read git diff --cached, then record the baseline with git commit -m \"Сохранить исходную учебную конфигурацию\". This local exercise needs no remote server.",
+      "Change one of your hints, review git diff and commit the separate change. Record git rev-parse HEAD. In a new empty infobase use Designer → Configuration → Load configuration from files (Конфигурация → Загрузить конфигурацию из файлов). Load the recorded sources, check the configuration, press F7 and then F5. Find the revised hint in Enterprise.",
+      "Retain both commits and the before/after comparison. Restore the DT into another empty infobase and verify earlier requests separately. Review the supplied two-version text case, preserve both versions and explain the merge. Record whether EDT was actually tested; mark it NOT RUN if unavailable."
     ],
     "expected": [
-      "XML/BSL; Separate from DT.",
-      "Exact settings/source and expected effect recorded.",
-      "New infobase from SHA; Checks and limits.",
-      "Reject compatibility: format/import/build are unverified."
+      "DT and source are separate; the accepted infobase remains intact.",
+      "The first commit contains only your own teaching sources and its SHA is recorded.",
+      "The new infobase uses the stated commit and shows only the intended hint change.",
+      "Both versions, the data-restoration result and the separate EDT status are retained."
     ],
     "evidence": [
       "Exact own source and version; actual keys, observations and expected versus actual table.",
       "Original and changed-copy results, failed attempts and untested environment limits."
     ],
-    "negative": "Rename a Designer dump as an EDT project and claim compatibility without import."
+    "negative": "Two copies of a description are supplied: one clarifies the action and the other adds the expected result. Explain why keeping only one loses a requirement. Produce a combined description and retain both originals."
   },
   "mistakes": [
     [
@@ -161,7 +161,7 @@
       "explanation": "Infobase data differs from source."
     },
     {
-      "question": "Should metadata conflicts always use newUUIDs?",
+      "question": "Should metadata conflicts always use new UUIDs?",
       "options": [
         "Yes",
         "For appearance",
@@ -171,9 +171,9 @@
       "explanation": "Preserve existing object identity."
     },
     {
-      "question": "NativePASSbelongs to",
+      "question": "Native PASS belongs to",
       "options": [
-        "The testedSHA/build/scenario",
+        "The tested SHA/build/scenario",
         "Any similar file",
         "AllGit"
       ],
@@ -232,49 +232,49 @@
     ],
     "route": {
       "kind": "installed-1c",
-      "program": "Installed official1C: Designer and Enterprise",
+      "program": "Installed official 1C: Designer and Enterprise",
       "studio": "optional",
       "fileTransfer": "none",
       "steps": [
         {
           "id": "step-1",
           "title": "Preserve and identify the starting state",
-          "where": "Конфигуратор → Конфигурация → Выгрузить конфигурацию в файлы",
-          "action": "Keep the earlier source and DT backup; restore into a new empty directory and verify its path. Distinguish Designer XML/BSL dump, EDT project and infobase data. Renaming a directory converts no format. For the available primary path retain DT separately and use Configuration → Dump configuration to files into a new empty source directory; do not clean an existing project.",
+          "where": "Designer for your own infobase",
+          "action": "Close Enterprise for your accepted infobase. In Designer choose Administration → Dump infobase (Администрирование → Выгрузить информационную базу) and save a DT outside the source directory. Use Configuration → Dump configuration to files (Конфигурация → Выгрузить конфигурацию в файлы) into a new empty directory. Record the infobase, backup and source locations.",
           "why": "Protect prior work and define the actual experiment.",
-          "expected": "XML/BSL; Separate from DT.",
-          "troubleshooting": "A list-entry name is not a separate directory; use only own synthetic data.",
-          "before": "Own path, prior sources and a restorable backup identified."
+          "expected": "DT and source are separate; the accepted infobase remains intact.",
+          "troubleshooting": "Check actual paths: a different launcher label does not create a different database.",
+          "before": "Own accepted infobase and its path identified."
         },
         {
           "id": "step-2",
           "title": "Prepare the exact mechanism",
-          "where": "Отдельная папка исходников → Git",
-          "action": "In the own source directory run git init, git switch -c feature/minutes-hint, git add and a Russian-message commit. Inspect files before adding: own XML/BSL/build notes only, no1CD/DT, profiles, tokens or closed configurations. Record git rev-parse HEAD and platform version.",
+          "where": "Terminal in the new source directory",
+          "action": "Open a terminal in that new source directory. Run git init and git switch -c feature/minutes-hint. Read git status --short: include only your own XML/BSL and study documentation. Run git add -- ., read git diff --cached, then record the baseline with git commit -m \"Сохранить исходную учебную конфигурацию\". This local exercise needs no remote server.",
           "why": "Match implementation to its intended boundary.",
-          "expected": "Exact settings/source and expected effect recorded.",
-          "troubleshooting": "Inspect actual metadata and version instead of substituting similarly named fields.",
-          "before": "XML/BSL; Separate from DT."
+          "expected": "The first commit contains only your own teaching sources and its SHA is recorded.",
+          "troubleshooting": "If Git needs an author name, configure it for this local repository. Do not stage DT, 1CD or personal files.",
+          "before": "DT and source are separate; the accepted infobase remains intact."
         },
         {
           "id": "step-3",
           "title": "Run only the available admitted route",
-          "where": "Новая пустая учебная база → загрузка конфигурации из файлов",
-          "action": "Change only the own hint, review git diff and make another commit. Load these files into a new empty infobase through Designer. Check contexts, F7 and runtime. Accepted data do not automatically transfer with sources; verify them separately through DT restoration.",
+          "where": "Designer for a new empty infobase → check → F7 → F5",
+          "action": "Change one of your hints, review git diff and commit the separate change. Record git rev-parse HEAD. In a new empty infobase use Designer → Configuration → Load configuration from files (Конфигурация → Загрузить конфигурацию из файлов). Load the recorded sources, check the configuration, press F7 and then F5. Find the revised hint in Enterprise.",
           "why": "Obtain an observable result in the stated environment.",
-          "expected": "New infobase from SHA; Checks and limits.",
-          "troubleshooting": "If the edition lacks the required feature, record NOT RUN and its reason; do not bypass licensing.",
-          "before": "Exact settings/source and expected effect recorded."
+          "expected": "The new infobase uses the stated commit and shows only the intended hint change.",
+          "troubleshooting": "If loading rejects the format, confirm it is a Designer export. An EDT project requires its supported import route.",
+          "before": "The first commit contains only your own teaching sources and its SHA is recorded."
         },
         {
           "id": "step-4",
           "title": "Check rejection and preserve evidence",
-          "where": "Review → точный SHA → протокол сборки",
-          "action": "Download EDT only officially and match platform compatibility. If absent, confirm Designer/Git and leave EDT NOT RUN. Preserve both conflict changes, explain the semantic merge and retain existing UUIDs rather than recreating objects to hide a diff. Rename a Designer dump as an EDT project and claim compatibility without import.",
+          "where": "Own result directory and separately restored infobase",
+          "action": "Retain both commits and the before/after comparison. Restore the DT into another empty infobase and verify earlier requests separately. Review the supplied two-version text case, preserve both versions and explain the merge. Record whether EDT was actually tested; mark it NOT RUN if unavailable.",
           "why": "Distinguish an incorrect conclusion and retain recovery.",
-          "expected": "Reject compatibility: format/import/build are unverified.",
-          "troubleshooting": "A planned test is not an observed failure or a PASS; preserve exact source/revision.",
-          "before": "New infobase from SHA; Checks and limits."
+          "expected": "Both versions, the data-restoration result and the separate EDT status are retained.",
+          "troubleshooting": "An absent EDT is not a successful EDT test. Retain the available Designer/Git result separately.",
+          "before": "The new infobase uses the stated commit and shows only the intended hint change."
         }
       ]
     },
