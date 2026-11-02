@@ -50,9 +50,16 @@ for(const locale of ['ru','en']){
  const ctx={prefs,t,cpp,catalog,academyViewFilter:{category:'all',availability:'all',query:'SYNTHETIC <query>'},visualIcon:v=>v,e,textFor,learnerAcademyEntries,visualShell:body=>body};
  const keys=Object.keys(ctx),baseline=new Function(...keys,before.slice(before.indexOf('function academy(){'),before.indexOf('function bindAcademyView(){'))+';return academy')(...keys.map(k=>ctx[k]));
  assert.equal(academyCatalogMarkup(ctx),baseline());
- const hub={prefs,t,cpp,programming,progress:()=>({done:3,total:40,pct:8}),cppContinuation:()=>({href:'#course=cpp',mode:'continue'}),continuationNote:()=>'<p>SYNTHETIC_RESUME</p>',recentProjectsMarkup:()=>'<section>SYNTHETIC_OWN_PROJECTS</section>',visualIcon:v=>v};
+ // Snapshot предшествует разрешённому открытию 1С. В прежнем planned-состоянии
+ // сохраняется полное byte-equivalence; новый вход проверяется отдельно.
+ const legacyProgramming=structuredClone(programming);legacyProgramming.tracks.find(x=>x.id==='onec').status='planned';
+ const hub={prefs,t,cpp,programming:legacyProgramming,progress:()=>({done:3,total:40,pct:8}),cppContinuation:()=>({href:'#course=cpp',mode:'continue'}),continuationNote:()=>'<p>SYNTHETIC_RESUME</p>',recentProjectsMarkup:()=>'<section>SYNTHETIC_OWN_PROJECTS</section>',visualIcon:v=>v};
  const dependencies={...hub,e,languageLabel,languageJourney,languageJourneyDialogMarkup,shell:body=>body};
  const names=Object.keys(dependencies),original=new Function(...names,before.slice(before.indexOf('function learningSearch('),before.indexOf('function practicumProgress('))+before.slice(before.indexOf('function programmingHub(){'),before.indexOf('function practicumData('))+';return programmingHub')(...names.map(k=>dependencies[k]));
  assert.equal(programmingHubMarkup(hub),original());
+ const active=programmingHubMarkup({...hub,programming}),legacy=original(),card=(html,id)=>{const matches=[...html.matchAll(new RegExp('<(a|button)\\b[^>]*data-language-id="'+id+'"[^>]*>[\\s\\S]*?<\\/\\1>','g'))];assert.equal(matches.length,1,id+' unique language card');return matches[0][0];};
+ const onec=card(active,'onec');assert.match(onec,/^<a\b/);assert.ok(onec.includes('href="#course=onec"'));assert.ok(onec.includes('<strong>'+e(languageLabel('onec',locale))+'</strong>'));
+ for(const track of programming.tracks.filter(x=>x.id!=='onec'))assert.equal(card(active,track.id),card(legacy,track.id),'Unchanged language '+track.id);
+ assert.equal((active.match(/class="programming-language-card available"/g)||[]).length,2,'Only C++ and approved onec are available');
 }
 console.log('PASS: Academy catalog and Code Hub byte-equivalent with accepted online RU/EN renderers');

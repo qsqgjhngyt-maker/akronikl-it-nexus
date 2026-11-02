@@ -5,12 +5,15 @@ export const CI_BASE='0eb4bdcbc05c73ae4f8a312e7bcc0f4279d91b13',PUBLISHED_SOURCE
 export const CI_PATHS=Object.freeze([
  '.github/workflows/academy-gold-cpp-module-1.yml','.github/workflows/academy-gold-cpp-module-2-preflight.yml','.github/workflows/academy-gold-cpp-module-3-publication.yml','.github/workflows/academy-gold-cpp-module-6-preflight.yml','.github/workflows/cpp-course-final.yml','.github/workflows/startup-intro-refresh.yml',
  'tools/current-platform-ci-route.mjs','tools/check-current-platform-course.mjs','tools/check-onec-preservation.mjs','tools/check-onec-regression.mjs',
- 'tests/helpers/public-fixture-path.mjs','tests/helpers/native-offline-fixture.mjs','tests/helpers/online-runtime-fixture.mjs','tests/startup-intro-launch-browser-check.mjs','tests/onec-shared-fixture-transport.test.mjs','tests/onec-platform-ci-route.test.mjs','tests/content-publication-route.test.mjs','tests/onec-historical-routing.test.mjs','tests/startup-intro-contract.test.mjs',
+ 'tests/helpers/public-fixture-path.mjs',"tests/academy-gold-module6-fixture.mjs","tests/academy-gold-module6-presentation-browser.mjs",'tests/helpers/native-offline-fixture.mjs','tests/helpers/online-runtime-fixture.mjs','tests/startup-intro-launch-browser-check.mjs','tests/onec-shared-fixture-transport.test.mjs','tests/onec-platform-ci-route.test.mjs','tests/content-publication-route.test.mjs','tests/onec-historical-routing.test.mjs','tests/startup-intro-contract.test.mjs','tests/shared-presentation-check.mjs',
  'docs/ru/03-content/onec/review-0305/CI_ROUTING_SCOPE.json','docs/ru/03-content/onec/pedagogy-v2-20261102/POST_MERGE_CI_ROUTING_RU.md'
 ]);
 export function platformCILoaderBash(){return `set -euo pipefail
 if [[ -z "\${NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA:-}" ]]; then
   export NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA=$(git show "$NEXUS_ROUTE_HEAD:.github/workflows/academy-gold-cpp-module-3-publication.yml" | tr -d '\\r' | sed -nE "s/^ +NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA: '([a-f0-9]{40})'$/\\1/p")
+fi
+if [[ "\${GITHUB_EVENT_NAME:-}" == "push" && "$NEXUS_ROUTE_BRANCH" == "feature/onec-dual-gold-foundation-20261030" ]]; then
+  export NEXUS_ROUTE_BASE=$(git rev-parse refs/remotes/origin/main)
 fi
 [[ "$NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA" =~ ^[0-9a-f]{40}$ ]]
 [[ "$NEXUS_ROUTE_BASE" =~ ^[0-9a-f]{40}$ ]]

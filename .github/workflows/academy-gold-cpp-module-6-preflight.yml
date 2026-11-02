@@ -55,6 +55,9 @@ jobs:
           if [[ -z "${NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA:-}" ]]; then
             export NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA=$(git show "$NEXUS_ROUTE_HEAD:.github/workflows/academy-gold-cpp-module-3-publication.yml" | tr -d '\r' | sed -nE "s/^ +NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA: '([a-f0-9]{40})'$/\1/p")
           fi
+          if [[ "${GITHUB_EVENT_NAME:-}" == "push" && "$NEXUS_ROUTE_BRANCH" == "feature/onec-dual-gold-foundation-20261030" ]]; then
+            export NEXUS_ROUTE_BASE=$(git rev-parse refs/remotes/origin/main)
+          fi
           [[ "$NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$NEXUS_ROUTE_BASE" =~ ^[0-9a-f]{40}$ ]]
           [[ "$NEXUS_ROUTE_HEAD" =~ ^[0-9a-f]{40}$ ]]
