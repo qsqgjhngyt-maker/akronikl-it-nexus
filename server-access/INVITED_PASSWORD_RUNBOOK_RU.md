@@ -163,7 +163,8 @@ WHERE status='active' AND id IN (
 проверки прошли локально. Runtime dependencies audit: 0; undici 7.30.1.
 Локальная среда: Node 24.18, Edge; Node 22 проверяет обновлённый source-only CI.
 Live production и физические Android/iPhone не проверялись. В отдельном staging
-проверены TLS и AUTH нового Mail.ru sender; провайдер отклонял DATA с SMTP 550.
+проверены TLS и AUTH нового Mail.ru sender; провайдер отклонил DATA с SMTP 550
+и категорией `spam-policy` (06:04 UTC). Rate limits при приёмке не сбрасывались.
 Успешная доставка пока не заявляется; требуется отдельная приёмка отправителя.
 
 
@@ -171,6 +172,6 @@ Live production и физические Android/iPhone не проверялис
 
 Подробная проверка: PASSWORD_SECURITY_REVIEW_RU.md. Миграции 0023 и 0024 дополнительно защищают immutable identity и email invite от старого Passkey path, включая отсутствие managed enrollment. Минимум пароля теперь 15 символов. Mail.ru SMTP и Resend используют отдельные секреты; производственные секреты в staging не копируются.
 
-Созданы отдельные Cloudflare Worker/D1, применены все 23 файла миграций до 0024. Локальный HTTPS BFF работает на Node 22.23.3. Capture-приёмка в настоящей новой облачной D1 пройдена: enrollment, session read, recovery, отказ старого пароля, logout. Настоящая доставка требует отдельного пароля приложения нового sender@example-mail.ru и подтверждения получения на test-recipient@example.com. Hosted Yandex ingress и физические мобильные устройства не объявляются проверенными.
+Созданы отдельные Cloudflare Worker/D1, применены все 23 файла миграций до 0024. Локальный HTTPS BFF работает на Node 22.23.3. Capture-приёмка в настоящей новой облачной D1 пройдена: enrollment, session read, recovery, отказ старого пароля, logout. Отдельный пароль приложения уже введён локально; настоящая доставка ожидает решения отказа Mail.ru `spam-policy` и подтверждения получения. Hosted Yandex ingress и физические мобильные устройства не объявляются проверенными.
 
 Старые workflow курсов теперь получают точную классификацию SHA diff. Только строгий auth allowlist передаётся identity workflow; courses/runtime/receipts/неизвестные файлы оставляют прежние gates обязательными. Новые проверки classifier и TLS SMTP включены в CI. Frozen release guards и исторические receipts не переписывались.
