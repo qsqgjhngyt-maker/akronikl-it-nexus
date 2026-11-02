@@ -52,7 +52,7 @@ async function envelope(request,env){
  if(!valid)deny('SERVICE_DENIED',401);
  let data;
  try{data=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes))}catch{deny('INVALID_INPUT')}
- if(!data||!['enroll','begin','finish','logout'].includes(data.op))deny('INVALID_INPUT');
+ if(!data||!['preflight','enroll','begin','finish','logout'].includes(data.op))deny('INVALID_INPUT');
  const saved=await sql(env.DB,'INSERT OR IGNORE INTO nexus_password_service_nonces(nonce,expires_at) VALUES(?1,?2)',nonce,new Date(Number(stamp)+30000).toISOString()).run();
  if(!saved.success||saved.meta?.changes!==1)deny('SERVICE_DENIED',401);
  await sql(env.DB,'DELETE FROM nexus_password_service_nonces WHERE nonce IN (SELECT nonce FROM nexus_password_service_nonces WHERE expires_at<?1 LIMIT 64)',now()).run();
@@ -83,6 +83,25 @@ function validDerived(salt,hash){
   Buffer.from(salt,'base64url').length===16&&Buffer.from(hash,'base64url').length===32;
 }
 
+async function preflight(env,data){
+ if(!exact(data,['op','inviteHash','emailHash','networkHash'])||
+    !isHash(data.inviteHash)||!isHash(data.emailHash)||!isHash(data.networkHash))
+  deny('INVALID_INPUT');
+ await rate(env,data);
+ const matched=await first(env.DB,[
+  'SELECT i.account_id FROM nexus_admin_invites i',
+  'JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash AND p.account_id=i.account_id',
+  'JOIN nexus_password_invite_emails e ON e.token_hash=i.token_hash AND e.account_id=i.account_id',
+  'JOIN nexus_alpha_members m ON m.account_id=i.account_id',
+  "JOIN account_subjects a ON a.id=i.account_id AND a.status='active'",
+  "WHERE i.token_hash=?1 AND e.email_hash=?2 AND i.kind='admin' AND i.state='ready'",
+  "AND m.state='invited' AND m.reserved_until>?3 AND p.consumed_at IS NULL AND p.expires_at>?3",
+  "AND NOT EXISTS(SELECT 1 FROM nexus_admin_grants g WHERE g.account_id=i.account_id)",
+  "AND NOT EXISTS(SELECT 1 FROM login_methods lm WHERE lm.account_id=i.account_id AND lm.kind='password')"
+ ].join(' '),data.inviteHash,data.emailHash,now());
+ if(!matched)deny('ENROLLMENT_REQUIRED',403);
+ return{ok:true};
+}
 async function enroll(env,data){
  if(!exact(data,['op','inviteHash','emailHash','username','displayName','saltB64','hashB64','networkHash'])||
     !isHash(data.inviteHash)||!isHash(data.emailHash)||!isHash(data.networkHash)||
@@ -206,7 +225,8 @@ async function logout(env,data){
 export async function handleInvitedPasswordService(request,env){
  try{
   const data=await envelope(request,env);
-  const result=data.op==='enroll'?await enroll(env,data):
+  const result=data.op==='preflight'?await preflight(env,data):
+   data.op==='enroll'?await enroll(env,data):
    data.op==='begin'?await begin(env,data):
    data.op==='finish'?await finish(env,data):await logout(env,data);
   return reply(result);
