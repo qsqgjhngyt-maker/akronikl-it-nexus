@@ -130,9 +130,13 @@ export function createInvitedPasswordHandler({env,fetchImpl=fetch}){
        !normalEmail(input.email)||!validPassword(input.password)||
        typeof input.username!=='string'||typeof input.displayName!=='string')
      throw Error('BAD_INPUT');
+    // Reject invalid or mismatched invitations before running memory-hard scrypt.
+    const inviteHash=sha(input.invitationToken),emailHash=sha(normalEmail(input.email));
+    const preflight=await service({op:'preflight',inviteHash,emailHash,networkHash});
+    if(preflight.ok!==true)throw Error('UPSTREAM');
     const salt=randomBytes(16),hash=await derive(input.password,salt);
     const data=await service({
-     op:'enroll',inviteHash:sha(input.invitationToken),emailHash:sha(normalEmail(input.email)),
+     op:'enroll',inviteHash,emailHash,
      username:input.username,displayName:input.displayName,
      saltB64:salt.toString('base64url'),hashB64:hash.toString('base64url'),networkHash
     });
