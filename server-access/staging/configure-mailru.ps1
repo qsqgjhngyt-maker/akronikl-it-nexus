@@ -12,10 +12,12 @@ $dialog.MaximizeBox=$false;$dialog.MinimizeBox=$false;$dialog.TopMost=$true
 $instruction=[System.Windows.Forms.Label]::new();$instruction.SetBounds(20,15,555,48)
 $instruction.Text='Введите отдельный пароль внешнего приложения «Nexus Staging». Не вводите обычный пароль от почты. Он сохранится только в закрытых настройках staging на этом компьютере.'
 $address=[System.Windows.Forms.TextBox]::new();$address.SetBounds(20,72,550,27);$address.Text=$Sender
+$address.ReadOnly=[bool]$Sender
 $passwordBox=[System.Windows.Forms.TextBox]::new();$passwordBox.SetBounds(20,116,550,27);$passwordBox.UseSystemPasswordChar=$true
 $submit=[System.Windows.Forms.Button]::new();$submit.SetBounds(345,169,110,32);$submit.Text='Подключить';$submit.DialogResult=[System.Windows.Forms.DialogResult]::OK
 $cancel=[System.Windows.Forms.Button]::new();$cancel.SetBounds(465,169,105,32);$cancel.Text='Отмена';$cancel.DialogResult=[System.Windows.Forms.DialogResult]::Cancel
 $dialog.Controls.AddRange(@($instruction,$address,$passwordBox,$submit,$cancel));$dialog.AcceptButton=$submit;$dialog.CancelButton=$cancel
+$dialog.Add_Shown({$passwordBox.Focus()})
 $answer=$dialog.ShowDialog()
 if ($answer -ne [System.Windows.Forms.DialogResult]::OK) { $dialog.Dispose();Write-Output 'MAIL_SETUP_CANCELLED_CAPTURE_UNCHANGED';exit 0 }
 $senderAddress=$address.Text.Trim();$appSecret=$passwordBox.Text;$passwordBox.Clear();$dialog.Dispose()

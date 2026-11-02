@@ -17,13 +17,13 @@ Production не используется. Cloud Worker/D1 отдельные; BF
 
 ## Новый отправитель Mail.ru
 
-Служебный ящик: `nexus-notify@mail.ru`. Получатель испытаний: `akronikl@mail.ru`.
+Служебный ящик: `<служебный-адрес>`. Получатель испытаний: `<тестовый-получатель>`.
 Пароль входа в почту приложению не нужен: создайте отдельный пароль приложения
 «Nexus Staging» по [инструкции Mail.ru](https://help.mail.ru/mail/login/mailer/).
 Настройка выполняется локально:
 
 ```powershell
-powershell.exe -NoProfile -STA -File server-access/staging/configure-mailru.ps1 -StateDirectory <private-state-directory> -Sender nexus-notify@mail.ru
+powershell.exe -NoProfile -STA -File server-access/staging/configure-mailru.ps1 -StateDirectory <private-state-directory> -Sender sender@example-mail.ru
 ```
 
 Окно маскирует пароль. Скрипт записывает его в закрытый файл staging с ACL
