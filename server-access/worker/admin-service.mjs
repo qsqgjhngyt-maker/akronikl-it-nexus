@@ -162,12 +162,27 @@ async function operation(env,value){
  if(path===BASE+'/invites'){
   if(!modern){validMutation(payload,['ttlMinutes']);payload.trialMinutes=null;}
   if(exact(payload,['requestId','ttlMinutes']))payload.trialMinutes='default';
-  validMutation(payload,['ttlMinutes','trialMinutes']);
+  // Password invites are explicitly email-bound and issued by a fresh-passkey admin.
+  const emailProvided=Object.hasOwn(payload,'email');
+  validMutation(payload,['ttlMinutes','trialMinutes',...(emailProvided?['email']:[])]);
+  if(emailProvided&&(!modern||env.INVITED_PASSWORD_ENABLED!=='true'))deny('INVALID_INPUT');
+  const normalizedEmail=emailProvided&&typeof payload.email==='string'?payload.email.trim().toLowerCase():null;
+  if(emailProvided&&(!normalizedEmail||normalizedEmail.length>254||
+   !/^[a-z0-9.!#$%&'*+/=?^_~{|}-]+@[a-z0-9.-]+\.[a-z]{2,63}$/.test(normalizedEmail)||
+   normalizedEmail.includes('..')||normalizedEmail.startsWith('.')||
+   normalizedEmail.includes('@.')||normalizedEmail.includes('.@')))deny('INVALID_INPUT');
   if(payload.trialMinutes!=='default'&&payload.trialMinutes!==null&&(!Number.isInteger(payload.trialMinutes)||payload.trialMinutes<60||payload.trialMinutes>525600))deny('INVALID_INPUT');
   if(payload.ttlMinutes!=='default'&&(!Number.isInteger(payload.ttlMinutes)||payload.ttlMinutes<10||payload.ttlMinutes>10080))deny('INVALID_INPUT');
   const defaults=await alphaSettings(env),ttlMinutes=payload.ttlMinutes==='default'?defaults.default_invitation_minutes:payload.ttlMinutes,trialMinutes=payload.trialMinutes==='default'?defaults.default_trial_minutes:payload.trialMinutes;
   const secret='npi_'+random(),hash=await sha(secret),id=crypto.randomUUID(),stamp=now(),expiresAt=new Date(Date.now()+ttlMinutes*60000).toISOString();
-  await atomic(env,[guard(env.DB,payload.requestId,'before','1'),query(env.DB,"INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,'Новый участник','active',?2,?2)",id,stamp),query(env.DB,"INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at,trial_minutes) VALUES(?1,'invited',?2,?3,?3,?4)",id,expiresAt,stamp,trialMinutes),query(env.DB,"INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)",hash,id,expiresAt),query(env.DB,"INSERT INTO nexus_admin_invites(token_hash,account_id,created_by,state,created_at) VALUES(?1,?2,?3,'ready',?4)",hash,id,actor.account_id,stamp),audit(env.DB,actor,payload.requestId,'invite',id,stamp)]);
+  const commands=[guard(env.DB,payload.requestId,'before','1'),
+   query(env.DB,"INSERT INTO account_subjects(id,display_name,status,created_at,updated_at) VALUES(?1,'Новый участник','active',?2,?2)",id,stamp),
+   query(env.DB,"INSERT INTO nexus_alpha_members(account_id,state,reserved_until,created_at,updated_at,trial_minutes) VALUES(?1,'invited',?2,?3,?3,?4)",id,expiresAt,stamp,trialMinutes),
+   query(env.DB,"INSERT INTO nexus_passkey_invites(token_hash,account_id,purpose,expires_at) VALUES(?1,?2,'bootstrap',?3)",hash,id,expiresAt),
+   query(env.DB,"INSERT INTO nexus_admin_invites(token_hash,account_id,created_by,state,created_at) VALUES(?1,?2,?3,'ready',?4)",hash,id,actor.account_id,stamp)];
+  if(emailProvided)commands.push(query(env.DB,'INSERT INTO nexus_password_invite_emails(token_hash,account_id,email_hash,created_at) VALUES(?1,?2,?3,?4)',hash,id,await sha(normalizedEmail),stamp));
+  commands.push(audit(env.DB,actor,payload.requestId,'invite',id,stamp));
+  await atomic(env,commands);
   return {ok:true,accountId:id,invitationToken:secret,expiresAt};
  }
  const match=new RegExp('^'+BASE+'/users/([A-Za-z0-9][A-Za-z0-9._:-]{0,159})/(action|purge-preview|purge|trial|invitation)$').exec(path);
