@@ -23,7 +23,7 @@ Production не используется. Cloud Worker/D1 отдельные; BF
 Настройка выполняется локально:
 
 ```powershell
-powershell.exe -NoProfile -STA -File server-access/staging/configure-mailru.ps1 -StateDirectory <private-state-directory> -Sender sender@example-mail.ru
+powershell.exe -NoProfile -STA -File server-access/staging/configure-mailru.ps1 -StateDirectory <private-state-directory>
 ```
 
 Окно маскирует пароль. Скрипт записывает его в закрытый файл staging с ACL
