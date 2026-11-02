@@ -1,4 +1,3 @@
-const ORIGIN='https://d5d8d3c2d1uhct6fmvle.3rspsmhh.apigw.yandexcloud.net';
 const loginForm=document.getElementById('login-form');
 const enrollForm=document.getElementById('enroll-form');
 const status=document.getElementById('status');
@@ -7,7 +6,7 @@ let running=false;
 const show=(message,error=false)=>{status.textContent=message;status.dataset.error=String(error)};
 function busy(value){
  running=value;
- for(const button of document.querySelectorAll('button[type=submit]'))button.disabled=value;
+ for(const button of document.querySelectorAll('button'))button.disabled=value;
 }
 const messages={
  INVALID_INPUT:'Проверьте заполненные поля.',
@@ -20,7 +19,7 @@ const messages={
  ENROLLMENT_UNCONFIRMED:'Регистрация не подтверждена. Проверьте свой доступ с администратором.'
 };
 async function post(action,body){
- if(location.origin!==ORIGIN)throw Error('PASSWORD_UNAVAILABLE');
+ if(location.protocol!=='https:')throw Error('PASSWORD_UNAVAILABLE');
  const controller=new AbortController();
  const timer=setTimeout(()=>controller.abort(),20000);
  try{
@@ -41,7 +40,10 @@ async function perform(task){
  busy(true);
  try{await task()}catch(error){
   show(messages[error?.message]||'Операция не выполнена. Проверьте подключение или обратитесь к администратору.',true);
- }finally{busy(false)}
+ }finally{
+  for(const id of ['login-password','new-password','confirm-password','recovery-password','recovery-confirm'])document.getElementById(id).value='';
+  busy(false);
+ }
 }
 const invite=new URLSearchParams(location.hash.slice(1)).get('invite');
 if(invite){
@@ -75,11 +77,13 @@ enrollForm.addEventListener('submit',event=>{
   await post('enroll',{
    invitationToken:document.getElementById('invitation').value,
    email:document.getElementById('enroll-email').value,
+   code:document.getElementById('email-code').value.trim(),
    username:document.getElementById('username').value,
    displayName:document.getElementById('display-name').value.trim(),
    password
   });
   document.getElementById('invitation').value='';
+  document.getElementById('email-code').value='';
   document.getElementById('new-password').value='';
   document.getElementById('confirm-password').value='';
   loginForm.querySelector('#login-email').value=document.getElementById('enroll-email').value;
@@ -87,8 +91,30 @@ enrollForm.addEventListener('submit',event=>{
   show('Приглашение принято! Пароль создан. Теперь войдите через форму выше.');
  });
 });
+const neutralMail='Если данные подходят для этой операции, письмо с кодом будет отправлено. Проверьте почту и папку «Спам».';
+document.getElementById('verify-email').addEventListener('click',()=>void perform(async()=>{
+ show('Отправляем код…');
+ await post('verify-email',{email:document.getElementById('enroll-email').value,invitationToken:document.getElementById('invitation').value});
+ show(neutralMail);
+}));
+document.getElementById('request-recovery').addEventListener('click',()=>void perform(async()=>{
+ show('Отправляем код…');
+ await post('recover',{email:document.getElementById('recovery-email').value});
+ show(neutralMail);
+}));
+document.getElementById('recovery-form').addEventListener('submit',event=>{
+ event.preventDefault();
+ void perform(async()=>{
+  const password=document.getElementById('recovery-password').value;
+  if(password!==document.getElementById('recovery-confirm').value){show('Пароли не совпадают.',true);return}
+  await post('reset',{email:document.getElementById('recovery-email').value,code:document.getElementById('recovery-code').value.trim(),password});
+  document.getElementById('recovery-code').value='';
+  document.getElementById('recovery-section').open=false;
+  show('Пароль изменён. Войдите с новым паролем.');
+ });
+});
 addEventListener('pagehide',()=>{
- for(const id of ['invitation','login-password','new-password','confirm-password']){
+ for(const id of ['invitation','email-code','login-password','new-password','confirm-password','recovery-code','recovery-password','recovery-confirm']){
   document.getElementById(id).value='';
  }
 });

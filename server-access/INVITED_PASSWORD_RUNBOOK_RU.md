@@ -1,81 +1,160 @@
-# AKRONIKL IT NEXUS — вход по почте для приглашённых
+# Email + пароль только для приглашённых — эксплуатация и откат
 
-Статус: SOURCE ONLY / NOT DEPLOYED. Основная ветка main и рабочая база не изменялись.
+Статус: source candidate в Draft PR #64. Production, main, облачные секреты и
+рабочая D1 не изменены. Исходная main: `d8721e06a2b1ac953aa18694c07559c62d388700`;
+продолжена существующая ветка `feature/invited-email-password-2026-11-02`.
+Не включать до staging и security review. Merge сам по себе не означает ввод в эксплуатацию.
 
-## Договорённость
-Администратор с действующей сессией Passkey выдаёт персональное приглашение,
-привязанное к электронной почте. Получатель устанавливает собственный пароль,
-а затем входит в Nexus через почту и пароль без Windows Hello/USB-ключа.
-Открытая регистрация, автоматическая выдача прав и password-вход владельца
-или администратора НЕ добавляются. Google/Яндекс и существующие ключи сохранены.
+## Сценарий
 
-## Порядок для администратора
-1. Войти в Nexus со своим Passkey и открыть раздел администрирования.
-2. Создать приглашение, указать электронную почту, срок действия ссылки и срок доступа.
-3. Скопировать выданную одноразовую ссылку, отправить её ТОЛЬКО в почтовый ящик,
-   указанный при создании приглашения.
-4. Участник вводит ту же почту, уникальный логин Nexus и парольную фразу не короче
-   12 символов. Пароль хранится только в виде защищённого scrypt-derived хеша
-   и не передаётся администратору.
-5. После активации войти через отдельную страницу с почтой и паролем.
-6. Отзыв/блокировка участника должны закрывать и его действующие сессии.
+1. Владелец/администратор с действующим грантом и свежей Passkey-сессией создаёт
+   персональное email-приглашение, выбирает срок ссылки и доступа и отправляет
+   ссылку получателю. Старые приглашения без email сохраняют свой Passkey-сценарий.
+2. Приглашённый открывает отдельную страницу `/account/password/`, вводит ту же
+   почту и запрашивает код. BFF отправляет код только после проверки приглашения
+   и хеша заранее привязанного email. Пересылка ссылки сама по себе владение почтой
+   не подтверждает: без кода из соответствующего ящика регистрация невозможна.
+3. Код действует 15 минут и используется один раз. Новый запрос заменяет прежний.
+   Приглашение также должно оставаться действующим, неиспользованным и неотозванным.
+4. Участник выбирает уникальный логин Nexus, имя и собственный пароль длиной
+   12–128 символов (до 512 UTF-8 байт). После регистрации входит по email + паролю.
+   Пароль не устанавливает и не получает администратор. Trial начинается при
+   первом подтверждённом входе, а не при создании пароля.
+5. «Забыли пароль?» отправляет отдельный код на ту же подтверждённую почту.
+   Смена пароля атомарно отзывает ВСЕ сессии и account tokens этого аккаунта,
+   инвалидирует начатые password challenges и требует нового входа.
+6. Блокировка/удаление из списка доступа и отзыв приглашения используют прежние
+   owner ACL и audit. Recovery не разблокирует аккаунт, не продлевает trial и
+   не создаёт грантов. Владелец/администратор этим способом входить не может.
 
-**Подтверждение владения почтой** на этом этапе предполагает доставку
-одноразовой ссылки ИМЕННО на заранее указанный почтовый ящик. Если ссылку
-отправить в чат, адрес сам по себе не подтверждён. Серверная отправка писем
-пока НЕ реализована; отправку выполняет администратор вручную.
+## Границы безопасности
 
-## Архитектура и защита
-- Ведущая запись пользователя — Nexus Account; отдельный password login method.
-- Node BFF: scrypt N=32768, r=8, p=3; соль 16 случайных байт.
-  Пароль в Cloudflare Worker не передаётся.
-- Worker: ограниченный временем и однократностью подписанный HMAC запрос,
-  проверка доказательства пароля по одноразовому challenge;
-  атомарная запись приглашения, логина, сессии.
-- D1 migration 0021 только добавляет таблицы и защитные триггеры.
-- Same-origin HTTPS, Secure HttpOnly SameSite=Strict cookie, CSRF/Origin check,
-  ограничения попыток по сети и почте, журнал без паролей и токенов.
-- Приглашения с email нельзя принять через WebAuthn; обычные старые
-  Passkey-приглашения не меняются.
-- Новые password-методы запрещены аккаунтам с администраторскими грантами.
-- Восстановление пароля по электронной почте ЕЩЁ НЕ РЕАЛИЗОВАНО.
-  Необходимо отдельно подключить почтового провайдера, одноразовые токены
-  сброса и отзыв действующих сессий. До этого обращаться к администратору.
-- Уже выданные ранее Passkey-приглашения не конвертируются: администратор
-  создаёт новое email-приглашение, старое отзывает.
+- Общий Nexus Account, реестр login_methods и серверные account_sessions.
+  Удалённый ресурс продолжает проверять account/device/method/admission/scope/ACL.
+  Для административных записей нужен свежий Passkey; пароль его не заменяет.
+- KDF на Node BFF: встроенный scrypt `N=32768,r=8,p=3`, соль 16 случайных байт,
+  результат 32 байта, максимум четыре KDF одновременно. Выбор совместим с Node 22
+  и одной из [конфигураций OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#scrypt).
+  Нагрузочный benchmark выполняется на целевом контейнере до включения.
+- Пароль передаётся только POST JSON по HTTPS на доверенный BFF. Worker получает
+  соль/верификатор при установке и challenge HMAC при входе. Все RPC подписаны
+  отдельным сервисным ключом; время ±30 секунд и сохранённый nonce защищают replay.
+- Email-коды: 256 бит случайности, в D1 только SHA-256. Код вводится вручную;
+  ни пароли, ни коды recovery не включаются в URL. Invitation token допускается
+  только во fragment первоначальной ссылки и сразу удаляется из history.
+- Cookie `__Host-nexus_session`, HttpOnly, Secure, SameSite=Strict, Path=/,
+  без Domain. Серверный idle TTL 30 минут, absolute TTL 12 часов. Секрет cookie
+  не возвращается JavaScript-клиенту и не сохраняется в browser storage.
+- Same-origin Host/Origin/Fetch Metadata, JSON + собственный write header,
+  лимит тела 4096 байт, запрет дополнительных полей и Authorization.
+- Общие лимиты в D1: 200 запросов/операцию/минуту, 30/сетевой bucket/минуту,
+  10/email/операцию/10 минут; письма дополнительно 3/email/15 минут. Нет постоянной
+  блокировки аккаунта из-за ошибок. Подмена X-Forwarded-For не меняет bucket:
+  используется адрес TCP peer. За Gateway это консервативный общий лимит;
+  индивидуальные IP требуют отдельного проверенного ingress-контракта.
+- Неизвестная почта и неподходящий доступ получают нейтральный ответ.
+  Запрос письма не раскрывает deliver/status провайдера, ожидает одинаковое окно
+  5,5 секунды после RPC при таймауте провайдера 5 секунд. Это не гарантия полного
+  равенства сетевых таймингов. Ошибку доставки можно повторить с учётом лимита.
+- Audit содержит account ID, действие и время; без почты, пароля, кода, verifier,
+  proof и session secret. Журналы неизменяемы. Не включать logging request/response
+  bodies на Gateway/BFF/Worker и mail API. Метрики доставки — только агрегаты.
+- D1 guard + триггеры проверяют состояние ВНУТРИ batch: отзыв, expiry, disable,
+  credential version и однократность. Удаление истёкших challenges сохраняет
+  строки, на которые ссылаются подтверждённые login receipts.
 
-## Перед публикацией
-1. Обязательное security review и staging-test всех сценариев и регрессий.
-2. Убедиться, что на сервере есть предыдущие миграции 0005,0009,0012,0020;
-   проверить 0021 на копии D1. Не применять её без бэкапа/разрешения.
-3. Создать отдельный случайный секрет INVITED_PASSWORD_SERVICE_KEY,
-   только в Worker secrets и защищённом Lockbox для BFF; не публиковать.
-4. Worker flags: ALPHA_ADMISSION_ENABLED=true; INVITED_PASSWORD_ENABLED=true.
-   BFF flags: INVITED_PASSWORD_PROXY_ENABLED=true, PRIVATE_GATEWAY_CONFIRMED=true,
-   INVITED_PASSWORD_SERVICE_KEY, INVITED_PASSWORD_ORIGIN (same HTTPS Nexus origin),
-   INVITED_PASSWORD_WORKER_ORIGIN (private HTTPS Worker).
-   Без flags обе стороны fail closed.
-5. В Yandex API Gateway добавить те же защищённые IAM-only BFF routes:
-   GET /account/password/
-   GET /account/password/password.js
-   POST /api/v2/account/password/enroll
-   POST /api/v2/account/password/login
-   POST /api/v2/account/password/logout
-   НИКОГДА не публиковать internal Worker route
-   /api/v2/account/internal/invited-password напрямую.
-   Logout требует согласованный защищённый passwordIngressContract
-   (проверенный Cookie ingress, как для существующих приватных API).
-6. Проверить на staging: приглашение, email binding, установка пароля, вход,
-   неверный пароль, блокировка пользователя, повторное использование
-   приглашения, выход, отсутствие административных прав, trial expiration,
-   работа на Windows без Hello, Android и iOS, отсутствие регрессии Google/Яндекс.
-7. Обновлять сначала безопасный backend/Gateway и затем frontend.
-   Не включать production без отдельного подтверждения владельца.
+## Конфигурация staging
 
-## Проверки и откат
-Синтетические тесты: server-access/check-invited-password.mjs
-Сборки: server-access/build-worker.mjs; server-access/build-bff.mjs.
-Для тестов Node 22 требуется экспериментальный node:sqlite.
-Rollback: выключить INVITED_PASSWORD_ENABLED и INVITED_PASSWORD_PROXY_ENABLED,
-вернуть предыдущую BFF/Frontend версию, сохранить таблицы и данные пользователей.
-Не восстанавливать старую D1 поверх новых записей.
+Worker: `ALPHA_ADMISSION_ENABLED=true`, `INVITED_PASSWORD_ENABLED=true`,
+`INVITED_PASSWORD_SERVICE_KEY` в Worker secrets. BFF:
+
+| Переменная | Назначение |
+|---|---|
+| INVITED_PASSWORD_PROXY_ENABLED | `true` после готовности staging |
+| PRIVATE_GATEWAY_CONFIRMED | `true` только для закрытого IAM container |
+| INVITED_PASSWORD_SERVICE_KEY | Тот же отдельный случайный секрет, из Lockbox |
+| INVITED_PASSWORD_ORIGIN | Точный HTTPS origin Nexus, без slash/path/query |
+| INVITED_PASSWORD_WORKER_ORIGIN | Точный HTTPS origin Worker |
+| INVITED_PASSWORD_MAIL_ENABLED | `true` после проверки отправителя |
+| RESEND_API_KEY | Sending-only ключ проверенного домена из secret manager |
+| INVITED_PASSWORD_MAIL_FROM | Один подтверждённый адрес отправителя |
+
+Встроен адаптер Resend: фиксированный `POST https://api.resend.com/emails`,
+redirect запрещён; [официальная спецификация](https://github.com/resend/resend-openapi/blob/main/resend.yaml).
+Реальная доставляемость, SPF/DKIM/DMARC, egress и доступность провайдера в целевом
+окружении требуют staging-проверки. Production-ключи здесь не создавались,
+реальные письма не отправлялись. Другой провайдер подключается через заменяемый
+`sendMail` адаптер с тем же контрактом; не подменять URL переменной из запроса.
+
+Gateway: GET `/account/password/`, `/account/password/password.js` и POST
+`/api/v2/account/password/{verify-email,enroll,login,recover,reset,logout}`
+на тот же IAM-only BFF. Internal Worker RPC не является публичным браузерным API.
+Для logout нужен защищённый `passwordIngressContract=v2` с двусторонней сверкой
+Cookie; v3 только по отдельно принятому ingress gate. Общий существующий logout
+Nexus также принимает password-сессию через обычную проверку login method.
+Проверить передачу Set-Cookie и последующий `/api/v2/account` через реальный Gateway.
+
+## Миграции и включение
+
+1. Зафиксировать точные текущие SHA frontend, BFF image digest/revision, Worker
+   version, Gateway spec, flags и ссылки secret versions. Сохранить их как rollback
+   manifest. Проверить, что старая версия реально запускается с добавочной схемой.
+2. Экспортировать D1, проверить восстановление на ОТДЕЛЬНОЙ базе. Не использовать
+   рабочие персональные данные в логах и тестовых отчётах.
+3. На isolated/staging D1 применить существующую цепочку 0001–0020 (0017 в проекте
+   нет), затем 0021 и 0022. Проверить PRAGMA foreign_key_check и контрольные количества
+   аккаунтов, login methods, проектов и сессий до/после. 0022 сохраняет прежние
+   credentials; неподтверждённые строки из старого draft не получают доступ.
+4. Развернуть Worker/BFF с флагами OFF, затем Gateway и новую страницу; сохранить
+   Google/Яндекс/Passkey маршруты и существующие секреты. Проверить fail-closed.
+5. Включить только staging. Пройти полный сценарий и негативные проверки из тестов,
+   реальную почту, обычный logout, revoke, trial expiry, два параллельных запроса,
+   Windows без Hello, Android/iOS, PWA, существующие OAuth и Passkey.
+6. Проверить CI на точном commit, runtime Node 22 и pinned production image,
+   нагрузку KDF и лимиты общего Gateway; провести отдельное security review.
+7. После этих проверок представить владельцу конкретные revision/digest и rollback
+   manifest. Production deployment/миграции — только после отдельного разрешения.
+
+## Откат
+
+1. Отключить BFF proxy/mail flags и Worker INVITED_PASSWORD_ENABLED; закрыть новые
+   маршруты записи. Existing OAuth/Passkey оставить доступными.
+2. Отозвать password-сессии, выданные до отключения: выключение флага само по себе
+   не отзывает уже выданную общую Nexus session. Операторский SQL для проверки
+   на staging, затем отдельного согласования применения к production:
+
+```sql
+UPDATE account_sessions SET status='revoked',
+ revoked_at=COALESCE(revoked_at,strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+ revoked_reason='password-feature-rollback'
+WHERE status='active' AND id IN (
+ SELECT s.session_id FROM session_login_methods s
+ JOIN login_methods l ON l.id=s.login_method_id AND l.kind='password'
+);
+```
+
+3. Вернуть сохранённые BFF/Worker/Frontend/Gateway revisions, проверить OAuth,
+   Passkey, account read и ACL. Старые email-приглашения нельзя принимать как
+   Passkey: оставить исправленный admission guard/совместимый Worker, если такие
+   приглашения уже были выданы; при полном старом Worker отозвать их перед откатом.
+4. НЕ удалять таблицы 0021/0022 и НЕ накатывать старый D1 backup поверх новых
+   пользовательских данных. Сохранить credentials/audit для безопасного возврата.
+5. Полное физическое удаление password-аккаунта пока требует отдельного schema
+   review и политики хранения audit. Block/remove/revoke работают штатно.
+   Purge старых аккаунтов без password-строк продолжает работать; новые защищены
+   отказом PURGE_SCHEMA_REVIEW_REQUIRED, без частичного удаления данных.
+
+## Проверки
+
+`node --experimental-sqlite server-access/check-invited-password.mjs` — 21 группа,
+реальная схема SQLite, подписанные BFF RPC, реальные scrypt, mail stub и гонки.
+`node server-access/build-worker.mjs` и `build-bff.mjs` — сборки без deployment.
+`node --experimental-sqlite server-access/check-invited-password-workerd.mjs` —
+5 групп в реальном локальном workerd/D1, все миграции, параллельный replay, recovery.
+`node server-access/check-invited-password-browser.mjs` — desktop/390px browser,
+перехваченные synthetic HTTPS ответы, без реальных пользователей и WebAuthn.
+В Windows можно задать NEXUS_BROWSER_CHANNEL=msedge; CI устанавливает Chromium.
+13 прежних identity/invitation/session регрессионных наборов и 4 worker-network
+проверки прошли локально. Runtime dependencies audit: 0; undici 7.30.1.
+Локальная среда: Node 24.18, Edge; Node 22 проверяет обновлённый source-only CI.
+Live production/реальные почтовые ящики/физические Android и iPhone не проверялись.

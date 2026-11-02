@@ -3,13 +3,14 @@
 // per-attempt HMAC challenge and issues ordinary Nexus Account sessions.
 import {createHash,createHmac,randomBytes,scrypt} from 'node:crypto';
 import {promisify} from 'node:util';
-import {isIP} from 'node:net';
 import {readV2CookieContext} from './gateway-cookie-context.mjs';
+import {passwordMailConfigured,sendPasswordMail} from './password-mail.mjs';
+import {setTimeout as delay} from 'node:timers/promises';
 
 const KDF=promisify(scrypt);
 const INTERNAL='/api/v2/account/internal/invited-password';
 const PREFIX='/api/v2/account/password/';
-const METHODS=new Map([['enroll','enroll'],['login','login'],['logout','logout']]);
+const METHODS=new Set(['enroll','login','logout','verify-email','recover','reset']);
 const sha=v=>createHash('sha256').update(v).digest('hex');
 const reply=(res,status,data,cookies=[])=>{
  const body=JSON.stringify(data);
@@ -79,7 +80,7 @@ async function derive(password,salt){
   return await KDF(password,salt,32,{N:32768,r:8,p:3,maxmem:96*1024*1024});
  }finally{busy--}
 }
-export function createInvitedPasswordHandler({env,fetchImpl=fetch}){
+export function createInvitedPasswordHandler({env,fetchImpl=fetch,sendMail=sendPasswordMail,wait=delay}){
  return async(req,res)=>{
   if(!req.url?.startsWith(PREFIX))return false;
   const action=req.url.slice(PREFIX.length);
@@ -94,13 +95,14 @@ export function createInvitedPasswordHandler({env,fetchImpl=fetch}){
   if(req.headers.host!==origin.host||count(req,'host')!==1||req.headers.authorization||
      count(req,'origin')!==1||req.headers.origin!==origin.origin||
      req.headers['sec-fetch-site']&&req.headers['sec-fetch-site']!=='same-origin'||
-     req.headers['content-type']!=='application/json'||
+     req.headers['content-type']!=='application/json'||count(req,'content-type')!==1||
      req.headers['x-nexus-password-write']!=='1'||count(req,'x-nexus-password-write')!==1)
    return reply(res,403,{error:{code:'ORIGIN_REJECTED'}});
   // Do not trust claimed client identity. IP is used only for a rate-limit scope.
-  const forwarded=String(req.headers['x-forwarded-for']||'').split(',').at(-1).trim();
+  // Unsigned forwarded-for is client-controlled. A shared gateway address gives a
+  // conservative shared limit until a reviewed authenticated IP contract exists.
   const networkHash=createHmac('sha256',env.INVITED_PASSWORD_SERVICE_KEY)
-   .update(isIP(forwarded)?forwarded:String(req.socket?.remoteAddress||'unknown')).digest('hex');
+   .update(String(req.socket?.remoteAddress||'unknown')).digest('hex');
   async function service(data){
    const body=JSON.stringify(data),timestamp=String(Date.now()),nonce=randomBytes(16).toString('hex');
    const canonical=['v1','POST',INTERNAL,timestamp,nonce,sha(body)].join('\n');
@@ -124,8 +126,33 @@ export function createInvitedPasswordHandler({env,fetchImpl=fetch}){
   }
   try{
    const input=await boundedJSON(req);
+   if(action==='verify-email'||action==='recover'){
+    if(!isObject(input,action==='verify-email'?['email','invitationToken']:['email'])||!normalEmail(input.email)||
+      action==='verify-email'&&!/^npi_[A-Za-z0-9_-]{43}$/.test(input.invitationToken||''))throw Error('BAD_INPUT');
+    if(!passwordMailConfigured(env))throw Error('PASSWORD_UNAVAILABLE');
+    const code=randomBytes(32).toString('base64url'),email=normalEmail(input.email);
+    const result=await service({op:action==='verify-email'?'mail-enroll':'mail-recover',emailHash:sha(email),networkHash,tokenHash:sha(code),
+     ...(action==='verify-email'?{inviteHash:sha(input.invitationToken)}:{})});
+    if(result.ok!==true||typeof result.deliver!=='boolean')throw Error('UPSTREAM');
+    // Same status/body and bounded delivery-time window for existing/unknown email.
+    const started=Date.now();
+    if(result.deliver)try{await sendMail({env,to:email,code,purpose:action==='verify-email'?'enroll':'recover'})}catch{/* neutral; code is never returned */}
+    await wait(Math.max(0,5500-(Date.now()-started)));
+    return reply(res,200,{ok:true});
+   }
+   if(action==='reset'){
+    if(!isObject(input,['email','code','password'])||!normalEmail(input.email)||
+       !/^[A-Za-z0-9_-]{43}$/.test(input.code||'')||!validPassword(input.password))throw Error('BAD_INPUT');
+    const emailHash=sha(normalEmail(input.email)),tokenHash=sha(input.code);
+    await service({op:'reset-check',emailHash,networkHash,tokenHash});
+    const salt=randomBytes(16),hash=await derive(input.password,salt);
+    const result=await service({op:'reset',emailHash,networkHash,tokenHash,saltB64:salt.toString('base64url'),hashB64:hash.toString('base64url')});
+    if(result.ok!==true)throw Error('UPSTREAM');
+    return reply(res,200,{ok:true},[cookie('',0)]);
+   }
    if(action==='enroll'){
-    if(!isObject(input,['invitationToken','email','password','username','displayName'])||
+    if(!isObject(input,['invitationToken','email','password','username','displayName','code'])||
+       !/^[A-Za-z0-9_-]{43}$/.test(input.code||'')||
        typeof input.invitationToken!=='string'||!/^npi_[A-Za-z0-9_-]{43}$/.test(input.invitationToken)||
        !normalEmail(input.email)||!validPassword(input.password)||
        typeof input.username!=='string'||typeof input.displayName!=='string')
@@ -136,7 +163,7 @@ export function createInvitedPasswordHandler({env,fetchImpl=fetch}){
     if(preflight.ok!==true)throw Error('UPSTREAM');
     const salt=randomBytes(16),hash=await derive(input.password,salt);
     const data=await service({
-     op:'enroll',inviteHash,emailHash,
+     op:'enroll',inviteHash,emailHash,tokenHash:sha(input.code),
      username:input.username,displayName:input.displayName,
      saltB64:salt.toString('base64url'),hashB64:hash.toString('base64url'),networkHash
     });

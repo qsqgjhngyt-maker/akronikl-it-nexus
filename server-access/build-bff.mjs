@@ -6,7 +6,7 @@ const root=new URL('./',import.meta.url),out=new URL('./image/',root);
 const absWorkingDir=fileURLToPath(new URL('../',root));
 const undiciLicense=await readFile(new URL('node_modules/undici/LICENSE',root),'utf8');
 await mkdir(new URL('bff/',out),{recursive:true});await mkdir(new URL('public/',out),{recursive:true});
-await build({absWorkingDir,entryPoints:[fileURLToPath(new URL('bff/server.mjs',root))],outfile:fileURLToPath(new URL('bff/server.mjs',out)),bundle:true,platform:'node',format:'esm',target:'node22',banner:{js:'/*! undici 7.29.1\n'+undiciLicense.replaceAll('*/','* /')+' */\n'+"import {createRequire as __nexusRequireFactory} from 'node:module'; const require=__nexusRequireFactory(import.meta.url);"},logLevel:'warning'});
+await build({absWorkingDir,entryPoints:[fileURLToPath(new URL('bff/server.mjs',root))],outfile:fileURLToPath(new URL('bff/server.mjs',out)),bundle:true,platform:'node',format:'esm',target:'node22',banner:{js:'/*! undici 7.30.1\n'+undiciLicense.replaceAll('*/','* /')+' */\n'+"import {createRequire as __nexusRequireFactory} from 'node:module'; const require=__nexusRequireFactory(import.meta.url);"},logLevel:'warning'});
 await buildNetworkBootstrap();
 for(const name of ['index.html','entry.html','entry.css','password.html'])await copyFile(new URL('public/'+name,root),new URL('public/'+name,out));
 await copyFile(new URL('../assets/brand-mark.svg',root),new URL('public/brand-mark.svg',out));
