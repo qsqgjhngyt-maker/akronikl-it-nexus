@@ -3,7 +3,7 @@ import https from 'node:https';
 import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {join} from 'node:path';
-import {fetch} from 'undici';
+import {Agent,fetch} from 'undici';
 import {createInvitedPasswordHandler} from '../bff/invited-password.mjs';
 import {sendPasswordMail,passwordMailConfigured} from '../bff/password-mail.mjs';
 import {validateStage,stagingRPC} from './contract.mjs';
@@ -26,7 +26,8 @@ const sendMail=async message=>{
    await sendPasswordMail(message);
    await writeFile(join(stateDir,'delivery-status.json'),JSON.stringify({status:'accepted',provider:s.mailProvider,at:new Date().toISOString()}));
   }catch(error){
-   await writeFile(join(stateDir,'delivery-status.json'),JSON.stringify({status:'failed',provider:s.mailProvider,at:new Date().toISOString()}));throw error;
+   await writeFile(join(stateDir,'delivery-status.json'),JSON.stringify({status:'failed',provider:s.mailProvider,
+    deadlineAborted:message.signal?.aborted===true,code:error.cause?.code,responseCode:error.cause?.responseCode,category:error.cause?.category,at:new Date().toISOString()}));throw error;
   }
   return;
  }
@@ -34,7 +35,20 @@ const sendMail=async message=>{
  // Private operator file, never served as a resource and never written to logs.
  await writeFile(join(stateDir,'mail.private.json'),JSON.stringify(mail,null,2)+'\n',{mode:0o600});
 };
-const password=createInvitedPasswordHandler({env,fetchImpl:fetch,sendMail});
+// The operator host has no reliable IPv6 route. Keep TLS validation and the
+// signed target check; constrain only this staging connection to IPv4.
+const workerDispatcher=new Agent({connect:{family:4}});
+const password=createInvitedPasswordHandler({env,fetchImpl:async(url,options)=>{
+ if(url!==s.workerOrigin+'/api/v2/account/internal/invited-password')throw Error('STAGING_WORKER_TARGET_REJECTED');
+ const started=Date.now();
+ try{
+  const r=await fetch(url,{...options,dispatcher:workerDispatcher});
+  await writeFile(join(stateDir,'worker-connection-status.json'),JSON.stringify({httpStatus:r.status,elapsedMs:Date.now()-started,at:new Date().toISOString()}));
+  return r;
+ }catch(error){
+  await writeFile(join(stateDir,'worker-connection-status.json'),JSON.stringify({failure:error.name,networkCode:error.cause?.code,elapsedMs:Date.now()-started,at:new Date().toISOString()}));throw error;
+ }
+},sendMail});
 const assets=new Map([
  ['/account/password/',{type:'text/html',body:(await readFile(new URL('./public/password.html',import.meta.url),'utf8')).replace('Вход для приглашённых','Staging · Вход для приглашённых')}],
  ['/account/password/password.js',{type:'text/javascript',body:await readFile(new URL('./public/password.js',import.meta.url),'utf8')}]

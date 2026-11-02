@@ -21,26 +21,35 @@ export async function sendPasswordMail({env,to,code,purpose,signal,fetchImpl=saf
   '\n\nОдноразовый код (действует 15 минут):\n'+code+
   '\n\nВведите его на уже открытой странице Nexus. Код нельзя передавать другим людям.'+
   '\nЕсли вы не делали запрос, проигнорируйте это письмо. Ваш доступ не изменён.';
- const deadline=signal?AbortSignal.any([signal,AbortSignal.timeout(5000)]):AbortSignal.timeout(5000);
+ const deadline=signal?AbortSignal.any([signal,AbortSignal.timeout(10000)]):AbortSignal.timeout(10000);
  if(env.INVITED_PASSWORD_MAIL_PROVIDER==='mailru'){
   // Fixed implicit TLS endpoint; plaintext SMTP and STARTTLS downgrade are absent.
   // The abort signal destroys the TLS socket, including an active SMTP exchange.
   const transport=createTransport({host:'smtp.mail.ru',port:465,secure:true,
    auth:{user:env.MAILRU_SMTP_USER,pass:env.MAILRU_SMTP_PASSWORD},logger:false,debug:false,
-   connectionTimeout:3000,greetingTimeout:3000,socketTimeout:5000,disableFileAccess:true,disableUrlAccess:true,
+   connectionTimeout:5000,greetingTimeout:5000,socketTimeout:10000,disableFileAccess:true,disableUrlAccess:true,
    tls:{servername:'smtp.mail.ru',rejectUnauthorized:true,minVersion:'TLSv1.2'},
    getSocket(_options,callback){
     let completed=false;
     const done=(error,result)=>{if(!completed){completed=true;callback(error,result)}};
     try{
-     const socket=connectTLS({host:'smtp.mail.ru',port:465,servername:'smtp.mail.ru',rejectUnauthorized:true,minVersion:'TLSv1.2',signal:deadline});
+     const socket=connectTLS({host:'smtp.mail.ru',port:465,family:4,servername:'smtp.mail.ru',rejectUnauthorized:true,minVersion:'TLSv1.2',signal:deadline});
      socket.once('secureConnect',()=>done(null,{connection:socket,secured:true}));
      socket.once('error',()=>done(Error('SMTP_CONNECT_FAILED')));
     }catch{done(Error('SMTP_CONNECT_FAILED'))}
    }});
   try{
    await transport.sendMail({from:env.INVITED_PASSWORD_MAIL_FROM,to,subject,text,disableFileAccess:true,disableUrlAccess:true});
-  }catch{throw Error('MAIL_DELIVERY_FAILED')}
+  }catch(error){
+   // Preserve only bounded technical categories, never the SMTP response text.
+   const code=['EAUTH','ETIMEDOUT','ECONNECTION','ESOCKET','ETLS','EENVELOPE','EMESSAGE'].includes(error.code)?error.code:'SMTP_FAILED';
+   const responseCode=Number.isInteger(error.responseCode)&&error.responseCode>=200&&error.responseCode<=599?error.responseCode:null;
+   const response=typeof error.response==='string'?error.response.slice(0,4096):'';
+   const category=/spam|спам/i.test(response)?'spam-policy':/rate.?limit|quota|too many/i.test(response)?'provider-limit':
+    /user not found|no such user|invalid mailbox/i.test(response)?'recipient-unavailable':
+    /access.*disabled|account.*blocked|account.*disabled/i.test(response)?'sender-disabled':'unspecified';
+   throw Error('MAIL_DELIVERY_FAILED',{cause:{code,responseCode,category}});
+  }
   finally{transport.close()}
   return;
  }

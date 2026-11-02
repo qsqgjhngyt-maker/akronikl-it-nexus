@@ -206,7 +206,7 @@ try{
  await check('Provider failure and worker failure are neutral and include database time in response budget',async()=>{
   const waits=[];
   const broken=createInvitedPasswordHandler({env,wait:async ms=>waits.push(ms),fetchImpl:async()=>new Response(JSON.stringify({error:{code:'PASSWORD_UNAVAILABLE'}}),{status:503,headers:{'content-type':'application/json'}})});
-  assert.deepEqual((await post('recover',{email:i.email},{},broken)).data,{ok:true});assert.ok(waits[0]>5000&&waits[0]<=5500);
+  assert.deepEqual((await post('recover',{email:i.email},{},broken)).data,{ok:true});assert.ok(waits[0]>15000&&waits[0]<=15500);
   const failingProvider=createInvitedPasswordHandler({env,wait:async ms=>waits.push(ms),fetchImpl:async()=>new Response(JSON.stringify({ok:true,deliver:true}),{headers:{'content-type':'application/json'}}),sendMail:async({signal})=>{assert.ok(signal instanceof AbortSignal);throw Error('SENSITIVE_PROVIDER_DETAIL')}});
   const r=await post('recover',{email:i.email},{},failingProvider);assert.equal(r.status,200);assert.deepEqual(r.data,{ok:true});assert.ok(!JSON.stringify(r).includes('SENSITIVE_PROVIDER_DETAIL'));
  });

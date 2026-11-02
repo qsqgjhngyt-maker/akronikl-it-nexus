@@ -19,6 +19,16 @@ test('Mail.ru setup requires matching sender and dedicated password; provider ca
  assert.equal(passwordMailConfigured(env),true);
  for(const delta of [{MAILRU_SMTP_PASSWORD:''},{MAILRU_SMTP_USER:'sender@gmail.com'},{INVITED_PASSWORD_MAIL_FROM:'other@mail.ru'},{INVITED_PASSWORD_MAIL_PROVIDER:'unknown'}])assert.equal(passwordMailConfigured({...env,...delta}),false);
 });
+
+test('SMTP refusal diagnostics discard provider text and any echoed secrets',async()=>{
+ const marker='DO_NOT_PROPAGATE_'+env.MAILRU_SMTP_PASSWORD;
+ const createTransport=()=>({sendMail:async()=>{throw Object.assign(Error(marker),{code:'EMESSAGE',responseCode:550,response:'550 spam message rejected '+marker})},close(){}});
+ await assert.rejects(()=>sendPasswordMail({env,to:'recipient@example.com',code:'D'.repeat(43),purpose:'recover',createTransport}),error=>{
+  assert.equal(error.message,'MAIL_DELIVERY_FAILED');
+  assert.deepEqual(error.cause,{code:'EMESSAGE',responseCode:550,category:'spam-policy'});
+  assert.ok(!JSON.stringify(error).includes(marker));return true;
+ });
+});
 test('Real TLS SMTP exchange sends code in message, keeps strict TLS and aborts stalled delivery',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'nexus-smtp-test-')),keyPath=join(dir,'test.key'),certPath=join(dir,'test.crt');
  const openssl=process.platform==='win32'?'C:/Program Files/Git/usr/bin/openssl.exe':'openssl';
@@ -45,7 +55,7 @@ test('Real TLS SMTP exchange sends code in message, keeps strict TLS and aborts 
  server.on('tlsClientError',()=>{});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const connectTLS=options=>{
-  assert.equal(options.host,'smtp.mail.ru');assert.equal(options.port,465);assert.equal(options.rejectUnauthorized,true);assert.equal(options.minVersion,'TLSv1.2');
+  assert.equal(options.host,'smtp.mail.ru');assert.equal(options.port,465);assert.equal(options.family,4);assert.equal(options.rejectUnauthorized,true);assert.equal(options.minVersion,'TLSv1.2');
   return connect({...options,host:'127.0.0.1',port:server.address().port,servername:'localhost',ca:cert});
  };
  try{

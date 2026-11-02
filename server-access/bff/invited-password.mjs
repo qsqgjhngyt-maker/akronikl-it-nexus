@@ -135,14 +135,14 @@ export function createInvitedPasswordHandler({env,fetchImpl=safeFetch,sendMail=s
     const code=randomBytes(32).toString('base64url'),email=normalEmail(input.email),started=Date.now();
     // One budget includes database lookup AND provider time, hiding the conditional
     // lookup/write latency as well as delivery latency. Timeout is neutral.
-    const signal=AbortSignal.timeout(5000);
+    const signal=AbortSignal.timeout(15000);
     try{
      const result=await service({op:action==='verify-email'?'mail-enroll':'mail-recover',emailHash:sha(email),networkHash,tokenHash:sha(code),
       ...(action==='verify-email'?{inviteHash:sha(input.invitationToken)}:{})},signal);
      if(result.ok!==true||typeof result.deliver!=='boolean')throw Error('UPSTREAM');
      if(result.deliver&&!signal.aborted)await sendMail({env,to:email,code,purpose:action==='verify-email'?'enroll':'recover',signal});
     }catch(error){if(error.message==='RATE_LIMITED')throw error;/* no email/account/provider oracle */}
-    await wait(Math.max(0,5500-(Date.now()-started)));
+    await wait(Math.max(0,15500-(Date.now()-started)));
     return reply(res,200,{ok:true});
    }
    if(action==='reset'){
