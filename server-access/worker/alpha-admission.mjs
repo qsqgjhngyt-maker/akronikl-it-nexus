@@ -33,6 +33,9 @@ export async function managedInvitation(env,tokenHash){
  const settings=await alphaSettings(env);
  const row=await query(env.DB,"SELECT i.*,p.expires_at,p.consumed_at,m.state AS member_state FROM nexus_admin_invites i JOIN nexus_passkey_invites p ON p.token_hash=i.token_hash JOIN nexus_alpha_members m ON m.account_id=i.account_id WHERE i.token_hash=?1",tokenHash).first();
  if(!row||row.state!=='ready'||row.member_state!=='invited'||row.consumed_at||row.expires_at<=new Date().toISOString())throw new AlphaError('ENROLLMENT_REQUIRED');
+ // Email/password invitations cannot be silently converted to Passkey accounts.
+ if(env.INVITED_PASSWORD_ENABLED==='true'&&await query(env.DB,'SELECT 1 ok FROM nexus_password_invite_emails WHERE token_hash=?1',tokenHash).first())
+  throw new AlphaError('ENROLLMENT_REQUIRED');
  if(row.kind==='public'&&(env.PUBLIC_PASSKEY_REGISTRATION_ENABLED!=='true'||settings.registration_mode!=='open'))throw new AlphaError('REGISTRATION_CLOSED');
  return row;
 }
