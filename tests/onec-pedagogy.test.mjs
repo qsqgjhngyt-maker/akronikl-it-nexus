@@ -2,6 +2,16 @@ import test from'node:test';import assert from'node:assert/strict';import fs fro
 import{loadConsolidatedBundle}from'../tools/check-onec-consolidation.mjs';import{loadPedagogyLedger,validatePedagogyLessons,pedagogyDigest}from'../tools/check-onec-pedagogy.mjs';
 const b=loadConsolidatedBundle(),ledger=loadPedagogyLedger(),sha=x=>createHash('sha256').update(x).digest('hex');
 
+test('A6: реальные права чтения/отказа записи и сохранность DT/обновления отделены от RLS и аккаунта Nexus',()=>{
+ const d='docs/ru/03-content/onec/pedagogy-v2-20261102/',r=JSON.parse(fs.readFileSync(d+'A6_ADMINISTRATION_RESULT.json'));
+ assert.equal(r.status,'AUTOMATED PASS');assert.equal(r.runnerSha256,sha(fs.readFileSync('tools/check-onec-pedagogy-administration.ps1')));assert.equal(r.moduleSourceSha256,sha(fs.readFileSync(d+'engineering/a6-administration-common.bsl')));
+ for(const k of['onlyOwnSyntheticInfobase','separateDtRestoredCopy','originalFileUnchanged','oldIdentitiesAndFieldsPreserved','readerRejectedValidWritePreservedData'])assert.equal(r[k],true);
+ for(const k of['rlsTested','nexusIAMTested','productionAccountUsed','passwordsUsed','osAuthenticationUsed','training1508Verified','allLearnerGuiStepsVerified','progressWritten','codeVerifiedServer'])assert.equal(r[k],false);
+ assert.equal(r.originalControlMinutes,75);assert.equal(r.changedCopyControlMinutes,90);assert.equal(r.checks.length,10);for(const c of['reader-actual-document-read','reader-valid-update-rejected-no-change','new-description-written-reread','diagnosis-business-rejection-preserved-45'])assert.ok(r.checks.includes(c));
+ for(const f of r.fixture)assert.equal(sha(fs.readFileSync('courses/onec-education/native/service-desk-administration-v2/'+f.path)),f.sha256);
+ for(const l of b.lessons.filter(l=>l.moduleId==='1c-enterprise.a6'))assert.equal(l.nativeEvidence.evidence,d+'A6_ADMINISTRATION_RESULT.json');
+});
+
 test('P5: реальные запись/отказ/движения/rollback связаны с восемью случаями и точными исходниками конфигурации',()=>{
  const d='docs/ru/03-content/onec/pedagogy-v2-20261102/',r=JSON.parse(fs.readFileSync(d+'PEDAGOGY_DOCUMENT_RESULT.json'));
  assert.equal(r.status,'AUTOMATED PASS');assert.equal(r.cases.length,8);assert.equal(r.runnerSha256,sha(fs.readFileSync('tools/check-onec-pedagogy-documents.ps1')));assert.equal(r.commonModuleMetadataSha256,sha(fs.readFileSync(d+'engineering/document-common-module.xml')));assert.equal(new Set(r.cases.map(c=>c.topicId)).size,4);assert.equal(r.onlyOwnSyntheticInfobase,true);

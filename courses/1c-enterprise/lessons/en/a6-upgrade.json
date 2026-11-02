@@ -6,152 +6,196 @@
   "topicId": "1c-enterprise.a6.topic-3",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Updating a copy",
-  "minutes": 120,
-  "goal": "Test an upgrade on a copy using a control dataset and rollback plan.",
+  "title": "Update a copy: add a service description and retain earlier data",
+  "minutes": 180,
+  "goal": "Add an optional text service description in a restored copy and verify old requests, the new field and recovery.",
   "prerequisites": [
     "1c-enterprise.a 5; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
   ],
   "outcomes": [
-    "Test an upgrade on a copy using a control dataset and rollback plan.",
-    "Record v1 controls and a backup.",
-    "Upgrade only a new copy."
+    "Separate platform upgrades from configuration changes.",
+    "Apply one additive attribute without removing old objects.",
+    "Compare before/after and retain a recovery route."
   ],
   "sections": [
     [
       "Platform and solution updates differ",
       "A new executable platform version and a new configuration are different changes. Record both versions, compatibility mode and purpose before and after. Do not blame every error on “old 1C” without reproduction. Start with one configuration change on the same platform to avoid mixing two factors.",
-      "Begin administration with responsibility boundaries: operators correct input, developers algorithms, and administrators the permitted environment/recovery. Being able to execute a command does not authorize consequences. Record purpose, source, destination and prohibited changes before acting; record outcome and preservation afterwards. This turns potentially dangerous clicks into a controlled experiment with an explicit acceptance condition."
+      "Only the configuration changes, on the same platform. Add service УчебноеОписание: String(100), optional. This does not rename Наименование. Keep the A4 customer note and A5 table. Do not load a full new CF over customized work."
     ],
     [
       "A control dataset protects meaning",
       "Prepare an old request, a new request, zero duration and rejected input. Reconcile report and references before upgrading. Repeat the same set afterwards and add the new capability’s scenario. Opening the main window is insufficient: lost fields or broken filters may appear only when old data is read.",
-      "A full backup restores data, not merely earlier code. Preserve platform/configuration versions, control identities and totals. Restore only to a fresh destination without someone else’s work. File existence is insufficient: open the restored instance and confirm accepted state survives another session. Recovery evidence names what was checked rather than implying every function was covered."
+      "Record service codes and control-request references/numbers/minutes30/45. Preserve the source and DT. Add one attribute, save configuration, then apply it to the database. The change list must match the new service field; unexpected removals require stopping before application."
     ],
     [
       "Verify return beforehand",
       "Back up before changing and verify restoration separately. Once an upgrade changes data, replacing the executable alone need not restore earlier state. Keep source and upgraded copies with distinct paths and identities. Preserve failed copies until the cause and safe protocol have been recorded.",
-      "Permission tests must allow required work while denying excess. Login failure alone is not an object-permission test. Pair each negative attempt with an allowed control in a suitable environment. Record training limitations separately: one-user login does not prove multi-user separation or authorize production use. Keep credentials out of logs and use synthetic roles/data."
+      "The old service’s new field starts empty. Write Учебная проверка A6 and reopen. Earlier references and75 should remain. If using the already changed90-minute copy, explicitly record90 as its baseline; comparing different initial states does not establish update preservation."
     ],
     [
       "Apply based on results",
       "The summary lists passed, failed and untested workflows plus rollback. Untested exchange or permissions do not inherit PASS from unrelated checks. The teaching task delivers a tested candidate rather than publishing it. Real working-system changes require their owner and an agreed maintenance window even after successful tests.",
-      "Preserve observations before testing hypotheses. Changing version, role and data together destroys causal explanation. Hand off minimal reproduction and sanitized classification while keeping private logs restricted. Repeat the original case and preservation control after fixing. Record failed attempts before cleanup: they can explain accepted limitations and prevent another unsafe experiment."
+      "Prepare recovery before modifying: retained source and a verified DT. Loading an earlier CF does not guarantee reverting data after structural changes. Open the preserved source or restore its DT into another new base and compare controls. This exercise authorizes no production publication."
     ]
   ],
   "diagram": "a6-2",
   "walkthrough": [
     {
-      "action": "Record v1 controls and a backup.",
-      "expected": "Data, versions and a test-restored copy exist."
+      "action": "Before — Keys and75",
+      "expected": "Source/DT retained."
     },
     {
-      "action": "Upgrade only a new copy.",
-      "expected": "Old and new workflows are reconciled in a table."
+      "action": "Metadata — One added field",
+      "expected": "Old attributes kept."
     },
     {
-      "action": "Return through another freshly restored instance.",
-      "expected": "v1 controls are restored; upgraded work is not destroyed."
+      "action": "Apply — Ctrl+S thenF7",
+      "expected": "Only the copy updated."
+    },
+    {
+      "action": "Reconcile — Description and old requests",
+      "expected": "New text and earlier75 verified."
     }
   ],
   "examples": [
     {
-      "title": "Main example",
-      "source": "v1: поле Номер; v2: +Приоритет; старая заявка R1",
-      "expected": "R1 retains its identity; the new field has an agreed state.",
-      "explanation": "Accept upgrades by workflows and data, not only a version label."
+      "title": "An additive change",
+      "source": "Услуги: + УчебноеОписание, String(100), optional\nOlder requests:30/45 →75 before and after",
+      "expected": "Existing fields/references remain while the new description persists separately.",
+      "explanation": "Check the added feature together with previous scenarios.",
+      "trace": [
+        [
+          "Before",
+          "Keys and75",
+          "Source/DT retained."
+        ],
+        [
+          "Metadata",
+          "One added field",
+          "Old attributes kept."
+        ],
+        [
+          "Apply",
+          "Ctrl+S thenF7",
+          "Only the copy updated."
+        ],
+        [
+          "Reconcile",
+          "Description and old requests",
+          "New text and earlier75 verified."
+        ]
+      ]
     },
     {
-      "title": "Boundary case",
-      "source": "Выполните возврат через новый восстановленный экземпляр.",
-      "expected": "v1 controls are restored; upgraded work is not destroyed.",
-      "explanation": "Accept upgrades by workflows and data, not only a version label."
+      "title": "Unexpected removal in the change list",
+      "source": "Expected a new description; an old field is marked for removal.",
+      "expected": "Stop application and compare source with the proposed change.",
+      "explanation": "A successful launch cannot compensate for lost structure.",
+      "trace": [
+        [
+          "Plan",
+          "Add one field",
+          "Small scope."
+        ],
+        [
+          "Observation",
+          "Unexpected removal",
+          "Stop before application."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Record v1 controls and a backup.",
-      "criteria": "Data, versions and a test-restored copy exist."
+      "level": "Basic",
+      "task": "Record platform/configuration versions and the single change scope.",
+      "criteria": "The two update kinds are distinguished."
     },
     {
       "level": "Applied",
-      "task": "Upgrade only a new copy.",
-      "criteria": "Old and new workflows are reconciled in a table."
+      "task": "Add the field in a copy, persist the description and reread older requests.",
+      "criteria": "One new attribute, retained identities/duration and persisted text."
     },
     {
       "level": "Advanced",
-      "task": "Find an old-filter regression and reject acceptance with evidence.",
-      "criteria": "Before/after identities and a reproducible fix are recorded."
+      "task": "Verify a separate pre-change restore and explain CF-only rollback limits.",
+      "criteria": "Recovery is supported by data comparisons, not old source alone."
     }
   ],
   "lab": {
-    "title": "Test an upgrade on a copy using a control dataset and rollback plan.",
-    "environment": "Official 1C 8.3.27.x, new training-service-desk copy. Command labels depend on the configuration interface; verify outcomes against data. Training-edition limits are explicit.",
+    "title": "One new field, earlier references and controls retained",
+    "environment": "Own original service desk; synthetic records only. No real Nexus accounts, Windows identities or external services are changed.",
     "steps": [
-      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
-      "Record v1 controls and a backup.",
-      "Upgrade only a new copy.",
-      "Return through another freshly restored instance.",
-      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+      "Use a freshly restored30/45=75 copy from the DT before the previous edit. Record versions/path/control keys and retain the source.",
+      "Add УчебноеОписание: String, length100, no fill check. Keep earlier names/types/objects.",
+      "Review changes and update only the copy. Stop for removals or unrelated objects.",
+      "Find the old service’s empty description, write Учебная проверка A6, save and reopen. Compare service code, requests30/45, total75 and retained customer note.",
+      "Open the original path or restore the earlier DT into another empty base and compare pre-change controls. Keep the updated copy."
     ],
     "expected": [
-      "Data, versions and a test-restored copy exist.",
-      "Old and new workflows are reconciled in a table.",
-      "v1 controls are restored; upgraded work is not destroyed."
+      "An exact75 baseline is identified.",
+      "One optional field added.",
+      "Field added without deleting prior structure.",
+      "Description persists; references/controls agree.",
+      "Pre-change state is accessible and new work retained."
     ],
     "evidence": [
-      "Input/expected/actual/case-ID table, platform build and source hashes.",
-      "R1 retains its identity; the new field has an agreed state.",
-      "Work-copy provenance, negative result and source preservation before/after."
+      "Actual versions and distinct own-copy paths; synthetic identities and before/after values.",
+      "Allowed/refused cases, completed controls and explicit untested scope; no secrets."
     ],
-    "negative": "v1 controls are restored; upgraded work is not destroyed."
+    "negative": "Use the second worked case to identify the unsafe or unproved condition. Never perform destructive restoration over existing work."
   },
   "mistakes": [
     [
-      "Treat an expected value as an observed execution.",
-      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+      "Platform upgrading is conflated with adding one field.",
+      "Record both versions and change one factor per experiment."
     ],
     [
-      "Modify the source infobase while experimenting.",
-      "Work on a new copy and verify the source by reopening it separately."
+      "The description replaces a populated field’s name/type.",
+      "Add a distinct optional attribute while retaining prior structure."
+    ],
+    [
+      "An older CF is treated as guaranteed data rollback.",
+      "Verify an earlier DT restore in another base and compare values."
     ]
   ],
   "quiz": [
     {
-      "question": "Platform and configuration upgrades are",
+      "question": "УчебноеОписание is",
       "options": [
-        "Always one action",
-        "Different changes",
-        "List sorting"
-      ],
-      "correct": 1,
-      "explanation": "Record versions and consequences separately."
-    },
-    {
-      "question": "Is opening the main window sufficient?",
-      "options": [
-        "Yes",
-        "For every upgrade",
-        "No"
-      ],
-      "correct": 2,
-      "explanation": "Old data and workflows need checks."
-    },
-    {
-      "question": "An untested exchange receives",
-      "options": [
-        "NOT RUN",
-        "Automatic PASS",
-        "Verified authorship"
+        "A distinct optional attribute",
+        "A replacement for Наименование",
+        "A new account"
       ],
       "correct": 0,
-      "explanation": "Status follows actual checks."
+      "explanation": "This is additive."
+    },
+    {
+      "question": "Unexpected removal requires",
+      "options": [
+        "Rushing",
+        "Stopping and comparison",
+        "Declaring acceptance"
+      ],
+      "correct": 1,
+      "explanation": "The change must match the intended scope."
+    },
+    {
+      "question": "Old-data verification needs",
+      "options": [
+        "The new field only",
+        "The filename only",
+        "Fresh reads of earlier identities/values"
+      ],
+      "correct": 2,
+      "explanation": "A new interface alone does not establish preservation."
     }
   ],
   "review": [
-    "Test an upgrade on a copy using a control dataset and rollback plan.",
-    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+    "What changes in this experiment?",
+    "Why test the old set?",
+    "What is needed to recover data?"
   ],
   "sources": [
     "training",
@@ -160,23 +204,175 @@
     "documents",
     "form-elements"
   ],
-  "contentRevision": "1.0.0-rc.1",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.full.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_FULL_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "executionProfile": "official-1c-file",
   "nativeEvidenceStatus": "NOT RUN",
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
     "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "1c-enterprise",
+    "topicId": "1c-enterprise.a6.topic-3",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
   },
   "theoryContext": {
     "kind": "shared-module-reasoning",
     "moduleId": "1c-enterprise.a6",
     "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "infobase",
+      "configuration",
+      "designer",
+      "dt",
+      "cf",
+      "rollback",
+      "reference",
+      "attribute",
+      "self-report"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Official installed 1C Enterprise/Designer of your own separate training copy",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "baseline",
+          "title": "Record versions and controls",
+          "where": "Help → About; own study notes",
+          "action": "Use a freshly restored30/45=75 copy from the DT before the previous edit. Record versions/path/control keys and retain the source.",
+          "why": "Avoid conflating update with the earlier90-minute edit.",
+          "expected": "An exact75 baseline is identified.",
+          "troubleshooting": "If using90, explicitly retain90 as the baseline and compare it consistently.",
+          "before": "Earlier A5 work/provenance and a verified separate-copy route are retained."
+        },
+        {
+          "id": "attribute",
+          "title": "Add the service description",
+          "where": "Copy Designer → Catalogs → Услуги → Data → Attributes",
+          "action": "Add УчебноеОписание: String, length100, no fill check. Keep earlier names/types/objects.",
+          "why": "The added field must not replace the model.",
+          "expected": "One optional field added.",
+          "troubleshooting": "If your earlier attempt already added it, inspect rather than duplicate.",
+          "before": "An exact75 baseline is identified."
+        },
+        {
+          "id": "apply",
+          "title": "Apply the expected change only",
+          "where": "Designer → Ctrl+S → F7",
+          "action": "Review changes and update only the copy. Stop for removals or unrelated objects.",
+          "why": "Separate metadata saving from database application.",
+          "expected": "Field added without deleting prior structure.",
+          "troubleshooting": "Do not confirm an unexpected list merely to continue.",
+          "before": "One optional field added."
+        },
+        {
+          "id": "verify",
+          "title": "Write the new value and reread older data",
+          "where": "Copy Enterprise → Услуги and control requests",
+          "action": "Find the old service’s empty description, write Учебная проверка A6, save and reopen. Compare service code, requests30/45, total75 and retained customer note.",
+          "why": "Test the added feature and older data separately.",
+          "expected": "Description persists; references/controls agree.",
+          "troubleshooting": "An explicit custom form may need the field element; modify only a form copy following module5.",
+          "before": "Field added without deleting prior structure."
+        },
+        {
+          "id": "return",
+          "title": "Demonstrate recovery",
+          "where": "Preserved source or a new base restored from the earlier DT",
+          "action": "Open the original path or restore the earlier DT into another empty base and compare pre-change controls. Keep the updated copy.",
+          "why": "Recovery must restore data meaning.",
+          "expected": "Pre-change state is accessible and new work retained.",
+          "troubleshooting": "Preserve the failed/successful copy and result before any cleanup.",
+          "before": "Description persists; references/controls agree."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Добавочное изменение",
+        "en": "Explore the example: An additive change"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "До",
+            "en": "Before"
+          },
+          "detail": {
+            "ru": "Ключи и75 → Источник/DT сохранены.",
+            "en": "Keys and75 → Source/DT retained."
+          }
+        },
+        {
+          "label": {
+            "ru": "Метаданные",
+            "en": "Metadata"
+          },
+          "detail": {
+            "ru": "Одно новое поле → Старые реквизиты оставлены.",
+            "en": "One added field → Old attributes kept."
+          }
+        },
+        {
+          "label": {
+            "ru": "Применение",
+            "en": "Apply"
+          },
+          "detail": {
+            "ru": "Ctrl+S, затемF7 → Обновлена только копия.",
+            "en": "Ctrl+S thenF7 → Only the copy updated."
+          }
+        },
+        {
+          "label": {
+            "ru": "Сверка",
+            "en": "Reconcile"
+          },
+          "detail": {
+            "ru": "Описание и прежние заявки → Новая запись и старые75 проверены.",
+            "en": "Description and old requests → New text and earlier75 verified."
+          }
+        }
+      ]
+    }
+  },
+  "nativeCaseIds": [
+    "old-service-new-field-empty",
+    "old-note-retained",
+    "new-description-written-reread"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/A6_ADMINISTRATION_RESULT.json",
+    "caseIds": [
+      "old-service-new-field-empty",
+      "old-note-retained",
+      "new-description-written-reread"
+    ],
+    "scope": "Own separate DT-restored infobase; old identities/header/note preserved, additive service description, permitted read/rejected valid update in two synthetic profiles, independent 75/90 controls, retained value after business refusal",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "rlsTested": false,
+    "nexusIAMTested": false,
+    "productionAccountUsed": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
   }
 }
