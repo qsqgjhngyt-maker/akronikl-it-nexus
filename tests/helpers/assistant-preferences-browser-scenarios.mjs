@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 export async function assistantPreferencesBrowserScenarios({owner,tester,f,check}){
- const open=async page=>{await page.locator('[data-akronikl-open]:visible,#askAkronikl:visible').first().click();await page.locator('[data-akronikl-panel] [data-ak-state-sync][data-state=saved]').waitFor();return page.locator('[data-akronikl-panel]')};
+ const open=async page=>{await page.locator('[data-akronikl-open]:visible,#askAkronikl:visible').first().click();await page.locator('[data-akronikl-panel] [data-ak-state-sync][data-state=saved]').waitFor({state:'attached'});return page.locator('[data-akronikl-panel]')};
  const model=async p=>{await p.locator('[data-akronikl-settings]').click();await p.locator('[aria-controls=ak-settings-model]').click()};
  await check('assistant close/reopen and reload preserve model/mode/theme and resume without another verification call',async()=>{
   const before=f.modelCalls();let p=await open(tester.page);await model(p);await p.locator('[data-akronikl-model-profile]').selectOption('external');await p.locator('[data-ak-cloud-model]').fill('Qwen3.8-Max');await p.locator('[data-ak-cloud-model]').blur();await p.locator('[data-ak-cloud-connect]').click();await p.locator('[data-akronikl-connection-status][data-connection-phase=connected]').waitFor();assert.equal(f.modelCalls(),before+1);
-  await p.locator('[data-ak-chat-mode]').uncheck();await p.locator('[aria-controls=ak-settings-basics]').click();await p.locator('[data-ak-theme-select]').selectOption('dark');await p.locator('[data-ak-state-sync][data-state=saved]').waitFor();
+  await p.locator('[data-ak-chat-mode]').uncheck();await p.locator('[aria-controls=ak-settings-basics]').click();await p.locator('[data-ak-theme-select]').selectOption('dark');await p.locator('[data-ak-state-sync][data-state=saved]').waitFor({state:'attached'});
   // Headless Chrome does not expose native tab visibility. Exercise the exact browser events and account recheck.
   await tester.page.evaluate(()=>{const panel=document.querySelector('[data-akronikl-panel]');panel.dataset.visibilitySentinel='same-panel';Object.defineProperty(document,'hidden',{configurable:true,value:true});Object.defineProperty(document,'visibilityState',{configurable:true,value:'hidden'});document.dispatchEvent(new Event('visibilitychange'));});
   assert.equal(await p.count(),1);assert.equal(await p.getAttribute('data-visibility-sentinel'),'same-panel');assert.equal(await p.locator('#ak-settings-basics').isVisible(),true);

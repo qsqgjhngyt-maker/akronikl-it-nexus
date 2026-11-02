@@ -3,6 +3,7 @@ import {publicContent} from './content-service.mjs';
 import {handleAdminService} from './admin-service.mjs';
 import {handlePasskeyService} from './passkey-service.mjs';
 import {handleOAuthService} from './oauth-service.mjs';
+import {handleInvitedPasswordService} from './invited-password-service.mjs';
 import {handleCloudSessionRequest} from './cloud-session-service.mjs';
 import {handleAkroniklService} from './akronikl-service.mjs';
 import {handleFeedbackRequest} from './feedback-service.js';
@@ -20,6 +21,8 @@ export default {async fetch(request,env,context){
  if(path==='/api/v2/cloud/internal')return handleCloudSessionRequest(request,env,context);
  if(path.startsWith('/api/v2/cloud/'))return reply(404,'NOT_FOUND');
  if(path==='/api/v2/account/internal/oauth')return handleOAuthService(request,env);
+ if(path==='/api/v2/account/internal/invited-password')return handleInvitedPasswordService(request,env);
+ if(path.startsWith('/api/v2/account/password/'))return reply(404,'NOT_FOUND');
  if(path.startsWith('/api/v2/account/oauth/'))return reply(404,'NOT_FOUND');
  if(path==='/api/v2/account/internal/passkey')return handlePasskeyService(request,env);
  if(path.startsWith('/api/v2/account/passkey/'))return reply(404,'NOT_FOUND');

@@ -1,3 +1,4 @@
+import './onec-microphone-status.test.mjs';
 import test from'node:test';import assert from'node:assert/strict';import{createMicrophone}from'../akronikl/experience/microphone.js';
 class Recognition{static instances=[];processLocally=false;constructor(){Recognition.instances.push(this)}start(){this.onstart?.()}stop(){this.onend?.()}abort(){this.aborted=true}emit(text,{final=true}={}){const r=[{transcript:text}];r.isFinal=final;this.onresult({resultIndex:0,results:[r]});}}
 function setup(){let current=true;const results=[],states=[];const mic=createMicrophone({windowRef:{SpeechRecognition:Recognition},isCurrent:()=>current,onState:s=>states.push(s.state),onTranscript:x=>results.push(x)});return{mic,results,states,invalidate:()=>{current=false;}};}

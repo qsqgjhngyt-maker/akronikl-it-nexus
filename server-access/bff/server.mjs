@@ -2,6 +2,7 @@ import http from 'node:http';
 import {createContentHandler} from './content.mjs';
 import {readFileSync} from 'node:fs';
 import {createPasskeyHandler} from './passkey.mjs';
+import {createInvitedPasswordHandler} from './invited-password.mjs';
 import {createCombinedHandler} from './routes.mjs';
 import {createEntryGateHandler} from './entry-gate.mjs';
 import {createCloudSessionHandler} from './cloud-session.mjs';
@@ -11,7 +12,7 @@ import {createNexusCloudHandler} from './akronikl-cloud.mjs';
 import {createPublishedAssets} from './published-assets.mjs';
 const akronikl=await createNexusCloudHandler({env:process.env});
 import {createStudioBffHandler} from '../../studio-build/bff.mjs';
-const passkey=createPasskeyHandler({env:process.env}),existing=createCombinedHandler({env:process.env});
+const passkey=createPasskeyHandler({env:process.env}),password=createInvitedPasswordHandler({env:process.env}),existing=createCombinedHandler({env:process.env});
 const publishedAssets=createPublishedAssets({env:process.env});
 const rawLandingBody=readFileSync(new URL('../public/entry.html',import.meta.url));
 const landingBody=publishedAssets.decorateEntryHTML?Buffer.from(publishedAssets.decorateEntryHTML(rawLandingBody.toString('utf8'))):rawLandingBody;
@@ -28,6 +29,8 @@ const assets=new Map([
  ['/account/entry/entry.js',['text/javascript; charset=utf-8',readFileSync(new URL('../public/entry.js',import.meta.url))]],
  ['/account/entry/galaxy.js',['text/javascript; charset=utf-8',readFileSync(new URL('../public/galaxy.js',import.meta.url))]],
  ['/account/entry/oauth-client.js',['text/javascript; charset=utf-8',readFileSync(new URL('../public/oauth-client.js',import.meta.url))]],
+ ['/account/password/',['text/html; charset=utf-8',readFileSync(new URL('../public/password.html',import.meta.url))]],
+ ['/account/password/password.js',['text/javascript; charset=utf-8',readFileSync(new URL('../public/password.js',import.meta.url))]],
  ['/account/access/',['text/html; charset=utf-8',readFileSync(new URL('../public/index.html',import.meta.url))]],
  ['/account/access/page.js',['text/javascript; charset=utf-8',readFileSync(new URL('../public/page.js',import.meta.url))]],
  ['/account/access/passkey-client.js',['text/javascript; charset=utf-8',readFileSync(new URL('../public/passkey-client.js',import.meta.url))]]
@@ -44,13 +47,18 @@ const server=http.createServer({maxHeaderSize:16384},async(req,res)=>{
   if(await control(req,res))return;
   if(await cloud(req,res))return;
   if(await oauth(req,res))return;
+  if(await password(req,res))return;
   if(req.url?.startsWith('/api/v2/account/passkey/'))return await passkey(req,res);
   if(req.url==='/account/entry')req.url='/account/entry/';
   if(req.url==='/account/access')req.url='/account/access/';
+  if(req.url==='/account/password')req.url='/account/password/';
   if(assets.has(req.url)){
    const[contentType,content]=assets.get(req.url);
-   if(req.method!=='GET'||process.env.PASSKEY_PROXY_ENABLED!=='true'||req.headers.host!==new URL(process.env.PASSKEY_ORIGIN).host){res.writeHead(404,{'cache-control':'no-store','vary':'*'});res.end();return}
-   res.writeHead(200,{'content-type':contentType,'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; media-src 'self' https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/ https://storage.yandexcloud.net/akronikl-p4q-public-intro-20261029-5c91ede9/intro-media/cinematic-v6/; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",'permissions-policy':'publickey-credentials-create=(self), publickey-credentials-get=(self)'});res.end(content);return;
+   const isPasswordAsset=req.url.startsWith('/account/password/');
+   const assetEnabled=isPasswordAsset?process.env.INVITED_PASSWORD_PROXY_ENABLED==='true':process.env.PASSKEY_PROXY_ENABLED==='true';
+   const origin=isPasswordAsset?process.env.INVITED_PASSWORD_ORIGIN:process.env.PASSKEY_ORIGIN;
+   if(req.method!=='GET'||!assetEnabled||!origin||req.headers.host!==new URL(origin).host){res.writeHead(404,{'cache-control':'no-store','vary':'*'});res.end();return}
+   res.writeHead(200,{'content-type':contentType,'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer','content-security-policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; media-src 'self' https://qsqgjhngyt-maker.github.io/akronikl-it-nexus/intro-media/ https://storage.yandexcloud.net/akronikl-p4q-public-intro-20261029-5c91ede9/intro-media/cinematic-v6/; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",'strict-transport-security':'max-age=31536000','permissions-policy':isPasswordAsset?'publickey-credentials-create=(), publickey-credentials-get=()':'publickey-credentials-create=(self), publickey-credentials-get=(self)'});res.end(content);return;
   }
   await existing(req,res);
  }catch{if(!res.headersSent)res.writeHead(500,{'cache-control':'no-store','vary':'*'});res.end()}

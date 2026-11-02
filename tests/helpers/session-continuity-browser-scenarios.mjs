@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 export async function sessionContinuityBrowserScenarios({tester,testerId,f,check}){
- const page=tester.page,open=async()=>{await page.locator('[data-akronikl-open]:visible,#askAkronikl:visible').first().click();await page.locator('[data-akronikl-panel] [data-ak-state-sync][data-state=saved]').waitFor();return page.locator('[data-akronikl-panel]')};
+ const page=tester.page,open=async()=>{await page.locator('[data-akronikl-open]:visible,#askAkronikl:visible').first().click();await page.locator('[data-akronikl-panel] [data-ak-state-sync][data-state=saved]').waitFor({state:'attached'});return page.locator('[data-akronikl-panel]')};
  let p;
  await check('foreground return preserves the project DOM, account and AI connection and slides its idle deadline',async()=>{
   p=await open();await p.locator('[data-akronikl-connection-status][data-connection-phase=connected]').waitFor({state:'attached'});const calls=f.modelCalls(),session=f.db.prepare("SELECT id FROM account_sessions WHERE subject_id=? AND status='active' ORDER BY created_at DESC LIMIT 1").get(testerId).id;

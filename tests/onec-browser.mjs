@@ -1,3 +1,4 @@
+import './onec-assistant-routing-browser.mjs';
 import{checkFinalAssessments}from'./onec-final-browser.mjs';
 import{launchOnecBrowser,ONEC_BROWSER_ENGINE,goOnec,createOfflineOnecContext}from'./onec-browser-engine.mjs';
 import assert from'node:assert/strict';import fs from'node:fs/promises';import path from'node:path';import http from'node:http';import{pathToFileURL,fileURLToPath}from'node:url';
