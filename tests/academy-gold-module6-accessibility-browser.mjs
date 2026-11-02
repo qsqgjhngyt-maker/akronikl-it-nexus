@@ -12,7 +12,7 @@ const files={...gold.laboratory.referenceFiles,'src/gui.cpp':gold.laboratory.ref
 const check=async(name,fn)=>{await fn();checks.push({name,status:'PASS'});console.log('PASS '+name);};
 try{
  await p.goto(f.origin+'/#view=home');await p.locator('.visual-home').waitFor();await f.waitReady();
- await p.evaluate(async({prefix,files})=>{const{createProject}=await import(prefix+'/project-studio/project-store.js'),{taskFlowApplicationTemplate}=await import(prefix+'/project-studio/application-template.js');createProject({...taskFlowApplicationTemplate(),id:'synthetic-qt-accessibility',files:Object.entries(files).map(([path,content])=>({path,content,languageId:'cpp'}))})},{prefix,files});
+ await p.evaluate(async({prefix,files})=>{const{createProject}=await import(prefix+'/project-studio/project-store.js'),{taskFlowApplicationTemplate}=await import(prefix+'/project-studio/application-template.js');const{withProjectWriter}=await import(prefix+'/project-studio/project-writer.js');await withProjectWriter(()=>{createProject({...taskFlowApplicationTemplate(),id:'synthetic-qt-accessibility',files:Object.entries(files).map(([path,content])=>({path,content,languageId:'cpp'}))})})},{prefix,files});
  await p.evaluate(()=>location.hash='#view=project-studio&project=synthetic-qt-accessibility');await p.locator('#editor').waitFor();await p.waitForFunction(()=>!document.querySelector('#runCode')?.disabled);await p.locator('#runCode').click();
  const iframe=p.locator('.nexus-application-panel iframe');await iframe.waitFor({timeout:180000});const frame=await(await iframe.elementHandle()).contentFrame();
  const input=frame.getByRole('textbox',{name:'Task title',exact:true});await input.waitFor({timeout:120000});
