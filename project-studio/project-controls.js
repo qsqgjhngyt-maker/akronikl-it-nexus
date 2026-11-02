@@ -1,3 +1,4 @@
+import {withProjectWriter} from './project-writer.js';
 import {getProject,createCheckpoint,restoreCheckpoint,renameProject,deleteProject,getProjectAudit} from './project-store.js';
 import {activePrincipalId,isCurrentProjectOwner} from '../core/identity.js';
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -11,7 +12,8 @@ export function bindProjectControls({mount,t,projectId,save,onRestore,onRename,o
  const {getProject,createCheckpoint,restoreCheckpoint,renameProject,deleteProject,getProjectAudit,isCurrentProjectOwner}=store;
  const controller=new AbortController(),options={signal:controller.signal};
  const owned=()=>{const project=getProject(projectId());if(!project||!isCurrentProjectOwner(project.access))throw Error(t('graphics.workshop.unavailable'));return project};
- const guarded=async fn=>{try{await fn()}catch(error){onError(error)}};
+ // Отдельный encrypted-offline port сохраняет собственную транзакцию, без account DB.
+ const guarded=async fn=>{try{await(store===defaultStore?withProjectWriter(fn):fn())}catch(error){onError(error)}};
  const refresh=()=>{
   const project=projectId()?owned():null;
   mount.querySelector('[data-studio-project-state]').textContent=t(project?'graphics.studio.local':'graphics.workshop.draft');

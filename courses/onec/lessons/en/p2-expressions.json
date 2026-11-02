@@ -1,0 +1,471 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p2",
+  "topicId": "onec.p2.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Your first calculation: variables, assignment and output",
+  "minutes": 85,
+  "goal": "Calculate the duration of two fictional service requests in installed 1C, explain each statement and change the calculation deliberately.",
+  "prerequisites": [
+    "Install the official training edition of 1C:Enterprise. The lab guide explains installation and creating a new empty file infobase.",
+    "Be able to open your own training infobase in Designer and distinguish it from other infobases. The applied course is not a mandatory prerequisite."
+  ],
+  "outcomes": [
+    "Explain how assignment evaluates its right side before updating the variable on its left.",
+    "Put a short program in the correct procedure, update the database configuration and see 75 in 1C:Enterprise.",
+    "Predict 50 after changing one input, diagnose subtraction instead of addition and independently total three durations."
+  ],
+  "sections": [
+    [
+      "The problem: calculate a total rather than print a prepared answer",
+      "The service desk has two requests, planned for 30 and 45 minutes. The dispatcher needs their combined duration: 75 minutes. Сообщить(75); would display that number, but would not calculate a total. Someone would have to recalculate manually whenever a request changed. Our program stores the two inputs and then computes the sum from their current values. These are fictional training requests, with no real customer information or money.",
+      "The program uses the 1C script language, commonly designated BSL in development tools. Read and analyze the lesson in Nexus, enter the source in Designer, and observe execution in the 1C:Enterprise window. The platform calls the application startup handler and displays the message. Nexus Studio can store sources, but is unnecessary for these four statements. Colored words in a browser do not mean that 1C has executed them.",
+      "Success is more than seeing one number once. Connect the inputs 30 and 45, the addition operation and the output 75. When the second input becomes 20, the same calculation must produce 50. This change distinguishes an actual calculation from a hard-coded answer. No statement here saves a catalog item or a document: screen output and persisted infobase data are different results."
+    ],
+    [
+      "Assignment: evaluate the right side, then update the left",
+      "A variable names a value the program can use. In МинутыПервойЗаявки = 30; the identifier is on the left and the numeric literal is on the right. Assignment first evaluates the right side, then puts the result into the variable on the left. After this statement, МинутыПервойЗаявки holds 30. After the second, МинутыВторойЗаявки also holds 45. Track assigned values rather than assuming values that the program has not assigned.",
+      "The third statement has an expression rather than a single literal on its right side: МинутыПервойЗаявки + МинутыВторойЗаявки. The platform reads 30 and 45, adds them, and assigns 75 to ВсегоМинут. The fourth statement passes this value to the built-in Сообщить procedure. Displaying the value does not change the total. Moving the calculation before the input assignments would break the required order of actions.",
+      "МинутыПервойЗаявки is one identifier without spaces. Its readable parts help a person, but do not determine the type of the value. An unquoted 30 is a number; a quoted \"30\" is text. Both inputs in this lab must be numbers. A semicolon ends each statement. The argument to Сообщить goes inside parentheses. Copy identifiers as a whole: visually similar Cyrillic and Latin letters can form different names."
+    ],
+    [
+      "Where the program belongs and why saving text is not enough",
+      "The managed application module contains code associated with the application as a whole. ПриНачалеРаботыСистемы is an event handler called by the platform when the application starts. Place the four statements between Процедура ПриНачалеРаботыСистемы() and КонецПроцедуры. These boundary lines are not part of the four-statement calculation, but provide its startup context.",
+      "A new empty infobase may not yet have this handler. The lab therefore provides the complete six-line module. If an infobase already contains your own handlers, preserve them and create a separate empty infobase for this first experiment instead of replacing its existing module. You do not need to save the four statements in Studio, export an archive and reload the source after every edit.",
+      "Saving in Designer preserves the editable configuration. The running application uses the database configuration, which must receive your changes before a new session starts. Close any open 1C:Enterprise user window, save in Designer, press F7 to update the database configuration, confirm the update if prompted, then press F5 to start. The training edition permits one simultaneous session; do not open multiple user sessions for this infobase."
+    ],
+    [
+      "Test the idea by changing one input",
+      "Write your prediction before running: 30 + 45 = 75. Compare it with the platform message. Replacing 45 with 20 in the second statement changes only the second request duration. The third statement still adds the two variables, so the next saved, updated and restarted version should display 50. Restore 45 before the following experiment, keeping the inputs for each observation clear.",
+      "Consider the faulty expression ВсегоМинут = МинутыПервойЗаявки - МинутыВторойЗаявки; It is syntactically valid but solves a different problem. With 30 and 45 it produces −15. A syntax check need not reject a calculation that misunderstands the requirement. Comparing actual output with the expected 75 detects this error. Correct the operator, preserve the expected result, and rerun with the same inputs.",
+      "Extend addition by assigning a third duration, 15, to another variable and including it in the sum. The prediction for 30, 45 and 15 is 90. First repeat the worked example, then change one known input, and finally solve the independent task with 10, 25 and 5. This progression tests whether you can transfer the method to new values rather than merely copy a familiar statement."
+    ]
+  ],
+  "diagram": "p2expression",
+  "walkthrough": [
+    {
+      "action": "Name the inputs and required result before opening the source.",
+      "expected": "30 and 45 minutes → addition → 75 minutes."
+    },
+    {
+      "action": "Read the statements in order and record the assigned values.",
+      "expected": "30; 30 and 45; ВсегоМинут=75; message 75."
+    },
+    {
+      "action": "Change only the second duration to 20 and repeat the complete run cycle.",
+      "expected": "Message 50; the first duration and addition operator remain unchanged."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Worked example: 30 and 45 minutes",
+      "source": "МинутыПервойЗаявки = 30;\nМинутыВторойЗаявки = 45;\nВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки;\nСообщить(ВсегоМинут);",
+      "expected": "1C displays the message 75.",
+      "explanation": "After statement 1 the first duration is 30. Statement 2 adds a second assigned value, 45. Statement 3 computes the total 75. Statement 4 displays that computed value. None creates a customer record.",
+      "trace": [
+        [
+          "МинутыПервойЗаявки = 30;",
+          "МинутыПервойЗаявки: 30",
+          "The first input has been assigned."
+        ],
+        [
+          "МинутыВторойЗаявки = 45;",
+          "First: 30; second: 45",
+          "The first input remains unchanged."
+        ],
+        [
+          "ВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки;",
+          "ВсегоМинут: 75",
+          "30 + 45 is evaluated before assignment."
+        ],
+        [
+          "Сообщить(ВсегоМинут);",
+          "Message: 75",
+          "Displaying the value does not change the total."
+        ]
+      ]
+    },
+    {
+      "title": "Controlled variation: the second request now takes 20 minutes",
+      "source": "МинутыПервойЗаявки = 30;\nМинутыВторойЗаявки = 20;\nВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки;\nСообщить(ВсегоМинут);",
+      "expected": "The message is 50 instead of 75.",
+      "explanation": "The first duration stays 30 and the second becomes 20, so the third statement computes 30 + 20. If you still see 75, inspect the database configuration update and the selected infobase before changing otherwise correct code."
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Guided repetition",
+      "task": "Run the worked four-statement example in a new training infobase. Predict 75 before starting. Identify the statement that calculates the sum and the statement that displays it.",
+      "criteria": "The numeric inputs are 30 and 45, the expression adds variables, and 1C displays 75. Explain calculation versus output.",
+      "hint": "Find the statement with + on the right side of =, then find Сообщить."
+    },
+    {
+      "level": "Modify a known solution",
+      "task": "Replace 45 with 20, predict and run. Restore 45, add a separate third duration of 15 and include its variable in the total.",
+      "criteria": "Obtain 50 and then 90. The latter expression uses all three variables rather than a literal 90.",
+      "hint": "Use exactly the same third-variable identifier in its assignment and in the sum."
+    },
+    {
+      "level": "Independent task",
+      "task": "Three requests take 10, 25 and 5 minutes. Calculate their total using meaningful variable names. Then check the case where the second takes 0 minutes. Predict both results before running.",
+      "criteria": "Obtain 40 and 15. Separate input assignments, calculation and output. Preserve the source and actual platform messages without claiming that Nexus automatically verified the external run.",
+      "hint": "A zero duration must not remove the other requests from the sum."
+    }
+  ],
+  "lab": {
+    "title": "Produce 75 in installed 1C and explain the calculation",
+    "environment": "Primary workflow: official installed training 1C:Enterprise 8.3, a separate new file infobase, Designer and 1C:Enterprise mode. Studio and Windows Sandbox are unnecessary.",
+    "steps": [
+      "Create a separate empty infobase named «Учебный расчёт». Open it in Designer; use no third-party or production infobase.",
+      "Open the managed application module from the configuration root. Enter the complete procedure shown in the detailed step below in its new empty module.",
+      "Read the statements and write the prediction 75 before running.",
+      "Close the user application window, save the configuration, update the database configuration and start the application.",
+      "Compare the message with your prediction. Change 45 to 20 and repeat the cycle; expect 50.",
+      "Preserve your source and observations. A Nexus step mark is your self-report rather than observation of the external application."
+    ],
+    "expected": [
+      "The first run displays 75 and the second displays 50.",
+      "Trace assignments and explain why displaying a message is different from persisting an infobase record."
+    ],
+    "evidence": [
+      "Screenshots of 1C displaying 75 and 50, with different filenames for the experiments.",
+      "Your module text and a short record of inputs, prediction, observation and the changed result."
+    ],
+    "negative": "In a separately preserved source version replace addition with subtraction for 30 and 45. It produces −15 rather than the expected 75. Restore + and rerun with those same inputs."
+  },
+  "mistakes": [
+    [
+      "I opened Studio and am waiting for 75.",
+      "Use installed 1C Designer and then run the application. Studio stores text; the browser does not execute BSL."
+    ],
+    [
+      "I pasted the statements after КонецПроцедуры.",
+      "Move the four statements inside ПриНачалеРаботыСистемы, preserving one matching procedure boundary pair."
+    ],
+    [
+      "I changed 45 to 20 but still see 75.",
+      "Close the old application window, update the database configuration with F7 and start again. Check the selected infobase name."
+    ],
+    [
+      "The syntax check succeeded but output is −15.",
+      "Inspect the operator: subtraction is valid syntax but does not satisfy the addition requirement. Do not change the expected 75 to fit faulty code."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "After assigning 30 and 45, what does ВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки; do?",
+      "options": [
+        "Changes the first duration to 75.",
+        "Evaluates 30 + 45, then assigns 75 to ВсегоМинут.",
+        "Stores the expression text in ВсегоМинут for later evaluation."
+      ],
+      "correct": 1,
+      "explanation": "The right side is evaluated immediately; only the variable on the left is updated. The two inputs remain 30 and 45."
+    },
+    {
+      "question": "You change the second duration to 20. What result and restart workflow do you expect?",
+      "options": [
+        "50; save, update the database configuration and start a new session.",
+        "75; variables always retain the first run’s values.",
+        "20; Сообщить displays only the most recently assigned input."
+      ],
+      "correct": 0,
+      "explanation": "The third statement now evaluates 30 + 20. Apply the editable configuration changes to the database configuration before the new session."
+    },
+    {
+      "question": "A subtraction version passes syntax checking but displays −15. Which conclusion is correct?",
+      "options": [
+        "Minus and plus are equivalent for numeric inputs.",
+        "Change the expected answer to −15.",
+        "The text is valid but its algorithm violates the requirement to add durations."
+      ],
+      "correct": 2,
+      "explanation": "Syntax validity and meeting a requirement are separate checks. Correct the operator and rerun with the same inputs."
+    }
+  ],
+  "review": [
+    "Explain the assigned state after each statement without running the code.",
+    "Show where the source is edited, where execution happens and where the result appears.",
+    "Next: value types, including the distinction between the number 30 and the text \"30\"."
+  ],
+  "sources": [
+    "cli",
+    "training",
+    "platform-architecture",
+    "bsl-language"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.a2p2.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "nativeCaseIds": [
+    "PED.P2.first-75",
+    "PED.P2.changed-50",
+    "PED.P2.third-90",
+    "PED.P2.independent-40",
+    "PED.P2.zero-15",
+    "PED.P2.minus-negative-15"
+  ],
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
+    "sourcePolicy": "primary-source-links-and-observed-native-results",
+    "studentAuthorshipVerified": false,
+    "previousContentRevision": "0.3.0-a2p2",
+    "revisionReason": "Педагогическая переработка V2; основной путь — установленная 1С; новые примеры требуют новой проверки."
+  },
+  "codeFile": "code/pedagogy/first-calculation.bsl",
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-platform-local-file-base",
+    "platformVersion": "8.3.27.2214",
+    "caseIds": [
+      "PED.P2.first-75",
+      "PED.P2.changed-50",
+      "PED.P2.third-90",
+      "PED.P2.independent-40",
+      "PED.P2.zero-15",
+      "PED.P2.minus-negative-15"
+    ],
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_NATIVE_RESULT.json",
+    "trainingBuildTested": true,
+    "licenseProfile": "NOT_INSPECTED",
+    "trainingEvidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_TRAINING_RESULT.json",
+    "trainingNegativeEvidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_TRAINING_NEGATIVE_RESULT.json"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "variable",
+      "procedure",
+      "module",
+      "designer",
+      "configuration",
+      "infobase",
+      "enterprise-mode"
+    ],
+    "diagram": {
+      "title": {
+        "ru": "От входных данных к наблюдаемому результату",
+        "en": "From inputs to observed output"
+      },
+      "nodes": [
+        {
+          "label": {
+            "ru": "Присвоить входы",
+            "en": "Assign inputs"
+          },
+          "detail": {
+            "ru": "Выполнены две строки: первая длительность 30, вторая 45. Общая сумма пока не вычислялась.",
+            "en": "Two assignments establish durations 30 and 45. The total has not yet been calculated."
+          }
+        },
+        {
+          "label": {
+            "ru": "Вычислить справа",
+            "en": "Evaluate the right side"
+          },
+          "detail": {
+            "ru": "Выражение читает оба текущих значения и получает 30 + 45 = 75.",
+            "en": "The expression reads both current values and evaluates 30 + 45 = 75."
+          }
+        },
+        {
+          "label": {
+            "ru": "Присвоить сумму",
+            "en": "Assign the total"
+          },
+          "detail": {
+            "ru": "ВсегоМинут получает 75. Исходные переменные остаются 30 и 45.",
+            "en": "ВсегоМинут receives 75. The input variables remain 30 and 45."
+          }
+        },
+        {
+          "label": {
+            "ru": "Показать сообщение",
+            "en": "Display a message"
+          },
+          "detail": {
+            "ru": "Сообщить читает ВсегоМинут и показывает 75. Это ещё не запись объекта базы.",
+            "en": "Сообщить reads ВсегоМинут and displays 75. No infobase object is written."
+          }
+        }
+      ]
+    },
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official training 1C",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "open-designer",
+          "title": "Open your training infobase",
+          "where": "1C launcher",
+          "before": "The training platform is installed and a separate empty file infobase «Учебный расчёт» exists. If not, open How to do a lab.",
+          "action": "Select «Учебный расчёт» and choose Designer (Конфигуратор). If the tree is hidden, choose Configuration → Open configuration.",
+          "why": "Edit the source belonging to the correct training infobase.",
+          "expected": "Designer displays the configuration tree.",
+          "troubleshooting": "If another infobase is selected, close it and return to the launcher. Do not replace an existing work with a template.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/01-designer-tree.jpg",
+              "width": 1920,
+              "height": 1032,
+              "sha256": "4b41b2f42c6a1e63dd83108af81ac75f3034bc5ac5e773981ecd33293f92725c",
+              "caption": "Designer: your training configuration tree is on the left, with its root object at the top.",
+              "alt": "Designer: your training configuration tree is on the left, with its root object at the top.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [
+                {
+                  "number": 1,
+                  "x": 0.01,
+                  "y": 0.15,
+                  "width": 0.12,
+                  "height": 0.03
+                }
+              ],
+              "focus": {
+                "x": 0,
+                "y": 0,
+                "width": 650,
+                "height": 550
+              }
+            }
+          ]
+        },
+        {
+          "id": "open-module",
+          "title": "Find the code module",
+          "where": "Designer",
+          "before": "Your new empty training configuration is open.",
+          "action": "Right-click the configuration root → «Открыть модуль приложения» (Open application module, as observed in 8.3.27.2214). Another version may explicitly say managed application module. Enter the complete text below in a new empty module; preserve any existing work and use a separate empty infobase instead of replacing it.",
+          "why": "The handler specifies the event that executes the calculation.",
+          "expected": "One procedure contains the four calculation statements and ends with one КонецПроцедуры.",
+          "troubleshooting": "Use the managed application module and avoid duplicate procedures with the same name.",
+          "code": "Процедура ПриНачалеРаботыСистемы()\n    МинутыПервойЗаявки = 30;\n    МинутыВторойЗаявки = 45;\n    ВсегоМинут = МинутыПервойЗаявки + МинутыВторойЗаявки;\n    Сообщить(ВсегоМинут);\nКонецПроцедуры",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/02-open-application-module.jpg",
+              "width": 1920,
+              "height": 1032,
+              "sha256": "1005e80f80b6c06a92b1834064d3faa07d884044be61121f5193c5471a17201b",
+              "caption": "Right-click the configuration root. In this version the command is «Открыть модуль приложения» (Open application module).",
+              "alt": "Right-click the configuration root. In this version the command is «Открыть модуль приложения» (Open application module).",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [
+                {
+                  "number": 1,
+                  "x": 0.065,
+                  "y": 0.167,
+                  "width": 0.175,
+                  "height": 0.025
+                }
+              ],
+              "focus": {
+                "x": 0,
+                "y": 100,
+                "width": 650,
+                "height": 700
+              }
+            },
+            {
+              "src": "media/tutorials/v2/04-first-calculation-code.jpg",
+              "width": 1920,
+              "height": 1032,
+              "sha256": "d89bba5bb83d7645abb5ad5ea92eeed3291c0d532132aed811143ca0ad1bc7e7",
+              "caption": "The complete module: the four calculation statements are inside the procedure boundaries.",
+              "alt": "The complete module: the four calculation statements are inside the procedure boundaries.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [
+                {
+                  "number": 1,
+                  "x": 0.15,
+                  "y": 0.119,
+                  "width": 0.25,
+                  "height": 0.09
+                }
+              ],
+              "focus": {
+                "x": 250,
+                "y": 95,
+                "width": 900,
+                "height": 155
+              }
+            }
+          ]
+        },
+        {
+          "id": "run-75",
+          "title": "Save and obtain 75",
+          "where": "Designer → 1C:Enterprise",
+          "before": "The module is entered and the prediction 75 recorded.",
+          "action": "Close the 1C:Enterprise user window. In Designer press Ctrl+S, then F7 to update the database configuration and confirm if prompted. Press F5 and confirm startup if asked.",
+          "why": "The running infobase must receive the saved source version.",
+          "expected": "The application opens and its messages contain 75. Capture that window.",
+          "troubleshooting": "If 1C reports a line error, compare identifiers, parentheses and semicolons. If no message appears, check the handler name and that the statements are inside it.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/05-run-result-75.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "4d61df41c43a67bf25a17f79704d325be0759a0f710428159d443008be2075b6",
+              "caption": "After startup the 1C Messages panel at the bottom displays 75: actual platform output.",
+              "alt": "After startup the 1C Messages panel at the bottom displays 75: actual platform output.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [
+                {
+                  "number": 1,
+                  "x": 0.008,
+                  "y": 0.898,
+                  "width": 0.12,
+                  "height": 0.042
+                }
+              ],
+              "focus": {
+                "x": 0,
+                "y": 630,
+                "width": 900,
+                "height": 82
+              }
+            }
+          ]
+        },
+        {
+          "id": "change-second",
+          "title": "Change one input and obtain 50",
+          "where": "Designer → 1C:Enterprise",
+          "before": "The first output 75 has been preserved.",
+          "action": "Close the user window. Replace 45 with 20 in the second statement. Predict 50, save, update with F7 and restart with F5.",
+          "why": "Check that the program calculates from its changed input.",
+          "expected": "The message is 50; preserve this second screenshot separately.",
+          "troubleshooting": "If 75 remains, verify that you updated and started the same infobase. Keep the correct expected total.",
+          "figures": []
+        },
+        {
+          "id": "preserve-result",
+          "title": "Preserve your work and return to Nexus",
+          "where": "Designer and Nexus",
+          "before": "Both results were observed, or a specific mismatch recorded.",
+          "action": "Save the module in your infobase. To back it up, close the user session and choose Designer → Administration → Dump infobase…, using a new .dt filename. Return to Nexus for the self-check and attest only after performing your own run.",
+          "why": "Preserve sources, observations and the self-report as distinct records.",
+          "expected": "The original infobase, a separate backup and both observations are preserved. Nexus saves the lesson position without inspecting the external infobase.",
+          "troubleshooting": "Do not import .dt into the Studio editor; restore it through 1C into another new infobase.",
+          "figures": []
+        }
+      ]
+    },
+    "screenshotNote": "Actual screenshots of our separate synthetic training infobase in 1C 8.3.27.2214 with Russian UI. Other versions can place commands differently; follow the named window and expected result.",
+    "sourceLabel": "BSL · Application event-handler body"
+  }
+}

@@ -1,3 +1,4 @@
+import {withProjectWriter,leaseProjectWriter} from './project-writer.js';
 import {projectStudioViewMarkup as sharedProjectView} from './project-presentation.js';
 import {downloadProjectSources} from './project-transfer.js';
 import {verifiedAccount} from '../core/account-storage.js';
@@ -18,7 +19,7 @@ let activeEditor=null;
 globalThis.addEventListener?.('beforeunload',event=>{if(activeEditor?.dirty()&&activeEditor.current()){event.preventDefault();event.returnValue=''}});
 registerUpdateParticipant({isDirty:()=>!!(activeEditor?.current()&&activeEditor.dirty())});
 export function prepareProjectNavigation(){
- if(!activeEditor?.current())return true;
+ if(!activeEditor?.current()){activeEditor?.dispose?.();activeEditor=null;return true;}
  if(activeEditor.dirty()&&!activeEditor.save()){
   if(!confirm(activeEditor.en?'Changes could not be saved. Leave this editor and discard the unsaved changes? Export the sources to keep them.':'Изменения не удалось сохранить. Покинуть редактор и потерять несохранённые изменения? Чтобы сохранить код, останьтесь и экспортируйте исходники.')){
    history.replaceState(null,'',location.pathname+location.search+activeEditor.hash);return false;
@@ -51,11 +52,13 @@ function cloudControls(project,en=false){
 }
 
 export {projectStudioDashboardMarkup} from './project-presentation.js';
-export function projectStudioViewMarkup(options={}){if(!options.project)return '';return sharedProjectView({...options,audit:getProjectAudit(options.project?.id,{limit:5}),cloudMarkup:options.project?cloudControls(options.project,options.locale==='en'):''})}
+export function projectStudioViewMarkup(options={}){if(!options.project)return '';if(options.project.languageId==='onec')return '<div data-onec-studio role="region" aria-label="1C Studio"><p role="status">'+(options.locale==='en'?'Loading the 1C editor…':'Загружаем редактор 1С…')+'</p></div>';return sharedProjectView({...options,audit:getProjectAudit(options.project?.id,{limit:5}),cloudMarkup:options.project?cloudControls(options.project,options.locale==='en'):''})}
 
 export function bindProjectStudioDashboard({locale='ru',onChanged=()=>{},onOpenProject=()=>{}}={}){
   const en=locale==='en';
-  const application=document.createElement('button');application.type='button';application.className='btn';application.id='psNewApplication';application.textContent=en?'＋ C++ application':'＋ Приложение C++';document.querySelector('#psNewProject')?.after(application);application.addEventListener('click',async()=>{if(!confirm(en?'This new GUI project uses Qt under GPLv3. If you distribute the application, provide corresponding source and GPLv3 rights. Private work is not automatically published to GitHub. Create the project?':'Новый GUI-проект использует Qt под GPLv3. При передаче приложения другим нужно предоставить соответствующие исходники и права GPLv3. Личная работа автоматически в GitHub не публикуется. Создать проект?'))return;application.disabled=true;try{const{taskFlowApplicationTemplate}=await import('./application-template.js');const project=createProject(taskFlowApplicationTemplate());onOpenProject(project.id);}catch(e){alert(e.message)}finally{application.disabled=false}});
+  const onecMount=document.querySelector('.nexus-project-studio')||document.querySelector('#psNewProject')?.parentElement?.parentElement;
+  import('../courses/onec-education/studio.mjs').then(api=>{if(onecMount?.isConnected)return api.bindOnecLauncher({mount:onecMount,locale,onOpenProject})}).catch(()=>{if(onecMount?.isConnected){const note=document.createElement('p');note.setAttribute('role','status');note.textContent=en?'1C materials could not load. Existing projects are preserved.':'Материалы 1С не загрузились. Прежние проекты сохранены.';onecMount.append(note)}});
+  const application=document.createElement('button');application.type='button';application.className='btn';application.id='psNewApplication';application.textContent=en?'＋ C++ application':'＋ Приложение C++';document.querySelector('#psNewProject')?.after(application);application.addEventListener('click',async()=>{if(!confirm(en?'This new GUI project uses Qt under GPLv3. If you distribute the application, provide corresponding source and GPLv3 rights. Private work is not automatically published to GitHub. Create the project?':'Новый GUI-проект использует Qt под GPLv3. При передаче приложения другим нужно предоставить соответствующие исходники и права GPLv3. Личная работа автоматически в GitHub не публикуется. Создать проект?'))return;application.disabled=true;try{const{taskFlowApplicationTemplate}=await import('./application-template.js');const project=await withProjectWriter(()=>createProject(taskFlowApplicationTemplate()));onOpenProject(project.id);}catch(e){alert(e.message)}finally{application.disabled=false}});
   document.querySelector('#psCloudImport')?.addEventListener('click',async()=>{try{
     if(!cloudSyncReady()){const go=confirm(en?'Nexus Cloud is not connected on this device. Open Account → Nexus Cloud settings?':'Nexus Cloud не подключён на этом устройстве. Перейти в Аккаунт → Nexus Cloud?');if(go)location.hash='#view=account&tab=cloud';return}
     const projects=await listCloudProjects();if(!projects.length){alert(en?'No cloud projects yet.':'В облаке пока нет проектов.');return}
@@ -65,21 +68,31 @@ export function bindProjectStudioDashboard({locale='ru',onChanged=()=>{},onOpenP
 }
 
 export function bindProjectStudio({projectId,locale='ru',onChanged=()=>{},onDeleted=()=>{}}={}){
-  const project=getProject(projectId);if(!project)return null;const en=locale==='en';const editor=document.querySelector('#editor');if(!editor)return null;
+  const project=getProject(projectId);if(!project)return null;const en=locale==='en';
+  if(project.languageId==='onec'){
+   const mount=document.querySelector('[data-onec-studio]'),account=verifiedAccount()?.accountId;if(!mount)return null;let handle=null,disposed=false;
+   const current=()=>!disposed&&mount.isConnected&&!!account&&verifiedAccount()?.accountId===account;
+   activeEditor={current,dirty:()=>handle?.dirty()||false,save:()=>handle?.save()??false,hash:location.hash,en,dispose:()=>{disposed=true;handle?.dispose()}};
+   import('../courses/onec-education/studio.mjs').then(api=>{if(current())handle=api.bindOnecEditor({mount,projectId,locale,current,onOpenProject:id=>{location.hash='#view=project-studio&project='+encodeURIComponent(id)}})}).catch(()=>{if(current())mount.textContent=en?'1C work is unavailable. Sources are preserved; verify your account and reopen.':'Работа 1С недоступна. Исходники сохранены; проверьте аккаунт и откройте её повторно.'});
+   return{get studio(){return handle?.studio},controller:null};
+  }
+  const editor=document.querySelector('#editor');if(!editor)return null;
   if(project.origin?.kind==='course-final'&&/^[a-f0-9-]{36}$/.test(project.origin.attemptId||'')){const back=document.createElement('a');back.className='btn tiny';back.dataset.finalReturn='';back.href='#view=course-final&attempt='+encodeURIComponent(project.origin.attemptId)+'&tab='+(String(project.origin.part).startsWith('P')?'practical':project.origin.part==='defense'?'defense':'project');back.textContent=en?'Back to final assessment':'К итоговой работе';document.querySelector('#psSaveProject')?.before(back);}
   const boundAccount=verifiedAccount()?.accountId;
-  let unsaved=false;
+  let unsaved=false,writerReady=false,writerLease=null,editorRevision=project.sync.localRevision;
   const contextValid=()=>editor.isConnected&&boundAccount&&verifiedAccount()?.accountId===boundAccount;
   const saveStatus=message=>{const status=document.querySelector('#psSaveStatus');if(contextValid()&&status)status.textContent=message};
   const studio=bindCodeStudio({editor,locale,languageId:project.languageId||'cpp',fileName:project.manifest?.entryFile||'src/main.cpp',files:project.workspace?.files||[],activeFile:project.workspace?.activeFile||project.manifest?.entryFile,sessionKey:`project:${projectId}`,onWorkspaceChange:(snapshot,type)=>{
    if(!contextValid())return;
-   if(type==='init'||type==='view-state')return;
+   if(!writerReady)editor.readOnly=true;if(type==='init'||type==='view-state')return;
    unsaved=true;
-   try{patchProject(projectId,{workspace:snapshot});unsaved=false;saveStatus(en?'Saved on this device.':'Сохранено на устройстве.');onChanged()}
+   try{const saved=patchProject(projectId,{workspace:snapshot},{expectedLocalRevision:editorRevision});editorRevision=saved.sync.localRevision;unsaved=false;saveStatus(en?'Saved on this device.':'Сохранено на устройстве.');onChanged()}
    catch{saveStatus(en?'Could not save. Keep this editor open and export your sources.':'Не удалось сохранить. Не закрывайте редактор; экспортируйте исходники.')}
   }});
-  const saveNow=()=>{if(!contextValid())return false;try{patchProject(projectId,{workspace:studio.getSnapshot(),stdin:document.querySelector('#stdin')?.value||''});unsaved=false;saveStatus(en?'Saved on this device.':'Сохранено на устройстве.');return true}catch{unsaved=true;saveStatus(en?'Could not save. Keep this editor open and export your sources.':'Не удалось сохранить. Не закрывайте редактор; экспортируйте исходники.');return false}};
-  let applicationPanel=null;activeEditor={current:contextValid,dirty:()=>unsaved,save:saveNow,hash:location.hash,en,dispose:()=>applicationPanel?.dispose()};
+  const saveNow=()=>{if(!contextValid())return false;try{const saved=patchProject(projectId,{workspace:studio.getSnapshot(),stdin:document.querySelector('#stdin')?.value||''},{expectedLocalRevision:editorRevision});editorRevision=saved.sync.localRevision;unsaved=false;saveStatus(en?'Saved on this device.':'Сохранено на устройстве.');return true}catch{unsaved=true;saveStatus(en?'Could not save. Keep this editor open and export your sources.':'Не удалось сохранить. Не закрывайте редактор; экспортируйте исходники.');return false}};
+  let applicationPanel=null;activeEditor={current:contextValid,dirty:()=>unsaved,save:saveNow,hash:location.hash,en,dispose:()=>{writerLease?.dispose();applicationPanel?.dispose()}};
+  const writerChrome=ready=>{writerReady=ready;editor.readOnly=!ready||!!studio.workspace.getFile()?.readOnly;document.querySelectorAll('#psSaveProject,#psCheckpoint,#psRenameProject,#psDeleteProject,[data-ps-milestone]').forEach(b=>b.disabled=!ready);const input=document.querySelector('#stdin');if(input)input.disabled=!ready;};
+  writerChrome(false);writerLease=leaseProjectWriter({granted:()=>{if(!contextValid()){writerLease?.dispose();return}writerChrome(true);saveStatus(en?'Editing enabled.':'Редактирование доступно.');},unavailable:()=>{writerChrome(false);saveStatus(en?'Editing unavailable.Close the other account editor and reopen;export remains available.':'Редактирование недоступно. Закройте другой редактор аккаунта и откройте работу снова; экспорт доступен.');}});
   document.querySelector('#psSaveProject')?.addEventListener('click',saveNow);
   document.querySelector('#psExportProject')?.addEventListener('click',()=>{if(!contextValid())return;try{downloadProjectSources({...getProject(projectId),workspace:studio.getSnapshot()})}catch{saveStatus(en?'Could not export this workspace.':'Не удалось экспортировать эту структуру файлов.')}});
   const stdin=document.querySelector('#stdin'),output=document.querySelector('#output'),engine=document.querySelector('#engine'),status=document.querySelector('#sandboxStatus'),routeInfo=document.querySelector('#runtimeRoute');
@@ -92,7 +105,7 @@ export function bindProjectStudio({projectId,locale='ru',onChanged=()=>{},onDele
   import('./application-panel.js').then(async({bindApplicationPanel})=>{if(!contextValid())return;const bound=await bindApplicationPanel({project,studio,current:contextValid,save:saveNow,runButton,locale});if(contextValid())applicationPanel=bound;else bound?.dispose();}).catch(()=>{if(contextValid()&&isApplication){output.style.display='';output.textContent=en?'Application controls could not load. Sources are preserved.':'Не удалось загрузить управление приложением. Исходники сохранены.';}});
   if(!isApplication)document.querySelector('#testRuntime')?.addEventListener('click',()=>controller.selfTest().catch(()=>{}));
   document.querySelector('#clearOutput')?.addEventListener('click',()=>{studio?.clearRuntimeDiagnostics?.();output.className='output';output.textContent=en?'Project output will appear here.':'Вывод проекта появится здесь.'});
-  document.querySelectorAll('[data-ps-milestone]').forEach(box=>box.addEventListener('change',()=>{toggleProjectMilestone(projectId,Number(box.dataset.psMilestone),box.checked);box.closest('.ps-milestone')?.classList.toggle('done',box.checked);onChanged()}));
+  document.querySelectorAll('[data-ps-milestone]').forEach(box=>box.addEventListener('change',()=>{editorRevision=toggleProjectMilestone(projectId,Number(box.dataset.psMilestone),box.checked).sync.localRevision;box.closest('.ps-milestone')?.classList.toggle('done',box.checked);onChanged()}));
   document.querySelector('#psCheckpoint')?.addEventListener('click',()=>{const label=prompt(en?'Checkpoint name':'Название checkpoint',en?'Working state':'Рабочее состояние');if(!label||!contextValid()||!saveNow())return;try{createCheckpoint(projectId,label);onChanged(true)}catch{saveStatus(en?'Could not save the checkpoint. Your sources are still open.':'Не удалось сохранить контрольную точку. Исходники остаются открытыми.')}});
   document.querySelectorAll('[data-ps-restore]').forEach(btn=>btn.addEventListener('click',()=>{if(!contextValid()||!confirm(en?'Restore this checkpoint? Current files will be replaced.':'Восстановить этот checkpoint? Текущие файлы будут заменены.'))return;restoreCheckpoint(projectId,btn.dataset.psRestore);onChanged(true)}));
   document.querySelector('#psRenameProject')?.addEventListener('click',()=>{if(!contextValid())return;const current=getProject(projectId);const title=prompt(en?'Project name':'Название проекта',current?.title||'');if(!title?.trim())return;try{renameProject(projectId,title.trim());onChanged(true)}catch{saveStatus(en?'Could not rename the project.':'Не удалось переименовать проект.')}});

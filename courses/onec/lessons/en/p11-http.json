@@ -1,0 +1,356 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p11",
+  "topicId": "onec.p11.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "HTTP and safe boundaries",
+  "minutes": 180,
+  "goal": "Design a boundedHTTPcontract and test success, rejection and timeout against a local mock.",
+  "prerequisites": [
+    "onec.p10; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Actual 1C confirms method, path, status and body.",
+    "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
+    "Accepted original preserved; rejection and its limits explained."
+  ],
+  "sections": [
+    [
+      "Exchange is an external boundary",
+      "AnHTTPrequest crosses into another participant’s failures and lifecycle. Specify method, path, body schema, response codes and size limits. A connection is not an accepted request; a 200 with a malformed body also fails the application contract. Do not send real data to public teaching services.",
+      "This advanced exercise uses only an own127.0.0.1 с портом собственного mock service, not a learner-controlled arbitrary host or Nexus. Inspect native/full-support/http-pedagogy-mock.mjs in the extracted source kit: loopback-only GET and synthetic responses. No tokens or real data."
+    ],
+    [
+      "Policy selects addresses",
+      "A user-suppliedURLmust not grant server code arbitrary internal-network/file access. Use a fixed loopback mock without secrets; it is not a production endpoint. RealHTTPSrequires certificate validation and redirect policy. DisablingTLSvalidation to make tests green is unacceptable.",
+      "Node.js from its official distribution is needed only for this extra HTTP exercise. In PowerShell at the kit directory run node native/full-support/http-pedagogy-mock.mjs mock-ready.json. Require the own process readiness file; if the port is occupied and startup fails, never contact the unknown service. Beginner labs need no such setup.",
+      " Open the mock-ready.json produced by your process in a text editor. Replace НомерПортаИзСвоегоMockReady in the caller with its numeric port value; the marker is not a predefined BSL variable. The host remains127.0.0.1."
+    ],
+    [
+      "Responses can be ambiguous",
+      "A timeout after sending does not reveal whether the remote side accepted the request. Blind retry can duplicate work. Use a requestIDand verification/retry policy. Distinguish transport failure, business 4 xx, temporary 5 xxand schema failure. Log safe IDs rather than tokens or complete payloads.",
+      "Append the complete BSL to server common module УчебныеПрофессиональныеОпыты. Call ОпытHTTP from the existing startup handler and print all three result fields. Save, F7 and run: health gives200 plus own-service marker, reject gives400 and slow raises a1-second timeout. No response creates a request document."
+    ],
+    [
+      "Mocks control outcomes",
+      "Prepare valid 200, 400, 500, delay and oversized-body cases. Set expectations before running theBSLclient. The mock inspects method/path but does not replace the 1C platform. Browserfetchor aJSmodel is not execution ofHTTPConnection.",
+      "The mock exits after three minutes; Ctrl+C may stop only its own terminal process. Remove the startup call and retain all observations. The4096 check is after string materialization, not a streaming network limit. This local test does not prove HTTPS, redirect policy, arbitrary-host SSRF protection or real external integration."
+    ]
+  ],
+  "diagram": "p11-0",
+  "walkthrough": [
+    {
+      "action": "Prepare — Own loopback ready",
+      "expected": "No other services."
+    },
+    {
+      "action": "Requests — 200/400",
+      "expected": "Contract distinguished."
+    },
+    {
+      "action": "Delay — 1-second timeout",
+      "expected": "No false success."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Reconcile the complete experiment",
+      "source": "Prepare → Own loopback ready → No other services.\nRequests → 200/400 → Contract distinguished.\nDelay → 1-second timeout → No false success.",
+      "expected": "1-second timeout; No false success.",
+      "explanation": "This advanced exercise uses only an own127.0.0.1 с портом собственного mock service, not a learner-controlled arbitrary host or Nexus. Inspect native/full-support/http-pedagogy-mock.mjs in the extracted source kit: loopback-only GET and synthetic responses. No tokens or real data.",
+      "trace": [
+        [
+          "Prepare",
+          "Own loopback ready",
+          "No other services."
+        ],
+        [
+          "Requests",
+          "200/400",
+          "Contract distinguished."
+        ],
+        [
+          "Delay",
+          "1-second timeout",
+          "No false success."
+        ]
+      ]
+    },
+    {
+      "title": "A case that distinguishes the wrong solution",
+      "source": "After the admitted run stop the own mock and call BSL again.",
+      "expected": "Availability failure is distinct from business400; no success claim.",
+      "explanation": "The mock exits after three minutes; Ctrl+C may stop only its own terminal process. Remove the startup call and retain all observations. The4096 check is after string materialization, not a streaming network limit. This local test does not prove HTTPS, redirect policy, arbitrary-host SSRF protection or real external integration.",
+      "trace": [
+        [
+          "Separate copy",
+          "After the admitted run stop the own mock and call BSL again.",
+          "Retain the accepted original."
+        ],
+        [
+          "Observe",
+          "Availability failure is distinct from business400; no success claim.",
+          "The mock exits after three minutes; Ctrl+C may stop only its own terminal process. Remove the startup call and retain all observations. The4096 check is after string materialization, not a streaming network limit. This local test does not prove HTTPS, redirect policy, arbitrary-host SSRF protection or real external integration."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Explain the checked boundary using the first trace. Call a validhealthmock.",
+      "criteria": "Actual 1C confirms method, path, status and body."
+    },
+    {
+      "level": "Applied",
+      "task": "Perform the stated available experiment and retain actual observations. Return 400 and 500.",
+      "criteria": "Actual input/output and exact own source identified; unperformed stages marked NOT RUN."
+    },
+    {
+      "level": "Advanced",
+      "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. After the admitted run stop the own mock and call BSL again.",
+      "criteria": "Accepted original preserved; rejection and its limits explained."
+    }
+  ],
+  "lab": {
+    "title": "HTTP and safe boundaries",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "steps": [
+      "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+      "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+      "Результат = УчебныеПрофессиональныеОпыты.ОпытHTTP(НомерПортаИзСвоегоMockReady);\nСообщить(Результат.HealthВерный);\nСообщить(Результат.ОтказВерный);\nСообщить(Результат.ТаймаутВерный); Open the mock-ready.json produced by your process in a text editor. Replace НомерПортаИзСвоегоMockReady in the caller with its numeric port value; the marker is not a predefined BSL variable. The host remains127.0.0.1.",
+      "Run once and compare the fields with the worked trace. 1-second timeout; No false success.",
+      "Remove only the startup call. Use another copy for the adverse case and keep both protocols."
+    ],
+    "expected": [
+      "Separate copy opens with the earlier records.",
+      "Definitions are module-level; no duplicate helper.",
+      "Only the stated caller is inside the existing startup handler.",
+      "1-second timeout; No false success.",
+      "Original retained, negative experiment isolated, automatic caller removed."
+    ],
+    "evidence": [
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits."
+    ],
+    "negative": "After the admitted run stop the own mock and call BSL again."
+  },
+  "mistakes": [
+    [
+      "Success is inferred from an unavailable environment.",
+      "Separate actual observations from a planned advanced scenario and name edition limits."
+    ],
+    [
+      "A failed attempt is removed to make the record look successful.",
+      "Retain the original failure, its cause, correction and regression evidence."
+    ],
+    [
+      "An own-copy change is applied over the accepted original.",
+      "Verify the actual directory and preserve source identities before making changes."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "DoesHTTP 200alone establish business success?",
+      "options": [
+        "No",
+        "Yes",
+        "Always forJSON"
+      ],
+      "correct": 0,
+      "explanation": "Validate the body contract."
+    },
+    {
+      "question": "A post-send timeout means",
+      "options": [
+        "Definitely not accepted",
+        "The outcome may be unknown",
+        "Always success"
+      ],
+      "correct": 1,
+      "explanation": "Use idempotency and state verification."
+    },
+    {
+      "question": "For teachingHTTPuse",
+      "options": [
+        "Real tokens",
+        "Any internalURL",
+        "A fixed synthetic mock"
+      ],
+      "correct": 2,
+      "explanation": "Constrain addresses and data."
+    }
+  ],
+  "review": [
+    "Actual 1C confirms method, path, status and body.",
+    "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
+    "Accepted original preserved; rejection and its limits explained."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "job-mechanism",
+    "scheduled-job",
+    "safe-eval"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p11.topic-1",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p11",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "reference",
+      "query",
+      "transaction"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C: Designer and Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "step-1",
+          "title": "Preserve the starting state",
+          "where": "Own-copy Designer",
+          "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+          "why": "Keep the accepted work independent.",
+          "expected": "Separate copy opens with the earlier records.",
+          "troubleshooting": "A new list name alone does not create another database directory.",
+          "before": "Own path, prior sources and a restorable backup identified."
+        },
+        {
+          "id": "step-2",
+          "title": "Add the complete server source",
+          "where": "Конфигуратор → Общие → Общие модули → УчебныеПрофессиональныеОпыты",
+          "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+          "why": "Database access has an explicit server boundary.",
+          "expected": "Definitions are module-level; no duplicate helper.",
+          "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
+          "before": "Separate copy opens with the earlier records."
+        },
+        {
+          "id": "step-3",
+          "title": "Prepare and call the experiment",
+          "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
+          "action": "Результат = УчебныеПрофессиональныеОпыты.ОпытHTTP(НомерПортаИзСвоегоMockReady);\nСообщить(Результат.HealthВерный);\nСообщить(Результат.ОтказВерный);\nСообщить(Результат.ТаймаутВерный); Open the mock-ready.json produced by your process in a text editor. Replace НомерПортаИзСвоегоMockReady in the caller with its numeric port value; the marker is not a predefined BSL variable. The host remains127.0.0.1.",
+          "why": "Print every named result instead of accepting compilation alone.",
+          "expected": "Only the stated caller is inside the existing startup handler.",
+          "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
+          "before": "Definitions are module-level; no duplicate helper."
+        },
+        {
+          "id": "step-4",
+          "title": "Save, update and run once",
+          "where": "Ctrl+S → F7 → Предприятие",
+          "action": "Run once and compare the fields with the worked trace. 1-second timeout; No false success.",
+          "why": "Observe actual1C data, not the browser diagram.",
+          "expected": "1-second timeout; No false success.",
+          "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
+          "before": "Only the stated caller is inside the existing startup handler."
+        },
+        {
+          "id": "step-5",
+          "title": "Retain both results",
+          "where": "Конфигуратор после закрытия Предприятия",
+          "action": "Remove only the startup call. Use another copy for the adverse case and keep both protocols.",
+          "why": "Preserve provenance and avoid repeating data creation at every startup.",
+          "expected": "Original retained, negative experiment isolated, automatic caller removed.",
+          "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
+          "before": "1-second timeout; No false success."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Сверьте полный опыт",
+        "en": "Explore the example: Reconcile the complete experiment"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Подготовить",
+            "en": "Prepare"
+          },
+          "detail": {
+            "ru": "Свой loopback ready → Без чужих сервисов.",
+            "en": "Own loopback ready → No other services."
+          }
+        },
+        {
+          "label": {
+            "ru": "Запросы",
+            "en": "Requests"
+          },
+          "detail": {
+            "ru": "200/400 → Договор различён.",
+            "en": "200/400 → Contract distinguished."
+          }
+        },
+        {
+          "label": {
+            "ru": "Задержка",
+            "en": "Delay"
+          },
+          "detail": {
+            "ru": "Таймаут1секунда → Не ложный успех.",
+            "en": "1-second timeout → No false success."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · complete server common module УчебныеПрофессиональныеОпыты; shared preparation once"
+  },
+  "nativeCaseIds": [
+    "EXCHANGE.HTTP.ORIGINAL",
+    "EXCHANGE.HTTP.MUTATION"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_EXCHANGE_RESULT.json",
+    "caseIds": [
+      "EXCHANGE.HTTP.ORIGINAL",
+      "EXCHANGE.HTTP.MUTATION"
+    ],
+    "scope": "Real1C HTTP only to own ready-confirmed loopback mock or sequential persisted operation repeat/conflict; compiled negative distinguished. No arbitrary network policy, concurrent receivers or crash recovery claim.",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  },
+  "codeFile": "code/pedagogy/exchange-http-first.bsl"
+}

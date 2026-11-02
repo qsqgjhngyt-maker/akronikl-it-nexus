@@ -1,0 +1,386 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p4",
+  "topicId": "onec.p4.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Attribute types and enumeration values are different levels",
+  "minutes": 120,
+  "goal": "Read actual metadata types and distinguish the Новая enumeration value from identically named text.",
+  "prerequisites": [
+    "onec.p3; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Locate Клиент, ДлительностьМинут and Статус types in Designer.",
+    "Inspect metadata through BSL without changing records.",
+    "Separate allowed state values from allowed state transitions."
+  ],
+  "sections": [
+    [
+      "Enumerations define finite values",
+      "New, InProgress andClosed are developer-defined states changed through configuration, so an enumeration suits them. User-maintained services suit a catalog. Do not choose enumeration merely because today’s list is short; consider who changes it and how.",
+      "The function reads document attributes and two type descriptions. СодержитТип checks permitted customer-reference and numeric types. ТипЗнч separately examines the actual Новая value as ПеречислениеСсылка.СтатусыЗаявки. The string \"Новая\" remains text despite a familiar caption."
+    ],
+    [
+      "An empty value needs meaning",
+      "A new request may default toNew; an older missing status may need handling. Never silently treat empty asClosed. Distinguish absence, an allowed enumeration value and a similar-looking string. Strong typing helps, but transition correctness remains an application rule.",
+      "Separate a field’s permitted type, a variable’s actual value type and a domain constraint. A number does not prove the0..1440 range, and an enumeration type does not prove a legal transition from a closed state. This experiment inspects types without changing existing statuses or validation."
+    ],
+    [
+      "Transitions form a directed graph",
+      "New→InProgress andInProgress→Closed may be allowed; Closed→New may require a special command. Enforce the allowed-pair table centrally, not only through button availability. Adding a state requires updating transitions, filters, reports and tests or the new value may be mishandled.",
+      "Enumeration values are defined by the configuration developer. Users select them instead of creating catalog-like items. User-configurable states require another model and integrity rules. Do not delete referenced enumeration values just to change a caption."
+    ],
+    [
+      "Compatibility checks old data",
+      "After changing enumeration values, check existing documents and saved report settings. Renaming an element technically differs from relabeling its synonym. Do not delete an in-use value for cosmetic reasons. Preserve prior references and test an invalid transition without a write.",
+      "All four original expectations are true. The incorrect control asks for String instead of Number for minutes: it compiles but its claim is false. That tests expected-type meaning, not a complete migration, status-transition graph or all stored data."
+    ]
+  ],
+  "diagram": "p4-2",
+  "walkthrough": [
+    {
+      "action": "Customer field — Permits Клиенты reference",
+      "expected": "True."
+    },
+    {
+      "action": "Minutes field — Permits Number",
+      "expected": "True."
+    },
+    {
+      "action": "Новая value — Enumeration reference type",
+      "expected": "Correct type."
+    },
+    {
+      "action": "\"Новая\" text — String",
+      "expected": "A different type."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Field description versus actual value",
+      "source": "ТипКлиента.СодержитТип(Тип(\"СправочникСсылка.Клиенты\"));\nТипМинут.СодержитТип(Тип(\"Число\"));\nТипЗнч(Перечисления.СтатусыЗаявки.Новая);",
+      "expected": "Customer reference, numeric minutes and a typed status value are distinguished.",
+      "explanation": "СодержитТип inspects a field description; ТипЗнч inspects an actual value.",
+      "trace": [
+        [
+          "Customer field",
+          "Permits Клиенты reference",
+          "True."
+        ],
+        [
+          "Minutes field",
+          "Permits Number",
+          "True."
+        ],
+        [
+          "Новая value",
+          "Enumeration reference type",
+          "Correct type."
+        ],
+        [
+          "\"Новая\" text",
+          "String",
+          "A different type."
+        ]
+      ]
+    },
+    {
+      "title": "Incorrect expected type",
+      "source": "In a separate incorrect copy: ТипМинут.СодержитТип(Тип(\"Строка\"))",
+      "expected": "The numeric-field claim fails despite valid syntax.",
+      "explanation": "The incorrect assertion was executed natively without schema changes.",
+      "trace": [
+        [
+          "Metadata",
+          "Minutes are numeric",
+          "Structure unchanged."
+        ],
+        [
+          "Wrong expectation",
+          "String requested",
+          "The claim is false."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Separate field description, value type and business range.",
+      "criteria": "Number is not proof of0..1440; a status type does not define a transition graph."
+    },
+    {
+      "level": "Applied",
+      "task": "Inspect Designer properties and obtain the function’s four results.",
+      "criteria": "Names/types agree and application records remain unchanged."
+    },
+    {
+      "level": "Advanced",
+      "task": "Draw allowed transitions among three synthetic states and specify independent forbidden-transition tests.",
+      "criteria": "The graph is justified; its execution is not claimed by this type-inspection experiment."
+    }
+  ],
+  "lab": {
+    "title": "Inspect types without data changes",
+    "environment": "Official installed training1C; your copy has Клиенты, Услуги, ЗаявкаУслуги and СтатусыЗаявки. Actual BSL execution, optional Studio.",
+    "steps": [
+      "Open the same P4 experiment base and verify the named metadata and existing common module. Preserve current source before appending. Do not reload a full CF over your work.",
+      "Append the complete source below outside existing procedures/functions. Reuse an existing identical function from your earlier attempt rather than defining it twice.",
+      "Inside the existing handler insert these statements, retaining other code separately:\nРезультат = УчебныеДанные.ОпытТиповМетаданных();\nСообщить(Результат.КлиентСсылка);\nСообщить(Результат.МинутыЧисло);\nСообщить(Результат.СтатусПеречисление);\nСообщить(Результат.СтрокаНеСтатус);",
+      "Save, update the copy, launch once and compare every returned field with the prediction. Record actual codes/numbers for any created items.",
+      "Compare the four type observations with Designer properties; verify existing application records remain unchanged.",
+      "Remove only this experiment call from startup or restore the saved handler. Retain the function, results and previous work; save and update the copy."
+    ],
+    "expected": [
+      "Correct copy and module identified.",
+      "One new exported function; previous work intact.",
+      "The handler calls the function, not its definition.",
+      "Four true claims. No application records are created or changed.",
+      "Claims and concrete records agree within the experiment scope.",
+      "Observation retained and automatic repetition stopped."
+    ],
+    "evidence": [
+      "Platform version, own-copy provenance, exact function and observed results.",
+      "Actual synthetic identities/fields and the explained negative control; no real data."
+    ],
+    "negative": "Investigate the stated compilable incorrect variant only in another own experimental copy; preserve the original."
+  },
+  "mistakes": [
+    [
+      "The text \"Новая\" is treated as an enumeration value.",
+      "Use Перечисления.СтатусыЗаявки.Новая and compare types explicitly."
+    ],
+    [
+      "A valid type is treated as sufficient domain validation.",
+      "Test ranges and state transitions separately."
+    ],
+    [
+      "A referenced enumeration value is deleted to change its caption.",
+      "Review presentation and migration separately while preserving references."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Who defines enumeration values?",
+      "options": [
+        "The configuration developer",
+        "Any name-text input",
+        "List sorting"
+      ],
+      "correct": 0,
+      "explanation": "They are metadata."
+    },
+    {
+      "question": "The text and enumeration value Новая have",
+      "options": [
+        "The same type",
+        "Different types",
+        "Always Undefined"
+      ],
+      "correct": 1,
+      "explanation": "Equal captions do not replace types."
+    },
+    {
+      "question": "Does Number alone prove0..1440?",
+      "options": [
+        "Always",
+        "Only in Nexus",
+        "No, a separate rule is needed"
+      ],
+      "correct": 2,
+      "explanation": "Type and domain validation differ."
+    }
+  ],
+  "review": [
+    "How do СодержитТип and ТипЗнч differ?",
+    "Can a number violate a domain range?",
+    "Where is an enumeration’s allowed list defined?"
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p4.topic-3",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p4",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "catalog",
+      "reference",
+      "metadata",
+      "module",
+      "attribute",
+      "document",
+      "bsl"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Same experiment-base Designer → УчебныеДанные common module → managed Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "copy",
+          "title": "Verify the continuing copy",
+          "where": "Copy Designer",
+          "action": "Open the same P4 experiment base and verify the named metadata and existing common module. Preserve current source before appending. Do not reload a full CF over your work.",
+          "why": "Preserve prior functions and records.",
+          "expected": "Correct copy and module identified.",
+          "troubleshooting": "Return to the preceding preparation route if the metadata is absent.",
+          "before": "The previous P4 experiment base and provenance are retained; УчебныеДанные has server/server-call enabled without global or privileged mode."
+        },
+        {
+          "id": "function",
+          "title": "Append the function",
+          "where": "Общие → Общие модули → УчебныеДанные",
+          "action": "Append the complete source below outside existing procedures/functions. Reuse an existing identical function from your earlier attempt rather than defining it twice.",
+          "why": "Keep definitions at common-module scope.",
+          "expected": "One new exported function; previous work intact.",
+          "troubleshooting": "Check module name, export and server context instead of enabling privilege.",
+          "before": "Correct copy and module identified."
+        },
+        {
+          "id": "caller",
+          "title": "Add only the client call",
+          "where": "Root → application module → startup handler",
+          "action": "Inside the existing handler insert these statements, retaining other code separately:\nРезультат = УчебныеДанные.ОпытТиповМетаданных();\nСообщить(Результат.КлиентСсылка);\nСообщить(Результат.МинутыЧисло);\nСообщить(Результат.СтатусПеречисление);\nСообщить(Результат.СтрокаНеСтатус);",
+          "why": "Call the server function from the managed application.",
+          "expected": "The handler calls the function, not its definition.",
+          "troubleshooting": "Do not nest a function definition or add a second startup handler.",
+          "before": "One new exported function; previous work intact."
+        },
+        {
+          "id": "run",
+          "title": "Run and record actual results",
+          "where": "Ctrl+S → F7 → 1С:Предприятие",
+          "action": "Save, update the copy, launch once and compare every returned field with the prediction. Record actual codes/numbers for any created items.",
+          "why": "Separate predicted behavior from platform observation.",
+          "expected": "Four true claims. No application records are created or changed.",
+          "troubleshooting": "Preserve the specific module/line and discrepancy; do not alter expectations to obtain PASS.",
+          "before": "The handler calls the function, not its definition."
+        },
+        {
+          "id": "reconcile",
+          "title": "Inspect the actual objects",
+          "where": "Enterprise lists and your control notes",
+          "action": "Compare the four type observations with Designer properties; verify existing application records remain unchanged.",
+          "why": "A message alone does not cover unrelated data.",
+          "expected": "Claims and concrete records agree within the experiment scope.",
+          "troubleshooting": "Use identities rather than fixed row positions or equal names.",
+          "before": "Four true claims. No application records are created or changed."
+        },
+        {
+          "id": "finish",
+          "title": "Retain the work and stop startup repetition",
+          "where": "Designer after closing Enterprise",
+          "action": "Remove only this experiment call from startup or restore the saved handler. Retain the function, results and previous work; save and update the copy.",
+          "why": "Ordinary reopening must not repeatedly create demonstration data.",
+          "expected": "Observation retained and automatic repetition stopped.",
+          "troubleshooting": "Do not remove whole modules or clear other records.",
+          "before": "Claims and concrete records agree within the experiment scope."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Описание поля и фактическое значение",
+        "en": "Explore the example: Field description versus actual value"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Поле Клиент",
+            "en": "Customer field"
+          },
+          "detail": {
+            "ru": "Описание допускает ссылку Клиенты → Проверка истинна.",
+            "en": "Permits Клиенты reference → True."
+          }
+        },
+        {
+          "label": {
+            "ru": "Поле минут",
+            "en": "Minutes field"
+          },
+          "detail": {
+            "ru": "Описание допускает Число → Проверка истинна.",
+            "en": "Permits Number → True."
+          }
+        },
+        {
+          "label": {
+            "ru": "Значение Новая",
+            "en": "Новая value"
+          },
+          "detail": {
+            "ru": "ПеречислениеСсылка.СтатусыЗаявки → Правильный тип.",
+            "en": "Enumeration reference type → Correct type."
+          }
+        },
+        {
+          "label": {
+            "ru": "Строка \"Новая\"",
+            "en": "\"Новая\" text"
+          },
+          "detail": {
+            "ru": "Тип Строка → Это другой тип.",
+            "en": "String → A different type."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · separate exported function in УчебныеДанные; append outside earlier functions"
+  },
+  "nativeCaseIds": [
+    "P4.TYPES.ORIGINAL",
+    "P4.TYPES.MUTATION"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_DATA_RESULT.json",
+    "caseIds": [
+      "P4.TYPES.ORIGINAL",
+      "P4.TYPES.MUTATION"
+    ],
+    "scope": "Exact server common-module function and managed caller; positive result and compilable semantic mutation independently distinguished",
+    "training1508Verified": false,
+    "visibleMessagesObserved": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  },
+  "codeFile": "code/pedagogy/metadata-types-first.bsl"
+}

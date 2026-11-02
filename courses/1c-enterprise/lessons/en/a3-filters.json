@@ -1,0 +1,447 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a3",
+  "topicId": "1c-enterprise.a3.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Search and filters: show the right requests while preserving the rest",
+  "minutes": 120,
+  "goal": "Find your own request number, apply a numeric filter and restore the full list while explaining visibility changes.",
+  "prerequisites": [
+    "1c-enterprise.a 2; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
+  ],
+  "outcomes": [
+    "Distinguish text search from a condition on a specific field.",
+    "Apply ДлительностьМинут ≥45 and verify the included boundary.",
+    "Disable the filter, clear search and compare all original numbers."
+  ],
+  "sections": [
+    [
+      "Search asks where your record is",
+      "A number taken from your saved form identifies your particular request. The Поиск (Ctrl+F) box searches the displayed set under platform rules. It neither creates records nor changes customer links. Check the search text and active restrictions before assuming a request is missing.",
+      "Search may operate within an already restricted period or filtered set. An empty result is not evidence of deleted data. Clear the search, disable your filter and check the period, then compare the infobase and actual number."
+    ],
+    [
+      "A filter has a field, comparison and value",
+      "ДлительностьМинут — Больше или равно — 45 compares each numeric duration with 45. For 30, 45 and 30 only the 45-minute request is visible. The equality part includes the boundary; Больше would give an empty result on that dataset.",
+      "The condition checkbox controls whether it applies. Its text and value may remain visible while unchecked: the setting is retained but no longer restricts rows. This allows reversible comparison without deleting either records or the setting."
+    ],
+    [
+      "Read combined restrictions carefully",
+      "Search text, a period and a duration filter can apply together. Searching the number of a 30-minute request while ≥45 is active gives an empty set. Understand the intersection instead of creating the request again. Change one restriction at a time and record what restores the row.",
+      "Advanced И and ИЛИ groups mean all conditions and at least one condition respectively. Start with one numeric condition. For an additional experiment predict the matching numbers manually before combining conditions. A list setting changes neither document validation rules nor access permissions."
+    ],
+    [
+      "Check reversibility and identity",
+      "Record your numbers and durations before filtering. Compare matching numbers with that table, then disable the condition and verify all original numbers return. A row count alone is weaker because different requests can share a duration.",
+      "Keep additional training records rather than deleting them to match a picture. Include them in your baseline and calculate the expected set using the same rule. Screenshots contain original synthetic verification data; your names, dates and numbers may differ."
+    ]
+  ],
+  "diagram": "a3-1",
+  "walkthrough": [
+    {
+      "action": "30 — 30 ≥45 is false",
+      "expected": "Hidden."
+    },
+    {
+      "action": "45 — 45 ≥45 is true",
+      "expected": "Visible."
+    },
+    {
+      "action": "30 — 30 ≥45 is false",
+      "expected": "Hidden."
+    },
+    {
+      "action": "Checkbox off — The condition no longer applies",
+      "expected": "All three numbers return."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Three requests, one matching row",
+      "source": "Your table: Request-1 → 30; Request-2 → 45; Request-3 → 30.\nFilter: ДлительностьМинут Больше или равно 45.",
+      "expected": "Only Request-2 is visible; the other records remain stored.",
+      "explanation": "Request-1/2/3 are table labels, not numbers to enter into your infobase.",
+      "trace": [
+        [
+          "30",
+          "30 ≥45 is false",
+          "Hidden."
+        ],
+        [
+          "45",
+          "45 ≥45 is true",
+          "Visible."
+        ],
+        [
+          "30",
+          "30 ≥45 is false",
+          "Hidden."
+        ],
+        [
+          "Checkbox off",
+          "The condition no longer applies",
+          "All three numbers return."
+        ]
+      ]
+    },
+    {
+      "title": "Why a search can be empty",
+      "source": "Keep ≥45 active and search a 30-minute request number.\nDisable the filter without changing the search number.",
+      "expected": "Initially empty, then the intended request is available.",
+      "explanation": "Both restrictions apply together; no deletion is implied.",
+      "trace": [
+        [
+          "Search + filter",
+          "Matching number has excluded minutes",
+          "Empty."
+        ],
+        [
+          "Filter disabled",
+          "Same number search",
+          "The request is available."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Predict matches among 30, 45, 30 for ≥45 and >45.",
+      "criteria": "One match for ≥45, none for >45; boundary explained."
+    },
+    {
+      "level": "Applied",
+      "task": "Find your number, clear search, apply ≥45, reconcile numbers and disable the filter.",
+      "criteria": "Baseline, filtered set and restored unchanged records are documented."
+    },
+    {
+      "level": "Advanced",
+      "task": "Combine a 30-minute number search with ≥45, explain the empty set and restore the row by disabling only one condition.",
+      "criteria": "No duplicates or record edits; the reason is the intersection of restrictions."
+    }
+  ],
+  "lab": {
+    "title": "Enable and disable a filter without losing requests",
+    "environment": "Official locally installed training 1C; the same own infobase, no Designer, code or Studio needed.",
+    "steps": [
+      "Clear search with its cross and disable your earlier filters. Record request numbers and minutes. The sequential route currently has 30, 45 and 30; preserve and include any additional records.",
+      "Enter an actual saved number, press Enter and compare the result. Clear the search afterward.",
+      "Open list settings and the Отбор tab. Double-click ДлительностьМинут on the left to add a condition on the right.",
+      "Choose Больше или равно in Вид сравнения, enter 45 in Значение, keep the checkbox on and choose Завершить редактирование.",
+      "Compare visible numbers with your prediction. For 30, 45 and 30 only the 45-minute request remains. Do not edit hidden durations to restore visibility.",
+      "Uncheck the condition, clear remaining search and compare every original number and duration. You may retain the disabled condition."
+    ],
+    "expected": [
+      "Your own numbers and durations are recorded.",
+      "The intended number is found; clearing search restores the baseline.",
+      "A duration condition appears with an application checkbox.",
+      "The active ≥45 setting appears above the list with matching records.",
+      "Matching numbers satisfy the rule, including 45.",
+      "All original records remain available with unchanged values."
+    ],
+    "evidence": [
+      "Original numbers and minutes, selected ≥45 numbers and restored set.",
+      "Explanation of the included boundary and empty result, without real data."
+    ],
+    "negative": "An empty set under incompatible restrictions does not prove data loss; reversibly disable your condition first."
+  },
+  "mistakes": [
+    [
+      "Search and filters can hide the same record together.",
+      "Disable restrictions one at a time and compare restored numbers."
+    ],
+    [
+      "Greater than and greater than or equal differ at the boundary.",
+      "Choose greater than or equal to include 45 and verify the committed comparison."
+    ],
+    [
+      "An unchecked condition deletes neither the setting nor a request.",
+      "Uncheck the condition and compare original numbers; no deletion is needed."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What does a list filter change?",
+      "options": [
+        "Stored durations",
+        "Which rows are visible",
+        "It deletes excluded requests"
+      ],
+      "correct": 1,
+      "explanation": "The records remain stored."
+    },
+    {
+      "question": "Is 45 included in ≥45?",
+      "options": [
+        "No",
+        "Only after posting",
+        "Yes"
+      ],
+      "correct": 2,
+      "explanation": "Equality includes the boundary."
+    },
+    {
+      "question": "A 30-minute number search is empty under ≥45. What should you check first?",
+      "options": [
+        "Combined restrictions",
+        "Database deletion",
+        "Creating a duplicate"
+      ],
+      "correct": 0,
+      "explanation": "The row must satisfy both restrictions."
+    }
+  ],
+  "review": [
+    "Why is 45 included?",
+    "What did you compare after disabling the filter?",
+    "Which restrictions will you check before recreating a “missing” record?"
+  ],
+  "sources": [
+    "training",
+    "designer",
+    "catalogs",
+    "documents",
+    "form-elements"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "1c-enterprise",
+    "topicId": "1c-enterprise.a3.topic-2",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "1c-enterprise.a3",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "document",
+      "reference",
+      "self-report"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Enterprise → Учебная сервисная служба → Заявка услуги",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "baseline",
+          "title": "Record the starting set",
+          "where": "Enterprise → Заявка услуги list",
+          "action": "Clear search with its cross and disable your earlier filters. Record request numbers and minutes. The sequential route currently has 30, 45 and 30; preserve and include any additional records.",
+          "why": "An independent table distinguishes hidden data from lost data.",
+          "expected": "Your own numbers and durations are recorded.",
+          "troubleshooting": "If fewer rows appear, check Ещё → Установить период and your infobase before creating duplicates.",
+          "before": "Your infobase contains earlier saved requests, including the corrected new 30-minute request, with their numbers recorded."
+        },
+        {
+          "id": "search",
+          "title": "Find your own number",
+          "where": "Поиск (Ctrl+F) above the list",
+          "action": "Enter an actual saved number, press Enter and compare the result. Clear the search afterward.",
+          "why": "Verify identity before adding a numeric restriction.",
+          "expected": "The intended number is found; clearing search restores the baseline.",
+          "troubleshooting": "Use the number from your form, including leading zeros, in list search rather than global application search.",
+          "before": "Your own numbers and durations are recorded."
+        },
+        {
+          "id": "settings",
+          "title": "Open filter settings",
+          "where": "List → Ещё → Настроить список… → Отбор",
+          "action": "Open list settings and the Отбор tab. Double-click ДлительностьМинут on the left to add a condition on the right.",
+          "why": "Bind the comparison to the intended numeric field.",
+          "expected": "A duration condition appears with an application checkbox.",
+          "troubleshooting": "Switch from Основные to Отбор if needed. Do not choose record deletion in the list menu.",
+          "before": "The intended number is found; clearing search restores the baseline.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/32-request-list-menu.jpg",
+              "width": 497,
+              "height": 594,
+              "sha256": "737c2cb9a1afd5ac430b8869b95fe1108896e82c488f82b512b03380ce836943",
+              "caption": "The list Ещё menu contains Настроить список. This separate empty-base image demonstrates controls only.",
+              "alt": "The list Ещё menu contains Настроить список. This separate empty-base image demonstrates controls only.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": []
+            },
+            {
+              "src": "media/tutorials/v2/33-request-list-settings.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "4b69f8b2dfb9179d58a0caa06d5599fea128255b46320dffdec04fcc94d5cb43",
+              "caption": "List settings: open Отбор. This separate empty-base image demonstrates the controls only.",
+              "alt": "List settings: open Отбор. This separate empty-base image demonstrates the controls only.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": []
+            }
+          ]
+        },
+        {
+          "id": "condition",
+          "title": "Set the included boundary",
+          "where": "List settings → condition row",
+          "action": "Choose Больше или равно in Вид сравнения, enter 45 in Значение, keep the checkbox on and choose Завершить редактирование.",
+          "why": "The equality includes a request of exactly 45 minutes.",
+          "expected": "The active ≥45 setting appears above the list with matching records.",
+          "troubleshooting": "Verify the committed comparison. For an empty result check search, period and actual durations.",
+          "before": "A duration condition appears with an application checkbox.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/34-request-duration-filter.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "c4e22b7e9389bd65e967da286408640235a7d0a59f88427278dbbb66654c1ce6",
+              "caption": "Condition: ДлительностьМинут, Больше или равно, 45, enabled. This screenshot shows setup in a separate empty base.",
+              "alt": "Condition: ДлительностьМинут, Больше или равно, 45, enabled. This screenshot shows setup in a separate empty base.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": []
+            }
+          ]
+        },
+        {
+          "id": "compare",
+          "title": "Reconcile matching rows",
+          "where": "Filtered list and your baseline table",
+          "action": "Compare visible numbers with your prediction. For 30, 45 and 30 only the 45-minute request remains. Do not edit hidden durations to restore visibility.",
+          "why": "Check the condition’s meaning, not just a changing count.",
+          "expected": "Matching numbers satisfy the rule, including 45.",
+          "troubleshooting": "Include additional durations ≥45; course screenshot numbers are not your numbers.",
+          "before": "The active ≥45 setting appears above the list with matching records.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/37-request-filter-one-record.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "b878fc62d46200ab2f2fb15b1d6b17be94b5dce8820aaee9cd0476356e71527b",
+              "caption": "For synthetic 30/45/15, the condition leaves the 45-minute request. Your course sequence has a different baseline but the same rule.",
+              "alt": "For synthetic 30/45/15, the condition leaves the 45-minute request. Your course sequence has a different baseline but the same rule.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 0,
+                "y": 150,
+                "width": 1100,
+                "height": 330
+              }
+            }
+          ]
+        },
+        {
+          "id": "restore",
+          "title": "Restore the full set",
+          "where": "ДлительностьМинут checkbox above the list",
+          "action": "Uncheck the condition, clear remaining search and compare every original number and duration. You may retain the disabled condition.",
+          "why": "Visibility returns without deleting or rewriting data.",
+          "expected": "All original records remain available with unchanged values.",
+          "troubleshooting": "Check other conditions and the period one at a time. Do not delete records or reset unrelated personal settings.",
+          "before": "Matching numbers satisfy the rule, including 45.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/38-request-filter-off-three-records.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "af5cd55d20b4cc044c1a2e5b67cf9dcbc42f7bfe118900c5cdf8cf8d153ea0cb",
+              "caption": "With the checkbox disabled, all three original test numbers return. Visibility is restored; documents are not recreated.",
+              "alt": "With the checkbox disabled, all three original test numbers return. Visibility is restored; documents are not recreated.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 0,
+                "y": 150,
+                "width": 1100,
+                "height": 330
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Три исходные заявки и одна подходящая",
+        "en": "Explore the example: Three requests, one matching row"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "30",
+            "en": "30"
+          },
+          "detail": {
+            "ru": "30 ≥ 45 — нет → Строка скрыта.",
+            "en": "30 ≥45 is false → Hidden."
+          }
+        },
+        {
+          "label": {
+            "ru": "45",
+            "en": "45"
+          },
+          "detail": {
+            "ru": "45 ≥ 45 — да → Строка видна.",
+            "en": "45 ≥45 is true → Visible."
+          }
+        },
+        {
+          "label": {
+            "ru": "30",
+            "en": "30"
+          },
+          "detail": {
+            "ru": "30 ≥ 45 — нет → Строка скрыта.",
+            "en": "30 ≥45 is false → Hidden."
+          }
+        },
+        {
+          "label": {
+            "ru": "Флажок выключен",
+            "en": "Checkbox off"
+          },
+          "detail": {
+            "ru": "Условие не применяется → Возвращаются три номера.",
+            "en": "The condition no longer applies → All three numbers return."
+          }
+        }
+      ]
+    }
+  },
+  "nativeCaseIds": [],
+  "nativeEvidence": {
+    "status": "LIVE PASS",
+    "environment": "official-platform-local-file-base",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/A3_NATIVE_UI_RESULT.json",
+    "scope": "Operator observed commands on separate synthetic bases; illustration dataset differences are explicit; no novice study",
+    "training1508GuiVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false,
+    "caseIds": []
+  }
+}

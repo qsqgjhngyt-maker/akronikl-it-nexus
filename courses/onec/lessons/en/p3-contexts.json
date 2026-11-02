@@ -1,0 +1,365 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p3",
+  "topicId": "onec.p3.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Module contexts: one calculation for different callers",
+  "minutes": 120,
+  "goal": "Create an original common module, explicitly permit a server call and execute its exported function from an application handler.",
+  "prerequisites": [
+    "onec.p2; P2: types, branching, loops and numeric boundaries."
+  ],
+  "outcomes": [
+    "Place each source fragment in its own intended module.",
+    "Explain Экспорт and Server call without confusing them with permissions or HTTP publication.",
+    "Obtain 600 without hidden form data and test removal of Экспорт in a separate copy."
+  ],
+  "sections": [
+    [
+      "Code location determines available data",
+      "The managed application module handles application events. Object modules belong to particular objects; form modules have form-specific data and context. A common module contains procedures and functions for other permitted callers. Identical procedure names in two modules do not create one shared implementation.",
+      "A cost formula may be needed by a form, a document and a report. Copying it into every place creates diverging implementations. A common module provides one calculation location but does not automatically receive the current form’s minutes. Pass minutes and the rate explicitly so identical inputs produce identical results."
+    ],
+    [
+      "Two settings answer different questions",
+      "Экспорт makes the method callable from another permitted module. The common module properties determine execution contexts. This exercise enables Server and Server call and disables Managed application client, Global and Privileged. Return values reuse is DontUse. These are settings for this particular calculation, not a universal module template.",
+      "Server call exposes the module through the platform’s client-to-server mechanism. It does not create an HTTP API or bypass user rights. A file infobase still distinguishes logical client and server contexts; this exercise does not prove a separately deployed network server or license a training client-server installation."
+    ],
+    [
+      "Pass only the necessary inputs",
+      "The first editor contains the exported function. The second contains a startup handler calling УчебныеРасчеты.Стоимость(30, 1200). Before the dot is the common module name; after it is the method name. The function validates types and ranges, returns a rounded number and writes no documents.",
+      "Do not replace parameters with an implicit “current request” global. That would make tests depend on earlier windows and execution order. If database access becomes necessary, isolate and name it explicitly and test it on an original synthetic dataset. Moving code into a common module alone does not make it pure or secure."
+    ],
+    [
+      "Test an allowed and a prohibited call",
+      "First obtain 600 and preserve the working version. Only in a separate copy remove Экспорт, save, update and retry the external call. It must become unavailable. Do not enable every context or privileged mode to conceal the cause.",
+      "Restore Экспорт and repeat the positive run. Changing only 30 to 45 must give 900 while the function stays unchanged. Record whether rejection occurred during checking or execution. One rejected call is not proof of all permissions or all environments."
+    ]
+  ],
+  "diagram": "p3-0",
+  "walkthrough": [
+    {
+      "action": "Parameters — 30 and 1200",
+      "expected": "Two valid numbers."
+    },
+    {
+      "action": "Formula — 30 × 1200 / 60",
+      "expected": "600."
+    },
+    {
+      "action": "Return — Number supplied to the caller",
+      "expected": "No document write."
+    }
+  ],
+  "examples": [
+    {
+      "title": "First editor: УчебныеРасчеты common function",
+      "source": "Функция Стоимость(Знач Минуты, Знач ТарифЗаЧас) Экспорт\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(ТарифЗаЧас) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Ожидались числа\";\n    КонецЕсли;\n    Если Минуты < 0 Или ТарифЗаЧас < 0 Тогда\n        ВызватьИсключение \"Ожидались неотрицательные числа\";\n    КонецЕсли;\n    Возврат Окр(Минуты * ТарифЗаЧас / 60, 2);\nКонецФункции",
+      "expected": "Arguments 30 and 1200 return the number 600.",
+      "explanation": "Create the named common module with the specified properties before using this fragment.",
+      "trace": [
+        [
+          "Parameters",
+          "30 and 1200",
+          "Two valid numbers."
+        ],
+        [
+          "Formula",
+          "30 × 1200 / 60",
+          "600."
+        ],
+        [
+          "Return",
+          "Number supplied to the caller",
+          "No document write."
+        ]
+      ]
+    },
+    {
+      "title": "Second editor: application event handler",
+      "source": "Процедура ПриНачалеРаботыСистемы()\n    Результат = УчебныеРасчеты.Стоимость(30, 1200);\n    Сообщить(Результат);\nКонецПроцедуры",
+      "expected": "Startup displays 600.",
+      "explanation": "This handler belongs to the application module, not the common module.",
+      "trace": [
+        [
+          "Event",
+          "Application starts",
+          "Handler invoked."
+        ],
+        [
+          "External call",
+          "УчебныеРасчеты.Стоимость",
+          "The platform invokes the permitted method."
+        ],
+        [
+          "Display",
+          "Сообщить(Результат)",
+          "600."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Draw the two modules, the call arrow, its inputs and result.",
+      "criteria": "Application and common module distinguished; 30/1200 → 600."
+    },
+    {
+      "level": "Applied",
+      "task": "Run 30- and 45-minute calls, changing only the handler argument.",
+      "criteria": "One shared function gives 600 and 900."
+    },
+    {
+      "level": "Advanced",
+      "task": "Remove Экспорт in a separate copy, record caller / callee / setting / result, then restore the working call.",
+      "criteria": "Allowed and prohibited results, rejection reason and recovery are documented."
+    }
+  ],
+  "lab": {
+    "title": "Call your common calculation from the application",
+    "environment": "Official locally installed training 1C; your own file infobase, no separately deployed server or Studio required.",
+    "steps": [
+      "Preserve the previous application text. Locate Общие → Общие модули. The second editor is the managed application module at the configuration root. Do not confuse a common module with a document object module.",
+      "Select Общие модули and press Insert or Add. Name it УчебныеРасчеты. Enable Сервер and Вызов сервера; disable Клиент (управляемое приложение), Глобальный and Привилегированный. Set return values reuse to Не использовать.",
+      "Paste only the first example, the Стоимость function with Экспорт, and save.",
+      "Replace only your training application module with the second example: one ПриНачалеРаботыСистемы handler calling УчебныеРасчеты.Стоимость(30, 1200).",
+      "Save both modules, update the database configuration and launch Enterprise mode. Compare the message with 30 × 1200 / 60.",
+      "Change only 30 to 45 and obtain 900. Preserve the working source. In a separate copy remove Экспорт and record rejection of the external call. Restore it and obtain 900 again."
+    ],
+    "expected": [
+      "Two different modules identified; previous source preserved.",
+      "The original УчебныеРасчеты module exists with the specified properties.",
+      "One Стоимость function; no application startup handler in this module.",
+      "The function and application handler are in separate modules.",
+      "The number 600 is displayed.",
+      "45 gives 900; the non-exported external call is unavailable; the restored source works."
+    ],
+    "evidence": [
+      "Names and properties of your two modules, sources and 600/900 results.",
+      "Separate non-exported copy and restoration result, without secrets or a server-grading claim."
+    ],
+    "negative": "A non-exported external call must not be accepted; do not enable additional contexts or privileges to bypass it."
+  },
+  "mistakes": [
+    [
+      "Pasting both fragments into one editor does not test the stated two-module connection.",
+      "Put the function and handler in their separate modules and repeat the external call."
+    ],
+    [
+      "Экспорт does not publish a network API.",
+      "Check export, module contexts and permissions separately; do not publish a network endpoint."
+    ],
+    [
+      "An available method does not automatically receive current form data.",
+      "Pass minutes and the rate explicitly and compare identical inputs from different callers."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What appears before the dot in УчебныеРасчеты.Стоимость?",
+      "options": [
+        "The common module name",
+        "The document name",
+        "The hourly rate"
+      ],
+      "correct": 0,
+      "explanation": "The qualified name identifies a module and method."
+    },
+    {
+      "question": "What does Экспорт do?",
+      "options": [
+        "Enables every permission",
+        "Makes a method available to another permitted context",
+        "Publishes an HTTP endpoint"
+      ],
+      "correct": 1,
+      "explanation": "Export does not replace module contexts or access rights."
+    },
+    {
+      "question": "Where is ПриНачалеРаботыСистемы in this lab?",
+      "options": [
+        "In a catalog",
+        "In the common module",
+        "In the managed application module"
+      ],
+      "correct": 2,
+      "explanation": "The application event calls the separate shared calculation."
+    }
+  ],
+  "review": [
+    "Explain Экспорт versus the Server call property.",
+    "Which inputs does the shared calculation receive and what does it avoid reading?",
+    "Which positive and negative observations establish the stated call boundary?"
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "cli"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p3.topic-1",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p3",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "module",
+      "procedure",
+      "bsl",
+      "api"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Designer: the УчебныеРасчеты common module and the managed application module; then Enterprise mode",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "map",
+          "title": "Locate both source editors",
+          "where": "Designer → configuration tree",
+          "action": "Preserve the previous application text. Locate Общие → Общие модули. The second editor is the managed application module at the configuration root. Do not confuse a common module with a document object module.",
+          "why": "Identify each fragment’s location before pasting.",
+          "expected": "Two different modules identified; previous source preserved.",
+          "troubleshooting": "If the tree is closed, open the configuration. If the infobase is unfamiliar, return to the startup list and verify your entry.",
+          "before": "Your separate training infobase opens and the preceding application source is preserved."
+        },
+        {
+          "id": "create",
+          "title": "Create your common module",
+          "where": "Designer → Общие → Общие модули",
+          "action": "Select Общие модули and press Insert or Add. Name it УчебныеРасчеты. Enable Сервер and Вызов сервера; disable Клиент (управляемое приложение), Глобальный and Привилегированный. Set return values reuse to Не использовать.",
+          "why": "The name and contexts must match the explicit application call.",
+          "expected": "The original УчебныеРасчеты module exists with the specified properties.",
+          "troubleshooting": "Use the selected module’s Properties command. Do not change an unfamiliar existing module.",
+          "before": "Two different modules identified; previous source preserved."
+        },
+        {
+          "id": "function",
+          "title": "Enter the common function",
+          "where": "Designer → УчебныеРасчеты → module editor",
+          "action": "Paste only the first example, the Стоимость function with Экспорт, and save.",
+          "why": "Export and module settings together define a permitted external call.",
+          "expected": "One Стоимость function; no application startup handler in this module.",
+          "troubleshooting": "If both fragments were pasted here, separate them into their intended editors.",
+          "before": "The original УчебныеРасчеты module exists with the specified properties."
+        },
+        {
+          "id": "caller",
+          "title": "Enter the calling handler",
+          "where": "Designer → configuration root → managed application module",
+          "action": "Replace only your training application module with the second example: one ПриНачалеРаботыСистемы handler calling УчебныеРасчеты.Стоимость(30, 1200).",
+          "why": "The caller names the module and method and supplies explicit inputs.",
+          "expected": "The function and application handler are in separate modules.",
+          "troubleshooting": "Verify the exact module name and remove unintended duplicate startup declarations by restoring your source.",
+          "before": "One Стоимость function; no application startup handler in this module."
+        },
+        {
+          "id": "run",
+          "title": "Save, update and execute",
+          "where": "Designer → Ctrl+S → F7 → F5",
+          "action": "Save both modules, update the database configuration and launch Enterprise mode. Compare the message with 30 × 1200 / 60.",
+          "why": "Real execution verifies the module connection and returned value.",
+          "expected": "The number 600 is displayed.",
+          "troubleshooting": "For an unavailable method check Экспорт and Вызов сервера. For old output verify your infobase and update completion.",
+          "before": "The function and application handler are in separate modules."
+        },
+        {
+          "id": "vary",
+          "title": "Test a change and a prohibited call in a copy",
+          "where": "Your separately preserved configuration copy → the same editors",
+          "action": "Change only 30 to 45 and obtain 900. Preserve the working source. In a separate copy remove Экспорт and record rejection of the external call. Restore it and obtain 900 again.",
+          "why": "Positive and negative checks distinguish working access from rejection while retaining recovery.",
+          "expected": "45 gives 900; the non-exported external call is unavailable; the restored source works.",
+          "troubleshooting": "Do not enable privileged mode to bypass the result. Preserve a non-sensitive failure record and return to your working copy if the cause is unclear.",
+          "before": "The number 600 is displayed."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Первое окно: функция общего модуля УчебныеРасчеты",
+        "en": "Explore the example: First editor: УчебныеРасчеты common function"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Параметры",
+            "en": "Parameters"
+          },
+          "detail": {
+            "ru": "30 и 1200 → Два допустимых числа.",
+            "en": "30 and 1200 → Two valid numbers."
+          }
+        },
+        {
+          "label": {
+            "ru": "Формула",
+            "en": "Formula"
+          },
+          "detail": {
+            "ru": "30 × 1200 / 60 → 600.",
+            "en": "30 × 1200 / 60 → 600."
+          }
+        },
+        {
+          "label": {
+            "ru": "Возврат",
+            "en": "Return"
+          },
+          "detail": {
+            "ru": "Число в вызывающее место → Без записи документа.",
+            "en": "Number supplied to the caller → No document write."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · УчебныеРасчеты common module"
+  },
+  "nativeCaseIds": [
+    "P3.CONTEXT.600",
+    "P3.CONTEXT.900",
+    "P3.CONTEXT.NOEXPORT"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "training1508Verified": false,
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_P3_RESULT.json",
+    "caseIds": [
+      "P3.CONTEXT.600",
+      "P3.CONTEXT.900",
+      "P3.CONTEXT.NOEXPORT"
+    ],
+    "scope": "Exact original fragments and explicit variants in own synthetic file infobase; three expected rejection reasons checked; no server grading."
+  },
+  "codeFile": "code/pedagogy/common-calculation-first.bsl"
+}

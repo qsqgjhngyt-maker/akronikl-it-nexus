@@ -1,0 +1,347 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p10",
+  "topicId": "onec.p10.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Roles and access restrictions",
+  "minutes": 180,
+  "goal": "Test object and row-level restrictions with negative cases without broadening permissions.",
+  "prerequisites": [
+    "onec.p9; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Permissions and scopes are explicit.",
+    "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
+    "Accepted original preserved; rejection and its limits explained."
+  ],
+  "sections": [
+    [
+      "Authorization checks an action",
+      "A role permits object operations; data restrictions refine scope. A user allowed Alpha requests does not gainBeta access merely by knowing a key. Test lists, direct open and edits. Hidden buttons and editable client filters are not authorization enforcement.",
+      "Continue module6 own roles: administrator reads/writes; the training reader reads and is denied a valid write. These are infobase roles, not Nexus accounts/RLS. Use an otherwise valid write so range validation is not mistaken for an authorization rejection."
+    ],
+    [
+      "Permissions can combine",
+      "Additional roles change effective permissions. Analyze the full set and context, not one role alone. Full rights can hide missing enforcement. Use separate synthetic least-privilege profiles and a positive control so a denial is not merely an inability to log in.",
+      "For advanced RLS in another copy restrict document Read with WHERE ДлительностьМинут <=30, matching the current schema. Do not load the historical Минуты fixture over learner work. A second broader role can widen access; inspect the complete role set."
+    ],
+    [
+      "Privilege needs justification",
+      "Privileged execution can alter normal permission boundaries. Do not enable it merely to silence a read error; justify need and outputs. Even aggregates can disclose forbidden information. Agree on a minimal contract and test indirect routes as well as visible records.",
+      "The final12 values yield5 visible records:30,15,0,20,25,total90. Compare SELECT ALLOWED with an unrestricted query in an admitted own module: one returns the subset; access to prohibited rows must reject. Separately the administrator sees12/440."
+    ],
+    [
+      "Bind the matrix to the actual environment",
+      "Record build, profile, object, action, scope and expectation. TestAlpha, Beta, direct references, writes and aggregates in a suitable stand. Mark unavailable training checksNOTRUN. Logs contain no passwords or full user data; successful login is not a complete security audit.",
+      "Record permitted object reading, denied update,30/35 boundary and unchanged prior fields. Own synthetic profiles need no password/OS authentication for this exercise. If the edition lacks the mode, complete object-right checks and leave RLS explicitly NOT RUN."
+    ]
+  ],
+  "diagram": "p10-1",
+  "walkthrough": [
+    {
+      "action": "Administrator — 12/440",
+      "expected": "Complete training set."
+    },
+    {
+      "action": "RLS reader — 5/90",
+      "expected": "Only ≤30."
+    },
+    {
+      "action": "Valid update — Insufficient rights",
+      "expected": "Data unchanged."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Reconcile the complete experiment",
+      "source": "Administrator → 12/440 → Complete training set.\nRLS reader → 5/90 → Only ≤30.\nValid update → Insufficient rights → Data unchanged.",
+      "expected": "Insufficient rights; Data unchanged.",
+      "explanation": "Continue module6 own roles: administrator reads/writes; the training reader reads and is denied a valid write. These are infobase roles, not Nexus accounts/RLS. Use an otherwise valid write so range validation is not mistaken for an authorization rejection.",
+      "trace": [
+        [
+          "Administrator",
+          "12/440",
+          "Complete training set."
+        ],
+        [
+          "RLS reader",
+          "5/90",
+          "Only ≤30."
+        ],
+        [
+          "Valid update",
+          "Insufficient rights",
+          "Data unchanged."
+        ]
+      ]
+    },
+    {
+      "title": "A case that distinguishes the wrong solution",
+      "source": "In another test copy add a broad read role to the restricted profile.",
+      "expected": "The earlier restriction is no longer sufficient; detect the wider rights and restore the intended role.",
+      "explanation": "Record permitted object reading, denied update,30/35 boundary and unchanged prior fields. Own synthetic profiles need no password/OS authentication for this exercise. If the edition lacks the mode, complete object-right checks and leave RLS explicitly NOT RUN.",
+      "trace": [
+        [
+          "Separate copy",
+          "In another test copy add a broad read role to the restricted profile.",
+          "Retain the accepted original."
+        ],
+        [
+          "Observe",
+          "The earlier restriction is no longer sufficient; detect the wider rights and restore the intended role.",
+          "Record permitted object reading, denied update,30/35 boundary and unchanged prior fields. Own synthetic profiles need no password/OS authentication for this exercise. If the edition lacks the mode, complete object-right checks and leave RLS explicitly NOT RUN."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Explain the checked boundary using the first trace. Create a synthetic profile matrix.",
+      "criteria": "Permissions and scopes are explicit."
+    },
+    {
+      "level": "Applied",
+      "task": "Perform the stated available experiment and retain actual observations. Read Alpha and directly open Beta.",
+      "criteria": "Actual input/output and exact own source identified; unperformed stages marked NOT RUN."
+    },
+    {
+      "level": "Advanced",
+      "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. In another test copy add a broad read role to the restricted profile.",
+      "criteria": "Accepted original preserved; rejection and its limits explained."
+    }
+  ],
+  "lab": {
+    "title": "Roles and access restrictions",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "steps": [
+      "Keep the earlier source and DT backup; restore into a new empty directory and verify its path. Continue module6 own roles: administrator reads/writes; the training reader reads and is denied a valid write. These are infobase roles, not Nexus accounts/RLS. Use an otherwise valid write so range validation is not mistaken for an authorization rejection.",
+      "For advanced RLS in another copy restrict document Read with WHERE ДлительностьМинут <=30, matching the current schema. Do not load the historical Минуты fixture over learner work. A second broader role can widen access; inspect the complete role set.",
+      "The final12 values yield5 visible records:30,15,0,20,25,total90. Compare SELECT ALLOWED with an unrestricted query in an admitted own module: one returns the subset; access to prohibited rows must reject. Separately the administrator sees12/440.",
+      "Record permitted object reading, denied update,30/35 boundary and unchanged prior fields. Own synthetic profiles need no password/OS authentication for this exercise. If the edition lacks the mode, complete object-right checks and leave RLS explicitly NOT RUN. In another test copy add a broad read role to the restricted profile."
+    ],
+    "expected": [
+      "12/440; Complete training set.",
+      "Exact settings/source and expected effect recorded.",
+      "Insufficient rights; Data unchanged.",
+      "The earlier restriction is no longer sufficient; detect the wider rights and restore the intended role."
+    ],
+    "evidence": [
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits."
+    ],
+    "negative": "In another test copy add a broad read role to the restricted profile."
+  },
+  "mistakes": [
+    [
+      "Success is inferred from an unavailable environment.",
+      "Separate actual observations from a planned advanced scenario and name edition limits."
+    ],
+    [
+      "A failed attempt is removed to make the record look successful.",
+      "Retain the original failure, its cause, correction and regression evidence."
+    ],
+    [
+      "An own-copy change is applied over the accepted original.",
+      "Verify the actual directory and preserve source identities before making changes."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Does knowing a key authorize foreign data?",
+      "options": [
+        "Yes",
+        "No",
+        "Only in lists"
+      ],
+      "correct": 1,
+      "explanation": "Identification is not authorization."
+    },
+    {
+      "question": "Full rights to fix a denial are",
+      "options": [
+        "A universal solution",
+        "Always safe",
+        "Unjustified broadening without analysis"
+      ],
+      "correct": 2,
+      "explanation": "Use the minimum required contract."
+    },
+    {
+      "question": "A positive control is needed",
+      "options": [
+        "So denial of everything is not mistaken for a correct role",
+        "For color",
+        "To delete logs"
+      ],
+      "correct": 0,
+      "explanation": "A role must support required work."
+    }
+  ],
+  "review": [
+    "Permissions and scopes are explicit.",
+    "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
+    "Accepted original preserved; rejection and its limits explained."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "safe-eval",
+    "managed-locks",
+    "admin-tools"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p10.topic-2",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p10",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "reference",
+      "query",
+      "transaction"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C: Designer and Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "step-1",
+          "title": "Preserve and identify the starting state",
+          "where": "Конфигуратор своей копии",
+          "action": "Keep the earlier source and DT backup; restore into a new empty directory and verify its path. Continue module6 own roles: administrator reads/writes; the training reader reads and is denied a valid write. These are infobase roles, not Nexus accounts/RLS. Use an otherwise valid write so range validation is not mistaken for an authorization rejection.",
+          "why": "Protect prior work and define the actual experiment.",
+          "expected": "12/440; Complete training set.",
+          "troubleshooting": "A list-entry name is not a separate directory; use only own synthetic data.",
+          "before": "Own path, prior sources and a restorable backup identified."
+        },
+        {
+          "id": "step-2",
+          "title": "Prepare the exact mechanism",
+          "where": "Конфигуратор → собственный модуль/настройки",
+          "action": "For advanced RLS in another copy restrict document Read with WHERE ДлительностьМинут <=30, matching the current schema. Do not load the historical Минуты fixture over learner work. A second broader role can widen access; inspect the complete role set.",
+          "why": "Match implementation to its intended boundary.",
+          "expected": "Exact settings/source and expected effect recorded.",
+          "troubleshooting": "Inspect actual metadata and version instead of substituting similarly named fields.",
+          "before": "12/440; Complete training set."
+        },
+        {
+          "id": "step-3",
+          "title": "Run only the available admitted route",
+          "where": "Предприятие → своя учебная операция",
+          "action": "The final12 values yield5 visible records:30,15,0,20,25,total90. Compare SELECT ALLOWED with an unrestricted query in an admitted own module: one returns the subset; access to prohibited rows must reject. Separately the administrator sees12/440.",
+          "why": "Obtain an observable result in the stated environment.",
+          "expected": "Insufficient rights; Data unchanged.",
+          "troubleshooting": "If the edition lacks the required feature, record NOT RUN and its reason; do not bypass licensing.",
+          "before": "Exact settings/source and expected effect recorded."
+        },
+        {
+          "id": "step-4",
+          "title": "Check rejection and preserve evidence",
+          "where": "Протокол и собственная папка результата",
+          "action": "Record permitted object reading, denied update,30/35 boundary and unchanged prior fields. Own synthetic profiles need no password/OS authentication for this exercise. If the edition lacks the mode, complete object-right checks and leave RLS explicitly NOT RUN. In another test copy add a broad read role to the restricted profile.",
+          "why": "Distinguish an incorrect conclusion and retain recovery.",
+          "expected": "The earlier restriction is no longer sufficient; detect the wider rights and restore the intended role.",
+          "troubleshooting": "A planned test is not an observed failure or a PASS; preserve exact source/revision.",
+          "before": "Insufficient rights; Data unchanged."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Сверьте полный опыт",
+        "en": "Explore the example: Reconcile the complete experiment"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Администратор",
+            "en": "Administrator"
+          },
+          "detail": {
+            "ru": "12/440 → Полный учебный набор.",
+            "en": "12/440 → Complete training set."
+          }
+        },
+        {
+          "label": {
+            "ru": "Читатель с RLS",
+            "en": "RLS reader"
+          },
+          "detail": {
+            "ru": "5/90 → Только ≤30. Отдельный ограниченный профиль читает только разрешённые записи; полное чтение и запись не допускаются.",
+            "en": "5/90 → Only ≤30. The separate restricted profile reads only admitted rows; full reading and writing are denied."
+          }
+        },
+        {
+          "label": {
+            "ru": "Корректная запись",
+            "en": "Valid update"
+          },
+          "detail": {
+            "ru": "Недостаточно прав → Данные прежние.",
+            "en": "Insufficient rights → Data unchanged."
+          }
+        }
+      ]
+    }
+  },
+  "nativeCaseIds": [
+    "five-rows-90",
+    "boundary-le30",
+    "unrestricted-query-rejected",
+    "valid-update-rejected",
+    "original-keys-fields-retained"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_RLS_RESULT.json",
+    "caseIds": [
+      "five-rows-90",
+      "boundary-le30",
+      "unrestricted-query-rejected",
+      "valid-update-rejected",
+      "original-keys-fields-retained"
+    ],
+    "scope": "Actual own restricted infobase profile and current ДлительностьМинут RLS; administrator12/440 versus reader5/90. No Nexus Identity or production-account claim.",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  }
+}

@@ -1,0 +1,333 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a2",
+  "topicId": "1c-enterprise.a2.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Your first request: fill, save and verify its state",
+  "minutes": 110,
+  "goal": "Create a training request linked to your customer and service, then prove persistence by reopening it.",
+  "prerequisites": [
+    "The prepared Training service desk and a saved customer from the preceding lesson."
+  ],
+  "outcomes": [
+    "Reconcile document number, date, references, minutes and state.",
+    "Explain writing versus posting in this specific workspace.",
+    "Test invalid input without destroying source documents."
+  ],
+  "sections": [
+    [
+      "A customer and a separate request",
+      "A customer identifies a participant; a request records one service event. One customer can have many requests. Do not represent a new request by renaming the customer. The Заявка услуги document stores date, number, customer, service, duration, status and comment.",
+      "Customer and Service fields reference catalog records. Select the saved card rather than typing a similar arbitrary word. A document number helps find the event; a customer name helps people recognize the participant. Record the actual number, date and fields, then reopen the same document."
+    ],
+    [
+      "Prepare a service and fill the form",
+      "A service describes what the desk does, such as Учебная диагностика (training diagnostics). Create and save one service card. Leave ТарифЗаЧас at zero for this first exercise: the task measures minutes, not real payments. Financial accounting is outside scope.",
+      "In the new document select your customer and service, enter 30 into ДлительностьМинут and choose Новая. The platform may assign number and date; read actual values rather than copying a test stand’s number. Comment Первое учебное обращение helps identify your record."
+    ],
+    [
+      "Saving is not posting",
+      "Unsaved edits exist only in the open form. Write or Write and close requests persistence and runs validity checks. Reopen the same document afterwards to test reading stored state rather than merely seeing typed text.",
+      "Posting is disabled in this beginner configuration because register movements are not modeled yet. Business status Новая or ВРаботе is a separate field. A status change proves neither posting, payment nor completion of all work. Do not enable posting merely to obtain a marker."
+    ],
+    [
+      "Rejected writes and safe correction",
+      "The object rule rejects a missing customer, service or status and duration outside 0..1440. Read a rejection and correct the specific field. A message alone does not prove absence of an invalid document: check your list and record count afterwards.",
+      "Use a separate new form for the negative case: leave Customer empty and try writing. Then close that unsaved form without saving and verify that your valid first request remains alone. Do not erase accepted document data to test rejection. Zero minutes is valid in this model; missing customer and zero duration mean different things."
+    ]
+  ],
+  "diagram": "a2document",
+  "walkthrough": [
+    {
+      "action": "Customer selected — Reference to the earlier card",
+      "expected": "No new customer is created."
+    },
+    {
+      "action": "New document saved — A separate event",
+      "expected": "Its number identifies this request."
+    },
+    {
+      "action": "Document reopened — 30 and Новая read from storage",
+      "expected": "Persistence is checked."
+    }
+  ],
+  "examples": [
+    {
+      "title": "One event, one document",
+      "source": "Customer: Учебный Север — ремонт\nService: Учебная диагностика\nMinutes: 30; Status: Новая",
+      "expected": "Your request is saved; its actual form number is recorded.",
+      "explanation": "The new request references existing catalog cards.",
+      "trace": [
+        [
+          "Customer selected",
+          "Reference to the earlier card",
+          "No new customer is created."
+        ],
+        [
+          "New document saved",
+          "A separate event",
+          "Its number identifies this request."
+        ],
+        [
+          "Document reopened",
+          "30 and Новая read from storage",
+          "Persistence is checked."
+        ]
+      ]
+    },
+    {
+      "title": "Changed status without posting",
+      "source": "Same request: Новая → ВРаботе → Write → reopen",
+      "expected": "The same document has status ВРаботе; posting is still unused.",
+      "explanation": "Edit the same request rather than making a duplicate.",
+      "trace": [
+        [
+          "Earlier row opened",
+          "Same number",
+          "Document identified."
+        ],
+        [
+          "Status ВРаботе",
+          "Field change",
+          "No register movement."
+        ],
+        [
+          "Reopened",
+          "Same number, new status",
+          "The particular edit is checked."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Guided",
+      "task": "Create a service and one 30-minute request; record its actual number and reopen it.",
+      "criteria": "Customer/service references selected; 30 minutes and status persist."
+    },
+    {
+      "level": "Changed condition",
+      "task": "Change only its status to ВРаботе and verify the number and count.",
+      "criteria": "Same number, one row, new status; posting was not enabled."
+    },
+    {
+      "level": "Independent",
+      "task": "Create a separate 45-minute event for the same customer without replacing the first.",
+      "criteria": "Two documents, durations 30 and 45; their sum is 75 minutes, not revenue."
+    }
+  ],
+  "lab": {
+    "title": "Create and read back a request",
+    "environment": "Your prepared infobase and training customer; no BSL or real payments.",
+    "steps": [
+      "Click Create, enter Учебная диагностика as the description and leave ТарифЗаЧас at 0. Write and close, then reopen the row and verify its name.",
+      "Use Customer selection to choose Учебный Север — ремонт and Service to choose Учебная диагностика. Enter ДлительностьМинут 30, Статус Новая and comment Первое учебное обращение. Read the date.",
+      "Click Write or Write and close. For rejection read the message, correct the field and retry. Record the actual document number.",
+      "Reopen the same row and verify customer, service, 30 minutes and status. Change only status to ВРаботе, write and reopen the same number again.",
+      "Open another new request, select service/status and enter 30, but leave Customer empty. Try writing and read the rejection. Close this form without saving, clear filters and check your valid first request."
+    ],
+    "expected": [
+      "One personal training service is saved.",
+      "The form is filled but persistence is not yet established.",
+      "The list contains your numbered request.",
+      "Same number, one request, status ВРаботе and 30 minutes.",
+      "The write is rejected; the valid request remains and accepted document count does not increase."
+    ],
+    "evidence": [
+      "Your actual number and fields read back after reopening.",
+      "A new empty-customer rejection with the valid document unchanged."
+    ],
+    "negative": "Use a separate new form for invalid input; do not clear the accepted request’s data."
+  },
+  "mistakes": [
+    [
+      "ВРаботе means posted.",
+      "It is a business-process field; posting is disabled here."
+    ],
+    [
+      "An error message proves no record exists.",
+      "Check the list and accepted document after rejection."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What does status ВРаботе mean here?",
+      "options": [
+        "Automatically posted",
+        "A separate process attribute changed",
+        "Service paid"
+      ],
+      "correct": 1,
+      "explanation": "Posting is disabled; status proves no payment or register movement."
+    },
+    {
+      "question": "What should follow rejection of a new request without Customer?",
+      "options": [
+        "Inspect message color only",
+        "Check that the window closed only",
+        "Check rejection, no new record and the earlier request intact"
+      ],
+      "correct": 2,
+      "explanation": "Verify both behavior and stored state."
+    },
+    {
+      "question": "How should another event for the same customer be entered?",
+      "options": [
+        "Create a separate document referencing the existing customer",
+        "Rename the customer",
+        "Overwrite the first request without preserving it"
+      ],
+      "correct": 0,
+      "explanation": "One customer can have separate numbered documents."
+    }
+  ],
+  "review": [
+    "How does a request differ from a customer?",
+    "Which fields did you actually read back?",
+    "Next, learn to locate your own record."
+  ],
+  "sources": [
+    "documents",
+    "catalogs",
+    "bsl-language",
+    "cli"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.a2p2.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "nativeCaseIds": [],
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
+    "sourcePolicy": "primary-source-links-and-observed-native-results",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "0.3.0-a2p2",
+    "originalCourseId": "1c-enterprise",
+    "topicId": "1c-enterprise.a2.topic-3",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "catalog",
+      "catalog-item",
+      "reference",
+      "document",
+      "posting",
+      "attribute",
+      "form"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Enterprise mode → your training service desk",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "service",
+          "title": "Prepare a service",
+          "where": "Enterprise → Учебная сервисная служба → Услуги",
+          "action": "Click Create, enter Учебная диагностика as the description and leave ТарифЗаЧас at 0. Write and close, then reopen the row and verify its name.",
+          "why": "The document needs an existing service reference.",
+          "expected": "One personal training service is saved.",
+          "troubleshooting": "Reuse your matching existing service; do not create a duplicate merely to continue.",
+          "before": "Your practice infobase is open and customer Учебный Север — ремонт is saved."
+        },
+        {
+          "id": "new-request",
+          "title": "Fill a new request",
+          "where": "Service section → Заявка услуги list → Create",
+          "action": "Use Customer selection to choose Учебный Север — ремонт and Service to choose Учебная диагностика. Enter ДлительностьМинут 30, Статус Новая and comment Первое учебное обращение. Read the date.",
+          "why": "Fields have separate meanings; arbitrary text does not replace references.",
+          "expected": "The form is filled but persistence is not yet established.",
+          "troubleshooting": "For an empty selection save the catalog record first and verify your infobase.",
+          "before": "One personal training service is saved."
+        },
+        {
+          "id": "write",
+          "title": "Write the document",
+          "where": "Open request form",
+          "action": "Click Write or Write and close. For rejection read the message, correct the field and retry. Record the actual document number.",
+          "why": "Validity rules must accept the intended state.",
+          "expected": "The list contains your numbered request.",
+          "troubleshooting": "Posting is disabled in this configuration and is unnecessary for the task.",
+          "before": "The form is filled but persistence is not yet established."
+        },
+        {
+          "id": "reopen",
+          "title": "Read saved state",
+          "where": "Request list → your numbered row",
+          "action": "Reopen the same row and verify customer, service, 30 minutes and status. Change only status to ВРаботе, write and reopen the same number again.",
+          "why": "Test persistence and one-record editing.",
+          "expected": "Same number, one request, status ВРаботе and 30 minutes.",
+          "troubleshooting": "If a second row appeared, compare numbers; you may have used Create instead of opening the original.",
+          "before": "The list contains your numbered request."
+        },
+        {
+          "id": "negative",
+          "title": "Test rejection in a separate form",
+          "where": "Request list → new card",
+          "action": "Open another new request, select service/status and enter 30, but leave Customer empty. Try writing and read the rejection. Close this form without saving, clear filters and check your valid first request.",
+          "why": "Invalid new input must not replace the accepted document.",
+          "expected": "The write is rejected; the valid request remains and accepted document count does not increase.",
+          "troubleshooting": "Do not delete the first request to make the list empty. For different behavior retain observations and inspect the exact form and fields.",
+          "before": "Same number, one request, status ВРаботе and 30 minutes."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Одно обращение — один документ",
+        "en": "Explore the example: One event, one document"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Клиент выбран",
+            "en": "Customer selected"
+          },
+          "detail": {
+            "ru": "Ссылка на прежнюю карточку → Новый клиент не создаётся.",
+            "en": "Reference to the earlier card → No new customer is created."
+          }
+        },
+        {
+          "label": {
+            "ru": "Новый документ записан",
+            "en": "New document saved"
+          },
+          "detail": {
+            "ru": "Отдельное обращение → Номер позволяет найти именно его.",
+            "en": "A separate event → Its number identifies this request."
+          }
+        },
+        {
+          "label": {
+            "ru": "Документ открыт заново",
+            "en": "Document reopened"
+          },
+          "detail": {
+            "ru": "30 и Новая прочитаны из базы → Проверено сохранение.",
+            "en": "30 and Новая read from storage → Persistence is checked."
+          }
+        }
+      ]
+    }
+  },
+  "nativeEvidence": {
+    "status": "PLANNED",
+    "environment": "official-1c-training",
+    "caseIds": [],
+    "reason": "Новая педагогическая ревизия; прежняя приёмка не переносится автоматически."
+  }
+}

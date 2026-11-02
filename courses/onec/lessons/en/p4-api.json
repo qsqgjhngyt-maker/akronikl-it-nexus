@@ -1,0 +1,386 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p4",
+  "topicId": "onec.p4.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Manager, object and selection: when an edit becomes persistent",
+  "minutes": 120,
+  "goal": "Distinguish manager lookup, editable object and selection cursor while testing the moment a name is saved.",
+  "prerequisites": [
+    "onec.p3; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Find an item by code without substituting name text for identity.",
+    "Show that an in-memory edit requires Записать.",
+    "Advance a selection with Следующий and locate the desired reference among other items."
+  ],
+  "sections": [
+    [
+      "Managers operate on a type",
+      "Catalogs.Customers provides type-wide creation and lookup operations.GetObject belongs to a particular reference; a selection traverses items. A manager is not an already-loaded array of objects: traversal and reads follow the API’s rules.",
+      "Справочники.Клиенты manages this object kind: it creates items and finds references by code within the catalog. ПолучитьОбъект gives an editable state of one record. After changing its name but before Записать, a fresh read should still see the stored name. After writing, lookup by the same code returns the new name."
+    ],
+    [
+      "A cursor needs advancing",
+      "AfterSelect, advance withNext in a loop. Read fields from the current position, not before the first advance. Test an empty selection separately: zero iterations should produce the agreed empty result. Traversed count alone does not prove there were no hidden conditions.",
+      "A selection starts before its first row. Пока Выборка.Следующий() advances the cursor and reports whether another row exists. The example compares references instead of relying on a fixed position. Additional customers need not be deleted to match an illustration."
+    ],
+    [
+      "Modification needs an object",
+      "For one card, obtain the object, validate current data andWrite. Bulk edits during traversal need care: changing selection conditions may affect later membership. In the starter exercise, collect references first and modify them in a separate controlled pass.",
+      "Separate object, reference and selection row. Persistence occurs explicitly through Черновик.Записать(). An in-memory presentation change is not a durable result. Bulk processing needs separate filter, transaction, permission and performance rules; one teaching loop does not establish them."
+    ],
+    [
+      "Operations need an observable trace",
+      "For reporting reads, compare identities and call counts with no writes. For one-card editing, compare only expected fields. Include empty sets and repeated execution. This shows the API choice follows the task rather than an accidental chain of unnecessary object accesses.",
+      "The original returns three true claims: unchanged storage before write, changed storage afterward and the desired reference found in selection. The incorrect variant omits writing: syntax remains valid and the item is found, but its new name is not stored. Each execution creates one test item; remove its startup call and record its code afterward."
+    ]
+  ],
+  "diagram": "p4-3",
+  "walkthrough": [
+    {
+      "action": "Manager — НайтиПоКоду",
+      "expected": "Reference obtained."
+    },
+    {
+      "action": "Object — Name changed in memory",
+      "expected": "Storage still has the old name."
+    },
+    {
+      "action": "Write — Explicit persistence",
+      "expected": "A new read sees the new name."
+    },
+    {
+      "action": "Selection — Следующий and reference comparison",
+      "expected": "The desired item is found."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Three mechanisms, one item code",
+      "source": "Ссылка = Справочники.Клиенты.НайтиПоКоду(Код);\nЧерновик = Ссылка.ПолучитьОбъект();\nЧерновик.Наименование = \"Новое имя\";\nЧерновик.Записать();",
+      "expected": "After writing, a fresh read by the same code sees the new name.",
+      "explanation": "The full executed function reads before and after the write separately.",
+      "trace": [
+        [
+          "Manager",
+          "НайтиПоКоду",
+          "Reference obtained."
+        ],
+        [
+          "Object",
+          "Name changed in memory",
+          "Storage still has the old name."
+        ],
+        [
+          "Write",
+          "Explicit persistence",
+          "A new read sees the new name."
+        ],
+        [
+          "Selection",
+          "Следующий and reference comparison",
+          "The desired item is found."
+        ]
+      ]
+    },
+    {
+      "title": "Omitted persistence",
+      "source": "The incorrect copy omits Черновик.Записать().",
+      "expected": "The before-write claim is true and the after-write claim false; finding the item does not hide the defect.",
+      "explanation": "The compilable mistake was executed and detected by rereading persistent state.",
+      "trace": [
+        [
+          "Memory",
+          "Text changed",
+          "No write yet."
+        ],
+        [
+          "Fresh read",
+          "Storage retains the old name",
+          "The new-name assertion fails."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Choose manager, object or selection for creation, lookup, editing and traversal.",
+      "criteria": "Each role and the explicit write boundary are identified."
+    },
+    {
+      "level": "Applied",
+      "task": "Run the function, verify three claims and record the created item code.",
+      "criteria": "The name is reread and the reference found independently of list position."
+    },
+    {
+      "level": "Advanced",
+      "task": "Investigate the missing write and plan bounded bulk processing with an explicit filter.",
+      "criteria": "The unsaved edit is detected; bulk permissions/transactions are not claimed from one loop."
+    }
+  ],
+  "lab": {
+    "title": "From an in-memory edit to a saved object",
+    "environment": "Official installed training1C; your copy has Клиенты, Услуги, ЗаявкаУслуги and СтатусыЗаявки. Actual BSL execution, optional Studio.",
+    "steps": [
+      "Open the same P4 experiment base and verify the named metadata and existing common module. Preserve current source before appending. Do not reload a full CF over your work.",
+      "Append the complete source below outside existing procedures/functions. Reuse an existing identical function from your earlier attempt rather than defining it twice.",
+      "Inside the existing handler insert these statements, retaining other code separately:\nРезультат = УчебныеДанные.ОпытМенеджераОбъектаВыборки();\nСообщить(Результат.ДоЗаписиНеИзменилось);\nСообщить(Результат.ПослеЗаписиИзменилось);\nСообщить(Результат.НайденВыборкой);",
+      "Save, update the copy, launch once and compare every returned field with the prediction. Record actual codes/numbers for any created items.",
+      "Reopen your newly created test item/document by its actual code/number and compare the claimed fields. Preserve all older records.",
+      "Remove only this experiment call from startup or restore the saved handler. Retain the function, results and previous work; save and update the copy."
+    ],
+    "expected": [
+      "Correct copy and module identified.",
+      "One new exported function; previous work intact.",
+      "The handler calls the function, not its definition.",
+      "Three true claims; one new test item has the persisted final name.",
+      "Claims and concrete records agree within the experiment scope.",
+      "Observation retained and automatic repetition stopped."
+    ],
+    "evidence": [
+      "Platform version, own-copy provenance, exact function and observed results.",
+      "Actual synthetic identities/fields and the explained negative control; no real data."
+    ],
+    "negative": "Investigate the stated compilable incorrect variant only in another own experimental copy; preserve the original."
+  },
+  "mistakes": [
+    [
+      "The catalog manager is mistaken for one editable item.",
+      "Obtain a concrete reference and an object for editing."
+    ],
+    [
+      "An in-memory assignment is expected to persist immediately.",
+      "Write explicitly and reread by your actual code."
+    ],
+    [
+      "Selection fields are read before the first Следующий.",
+      "Advance the cursor and process only an existing current row."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Which mechanism finds an item by code?",
+      "options": [
+        "Manager",
+        "Course heading",
+        "Form colour"
+      ],
+      "correct": 0,
+      "explanation": "Lookup belongs to the catalog manager."
+    },
+    {
+      "question": "Saving an in-memory change requires",
+      "options": [
+        "Sorting",
+        "Записать",
+        "A new chat"
+      ],
+      "correct": 1,
+      "explanation": "An explicit write changes persistent state."
+    },
+    {
+      "question": "Reading the next selection row requires",
+      "options": [
+        "Resetting the base",
+        "Deleting customers",
+        "A successful Следующий"
+      ],
+      "correct": 2,
+      "explanation": "It advances and tests row existence."
+    }
+  ],
+  "review": [
+    "How do you find a concrete item?",
+    "What changes before Записать?",
+    "Why is Следующий in the loop condition?"
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p4.topic-4",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p4",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "catalog",
+      "reference",
+      "metadata",
+      "module",
+      "attribute",
+      "document",
+      "bsl"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Same experiment-base Designer → УчебныеДанные common module → managed Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "copy",
+          "title": "Verify the continuing copy",
+          "where": "Copy Designer",
+          "action": "Open the same P4 experiment base and verify the named metadata and existing common module. Preserve current source before appending. Do not reload a full CF over your work.",
+          "why": "Preserve prior functions and records.",
+          "expected": "Correct copy and module identified.",
+          "troubleshooting": "Return to the preceding preparation route if the metadata is absent.",
+          "before": "The previous P4 experiment base and provenance are retained; УчебныеДанные has server/server-call enabled without global or privileged mode."
+        },
+        {
+          "id": "function",
+          "title": "Append the function",
+          "where": "Общие → Общие модули → УчебныеДанные",
+          "action": "Append the complete source below outside existing procedures/functions. Reuse an existing identical function from your earlier attempt rather than defining it twice.",
+          "why": "Keep definitions at common-module scope.",
+          "expected": "One new exported function; previous work intact.",
+          "troubleshooting": "Check module name, export and server context instead of enabling privilege.",
+          "before": "Correct copy and module identified."
+        },
+        {
+          "id": "caller",
+          "title": "Add only the client call",
+          "where": "Root → application module → startup handler",
+          "action": "Inside the existing handler insert these statements, retaining other code separately:\nРезультат = УчебныеДанные.ОпытМенеджераОбъектаВыборки();\nСообщить(Результат.ДоЗаписиНеИзменилось);\nСообщить(Результат.ПослеЗаписиИзменилось);\nСообщить(Результат.НайденВыборкой);",
+          "why": "Call the server function from the managed application.",
+          "expected": "The handler calls the function, not its definition.",
+          "troubleshooting": "Do not nest a function definition or add a second startup handler.",
+          "before": "One new exported function; previous work intact."
+        },
+        {
+          "id": "run",
+          "title": "Run and record actual results",
+          "where": "Ctrl+S → F7 → 1С:Предприятие",
+          "action": "Save, update the copy, launch once and compare every returned field with the prediction. Record actual codes/numbers for any created items.",
+          "why": "Separate predicted behavior from platform observation.",
+          "expected": "Three true claims; one new test item has the persisted final name.",
+          "troubleshooting": "Preserve the specific module/line and discrepancy; do not alter expectations to obtain PASS.",
+          "before": "The handler calls the function, not its definition."
+        },
+        {
+          "id": "reconcile",
+          "title": "Inspect the actual objects",
+          "where": "Enterprise lists and your control notes",
+          "action": "Reopen your newly created test item/document by its actual code/number and compare the claimed fields. Preserve all older records.",
+          "why": "A message alone does not cover unrelated data.",
+          "expected": "Claims and concrete records agree within the experiment scope.",
+          "troubleshooting": "Use identities rather than fixed row positions or equal names.",
+          "before": "Three true claims; one new test item has the persisted final name."
+        },
+        {
+          "id": "finish",
+          "title": "Retain the work and stop startup repetition",
+          "where": "Designer after closing Enterprise",
+          "action": "Remove only this experiment call from startup or restore the saved handler. Retain the function, results and previous work; save and update the copy.",
+          "why": "Ordinary reopening must not repeatedly create demonstration data.",
+          "expected": "Observation retained and automatic repetition stopped.",
+          "troubleshooting": "Do not remove whole modules or clear other records.",
+          "before": "Claims and concrete records agree within the experiment scope."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Три механизма, один код элемента",
+        "en": "Explore the example: Three mechanisms, one item code"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Менеджер",
+            "en": "Manager"
+          },
+          "detail": {
+            "ru": "НайтиПоКоду → Получена ссылка.",
+            "en": "НайтиПоКоду → Reference obtained."
+          }
+        },
+        {
+          "label": {
+            "ru": "Объект",
+            "en": "Object"
+          },
+          "detail": {
+            "ru": "Изменение имени в памяти → В базе ещё прежнее имя.",
+            "en": "Name changed in memory → Storage still has the old name."
+          }
+        },
+        {
+          "label": {
+            "ru": "Записать",
+            "en": "Write"
+          },
+          "detail": {
+            "ru": "Явное сохранение → Новое чтение видит новое имя.",
+            "en": "Explicit persistence → A new read sees the new name."
+          }
+        },
+        {
+          "label": {
+            "ru": "Выборка",
+            "en": "Selection"
+          },
+          "detail": {
+            "ru": "Следующий и сравнение ссылок → Нужный элемент найден.",
+            "en": "Следующий and reference comparison → The desired item is found."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · separate exported function in УчебныеДанные; append outside earlier functions"
+  },
+  "nativeCaseIds": [
+    "P4.API.ORIGINAL",
+    "P4.API.MUTATION"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_DATA_RESULT.json",
+    "caseIds": [
+      "P4.API.ORIGINAL",
+      "P4.API.MUTATION"
+    ],
+    "scope": "Exact server common-module function and managed caller; positive result and compilable semantic mutation independently distinguished",
+    "training1508Verified": false,
+    "visibleMessagesObserved": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  },
+  "codeFile": "code/pedagogy/metadata-api-first.bsl"
+}
