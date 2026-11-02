@@ -1,7 +1,7 @@
 // Secure public entry for INVITED participants only. Browser never calls Worker.
 // Password KDF stays in the trusted Node BFF; Cloudflare Worker verifies a
 // per-attempt HMAC challenge and issues ordinary Nexus Account sessions.
-import {createHash,createHmac,randomBytes,scrypt,promises as ignored} from 'node:crypto';
+import {createHash,createHmac,randomBytes,scrypt} from 'node:crypto';
 import {promisify} from 'node:util';
 import {isIP} from 'node:net';
 import {readV2CookieContext} from './gateway-cookie-context.mjs';
