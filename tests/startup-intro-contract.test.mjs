@@ -28,10 +28,19 @@ test('Маршрутизация оставляет оригинальные к�
    // onec-historical-routing suite; runtime CI сверяет scope из trusted commit.
    const scope=JSON.parse(await readFile(new URL('../'+SCOPE_FILE,import.meta.url),'utf8'));
    assert.equal(hashRouting(file,Buffer.from(actual)),scope.files.find(p=>p.path===file)?.sha256,'Unapproved content layer');
+   reviewedActual=reviewedActual.replace(', main, feature/onec-dual-gold-foundation-20261030]',', main]');
    reviewedActual=reviewedActual.slice(0,reviewedActual.indexOf('jobs:\n')+6)+reviewedActual.slice(reviewedActual.indexOf('  '+contentLayer[0]+':\n'));
    for(const name of contentLayer){const guard='  '+name+":\n    needs: content_scope\n    if: needs.content_scope.outputs.kind == 'historical-release'\n";assert.ok(reviewedActual.includes(guard));reviewedActual=reviewedActual.replace(guard,'  '+name+':\n');}
   }
-  assert.equal((file===WORKFLOW?routePublicationWorkflow(after,pin):after).replaceAll('\r\n','\n'),reviewedActual);
+  if(file===WORKFLOW){
+   // Полный trusted CI loader сверяется content-publication-route suite.
+   // Здесь остаётся дословная проверка всего Intro/publication job, не её копии.
+   const scope=JSON.parse(await readFile(new URL('../'+SCOPE_FILE,import.meta.url),'utf8'));
+   assert.equal(hashRouting(file,Buffer.from(actual)),scope.files.find(p=>p.path===file)?.sha256,'Unapproved current CI layer');
+   const gate="  publication:\n    needs: content_scope\n    if: needs.content_scope.outputs.kind == 'historical-release'\n";
+   assert.ok(reviewedActual.includes(gate));
+   assert.equal(reviewedActual.slice(reviewedActual.indexOf(gate)+gate.length),after.replaceAll('\r\n','\n').split('jobs:\n  publication:\n')[1]);
+  }else assert.equal(after.replaceAll('\r\n','\n'),reviewedActual);
   for(const line of before.replaceAll('\r\n','\n').split('\n').filter(l=>/^          (?:node |git |npm )/.test(l)))assert.ok(after.includes(line),'Потеряна команда '+line);
   assert.equal((after.match(/id: startup_intro/g)||[]).length,Object.keys(lanes).length);
   assert.ok(after.includes('node tools/startup-intro-ci-route.mjs'));

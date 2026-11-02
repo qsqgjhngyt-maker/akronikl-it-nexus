@@ -1,3 +1,4 @@
+import{platformCILoaderBash}from'../tools/current-platform-ci-route.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import{execFileSync}from'node:child_process';
 import{classifyContentChanges,hashRouting,verifyBootstrap,routePublicationWorkflow,inspectRoute,WORKFLOW,ROUTE_FILE,SCOPE_FILE,BOOTSTRAP_BASE}from'../tools/content-publication-route.mjs';
 const rows=(...paths)=>paths.map(path=>({path,status:'A',mode:'100644'})),content=r=>assert.equal(classifyContentChanges(r).kind,'content-review'),release=r=>assert.equal(classifyContentChanges(r).kind,'historical-release');
@@ -10,24 +11,13 @@ test('Path traversal, absolute и backslash отклоняются',()=>{for(con
 test('Bootstrap допускает только точные approved bytes/mode, не новый произвольный allowlist',()=>{const bytes=Buffer.from('approved'),scope={schema:1,base:BOOTSTRAP_BASE,releaseEligible:false,files:[{path:WORKFLOW,mode:'100644',sha256:hashRouting(WORKFLOW,bytes)}]};assert.ok(verifyBootstrap(scope,()=>({bytes,mode:'100644'})).includes(WORKFLOW));assert.throws(()=>verifyBootstrap(scope,()=>({bytes:Buffer.from('tampered'),mode:'100644'})));assert.throws(()=>verifyBootstrap(scope,()=>({bytes,mode:'100755'})));assert.throws(()=>verifyBootstrap({...scope,releaseEligible:true},()=>({bytes,mode:'100644'})));});
 test('Изменённый classifier из PR не становится trusted при наличии базового router',()=>{const base='1'.repeat(40),head='2'.repeat(40),trusted='3'.repeat(40),git=(...a)=>a[0]==='ls-tree'?Buffer.from(ROUTE_FILE+'\n'):Buffer.alloc(0);assert.throws(()=>inspectRoute({base,head,trusted},git),/TRUST_BASE_ROUTER/);});
 test('Bootstrap закрыт для чужой ветки/PR и другой базы; SHA обязателен',()=>{const git=()=>Buffer.alloc(0),args={base:BOOTSTRAP_BASE,head:'2'.repeat(40),trusted:'3'.repeat(40),branch:'feature/other',pr:64,event:'pull_request'};assert.throws(()=>inspectRoute(args,git),/OWNER_APPROVED_BOOTSTRAP_ONLY/);assert.throws(()=>inspectRoute({...args,base:'4'.repeat(40)},git),/BOOTSTRAP_BASE/);assert.throws(()=>inspectRoute({...args,base:'main'},git),/PINNED_SHA_REQUIRED/);});
-test('Identity lane сохраняет trusted content routing и историческую publication дословно',()=>{
- const original=execFileSync('git',['show',BOOTSTRAP_BASE+':'+WORKFLOW],{encoding:'utf8'});
- const current=fs.readFileSync(WORKFLOW,'utf8').replaceAll('\r\n','\n');
+test('Identity lane сохраняет актуальный trusted content routing и исходные исторические jobs',()=>{
+ const original=execFileSync('git',['show',BOOTSTRAP_BASE+':'+WORKFLOW],{encoding:'utf8'}),current=fs.readFileSync(WORKFLOW,'utf8').replaceAll('\r\n','\n');
  const pin=/NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA: '([a-f0-9]{40})'/.exec(current)?.[1];assert.ok(pin);
- const identityStart=current.indexOf('  identity-scope:\n'),contentStart=current.indexOf('  content_scope:\n');
- assert.ok(identityStart>=0&&contentStart>identityStart);
- const identity=current.slice(identityStart,contentStart);
- assert.match(identity,/run: node tools\/invited-password-ci-scope\.mjs/);
- assert.match(identity,/auth_only: \$\{\{ steps\.scope\.outputs\.auth_only \}\}/);
- const dependency="  content_scope:\n    needs: identity-scope\n    if: needs.identity-scope.outputs.auth_only != 'true'\n";
- assert.ok(current.includes(dependency));
- // Strip only the composed identity job and its dependency. Every byte of the
- // owner-approved content router and historical release jobs must remain intact.
- const contentWorkflow=(current.slice(0,identityStart)+current.slice(contentStart)).replace(dependency,'  content_scope:\n');
- assert.equal(routePublicationWorkflow(original,pin),contentWorkflow);
- const body=original.replaceAll('\r\n','\n').split('jobs:\n  publication:\n')[1];
- assert.ok(current.includes(body));
- assert.match(current,/needs: content_scope\n    if: needs.content_scope.outputs.kind == 'historical-release'/);
- assert.match(current,/git show "\$NEXUS_ROUTE_TRUSTED:tools\/content-publication-route.mjs"/);
- assert.ok(!current.includes('continue-on-error: true'));
+ const identityStart=current.indexOf('  identity-scope:\n'),contentStart=current.indexOf('  content_scope:\n');assert.ok(identityStart>=0&&contentStart>identityStart);
+ const identity=current.slice(identityStart,contentStart);assert.match(identity,/run: node tools\/invited-password-ci-scope\.mjs/);assert.match(identity,/auth_only: \$\{\{ steps\.scope\.outputs\.auth_only \}\}/);
+ const dependency="  content_scope:\n    needs: identity-scope\n    if: needs.identity-scope.outputs.auth_only != 'true'\n";assert.ok(current.includes(dependency));
+ const stripped=(current.slice(0,identityStart)+current.slice(contentStart)).replace(dependency,'  content_scope:\n');
+ let expected=routePublicationWorkflow(original,pin).replace('feature/academy-gold-standard-cpp-module-4, main]','feature/academy-gold-standard-cpp-module-4, main, feature/onec-dual-gold-foundation-20261030]');const runStart=expected.indexOf('        run: |\n'),runEnd=expected.indexOf('      - name: Сохранить решение маршрутизации',runStart);assert.ok(runStart>0&&runEnd>runStart);expected=expected.slice(0,runStart)+'        run: |\n'+platformCILoaderBash().split('\n').map(l=>'          '+l).join('\n')+'\n'+expected.slice(runEnd);assert.equal(expected,stripped);
+ const body=original.replaceAll('\r\n','\n').split('jobs:\n  publication:\n')[1];assert.ok(current.includes(body));assert.match(current,/needs: content_scope\n    if: needs.content_scope.outputs.kind == 'historical-release'/);assert.match(current,/git show "\$NEXUS_ROUTE_TRUSTED:tools\/content-publication-route.mjs"/);assert.ok(!current.includes('continue-on-error: true'));
 });

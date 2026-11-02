@@ -14,35 +14,35 @@
   ],
   "outcomes": [
     "Pre-sum cardinality shown.",
-    "Two keys75/0 independently verified.",
+    "Two keys 75/0 independently verified.",
     "Equal names remain separate."
   ],
   "sections": [
     [
       "Predict cardinality before querying",
       "A customer with two requests yields two joined rows. Joining another two detail rows can produce four. Aggregating that multiplication is wrong even when syntax is valid. Draw 1: Nrelationships and define result granularity before writing the query: customer, request or document line.",
-      "Create a customer with30/45 requests and another with exactly the same name but no requests. Ключи contains only their two new references. Before aggregation there are two detail rows for the first and one unmatched right row for the second."
+      "Create a customer with 30/45 requests and another with exactly the same name but no requests. Ключи contains only their two new references. Before aggregation there are two detail rows for the first and one unmatched right row for the second."
     ],
     [
       "Left joins preserve absence",
       "A left join preserves all customers. Missing right-side fields areNULL, not an empty reference orUndefined. AWHEREcondition on the right table can discard these rows and defeat the intended behavior. Place conditions according to meaning rather than brevity.",
-      "Join and group by reference. The unmatched right side is NULL; ЕСТЬNULL explicitly converts its missing sum to0 for this report. It is neither an empty reference nor query failure."
+      "Join and group by reference. The unmatched right side is NULL; ЕСТЬNULL explicitly converts its missing sum to 0 for this report. It is neither an empty reference nor query failure."
     ],
     [
       "Grouping selects granularity",
       "GROUPBYCustomer collapses documents into customer totals. Name and reference differ: grouping by name can merge distinct customers. DISTINCTis not a universal cure for a bad join; it can hide the defect and discard legitimate equal rows. Fix relationships and aggregation granularity.",
-      "Expect two distinct keys with75 and0. A right-side condition in WHERE could eliminate the empty customer; decide the intended meaning before adding a period. DISTINCT does not repair wrong cardinality."
+      "Expect two distinct keys with 75 and 0. A right-side condition in WHERE could eliminate the empty customer; decide the intended meaning before adding a period. DISTINCT does not repair wrong cardinality."
     ],
     [
       "Choose discriminating data",
       "UseAlpha with 30/45, Beta with 15, andGamma without requests. Expect 75, 15, and agreed zero/missing resource. Add another customer with the same name but a different reference. Reconcile identities and raw joined rows to detect lost empty groups and accidental merging.",
-      "Replacing LEFT with INNER compiles but loses the empty group. Check count,75 and the retained0 independently. Adding another request changes only its customer total, not the two-group count."
+      "Replacing LEFT with INNER compiles but loses the empty group. Check count,75 and the retained 0 independently. Adding another request changes only its customer total, not the two-group count."
     ]
   ],
   "diagram": "p7-1",
   "walkthrough": [
     {
-      "action": "Input — Customerα:30/45;β:none",
+      "action": "Input — Customerα:30/45; β:none",
       "expected": "Same names."
     },
     {
@@ -50,7 +50,7 @@
       "expected": "Two identities."
     },
     {
-      "action": "Groups — α=75,β=0",
+      "action": "Groups — α=75, β=0",
       "expected": "Both retained."
     }
   ],
@@ -58,12 +58,12 @@
     {
       "title": "Reconcile the complete experiment",
       "source": "К.Ссылка = З.Клиент\n// LEFT JOIN; GROUP BY К.Ссылка\n// ЕСТЬNULL(СУММА(З.ДлительностьМинут),0)",
-      "expected": "ДваКлюча, ИтогВерный and ПустойСохранен=True; totals75 and0.",
+      "expected": "ДваКлюча, ИтогВерный and ПустойСохранен=True; totals 75 and 0.",
       "explanation": "Equal labels remain distinct identities; absence is retained explicitly.",
       "trace": [
         [
           "Input",
-          "Customerα:30/45;β:none",
+          "Customerα:30/45; β:none",
           "Same names."
         ],
         [
@@ -73,7 +73,7 @@
         ],
         [
           "Groups",
-          "α=75,β=0",
+          "α=75, β=0",
           "Both retained."
         ]
       ]
@@ -106,7 +106,7 @@
     {
       "level": "Applied",
       "task": "Match both totals to actual references.",
-      "criteria": "Two keys75/0 independently verified."
+      "criteria": "Two keys 75/0 independently verified."
     },
     {
       "level": "Advanced",
@@ -128,7 +128,7 @@
       "Separate copy opens with the earlier records.",
       "Definitions are module-level; no duplicate helper.",
       "Only the stated caller is inside the existing startup handler.",
-      "ДваКлюча, ИтогВерный and ПустойСохранен=True; totals75 and0.",
+      "ДваКлюча, ИтогВерный and ПустойСохранен=True; totals 75 and 0.",
       "Original retained, negative experiment isolated, automatic caller removed."
     ],
     "evidence": [
@@ -185,7 +185,7 @@
   ],
   "review": [
     "Pre-sum cardinality shown.",
-    "Two keys75/0 independently verified.",
+    "Two keys 75/0 independently verified.",
     "Equal names remain separate."
   ],
   "sources": [
@@ -235,7 +235,7 @@
     ],
     "route": {
       "kind": "installed-1c",
-      "program": "Installed official1C: Designer and Enterprise",
+      "program": "Installed official 1C: Designer and Enterprise",
       "studio": "optional",
       "fileTransfer": "none",
       "steps": [
@@ -274,8 +274,8 @@
           "title": "Save, update and run once",
           "where": "Ctrl+S → F7 → Предприятие",
           "action": "Run once, record both actual boolean claims and, for measurement, the two durations. Keep the created keys.",
-          "why": "Observe actual1C data, not the browser diagram.",
-          "expected": "ДваКлюча, ИтогВерный and ПустойСохранен=True; totals75 and0.",
+          "why": "Observe actual 1C data, not the browser diagram.",
+          "expected": "ДваКлюча, ИтогВерный and ПустойСохранен=True; totals 75 and 0.",
           "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
           "before": "Only the stated caller is inside the existing startup handler."
         },
@@ -287,7 +287,7 @@
           "why": "Preserve provenance and avoid repeating data creation at every startup.",
           "expected": "Original retained, negative experiment isolated, automatic caller removed.",
           "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
-          "before": "ДваКлюча, ИтогВерный and ПустойСохранен=True; totals75 and0."
+          "before": "ДваКлюча, ИтогВерный and ПустойСохранен=True; totals 75 and 0."
         }
       ]
     },
@@ -305,7 +305,7 @@
           },
           "detail": {
             "ru": "Клиентα:30/45; клиентβ:нет → Имена одинаковы.",
-            "en": "Customerα:30/45;β:none → Same names."
+            "en": "Customerα:30/45; β:none → Same names."
           }
         },
         {
@@ -324,8 +324,8 @@
             "en": "Groups"
           },
           "detail": {
-            "ru": "α=75,β=0 → Обе сохранены.",
-            "en": "α=75,β=0 → Both retained."
+            "ru": "α=75, β=0 → Обе сохранены.",
+            "en": "α=75, β=0 → Both retained."
           }
         }
       ]

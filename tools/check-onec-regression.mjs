@@ -1,12 +1,13 @@
 import{spawnSync}from'node:child_process';import fs from'node:fs';import path from'node:path';
 const out=path.resolve(process.env.ONEC_REGRESSION_EVIDENCE||'onec-regression-evidence');fs.mkdirSync(out,{recursive:true});
 const commands=[
- ['ONEC_PEDAGOGY_V2',['--test','tests/onec-pedagogy.test.mjs','tests/onec-pedagogy-native-current.test.mjs','tests/onec-worker-configuration.test.mjs','tests/onec-assistant-context.test.mjs','tests/onec-pedagogy-preservation.test.mjs','tests/onec-learning-context.test.mjs','tests/onec-glossary.test.mjs','tests/onec-tutor.test.mjs','tests/onec-offline-data.test.mjs','tests/term-reference.test.mjs']],
+ ['ONEC_PEDAGOGY_V2',['--test','tests/onec-password-integration.test.mjs','tests/onec-platform-ci-route.test.mjs','tests/onec-shared-fixture-transport.test.mjs','tests/onec-pedagogy.test.mjs','tests/onec-pedagogy-native-current.test.mjs','tests/onec-worker-configuration.test.mjs','tests/onec-assistant-context.test.mjs','tests/onec-pedagogy-preservation.test.mjs','tests/onec-learning-context.test.mjs','tests/onec-glossary.test.mjs','tests/onec-tutor.test.mjs','tests/onec-offline-data.test.mjs','tests/term-reference.test.mjs']],
  ['GOLD_SHARED_STYLE',['tools/build-learning-gold-style.mjs']],
  ['ONEC_LAB_HELP_ZIP',['--test','tests/onec-lab-help.test.mjs']],
  ['ONEC_VOICE_GUEST_UNIT',['--test','tests/onec-asr.test.mjs','tests/onec-voice-session.test.mjs','tests/onec-official-lab.test.mjs']],
  ['ONEC_GUIDE_INDEX',['tools/check-onec-guide.mjs']],['ONEC_ASSISTANT_UNIT',['--test','tests/onec-assistant.test.mjs','tests/onec-microphone.test.mjs']],
  ['ASSISTANT_SHARED_REGRESSION',['--test','tests/akronikl-full-chat.test.mjs','tests/akronikl-knowledge.test.mjs','tests/akronikl-personal-state.test.mjs','tests/akronikl-experience.test.mjs','tests/akronikl-focus-cycle.test.mjs','tests/akronikl-user-modes.test.mjs']],
+ ['SHARED_PRESENTATION_CURRENT',['tests/shared-presentation-check.mjs']],
  ['ONEC_HISTORICAL_ROUTE_UNIT',['--test','tests/onec-historical-routing.test.mjs']],['CPP_SHARED_STARTUP_UNIT',['--test','tests/platform-lazy-imports.test.mjs','tests/platform-startup-load.test.mjs','tests/cpp-stream-state-routing.test.mjs']],
  ['ONEC_PWA_FRAGMENT_UNIT',['--test','tests/onec-pwa-fragment.test.mjs']],
  ['CPP_FINAL_CLIENT_UNIT',['--test','tests/course-final-client.test.mjs']],['CPP_FINAL_CONTRACT_UNIT',['--test','tests/course-final-contract.test.mjs']],['CPP_FINAL_AUTOMATIC_UNIT',['--test','tests/course-final-automatic.test.mjs']],['GRAPHICS_OFFLINE',['tests/offline-graphics-adapter-check.mjs']],

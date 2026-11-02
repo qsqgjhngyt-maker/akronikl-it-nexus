@@ -1,4 +1,5 @@
 import {staticMime} from '../pwa/static-mime.js';
+import{decodeFixturePathname,resolveFixtureFile}from'./helpers/public-fixture-path.mjs';
 import{bindIntroTransport}from'./helpers/intro-transport.mjs';
 import{createStudioService}from'../studio-build/service.mjs';
 // Настоящий bootstrap/app/SW/Worker на canonical origin, физически только loopback.
@@ -19,7 +20,7 @@ export async function module6ApplicationFixture({chromiumArgs=[]}={}){
  const tls={key:await readFile(path.join(cache,'qa-key.pem')),cert:await readFile(path.join(cache,'qa-cert.pem'))};const previewServer=https.createServer(tls,(req,res)=>void studio.previewHandler(req,res));await new Promise(resolve=>previewServer.listen(0,'127.0.0.1',resolve));
  const server=https.createServer(tls,async(req,res)=>{
   requests.push({path:new URL(req.url,GATEWAY_ORIGIN).pathname,method:req.method});
-  try{const actor=actorFor(req),u=new URL(req.url,GATEWAY_ORIGIN);if(await studio.handler(req,res))return;if(req.method!=='GET'){res.writeHead(403);return res.end('SYNTHETIC_WRITE_DENIED');}
+  try{const actor=actorFor(req),u=new URL(req.url,GATEWAY_ORIGIN),pathname=decodeFixturePathname(u.pathname);if(await studio.handler(req,res))return;if(req.method!=='GET'){res.writeHead(403);return res.end('SYNTHETIC_WRITE_DENIED');}
    if(u.pathname==='/favicon.ico'){res.writeHead(204);return res.end();}
    if(u.pathname.startsWith('/api/')){let dto,status=200;
     if(u.pathname==='/api/akronikl/cloud/preferences')dto={revision:0,value:null};
@@ -31,7 +32,7 @@ export async function module6ApplicationFixture({chromiumArgs=[]}={}){
     else{dto={error:{code:'SYNTHETIC_DENIED'}};status=403;}
     res.writeHead(status,{'content-type':'application/json','cache-control':'no-store',vary:'*'});return res.end(JSON.stringify(dto));
    }
-   const name=u.pathname==='/'?'nexus-shell.html':u.pathname.slice(1),file=path.resolve(frontend,name);if(!file.startsWith(frontend+path.sep))throw Error('PATH');
+   const name=pathname==='/'?'nexus-shell.html':pathname.slice(1),file=resolveFixtureFile(frontend,name);
    const bytes=await readFile(file);res.writeHead(200,{'content-type':mime(name),'cache-control':'public, max-age=0'});res.end(bytes);
   }catch{res.writeHead(404);res.end('SYNTHETIC_NOT_FOUND');}
  });

@@ -1,3 +1,4 @@
+import{decodeFixturePathname,resolveFixtureFile}from'./public-fixture-path.mjs';
 import {staticMime} from '../../pwa/static-mime.js';
 import{bindIntroTransport}from'./intro-transport.mjs';
 // Настоящий bootstrap/app/SW/Worker на canonical origin, физически только loopback.
@@ -16,19 +17,19 @@ export async function onlineRuntimeFixture({chromiumArgs=[]}={}){
  const mime=staticMime;
  const server=https.createServer({key:await readFile(path.join(cache,'qa-key.pem')),cert:await readFile(path.join(cache,'qa-cert.pem'))},async(req,res)=>{
   requests.push({path:new URL(req.url,GATEWAY_ORIGIN).pathname,method:req.method});
-  try{const u=new URL(req.url,GATEWAY_ORIGIN);if(req.method!=='GET'){res.writeHead(403);return res.end('SYNTHETIC_WRITE_DENIED');}
-   if(u.pathname==='/favicon.ico'){res.writeHead(204);return res.end();}
-   if(u.pathname.startsWith('/api/')){let dto,status=200;
-    if(u.pathname==='/api/akronikl/cloud/preferences')dto={revision:0,value:null};
-    else if(u.pathname==='/api/v2/account')dto=account;
-    else if(u.pathname==='/api/v2/account/profile')dto={...account.account,username:null,avatar:null,avatarVersion:0};
-    else if(u.pathname==='/api/v2/account/control/capabilities')dto={canManage:false,canModerate:false,canPurge:false,freshPasskey:false};
-    else if(u.pathname==='/api/v2/content/feed')dto={posts:[],home:{}};
-    else if(u.pathname==='/api/v2/feedback/reviews')dto={reviews:[],ratings:0,average:0,total:0};
+  try{const u=new URL(req.url,GATEWAY_ORIGIN);const pathname=decodeFixturePathname(u.pathname);if(req.method!=='GET'){res.writeHead(403);return res.end('SYNTHETIC_WRITE_DENIED');}
+   if(pathname==='/favicon.ico'){res.writeHead(204);return res.end();}
+   if(pathname.startsWith('/api/')){let dto,status=200;
+    if(pathname==='/api/akronikl/cloud/preferences')dto={revision:0,value:null};
+    else if(pathname==='/api/v2/account')dto=account;
+    else if(pathname==='/api/v2/account/profile')dto={...account.account,username:null,avatar:null,avatarVersion:0};
+    else if(pathname==='/api/v2/account/control/capabilities')dto={canManage:false,canModerate:false,canPurge:false,freshPasskey:false};
+    else if(pathname==='/api/v2/content/feed')dto={posts:[],home:{}};
+    else if(pathname==='/api/v2/feedback/reviews')dto={reviews:[],ratings:0,average:0,total:0};
     else{dto={error:{code:'SYNTHETIC_DENIED'}};status=403;}
     res.writeHead(status,{'content-type':'application/json','cache-control':'no-store',vary:'*'});return res.end(JSON.stringify(dto));
    }
-   const name=u.pathname==='/'?'nexus-shell.html':u.pathname.slice(1),file=path.resolve(frontend,name);if(!file.startsWith(frontend+path.sep))throw Error('PATH');
+   const name=pathname==='/'?'nexus-shell.html':pathname.slice(1),file=resolveFixtureFile(frontend,name);if(!file.startsWith(frontend+path.sep))throw Error('PATH');
    const bytes=await readFile(file);res.writeHead(200,{'content-type':mime(name),'cache-control':'public, max-age=0'});res.end(bytes);
   }catch{res.writeHead(404);res.end('SYNTHETIC_NOT_FOUND');}
  });

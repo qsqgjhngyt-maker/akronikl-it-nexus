@@ -6,7 +6,7 @@
   "topicId": "onec.p6.reposting",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Reposting:75 stays75, changes yield90 and unposting preserves the other recorder",
+  "title": "Reposting:75 stays 75, changes yield 90 and unposting preserves the other recorder",
   "minutes": 180,
   "goal": "Verify repeat/replacement/unposting without duplication or losing another recorder.",
   "prerequisites": [
@@ -21,22 +21,22 @@
     [
       "A repeatable transformation",
       "Posting transforms the current document into a movement set. Identical input should yield an equivalent set regardless of repetition. Compare dimensions, resources, periods and recorder—not merely one total. Opposite duplicates can cancel numerically while leaving invalid records.",
-      "Begin with own30/45 requests totaling75. Reposting the first is not another30-minute fact: movements represent current document state rather than button presses. The handler clears and rebuilds its own object’s set."
+      "Begin with own 30/45 requests totaling 75. Reposting the first is not another 30-minute fact: movements represent current document state rather than button presses. The handler clears and rebuilds its own object’s set."
     ],
     [
       "A change replaces the prior effect",
-      "Changing 30→45 replaces the recorder’s old effect under the agreed policy. Appending 45 gives 75 incorrectly. For multiline documents, test a removed line: its old movement must disappear. Define behavior for an empty document too.",
-      "Changing the first30→45 replaces its effect, giving90 rather than120. Unposting it leaves the second45; unposting the second leaves0 for this own customer, without clearing other customers."
+      "Changing 30 → 45 replaces the recorder’s old effect under the agreed policy. Appending 45 gives 75 incorrectly. For multiline documents, test a removed line: its old movement must disappear. Define behavior for an empty document too.",
+      "Changing the first 30 → 45 replaces its effect, giving 90 rather than 120. Unposting it leaves the second 45; unposting the second leaves 0 for this own customer, without clearing other customers."
     ],
     [
       "Failures must not mix versions",
       "Failure between removing old and writing new records must not leave a partial effect. Inject failure only in a new copy and test atomicity. Reread document/register in a fresh session. Transactions and locks address different concerns: one change’s consistency versus interacting concurrent changes.",
-      "A parameterized query checks each stage. A correct final0 could hide an earlier duplication, so retain all five claims:75,75,90,45,0. Unposting retains document identity."
+      "A parameterized query checks each stage. A correct final 0 could hide an earlier duplication, so retain all five claims:75, 75, 90, 45, 0. Unposting retains document identity."
     ],
     [
       "Use a matrix beyond the happy path",
       "Use post 30, repeat 30, change 45, remove a line, reverse, repost. Record counts and movement identities at every step. Include another recorder to expose accidental deletion of someone else’s set. Preserve both the current invariant and independent earlier documents.",
-      "A31/45 negative set gives76 despite the same count. The initial75 expectation must detect it. Specify a separate injected posting failure to check atomic old/new state; concurrent posting needs suitable separate sessions and is not established by one file-base experiment."
+      "A31/45 negative set gives 76 despite the same count. The initial 75 expectation must detect it. Specify a separate injected posting failure to check atomic old/new state; concurrent posting needs suitable separate sessions and is not established by one file-base experiment."
     ]
   ],
   "diagram": "p6-4",
@@ -50,19 +50,19 @@
       "expected": "75."
     },
     {
-      "action": "Replace — First45",
+      "action": "Replace — First 45",
       "expected": "90."
     },
     {
       "action": "Unpost — First then second",
-      "expected": "45 then0; other sets retained."
+      "expected": "45 then 0; other sets retained."
     }
   ],
   "examples": [
     {
       "title": "Native worked example",
       "source": "Первая.Записать(РежимЗаписиДокумента.Проведение);\nПервая.Записать(РежимЗаписиДокумента.Проведение);\n// Verify every stage, not only the final state.",
-      "expected": "Five True; own-set75→75→90→45→0.",
+      "expected": "Five True; own-set75 → 75 → 90 → 45 → 0.",
       "explanation": "Excerpt only; the complete source below belongs to the stated server common module.",
       "trace": [
         [
@@ -77,30 +77,30 @@
         ],
         [
           "Replace",
-          "First45",
+          "First 45",
           "90."
         ],
         [
           "Unpost",
           "First then second",
-          "45 then0; other sets retained."
+          "45 then 0; other sets retained."
         ]
       ]
     },
     {
       "title": "Discriminating semantic control",
-      "source": "In another copy use31/45 rather than30/45; initial75 must detect76.",
+      "source": "In another copy use 31/45 rather than 30/45; initial 75 must detect 76.",
       "expected": "The independent original expectation fails; preserve the original copy.",
       "explanation": "A compilable wrong value is not a syntax-only test.",
       "trace": [
         [
           "Mutation",
-          "In another copy use31/45 rather than30/45; initial75 must detect76.",
+          "In another copy use 31/45 rather than 30/45; initial 75 must detect 76.",
           "Only another own copy."
         ],
         [
           "Check",
-          "Five True; own-set75→75→90→45→0.",
+          "Five True; own-set75 → 75 → 90 → 45 → 0.",
           "Observe the failed claim."
         ]
       ]
@@ -124,11 +124,11 @@
     }
   ],
   "lab": {
-    "title": "Reposting:75 stays75, changes yield90 and unposting preserves the other recorder",
+    "title": "Reposting:75 stays 75, changes yield 90 and unposting preserves the other recorder",
     "environment": "Own synthetic infobase and original metadata; no real accounting, mandatory Studio or Sandbox.",
     "steps": [
       "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
-      "Reuse module5 Трудозатраты/handler: clear only this object’s Движения.Трудозатраты, map ДлительностьМинут and retain automatic deletion on unposting.",
+      "Reuse module 5 Трудозатраты/handler: clear only this object’s Движения.Трудозатраты, map ДлительностьМинут and retain automatic deletion on unposting.",
       "Create a server/server-call common module without Global/Privileged. Append the complete source below outside other procedures. If НовыйНаборРегистров is already present, keep its one matching definition and append only the new experiment function.",
       "Результат = УчебныеРегистры.ОпытПовторногоПроведения();\nСообщить(Результат.НачалоВерно);\nСообщить(Результат.ПовторНеУдвоил);\nСообщить(Результат.ЗаменаВерна);\nСообщить(Результат.ДругойСохранен);\nСообщить(Результат.СвоиОтменены);",
       "Review changes, apply only to this copy and run once. Record actual booleans and created customer/service/document/account identities.",
@@ -139,14 +139,14 @@
       "Names/types/recorder connections match.",
       "One definition per function; earlier code retained.",
       "Caller is inside the existing handler.",
-      "Five True; own-set75→75→90→45→0.",
+      "Five True; own-set75 → 75 → 90 → 45 → 0.",
       "Work retained; no automatic repetition."
     ],
     "evidence": [
       "Actual source, version and per-field observations with own identities.",
       "Separate compilable negative control and retained original; no server grading/authorship claim."
     ],
-    "negative": "In another copy use31/45 rather than30/45; initial75 must detect76."
+    "negative": "In another copy use 31/45 rather than 30/45; initial 75 must detect 76."
   },
   "mistakes": [
     [
@@ -164,24 +164,24 @@
   ],
   "quiz": [
     {
-      "question": "Repeating first30 at total75 yields",
+      "question": "Repeating first 30 at total 75 yields",
       "options": [
         "75",
         "105",
         "0"
       ],
       "correct": 0,
-      "explanation": "Begin with own30/45 requests totaling75. Reposting the first is not another30-minute fact: movements represent current document state rather than button presses. The handler clears and rebuilds its own object’s set."
+      "explanation": "Begin with own 30/45 requests totaling 75. Reposting the first is not another 30-minute fact: movements represent current document state rather than button presses. The handler clears and rebuilds its own object’s set."
     },
     {
-      "question": "Changing30→45 with another45 yields",
+      "question": "Changing 30 → 45 with another 45 yields",
       "options": [
         "120",
         "90",
         "75"
       ],
       "correct": 1,
-      "explanation": "Changing the first30→45 replaces its effect, giving90 rather than120. Unposting it leaves the second45; unposting the second leaves0 for this own customer, without clearing other customers."
+      "explanation": "Changing the first 30 → 45 replaces its effect, giving 90 rather than 120. Unposting it leaves the second 45; unposting the second leaves 0 for this own customer, without clearing other customers."
     },
     {
       "question": "Unposting the first retains",
@@ -191,7 +191,7 @@
         "The second own recorder’s45"
       ],
       "correct": 2,
-      "explanation": "A parameterized query checks each stage. A correct final0 could hide an earlier duplication, so retain all five claims:75,75,90,45,0. Unposting retains document identity."
+      "explanation": "A parameterized query checks each stage. A correct final 0 could hide an earlier duplication, so retain all five claims:75, 75, 90, 45, 0. Unposting retains document identity."
     }
   ],
   "review": [
@@ -249,7 +249,7 @@
     ],
     "route": {
       "kind": "installed-1c",
-      "program": "Installed official1C Designer → server module → managed application",
+      "program": "Installed official 1C Designer → server module → managed application",
       "studio": "optional",
       "fileTransfer": "none",
       "steps": [
@@ -267,7 +267,7 @@
           "id": "metadata",
           "title": "Prepare the stated metadata",
           "where": "Конфигуратор → дерево конфигурации",
-          "action": "Reuse module5 Трудозатраты/handler: clear only this object’s Движения.Трудозатраты, map ДлительностьМинут and retain automatic deletion on unposting.",
+          "action": "Reuse module 5 Трудозатраты/handler: clear only this object’s Движения.Трудозатраты, map ДлительностьМинут and retain automatic deletion on unposting.",
           "why": "The native function needs these actual platform objects.",
           "expected": "Names/types/recorder connections match.",
           "troubleshooting": "Inspect existing objects before adding duplicates; retain old UUIDs/fields.",
@@ -298,8 +298,8 @@
           "title": "Save, update and run once",
           "where": "Ctrl+S → F7 → Предприятие",
           "action": "Review changes, apply only to this copy and run once. Record actual booleans and created customer/service/document/account identities.",
-          "why": "Observe real1C, then reconcile with the prediction.",
-          "expected": "Five True; own-set75→75→90→45→0.",
+          "why": "Observe real 1C, then reconcile with the prediction.",
+          "expected": "Five True; own-set75 → 75 → 90 → 45 → 0.",
           "troubleshooting": "Retain the actual module/line and failed claim; never change expected values to conceal a defect.",
           "before": "Caller is inside the existing handler."
         },
@@ -311,7 +311,7 @@
           "why": "Reopening must not silently recreate datasets.",
           "expected": "Work retained; no automatic repetition.",
           "troubleshooting": "Do not clear whole registers or remove prior work.",
-          "before": "Five True; own-set75→75→90→45→0."
+          "before": "Five True; own-set75 → 75 → 90 → 45 → 0."
         }
       ]
     },
@@ -348,8 +348,8 @@
             "en": "Replace"
           },
           "detail": {
-            "ru": "Первый45 → 90. Сверяется весь набор двух собственных регистраторов; повтор не добавляет прежнее движение второй раз.",
-            "en": "First45 → 90. Reconcile both own recorder sets; a repeat does not append the earlier movement again."
+            "ru": "Первый 45 → 90. Сверяется весь набор двух собственных регистраторов; повтор не добавляет прежнее движение второй раз.",
+            "en": "First 45 → 90. Reconcile both own recorder sets; a repeat does not append the earlier movement again."
           }
         },
         {
@@ -358,8 +358,8 @@
             "en": "Unpost"
           },
           "detail": {
-            "ru": "Первый, затем второй → 45, затем0; чужие наборы целы.",
-            "en": "First then second → 45 then0; other sets retained."
+            "ru": "Первый, затем второй → 45, затем 0; чужие наборы целы.",
+            "en": "First then second → 45 then 0; other sets retained."
           }
         }
       ]

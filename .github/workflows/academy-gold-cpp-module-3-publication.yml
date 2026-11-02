@@ -1,7 +1,7 @@
 name: C++ Modules 3/4 — точная тестовая публикация и откат
 on:
   push:
-    branches: [feature/academy-gold-standard-cpp-module-3, feature/academy-gold-standard-cpp-module-4, main]
+    branches: [feature/academy-gold-standard-cpp-module-3, feature/academy-gold-standard-cpp-module-4, main, feature/onec-dual-gold-foundation-20261030]
   pull_request:
     branches: [main]
 permissions:
@@ -44,18 +44,26 @@ jobs:
           NEXUS_ROUTE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
           NEXUS_ROUTE_BRANCH: ${{ github.head_ref || github.ref_name }}
           NEXUS_ROUTE_PR: ${{ github.event.pull_request.number }}
-          NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA: '0edc6cfe6b6a4e74de01af4d2fc8aeaedb234fed'
+          NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA: 'b4f641d88a3fb8408bc8f4dae60a4b98a2cea02e'
         run: |
           set -euo pipefail
+          if [[ -z "${NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA:-}" ]]; then
+            export NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA=$(git show "$NEXUS_ROUTE_HEAD:.github/workflows/academy-gold-cpp-module-3-publication.yml" | tr -d '\r' | sed -nE "s/^ +NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA: '([a-f0-9]{40})'$/\1/p")
+          fi
+          if [[ "${GITHUB_EVENT_NAME:-}" == "push" && "$NEXUS_ROUTE_BRANCH" == "feature/onec-dual-gold-foundation-20261030" ]]; then
+            export NEXUS_ROUTE_BASE=$(git rev-parse refs/remotes/origin/main)
+          fi
+          [[ "$NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA" =~ ^[0-9a-f]{40}$ ]]
           [[ "$NEXUS_ROUTE_BASE" =~ ^[0-9a-f]{40}$ ]]
           [[ "$NEXUS_ROUTE_HEAD" =~ ^[0-9a-f]{40}$ ]]
-          if git cat-file -e "$NEXUS_ROUTE_BASE:tools/content-publication-route.mjs" 2>/dev/null; then
+          if git cat-file -e "$NEXUS_ROUTE_BASE:tools/current-platform-ci-route.mjs" 2>/dev/null; then
             export NEXUS_ROUTE_TRUSTED="$NEXUS_ROUTE_BASE"
           else
             export NEXUS_ROUTE_TRUSTED="$NEXUS_CONTENT_ROUTE_BOOTSTRAP_SHA"
           fi
-          git show "$NEXUS_ROUTE_TRUSTED:tools/content-publication-route.mjs" > "$RUNNER_TEMP/nexus-content-route.mjs"
-          node "$RUNNER_TEMP/nexus-content-route.mjs"
+          git show "$NEXUS_ROUTE_TRUSTED:tools/content-publication-route.mjs" > "$RUNNER_TEMP/content-publication-route.mjs"
+          git show "$NEXUS_ROUTE_TRUSTED:tools/current-platform-ci-route.mjs" > "$RUNNER_TEMP/current-platform-ci-route.mjs"
+          node "$RUNNER_TEMP/current-platform-ci-route.mjs"
       - name: Сохранить решение маршрутизации
         if: always()
         uses: actions/upload-artifact@v4

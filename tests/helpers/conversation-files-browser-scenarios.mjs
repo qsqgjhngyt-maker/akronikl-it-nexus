@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 import path from 'node:path';
 export async function conversationFilesBrowserScenarios({owner,tester,f,check}){
- const open=async page=>{await page.locator('[data-akronikl-open]:visible,#askAkronikl:visible').first().click();await page.locator('[data-akronikl-panel] [data-ak-state-sync][data-state=saved]').waitFor();return page.locator('[data-akronikl-panel]')};
+ const open=async page=>{await page.locator('[data-akronikl-open]:visible,#askAkronikl:visible').first().click();await page.locator('[data-akronikl-panel] [data-ak-state-sync][data-state=saved]').waitFor({state:'attached'});return page.locator('[data-akronikl-panel]')};
  const close=async p=>p.locator('[data-akronikl-close]').click();
  let p;
  await check('attachment control is visible without a model and offers connection without inference',async()=>{
@@ -24,7 +24,7 @@ export async function conversationFilesBrowserScenarios({owner,tester,f,check}){
   await p.locator('[data-akronikl-message]').focus();await tester.page.evaluate(()=>navigator.clipboard.writeText('Обычный текст из буфера'));await tester.page.keyboard.press('Control+V');assert.equal(await p.locator('[data-akronikl-message]').inputValue(),'Обычный текст из буфера');await p.locator('[data-akronikl-message]').fill('');
  });
  await check('mobile attachment/mode controls fit the viewport and conversation choice survives reopen/reload',async()=>{
-  await tester.page.setViewportSize({width:390,height:844});assert.equal(await p.locator('[data-ak-chat-attach]').isVisible(),true);const box=await p.locator('[data-ak-chat-attach]').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=390&&box.y+box.height<=844);if(process.env.NEXUS_SCREENSHOT_DIR)await tester.page.screenshot({path:path.join(process.env.NEXUS_SCREENSHOT_DIR,'conversation-files-mobile.png')});await p.locator('[data-ak-state-sync][data-state=saved]').waitFor();await close(p);await tester.page.reload();p=await open(tester.page);assert.equal(await p.locator('[data-ak-chat-mode-select]').inputValue(),'conversation');assert.ok(await p.locator('.ak-chat-image').count()>0);await close(p);await tester.page.setViewportSize({width:1280,height:900});
+  await tester.page.setViewportSize({width:390,height:844});assert.equal(await p.locator('[data-ak-chat-attach]').isVisible(),true);const box=await p.locator('[data-ak-chat-attach]').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=390&&box.y+box.height<=844);if(process.env.NEXUS_SCREENSHOT_DIR)await tester.page.screenshot({path:path.join(process.env.NEXUS_SCREENSHOT_DIR,'conversation-files-mobile.png')});await p.locator('[data-ak-state-sync][data-state=saved]').waitFor({state:'attached'});await close(p);await tester.page.reload();p=await open(tester.page);assert.equal(await p.locator('[data-ak-chat-mode-select]').inputValue(),'conversation');assert.ok(await p.locator('.ak-chat-image').count()>0);await close(p);await tester.page.setViewportSize({width:1280,height:900});
  });
  if(process.env.NEXUS_SCREENSHOT_DIR)await writeFile(path.join(process.env.NEXUS_SCREENSHOT_DIR,'CHAT_TEST_SCOPE.json'),JSON.stringify({realCloudCalls:0,syntheticChatRequests:f.chatRequests().length,nativeClipboardKeyboard:true},null,2)+'\n',{flag:'wx'});
 }

@@ -1,6 +1,9 @@
 import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';import{createHash}from'node:crypto';
 import{loadConsolidatedBundle}from'../tools/check-onec-consolidation.mjs';import{loadPedagogyLedger,validatePedagogyLessons,pedagogyDigest}from'../tools/check-onec-pedagogy.mjs';
+import './onec-readability.test.mjs';
+import{checkOnecReadability}from'../tools/check-onec-readability.mjs';
 const b=loadConsolidatedBundle(),ledger=loadPedagogyLedger(),sha=x=>createHash('sha256').update(x).digest('hex');
+test('Все 168 локализаций, справочник, маршруты и UI проходят редакторский guard',async()=>{const r=await checkOnecReadability();assert.equal(r.localizedLessons,168);assert.equal(r.jsonFiles,172);assert.ok(r.uiModules>=26);assert.deepEqual(r.findings,[]);});
 
 test('P6: настоящие три вида регистров, план счетов и десять различающих случаев привязаны к точным исходникам',()=>{
  const d='docs/ru/03-content/onec/pedagogy-v2-20261102/',r=JSON.parse(fs.readFileSync(d+'PEDAGOGY_REGISTERS_RESULT.json'));assert.equal(r.status,'AUTOMATED PASS');assert.equal(r.cases.length,10);assert.equal(r.cases.filter(x=>x.expectedSemanticRejection).length,5);assert.equal(r.runnerSha256,sha(fs.readFileSync('tools/check-onec-pedagogy-registers.ps1')));assert.equal(r.commonModuleMetadataSha256,sha(fs.readFileSync(d+'engineering/register-common-module.xml')));

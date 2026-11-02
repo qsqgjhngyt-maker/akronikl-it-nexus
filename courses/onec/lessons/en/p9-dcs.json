@@ -8,41 +8,41 @@
   "status": "IMPLEMENTED",
   "title": "Data set and resources",
   "minutes": 180,
-  "goal": "Execute actual DCS for two own requests, reconciling2/75 and then1/45.",
+  "goal": "Run the actual DCS processor for two of your own requests: verify two rows totaling 75 minutes, then one filtered row of 45 minutes.",
   "prerequisites": [
     "onec.p8; P1–P3; explicit contracts, types, collections and failure handling."
   ],
   "outcomes": [
     "Schema/settings/result distinguished.",
-    "2/75 and1/45 reconciled by key.",
+    "2/75 and 1/45 reconciled by key.",
     "Negative threshold explained."
   ],
   "sections": [
     [
       "A schema describes data",
-      "DCS separates data description, settings, layout and output. A schema defines datasets, fields, relationships and parameters. TheMinutes resource specifies aggregation rather than merely a numeric column. Define dataset granularity and a three-document expectation before using a designer.",
-      "The complete source creates own30/45 documents, builds a DataCompositionSchema and outputs a value collection. Fields include reference/customer/minutes. A customer-reference filter isolates the experiment in a growing base. This is an actual DCS processor, not JavaScript arithmetic."
+      "DCS means Data Composition System (СКД, система компоновки данных). It separates the description of available data, report settings and execution. Think of a report as a question: which records should it include, what should one row mean and which quantities should it total? Answer these questions before opening the designer. A resource is a value aggregated by the chosen rule; here Минуты is a duration in minutes.",
+      "The supplied complete module creates two requests belonging to your own customer, with durations of 30 and 45 minutes. It builds a DataCompositionSchema and outputs a collection containing document reference, customer and minutes. Before running it, predict two rows and a total of 75. The customer-reference filter isolates this experiment from earlier work in the infobase."
     ],
     [
       "Resources depend on granularity",
-      "An already customer-grouped dataset can be summed again only with correct multiplicity. A bad join doubles resources beforeDCS. Check raw query rows before report groupings. A computed field with a nice name cannot repair lost or extra records.",
-      "Separate the Local source, query dataset, declared fields and output settings. DataPath connects available fields to structure. A schema is not a result: the layout composer applies settings, the processor executes the layout and the output processor returns a table."
+      "An already customer-grouped dataset can be summed again only with correct multiplicity. A bad join doubles resources before DCS. Check raw query rows before report groupings. A computed field with a nice name cannot repair lost or extra records.",
+      "Follow the pipeline in order: the schema describes the query and fields; settings select fields and filters; the layout composer prepares the execution layout; the DCS processor executes it; the output processor returns a value table. DataPath (ПутьКДанным) names the field available to the composition system. Creating a schema object alone does not execute a report."
     ],
     [
       "Settings differ from the source set",
       "One schema can support multiple report variants. Users change available fields, filters and groupings without silently gaining forbidden data scope. Check permissions and dataset restrictions separately. Preserve variant and parameters so another reviewer reproduces the same question.",
-      "First expect two detail rows/75. No extra total row is added to those details, avoiding double summation. When designing grouped output separately, specify the result grain and distinguish detail from aggregate rows."
+      "This experiment returns detail rows only, without an extra total row. Sum their Минуты values once: 30 + 45 = 75. If you later add grouping and report totals, distinguish detail from aggregate rows so you do not add the same minutes twice. The shorthand 2/75 below means two rows totaling 75 minutes."
     ],
     [
       "Accept from source evidence",
-      "For 30/45/15, expect 90 minutes and customer groups 75/15. Reconcile detail and grand total, then include a request-free customer and empty period. Change one record in a copy and regenerate. A prior saved result does not prove a fresh run; show parameters, time and membership.",
-      "Recompose the same input with minutes>30: expect only the second reference/45. Changing the threshold to45 yields no rows and distinguishes semantics despite valid syntax. Retain settings, source and both outputs."
+      "A separate three-document example illustrates grouping: durations 30 and 45 for one customer and 15 for another give 90 minutes overall and customer totals 75 and 15. This is a different input from the two-document runnable experiment. In both cases compare actual document references as well as totals. A matching sum can conceal a missing record and an extra record of the same duration.",
+      "Recompose the same input with minutes>30: expect only the second reference/45. Changing the threshold to 45 yields no rows and distinguishes semantics despite valid syntax. Retain settings, source and both outputs."
     ]
   ],
   "diagram": "p9-0",
   "walkthrough": [
     {
-      "action": "Source — Own30/45",
+      "action": "Source — two requests: 30 and 45 minutes",
       "expected": "Two documents."
     },
     {
@@ -57,13 +57,13 @@
   "examples": [
     {
       "title": "Reconcile the complete experiment",
-      "source": "Schema → Settings → Layout composer → Processor → Value-collection output\n// Own30/45→2/75; minutes>30→1/45",
-      "expected": "ПолныйВерный=True and ОтборВерный=True;2/75 and the exact second reference/45.",
+      "source": "Schema → Settings → Layout composer → Processor → Value-collection output\n// Own 30/45→2/75; minutes>30→1/45",
+      "expected": "Both checks are True: two own rows totaling 75, then exactly the second request for 45 minutes.",
       "explanation": "Reconcile actual DCS output and provenance.",
       "trace": [
         [
           "Source",
-          "Own30/45",
+          "Two own requests: 30 and 45 minutes",
           "Two documents."
         ],
         [
@@ -80,18 +80,18 @@
     },
     {
       "title": "A case that distinguishes the wrong solution",
-      "source": "In another copy change ОтборМинут.ПравоеЗначение from30 to45.",
-      "expected": "ОтборВерный=False: strict >45 excludes45.",
+      "source": "In another copy change ОтборМинут.ПравоеЗначение from 30 to 45.",
+      "expected": "ОтборВерный=False: strict >45 excludes 45.",
       "explanation": "The threshold distinguishes filter semantics.",
       "trace": [
         [
           "Separate copy",
-          "In another copy change ОтборМинут.ПравоеЗначение from30 to45.",
+          "In another copy change ОтборМинут.ПравоеЗначение from 30 to 45.",
           "Retain the accepted original."
         ],
         [
           "Observe",
-          "ОтборВерный=False: strict >45 excludes45.",
+          "ОтборВерный=False: strict >45 excludes 45.",
           "The threshold distinguishes filter semantics."
         ]
       ]
@@ -106,7 +106,7 @@
     {
       "level": "Applied",
       "task": "Run and reconcile actual rows.",
-      "criteria": "2/75 and1/45 reconciled by key."
+      "criteria": "2/75 and 1/45 reconciled by key."
     },
     {
       "level": "Advanced",
@@ -121,21 +121,21 @@
       "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
       "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
       "Результат = УчебныеОтчёты.ОпытКомпоновки();\nСообщить(Результат.ПолныйВерный);\nСообщить(Результат.ОтборВерный);",
-      "Run once and reconcile the own document references with2/75 then1/45.",
+      "Save the configuration, update the database configuration with F7 and start Enterprise with F5 once. Read both messages. ПолныйВерный=True means two own document references totaling 75 minutes; ОтборВерный=True means that minutes > 30 selected only the 45-minute request.",
       "Remove only the startup caller, retain all source and use another copy for the negative case."
     ],
     "expected": [
       "Separate copy opens with the earlier records.",
       "Definitions are module-level; no duplicate helper.",
       "Only the stated caller is inside the existing startup handler.",
-      "ПолныйВерный=True and ОтборВерный=True;2/75 and the exact second reference/45.",
+      "Both checks are True: two own rows totaling 75, then exactly the second request for 45 minutes.",
       "Original retained, negative experiment isolated, automatic caller removed."
     ],
     "evidence": [
       "Exact own source and version; actual keys, observations and expected versus actual table.",
       "Original and changed-copy results, failed attempts and untested environment limits."
     ],
-    "negative": "In another copy change ОтборМинут.ПравоеЗначение from30 to45."
+    "negative": "In another copy change ОтборМинут.ПравоеЗначение from 30 to 45."
   },
   "mistakes": [
     [
@@ -163,14 +163,14 @@
       "explanation": "Settings and execution produce a result."
     },
     {
-      "question": ">30 selects from30/45",
+      "question": ">30 selects from 30/45",
       "options": [
-        "Only45",
+        "Only 45",
         "Both",
         "Neither"
       ],
       "correct": 0,
-      "explanation": "Strict comparison excludes30."
+      "explanation": "Strict comparison excludes 30."
     },
     {
       "question": "Detail and total rows",
@@ -185,7 +185,7 @@
   ],
   "review": [
     "Schema/settings/result distinguished.",
-    "2/75 and1/45 reconciled by key.",
+    "2/75 and 1/45 reconciled by key.",
     "Negative threshold explained."
   ],
   "sources": [
@@ -235,7 +235,7 @@
     ],
     "route": {
       "kind": "installed-1c",
-      "program": "Installed official1C: Designer and Enterprise",
+      "program": "Installed official 1C: Designer and Enterprise",
       "studio": "optional",
       "fileTransfer": "none",
       "steps": [
@@ -273,9 +273,9 @@
           "id": "step-4",
           "title": "Save, update and run once",
           "where": "Ctrl+S → F7 → Предприятие",
-          "action": "Run once and reconcile the own document references with2/75 then1/45.",
-          "why": "Observe actual1C data, not the browser diagram.",
-          "expected": "ПолныйВерный=True and ОтборВерный=True;2/75 and the exact second reference/45.",
+          "action": "Save the configuration, update the database configuration with F7 and start Enterprise with F5 once. Read both messages. ПолныйВерный=True means two own document references totaling 75 minutes; ОтборВерный=True means that minutes > 30 selected only the 45-minute request.",
+          "why": "Observe actual 1C data, not the browser diagram.",
+          "expected": "Both checks are True: two own rows totaling 75, then exactly the second request for 45 minutes.",
           "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
           "before": "Only the stated caller is inside the existing startup handler."
         },
@@ -287,7 +287,7 @@
           "why": "Preserve provenance and avoid repeating data creation at every startup.",
           "expected": "Original retained, negative experiment isolated, automatic caller removed.",
           "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
-          "before": "ПолныйВерный=True and ОтборВерный=True;2/75 and the exact second reference/45."
+          "before": "Both checks are True: two own rows totaling 75, then exactly the second request for 45 minutes."
         }
       ]
     },
@@ -304,8 +304,8 @@
             "en": "Source"
           },
           "detail": {
-            "ru": "Свои30/45 → Два документа.",
-            "en": "Own30/45 → Two documents."
+            "ru": "Две свои заявки на 30 и 45 минут. Сначала сверяем их ссылки.",
+            "en": "Two own requests for 30 and 45 minutes. Check their references first."
           }
         },
         {
@@ -314,8 +314,8 @@
             "en": "Compose"
           },
           "detail": {
-            "ru": "Без порога → 2/75. Настоящий процессор СКД вывел две детальные строки своего клиента с независимым итогом75.",
-            "en": "No threshold → 2/75. The actual DCS processor returns the own customer’s two detail rows totalling75."
+            "ru": "Без порога → 2/75. Настоящий процессор СКД вывел две детальные строки своего клиента с независимым итогом 75.",
+            "en": "No threshold → 2/75. The actual DCS processor returns the own customer’s two detail rows totalling 75."
           }
         },
         {
