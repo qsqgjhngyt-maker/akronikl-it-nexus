@@ -2,6 +2,36 @@ import test from'node:test';import assert from'node:assert/strict';import fs fro
 import{loadConsolidatedBundle}from'../tools/check-onec-consolidation.mjs';import{loadPedagogyLedger,validatePedagogyLessons,pedagogyDigest}from'../tools/check-onec-pedagogy.mjs';
 const b=loadConsolidatedBundle(),ledger=loadPedagogyLedger(),sha=x=>createHash('sha256').update(x).digest('hex');
 
+test('P5: реальные запись/отказ/движения/rollback связаны с восемью случаями и точными исходниками конфигурации',()=>{
+ const d='docs/ru/03-content/onec/pedagogy-v2-20261102/',r=JSON.parse(fs.readFileSync(d+'PEDAGOGY_DOCUMENT_RESULT.json'));
+ assert.equal(r.status,'AUTOMATED PASS');assert.equal(r.cases.length,8);assert.equal(r.runnerSha256,sha(fs.readFileSync('tools/check-onec-pedagogy-documents.ps1')));assert.equal(r.commonModuleMetadataSha256,sha(fs.readFileSync(d+'engineering/document-common-module.xml')));assert.equal(new Set(r.cases.map(c=>c.topicId)).size,4);assert.equal(r.onlyOwnSyntheticInfobase,true);
+ for(const k of['training1508Verified','realAccountUsed','progressWritten','codeVerifiedServer'])assert.equal(r[k],false);
+ for(const c of r.cases){assert.equal(c.status,'PASS');assert.equal(sha(fs.readFileSync(c.sourceFile)),c.originalSourceSha256);assert.equal(c.syntaxAndContextsPassed,true);assert.equal(c.observed,c.expected);if(c.expectedSemanticRejection){assert.equal(c.observed,'FAIL');assert.equal(c.assertionAccepted,false);assert.notEqual(c.executedSourceSha256,c.originalSourceSha256);}else assert.equal(c.executedSourceSha256,c.originalSourceSha256);}
+ assert.equal(r.cases.filter(c=>c.expectedSemanticRejection).length,4);assert.ok(r.fixture.length>=15);for(const f of r.fixture)assert.equal(sha(fs.readFileSync('courses/onec-education/native/service-desk-documents-v2/'+f.path)),f.sha256);
+ const doc=fs.readFileSync('courses/onec-education/native/service-desk-documents-v2/Documents/ЗаявкаУслуги.xml','utf8');assert.match(doc,/<Attribute uuid="d99bad12-3458-4a6b-b948-5c9b5c3b9788">\s*<Properties>\s*<Name>ДлительностьМинут<\/Name>/);assert.ok(doc.includes('УчебнаяФормаЗаявки'));assert.ok(doc.includes('Работы'));
+ for(const l of b.lessons.filter(l=>l.moduleId==='onec.p5'))assert.deepEqual(l.nativeCaseIds,r.cases.filter(c=>c.topicId===l.topicId).map(c=>c.id));
+});
+
+test('A5: восстановленная копия сохраняет прежнюю шапку/заметку; строки, отказ и настоящая явная форма проверены отдельно',()=>{
+ const d='docs/ru/03-content/onec/pedagogy-v2-20261102/',r=JSON.parse(fs.readFileSync(d+'A5_PRESERVATION_RESULT.json')),ui=JSON.parse(fs.readFileSync(d+'A5_FORM_UI_RESULT.json'));
+ assert.equal(r.status,'AUTOMATED PASS');assert.equal(r.runnerSha256,sha(fs.readFileSync('tools/check-onec-pedagogy-a5.ps1')));assert.equal(r.sourceSha256,sha(fs.readFileSync(d+'engineering/a5-preservation-common.bsl')));
+ for(const k of['onlyOwnSyntheticInfobase','restoredSeparateCopy','originalFileUnchanged','oldIdentitiesAndAllSnapshotFieldsPreserved','oldA4NotePreserved'])assert.equal(r[k],true);
+ for(const k of['training1508Verified','realAccountUsed','progressWritten','codeVerifiedServer'])assert.equal(r[k],false);
+ assert.deepEqual(r.checks,['older-document-empty-new-rows','header-and-two-rows-persisted','row-order-values-persisted','rename-preserves-references','no-implicit-header-recalculation','rows-do-not-bypass-required-customer','native-form-created-opened-two-rows']);
+ for(const f of r.fixture)assert.equal(sha(fs.readFileSync('courses/onec-education/native/service-desk-teaching-v2/'+f.path)),f.sha256);
+ assert.equal(ui.status,'LIVE PASS');assert.equal(ui.allLearnerGuiStepsVerified,false);assert.equal(ui.noviceValidation,false);for(const f of ui.originalScreenshots)assert.equal(sha(fs.readFileSync('courses/onec-education/media/tutorials/v2/'+f.file)),f.sha256);
+ for(const l of b.lessons.filter(l=>l.moduleId==='1c-enterprise.a5'))assert.equal(l.nativeEvidence.evidence,d+'A5_PRESERVATION_RESULT.json');
+});
+
+test('P4 data: восемь настоящих случаев различают правильные функции и компилируемые содержательные ошибки',()=>{
+ const d='docs/ru/03-content/onec/pedagogy-v2-20261102/',r=JSON.parse(fs.readFileSync(d+'PEDAGOGY_DATA_RESULT.json'));
+ assert.equal(r.status,'AUTOMATED PASS');assert.equal(r.runnerSha256,sha(fs.readFileSync('tools/check-onec-pedagogy-data.ps1')));assert.equal(r.commonModuleMetadataSha256,sha(fs.readFileSync(d+'engineering/data-common-module.xml')));assert.equal(r.cases.length,8);assert.equal(r.onlyOwnSyntheticInfobase,true);
+ for(const k of['training1508Verified','realAccountUsed','progressWritten','codeVerifiedServer'])assert.equal(r[k],false);
+ for(const c of r.cases){assert.equal(c.status,'PASS');assert.equal(sha(fs.readFileSync(c.sourceFile)),c.originalSourceSha256);assert.equal(c.syntaxAndContextsPassed,true);assert.equal(c.observed,c.expected);if(c.expectedSemanticRejection){assert.equal(c.observed,'FAIL');assert.equal(c.assertionAccepted,false);assert.notEqual(c.executedSourceSha256,c.originalSourceSha256);}else{assert.equal(c.observed,'PASS');assert.equal(c.executedSourceSha256,c.originalSourceSha256);}}
+ assert.equal(r.cases.filter(c=>c.expectedSemanticRejection).length,4);
+ for(const l of b.lessons.filter(l=>l.moduleId==='onec.p4'&&l.topicId!=='onec.p4.topic-1'))assert.deepEqual(l.nativeCaseIds,r.cases.filter(c=>c.topicId===l.topicId).map(c=>c.id));
+});
+
 test('P4 identity: реальный вызов сохраняет ссылку, компилируемая замена объекта отличается отрицательным контролем',()=>{
  const d='docs/ru/03-content/onec/pedagogy-v2-20261102/',r=JSON.parse(fs.readFileSync(d+'PEDAGOGY_IDENTITY_RESULT.json'));assert.equal(r.status,'AUTOMATED PASS');assert.equal(r.runnerSha256,sha(fs.readFileSync('tools/check-onec-pedagogy-identity.ps1')));assert.equal(r.commonModuleMetadataSha256,sha(fs.readFileSync(d+'engineering/identity-common-module.xml')));assert.equal(r.cases.length,2);assert.equal(r.onlyOwnSyntheticInfobase,true);for(const k of['training1508Verified','realAccountUsed','progressWritten','codeVerifiedServer'])assert.equal(r[k],false);for(const c of r.cases){assert.equal(c.topicId,'onec.p4.topic-1');assert.equal(c.status,'PASS');assert.equal(sha(fs.readFileSync(c.sourceFile)),c.originalSourceSha256);assert.equal(c.syntaxAndContextsPassed,true);assert.equal(c.observed,c.expected);if(c.expectedSemanticRejection){assert.equal(c.observed,'FAIL');assert.equal(c.assertionAccepted,false);assert.notEqual(c.executedSourceSha256,c.originalSourceSha256);}else{assert.equal(c.observed,'PASS');assert.equal(c.executedSourceSha256,c.originalSourceSha256);}}
  assert.equal(r.cases.filter(c=>c.expectedSemanticRejection).length,1);for(const l of b.lessons.filter(l=>l.topicId==='onec.p4.topic-1'))assert.deepEqual(l.nativeCaseIds,r.cases.map(c=>c.id));

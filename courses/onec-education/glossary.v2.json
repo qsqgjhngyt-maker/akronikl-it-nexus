@@ -704,6 +704,210 @@
         "self report"
       ],
       "sourceId": "nexus-original"
+    },
+    {
+      "id": "transaction",
+      "ru": {
+        "term": "Транзакция",
+        "full": "Транзакция базы данных",
+        "definition": "Граница группы изменений базы: они либо фиксируются вместе, либо отменяются. Успешная запись внутри неё ещё не доказывает итоговое сохранение. Внешние файлы и HTTP не становятся частью отката базы автоматически.",
+        "example": "НачатьТранзакцию → запись → ОтменитьТранзакцию: новое чтение не находит отклонённую карточку."
+      },
+      "en": {
+        "term": "Transaction",
+        "full": "Database transaction",
+        "definition": "A boundary grouping database changes until commit or rollback. An in-transaction write is not final persistence; arbitrary external files or HTTP effects are not automatically rolled back.",
+        "example": "Begin → write → rollback: a fresh lookup does not find the rejected item."
+      },
+      "aliases": [
+        "транзакции",
+        "transaction",
+        "НачатьТранзакцию"
+      ],
+      "sourceId": "onec.p5.topic-4"
+    },
+    {
+      "id": "rollback",
+      "ru": {
+        "term": "Откат",
+        "full": "Отмена изменений или возврат к проверенной версии",
+        "definition": "Для транзакции это отмена её изменений базы. Для обновления приложения это отдельно подготовленный возврат к прежним исходникам и совместимым данным. Наличие архива без проверки восстановления ещё не доказывает рабочий откат.",
+        "example": "Восстановите DT в новой базе и сравните коды/номера/значения, сохранив исходную работу."
+      },
+      "en": {
+        "term": "Rollback",
+        "full": "Transaction rollback or return to a verified version",
+        "definition": "For a transaction, undo its database changes. For an application update, a separately prepared return to earlier source and compatible data. An untested archive alone is not proof of recoverability.",
+        "example": "Restore a DT into a new infobase and compare identities/values while retaining the source."
+      },
+      "aliases": [
+        "откат",
+        "rollback",
+        "ОтменитьТранзакцию"
+      ],
+      "sourceId": "onec.p5.topic-4"
+    },
+    {
+      "id": "recorder",
+      "ru": {
+        "term": "Регистратор",
+        "full": "Документ, которому принадлежат движения регистра",
+        "definition": "Связь движения с документом-источником. Отбор по регистратору позволяет проверить свой набор, не смешивая его с движениями других документов. Отмена проведения не равна удалению самого документа.",
+        "example": "Заявка α имеет одну строку трудозатрат 30 минут; запрос отбирает только Регистратор = α."
+      },
+      "en": {
+        "term": "Recorder",
+        "full": "Document owning register movements",
+        "definition": "A movement’s link to its source document. Filtering by recorder checks one set without mixing other documents. Unposting does not mean deleting the document.",
+        "example": "Request α has one 30-minute movement; the query filters Регистратор = α."
+      },
+      "aliases": [
+        "регистратор",
+        "recorder"
+      ],
+      "sourceId": "onec.p5.topic-3"
+    },
+    {
+      "id": "dimension",
+      "ru": {
+        "term": "Измерение",
+        "full": "Измерение регистра",
+        "definition": "Поле, по которому различают факты или учётные итоги. В регистре трудозатрат Клиент определяет, к кому относится ресурс Минуты. Имя клиента не заменяет ссылочный тип измерения.",
+        "example": "Измерение Клиент: СправочникСсылка.Клиенты; ресурс Минуты: Число."
+      },
+      "en": {
+        "term": "Dimension",
+        "full": "Register dimension",
+        "definition": "A field distinguishing facts or accounting totals. Клиент identifies whose Минуты resource is recorded in the labor register. A displayed name does not replace its reference type.",
+        "example": "Клиент dimension: CatalogRef.Клиенты; Минуты resource: Number."
+      },
+      "aliases": [
+        "измерения",
+        "dimension"
+      ],
+      "sourceId": "onec.p5.topic-3"
+    },
+    {
+      "id": "resource",
+      "ru": {
+        "term": "Ресурс",
+        "full": "Ресурс регистра",
+        "definition": "Хранимое значение регистра. В накопительном регистре это числовая величина для итогов, например минуты. Ресурс не тождествен одноимённому полю документа: перенос задаёт обработчик.",
+        "example": "Движение.Минуты = ДлительностьМинут явно переносит значение из заявки."
+      },
+      "en": {
+        "term": "Resource",
+        "full": "Register resource",
+        "definition": "A stored register value. In an accumulation register it is a numeric measure for totals, such as minutes. It is distinct from a document field; a handler defines the mapping.",
+        "example": "Движение.Минуты = ДлительностьМинут explicitly maps the request field."
+      },
+      "aliases": [
+        "ресурсы",
+        "resource"
+      ],
+      "sourceId": "onec.p5.topic-3"
+    },
+    {
+      "id": "function",
+      "ru": {
+        "term": "Функция",
+        "full": "Функция встроенного языка",
+        "definition": "Именованный фрагмент программы, возвращающий значение через Возврат. Его определение находится на уровне модуля; вызов использует имя и параметры. Нельзя вставлять определение внутрь другой процедуры.",
+        "example": "Стоимость = РассчитатьСтоимость(30, 2); возвращает результат отдельной функции."
+      },
+      "en": {
+        "term": "Function",
+        "full": "Script function",
+        "definition": "A named program unit returning a value through Возврат. Define it at module scope and call it with arguments; do not nest its definition inside a procedure.",
+        "example": "Стоимость = РассчитатьСтоимость(30, 2); obtains a function result."
+      },
+      "aliases": [
+        "функции",
+        "function",
+        "Возврат"
+      ],
+      "sourceId": "onec.p3.topic-2"
+    },
+    {
+      "id": "parameter",
+      "ru": {
+        "term": "Параметр",
+        "full": "Параметр функции или запроса",
+        "definition": "В функции это именованный вход; в запросе — отдельное значение, передаваемое через УстановитьПараметр. Параметры запроса позволяют не склеивать текст пользователя с исполняемым запросом.",
+        "example": "Запрос.УстановитьПараметр(\"Заявка\", Ссылка) передаёт ссылку отдельно от текста запроса."
+      },
+      "en": {
+        "term": "Parameter",
+        "full": "Function or query parameter",
+        "definition": "A named input to a function, or a separately supplied query value set through УстановитьПараметр. Query parameters avoid concatenating input into executable query text.",
+        "example": "Запрос.УстановитьПараметр(\"Заявка\", Ссылка) supplies the reference separately."
+      },
+      "aliases": [
+        "параметры",
+        "parameter"
+      ],
+      "sourceId": "onec.p5.topic-3"
+    },
+    {
+      "id": "client",
+      "ru": {
+        "term": "Клиентский контекст",
+        "full": "Код клиентского приложения 1С",
+        "definition": "Место выполнения кода, взаимодействующего с окнами и пользователем. Это другое значение слова «клиент», чем элемент справочника Клиенты. Для серверной функции требуется корректный вызов и доступный серверный модуль.",
+        "example": "Модуль управляемого приложения вызывает УчебныеДокументы.ОпытЖизненногоЦикла()."
+      },
+      "en": {
+        "term": "Client context",
+        "full": "1C client-application code",
+        "definition": "Code executing in the user-facing application. This differs from a customer item in Клиенты. Server functions require an appropriate call and accessible server module.",
+        "example": "Managed application startup calls УчебныеДокументы.ОпытЖизненногоЦикла()."
+      },
+      "aliases": [
+        "клиентский",
+        "client context"
+      ],
+      "sourceId": "onec.p3.topic-1"
+    },
+    {
+      "id": "server",
+      "ru": {
+        "term": "Серверный контекст",
+        "full": "Код серверного контекста платформы",
+        "definition": "Контекст, в котором доступны соответствующие операции с прикладными данными. В учебной файловой базе слово «серверный» не доказывает наличие промышленного сервера или удалённого облачного запуска.",
+        "example": "Общий модуль с флагами Сервер/Вызов сервера выполняет функцию записи своей учебной заявки."
+      },
+      "en": {
+        "term": "Server context",
+        "full": "Platform server execution context",
+        "definition": "The context providing the corresponding application-data operations. In a teaching file infobase this term does not establish a production server or remote cloud execution.",
+        "example": "A server/server-call common module executes the function writing an own teaching request."
+      },
+      "aliases": [
+        "серверный",
+        "server context"
+      ],
+      "sourceId": "onec.p3.topic-1"
+    },
+    {
+      "id": "dcs",
+      "ru": {
+        "term": "СКД",
+        "full": "Система компоновки данных",
+        "definition": "Механизм 1С для построения отчёта из наборов данных, полей, ресурсов, отборов и настроек вывода. Настройка формы отчёта сама по себе не доказывает правильность запроса и суммы.",
+        "example": "Отчёт по клиентам сверяется с конкретными исходными заявками и ручной суммой минут."
+      },
+      "en": {
+        "term": "DCS",
+        "full": "Data composition system",
+        "definition": "The 1C reporting mechanism combining datasets, fields, resources, filters and output settings. A report interface alone does not establish correct querying or totals.",
+        "example": "Reconcile the customer report against identified source requests and a manual minute total."
+      },
+      "aliases": [
+        "СКД",
+        "DCS",
+        "система компоновки данных"
+      ],
+      "sourceId": "1c-enterprise.a3.topic-4"
     }
   ]
 }

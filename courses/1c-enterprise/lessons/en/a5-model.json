@@ -6,152 +6,196 @@
   "topicId": "1c-enterprise.a5.topic-1",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Simple service desk model",
-  "minutes": 120,
-  "goal": "Build a minimal service-desk model distinguishing customer, service and request facts.",
+  "title": "Customer, service and request: verify your service desk relationships",
+  "minutes": 150,
+  "goal": "Trace a real request to its catalog items and show that renaming a customer does not create a new identity.",
   "prerequisites": [
     "1c-enterprise.a 4; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
   ],
   "outcomes": [
-    "Build a minimal service-desk model distinguishing customer, service and request facts.",
-    "Draw three entities and two relationships.",
-    "CreateC1, S1, R1 on a copy."
+    "Explain why customers and services exist separately from requests.",
+    "Check identity by code and reopening instead of name text alone.",
+    "Build a small control set while retaining earlier work."
   ],
   "sections": [
     [
       "An entity follows its lifecycle",
       "A customer exists before and after individual requests; a service describes an offering; a request records an occurrence in time. Repeating customer text in each request creates duplicates and widespread edits after a name change. A catalog reference separates persistent identity from recurring operations.",
-      "Start assembly with one complete operator route: select customer/service, enter duration, save and find the request again. Add report variants andUIimprovements afterwards. This ties objects to actions and exposes missing references or fields early, rather than accumulating disconnected screens. Every object should support a named workflow and a measurable persistence check."
+      "Use customer Учебный A5, service Диагностика A5 and two requests of 30 and 15 minutes. Create the customer once and select the same item in both documents. The customer ← requests → service diagram shows stored reference direction, not window order: each request contains both references."
     ],
     [
       "Minimal fields must still be sufficient",
       "The teaching core needs customer and service codes/names plus a document with references, date, minutes and status. Real phone numbers, addresses and identity documents are unnecessary. Associate each field with a workflow and persistence criterion; otherwise the model grows without testable benefit.",
-      "Catalogs represent reusable entities; documents represent individual requests. One customer can have many requests and one service many customers. Test that multiplicity synthetically. Creating a new equal-named customer for every request breaks the model even when totals match. Check catalog counts and reference identity separately from arithmetic and appearance."
+      "The platform assigns the item code when it is saved. Record actual codes and document numbers; C1, S1 and R1 are diagram labels only. A name is human-readable and may coincide between different records. Do not type C1 into a numeric code or rename metadata merely to match an illustration."
     ],
     [
       "A rule connects objects",
       "A request selects an existing customer and service; an enumeration supplies allowed statuses. Deleting a referenced customer is not an isolated list cleanup. Specify inactive-customer and historical-document behavior. The foundation course can use marking and reference checks without claiming an industrial archival mechanism.",
-      "Usable forms do not replace write rules. Invalid minutes must reject through alternative input routes, and correcting one field must preserve other input. After rejection, perform a valid operation, close and reopen the document. This verifies bothUIutility and durable state rather than merely the ability to display an error."
+      "Rename only your Учебный A5 item to Учебный A5 — уточнено. Save it, reopen both requests and open their linked customer. The actual code should remain unchanged. If you made a duplicate, inspect which item each request references; do not bulk-replace links or delete records to improve the appearance of a report."
     ],
     [
       "A workflow checks cohesion",
       "Follow createcustomer→createservice→createrequest→findrequest→obtaintotal. Record identity and successful reread at each step. Change the customer’s displayed name and confirm the request still references the same item. This tests model cohesion rather than merely collecting attractive screens.",
-      "A complete teaching system explains each reported number through source documents and an independent small-data sum. Change one document in a fresh copy and verify recalculation, then reread the source to prove independence. Bind changes and snapshots to work IDs. Matching an infobase name never authorizes overwriting a prior submission."
+      "Record actual document number, customer code, service code, duration, status and successful reopening. Your two-request control is 45 minutes. The entire infobase can contain more minutes from earlier lessons. Compare the same bounded set and retain those records: this begins an acceptance scenario, not evidence of a production system."
     ]
   ],
   "diagram": "a5-0",
   "walkthrough": [
     {
-      "action": "Draw three entities and two relationships.",
-      "expected": "The request references customer and service, not text matches."
+      "action": "Cards — Create C1 and S1",
+      "expected": "Record actual codes."
     },
     {
-      "action": "CreateC1, S1, R1 on a copy.",
-      "expected": "ReopeningR1 preserves keys and 30 minutes."
+      "action": "Requests — R1=30, R2=15",
+      "expected": "Select the existing items."
     },
     {
-      "action": "RenameC1 without duplicating it.",
-      "expected": "R1 points to the same key; customer count does not grow."
+      "action": "Rename — Change C1 name",
+      "expected": "Its code is retained."
+    },
+    {
+      "action": "Reopen — R1 and R2",
+      "expected": "Same references, 45 minutes."
     }
   ],
   "examples": [
     {
-      "title": "Main example",
-      "source": "Клиент C1 ← Заявка R1 → Услуга S1; R1.Минуты = 30",
-      "expected": "R1 stores two references and 30 minutes; C1’s name can change without replacing its reference.",
-      "explanation": "A catalog represents a reusable entity; a document represents an event."
+      "title": "One customer, two requests",
+      "source": "C1 ← R1: 30 minutes → S1\nC1 ← R2: 15 minutes → S1\nOwn-set control: 30 + 15 = 45",
+      "expected": "Two distinct requests retain the same customer/service references and total 45 minutes.",
+      "explanation": "This is a data diagram, not executable BSL. Use Enterprise cards.",
+      "trace": [
+        [
+          "Cards",
+          "Create C1 and S1",
+          "Record actual codes."
+        ],
+        [
+          "Requests",
+          "R1=30, R2=15",
+          "Select the existing items."
+        ],
+        [
+          "Rename",
+          "Change C1 name",
+          "Its code is retained."
+        ],
+        [
+          "Reopen",
+          "R1 and R2",
+          "Same references, 45 minutes."
+        ]
+      ]
     },
     {
-      "title": "Boundary case",
-      "source": "Переименуйте C1 без создания дубля.",
-      "expected": "R1 points to the same key; customer count does not grow.",
-      "explanation": "A catalog represents a reusable entity; a document represents an event."
+      "title": "Equal names conceal separate items",
+      "source": "C1 Учебный A5 and C2 Учебный A5\nR1.Customer = C1; R2.Customer = C2",
+      "expected": "The names coincide but the references differ; this is not two requests for one customer.",
+      "explanation": "Opening each card and comparing codes detects what the displayed name conceals.",
+      "trace": [
+        [
+          "Name",
+          "Equal text",
+          "Identity unverified."
+        ],
+        [
+          "Card",
+          "Different codes",
+          "Different items detected."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Draw three entities and two relationships.",
-      "criteria": "The request references customer and service, not text matches."
+      "level": "Basic",
+      "task": "Draw three object kinds and locate the two references.",
+      "criteria": "The request stores the references; customer identity is not repeated name text."
     },
     {
       "level": "Applied",
-      "task": "CreateC1, S1, R1 on a copy.",
-      "criteria": "ReopeningR1 preserves keys and 30 minutes."
+      "task": "Create two own requests, rename their shared customer and reopen the links.",
+      "criteria": "Actual codes/numbers retained, 30+15=45 and earlier records intact."
     },
     {
       "level": "Advanced",
-      "task": "Add a Priority requirement and justify its location.",
-      "criteria": "The field belongs to the request; type and old-record checks are specified."
+      "task": "Explain why equal names do not prove equal references and why the current name is not a historical snapshot.",
+      "criteria": "Identity and history have distinct checks; no bulk cleanup."
     }
   ],
   "lab": {
-    "title": "Build a minimal service-desk model distinguishing customer, service and request facts.",
-    "environment": "Official 1C 8.3.27.x, new training-service-desk copy. Command labels depend on the configuration interface; verify outcomes against data. Training-edition limits are explicit.",
+    "title": "Two requests share one customer after a rename",
+    "environment": "Official local training platform; original service-desk configuration, synthetic records only. Studio and Sandbox optional.",
     "steps": [
-      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
-      "Draw three entities and two relationships.",
-      "CreateC1, S1, R1 on a copy.",
-      "RenameC1 without duplicating it.",
-      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+      "Choose your module 4 copy and verify its name and directory against your notes. Open Учебная служба. Do not load a full CF over your work.",
+      "Create Учебный A5 and Диагностика A5 only if absent from your own attempt. Use Записать и закрыть, reopen and record the assigned codes.",
+      "Select these items, 30 minutes and Новая in the first request; save and close. Save the second with the same items and 15 minutes. Record actual numbers and dates.",
+      "Change its name to Учебный A5 — уточнено and save. Do not use Create; verify the same code.",
+      "Reopen each request, open the linked customer using the button beside its field and compare the code. Check duration and service, then fill your observation table."
     ],
     "expected": [
-      "The request references customer and service, not text matches.",
-      "ReopeningR1 preserves keys and 30 minutes.",
-      "R1 points to the same key; customer count does not grow."
+      "Earlier customers, services and requests are visible.",
+      "One identified customer and service exist.",
+      "Two saved requests with a 45-minute own-set control.",
+      "Same code, updated name.",
+      "Same customer and service, distinct 30/15-minute requests."
     ],
     "evidence": [
-      "Input/expected/actual/case-ID table, platform build and source hashes.",
-      "R1 stores two references and 30 minutes; C1’s name can change without replacing its reference.",
-      "Work-copy provenance, negative result and source preservation before/after."
+      "Actual infobase/version, own synthetic codes and numbers, before/after field observations.",
+      "Saved source and outcome; any missing or untested behavior explicitly recorded."
     ],
-    "negative": "R1 points to the same key; customer count does not grow."
+    "negative": "Use the second worked case only in an own copy or unsaved draft. Preserve the accepted record and explain the discrepancy."
   },
   "mistakes": [
     [
-      "Treat an expected value as an observed execution.",
-      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+      "A new equal-named customer is created for each request.",
+      "Select your existing item and compare its actual code."
     ],
     [
-      "Modify the source infobase while experimenting.",
-      "Work on a new copy and verify the source by reopening it separately."
+      "The entire-base total is used as the two-request control.",
+      "Compare the same documents and independently calculate 30+15."
+    ],
+    [
+      "The C1/R1 diagram is pasted as executable BSL.",
+      "It explains relationships; perform this lesson in Enterprise cards."
     ]
   ],
   "quiz": [
     {
-      "question": "Where is an individual request fact stored?",
+      "question": "Another request for the same customer needs",
       "options": [
-        "In a request document",
-        "In a customer name",
-        "In a service color"
+        "The existing item",
+        "A mandatory new customer",
+        "A platform reinstall"
       ],
       "correct": 0,
-      "explanation": "An event has its own identity and date."
+      "explanation": "The requests differ; their customer is shared."
     },
     {
-      "question": "Why references instead of repeated names?",
+      "question": "How do you distinguish equal names?",
       "options": [
-        "For fonts",
-        "For stable identity",
-        "To hide minutes"
+        "Row colour",
+        "Open the cards and compare codes/references",
+        "List position"
       ],
       "correct": 1,
-      "explanation": "Names may change while keys remain."
+      "explanation": "Position and name do not establish identity."
     },
     {
-      "question": "What data does the teaching desk need?",
+      "question": "The 30+15 control applies to",
       "options": [
-        "Real identity documents",
-        "Someone else’s customer database",
-        "A minimal synthetic dataset"
+        "Every record regardless of filter",
+        "Any report",
+        "The two selected requests"
       ],
       "correct": 2,
-      "explanation": "The workflow is testable without real data."
+      "explanation": "Keep a defined control set."
     }
   ],
   "review": [
-    "Build a minimal service-desk model distinguishing customer, service and request facts.",
-    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+    "Where are the two references stored?",
+    "How is identity checked after renaming?",
+    "Why can the entire-base total exceed 45?"
   ],
   "sources": [
     "training",
@@ -160,23 +204,179 @@
     "documents",
     "form-elements"
   ],
-  "contentRevision": "1.0.0-rc.1",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.full.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_FULL_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "executionProfile": "official-1c-file",
   "nativeEvidenceStatus": "NOT RUN",
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
     "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "1c-enterprise",
+    "topicId": "1c-enterprise.a5.topic-1",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
   },
   "theoryContext": {
     "kind": "shared-module-reasoning",
     "moduleId": "1c-enterprise.a5",
     "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "catalog",
+      "document",
+      "reference",
+      "attribute",
+      "metadata",
+      "form",
+      "configuration",
+      "infobase"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed 1C Enterprise / Designer of your separate training copy",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "copy",
+          "title": "Open the continuing copy",
+          "where": "Installed 1C → infobase list → Enterprise",
+          "action": "Choose your module 4 copy and verify its name and directory against your notes. Open Учебная служба. Do not load a full CF over your work.",
+          "why": "Continue preserved work rather than replace it with a template.",
+          "expected": "Earlier customers, services and requests are visible.",
+          "troubleshooting": "If these lists are absent, return to module 2 preparation; a new empty base is not your earlier work.",
+          "before": "Your module 4 work and copy provenance are retained; actual infobase path identified."
+        },
+        {
+          "id": "cards",
+          "title": "Prepare the two cards",
+          "where": "Enterprise → Учебная служба → Клиенты, then Услуги",
+          "action": "Create Учебный A5 and Диагностика A5 only if absent from your own attempt. Use Записать и закрыть, reopen and record the assigned codes.",
+          "why": "Reusing your attempt avoids silent duplicates.",
+          "expected": "One identified customer and service exist.",
+          "troubleshooting": "For equal names, compare actual card codes without deleting older records.",
+          "before": "Earlier customers, services and requests are visible."
+        },
+        {
+          "id": "requests",
+          "title": "Save two requests",
+          "where": "Enterprise → Заявки → Создать",
+          "action": "Select these items, 30 minutes and Новая in the first request; save and close. Save the second with the same items and 15 minutes. Record actual numbers and dates.",
+          "why": "Distinguish another request from another customer.",
+          "expected": "Two saved requests with a 45-minute own-set control.",
+          "troubleshooting": "Correct the reported invalid field while keeping other input; retain validation.",
+          "before": "One identified customer and service exist."
+        },
+        {
+          "id": "rename",
+          "title": "Rename the same customer",
+          "where": "Enterprise → Клиенты → your card",
+          "action": "Change its name to Учебный A5 — уточнено and save. Do not use Create; verify the same code.",
+          "why": "A display change must not replace identity.",
+          "expected": "Same code, updated name.",
+          "troubleshooting": "If you edited a duplicate, inspect the original code and links without deleting records.",
+          "before": "Two saved requests with a 45-minute own-set control."
+        },
+        {
+          "id": "verify",
+          "title": "Verify both references",
+          "where": "Enterprise → your two requests",
+          "action": "Reopen each request, open the linked customer using the button beside its field and compare the code. Check duration and service, then fill your observation table.",
+          "why": "Rereading tests persistence.",
+          "expected": "Same customer and service, distinct 30/15-minute requests.",
+          "troubleshooting": "An entire-base report may exceed 45; isolate your set by customer/numbers without clearing data.",
+          "before": "Same code, updated name."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Один клиент, два обращения",
+        "en": "Explore the example: One customer, two requests"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Карточки",
+            "en": "Cards"
+          },
+          "detail": {
+            "ru": "Созданы C1 и S1 → Записаны их фактические коды.",
+            "en": "Create C1 and S1 → Record actual codes."
+          }
+        },
+        {
+          "label": {
+            "ru": "Заявки",
+            "en": "Requests"
+          },
+          "detail": {
+            "ru": "R1=30, R2=15 → Выбраны прежние карточки.",
+            "en": "R1=30, R2=15 → Select the existing items."
+          }
+        },
+        {
+          "label": {
+            "ru": "Переименование",
+            "en": "Rename"
+          },
+          "detail": {
+            "ru": "Изменено имя C1 → Его код сохранён.",
+            "en": "Change C1 name → Its code is retained."
+          }
+        },
+        {
+          "label": {
+            "ru": "Повторное открытие",
+            "en": "Reopen"
+          },
+          "detail": {
+            "ru": "R1 и R2 → Те же связи и 45 минут.",
+            "en": "R1 and R2 → Same references, 45 minutes."
+          }
+        }
+      ]
+    }
+  },
+  "nativeCaseIds": [
+    "older-document-empty-new-rows",
+    "header-and-two-rows-persisted",
+    "row-order-values-persisted",
+    "rename-preserves-references",
+    "no-implicit-header-recalculation",
+    "rows-do-not-bypass-required-customer",
+    "native-form-created-opened-two-rows"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/A5_PRESERVATION_RESULT.json",
+    "caseIds": [
+      "older-document-empty-new-rows",
+      "header-and-two-rows-persisted",
+      "row-order-values-persisted",
+      "rename-preserves-references",
+      "no-implicit-header-recalculation",
+      "rows-do-not-bypass-required-customer",
+      "native-form-created-opened-two-rows"
+    ],
+    "scope": "Separate DT-restored copy: original identities/header/A4 note preserved, table rows persisted, references retained after rename, no implicit total, missing customer rejected, exact Designer-generated named form opened with two rows",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
   }
 }
