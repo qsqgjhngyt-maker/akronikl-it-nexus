@@ -6,6 +6,7 @@ import {promisify} from 'node:util';
 import {readV2CookieContext} from './gateway-cookie-context.mjs';
 import {passwordMailConfigured,sendPasswordMail} from './password-mail.mjs';
 import {setTimeout as delay} from 'node:timers/promises';
+import {fetch as safeFetch} from 'undici';
 
 const KDF=promisify(scrypt);
 const INTERNAL='/api/v2/account/internal/invited-password';
@@ -18,6 +19,7 @@ const reply=(res,status,data,cookies=[])=>{
   'content-type':'application/json; charset=utf-8',
   'content-length':Buffer.byteLength(body),
   'cache-control':'no-store','vary':'*','x-content-type-options':'nosniff','referrer-policy':'no-referrer',
+  'strict-transport-security':'max-age=31536000',
   ...(cookies.length?{'set-cookie':cookies}:{})
  });
  res.end(body);return true;
@@ -35,7 +37,7 @@ const normalEmail=value=>{
     text.includes('..')||text.startsWith('.')||text.includes('@.')||text.includes('.@'))return null;
  return text;
 };
-const validPassword=value=>typeof value==='string'&&Array.from(value).length>=12&&Array.from(value).length<=128&&
+const validPassword=value=>typeof value==='string'&&Array.from(value).length>=15&&Array.from(value).length<=128&&
  Buffer.byteLength(value,'utf8')<=512&&!/[\u0000-\u001f\u007f]/.test(value);
 const isObject=(value,keys)=>value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===[...keys].sort().join(',');
 const isHash=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
@@ -80,7 +82,7 @@ async function derive(password,salt){
   return await KDF(password,salt,32,{N:32768,r:8,p:3,maxmem:96*1024*1024});
  }finally{busy--}
 }
-export function createInvitedPasswordHandler({env,fetchImpl=fetch,sendMail=sendPasswordMail,wait=delay}){
+export function createInvitedPasswordHandler({env,fetchImpl=safeFetch,sendMail=sendPasswordMail,wait=delay}){
  return async(req,res)=>{
   if(!req.url?.startsWith(PREFIX))return false;
   const action=req.url.slice(PREFIX.length);
@@ -103,11 +105,11 @@ export function createInvitedPasswordHandler({env,fetchImpl=fetch,sendMail=sendP
   // conservative shared limit until a reviewed authenticated IP contract exists.
   const networkHash=createHmac('sha256',env.INVITED_PASSWORD_SERVICE_KEY)
    .update(String(req.socket?.remoteAddress||'unknown')).digest('hex');
-  async function service(data){
+  async function service(data,signal){
    const body=JSON.stringify(data),timestamp=String(Date.now()),nonce=randomBytes(16).toString('hex');
    const canonical=['v1','POST',INTERNAL,timestamp,nonce,sha(body)].join('\n');
    const upstream=await fetchImpl(worker.origin+INTERNAL,{
-    method:'POST',body,redirect:'error',signal:AbortSignal.timeout(12000),
+    method:'POST',body,redirect:'error',signal:signal?AbortSignal.any([signal,AbortSignal.timeout(12000)]):AbortSignal.timeout(12000),
     headers:{
      accept:'application/json','content-type':'application/json',
      'x-nexus-service-timestamp':timestamp,
@@ -130,13 +132,16 @@ export function createInvitedPasswordHandler({env,fetchImpl=fetch,sendMail=sendP
     if(!isObject(input,action==='verify-email'?['email','invitationToken']:['email'])||!normalEmail(input.email)||
       action==='verify-email'&&!/^npi_[A-Za-z0-9_-]{43}$/.test(input.invitationToken||''))throw Error('BAD_INPUT');
     if(!passwordMailConfigured(env))throw Error('PASSWORD_UNAVAILABLE');
-    const code=randomBytes(32).toString('base64url'),email=normalEmail(input.email);
-    const result=await service({op:action==='verify-email'?'mail-enroll':'mail-recover',emailHash:sha(email),networkHash,tokenHash:sha(code),
-     ...(action==='verify-email'?{inviteHash:sha(input.invitationToken)}:{})});
-    if(result.ok!==true||typeof result.deliver!=='boolean')throw Error('UPSTREAM');
-    // Same status/body and bounded delivery-time window for existing/unknown email.
-    const started=Date.now();
-    if(result.deliver)try{await sendMail({env,to:email,code,purpose:action==='verify-email'?'enroll':'recover'})}catch{/* neutral; code is never returned */}
+    const code=randomBytes(32).toString('base64url'),email=normalEmail(input.email),started=Date.now();
+    // One budget includes database lookup AND provider time, hiding the conditional
+    // lookup/write latency as well as delivery latency. Timeout is neutral.
+    const signal=AbortSignal.timeout(5000);
+    try{
+     const result=await service({op:action==='verify-email'?'mail-enroll':'mail-recover',emailHash:sha(email),networkHash,tokenHash:sha(code),
+      ...(action==='verify-email'?{inviteHash:sha(input.invitationToken)}:{})},signal);
+     if(result.ok!==true||typeof result.deliver!=='boolean')throw Error('UPSTREAM');
+     if(result.deliver&&!signal.aborted)await sendMail({env,to:email,code,purpose:action==='verify-email'?'enroll':'recover',signal});
+    }catch(error){if(error.message==='RATE_LIMITED')throw error;/* no email/account/provider oracle */}
     await wait(Math.max(0,5500-(Date.now()-started)));
     return reply(res,200,{ok:true});
    }
@@ -146,7 +151,8 @@ export function createInvitedPasswordHandler({env,fetchImpl=fetch,sendMail=sendP
     const emailHash=sha(normalEmail(input.email)),tokenHash=sha(input.code);
     await service({op:'reset-check',emailHash,networkHash,tokenHash});
     const salt=randomBytes(16),hash=await derive(input.password,salt);
-    const result=await service({op:'reset',emailHash,networkHash,tokenHash,saltB64:salt.toString('base64url'),hashB64:hash.toString('base64url')});
+    let result;
+    try{result=await service({op:'reset',emailHash,networkHash,tokenHash,saltB64:salt.toString('base64url'),hashB64:hash.toString('base64url')})}finally{hash.fill(0)}
     if(result.ok!==true)throw Error('UPSTREAM');
     return reply(res,200,{ok:true},[cookie('',0)]);
    }
@@ -162,11 +168,12 @@ export function createInvitedPasswordHandler({env,fetchImpl=fetch,sendMail=sendP
     const preflight=await service({op:'preflight',inviteHash,emailHash,networkHash});
     if(preflight.ok!==true)throw Error('UPSTREAM');
     const salt=randomBytes(16),hash=await derive(input.password,salt);
-    const data=await service({
+    let data;
+    try{data=await service({
      op:'enroll',inviteHash,emailHash,tokenHash:sha(input.code),
      username:input.username,displayName:input.displayName,
      saltB64:salt.toString('base64url'),hashB64:hash.toString('base64url'),networkHash
-    });
+    })}finally{hash.fill(0)}
     if(data.ok!==true||'sessionSecret' in data)throw Error('UPSTREAM');
     return reply(res,200,{ok:true});
    }
@@ -180,6 +187,7 @@ export function createInvitedPasswordHandler({env,fetchImpl=fetch,sendMail=sendP
      throw Error('UPSTREAM');
     const derived=await derive(input.password,Buffer.from(begun.saltB64,'base64url'));
     const proof=createHmac('sha256',derived).update(['v1',begun.challengeId,emailHash,networkHash].join('\n')).digest('hex');
+    derived.fill(0);
     const issued=await service({op:'finish',challengeId:begun.challengeId,emailHash,networkHash,proof});
     if(issued.ok!==true||!/^nxs_[A-Za-z0-9_-]{43}$/.test(issued.sessionSecret||''))
      throw Error('UPSTREAM');

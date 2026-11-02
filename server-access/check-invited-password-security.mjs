@@ -11,7 +11,7 @@ import {createInvitedPasswordHandler} from './bff/invited-password.mjs';
 import {sendPasswordMail} from './bff/password-mail.mjs';
 const sha=v=>createHash('sha256').update(v).digest('hex');
 const f=await controlFixture(),db=f.db,checks=[];
-for(const name of ['0016_blog_media_parts','0018_course_final','0019_akronikl','0021_invited_email_password','0022_password_mail_recovery'])
+for(const name of ['0016_blog_media_parts','0018_course_final','0019_akronikl','0021_invited_email_password','0022_password_mail_recovery','0023_password_security_review','0024_password_invite_passkey_guard'])
  db.exec(readFileSync(new URL('./migrations/'+name+'.sql',import.meta.url),'utf8'));
 const key='SYNTHETIC_PASSWORD_SERVICE_KEY_FOR_TESTS_ONLY';
 Object.assign(f.env,{INVITED_PASSWORD_ENABLED:'true',INVITED_PASSWORD_SERVICE_KEY:key});
@@ -56,10 +56,22 @@ try{
   assert.ok(await readEligibleAccountFoundation(f.env.DB,sha(f.owner.secret),undefined,f.env));assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
  });
  const i=await invite();let code,session;
+ await check('Existing email-free invitations remain valid for the original Passkey flow',async()=>{
+  const r=await f.call('/api/v2/account/control/invites',{method:'POST',payload:{requestId:crypto.randomUUID(),ttlMinutes:60,trialMinutes:60}});
+  assert.equal(r.status,200);const legacy=await managedInvitation(f.env,sha(r.body.invitationToken));assert.equal(legacy.account_id,r.body.accountId);
+  assert.equal((await rpc('preflight',{inviteHash:sha(r.body.invitationToken),emailHash:sha('legacy@example.com'),networkHash:sha('network')})).status,403);
+ });
  await check('Flags OFF and invalid origin fail before upstream/KDF',async()=>{
   assert.equal((await post('login',{email:i.email,password:pass},{},createInvitedPasswordHandler({env:{}}))).status,503);
   assert.equal((await post('login',{email:i.email,password:pass},{origin:'https://evil.invalid'})).status,403);
   assert.equal((await post('login',{}, {'sec-fetch-site':'cross-site'})).status,403);assert.equal(calls.length,0);
+ });
+ await check('Single-factor password minimum is 15 Unicode characters and input is bounded',async()=>{
+  for(const password of ['12345678901234','\u0000'+'x'.repeat(20),'x'.repeat(129)])
+   assert.equal((await post('login',{email:i.email,password})).status,400);
+  assert.equal((await post('login',{email:i.email,password:pass,role:'owner'})).status,400);
+  assert.equal((await post('login',' '.repeat(4097))).status,400);
+  assert.equal(calls.length,0);
  });
  await check('Email proof goes only to bound mailbox with neutral response',async()=>{
   const a=await post('verify-email',{email:'other@example.com',invitationToken:i.invitationToken});assert.equal(mailbox.length,0);
@@ -78,6 +90,19 @@ try{
   const p=db.prepare('SELECT * FROM nexus_password_credentials WHERE account_id=?').get(i.accountId);assert.ok(p.email_verified_at);assert.equal(p.version,1);
   assert.equal(db.prepare('SELECT first_login_at FROM nexus_alpha_members WHERE account_id=?').get(i.accountId).first_login_at,null);
   assert.notEqual((await post('enroll',fields(i,code))).status,200);
+ });
+ await check('Verified identity and credential version cannot be changed outside reset',async()=>{
+  assert.throws(()=>db.prepare('UPDATE nexus_password_credentials SET email_hash=? WHERE account_id=?').run(sha('other@example.com'),i.accountId),/IDENTITY_IMMUTABLE/);
+  assert.throws(()=>db.prepare('UPDATE nexus_password_credentials SET version=version+1 WHERE account_id=?').run(i.accountId),/VERSION_REQUIRES_RESET/);
+ });
+ await check('Database rejects stale Passkey application enrollment of an email invitation',async()=>{
+  const challenge=crypto.randomUUID(),stamp=new Date().toISOString(),expires=new Date(Date.now()+60000).toISOString();
+  db.prepare("INSERT INTO nexus_passkey_challenges(id,purpose,challenge,flow_hash,account_id,invite_hash,expires_at) VALUES(?,'register','synthetic',?,?,?,?)").run(challenge,sha('flow'),i.accountId,sha(i.invitationToken),expires);
+  db.prepare('INSERT INTO nexus_invite_enrollments(challenge_id,token_hash,username,display_name,created_at) VALUES(?,?,?,?,?)').run(challenge,sha(i.invitationToken),'guest.stale','Synthetic guest',stamp);
+  assert.throws(()=>db.prepare("INSERT INTO nexus_passkey_receipts(id,challenge_id,credential_id,account_id,login_method_id,action,created_at) VALUES(?,?,?,?,?,'register',?)").run(crypto.randomUUID(),challenge,f.owner.id+'-credential',i.accountId,f.owner.method,stamp),/PASSWORD_EMAIL_INVITATION_ONLY/);
+  const rawChallenge=crypto.randomUUID();
+  db.prepare("INSERT INTO nexus_passkey_challenges(id,purpose,challenge,flow_hash,account_id,invite_hash,expires_at) VALUES(?,'register','synthetic',?,?,?,?)").run(rawChallenge,sha('raw-flow'),i.accountId,sha(i.invitationToken),expires);
+  assert.throws(()=>db.prepare("INSERT INTO nexus_passkey_receipts(id,challenge_id,credential_id,account_id,login_method_id,action,created_at) VALUES(?,?,?,?,?,'register',?)").run(crypto.randomUUID(),rawChallenge,f.owner.id+'-credential',i.accountId,f.owner.method,stamp),/PASSWORD_EMAIL_INVITATION_ONLY/);
  });
  await check('Unknown/wrong login is neutral; no password reaches Worker',async()=>{
   assert.deepEqual((await login(i.email,'Wrong synthetic password 123')).data,(await login('unknown@example.com')).data);assert.ok(!JSON.stringify(calls).includes(pass));
@@ -177,6 +202,13 @@ try{
   let called=false;await sendPasswordMail({env,to:'guest@example.com',code:'x'.repeat(43),purpose:'recover',fetchImpl:async(url,options)=>{
    called=true;assert.equal(url,'https://api.resend.com/emails');assert.equal(options.redirect,'error');assert.ok(JSON.parse(options.body).text.includes('x'.repeat(43)));return new Response('{}');
   }});assert.ok(called);
+ });
+ await check('Provider failure and worker failure are neutral and include database time in response budget',async()=>{
+  const waits=[];
+  const broken=createInvitedPasswordHandler({env,wait:async ms=>waits.push(ms),fetchImpl:async()=>new Response(JSON.stringify({error:{code:'PASSWORD_UNAVAILABLE'}}),{status:503,headers:{'content-type':'application/json'}})});
+  assert.deepEqual((await post('recover',{email:i.email},{},broken)).data,{ok:true});assert.ok(waits[0]>5000&&waits[0]<=5500);
+  const failingProvider=createInvitedPasswordHandler({env,wait:async ms=>waits.push(ms),fetchImpl:async()=>new Response(JSON.stringify({ok:true,deliver:true}),{headers:{'content-type':'application/json'}}),sendMail:async({signal})=>{assert.ok(signal instanceof AbortSignal);throw Error('SENSITIVE_PROVIDER_DETAIL')}});
+  const r=await post('recover',{email:i.email},{},failingProvider);assert.equal(r.status,200);assert.deepEqual(r.data,{ok:true});assert.ok(!JSON.stringify(r).includes('SENSITIVE_PROVIDER_DETAIL'));
  });
  await check('Audit is immutable and full schema foreign keys remain valid',async()=>{
   assert.throws(()=>db.exec('DELETE FROM nexus_password_security_audit'),/IMMUTABLE/);const a=JSON.stringify(db.prepare('SELECT * FROM nexus_password_security_audit').all());assert.ok(!a.includes(pass));assert.ok(!a.includes(code));assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);

@@ -33,7 +33,23 @@ on:
 permissions:
   contents: read
 jobs:
+  identity-scope:
+    runs-on: ubuntu-24.04
+    outputs:
+      auth_only: ${{ steps.scope.outputs.auth_only }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: node --test tests/invited-password-ci-scope.test.mjs
+      - id: scope
+        run: node tools/invited-password-ci-scope.mjs
   publication:
+    needs: identity-scope
+    if: needs.identity-scope.outputs.auth_only != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:

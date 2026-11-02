@@ -23,7 +23,7 @@ const emailHash=sha('worker-guest@example.com'),networkHash=sha('synthetic-netwo
 const salt=randomBytes(16),hash=scryptSync('Synthetic workerd password',salt,32,{N:32768,r:8,p:3,maxmem:96*1024*1024});
 try{
  db=await mf.getD1Database('DB');
- await check('Actual D1 applies complete migration chain including 0021 and 0022',async()=>{
+ await check('Actual D1 applies complete migration chain through 0024',async()=>{
   const foundation=['0001_sync_team_foundation','0002_nexus_account_tokens','0003_d1_only_project_snapshots','0004_identity_v2_session_foundation'].map(n=>'../cloudflare/nexus-sync-worker/migrations/'+n+'.sql');
   const files=await readdir(new URL('migrations/',import.meta.url));
   for(const file of [...foundation,...files.filter(n=>n.endsWith('.sql')).sort().map(n=>'migrations/'+n)]){

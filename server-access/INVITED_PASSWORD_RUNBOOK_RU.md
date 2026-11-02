@@ -17,7 +17,7 @@
 3. Код действует 15 минут и используется один раз. Новый запрос заменяет прежний.
    Приглашение также должно оставаться действующим, неиспользованным и неотозванным.
 4. Участник выбирает уникальный логин Nexus, имя и собственный пароль длиной
-   12–128 символов (до 512 UTF-8 байт). После регистрации входит по email + паролю.
+   15–128 символов (до 512 UTF-8 байт). После регистрации входит по email + паролю.
    Пароль не устанавливает и не получает администратор. Trial начинается при
    первом подтверждённом входе, а не при создании пароля.
 5. «Забыли пароль?» отправляет отдельный код на ту же подтверждённую почту.
@@ -54,7 +54,7 @@
   индивидуальные IP требуют отдельного проверенного ingress-контракта.
 - Неизвестная почта и неподходящий доступ получают нейтральный ответ.
   Запрос письма не раскрывает deliver/status провайдера, ожидает одинаковое окно
-  5,5 секунды после RPC при таймауте провайдера 5 секунд. Это не гарантия полного
+  5,5 секунды с начала операции при общем бюджете RPC + провайдер 5 секунд. Это не гарантия полного
   равенства сетевых таймингов. Ошибку доставки можно повторить с учётом лимита.
 - Audit содержит account ID, действие и время; без почты, пароля, кода, verifier,
   proof и session secret. Журналы неизменяемы. Не включать logging request/response
@@ -76,14 +76,19 @@ Worker: `ALPHA_ADMISSION_ENABLED=true`, `INVITED_PASSWORD_ENABLED=true`,
 | INVITED_PASSWORD_ORIGIN | Точный HTTPS origin Nexus, без slash/path/query |
 | INVITED_PASSWORD_WORKER_ORIGIN | Точный HTTPS origin Worker |
 | INVITED_PASSWORD_MAIL_ENABLED | `true` после проверки отправителя |
-| RESEND_API_KEY | Sending-only ключ проверенного домена из secret manager |
+| INVITED_PASSWORD_MAIL_PROVIDER | mailru или resend (по умолчанию resend) |
+| RESEND_API_KEY | Для Resend: sending-only ключ проверенного домена |
+| MAILRU_SMTP_USER | Для Mail.ru: служебный адрес отправителя |
+| MAILRU_SMTP_PASSWORD | Для Mail.ru: отдельный пароль приложения из secret manager |
 | INVITED_PASSWORD_MAIL_FROM | Один подтверждённый адрес отправителя |
 
-Встроен адаптер Resend: фиксированный `POST https://api.resend.com/emails`,
+Mail.ru: фиксированный smtp.mail.ru:465, implicit TLS >=1.2 с проверкой сертификата, отдельный пароль приложения. Отправитель совпадает с SMTP_USER; SMTP host/port нельзя передать из браузера. Подготовка нового ящика и локальный защищённый ввод: staging/README_RU.md.
+
+Также встроен адаптер Resend: фиксированный `POST https://api.resend.com/emails`,
 redirect запрещён; [официальная спецификация](https://github.com/resend/resend-openapi/blob/main/resend.yaml).
 Реальная доставляемость, SPF/DKIM/DMARC, egress и доступность провайдера в целевом
 окружении требуют staging-проверки. Production-ключи здесь не создавались,
-реальные письма не отправлялись. Другой провайдер подключается через заменяемый
+реальная доставка принимается отдельно. Другой провайдер подключается через заменяемый
 `sendMail` адаптер с тем же контрактом; не подменять URL переменной из запроса.
 
 Gateway: GET `/account/password/`, `/account/password/password.js` и POST
@@ -102,7 +107,7 @@ Nexus также принимает password-сессию через обычн�
 2. Экспортировать D1, проверить восстановление на ОТДЕЛЬНОЙ базе. Не использовать
    рабочие персональные данные в логах и тестовых отчётах.
 3. На isolated/staging D1 применить существующую цепочку 0001–0020 (0017 в проекте
-   нет), затем 0021 и 0022. Проверить PRAGMA foreign_key_check и контрольные количества
+   нет), затем 0021, 0022, 0023 и 0024. Проверить PRAGMA foreign_key_check и контрольные количества
    аккаунтов, login methods, проектов и сессий до/после. 0022 сохраняет прежние
    credentials; неподтверждённые строки из старого draft не получают доступ.
 4. Развернуть Worker/BFF с флагами OFF, затем Gateway и новую страницу; сохранить
@@ -137,7 +142,7 @@ WHERE status='active' AND id IN (
    Passkey, account read и ACL. Старые email-приглашения нельзя принимать как
    Passkey: оставить исправленный admission guard/совместимый Worker, если такие
    приглашения уже были выданы; при полном старом Worker отозвать их перед откатом.
-4. НЕ удалять таблицы 0021/0022 и НЕ накатывать старый D1 backup поверх новых
+4. НЕ удалять таблицы 0021–0024 и НЕ накатывать старый D1 backup поверх новых
    пользовательских данных. Сохранить credentials/audit для безопасного возврата.
 5. Полное физическое удаление password-аккаунта пока требует отдельного schema
    review и политики хранения audit. Block/remove/revoke работают штатно.
@@ -146,7 +151,7 @@ WHERE status='active' AND id IN (
 
 ## Проверки
 
-`node --experimental-sqlite server-access/check-invited-password.mjs` — 21 группа,
+`node --experimental-sqlite server-access/check-invited-password.mjs` — 26 групп,
 реальная схема SQLite, подписанные BFF RPC, реальные scrypt, mail stub и гонки.
 `node server-access/build-worker.mjs` и `build-bff.mjs` — сборки без deployment.
 `node --experimental-sqlite server-access/check-invited-password-workerd.mjs` —
@@ -158,3 +163,12 @@ WHERE status='active' AND id IN (
 проверки прошли локально. Runtime dependencies audit: 0; undici 7.30.1.
 Локальная среда: Node 24.18, Edge; Node 22 проверяет обновлённый source-only CI.
 Live production/реальные почтовые ящики/физические Android и iPhone не проверялись.
+
+
+## Дополнение security/staging review
+
+Подробная проверка: PASSWORD_SECURITY_REVIEW_RU.md. Миграции 0023 и 0024 дополнительно защищают immutable identity и email invite от старого Passkey path, включая отсутствие managed enrollment. Минимум пароля теперь 15 символов. Mail.ru SMTP и Resend используют отдельные секреты; производственные секреты в staging не копируются.
+
+Созданы отдельные Cloudflare Worker/D1, применены все 23 файла миграций до 0024. Локальный HTTPS BFF работает на Node 22.23.3. Capture-приёмка в настоящей новой облачной D1 пройдена: enrollment, session read, recovery, отказ старого пароля, logout. Настоящая доставка требует отдельного пароля приложения нового nexus-notify@mail.ru и подтверждения получения на akronikl@mail.ru. Hosted Yandex ingress и физические мобильные устройства не объявляются проверенными.
+
+Старые workflow курсов теперь получают точную классификацию SHA diff. Только строгий auth allowlist передаётся identity workflow; courses/runtime/receipts/неизвестные файлы оставляют прежние gates обязательными. Новые проверки classifier и TLS SMTP включены в CI. Frozen release guards и исторические receipts не переписывались.
