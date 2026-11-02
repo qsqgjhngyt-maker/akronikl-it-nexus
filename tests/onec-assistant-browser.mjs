@@ -1,3 +1,4 @@
+import './onec-assistant-routing-browser.mjs';
 import assert from'node:assert/strict';import fs from'node:fs/promises';import http from'node:http';import path from'node:path';import{fileURLToPath,pathToFileURL}from'node:url';import{buildOnecOffline}from'../tools/build-onec-offline.mjs';
 import{launchOnecBrowser,ONEC_BROWSER_ENGINE,createOfflineOnecContext}from'./onec-browser-engine.mjs';
 const root=path.resolve(fileURLToPath(new URL('../',import.meta.url))),out=path.resolve(process.env.ONEC_EVIDENCE||'onec-assistant-evidence','assistant');await fs.mkdir(out,{recursive:true});
