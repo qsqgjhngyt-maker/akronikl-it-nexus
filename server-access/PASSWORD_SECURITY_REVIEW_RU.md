@@ -43,7 +43,9 @@ session → recovery → owner revoke; BFF/Worker/D1, transport, SMTP, CI и sta
 ## Staging и эксплуатационные границы
 
 Созданы НОВЫЕ Worker и D1 с именем `nexus-password-staging-769214238790`.
-Рабочая D1 не читалась и не мигрировалась, production Worker/YC/main не менялись.
+Рабочая D1 не читалась и не мигрировалась, production Worker/YC этой работой не менялись.
+Main независимо обновлён релизом 1С до `0eb4bdcbc05c73ae4f8a312e7bcc0f4279d91b13`;
+новая база объединена только с feature-веткой PR64.
 Новая D1: `a8c2e02f-618c-418a-8b7c-34f4f6981d27`; применены 23 файла миграций,
 включая 0021–0024. Схема заполнена только синтетической fixture и тестовым
 приглашением. Её нельзя продвигать в production как пользовательскую базу.
@@ -74,6 +76,13 @@ PowerShell/curl при отключённом VPN: письмо получено
 кодом не заявляется: reset/отзыв сессий проверены в capture lifecycle.
 Тестовые скрипты не сохраняют
 почтовый пароль в файлах/argv/URL и не выводят SMTP AUTH или одноразовые коды.
+
+Совместимость с 1С: оба конфликтующих workflow совмещены через identity-scope →
+content_scope. Для bounded auth diff content/release jobs не запрашиваются; для
+остальных diff trusted content router и исторические release jobs сохранены.
+10 content-routing тестов проверяют защищённые пути, недоверенные SHA, bootstrap
+и сохранение исходного content/release workflow после удаления identity lane.
+Bootstrap SHA, approved content scope и исторические receipts не изменяются.
 
 ## Остающиеся условия перед production
 

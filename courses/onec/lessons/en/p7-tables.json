@@ -1,0 +1,376 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p7",
+  "topicId": "onec.p7.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Temporary and virtual tables",
+  "minutes": 180,
+  "goal": "Materialize two own requests, reconcile75 and end the temporary-table context.",
+  "prerequisites": [
+    "onec.p6; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Set contract defined.",
+    "2/75 and lifetime verified.",
+    "Temporary and virtual tables distinguished."
+  ],
+  "sections": [
+    [
+      "Intermediate sets need contracts",
+      "A temporary table stores intermediate results within an execution context and can support reuse. It is not a persistent catalog. Specify fields, keys and expected multiplicity. Materializing all columns or all source rows can hurt performance; select only required data with justified filtering.",
+      "Create a local TempTablesManager. The first query stores only references and minutes of the own customer in СвоиЗаявки. This is not permanent metadata or a global multi-user cache."
+    ],
+    [
+      "Virtual tables compute a view",
+      "Balance, Turnovers andSliceLast expose register semantics. Period and dimension parameters participate in the computation. Filtering afterwards is not always semantically or operationally equivalent to a virtual-table parameter. Establish correctness on a small set before comparing plans and measurements.",
+      "Assign the same manager to the second query so it sees the temporary table and returns two facts/75. An equal table name does not transfer context. Separate field/row provenance from the final aggregation."
+    ],
+    [
+      "Manager lifetime",
+      "A shared temporary-table manager can expose an intermediate set to multiple queries. Another query without that context need not see it. A global manager is not an eternal cache of other users’data. Define creation, use and disposal; repeat tests from a known state.",
+      "Close the manager after reading. A controlled subsequent access must fail, proving the context ended. Production cleanup must also handle exceptions; this experiment covers the normal path and explicit later failure, not all server failures."
+    ],
+    [
+      "Test stages separately",
+      "First reconcile temporary rows with source data, then final aggregation with an independent total. For virtual tables, test before the first movement and at a change boundary. Include empty sets. Faster execution with different identities or values is not a valid optimization.",
+      "The module6 virtual table computes register semantics over time/dimensions; a temporary table stores a prepared set within a context. Compare purposes. Materialization alone does not prove faster execution."
+    ]
+  ],
+  "diagram": "p7-2",
+  "walkthrough": [
+    {
+      "action": "Create — Local manager",
+      "expected": "One owner."
+    },
+    {
+      "action": "Store — СвоиЗаявки:2/75",
+      "expected": "Own key only."
+    },
+    {
+      "action": "Read — Same manager",
+      "expected": "2/75."
+    },
+    {
+      "action": "Close — Read again",
+      "expected": "Expected rejection."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Reconcile the complete experiment",
+      "source": "Менеджер = Новый МенеджерВременныхТаблиц;\nЗапрос.МенеджерВременныхТаблиц = Менеджер;\n// INTO СвоиЗаявки; second query shares the manager",
+      "expected": "НаборВерный=True and КонтекстЗакрыт=True:2/75 before closing, rejection after.",
+      "explanation": "Both data and lifetime are tested.",
+      "trace": [
+        [
+          "Create",
+          "Local manager",
+          "One owner."
+        ],
+        [
+          "Store",
+          "СвоиЗаявки:2/75",
+          "Own key only."
+        ],
+        [
+          "Read",
+          "Same manager",
+          "2/75."
+        ],
+        [
+          "Close",
+          "Read again",
+          "Expected rejection."
+        ]
+      ]
+    },
+    {
+      "title": "A case that distinguishes the wrong solution",
+      "source": "In a separate source omit assigning the same manager to the second query.",
+      "expected": "The second query cannot read СвоиЗаявки and produces no successful75 result.",
+      "explanation": "Equal names do not merge contexts.",
+      "trace": [
+        [
+          "Separate copy",
+          "In a separate source omit assigning the same manager to the second query.",
+          "Retain the accepted original."
+        ],
+        [
+          "Observe",
+          "The second query cannot read СвоиЗаявки and produces no successful75 result.",
+          "Equal names do not merge contexts."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Specify fields, key and owner.",
+      "criteria": "Set contract defined."
+    },
+    {
+      "level": "Applied",
+      "task": "Verify both results and explain the later failure.",
+      "criteria": "2/75 and lifetime verified."
+    },
+    {
+      "level": "Advanced",
+      "task": "Compare with module6 turnovers and state distinct purposes/tests.",
+      "criteria": "Temporary and virtual tables distinguished."
+    }
+  ],
+  "lab": {
+    "title": "Temporary and virtual tables",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "steps": [
+      "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+      "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+      "Результат = УчебныеЗапросы.ОпытВременнойТаблицы();\nСообщить(Результат.НаборВерный);\nСообщить(Результат.КонтекстЗакрыт);",
+      "Run once, record both actual boolean claims and, for measurement, the two durations. Keep the created keys.",
+      "Remove only the startup call. Retain functions/data and investigate the negative control in another restored copy."
+    ],
+    "expected": [
+      "Separate copy opens with the earlier records.",
+      "Definitions are module-level; no duplicate helper.",
+      "Only the stated caller is inside the existing startup handler.",
+      "НаборВерный=True and КонтекстЗакрыт=True:2/75 before closing, rejection after.",
+      "Original retained, negative experiment isolated, automatic caller removed."
+    ],
+    "evidence": [
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits."
+    ],
+    "negative": "In a separate source omit assigning the same manager to the second query."
+  },
+  "mistakes": [
+    [
+      "A customer name replaces its reference.",
+      "Use the actual typed reference of the experiment, not its display label."
+    ],
+    [
+      "An equal sum is accepted without membership checks.",
+      "Reconcile actual keys and row count before accepting the aggregate."
+    ],
+    [
+      "A tiny timing is promoted to a server performance guarantee.",
+      "Retain raw observations and explicitly limit the environment and metric."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "The second query sees the set through",
+      "options": [
+        "Equal colour",
+        "Shared manager",
+        "A global course name"
+      ],
+      "correct": 1,
+      "explanation": "The manager binds the context."
+    },
+    {
+      "question": "INTO creates here",
+      "options": [
+        "A temporary set",
+        "A permanent catalog",
+        "An account"
+      ],
+      "correct": 0,
+      "explanation": "The set lives in its manager."
+    },
+    {
+      "question": "After Close expect",
+      "options": [
+        "Eternal caching",
+        "A new record",
+        "A rejected read"
+      ],
+      "correct": 2,
+      "explanation": "The resource has ended."
+    }
+  ],
+  "review": [
+    "Set contract defined.",
+    "2/75 and lifetime verified.",
+    "Temporary and virtual tables distinguished."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "query-mechanism",
+    "query-language",
+    "accumulation-register"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p7.topic-3",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p7",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "reference",
+      "query",
+      "transaction"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C: Designer and Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "step-1",
+          "title": "Preserve the starting state",
+          "where": "Own-copy Designer",
+          "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+          "why": "Keep the accepted work independent.",
+          "expected": "Separate copy opens with the earlier records.",
+          "troubleshooting": "A new list name alone does not create another database directory.",
+          "before": "Own path, prior sources and a restorable backup identified."
+        },
+        {
+          "id": "step-2",
+          "title": "Add the complete server source",
+          "where": "Конфигуратор → Общие → Общие модули → УчебныеЗапросы",
+          "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+          "why": "Database access has an explicit server boundary.",
+          "expected": "Definitions are module-level; no duplicate helper.",
+          "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
+          "before": "Separate copy opens with the earlier records."
+        },
+        {
+          "id": "step-3",
+          "title": "Prepare and call the experiment",
+          "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
+          "action": "Результат = УчебныеЗапросы.ОпытВременнойТаблицы();\nСообщить(Результат.НаборВерный);\nСообщить(Результат.КонтекстЗакрыт);",
+          "why": "Print every named result instead of accepting compilation alone.",
+          "expected": "Only the stated caller is inside the existing startup handler.",
+          "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
+          "before": "Definitions are module-level; no duplicate helper."
+        },
+        {
+          "id": "step-4",
+          "title": "Save, update and run once",
+          "where": "Ctrl+S → F7 → Предприятие",
+          "action": "Run once, record both actual boolean claims and, for measurement, the two durations. Keep the created keys.",
+          "why": "Observe actual1C data, not the browser diagram.",
+          "expected": "НаборВерный=True and КонтекстЗакрыт=True:2/75 before closing, rejection after.",
+          "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
+          "before": "Only the stated caller is inside the existing startup handler."
+        },
+        {
+          "id": "step-5",
+          "title": "Retain both results",
+          "where": "Конфигуратор после закрытия Предприятия",
+          "action": "Remove only the startup call. Retain functions/data and investigate the negative control in another restored copy.",
+          "why": "Preserve provenance and avoid repeating data creation at every startup.",
+          "expected": "Original retained, negative experiment isolated, automatic caller removed.",
+          "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
+          "before": "НаборВерный=True and КонтекстЗакрыт=True:2/75 before closing, rejection after."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Сверьте полный опыт",
+        "en": "Explore the example: Reconcile the complete experiment"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Создать",
+            "en": "Create"
+          },
+          "detail": {
+            "ru": "Менеджер внутри функции → Один владелец.",
+            "en": "Local manager → One owner."
+          }
+        },
+        {
+          "label": {
+            "ru": "Поместить",
+            "en": "Store"
+          },
+          "detail": {
+            "ru": "СвоиЗаявки:2/75 → Только собственный ключ.",
+            "en": "СвоиЗаявки:2/75 → Own key only."
+          }
+        },
+        {
+          "label": {
+            "ru": "Прочитать",
+            "en": "Read"
+          },
+          "detail": {
+            "ru": "Тот же менеджер → 2/75.",
+            "en": "Same manager → 2/75. The second query sees both prepared rows through the same manager, not the name alone."
+          }
+        },
+        {
+          "label": {
+            "ru": "Закрыть",
+            "en": "Close"
+          },
+          "detail": {
+            "ru": "Повторное обращение → Ожидаемый отказ.",
+            "en": "Read again → Expected rejection."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · complete server common-module source УчебныеЗапросы; shared preparation once"
+  },
+  "nativeCaseIds": [
+    "P7.TABLES.ORIGINAL",
+    "P7.TABLES.MUTATION"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_QUERIES_RESULT.json",
+    "caseIds": [
+      "P7.TABLES.ORIGINAL",
+      "P7.TABLES.MUTATION"
+    ],
+    "scope": "Exact native query function and compiled discriminating negative; own references, boundaries, joins, temporary lifetime or explicit call count. No field p95 claim.",
+    "training1508Verified": true,
+    "allLearnerGuiStepsVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false,
+    "trainingCompatibilityEvidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/CURRENT_TRAINING_RESULT.json",
+    "trainingCompatibilityScope": "Exact current server source compiled and all positive assertions passed in official personal training1508; integrated observer. Does not extend GUI/RLS/HTTP/scheduling claims."
+  },
+  "codeFile": "code/pedagogy/query-tables-first.bsl"
+}

@@ -1,0 +1,387 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p4",
+  "topicId": "onec.p4.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Customer identity: names change while references remain",
+  "minutes": 120,
+  "goal": "Use real catalog items to show that references establish identity and equal names do not merge customers.",
+  "prerequisites": [
+    "onec.p3; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Separate entity, reference, local code and readable name.",
+    "Run an original function in a server common module and explain both checks.",
+    "Preserve earlier work and identify intentionally created equal-name test items."
+  ],
+  "sections": [
+    [
+      "Entity and key",
+      "A customer outlives one request. Its internal reference distinguishes it from another item even with the same name. An external code supports imports but needs its own uniqueness scope. Define which event creates a customer and which only updates the existing presentation.",
+      "The experiment creates two synthetic customers in a separate copy. The first is written, receives reference α, then changes name through the same object. A second object gets the same final name and a different reference β. Expect the original α after renaming and β≠α for the other item. These letters explain the trace and are not UUID values to enter. The check compares references rather than captions."
+    ],
+    [
+      "Normalization is not a business decision",
+      "Trimming spaces and case normalization can help compare codes but may collapse distinct identifiers. Normalized names do not prove identity. Define a unique teaching codeC001 and reject collisions with a different entity. Repeating an import must not increase item count.",
+      "In this configuration Код is a nine-character string with a scope different from the internal reference. One catalog’s code is not a universal global key. Integration identifiers require an agreed source and scope; normalizing names does not establish that agreement. The equal-name records are intentional test objects, not an automatic assertion that they are one customer."
+    ],
+    [
+      "References preserve relationships",
+      "A document stores a customer reference. Renaming should change presentation without breaking requests. Replacing the reference with a string loses relational identity and complicates updates. Key migration needs a mapping and checks of dependent objects; mass renaming alone is insufficient.",
+      "УчебныеДанные executes in the platform server context and is called by the managed application. In a file infobase that does not require a separate server computer. Server-call permission allows the 1C client to call an exported function; it neither publishes an internet HTTP endpoint nor replaces access rights. Leave privileged and global modes off."
+    ],
+    [
+      "Verify idempotent creation",
+      "Seed twice and compare references, count and attributes. Add equal names with different codes to expose name-based lookup errors. Concurrent creation under one code needs a transactional solution; single-user repetition does not prove it. P10 addresses that boundary.",
+      "Every call creates two new items: this is a deliberate one-time experiment, not an idempotent customer import. Before repeating, record the created codes and expected growth. Do not use the original working base. The experiment distinguishes reference identity from names; merging records needs a separate rule and agreement."
+    ]
+  ],
+  "diagram": "p4-0",
+  "walkthrough": [
+    {
+      "action": "First write — Customer receives α",
+      "expected": "Identity assigned."
+    },
+    {
+      "action": "New name — Same object written again",
+      "expected": "Reference remains α."
+    },
+    {
+      "action": "Another object — Same name, separate write",
+      "expected": "Reference β differs."
+    },
+    {
+      "action": "Checks — α=α and β≠α",
+      "expected": "Both claims true."
+    }
+  ],
+  "examples": [
+    {
+      "title": "A renamed item and another equal-name item",
+      "source": "СсылкаДо = Клиент.Ссылка;\nКлиент.Наименование = \"Учебная идентичность — после\";\nКлиент.Записать();\nCreate Другой separately with the same name.",
+      "expected": "ПереименованиеСохранилоСсылку and ОдинаковыеИменаРазныеСсылки are both true.",
+      "explanation": "The full function below was executed in the official platform. α/β explain references; they are not literal input.",
+      "trace": [
+        [
+          "First write",
+          "Customer receives α",
+          "Identity assigned."
+        ],
+        [
+          "New name",
+          "Same object written again",
+          "Reference remains α."
+        ],
+        [
+          "Another object",
+          "Same name, separate write",
+          "Reference β differs."
+        ],
+        [
+          "Checks",
+          "α=α and β≠α",
+          "Both claims true."
+        ]
+      ]
+    },
+    {
+      "title": "Replacing the object while renaming",
+      "source": "An erroneous Клиент = Справочники.Клиенты.СоздатьЭлемент() is inserted before renaming.",
+      "expected": "The new item receives another reference and the identity-preservation check becomes false.",
+      "explanation": "This compilable incorrect variant was separately executed and distinguished by its assertion.",
+      "trace": [
+        [
+          "Expected",
+          "Rename the earlier object",
+          "Preserve α."
+        ],
+        [
+          "Defect",
+          "Create another object",
+          "Reference is no longer α."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Predict α/β comparisons before executing.",
+      "criteria": "Names are not identities and equal-name items are not automatically merged."
+    },
+    {
+      "level": "Applied",
+      "task": "Run through the common module, inspect both claims and actual codes, then stop automatic repetition.",
+      "criteria": "Actual platform observations and distinct stored records retained; earlier work preserved."
+    },
+    {
+      "level": "Advanced",
+      "task": "Investigate object replacement in a separate experimental copy and define an external-source duplicate rule.",
+      "criteria": "The check detects changed identity; source/key scope is explicit instead of matching names alone."
+    }
+  ],
+  "lab": {
+    "title": "Rename one item and distinguish another with the same name",
+    "environment": "Official installed training1C, separate synthetic copy; platform execution, optional Studio.",
+    "steps": [
+      "If your base already has the training objects, export a .dt and restore into a new empty experiment base. If the language base lacks them, retain it with all code, create ANOTHER empty base and load the prepared lab CF there, then F7. Never load a full .cf over custom development. Record this stage’s origin.",
+      "Create УчебныеДанные or open your existing module of that name. Enable Сервер and Вызов сервера; disable managed-client, global and privileged modes. Preserve any previous module text before appending.",
+      "Insert the complete ОпытИдентичности function outside other procedures. If it exists from an earlier attempt, compare and reuse it.",
+      "Inside the existing ПриНачалеРаботыСистемы add Результат = УчебныеДанные.ОпытИдентичности(); then Сообщить(Результат.ПереименованиеСохранилоСсылку); and Сообщить(Результат.ОдинаковыеИменаРазныеСсылки);. Preserve the old handler separately; do not create a second same-name handler.",
+      "Save, update the copy and launch. Read both message values; open Клиенты and record the two new equal-name items’ actual codes.",
+      "Remove only the experiment call from startup or restore your saved handler; retain the common-module function. Save and apply. Record inputs, checks and codes without deleting earlier work."
+    ],
+    "expected": [
+      "Клиенты exists in the experiment base; modules1–3 work remains separate.",
+      "Contexts agree and existing functions remain intact.",
+      "One exported function exists without overwriting other functions.",
+      "One call and two messages exist; the function remains in the other module.",
+      "Both checks are true; equal final names have distinct identities.",
+      "The experiment remains as a separate work and repeated startup creation stops."
+    ],
+    "evidence": [
+      "Version, separate-base provenance, common-module properties and both observed claims.",
+      "Your synthetic item codes and explanation of equal names versus identity."
+    ],
+    "negative": "Deliberately replacing the object during renaming must break the reference check; retain the original work."
+  },
+  "mistakes": [
+    [
+      "An equal name is treated as proof of one customer.",
+      "Compare references and provenance instead of merging by caption."
+    ],
+    [
+      "The common-module function is defined inside application startup.",
+      "Keep its definition at common-module scope and only a call in the handler."
+    ],
+    [
+      "Repeated startup creates records and the growth is blamed on the platform.",
+      "Account for two new items and remove the startup call after the experiment."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What is preserved when renaming the same written object?",
+      "options": [
+        "Its reference",
+        "Necessarily its old name",
+        "Its list position"
+      ],
+      "correct": 0,
+      "explanation": "A readable name does not define identity."
+    },
+    {
+      "question": "Separate equal-name items",
+      "options": [
+        "Automatically represent one entity",
+        "Can have different references",
+        "Necessarily indicate corrupted storage"
+      ],
+      "correct": 1,
+      "explanation": "Equal presentation does not establish identity."
+    },
+    {
+      "question": "After the experiment, the startup call should",
+      "options": [
+        "Remain forever without accounting",
+        "Be replaced by a paid service",
+        "Be removed while keeping function and observations"
+      ],
+      "correct": 2,
+      "explanation": "Every call creates two test items."
+    }
+  ],
+  "review": [
+    "What remains after renaming?",
+    "Why do codes and references have different scopes?",
+    "Why is this not an idempotent import?"
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p4.topic-1",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p4",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "catalog",
+      "catalog-item",
+      "reference",
+      "module",
+      "metadata",
+      "bsl",
+      "dt",
+      "cf"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Copy Designer → УчебныеДанные common module, then managed Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "prepare",
+          "title": "Prepare a separate project stage",
+          "where": "1C launcher, then Designer",
+          "action": "If your base already has the training objects, export a .dt and restore into a new empty experiment base. If the language base lacks them, retain it with all code, create ANOTHER empty base and load the prepared lab CF there, then F7. Never load a full .cf over custom development. Record this stage’s origin.",
+          "why": "Data APIs need actual metadata while prior work stays intact.",
+          "expected": "Клиенты exists in the experiment base; modules1–3 work remains separate.",
+          "troubleshooting": "Follow the main preparation instructions and never target the original working folder.",
+          "before": "Language modules1–3 completed; a separate own stage base contains prepared Клиенты/Услуги/ЗаявкаУслуги/СтатусыЗаявки metadata. Prior work retained separately."
+        },
+        {
+          "id": "module",
+          "title": "Create or inspect the common module",
+          "where": "Designer → Общие → Общие модули",
+          "action": "Create УчебныеДанные or open your existing module of that name. Enable Сервер and Вызов сервера; disable managed-client, global and privileged modes. Preserve any previous module text before appending.",
+          "why": "Use the appropriate context without unnecessary capabilities.",
+          "expected": "Contexts agree and existing functions remain intact.",
+          "troubleshooting": "Do not replace earlier УчебныеРасчеты or enable privileged mode to bypass an error.",
+          "before": "Клиенты exists in the experiment base; modules1–3 work remains separate."
+        },
+        {
+          "id": "function",
+          "title": "Append the separate function",
+          "where": "УчебныеДанные module text",
+          "action": "Insert the complete ОпытИдентичности function outside other procedures. If it exists from an earlier attempt, compare and reuse it.",
+          "why": "Definitions remain at module scope.",
+          "expected": "One exported function exists without overwriting other functions.",
+          "troubleshooting": "Do not insert its definition inside ПриНачалеРаботыСистемы.",
+          "before": "Contexts agree and existing functions remain intact."
+        },
+        {
+          "id": "caller",
+          "title": "Add the client call",
+          "where": "Configuration root → right-click → Открыть модуль приложения",
+          "action": "Inside the existing ПриНачалеРаботыСистемы add Результат = УчебныеДанные.ОпытИдентичности(); then Сообщить(Результат.ПереименованиеСохранилоСсылку); and Сообщить(Результат.ОдинаковыеИменаРазныеСсылки);. Preserve the old handler separately; do not create a second same-name handler.",
+          "why": "The client calls the exported server function and displays its results.",
+          "expected": "One call and two messages exist; the function remains in the other module.",
+          "troubleshooting": "For method-not-found inspect export, names and contexts instead of disabling safeguards.",
+          "before": "One exported function exists without overwriting other functions."
+        },
+        {
+          "id": "run",
+          "title": "Run once",
+          "where": "Designer → Ctrl+S → F7 → Enterprise",
+          "action": "Save, update the copy and launch. Read both message values; open Клиенты and record the two new equal-name items’ actual codes.",
+          "why": "Connect logical claims to real stored items.",
+          "expected": "Both checks are true; equal final names have distinct identities.",
+          "troubleshooting": "Account for new records before repeating; retain module/line diagnostics without secrets.",
+          "before": "One call and two messages exist; the function remains in the other module."
+        },
+        {
+          "id": "finish",
+          "title": "Record and stop automatic repetition",
+          "where": "Copy Designer after closing Enterprise",
+          "action": "Remove only the experiment call from startup or restore your saved handler; retain the common-module function. Save and apply. Record inputs, checks and codes without deleting earlier work.",
+          "why": "Ordinary startup should not silently keep adding test records.",
+          "expected": "The experiment remains as a separate work and repeated startup creation stops.",
+          "troubleshooting": "Do not remove whole modules containing other functions or load unrelated configurations to clean up.",
+          "before": "Both checks are true; equal final names have distinct identities."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Один переименованный и другой одноимённый",
+        "en": "Explore the example: A renamed item and another equal-name item"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Первая запись",
+            "en": "First write"
+          },
+          "detail": {
+            "ru": "Клиент получает α → Появилась идентичность.",
+            "en": "Customer receives α → Identity assigned."
+          }
+        },
+        {
+          "label": {
+            "ru": "Новое имя",
+            "en": "New name"
+          },
+          "detail": {
+            "ru": "Тот же объект записан повторно → Ссылка остаётся α.",
+            "en": "Same object written again → Reference remains α."
+          }
+        },
+        {
+          "label": {
+            "ru": "Другой объект",
+            "en": "Another object"
+          },
+          "detail": {
+            "ru": "Такое же имя, отдельная запись → Ссылка β отличается.",
+            "en": "Same name, separate write → Reference β differs."
+          }
+        },
+        {
+          "label": {
+            "ru": "Проверки",
+            "en": "Checks"
+          },
+          "detail": {
+            "ru": "α=α и β≠α → Оба утверждения истинны.",
+            "en": "α=α and β≠α → Both claims true."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · separate exported function in УчебныеДанные; append outside other procedures/functions"
+  },
+  "nativeCaseIds": [
+    "P4.IDENTITY.ORIGINAL",
+    "P4.IDENTITY.MUTATION"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_IDENTITY_RESULT.json",
+    "caseIds": [
+      "P4.IDENTITY.ORIGINAL",
+      "P4.IDENTITY.MUTATION"
+    ],
+    "scope": "Real server common-module function and managed-application caller; original accepted and compilable identity-changing mutation rejected in own synthetic base",
+    "training1508Verified": false,
+    "visibleMessagesObserved": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  },
+  "codeFile": "code/pedagogy/metadata-identity-first.bsl"
+}

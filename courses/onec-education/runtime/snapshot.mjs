@@ -1,0 +1,7 @@
+// Снимок одного языкового задания. Не содержит Account, ACL, прогресс или попытки.
+export async function createLanguageSnapshot({workId,sourceRevision,courseId,topicId,entryPath,source}){
+ if(typeof workId!=='string'||!/^[a-zA-Z0-9_-]{1,64}$/.test(workId)||!Number.isSafeInteger(sourceRevision)||sourceRevision<0||!['onec','1c-enterprise'].includes(courseId)||typeof topicId!=='string'||!topicId.startsWith(courseId+'.')||!/^[a-z0-9.-]+$/.test(topicId)||typeof entryPath!=='string'||!/^[-a-zA-Z0-9_А-Яа-яЁё]+\.(?:os|bsl)$/u.test(entryPath)||typeof source!=='string'||source.includes('\0')||new TextEncoder().encode(source).length>16384)throw Error('LANGUAGE_SNAPSHOT_REJECTED');
+ const bytes=new TextEncoder().encode(source),sha256=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');
+ return{schemaVersion:1,kind:'onec-language-snapshot',runtime:'onescript',workId,sourceRevision,courseId,topicId,entryPath,source,sha256,codeVerifiedServer:false,credentialEligible:false};
+}
+export async function validateLanguageSnapshot(value){if(!value||Object.keys(value).sort().join(',')!=='codeVerifiedServer,courseId,credentialEligible,entryPath,kind,runtime,schemaVersion,sha256,source,sourceRevision,topicId,workId')throw Error('LANGUAGE_SNAPSHOT_REJECTED');const expected=await createLanguageSnapshot(value);if(JSON.stringify(expected)!==JSON.stringify(Object.fromEntries(Object.keys(expected).map(k=>[k,value[k]]))))throw Error('LANGUAGE_SNAPSHOT_TAMPERED');return expected;}

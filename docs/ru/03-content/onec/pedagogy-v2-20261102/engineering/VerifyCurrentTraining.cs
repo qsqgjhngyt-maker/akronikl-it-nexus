@@ -1,0 +1,14 @@
+using System;using System.IO;using System.Diagnostics;using System.Security.Cryptography;using System.Text;
+class VerifyCurrentTraining{
+static string Sha(string p){using(var h=SHA256.Create())using(var s=File.OpenRead(p))return BitConverter.ToString(h.ComputeHash(s)).Replace("-","").ToLowerInvariant();}
+static string Q(string p){return "\""+p+"\"";}
+static void Run(string exe,string args,string log){var p=Process.Start(new ProcessStartInfo(exe,args+" /DisableStartupDialogs /DisableStartupMessages /Out "+Q(log)){UseShellExecute=false,CreateNoWindow=true});if(!p.WaitForExit(60000)){p.Kill();throw new Exception("TIMEOUT");}if(p.ExitCode!=0)throw new Exception("NATIVE_EXIT");var t=File.Exists(log)?File.ReadAllText(log):"";if(t.Contains("Ошибка")||t.Contains("Error")||t.Contains("Синтакс"))throw new Exception("DIAGNOSTIC");}
+static void Copy(string from,string to){Directory.CreateDirectory(to);foreach(var f in Directory.GetFiles(from))File.Copy(f,Path.Combine(to,Path.GetFileName(f)));foreach(var d in Directory.GetDirectories(from))Copy(d,Path.Combine(to,Path.GetFileName(d)));}
+static int Main(){try{string exe=null;foreach(var p in new[]{@"C:\Program Files (x86)\1cv8t\8.3.27.1508\bin\1cv8t.exe",@"C:\Program Files\1cv8t\8.3.27.1508\bin\1cv8t.exe"})if(File.Exists(p))exe=p;
+if(exe==null||Sha(exe)!="d52c3feaba002dd2ddbe01c8d4780cda947b99a6831c22d406290dd3dfd7bde4")return 42;
+var dest=@"C:\NexusCurrentCheck";if(Directory.Exists(dest))return 43;Directory.CreateDirectory(dest);var src=Path.Combine(dest,"source");Copy(@"C:\NexusCfInput\source",src);var db=Path.Combine(dest,"base");
+Run(exe,"CREATEINFOBASE "+Q("File=\""+db+"\";"),Path.Combine(dest,"create.log"));Run(exe,"DESIGNER /F "+Q(db)+" /LoadConfigFromFiles "+Q(src)+" /UpdateDBCfg",Path.Combine(dest,"load.log"));Run(exe,"DESIGNER /F "+Q(db)+" /CheckConfig -ThinClient -ThickClientManagedApplication -Server -ConfigLogicalIntegrity",Path.Combine(dest,"check.log"));Run(exe,"ENTERPRISE /F "+Q(db),Path.Combine(dest,"run.log"));
+var result=Path.Combine(dest,"result.txt");if(!File.Exists(result)||File.ReadAllText(result).Trim()!="PASS|14")return 44;
+var module=Path.Combine(src,@"CommonModules\УчебныйПолныйКонтроль\Ext\Module.bsl");var code=File.ReadAllText(module);if(!code.Contains("ПервыеМинуты = 30"))return 45;File.WriteAllText(module,code.Replace("ПервыеМинуты = 30","ПервыеМинуты = 31"),new UTF8Encoding(false));File.Delete(result);
+Run(exe,"DESIGNER /F "+Q(db)+" /LoadConfigFromFiles "+Q(src)+" /UpdateDBCfg",Path.Combine(dest,"negative-load.log"));Run(exe,"DESIGNER /F "+Q(db)+" /CheckConfig -ThinClient -ThickClientManagedApplication -Server",Path.Combine(dest,"negative-check.log"));Run(exe,"ENTERPRISE /F "+Q(db),Path.Combine(dest,"negative-run.log"));if(!File.Exists(result)||File.ReadAllText(result).Trim()!="FAIL|14")return 46;return 0;
+}catch{return 49;}}}

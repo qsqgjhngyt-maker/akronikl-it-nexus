@@ -1,0 +1,362 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p8",
+  "topicId": "onec.p8.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Directives and calls",
+  "minutes": 180,
+  "goal": "Separate form context, no-context server calculation and client interaction.",
+  "prerequisites": [
+    "onec.p7; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Three boundaries explained.",
+    "Compilation and runtime distinguished.",
+    "Negative diagnostic retained."
+  ],
+  "sections": [
+    [
+      "Directives select execution context",
+      "AtClient selects client execution; AtServer uses the form’s server context; AtServerNoContext does not automatically receive it. Method names do not select execution location. Compiler and runtime availability follow actual directives and module type.",
+      "One complete module demonstrates three boundaries. &НаКлиенте manages messages/dialogs; &НаСервере СверитьБуфер uses form data; &НаСервереБезКонтекста ЧасыНаСервере consumes only its numeric input. Directives express dependencies rather than decoration."
+    ],
+    [
+      "No-context calls need explicit inputs",
+      "A pure calculation can use a no-context server method with explicit minutes/rate. Reading form attributes there reveals a hidden dependency to remove. Passing the whole form is not parameter design. A no-context call alone does not prove speedup without data-volume measurements.",
+      "The no-context function cannot read Объект. Minutes suffice, so avoid passing an entire document. Persisted reading needs a separate keyed function with appropriate rights. Minimal inputs simplify testing and reduce accidental state transfer."
+    ],
+    [
+      "Use context deliberately",
+      "A form-state operation may legitimately need context. Do not move everything toNoContext as a slogan. Separate data acquisition, pure computation andUIupdates. A matrix shows what can be tested without a window and what actually requires form state.",
+      "Check Thin client, Server and Thick managed client compilation. This checks name/context availability, not an actual network installation. An ordinary run separately verifies90→1.5 and rejection of1441."
+    ],
+    [
+      "Include a wrong-context check",
+      "Compare two calculation versions with identical explicit inputs. In an experimental copy, access a form attribute fromNoContext and detect the dependency. Do not hide it in a global variable. Test missing input and repeats so prior form state cannot influence the next result.",
+      "In another source copy intentionally read Объект inside the no-context function, retain the diagnostic and restore the argument. Do not fix it with Privileged or by moving all database work to the client; that changes the trust boundary."
+    ]
+  ],
+  "diagram": "p8-2",
+  "walkthrough": [
+    {
+      "action": "UI — &НаКлиенте",
+      "expected": "Message/dialog."
+    },
+    {
+      "action": "Form data — &НаСервере",
+      "expected": "Explicit form dependency."
+    },
+    {
+      "action": "Pure input — &НаСервереБезКонтекста",
+      "expected": "Number only."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Reconcile the complete experiment",
+      "source": "&НаСервереБезКонтекста\nФункция ЧасыНаСервере(Минуты) Экспорт\n    // Explicit argument only; complete source below.\nКонецФункции",
+      "expected": "Correct contexts compile;90→1.5 and1441 rejection are observable.",
+      "trace": [
+        [
+          "UI",
+          "&НаКлиенте",
+          "Message/dialog."
+        ],
+        [
+          "Form data",
+          "&НаСервере",
+          "Explicit form dependency."
+        ],
+        [
+          "Pure input",
+          "&НаСервереБезКонтекста",
+          "Number only."
+        ]
+      ]
+    },
+    {
+      "title": "A case that distinguishes the wrong solution",
+      "source": "In another source read Объект in the no-context function.",
+      "expected": "A context diagnostic rather than successful execution.",
+      "explanation": "An implicit form dependency violates the directive.",
+      "trace": [
+        [
+          "Separate copy",
+          "In another source read Объект in the no-context function.",
+          "Retain the accepted original."
+        ],
+        [
+          "Observe",
+          "A context diagnostic rather than successful execution.",
+          "An implicit form dependency violates the directive."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Annotate dependencies for every method.",
+      "criteria": "Three boundaries explained."
+    },
+    {
+      "level": "Applied",
+      "task": "Check three contexts and run normally.",
+      "criteria": "Compilation and runtime distinguished."
+    },
+    {
+      "level": "Advanced",
+      "task": "Retain the wrong copy and explain a fix without privileges.",
+      "criteria": "Negative diagnostic retained."
+    }
+  ],
+  "lab": {
+    "title": "Directives and calls",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "steps": [
+      "Retain a DT and the earlier form module. Identify an own saved30-minute request and record its actual reference.",
+      "Append the complete source below outside earlier handlers. In the form Attributes tab add ИтогОпыта:String120 and ВерсияЗапроса:Number10,0 as form attributes, not document fields. Keep previous methods and one definition of each new method.",
+      "Add ПроверитьЧасы and УчебноеПодтверждение; select matching existing action methods and drag commands to the form command bar. For Сверить add a client action with the first example’s four lines.",
+      "Check Thin client, Server and Thick managed client. Apply changes to this copy. Open the same own request and perform the first worked example; do not press Save/Post unless the exercise explicitly asks.",
+      "In another source read Объект in the no-context function. Retain the correct source, all observations and the unchanged original; do not claim a direct callback test is a physical dialog check."
+    ],
+    "expected": [
+      "The original and own copy are distinct.",
+      "Methods and two form attributes exist.",
+      "Commands show the intended actions without automatic startup.",
+      "Correct contexts compile;90→1.5 and1441 rejection are observable.",
+      "A context diagnostic rather than successful execution."
+    ],
+    "evidence": [
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits."
+    ],
+    "negative": "In another source read Объект in the no-context function."
+  },
+  "mistakes": [
+    [
+      "Form data is assumed to already be persisted.",
+      "Read the actual saved reference independently before accepting persistence."
+    ],
+    [
+      "A no-context function reaches into the form object.",
+      "Pass the minimal explicit input or deliberately choose the correct context."
+    ],
+    [
+      "Direct continuation tests are reported as physical dialog clicks.",
+      "Record native branch coverage and actual UI interaction separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "NoContext means",
+      "options": [
+        "No validation",
+        "No form context",
+        "No server"
+      ],
+      "correct": 1,
+      "explanation": "Inputs must be explicit."
+    },
+    {
+      "question": "The form object is needed by",
+      "options": [
+        "The context method",
+        "Every calculation",
+        "Only colour"
+      ],
+      "correct": 0,
+      "explanation": "СверитьБуфер depends on form data."
+    },
+    {
+      "question": "Fix context errors with",
+      "options": [
+        "Privilege",
+        "Removing checks",
+        "A correct contract/directive"
+      ],
+      "correct": 2,
+      "explanation": "Do not weaken protections to compile."
+    }
+  ],
+  "review": [
+    "Three boundaries explained.",
+    "Compilation and runtime distinguished.",
+    "Negative diagnostic retained."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "form-editor"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p8.topic-3",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p8",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "reference",
+      "query",
+      "transaction"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C: Designer and Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "step-1",
+          "title": "Preserve and select an own request",
+          "where": "Конфигуратор своей отдельной копии",
+          "action": "Retain a DT and the earlier form module. Identify an own saved30-minute request and record its actual reference.",
+          "why": "Protect prior work.",
+          "expected": "The original and own copy are distinct.",
+          "troubleshooting": "Inspect the database path and reference; display names may coincide.",
+          "before": "Own path, prior sources and a restorable backup identified."
+        },
+        {
+          "id": "step-2",
+          "title": "Open the managed form module",
+          "where": "Документы → ЗаявкаУслуги → Формы → УчебнаяФормаЗаявки → Модуль",
+          "action": "Append the complete source below outside earlier handlers. In the form Attributes tab add ИтогОпыта:String120 and ВерсияЗапроса:Number10,0 as form attributes, not document fields. Keep previous methods and one definition of each new method.",
+          "why": "The form owns UI state while the document schema stays intact.",
+          "expected": "Methods and two form attributes exist.",
+          "troubleshooting": "Do not add these attributes to the document metadata or paste form code into a common module.",
+          "before": "The original and own copy are distinct."
+        },
+        {
+          "id": "step-3",
+          "title": "Bind commands",
+          "where": "Редактор формы → Команды → собственные команды",
+          "action": "Add ПроверитьЧасы and УчебноеПодтверждение; select matching existing action methods and drag commands to the form command bar. For Сверить add a client action with the first example’s four lines.",
+          "why": "Make code reachable through explicit UI actions.",
+          "expected": "Commands show the intended actions without automatic startup.",
+          "troubleshooting": "If an action generator creates an empty duplicate, merge only its body into the existing matching handler.",
+          "before": "Methods and two form attributes exist."
+        },
+        {
+          "id": "step-4",
+          "title": "Check contexts and run",
+          "where": "Ctrl+S → Конфигурация → Проверка конфигурации → F7 → Предприятие",
+          "action": "Check Thin client, Server and Thick managed client. Apply changes to this copy. Open the same own request and perform the first worked example; do not press Save/Post unless the exercise explicitly asks.",
+          "why": "Compilation and observed behaviour are independent checks.",
+          "expected": "Correct contexts compile;90→1.5 and1441 rejection are observable.",
+          "troubleshooting": "Record the method/line; distinguish a context error from a missing command binding.",
+          "before": "Commands show the intended actions without automatic startup."
+        },
+        {
+          "id": "step-5",
+          "title": "Record cancellation and retain work",
+          "where": "Предприятие → закрытие формы без записи",
+          "action": "In another source read Объект in the no-context function. Retain the correct source, all observations and the unchanged original; do not claim a direct callback test is a physical dialog check.",
+          "why": "Separate adverse cases from accepted work.",
+          "expected": "A context diagnostic rather than successful execution.",
+          "troubleshooting": "Reopen the actual reference to check persisted state.",
+          "before": "Correct contexts compile;90→1.5 and1441 rejection are observable."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Сверьте полный опыт",
+        "en": "Explore the example: Reconcile the complete experiment"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "UI",
+            "en": "UI"
+          },
+          "detail": {
+            "ru": "&НаКлиенте → Сообщение/диалог.",
+            "en": "&НаКлиенте → Message/dialog."
+          }
+        },
+        {
+          "label": {
+            "ru": "Данные формы",
+            "en": "Form data"
+          },
+          "detail": {
+            "ru": "&НаСервере → Явная зависимость формы.",
+            "en": "&НаСервере → Explicit form dependency."
+          }
+        },
+        {
+          "label": {
+            "ru": "Чистый вход",
+            "en": "Pure input"
+          },
+          "detail": {
+            "ru": "&НаСервереБезКонтекста → Только число.",
+            "en": "&НаСервереБезКонтекста → Number only."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · complete managed form module УчебнаяФормаЗаявки; do not paste into startup"
+  },
+  "nativeCaseIds": [
+    "P8.form-buffer-object-persisted|PASS",
+    "P8.no-context-explicit-numeric-input|PASS",
+    "P8.server-rejects-out-of-range|PASS",
+    "P8.callback-no-cancels|PASS",
+    "P8.stale-generation-rejected|PASS",
+    "P8.changed-buffer-rejected|PASS",
+    "P8.accepted-current-intent-does-not-write|PASS"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_FORMS_RESULT.json",
+    "caseIds": [
+      "P8.form-buffer-object-persisted|PASS",
+      "P8.no-context-explicit-numeric-input|PASS",
+      "P8.server-rejects-out-of-range|PASS",
+      "P8.callback-no-cancels|PASS",
+      "P8.stale-generation-rejected|PASS",
+      "P8.changed-buffer-rejected|PASS",
+      "P8.accepted-current-intent-does-not-write|PASS"
+    ],
+    "scope": "Actual managed form, buffer/object/persisted separation, server input and direct native callback branches. Thin/server compilation; physical dialog clicks and remote deployment are not claimed.",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  },
+  "codeFile": "code/pedagogy/form-context-first.bsl"
+}

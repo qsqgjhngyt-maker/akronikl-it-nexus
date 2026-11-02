@@ -3,6 +3,7 @@ const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
 
 // Presentation adapter over canonical track records; never creates curricula or progress.
 export function languageJourney(track,course=null){
+ if(track?.id==='onec'&&track.status==='available-alpha'&&track.courseId==='onec'&&track.route==='#course=onec')return{id:'onec',group:track.group,status:'available',href:'#course=onec',sections:[],counts:null};
  const available=track?.id==='cpp'&&track.status==='available-alpha'&&course?.manifest?.id==='cpp';
  return {id:track.id,group:track.group,status:available?'available':'planned',href:available?'#course=cpp':null,sections:available?course.curriculum.sections.map(section=>({id:section.id,lessonIds:[...section.lessonIds],title:section.title})):[],counts:available?{topics:course.curriculum.lessons.length,practicums:course.practicumsRu.practicums.length,projects:course.projectsRu.projects.length}:null};
 }

@@ -1,0 +1,381 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p8",
+  "topicId": "onec.p8.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Asynchrony and cancellation",
+  "minutes": 180,
+  "goal": "Accept current intent, cancel No and reject stale answers without persisting a document.",
+  "prerequisites": [
+    "onec.p7; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Deferred continuation explained.",
+    "Ordinary answers distinguished.",
+    "Stale answer rejected without claiming remote cancellation."
+  ],
+  "sections": [
+    [
+      "Continuations run later",
+      "An asynchronous dialog returns control before the user answers. Decision-dependent logic belongs in its continuation rather than the next line as if synchronous. Meanwhile, the form may close, data may change or another request may start. Include those states in the operation contract.",
+      "УчебноеПодтверждение increments ВерсияЗапроса and captures minutes. ПоказатьВопрос yields to the UI; ОписаниеОповещения calls ПослеПодтверждения later. Reaching the line after opening a dialog does not mean an answer exists."
+    ],
+    [
+      "Bind confirmation to intent",
+      "Preserve request identity and the confirmed snapshot. Before acting, check form and intent validity. An oldYesmust not authorize a new request; double-clicking must not create a duplicate. Use explicitpending/accepted/cancelledstate instead of one flag that conflates attempts.",
+      "No sets Cancelled immediately. Yes permits calculation only when request generation and current minutes match the snapshot. An old confirmation for77 must not act after editing90 or starting another request. The snapshot contains intent data, never credentials."
+    ],
+    [
+      "Cancellation has observable effects",
+      "No, dialog close and form cancellation must not initiate a write. Once a server operation has committed, localUIcancel need not reverse it: show actual state and a verification route. A closed window does not prove server-effect cancellation. Distinguish timeout and environment unavailability.",
+      "Even acceptance only computes hours; no document write occurs. Check cancellation using the result and persisted30. In a real remote operation closing a dialog does not revoke an already accepted server effect: use an operation ID and reconcile outcome."
+    ],
+    [
+      "Tests control event ordering",
+      "TestYes, No, double-click, response after close and two replies arriving in reverse order. Tie each to its ownIDand state. One fast success does not test asynchrony: use a controlled delay in a safe stand and verify no late write. An explanatory event diagram is notBSLexecution.",
+      "Manually test Yes/No through the actual dialog. Separately invoke the exported continuation with current/stale versions and changed minutes to reproduce event ordering. That executes real BSL branches but does not prove a physical dialog click. Report these evidence types separately."
+    ]
+  ],
+  "diagram": "p8-3",
+  "walkthrough": [
+    {
+      "action": "Request — Generation2,minutes90",
+      "expected": "Intent snapshot."
+    },
+    {
+      "action": "No — Rejected answer",
+      "expected": "Cancelled."
+    },
+    {
+      "action": "Stale Yes — Generation1/changed minutes",
+      "expected": "Rejected."
+    },
+    {
+      "action": "Current Yes — Generation2,90",
+      "expected": "1.5,no write."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Reconcile the complete experiment",
+      "source": "Snapshot = Новый Структура(\"Версия,Минуты\",ВерсияЗапроса,Объект.ДлительностьМинут);\n// Answer→generation→minutes→calculation",
+      "expected": "No→Отменено; stale→Устаревшее намерение; current90→1.5; persisted value remains30.",
+      "trace": [
+        [
+          "Request",
+          "Generation2,minutes90",
+          "Intent snapshot."
+        ],
+        [
+          "No",
+          "Rejected answer",
+          "Cancelled."
+        ],
+        [
+          "Stale Yes",
+          "Generation1/changed minutes",
+          "Rejected."
+        ],
+        [
+          "Current Yes",
+          "Generation2,90",
+          "1.5,no write."
+        ]
+      ]
+    },
+    {
+      "title": "A case that distinguishes the wrong solution",
+      "source": "Pass Yes with generation1 while the current generation is2.",
+      "expected": "Устаревшее намерение; no calculation for the stale snapshot.",
+      "explanation": "Acceptance is bound to intent generation, not merely Yes.",
+      "trace": [
+        [
+          "Separate copy",
+          "Pass Yes with generation1 while the current generation is2.",
+          "Retain the accepted original."
+        ],
+        [
+          "Observe",
+          "Устаревшее намерение; no calculation for the stale snapshot.",
+          "Acceptance is bound to intent generation, not merely Yes."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Draw open/return/continuation ordering.",
+      "criteria": "Deferred continuation explained."
+    },
+    {
+      "level": "Applied",
+      "task": "Use Yes and No and verify persisted30.",
+      "criteria": "Ordinary answers distinguished."
+    },
+    {
+      "level": "Advanced",
+      "task": "Invoke stale/changed snapshots and distinguish this from dialog testing.",
+      "criteria": "Stale answer rejected without claiming remote cancellation."
+    }
+  ],
+  "lab": {
+    "title": "Asynchrony and cancellation",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "steps": [
+      "Retain a DT and the earlier form module. Identify an own saved30-minute request and record its actual reference.",
+      "Append the complete source below outside earlier handlers. In the form Attributes tab add ИтогОпыта:String120 and ВерсияЗапроса:Number10,0 as form attributes, not document fields. Keep previous methods and one definition of each new method.",
+      "Add ПроверитьЧасы and УчебноеПодтверждение; select matching existing action methods and drag commands to the form command bar. For Сверить add a client action with the first example’s four lines.",
+      "Check Thin client, Server and Thick managed client. Apply changes to this copy. Open the same own request and perform the first worked example; do not press Save/Post unless the exercise explicitly asks.",
+      "Pass Yes with generation1 while the current generation is2. Retain the correct source, all observations and the unchanged original; do not claim a direct callback test is a physical dialog check."
+    ],
+    "expected": [
+      "The original and own copy are distinct.",
+      "Methods and two form attributes exist.",
+      "Commands show the intended actions without automatic startup.",
+      "No→Отменено; stale→Устаревшее намерение; current90→1.5; persisted value remains30.",
+      "Устаревшее намерение; no calculation for the stale snapshot."
+    ],
+    "evidence": [
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits."
+    ],
+    "negative": "Pass Yes with generation1 while the current generation is2."
+  },
+  "mistakes": [
+    [
+      "Form data is assumed to already be persisted.",
+      "Read the actual saved reference independently before accepting persistence."
+    ],
+    [
+      "A no-context function reaches into the form object.",
+      "Pass the minimal explicit input or deliberately choose the correct context."
+    ],
+    [
+      "Direct continuation tests are reported as physical dialog clicks.",
+      "Record native branch coverage and actual UI interaction separately."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "After ShowQuestion the answer",
+      "options": [
+        "Is already certain",
+        "Arrives later in the continuation",
+        "Is always Yes"
+      ],
+      "correct": 1,
+      "explanation": "The dialog is asynchronous."
+    },
+    {
+      "question": "Stale Yes must",
+      "options": [
+        "Be generation-rejected",
+        "Always write",
+        "Clear the database"
+      ],
+      "correct": 0,
+      "explanation": "Intent may have changed."
+    },
+    {
+      "question": "Direct callback invocation proves",
+      "options": [
+        "A physical button click",
+        "A network SLA",
+        "The BSL continuation branch"
+      ],
+      "correct": 2,
+      "explanation": "Test the actual dialog separately."
+    }
+  ],
+  "review": [
+    "Deferred continuation explained.",
+    "Ordinary answers distinguished.",
+    "Stale answer rejected without claiming remote cancellation."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "form-editor"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p8.topic-4",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p8",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "reference",
+      "query",
+      "transaction"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C: Designer and Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "step-1",
+          "title": "Preserve and select an own request",
+          "where": "Конфигуратор своей отдельной копии",
+          "action": "Retain a DT and the earlier form module. Identify an own saved30-minute request and record its actual reference.",
+          "why": "Protect prior work.",
+          "expected": "The original and own copy are distinct.",
+          "troubleshooting": "Inspect the database path and reference; display names may coincide.",
+          "before": "Own path, prior sources and a restorable backup identified."
+        },
+        {
+          "id": "step-2",
+          "title": "Open the managed form module",
+          "where": "Документы → ЗаявкаУслуги → Формы → УчебнаяФормаЗаявки → Модуль",
+          "action": "Append the complete source below outside earlier handlers. In the form Attributes tab add ИтогОпыта:String120 and ВерсияЗапроса:Number10,0 as form attributes, not document fields. Keep previous methods and one definition of each new method.",
+          "why": "The form owns UI state while the document schema stays intact.",
+          "expected": "Methods and two form attributes exist.",
+          "troubleshooting": "Do not add these attributes to the document metadata or paste form code into a common module.",
+          "before": "The original and own copy are distinct."
+        },
+        {
+          "id": "step-3",
+          "title": "Bind commands",
+          "where": "Редактор формы → Команды → собственные команды",
+          "action": "Add ПроверитьЧасы and УчебноеПодтверждение; select matching existing action methods and drag commands to the form command bar. For Сверить add a client action with the first example’s four lines.",
+          "why": "Make code reachable through explicit UI actions.",
+          "expected": "Commands show the intended actions without automatic startup.",
+          "troubleshooting": "If an action generator creates an empty duplicate, merge only its body into the existing matching handler.",
+          "before": "Methods and two form attributes exist."
+        },
+        {
+          "id": "step-4",
+          "title": "Check contexts and run",
+          "where": "Ctrl+S → Конфигурация → Проверка конфигурации → F7 → Предприятие",
+          "action": "Check Thin client, Server and Thick managed client. Apply changes to this copy. Open the same own request and perform the first worked example; do not press Save/Post unless the exercise explicitly asks.",
+          "why": "Compilation and observed behaviour are independent checks.",
+          "expected": "No→Отменено; stale→Устаревшее намерение; current90→1.5; persisted value remains30.",
+          "troubleshooting": "Record the method/line; distinguish a context error from a missing command binding.",
+          "before": "Commands show the intended actions without automatic startup."
+        },
+        {
+          "id": "step-5",
+          "title": "Record cancellation and retain work",
+          "where": "Предприятие → закрытие формы без записи",
+          "action": "Pass Yes with generation1 while the current generation is2. Retain the correct source, all observations and the unchanged original; do not claim a direct callback test is a physical dialog check.",
+          "why": "Separate adverse cases from accepted work.",
+          "expected": "Устаревшее намерение; no calculation for the stale snapshot.",
+          "troubleshooting": "Reopen the actual reference to check persisted state.",
+          "before": "No→Отменено; stale→Устаревшее намерение; current90→1.5; persisted value remains30."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Сверьте полный опыт",
+        "en": "Explore the example: Reconcile the complete experiment"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Запрос",
+            "en": "Request"
+          },
+          "detail": {
+            "ru": "Версия2,минуты90 → Снимок намерения.",
+            "en": "Generation2,minutes90 → Intent snapshot."
+          }
+        },
+        {
+          "label": {
+            "ru": "Нет",
+            "en": "No"
+          },
+          "detail": {
+            "ru": "Любой ответ отказа → Отменено.",
+            "en": "Rejected answer → Cancelled."
+          }
+        },
+        {
+          "label": {
+            "ru": "Старое Да",
+            "en": "Stale Yes"
+          },
+          "detail": {
+            "ru": "Версия1/изменённые минуты → Отклонено.",
+            "en": "Generation1/changed minutes → Rejected."
+          }
+        },
+        {
+          "label": {
+            "ru": "Текущее Да",
+            "en": "Current Yes"
+          },
+          "detail": {
+            "ru": "Версия2,90 → 1,5 без записи.",
+            "en": "Generation2,90 → 1.5,no write."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · complete managed form module УчебнаяФормаЗаявки; do not paste into startup"
+  },
+  "nativeCaseIds": [
+    "P8.form-buffer-object-persisted|PASS",
+    "P8.no-context-explicit-numeric-input|PASS",
+    "P8.server-rejects-out-of-range|PASS",
+    "P8.callback-no-cancels|PASS",
+    "P8.stale-generation-rejected|PASS",
+    "P8.changed-buffer-rejected|PASS",
+    "P8.accepted-current-intent-does-not-write|PASS"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_FORMS_RESULT.json",
+    "caseIds": [
+      "P8.form-buffer-object-persisted|PASS",
+      "P8.no-context-explicit-numeric-input|PASS",
+      "P8.server-rejects-out-of-range|PASS",
+      "P8.callback-no-cancels|PASS",
+      "P8.stale-generation-rejected|PASS",
+      "P8.changed-buffer-rejected|PASS",
+      "P8.accepted-current-intent-does-not-write|PASS"
+    ],
+    "scope": "Actual managed form, buffer/object/persisted separation, server input and direct native callback branches. Thin/server compilation; physical dialog clicks and remote deployment are not claimed.",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  },
+  "codeFile": "code/pedagogy/form-context-first.bsl"
+}

@@ -1,0 +1,435 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a3",
+  "topicId": "1c-enterprise.a3.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Customer report: turn source documents into a verifiable total",
+  "minutes": 120,
+  "goal": "Generate the prepared report in your training infobase, reconcile counts and minutes with source requests and explain a customer filter.",
+  "prerequisites": [
+    "1c-enterprise.a 2; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
+  ],
+  "outcomes": [
+    "Locate the actual prepared report rather than assume a universal report exists.",
+    "Reconcile overall and customer totals with an independent table of numbers.",
+    "Disable the filter, regenerate and confirm that original requests remain intact."
+  ],
+  "sections": [
+    [
+      "A report reads documents without replacing them",
+      "The training package includes Заявки по клиентам. It reads ЗаявкаУслуги documents, excludes deletion-marked records and groups by customer reference. Количество counts included requests; Минуты sums ДлительностьМинут. Generating a report writes no request documents. A report row is not another document.",
+      "This simple variant has no period or status restriction: all non-deletion-marked requests are included, including Новая. Do not import assumptions from another application. A universal report is not automatically present in every empty infobase; this is a specific report supplied with our original training package."
+    ],
+    [
+      "Prepare the control before generating",
+      "From the previous lesson record each actual number, customer and duration. The sequential dataset has Учебный Север — ремонт with 30, 45 and 30 minutes and Учебный Юг with 15. Expected totals: first customer 3 and 105; second 1 and 15; overall 4 and 120. Include additional requests you created rather than deleting them to match an illustration.",
+      "Derive the control from the primary list and opened documents, not a copy of the report under test. Equal sums do not prove equal composition: 30+45 and 15+60 both yield 75 but represent different requests. Check count, customer reference, numbers and units together."
+    ],
+    [
+      "Parameters and a fresh result are separate states",
+      "Open Учебная сервисная служба → Отчёты → Заявки по клиентам. Disable the Клиент checkbox and choose Сформировать. After changing its value or checkbox, choose Сформировать again: the previous result can remain visible until regeneration.",
+      "For the customer restriction enable Клиент and select the existing Учебный Север — ремонт catalog item. It is a reference to an item, not a search for similar text. Equally named items may have different codes and separate totals. Do not create another customer merely to filter the report."
+    ],
+    [
+      "Why 120 and 105 can both be correct",
+      "The overall report includes four requests and 120 minutes. The first-customer restriction includes three and 105. The difference of 15 belongs to the second customer; it is a change of scope, not lost data. Disabling the checkbox and regenerating should restore 4 and 120 without editing documents.",
+      "When results disagree, compare scope before composition. Check Клиент, the selected item and regeneration. In the primary list clear your restrictions and compare numbers, minutes and deletion marks. Do not change data to obtain an attractive total or remove other deletion marks: retain the discrepancy and identify the included or omitted request."
+    ],
+    [
+      "When the report command is absent",
+      "First check that you opened the same infobase used for earlier labs. The current prepared package already includes the report, so loading another configuration over your work is unnecessary. An earlier package may lack it. In that case use the additional copy-update route below while retaining the original infobase separately.",
+      "That route applies to the unchanged Nexus training structure when only data was added. Loading a full .cf over your custom objects or code can replace that development: stop, preserve the base and review merging separately. A .cf contains configuration structure and training code, not a backup of your documents. A .dt export contains the infobase configuration and data."
+    ],
+    [
+      "What constitutes the lab result",
+      "Keep your control table, the parameters of three generations and observations: all → first customer → all. Reopen one earlier request by number and verify its customer and minutes. Illustrations use synthetic Учебный клиент А and Б from a separate test; your names, dates and numbers can differ.",
+      "Nexus can store your self-reported completion and a safe result description. That is not a server-side BSL verdict or proof of authorship. This lab runs in installed 1C; Studio, source transfer and Windows Sandbox are unnecessary."
+    ],
+    [
+      "Optional: preserve an earlier package in a separate copy",
+      "Use this section only when the report is absent and your infobase has the earlier unchanged Nexus training structure. If you added objects or changed configuration code, do not load a full .cf: preserve a .dt and review merging separately. The normal current-package workflow needs none of these steps.",
+      "1. Close this infobase’s Enterprise window. Select the original training infobase in the launcher and open Конфигуратор. Choose Администрирование → Выгрузить информационную базу…, save a clearly named .dt backup in a separate folder and wait for successful completion. Do not continue after a failed export. Close Designer.",
+      "2. In the launcher choose Добавить → create a new infobase → without configuration. Give it a distinct name, such as My service — report copy, and a new separate folder. Open Designer for the NEW base, verify its identity and choose Администрирование → Загрузить информационную базу… using your .dt. Restoration replaces its target, so that target must be only the new empty copy. Retain the original launcher entry."
+    ],
+    [
+      "Optional: add the report only to that prepared copy",
+      "3. Open the restored new copy in Enterprise and compare previous numbers and fields with your control table. Stop and return to the original when they differ; do not edit documents to hide a mismatch. Close Enterprise.",
+      "4. Expand the Nexus lab instructions and download NexusTrainingServiceDeskReportsV2.cf. Open Designer for the restored NEW copy. Choose Конфигурация → Загрузить конфигурацию из файла… and select that .cf. This is a full load for the known unchanged training structure, not an automatic merge of custom development. Save the configuration and update the database configuration (F7). Review changes; stop on unexpected object or data deletion.",
+      "5. After a successful update, open the copy in Enterprise. Verify previous numbers, customers, minutes and comments; then open Отчёты → Заявки по клиентам and follow the main lab route. Retain the original base and .dt as separate return points. An automated check covers this unchanged package on 8.3.27.2214 with four synthetic requests; it makes no arbitrary-configuration upgrade claim."
+    ]
+  ],
+  "diagram": "a3-3",
+  "walkthrough": [
+    {
+      "action": "Sources — First: 30, 45, 30; second: 15",
+      "expected": "Four distinct numbers."
+    },
+    {
+      "action": "All customers — 3+1 and 105+15",
+      "expected": "4 requests, 120 minutes."
+    },
+    {
+      "action": "First customer — 30+45+30",
+      "expected": "3 requests, 105 minutes."
+    },
+    {
+      "action": "Restriction disabled — Regenerate",
+      "expected": "4 requests, 120 minutes again."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Four requests, two customers and one overall total",
+      "source": "First customer: 30 + 45 + 30 = 105 minutes, 3 requests.\nSecond: 15 minutes, 1 request.\nOverall: 105 + 15 = 120 minutes, 4 requests.",
+      "expected": "Unrestricted 4/120; first customer 3/105; disabled again 4/120.",
+      "explanation": "Calculate from documents before generating three views without changing data.",
+      "trace": [
+        [
+          "Sources",
+          "First: 30, 45, 30; second: 15",
+          "Four distinct numbers."
+        ],
+        [
+          "All customers",
+          "3+1 and 105+15",
+          "4 requests, 120 minutes."
+        ],
+        [
+          "First customer",
+          "30+45+30",
+          "3 requests, 105 minutes."
+        ],
+        [
+          "Restriction disabled",
+          "Regenerate",
+          "4 requests, 120 minutes again."
+        ]
+      ]
+    },
+    {
+      "title": "Equal sums with different documents",
+      "source": "Set X: 30 + 45 = 75.\nSet Y: 15 + 60 = 75.\nThe sums match but numbers and customers differ.",
+      "expected": "One number, 75, does not establish identical composition.",
+      "explanation": "Reconcile scope, identities, count and sum in the same units.",
+      "trace": [
+        [
+          "Sum",
+          "Both sets yield 75",
+          "Arithmetic cannot distinguish composition."
+        ],
+        [
+          "Numbers and scope",
+          "Inspect source documents",
+          "A different set is revealed."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Calculate two customer totals and the overall result for 30/45/30/15.",
+      "criteria": "First 3/105, second 1/15, overall 4/120; minutes and distinct numbers recorded."
+    },
+    {
+      "level": "Applied",
+      "task": "Generate all, first customer, all again; reopen an earlier request.",
+      "criteria": "Parameters and observations retained, 120→105→120 explained, original fields intact."
+    },
+    {
+      "level": "Advanced",
+      "task": "Explain why equal sums do not prove equal composition. Independently reconcile any additional requests you created.",
+      "criteria": "Identities, scope, count, units and the first discrepancy cause recorded without deleting work."
+    }
+  ],
+  "lab": {
+    "title": "Reconcile overall and customer totals while preserving requests",
+    "environment": "Official installed training 1C and your continuing infobase; no code editing.",
+    "steps": [
+      "Clear search and your list filters. Record each included document number, customer and minutes. Calculate per-customer and overall counts and sums. Exclude deletion-marked records without changing those marks.",
+      "Select Заявки по клиентам. Locate Сформировать and the Клиент field with its checkbox.",
+      "Disable Клиент and choose Сформировать. Compare customer rows, Количество, Минуты and Итого with your table.",
+      "Enable Клиент. Use the selection button on the right to choose the existing Учебный Север — ремонт item. Generate and compare with independent 30+45+30.",
+      "Disable the checkbox, regenerate and explain the difference between overall and customer totals.",
+      "Open an original number, verify customer and minutes, and keep a protocol of expectations, observed totals, parameters and reopening."
+    ],
+    "expected": [
+      "Sequential dataset: first customer 3/105, second 1/15, overall 4/120.",
+      "The Заявки по клиентам form is open.",
+      "The sequential dataset yields four requests and 120 minutes.",
+      "The first customer has three requests and 105 minutes.",
+      "4/120 returns; the difference of 15 belongs to the second customer.",
+      "Original number and fields remain; discrepancies are explained by composition."
+    ],
+    "evidence": [
+      "Source numbers, customers and minutes with independent expected sums.",
+      "Three parameter/result sets and reopening of an earlier number."
+    ],
+    "negative": "Select the second customer: expect 1/15 rather than an error or lost first-customer data; disable to restore the full set."
+  },
+  "mistakes": [
+    [
+      "105 is compared with overall 120 without inspecting the restriction.",
+      "Compare scope and selected reference first; 15 may belong to another customer."
+    ],
+    [
+      "The old table is read after changing the selected customer.",
+      "Choose Сформировать before recording a fresh observation."
+    ],
+    [
+      "A .cf is loaded over a custom configuration just to obtain a report.",
+      "Preserve the original and use a separate copy; full loading applies only to the known unchanged training package."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Which action refreshes the table after changing the customer?",
+      "options": [
+        "Сформировать",
+        "Rewrite a request",
+        "Close Nexus"
+      ],
+      "correct": 0,
+      "explanation": "Regenerate to apply the parameters."
+    },
+    {
+      "question": "What is the overall result for 30, 45, 30 and 15?",
+      "options": [
+        "3 and 105",
+        "4 and 120",
+        "4 and 105"
+      ],
+      "correct": 1,
+      "explanation": "Four distinct documents total 120 minutes."
+    },
+    {
+      "question": "Which file is a complete infobase export with data?",
+      "options": [
+        ".bsl",
+        ".cf",
+        ".dt"
+      ],
+      "correct": 2,
+      "explanation": "A .dt includes configuration and data; .cf does not replace that backup."
+    }
+  ],
+  "review": [
+    "Where does an independent expectation come from?",
+    "Why is an equal sum insufficient?",
+    "How do you restore the overall total without editing requests?"
+  ],
+  "sources": [
+    "training",
+    "designer",
+    "catalogs",
+    "documents",
+    "form-elements"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "1c-enterprise",
+    "topicId": "1c-enterprise.a3.topic-4",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "1c-enterprise.a3",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "document",
+      "reference",
+      "infobase",
+      "configuration"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Enterprise → Учебная сервисная служба → Отчёты → Заявки по клиентам",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "baseline",
+          "title": "Calculate an independent expectation",
+          "where": "Enterprise → Заявка услуги and your table",
+          "action": "Clear search and your list filters. Record each included document number, customer and minutes. Calculate per-customer and overall counts and sums. Exclude deletion-marked records without changing those marks.",
+          "why": "The control must be independent of the report.",
+          "expected": "Sequential dataset: first customer 3/105, second 1/15, overall 4/120.",
+          "troubleshooting": "Include additional saved work in your own expectation instead of deleting it.",
+          "before": "Four sequential requests 30/45/30/15, or your expanded dataset, are saved; the current training package includes the report."
+        },
+        {
+          "id": "open",
+          "title": "Open the prepared report",
+          "where": "Учебная сервисная служба → Отчёты",
+          "action": "Select Заявки по клиентам. Locate Сформировать and the Клиент field with its checkbox.",
+          "why": "Use the specific training report instead of assuming a universal one.",
+          "expected": "The Заявки по клиентам form is open.",
+          "troubleshooting": "If absent, verify the base; for an earlier unchanged training package use the additional route below, preserving the original.",
+          "before": "Sequential dataset: first customer 3/105, second 1/15, overall 4/120."
+        },
+        {
+          "id": "all",
+          "title": "Generate the overall result",
+          "where": "Report form",
+          "action": "Disable Клиент and choose Сформировать. Compare customer rows, Количество, Минуты and Итого with your table.",
+          "why": "A disabled checkbox removes the restriction even if a name remains displayed.",
+          "expected": "The sequential dataset yields four requests and 120 minutes.",
+          "troubleshooting": "Regenerate a stale table; first compare scope and source numbers when totals disagree.",
+          "before": "The Заявки по клиентам form is open.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/49-request-report-after-validation.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "6ce2ee733db3c38a5cfc3d9a51e2829c90b98bb6117dd15e77cdcb91af62e618",
+              "caption": "After adding the new request, the test shows A: 3/105, B: 1/15, overall 4/120. Your course sequence uses Север/Юг.",
+              "alt": "After adding the new request, the test shows A: 3/105, B: 1/15, overall 4/120. Your course sequence uses Север/Юг.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 0,
+                "y": 150,
+                "width": 700,
+                "height": 260
+              }
+            }
+          ]
+        },
+        {
+          "id": "customer",
+          "title": "Verify one customer",
+          "where": "Клиент field",
+          "action": "Enable Клиент. Use the selection button on the right to choose the existing Учебный Север — ремонт item. Generate and compare with independent 30+45+30.",
+          "why": "A reference filter changes scope, not data.",
+          "expected": "The first customer has three requests and 105 minutes.",
+          "troubleshooting": "Do not create another item or choose a different equally named one; compare its code and your table.",
+          "before": "The sequential dataset yields four requests and 120 minutes.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/50-request-report-customer-105.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "215e0a2b12894f38d285c0100fe3c815778a5e6b6859ff1462966e7b5063ce5a",
+              "caption": "Клиент is enabled with existing A and the report regenerated: 3 requests, 105 minutes. The other customer’s request remains stored.",
+              "alt": "Клиент is enabled with existing A and the report regenerated: 3 requests, 105 minutes. The other customer’s request remains stored.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 0,
+                "y": 150,
+                "width": 700,
+                "height": 260
+              }
+            }
+          ]
+        },
+        {
+          "id": "restore",
+          "title": "Restore the overall total",
+          "where": "Клиент checkbox and Сформировать",
+          "action": "Disable the checkbox, regenerate and explain the difference between overall and customer totals.",
+          "why": "Verify reversible restriction without document edits.",
+          "expected": "4/120 returns; the difference of 15 belongs to the second customer.",
+          "troubleshooting": "A retained name does not restrict a disabled condition; inspect the checkbox and regenerate.",
+          "before": "The first customer has three requests and 105 minutes."
+        },
+        {
+          "id": "preserve",
+          "title": "Reopen an earlier request",
+          "where": "Заявка услуги list",
+          "action": "Open an original number, verify customer and minutes, and keep a protocol of expectations, observed totals, parameters and reopening.",
+          "why": "An attractive aggregate does not prove source preservation.",
+          "expected": "Original number and fields remain; discrepancies are explained by composition.",
+          "troubleshooting": "Use your own synthetic data only; never attach a real business infobase.",
+          "before": "4/120 returns; the difference of 15 belongs to the second customer."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Четыре заявки, два клиента и один общий итог",
+        "en": "Explore the example: Four requests, two customers and one overall total"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Исходники",
+            "en": "Sources"
+          },
+          "detail": {
+            "ru": "Север: 30, 45, 30; Юг: 15 → Четыре разных номера.",
+            "en": "First: 30, 45, 30; second: 15 → Four distinct numbers."
+          }
+        },
+        {
+          "label": {
+            "ru": "Все клиенты",
+            "en": "All customers"
+          },
+          "detail": {
+            "ru": "3+1 и 105+15 → 4 заявки, 120 минут.",
+            "en": "3+1 and 105+15 → 4 requests, 120 minutes."
+          }
+        },
+        {
+          "label": {
+            "ru": "Первый клиент",
+            "en": "First customer"
+          },
+          "detail": {
+            "ru": "30+45+30 → 3 заявки, 105 минут.",
+            "en": "30+45+30 → 3 requests, 105 minutes."
+          }
+        },
+        {
+          "label": {
+            "ru": "Отбор выключен",
+            "en": "Restriction disabled"
+          },
+          "detail": {
+            "ru": "Повторное формирование → Снова 4 заявки, 120 минут.",
+            "en": "Regenerate → 4 requests, 120 minutes again."
+          }
+        }
+      ]
+    }
+  },
+  "nativeCaseIds": [],
+  "nativeEvidence": {
+    "status": "LIVE PASS",
+    "environment": "official-platform-local-file-base",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/A3_NATIVE_UI_RESULT.json",
+    "scope": "Operator observed commands on separate synthetic bases; illustration dataset differences are explicit; no novice study",
+    "training1508GuiVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false,
+    "caseIds": [],
+    "upgradeEvidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/REPORT_UPGRADE_RESULT.json",
+    "upgradeScope": "Unchanged earlier Nexus package only; synthetic data and separate restored copy; host 2214 automated, training 1508 upgrade and GUI route pending"
+  }
+}

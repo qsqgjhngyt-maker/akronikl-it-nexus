@@ -1,0 +1,370 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p3",
+  "topicId": "onec.p3.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Collections: order, named fields and lookup by key",
+  "minutes": 120,
+  "goal": "Choose an Array, Structure or Map for its purpose and calculate a total while distinguishing order, fields and keys.",
+  "prerequisites": [
+    "The preceding language lesson; saving, updating and launching your own infobase."
+  ],
+  "outcomes": [
+    "Traverse different durations and explain the first array index.",
+    "Read a named structure field and a map value by key.",
+    "Distinguish a missing key, zero and a shared mutable collection."
+  ],
+  "sections": [
+    [
+      "An array preserves a sequence",
+      "Our requests now take different durations: 30 and 45 minutes. Массив preserves a sequence. Добавить appends an element; the first index is 0, so МинутыЗаявок[0] is 30. There are two elements and the last valid index is 1.",
+      "Для Каждого visits the values in turn. The accumulator starts outside the loop: after 30 it is 30, after 45 it is 75. Reordering these numeric inputs changes traversal order but not their sum. An invalid index is an error, not a request for an imaginary zero."
+    ],
+    [
+      "A structure names the fields of one record",
+      "Карточка has Клиент and Минуты fields. Карточка.Минуты communicates meaning more clearly than an arbitrary index. Structure field names must be suitable property identifiers. Several unrelated fields do not become a sequence of requests merely by being placed together.",
+      "The duration field receives the computed 75. This is an in-memory structure; creating it does not write a catalog item or database document. For an optional field, use Свойство(\"FieldName\", Value) rather than assuming a misspelling returns an empty string."
+    ],
+    [
+      "A map associates a key with a value",
+      "Соответствие is useful for lookup by key rather than position or a predefined field name. \"Клиент-А\" is an educational label here. A changeable customer name is not reliable identity in a real application; later lessons introduce catalog references. Inserting the same key replaces its associated value rather than appending a second array row.",
+      "Получить on a missing key returns Неопределено, which differs from a stored numeric zero. Do not add an unknown value to a duration without deciding what absence means. It might indicate that the total has not been calculated. Check the expected value and its type first."
+    ],
+    [
+      "Two variables can name the same mutable object",
+      "ВтороеИмя = МинутыЗаявок does not create an independent array. Both variables access the same mutable object; an append through one is visible through the other. Build a new array and transfer values for an independent flat collection. Nested mutable objects need an additional copying decision.",
+      "A preservation check compares actual contents before and after, not just variable names. An empty array leaves this accumulator at zero under our chosen rule. A text value among numeric durations needs a different response: detect and reject it rather than trusting its numeric appearance."
+    ]
+  ],
+  "diagram": "p3-2",
+  "walkthrough": [
+    {
+      "action": "Append — [30,45]",
+      "expected": "Two elements; indexes 0 and 1."
+    },
+    {
+      "action": "Traverse — 0 → 30 → 75",
+      "expected": "Результат=75."
+    },
+    {
+      "action": "Structure — Минуты=75",
+      "expected": "A named field."
+    },
+    {
+      "action": "Map — Key \"Клиент-А\"",
+      "expected": "Получить returns 75."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Trace the main example",
+      "source": "МинутыЗаявок = Новый Массив;\nМинутыЗаявок.Добавить(30);\nМинутыЗаявок.Добавить(45);\nРезультат = 0;\nДля Каждого Минуты Из МинутыЗаявок Цикл\n    Результат = Результат + Минуты;\nКонецЦикла;\nКарточка = Новый Структура(\"Клиент,Минуты\", \"Учебный клиент\", Результат);\nИтоги = Новый Соответствие;\nИтоги.Вставить(\"Клиент-А\", Карточка.Минуты);\nСообщить(МинутыЗаявок[0]);\nСообщить(Карточка.Минуты);\nСообщить(Итоги.Получить(\"Клиент-А\"));",
+      "expected": "Messages: 30, 75, 75.",
+      "explanation": "The array supplies inputs, the loop totals 75, the structure names the result and the map retrieves it by a training key.",
+      "trace": [
+        [
+          "Append",
+          "[30,45]",
+          "Two elements; indexes 0 and 1."
+        ],
+        [
+          "Traverse",
+          "0 → 30 → 75",
+          "Результат=75."
+        ],
+        [
+          "Structure",
+          "Минуты=75",
+          "A named field."
+        ],
+        [
+          "Map",
+          "Key \"Клиент-А\"",
+          "Получить returns 75."
+        ]
+      ]
+    },
+    {
+      "title": "A missing value or a stored zero?",
+      "source": "Итоги.Вставить(\"Нулевой\", 0);\nСообщить(Итоги.Получить(\"Нулевой\"));\nСообщить(Итоги.Получить(\"НетТакого\"));",
+      "expected": "The first key stores zero; the second returns Неопределено.",
+      "explanation": "Absence and a known zero total are different states.",
+      "trace": [
+        [
+          "Нулевой",
+          "Existing key",
+          "Number 0."
+        ],
+        [
+          "НетТакого",
+          "No such key",
+          "Неопределено, not a number."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Trace both loop iterations and explain the three messages.",
+      "criteria": "Index 0, total 75, named field and separate key are identified."
+    },
+    {
+      "level": "Applied",
+      "task": "Add a third duration of 15 and reconcile the result manually.",
+      "criteria": "Three elements; total 90; the structure and map both show 90."
+    },
+    {
+      "level": "Advanced",
+      "task": "In a separate copy alias the array and append through the alias; then explicitly create an independent flat array and repeat.",
+      "criteria": "Shared identity and a new collection are distinguished; the original working source remains available."
+    }
+  ],
+  "lab": {
+    "title": "Collections: order, named fields and lookup by key",
+    "environment": "Official locally installed training platform; a separate personal file infobase, no Studio required.",
+    "steps": [
+      "Trace both loop iterations and explain the three messages.",
+      "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
+      "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
+      "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+      "Append 15 before the loop and run again. In a separate experiment remove all appends and explain the empty array."
+    ],
+    "expected": [
+      "Messages: 30, 75, 75.",
+      "The intended module is open and the earlier source remains available.",
+      "The exact exercise source is entered in the intended context.",
+      "Messages: 30, 75, 75.",
+      "With the third request: 30, 90, 90. For the empty experiment remove [0] access: the total is 0, but index 0 does not exist."
+    ],
+    "evidence": [
+      "Source version, predicted and actual outputs.",
+      "One changed input and a trace explaining its result; no automatic grading claim."
+    ],
+    "negative": "Do not index an empty array at [0], treat Неопределено as zero or describe assignment as an independent copy."
+  },
+  "mistakes": [
+    [
+      "Two elements do not make index 2 valid.",
+      "For two elements use indexes 0 and 1; handle an empty array before indexing."
+    ],
+    [
+      "An in-memory structure does not write database records.",
+      "Persisting data needs an explicit object operation; a structure only stores in-memory values."
+    ],
+    [
+      "Reusing a map key replaces its value; it is not a new request.",
+      "Use a distinct key for a distinct entity and check the previous total was not replaced accidentally."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What is the first array index?",
+      "options": [
+        "1",
+        "Количество()",
+        "0"
+      ],
+      "correct": 2,
+      "explanation": "Array indexing begins at zero."
+    },
+    {
+      "question": "What does Получить return for a missing key?",
+      "options": [
+        "Always 0",
+        "Неопределено",
+        "The last element"
+      ],
+      "correct": 1,
+      "explanation": "A missing value differs from a stored zero."
+    },
+    {
+      "question": "Does assigning an array to another variable create an independent collection?",
+      "options": [
+        "No, it is the same mutable object",
+        "Yes, including nested objects",
+        "Yes, if the name is new"
+      ],
+      "correct": 0,
+      "explanation": "A variable name does not define an object copy."
+    }
+  ],
+  "review": [
+    "Explain the result without looking at the final message.",
+    "Name an input that would expose the described mistake.",
+    "Preserve the source before moving to the next lesson."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "cli"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p3.topic-3",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p3",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "variable",
+      "reference"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Designer → managed application module of your training copy",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "predict",
+          "title": "Predict the result",
+          "where": "Nexus → this lesson’s worked example",
+          "action": "Trace both loop iterations and explain the three messages.",
+          "why": "An expectation makes a wrong result detectable.",
+          "expected": "Messages: 30, 75, 75.",
+          "troubleshooting": "Use the trace to separate each instruction; do not copy a displayed total without explaining it.",
+          "before": "Your own training infobase opens and its startup handler already works. Preserve the preceding source before replacing this exercise body."
+        },
+        {
+          "id": "prepare-source",
+          "title": "Preserve your preceding work",
+          "where": "Your infobase → Designer → configuration root → managed application module",
+          "action": "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
+          "why": "The next exercise must not destroy the preceding version.",
+          "expected": "The intended module is open and the earlier source remains available.",
+          "troubleshooting": "If you cannot identify the infobase, return to the startup list and check its entry and directory.",
+          "before": "Messages: 30, 75, 75."
+        },
+        {
+          "id": "enter-code",
+          "title": "Enter this example",
+          "where": "Designer → the module text window",
+          "action": "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
+          "why": "The array supplies inputs, the loop totals 75, the structure names the result and the map retrieves it by a training key.",
+          "expected": "The exact exercise source is entered in the intended context.",
+          "troubleshooting": "Check ordinary quotes, semicolons and matching block endings. A syntax rejection is not execution.",
+          "before": "The intended module is open and the earlier source remains available."
+        },
+        {
+          "id": "run-check",
+          "title": "Save, update and execute",
+          "where": "Designer → Ctrl+S → Configuration / Update database configuration (F7) → Debug / Start (F5)",
+          "action": "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+          "why": "Only the installed platform executes this BSL.",
+          "expected": "Messages: 30, 75, 75.",
+          "troubleshooting": "For old output close your client, verify the infobase and update again. For a different value find the first trace step that differs.",
+          "before": "The exact exercise source is entered in the intended context."
+        },
+        {
+          "id": "vary-record",
+          "title": "Change one condition and retain evidence",
+          "where": "The same module, then Enterprise mode and Nexus notes",
+          "action": "Append 15 before the loop and run again. In a separate experiment remove all appends and explain the empty array.",
+          "why": "A changed input tests understanding beyond copying the example.",
+          "expected": "With the third request: 30, 90, 90. For the empty experiment remove [0] access: the total is 0, but index 0 does not exist.",
+          "troubleshooting": "Do not index an empty array at [0], treat Неопределено as zero or describe assignment as an independent copy.",
+          "before": "Messages: 30, 75, 75."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Разбор основного примера",
+        "en": "Explore the example: Trace the main example"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Добавление",
+            "en": "Append"
+          },
+          "detail": {
+            "ru": "[30,45] → Два элемента; индексы 0 и 1.",
+            "en": "[30,45] → Two elements; indexes 0 and 1."
+          }
+        },
+        {
+          "label": {
+            "ru": "Обход",
+            "en": "Traverse"
+          },
+          "detail": {
+            "ru": "0 → 30 → 75 → Результат=75.",
+            "en": "0 → 30 → 75 → Результат=75."
+          }
+        },
+        {
+          "label": {
+            "ru": "Структура",
+            "en": "Structure"
+          },
+          "detail": {
+            "ru": "Минуты=75 → Именованное поле.",
+            "en": "Минуты=75 → A named field."
+          }
+        },
+        {
+          "label": {
+            "ru": "Соответствие",
+            "en": "Map"
+          },
+          "detail": {
+            "ru": "Ключ \"Клиент-А\" → Получить возвращает 75.",
+            "en": "Key \"Клиент-А\" → Получить returns 75."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · Application event-handler body"
+  },
+  "nativeCaseIds": [
+    "P3.COLLECTION.75",
+    "P3.COLLECTION.90",
+    "P3.COLLECTION.EMPTY",
+    "P3.COLLECTION.MISSING",
+    "P3.COLLECTION.ALIAS"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "training1508Verified": false,
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_P3_RESULT.json",
+    "caseIds": [
+      "P3.COLLECTION.75",
+      "P3.COLLECTION.90",
+      "P3.COLLECTION.EMPTY",
+      "P3.COLLECTION.MISSING",
+      "P3.COLLECTION.ALIAS"
+    ],
+    "scope": "Exact original fragments and explicit variants in own synthetic file infobase; three expected rejection reasons checked; no server grading."
+  },
+  "codeFile": "code/pedagogy/collections-first.bsl"
+}

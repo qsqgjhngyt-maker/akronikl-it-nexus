@@ -1,0 +1,357 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p11",
+  "topicId": "onec.p11.topic-2",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "JSON, XML and exchange schemas",
+  "minutes": 180,
+  "goal": "ValidateJSON/XMLschema, types and limits without executing input text.",
+  "prerequisites": [
+    "onec.p10; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Numbers remain numeric rather than strings.",
+    "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
+    "Accepted original preserved; rejection and its limits explained."
+  ],
+  "sections": [
+    [
+      "Serialization carries data",
+      "JSONcarries values but does not automatically preserve every 1C-specific type. References need agreed external keys, dates a format/timezone, and money precision rules. A customer display name is not identity. Define required fields, types, ranges and protocol version in a schema.",
+      "The complete source accepts JSON text with exactly schemaVersion,minutes,text. Validate string type/4096 length, syntax, field set, types and integer range0…1440. Parsing alone is not schema validation. This limit applies to materialized input; a network stream needs its own bound."
+    ],
+    [
+      "Parsing is not validation",
+      "Syntactically valid{\"minutes\": \"30\"}can violate a numeric requirement. Do not coerce every input and hide sender defects. Separate parsing, schema validation, business rules and persistence. Handle unknown versions and critical unexpected fields under an explicit policy.",
+      "A valid packet uses version1, numeric30 and synthetic text containing& and< >. JSON writing/reading preserves number and text. String\"30\" is deliberately rejected; implicit coercion would change the versioned contract."
+    ],
+    [
+      "Bound size and structure",
+      "Check byte limits before expensive parsing and structure depth/count during validation. RejectDOCTYPE/ENTITYin teachingXMLimports; do not enable external entities for convenience. Never pass text toExecute. Regexis not a generalXMLparser, so exercise formats are deliberately constrained.",
+      "Generate XML only from own data using the platform writer: request root, minutes attribute and text node. The API escapes special characters. This test checks root/attribute and is not a complete arbitrary-XML/XSD validator; it accepts no user DTD/external documents."
+    ],
+    [
+      "Test round trips",
+      "Serialize a synthetic request, parse and compare semantic fields rather thanJSONkey order. IncludeCyrillic, quotes, zero, missing required data, wrong types and oversized input. Rejection must not leave partially created customers/documents. Raw-payload hash and semantic identity are distinct.",
+      "Run from the server common module and print JSONВерный,ТипОтклонен,XMLВерный. In another copy test an unknown fourth field, version2,fraction30.5 and length4097. Record each expected rejection; none should modify infobase documents."
+    ]
+  ],
+  "diagram": "p11-1",
+  "walkthrough": [
+    {
+      "action": "Text — Version1,numeric30",
+      "expected": "Contract validated."
+    },
+    {
+      "action": "Round trip — JSON→data→JSON",
+      "expected": "Type/text retained."
+    },
+    {
+      "action": "XML — Own root/attribute",
+      "expected": "Read checked."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Reconcile the complete experiment",
+      "source": "Text → Version1,numeric30 → Contract validated.\nRound trip → JSON→data→JSON → Type/text retained.\nXML → Own root/attribute → Read checked.",
+      "expected": "Own root/attribute; Read checked.",
+      "explanation": "The complete source accepts JSON text with exactly schemaVersion,minutes,text. Validate string type/4096 length, syntax, field set, types and integer range0…1440. Parsing alone is not schema validation. This limit applies to materialized input; a network stream needs its own bound.",
+      "trace": [
+        [
+          "Text",
+          "Version1,numeric30",
+          "Contract validated."
+        ],
+        [
+          "Round trip",
+          "JSON→data→JSON",
+          "Type/text retained."
+        ],
+        [
+          "XML",
+          "Own root/attribute",
+          "Read checked."
+        ]
+      ]
+    },
+    {
+      "title": "A case that distinguishes the wrong solution",
+      "source": "Pass minutes:\"30\", an unknown field or version2.",
+      "expected": "Explicit contract rejection; documents unchanged.",
+      "explanation": "Run from the server common module and print JSONВерный,ТипОтклонен,XMLВерный. In another copy test an unknown fourth field, version2,fraction30.5 and length4097. Record each expected rejection; none should modify infobase documents.",
+      "trace": [
+        [
+          "Separate copy",
+          "Pass minutes:\"30\", an unknown field or version2.",
+          "Retain the accepted original."
+        ],
+        [
+          "Observe",
+          "Explicit contract rejection; documents unchanged.",
+          "Run from the server common module and print JSONВерный,ТипОтклонен,XMLВерный. In another copy test an unknown fourth field, version2,fraction30.5 and length4097. Record each expected rejection; none should modify infobase documents."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Explain the checked boundary using the first trace. Parseminutes 30 and 0.",
+      "criteria": "Numbers remain numeric rather than strings."
+    },
+    {
+      "level": "Applied",
+      "task": "Perform the stated available experiment and retain actual observations. Round-tripCyrillic text with quotes.",
+      "criteria": "Actual input/output and exact own source identified; unperformed stages marked NOT RUN."
+    },
+    {
+      "level": "Advanced",
+      "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. Pass minutes:\"30\", an unknown field or version2.",
+      "criteria": "Accepted original preserved; rejection and its limits explained."
+    }
+  ],
+  "lab": {
+    "title": "JSON, XML and exchange schemas",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "steps": [
+      "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+      "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+      "Результат = УчебныеПрофессиональныеОпыты.ОпытJSONXML();\nСообщить(Результат.JSONВерный);\nСообщить(Результат.ТипОтклонен);\nСообщить(Результат.XMLВерный);",
+      "Run once and compare the fields with the worked trace. Own root/attribute; Read checked.",
+      "Remove only the startup call. Use another copy for the adverse case and keep both protocols."
+    ],
+    "expected": [
+      "Separate copy opens with the earlier records.",
+      "Definitions are module-level; no duplicate helper.",
+      "Only the stated caller is inside the existing startup handler.",
+      "Own root/attribute; Read checked.",
+      "Original retained, negative experiment isolated, automatic caller removed."
+    ],
+    "evidence": [
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits."
+    ],
+    "negative": "Pass minutes:\"30\", an unknown field or version2."
+  },
+  "mistakes": [
+    [
+      "Success is inferred from an unavailable environment.",
+      "Separate actual observations from a planned advanced scenario and name edition limits."
+    ],
+    [
+      "A failed attempt is removed to make the record look successful.",
+      "Retain the original failure, its cause, correction and regression evidence."
+    ],
+    [
+      "An own-copy change is applied over the accepted original.",
+      "Verify the actual directory and preserve source identities before making changes."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Does successfulJSONparsing prove schema validity?",
+      "options": [
+        "Yes",
+        "No",
+        "For numbers"
+      ],
+      "correct": 1,
+      "explanation": "Check types and required fields separately."
+    },
+    {
+      "question": "Should received data be executed withExecute?",
+      "options": [
+        "Always",
+        "ForXML",
+        "No"
+      ],
+      "correct": 2,
+      "explanation": "Serialized input remains data."
+    },
+    {
+      "question": "Compare a round trip by",
+      "options": [
+        "Semantic fields",
+        "Always key order",
+        "Color"
+      ],
+      "correct": 0,
+      "explanation": "JSONfield order does not define message identity."
+    }
+  ],
+  "review": [
+    "Numbers remain numeric rather than strings.",
+    "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
+    "Accepted original preserved; rejection and its limits explained."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "job-mechanism",
+    "scheduled-job",
+    "safe-eval"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p11.topic-2",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p11",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "reference",
+      "query",
+      "transaction"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C: Designer and Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "step-1",
+          "title": "Preserve the starting state",
+          "where": "Own-copy Designer",
+          "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+          "why": "Keep the accepted work independent.",
+          "expected": "Separate copy opens with the earlier records.",
+          "troubleshooting": "A new list name alone does not create another database directory.",
+          "before": "Own path, prior sources and a restorable backup identified."
+        },
+        {
+          "id": "step-2",
+          "title": "Add the complete server source",
+          "where": "Конфигуратор → Общие → Общие модули → УчебныеПрофессиональныеОпыты",
+          "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+          "why": "Database access has an explicit server boundary.",
+          "expected": "Definitions are module-level; no duplicate helper.",
+          "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
+          "before": "Separate copy opens with the earlier records."
+        },
+        {
+          "id": "step-3",
+          "title": "Prepare and call the experiment",
+          "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
+          "action": "Результат = УчебныеПрофессиональныеОпыты.ОпытJSONXML();\nСообщить(Результат.JSONВерный);\nСообщить(Результат.ТипОтклонен);\nСообщить(Результат.XMLВерный);",
+          "why": "Print every named result instead of accepting compilation alone.",
+          "expected": "Only the stated caller is inside the existing startup handler.",
+          "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
+          "before": "Definitions are module-level; no duplicate helper."
+        },
+        {
+          "id": "step-4",
+          "title": "Save, update and run once",
+          "where": "Ctrl+S → F7 → Предприятие",
+          "action": "Run once and compare the fields with the worked trace. Own root/attribute; Read checked.",
+          "why": "Observe actual1C data, not the browser diagram.",
+          "expected": "Own root/attribute; Read checked.",
+          "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
+          "before": "Only the stated caller is inside the existing startup handler."
+        },
+        {
+          "id": "step-5",
+          "title": "Retain both results",
+          "where": "Конфигуратор после закрытия Предприятия",
+          "action": "Remove only the startup call. Use another copy for the adverse case and keep both protocols.",
+          "why": "Preserve provenance and avoid repeating data creation at every startup.",
+          "expected": "Original retained, negative experiment isolated, automatic caller removed.",
+          "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
+          "before": "Own root/attribute; Read checked."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Сверьте полный опыт",
+        "en": "Explore the example: Reconcile the complete experiment"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Текст",
+            "en": "Text"
+          },
+          "detail": {
+            "ru": "Версия1,число30 → Договор проверен.",
+            "en": "Version1,numeric30 → Contract validated."
+          }
+        },
+        {
+          "label": {
+            "ru": "Круговой путь",
+            "en": "Round trip"
+          },
+          "detail": {
+            "ru": "JSON→данные→JSON → Тип/текст сохранены.",
+            "en": "JSON→data→JSON → Type/text retained."
+          }
+        },
+        {
+          "label": {
+            "ru": "XML",
+            "en": "XML"
+          },
+          "detail": {
+            "ru": "Свой корень/атрибут → Чтение проверено.",
+            "en": "Own root/attribute → Read checked."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · complete server common module УчебныеПрофессиональныеОпыты; shared preparation once"
+  },
+  "nativeCaseIds": [
+    "CURRENT.SCHEMA.ORIGINAL",
+    "CURRENT.SCHEMA.MUTATION"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_ADVANCED_RESULT.json",
+    "caseIds": [
+      "CURRENT.SCHEMA.ORIGINAL",
+      "CURRENT.SCHEMA.MUTATION"
+    ],
+    "scope": "Exact actual DCS, local managed lock/rollback, JSON/XML or manual batch function with a compiled semantic negative. No two-session race, arbitrary XML validator or scheduled-server execution claim.",
+    "training1508Verified": true,
+    "allLearnerGuiStepsVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false,
+    "trainingCompatibilityEvidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/CURRENT_TRAINING_RESULT.json",
+    "trainingCompatibilityScope": "Exact current server source compiled and all positive assertions passed in official personal training1508; integrated observer. Does not extend GUI/RLS/HTTP/scheduling claims."
+  },
+  "codeFile": "code/pedagogy/exchange-schema-first.bsl"
+}

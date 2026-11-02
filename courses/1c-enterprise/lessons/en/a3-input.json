@@ -1,0 +1,466 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a3",
+  "topicId": "1c-enterprise.a3.topic-1",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Validate a request: notice an error before accepting a write",
+  "minutes": 120,
+  "goal": "Check required fields and duration, correct a rejected new request and verify persistence by reopening it.",
+  "prerequisites": [
+    "1c-enterprise.a 2; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
+  ],
+  "outcomes": [
+    "Distinguish selecting an existing customer from similar-looking text.",
+    "Explain rejection under the training configuration’s required-field and duration rules.",
+    "Correct and reopen a new request while preserving earlier records."
+  ],
+  "sections": [
+    [
+      "A filled field must have the intended meaning",
+      "A request links a customer, service, duration and work status. A visible customer label alone does not establish a link to the intended record. Select through the list and check its code. Do not create a duplicate just because a search hides the original; clear the search first.",
+      "Field types and business rules are separate. A numeric field does not make every number an acceptable duration. Our original training document permits 0 through 1440 minutes inclusive and requires a customer, service and status. These are this configuration’s rules, not universal rules of every 1C application."
+    ],
+    [
+      "A rejection asks you to correct the form",
+      "Записать triggers validation and document rules. Missing customer or service produces a prompt to select them; a missing status produces its own prompt; an out-of-range duration produces the 0..1440 message. Clicking the button alone is not a successful write.",
+      "Keep the new form open, read the reason and correct the relevant field. Do not select a random record merely to remove the message. If the result is unclear, record your steps and observation. Do not alter validation code to bypass a rejected input."
+    ],
+    [
+      "Boundaries explain the rule",
+      "Compare ordinary input 30, permitted boundaries 0 and 1440, and invalid -1 and 1441. Zero is explicitly known zero effort here, not an unknown duration. A different organization may require a strictly positive duration; learn its rule instead of transferring this one automatically.",
+      "Use a new separate request for invalid-input experiments, preserving accepted records. Confirm that the invalid value did not enter the saved list. If the field rejects a value before writing, record that earlier input constraint; do not disable it to force the experiment."
+    ],
+    [
+      "Reopening verifies persistence",
+      "After correcting the form click Записать, wait for completion and record its actual number. Close it, locate that number, reopen and compare customer, service, minutes and status. This distinguishes stored data from an unsaved form.",
+      "Writing and posting are different actions. Posting is disabled in the initial training configuration; ВРаботе is a field value, not a posting indicator. A Nexus self-report is separate from the installed infobase: it neither creates a 1C request nor proves server grading."
+    ]
+  ],
+  "diagram": "a3-0",
+  "walkthrough": [
+    {
+      "action": "Before write — Missing customer/service",
+      "expected": "Required links are absent."
+    },
+    {
+      "action": "Attempt — Записать",
+      "expected": "Rejected; correction still needed."
+    },
+    {
+      "action": "Correction — Select existing records",
+      "expected": "30 and status are valid."
+    },
+    {
+      "action": "Retry — Wait for completion",
+      "expected": "Number and reopening verify persistence."
+    }
+  ],
+  "examples": [
+    {
+      "title": "A missing link and a meaningful correction",
+      "source": "New request: 30 minutes, Новая, no customer/service → Записать → prompt → select existing records → Записать.",
+      "expected": "The first attempt is rejected; the corrected request is saved under your actual number.",
+      "explanation": "Change this new form’s input, not validation code or an older request.",
+      "trace": [
+        [
+          "Before write",
+          "Missing customer/service",
+          "Required links are absent."
+        ],
+        [
+          "Attempt",
+          "Записать",
+          "Rejected; correction still needed."
+        ],
+        [
+          "Correction",
+          "Select existing records",
+          "30 and status are valid."
+        ],
+        [
+          "Retry",
+          "Wait for completion",
+          "Number and reopening verify persistence."
+        ]
+      ]
+    },
+    {
+      "title": "Duration boundaries of this model",
+      "source": "0 → valid\n30 → valid\n1440 → valid\n-1 and 1441 → invalid",
+      "expected": "Both boundaries are included; invalid input is not accepted as zero.",
+      "explanation": "If a field prevents entry earlier, record that actual constraint.",
+      "trace": [
+        [
+          "1440",
+          "Upper boundary",
+          "Permitted."
+        ],
+        [
+          "1441",
+          "One minute above",
+          "Input or write rejection."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Name required fields and duration limits before writing; predict the incomplete-form rejection.",
+      "criteria": "Customer, service, status and 0..1440 identified; no code change required."
+    },
+    {
+      "level": "Applied",
+      "task": "Reject a new incomplete form, correct it, save and reopen it by actual number.",
+      "criteria": "Reason, corrected fields and reopened observation recorded; earlier requests preserved."
+    },
+    {
+      "level": "Advanced",
+      "task": "Make a table for 0, 30, 1440, -1 and 1441; identify whether each restriction occurs during input or writing.",
+      "criteria": "Prediction and observation are separate; no bypasses; saved records remain valid."
+    }
+  ],
+  "lab": {
+    "title": "Correct a new request and verify its persistence",
+    "environment": "Official locally installed training 1C, your own infobase with the original training configuration; no code or Studio required.",
+    "steps": [
+      "Find your customer Учебный Север — ремонт and service Учебная диагностика in their lists. If you used other synthetic names, record their correspondence and codes. Record the numbers of your two preceding requests.",
+      "Click Создать, enter 30 minutes and select Новая status. Leave customer and service unselected for now. Do not open an earlier request for this experiment.",
+      "Click Записать. If a generic «Не удалось записать» dialog appears, choose OK, then read «Укажите учебного клиента и услугу» in the bottom message area. The write was rejected; keep this form open for correction.",
+      "Select the existing customer and service through their lists and keep Новая. If the field permits it, separately try 1441 minutes and write: expect rejection. Correct duration to 30.",
+      "Click Записать, wait and record the actual document number from your form. Do not copy a number from a course screenshot.",
+      "Close the saved form, locate your number and reopen it. Verify customer, service, 30 minutes and Новая. Clear search and check the two previous requests remain unchanged."
+    ],
+    "expected": [
+      "Existing records and both earlier request numbers are identified.",
+      "A new request form has deliberately missing required links.",
+      "A clear prompt appears; the incomplete request is not accepted.",
+      "Links are selected; invalid duration is rejected; 30 is ready.",
+      "The valid request is saved and its actual number recorded.",
+      "New fields match expectations and old numbers and durations remain intact."
+    ],
+    "evidence": [
+      "Old and new synthetic request numbers, expectation and non-sensitive rejection reason.",
+      "Reopened fields and preservation of earlier requests."
+    ],
+    "negative": "Missing required links and minutes outside 0..1440 must not count as successful writes; do not disable validation."
+  },
+  "mistakes": [
+    [
+      "A button click without reading feedback does not establish persistence.",
+      "Read feedback, correct the form, wait for the write and reopen your number."
+    ],
+    [
+      "A label does not replace selecting the intended existing record.",
+      "Select the existing catalog item and verify its code instead of duplicating it."
+    ],
+    [
+      "ВРаботе status is not document posting.",
+      "Check status separately; the initial package does not use posting."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "How do you verify a saved request?",
+      "options": [
+        "By seeing the pressed button",
+        "Reopen your number and compare fields",
+        "Only mark the lesson"
+      ],
+      "correct": 1,
+      "explanation": "Compare persisted data."
+    },
+    {
+      "question": "Which duration violates 0..1440?",
+      "options": [
+        "0",
+        "1440",
+        "1441"
+      ],
+      "correct": 2,
+      "explanation": "Both stated boundaries are included."
+    },
+    {
+      "question": "What should you do for a missing customer?",
+      "options": [
+        "Select the intended existing record and retry",
+        "Disable validation",
+        "Modify an earlier request"
+      ],
+      "correct": 0,
+      "explanation": "Correct this particular new form."
+    }
+  ],
+  "review": [
+    "Which action verified persistence?",
+    "Why use a new form for the negative experiment?",
+    "How does zero differ from unknown duration?"
+  ],
+  "sources": [
+    "training",
+    "designer",
+    "catalogs",
+    "documents",
+    "form-elements"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "1c-enterprise",
+    "topicId": "1c-enterprise.a3.topic-1",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "1c-enterprise.a3",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "document",
+      "reference",
+      "catalog-item",
+      "attribute",
+      "self-report"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed Enterprise mode → Учебная сервисная служба → Заявка услуги",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "identify",
+          "title": "Identify the starting records",
+          "where": "Enterprise → Учебная сервисная служба",
+          "action": "Find your customer Учебный Север — ремонт and service Учебная диагностика in their lists. If you used other synthetic names, record their correspondence and codes. Record the numbers of your two preceding requests.",
+          "why": "Use meaningful links and preserve earlier results.",
+          "expected": "Existing records and both earlier request numbers are identified.",
+          "troubleshooting": "Clear search before assuming a record is missing. Verify your startup entry; do not import over completed work.",
+          "before": "Your own training infobase and earlier records are available, with their numbers recorded. Use a new separate request for this experiment."
+        },
+        {
+          "id": "new-form",
+          "title": "Open a separate new form",
+          "where": "Enterprise → Заявка услуги → Создать",
+          "action": "Click Создать, enter 30 minutes and select Новая status. Leave customer and service unselected for now. Do not open an earlier request for this experiment.",
+          "why": "The negative experiment must not modify accepted records.",
+          "expected": "A new request form has deliberately missing required links.",
+          "troubleshooting": "If it is an old document, close it without changes and create a new form.",
+          "before": "Existing records and both earlier request numbers are identified."
+        },
+        {
+          "id": "reject",
+          "title": "Read the rejection reason",
+          "where": "New request form → Записать",
+          "action": "Click Записать. If a generic «Не удалось записать» dialog appears, choose OK, then read «Укажите учебного клиента и услугу» in the bottom message area. The write was rejected; keep this form open for correction.",
+          "why": "The button starts validation; it does not prove persistence.",
+          "expected": "A clear prompt appears; the incomplete request is not accepted.",
+          "troubleshooting": "If it writes, verify that links were truly empty and the intended original configuration is in use. Preserve the discrepancy record.",
+          "before": "A new request form has deliberately missing required links.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/43-request-write-rejected.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "6d25d4bf85f216384f4b7f9c50d46c7fc8c298901402656f6d21762e4bac4264",
+              "caption": "An incomplete form first produces a generic write refusal. Choose OK, then read the specific reason in Messages.",
+              "alt": "An incomplete form first produces a generic write refusal. Choose OK, then read the specific reason in Messages.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": []
+            },
+            {
+              "src": "media/tutorials/v2/44-request-validation-message.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "1e912db338269cca220e19d241529e11a423a91180825f1ddef4fa4be2079ce0",
+              "caption": "The lower panel asks for a training customer and service. The form stays open without a saved number.",
+              "alt": "The lower panel asks for a training customer and service. The form stays open without a saved number.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": []
+            }
+          ]
+        },
+        {
+          "id": "correct",
+          "title": "Select links and check the range",
+          "where": "The same new request form",
+          "action": "Select the existing customer and service through their lists and keep Новая. If the field permits it, separately try 1441 minutes and write: expect rejection. Correct duration to 30.",
+          "why": "Correct the cause rather than disabling validation or duplicating catalog items.",
+          "expected": "Links are selected; invalid duration is rejected; 30 is ready.",
+          "troubleshooting": "Do not disable an input constraint. If 1441 cannot be entered, record that earlier restriction and restore 30.",
+          "before": "A clear prompt appears; the incomplete request is not accepted.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/45-request-duration-rejected.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "38cd659481af003cb2c40fe2e526595a5431fc87156a739e068998b5198d007b",
+              "caption": "A separate boundary test rejects 1441 minutes. After OK the message states the permitted range, 0..1440.",
+              "alt": "A separate boundary test rejects 1441 minutes. After OK the message states the permitted range, 0..1440.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": []
+            }
+          ]
+        },
+        {
+          "id": "save",
+          "title": "Wait for the write to finish",
+          "where": "The same form → Записать",
+          "action": "Click Записать, wait and record the actual document number from your form. Do not copy a number from a course screenshot.",
+          "why": "The number identifies your particular new record.",
+          "expected": "The valid request is saved and its actual number recorded.",
+          "troubleshooting": "Read any remaining rejection and verify status; do not use Провести.",
+          "before": "Links are selected; invalid duration is rejected; 30 is ready.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/46-request-corrected-saved.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "69282d882509a302074594ab1f45a78f1d1d38fb41ff8cd197210623567fc23e",
+              "caption": "Correcting to 30 and writing assigns 000000004 here. Record the actual number in your own infobase.",
+              "alt": "Correcting to 30 and writing assigns 000000004 here. Record the actual number in your own infobase.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 0,
+                "y": 150,
+                "width": 640,
+                "height": 340
+              }
+            }
+          ]
+        },
+        {
+          "id": "reopen",
+          "title": "Compare persisted values",
+          "where": "Request list → search your number → open",
+          "action": "Close the saved form, locate your number and reopen it. Verify customer, service, 30 minutes and Новая. Clear search and check the two previous requests remain unchanged.",
+          "why": "Reopening verifies persistence; comparison preserves earlier work.",
+          "expected": "New fields match expectations and old numbers and durations remain intact.",
+          "troubleshooting": "If missing, clear search and verify the infobase and number before creating another copy.",
+          "before": "The valid request is saved and its actual number recorded.",
+          "figures": [
+            {
+              "src": "media/tutorials/v2/47-request-four-preserved-records.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "51fb9e8fb24a44f8a835aca4850b9b27f5a8c9f268c5ee5acf93272e21d6c4d9",
+              "caption": "The separate test now has four requests; the previous three numbers and durations remain.",
+              "alt": "The separate test now has four requests; the previous three numbers and durations remain.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 0,
+                "y": 150,
+                "width": 1100,
+                "height": 330
+              }
+            },
+            {
+              "src": "media/tutorials/v2/48-request-reopened.jpg",
+              "width": 1438,
+              "height": 753,
+              "sha256": "beb8f3f78d793cf56699fc54710a5991ad15523b81ec0ac933d1f06e4d974b09",
+              "caption": "The same fourth request is reopened: customer, service, 30 minutes and Новая are retained.",
+              "alt": "The same fourth request is reopened: customer, service, 30 minutes and Новая are retained.",
+              "uiLocale": "ru",
+              "platformVersion": "8.3.27.2214",
+              "callouts": [],
+              "focus": {
+                "x": 0,
+                "y": 150,
+                "width": 640,
+                "height": 340
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Пустая связь и осмысленное исправление",
+        "en": "Explore the example: A missing link and a meaningful correction"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "До записи",
+            "en": "Before write"
+          },
+          "detail": {
+            "ru": "Нет клиента и услуги → Обязательные связи не заполнены.",
+            "en": "Missing customer/service → Required links are absent."
+          }
+        },
+        {
+          "label": {
+            "ru": "Попытка",
+            "en": "Attempt"
+          },
+          "detail": {
+            "ru": "Записать → Отказ, исправление ещё требуется.",
+            "en": "Записать → Rejected; correction still needed."
+          }
+        },
+        {
+          "label": {
+            "ru": "Исправление",
+            "en": "Correction"
+          },
+          "detail": {
+            "ru": "Выбраны карточки → 30 минут и статус подходят.",
+            "en": "Select existing records → 30 and status are valid."
+          }
+        },
+        {
+          "label": {
+            "ru": "Повторная запись",
+            "en": "Retry"
+          },
+          "detail": {
+            "ru": "Дождаться завершения → Номер и повторное открытие подтверждают сохранение.",
+            "en": "Wait for completion → Number and reopening verify persistence."
+          }
+        }
+      ]
+    }
+  },
+  "nativeCaseIds": [],
+  "nativeEvidence": {
+    "status": "LIVE PASS",
+    "environment": "official-platform-local-file-base",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/A3_NATIVE_UI_RESULT.json",
+    "scope": "Operator observed commands on separate synthetic bases; illustration dataset differences are explicit; no novice study",
+    "training1508GuiVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false,
+    "caseIds": []
+  }
+}

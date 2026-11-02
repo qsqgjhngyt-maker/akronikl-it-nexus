@@ -1,0 +1,14 @@
+import fs from'node:fs/promises';import path from'node:path';import{execFileSync}from'node:child_process';import{createHash}from'node:crypto';import{pathToFileURL}from'node:url';
+const work=import.meta.dirname,repo=path.join(work,'repo'),dir=path.join(work,'s8-publication-20261101'),privateDir=path.join(dir,'private');await fs.mkdir(privateDir,{recursive:true});
+const {projectRevision,hashConfig,FIXED}=await import(pathToFileURL(path.join(repo,'tools/publication-revision-config.mjs'))),sha=b=>createHash('sha256').update(b).digest('hex'),need=(v,c)=>{if(!v)throw Error(c)};
+const yc=args=>{try{return JSON.parse(execFileSync('C:/Users/User/yc-cli/yc.exe',[...args,'--format','json','--retry','0','--no-user-output','--no-browser'],{encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:55000,maxBuffer:16000000,windowsHide:true}))}catch{throw Error('YC_READ_FAILED_REDACTED')}};
+try{
+ const active=yc(['serverless','container','revision','list','--container-id',FIXED.container]).filter(r=>r.status==='ACTIVE');need(active.length===1,'ONE_ACTIVE_REVISION_REQUIRED');const revision=yc(['serverless','container','revision','get','--id',active[0].id]),projection=projectRevision(revision);
+ need(revision.id==='bba09u2uovhfc6aiepos'&&revision.image.image_digest==='sha256:600caf554f9dacd823160072d40eb0ba9b7b08da4d5672c450b33077f8c7c4d8','CLOUD_BASELINE_CHANGED');
+ await fs.writeFile(path.join(privateDir,'bff-before.json'),JSON.stringify(revision,null,2)+'\n',{flag:'wx'});
+ const spec=yc(['serverless','api-gateway','get-spec','--id',FIXED.gateway]).openapi_spec;need(typeof spec==='string','GATEWAY_SPEC_REQUIRED');await fs.writeFile(path.join(privateDir,'gateway-before.yaml'),spec,{flag:'wx'});
+ process.env.NEXUS_WORKER_READBACK_MODULE=path.join(work,'s8-cf-readonly.mjs');const {readPrimaryPublicationSurface}=await import(pathToFileURL(path.join(repo,'tools/publication-auth-cloud.mjs'))),surface=await readPrimaryPublicationSurface();
+ need(surface.imageDigest===revision.image.image_digest,'BASELINE_MOVED_DURING_PIN');
+ const result={status:'EXACT LIVE BASELINE PINNED / READ ONLY',recordedAtUtc:new Date().toISOString(),revisionId:revision.id,...surface,runtimeConfigSha256:hashConfig(projection),resources:revision.resources,executionTimeout:revision.execution_timeout,concurrency:revision.concurrency,secretReferences:revision.secrets.length,secretPayloadsRead:false,newPaidResources:0,mainChanged:false,productionChanged:false};
+ await fs.writeFile(path.join(dir,'BASELINE_PINNED.json'),JSON.stringify(result,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify(result));
+}catch(error){const result={status:'FAIL STOP / NO MUTATION',code:/^[A-Z0-9_]+$/.test(error.message)?error.message:'BASELINE_PIN_FAILURE_REDACTED',productionChanged:false};await fs.writeFile(path.join(dir,'BASELINE_PIN_FAILURE.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));process.exitCode=1;}

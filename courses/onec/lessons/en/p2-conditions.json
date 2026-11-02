@@ -1,0 +1,344 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p2",
+  "topicId": "onec.p2.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Conditions: choose an action and check boundaries",
+  "minutes": 115,
+  "goal": "Build a decision table for a known numeric input and test branch ordering and boundaries.",
+  "prerequisites": [
+    "The preceding language lesson; saving, updating and launching your own infobase."
+  ],
+  "outcomes": [
+    "Explain first-matching-branch selection.",
+    "Distinguish И from Или.",
+    "Test 0, 60/61 and 1440/1441 while preserving the original version."
+  ],
+  "sections": [
+    [
+      "State the rule first",
+      "A condition has a Boolean answer, Истина or Ложь. Reject quantities below zero or above 1440 first. Among valid inputs distinguish zero, then quantities up to and including 60. The input is already known to be numeric; arbitrary text parsing is outside this rule.",
+      "Partition numeric inputs into four disjoint classes: outside 0..1440; exactly 0; 1..60; and above 60 up to 1440. This guides branches and boundaries. The main exercise assumes numeric type; do not promise string-input validation the source does not perform."
+    ],
+    [
+      "The first matching branch",
+      "An Если/ИначеЕсли/Иначе chain chooses its first matching branch. Testing zero before <=60 preserves “Без затрат” (no time spent). With the range first, zero would already select “Короткая” (short), preventing the later zero branch.",
+      "Each branch assigns text to Класс; one message follows КонецЕсли. Later ИначеЕсли branches do not revise the chosen value. A trace includes tests that were never reached, explaining why order matters."
+    ],
+    [
+      "And, or and negation",
+      "Или is true when at least one of the two limits is violated. A negative quantity and exceeding the upper limit are different invalid cases. Replacing Или with И is wrong: no number is simultaneously below zero and above 1440.",
+      "A И B requires both conditions; A Или B requires at least one; Не negates a Boolean. For a complex expression evaluate simple parts first, then combine them. Use parentheses to make intention explicit rather than depending on guessed precedence."
+    ],
+    [
+      "A boundary counterexample",
+      "Test where the answer changes: -1/0, 0/1, 60/61 and 1440/1441. Input 30 alone cannot expose a missing boundary. Record which preceding conditions are false and which becomes true. This explains the branch rather than guessing from the final message.",
+      "Accidental <60 instead of <=60 fails at 60 while input 30 hides the error. Removing the upper rejection may classify 1441 as long. For each suspected mutation choose an input on which correct and incorrect programs differ."
+    ]
+  ],
+  "diagram": "p2conditions",
+  "walkthrough": [
+    {
+      "action": "0 < 0 Или 0 > 1440 — False",
+      "expected": "Continue."
+    },
+    {
+      "action": "0 = 0 — True",
+      "expected": "Select “Без затрат”."
+    },
+    {
+      "action": "Test <= 60 — Not executed",
+      "expected": "A preceding branch already matched."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Trace the main example",
+      "source": "Минуты = 0;\nЕсли Минуты < 0 Или Минуты > 1440 Тогда\n    Класс = \"Недопустимо\";\nИначеЕсли Минуты = 0 Тогда\n    Класс = \"Без затрат\";\nИначеЕсли Минуты <= 60 Тогда\n    Класс = \"Короткая\";\nИначе\n    Класс = \"Длинная\";\nКонецЕсли;\nСообщить(Класс);",
+      "expected": "For Минуты = 0 the message is “Без затрат”.",
+      "explanation": "The invalid-range test is false; the zero test is true and selects the branch.",
+      "trace": [
+        [
+          "0 < 0 Или 0 > 1440",
+          "False",
+          "Continue."
+        ],
+        [
+          "0 = 0",
+          "True",
+          "Select “Без затрат”."
+        ],
+        [
+          "Test <= 60",
+          "Not executed",
+          "A preceding branch already matched."
+        ]
+      ]
+    },
+    {
+      "title": "The short-request boundary",
+      "source": "Минуты = 61; // keep the rest of the chain unchanged",
+      "expected": "“Длинная” (long).",
+      "explanation": "61 is valid, nonzero and no longer <=60.",
+      "trace": [
+        [
+          "61 within range",
+          "Valid",
+          "No rejection."
+        ],
+        [
+          "61 <= 60",
+          "False",
+          "Choose final long branch."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Guided",
+      "task": "Make a decision table for 0, 60 and 61 before execution.",
+      "criteria": "No time spent; short; long, with the first matching branch explained."
+    },
+    {
+      "level": "Changed condition",
+      "task": "Test -1, 1, 1440 and 1441 by changing only the first line.",
+      "criteria": "Invalid; short; long; invalid."
+    },
+    {
+      "level": "Independent",
+      "task": "Find counterexamples to replacing Или with И and moving <=60 before zero.",
+      "criteria": "-1/1441 exposes the wrong connective; 0 exposes wrong ordering."
+    }
+  ],
+  "lab": {
+    "title": "Conditions: choose an action and check boundaries",
+    "environment": "Official locally installed training platform; a separate personal file infobase, no Studio required.",
+    "steps": [
+      "Make a decision table for 0, 60 and 61 before execution.",
+      "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
+      "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
+      "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+      "Change the input to 60, 61, -1 and 1441 in turn. Execute each version and compare with the table."
+    ],
+    "expected": [
+      "For Минуты = 0 the message is “Без затрат”.",
+      "The intended module is open and the earlier source remains available.",
+      "The exact exercise source is entered in the intended context.",
+      "For Минуты = 0 the message is “Без затрат”.",
+      "Короткая; Длинная; Недопустимо; Недопустимо."
+    ],
+    "evidence": [
+      "Source version, predicted and actual outputs.",
+      "One changed input and a trace explaining its result; no automatic grading claim."
+    ],
+    "negative": "For a different result, preserve the failed version and find the first incorrect condition. Do not change the requirement to fit the output."
+  },
+  "mistakes": [
+    [
+      "Zero is <=60, so ordering is irrelevant.",
+      "The chain selects its first matching branch."
+    ],
+    [
+      "И and Или are interchangeable.",
+      "Simultaneous conditions differ from at least one condition."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "What does the shown chain select for 0?",
+      "options": [
+        "Short",
+        "Invalid",
+        "No time spent"
+      ],
+      "correct": 2,
+      "explanation": "Zero is checked before <=60."
+    },
+    {
+      "question": "Why is “Минуты < 0 И Минуты > 1440” unsuitable for rejection?",
+      "options": [
+        "A number cannot violate both limits simultaneously",
+        "И always means Или",
+        "1440 is a string"
+      ],
+      "correct": 0,
+      "explanation": "One violated limit suffices, so use Или."
+    },
+    {
+      "question": "Which inputs best expose a wrong inclusive boundary at 60?",
+      "options": [
+        "30 and 45",
+        "60 and 61",
+        "10 and 20"
+      ],
+      "correct": 1,
+      "explanation": "Adjacent values lie on opposite sides of the boundary."
+    }
+  ],
+  "review": [
+    "Explain the result without looking at the final message.",
+    "Name an input that would expose the described mistake.",
+    "Preserve the source before moving to the next lesson."
+  ],
+  "sources": [
+    "cli",
+    "training",
+    "platform-architecture",
+    "bsl-language"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.a2p2.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "nativeCaseIds": [
+    "P2.IF.-1",
+    "P2.IF.0",
+    "P2.IF.1",
+    "P2.IF.60",
+    "P2.IF.61",
+    "P2.IF.1440",
+    "P2.IF.1441"
+  ],
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "8330fd232856fc4076929ddade6e81cfaa8c0e4f",
+    "sourcePolicy": "primary-source-links-and-observed-native-results",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "0.3.0-a2p2",
+    "originalCourseId": "onec",
+    "topicId": "onec.p2.topic-3",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten in novice-first order; valid core concepts retained without obsolete probe-first route"
+  },
+  "codeFile": "code/pedagogy/conditions-first.bsl",
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "variable",
+      "bsl"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Designer → managed application module of your training copy",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "predict",
+          "title": "Predict the result",
+          "where": "Nexus → this lesson’s worked example",
+          "action": "Make a decision table for 0, 60 and 61 before execution.",
+          "why": "An expectation makes a wrong result detectable.",
+          "expected": "For Минуты = 0 the message is “Без затрат”.",
+          "troubleshooting": "Use the trace to separate each instruction; do not copy a displayed total without explaining it.",
+          "before": "Your own training infobase opens and its startup handler already works. Preserve the preceding source before replacing this exercise body."
+        },
+        {
+          "id": "prepare-source",
+          "title": "Preserve your preceding work",
+          "where": "Your infobase → Designer → configuration root → managed application module",
+          "action": "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
+          "why": "The next exercise must not destroy the preceding version.",
+          "expected": "The intended module is open and the earlier source remains available.",
+          "troubleshooting": "If you cannot identify the infobase, return to the startup list and check its entry and directory.",
+          "before": "For Минуты = 0 the message is “Без затрат”."
+        },
+        {
+          "id": "enter-code",
+          "title": "Enter this example",
+          "where": "Designer → the module text window",
+          "action": "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
+          "why": "The invalid-range test is false; the zero test is true and selects the branch.",
+          "expected": "The exact exercise source is entered in the intended context.",
+          "troubleshooting": "Check ordinary quotes, semicolons and matching block endings. A syntax rejection is not execution.",
+          "before": "The intended module is open and the earlier source remains available."
+        },
+        {
+          "id": "run-check",
+          "title": "Save, update and execute",
+          "where": "Designer → Ctrl+S → Configuration / Update database configuration (F7) → Debug / Start (F5)",
+          "action": "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+          "why": "Only the installed platform executes this BSL.",
+          "expected": "For Минуты = 0 the message is “Без затрат”.",
+          "troubleshooting": "For old output close your client, verify the infobase and update again. For a different value find the first trace step that differs.",
+          "before": "The exact exercise source is entered in the intended context."
+        },
+        {
+          "id": "vary-record",
+          "title": "Change one condition and retain evidence",
+          "where": "The same module, then Enterprise mode and Nexus notes",
+          "action": "Change the input to 60, 61, -1 and 1441 in turn. Execute each version and compare with the table.",
+          "why": "A changed input tests understanding beyond copying the example.",
+          "expected": "Короткая; Длинная; Недопустимо; Недопустимо.",
+          "troubleshooting": "For a different result, preserve the failed version and find the first incorrect condition. Do not change the requirement to fit the output.",
+          "before": "For Минуты = 0 the message is “Без затрат”."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Разбор основного примера",
+        "en": "Explore the example: Trace the main example"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "0 < 0 Или 0 > 1440",
+            "en": "0 < 0 Или 0 > 1440"
+          },
+          "detail": {
+            "ru": "Ложь → Переходим дальше.",
+            "en": "False → Continue. Zero passes the stated range validation."
+          }
+        },
+        {
+          "label": {
+            "ru": "0 = 0",
+            "en": "0 = 0"
+          },
+          "detail": {
+            "ru": "Истина → Выбираем «Без затрат».",
+            "en": "True → Select “Без затрат”."
+          }
+        },
+        {
+          "label": {
+            "ru": "Проверка <= 60",
+            "en": "Test <= 60"
+          },
+          "detail": {
+            "ru": "Не выполняется → Предыдущая ветвь уже выбрана.",
+            "en": "Not executed → A preceding branch already matched."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · Application event-handler body"
+  },
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "training1508Verified": false,
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_LANGUAGE_RESULT.json",
+    "caseIds": [
+      "P2.IF.-1",
+      "P2.IF.0",
+      "P2.IF.1",
+      "P2.IF.60",
+      "P2.IF.61",
+      "P2.IF.1440",
+      "P2.IF.1441"
+    ],
+    "scope": "Exact current lesson source plus explicit input variants; observer assertions, no server grade or student authorship proof."
+  }
+}

@@ -1,0 +1,382 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "1c-enterprise",
+  "moduleId": "1c-enterprise.a5",
+  "topicId": "1c-enterprise.a5.topic-3",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "A request: header, work rows and validation before saving",
+  "minutes": 150,
+  "goal": "Save a consistent request and model repeating work rows without replacing existing fields.",
+  "prerequisites": [
+    "1c-enterprise.a 4; A1–A2: separate infobase, catalogs, references and documents; synthetic data only."
+  ],
+  "outcomes": [
+    "Verify persisted references, date, status and duration.",
+    "Distinguish one header attribute from a tabular-section collection.",
+    "Add the teaching table only in a separate copy while retaining old fields."
+  ],
+  "sections": [
+    [
+      "A document records a specific event",
+      "A request has its own reference, date and number. The same customer and service may recur, so their pair is not necessarily a document key. Use the reference or an agreed external identity for reopening. Do not create another document when correcting the same request.",
+      "The starter request has one service and ДлительностьМинут in its header. This represents one request adequately. The single Услуга field is not a tabular section. Работы is not already present in the unchanged starter: this lesson creates it as a separate teaching extension in a new copy, retaining earlier attributes and documents."
+    ],
+    [
+      "Writing differs from posting",
+      "Writing persists document fields. Posting performs configured accounting actions that may be absent from the initial stand. An icon or command name does not prove register movements. A5 requires correct writing and field verification; P5–P6 separately cover posting, rejection and movements. Do not attribute future functionality to the starter template.",
+      "A tabular section stores repeating rows inside one document. Create Работы with Услуга: CatalogRef.Услуги and Минуты: Number(5,0). Do not rename the header ДлительностьМинут. Rows of 20 and 10 give a manual control of 30, but their existence does not automatically assign that total to the header; automatic calculation requires an explicit rule."
+    ],
+    [
+      "Status transitions need rules",
+      "An enumeration defines values, not permission for every transition. New→InProgress→Closed is an agreed path; reopening a closed request needs another rule. Specify allowed transitions and identify where they are enforced. Filtering by status neither changes status nor replaces transition validation.",
+      "The existing handler validates required header fields and duration bounds. The new table is not automatically connected to the customer report, posting or per-row validation. Enter 30 in the header and 20/10 in rows, explicitly noting manual reconciliation. Filled rows do not remove the header requirements: missing header input must still be rejected."
+    ],
+    [
+      "Rereading separates buffer from database",
+      "An open form can show unsaved values. Save, close and reopen the same identity. Verify fields, list total and document count. For a rejected write, compare before/after state. This catches a screen showing corrected 30 minutes while the database still contains 45.",
+      "Before updating, create a separate copy through module 1 and compare older documents after adding the table. They should retain the same headers and have empty new rows. An empty new table is expected, not loss of the original service. Do not automatically migrate or populate old documents without a separate task."
+    ]
+  ],
+  "diagram": "a5-2",
+  "walkthrough": [
+    {
+      "action": "Copy — Earlier documents retained",
+      "expected": "Header control recorded."
+    },
+    {
+      "action": "Metadata — Add Работы",
+      "expected": "Two row attributes."
+    },
+    {
+      "action": "Input — Header 30, rows 20/10",
+      "expected": "Save a new document."
+    },
+    {
+      "action": "Reopen — Read header and rows",
+      "expected": "Manual control is 30."
+    }
+  ],
+  "examples": [
+    {
+      "title": "One document, two data levels",
+      "source": "Header: customer C1, service S1, ДлительностьМинут 30\nРаботы: S1 — 20; S2 — 10\nManual control: 20 + 10 = 30",
+      "expected": "Reopening retains the header and two rows separately.",
+      "explanation": "The row total is not assigned automatically; this lesson reconciles manually.",
+      "trace": [
+        [
+          "Copy",
+          "Earlier documents retained",
+          "Header control recorded."
+        ],
+        [
+          "Metadata",
+          "Add Работы",
+          "Two row attributes."
+        ],
+        [
+          "Input",
+          "Header 30, rows 20/10",
+          "Save a new document."
+        ],
+        [
+          "Reopen",
+          "Read header and rows",
+          "Manual control is 30."
+        ]
+      ]
+    },
+    {
+      "title": "Rows do not fill the required header",
+      "source": "Работы is filled; header Клиент is empty",
+      "expected": "The existing rule rejects writing; rows alone do not validate the document.",
+      "explanation": "Each data level needs explicit rules.",
+      "trace": [
+        [
+          "Rows",
+          "20 and 10",
+          "One part is populated."
+        ],
+        [
+          "Header",
+          "Empty customer",
+          "Existing write rule rejects it."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Label header and row fields and explain why one service is not a table.",
+      "criteria": "One value and a row collection are distinguished."
+    },
+    {
+      "level": "Applied",
+      "task": "Add Работы in a new copy, save 30/20+10 and reopen the document.",
+      "criteria": "Header and two rows persist; earlier documents remain unchanged."
+    },
+    {
+      "level": "Advanced",
+      "task": "Specify automatic totals, row validation and report changes as a separate engineering task.",
+      "criteria": "Source of truth, mismatch rejection and older-document compatibility specified without claiming implementation."
+    }
+  ],
+  "lab": {
+    "title": "Two teaching rows in a new-copy document",
+    "environment": "Official local training platform; original service-desk configuration, synthetic records only. Studio and Sandbox optional.",
+    "steps": [
+      "Close Enterprise, save a DT and restore it only into a new empty infobase with a new name/directory, following module 1. Record an earlier document’s fields.",
+      "Under Tabular sections add Работы. Inside it add Услуга: CatalogRef.Услуги and Минуты: Number, length 5, precision 0. Keep existing header attributes.",
+      "Review the change list: only Работы and its fields are added, with no old objects removed. Update this copy, then launch Enterprise.",
+      "Fill customer, service, Новая and 30 header minutes. Add two Работы rows with existing services and 20/10 minutes. Save and close; record the number.",
+      "Reopen and check 30/20+10. In a new draft, fill rows but leave the customer empty and attempt saving. After rejection close only that draft without saving."
+    ],
+    "expected": [
+      "Source retained; new copy opens independently.",
+      "Работы is a tabular section, not a header attribute.",
+      "The copy updates and older requests open.",
+      "A new document retains two rows.",
+      "Saved work intact; incomplete header rejected."
+    ],
+    "evidence": [
+      "Actual infobase/version, own synthetic codes and numbers, before/after field observations.",
+      "Saved source and outcome; any missing or untested behavior explicitly recorded."
+    ],
+    "negative": "Use the second worked case only in an own copy or unsaved draft. Preserve the accepted record and explain the discrepancy."
+  },
+  "mistakes": [
+    [
+      "The table is expected in the unchanged starter.",
+      "Add Работы in a separate copy first; the starter has one header service."
+    ],
+    [
+      "Row Минуты replaces header ДлительностьМинут.",
+      "Keep the existing header field and add the new attribute inside the table."
+    ],
+    [
+      "A row total is assumed to update the header automatically.",
+      "Reconcile manually here; automatic recalculation needs an explicit handler."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "Работы here is",
+      "options": [
+        "A new table in a copy",
+        "A renamed old field",
+        "A mandatory Studio feature"
+      ],
+      "correct": 0,
+      "explanation": "It adds rows without replacing the original model."
+    },
+    {
+      "question": "Do rows 20 and 10 automatically set the header to 30?",
+      "options": [
+        "Always",
+        "Only with an explicit implemented rule",
+        "The form colour does it"
+      ],
+      "correct": 1,
+      "explanation": "A table alone does not create a calculation."
+    },
+    {
+      "question": "An older document should",
+      "options": [
+        "Disappear",
+        "Receive arbitrary rows",
+        "Retain its header with empty new rows"
+      ],
+      "correct": 2,
+      "explanation": "Preserve old data without an unrequested migration."
+    }
+  ],
+  "review": [
+    "Where do repeating rows live?",
+    "Why is the header still required?",
+    "Which rules were not implemented by adding a table?"
+  ],
+  "sources": [
+    "training",
+    "designer",
+    "catalogs",
+    "documents",
+    "form-elements"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "1c-enterprise",
+    "topicId": "1c-enterprise.a5.topic-3",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "1c-enterprise.a5",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "catalog",
+      "document",
+      "reference",
+      "attribute",
+      "metadata",
+      "form",
+      "configuration",
+      "infobase"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed 1C Enterprise / Designer of your separate training copy",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "copy",
+          "title": "Create a separate change copy",
+          "where": "Designer → Administration → Dump infobase",
+          "action": "Close Enterprise, save a DT and restore it only into a new empty infobase with a new name/directory, following module 1. Record an earlier document’s fields.",
+          "why": "Keep structural experiments separate from continuing work.",
+          "expected": "Source retained; new copy opens independently.",
+          "troubleshooting": "Never restore over your only base: restoration replaces its target.",
+          "before": "Your module 4 work and copy provenance are retained; actual infobase path identified."
+        },
+        {
+          "id": "table",
+          "title": "Add the tabular section",
+          "where": "Copy Designer → Documents → ЗаявкаУслуги → Data",
+          "action": "Under Tabular sections add Работы. Inside it add Услуга: CatalogRef.Услуги and Минуты: Number, length 5, precision 0. Keep existing header attributes.",
+          "why": "Define rows without replacing prior fields.",
+          "expected": "Работы is a tabular section, not a header attribute.",
+          "troubleshooting": "Correct only the new unpopulated element if misplaced; preserve old objects.",
+          "before": "Source retained; new copy opens independently."
+        },
+        {
+          "id": "update",
+          "title": "Save and apply",
+          "where": "Copy Designer → Ctrl+S → F7",
+          "action": "Review the change list: only Работы and its fields are added, with no old objects removed. Update this copy, then launch Enterprise.",
+          "why": "Saving metadata differs from applying it to the database.",
+          "expected": "The copy updates and older requests open.",
+          "troubleshooting": "Stop before confirmation if old attributes would be removed.",
+          "before": "Работы is a tabular section, not a header attribute."
+        },
+        {
+          "id": "enter",
+          "title": "Fill a new request",
+          "where": "Copy Enterprise → Заявки → Создать",
+          "action": "Fill customer, service, Новая and 30 header minutes. Add two Работы rows with existing services and 20/10 minutes. Save and close; record the number.",
+          "why": "Explicitly reconcile levels without implied automation.",
+          "expected": "A new document retains two rows.",
+          "troubleshooting": "If an earlier explicit form hides the table, avoid blind changes; the next lesson creates a separate form in this copy.",
+          "before": "The copy updates and older requests open."
+        },
+        {
+          "id": "verify",
+          "title": "Reread and test rejection",
+          "where": "Enterprise → saved request, then a new unsaved draft",
+          "action": "Reopen and check 30/20+10. In a new draft, fill rows but leave the customer empty and attempt saving. After rejection close only that draft without saving.",
+          "why": "A negative case checks existing rules.",
+          "expected": "Saved work intact; incomplete header rejected.",
+          "troubleshooting": "Do not disable validation or remove rows from your saved work for the negative case.",
+          "before": "A new document retains two rows."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Один документ и два уровня данных",
+        "en": "Explore the example: One document, two data levels"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Копия",
+            "en": "Copy"
+          },
+          "detail": {
+            "ru": "Прежние документы сохранены → Зафиксирован контроль шапки.",
+            "en": "Earlier documents retained → Header control recorded."
+          }
+        },
+        {
+          "label": {
+            "ru": "Метаданные",
+            "en": "Metadata"
+          },
+          "detail": {
+            "ru": "Добавлена Работы → Два реквизита строк.",
+            "en": "Add Работы → Two row attributes."
+          }
+        },
+        {
+          "label": {
+            "ru": "Ввод",
+            "en": "Input"
+          },
+          "detail": {
+            "ru": "Шапка 30, строки 20/10 → Записан новый документ.",
+            "en": "Header 30, rows 20/10 → Save a new document."
+          }
+        },
+        {
+          "label": {
+            "ru": "Открытие",
+            "en": "Reopen"
+          },
+          "detail": {
+            "ru": "Шапка и строки перечитаны → Ручной контроль равен 30.",
+            "en": "Read header and rows → Manual control is 30."
+          }
+        }
+      ]
+    }
+  },
+  "nativeCaseIds": [
+    "older-document-empty-new-rows",
+    "header-and-two-rows-persisted",
+    "row-order-values-persisted",
+    "rename-preserves-references",
+    "no-implicit-header-recalculation",
+    "rows-do-not-bypass-required-customer",
+    "native-form-created-opened-two-rows"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/A5_PRESERVATION_RESULT.json",
+    "caseIds": [
+      "older-document-empty-new-rows",
+      "header-and-two-rows-persisted",
+      "row-order-values-persisted",
+      "rename-preserves-references",
+      "no-implicit-header-recalculation",
+      "rows-do-not-bypass-required-customer",
+      "native-form-created-opened-two-rows"
+    ],
+    "scope": "Separate DT-restored copy: original identities/header/A4 note preserved, table rows persisted, references retained after rename, no implicit total, missing customer rejected, exact Designer-generated named form opened with two rows",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  }
+}

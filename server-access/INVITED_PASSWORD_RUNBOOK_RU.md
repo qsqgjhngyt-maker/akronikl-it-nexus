@@ -1,8 +1,10 @@
 # Email + пароль только для приглашённых — эксплуатация и откат
 
-Статус: изменения подготовлены к review в PR #64. Production, main, production-секреты и
+Статус: изменения подготовлены к review в PR #64. Production, production-секреты и
 рабочая D1 не изменены. Исходная main: `d8721e06a2b1ac953aa18694c07559c62d388700`;
 продолжена существующая ветка `feature/invited-email-password-2026-11-02`.
+Интеграционная база обновлена до main `0eb4bdcbc05c73ae4f8a312e7bcc0f4279d91b13`
+из независимого релиза 1С; объединение выполняется только в ветке PR.
 Локальные staging/security проверки выполнены. Перед production обязательны
 оставшиеся deployment gates из PASSWORD_SECURITY_REVIEW_RU.md. Merge сам по себе
 не означает ввод в эксплуатацию.
@@ -180,3 +182,8 @@ Reset с этим реальным кодом не заявляется: reset/�
 Созданы отдельные Cloudflare Worker/D1, применены все 23 файла миграций до 0024. Локальный HTTPS BFF работает на Node 22.23.3. Capture-приёмка в настоящей новой облачной D1 пройдена: enrollment, session read, recovery, отказ старого пароля, logout. Отдельный пароль приложения уже введён локально; самостоятельный SMTP-тест и реальное письмо восстановления через BFF без VPN получены во «Входящих». Локальная почтовая приёмка завершена. Hosted Yandex ingress и физические мобильные устройства не объявляются проверенными.
 
 Старые workflow курсов теперь получают точную классификацию SHA diff. Только строгий auth allowlist передаётся identity workflow; courses/runtime/receipts/неизвестные файлы оставляют прежние gates обязательными. Новые проверки classifier и TLS SMTP включены в CI. Frozen release guards и исторические receipts не переписывались.
+При совмещении с main сохранены trusted content_scope/content_review и тела
+historical-release jobs. Перед content_scope добавлена только зависимость от
+строгого identity classifier: обычные content и release изменения продолжают
+проходить исходную маршрутизацию. 10 тестов content router, включая сохранность
+полного workflow после удаления добавленной identity lane, включены в identity CI.

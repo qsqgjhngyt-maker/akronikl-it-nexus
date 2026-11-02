@@ -8,6 +8,7 @@ export const AUTH_PATHS=new Set([
  '.github/workflows/academy-gold-cpp-module-2-preflight.yml',
  '.github/workflows/academy-gold-cpp-module-3-publication.yml',
  'core/account-control.js','tools/invited-password-ci-scope.mjs','tests/invited-password-ci-scope.test.mjs',
+ 'tests/content-publication-route.test.mjs',
  'server-access/INVITED_PASSWORD_RUNBOOK_RU.md','server-access/PASSWORD_SECURITY_REVIEW_RU.md',
  'server-access/bff/invited-password.mjs','server-access/bff/password-mail.mjs','server-access/bff/server.mjs',
  'server-access/build-bff.mjs','server-access/build-network-bootstrap.mjs',

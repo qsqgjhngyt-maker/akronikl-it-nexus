@@ -1,0 +1,357 @@
+{
+  "schemaVersion": 1,
+  "standardVersion": "academy-gold-1.1",
+  "courseId": "onec",
+  "moduleId": "onec.p7",
+  "topicId": "onec.p7.topic-4",
+  "locale": "en",
+  "status": "IMPLEMENTED",
+  "title": "Measurement plan and eliminating N+1",
+  "minutes": 180,
+  "goal": "Compare two explicit queries with one batch selection using the same keys and75 total.",
+  "prerequisites": [
+    "onec.p6; P1–P3; explicit contracts, types, collections and failure handling."
+  ],
+  "outcomes": [
+    "Counter boundary explicit.",
+    "Equivalence checked first.",
+    "Raw runs/version/limits retained."
+  ],
+  "sections": [
+    [
+      "Convenient access can hide cost",
+      "A100-request loop reading customer and rate can cause many individual calls. A shortCustomer.Descriptionexpression does not prove negligible cost. Map data sources and count calls. One form may tolerate this; bulk reporting may benefit from a combined selection. Measurements decide.",
+      "Count calls to Execute in our own code: two per-reference queries versus one IN(&Keys). This is a local measured boundary, not a count of internal SQL statements, packets or cache reads."
+    ],
+    [
+      "Freeze the baseline",
+      "Record version, volume, dataset, cold/warm state and measured operation. Network, cache andUIaffect timing. Do not compare one cold baseline with a warmed new version. A small training infobase demonstrates method, not field p95 or industrial scaling.",
+      "Both paths use the same two references. One sums30+45; the other returns2/75. Check equivalence before timing. A professional larger comparison should also reconcile the complete key set and values by key."
+    ],
+    [
+      "Establish equivalence first",
+      "Replace per-item reads with a query selecting required fields and correct relationships. Compare identities, rows, missing values, sums and required order. Losing request-free customers can make a report faster but wrong. Keep a small oracle dataset beside the benchmark so optimization does not change the task.",
+      "Record platform wall-clock milliseconds without claiming monotonic time. Zero and an occasionally slower batch are legitimate for this tiny dataset; no assertion requires it to be faster every run. The explicit2→1 reduction is separate from observed duration."
+    ],
+    [
+      "Make two distinct conclusions",
+      "Report equivalence separately from call count and timing. Repeated runs reveal variability; one run is not p95. Unmeasured speedup remains a hypothesis. Do not enlargeNexusstartup budgets for the course; NEXUS-PERF-01checks those independently.",
+      "Use a new copy for a larger synthetic dataset, consistent conditions and at least five runs per variant. Retain raw timings, version and cache assumptions. These are not field p95 or a change to frontend NEXUS-PERF-01."
+    ]
+  ],
+  "diagram": "p7-3",
+  "walkthrough": [
+    {
+      "action": "Baseline — Two keys,two queries",
+      "expected": "30+45=75."
+    },
+    {
+      "action": "Change — Same keys,one query",
+      "expected": "2/75."
+    },
+    {
+      "action": "Measure — Both durations",
+      "expected": "Observations,not a standard."
+    }
+  ],
+  "examples": [
+    {
+      "title": "Reconcile the complete experiment",
+      "source": "// Two Execute calls for two references\n// versus one Execute with IN (&Keys)\n// Reconcile keys/2/75 before observed milliseconds.",
+      "expected": "Эквивалентно=True and ВызовыУменьшены=True; retain observed timings without a speed guarantee.",
+      "explanation": "Fewer explicit calls are demonstrable; elapsed time depends on conditions.",
+      "trace": [
+        [
+          "Baseline",
+          "Two keys,two queries",
+          "30+45=75."
+        ],
+        [
+          "Change",
+          "Same keys,one query",
+          "2/75."
+        ],
+        [
+          "Measure",
+          "Both durations",
+          "Observations,not a standard."
+        ]
+      ]
+    },
+    {
+      "title": "A case that distinguishes the wrong solution",
+      "source": "In a separate copy omit one reference from the batch parameter.",
+      "expected": "Эквивалентно=False: one row and an incomplete total.",
+      "explanation": "Faster data loss is not an acceptable optimization.",
+      "trace": [
+        [
+          "Separate copy",
+          "In a separate copy omit one reference from the batch parameter.",
+          "Retain the accepted original."
+        ],
+        [
+          "Observe",
+          "Эквивалентно=False: one row and an incomplete total.",
+          "Faster data loss is not an acceptable optimization."
+        ]
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "level": "Basic",
+      "task": "Distinguish an explicit call from internal platform requests.",
+      "criteria": "Counter boundary explicit."
+    },
+    {
+      "level": "Applied",
+      "task": "Retain both timings and prove2→1 with the same set.",
+      "criteria": "Equivalence checked first."
+    },
+    {
+      "level": "Advanced",
+      "task": "Run five repetitions on a larger own dataset and state limits.",
+      "criteria": "Raw runs/version/limits retained."
+    }
+  ],
+  "lab": {
+    "title": "Measurement plan and eliminating N+1",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "steps": [
+      "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+      "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+      "Результат = УчебныеЗапросы.ОпытЧислаЗапросов();\nСообщить(Результат.Эквивалентно);\nСообщить(Результат.ВызовыУменьшены);\nСообщить(Результат.ОтдельноМс);\nСообщить(Результат.ПакетомМс);",
+      "Run once, record both actual boolean claims and, for measurement, the two durations. Keep the created keys.",
+      "Remove only the startup call. Retain functions/data and investigate the negative control in another restored copy."
+    ],
+    "expected": [
+      "Separate copy opens with the earlier records.",
+      "Definitions are module-level; no duplicate helper.",
+      "Only the stated caller is inside the existing startup handler.",
+      "Эквивалентно=True and ВызовыУменьшены=True; retain observed timings without a speed guarantee.",
+      "Original retained, negative experiment isolated, automatic caller removed."
+    ],
+    "evidence": [
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits."
+    ],
+    "negative": "In a separate copy omit one reference from the batch parameter."
+  },
+  "mistakes": [
+    [
+      "A customer name replaces its reference.",
+      "Use the actual typed reference of the experiment, not its display label."
+    ],
+    [
+      "An equal sum is accepted without membership checks.",
+      "Reconcile actual keys and row count before accepting the aggregate."
+    ],
+    [
+      "A tiny timing is promoted to a server performance guarantee.",
+      "Retain raw observations and explicitly limit the environment and metric."
+    ]
+  ],
+  "quiz": [
+    {
+      "question": "First compare",
+      "options": [
+        "Only milliseconds",
+        "Data equivalence",
+        "Font size"
+      ],
+      "correct": 1,
+      "explanation": "A fast wrong answer remains wrong."
+    },
+    {
+      "question": "2→1 means here",
+      "options": [
+        "Explicit Execute calls",
+        "All server SQL",
+        "Network p95"
+      ],
+      "correct": 0,
+      "explanation": "Internal operations are not counted."
+    },
+    {
+      "question": "Zero tiny-case duration",
+      "options": [
+        "Proves instant execution always",
+        "Proves a server SLA",
+        "Can reflect scale/resolution"
+      ],
+      "correct": 2,
+      "explanation": "Conditions and repeated observations are needed."
+    }
+  ],
+  "review": [
+    "Counter boundary explicit.",
+    "Equivalence checked first.",
+    "Raw runs/version/limits retained."
+  ],
+  "sources": [
+    "bsl-language",
+    "platform-architecture",
+    "designer",
+    "cli",
+    "catalogs",
+    "documents",
+    "query-mechanism",
+    "query-language",
+    "accumulation-register"
+  ],
+  "contentRevision": "2.0.0-pedagogy.1",
+  "sharedRefs": [
+    "onec.shared.v1@1.0.0",
+    "onec.full.shared.v1@1.0.0"
+  ],
+  "nativeGuide": "native/BEGINNER_EN.md",
+  "executionProfile": "official-1c-file",
+  "nativeEvidenceStatus": "NOT RUN",
+  "provenance": {
+    "authorship": "original-nexus-course-content",
+    "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
+    "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p7.topic-4",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
+  },
+  "theoryContext": {
+    "kind": "shared-module-reasoning",
+    "moduleId": "onec.p7",
+    "locale": "en"
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "reference",
+      "query",
+      "transaction"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C: Designer and Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "step-1",
+          "title": "Preserve the starting state",
+          "where": "Own-copy Designer",
+          "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+          "why": "Keep the accepted work independent.",
+          "expected": "Separate copy opens with the earlier records.",
+          "troubleshooting": "A new list name alone does not create another database directory.",
+          "before": "Own path, prior sources and a restorable backup identified."
+        },
+        {
+          "id": "step-2",
+          "title": "Add the complete server source",
+          "where": "Конфигуратор → Общие → Общие модули → УчебныеЗапросы",
+          "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+          "why": "Database access has an explicit server boundary.",
+          "expected": "Definitions are module-level; no duplicate helper.",
+          "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
+          "before": "Separate copy opens with the earlier records."
+        },
+        {
+          "id": "step-3",
+          "title": "Prepare and call the experiment",
+          "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
+          "action": "Результат = УчебныеЗапросы.ОпытЧислаЗапросов();\nСообщить(Результат.Эквивалентно);\nСообщить(Результат.ВызовыУменьшены);\nСообщить(Результат.ОтдельноМс);\nСообщить(Результат.ПакетомМс);",
+          "why": "Print every named result instead of accepting compilation alone.",
+          "expected": "Only the stated caller is inside the existing startup handler.",
+          "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
+          "before": "Definitions are module-level; no duplicate helper."
+        },
+        {
+          "id": "step-4",
+          "title": "Save, update and run once",
+          "where": "Ctrl+S → F7 → Предприятие",
+          "action": "Run once, record both actual boolean claims and, for measurement, the two durations. Keep the created keys.",
+          "why": "Observe actual1C data, not the browser diagram.",
+          "expected": "Эквивалентно=True and ВызовыУменьшены=True; retain observed timings without a speed guarantee.",
+          "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
+          "before": "Only the stated caller is inside the existing startup handler."
+        },
+        {
+          "id": "step-5",
+          "title": "Retain both results",
+          "where": "Конфигуратор после закрытия Предприятия",
+          "action": "Remove only the startup call. Retain functions/data and investigate the negative control in another restored copy.",
+          "why": "Preserve provenance and avoid repeating data creation at every startup.",
+          "expected": "Original retained, negative experiment isolated, automatic caller removed.",
+          "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
+          "before": "Эквивалентно=True and ВызовыУменьшены=True; retain observed timings without a speed guarantee."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Сверьте полный опыт",
+        "en": "Explore the example: Reconcile the complete experiment"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Базовая линия",
+            "en": "Baseline"
+          },
+          "detail": {
+            "ru": "Два ключа,два запроса → 30+45=75.",
+            "en": "Two keys,two queries → 30+45=75."
+          }
+        },
+        {
+          "label": {
+            "ru": "Изменение",
+            "en": "Change"
+          },
+          "detail": {
+            "ru": "Те же ключи,один запрос → 2/75.",
+            "en": "Same keys,one query → 2/75."
+          }
+        },
+        {
+          "label": {
+            "ru": "Измерение",
+            "en": "Measure"
+          },
+          "detail": {
+            "ru": "Оба времени → Наблюдения,не норматив.",
+            "en": "Both durations → Observations,not a standard."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · complete server common-module source УчебныеЗапросы; shared preparation once"
+  },
+  "nativeCaseIds": [
+    "P7.MEASUREMENT.ORIGINAL",
+    "P7.MEASUREMENT.MUTATION"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_QUERIES_RESULT.json",
+    "caseIds": [
+      "P7.MEASUREMENT.ORIGINAL",
+      "P7.MEASUREMENT.MUTATION"
+    ],
+    "scope": "Exact native query function and compiled discriminating negative; own references, boundaries, joins, temporary lifetime or explicit call count. No field p95 claim.",
+    "training1508Verified": true,
+    "allLearnerGuiStepsVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false,
+    "trainingCompatibilityEvidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/CURRENT_TRAINING_RESULT.json",
+    "trainingCompatibilityScope": "Exact current server source compiled and all positive assertions passed in official personal training1508; integrated observer. Does not extend GUI/RLS/HTTP/scheduling claims."
+  },
+  "codeFile": "code/pedagogy/query-measurement-first.bsl"
+}
