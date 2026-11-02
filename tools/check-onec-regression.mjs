@@ -1,7 +1,7 @@
 import{spawnSync}from'node:child_process';import fs from'node:fs';import path from'node:path';
 const out=path.resolve(process.env.ONEC_REGRESSION_EVIDENCE||'onec-regression-evidence');fs.mkdirSync(out,{recursive:true});
 const commands=[
- ['ONEC_PEDAGOGY_V2',['--test','tests/onec-pedagogy.test.mjs','tests/onec-pedagogy-preservation.test.mjs','tests/onec-learning-context.test.mjs','tests/onec-glossary.test.mjs','tests/onec-tutor.test.mjs','tests/onec-offline-data.test.mjs','tests/term-reference.test.mjs']],
+ ['ONEC_PEDAGOGY_V2',['--test','tests/onec-pedagogy.test.mjs','tests/onec-pedagogy-native-current.test.mjs','tests/onec-worker-configuration.test.mjs','tests/onec-pedagogy-preservation.test.mjs','tests/onec-learning-context.test.mjs','tests/onec-glossary.test.mjs','tests/onec-tutor.test.mjs','tests/onec-offline-data.test.mjs','tests/term-reference.test.mjs']],
  ['GOLD_SHARED_STYLE',['tools/build-learning-gold-style.mjs']],
  ['ONEC_LAB_HELP_ZIP',['--test','tests/onec-lab-help.test.mjs']],
  ['ONEC_VOICE_GUEST_UNIT',['--test','tests/onec-asr.test.mjs','tests/onec-voice-session.test.mjs','tests/onec-official-lab.test.mjs']],

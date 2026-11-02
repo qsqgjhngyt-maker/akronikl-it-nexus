@@ -6,152 +6,198 @@
   "topicId": "onec.p6.reposting",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Reposting and duplicate movement prevention",
-  "minutes": 120,
-  "goal": "Prove absence of duplicate movements after repetition, changes and reversal.",
+  "title": "Reposting:75 stays75, changes yield90 and unposting preserves the other recorder",
+  "minutes": 180,
+  "goal": "Verify repeat/replacement/unposting without duplication or losing another recorder.",
   "prerequisites": [
     "onec.p5; P1–P3; explicit contracts, types, collections and failure handling."
   ],
   "outcomes": [
-    "Prove absence of duplicate movements after repetition, changes and reversal.",
-    "PostR1=30, R2=15.",
-    "RepeatR1 and change it to 45."
+    "Each transition has an independent expectation.",
+    "Other recorder retained until its own unposting.",
+    "Atomicity/concurrency have separate checks/environments."
   ],
   "sections": [
     [
       "A repeatable transformation",
       "Posting transforms the current document into a movement set. Identical input should yield an equivalent set regardless of repetition. Compare dimensions, resources, periods and recorder—not merely one total. Opposite duplicates can cancel numerically while leaving invalid records.",
-      "Choose a register from the data question. “Which rate applied?” needs keyed temporal state;“how much was delivered this week?” needs turnover;“what obligation remains?” needs balance. Similar-looking fields do not imply equal mechanisms or invariants. Write a small independent example for each and explain why another register type would answer the wrong question."
+      "Begin with own30/45 requests totaling75. Reposting the first is not another30-minute fact: movements represent current document state rather than button presses. The handler clears and rebuilds its own object’s set."
     ],
     [
       "A change replaces the prior effect",
       "Changing 30→45 replaces the recorder’s old effect under the agreed policy. Appending 45 gives 75 incorrectly. For multiline documents, test a removed line: its old movement must disappear. Define behavior for an empty document too.",
-      "Dimensions define slices, resources measured quantities, and recorders provenance where supported. Adding a dimension changes keys and granularity: customer totals may split by service. Define old-data treatment and grand-total reconciliation before restructuring. New granularity is more than another displayed column; it changes writes, uniqueness and the interpretation of historical records."
+      "Changing the first30→45 replaces its effect, giving90 rather than120. Unposting it leaves the second45; unposting the second leaves0 for this own customer, without clearing other customers."
     ],
     [
       "Failures must not mix versions",
       "Failure between removing old and writing new records must not leave a partial effect. Inject failure only in a new copy and test atomicity. Reread document/register in a fresh session. Transactions and locks address different concerns: one change’s consistency versus interacting concurrent changes.",
-      "Time boundaries belong in specifications. State uses an as-of moment, turnover an interval, and movements an agreed period. Test before the first fact, exactly at a change and after it. Equal totals without matching identities do not prove correctness: errors for different customers can cancel numerically while allocations remain wrong."
+      "A parameterized query checks each stage. A correct final0 could hide an earlier duplication, so retain all five claims:75,75,90,45,0. Unposting retains document identity."
     ],
     [
       "Use a matrix beyond the happy path",
       "Use post 30, repeat 30, change 45, remove a line, reverse, repost. Record counts and movement identities at every step. Include another recorder to expose accidental deletion of someone else’s set. Preserve both the current invariant and independent earlier documents.",
-      "Trace totals back to original facts. Preserve recorder-level records, independent arithmetic and reversal results. Reposting one document must not affect unrelated sets. For accounting models, test both side equality and analytic meaning. Array exercises demonstrate algorithms but do not replace actual execution of the corresponding platform mechanism. Record that distinction in the evidence and acceptance scope."
+      "A31/45 negative set gives76 despite the same count. The initial75 expectation must detect it. Specify a separate injected posting failure to check atomic old/new state; concurrent posting needs suitable separate sessions and is not established by one file-base experiment."
     ]
   ],
   "diagram": "p6-4",
   "walkthrough": [
     {
-      "action": "PostR1=30, R2=15.",
-      "expected": "Total 45 with independent recorders."
+      "action": "Two documents — 30/45",
+      "expected": "75."
     },
     {
-      "action": "RepeatR1 and change it to 45.",
-      "expected": "First 45, then 60; not duplicate-driven 75/90."
+      "action": "Repeat — First unchanged",
+      "expected": "75."
     },
     {
-      "action": "ReverseR1 and inject failure on a fresh copy.",
-      "expected": "R2 remains 15; failure leaves no partial version."
+      "action": "Replace — First45",
+      "expected": "90."
+    },
+    {
+      "action": "Unpost — First then second",
+      "expected": "45 then0; other sets retained."
     }
   ],
   "examples": [
     {
-      "title": "Main example",
-      "source": "R1: 30 → 30 → 45 → отмена; R2: 15 неизменно",
-      "expected": "Totals 45→45→60→15; R2 is never removed.",
-      "explanation": "Totals includeR1+R2; repeatingR1 does not add another 30."
+      "title": "Native worked example",
+      "source": "Первая.Записать(РежимЗаписиДокумента.Проведение);\nПервая.Записать(РежимЗаписиДокумента.Проведение);\n// Verify every stage, not only the final state.",
+      "expected": "Five True; own-set75→75→90→45→0.",
+      "explanation": "Excerpt only; the complete source below belongs to the stated server common module.",
+      "trace": [
+        [
+          "Two documents",
+          "30/45",
+          "75."
+        ],
+        [
+          "Repeat",
+          "First unchanged",
+          "75."
+        ],
+        [
+          "Replace",
+          "First45",
+          "90."
+        ],
+        [
+          "Unpost",
+          "First then second",
+          "45 then0; other sets retained."
+        ]
+      ]
     },
     {
-      "title": "Boundary case",
-      "source": "Отмените R1 и испытайте сбой на новой копии.",
-      "expected": "R2 remains 15; failure leaves no partial version.",
-      "explanation": "Totals includeR1+R2; repeatingR1 does not add another 30."
+      "title": "Discriminating semantic control",
+      "source": "In another copy use31/45 rather than30/45; initial75 must detect76.",
+      "expected": "The independent original expectation fails; preserve the original copy.",
+      "explanation": "A compilable wrong value is not a syntax-only test.",
+      "trace": [
+        [
+          "Mutation",
+          "In another copy use31/45 rather than30/45; initial75 must detect76.",
+          "Only another own copy."
+        ],
+        [
+          "Check",
+          "Five True; own-set75→75→90→45→0.",
+          "Observe the failed claim."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "PostR1=30, R2=15.",
-      "criteria": "Total 45 with independent recorders."
+      "level": "Basic",
+      "task": "Predict all five totals before running.",
+      "criteria": "Each transition has an independent expectation."
     },
     {
       "level": "Applied",
-      "task": "RepeatR1 and change it to 45.",
-      "criteria": "First 45, then 60; not duplicate-driven 75/90."
+      "task": "Run repeat/replacement/two unpostings and reconcile.",
+      "criteria": "Other recorder retained until its own unposting."
     },
     {
       "level": "Advanced",
-      "task": "Add a two-line document and remove one line before reposting.",
-      "criteria": "The removed line’s old movement disappears; other sets remain."
+      "task": "Specify injected failure and separate concurrency testing without a server-PASS claim.",
+      "criteria": "Atomicity/concurrency have separate checks/environments."
     }
   ],
   "lab": {
-    "title": "Prove absence of duplicate movements after repetition, changes and reversal.",
-    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "title": "Reposting:75 stays75, changes yield90 and unposting preserves the other recorder",
+    "environment": "Own synthetic infobase and original metadata; no real accounting, mandatory Studio or Sandbox.",
     "steps": [
-      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
-      "PostR1=30, R2=15.",
-      "RepeatR1 and change it to 45.",
-      "ReverseR1 and inject failure on a fresh copy.",
-      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+      "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+      "Reuse module5 Трудозатраты/handler: clear only this object’s Движения.Трудозатраты, map ДлительностьМинут and retain automatic deletion on unposting.",
+      "Create a server/server-call common module without Global/Privileged. Append the complete source below outside other procedures. If НовыйНаборРегистров is already present, keep its one matching definition and append only the new experiment function.",
+      "Результат = УчебныеРегистры.ОпытПовторногоПроведения();\nСообщить(Результат.НачалоВерно);\nСообщить(Результат.ПовторНеУдвоил);\nСообщить(Результат.ЗаменаВерна);\nСообщить(Результат.ДругойСохранен);\nСообщить(Результат.СвоиОтменены);",
+      "Review changes, apply only to this copy and run once. Record actual booleans and created customer/service/document/account identities.",
+      "Remove only this startup call, retaining functions and records. Investigate the negative example only in another own copy and retain both protocols."
     ],
     "expected": [
-      "Total 45 with independent recorders.",
-      "First 45, then 60; not duplicate-driven 75/90.",
-      "R2 remains 15; failure leaves no partial version."
+      "Own copy/path and provenance identified.",
+      "Names/types/recorder connections match.",
+      "One definition per function; earlier code retained.",
+      "Caller is inside the existing handler.",
+      "Five True; own-set75→75→90→45→0.",
+      "Work retained; no automatic repetition."
     ],
     "evidence": [
-      "Input/expected/actual/case-ID table, platform build and source hashes.",
-      "Totals 45→45→60→15; R2 is never removed.",
-      "Work-copy provenance, negative result and source preservation before/after."
+      "Actual source, version and per-field observations with own identities.",
+      "Separate compilable negative control and retained original; no server grading/authorship claim."
     ],
-    "negative": "R2 remains 15; failure leaves no partial version."
+    "negative": "In another copy use31/45 rather than30/45; initial75 must detect76."
   },
   "mistakes": [
     [
-      "Treat an expected value as an observed execution.",
-      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+      "A helper definition is duplicated inside the startup handler.",
+      "Keep one module-level helper and only its call inside startup."
     ],
     [
-      "Modify the source infobase while experimenting.",
-      "Work on a new copy and verify the source by reopening it separately."
+      "Whole-register totals replace the own-key control.",
+      "Filter by the actual customer/service/recorder reference for this experiment."
+    ],
+    [
+      "A runnable result is treated as proof of all accounting/security behavior.",
+      "Record each checked mechanism and retain untested concurrency/edition limits."
     ]
   ],
   "quiz": [
     {
-      "question": "RepeatingR1=30 withR2=15 gives",
+      "question": "Repeating first30 at total75 yields",
       "options": [
-        "45",
         "75",
-        "60"
+        "105",
+        "0"
       ],
       "correct": 0,
-      "explanation": "A repeat does not create another fact."
+      "explanation": "Begin with own30/45 requests totaling75. Reposting the first is not another30-minute fact: movements represent current document state rather than button presses. The handler clears and rebuilds its own object’s set."
     },
     {
-      "question": "Deleting all register records forR1 is",
+      "question": "Changing30→45 with another45 yields",
       "options": [
-        "Required",
-        "Dangerous to other recorders",
-        "Always safe"
+        "120",
+        "90",
+        "75"
       ],
       "correct": 1,
-      "explanation": "Replacement is scoped to its own set."
+      "explanation": "Changing the first30→45 replaces its effect, giving90 rather than120. Unposting it leaves the second45; unposting the second leaves0 for this own customer, without clearing other customers."
     },
     {
-      "question": "Does a correct sum rule out duplicates?",
+      "question": "Unposting the first retains",
       "options": [
-        "Yes",
-        "For numbers",
-        "No; reconcile the set"
+        "Every register empty",
+        "A deleted document",
+        "The second own recorder’s45"
       ],
       "correct": 2,
-      "explanation": "Compensating duplicates can hide."
+      "explanation": "A parameterized query checks each stage. A correct final0 could hide an earlier duplication, so retain all five claims:75,75,90,45,0. Unposting retains document identity."
     }
   ],
   "review": [
-    "Prove absence of duplicate movements after repetition, changes and reversal.",
-    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+    "Each transition has an independent expectation.",
+    "Other recorder retained until its own unposting.",
+    "Atomicity/concurrency have separate checks/environments."
   ],
   "sources": [
     "bsl-language",
@@ -163,23 +209,182 @@
     "information-register",
     "accumulation-register"
   ],
-  "contentRevision": "1.0.0-rc.1",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.full.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_FULL_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "executionProfile": "official-1c-file",
   "nativeEvidenceStatus": "NOT RUN",
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
     "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p6.reposting",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
   },
   "theoryContext": {
     "kind": "shared-module-reasoning",
     "moduleId": "onec.p6",
     "locale": "en"
-  }
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "register",
+      "recorder",
+      "dimension",
+      "resource",
+      "reference",
+      "transaction",
+      "posting",
+      "bsl"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C Designer → server module → managed application",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "copy",
+          "title": "Identify the own experiment copy",
+          "where": "Own-copy Designer",
+          "action": "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+          "why": "Keep prior work independent.",
+          "expected": "Own copy/path and provenance identified.",
+          "troubleshooting": "Check actual directories rather than list-entry names.",
+          "before": "P5 work, backup and exact own-copy path retained."
+        },
+        {
+          "id": "metadata",
+          "title": "Prepare the stated metadata",
+          "where": "Конфигуратор → дерево конфигурации",
+          "action": "Reuse module5 Трудозатраты/handler: clear only this object’s Движения.Трудозатраты, map ДлительностьМинут and retain automatic deletion on unposting.",
+          "why": "The native function needs these actual platform objects.",
+          "expected": "Names/types/recorder connections match.",
+          "troubleshooting": "Inspect existing objects before adding duplicates; retain old UUIDs/fields.",
+          "before": "Own copy/path and provenance identified."
+        },
+        {
+          "id": "source",
+          "title": "Place the complete function",
+          "where": "Конфигуратор → Общие → Общие модули → УчебныеРегистры",
+          "action": "Create a server/server-call common module without Global/Privileged. Append the complete source below outside other procedures. If НовыйНаборРегистров is already present, keep its one matching definition and append only the new experiment function.",
+          "why": "Definitions have explicit server scope.",
+          "expected": "One definition per function; earlier code retained.",
+          "troubleshooting": "Do not nest functions inside startup or duplicate shared preparation.",
+          "before": "Names/types/recorder connections match."
+        },
+        {
+          "id": "call",
+          "title": "Add only the client call",
+          "where": "Модуль приложения → ПриНачалеРаботыСистемы",
+          "action": "Результат = УчебныеРегистры.ОпытПовторногоПроведения();\nСообщить(Результат.НачалоВерно);\nСообщить(Результат.ПовторНеУдвоил);\nСообщить(Результат.ЗаменаВерна);\nСообщить(Результат.ДругойСохранен);\nСообщить(Результат.СвоиОтменены);",
+          "why": "Print every independent claim.",
+          "expected": "Caller is inside the existing handler.",
+          "troubleshooting": "Keep one startup handler and retain its earlier source.",
+          "before": "One definition per function; earlier code retained."
+        },
+        {
+          "id": "run",
+          "title": "Save, update and run once",
+          "where": "Ctrl+S → F7 → Предприятие",
+          "action": "Review changes, apply only to this copy and run once. Record actual booleans and created customer/service/document/account identities.",
+          "why": "Observe real1C, then reconcile with the prediction.",
+          "expected": "Five True; own-set75→75→90→45→0.",
+          "troubleshooting": "Retain the actual module/line and failed claim; never change expected values to conceal a defect.",
+          "before": "Caller is inside the existing handler."
+        },
+        {
+          "id": "retain",
+          "title": "Preserve observations and stop startup repetition",
+          "where": "Конфигуратор после закрытия Предприятия",
+          "action": "Remove only this startup call, retaining functions and records. Investigate the negative example only in another own copy and retain both protocols.",
+          "why": "Reopening must not silently recreate datasets.",
+          "expected": "Work retained; no automatic repetition.",
+          "troubleshooting": "Do not clear whole registers or remove prior work.",
+          "before": "Five True; own-set75→75→90→45→0."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Разобранный нативный пример",
+        "en": "Explore the example: Native worked example"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Два документа",
+            "en": "Two documents"
+          },
+          "detail": {
+            "ru": "30/45 → 75. Сверяется весь набор двух собственных регистраторов; повтор не добавляет прежнее движение второй раз.",
+            "en": "30/45 → 75. Reconcile both own recorder sets; a repeat does not append the earlier movement again."
+          }
+        },
+        {
+          "label": {
+            "ru": "Повтор",
+            "en": "Repeat"
+          },
+          "detail": {
+            "ru": "Первый без изменений → 75.",
+            "en": "First unchanged → 75."
+          }
+        },
+        {
+          "label": {
+            "ru": "Замена",
+            "en": "Replace"
+          },
+          "detail": {
+            "ru": "Первый45 → 90. Сверяется весь набор двух собственных регистраторов; повтор не добавляет прежнее движение второй раз.",
+            "en": "First45 → 90. Reconcile both own recorder sets; a repeat does not append the earlier movement again."
+          }
+        },
+        {
+          "label": {
+            "ru": "Отмены",
+            "en": "Unpost"
+          },
+          "detail": {
+            "ru": "Первый, затем второй → 45, затем0; чужие наборы целы.",
+            "en": "First then second → 45 then0; other sets retained."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · complete server common-module source УчебныеРегистры; shared helper defined once"
+  },
+  "nativeCaseIds": [
+    "P6.REPOSTING.ORIGINAL",
+    "P6.REPOSTING.MUTATION"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_REGISTERS_RESULT.json",
+    "caseIds": [
+      "P6.REPOSTING.ORIGINAL",
+      "P6.REPOSTING.MUTATION"
+    ],
+    "scope": "Exact server functions on actual information/accumulation/accounting registers and own chart; original and compilable semantic negative distinguished; all fixture bytes pinned",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "concurrentServerTested": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  },
+  "codeFile": "code/pedagogy/register-reposting-first.bsl"
 }

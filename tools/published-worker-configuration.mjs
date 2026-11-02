@@ -27,5 +27,24 @@ export function readWorkerConfiguration(text){
   }
   json+=c;
  }
- return JSON.parse(json);
+ return expandPublicWorkerConfiguration(JSON.parse(json));
+}
+
+// Аддитивное публичное представление. Старый объект возвращается без изменений.
+// Только данные JSON: никакого eval и исполнения текста опубликованного worker.
+export function expandPublicWorkerConfiguration(value){
+ if(!Object.hasOwn(value,'assetEncoding'))return value;
+ const fail=()=>{throw Error('Invalid packed public asset manifest');};
+ if(value.assetEncoding!=='prefix-groups-v1'||!Array.isArray(value.assets)||value.assets.length||!Array.isArray(value.assetGroups)||value.assetGroups.length>1000)fail();
+ const assets=[],seen=new Set();
+ for(const group of value.assetGroups){
+  if(!Array.isArray(group)||group.length!==2||typeof group[0]!=='string'||group[0].length>256||!Array.isArray(group[1]))fail();
+  for(const pair of group[1]){
+   if(!Array.isArray(pair)||pair.length!==2||typeof pair[0]!=='string'||!pair[1]||typeof pair[1]!=='object'||Array.isArray(pair[1]))fail();
+   const url=group[0]+pair[0],row=pair[1];
+   if(url.length>2048||!url||!/^[A-Za-z0-9._/@+-]+(?:\/[A-Za-z0-9._@+-]+)*$/.test(url)||url.split('/').some(x=>x==='.'||x==='..')||seen.has(url)||Object.keys(row).some(k=>!['bytes','sha256','mime','version'].includes(k))||!Number.isSafeInteger(row.bytes)||row.bytes<0||!/^[a-f0-9]{64}$/.test(row.sha256||'')||typeof row.mime!=='string'||row.mime.length>200||Object.hasOwn(row,'version')&&(typeof row.version!=='string'||row.version.length>200))fail();
+   seen.add(url);assets.push({url,...row});if(assets.length>100000)fail();
+  }
+ }
+ const{assetEncoding,assetGroups,...config}=value;return{...config,assets};
 }

@@ -7,114 +7,148 @@
   "locale": "en",
   "status": "IMPLEMENTED",
   "title": "Locks and concurrent changes",
-  "minutes": 120,
+  "minutes": 180,
   "goal": "Protect a balance check against concurrent changes and reproduce two-transaction ordering.",
   "prerequisites": [
     "onec.p9; P1–P3; explicit contracts, types, collections and failure handling."
   ],
   "outcomes": [
-    "Protect a balance check against concurrent changes and reproduce two-transaction ordering.",
-    "Reproduce the unsafe schedule in a model.",
-    "Protect read and write in a permitted stand."
+    "Show how two individually valid decisions produce−4.",
+    "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
+    "Accepted original preserved; rejection and its limits explained."
   ],
   "sections": [
     [
       "Individually correct, collectively wrong",
       "Two operations each read balance 10 and spend 7. Each passes alone; combined balance−4breaks the rule. A post-read check without coordinated locking does not prevent the second transaction. Starting a transaction alone does not specify lock scope. Draw read A→readB→write A→writeBbefore choosing anAPI.",
-      "Engineering quality follows invariants, not absence of exceptions. Balance uses admissible amounts, permissions authorized scope, diagnostics explainable failure without leaks. Specify what survives errors and concurrent actions. Positive cases prove utility; negative cases prove boundaries. Denying everything is not a universally correct security implementation. Evidence needs both operational success and correctly bounded rejection."
+      "The runnable local experiment creates own30/45 documents. A transaction locks Document.ЗаявкаУслуги by the first reference, writes99 and rolls back. Expect30 and the untouched45. This proves actual lock API/rollback, not a two-session race."
     ],
     [
       "Locks apply to data",
       "Managed locking identifies a data space and dimension values. Lock invariant-related data before deciding. Too-wide locks reduce concurrency; too-narrow locks miss conflicts. Scope depends on register, mode and operation; there is no universal line suitable for every solution.",
-      "Transactions, locks and authorization solve different problems. Atomicity coordinates one operation, locking interacting operations, and rights constrain subjects. None proves the others. Identify decision point, read data and authorized actor for each failure scenario. Choose minimal protection rather than enabling every capability or broadening privileges. A context compile check is not a multi-user access proof."
+      "Lock scope follows the invariant. A shared customer/period resource may need a broader key than one document reference. Define competing read/check/write operations first. Locking the entire infobase merely to avoid errors is not a justified design."
     ],
     [
       "Consistent ordering reduces deadlocks",
       "Two operations locking A/Bin opposite order can deadlock. Agree on stable-key order and keep transactions short. A timeout is failure, not a successful spend. Retrying needs idempotency and a fresh state read; blindly repeating external effects can duplicate them.",
-      "Measurement/observability must preserve privacy. Use synthetic IDs, bounded logs and defined metrics. Passwords/tokens are unnecessary even for leak demonstrations; use canaries. One timing is not p95, and one profile result does not cover every role/configuration combination. Keep raw diagnostics restricted and publish only sufficient sanitized evidence tied to the actual test environment."
+      "Draw a separate schedule: both actors read10 and request7. Correct serialization makes the second reread3 and reject. A real test needs two permitted concurrent sessions with controlled pauses; a single-user training installation does not prove it."
     ],
     [
       "Two sessions need separate evidence",
       "Single-sessiontrainingcannot prove this scenario. In a permitted multi-session stand, control barriers and record both traces and final balance. From 10, one spend 7 succeeds; the second rereads and rejects, result 3. Test an independent customer to show the lock does not block everything.",
-      "Security acceptance needs discriminating tests in a permitted environment. Races need two controlled sessions, roles allowed work plus bypass attempts, and isolation denial of a specific resource. Preserve traces/post-failure state and repeat a successful control. Unsupported environments yieldNOTRUN; static analysis or diagrams cannot automatically fill that evidence gap. Report the remaining gate explicitly."
+      "In another copy replace rollback with commit:99 persists and the30 assertion fails. Retain the failed protocol and corrected source. Timeouts, deadlocks and a server cluster remain separate scenarios until actually tested."
     ]
   ],
   "diagram": "p10-0",
   "walkthrough": [
     {
-      "action": "Reproduce the unsafe schedule in a model.",
-      "expected": "Show how two individually valid decisions produce−4."
+      "action": "Start — 30/45",
+      "expected": "Two own references."
     },
     {
-      "action": "Protect read and write in a permitted stand.",
-      "expected": "One spend, balance 3, second rejection."
+      "action": "Transaction — Lock first;write99",
+      "expected": "Second unchanged."
     },
     {
-      "action": "Test timeout and an independent customer.",
-      "expected": "No false success; unrelated scope is not blocked unnecessarily."
+      "action": "Rollback — 30/45",
+      "expected": "Both checks True."
     }
   ],
   "examples": [
     {
-      "title": "Main example",
-      "source": "A: read 10; B: read 10; A: −7; B: −7 → −4\nЗащищённо: A commits 3; B reads 3 → reject",
-      "expected": "Final 3, one accepted operation, one explained rejection.",
-      "explanation": "This specifies a schedule; test actual managed-lockAPIin the required configuration."
+      "title": "Reconcile the complete experiment",
+      "source": "Start → 30/45 → Two own references.\nTransaction → Lock first;write99 → Second unchanged.\nRollback → 30/45 → Both checks True.",
+      "expected": "30/45; Both checks True.",
+      "explanation": "The runnable local experiment creates own30/45 documents. A transaction locks Document.ЗаявкаУслуги by the first reference, writes99 and rolls back. Expect30 and the untouched45. This proves actual lock API/rollback, not a two-session race.",
+      "trace": [
+        [
+          "Start",
+          "30/45",
+          "Two own references."
+        ],
+        [
+          "Transaction",
+          "Lock first;write99",
+          "Second unchanged."
+        ],
+        [
+          "Rollback",
+          "30/45",
+          "Both checks True."
+        ]
+      ]
     },
     {
-      "title": "Boundary case",
-      "source": "Проверьте таймаут и независимого клиента.",
-      "expected": "No false success; unrelated scope is not blocked unnecessarily.",
-      "explanation": "This specifies a schedule; test actual managed-lockAPIin the required configuration."
+      "title": "A case that distinguishes the wrong solution",
+      "source": "In another copy commit instead of rolling back.",
+      "expected": "The30 assertion fails because99 is persisted.",
+      "explanation": "In another copy replace rollback with commit:99 persists and the30 assertion fails. Retain the failed protocol and corrected source. Timeouts, deadlocks and a server cluster remain separate scenarios until actually tested.",
+      "trace": [
+        [
+          "Separate copy",
+          "In another copy commit instead of rolling back.",
+          "Retain the accepted original."
+        ],
+        [
+          "Observe",
+          "The30 assertion fails because99 is persisted.",
+          "In another copy replace rollback with commit:99 persists and the30 assertion fails. Retain the failed protocol and corrected source. Timeouts, deadlocks and a server cluster remain separate scenarios until actually tested."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Reproduce the unsafe schedule in a model.",
+      "level": "Basic",
+      "task": "Explain the checked boundary using the first trace. Reproduce the unsafe schedule in a model.",
       "criteria": "Show how two individually valid decisions produce−4."
     },
     {
       "level": "Applied",
-      "task": "Protect read and write in a permitted stand.",
-      "criteria": "One spend, balance 3, second rejection."
+      "task": "Perform the stated available experiment and retain actual observations. Protect read and write in a permitted stand.",
+      "criteria": "Actual input/output and exact own source identified; unperformed stages marked NOT RUN."
     },
     {
       "level": "Advanced",
-      "task": "Build an A/Bdeadlock schedule and address it with consistent ordering.",
-      "criteria": "Traces, order, timeouts and rechecks are documented."
+      "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. In another copy commit instead of rolling back.",
+      "criteria": "Accepted original preserved; rejection and its limits explained."
     }
   ],
   "lab": {
-    "title": "Protect a balance check against concurrent changes and reproduce two-transaction ordering.",
-    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "title": "Locks and concurrent changes",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
     "steps": [
-      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
-      "Reproduce the unsafe schedule in a model.",
-      "Protect read and write in a permitted stand.",
-      "Test timeout and an independent customer.",
-      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+      "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+      "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+      "Результат = УчебныеПрофессиональныеОпыты.ОпытЛокальнойБлокировки();\nСообщить(Результат.ОткатСохранил);\nСообщить(Результат.ДругойСохранен);",
+      "Run once and compare the fields with the worked trace. 30/45; Both checks True.",
+      "Remove only the startup call. Use another copy for the adverse case and keep both protocols."
     ],
     "expected": [
-      "Show how two individually valid decisions produce−4.",
-      "One spend, balance 3, second rejection.",
-      "No false success; unrelated scope is not blocked unnecessarily."
+      "Separate copy opens with the earlier records.",
+      "Definitions are module-level; no duplicate helper.",
+      "Only the stated caller is inside the existing startup handler.",
+      "30/45; Both checks True.",
+      "Original retained, negative experiment isolated, automatic caller removed."
     ],
     "evidence": [
-      "Input/expected/actual/case-ID table, platform build and source hashes.",
-      "Final 3, one accepted operation, one explained rejection.",
-      "Work-copy provenance, negative result and source preservation before/after."
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits."
     ],
-    "negative": "No false success; unrelated scope is not blocked unnecessarily."
+    "negative": "In another copy commit instead of rolling back."
   },
   "mistakes": [
     [
-      "Treat an expected value as an observed execution.",
-      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+      "Success is inferred from an unavailable environment.",
+      "Separate actual observations from a planned advanced scenario and name edition limits."
     ],
     [
-      "Modify the source infobase while experimenting.",
-      "Work on a new copy and verify the source by reopening it separately."
+      "A failed attempt is removed to make the record look successful.",
+      "Retain the original failure, its cause, correction and regression evidence."
+    ],
+    [
+      "An own-copy change is applied over the accepted original.",
+      "Verify the actual directory and preserve source identities before making changes."
     ]
   ],
   "quiz": [
@@ -150,8 +184,9 @@
     }
   ],
   "review": [
-    "Protect a balance check against concurrent changes and reproduce two-transaction ordering.",
-    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+    "Show how two individually valid decisions produce−4.",
+    "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
+    "Accepted original preserved; rejection and its limits explained."
   ],
   "sources": [
     "bsl-language",
@@ -164,23 +199,157 @@
     "managed-locks",
     "admin-tools"
   ],
-  "contentRevision": "1.0.0-rc.1",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.full.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_FULL_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "executionProfile": "official-1c-file",
   "nativeEvidenceStatus": "NOT RUN",
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
     "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p10.topic-1",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
   },
   "theoryContext": {
     "kind": "shared-module-reasoning",
     "moduleId": "onec.p10",
     "locale": "en"
-  }
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "reference",
+      "query",
+      "transaction"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C: Designer and Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "step-1",
+          "title": "Preserve the starting state",
+          "where": "Own-copy Designer",
+          "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+          "why": "Keep the accepted work independent.",
+          "expected": "Separate copy opens with the earlier records.",
+          "troubleshooting": "A new list name alone does not create another database directory.",
+          "before": "Own path, prior sources and a restorable backup identified."
+        },
+        {
+          "id": "step-2",
+          "title": "Add the complete server source",
+          "where": "Конфигуратор → Общие → Общие модули → УчебныеПрофессиональныеОпыты",
+          "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+          "why": "Database access has an explicit server boundary.",
+          "expected": "Definitions are module-level; no duplicate helper.",
+          "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
+          "before": "Separate copy opens with the earlier records."
+        },
+        {
+          "id": "step-3",
+          "title": "Prepare and call the experiment",
+          "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
+          "action": "Результат = УчебныеПрофессиональныеОпыты.ОпытЛокальнойБлокировки();\nСообщить(Результат.ОткатСохранил);\nСообщить(Результат.ДругойСохранен);",
+          "why": "Print every named result instead of accepting compilation alone.",
+          "expected": "Only the stated caller is inside the existing startup handler.",
+          "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
+          "before": "Definitions are module-level; no duplicate helper."
+        },
+        {
+          "id": "step-4",
+          "title": "Save, update and run once",
+          "where": "Ctrl+S → F7 → Предприятие",
+          "action": "Run once and compare the fields with the worked trace. 30/45; Both checks True.",
+          "why": "Observe actual1C data, not the browser diagram.",
+          "expected": "30/45; Both checks True.",
+          "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
+          "before": "Only the stated caller is inside the existing startup handler."
+        },
+        {
+          "id": "step-5",
+          "title": "Retain both results",
+          "where": "Конфигуратор после закрытия Предприятия",
+          "action": "Remove only the startup call. Use another copy for the adverse case and keep both protocols.",
+          "why": "Preserve provenance and avoid repeating data creation at every startup.",
+          "expected": "Original retained, negative experiment isolated, automatic caller removed.",
+          "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
+          "before": "30/45; Both checks True."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Сверьте полный опыт",
+        "en": "Explore the example: Reconcile the complete experiment"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Исходник",
+            "en": "Start"
+          },
+          "detail": {
+            "ru": "30/45 → Две свои ссылки.",
+            "en": "30/45 → Two own references."
+          }
+        },
+        {
+          "label": {
+            "ru": "Транзакция",
+            "en": "Transaction"
+          },
+          "detail": {
+            "ru": "Блокировка первой;99 → Вторая не меняется.",
+            "en": "Lock first;write99 → Second unchanged."
+          }
+        },
+        {
+          "label": {
+            "ru": "Откат",
+            "en": "Rollback"
+          },
+          "detail": {
+            "ru": "30/45 → Оба контроля Истина.",
+            "en": "30/45 → Both checks True."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · complete server common module УчебныеПрофессиональныеОпыты; shared preparation once"
+  },
+  "nativeCaseIds": [
+    "CURRENT.LOCKS.ORIGINAL",
+    "CURRENT.LOCKS.MUTATION"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_ADVANCED_RESULT.json",
+    "caseIds": [
+      "CURRENT.LOCKS.ORIGINAL",
+      "CURRENT.LOCKS.MUTATION"
+    ],
+    "scope": "Exact actual DCS, local managed lock/rollback, JSON/XML or manual batch function with a compiled semantic negative. No two-session race, arbitrary XML validator or scheduled-server execution claim.",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  },
+  "codeFile": "code/pedagogy/reliability-lock-first.bsl"
 }

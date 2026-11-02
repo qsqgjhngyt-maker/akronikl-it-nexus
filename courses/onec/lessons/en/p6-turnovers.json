@@ -6,152 +6,198 @@
   "topicId": "onec.p6.topic-3",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Turnovers and recorders",
-  "minutes": 120,
-  "goal": "Distinguish turnover and balance registers and reconcile an interval report.",
+  "title": "Turnovers: reconcile a period with two recorders",
+  "minutes": 180,
+  "goal": "Compare virtual-table75 with two actual30/45 movements.",
   "prerequisites": [
     "onec.p5; P1–P3; explicit contracts, types, collections and failure handling."
   ],
   "outcomes": [
-    "Distinguish turnover and balance registers and reconcile an interval report.",
-    "Generate turnovers for two services.",
-    "Count distinct documents."
+    "Accounting questions separated.",
+    "Resource and provenance independently verified.",
+    "Boundary specified rather than guessed."
   ],
   "sections": [
     [
       "Accumulation without a balance",
       "Delivered services often need volume during a period, not an end-of-day obligation. A turnover register stores numeric facts for aggregation by dimensions. Do not invent receipt/expense semantics merely because balance registers are familiar. First ask whether the resource has a meaningful balance and explain it concretely.",
-      "Choose a register from the data question. “Which rate applied?” needs keyed temporal state;“how much was delivered this week?” needs turnover;“what obligation remains?” needs balance. Similar-looking fields do not imply equal mechanisms or invariants. Write a small independent example for each and explain why another register type would answer the wrong question."
+      "Reuse turnover register Трудозатраты from module5. Preparation creates an own30/45 set; posting runs its existing handler. Минуты receives document ДлительностьМинут without renaming the populated header."
     ],
     [
       "Interval and granularity",
       "A weekly 60-minute turnover differs from a 20-minute closing obligation. Specify boundaries and grouping. One document with two services may create two records, so movement count differs from document count. Count recorder identities when the question asks for documents.",
-      "Dimensions define slices, resources measured quantities, and recorders provenance where supported. Adding a dimension changes keys and granularity: customer totals may split by service. Define old-data treatment and grand-total reconciliation before restructuring. New granularity is more than another displayed column; it changes writes, uniqueness and the interpretation of historical records."
+      "The virtual Обороты table accepts begin/end and Клиент=&Клиент. It represents computed platform totals, not a stored table containing75. The full code selects МинутыОборот as Минуты."
     ],
     [
       "A repeat does not create another fact",
       "Reposting replaces the current recorder’s set. Appending without replacement makes report volume grow after every correction. Test one two-line document, repost, line change and reversal. Reconcile by service and grand total while preserving document sources.",
-      "Time boundaries belong in specifications. State uses an as-of moment, turnover an interval, and movements an agreed period. Test before the first fact, exactly at a change and after it. Equal totals without matching identities do not prove correctness: errors for different customers can cancel numerically while allocations remain wrong."
+      "Verify75 and two source-register rows filtered by your customer. An earlier empty period has no turnover. Exact endpoint events require an explicit inclusion policy; these movements lie inside a day and do not prove every time-boundary combination."
     ],
     [
       "Empty periods and boundaries",
       "Test an empty period and records exactly at agreed boundaries. Including a whole final day must follow an explicit rule, not accidental parameter precision. Do not change document dates to force a match: correct the report condition in a separate copy.",
-      "Trace totals back to original facts. Preserve recorder-level records, independent arithmetic and reversal results. Reposting one document must not affect unrelated sets. For accounting models, test both side equality and analytic meaning. Array exercises demonstrate algorithms but do not replace actual execution of the corresponding platform mechanism. Record that distinction in the evidence and acceptance scope."
+      "The46 mutation gives76 instead of75 while retaining two recorders. Test count and resource separately. Labor turnover is not remaining obligations: those are distinct questions/registers."
     ]
   ],
   "diagram": "p6-2",
   "walkthrough": [
     {
-      "action": "Generate turnovers for two services.",
-      "expected": "75 and 15, total 90."
+      "action": "Documents — 30/45",
+      "expected": "Own references retained."
     },
     {
-      "action": "Count distinct documents.",
-      "expected": "Count is not replaced by row count."
+      "action": "Posting — Two movements",
+      "expected": "Recorders explain provenance."
     },
     {
-      "action": "Repeat posting and test an empty period.",
-      "expected": "No duplication; empty period gives the agreed zero/empty set."
+      "action": "Turnover — Own customer/period",
+      "expected": "75."
+    },
+    {
+      "action": "Reconcile — Resource and sources",
+      "expected": "Independent checks."
     }
   ],
   "examples": [
     {
-      "title": "Main example",
-      "source": "D1: S1=30, S2=15; D2: S1=45 → оборот S1=75, S2=15",
-      "expected": "Grand turnover 90; three records can belong to two documents.",
-      "explanation": "Movement count differs from distinct recorder count."
+      "title": "Native worked example",
+      "source": "РегистрНакопления.Трудозатраты.Обороты(&Начало,&Конец,,Клиент = &Клиент)",
+      "expected": "Three True:75, two own recorders and an empty earlier period.",
+      "explanation": "Excerpt only; the complete source below belongs to the stated server common module.",
+      "trace": [
+        [
+          "Documents",
+          "30/45",
+          "Own references retained."
+        ],
+        [
+          "Posting",
+          "Two movements",
+          "Recorders explain provenance."
+        ],
+        [
+          "Turnover",
+          "Own customer/period",
+          "75."
+        ],
+        [
+          "Reconcile",
+          "Resource and sources",
+          "Independent checks."
+        ]
+      ]
     },
     {
-      "title": "Boundary case",
-      "source": "Повторите проведение и пустой период.",
-      "expected": "No duplication; empty period gives the agreed zero/empty set.",
-      "explanation": "Movement count differs from distinct recorder count."
+      "title": "Discriminating semantic control",
+      "source": "In another copy prepare30/46 rather than30/45; expected75 must detect76.",
+      "expected": "The independent original expectation fails; preserve the original copy.",
+      "explanation": "A compilable wrong value is not a syntax-only test.",
+      "trace": [
+        [
+          "Mutation",
+          "In another copy prepare30/46 rather than30/45; expected75 must detect76.",
+          "Only another own copy."
+        ],
+        [
+          "Check",
+          "Three True:75, two own recorders and an empty earlier period.",
+          "Observe the failed claim."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Generate turnovers for two services.",
-      "criteria": "75 and 15, total 90."
+      "level": "Basic",
+      "task": "Explain turnover/balance/movement source.",
+      "criteria": "Accounting questions separated."
     },
     {
       "level": "Applied",
-      "task": "Count distinct documents.",
-      "criteria": "Count is not replaced by row count."
+      "task": "Reconcile75 with30/45 and two recorders.",
+      "criteria": "Resource and provenance independently verified."
     },
     {
       "level": "Advanced",
-      "task": "Design one turnover report and a separate obligation report.",
-      "criteria": "Questions, registers, intervals and units are distinguished."
+      "task": "Specify a precise endpoint event and inclusion rule.",
+      "criteria": "Boundary specified rather than guessed."
     }
   ],
   "lab": {
-    "title": "Distinguish turnover and balance registers and reconcile an interval report.",
-    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "title": "Turnovers: reconcile a period with two recorders",
+    "environment": "Own synthetic infobase and original metadata; no real accounting, mandatory Studio or Sandbox.",
     "steps": [
-      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
-      "Generate turnovers for two services.",
-      "Count distinct documents.",
-      "Repeat posting and test an empty period.",
-      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+      "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+      "Verify Трудозатраты Turnovers with Клиент/Минуты and ЗаявкаУслуги recorder. Reuse module5 posting handler without changing register kind.",
+      "Create a server/server-call common module without Global/Privileged. Append the complete source below outside other procedures. If НовыйНаборРегистров is already present, keep its one matching definition and append only the new experiment function.",
+      "Результат = УчебныеРегистры.ОпытОборотовТрудозатрат();\nСообщить(Результат.ОборотВерный);\nСообщить(Результат.ДваРегистратора);\nСообщить(Результат.ПустойПериод);",
+      "Review changes, apply only to this copy and run once. Record actual booleans and created customer/service/document/account identities.",
+      "Remove only this startup call, retaining functions and records. Investigate the negative example only in another own copy and retain both protocols."
     ],
     "expected": [
-      "75 and 15, total 90.",
-      "Count is not replaced by row count.",
-      "No duplication; empty period gives the agreed zero/empty set."
+      "Own copy/path and provenance identified.",
+      "Names/types/recorder connections match.",
+      "One definition per function; earlier code retained.",
+      "Caller is inside the existing handler.",
+      "Three True:75, two own recorders and an empty earlier period.",
+      "Work retained; no automatic repetition."
     ],
     "evidence": [
-      "Input/expected/actual/case-ID table, platform build and source hashes.",
-      "Grand turnover 90; three records can belong to two documents.",
-      "Work-copy provenance, negative result and source preservation before/after."
+      "Actual source, version and per-field observations with own identities.",
+      "Separate compilable negative control and retained original; no server grading/authorship claim."
     ],
-    "negative": "No duplication; empty period gives the agreed zero/empty set."
+    "negative": "In another copy prepare30/46 rather than30/45; expected75 must detect76."
   },
   "mistakes": [
     [
-      "Treat an expected value as an observed execution.",
-      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+      "A helper definition is duplicated inside the startup handler.",
+      "Keep one module-level helper and only its call inside startup."
     ],
     [
-      "Modify the source infobase while experimenting.",
-      "Work on a new copy and verify the source by reopening it separately."
+      "Whole-register totals replace the own-key control.",
+      "Filter by the actual customer/service/recorder reference for this experiment."
+    ],
+    [
+      "A runnable result is treated as proof of all accounting/security behavior.",
+      "Record each checked mechanism and retain untested concurrency/edition limits."
     ]
   ],
   "quiz": [
     {
-      "question": "Does record count always equal document count?",
+      "question": "Трудозатраты measures",
       "options": [
-        "No",
-        "Yes",
-        "Only for services"
+        "Labor turnover",
+        "Password balance",
+        "License balance"
       ],
       "correct": 0,
-      "explanation": "A recorder can have multiple rows."
+      "explanation": "Reuse turnover register Трудозатраты from module5. Preparation creates an own30/45 set; posting runs its existing handler. Минуты receives document ДлительностьМинут without renaming the populated header."
     },
     {
-      "question": "Weekly turnover is",
+      "question": "The Минуты alias changes",
       "options": [
-        "The closing balance",
-        "An interval amount",
-        "A document number"
+        "Resource meaning",
+        "Result column name",
+        "Stored data"
       ],
       "correct": 1,
-      "explanation": "Aggregate the resource over the agreed interval."
+      "explanation": "The virtual Обороты table accepts begin/end and Клиент=&Клиент. It represents computed platform totals, not a stored table containing75. The full code selects МинутыОборот as Минуты."
     },
     {
-      "question": "Reposting doubled the total:",
+      "question": "Two recorders alone establish",
       "options": [
-        "This is success",
-        "This is always required",
-        "The effect-replacement policy is broken"
+        "Correct totals",
+        "No possible defects",
+        "The checked source count only"
       ],
       "correct": 2,
-      "explanation": "A repeat is not a new business fact."
+      "explanation": "Verify75 and two source-register rows filtered by your customer. An earlier empty period has no turnover. Exact endpoint events require an explicit inclusion policy; these movements lie inside a day and do not prove every time-boundary combination."
     }
   ],
   "review": [
-    "Distinguish turnover and balance registers and reconcile an interval report.",
-    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+    "Accounting questions separated.",
+    "Resource and provenance independently verified.",
+    "Boundary specified rather than guessed."
   ],
   "sources": [
     "bsl-language",
@@ -163,23 +209,182 @@
     "information-register",
     "accumulation-register"
   ],
-  "contentRevision": "1.0.0-rc.1",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.full.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_FULL_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "executionProfile": "official-1c-file",
   "nativeEvidenceStatus": "NOT RUN",
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
     "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p6.topic-3",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
   },
   "theoryContext": {
     "kind": "shared-module-reasoning",
     "moduleId": "onec.p6",
     "locale": "en"
-  }
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "register",
+      "recorder",
+      "dimension",
+      "resource",
+      "reference",
+      "transaction",
+      "posting",
+      "bsl"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C Designer → server module → managed application",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "copy",
+          "title": "Identify the own experiment copy",
+          "where": "Own-copy Designer",
+          "action": "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+          "why": "Keep prior work independent.",
+          "expected": "Own copy/path and provenance identified.",
+          "troubleshooting": "Check actual directories rather than list-entry names.",
+          "before": "P5 work, backup and exact own-copy path retained."
+        },
+        {
+          "id": "metadata",
+          "title": "Prepare the stated metadata",
+          "where": "Конфигуратор → дерево конфигурации",
+          "action": "Verify Трудозатраты Turnovers with Клиент/Минуты and ЗаявкаУслуги recorder. Reuse module5 posting handler without changing register kind.",
+          "why": "The native function needs these actual platform objects.",
+          "expected": "Names/types/recorder connections match.",
+          "troubleshooting": "Inspect existing objects before adding duplicates; retain old UUIDs/fields.",
+          "before": "Own copy/path and provenance identified."
+        },
+        {
+          "id": "source",
+          "title": "Place the complete function",
+          "where": "Конфигуратор → Общие → Общие модули → УчебныеРегистры",
+          "action": "Create a server/server-call common module without Global/Privileged. Append the complete source below outside other procedures. If НовыйНаборРегистров is already present, keep its one matching definition and append only the new experiment function.",
+          "why": "Definitions have explicit server scope.",
+          "expected": "One definition per function; earlier code retained.",
+          "troubleshooting": "Do not nest functions inside startup or duplicate shared preparation.",
+          "before": "Names/types/recorder connections match."
+        },
+        {
+          "id": "call",
+          "title": "Add only the client call",
+          "where": "Модуль приложения → ПриНачалеРаботыСистемы",
+          "action": "Результат = УчебныеРегистры.ОпытОборотовТрудозатрат();\nСообщить(Результат.ОборотВерный);\nСообщить(Результат.ДваРегистратора);\nСообщить(Результат.ПустойПериод);",
+          "why": "Print every independent claim.",
+          "expected": "Caller is inside the existing handler.",
+          "troubleshooting": "Keep one startup handler and retain its earlier source.",
+          "before": "One definition per function; earlier code retained."
+        },
+        {
+          "id": "run",
+          "title": "Save, update and run once",
+          "where": "Ctrl+S → F7 → Предприятие",
+          "action": "Review changes, apply only to this copy and run once. Record actual booleans and created customer/service/document/account identities.",
+          "why": "Observe real1C, then reconcile with the prediction.",
+          "expected": "Three True:75, two own recorders and an empty earlier period.",
+          "troubleshooting": "Retain the actual module/line and failed claim; never change expected values to conceal a defect.",
+          "before": "Caller is inside the existing handler."
+        },
+        {
+          "id": "retain",
+          "title": "Preserve observations and stop startup repetition",
+          "where": "Конфигуратор после закрытия Предприятия",
+          "action": "Remove only this startup call, retaining functions and records. Investigate the negative example only in another own copy and retain both protocols.",
+          "why": "Reopening must not silently recreate datasets.",
+          "expected": "Work retained; no automatic repetition.",
+          "troubleshooting": "Do not clear whole registers or remove prior work.",
+          "before": "Three True:75, two own recorders and an empty earlier period."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Разобранный нативный пример",
+        "en": "Explore the example: Native worked example"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Документы",
+            "en": "Documents"
+          },
+          "detail": {
+            "ru": "30/45 → Свои ссылки сохранены.",
+            "en": "30/45 → Own references retained."
+          }
+        },
+        {
+          "label": {
+            "ru": "Проведение",
+            "en": "Posting"
+          },
+          "detail": {
+            "ru": "Два движения → Регистраторы объясняют факт.",
+            "en": "Two movements → Recorders explain provenance."
+          }
+        },
+        {
+          "label": {
+            "ru": "Обороты",
+            "en": "Turnover"
+          },
+          "detail": {
+            "ru": "Свой клиент/период → 75.",
+            "en": "Own customer/period → 75."
+          }
+        },
+        {
+          "label": {
+            "ru": "Сверка",
+            "en": "Reconcile"
+          },
+          "detail": {
+            "ru": "Ресурс и источники → Две независимые проверки.",
+            "en": "Resource and sources → Independent checks."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · complete server common-module source УчебныеРегистры; shared helper defined once"
+  },
+  "nativeCaseIds": [
+    "P6.TURNOVERS.ORIGINAL",
+    "P6.TURNOVERS.MUTATION"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_REGISTERS_RESULT.json",
+    "caseIds": [
+      "P6.TURNOVERS.ORIGINAL",
+      "P6.TURNOVERS.MUTATION"
+    ],
+    "scope": "Exact server functions on actual information/accumulation/accounting registers and own chart; original and compilable semantic negative distinguished; all fixture bytes pinned",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "concurrentServerTested": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  },
+  "codeFile": "code/pedagogy/register-turnovers-first.bsl"
 }

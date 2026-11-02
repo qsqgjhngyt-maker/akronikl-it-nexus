@@ -6,152 +6,198 @@
   "topicId": "onec.p6.topic-1",
   "locale": "en",
   "status": "IMPLEMENTED",
-  "title": "Information register and periodicity",
-  "minutes": 120,
-  "goal": "Choose rate-register dimensions, resource and periodicity and verify a price as of a date.",
+  "title": "Tariff history: key, period and last slice",
+  "minutes": 180,
+  "goal": "Write two own tariff facts and verify before, at and before the first boundary.",
   "prerequisites": [
     "onec.p5; P1–P3; explicit contracts, types, collections and failure handling."
   ],
   "outcomes": [
-    "Choose rate-register dimensions, resource and periodicity and verify a price as of a date.",
-    "Write100fromD1 and150fromD2.",
-    "Check an intermediate time andD2."
+    "Key/time/resource separated.",
+    "100/150/empty observations tied to one own service.",
+    "Zero and empty sets have different expected outcomes."
   ],
   "sections": [
     [
       "Facts by key",
       "An information register suits rates by service and time. Service is a dimension, rate a resource, and period adds history. An attribute stores extra description rather than replacing the key. Start from “which rate applied toS1 atD”; one current card price cannot answer the historical question.",
-      "Choose a register from the data question. “Which rate applied?” needs keyed temporal state;“how much was delivered this week?” needs turnover;“what obligation remains?” needs balance. Similar-looking fields do not imply equal mechanisms or invariants. Write a small independent example for each and explain why another register type would answer the wrong question."
+      "Create independent day-periodic information register ТарифыУслуг: Услуга: CatalogRef.Услуги dimension and Тариф: Number(15,2) resource. Период is its platform period field, not a second custom date. The card’s ТарифЗаЧас is distinct and unchanged; this exercise implements no automatic costing."
     ],
     [
       "Periodicity limits distinguishable states",
       "Two records for one service in one period follow the key policy. Daily periodicity cannot distinguish two intraday changes under the same key. Do not substitute current time just to bypass a collision. Choose required precision and test exactly at a rate-change boundary.",
-      "Dimensions define slices, resources measured quantities, and recorders provenance where supported. Adding a dimension changes keys and granularity: customer totals may split by service. Define old-data treatment and grand-total reconciliation before restructuring. New granularity is more than another displayed column; it changes writes, uniqueness and the interpretation of historical records."
+      "The function creates an own service and facts November1=100 and15=150. СрезПоследних filtered by its reference returns100 on14 and150 on15. It selects current state per key rather than summing250, without including other services."
     ],
     [
       "A slice is not a sum of prices",
       "Between changes, use the latest applicable rate rather than summing history. SliceLast represents state at a time; record sets represent history. Explicitly return absence or reject when no prior rate exists. Automatic zero can resemble a free service and hide missing data.",
-      "Time boundaries belong in specifications. State uses an as-of moment, turnover an interval, and movements an agreed period. Test before the first fact, exactly at a change and after it. Equal totals without matching identities do not prove correctness: errors for different customers can cancel numerically while allocations remain wrong."
+      "Before the first fact there are no rows. Missing and zero tariffs differ and need an explicit calculation policy. Day periodicity does not distinguish two changes inside the same day/key; a different requirement needs different periodicity/key design."
     ],
     [
       "Test history at boundary dates",
       "Set rate 100 fromD1 and 150 fromD2. Expect absence beforeD1, 100 betweenD1/D2, and 150 at the agreed inclusiveD2 boundary. Reopen and verify. Repeating the same keys must not increase count; editing copy rates must preserve the source.",
-      "Trace totals back to original facts. Preserve recorder-level records, independent arithmetic and reversal results. Reposting one document must not affect unrelated sets. For accounting models, test both side equality and analytic meaning. Array exercises demonstrate algorithms but do not replace actual execution of the corresponding platform mechanism. Record that distinction in the evidence and acceptance scope."
+      "A compilable151 mutation fails the independent150 boundary expectation. This uses an actual register, not a browser array. Each run creates a new own service; retain the function/protocol and remove the startup call."
     ]
   ],
   "diagram": "p6-0",
   "walkthrough": [
     {
-      "action": "Write100fromD1 and150fromD2.",
-      "expected": "Two historical states for one dimension."
+      "action": "Facts — Nov1=100,Nov15=150",
+      "expected": "Own service."
     },
     {
-      "action": "Check an intermediate time andD2.",
-      "expected": "100 beforeD2; 150 atD2."
+      "action": "Before — Nov14",
+      "expected": "100."
     },
     {
-      "action": "Query a time beforeD1.",
-      "expected": "Explicit absence, not a silently free service."
+      "action": "Boundary — Nov15",
+      "expected": "150."
+    },
+    {
+      "action": "Earlier — Oct31",
+      "expected": "Empty, not zero."
     }
   ],
   "examples": [
     {
-      "title": "Main example",
-      "source": "// Требуется периодический регистрТарифыУслуг с измерениемУслуга\nТарифы = РегистрыСведений.ТарифыУслуг.СрезПоследних(Момент, Новый Структура(\"Услуга\", Услуга));",
-      "expected": "The service state as ofMoment is returned, not the sum of history.",
-      "explanation": "Metadata defines fields and periodicity; handle an empty result separately."
+      "title": "Native worked example",
+      "source": "Отбор = Новый Структура(\"Услуга\", Услуга.Ссылка);\nДо = РегистрыСведений.ТарифыУслуг.СрезПоследних(Дата(2026,11,14), Отбор);",
+      "expected": "Three True:100 before change,150 at the boundary and no earlier row.",
+      "explanation": "Excerpt only; the complete source below belongs to the stated server common module.",
+      "trace": [
+        [
+          "Facts",
+          "Nov1=100,Nov15=150",
+          "Own service."
+        ],
+        [
+          "Before",
+          "Nov14",
+          "100."
+        ],
+        [
+          "Boundary",
+          "Nov15",
+          "150."
+        ],
+        [
+          "Earlier",
+          "Oct31",
+          "Empty, not zero."
+        ]
+      ]
     },
     {
-      "title": "Boundary case",
-      "source": "Запросите момент до D1.",
-      "expected": "Explicit absence, not a silently free service.",
-      "explanation": "Metadata defines fields and periodicity; handle an empty result separately."
+      "title": "Discriminating semantic control",
+      "source": "In another own copy change Вторая.Тариф =150 to151; the150 expectation must fail.",
+      "expected": "The independent original expectation fails; preserve the original copy.",
+      "explanation": "A compilable wrong value is not a syntax-only test.",
+      "trace": [
+        [
+          "Mutation",
+          "In another own copy change Вторая.Тариф =150 to151; the150 expectation must fail.",
+          "Only another own copy."
+        ],
+        [
+          "Check",
+          "Three True:100 before change,150 at the boundary and no earlier row.",
+          "Observe the failed claim."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Write100fromD1 and150fromD2.",
-      "criteria": "Two historical states for one dimension."
+      "level": "Basic",
+      "task": "Explain service key, periodicity and slice versus sum.",
+      "criteria": "Key/time/resource separated."
     },
     {
       "level": "Applied",
-      "task": "Check an intermediate time andD2.",
-      "criteria": "100 beforeD2; 150 atD2."
+      "task": "Run and reread both facts by actual service code.",
+      "criteria": "100/150/empty observations tied to one own service."
     },
     {
       "level": "Advanced",
-      "task": "Add another service and redeliver rates.",
-      "criteria": "Dimensions remain isolated; repeated keys do not duplicate records."
+      "task": "Add zero and distinguish it from missing data.",
+      "criteria": "Zero and empty sets have different expected outcomes."
     }
   ],
   "lab": {
-    "title": "Choose rate-register dimensions, resource and periodicity and verify a price as of a date.",
-    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "title": "Tariff history: key, period and last slice",
+    "environment": "Own synthetic infobase and original metadata; no real accounting, mandatory Studio or Sandbox.",
     "steps": [
-      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
-      "Write100fromD1 and150fromD2.",
-      "Check an intermediate time andD2.",
-      "Query a time beforeD1.",
-      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+      "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+      "Information registers → ТарифыУслуг: Independent, Day periodicity; Услуга: CatalogRef.Услуги dimension; Тариф: Number15,2 resource. Include in УчебнаяСлужба.",
+      "Create a server/server-call common module without Global/Privileged. Append the complete source below outside other procedures. If НовыйНаборРегистров is already present, keep its one matching definition and append only the new experiment function.",
+      "Результат = УчебныеРегистры.ОпытИсторииТарифа();\nСообщить(Результат.ДоВерно);\nСообщить(Результат.ГраницаВерна);\nСообщить(Результат.РаньшеНет);",
+      "Review changes, apply only to this copy and run once. Record actual booleans and created customer/service/document/account identities.",
+      "Remove only this startup call, retaining functions and records. Investigate the negative example only in another own copy and retain both protocols."
     ],
     "expected": [
-      "Two historical states for one dimension.",
-      "100 beforeD2; 150 atD2.",
-      "Explicit absence, not a silently free service."
+      "Own copy/path and provenance identified.",
+      "Names/types/recorder connections match.",
+      "One definition per function; earlier code retained.",
+      "Caller is inside the existing handler.",
+      "Three True:100 before change,150 at the boundary and no earlier row.",
+      "Work retained; no automatic repetition."
     ],
     "evidence": [
-      "Input/expected/actual/case-ID table, platform build and source hashes.",
-      "The service state as ofMoment is returned, not the sum of history.",
-      "Work-copy provenance, negative result and source preservation before/after."
+      "Actual source, version and per-field observations with own identities.",
+      "Separate compilable negative control and retained original; no server grading/authorship claim."
     ],
-    "negative": "Explicit absence, not a silently free service."
+    "negative": "In another own copy change Вторая.Тариф =150 to151; the150 expectation must fail."
   },
   "mistakes": [
     [
-      "Treat an expected value as an observed execution.",
-      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+      "A helper definition is duplicated inside the startup handler.",
+      "Keep one module-level helper and only its call inside startup."
     ],
     [
-      "Modify the source infobase while experimenting.",
-      "Work on a new copy and verify the source by reopening it separately."
+      "Whole-register totals replace the own-key control.",
+      "Filter by the actual customer/service/recorder reference for this experiment."
+    ],
+    [
+      "A runnable result is treated as proof of all accounting/security behavior.",
+      "Record each checked mechanism and retain untested concurrency/edition limits."
     ]
   ],
   "quiz": [
     {
-      "question": "A rate as of a date is",
+      "question": "Last slice selects",
       "options": [
-        "State, not a historical sum",
-        "The sum of all prices",
-        "A service name"
+        "Current fact per key",
+        "Sum of all prices",
+        "Course name"
       ],
       "correct": 0,
-      "explanation": "Use the applicable fact by key and time."
+      "explanation": "Create independent day-periodic information register ТарифыУслуг: Услуга: CatalogRef.Услуги dimension and Тариф: Number(15,2) resource. Период is its platform period field, not a second custom date. The card’s ТарифЗаЧас is distinct and unchanged; this exercise implements no automatic costing."
     },
     {
-      "question": "Does daily periodicity distinguish two same-day changes?",
+      "question": "Before the first fact expect",
       "options": [
-        "Always",
-        "Not with service+day alone",
-        "By font"
+        "Necessarily zero",
+        "No rows",
+        "A future price"
       ],
       "correct": 1,
-      "explanation": "Key precision must fit the task."
+      "explanation": "The function creates an own service and facts November1=100 and15=150. СрезПоследних filtered by its reference returns100 on14 and150 on15. It selects current state per key rather than summing250, without including other services."
     },
     {
-      "question": "No price beforeD1:",
+      "question": "Two changes in one day with Day periodicity",
       "options": [
-        "Always 0",
-        "Always 150",
-        "Handle absence under the contract"
+        "Are always distinguished by seconds",
+        "Need no design",
+        "Need a revised periodicity/key"
       ],
       "correct": 2,
-      "explanation": "Do not hide incomplete history."
+      "explanation": "Before the first fact there are no rows. Missing and zero tariffs differ and need an explicit calculation policy. Day periodicity does not distinguish two changes inside the same day/key; a different requirement needs different periodicity/key design."
     }
   ],
   "review": [
-    "Choose rate-register dimensions, resource and periodicity and verify a price as of a date.",
-    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+    "Key/time/resource separated.",
+    "100/150/empty observations tied to one own service.",
+    "Zero and empty sets have different expected outcomes."
   ],
   "sources": [
     "bsl-language",
@@ -163,23 +209,182 @@
     "information-register",
     "accumulation-register"
   ],
-  "contentRevision": "1.0.0-rc.1",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.full.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_FULL_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "executionProfile": "official-1c-file",
   "nativeEvidenceStatus": "NOT RUN",
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
     "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p6.topic-1",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
   },
   "theoryContext": {
     "kind": "shared-module-reasoning",
     "moduleId": "onec.p6",
     "locale": "en"
-  }
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "register",
+      "recorder",
+      "dimension",
+      "resource",
+      "reference",
+      "transaction",
+      "posting",
+      "bsl"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C Designer → server module → managed application",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "copy",
+          "title": "Identify the own experiment copy",
+          "where": "Own-copy Designer",
+          "action": "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+          "why": "Keep prior work independent.",
+          "expected": "Own copy/path and provenance identified.",
+          "troubleshooting": "Check actual directories rather than list-entry names.",
+          "before": "P5 work, backup and exact own-copy path retained."
+        },
+        {
+          "id": "metadata",
+          "title": "Prepare the stated metadata",
+          "where": "Конфигуратор → дерево конфигурации",
+          "action": "Information registers → ТарифыУслуг: Independent, Day periodicity; Услуга: CatalogRef.Услуги dimension; Тариф: Number15,2 resource. Include in УчебнаяСлужба.",
+          "why": "The native function needs these actual platform objects.",
+          "expected": "Names/types/recorder connections match.",
+          "troubleshooting": "Inspect existing objects before adding duplicates; retain old UUIDs/fields.",
+          "before": "Own copy/path and provenance identified."
+        },
+        {
+          "id": "source",
+          "title": "Place the complete function",
+          "where": "Конфигуратор → Общие → Общие модули → УчебныеРегистры",
+          "action": "Create a server/server-call common module without Global/Privileged. Append the complete source below outside other procedures. If НовыйНаборРегистров is already present, keep its one matching definition and append only the new experiment function.",
+          "why": "Definitions have explicit server scope.",
+          "expected": "One definition per function; earlier code retained.",
+          "troubleshooting": "Do not nest functions inside startup or duplicate shared preparation.",
+          "before": "Names/types/recorder connections match."
+        },
+        {
+          "id": "call",
+          "title": "Add only the client call",
+          "where": "Модуль приложения → ПриНачалеРаботыСистемы",
+          "action": "Результат = УчебныеРегистры.ОпытИсторииТарифа();\nСообщить(Результат.ДоВерно);\nСообщить(Результат.ГраницаВерна);\nСообщить(Результат.РаньшеНет);",
+          "why": "Print every independent claim.",
+          "expected": "Caller is inside the existing handler.",
+          "troubleshooting": "Keep one startup handler and retain its earlier source.",
+          "before": "One definition per function; earlier code retained."
+        },
+        {
+          "id": "run",
+          "title": "Save, update and run once",
+          "where": "Ctrl+S → F7 → Предприятие",
+          "action": "Review changes, apply only to this copy and run once. Record actual booleans and created customer/service/document/account identities.",
+          "why": "Observe real1C, then reconcile with the prediction.",
+          "expected": "Three True:100 before change,150 at the boundary and no earlier row.",
+          "troubleshooting": "Retain the actual module/line and failed claim; never change expected values to conceal a defect.",
+          "before": "Caller is inside the existing handler."
+        },
+        {
+          "id": "retain",
+          "title": "Preserve observations and stop startup repetition",
+          "where": "Конфигуратор после закрытия Предприятия",
+          "action": "Remove only this startup call, retaining functions and records. Investigate the negative example only in another own copy and retain both protocols.",
+          "why": "Reopening must not silently recreate datasets.",
+          "expected": "Work retained; no automatic repetition.",
+          "troubleshooting": "Do not clear whole registers or remove prior work.",
+          "before": "Three True:100 before change,150 at the boundary and no earlier row."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Разобранный нативный пример",
+        "en": "Explore the example: Native worked example"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Записи",
+            "en": "Facts"
+          },
+          "detail": {
+            "ru": "1 ноября100,15 ноября150 → Отдельная услуга.",
+            "en": "Nov1=100,Nov15=150 → Own service."
+          }
+        },
+        {
+          "label": {
+            "ru": "До смены",
+            "en": "Before"
+          },
+          "detail": {
+            "ru": "14 ноября → 100. Срез выбирает тариф именно на указанную границу времени собственного ключа услуги.",
+            "en": "Nov14 → 100. The slice selects the tariff at the stated boundary for the own service key."
+          }
+        },
+        {
+          "label": {
+            "ru": "Граница",
+            "en": "Boundary"
+          },
+          "detail": {
+            "ru": "15 ноября → 150. Срез выбирает тариф именно на указанную границу времени собственного ключа услуги.",
+            "en": "Nov15 → 150. The slice selects the tariff at the stated boundary for the own service key."
+          }
+        },
+        {
+          "label": {
+            "ru": "До первого",
+            "en": "Earlier"
+          },
+          "detail": {
+            "ru": "31 октября → Пусто, не ноль.",
+            "en": "Oct31 → Empty, not zero."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · complete server common-module source УчебныеРегистры; shared helper defined once"
+  },
+  "nativeCaseIds": [
+    "P6.INFORMATION.ORIGINAL",
+    "P6.INFORMATION.MUTATION"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_REGISTERS_RESULT.json",
+    "caseIds": [
+      "P6.INFORMATION.ORIGINAL",
+      "P6.INFORMATION.MUTATION"
+    ],
+    "scope": "Exact server functions on actual information/accumulation/accounting registers and own chart; original and compilable semantic negative distinguished; all fixture bytes pinned",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "concurrentServerTested": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  },
+  "codeFile": "code/pedagogy/register-information-first.bsl"
 }

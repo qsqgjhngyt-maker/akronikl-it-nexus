@@ -27,7 +27,7 @@ try{
     for(const locale of ['ru','en']){
      await goOnec(page,base+`#course=onec&locale=${locale}&lesson=onec.p12.topic-4`);await page.locator('[data-lesson]').waitFor();
      await page.locator('[data-onec-scroll="onec-lab-help"]').click();assert.equal(await page.locator('[data-onec-lab-help]').getAttribute('open'),'');assert.equal(await page.locator('[data-onec-lab-help] .onec-lab-step').count(),8);
-     const text=await page.locator('[data-lesson]').innerText();assert.equal(/БГУ|ЗГУ|BGU|ZGU|Восстановитепроект|тестповтора/.test(text),false);if(locale==='ru'){assert.match(text,/Восстановите проект по воспроизводимой инструкции/);assert.match(text,/тест повтора/);await page.locator('[data-node]').first().click();assert.match(await page.locator('.diagram-detail').innerText(),/исправить контрольный дефект и доказать восстановление/);}
+     const text=await page.locator('[data-lesson]').innerText();assert.equal(/БГУ|ЗГУ|BGU|ZGU|Восстановитепроект|тестповтора/.test(text),false);if(locale==='ru'){assert.match(text,/контрольное изменение в новой копии/);assert.match(text,/исходное воспроизведение, собственное решение/);await page.locator('[data-node]').first().click();assert.match(await page.locator('.diagram-detail').innerText(),/Критерии прочитаны/);}
      await page.locator('[data-worked-examples]').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'S12_READABILITY_'+locale+'.png')});
      await goOnec(page,base+`#course=onec&locale=${locale}&lesson=onec.p12.topic-4&guide=laboratory`);await page.locator('[data-onec-lab-help][open]').waitFor();
     }

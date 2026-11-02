@@ -1,5 +1,5 @@
 import{createOnecGuide}from'./guide-model.mjs';
-const ONEC_GUIDE_MANIFEST_SHA='a3209bedd44b2461a6339bd802860005e1af52c64e1ec0bcea511c77a044aa65';
+const ONEC_GUIDE_MANIFEST_SHA='8de6441384d14a55aeb4413f5c4e4f53c851491bbb59627c7249a37b46e53220';
 export async function loadOnecGuide(locale,{signal}={}){
  if(!['ru','en'].includes(locale))throw Error('GUIDE_LOCALE');
  const {readBoundedJsonBytes}=await import('../../akronikl/ui/knowledge-loader.js');
@@ -8,7 +8,7 @@ export async function loadOnecGuide(locale,{signal}={}){
  const cacheName='onec-guide-'+ONEC_GUIDE_MANIFEST_SHA,decode=b=>JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(b));
  async function read(name,maxBytes,sha){const url=new URL(name,import.meta.url);let bytes;try{bytes=await readBoundedJsonBytes(url,{signal:controller.signal,maxBytes});}catch(error){controller.signal.throwIfAborted();const response=await globalThis.caches?.open(cacheName).then(c=>c.match(url));if(!response)throw error;bytes=await readBoundedJsonBytes(url,{signal:controller.signal,maxBytes,fetchImpl:async()=>response});}
   if(await hash(bytes)!==sha)throw Error('GUIDE_INTEGRITY');controller.signal.throwIfAborted();try{const c=await globalThis.caches?.open(cacheName);await c?.put(url,new Response(bytes,{headers:{'content-type':'application/json'}}));}catch{/* Ошибка кэша не означает доступность offline. */}return decode(bytes);}
- try{const manifest=await read('guide-manifest.json',4096,ONEC_GUIDE_MANIFEST_SHA),row=manifest.indexes.find(x=>x.locale===locale);if(!row||row.file!==`guide-index.${locale}.json`||row.bytes>1500000)throw Error('GUIDE_MANIFEST');const index=await read(row.file,row.bytes,row.sha256);return createOnecGuide(index);}finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);}
+ try{const manifest=await read('guide-manifest.json',4096,ONEC_GUIDE_MANIFEST_SHA),row=manifest.indexes.find(x=>x.locale===locale);if(!row||row.file!==`guide-packed.${locale}.json`||!Number.isSafeInteger(row.bytes)||row.bytes<1||row.bytes>1500000||row.encoding!=='gzip-base64-json-v1')throw Error('GUIDE_MANIFEST');const packed=await read(row.file,row.bytes,row.sha256),{decodePackedOnecGuide}=await import('./guide-codec.mjs'),index=await decodePackedOnecGuide(packed,row);controller.signal.throwIfAborted();return createOnecGuide(index);}finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);}
 }
 export function mountOnecGuide(root,{locale='ru',courseId='onec',currentTopic=null,readState=null,loadGuide=loadOnecGuide,isCurrent=()=>true,candidateBase=new URL('./index.html',import.meta.url),navigate=null}={}){
  const doc=root.ownerDocument,en=locale==='en',t=(ru,english)=>en?english:ru,abort=new AbortController();let dead=false,ticket=0,guidePromise=null;

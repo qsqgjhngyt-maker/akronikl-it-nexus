@@ -7,151 +7,194 @@
   "locale": "en",
   "status": "IMPLEMENTED",
   "title": "Form data and object",
-  "minutes": 120,
-  "goal": "Separate managed-form data from the infobase object when saving a request.",
+  "minutes": 180,
+  "goal": "Observe77 in form/object buffers while the persisted document remains30.",
   "prerequisites": [
     "onec.p7; P1–P3; explicit contracts, types, collections and failure handling."
   ],
   "outcomes": [
-    "Separate managed-form data from the infobase object when saving a request.",
-    "Compare form-data and object types.",
-    "Save a valid request and reread."
+    "Buffer/object/database distinguished.",
+    "Reference and30 preserved.",
+    "Cancel and save have separate protocols."
   ],
   "sections": [
     [
       "Forms hold a representation",
       "A managed form has attributes and controls; an application object has logic and persisted state. Form values can be intermediate and unsaved. Equal field names do not create one variable in every context. Trace where minutes came from and when they become a persisted document value.",
-      "A managed form is an interaction boundary, not the only data source. Values occupy form buffers, objects and persisted records at different times. Trace read, edit, transfer and write to identify unsaved snapshots. Refresh must not silently replace user input with another request’s state. Distinguish visible values from accepted business state throughout the workflow."
+      "Start from an own saved30-minute document and retain its reference. Edit to77 without Save/Post. Distinguish form data, the converted object and the earlier persisted record. Equal buffer values do not prove persistence."
     ],
     [
       "Conversion is explicit",
       "On the server, FormAttributeToValuecan obtain an application object from a suitable form attribute. Returning data also requires proper conversion. Do not assume form data exposes every object method. Identify actual type and allowed context rather than moving everything to the client to silence an error.",
-      "Context determines available operations and required inputs. Pure calculations need numbers; document reads need identity and an available server environment; focus handling needsUI. Do not pass whole forms instead of designing minimal contracts. Specify serialized inputs, outputs and reliable-side validation independently of client hints. Context availability and permission authorization remain separate concerns."
+      "СверитьБуфер belongs to the managed form module with &НаСервере. РеквизитФормыВЗначение(\"Объект\") converts current form data; Объект.Ссылка.ПолучитьОбъект() independently rereads persisted state. No write method is called."
     ],
     [
       "UIvalidation does not protect writes",
       "The form may highlight bad ranges before submission, but the object boundary must enforce mandatory rules. Client data can become stale between read and write. Important operations need an agreed server-side version/state check. A new screen must not bypassP5preservation rules.",
-      "Bind asynchronous actions to a specific intent/version. Users can close forms, edit data or start another operation while awaiting replies. Late responses must validate relevance before acting. UIcancellation does not promise rollback of committed server work. Separate pending, accepted, unknown, rejected and canceled states with distinct verification scenarios rather than one ambiguous success flag."
+      "Add an own Сверить command whose action calls the function and prints all three fields separately. Each observation must name its source. Replacing rereading with the same form value would invalidate independence."
     ],
     [
       "Test two routes",
       "Create a valid request through the form and programmatically; outcomes should agree. Submit invalid data by both routes. Reopen and compare fields. If presentation is stale, refresh it through the agreed event rather than rewriting the database merely to synchronize the screen.",
-      "Test both expected and unexpected event ordering: delays, double-clicks, cancel and closing with unsaved input. Reconcile effect count and database state through fresh reads. File-mode compilation of client directives proves only that context; it does not measure network routing, physical mobile acceptance or isolatedStudioBSLexecution. Record these boundaries so successful checks are not overstated."
+      "Close without saving and reopen the same reference: expect30. In a different copy test ordinary saving of77 and rereading. Module5 direct writes remain an independent route for object validation; never use another learner’s document."
     ]
   ],
   "diagram": "p8-0",
   "walkthrough": [
     {
-      "action": "Compare form-data and object types.",
-      "expected": "APIand context differences are recorded."
+      "action": "Database — Own reference→30",
+      "expected": "Persisted state."
     },
     {
-      "action": "Save a valid request and reread.",
-      "expected": "Form and database agree after a confirmed write."
+      "action": "Editor — Change to77",
+      "expected": "Not saved yet."
     },
     {
-      "action": "Submit negative minutes outsideUI.",
-      "expected": "The object boundary rejects writing and preserves data."
+      "action": "Convert — Object from form→77",
+      "expected": "Still no write."
+    },
+    {
+      "action": "Reread — Reference→30",
+      "expected": "Original retained."
     }
   ],
   "examples": [
     {
-      "title": "Main example",
-      "source": "&НаСервере\nПроцедура ПроверитьОбъектНаСервере()\n    Док = РеквизитФормыВЗначение(\"Объект\");\n    // проверить и записать по согласованному контракту\nКонецПроцедуры",
-      "expected": "The application object is obtained on the server; conversion alone does not prove persistence.",
-      "explanation": "Requires a document form module with anObjectattribute."
+      "title": "Reconcile the complete experiment",
+      "source": "Result = СверитьБуфер();\nСообщить(Result.ВФорме);\nСообщить(Result.ВОбъекте);\nСообщить(Result.ВБазе);",
+      "expected": "77/77/30 before saving;30 again after closing without save.",
+      "trace": [
+        [
+          "Database",
+          "Own reference→30",
+          "Persisted state."
+        ],
+        [
+          "Editor",
+          "Change to77",
+          "Not saved yet."
+        ],
+        [
+          "Convert",
+          "Object from form→77",
+          "Still no write."
+        ],
+        [
+          "Reread",
+          "Reference→30",
+          "Original retained."
+        ]
+      ]
     },
     {
-      "title": "Boundary case",
-      "source": "Отправьте отрицательные минуты обходом UI.",
-      "expected": "The object boundary rejects writing and preserves data.",
-      "explanation": "Requires a document form module with anObjectattribute."
+      "title": "A case that distinguishes the wrong solution",
+      "source": "In another copy replace the reference reread with the form value.",
+      "expected": "The invalid control reports77 as if it were persisted.",
+      "explanation": "An independent check must read another layer.",
+      "trace": [
+        [
+          "Separate copy",
+          "In another copy replace the reference reread with the form value.",
+          "Retain the accepted original."
+        ],
+        [
+          "Observe",
+          "The invalid control reports77 as if it were persisted.",
+          "An independent check must read another layer."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "Compare form-data and object types.",
-      "criteria": "APIand context differences are recorded."
+      "level": "Basic",
+      "task": "Identify the three layers and execution context.",
+      "criteria": "Buffer/object/database distinguished."
     },
     {
       "level": "Applied",
-      "task": "Save a valid request and reread.",
-      "criteria": "Form and database agree after a confirmed write."
+      "task": "Observe77/77/30 and30 after cancelling.",
+      "criteria": "Reference and30 preserved."
     },
     {
       "level": "Advanced",
-      "task": "Design form refresh after an external change without overwriting input.",
-      "criteria": "Conflict is visible, unsaved input preserved, and no silent rewrite occurs."
+      "task": "Save77 normally in another copy and reconcile.",
+      "criteria": "Cancel and save have separate protocols."
     }
   ],
   "lab": {
-    "title": "Separate managed-form data from the infobase object when saving a request.",
-    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "title": "Form data and object",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
     "steps": [
-      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
-      "Compare form-data and object types.",
-      "Save a valid request and reread.",
-      "Submit negative minutes outsideUI.",
-      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+      "Retain a DT and the earlier form module. Identify an own saved30-minute request and record its actual reference.",
+      "Append the complete source below outside earlier handlers. In the form Attributes tab add ИтогОпыта:String120 and ВерсияЗапроса:Number10,0 as form attributes, not document fields. Keep previous methods and one definition of each new method.",
+      "Add ПроверитьЧасы and УчебноеПодтверждение; select matching existing action methods and drag commands to the form command bar. For Сверить add a client action with the first example’s four lines.",
+      "Check Thin client, Server and Thick managed client. Apply changes to this copy. Open the same own request and perform the first worked example; do not press Save/Post unless the exercise explicitly asks.",
+      "In another copy replace the reference reread with the form value. Retain the correct source, all observations and the unchanged original; do not claim a direct callback test is a physical dialog check."
     ],
     "expected": [
-      "APIand context differences are recorded.",
-      "Form and database agree after a confirmed write.",
-      "The object boundary rejects writing and preserves data."
+      "The original and own copy are distinct.",
+      "Methods and two form attributes exist.",
+      "Commands show the intended actions without automatic startup.",
+      "77/77/30 before saving;30 again after closing without save.",
+      "The invalid control reports77 as if it were persisted."
     ],
     "evidence": [
-      "Input/expected/actual/case-ID table, platform build and source hashes.",
-      "The application object is obtained on the server; conversion alone does not prove persistence.",
-      "Work-copy provenance, negative result and source preservation before/after."
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits."
     ],
-    "negative": "The object boundary rejects writing and preserves data."
+    "negative": "In another copy replace the reference reread with the form value."
   },
   "mistakes": [
     [
-      "Treat an expected value as an observed execution.",
-      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+      "Form data is assumed to already be persisted.",
+      "Read the actual saved reference independently before accepting persistence."
     ],
     [
-      "Modify the source infobase while experimenting.",
-      "Work on a new copy and verify the source by reopening it separately."
+      "A no-context function reaches into the form object.",
+      "Pass the minimal explicit input or deliberately choose the correct context."
+    ],
+    [
+      "Direct continuation tests are reported as physical dialog clicks.",
+      "Record native branch coverage and actual UI interaction separately."
     ]
   ],
   "quiz": [
     {
-      "question": "Does form data always expose the objectAPI?",
+      "question": "FormDataToValue itself",
       "options": [
-        "No",
-        "Yes",
-        "In colored forms"
-      ],
-      "correct": 0,
-      "explanation": "Identify type and use proper conversion."
-    },
-    {
-      "question": "Does conversion itself write?",
-      "options": [
-        "Always",
-        "No",
-        "For every attribute"
+        "Writes the document",
+        "Converts data",
+        "Creates an account"
       ],
       "correct": 1,
       "explanation": "Writing is separate."
     },
     {
-      "question": "IsUI-only validation sufficient?",
+      "question": "Read persisted duration",
       "options": [
-        "Yes",
-        "For export",
-        "No"
+        "By saved reference",
+        "From colour",
+        "From title"
+      ],
+      "correct": 0,
+      "explanation": "This is the independent source."
+    },
+    {
+      "question": "After closing without save expect",
+      "options": [
+        "Always77",
+        "A deleted document",
+        "Earlier30"
       ],
       "correct": 2,
-      "explanation": "Alternative write routes exist."
+      "explanation": "The buffer was not persisted."
     }
   ],
   "review": [
-    "Separate managed-form data from the infobase object when saving a request.",
-    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+    "Buffer/object/database distinguished.",
+    "Reference and30 preserved.",
+    "Cancel and save have separate protocols."
   ],
   "sources": [
     "bsl-language",
@@ -162,23 +205,177 @@
     "documents",
     "form-editor"
   ],
-  "contentRevision": "1.0.0-rc.1",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.full.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_FULL_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "executionProfile": "official-1c-file",
   "nativeEvidenceStatus": "NOT RUN",
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
     "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p8.topic-1",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
   },
   "theoryContext": {
     "kind": "shared-module-reasoning",
     "moduleId": "onec.p8",
     "locale": "en"
-  }
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "reference",
+      "query",
+      "transaction"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C: Designer and Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "step-1",
+          "title": "Preserve and select an own request",
+          "where": "Конфигуратор своей отдельной копии",
+          "action": "Retain a DT and the earlier form module. Identify an own saved30-minute request and record its actual reference.",
+          "why": "Protect prior work.",
+          "expected": "The original and own copy are distinct.",
+          "troubleshooting": "Inspect the database path and reference; display names may coincide.",
+          "before": "Own path, prior sources and a restorable backup identified."
+        },
+        {
+          "id": "step-2",
+          "title": "Open the managed form module",
+          "where": "Документы → ЗаявкаУслуги → Формы → УчебнаяФормаЗаявки → Модуль",
+          "action": "Append the complete source below outside earlier handlers. In the form Attributes tab add ИтогОпыта:String120 and ВерсияЗапроса:Number10,0 as form attributes, not document fields. Keep previous methods and one definition of each new method.",
+          "why": "The form owns UI state while the document schema stays intact.",
+          "expected": "Methods and two form attributes exist.",
+          "troubleshooting": "Do not add these attributes to the document metadata or paste form code into a common module.",
+          "before": "The original and own copy are distinct."
+        },
+        {
+          "id": "step-3",
+          "title": "Bind commands",
+          "where": "Редактор формы → Команды → собственные команды",
+          "action": "Add ПроверитьЧасы and УчебноеПодтверждение; select matching existing action methods and drag commands to the form command bar. For Сверить add a client action with the first example’s four lines.",
+          "why": "Make code reachable through explicit UI actions.",
+          "expected": "Commands show the intended actions without automatic startup.",
+          "troubleshooting": "If an action generator creates an empty duplicate, merge only its body into the existing matching handler.",
+          "before": "Methods and two form attributes exist."
+        },
+        {
+          "id": "step-4",
+          "title": "Check contexts and run",
+          "where": "Ctrl+S → Конфигурация → Проверка конфигурации → F7 → Предприятие",
+          "action": "Check Thin client, Server and Thick managed client. Apply changes to this copy. Open the same own request and perform the first worked example; do not press Save/Post unless the exercise explicitly asks.",
+          "why": "Compilation and observed behaviour are independent checks.",
+          "expected": "77/77/30 before saving;30 again after closing without save.",
+          "troubleshooting": "Record the method/line; distinguish a context error from a missing command binding.",
+          "before": "Commands show the intended actions without automatic startup."
+        },
+        {
+          "id": "step-5",
+          "title": "Record cancellation and retain work",
+          "where": "Предприятие → закрытие формы без записи",
+          "action": "In another copy replace the reference reread with the form value. Retain the correct source, all observations and the unchanged original; do not claim a direct callback test is a physical dialog check.",
+          "why": "Separate adverse cases from accepted work.",
+          "expected": "The invalid control reports77 as if it were persisted.",
+          "troubleshooting": "Reopen the actual reference to check persisted state.",
+          "before": "77/77/30 before saving;30 again after closing without save."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Сверьте полный опыт",
+        "en": "Explore the example: Reconcile the complete experiment"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "База",
+            "en": "Database"
+          },
+          "detail": {
+            "ru": "Своя ссылка→30 → Устойчивое состояние.",
+            "en": "Own reference→30 → Persisted state."
+          }
+        },
+        {
+          "label": {
+            "ru": "Редактор",
+            "en": "Editor"
+          },
+          "detail": {
+            "ru": "Изменить на77 → Ещё не запись.",
+            "en": "Change to77 → Not saved yet."
+          }
+        },
+        {
+          "label": {
+            "ru": "Преобразование",
+            "en": "Convert"
+          },
+          "detail": {
+            "ru": "Объект из формы→77 → Тоже без записи.",
+            "en": "Object from form→77 → Still no write."
+          }
+        },
+        {
+          "label": {
+            "ru": "Перечитать",
+            "en": "Reread"
+          },
+          "detail": {
+            "ru": "По ссылке→30 → Исходник сохранён.",
+            "en": "Reference→30 → Original retained."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · complete managed form module УчебнаяФормаЗаявки; do not paste into startup"
+  },
+  "nativeCaseIds": [
+    "P8.form-buffer-object-persisted|PASS",
+    "P8.no-context-explicit-numeric-input|PASS",
+    "P8.server-rejects-out-of-range|PASS",
+    "P8.callback-no-cancels|PASS",
+    "P8.stale-generation-rejected|PASS",
+    "P8.changed-buffer-rejected|PASS",
+    "P8.accepted-current-intent-does-not-write|PASS"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_FORMS_RESULT.json",
+    "caseIds": [
+      "P8.form-buffer-object-persisted|PASS",
+      "P8.no-context-explicit-numeric-input|PASS",
+      "P8.server-rejects-out-of-range|PASS",
+      "P8.callback-no-cancels|PASS",
+      "P8.stale-generation-rejected|PASS",
+      "P8.changed-buffer-rejected|PASS",
+      "P8.accepted-current-intent-does-not-write|PASS"
+    ],
+    "scope": "Actual managed form, buffer/object/persisted separation, server input and direct native callback branches. Thin/server compilation; physical dialog clicks and remote deployment are not claimed.",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  },
+  "codeFile": "code/pedagogy/form-context-first.bsl"
 }

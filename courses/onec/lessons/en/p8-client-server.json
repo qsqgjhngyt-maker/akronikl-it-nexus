@@ -7,151 +7,185 @@
   "locale": "en",
   "status": "IMPLEMENTED",
   "title": "Client and server",
-  "minutes": 120,
-  "goal": "Separate client reactions from server work and reduce transferred data.",
+  "minutes": 180,
+  "goal": "Pass90 as an explicit number and return1.5 hours with server-side validation.",
   "prerequisites": [
     "onec.p7; P1–P3; explicit contracts, types, collections and failure handling."
   ],
   "outcomes": [
-    "Separate client reactions from server work and reduce transferred data.",
-    "MapUI→server→data.",
-    "Check an allowed call."
+    "Explicit call contract.",
+    "Both bounds checked.",
+    "Type and range distinguished."
   ],
   "sections": [
     [
       "Clients handle interaction",
       "Button handling, focus and dialogs belong toUI. Infobase access and reliable rules belong in an available server context. Thick and thin clients differ; local success does not prove a distributed design. Specify the target client and permitted operations before implementation.",
-      "A managed form is an interaction boundary, not the only data source. Values occupy form buffers, objects and persisted records at different times. Trace read, edit, transfer and write to identify unsaved snapshots. Refresh must not silently replace user input with another request’s state. Distinguish visible values from accepted business state throughout the workflow."
+      "ЧасыНаСервере receives only a number. ПроверитьЧасы reads the UI field and calls the server; neither form state nor document writing is an implicit contract. Convert the returned number to display text on the client."
     ],
     [
       "The boundary carries a contract",
       "Do not send every customer to obtain one total. A server method receives minimal typed inputs and returns required data. The client cannot provide trusted permission or price decisions; the server checks its own conditions. Test serialization and parameter types separately from arithmetic correctness.",
-      "Context determines available operations and required inputs. Pure calculations need numbers; document reads need identity and an available server environment; focus handling needsUI. Do not pass whole forms instead of designing minimal contracts. Specify serialized inputs, outputs and reliable-side validation independently of client hints. Context availability and permission authorization remain separate concerns."
+      "90/60=1.5 without rounding or document updates. Validate type before range0…1440. String \"90\" and numeric1441 fail different checks: type versus allowed value."
     ],
     [
       "A file infobase is not a network",
       "File mode can teach client/server directives but does not fully reproduce network latency, clusters or parallel sessions. Separate compilation-contextPASSfrom distributedLIVE. Counting source lines or one local process is not measured network-call reduction.",
-      "Bind asynchronous actions to a specific intent/version. Users can close forms, edit data or start another operation while awaiting replies. Late responses must validate relevance before acting. UIcancellation does not promise rollback of committed server work. Separate pending, accepted, unknown, rejected and canceled states with distinct verification scenarios rather than one ambiguous success flag."
+      "Create the ПроверитьЧасы form command, bind its existing action and drag it to the command bar.90 displays1.5, or1,5 in Russian locale; the display separator does not alter the numeric result."
     ],
     [
       "An availability matrix checks context",
       "For each method, list caller, parameters and returned data. Test an allowed call and an unavailable operation in the wrong context. Count calls for an ordinary action. Do not fix context errors by enabling every capability indiscriminately; reduce dependencies to what is necessary.",
-      "Test both expected and unexpected event ordering: delays, double-clicks, cancel and closing with unsaved input. Reconcile effect count and database state through fresh reads. File-mode compilation of client directives proves only that context; it does not measure network routing, physical mobile acceptance or isolatedStudioBSLexecution. Record these boundaries so successful checks are not overstated."
+      "A file-mode run proves method availability and this platform call, not network latency. Training-edition client/server limits do not prevent this local experiment. Network performance and licensed deployment require separate checks."
     ]
   ],
   "diagram": "p8-1",
   "walkthrough": [
     {
-      "action": "MapUI→server→data.",
-      "expected": "Each operation has context and minimal parameters."
+      "action": "Client — Field90",
+      "expected": "Number,not document."
     },
     {
-      "action": "Check an allowed call.",
-      "expected": "The result crosses the agreed type contract."
+      "action": "Server — Type/range",
+      "expected": "Validate first."
     },
     {
-      "action": "Check prohibited client access.",
-      "expected": "Denial/context failure is recorded, not bypassed with full permissions."
+      "action": "Return — 90/60=1.5",
+      "expected": "No write."
     }
   ],
   "examples": [
     {
-      "title": "Main example",
-      "source": "&НаКлиенте\nПроцедура Пересчитать(Команда)\n    // вызвать узкий серверный контракт и обновитьUI\nКонецПроцедуры",
-      "expected": "The client handler contains no hidden arbitrary database access.",
-      "explanation": "This is a separation skeleton; test the real server method and types in their context."
+      "title": "Reconcile the complete experiment",
+      "source": "ИтогОпыта = Строка(ЧасыНаСервере(Объект.ДлительностьМинут));",
+      "expected": "90→1.5;1441 and string\"90\" rejected; document unchanged.",
+      "trace": [
+        [
+          "Client",
+          "Field90",
+          "Number,not document."
+        ],
+        [
+          "Server",
+          "Type/range",
+          "Validate first."
+        ],
+        [
+          "Return",
+          "90/60=1.5",
+          "No write."
+        ]
+      ]
     },
     {
-      "title": "Boundary case",
-      "source": "Проверьте запрещённый клиентский доступ.",
-      "expected": "Denial/context failure is recorded, not bypassed with full permissions.",
-      "explanation": "This is a separation skeleton; test the real server method and types in their context."
+      "title": "A case that distinguishes the wrong solution",
+      "source": "Call ЧасыНаСервере(1441) directly, bypassing the UI field.",
+      "expected": "Server range rejection; persisted30 retained.",
+      "explanation": "A client hint does not replace the trusted-boundary check.",
+      "trace": [
+        [
+          "Separate copy",
+          "Call ЧасыНаСервере(1441) directly, bypassing the UI field.",
+          "Retain the accepted original."
+        ],
+        [
+          "Observe",
+          "Server range rejection; persisted30 retained.",
+          "A client hint does not replace the trusted-boundary check."
+        ]
+      ]
     }
   ],
   "exercises": [
     {
-      "level": "Foundation",
-      "task": "MapUI→server→data.",
-      "criteria": "Each operation has context and minimal parameters."
+      "level": "Basic",
+      "task": "Annotate argument/result direction and type.",
+      "criteria": "Explicit call contract."
     },
     {
       "level": "Applied",
-      "task": "Check an allowed call.",
-      "criteria": "The result crosses the agreed type contract."
+      "task": "Test90,0,1440 and1441.",
+      "criteria": "Both bounds checked."
     },
     {
       "level": "Advanced",
-      "task": "Compare one action using1andNserver calls on identical data.",
-      "criteria": "Correctness, call count and actual environment are reported separately."
+      "task": "Compare string\"90\" with number90 and explain both failures.",
+      "criteria": "Type and range distinguished."
     }
   ],
   "lab": {
-    "title": "Separate client reactions from server work and reduce transferred data.",
-    "environment": "Official 1C 8.3.27.x, separate original teaching configuration and synthetic data. Metadata-dependent excerpts require the named objects; they are not standalone.os scripts. Full client-server/multi-user experiments need a separately permitted stand.",
+    "title": "Client and server",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
     "steps": [
-      "Create a separate work copy; record its ID, source ID and platform/configuration build. Never restore over your source.",
-      "MapUI→server→data.",
-      "Check an allowed call.",
-      "Check prohibited client access.",
-      "Reopen the copy, repeat the checks and reconcile the unchanged source. Preserve failures separately from the corrected attempt."
+      "Retain a DT and the earlier form module. Identify an own saved30-minute request and record its actual reference.",
+      "Append the complete source below outside earlier handlers. In the form Attributes tab add ИтогОпыта:String120 and ВерсияЗапроса:Number10,0 as form attributes, not document fields. Keep previous methods and one definition of each new method.",
+      "Add ПроверитьЧасы and УчебноеПодтверждение; select matching existing action methods and drag commands to the form command bar. For Сверить add a client action with the first example’s four lines.",
+      "Check Thin client, Server and Thick managed client. Apply changes to this copy. Open the same own request and perform the first worked example; do not press Save/Post unless the exercise explicitly asks.",
+      "Call ЧасыНаСервере(1441) directly, bypassing the UI field. Retain the correct source, all observations and the unchanged original; do not claim a direct callback test is a physical dialog check."
     ],
     "expected": [
-      "Each operation has context and minimal parameters.",
-      "The result crosses the agreed type contract.",
-      "Denial/context failure is recorded, not bypassed with full permissions."
+      "The original and own copy are distinct.",
+      "Methods and two form attributes exist.",
+      "Commands show the intended actions without automatic startup.",
+      "90→1.5;1441 and string\"90\" rejected; document unchanged.",
+      "Server range rejection; persisted30 retained."
     ],
     "evidence": [
-      "Input/expected/actual/case-ID table, platform build and source hashes.",
-      "The client handler contains no hidden arbitrary database access.",
-      "Work-copy provenance, negative result and source preservation before/after."
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits."
     ],
-    "negative": "Denial/context failure is recorded, not bypassed with full permissions."
+    "negative": "Call ЧасыНаСервере(1441) directly, bypassing the UI field."
   },
   "mistakes": [
     [
-      "Treat an expected value as an observed execution.",
-      "Reconcile the result in the specified environment and attach the protocol; the browser model does not execute BSL."
+      "Form data is assumed to already be persisted.",
+      "Read the actual saved reference independently before accepting persistence."
     ],
     [
-      "Modify the source infobase while experimenting.",
-      "Work on a new copy and verify the source by reopening it separately."
+      "A no-context function reaches into the form object.",
+      "Pass the minimal explicit input or deliberately choose the correct context."
+    ],
+    [
+      "Direct continuation tests are reported as physical dialog clicks.",
+      "Record native branch coverage and actual UI interaction separately."
     ]
   ],
   "quiz": [
     {
-      "question": "Does file mode prove network latency?",
+      "question": "Client passes",
       "options": [
-        "Yes",
-        "No",
-        "For every screen"
+        "Entire form",
+        "Numeric minutes",
+        "A password"
       ],
       "correct": 1,
-      "explanation": "Test distributed deployment separately."
+      "explanation": "Use the minimal explicit input."
     },
     {
-      "question": "For one total, prefer transferring",
+      "question": "1441 fails",
       "options": [
-        "The whole database",
-        "A password",
-        "Minimal parameters and result"
-      ],
-      "correct": 2,
-      "explanation": "Keep the boundary narrow."
-    },
-    {
-      "question": "Is a client-supplied price trusted?",
-      "options": [
-        "No; validate under the contract",
-        "Always",
-        "If attractive"
+        "Range",
+        "Colour",
+        "Necessarily type"
       ],
       "correct": 0,
-      "explanation": "ClientUIis not a trust boundary."
+      "explanation": "It is a number outside the contract."
+    },
+    {
+      "question": "File-mode run proves",
+      "options": [
+        "Network SLA",
+        "A server cluster",
+        "This local call"
+      ],
+      "correct": 2,
+      "explanation": "Network deployment is separate."
     }
   ],
   "review": [
-    "Separate client reactions from server work and reduce transferred data.",
-    "Explain which negative case distinguishes a correct solution from a superficially similar one."
+    "Explicit call contract.",
+    "Both bounds checked.",
+    "Type and range distinguished."
   ],
   "sources": [
     "bsl-language",
@@ -162,23 +196,167 @@
     "documents",
     "form-editor"
   ],
-  "contentRevision": "1.0.0-rc.1",
+  "contentRevision": "2.0.0-pedagogy.1",
   "sharedRefs": [
     "onec.shared.v1@1.0.0",
     "onec.full.shared.v1@1.0.0"
   ],
-  "nativeGuide": "native/README_FULL_EN.md",
+  "nativeGuide": "native/BEGINNER_EN.md",
   "executionProfile": "official-1c-file",
   "nativeEvidenceStatus": "NOT RUN",
   "provenance": {
     "authorship": "original-nexus-course-content",
     "baseline": "036dd257c8976bce898c5ca21cf977fa4386e2bc",
     "sourcePolicy": "primary-source-links-and-explicit-runtime-evidence",
-    "studentAuthorshipVerified": false
+    "studentAuthorshipVerified": false,
+    "pedagogyRevision": "2.0.0-pedagogy.1",
+    "baselineRevision": "1.0.0-rc.1",
+    "originalCourseId": "onec",
+    "topicId": "onec.p8.topic-2",
+    "authoring": "AKRONIKL / original educational rework",
+    "learnerRoute": "installed-official-1c",
+    "retainedTheory": "rewritten"
   },
   "theoryContext": {
     "kind": "shared-module-reasoning",
     "moduleId": "onec.p8",
     "locale": "en"
-  }
+  },
+  "experience": {
+    "schemaVersion": 1,
+    "termIds": [
+      "bsl",
+      "reference",
+      "query",
+      "transaction"
+    ],
+    "route": {
+      "kind": "installed-1c",
+      "program": "Installed official1C: Designer and Enterprise",
+      "studio": "optional",
+      "fileTransfer": "none",
+      "steps": [
+        {
+          "id": "step-1",
+          "title": "Preserve and select an own request",
+          "where": "Конфигуратор своей отдельной копии",
+          "action": "Retain a DT and the earlier form module. Identify an own saved30-minute request and record its actual reference.",
+          "why": "Protect prior work.",
+          "expected": "The original and own copy are distinct.",
+          "troubleshooting": "Inspect the database path and reference; display names may coincide.",
+          "before": "Own path, prior sources and a restorable backup identified."
+        },
+        {
+          "id": "step-2",
+          "title": "Open the managed form module",
+          "where": "Документы → ЗаявкаУслуги → Формы → УчебнаяФормаЗаявки → Модуль",
+          "action": "Append the complete source below outside earlier handlers. In the form Attributes tab add ИтогОпыта:String120 and ВерсияЗапроса:Number10,0 as form attributes, not document fields. Keep previous methods and one definition of each new method.",
+          "why": "The form owns UI state while the document schema stays intact.",
+          "expected": "Methods and two form attributes exist.",
+          "troubleshooting": "Do not add these attributes to the document metadata or paste form code into a common module.",
+          "before": "The original and own copy are distinct."
+        },
+        {
+          "id": "step-3",
+          "title": "Bind commands",
+          "where": "Редактор формы → Команды → собственные команды",
+          "action": "Add ПроверитьЧасы and УчебноеПодтверждение; select matching existing action methods and drag commands to the form command bar. For Сверить add a client action with the first example’s four lines.",
+          "why": "Make code reachable through explicit UI actions.",
+          "expected": "Commands show the intended actions without automatic startup.",
+          "troubleshooting": "If an action generator creates an empty duplicate, merge only its body into the existing matching handler.",
+          "before": "Methods and two form attributes exist."
+        },
+        {
+          "id": "step-4",
+          "title": "Check contexts and run",
+          "where": "Ctrl+S → Конфигурация → Проверка конфигурации → F7 → Предприятие",
+          "action": "Check Thin client, Server and Thick managed client. Apply changes to this copy. Open the same own request and perform the first worked example; do not press Save/Post unless the exercise explicitly asks.",
+          "why": "Compilation and observed behaviour are independent checks.",
+          "expected": "90→1.5;1441 and string\"90\" rejected; document unchanged.",
+          "troubleshooting": "Record the method/line; distinguish a context error from a missing command binding.",
+          "before": "Commands show the intended actions without automatic startup."
+        },
+        {
+          "id": "step-5",
+          "title": "Record cancellation and retain work",
+          "where": "Предприятие → закрытие формы без записи",
+          "action": "Call ЧасыНаСервере(1441) directly, bypassing the UI field. Retain the correct source, all observations and the unchanged original; do not claim a direct callback test is a physical dialog check.",
+          "why": "Separate adverse cases from accepted work.",
+          "expected": "Server range rejection; persisted30 retained.",
+          "troubleshooting": "Reopen the actual reference to check persisted state.",
+          "before": "90→1.5;1441 and string\"90\" rejected; document unchanged."
+        }
+      ]
+    },
+    "diagram": {
+      "title": {
+        "ru": "Разберите пример: Сверьте полный опыт",
+        "en": "Explore the example: Reconcile the complete experiment"
+      },
+      "kind": "sequence",
+      "nodes": [
+        {
+          "label": {
+            "ru": "Клиент",
+            "en": "Client"
+          },
+          "detail": {
+            "ru": "Поле90 → Число,не документ.",
+            "en": "Field90 → Number,not document."
+          }
+        },
+        {
+          "label": {
+            "ru": "Сервер",
+            "en": "Server"
+          },
+          "detail": {
+            "ru": "Тип/диапазон → Проверка до расчёта.",
+            "en": "Type/range → Validate first."
+          }
+        },
+        {
+          "label": {
+            "ru": "Возврат",
+            "en": "Return"
+          },
+          "detail": {
+            "ru": "90/60=1,5 → Без записи.",
+            "en": "90/60=1.5 → No write."
+          }
+        }
+      ]
+    },
+    "sourceLabel": "BSL · complete managed form module УчебнаяФормаЗаявки; do not paste into startup"
+  },
+  "nativeCaseIds": [
+    "P8.form-buffer-object-persisted|PASS",
+    "P8.no-context-explicit-numeric-input|PASS",
+    "P8.server-rejects-out-of-range|PASS",
+    "P8.callback-no-cancels|PASS",
+    "P8.stale-generation-rejected|PASS",
+    "P8.changed-buffer-rejected|PASS",
+    "P8.accepted-current-intent-does-not-write|PASS"
+  ],
+  "nativeEvidence": {
+    "status": "AUTOMATED PASS",
+    "environment": "official-installed-local-platform",
+    "platformVersion": "8.3.27.2214",
+    "evidence": "docs/ru/03-content/onec/pedagogy-v2-20261102/PEDAGOGY_FORMS_RESULT.json",
+    "caseIds": [
+      "P8.form-buffer-object-persisted|PASS",
+      "P8.no-context-explicit-numeric-input|PASS",
+      "P8.server-rejects-out-of-range|PASS",
+      "P8.callback-no-cancels|PASS",
+      "P8.stale-generation-rejected|PASS",
+      "P8.changed-buffer-rejected|PASS",
+      "P8.accepted-current-intent-does-not-write|PASS"
+    ],
+    "scope": "Actual managed form, buffer/object/persisted separation, server input and direct native callback branches. Thin/server compilation; physical dialog clicks and remote deployment are not claimed.",
+    "training1508Verified": false,
+    "allLearnerGuiStepsVerified": false,
+    "codeVerifiedServer": false,
+    "progressWritten": false
+  },
+  "codeFile": "code/pedagogy/form-context-first.bsl"
 }
