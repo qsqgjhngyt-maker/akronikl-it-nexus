@@ -1,0 +1,81 @@
+name: C++ — CPP-CLARITY-01, проверка кандидата без публикации
+on:
+  push:
+    branches: [feature/cpp-clarity-01-m1-m2-20261104]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'courses/cpp/**'
+      - 'core/academy-gold-presentation.js'
+      - 'core/learning-views.js'
+      - 'styles/academy-gold.css'
+      - 'tools/*cpp-clarity*'
+      - 'tests/*cpp-clarity*'
+      - 'docs/ru/03-content/cpp-clarity-01/**'
+      - '.github/workflows/cpp-clarity-01.yml'
+permissions:
+  contents: read
+concurrency:
+  group: cpp-clarity-01-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Проверки кандидата, когда реализация подготовлена
+        run: |
+          set -euo pipefail
+          mkdir -p cpp-clarity-evidence
+          if [ -f tools/check-cpp-clarity.mjs ]; then
+            node tools/check-cpp-clarity.mjs
+          else
+            echo 'PREPARATION ONLY: implementation tests are not present; no acceptance is claimed.' | tee cpp-clarity-evidence/PREPARATION.txt
+          fi
+      - name: Сохранить исходный снимок и хеши без пользовательских данных
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import pathlib, subprocess, hashlib, json, zipfile
+          root=pathlib.Path('.')
+          out=root/'cpp-clarity-evidence';out.mkdir(exist_ok=True)
+          source=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          paths=subprocess.check_output(['git','ls-files','-z']).decode('utf-8').split('\0')
+          allowed={'.md','.txt','.json','.mjs','.js','.css','.html','.yml','.yaml','.py','.sh','.cpp','.hpp','.h','.c','.cmake','.toml','.ps1'}
+          hashes=[];included=[];total=0
+          with zipfile.ZipFile(out/'source-text.zip','w',zipfile.ZIP_DEFLATED) as z:
+            for rel in paths:
+              if not rel: continue
+              p=root/rel
+              if not p.is_file() or p.is_symlink(): continue
+              b=p.read_bytes()
+              hashes.append({'path':rel,'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest()})
+              parts=p.parts
+              if '.env' in p.name or any(k in p.name.lower() for k in ('credential','secret-key','private-key')): continue
+              if p.suffix not in allowed and p.name not in ('LICENSE','CMakeLists.txt','.gitattributes','.gitignore'): continue
+              if len(b)>8*1024*1024: continue
+              try: b.decode('utf-8')
+              except UnicodeDecodeError: continue
+              total+=len(b)
+              if total>100*1024*1024: raise RuntimeError('Source text snapshot exceeds the explicit 100 MiB cap')
+              z.writestr(rel,b);included.append(rel)
+          (out/'SOURCE.json').write_text(json.dumps({'sourceCommit':source,'baseline':'ee2787c0cd92da2ad1d5e79df5e2bfadab2c3dd6','kind':'text-only-source-not-release','includedFiles':len(included),'uncompressedBytes':total,'publicationAuthorized':False},indent=2)+'\n')
+          (out/'TRACKED_SHA256.json').write_text(json.dumps(hashes,ensure_ascii=False,indent=2)+'\n')
+          b=(out/'source-text.zip').read_bytes()
+          (out/'SOURCE_SHA256.txt').write_text(hashlib.sha256(b).hexdigest()+'  source-text.zip\n')
+          PY
+      - name: Evidence без merge, deployment или Release
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpp-clarity-01-${{ github.sha }}
+          path: cpp-clarity-evidence/
+          retention-days: 30
+          if-no-files-found: error
