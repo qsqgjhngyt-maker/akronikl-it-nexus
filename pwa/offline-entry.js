@@ -211,6 +211,7 @@ async function renderCurrent(seq){
 
 function bindReadOnlyLearning(){
  bindCppLearningPath({root,onSelect:value=>{cppLearningFilter=value}});
+ for(const button of root.querySelectorAll('[data-clarity-open]')){button.disabled=!data;if(!data)button.title=locale==='en'?'Open your local copy to edit; the lesson is available for reading.':'Откройте свою локальную копию для редактирования. Урок доступен для чтения.'}
  for(const input of root.querySelectorAll('[data-practicum][data-task]')){input.disabled=!data;if(data)input.onchange=()=>{const p=course.practicumsRu.practicums.find(x=>x.id===input.dataset.practicum);if(p){markTask(data,'practicum',p,Number(input.dataset.task),input.checked);void save().catch(()=>{})}}}
  disposeTerms=bindGlossaryDrawer(root);
 }

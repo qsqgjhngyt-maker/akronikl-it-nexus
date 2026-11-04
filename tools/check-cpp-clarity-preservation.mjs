@@ -3,6 +3,7 @@ import {execFileSync} from 'node:child_process';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
+import {GOLD_ALGORITHM_LESSONS,GOLD_BASICS_LESSONS} from '../core/academy-gold-catalog.js';
 const base='ee2787c0cd92da2ad1d5e79df5e2bfadab2c3dd6',git=(...args)=>execFileSync('git',['-c','core.longpaths=true',...args],{maxBuffer:64e6}),sha=b=>createHash('sha256').update(b).digest('hex');
 const fixed=['courses/cpp/curriculum.json','courses/cpp/manifest.json','courses/cpp/content-package.json','courses/cpp/data/lessons.ru.json','courses/cpp/data/lessons.en.json','courses/cpp/data/gold-laboratories-m6.json','core/storage.js','core/account-storage.js','pwa/local-vault.js','pwa/offline-learning.js','pwa/local-editor.js','pwa/runtime-manifest.js','tools/check-cpp-course-perf.mjs','release-candidate.json','version.json','index.html','service-worker.js'];
 const preserved=[];for(const file of fixed){const a=git('show',base+':'+file),b=await readFile(file);assert.deepEqual(b,a,file);preserved.push({file,sha256:sha(b),bytes:b.length});}
@@ -13,5 +14,7 @@ const protectedAreas=['courses/1c-enterprise','courses/onec','courses/onec-educa
 for(const area of protectedAreas)assert.equal(git('diff','--name-only',base,'--',area).toString(),'','Protected area: '+area);
 const current=JSON.parse(await readFile('courses/cpp/curriculum.json')),old=JSON.parse(git('show',base+':courses/cpp/curriculum.json'));
 assert.deepEqual(current,old);assert.equal(current.lessons.length,67);assert.equal(current.lessons.filter(x=>Number.isInteger(x.legacyIndex)).length,40);
+const catalog=JSON.parse(await readFile('courses/cpp/data/gold-laboratories.json')),oldCatalog=JSON.parse(git('show',base+':courses/cpp/data/gold-laboratories.json')),revised=new Set([...GOLD_ALGORITHM_LESSONS,...GOLD_BASICS_LESSONS]);
+assert.deepEqual(Object.keys(catalog.lessons),Object.keys(oldCatalog.lessons));for(const[id,value]of Object.entries(oldCatalog.lessons))if(!revised.has(id))assert.deepEqual(catalog.lessons[id],value,'Unchanged laboratory metadata: '+id);
 const result={status:'PASS',baseline:base,head:git('rev-parse','HEAD').toString().trim(),topicIds:67,legacyIndices:40,protectedAreas,preserved,changedTrackedPaths:names,personalDataAccess:false,productionWrites:false};
 const out=path.resolve(process.env.NEXUS_CLARITY_EVIDENCE||'cpp-clarity-evidence');await mkdir(out,{recursive:true});await writeFile(path.join(out,'PRESERVATION.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({...result,preserved:preserved.length,changedTrackedPaths:names.length}));

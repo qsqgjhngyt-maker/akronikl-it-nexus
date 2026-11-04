@@ -26,12 +26,15 @@ export function bindClarityEditor(root,gold,{studio,persist,createCopy,isCurrent
   if(!isCurrent()||root.querySelector('[data-clarity-choose]'))return;
   const selected=choice(mode),dialog=document.createElement('dialog');dialog.dataset.clarityChoose='';dialog.className='clarity-choice';dialog.lang=gold.locale;
   dialog.innerHTML='<h2>'+e(selected.title)+' · '+e(gold.title)+'</h2><p>'+t('Новая копия открывается отдельным проектом. Перед заменой текущая работа со всеми файлами сохраняется отдельным проектом. Если сохранение не удалось, замены не будет.','A new copy opens as a separate project. Before replacing, your current work and all its files are saved as a separate project. If saving fails, replacement stops.')+'</p><button type="button" class="btn primary" data-choice="copy">'+t('Открыть новую копию','Open a new copy')+'</button><button type="button" class="btn" data-choice="replace">'+t('Сохранить мою работу и заменить','Save my work and replace')+'</button><button type="button" class="btn" data-choice="cancel">'+t('Отмена','Cancel')+'</button><p data-choice-status role="status" aria-live="polite"></p>';
+  const title=dialog.querySelector('h2');title.id='clarityChoiceTitle';dialog.setAttribute('aria-labelledby',title.id);
   root.append(dialog);dialog.showModal();let busy=false;
+  dialog.addEventListener('cancel',event=>{if(busy)event.preventDefault()});
   dialog.addEventListener('close',()=>dialog.remove(),{once:true});
   dialog.addEventListener('click',async event=>{
    const action=event.target.closest('[data-choice]')?.dataset.choice;if(!action||busy)return;
    if(action==='cancel'){dialog.close();return}
-   busy=true;const status=dialog.querySelector('[data-choice-status]');
+   busy=true;for(const b of dialog.querySelectorAll('button'))b.disabled=true;
+   const status=dialog.querySelector('[data-choice-status]');status.textContent=t('Сохраняем работу…','Saving work…');
    const snapshot=capture(),originalInput=stdin.value,signature=JSON.stringify(snapshot);
    try{
     if(!isCurrent())throw Error(t('Окно или аккаунт изменились. Откройте действие снова.','The window or account changed. Open the action again.'));
@@ -53,7 +56,7 @@ export function bindClarityEditor(root,gold,{studio,persist,createCopy,isCurrent
     studio.clearRuntimeDiagnostics?.();out.className='output';out.textContent=t('Заготовка открыта. Этот код ещё не запускался.','Starter opened. This source has not run yet.');
     dialog.close();
    }catch(error){status.append(document.createTextNode(' '+t('Замена остановлена: ','Replacement stopped: ')+(error?.message||String(error))));}
-   finally{busy=false;}
+   finally{busy=false;for(const b of dialog.querySelectorAll('button'))b.disabled=false;}
   });
  }
  root.querySelectorAll('[data-clarity-open]').forEach(b=>b.addEventListener('click',()=>open(b.dataset.clarityOpen)));
