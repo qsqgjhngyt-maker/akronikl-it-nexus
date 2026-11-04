@@ -1,0 +1,120 @@
+-- SESSION-REMEMBER-01: ISOLATED MIGRATION CANDIDATE. DO NOT APPLY TO PRODUCTION.
+-- D1+Ingress+IAM+Account auth-strength review required. Existing rows never changed.
+-- 30d absolute, only SHA256 hashes, account/device/method owners immutable.
+CREATE TABLE IF NOT EXISTS nexus_remembered_grants (
+ id TEXT PRIMARY KEY,
+ account_id TEXT NOT NULL,
+ device_id TEXT NOT NULL,
+ login_method_id TEXT NOT NULL,
+ source_session_id TEXT NOT NULL,
+ current_hash TEXT NOT NULL UNIQUE CHECK(length(current_hash)=64),
+ generation INTEGER NOT NULL DEFAULT 1 CHECK(generation>=1),
+ status TEXT NOT NULL CHECK(status IN('active','revoked')),
+ created_at TEXT NOT NULL,
+ expires_at TEXT NOT NULL,
+ last_rotated_at TEXT NOT NULL,
+ last_session_id TEXT,
+ revoked_at TEXT,
+ revoked_reason TEXT,
+ FOREIGN KEY(account_id) REFERENCES account_subjects(id) ON DELETE RESTRICT,
+ FOREIGN KEY(device_id) REFERENCES account_devices(id) ON DELETE RESTRICT,
+ FOREIGN KEY(login_method_id) REFERENCES login_methods(id) ON DELETE RESTRICT,
+ FOREIGN KEY(source_session_id) REFERENCES account_sessions(id) ON DELETE RESTRICT,
+ CHECK((status='active' AND revoked_at IS NULL AND revoked_reason IS NULL)
+    OR (status='revoked' AND revoked_at IS NOT NULL AND revoked_reason IS NOT NULL))
+);
+CREATE INDEX IF NOT EXISTS idx_nexus_remembered_account
+ ON nexus_remembered_grants(account_id,status,expires_at);
+CREATE INDEX IF NOT EXISTS idx_nexus_remembered_device
+ ON nexus_remembered_grants(device_id,status);
+CREATE TABLE IF NOT EXISTS nexus_remembered_spent (
+ token_hash TEXT PRIMARY KEY CHECK(length(token_hash)=64),
+ grant_id TEXT NOT NULL,
+ used_at TEXT NOT NULL,
+ expires_at TEXT NOT NULL,
+ FOREIGN KEY(grant_id) REFERENCES nexus_remembered_grants(id) ON DELETE RESTRICT
+);
+CREATE INDEX IF NOT EXISTS idx_nexus_remembered_spent_expiry
+ ON nexus_remembered_spent(expires_at);
+CREATE TABLE IF NOT EXISTS nexus_remembered_renewal_receipts (
+ id TEXT PRIMARY KEY,
+ grant_id TEXT NOT NULL,
+ session_id TEXT NOT NULL UNIQUE,
+ generation INTEGER NOT NULL CHECK(generation>=2),
+ created_at TEXT NOT NULL,
+ FOREIGN KEY(grant_id) REFERENCES nexus_remembered_grants(id) ON DELETE RESTRICT,
+ FOREIGN KEY(session_id) REFERENCES account_sessions(id) ON DELETE RESTRICT
+);
+CREATE TRIGGER IF NOT EXISTS trg_nexus_remembered_owner_immutable
+ BEFORE UPDATE OF id,account_id,device_id,login_method_id,source_session_id,created_at,expires_at
+ ON nexus_remembered_grants
+ WHEN NEW.id IS NOT OLD.id OR NEW.account_id IS NOT OLD.account_id
+   OR NEW.device_id IS NOT OLD.device_id OR NEW.login_method_id IS NOT OLD.login_method_id
+   OR NEW.source_session_id IS NOT OLD.source_session_id
+   OR NEW.created_at IS NOT OLD.created_at OR NEW.expires_at IS NOT OLD.expires_at
+ BEGIN SELECT RAISE(ABORT,'REMEMBER_OWNER_IMMUTABLE'); END;
+-- При выдаче гранта нужен активный сильный origin session, возраст до 5 минут.
+CREATE TRIGGER IF NOT EXISTS trg_nexus_remembered_fresh_enrollment
+ BEFORE INSERT ON nexus_remembered_grants
+ WHEN NOT EXISTS(
+  SELECT 1 FROM account_sessions s
+  JOIN account_subjects a ON a.id=s.subject_id AND a.status='active'
+  JOIN account_devices d ON d.id=s.device_id AND d.subject_id=a.id AND d.status='active'
+  JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=a.id
+  JOIN login_methods lm ON lm.id=slm.login_method_id AND lm.account_id=a.id AND lm.status='active'
+  WHERE s.id=NEW.source_session_id AND s.subject_id=NEW.account_id
+   AND s.device_id=NEW.device_id AND lm.id=NEW.login_method_id
+   AND s.status='active' AND s.auth_strength='account-method-v1'
+   AND s.revoked_at IS NULL AND s.idle_expires_at>NEW.created_at
+   AND s.absolute_expires_at>NEW.created_at
+   AND (julianday(NEW.created_at)-julianday(s.created_at)) BETWEEN 0 AND (5.0/1440)
+   AND NOT EXISTS(SELECT 1 FROM nexus_alpha_members m WHERE m.account_id=a.id AND m.state IN('blocked','removed'))
+ ) OR julianday(NEW.expires_at)-julianday(NEW.created_at)>(30.0)
+ BEGIN SELECT RAISE(ABORT,'REMEMBER_FRESH_PROOF_REQUIRED'); END;
+-- Consumptions: nonce spend CAS is the FIRST write of a single D1 batch transaction.
+-- Unmatched, expired, blocked, device revoked, disabled method => statement error + rollback.
+CREATE TRIGGER IF NOT EXISTS trg_nexus_remembered_spend_guard
+ BEFORE INSERT ON nexus_remembered_spent
+ WHEN NOT EXISTS(
+  SELECT 1 FROM nexus_remembered_grants g
+  JOIN account_subjects a ON a.id=g.account_id AND a.status='active'
+  JOIN account_devices d ON d.id=g.device_id AND d.subject_id=a.id AND d.status='active'
+  JOIN login_methods lm ON lm.id=g.login_method_id AND lm.account_id=a.id AND lm.status='active'
+  WHERE g.id=NEW.grant_id AND g.current_hash=NEW.token_hash
+    AND g.status='active' AND g.expires_at>NEW.used_at
+    AND g.expires_at>strftime('%Y-%m-%dT%H:%M:%fZ','now')
+    AND NOT EXISTS(SELECT 1 FROM nexus_alpha_members m WHERE m.account_id=a.id AND m.state IN('blocked','removed'))
+ )
+ BEGIN SELECT RAISE(ABORT,'REMEMBER_TOKEN_SPEND_REJECTED'); END;
+-- Нельзя выдавать ослабленный session без ранее проверенной ротации и idempotent receipt.
+CREATE TRIGGER IF NOT EXISTS trg_nexus_remembered_session_issued
+ BEFORE INSERT ON account_sessions
+ WHEN NEW.auth_strength='remembered-device-v1' AND NOT EXISTS(
+  SELECT 1 FROM nexus_remembered_grants g
+  JOIN nexus_remembered_spent sp ON sp.grant_id=g.id
+  WHERE g.last_session_id=NEW.id AND g.status='active'
+    AND g.account_id=NEW.subject_id AND g.device_id=NEW.device_id
+    AND g.last_rotated_at=NEW.created_at
+    AND sp.used_at=NEW.created_at
+    AND g.generation>=2 AND g.expires_at>NEW.created_at
+ )
+ BEGIN SELECT RAISE(ABORT,'REMEMBER_SESSION_WITHOUT_ROTATION'); END;
+-- Финальное receipt гарантирует completeness batch: session + method + account + grant.
+CREATE TRIGGER IF NOT EXISTS trg_nexus_remembered_receipt_commit
+ BEFORE INSERT ON nexus_remembered_renewal_receipts
+ WHEN NOT EXISTS(
+ SELECT 1 FROM nexus_remembered_grants g
+ JOIN account_sessions s ON s.id=NEW.session_id
+ JOIN session_login_methods slm ON slm.session_id=s.id AND slm.account_id=g.account_id
+ WHERE g.id=NEW.grant_id AND g.last_session_id=NEW.session_id
+ AND g.generation=NEW.generation AND g.last_rotated_at=NEW.created_at
+ AND s.subject_id=g.account_id AND s.device_id=g.device_id
+ AND s.auth_strength='remembered-device-v1' AND s.status='active'
+ AND s.created_at=NEW.created_at AND slm.login_method_id=g.login_method_id
+ )
+ BEGIN SELECT RAISE(ABORT,'REMEMBER_ATOMIC_COMMIT_REJECTED'); END;
+-- Никогда не разрешать downgrade/upgrade remembered-session в fresh passkey.
+CREATE TRIGGER IF NOT EXISTS trg_nexus_remembered_auth_strength_immutable
+ BEFORE UPDATE OF auth_strength ON account_sessions
+ WHEN OLD.auth_strength='remembered-device-v1' AND NEW.auth_strength!='remembered-device-v1'
+ BEGIN SELECT RAISE(ABORT,'REMEMBER_STEP_UP_FORBIDDEN'); END;
