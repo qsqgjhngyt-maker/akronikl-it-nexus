@@ -16,7 +16,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Variables, blocks, and lifetime: a state journal",
-  "lead": "Trace when an object is created, which name denotes it, and why a copy does not change with the original.",
+  "lead": "Trace variable creation, reassignment and the boundary of a block.",
   "why": "Debugging needs a history of changes rather than the last number alone. Name scope and object lifetime are related but answer different questions. We examine them without assuming a particular hardware stack layout.",
   "objectives": [
     "Distinguish initialization from later assignment.",
@@ -321,5 +321,97 @@
       "Only to the compiler"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Trace variable creation, reassignment and the boundary of a block.",
+    "prerequisites": [
+      "You can declare an int and compute a product."
+    ],
+    "model": [
+      "int total = price*count creates total and computes its initial value once. Later price=80 changes price but does not recalculate total. A separate total=price*count statement is needed.",
+      "Scope is the region of source where a name is available. A local name declared inside inner braces is visible only up to that block’s closing brace. The local int object lives until the end of its block; do not keep a pointer to use afterward. Initialize a number before reading it."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Trace variable creation, reassignment and the boundary of a block.",
+      "code": "#include <iostream>\n\nint main() {\n    int price = 120;\n    int count = 3;\n    int total = price * count;\n    price = 80;\n    std::cout << total << ' ' << price * count << '\\n';\n    {\n        int local = 5;\n        std::cout << local << '\\n';\n    }\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "360 240\n5\n",
+      "trace": [
+        {
+          "line": "total = price * count",
+          "before": "120; 3",
+          "after": "total: 360",
+          "why": "This initializes a new object with a number."
+        },
+        {
+          "line": "price = 80",
+          "before": "price: 120; total: 360",
+          "after": "price: 80; total: 360",
+          "why": "The variables are not linked by a live formula."
+        },
+        {
+          "line": "cout << total << price*count",
+          "before": "360; 80 × 3",
+          "after": "stdout: 360 240",
+          "why": "One stored old number and one new calculation."
+        },
+        {
+          "line": "{ local = 5; }",
+          "before": "local absent",
+          "after": "stdout: 5",
+          "why": "Output occurs before local’s scope ends."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "After price=80, add total=price*count before output.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int price = 120;\n    int count = 3;\n    int total = price * count;\n    price = 80;\n    std::cout << total << ' ' << price * count << '\\n';\n    {\n        int local = 5;\n        std::cout << local << '\\n';\n    }\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "240 240\n5\n",
+      "hints": [
+        "The new line assigns to the existing total; do not repeat int.",
+        "First 80×3=240 is stored in total; then both values print."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int price = 120;\n    int count = 3;\n    int total = price * count;\n    price = 80;\n    total = price * count;\n    std::cout << total << ' ' << price * count << '\\n';\n    {\n        int local = 5;\n        std::cout << local << '\\n';\n    }\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "240 240\n5\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Create width=4, height=3 and area=width*height. Change width to 5; print the old area, then recalculate and print the new area.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "12\n15\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"12\\n15\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "Using local after } is a name-visibility error; do not replace it by reading a new uninitialized number with the same name."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int width = 4;\n    int height = 3;\n    int area = width * height;\n    width = 5;\n    std::cout << area << '\\n';\n    area = width * height;\n    std::cout << area << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Trace variable creation, reassignment and the boundary of a block.",
+      "steps": [
+        "Create width=4, height=3 and area=width*height. Change width to 5; print the old area, then recalculate and print the new area.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Using local after } is a name-visibility error; do not replace it by reading a new uninitialized number with the same name.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

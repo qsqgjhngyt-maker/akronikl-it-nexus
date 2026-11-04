@@ -23,7 +23,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Стандартный ввод-вывод: договор данных и проверяемый проект",
-  "lead": "Обработайте правильный и повреждённый ввод, разберите оставшийся перевод строки и завершите модуль точным расчётом времени передачи файла.",
+  "lead": "Прочитаем два числа и покажем, где ввод, вычисление и вывод.",
   "why": "Программа получает не «готовые правильные числа», а поток символов. Надёжный интерфейс отличает синтаксис, допустимый диапазон и лишние данные, а результат остаётся воспроизводимым. Конечное поле stdin Nexus делает такие проверки удобными, но отличается от живого терминала.",
   "objectives": [
     "Читать числа через cin и проверять успех до использования.",
@@ -846,5 +846,109 @@
       "?:"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Прочитаем два числа и покажем, где ввод, вычисление и вывод.",
+    "prerequisites": [
+      "Знаете if/else, ||, !, int и умножение; смысл состояния потока вводится здесь."
+    ],
+    "model": [
+      "stdin — входной текст программы. В поле ввода напишем 4 3: std::cin >> width >> height пытается прочитать два целых. Пробел либо перевод строки разделяет числа. После успешного чтения width=4 и height=3. std::cout — отдельный выход, он не заполняет stdin.",
+      "!(std::cin >> width >> height) истинно при ошибке чтения: ! означает отрицание успешного состояния потока. Ранний return завершает main, поэтому после ошибки мы не вычисляем площадь. Проверка width<0 || height<0 отклоняет отрицательные размеры. Для этого примера используйте размеры 0..1000; перед умножением проверяем и верхние границы.",
+      "Этот маленький протокол читает два числа и не требует отсутствия дальнейших слов. Более строгий разбор всей строки и смешение cin с getline — отдельная следующая ступень. Пустой stdin здесь вызовет invalid, в отличие от примеров с числами прямо в коде."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Прочитаем два числа и покажем, где ввод, вычисление и вывод.",
+      "code": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+      "stdin": "4 3\n",
+      "expectedStdout": "12\n",
+      "trace": [
+        {
+          "line": "cin >> width >> height",
+          "before": "stdin: 4 3",
+          "after": "width: 4; height: 3",
+          "why": "Оба целых прочитаны, первая ветвь пропущена."
+        },
+        {
+          "line": "Проверка / bounds",
+          "before": "4; 3",
+          "after": "valid",
+          "why": "Размеры в пределах 0..1000."
+        },
+        {
+          "line": "cout << width * height",
+          "before": "4 × 3",
+          "after": "stdout: 12",
+          "why": "Вывод вычислен только после двух проверок."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Тренировка",
+      "challenge": "Исходник не меняйте: в stdin поставьте 5 6, затем oops.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+      "stdin": "4 3\n",
+      "expectedStdout": "30\n",
+      "hints": [
+        "Два числовых токена становятся шириной и высотой.",
+        "При oops чтение int не удалось; умножение не выполняется."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+          "stdin": "5 6\n",
+          "stdout": "30\n"
+        },
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+          "stdin": "oops\n",
+          "stdout": "invalid\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Самостоятельная вариация",
+      "challenge": "Напишите чтение цены и количества 0..1000 с проверкой чтения и границ. Выведите произведение либо invalid. Проверьте 70 5, 70 0, -1 5 и пустой ввод.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Напишите своё решение здесь.\n    return 0;\n}\n",
+      "stdin": "70 5\n",
+      "cases": [
+        {
+          "stdin": "70 5\n",
+          "stdout": "350\n"
+        },
+        {
+          "stdin": "70 0\n",
+          "stdout": "0\n"
+        },
+        {
+          "stdin": "-1 5\n",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ],
+      "rubric": [
+        "Вывод указанного случая: \"350\\n\"",
+        "Объясните каждое изменение через объекты или операции этой темы.",
+        "Если вычислять после неудачного чтения, программа использует не полученные от пользователя данные. Проверка чтения должна предшествовать расчёту."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int price = 0;\n    int count = 0;\n    if (!(std::cin >> price >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (price < 0 || price > 1000 || count < 0 || count > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << price * count << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Прочитаем два числа и покажем, где ввод, вычисление и вывод.",
+      "steps": [
+        "Напишите чтение цены и количества 0..1000 с проверкой чтения и границ. Выведите произведение либо invalid. Проверьте 70 5, 70 0, -1 5 и пустой ввод.",
+        "Предскажите результат до запуска.",
+        "Напишите решение в отдельной заготовке; сохраните прежнюю работу.",
+        "Сравните фактический вывод с прогнозом и объясните расхождение."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Если вычислять после неудачного чтения, программа использует не полученные от пользователя данные. Проверка чтения должна предшествовать расчёту.",
+    "next": "После вариации переходите к углублению: там сохранены точные ограничения, дополнительные случаи и прежняя лабораторная. Старое завершение и попытки сохраняют отношение к прежней редакции."
   }
 }

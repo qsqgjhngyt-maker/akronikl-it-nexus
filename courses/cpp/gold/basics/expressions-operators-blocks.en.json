@@ -17,7 +17,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Expressions and operators: grouping, values, and clear steps",
-  "lead": "Break a formula into operands, predict the result, and rewrite a dense line as verifiable intermediate calculations.",
+  "lead": "Compare two expressions and see how parentheses change grouping.",
   "why": "Similar-looking formulas can describe different calculations. Precedence determines grouping rather than a universal execution order. The distinction prevents later mistakes involving state changes.",
   "objectives": [
     "Identify operands, operator, type, and value in a simple expression.",
@@ -316,5 +316,91 @@
       "They convert int to double"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Compare two expressions and see how parentheses change grouping.",
+    "prerequisites": [
+      "You know addition, multiplication and declarations."
+    ],
+    "model": [
+      "An expression computes a value: 2+3*4 produces a number. Multiplication has higher precedence: first 3*4=12, then 2+12=14. Parentheses explicitly group operations: (2+3)*4 gives 20.",
+      "Braces group statements into a block and limit local names. They do not replace arithmetic parentheses. Precedence defines grouping; it is not a general execution-order rule for all side effects. Avoid modifying one variable several times in a complex expression."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Compare two expressions and see how parentheses change grouping.",
+      "code": "#include <iostream>\n\nint main() {\n    int a = 2 + 3 * 4;\n    int b = (2 + 3) * 4;\n    std::cout << a << ' ' << b << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "14 20\n",
+      "trace": [
+        {
+          "line": "3 * 4",
+          "before": "3; 4",
+          "after": "12",
+          "why": "This subexpression performs the multiplication in a."
+        },
+        {
+          "line": "2 + 12",
+          "before": "2; 12",
+          "after": "a: 14",
+          "why": "Completed the calculation of a."
+        },
+        {
+          "line": "(2+3) * 4",
+          "before": "5 × 4",
+          "after": "b: 20",
+          "why": "Parentheses changed the grouping."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Replace both occurrences of 4 with 5; explain why the results differ.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int a = 2 + 3 * 4;\n    int b = (2 + 3) * 4;\n    std::cout << a << ' ' << b << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "17 25\n",
+      "hints": [
+        "The first expression starts with 3×5.",
+        "The second starts with 2+3, then multiplication by 5."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int a = 2 + 3 * 5;\n    int b = (2 + 3) * 5;\n    std::cout << a << ' ' << b << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "17 25\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Compute 10-2*3 and (10-2)*3. Name the first operation for each result.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "4 24\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"4 24\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "Removing b’s parentheses changes 20 to 14; changing indentation does not."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int a = 10 - 2 * 3;\n    int b = (10 - 2) * 3;\n    std::cout << a << ' ' << b << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Compare two expressions and see how parentheses change grouping.",
+      "steps": [
+        "Compute 10-2*3 and (10-2)*3. Name the first operation for each result.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Removing b’s parentheses changes 20 to 14; changing indentation does not.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

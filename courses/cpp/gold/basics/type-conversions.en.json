@@ -19,7 +19,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Type conversions: intent, information loss, and range checks",
-  "lead": "Identify an operation’s type before it runs and use static_cast only with a justified intention.",
+  "lead": "Compare conversion before division with conversion after the fraction is lost.",
   "why": "An explicit cast can look convincing while neither checking bounds nor restoring a lost fraction. We examine repairs that must occur earlier and warnings that require reasoning.",
   "objectives": [
     "Distinguish implicit conversion, promotion, and explicit static_cast.",
@@ -464,5 +464,91 @@
       "Never"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Compare conversion before division with conversion after the fraction is lost.",
+    "prerequisites": [
+      "You understand int, double and integer division."
+    ],
+    "model": [
+      "If both operands are integers, 5/2 gives 2. Storing that result in double gives 2.0: the fraction has already been lost. static_cast<double>(count) explicitly obtains a double value from count before division. With a double operand, division is performed in a floating-point type.",
+      "An explicit conversion states intent but does not make every value safe. double→int discards the fraction toward zero, and the value must be within range. Brace initialization rejects many narrowing conversions to detect loss early. Here 5 and 2 are small and exactly representable."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Compare conversion before division with conversion after the fraction is lost.",
+      "code": "#include <iostream>\n\nint main() {\n    int count = 5;\n    int people = 2;\n    double late = count / people;\n    double early = static_cast<double>(count) / people;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "2 2.5\n",
+      "trace": [
+        {
+          "line": "count / people",
+          "before": "int 5; int 2",
+          "after": "int 2",
+          "why": "Integer division happened first."
+        },
+        {
+          "line": "double late = 2",
+          "before": "int 2",
+          "after": "double 2",
+          "why": "Conversion after division cannot recover the fraction."
+        },
+        {
+          "line": "static_cast<double>(count) / people",
+          "before": "double 5; int 2",
+          "after": "early: 2.5",
+          "why": "A floating-point operand exists before division."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Replace count=5 with count=7.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int count = 5;\n    int people = 2;\n    double late = count / people;\n    double early = static_cast<double>(count) / people;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "3 3.5\n",
+      "hints": [
+        "Integer 7/2 gives 3.",
+        "Floating-point 7.0/2 gives 3.5."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int count = 7;\n    int people = 2;\n    double late = count / people;\n    double early = static_cast<double>(count) / people;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "3 3.5\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Divide 9 items between two people. Show the integer quotient and floating-point share; convert an operand before the operation.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "4 4.5\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"4 4.5\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "static_cast<double>(count/people) still converts a completed integer quotient and gives 2."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int items = 9;\n    int people = 2;\n    std::cout << items / people << ' ' << static_cast<double>(items) / people << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Compare conversion before division with conversion after the fraction is lost.",
+      "steps": [
+        "Divide 9 items between two people. Show the integer quotient and floating-point share; convert an operand before the operation.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "static_cast<double>(count/people) still converts a completed integer quotient and gives 2.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

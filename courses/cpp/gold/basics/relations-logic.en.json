@@ -17,7 +17,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Comparisons and logic: conditions as testable contracts",
-  "lead": "Build conditions from clear parts and identify right operands that will not be evaluated.",
+  "lead": "Check a range with two conditions and distinguish “and” from “or”.",
   "why": "A condition can do more than answer yes or no: its order can protect an invalid operation. Short-circuiting follows exact built-in && and || rules rather than compiler intuition.",
   "objectives": [
     "Read <, <=, >, >=, ==, and != as bool-producing comparisons.",
@@ -371,5 +371,96 @@
       "!="
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Check a range with two conditions and distinguish “and” from “or”.",
+    "prerequisites": [
+      "You know comparisons, bool and a range boundary."
+    ],
+    "model": [
+      "A valid age in 0..120 means age>=0 AND age<=120. && is true only when both parts are true. || is true when at least one part is true. ! reverses truth and falsehood. Comparisons produce bool results.",
+      "&& and || evaluate their second part only when needed: a false first part settles && as false; a true first part settles || as true. This short-circuiting can protect division by checking its divisor first. This example only uses safe comparisons."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Check a range with two conditions and distinguish “and” from “or”.",
+      "code": "#include <iostream>\n\nint main() {\n    int age = 25;\n    bool valid = age >= 0 && age <= 120;\n    bool outside = age < 0 || age > 120;\n    std::cout << valid << ' ' << outside << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "1 0\n",
+      "trace": [
+        {
+          "line": "age >= 0",
+          "before": "25 >= 0",
+          "after": "true",
+          "why": "The lower bound is satisfied."
+        },
+        {
+          "line": "age <= 120",
+          "before": "25 <= 120",
+          "after": "true",
+          "why": "Both && parts are true: valid=true."
+        },
+        {
+          "line": "age < 0 || age > 120",
+          "before": "false; false",
+          "after": "outside: false",
+          "why": "Neither bound is violated; bool prints as 1/0."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Check age=120, then age=121.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int age = 25;\n    bool valid = age >= 0 && age <= 120;\n    bool outside = age < 0 || age > 120;\n    std::cout << valid << ' ' << outside << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "1 0\n",
+      "hints": [
+        "Equality at 120 is valid because of <=.",
+        "121 exceeds the upper bound but satisfies the lower one."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int age = 120;\n    bool valid = age >= 0 && age <= 120;\n    bool outside = age < 0 || age > 120;\n    std::cout << valid << ' ' << outside << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "1 0\n"
+        },
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int age = 121;\n    bool valid = age >= 0 && age <= 120;\n    bool outside = age < 0 || age > 120;\n    std::cout << valid << ' ' << outside << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "0 1\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Check score in 0..100; print valid for -1,0,100,101 and explain both bounds.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "1\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"1\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "age>=0 || age<=120 accepts 250 because the first part is true. Range membership needs &&."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int score = 100;\n    bool valid = score >= 0 && score <= 100;\n    std::cout << valid << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Check a range with two conditions and distinguish “and” from “or”.",
+      "steps": [
+        "Check score in 0..100; print valid for -1,0,100,101 and explain both bounds.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "age>=0 || age<=120 accepts 250 because the first part is true. Range membership needs &&.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

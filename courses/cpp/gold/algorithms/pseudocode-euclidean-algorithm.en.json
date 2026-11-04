@@ -6,7 +6,7 @@
   "standardVersion": "academy-gold-1.1",
   "status": "candidate",
   "title": "Euclid's algorithm: remainders, traces and invariants",
-  "lead": "Instead of guessing a greatest common divisor, we repeatedly transform a pair of integers without changing the answer.",
+  "lead": "Find a common divisor by repeatedly replacing a pair with a smaller problem.",
   "why": "Euclid's algorithm is a model of algorithmic reasoning: simplify the state while preserving a key property, then explain why the process must terminate.",
   "objectives": [
     "Trace the greatest common divisor calculation by hand.",
@@ -309,5 +309,109 @@
       "steps becomes 10"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Find a common divisor by repeatedly replacing a pair with a smaller problem.",
+    "prerequisites": [
+      "You can divide with a remainder and read assignments and a condition. while is introduced here."
+    ],
+    "model": [
+      "The greatest common divisor of 48 and 18 is the largest positive number dividing both without a remainder. 48 = 2 × 18 + 12. The common divisors of 48 and 18 are the same as those of 18 and 12: subtracting a multiple preserves them.",
+      "While b is not zero, compute a % b, then set a to the old b and b to the remainder. while means repeat while the condition is true; != means not equal. The temporary variable remainder preserves the remainder before a changes.",
+      "For b > 0, the remainder is nonnegative and smaller than b. Thus the second number decreases to zero; division by zero never runs because the condition is tested before the body. The pair’s greatest common divisor stays the same at every step: this is the concrete invariant. We do not use the pair 0,0 here."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Find a common divisor by repeatedly replacing a pair with a smaller problem.",
+      "code": "#include <iostream>\n\nint main() {\n    int a = 48;\n    int b = 18;\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "6\n",
+      "trace": [
+        {
+          "line": "remainder = 48 % 18",
+          "before": "a: 48; b: 18",
+          "after": "remainder: 12",
+          "why": "48 = 2 × 18 + 12."
+        },
+        {
+          "line": "a = b; b = remainder",
+          "before": "48; 18",
+          "after": "a: 18; b: 12",
+          "why": "Moved to a pair with the same common divisor."
+        },
+        {
+          "line": "18 % 12; replacement",
+          "before": "18; 12",
+          "after": "a: 12; b: 6",
+          "why": "Remainder 6; the second number decreased."
+        },
+        {
+          "line": "12 % 6; replacement",
+          "before": "12; 6",
+          "after": "a: 6; b: 0",
+          "why": "Remainder 0. The next while condition is false."
+        },
+        {
+          "line": "cout << a",
+          "before": "6; 0",
+          "after": "stdout: 6",
+          "why": "The final nonzero a is the answer."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Set a=35 and b=15. Write both pair replacements before running.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int a = 48;\n    int b = 18;\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "5\n",
+      "hints": [
+        "35 % 15 = 5, so the next pair is 15,5.",
+        "15 % 5 = 0; the answer is 5."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int a = 35;\n    int b = 18;\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "1\n"
+        },
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int a = 35;\n    int b = 15;\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "5\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Find the GCD of 27 and 18; show the pairs and explain why the loop finished.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "9\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"9\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "Setting a=b before computing a%b loses the old a: 18%18 gives 0 instead of 12."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int a = 27;\n    int b = 18;\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Find a common divisor by repeatedly replacing a pair with a smaller problem.",
+      "steps": [
+        "Find the GCD of 27 and 18; show the pairs and explain why the loop finished.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Setting a=b before computing a%b loses the old a: 18%18 gives 0 instead of 12.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

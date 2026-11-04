@@ -6,7 +6,7 @@
   "standardVersion": "academy-gold-1.1",
   "status": "candidate",
   "title": "Flowcharts as testable execution models",
-  "lead": "A flowchart is not decorative artwork. It shows how an algorithm chooses actions and which path a particular input follows.",
+  "lead": "Follow a flowchart’s arrows and check the free-delivery boundary.",
   "why": "In order processing, pricing and control systems, a wrong edge or label can become a business defect. A diagram should be testable against real inputs and code.",
   "objectives": [
     "Follow directed control-flow edges.",
@@ -335,5 +335,101 @@
       "A terminator"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Follow a flowchart’s arrows and check the free-delivery boundary.",
+    "prerequisites": [
+      "You understand if/else branching and comparisons."
+    ],
+    "model": [
+      "Delivery is free for an order total of at least 1000. A smaller nonnegative total has a fee of 150. A negative total is invalid. Follow the arrows: start → test total<0 → on “no”, test total>=1000 → one result → end.",
+      "A diamond is a question with labelled yes/no exits. A rectangle is an action such as output. >= includes equality; else if asks the next question only after the previous answer was no. The example’s number is in the source; stdin is empty."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Follow a flowchart’s arrows and check the free-delivery boundary.",
+      "code": "#include <iostream>\n\nint main() {\n    int total = 1000;\n    if (total < 0) {\n        std::cout << \"invalid\\n\";\n    } else if (total >= 1000) {\n        std::cout << \"free\\n\";\n    } else {\n        std::cout << \"150\\n\";\n    }\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "free\n",
+      "trace": [
+        {
+          "line": "total < 0",
+          "before": "total: 1000",
+          "after": "false",
+          "why": "The order is valid; continue to the next question."
+        },
+        {
+          "line": "total >= 1000",
+          "before": "1000 >= 1000",
+          "after": "true",
+          "why": "Equality is included, selecting free delivery."
+        },
+        {
+          "line": "cout",
+          "before": "stdout: empty",
+          "after": "stdout: free",
+          "why": "The other branches do not run."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Check total=999, then total=-1; name the questions visited.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int total = 1000;\n    if (total < 0) {\n        std::cout << \"invalid\\n\";\n    } else if (total >= 1000) {\n        std::cout << \"free\\n\";\n    } else {\n        std::cout << \"150\\n\";\n    }\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "150\n",
+      "hints": [
+        "For 999, both questions answer no.",
+        "For -1, the first question answers yes; the second is never needed."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int total = 999;\n    if (total < 0) {\n        std::cout << \"invalid\\n\";\n    } else if (total >= 1000) {\n        std::cout << \"free\\n\";\n    } else {\n        std::cout << \"150\\n\";\n    }\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "150\n"
+        },
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int total = -1;\n    if (total < 0) {\n        std::cout << \"invalid\\n\";\n    } else if (total >= 1000) {\n        std::cout << \"free\\n\";\n    } else {\n        std::cout << \"150\\n\";\n    }\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "invalid\n"
+        },
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int total = 1000;\n    if (total < 0) {\n        std::cout << \"invalid\\n\";\n    } else if (total > 1000) {\n        std::cout << \"free\\n\";\n    } else {\n        std::cout << \"150\\n\";\n    }\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "150\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Set a passing score of 60, with valid scores 0..100. Output invalid, pass or retry. Check -1,59,60,101.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "pass\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"pass\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "Replacing >= with > incorrectly charges an order of exactly 1000. Test the boundary itself."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int score = 60;\n    if (score < 0) {\n        std::cout << \"invalid\\n\";\n    } else if (score > 100) {\n        std::cout << \"invalid\\n\";\n    } else if (score >= 60) {\n        std::cout << \"pass\\n\";\n    } else {\n        std::cout << \"retry\\n\";\n    }\n    return 0;\n}\n",
+      "catalogGoal": "Follow a flowchart’s arrows and check the free-delivery boundary.",
+      "steps": [
+        "Set a passing score of 60, with valid scores 0..100. Output invalid, pass or retry. Check -1,59,60,101.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Replacing >= with > incorrectly charges an order of exactly 1000. Test the boundary itself.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

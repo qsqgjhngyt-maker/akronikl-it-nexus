@@ -16,7 +16,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Tokens and names: precise source with clear meaning",
-  "lead": "Read source as a sequence of meaningful parts, choose safe names, and rename them without changing behavior.",
+  "lead": "Split a statement into parts and identify which names you may change.",
   "why": "A one-character typo can stop a build, while an unclear name can hide a unit error in a working program. We separate language requirements from team conventions so that readability improves without inventing C++ restrictions.",
   "objectives": [
     "Distinguish keywords, identifiers, literals, operators, and punctuation.",
@@ -356,5 +356,91 @@
       "salary2026"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Split a statement into parts and identify which names you may change.",
+    "prerequisites": [
+      "You can read the main frame and an int declaration."
+    ],
+    "model": [
+      "In int itemCount = 3;, int is a keyword: the language reserves it for an integer type. itemCount is an identifier chosen by the author; 3 is a numeric literal; = supplies the initial value and ; ends the declaration. These meaningful pieces of text are tokens.",
+      "A name starts with a letter or an allowed underscore and may then contain digits. For our own names, use Latin letters without a leading underscore. itemCount and itemcount are different names: case matters. A space separates int from its name; no space belongs inside itemCount. Do not use reserved words as names."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Split a statement into parts and identify which names you may change.",
+      "code": "#include <iostream>\n\nint main() {\n    int itemCount = 3;\n    int itemPrice = 20;\n    std::cout << itemCount * itemPrice << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "60\n",
+      "trace": [
+        {
+          "line": "int itemCount = 3",
+          "before": "—",
+          "after": "itemCount: 3",
+          "why": "Type, name and value have different roles."
+        },
+        {
+          "line": "int itemPrice = 20",
+          "before": "itemCount: 3",
+          "after": "itemPrice: 20",
+          "why": "Created a second named number."
+        },
+        {
+          "line": "itemCount * itemPrice",
+          "before": "3 × 20",
+          "after": "stdout: 60",
+          "why": "Names in the expression must match their declarations."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Rename itemCount to quantity in its declaration and expression.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int itemCount = 3;\n    int itemPrice = 20;\n    std::cout << itemCount * itemPrice << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "60\n",
+      "hints": [
+        "The name changes, not the value 3.",
+        "Find both uses of the name; the compiler distinguishes case."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int quantity = 3;\n    int itemPrice = 20;\n    std::cout << quantity * itemPrice << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "60\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Calculate 4 items at 15 using quantity and price. Explain which tokens are keywords and which you chose.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "60\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"60\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "Renaming only the declaration leaves an unknown name in the output expression: this is a build error, not a wrong price."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int quantity = 4;\n    int price = 15;\n    std::cout << quantity * price << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Split a statement into parts and identify which names you may change.",
+      "steps": [
+        "Calculate 4 items at 15 using quantity and price. Explain which tokens are keywords and which you chose.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Renaming only the declaration leaves an unknown name in the output expression: this is a build error, not a wrong price.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

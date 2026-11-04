@@ -18,7 +18,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Data types: choosing values, initialization, and measuring a target",
-  "lead": "Choose types by domain and range, initialize them, and record target properties without assuming that int always occupies four bytes.",
+  "lead": "Choose a type for a value and observe integer versus floating-point division.",
   "why": "A type defines representable values and operations. A program working on one device does not establish an identical representation elsewhere. We separate portable rules from observations of Clang/WASM and a native compiler.",
   "objectives": [
     "Choose bool, char, integer, or floating-point types by domain meaning.",
@@ -518,5 +518,96 @@
       "char[]"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Choose a type for a value and observe integer versus floating-point division.",
+    "prerequisites": [
+      "You know integer expressions, % and !=; this step introduces double and bool."
+    ],
+    "model": [
+      "A type determines values and operations. int holds integers, double holds approximate real values, bool holds false/true, and char holds one encoding unit, not an arbitrary letter in every language. Five whole items divided between two people have integer quotient 2; 5.0/2.0 gives 2.5.",
+      "5.0 is a floating-point literal. In contrast, 5/2 performs integer division before any result is stored elsewhere. Sizes and exact limits depend on the platform: do not infer every pointer size from one machine. Signed integer overflow is not a valid way to obtain the “next” number."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Choose a type for a value and observe integer versus floating-point division.",
+      "code": "#include <iostream>\n\nint main() {\n    int whole = 5 / 2;\n    double share = 5.0 / 2.0;\n    bool hasRemainder = (5 % 2 != 0);\n    std::cout << whole << ' ' << share << ' ' << hasRemainder << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "2 2.5 1\n",
+      "trace": [
+        {
+          "line": "5 / 2",
+          "before": "int; int",
+          "after": "whole: 2",
+          "why": "The fractional part is not part of the integer quotient."
+        },
+        {
+          "line": "5.0 / 2.0",
+          "before": "double; double",
+          "after": "share: 2.5",
+          "why": "This half is exactly representable."
+        },
+        {
+          "line": "5 % 2 != 0",
+          "before": "1 != 0",
+          "after": "hasRemainder: true",
+          "why": "Without boolalpha, true prints as 1."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Replace 5 with 6 in both divisions, keeping .0 for double.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int whole = 5 / 2;\n    double share = 5.0 / 2.0;\n    bool hasRemainder = (5 % 2 != 0);\n    std::cout << whole << ' ' << share << ' ' << hasRemainder << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "3 3 1\n",
+      "hints": [
+        "Both quotients are now 3.",
+        "hasRemainder still asks about 5! Change it separately too; then the final number becomes 0."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int whole = 6 / 2;\n    double share = 5.0 / 2.0;\n    bool hasRemainder = (5 % 2 != 0);\n    std::cout << whole << ' ' << share << ' ' << hasRemainder << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "3 2.5 1\n"
+        },
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int whole = 6 / 2;\n    double share = 6.0 / 2.0;\n    bool hasRemainder = (5 % 2 != 0);\n    std::cout << whole << ' ' << share << ' ' << hasRemainder << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "3 3 1\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Compare 7/2 and 7.0/2.0. Print both results and a bool indicating whether 7 has a remainder.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "3 3.5 1\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"3 3.5 1\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "double value = 5/2 gives 2, not 2.5: the destination type does not recover a discarded fraction."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int whole = 7 / 2;\n    double share = 7.0 / 2.0;\n    bool hasRemainder = (7 % 2 != 0);\n    std::cout << whole << ' ' << share << ' ' << hasRemainder << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Choose a type for a value and observe integer versus floating-point division.",
+      "steps": [
+        "Compare 7/2 and 7.0/2.0. Print both results and a bool indicating whether 7 has a remainder.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "double value = 5/2 gives 2, not 2.5: the destination type does not recover a discarded fraction.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

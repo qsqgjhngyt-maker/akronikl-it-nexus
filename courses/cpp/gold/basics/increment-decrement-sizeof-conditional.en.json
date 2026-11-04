@@ -19,7 +19,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "++ and --, sizeof and ?: — concise syntax with precise meaning",
-  "lead": "Separate object mutation, expression value, type measurement, and selecting an evaluated branch.",
+  "lead": "Observe a counter change, an expression value and a selected result separately.",
   "why": "Concise syntax helps when it keeps state understandable. Updating, an unevaluated operand, and branch selection are distinct mechanisms. One rule to read everything left to right cannot explain them.",
   "objectives": [
     "Distinguish prefix/postfix and object state from expression result.",
@@ -342,5 +342,97 @@
       "Increments a number"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Observe a counter change, an expression value and a selected result separately.",
+    "prerequisites": [
+      "You know assignment, comparisons and bool."
+    ],
+    "model": [
+      "i++ increments i, but the expression’s value is the old i. ++i increments first and yields the new value. Keep these operations in separate statements so there is no guessing about order. -- similarly subtracts one; check type bounds before changing a value.",
+      "The conditional expression condition ? a : b selects one of two values. sizeof gives a type or object size in C++ bytes; sizeof(char) is always 1, but a byte need not have exactly eight bits on every platform. sizeof here does not modify a variable."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Observe a counter change, an expression value and a selected result separately.",
+      "code": "#include <iostream>\n\nint main() {\n    int i = 4;\n    int old = i++;\n    int next = ++i;\n    int larger = (old > next) ? old : next;\n    std::cout << old << ' ' << next << ' ' << i << ' ' << larger << ' ' << sizeof(char) << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "4 6 6 6 1\n",
+      "trace": [
+        {
+          "line": "old = i++",
+          "before": "i: 4",
+          "after": "old: 4; i: 5",
+          "why": "Captured the old value, then changed the counter."
+        },
+        {
+          "line": "next = ++i",
+          "before": "i: 5",
+          "after": "next: 6; i: 6",
+          "why": "The updated counter became the expression value."
+        },
+        {
+          "line": "old > next ? old : next",
+          "before": "4 > 6",
+          "after": "larger: 6",
+          "why": "The condition is false, so next is selected."
+        },
+        {
+          "line": "sizeof(char)",
+          "before": "char",
+          "after": "1",
+          "why": "This is the guaranteed size of char, not a measurement of int or a pointer."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Start with i=10 and keep the other statements.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int i = 4;\n    int old = i++;\n    int next = ++i;\n    int larger = (old > next) ? old : next;\n    std::cout << old << ' ' << next << ' ' << i << ' ' << larger << ' ' << sizeof(char) << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "10 12 12 12 1\n",
+      "hints": [
+        "After i++, the counter is 11 and old remains 10.",
+        "++i yields 12; the larger value selected is 12."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int i = 10;\n    int old = i++;\n    int next = ++i;\n    int larger = (old > next) ? old : next;\n    std::cout << old << ' ' << next << ' ' << i << ' ' << larger << ' ' << sizeof(char) << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "10 12 12 12 1\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Start with i=7. In separate statements obtain old with i--, then next with --i. Print old, next, i and select the smaller value using a conditional expression.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "7 5 5 5\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"7 5 5 5\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "Replacing old=i++ with old=++i changes old from 4 to 5. Do not explore ordering with an expression like i++ + ++i."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int i = 7;\n    int old = i--;\n    int next = --i;\n    int smaller = (old < next) ? old : next;\n    std::cout << old << ' ' << next << ' ' << i << ' ' << smaller << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Observe a counter change, an expression value and a selected result separately.",
+      "steps": [
+        "Start with i=7. In separate statements obtain old with i--, then next with --i. Print old, next, i and select the smaller value using a conditional expression.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Replacing old=i++ with old=++i changes old from 4 to 5. Do not explore ordering with an expression like i++ + ++i.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

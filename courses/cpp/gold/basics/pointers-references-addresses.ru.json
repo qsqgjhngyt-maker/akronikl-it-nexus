@@ -19,7 +19,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Объект, копия, ссылка и указатель: связи без опасной памяти",
-  "lead": "Проследите один живой объект через несколько способов доступа и не путайте изменение адреса с изменением значения.",
+  "lead": "Отделим копию числа, второе имя объекта и указатель на объект.",
   "why": "Ссылки и указатели нужны для совместного доступа к объектам. Их сила требует точного договора: какой объект существует, кто его обозначает и когда доступ допустим. Мы начнём с автоматических объектов, без new/delete и адресной арифметики.",
   "objectives": [
     "Различать копию значения, ссылку и указатель.",
@@ -363,5 +363,110 @@
       "Оно создаёт новый int"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Отделим копию числа, второе имя объекта и указатель на объект.",
+    "prerequisites": [
+      "Умеете создавать int, присваивать значения, читать последовательность команд и выводить числа."
+    ],
+    "model": [
+      "int copy = original создаёт отдельный объект. int& ref = original создаёт ссылку: ref — другое имя original, а не отдельная копия числа. После copy = 9 исходное число не изменяется; после ref = 6 оно становится 6.",
+      "int* ptr = &original создаёт указатель. & получает адрес существующего объекта, *ptr обращается к объекту по сохранённому адресу. Схема связей: ref → original ← ptr; copy отдельно. Это имена связей, а не выдуманные числовые адреса.",
+      "*ptr = 8 меняет число в original. ptr = &other меняет сам указатель: теперь *ptr — это other; ref по-прежнему обозначает original. Разыменовывать можно только указатель на живой подходящий объект; nullptr и указатели на уже уничтоженные объекты здесь не разыменовываем. const ограничивает изменение через соответствующее имя; время жизни объекта от ссылки не продлевается в общем случае."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Отделим копию числа, второе имя объекта и указатель на объект.",
+      "code": "#include <iostream>\n\nint main() {\n    int original = 4;\n    int copy = original;\n    int& ref = original;\n    int* ptr = &original;\n    copy = 9;\n    ref = 6;\n    *ptr = 8;\n    int other = 20;\n    ptr = &other;\n    *ptr = 21;\n    std::cout << original << ' ' << copy << ' ' << ref << ' ' << other << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "8 9 8 21\n",
+      "trace": [
+        {
+          "line": "copy = original",
+          "before": "original: 4",
+          "after": "original: 4; copy: 4",
+          "why": "Два объекта: последующие изменения независимы."
+        },
+        {
+          "line": "ref; ptr",
+          "before": "original: 4",
+          "after": "ref → original ← ptr",
+          "why": "Два способа обратиться к одному объекту."
+        },
+        {
+          "line": "copy = 9",
+          "before": "4; 4",
+          "after": "original: 4; copy: 9",
+          "why": "Изменили только копию."
+        },
+        {
+          "line": "ref = 6",
+          "before": "original: 4",
+          "after": "original: 6; ref: 6",
+          "why": "Оба имени обозначают один объект."
+        },
+        {
+          "line": "*ptr = 8",
+          "before": "original: 6",
+          "after": "original: 8; ref: 8",
+          "why": "ptr всё ещё указывает на original."
+        },
+        {
+          "line": "ptr = &other; *ptr = 21",
+          "before": "original: 8; other: 20",
+          "after": "original: 8; other: 21",
+          "why": "Перенаправили указатель; ссылка не перенаправилась."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Тренировка",
+      "challenge": "Замените ref = 6 на ref = 10 и уберите только *ptr = 8. Предскажите четыре числа.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int original = 4;\n    int copy = original;\n    int& ref = original;\n    int* ptr = &original;\n    copy = 9;\n    ref = 6;\n    *ptr = 8;\n    int other = 20;\n    ptr = &other;\n    *ptr = 21;\n    std::cout << original << ' ' << copy << ' ' << ref << ' ' << other << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "10 9 10 21\n",
+      "hints": [
+        "copy всё ещё отдельный объект; ptr после перенаправления меняет other.",
+        "Перед выводом original и ref равны 10, copy — 9, other — 21."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int original = 4;\n    int copy = original;\n    int& ref = original;\n    int* ptr = &original;\n    copy = 9;\n    ref = 10;\n    int other = 20;\n    ptr = &other;\n    *ptr = 21;\n    std::cout << original << ' ' << copy << ' ' << ref << ' ' << other << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "10 9 10 21\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Самостоятельная вариация",
+      "challenge": "Начните с original=10. Создайте копию, ссылку и указатель. Поменяйте копию на 11, исходник через ссылку на 12, затем через указатель на 13. Выведите original/copy/ref.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Напишите своё решение здесь.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "13 11 13\n"
+        }
+      ],
+      "rubric": [
+        "Вывод указанного случая: \"13 11 13\\n\"",
+        "Объясните каждое изменение через объекты или операции этой темы.",
+        "Утверждение «ref = other перенаправит ссылку» неверно: оно присвоит original текущее число из other. Не проверяйте эту мысль через уничтоженные объекты."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int original = 10;\n    int copy = original;\n    int& ref = original;\n    int* ptr = &original;\n    copy = 11;\n    ref = 12;\n    *ptr = 13;\n    std::cout << original << ' ' << copy << ' ' << ref << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Отделим копию числа, второе имя объекта и указатель на объект.",
+      "steps": [
+        "Начните с original=10. Создайте копию, ссылку и указатель. Поменяйте копию на 11, исходник через ссылку на 12, затем через указатель на 13. Выведите original/copy/ref.",
+        "Предскажите результат до запуска.",
+        "Напишите решение в отдельной заготовке; сохраните прежнюю работу.",
+        "Сравните фактический вывод с прогнозом и объясните расхождение."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Утверждение «ref = other перенаправит ссылку» неверно: оно присвоит original текущее число из other. Не проверяйте эту мысль через уничтоженные объекты.",
+    "next": "После вариации переходите к углублению: там сохранены точные ограничения, дополнительные случаи и прежняя лабораторная. Старое завершение и попытки сохраняют отношение к прежней редакции."
   }
 }

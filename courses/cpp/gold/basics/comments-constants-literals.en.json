@@ -17,7 +17,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Comments, constants, and literals: meaning instead of magic numbers",
-  "lead": "Write values precisely, name immutable quantities, and use comments to explain decisions.",
+  "lead": "Separate a human explanation from a value used by the program.",
   "why": "minutes * 60 can work while leaving 60 easy to mistake for a limit or setting. Distinguishing literals, named constants, and comments makes changes deliberate and exposes inconsistent units.",
   "objectives": [
     "Distinguish a literal, a named object, and an explanatory comment.",
@@ -360,5 +360,97 @@
       "To create a loop"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Separate a human explanation from a value used by the program.",
+    "prerequisites": [
+      "You know declarations, an integer literal and output."
+    ],
+    "model": [
+      "// starts a comment lasting to the end of the line: it is not an executable statement. const int days = 7 creates an integer that cannot be reassigned through this name. 7 is an integer literal; \"days\" is a string literal, just output text.",
+      "A named constant avoids repeating an unexplained number, but a comment should describe the reason, such as counting whole weeks. Changing a comment does not change the calculation. constexpr suits a value computed at compile time; const alone does not promise compile-time evaluation in every case."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Separate a human explanation from a value used by the program.",
+      "code": "#include <iostream>\n\nint main() {\n    const int daysPerWeek = 7;\n    int weeks = 2;\n    // Count complete weeks.\n    std::cout << daysPerWeek * weeks << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "14\n",
+      "trace": [
+        {
+          "line": "daysPerWeek = 7",
+          "before": "—",
+          "after": "daysPerWeek: 7",
+          "why": "Declared the fixed length of a week."
+        },
+        {
+          "line": "weeks = 2",
+          "before": "—",
+          "after": "weeks: 2",
+          "why": "The number of weeks is separate data."
+        },
+        {
+          "line": "// Count complete weeks.",
+          "before": "7; 2",
+          "after": "7; 2",
+          "why": "The comment does not change the state."
+        },
+        {
+          "line": "daysPerWeek * weeks",
+          "before": "7 × 2",
+          "after": "stdout: 14",
+          "why": "Multiplied values, not the comment text."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Change only the comment. Then change weeks from 2 to 3.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    const int daysPerWeek = 7;\n    int weeks = 2;\n    // Count complete weeks.\n    std::cout << daysPerWeek * weeks << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "14\n",
+      "hints": [
+        "Changing the comment leaves output at 14.",
+        "Three whole weeks are 7×3=21 days."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    const int daysPerWeek = 7;\n    int weeks = 3;\n    // Count complete weeks.\n    std::cout << daysPerWeek * weeks << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "21\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Declare const int minutesPerHour=60 and calculate minutes in three hours. Add a comment explaining the number.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "180\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"180\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "Assigning daysPerWeek=8 after declaration is invalid; writing “now 8” in a comment does not change 7 either."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    const int minutesPerHour = 60;\n    int hours = 3;\n    // Convert whole hours to minutes.\n    std::cout << minutesPerHour * hours << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Separate a human explanation from a value used by the program.",
+      "steps": [
+        "Declare const int minutesPerHour=60 and calculate minutes in three hours. Add a comment explaining the number.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Assigning daysPerWeek=8 after declaration is invalid; writing “now 8” in a comment does not change 7 either.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

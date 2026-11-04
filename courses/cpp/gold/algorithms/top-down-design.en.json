@@ -6,7 +6,7 @@
   "standardVersion": "academy-gold-1.1",
   "status": "candidate",
   "title": "Top-down design: from requirements to functions",
-  "lead": "Complex software becomes easier to build and verify when decomposed into small operations with clear responsibilities.",
+  "lead": "Split an order calculation into parts with explicit intermediate values.",
   "why": "Decomposition supports large projects: define responsibilities first, implement and test each part, then verify the complete behavior.",
   "objectives": [
     "Decompose a requirement into cohesive functions.",
@@ -348,5 +348,97 @@
       "Always writing at the top of a file"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Split an order calculation into parts with explicit intermediate values.",
+    "prerequisites": [
+      "You know integer variables, multiplication, division and statement order."
+    ],
+    "model": [
+      "Task: three items at 100, with a 10 percent discount. First compute the subtotal, then the discount amount, then the total. Decomposition splits a task into steps, each answering one question.",
+      "subtotal is the amount before discount; saving is what we subtract; total is what we pay. Compute percent as subtotal*discount/100. Here 300*10/100 is exactly 30. Integer division discards the fractional part: agree on this rounding rule beforehand.",
+      "Use price and quantity 0..1000 and discount 0..100: the intermediate product is at most 100000000 and fits a 32-bit int. The example satisfies these bounds; handling arbitrary input is a later step. We do not need user-defined functions before learning how they work."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Split an order calculation into parts with explicit intermediate values.",
+      "code": "#include <iostream>\n\nint main() {\n    int price = 100;\n    int count = 3;\n    int discount = 10;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "300 30 270\n",
+      "trace": [
+        {
+          "line": "price * count",
+          "before": "100; 3",
+          "after": "subtotal: 300",
+          "why": "Solved the first subtask."
+        },
+        {
+          "line": "subtotal * discount / 100",
+          "before": "300; 10",
+          "after": "saving: 30",
+          "why": "Computed the amount to subtract, not the final total."
+        },
+        {
+          "line": "subtotal - saving",
+          "before": "300; 30",
+          "after": "total: 270",
+          "why": "Connected the previous two results."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Set discount=0, then discount=100.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int price = 100;\n    int count = 3;\n    int discount = 10;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "300 0 300\n",
+      "hints": [
+        "At 0 percent, saving is 0.",
+        "At 100 percent, the entire subtotal is subtracted."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int price = 100;\n    int count = 3;\n    int discount = 0;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "300 0 300\n"
+        },
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int price = 100;\n    int count = 3;\n    int discount = 100;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "300 300 0\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Calculate two items at 80 with a 25 percent discount. Print subtotal, saving and total separately and explain each number.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "160 40 120\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"160 40 120\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "Printing saving instead of total gives 30 rather than 270: a subtask was solved, but the wrong result was selected."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int price = 80;\n    int count = 2;\n    int discount = 25;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Split an order calculation into parts with explicit intermediate values.",
+      "steps": [
+        "Calculate two items at 80 with a 25 percent discount. Print subtotal, saving and total separately and explain each number.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Printing saving instead of total gives 30 rather than 270: a subtask was solved, but the wrong result was selected.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

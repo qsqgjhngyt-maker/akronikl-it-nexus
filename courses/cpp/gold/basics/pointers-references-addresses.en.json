@@ -19,7 +19,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Objects, copies, references, and pointers: links without unsafe memory",
-  "lead": "Trace a live object through several access paths and distinguish changing an address from changing a value.",
+  "lead": "Distinguish a copied number, another name for an object and a pointer to an object.",
   "why": "References and pointers enable shared access to objects. Their power requires a precise agreement about object existence, access paths, and valid lifetime. We begin with automatic objects without new/delete or pointer arithmetic.",
   "objectives": [
     "Distinguish a value copy, reference, and pointer.",
@@ -363,5 +363,110 @@
       "It creates a new int"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Distinguish a copied number, another name for an object and a pointer to an object.",
+    "prerequisites": [
+      "You can create an int, assign values, read statements in order and print numbers."
+    ],
+    "model": [
+      "int copy = original creates a separate object. int& ref = original creates a reference: ref is another name for original, not a separate copy of its number. copy = 9 does not change the original; ref = 6 makes the original 6.",
+      "int* ptr = &original creates a pointer. & obtains the address of an existing object; *ptr accesses the object at that address. Relationship diagram: ref → original ← ptr; copy is separate. These are named relationships, not invented numeric addresses.",
+      "*ptr = 8 changes the number in original. ptr = &other changes the pointer itself: *ptr now denotes other, while ref still denotes original. Dereference only a pointer to a live suitable object; do not dereference nullptr or a pointer to a destroyed object. const restricts modification through the corresponding name; a reference does not generally extend an object’s lifetime."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Distinguish a copied number, another name for an object and a pointer to an object.",
+      "code": "#include <iostream>\n\nint main() {\n    int original = 4;\n    int copy = original;\n    int& ref = original;\n    int* ptr = &original;\n    copy = 9;\n    ref = 6;\n    *ptr = 8;\n    int other = 20;\n    ptr = &other;\n    *ptr = 21;\n    std::cout << original << ' ' << copy << ' ' << ref << ' ' << other << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "8 9 8 21\n",
+      "trace": [
+        {
+          "line": "copy = original",
+          "before": "original: 4",
+          "after": "original: 4; copy: 4",
+          "why": "Two objects: later changes are independent."
+        },
+        {
+          "line": "ref; ptr",
+          "before": "original: 4",
+          "after": "ref → original ← ptr",
+          "why": "Two ways to access the same object."
+        },
+        {
+          "line": "copy = 9",
+          "before": "4; 4",
+          "after": "original: 4; copy: 9",
+          "why": "Changed only the copy."
+        },
+        {
+          "line": "ref = 6",
+          "before": "original: 4",
+          "after": "original: 6; ref: 6",
+          "why": "Both names denote the same object."
+        },
+        {
+          "line": "*ptr = 8",
+          "before": "original: 6",
+          "after": "original: 8; ref: 8",
+          "why": "ptr still points to original."
+        },
+        {
+          "line": "ptr = &other; *ptr = 21",
+          "before": "original: 8; other: 20",
+          "after": "original: 8; other: 21",
+          "why": "Retargeted the pointer; the reference was not retargeted."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Replace ref = 6 with ref = 10 and remove only *ptr = 8. Predict the four numbers.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int original = 4;\n    int copy = original;\n    int& ref = original;\n    int* ptr = &original;\n    copy = 9;\n    ref = 6;\n    *ptr = 8;\n    int other = 20;\n    ptr = &other;\n    *ptr = 21;\n    std::cout << original << ' ' << copy << ' ' << ref << ' ' << other << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "10 9 10 21\n",
+      "hints": [
+        "copy remains separate; after retargeting, ptr changes other.",
+        "Before output, original and ref are 10, copy is 9, other is 21."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int original = 4;\n    int copy = original;\n    int& ref = original;\n    int* ptr = &original;\n    copy = 9;\n    ref = 10;\n    int other = 20;\n    ptr = &other;\n    *ptr = 21;\n    std::cout << original << ' ' << copy << ' ' << ref << ' ' << other << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "10 9 10 21\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Start with original=10. Create a copy, a reference and a pointer. Set the copy to 11, set the original through the reference to 12, then through the pointer to 13. Print original/copy/ref.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "13 11 13\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"13 11 13\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "The claim “ref = other retargets the reference” is false: it assigns the current number from other to original. Do not test this using destroyed objects."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int original = 10;\n    int copy = original;\n    int& ref = original;\n    int* ptr = &original;\n    copy = 11;\n    ref = 12;\n    *ptr = 13;\n    std::cout << original << ' ' << copy << ' ' << ref << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Distinguish a copied number, another name for an object and a pointer to an object.",
+      "steps": [
+        "Start with original=10. Create a copy, a reference and a pointer. Set the copy to 11, set the original through the reference to 12, then through the pointer to 13. Print original/copy/ref.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "The claim “ref = other retargets the reference” is false: it assigns the current number from other to original. Do not test this using destroyed objects.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

@@ -10,7 +10,7 @@
   ],
   "locale": "en",
   "title": "From C++ source to execution: compilation, linking and debugging",
-  "lead": "A source file is not executed directly. It goes through build stages, after which the program processes actual input.",
+  "lead": "Distinguish a build error from a wrong answer and verify a correction.",
   "why": "When code fails to build or produces an incorrect result, identifying the stage of the problem is more effective than random edits.",
   "objectives": [
     "Distinguish source, compilation, linking and execution.",
@@ -576,5 +576,91 @@
     ],
     "completionRule": "Self-check: at least 8 of 10 points, with no failure of required validation or a listed output. Use the rubric manually; it does not set a grade, mastery level or completion flag. A working reference alone is not your project evidence.",
     "verification": "manual-output-comparison"
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Distinguish a build error from a wrong answer and verify a correction.",
+    "prerequisites": [
+      "You know variables, arithmetic and output."
+    ],
+    "model": [
+      "Source is the text we write. A compiler checks C++ rules and translates it, a linker joins required parts and the environment runs the result. A successful build allows execution but does not prove that it solves the task.",
+      "A rectangle of width 4 and height 3 has area 12. Multiplication below matches this requirement. With +, the result 7 is also legal C++, so comparison with an independently calculated answer reveals the error. Debugging means reproducing, finding the cause, correcting it and checking again."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Distinguish a build error from a wrong answer and verify a correction.",
+      "code": "#include <iostream>\n\nint main() {\n    int width = 4;\n    int height = 3;\n    int area = width * height;\n    std::cout << area << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "12\n",
+      "trace": [
+        {
+          "line": "width; height",
+          "before": "—",
+          "after": "4; 3",
+          "why": "Reproduced the task’s starting data."
+        },
+        {
+          "line": "width * height",
+          "before": "4 × 3",
+          "after": "area: 12",
+          "why": "The formula matches the independent calculation."
+        },
+        {
+          "line": "cout",
+          "before": "area: 12",
+          "after": "stdout: 12",
+          "why": "Observe the result of this particular run."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Temporarily replace * with +. Predict the wrong result, then restore *.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int width = 4;\n    int height = 3;\n    int area = width * height;\n    std::cout << area << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "7\n",
+      "hints": [
+        "Compare against area 12, calculated before running.",
+        "4+3=7: the operation is wrong, not the environment. After fixing it, the answer must be 12 again."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int width = 4;\n    int height = 3;\n    int area = width + height;\n    std::cout << area << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "7\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Calculate area 5×6. Check 1×6 and 0×6. State which three observations support the correction.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "30\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"30\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "If a new build failed, old output 12 does not prove the new statements ran. Find the current build diagnostics."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int width = 5;\n    int height = 6;\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Distinguish a build error from a wrong answer and verify a correction.",
+      "steps": [
+        "Calculate area 5×6. Check 1×6 and 0×6. State which three observations support the correction.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "If a new build failed, old output 12 does not prove the new statements ran. Find the current build diagnostics.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

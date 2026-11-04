@@ -8,9 +8,15 @@ on:
       - 'courses/cpp/**'
       - 'core/academy-gold-presentation.js'
       - 'core/learning-views.js'
+      - 'core/app.js'
+      - 'core/cpp-clarity-presentation.js'
+      - 'core/nexus-learning-discovery.js'
+      - 'pwa/offline-entry.js'
       - 'styles/academy-gold.css'
       - 'tools/*cpp-clarity*'
       - 'tests/*cpp-clarity*'
+      - 'tests/helpers/cpp-clarity-*'
+      - 'tools/build-academy-gold-laboratories.mjs'
       - 'docs/ru/03-content/cpp-clarity-01/**'
       - '.github/workflows/cpp-clarity-01.yml'
 permissions:
@@ -21,7 +27,12 @@ concurrency:
 jobs:
   candidate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
+    env:
+      NEXUS_CLARITY_EVIDENCE: ${{ github.workspace }}/cpp-clarity-evidence
+      NEXUS_FRONTEND_DIR: ${{ github.workspace }}/cpp-clarity-frontend
+      NEXUS_PINNED_RUNTIME_DIR: ${{ github.workspace }}/cpp-clarity-runtime
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,15 +41,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Проверки кандидата, когда реализация подготовлена
+      - name: Подготовить закреплённые зависимости проверок
+        run: |
+          npm ci --prefix server-access --ignore-scripts
+          npm ci --prefix tools/qa-browser-driver
+          node tools/qa-browser-driver/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Обязательный технический gate кандидата
         run: |
           set -euo pipefail
           mkdir -p cpp-clarity-evidence
-          if [ -f tools/check-cpp-clarity.mjs ]; then
-            node tools/check-cpp-clarity.mjs
-          else
-            echo 'PREPARATION ONLY: implementation tests are not present; no acceptance is claimed.' | tee cpp-clarity-evidence/PREPARATION.txt
-          fi
+          node tools/check-cpp-clarity.mjs
+      - name: Настоящий host C++20 и UBSan — отдельно от браузера
+        env:
+          NEXUS_GOLD_EVIDENCE: ${{ github.workspace }}/cpp-clarity-evidence/previous-m1-host
+          NEXUS_M2_EVIDENCE: ${{ github.workspace }}/cpp-clarity-evidence/previous-m2-host
+        run: |
+          node tools/check-cpp-clarity-host.mjs
+          node tools/check-academy-gold-cpp.mjs
+          node tools/check-academy-gold-module2-examples.mjs
+      - name: Собрать непубликованный кандидат и подготовить проверенный runtime
+        env:
+          NEXUS_GOLD_EVIDENCE: ${{ github.workspace }}/cpp-clarity-evidence/runtime-bytes
+        run: |
+          node tools/build-cpp-clarity-candidate.mjs
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+      - name: Настоящий Clang-WASI, сохранность, мобильные экраны и холодный offline
+        run: node tests/cpp-clarity-browser.mjs
       - name: Сохранить текущие текстовые исходники и хеши
         if: always()
         run: |

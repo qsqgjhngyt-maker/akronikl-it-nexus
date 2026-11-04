@@ -132,6 +132,24 @@ async function editor(p){
  bindEditor(p);
 }
 function bindEditor(p,starter){studio=bindLocalEditor({root,project:p,data,save,settled,render,starter,locale:prefs.uiLocale,onDelete:()=>{location.hash=new URLSearchParams(location.hash.slice(1)).get('view')==='code-studio'?'#view=code-studio':'#view=project-studio'}});bindNexusStudioUi(prefs.uiLocale);assistantBridge.bindEditor()}
+function bindLocalClarity(item,exercise,state){
+ const unlocked=data,boundSession=session,editor=root.querySelector('#editor'),boundStudio=studio;
+ const current=()=>data===unlocked&&session===boundSession&&editor?.isConnected&&root.querySelector('#editor')===editor;
+ goldPresentation.bindClarityEditor(root,item.gold,{studio:boundStudio,isCurrent:current,
+  createCopy:async(files,title,entryFile)=>{
+   if(!current())throw Error('LOCAL_COPY_LOCKED');
+   const p=projectTemplate(title,undefined,crypto.randomUUID(),{files,entryFile,sourceRoots:['.']});
+   data.projects[p.id]=p;
+   try{await save();if(!current())throw Error('LOCAL_COPY_LOCKED');return p}catch(error){if(data===unlocked)delete data.projects[p.id];throw error}
+  },
+  persist:async patch=>{
+   if(!current())throw Error('LOCAL_COPY_LOCKED');
+   const previous=clone(exercise),previousState=clone(state);
+   exercise.workspace=clone(patch.workspace);exercise.stdin=patch.stdin;rememberLearningWorkspace(data,exercise);
+   try{await save()}catch(error){if(data===unlocked){Object.assign(exercise,previous);for(const k of Object.keys(state))delete state[k];Object.assign(state,previousState)}throw error}
+  }
+ });
+}
 async function compiler(){
  root.innerHTML='<section class="ps-hero glass-panel"><div><span class="eyebrow">NEXUS RUNTIME</span><h1>Компилятор C++</h1><p>Подготовка загружает около 106 МБ, проверяет SHA256 всех 7 файлов и сохраняет их в IndexedDB. Готовность проверяется заново после запуска. Браузер может освободить хранилище; проекты при этом не удаляются.</p></div><span class="visual-cpp-symbol">C++</span></section><section class="block glass-panel"><h2>Подготовка к работе без сети</h2><button class="btn primary" id="prepareCompiler">Подготовить компилятор при наличии сети</button><p id="runtimeStatus" role="status">Проверяем сохранённые файлы…</p></section>';
  const status=root.querySelector('#runtimeStatus'),button=root.querySelector('button');button.disabled=true;
@@ -183,7 +201,7 @@ async function renderCurrent(seq){
  const state=data?learningState(data,kind,item.id):{},exercise=data&&item.gold?.runtimeTarget!=='qt-wasm'?exerciseCopy(data,kind,item):null;
  root.innerHTML=kind==='lesson'?views().lessonView(item.id):views().practicumView(item.id);
  if(item.gold?.runtimeTarget==='qt-wasm'){/* GUI target requires the online Project Studio; no console workspace is created. */}else if(exercise)bindEditor(exercise,item.code||item.starter);else for(const node of root.querySelectorAll('#editor,#stdin,#runCode,#testRuntime,#resetCode,#completeLesson,[data-task]'))node.disabled=true;
- bindKnowledge(item,state);if(item.gold)goldPresentation.bindAcademyGold(root,item.gold);bindMemoryLab(item.benchmark?.interactiveMemory,locale);bindOopLab(item.benchmark?.interactiveOop,locale);
+ bindKnowledge(item,state);if(item.gold){goldPresentation.bindAcademyGold(root,item.gold);if(exercise)bindLocalClarity(item,exercise,state)}bindMemoryLab(item.benchmark?.interactiveMemory,locale);bindOopLab(item.benchmark?.interactiveOop,locale);
  const mark=root.querySelector('#completeLesson');if(mark&&data)mark.onclick=async()=>{state.completed=!state.completed;await save();await render()};
  for(const input of root.querySelectorAll('[data-task]'))input.onchange=()=>{if(!data)return;markTask(data,kind,item,Number(input.dataset.task),input.checked);void save().catch(()=>{})};
  bindNexusLearningUi(t);bindReadOnlyLearning();

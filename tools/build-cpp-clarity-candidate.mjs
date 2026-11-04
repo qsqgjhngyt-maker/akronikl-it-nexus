@@ -1,0 +1,13 @@
+import {cp,mkdir,readFile,writeFile,mkdtemp} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
+import path from 'node:path';
+import {tmpdir} from 'node:os';
+const out=path.resolve(process.env.NEXUS_FRONTEND_DIR||'cpp-clarity-evidence/frontend'),stage=await mkdtemp(path.join(tmpdir(),'cpp-clarity-build-'));
+const dirs=['core','effects','styles','locales','courses','assets','sandbox','project-studio','course-final','sync','collaboration','akronikl','feedback','pwa','intro-media'];
+for(const dir of dirs)await cp(dir,path.join(stage,dir),{recursive:true});
+for(const file of ['index.html','offline.html','nexus-shell.html','manifest.webmanifest','version.json','startup-intro.json'])await cp(file,path.join(stage,file));
+await mkdir(path.join(stage,'server-access'),{recursive:true});await cp('server-access/public',path.join(stage,'server-access/public'),{recursive:true});
+const config=JSON.parse(await readFile('release-candidate.json'));config.retainedPublicGenerations=[];config.publication={module:'cpp-clarity-01',production:false};config.ownerPublicationAuthorized=false;
+await writeFile(path.join(stage,'release-candidate.json'),JSON.stringify(config,null,2)+'\n');
+const r=spawnSync(process.execPath,['tools/build-ui1a-release.mjs','--source',stage,'--out',out,'--generation','ui1a-cpp-clarity-01-20261105','--version',config.version],{encoding:'utf8',timeout:180000,maxBuffer:4e6});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status!==0)process.exit(r.status||1);
+await writeFile(path.join(out,'CLARITY_BUILD_SCOPE.json'),JSON.stringify({sourceCommit:spawnSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).stdout.trim(),localCandidateOnly:true,production:false,retainedHistoricalGenerationsExcluded:true,sourceReleaseMetadataChanged:false},null,2)+'\n');

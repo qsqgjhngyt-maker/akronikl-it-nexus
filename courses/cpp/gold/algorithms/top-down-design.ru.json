@@ -6,7 +6,7 @@
   "standardVersion": "academy-gold-1.1",
   "status": "candidate",
   "title": "Нисходящее проектирование: от требований к функциям",
-  "lead": "Сложную программу проще понимать и проверять, если делить её на небольшие операции с ясными контрактами.",
+  "lead": "Разделим расчёт заказа на понятные части с явными промежуточными числами.",
   "why": "Именно декомпозиция позволяет писать большие системы: сначала определяем самостоятельные обязанности, затем реализуем и тестируем каждую, сохраняя общую цель.",
   "objectives": [
     "Декомпозировать задачу на функциональные блоки.",
@@ -348,5 +348,97 @@
       "Всегда писать сверху файла"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Разделим расчёт заказа на понятные части с явными промежуточными числами.",
+    "prerequisites": [
+      "Знаете целые переменные, умножение, деление и последовательность команд."
+    ],
+    "model": [
+      "Задача: три товара по 100, скидка 10 процентов. Сначала считаем стоимость без скидки, затем величину скидки, затем итог. Декомпозиция — разделение задачи на шаги, каждый из которых отвечает на один вопрос.",
+      "subtotal — сумма без скидки; saving — сколько вычитаем; total — сколько платим. Проценты считаем как subtotal*discount/100. В этом случае 300*10/100 равно 30 без остатка. При целых числах дробная часть отбрасывается: это правило округления нужно согласовать заранее.",
+      "Используем цену и количество 0..1000, скидку 0..100: промежуточное произведение не больше 100000000 и помещается даже в 32-битный int. В примере эти границы соблюдены; обработка произвольного ввода остаётся следующей ступенью. Не добавляем функции раньше объяснения их устройства."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Разделим расчёт заказа на понятные части с явными промежуточными числами.",
+      "code": "#include <iostream>\n\nint main() {\n    int price = 100;\n    int count = 3;\n    int discount = 10;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "300 30 270\n",
+      "trace": [
+        {
+          "line": "price * count",
+          "before": "100; 3",
+          "after": "subtotal: 300",
+          "why": "Решили первую подзадачу."
+        },
+        {
+          "line": "subtotal * discount / 100",
+          "before": "300; 10",
+          "after": "saving: 30",
+          "why": "Вычислили вычитаемую сумму, а не итог."
+        },
+        {
+          "line": "subtotal - saving",
+          "before": "300; 30",
+          "after": "total: 270",
+          "why": "Связали два предыдущих результата."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Тренировка",
+      "challenge": "Поставьте discount=0, затем discount=100.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int price = 100;\n    int count = 3;\n    int discount = 10;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "300 0 300\n",
+      "hints": [
+        "При 0 процентах saving равно 0.",
+        "При 100 процентах вычитается весь subtotal."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int price = 100;\n    int count = 3;\n    int discount = 0;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "300 0 300\n"
+        },
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int price = 100;\n    int count = 3;\n    int discount = 100;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "300 300 0\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Самостоятельная вариация",
+      "challenge": "Посчитайте два товара по 80 со скидкой 25 процентов. Выведите отдельно subtotal, saving и total; объясните каждое число.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Напишите своё решение здесь.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "160 40 120\n"
+        }
+      ],
+      "rubric": [
+        "Вывод указанного случая: \"160 40 120\\n\"",
+        "Объясните каждое изменение через объекты или операции этой темы.",
+        "Если выводить saving вместо total, получится 30 вместо 270: подзадача решена, но выбран не тот результат."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int price = 80;\n    int count = 2;\n    int discount = 25;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Разделим расчёт заказа на понятные части с явными промежуточными числами.",
+      "steps": [
+        "Посчитайте два товара по 80 со скидкой 25 процентов. Выведите отдельно subtotal, saving и total; объясните каждое число.",
+        "Предскажите результат до запуска.",
+        "Напишите решение в отдельной заготовке; сохраните прежнюю работу.",
+        "Сравните фактический вывод с прогнозом и объясните расхождение."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "Если выводить saving вместо total, получится 30 вместо 270: подзадача решена, но выбран не тот результат.",
+    "next": "После вариации переходите к углублению: там сохранены точные ограничения, дополнительные случаи и прежняя лабораторная. Старое завершение и попытки сохраняют отношение к прежней редакции."
   }
 }

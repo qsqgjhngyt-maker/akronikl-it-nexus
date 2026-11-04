@@ -16,7 +16,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Your first C++ program: from source to a verifiable report",
-  "lead": "Build a program, explain every part of its scaffold, and produce a small report with predictable output.",
+  "lead": "Read every line of a first program and identify its actual result.",
   "why": "Printing a line becomes useful when you can identify the source that was built, explain what executed, and check its result. This lesson turns copying and running into a reproducible development cycle.",
   "objectives": [
     "Explain #include, int main(), braces, std::cout, <<, a string, ;, and return 0.",
@@ -377,5 +377,114 @@
       "It is the name of the standard library"
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Read every line of a first program and identify its actual result.",
+    "prerequisites": [
+      "You can open the editor and perform the small calculation from the first topic."
+    ],
+    "model": [
+      "A program is a text of instructions. The environment builds it, then runs it. Editor text, standard input stdin, output stdout and build messages are different things. This example has empty input because it reads nothing.",
+      " #include <iostream> provides output facilities. int main() { begins the main function; braces enclose its statements. std::cout is standard output; << sends text or a number to it here. The string literal \"Hello\" is text in double quotes. '\\n' is a newline character. ; ends a statement.",
+      "return 0 passes a successful exit status to the environment; it does not write 0 to output. The environment prepares execution before main. Read << as output here; its other uses belong to later material."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Read every line of a first program and identify its actual result.",
+      "code": "#include <iostream>\n\nint main() {\n    std::cout << \"Hello\" << '\\n';\n    std::cout << 2 + 3 << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "Hello\n5\n",
+      "trace": [
+        {
+          "line": "#include <iostream>",
+          "before": "source text",
+          "after": "output available",
+          "why": "Declarations are available; this is not an output statement."
+        },
+        {
+          "line": "main() {",
+          "before": "—",
+          "after": "body begins",
+          "why": "The statements in the body begin to execute."
+        },
+        {
+          "line": "cout << \"Hello\"",
+          "before": "stdout: empty",
+          "after": "stdout: Hello",
+          "why": "Quotes are not printed; the newline separates the next line."
+        },
+        {
+          "line": "cout << 2 + 3",
+          "before": "2 + 3",
+          "after": "stdout: Hello; 5",
+          "why": "First the expression produces 5, then output displays it."
+        },
+        {
+          "line": "return 0",
+          "before": "stdout: Hello; 5",
+          "after": "unchanged",
+          "why": "Zero is an exit status, not a third output line."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Replace Hello with Welcome and 2 + 3 with 7 + 4.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    std::cout << \"Hello\" << '\\n';\n    std::cout << 2 + 3 << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "Welcome\n11\n",
+      "hints": [
+        "Edit the text inside the double quotes.",
+        "Keep the two output statements and both newlines."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    std::cout << \"Welcome\" << '\\n';\n    std::cout << 2 + 3 << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "Welcome\n5\n"
+        },
+        {
+          "code": "#include <iostream>\n\nint main() {\n    std::cout << \"Hello\" << '\\n';\n    std::cout << 7 + 4 << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "Hello\n11\n"
+        },
+        {
+          "code": "#include <iostream>\n\nint main() {\n    std::cout << \"Welcome\" << '\\n';\n    std::cout << 7 + 4 << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "Welcome\n11\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Write two output lines: Ready and the result of 6 × 7. Explain why there is no third line containing 0.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "Ready\n42\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"Ready\\n42\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "A missing ; usually prevents a build. Replacing + with - may build but produces a different result. After a failed build, old stdout is not the output of the new source."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    std::cout << \"Ready\" << '\\n';\n    std::cout << 6 * 7 << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Read every line of a first program and identify its actual result.",
+      "steps": [
+        "Write two output lines: Ready and the result of 6 × 7. Explain why there is no third line containing 0.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "A missing ; usually prevents a build. Replacing + with - may build but produces a different result. After a failed build, old stdout is not the output of the new source.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }

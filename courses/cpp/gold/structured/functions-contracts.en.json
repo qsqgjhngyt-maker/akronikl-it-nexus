@@ -103,13 +103,16 @@
       "id": "copy-reference",
       "title": "Copy and mutation",
       "purpose": "A copied parameter and a reference parameter have different mutation effects.",
-      "code": "#include <iostream>\nint copied(int value) { ++value; return value; }\nvoid changed(int& value) { ++value; }\nint main() {\n    int original{4};\n    int result = copied(original);\n    std::cout << original << ' ' << result << '\\n';\n    changed(original);\n    std::cout << original << '\\n';\n}\n",
+      "code": "#include <iostream>\n\nint copied(int value) {\n    ++value;\n    return value;\n}\n\nvoid changed(int& value) {\n    ++value;\n}\n\nint main() {\n    int original = 4;\n    int result = copied(original);\n    std::cout << original << ' ' << result << '\\n';\n    changed(original);\n    std::cout << original << '\\n';\n}\n",
       "stdin": "",
       "expectedStdout": "4 5\n5\n",
       "steps": [
-        "Read the contract and independently derive the expected result for the given input.",
-        "Trace state after each significant operation and identify the established preconditions.",
-        "Run the source, compare stdout and exit code, then check the additional cases."
+        "original starts at 4. Calling copied(original) creates a separate parameter value=4; result initialization is not complete yet.",
+        "++value changes the parameter from 4 to 5. original is still 4 because the parameter is a copy.",
+        "return value yields 5. The call ends and result is initialized to 5. The first output line is 4 5.",
+        "changed(original) binds its int& parameter to original. There is no separate copied integer here.",
+        "++value now changes original from 4 to 5. result stays 5. The second output line is 5.",
+        "For your own prediction, start at original=10: expect 10 11, then 11. Explain each state before running."
       ],
       "cases": []
     },
@@ -121,9 +124,10 @@
       "stdin": "",
       "expectedStdout": "0 17\n1 12\n",
       "steps": [
-        "Read the contract and independently derive the expected result for the given input.",
-        "Trace state after each significant operation and identify the established preconditions.",
-        "Run the source, compare stdout and exit code, then check the additional cases."
+        "result starts at 17. checkedArea(-1,2,result) checks width first: -1 is outside 0..1000.",
+        "return false ends this call before assigning result. ok is false and result remains 17; output is 0 17.",
+        "checkedArea(3,4,result) passes all bounds. result becomes 12 and the call returns true; output is 1 12.",
+        "A CLI line invalid alone cannot show that result stayed 17. This direct call observes both the returned bool and the output parameter."
       ],
       "cases": []
     }
@@ -163,9 +167,9 @@
   "practice": [
     {
       "level": "basic",
-      "task": "Manually trace the first example and explain every expected output line.",
-      "criteria": "A signature communicates what a function reads, returns, and changes.",
-      "hint": "Identify input, state, and observable output first."
+      "task": "Start original at 10 and predict both output lines without running.",
+      "criteria": "10 11, then 11; distinguish the local copy from the referenced object.",
+      "hint": "copied changes only its parameter; changed writes through an alias of original."
     },
     {
       "level": "basic",
@@ -177,7 +181,7 @@
       "level": "applied",
       "task": "Implement bool checkedArea(int w,int h,int& result): dimensions are 0…1000 and rejection leaves result unchanged. main reads exactly two dimensions and prints the area or invalid.",
       "criteria": "All cases pass, source and actual-result tables are kept, and rejection is not labelled success.",
-      "hint": "A signature communicates what a function reads, returns, and changes."
+      "hint": "Check every width/height bound first. On any rejection return false before assigning result. Only the success path computes width*height."
     },
     {
       "level": "applied",
@@ -239,18 +243,18 @@
     "metadata": {},
     "steps": [
       "Restate the input, output, and rejection contract in your own words.",
-      "Draw the state and state the invariant: A signature communicates what a function reads, returns, and changes.",
+      "Record result=17 before a rejected call. Afterward observe false and exactly the same 17.",
       "Start from the scaffold, implement the valid path, then add boundary checks.",
       "For every reference case, independently write the expectation before running; keep stdout and exit code.",
       "Add two original cases including one rejection; explain the result without consulting the reference.",
-      "Preserve source, a result table, and a short cost-and-limit analysis."
+      "Save your source, the observed state table and supported input bounds."
     ],
     "rubric": [
       "The contract matches the task and defines units, empty input, and extra data.",
       "Every published case matches and two explained original tests are included.",
-      "A signature communicates what a function reads, returns, and changes.",
+      "A direct rejection test observes false and unchanged result=17; a valid 3×4 call observes true and 12.",
       "Do not assign result before every check succeeds. Do not return a reference to a local variable.",
-      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+      "Save source, actual output, exit status and an explanation of the validation order."
     ],
     "artifact": "source-code-and-test-report",
     "verification": "manual-output-comparison"

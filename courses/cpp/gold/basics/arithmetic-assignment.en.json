@@ -18,7 +18,7 @@
     "CPP-GUIDELINES"
   ],
   "title": "Arithmetic and assignment: quotient, remainder, and safe intermediates",
-  "lead": "Check integer division, express state changes concisely, and calculate block counts without overflow.",
+  "lead": "Separate computing a value from storing it in a variable.",
   "why": "A defect can occur before a result is stored: a wide destination cannot repair earlier arithmetic on the right. Reliable calculation begins with valid inputs and bounds for every step rather than an overflow experiment.",
   "objectives": [
     "Calculate / and % for positive and negative integers.",
@@ -351,5 +351,97 @@
       "+="
     ],
     "correctIndex": 1
+  },
+  "clarity": {
+    "revision": "cpp-clarity-01-v1",
+    "goal": "Separate computing a value from storing it in a variable.",
+    "prerequisites": [
+      "You know initialization and the difference between an expression and a statement."
+    ],
+    "model": [
+      "In sum = sum + 3, read the old sum, add 3, then store the new value back. For this integer variable, sum += 3 is a shorthand for the same operation. sum + 3 alone does not store the result.",
+      "For integers, 17/5 is 3 and 17%5 is 2: 3×5+2=17. Division by zero is invalid. For negative operands, division truncates toward zero; this first example uses nonnegative numbers. For large calculations, check type bounds, including intermediate products."
+    ],
+    "example": {
+      "id": "clarity-core",
+      "title": "Separate computing a value from storing it in a variable.",
+      "code": "#include <iostream>\n\nint main() {\n    int sum = 10;\n    sum = sum + 3;\n    sum += 2;\n    std::cout << sum << ' ' << 17 / 5 << ' ' << 17 % 5 << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "15 3 2\n",
+      "trace": [
+        {
+          "line": "sum = 10",
+          "before": "—",
+          "after": "sum: 10",
+          "why": "Initial value."
+        },
+        {
+          "line": "sum = sum + 3",
+          "before": "sum: 10",
+          "after": "sum: 13",
+          "why": "Compute 10+3, then store 13."
+        },
+        {
+          "line": "sum += 2",
+          "before": "sum: 13",
+          "after": "sum: 15",
+          "why": "Added to the already changed value."
+        },
+        {
+          "line": "17 / 5; 17 % 5",
+          "before": "17; 5",
+          "after": "3; 2",
+          "why": "Quotient and remainder are different results."
+        }
+      ]
+    },
+    "training": {
+      "id": "clarity-training",
+      "title": "Training",
+      "challenge": "Replace sum += 2 with sum *= 2.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int sum = 10;\n    sum = sum + 3;\n    sum += 2;\n    std::cout << sum << ' ' << 17 / 5 << ' ' << 17 % 5 << '\\n';\n    return 0;\n}\n",
+      "stdin": "",
+      "expectedStdout": "26 3 2\n",
+      "hints": [
+        "sum is already 13 before this line.",
+        "It multiplies 13, not the initial 10."
+      ],
+      "variants": [
+        {
+          "code": "#include <iostream>\n\nint main() {\n    int sum = 10;\n    sum = sum + 3;\n    sum *= 2;\n    std::cout << sum << ' ' << 17 / 5 << ' ' << 17 % 5 << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "stdout": "26 3 2\n"
+        }
+      ]
+    },
+    "laboratory": {
+      "id": "clarity-lab",
+      "title": "Independent variation",
+      "challenge": "Start with balance=20; add 7, then subtract 5. Print balance and explain both assignments.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n",
+      "stdin": "",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "22\n"
+        }
+      ],
+      "rubric": [
+        "Output for the stated case: \"22\\n\"",
+        "Explain each change using the objects or operations in this topic.",
+        "sum=+2 assigns positive 2; it does not add 2. The order of the += symbols matters."
+      ],
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int balance = 20;\n    balance += 7;\n    balance -= 5;\n    std::cout << balance << '\\n';\n    return 0;\n}\n",
+      "catalogGoal": "Separate computing a value from storing it in a variable.",
+      "steps": [
+        "Start with balance=20; add 7, then subtract 5. Print balance and explain both assignments.",
+        "Predict the result before running.",
+        "Write your solution in a separate starter; keep your previous work.",
+        "Compare actual output with your prediction and explain any difference."
+      ],
+      "verification": "manual-output-comparison"
+    },
+    "negative": "sum=+2 assigns positive 2; it does not add 2. The order of the += symbols matters.",
+    "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
   }
 }
