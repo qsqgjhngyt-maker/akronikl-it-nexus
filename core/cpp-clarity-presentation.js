@@ -18,7 +18,7 @@ export function bindClarityEditor(root,gold,{studio,persist,createCopy,isCurrent
  const label=document.createElement('p');label.dataset.clarityCurrent='';label.textContent=t('Ваша работа. Открытие примера само по себе её не заменяет.','Your work. Opening an example does not replace it automatically.');host.prepend(label);
  const choice=(mode)=>{
   const c=gold.clarity;
-  if(mode==='example')return{title:t('Пример','Example'),code:c?.example.code||gold.workedExamples[0].code,stdin:c?.example.stdin||gold.workedExamples[0].stdin||''};
+  if(mode==='example')return{title:t('Пример','Example'),code:c?.example.code||gold.workedExamples[0].code,stdin:c?.example.stdin??gold.workedExamples[0].stdin??''};
   if(mode==='training')return{title:t('Тренировка','Training'),code:c.training.starterCode,stdin:c.training.stdin||''};
   return{title:t('Лабораторная','Laboratory'),code:c?.laboratory.starterCode||gold.laboratory.starterCode,stdin:c?.laboratory.stdin??gold.laboratory.cases?.[0]?.stdin??''};
  };
@@ -33,6 +33,9 @@ export function bindClarityEditor(root,gold,{studio,persist,createCopy,isCurrent
   dialog.addEventListener('click',async event=>{
    const action=event.target.closest('[data-choice]')?.dataset.choice;if(!action||busy)return;
    if(action==='cancel'){dialog.close();return}
+   if(action==='replace'&&(root.querySelector('#engine')?.classList.contains('busy')||root.querySelector('#runCode')?.disabled)){
+    dialog.querySelector('[data-choice-status]').textContent=t('Дождитесь завершения текущего запуска и повторите замену.','Wait for the current run to finish, then try replacement again.');return;
+   }
    busy=true;for(const b of dialog.querySelectorAll('button'))b.disabled=true;
    const status=dialog.querySelector('[data-choice-status]');status.textContent=t('Сохраняем работу…','Saving work…');
    const snapshot=capture(),originalInput=stdin.value,signature=JSON.stringify(snapshot);

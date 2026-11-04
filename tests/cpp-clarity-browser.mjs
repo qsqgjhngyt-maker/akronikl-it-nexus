@@ -41,6 +41,16 @@ try{
  for(const locale of ['en','ru']){
   await goldLessonRoute(page,lesson,locale);await page.locator('#editor').waitFor();assert.equal(await page.locator('#editor').inputValue(),source);assert.equal((await state()).quiz,1);
  }mark('Смена языка сохраняет код и ответ по стабильному ID');
+ for(const g of lessons){
+  await goldLessonRoute(page,g.lessonId,g.locale);
+  for(const mode of ['example','training','laboratory']){
+   const material=g.clarity[mode==='example'?'example':mode==='training'?'training':'laboratory'];
+   await choose(mode,'replace');await page.locator('[data-clarity-choose]').waitFor({state:'detached'});
+   assert.equal(await page.locator('#editor').inputValue(),material.code??material.starterCode,g.lessonId+' '+g.locale+' '+mode+' source');assert.equal(await page.locator('#stdin').inputValue(),material.stdin,g.lessonId+' '+g.locale+' '+mode+' stdin');
+  }
+ }
+ await goldLessonRoute(page,lesson,'ru');await page.locator('#editor').fill(source);await saved();
+ mark('Все20 тем RU/EN ×3 режима: правильные исходник и stdin, включая пустой ввод');
  for(const [id,locale,width]of [['cpp.programming-process','ru',1366],['cpp.first-cpp-program','en',390],['cpp.pointers-references-addresses','ru',320],['cpp.functions-contracts','en',1366],['cpp.qt-graphical-adapter','ru',390]]){
   await page.setViewportSize({width,height:900});await goldLessonRoute(page,id,locale);await page.locator('[data-gold-lesson]').waitFor();
   if(id!=='cpp.qt-graphical-adapter')assert.ok(await page.locator(id==='cpp.functions-contracts'?'.gold-example pre':'[data-clarity-example] pre').first().isVisible());

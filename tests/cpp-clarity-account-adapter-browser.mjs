@@ -14,7 +14,8 @@ try{
   let release;const gate=new Promise(resolve=>{release=resolve});
   bindClarityEditor(root,g,{studio,persist:patch=>storage.patchLesson(id,patch),isCurrent:()=>editor.isConnected&&document.querySelector('#editor')===editor,createCopy:async(files,title,entryFile)=>{await gate;return withProjectWriter(()=>projects.createProject({title,files,entryFile,sourceRoots:['.']}))}});
   const click=s=>root.querySelector(s).click(),wait=async fn=>{for(let i=0;i<200;i++){if(fn())return;await new Promise(r=>setTimeout(r,20))}throw Error('ADAPTER_TIMEOUT')};
-  click('[data-clarity-open="example"]');click('[data-choice="replace"]');
+  const engine=document.createElement('span');engine.id='engine';engine.className='busy';root.append(engine);
+  click('[data-clarity-open="example"]');click('[data-choice="replace"]');if(projects.listProjects().length||editor.value!=='// unsaved in active buffer\nint main() {}'||!root.querySelector('[data-choice-status]').textContent.includes('текущего запуска'))throw Error('RUNNING_REPLACEMENT');engine.className='idle';click('[data-choice="replace"]');
   const dialog=root.querySelector('[data-clarity-choose]'),cancel=new Event('cancel',{cancelable:true});dialog.dispatchEvent(cancel);if(!cancel.defaultPrevented||!dialog.open||!dialog.getAttribute('aria-labelledby'))throw Error('PENDING_SAVE_CANCEL_GUARD');release();await wait(()=>!root.querySelector('[data-clarity-choose]'));
   const backup=projects.listProjects().find(x=>x.title.startsWith('Моя работа до замены'));if(!backup?.workspace.files.some(x=>x.content.startsWith('// unsaved')))throw Error('BACKUP_MISSING');if(backup.manifest.entryFile!=='main.cpp')throw Error('BAD_ENTRY_FILE');
   if(editor.value!==g.clarity.example.code)throw Error('WRONG_TEMPLATE');const saved=storage.lessonState(id);if(!saved.completed||saved.quiz!==2||saved.attempts[0].revision!=='old')throw Error('HISTORY_CHANGED');
@@ -22,6 +23,6 @@ try{
   try{click('[data-clarity-open="laboratory"]');click('[data-choice="replace"]');await wait(()=>root.querySelector('[data-choice-status]')?.textContent.includes('Замена остановлена'));if(editor.value!==before)throw Error('QUOTA_OVERWRITE')}finally{Storage.prototype.setItem=original;click('[data-choice="cancel"]')}
   await wait(()=>!root.querySelector('[data-clarity-choose]'));
   account.lockAccountStorage();click('[data-clarity-open="example"]');click('[data-choice="replace"]');await wait(()=>root.querySelector('[data-choice-status]')?.textContent.includes('Замена остановлена'));if(editor.value!==before)throw Error('LOCKED_OVERWRITE');click('[data-choice="cancel"]');root.remove();
-  return{backup:true,unsavedBuffer:true,entryFile:true,history:true,quota:true,lockedAccount:true,escapeDuringSaveGuard:true,accessibleDialogName:true,serverAuthentication:'NOT TESTED',syntheticAccount:true,productionRequests:0};
+  return{backup:true,unsavedBuffer:true,entryFile:true,history:true,quota:true,lockedAccount:true,escapeDuringSaveGuard:true,runningProgramGuard:true,accessibleDialogName:true,serverAuthentication:'NOT TESTED',syntheticAccount:true,productionRequests:0};
  },prefix);assert.ok(Object.values(result).length);console.log('PASS: actual account storage/project-writer adapter, backup/quota/lock/history');
 }catch(error){failure={message:error.message,stack:String(error.stack).slice(0,2200)};console.error(error)}finally{await writeFile(path.join(out,'ACCOUNT_ADAPTER.json'),JSON.stringify({status:failure?'FAIL':'PASS',failure,result},null,2)+'\n');await f.close();if(failure)process.exitCode=1}
