@@ -36,6 +36,7 @@ try{
  if(!await page.locator('.visual-home').isVisible())await page.reload();await page.locator('.visual-home').waitFor();
  const lessons=(await clarityLessons()).sort((a,b)=>b.locale.localeCompare(a.locale)),observations=[],screens=[];
  for(const g of lessons){
+  if(g.lessonId==='cpp.programming-process'){await page.evaluate(({id,locale})=>{location.hash='#course=cpp&lesson='+id+'&locale='+locale+'&stage=practice'}, {id:g.lessonId,locale:g.locale});await page.locator('[data-r3-topic][lang="'+g.locale+'"]').waitFor();await page.locator('#editor').waitFor();assert.equal(await page.locator('#editor:enabled,#runCode:enabled').count(),0);const expected=await page.locator('[data-expected-output]').allTextContents();assert.ok(expected.includes('350\n')&&expected.includes('140\n'));assert.match(await page.locator('.practice-card').first().textContent(),/75/);observations.push({lessonId:g.lessonId,locale:g.locale,status:'PASS',pilot:true,url:page.url()});continue;}
   await goldLessonRoute(page,g.lessonId,g.locale);
   await page.locator('[data-clarity-lesson="'+g.lessonId+'"][lang="'+g.locale+'"]').waitFor();
   const block=page.locator('[data-clarity-lab-expected]');await block.scrollIntoViewIfNeeded();assert.equal(await block.locator('pre code').textContent(),g.clarity.laboratory.cases[0].stdout);
@@ -48,9 +49,9 @@ try{
  }
  assert.deepEqual(errors,[]);assert.deepEqual(criticalFailures,[]);
  const productionRequests=externalRequests.filter(r=>/akronikl|nexus|github\.io|workers\.dev|cloudflare|yandexcloud|apigw/.test(r.origin));assert.deepEqual(productionRequests,[]);
- await page.goto(server.url);await page.locator('[data-clarity-lesson="cpp.programming-process"]').waitFor();
+ await page.goto(server.url);await page.locator('[data-r3-topic="cpp.programming-process"]').waitFor();
  result={...server,browser:headless?'Headless browser preview check':'Ordinary headed Chrome with isolated empty profile',browserVersion:context.browser()?.version(),headed:!headless,verifiedPublicReady:ready.publicReady,verifiedGeneration:ready.generation,verifiedPublicResourceCount:publicRecords.length,assetFailures,backendDenial:401,observations,screens,errors,criticalFailures,externalRequests,productionRequests:0,userDataUsed:false,authorizationBypass:false,editing:'Unavailable until an ordinary local copy is opened',learnerFeedback:'NOT RUN'};
- console.log('PASS: actual headed Chrome; all40 lesson criteria visible; three requested RU pages captured; verified public cache; backend remains unavailable');
+ console.log('PASS: browser preview; all 40 lesson criteria visible; verified public cache; backend remains unavailable');
 }catch(error){failure={message:error.message,stack:String(error.stack).slice(0,2500)};console.error(error)}finally{
  await context?.close();if(process.env.NEXUS_KEEP_PREVIEW_SERVER!=='1')child.kill();else child.unref();
  await writeFile(path.join(out,'MANUAL_PREVIEW_CHECK.json'),JSON.stringify({status:failure?'FAIL':'PASS',failure,result,diagnostic,logs},null,2)+'\n');if(failure)process.exitCode=1;

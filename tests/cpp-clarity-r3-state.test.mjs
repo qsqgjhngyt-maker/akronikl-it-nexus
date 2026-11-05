@@ -112,7 +112,7 @@ test('saved ID alone is insufficient: binding, accessible file and fresh cursor 
  accessible.binding.workspaceDigest='b'.repeat(64);expect(()=>validateWorkReferences(cpp,v,accessible),'R3_WORK_REFERENCE_INVALID');accessible.binding=copy(v.workBinding);
  v.activeFile='missing.cpp';expect(()=>validateWorkReferences(cpp,v,accessible),'R3_WORK_REFERENCE_INVALID');v.activeFile='main.cpp';v.cursor.end=1000;expect(()=>validateWorkReferences(cpp,v,accessible),'R3_CURSOR_INVALID');
 });
-test('new pure module has no storage, DOM, network or product import path',async()=>{
+test('pure state module has no storage, DOM or network; product integration remains lazy',async()=>{
  const source=await fs.readFile('core/cpp-clarity-r3-state.mjs','utf8');assert.doesNotMatch(source,/\b(?:localStorage|sessionStorage|indexedDB|fetch|document|window)\s*[.(]/);
- for(const path of ['core/app.js','core/storage.js','pwa/offline-entry.js','courses/onec-education/candidate.mjs'])assert.doesNotMatch(await fs.readFile(path,'utf8'),/cpp-clarity-r3-state/);
+ for(const path of ['core/app.js','core/storage.js','pwa/offline-entry.js','courses/onec-education/candidate.mjs'])assert.doesNotMatch(await fs.readFile(path,'utf8'),/import\s+[^;\n]*from\s+['"][^'"]*cpp-clarity-r3-state/);
 });

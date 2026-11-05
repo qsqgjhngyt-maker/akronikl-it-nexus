@@ -1,7 +1,7 @@
 import {withProjectWriter} from '../project-studio/project-writer.js';
 import {verifiedAccount} from '../core/account-storage.js';
 import {isCurrentProjectOwner} from '../core/identity.js';
-import {loadState,saveState} from '../core/storage.js';
+import {loadState,saveState,withCourseStateWriter} from '../core/storage.js';
 import {listProjects,patchProject,createProject} from '../project-studio/project-store.js';
 import {createVaultStore} from './local-vault.js';
 import {makeLocalPayload,transferPlan} from './offline-transfer.js';
@@ -43,21 +43,30 @@ export async function bindOfflineCenter(){
   const session=await store.unlock(fields.get('vaultId'),fields.get('localPhrase'));
   try{
    const account=await prove(),payload=session.read();
-   await withProjectWriter(async()=>{
-   const plan=transferPlan(payload,account,loadState(),listProjects(),{vaultId:session.id,revision:session.revision});
-   for(const item of plan.projects){
-    const p=item.data;
-    if(item.action==='patch')patchProject(item.id,{title:p.title,description:p.description,workspace:p.workspace,progress:p.progress,checkpoints:p.checkpoints,stdin:p.stdin||'',...(p.manifest?{manifest:p.manifest}:{}),origin:{...listProjects().find(x=>x.id===item.id)?.origin,offlineImport:item.marker}});
-    else {
-     const origin=p.origin?.kind==='graphics-lab'?{kind:'graphics-lab',template:['nexus','sphere','orbit','system','blank'].includes(p.origin.template)?p.origin.template:'blank',offlineImport:item.marker}:{kind:'offline-copy',offlineImport:item.marker};
-     const created=createProject({title:p.title+' · офлайн-копия',languageId:p.languageId,files:p.workspace.files,entryFile:p.workspace.entryFile,activeFile:p.workspace.activeFile,sourceRoots:p.manifest?.sourceRoots,includeRoots:p.manifest?.includeRoots,testRoots:p.manifest?.testRoots,origin});
-     patchProject(created.id,{workspace:p.workspace,progress:p.progress,checkpoints:p.checkpoints,stdin:p.stdin||'',...(p.manifest?{manifest:p.manifest}:{})});
-    }
-   }
-   if(!plan.alreadyApplied)saveState(plan.state);
+   const plan=await transferLocalPayload(payload,account,{vaultId:session.id,revision:session.revision});
    status.textContent=plan.alreadyApplied?'Эта версия уже перенесена.':('Изменения перенесены. Отдельных конфликтов: '+plan.conflicts.length+'. Исходная офлайн-копия сохранена. Cloud PUSH/PULL запускаются только вами.');
-   });
   }finally{await session.lock()}
  });
  try{await refresh()}catch{status.textContent='Локальное хранилище недоступно. Данные аккаунта не изменены.'}
+}
+
+// Общий порядок lock: project-store → course-state. Никакой общей атомарности не обещаем.
+export async function transferLocalPayload(payload,account,receipt){
+ let projectsWritten=0,projectPhaseComplete=false;
+ try{return await withProjectWriter(()=>withCourseStateWriter(()=>{
+   const capturedState=loadState();const plan=transferPlan(payload,account,capturedState,listProjects(),receipt);
+   for(const item of plan.projects){
+    const p=item.data;
+    if(item.action==='patch')patchProject(item.id,{title:p.title,description:p.description,workspace:p.workspace,progress:p.progress,checkpoints:p.checkpoints,stdin:p.stdin||'',...(p.manifest?{manifest:p.manifest}:{}),origin:{...listProjects().find(x=>x.id===item.id)?.origin,offlineImport:item.marker}}),projectsWritten++;
+    else {
+     const origin=p.origin?.kind==='graphics-lab'?{kind:'graphics-lab',template:['nexus','sphere','orbit','system','blank'].includes(p.origin.template)?p.origin.template:'blank',offlineImport:item.marker}:{kind:'offline-copy',offlineImport:item.marker};
+     const created=createProject({title:p.title+' · офлайн-копия',languageId:p.languageId,files:p.workspace.files,entryFile:p.workspace.entryFile,activeFile:p.workspace.activeFile,sourceRoots:p.manifest?.sourceRoots,includeRoots:p.manifest?.includeRoots,testRoots:p.manifest?.testRoots,origin});
+     projectsWritten++;patchProject(created.id,{workspace:p.workspace,progress:p.progress,checkpoints:p.checkpoints,stdin:p.stdin||'',...(p.manifest?{manifest:p.manifest}:{})});
+    }
+   }
+   projectPhaseComplete=true;
+   if(!plan.alreadyApplied)saveState(plan.state,{expected:capturedState});
+   return plan;
+ },{expectedContext:account}));}
+ catch(error){if(projectsWritten)throw Object.assign(Error(projectPhaseComplete?'Часть проектов перенесена; прогресс ещё не подтверждён. Исходная локальная копия остаётся. Повторите перенос: уже перенесённые проекты распознаются по отметкам.':'Перенос проекта не завершён. Исходная локальная копия сохранена; созданная копия может быть неполной. Не считайте перенос завершённым.'),{code:'OFFLINE_TRANSFER_PARTIAL',cause:error});throw error;}
 }

@@ -8,7 +8,7 @@ const out=path.resolve(process.env.NEXUS_CLARITY_EVIDENCE||'cpp-clarity-evidence
 const manifest=JSON.parse(await readFile(path.join(process.env.NEXUS_FRONTEND_DIR,'BUILD_MANIFEST.json'))),prefix='/releases/'+manifest.assetGeneration;
 const f=await clarityLocalFixture(path.join(out,'native-first')),page=f.page,checks=[],runtime=[],screens=[];let failure;
 const mark=(name)=>{checks.push({name,status:'PASS'});console.log('PASS: '+name)};
-const lesson='cpp.programming-process',lessons=await clarityLessons(),content=lessons.find(x=>x.lessonId===lesson&&x.locale==='ru');
+const lesson='cpp.first-cpp-program',lessons=(await clarityLessons()).filter(g=>g.lessonId!=='cpp.programming-process'),content=lessons.find(x=>x.lessonId===lesson&&x.locale==='ru');
 const saved=()=>page.waitForFunction(()=>document.querySelector('#saveStatus')?.textContent.startsWith('Сохранено на устройстве'));
 const state=async()=>(await f.read()).state.courses.cpp.lessons[lesson];
 const choose=async(mode,action)=>{await page.locator('[data-clarity-open="'+mode+'"]').click();await page.locator('[data-choice="'+action+'"]').click()};
@@ -50,8 +50,8 @@ try{
   }
  }
  await goldLessonRoute(page,lesson,'ru');await page.locator('#editor').fill(source);await saved();
- mark('Все20 тем RU/EN ×3 режима: правильные исходник и stdin, включая пустой ввод');
- for(const [id,locale,width]of [['cpp.programming-process','ru',1366],['cpp.first-cpp-program','en',390],['cpp.pointers-references-addresses','ru',320],['cpp.functions-contracts','en',1366],['cpp.qt-graphical-adapter','ru',390]]){
+ mark('Прежние19 тем RU/EN ×3 режима; R3 проверяется отдельно: правильные исходник и stdin, включая пустой ввод');
+ for(const [id,locale,width]of [['cpp.first-cpp-program','ru',1366],['cpp.first-cpp-program','en',390],['cpp.pointers-references-addresses','ru',320],['cpp.functions-contracts','en',1366],['cpp.qt-graphical-adapter','ru',390]]){
   await page.setViewportSize({width,height:900});await goldLessonRoute(page,id,locale);await page.locator('[data-gold-lesson]').waitFor();
   if(id!=='cpp.qt-graphical-adapter')assert.ok(await page.locator(id==='cpp.functions-contracts'?'.gold-example pre':'[data-clarity-example] pre').first().isVisible());
   const overflow=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,items:[...document.querySelectorAll('body *')].map(x=>({tag:x.tagName,cls:x.className,right:x.getBoundingClientRect().right,width:x.getBoundingClientRect().width})).filter(x=>x.right>innerWidth+1&&x.width>0).slice(0,12)}));assert.ok(overflow.scrollWidth<=overflow.width+1,id+' horizontal page overflow '+JSON.stringify(overflow));

@@ -1,3 +1,5 @@
+> Актуализация 05.11.2026: редакция 2 на 2715275478d121b9305014e0f87b7ba32fa22253 принята 01 и 02 — APPROVE / CONTRACT ONLY; все девять замечаний закрыты на уровне контракта. Интеграция реализована, см. [R3_IMPLEMENTATION_RU.md](R3_IMPLEMENTATION_RU.md). Ниже сохранена история подготовки. По последнему поручению владельца промежуточная рассылка прекращена; итог сдаётся 00.
+
 # CPP-CLARITY-01 — контрольная точка MASTER 00
 
 Дата: 05.11.2026. Один исполнитель, одна существующая ветка, один [Draft PR65](https://github.com/qsqgjhngyt-maker/akronikl-it-nexus/pull/65). Main`ee2787c0cd92da2ad1d5e79df5e2bfadab2c3dd6` не изменён. Merge, production deployment и Release не выполнялись.
