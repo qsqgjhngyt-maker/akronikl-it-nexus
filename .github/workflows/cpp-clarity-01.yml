@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'courses/cpp/**'
+      - 'review/cpp-clarity-r3/**'
       - 'core/academy-gold-presentation.js'
       - 'core/learning-views.js'
       - 'core/app.js'
@@ -71,6 +72,13 @@ jobs:
           node tests/cpp-clarity-cold-browser.mjs
           node tests/cpp-clarity-account-adapter-browser.mjs
           NEXUS_PREVIEW_HEADLESS=1 node tests/cpp-clarity-preview-browser.mjs
+      - name: R3 — отдельный учебный экран и новые программы C++
+        env:
+          NEXUS_REVIEW_HEADLESS: '1'
+          NEXUS_CLARITY_R3_EVIDENCE: ${{ github.workspace }}/cpp-clarity-evidence/r3
+        run: |
+          node tools/check-cpp-clarity-r3-review.mjs
+          node tests/cpp-clarity-r3-runtime.mjs
       - name: Сохранить текущие текстовые исходники и хеши
         if: always()
         run: |
@@ -80,7 +88,7 @@ jobs:
           out=root/'cpp-clarity-evidence';out.mkdir(exist_ok=True)
           source=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
           paths=subprocess.check_output(['git','ls-files','-z']).decode('utf-8').split('\0')
-          allowed={'.md','.txt','.json','.mjs','.js','.css','.html','.yml','.yaml','.py','.sh','.cpp','.hpp','.h','.c','.cmake','.toml','.ps1','.cmd'}
+          allowed={'.md','.txt','.json','.mjs','.js','.css','.html','.yml','.yaml','.py','.sh','.cpp','.hpp','.h','.c','.cmake','.toml','.ps1','.cmd','.bsl','.query'}
           roots={'core','courses','sandbox','styles','pwa','effects','akronikl','content','tools','tests','server-access','.github'}
           hashes=[];included=[];total=0
           with zipfile.ZipFile(out/'source-text.zip','w',zipfile.ZIP_DEFLATED) as z:
@@ -91,7 +99,7 @@ jobs:
               b=p.read_bytes()
               hashes.append({'path':rel,'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest()})
               parts=p.parts
-              in_scope=len(parts)==1 or parts[0] in roots or rel.startswith('docs/ru/03-content/cpp-clarity-01/')
+              in_scope=len(parts)==1 or parts[0] in roots or rel.startswith('docs/ru/03-content/cpp-clarity-01/') or rel.startswith('review/cpp-clarity-r3/')
               if not in_scope: continue
               if any(x in parts for x in ('node_modules','dist','evidence','releases','retained','vendor-cache')): continue
               if '.env' in p.name or any(k in p.name.lower() for k in ('credential','secret-key','private-key')): continue
