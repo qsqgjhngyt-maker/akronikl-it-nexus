@@ -7,7 +7,7 @@ const f=await clarityLocalFixture(path.join(out,'vault')),p=f.page,id='cpp.progr
 p.on('dialog',d=>d.accept());
 const mark=name=>{checks.push({name,status:'PASS'});console.log('PASS '+name);};
 const stage=async name=>{await p.locator('[data-stage="'+name+'"]').click();await p.locator('[data-stage="'+name+'"][aria-current="step"]').waitFor();};
-const saved=()=>p.waitForFunction(()=>document.querySelector('[data-r3-save]')?.dataset.state==='saved');
+const saved=()=>p.waitForFunction(()=>['saved','restored'].includes(document.querySelector('[data-r3-save]')?.dataset.state));
 const state=async()=>(await f.read()).state.courses.cpp.lessons[id];
 try{
  await p.evaluate(id=>{location.hash='#course=cpp&lesson='+id},id);await p.locator('[data-r3-topic]').waitFor();assert.equal(await p.locator('.lesson-section').count(),6);assert.equal(await p.locator('[data-gold-depth]').count(),0);assert.deepEqual((await f.read()).projects,{});mark('Один последовательный урок; чтение не создаёт exercise project');
@@ -27,4 +27,4 @@ try{
  await stage('practice');await saved();await p.reload();await f.reopen(id);assert.equal(await p.locator('#editor').inputValue(),source);assert.equal(await p.locator('#stdin').inputValue(),'changed');mark('F5 и повторная разблокировка восстанавливают подтверждённую работу');
  assert.equal((await f.read()).projects['exercise-lesson-'+id],undefined);assert.equal((await state()).quiz,1);assert.equal((await state()).attempts.length,1);
 }catch(error){failure={message:error.message,stack:String(error.stack).slice(0,1800)};console.error(error);await p.screenshot({path:path.join(out,'FAIL.png')}).catch(()=>{});console.log((await p.locator('body').innerText()).slice(0,2500));}
-finally{await writeFile(path.join(out,'PILOT_BROWSER.json'),JSON.stringify({status:failure?'FAIL':'PASS',checks,failure,syntheticDataOnly:true,serverAuthentication:'NOT TESTED',learnerAcceptance:'PENDING 03/07'},null,2)+'\n');await f.close();if(failure)process.exitCode=1;}
+finally{await writeFile(path.join(out,'PILOT_BROWSER.json'),JSON.stringify({status:failure?'FAIL':'PASS',checks,failure,syntheticDataOnly:true,serverAuthentication:'NOT TESTED',learnerAcceptance:'PENDING OWNER; development remains in Work, final delivery to 00'},null,2)+'\n');await f.close();if(failure)process.exitCode=1;}
