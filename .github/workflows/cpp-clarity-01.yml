@@ -70,6 +70,7 @@ jobs:
           node tests/cpp-clarity-browser.mjs
           node tests/cpp-clarity-cold-browser.mjs
           node tests/cpp-clarity-account-adapter-browser.mjs
+          NEXUS_PREVIEW_HEADLESS=1 node tests/cpp-clarity-preview-browser.mjs
       - name: Сохранить текущие текстовые исходники и хеши
         if: always()
         run: |
@@ -79,7 +80,7 @@ jobs:
           out=root/'cpp-clarity-evidence';out.mkdir(exist_ok=True)
           source=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
           paths=subprocess.check_output(['git','ls-files','-z']).decode('utf-8').split('\0')
-          allowed={'.md','.txt','.json','.mjs','.js','.css','.html','.yml','.yaml','.py','.sh','.cpp','.hpp','.h','.c','.cmake','.toml','.ps1'}
+          allowed={'.md','.txt','.json','.mjs','.js','.css','.html','.yml','.yaml','.py','.sh','.cpp','.hpp','.h','.c','.cmake','.toml','.ps1','.cmd'}
           roots={'core','courses','sandbox','styles','pwa','effects','akronikl','content','tools','tests','server-access','.github'}
           hashes=[];included=[];total=0
           with zipfile.ZipFile(out/'source-text.zip','w',zipfile.ZIP_DEFLATED) as z:

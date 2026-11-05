@@ -25,3 +25,22 @@ test('Критерий функции различает false, выходной
  assert.equal(good.cases[0].stdout,'0 17\n1 12\n');assert.equal(mutants.length,2);assert.ok(mutants.every(x=>x.cases[0].stdout!==good.cases[0].stdout));
  const g=JSON.parse(await readFile('courses/cpp/gold/structured/functions-contracts.ru.json'));assert.ok(g.laboratory.rubric.some(x=>x.includes('result=17')));assert.ok(!g.laboratory.rubric.some(x=>x.includes('O(n)')));
 });
+
+test('Все20 лабораторных RU/EN: читаемый вывод в открытом блоке критериев, без JSON-строк',()=>{
+ const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ for(const g of all){
+  const html=academyGoldMarkup(g),lab=html.slice(html.indexOf('data-clarity-laboratory>'),html.indexOf('data-gold-depth>'));
+  const match=lab.match(/<div data-clarity-lab-expected><h4>[^<]+<\/h4><pre><code>([\s\S]*?)<\/code><\/pre><\/div>/);
+  assert.ok(match,g.lessonId+' '+g.locale);assert.equal(match[1],escape(g.clarity.laboratory.cases[0].stdout));
+  assert.ok(lab.indexOf('data-clarity-lab-expected')<lab.indexOf(g.locale==='en'?'Reference after your own attempt':'Эталон после собственной попытки'));
+  assert.ok(g.clarity.laboratory.rubric.every(s=>!s.includes('\\n')&&!s.includes('"')),g.lessonId+' rubric is prose');
+  assert.ok(!lab.includes('data-clarity-example-negative'));
+ }
+});
+test('Лабораторная покупки использует70×5→350 и ошибку70+5→75 в обоих языках',async()=>{
+ for(const g of all.filter(g=>g.lessonId==='cpp.programming-process')){
+  const text=g.clarity.laboratory.rubric.join(' ');for(const number of ['75','350','140'])assert.ok(text.includes(number));
+  for(const number of ['123','360'])assert.ok(!text.includes(number));
+ }
+ const programs=(await clarityPrograms()).filter(p=>p.name==='lab-wrong-addition');assert.equal(programs.length,2);assert.ok(programs.every(p=>p.cases[0].stdout==='75\n'));
+});

@@ -9,6 +9,7 @@ export async function clarityPrograms(){
   const c=g.clarity;add(g,'primary-example',c.example.code,[{stdin:c.example.stdin,stdout:c.example.expectedStdout}]);
   for(const [i,v]of c.training.variants.entries())add(g,'training-'+i,v.code,[{stdin:v.stdin,stdout:v.stdout}]);
   add(g,'independent-reference',c.laboratory.referenceCode,c.laboratory.cases);
+  if(g.lessonId==='cpp.programming-process')add(g,'lab-wrong-addition',c.laboratory.referenceCode.replace('price * count','price + count'),[{stdin:'',stdout:'75\n'}]);
  }
  const g=JSON.parse(await readFile(goldLessonPath('cpp.functions-contracts','ru'),'utf8'));
  for(const x of g.workedExamples)add(g,'functions-'+x.id,x.code,[{stdin:x.stdin,stdout:x.expectedStdout}]);
