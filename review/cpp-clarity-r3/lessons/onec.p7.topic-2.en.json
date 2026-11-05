@@ -287,7 +287,7 @@
   ],
   "practice": {
     "title": "A report for two different training customers",
-    "task": "In a separate synthetic infobase, create two new references X andY with the same name “Workshop”. X has 10- and 20-minute requests; Y has none. Obtain detail join rows, then one total row per reference. After the first result, change the first duration from 10 to 15 and rerun both queries.",
+    "task": "Run two experiments with new synthetic data in a separate learning database. The first run creates two references X/Y named “Workshop”: X has requests of 10 and 20 minutes; Y has none. Obtain joined rows and totals for those references. Use 15 and 20 for the second run: it creates TWO DIFFERENT X/Y references and new requests, leaving the first set unchanged. X/Y are roles within each experiment. Older records remain; every query is restricted to Данные.Ключи from its own run.",
     "environment": "Installed official training 1C and a separate training-service infobase with Клиенты, Услуги, СтатусыЗаявки and ЗаявкаУслуги. Use only newly created synthetic references.",
     "setup": true,
     "files": [
@@ -326,7 +326,7 @@
         }
       },
       {
-        "label": "After changing 10→15",
+        "label": "Second separate dataset",
         "input": "X:[15;20];Y:[]",
         "table": {
           "caption": "Expected totals",
@@ -349,7 +349,7 @@
     ],
     "criteria": [
       "Before aggregation, show three rows: two forX and a NULL row forY.",
-      "Grouping retains two distinct references: initiallyX/30 andY/0, thenX/35 andY/0.",
+      "Each experiment has two distinct references: X/30 and Y/0 in the first set; X/35 and Y/0 in the second separate set. The second result excludes requests from the first set.",
       "Distinguish an inner join and name-only grouping by the lost group, even when the grand total looks plausible."
     ],
     "hint": "Join with З.Клиент=К.Ссылка and group by the reference. Use ЕСТЬNULL to state the 0 policy for an absent sum.",
@@ -369,13 +369,13 @@
       },
       {
         "where": "Configurator",
-        "action": "The managed application frame creates only a newX/Y set. Supply 10 and 20 to the named preparation call, retain both new references and run the queries with them.",
+        "action": "Replace the texts of both functions in УчебныеСоединенияR3 with your queries using the instructions below. In the managed application module use ПодготовитьНабор(10, 20, \"Workshop\"); add \"X\", \"Y\" after Данные in both МеткаКлиента calls. Both queries receive Данные.Ключи from this run.",
         "why": "Do not select unrelated records by a shared display name.",
         "expected": "The output distinguishesX andY."
       },
       {
-        "where": "1C: Enterprise",
-        "action": "AfterCtrl+S/F7/F5, compare detail rows before totals. In a separate new run, supply 15 and 20 and repeat.",
+        "where": "Designer (Configurator) → 1C:Enterprise",
+        "action": "In Designer save with Ctrl+S, close the previous session, update with F7 and start with F5. Compare the first set’s rows and totals in the messages. For the second experiment close the session, change the preparation arguments to (15, 20, \"Workshop\"), then repeat Ctrl+S/F7/F5: new X/Y references and requests are created. The first set is neither changed nor deleted.",
         "why": "Observe rows and concrete values, not only boolean flags.",
         "expected": "Three detail rows, two groups;30/0, then 35/0."
       },
@@ -385,6 +385,17 @@
         "why": "The external 1C window is not observed automatically.",
         "expected": "Self-report remains separate from technical evidence."
       }
-    ]
+    ],
+    "externalRoute": "Designer (Configurator) → common module УчебныеСоединенияR3 → two functions containing your queries; managed application module → new dataset arguments → Ctrl+S → close the previous session → F7 → F5. Read detail rows and totals in 1C:Enterprise messages.",
+    "transfer": {
+      "title": "Put your own query into the executed module",
+      "text": "ЗапросСтрок.bsl and ЗапросИтогов.bsl contain query-language text, not standalone BSL modules. There is no automatic exchange with 1C. Work directly in Designer or manually transfer your text from the optional draft. Below are two complete function examples. Replace only the text between the opening quote after Возврат and the closing quote before ;. Keep the function declaration and КонецФункции. Put the first query line after the opening quote; prefix each following line with |. Double any quotes used within the query inside the BSL string. Keep &Ключи as a parameter.",
+      "functions": [
+        "Функция ТекстДетальногоЗапроса() Экспорт\n    Возврат \"ВЫБРАТЬ\n    |    К.Ссылка КАК Клиент,\n    |    З.Ссылка КАК Заявка,\n    |    З.ДлительностьМинут КАК Минуты\n    |ИЗ\n    |    Справочник.Клиенты КАК К\n    |        ЛЕВОЕ СОЕДИНЕНИЕ Документ.ЗаявкаУслуги КАК З\n    |        ПО К.Ссылка = З.Клиент\n    |ГДЕ\n    |    К.Ссылка В (&Ключи)\";\nКонецФункции",
+        "Функция ТекстИтоговогоЗапроса() Экспорт\n    Возврат \"ВЫБРАТЬ\n    |    К.Ссылка КАК Клиент,\n    |    ЕСТЬNULL(СУММА(З.ДлительностьМинут), 0) КАК Минуты\n    |ИЗ\n    |    Справочник.Клиенты КАК К\n    |        ЛЕВОЕ СОЕДИНЕНИЕ Документ.ЗаявкаУслуги КАК З\n    |        ПО К.Ссылка = З.Клиент\n    |ГДЕ\n    |    К.Ссылка В (&Ключи)\n    |СГРУППИРОВАТЬ ПО\n    |    К.Ссылка\";\nКонецФункции"
+      ],
+      "calls": "Строки = УчебныеСоединенияR3.ВыполнитьЗапрос(\n    УчебныеСоединенияR3.ТекстДетальногоЗапроса(), Данные.Ключи);\nИтоги = УчебныеСоединенияR3.ВыполнитьЗапрос(\n    УчебныеСоединенияR3.ТекстИтоговогоЗапроса(), Данные.Ключи);",
+      "execution": "These two calls already follow ПодготовитьНабор in the managed application module. They read the functions you edited and pass the current Данные.Ключи to ВыполнитьЗапрос, where УстановитьПараметр(\"Ключи\", Ключи) restricts the dataset. The Строки loop prints details; the Итоги loop prints groups. Save both modules and run F7/F5. To check the transfer, temporarily replace ЛЕВОЕ with ВНУТРЕННЕЕ in your totals function: Y disappears. Restore ЛЕВОЕ and rerun: two groups return. Each run creates a new set. Recording the result in Nexus is still a self-report."
+    }
   }
 }

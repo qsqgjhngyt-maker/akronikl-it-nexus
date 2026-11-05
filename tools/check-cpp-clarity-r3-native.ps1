@@ -10,6 +10,19 @@ $common=Join-Path $source 'CommonModules\УчебныеСоединенияR3\Ex
 Save (Join-Path $source 'CommonModules\УчебныеСоединенияR3.xml') $xml
 $cfg=Join-Path $source 'Configuration.xml';Save $cfg ([IO.File]::ReadAllText($cfg).Replace('<ChildObjects>','<ChildObjects><CommonModule>УчебныеСоединенияR3</CommonModule>'))
 Copy-Item -LiteralPath (Join-Path $Review 'code\УчебныеСоединенияR3.bsl') -Destination $common
+# Перенос обеих показанных учащемуся функций в серверный модуль: выполняется именно текст инструкции.
+$transfer=([IO.File]::ReadAllText((Join-Path $Review 'lessons\onec.p7.topic-2.ru.json'))|ConvertFrom-Json).practice.transfer
+$transferredSource=[IO.File]::ReadAllText($common)
+foreach($functionText in $transfer.functions){
+    $functionName=[regex]::Match($functionText,'Функция ([^(]+)').Groups[1].Value
+    if($functionName -notin @('ТекстДетальногоЗапроса','ТекстИтоговогоЗапроса')){throw 'Неизвестная функция переноса'}
+    $pattern='(?s)Функция '+[regex]::Escape($functionName)+'\(\) Экспорт.*?КонецФункции'
+    if([regex]::Matches($transferredSource,$pattern).Count -ne 1){throw 'Не найдена одна функция для переноса'}
+    $replacement=$functionText
+    $transferredSource=[regex]::Replace($transferredSource,$pattern,[Text.RegularExpressions.MatchEvaluator]{param($match) $replacement})
+}
+Save $common $transferredSource
+
 $base=Join-Path $dest 'test-base';$module=Join-Path $source 'Ext\ManagedApplicationModule.bsl';Invoke-Own 'create' @('CREATEINFOBASE',('File="'+$base+'";'))
 function Execute([string]$id,[string]$body){Save $module $body;Invoke-Own ($id+'-load') @('DESIGNER','/F',('"'+$base+'"'),'/LoadConfigFromFiles',('"'+$source+'"'),'/UpdateDBCfg');Invoke-Own ($id+'-check') @('DESIGNER','/F',('"'+$base+'"'),'/CheckConfig','-ThinClient','-ThickClientManagedApplication','-Server','-ConfigLogicalIntegrity');Invoke-Own ($id+'-run') @('ENTERPRISE','/F',('"'+$base+'"'))}
 $programs=([IO.File]::ReadAllText((Join-Path $Review 'lessons\onec.p2.topic-1.ru.json'))|ConvertFrom-Json).nativePrograms
@@ -66,6 +79,6 @@ if(($observed -join "`n") -ne ($expected -join "`n")){throw ('Строки ил�
 $cases.Add(@{name=$v.id;observedRows=$observed;expectedRows=$expected;innerLostEmptyCustomer=$true;nameGroupingMergedDistinctReferences=$true;status='PASS'})
 }
 $hashes=@(Get-ChildItem -LiteralPath (Join-Path $Review 'code') -File|ForEach-Object {@{file=$_.Name;sha256=(Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant()}})
-$report=@{status='AUTOMATED PASS';platformVersion=(Get-Item -LiteralPath $platform).VersionInfo.ProductVersion;training1508Tested=$false;nativeLearnerGuiTested=$false;privateInfobaseOnly=$true;realAccountUsed=$false;progressWritten=$false;cases=$cases;steps=$steps;sources=$hashes;runnerSha256=(Get-FileHash -LiteralPath $PSCommandPath).Hash.ToLowerInvariant()}
+$report=@{status='AUTOMATED PASS';platformVersion=(Get-Item -LiteralPath $platform).VersionInfo.ProductVersion;training1508Tested=$false;nativeLearnerGuiTested=$false;queryTransferFromDisplayedFunctions=$true;transferFunctions=@('ТекстДетальногоЗапроса','ТекстИтоговогоЗапроса');privateInfobaseOnly=$true;realAccountUsed=$false;progressWritten=$false;cases=$cases;steps=$steps;sources=$hashes;runnerSha256=(Get-FileHash -LiteralPath $PSCommandPath).Hash.ToLowerInvariant()}
 Save (Join-Path $dest 'R3_NATIVE_RESULT.json') ($report|ConvertTo-Json -Depth 12)
 Write-Output ('AUTOMATED PASS: '+$cases.Count+' cases; platform '+$report.platformVersion+'; training1508 and learner GUI NOT RUN')

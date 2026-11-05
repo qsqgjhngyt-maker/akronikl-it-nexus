@@ -71,7 +71,17 @@
     },
     {
       "title": "Use your own data set",
-      "text": "Change ПодготовитьНабор(30, 45, \"Сервис\") to (10, 20, \"Мастерская\"). Add the third and fourth arguments \"X\", \"Y\" to both МеткаКлиента calls. Put your queries into the two matching text functions in the server module. Expect X/J1/10, X/J2/20, Y/NULL/NULL and totals X/30, Y/0. In a new experiment change 10 to 15: X/35, Y/0. Each run creates a new synthetic set and filters only its references; previous sets do not enter the report."
+      "text": "Replace the texts of both functions in УчебныеСоединенияR3 with your queries using the instructions below. In the managed application module use ПодготовитьНабор(10, 20, \"Workshop\"); add \"X\", \"Y\" after Данные in both МеткаКлиента calls. Both queries receive Данные.Ключи from this run. In Designer save with Ctrl+S, close the previous session, update with F7 and start with F5. Compare the first set’s rows and totals in the messages. For the second experiment close the session, change the preparation arguments to (15, 20, \"Workshop\"), then repeat Ctrl+S/F7/F5: new X/Y references and requests are created. The first set is neither changed nor deleted. X/Y denote roles within each set; previous data remains and is excluded by the current Данные.Ключи."
+    },
+    {
+      "title": "Put your own query into the executed module",
+      "text": "ЗапросСтрок.bsl and ЗапросИтогов.bsl contain query-language text, not standalone BSL modules. There is no automatic exchange with 1C. Work directly in Designer or manually transfer your text from the optional draft. Below are two complete function examples. Replace only the text between the opening quote after Возврат and the closing quote before ;. Keep the function declaration and КонецФункции. Put the first query line after the opening quote; prefix each following line with |. Double any quotes used within the query inside the BSL string. Keep &Ключи as a parameter.",
+      "code": "Функция ТекстДетальногоЗапроса() Экспорт\n    Возврат \"ВЫБРАТЬ\n    |    К.Ссылка КАК Клиент,\n    |    З.Ссылка КАК Заявка,\n    |    З.ДлительностьМинут КАК Минуты\n    |ИЗ\n    |    Справочник.Клиенты КАК К\n    |        ЛЕВОЕ СОЕДИНЕНИЕ Документ.ЗаявкаУслуги КАК З\n    |        ПО К.Ссылка = З.Клиент\n    |ГДЕ\n    |    К.Ссылка В (&Ключи)\";\nКонецФункции\n\nФункция ТекстИтоговогоЗапроса() Экспорт\n    Возврат \"ВЫБРАТЬ\n    |    К.Ссылка КАК Клиент,\n    |    ЕСТЬNULL(СУММА(З.ДлительностьМинут), 0) КАК Минуты\n    |ИЗ\n    |    Справочник.Клиенты КАК К\n    |        ЛЕВОЕ СОЕДИНЕНИЕ Документ.ЗаявкаУслуги КАК З\n    |        ПО К.Ссылка = З.Клиент\n    |ГДЕ\n    |    К.Ссылка В (&Ключи)\n    |СГРУППИРОВАТЬ ПО\n    |    К.Ссылка\";\nКонецФункции"
+    },
+    {
+      "title": "Call your own functions",
+      "text": "These two calls already follow ПодготовитьНабор in the managed application module. They read the functions you edited and pass the current Данные.Ключи to ВыполнитьЗапрос, where УстановитьПараметр(\"Ключи\", Ключи) restricts the dataset. The Строки loop prints details; the Итоги loop prints groups. Save both modules and run F7/F5. To check the transfer, temporarily replace ЛЕВОЕ with ВНУТРЕННЕЕ in your totals function: Y disappears. Restore ЛЕВОЕ and rerun: two groups return. Each run creates a new set. Recording the result in Nexus is still a self-report.",
+      "code": "Строки = УчебныеСоединенияR3.ВыполнитьЗапрос(\n    УчебныеСоединенияR3.ТекстДетальногоЗапроса(), Данные.Ключи);\nИтоги = УчебныеСоединенияR3.ВыполнитьЗапрос(\n    УчебныеСоединенияR3.ТекстИтоговогоЗапроса(), Данные.Ключи);"
     }
   ]
 }
