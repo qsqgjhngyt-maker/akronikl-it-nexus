@@ -32,14 +32,14 @@
       "title": "What the report must show",
       "paragraphs": [
         "The report must show request minutes for each of two selected customers, including a customer without requests. A correct grand total alone is insufficient: both distinct customer records must survive. We will inspect rows before adding them.",
-        "A andB are short labels for two different references in the training infobase. They are not real addresses or literal values to enter in a reference field. Both customers have the same displayed name “Service”. A name helps a reader but does not make two records identical."
+        "A and B are short labels for two different references in the training infobase. They are not real addresses or literal values to enter in a reference field. Both customers have the same displayed name “Service”. A name helps a reader but does not make two records identical."
       ]
     },
     {
       "id": "source-tables",
       "title": "Rows before the query",
       "paragraphs": [
-        "There are two customer rows. Both request rows referenceA, with durations 30 and 45. CustomerB has no request. The Ключи parameter contains exactly the two newly created training referencesA andB, limiting this exercise to its own data. We do not select unrelated records by matching names."
+        "There are two customer rows. Both request rows reference A, with durations 30 and 45. Customer B has no request. The Ключи parameter contains exactly the two newly created training references A and B, limiting this exercise to its own data. We do not select unrelated records by matching names."
       ],
       "tables": [
         {
@@ -85,8 +85,8 @@
       "id": "joined-rows",
       "title": "Join: find matches for each left row",
       "paragraphs": [
-        "К and З are short table aliases. К. Ссылка=З. Клиент matches requests to this customer record. Two matches forA produce two rows, not one row with a total. The left join then retainsB: there is no match, but the left row remains.",
-        "The right fields forB contain NULL: there is no matching value in the query result. This is not a zero-minute document, an empty reference or Неопределено. Row order is not guaranteed without ORDER BY; the table below is arranged by our labels for readability."
+        "К and З are short table aliases. К.Ссылка=З.Клиент matches requests to this customer record. Two matches for A produce two rows, not one row with a total. The left join then retains B: there is no match, but the left row remains.",
+        "The right fields for B contain NULL: there is no matching value in the query result. This is not a zero-minute document, an empty reference or Неопределено. Row order is not guaranteed without ORDER BY; the table below is arranged by our labels for readability."
       ],
       "code": {
         "language": "1c-query",
@@ -124,7 +124,7 @@
           "A → J 1",
           "A",
           "A | J 1 |30",
-          "The request referencesA."
+          "The request references A."
         ],
         [
           "A → J 2",
@@ -144,7 +144,7 @@
       "id": "groups",
       "title": "Now choose the result level: one row per customer",
       "paragraphs": [
-        "GROUP BY К. Ссылка collects rows with the same customer reference. GroupA has 30+45=75 minutes. GroupB has no request duration. This report’s contract displays 0 when the sum is absent; ЕСТЬ NULL(...,0) states that replacement explicitly.",
+        "GROUP BY К.Ссылка collects rows with the same customer reference. Group A has 30+45=75 minutes. Group B has no request duration. This report’s contract displays 0 when the sum is absent; ЕСТЬNULL(...,0) states that replacement explicitly.",
         "Summation follows the join. We can see which rows belong to each group, so 75 and 0 have an explanation. Obtaining one number 75 and displaying two true flags would not replace this walkthrough."
       ],
       "code": {
@@ -201,8 +201,8 @@
       "id": "identity-and-errors",
       "title": "Two ways to lose the required result",
       "paragraphs": [
-        "INNER JOIN keeps matches only. TheB row disappears, leaving onlyA/75. The query can be syntactically valid while failing the requirement to show every selected customer.",
-        "Grouping only by К. Наименование mergesA andB, because their names match. The total 75 may look plausible while the two identities have been lost. Check group count and totals for the specific references, not just a grand total or label."
+        "INNER JOIN keeps matches only. The B row disappears, leaving only A/75. The query can be syntactically valid while failing the requirement to show every selected customer.",
+        "Grouping only by К.Наименование merges A and B, because their names match. The total 75 may look plausible while the two identities have been lost. Check group count and totals for the specific references, not just a grand total or label."
       ],
       "tables": [
         {
@@ -236,7 +236,7 @@
       "id": "next",
       "title": "Transfer to your own training data",
       "paragraphs": [
-        "Practice uses different referencesX/Y and durations 10/20. Predict the joined rows and both totals first, then compare them with actual 1C output. Use the link back to the joined-row table; your draft remains in this tab."
+        "Practice uses different references X/Y and durations 10/20. Predict the joined rows and both totals first, then compare them with actual 1C output. Use the link back to the joined-row table; your draft remains in this tab."
       ],
       "clarifications": [
         {
@@ -287,7 +287,7 @@
   ],
   "practice": {
     "title": "A report for two different training customers",
-    "task": "In a separate synthetic infobase, create two new referencesX andY with the same name “Workshop”. X has 10- and 20-minute requests; Y has none. Obtain detail join rows, then one total row per reference. After the first result, change the first duration from 10 to 15 and rerun both queries.",
+    "task": "In a separate synthetic infobase, create two new references X andY with the same name “Workshop”. X has 10- and 20-minute requests; Y has none. Obtain detail join rows, then one total row per reference. After the first result, change the first duration from 10 to 15 and rerun both queries.",
     "environment": "Installed official training 1C and a separate training-service infobase with Клиенты, Услуги, СтатусыЗаявки and ЗаявкаУслуги. Use only newly created synthetic references.",
     "setup": true,
     "files": [
@@ -352,7 +352,7 @@
       "Grouping retains two distinct references: initiallyX/30 andY/0, thenX/35 andY/0.",
       "Distinguish an inner join and name-only grouping by the lost group, even when the grand total looks plausible."
     ],
-    "hint": "Join with З. Клиент=К. Ссылка and group by the reference. Use ЕСТЬ NULL to state the 0 policy for an absent sum.",
+    "hint": "Join with З.Клиент=К.Ссылка and group by the reference. Use ЕСТЬNULL to state the 0 policy for an absent sum.",
     "returnAnchor": "joined-rows",
     "steps": [
       {
