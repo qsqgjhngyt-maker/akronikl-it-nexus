@@ -1,11 +1,9 @@
 // Исполняемая часть контракта R3. Чистые функции: без Storage, DOM и записи данных.
+import {CLARITY_COURSES} from './clarity-course-registry.mjs';
+export const clarityContentRevision=id=>CLARITY_COURSES[id]?.pilot?'r3-stage-a-8bccaf5':'clarity-courses-v1';
 export const CLARITY_CONTENT_REVISION = 'r3-stage-a-8bccaf5';
 export const CLARITY_LIMITS = Object.freeze({answer:4096, output:16384, reportDraft:16384, snapshot:32768, draft:65536});
-export const CLARITY_QUESTIONS = Object.freeze({
- 'cpp.programming-process':Object.freeze({'cpp-predict':3,'cpp-error':3,'cpp-explain':'free'}),
- 'onec.p2.topic-1':Object.freeze({'bsl-predict':3,'bsl-save':3,'bsl-explain':'free'}),
- 'onec.p7.topic-2':Object.freeze({'join-inner':3,'join-name':3,'join-explain':'free'})
-});
+export const CLARITY_QUESTIONS=Object.freeze(Object.fromEntries(Object.entries(CLARITY_COURSES).map(([id,t])=>[id,Object.freeze(t.questions)])));
 const encoder = new TextEncoder(), stages = ['explanation','selfcheck','practice'];
 const fail = code => { throw Object.assign(new Error(code), {code}); };
 const require = (ok, code='R3_SCHEMA_INVALID') => { if(!ok)fail(code); };
@@ -50,9 +48,9 @@ export function sha256Utf8(value){
 function binding(v,id){
  if(v===null)return;
  require(record(v));require('value' in (Object.getOwnPropertyDescriptor(v,'kind')||{}));
- if(v.kind==='lesson'){object(v,['kind','topicId','workspaceDigest']);require(id==='cpp.programming-process' && v.topicId===id);digest(v.workspaceDigest);}
- else if(v.kind==='project'){object(v,['kind','id','expectedLocalRevision']);require(id.startsWith('onec.'));revision(v.id);uint(v.expectedLocalRevision);}
- else if(v.kind==='local-project'){object(v,['kind','id','workspaceDigest']);require(id==='cpp.programming-process');revision(v.id);digest(v.workspaceDigest);}
+ if(v.kind==='lesson'){object(v,['kind','topicId','workspaceDigest']);require(CLARITY_COURSES[id]?.courseId==='cpp' && v.topicId===id);digest(v.workspaceDigest);}
+ else if(v.kind==='project'){object(v,['kind','id','expectedLocalRevision']);require(['onec','1c-enterprise'].includes(CLARITY_COURSES[id]?.courseId));revision(v.id);uint(v.expectedLocalRevision);}
+ else if(v.kind==='local-project'){object(v,['kind','id','workspaceDigest']);require(CLARITY_COURSES[id]?.courseId==='cpp');revision(v.id);digest(v.workspaceDigest);}
  else fail('R3_BINDING_REJECTED');
 }
 export function validateInputSnapshot(v){
@@ -61,7 +59,7 @@ export function validateInputSnapshot(v){
  require(Array.isArray(v.files) && v.files.length>0 && v.files.length<=128);
  const names=new Set();for(const f of v.files){object(f,['path','content']);filePath(f.path);text(f.content);require(!names.has(f.path),'R3_DUPLICATE_FILE');names.add(f.path);}
  require(v.files.find(f=>f.path===v.entryFile)?.content===v.source,'R3_ENTRY_SOURCE_MISMATCH');
- object(v.metadata,['entryFile','activeFile','workspaceRevision']);require(v.metadata.entryFile===v.entryFile && names.has(v.metadata.activeFile));uint(v.metadata.workspaceRevision);
+ object(v.metadata,['entryFile','activeFile','workspaceRevision',...['translationUnits','includeRoots'].filter(k=>Object.hasOwn(v.metadata,k))]);for(const key of ['translationUnits','includeRoots'])if(Object.hasOwn(v.metadata,key)){const paths=v.metadata[key];require(Array.isArray(paths)&&paths.length<=128);for(const p of paths){if(key==='includeRoots'&&p==='.')continue;filePath(p);if(key==='translationUnits')require(names.has(p),'R3_BUILD_FILE_MISSING');}}require(v.metadata.entryFile===v.entryFile && names.has(v.metadata.activeFile));uint(v.metadata.workspaceRevision);
  limit(snapshotJson(v),CLARITY_LIMITS.snapshot,'R3_SNAPSHOT_TOO_LARGE');return v;
 }
 export function snapshotJson(v){return canonicalJson({...v,files:[...v.files].sort((a,b)=>compareUtf8(a.path,b.path))});}
@@ -78,8 +76,8 @@ function result(v,id){
  require(v.exitCode===null || Number.isSafeInteger(v.exitCode));
  if(v.inputSnapshot===null){require(v.kind==='external-self-report' && v.workBinding===null && v.sourceDigest===null && v.stdinDigest===null);}
  else {validateInputSnapshot(v.inputSnapshot);const hashes=snapshotDigests(v.inputSnapshot);require(hashes.sourceDigest===v.sourceDigest && hashes.stdinDigest===v.stdinDigest,'R3_DIGEST_MISMATCH');require(v.workspaceRevision===v.inputSnapshot.metadata.workspaceRevision);}
- if(v.kind==='runtime'){require(id==='cpp.programming-process' && v.inputSnapshot!==null && v.workBinding!==null && v.inputSnapshot.languageId==='cpp');revision(v.providerId);}
- else {require(id.startsWith('onec.') && v.providerId===null && v.exitCode===null);if(v.inputSnapshot)require(v.inputSnapshot.languageId===(id==='onec.p2.topic-1'?'bsl':'1c-query'));}
+ if(v.kind==='runtime'){require(CLARITY_COURSES[id]?.runtime==='cpp-console' && v.inputSnapshot!==null && v.workBinding!==null && v.inputSnapshot.languageId==='cpp');revision(v.providerId);}
+ else {require(CLARITY_COURSES[id]?.runtime!=='cpp-console' && v.providerId===null && v.exitCode===null);if(v.inputSnapshot)require(v.inputSnapshot.languageId===CLARITY_COURSES[id].languageId);}
 }
 export function validateClarityDraft(id,v,{persisted=true}={}){
  const questions=topic(id);
@@ -100,7 +98,7 @@ export function validateClarityDraft(id,v,{persisted=true}={}){
  text(v.reportDraft);limit(v.reportDraft,CLARITY_LIMITS.reportDraft,'R3_REPORT_TOO_LARGE');result(v.lastResult,id);
  limit(canonicalJson(v),CLARITY_LIMITS.draft,'R3_DRAFT_TOO_LARGE');return v;
 }
-export function emptyClarityDraft(id){topic(id);return {schemaVersion:1,topicId:id,contentRevision:CLARITY_CONTENT_REVISION,stateRevision:0,stage:'explanation',positions:Object.fromEntries(stages.map(s=>[s,{x:0,y:0}])),activeFile:null,cursor:null,answers:{},workBinding:null,reportDraft:'',lastResult:null};}
+export function emptyClarityDraft(id){topic(id);return {schemaVersion:1,topicId:id,contentRevision:clarityContentRevision(id),stateRevision:0,stage:'explanation',positions:Object.fromEntries(stages.map(s=>[s,{x:0,y:0}])),activeFile:null,cursor:null,answers:{},workBinding:null,reportDraft:'',lastResult:null};}
 export function prepareClarityDraft(id,proposed,{previous=null,expectedStateRevision}={}){
  uint(expectedStateRevision);if(previous!==null)validateClarityDraft(id,previous);
  const actual=previous?.stateRevision??0;require(actual===expectedStateRevision,'R3_STATE_CONFLICT');require(actual<Number.MAX_SAFE_INTEGER,'R3_REVISION_EXHAUSTED');

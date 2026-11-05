@@ -1,0 +1,853 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.standard-io",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "Программирование на C++",
+  "module": "Основы C++",
+  "locale": "ru",
+  "title": "Стандартный ввод-вывод: договор данных и проверяемый проект",
+  "goal": "Прочитаем два числа и покажем, где ввод, вычисление и вывод.",
+  "prerequisites": [
+    {
+      "text": "Знаете if/else, ||, !, int и умножение; смысл состояния потока вводится здесь."
+    }
+  ],
+  "sections": [
+    {
+      "id": "model",
+      "title": "От задачи к действию",
+      "paragraphs": [
+        "stdin — входной текст программы. В поле ввода напишем 4 3: std::cin >> width >> height пытается прочитать два целых. Пробел либо перевод строки разделяет числа. После успешного чтения width=4 и height=3. std::cout — отдельный выход, он не заполняет stdin.",
+        "!(std::cin >> width >> height) истинно при ошибке чтения: ! означает отрицание успешного состояния потока. Ранний return завершает main, поэтому после ошибки мы не вычисляем площадь. Проверка width<0 || height<0 отклоняет отрицательные размеры. Для этого примера используйте размеры 0..1000; перед умножением проверяем и верхние границы.",
+        "Этот маленький протокол читает два числа и не требует отсутствия дальнейших слов. Более строгий разбор всей строки и смешение cin с getline — отдельная следующая ступень. Пустой stdin здесь вызовет invalid, в отличие от примеров с числами прямо в коде."
+      ]
+    },
+    {
+      "id": "worked-example",
+      "title": "Прочитаем два числа и покажем, где ввод, вычисление и вывод.",
+      "paragraphs": [],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+        "output": "12\n",
+        "stdin": "4 3\n"
+      },
+      "steps": [],
+      "trace": [
+        [
+          "cin >> width >> height",
+          "stdin: 4 3",
+          "width: 4; height: 3",
+          "Оба целых прочитаны, первая ветвь пропущена."
+        ],
+        [
+          "Проверка",
+          "4; 3",
+          "valid",
+          "Размеры в пределах 0..1000."
+        ],
+        [
+          "cout << width * height",
+          "4 × 3",
+          "stdout: 12",
+          "Вывод вычислен только после двух проверок."
+        ]
+      ]
+    },
+    {
+      "id": "variation",
+      "title": "Изменим условие и проверим прогноз",
+      "paragraphs": [
+        "Исходник не меняйте: в stdin поставьте 5 6, затем oops.",
+        "Два числовых токена становятся шириной и высотой.",
+        "При oops чтение int не удалось; умножение не выполняется."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+        "stdin": "4 3\n",
+        "output": "30\n"
+      }
+    },
+    {
+      "id": "diagnose",
+      "title": "Если результат не совпал",
+      "paragraphs": [
+        "Если вычислять после неудачного чтения, программа использует не полученные от пользователя данные. Проверка чтения должна предшествовать расчёту."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь выполните свою задачу",
+      "paragraphs": [
+        "Напишите чтение цены и количества 0..1000 с проверкой чтения и границ. Выведите произведение либо invalid. Проверьте 70 5, 70 0, -1 5 и пустой ввод.",
+        "В разделе «Практика» находится отдельная заготовка. Сначала запишите ожидаемый результат, затем изменяйте свою программу. Возвращение к примеру не заменяет ваш исходник."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Какой вывод получится после указанного изменения? Исходник не меняйте: в stdin поставьте 5 6, затем oops.",
+      "options": [
+        "30\n",
+        "invalid\n"
+      ],
+      "correct": 0,
+      "feedback": "Два числовых токена становятся шириной и высотой. При oops чтение int не удалось; умножение не выполняется."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Напишите чтение цены и количества 0..1000 с проверкой чтения и границ. Выведите произведение либо invalid. Проверьте 70 5, 70 0, -1 5 и пустой ввод.",
+      "feedback": "Сравните вывод с показанным ниже контрольным случаем. Объясните каждое изменение через объекты или операции этой темы. Для входов 70 5, 70 0, -1 5 и пустого ввода ответы: 350, 0, invalid, invalid. При неудачном чтении или нарушении границ расчёт не выполняется."
+    }
+  ],
+  "practice": {
+    "title": "Самостоятельная вариация",
+    "task": "Напишите чтение цены и количества 0..1000 с проверкой чтения и границ. Выведите произведение либо invalid. Проверьте 70 5, 70 0, -1 5 и пустой ввод.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    // Напишите своё решение здесь.\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "70 5\n",
+    "returnAnchor": "worked-example",
+    "cases": [
+      {
+        "label": "Случай 1",
+        "input": "70 5\n",
+        "output": "350\n"
+      },
+      {
+        "label": "Случай 2",
+        "input": "70 0\n",
+        "output": "0\n"
+      },
+      {
+        "label": "Случай 3",
+        "input": "-1 5\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Случай 4",
+        "input": "",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "Сравните вывод с показанным ниже контрольным случаем.",
+      "Объясните каждое изменение через объекты или операции этой темы.",
+      "Для входов 70 5, 70 0, -1 5 и пустого ввода ответы: 350, 0, invalid, invalid. При неудачном чтении или нарушении границ расчёт не выполняется."
+    ],
+    "hint": "Два числовых токена становятся шириной и высотой. При oops чтение int не удалось; умножение не выполняется.",
+    "steps": [
+      {
+        "where": "Моя программа",
+        "action": "Напишите чтение цены и количества 0..1000 с проверкой чтения и границ. Выведите произведение либо invalid. Проверьте 70 5, 70 0, -1 5 и пустой ввод.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя программа",
+        "action": "Предскажите результат до запуска.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя программа",
+        "action": "Напишите решение в отдельной заготовке; сохраните прежнюю работу.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя программа",
+        "action": "Сравните фактический вывод с прогнозом и объясните расхождение.",
+        "why": "",
+        "expected": ""
+      }
+    ],
+    "modulePracticum": {
+      "title": "Итоговый проект: проверяемое время передачи файла",
+      "label": "ИТОГОВЫЙ ПРОЕКТ MODULE 2",
+      "starterLabel": "Заготовка: начните с собственного решения",
+      "challenge": "Реализуйте модель MiB → kbit/s с процентом накладных расходов, округлением вверх и строгим конечным вводом.",
+      "readiness": "Все 12 тем. Используйте готовый main, long long, условия и потоки; циклы, new/delete и собственные функции не требуются.",
+      "skills": [
+        {
+          "lessonId": "cpp.first-cpp-program",
+          "title": "Первая программа C++: от исходника к проверяемому отчёту"
+        },
+        {
+          "lessonId": "cpp.tokens-identifiers-keywords",
+          "title": "Токены и имена: точность исходника и понятный смысл"
+        },
+        {
+          "lessonId": "cpp.comments-constants-literals",
+          "title": "Комментарии, константы и литералы: смысл вместо магических чисел"
+        },
+        {
+          "lessonId": "cpp.data-types",
+          "title": "Типы данных: выбор значения, инициализация и измерение target"
+        },
+        {
+          "lessonId": "cpp.variables-scope",
+          "title": "Переменные, блоки и время жизни: журнал состояний"
+        },
+        {
+          "lessonId": "cpp.expressions-operators-blocks",
+          "title": "Выражения и операторы: группировка, значение и понятные шаги"
+        },
+        {
+          "lessonId": "cpp.arithmetic-assignment",
+          "title": "Арифметика и присваивание: частное, остаток и безопасные промежуточные значения"
+        },
+        {
+          "lessonId": "cpp.type-conversions",
+          "title": "Преобразования типов: намерение, потеря информации и проверка диапазона"
+        },
+        {
+          "lessonId": "cpp.relations-logic",
+          "title": "Сравнения и логика: условие как проверяемый договор"
+        },
+        {
+          "lessonId": "cpp.increment-decrement-sizeof-conditional",
+          "title": "++ и --, sizeof и ?: — короткая запись с точным смыслом"
+        },
+        {
+          "lessonId": "cpp.pointers-references-addresses",
+          "title": "Объект, копия, ссылка и указатель: связи без опасной памяти"
+        },
+        {
+          "lessonId": "cpp.standard-io",
+          "title": "Стандартный ввод-вывод: договор данных и проверяемый проект"
+        }
+      ],
+      "requirements": [
+        "Ввод m r h с диапазонами из теории. Ровно три целых поля.",
+        "MiB=1048576 байт, kbit/s=1000 bit/s; h — процент от полезных битов.",
+        "Все промежуточные произведения в long long до первого умножения.",
+        "stdout: seconds minutes remainder и newline; ошибка: invalid и newline.",
+        "Ссылки и указатели не добавляются в формулу без пользы: их навык отдельно доказан практикумом C."
+      ],
+      "milestones": [
+        "Перепишите единицы и независимо вычислите четыре базовых случая.",
+        "Завершите заготовку расчётом и stdout.",
+        "Докажите верхнюю границу num и ненулевой den.",
+        "Выполните 30 контрольных случаев и два собственных.",
+        "Сохраните исходник, протокол и самооценку."
+      ],
+      "walkthrough": [
+        "1 MiB содержит 8388608 бит. При 1000 kbit/s без накладных расходов это 8.388608 секунды, вверх — 9.",
+        "При h=25 число полезных битов умножается на 125/100, получаем 10.48576 секунды, вверх — 11.",
+        "num/den даёт полные секунды, ненулевой остаток добавляет одну. Это избегает потенциальной суммы num+den−1.",
+        "Для максимального объёма, минимальной скорости и 100% накладных расходов ответ 16777216000 секунд: 279620266 минут и 40 секунд."
+      ],
+      "starterCode": "#include <iostream>\n\nint main() {\n    long long mib{0};\n    long long rateKbit{0};\n    long long overheadPercent{0};\n    if (!(std::cin >> mib >> rateKbit >> overheadPercent)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || mib < 0 || mib > 1000000 || rateKbit < 1 || rateKbit > 1000000 || overheadPercent < 0 || overheadPercent > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    // Complete the bounded integer calculation and replace this placeholder.\n    std::cout << \"TODO\\n\";\n    return 0;\n}\n",
+      "starterExpectedStdout": "TODO\n",
+      "referenceCode": "#include <iostream>\n\nint main() {\n    long long mib{0};\n    long long rateKbit{0};\n    long long overheadPercent{0};\n    if (!(std::cin >> mib >> rateKbit >> overheadPercent)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || mib < 0 || mib > 1000000 || rateKbit < 1 || rateKbit > 1000000 || overheadPercent < 0 || overheadPercent > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    constexpr long long bytesPerMiB{1024LL * 1024};\n    constexpr long long bitsPerByte{8};\n    constexpr long long bitsPerKbit{1000};\n    long long numerator = mib * bytesPerMiB * bitsPerByte * (100 + overheadPercent);\n    long long denominator = 100LL * rateKbit * bitsPerKbit;\n    long long seconds = numerator / denominator + (numerator % denominator != 0);\n    std::cout << seconds << ' ' << seconds / 60 << ' ' << seconds % 60 << '\\n';\n    return 0;\n}\n",
+      "cases": [
+        {
+          "stdin": "0 1000 0",
+          "stdout": "0 0 0\n"
+        },
+        {
+          "stdin": "1 1000 0",
+          "stdout": "9 0 9\n"
+        },
+        {
+          "stdin": "1 1000 25",
+          "stdout": "11 0 11\n"
+        },
+        {
+          "stdin": "1000000 1 100",
+          "stdout": "16777216000 279620266 40\n"
+        },
+        {
+          "stdin": "1 1 0",
+          "stdout": "8389 139 49\n"
+        },
+        {
+          "stdin": "1 1000000 0",
+          "stdout": "1 0 1\n"
+        },
+        {
+          "stdin": "2 8192 0",
+          "stdout": "3 0 3\n"
+        },
+        {
+          "stdin": "125 1000 100",
+          "stdout": "2098 34 58\n"
+        },
+        {
+          "stdin": "1000000 1000000 100",
+          "stdout": "16778 279 38\n"
+        },
+        {
+          "stdin": "10 800 25",
+          "stdout": "132 2 12\n"
+        },
+        {
+          "stdin": "1 1000 100",
+          "stdout": "17 0 17\n"
+        },
+        {
+          "stdin": "0 1 100",
+          "stdout": "0 0 0\n"
+        },
+        {
+          "stdin": "1000000 1 0",
+          "stdout": "8388608000 139810133 20\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "abc 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1.5 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 0.5",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "-1 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1000001 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 0 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 -1 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000001 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 -1",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 101",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 0 extra",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 0 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "99999999999999999999999999999 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 25 \n\t",
+          "stdout": "11 0 11\n"
+        }
+      ],
+      "verificationVariants": [],
+      "artifacts": [
+        "main.cpp и текстовый договор единиц.",
+        "Доказательство границ всех промежуточных значений.",
+        "Таблица 30+2 входов, ожиданий и реальных stdout.",
+        "Один дефект с гипотезой, исправлением и повторной проверкой.",
+        "Ограничения модели: постоянная скорость, заданный overhead, без реального измерения сети."
+      ],
+      "rubric": [
+        {
+          "criterion": "Контракт и единицы",
+          "complete": "MiB и kbit/s согласованы, overhead определён.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Корректность расчёта",
+          "complete": "Есть точное округление вверх и согласованный формат минут.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Безопасность диапазонов",
+          "complete": "Границы доказаны, операции после валидации.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Строгий ввод",
+          "complete": "Пустой, повреждённый, лишний и вне диапазона ввод отклоняется.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Проверки и объяснение",
+          "complete": "30+2 результата сохранены, решение объясняется без копирования формулировок.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        }
+      ],
+      "completionRule": "Самопроверка: не менее 8/10, без нуля за корректность, безопасность и проверки. Это ручная рубрика, а не автоматический балл или блокировка следующего урока.",
+      "verification": "manual-output-comparison"
+    }
+  },
+  "terms": [
+    {
+      "term": "stdin",
+      "definition": "Стандартный поток ввода. В Nexus поле передаёт конечную последовательность символов, после которой наступает конец данных."
+    },
+    {
+      "term": "Форматированное извлечение",
+      "definition": "Чтение значения через >> по правилам типа и состояния потока."
+    },
+    {
+      "term": "fail()",
+      "definition": "Сообщает о состоянии неудачного чтения либо более серьёзной ошибки; значение после ошибки не используют как проверенный ввод."
+    },
+    {
+      "term": "eof()",
+      "definition": "Сообщает о ранее обнаруженном конце ввода, а не предсказывает успех будущего чтения."
+    },
+    {
+      "term": "std::string",
+      "definition": "Готовый библиотечный тип для последовательности символов; строковые алгоритмы будут отдельной темой."
+    },
+    {
+      "term": "std::getline",
+      "definition": "Читает строку до разделителя, обычно перевода строки; разделитель извлекается, но не добавляется к результату."
+    },
+    {
+      "term": "std::ws",
+      "definition": "Извлекает начальные пробельные символы, включая переводы и пустые строки, до непробельного символа либо конца ввода."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-INPUT",
+    "CPP20-STREAM-STATE",
+    "CPP20-WS",
+    "CPP20-STRING-IO",
+    "CPP20-FORMAT",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.standard-io",
+    "locale": "ru",
+    "visualization": null,
+    "sourceRefs": [
+      "CPP20-INPUT",
+      "CPP20-STREAM-STATE",
+      "CPP20-WS",
+      "CPP20-STRING-IO",
+      "CPP20-FORMAT",
+      "CPP-GUIDELINES"
+    ],
+    "blockPracticum": {
+      "title": "Практикум C: объекты, aliases и контракт ввода",
+      "label": "НАКОПИТЕЛЬНЫЙ ПРАКТИКУМ C",
+      "starterLabel": "Заготовка: начните с собственного решения",
+      "challenge": "Прочитайте остаток, выдайте до трёх и покажите снимок, новое значение и идентичность объекта.",
+      "readiness": "Темы 9–12 и журнал состояний. Адреса сравниваются, не печатаются как постоянные числа.",
+      "skills": [
+        {
+          "lessonId": "cpp.relations-logic",
+          "title": "Сравнения и логика: условие как проверяемый договор"
+        },
+        {
+          "lessonId": "cpp.increment-decrement-sizeof-conditional",
+          "title": "++ и --, sizeof и ?: — короткая запись с точным смыслом"
+        },
+        {
+          "lessonId": "cpp.pointers-references-addresses",
+          "title": "Объект, копия, ссылка и указатель: связи без опасной памяти"
+        },
+        {
+          "lessonId": "cpp.standard-io",
+          "title": "Стандартный ввод-вывод: договор данных и проверяемый проект"
+        }
+      ],
+      "requirements": [
+        "Ровно одно целое 0…100 и допустимый пробельный хвост.",
+        "Снимок независим, alias и selected обозначают живой stock.",
+        "Выдача min(stock,3) через объяснённый ?: .",
+        "same_object=1 проверяется равенством указателей."
+      ],
+      "milestones": [
+        "Нарисуйте объекты.",
+        "Проверьте ввод.",
+        "Обновите через ссылку, прочитайте через указатель.",
+        "Сохраните восемь реальных запусков."
+      ],
+      "walkthrough": [
+        "snapshot копирует исходное число. &alias даёт адрес того же stock, selected хранит этот адрес.",
+        "После issued≤stock вычитание безопасно. Время жизни stock охватывает все доступы."
+      ],
+      "starterCode": "#include <iostream>\n\nint main() {\n    int stock{0};\n    if (!(std::cin >> stock)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"stock=\" << stock << '\\n';\n    return 0;\n}\n",
+      "starterExpectedStdout": "stock=8\n",
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int stock{0};\n    if (!(std::cin >> stock)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || stock < 0 || stock > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int snapshot = stock;\n    int& alias = stock;\n    int* selected = &stock;\n    int issued = stock >= 3 ? 3 : stock;\n    alias -= issued;\n    std::cout << \"before=\" << snapshot << '\\n';\n    std::cout << \"after=\" << *selected << '\\n';\n    std::cout << \"issued=\" << issued << '\\n';\n    std::cout << \"same_object=\" << (&alias == selected) << '\\n';\n    return 0;\n}\n",
+      "cases": [
+        {
+          "stdin": "8",
+          "stdout": "before=8\nafter=5\nissued=3\nsame_object=1\n"
+        },
+        {
+          "stdin": "0",
+          "stdout": "before=0\nafter=0\nissued=0\nsame_object=1\n"
+        },
+        {
+          "stdin": "2",
+          "stdout": "before=2\nafter=0\nissued=2\nsame_object=1\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "-1",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "101",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "8 extra",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "8.5",
+          "stdout": "invalid\n"
+        }
+      ],
+      "verificationVariants": [],
+      "artifacts": [
+        "Исходник.",
+        "Символическая карта объектов.",
+        "Восемь stdout и ожиданий.",
+        "Разбор ошибки без опасного чтения."
+      ],
+      "rubric": [
+        {
+          "criterion": "Корректность",
+          "complete": "Остаток и выдача согласованы.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Ввод",
+          "complete": "Хвост и границы проверены.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Объекты",
+          "complete": "Копия и alias различены.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Безопасность",
+          "complete": "Все цели живы, null не читается.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Проверки",
+          "complete": "Все восемь результатов сохранены.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        }
+      ],
+      "completionRule": "Самопроверка: не менее 8/10, без нуля за корректность, безопасность и проверки. Это ручная рубрика, а не автоматический балл или блокировка следующего урока.",
+      "verification": "manual-output-comparison"
+    },
+    "modulePracticum": {
+      "title": "Итоговый проект: проверяемое время передачи файла",
+      "label": "ИТОГОВЫЙ ПРОЕКТ MODULE 2",
+      "starterLabel": "Заготовка: начните с собственного решения",
+      "challenge": "Реализуйте модель MiB → kbit/s с процентом накладных расходов, округлением вверх и строгим конечным вводом.",
+      "readiness": "Все 12 тем. Используйте готовый main, long long, условия и потоки; циклы, new/delete и собственные функции не требуются.",
+      "skills": [
+        {
+          "lessonId": "cpp.first-cpp-program",
+          "title": "Первая программа C++: от исходника к проверяемому отчёту"
+        },
+        {
+          "lessonId": "cpp.tokens-identifiers-keywords",
+          "title": "Токены и имена: точность исходника и понятный смысл"
+        },
+        {
+          "lessonId": "cpp.comments-constants-literals",
+          "title": "Комментарии, константы и литералы: смысл вместо магических чисел"
+        },
+        {
+          "lessonId": "cpp.data-types",
+          "title": "Типы данных: выбор значения, инициализация и измерение target"
+        },
+        {
+          "lessonId": "cpp.variables-scope",
+          "title": "Переменные, блоки и время жизни: журнал состояний"
+        },
+        {
+          "lessonId": "cpp.expressions-operators-blocks",
+          "title": "Выражения и операторы: группировка, значение и понятные шаги"
+        },
+        {
+          "lessonId": "cpp.arithmetic-assignment",
+          "title": "Арифметика и присваивание: частное, остаток и безопасные промежуточные значения"
+        },
+        {
+          "lessonId": "cpp.type-conversions",
+          "title": "Преобразования типов: намерение, потеря информации и проверка диапазона"
+        },
+        {
+          "lessonId": "cpp.relations-logic",
+          "title": "Сравнения и логика: условие как проверяемый договор"
+        },
+        {
+          "lessonId": "cpp.increment-decrement-sizeof-conditional",
+          "title": "++ и --, sizeof и ?: — короткая запись с точным смыслом"
+        },
+        {
+          "lessonId": "cpp.pointers-references-addresses",
+          "title": "Объект, копия, ссылка и указатель: связи без опасной памяти"
+        },
+        {
+          "lessonId": "cpp.standard-io",
+          "title": "Стандартный ввод-вывод: договор данных и проверяемый проект"
+        }
+      ],
+      "requirements": [
+        "Ввод m r h с диапазонами из теории. Ровно три целых поля.",
+        "MiB=1048576 байт, kbit/s=1000 bit/s; h — процент от полезных битов.",
+        "Все промежуточные произведения в long long до первого умножения.",
+        "stdout: seconds minutes remainder и newline; ошибка: invalid и newline.",
+        "Ссылки и указатели не добавляются в формулу без пользы: их навык отдельно доказан практикумом C."
+      ],
+      "milestones": [
+        "Перепишите единицы и независимо вычислите четыре базовых случая.",
+        "Завершите заготовку расчётом и stdout.",
+        "Докажите верхнюю границу num и ненулевой den.",
+        "Выполните 30 контрольных случаев и два собственных.",
+        "Сохраните исходник, протокол и самооценку."
+      ],
+      "walkthrough": [
+        "1 MiB содержит 8388608 бит. При 1000 kbit/s без накладных расходов это 8.388608 секунды, вверх — 9.",
+        "При h=25 число полезных битов умножается на 125/100, получаем 10.48576 секунды, вверх — 11.",
+        "num/den даёт полные секунды, ненулевой остаток добавляет одну. Это избегает потенциальной суммы num+den−1.",
+        "Для максимального объёма, минимальной скорости и 100% накладных расходов ответ 16777216000 секунд: 279620266 минут и 40 секунд."
+      ],
+      "starterCode": "#include <iostream>\n\nint main() {\n    long long mib{0};\n    long long rateKbit{0};\n    long long overheadPercent{0};\n    if (!(std::cin >> mib >> rateKbit >> overheadPercent)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || mib < 0 || mib > 1000000 || rateKbit < 1 || rateKbit > 1000000 || overheadPercent < 0 || overheadPercent > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    // Complete the bounded integer calculation and replace this placeholder.\n    std::cout << \"TODO\\n\";\n    return 0;\n}\n",
+      "starterExpectedStdout": "TODO\n",
+      "referenceCode": "#include <iostream>\n\nint main() {\n    long long mib{0};\n    long long rateKbit{0};\n    long long overheadPercent{0};\n    if (!(std::cin >> mib >> rateKbit >> overheadPercent)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || mib < 0 || mib > 1000000 || rateKbit < 1 || rateKbit > 1000000 || overheadPercent < 0 || overheadPercent > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    constexpr long long bytesPerMiB{1024LL * 1024};\n    constexpr long long bitsPerByte{8};\n    constexpr long long bitsPerKbit{1000};\n    long long numerator = mib * bytesPerMiB * bitsPerByte * (100 + overheadPercent);\n    long long denominator = 100LL * rateKbit * bitsPerKbit;\n    long long seconds = numerator / denominator + (numerator % denominator != 0);\n    std::cout << seconds << ' ' << seconds / 60 << ' ' << seconds % 60 << '\\n';\n    return 0;\n}\n",
+      "cases": [
+        {
+          "stdin": "0 1000 0",
+          "stdout": "0 0 0\n"
+        },
+        {
+          "stdin": "1 1000 0",
+          "stdout": "9 0 9\n"
+        },
+        {
+          "stdin": "1 1000 25",
+          "stdout": "11 0 11\n"
+        },
+        {
+          "stdin": "1000000 1 100",
+          "stdout": "16777216000 279620266 40\n"
+        },
+        {
+          "stdin": "1 1 0",
+          "stdout": "8389 139 49\n"
+        },
+        {
+          "stdin": "1 1000000 0",
+          "stdout": "1 0 1\n"
+        },
+        {
+          "stdin": "2 8192 0",
+          "stdout": "3 0 3\n"
+        },
+        {
+          "stdin": "125 1000 100",
+          "stdout": "2098 34 58\n"
+        },
+        {
+          "stdin": "1000000 1000000 100",
+          "stdout": "16778 279 38\n"
+        },
+        {
+          "stdin": "10 800 25",
+          "stdout": "132 2 12\n"
+        },
+        {
+          "stdin": "1 1000 100",
+          "stdout": "17 0 17\n"
+        },
+        {
+          "stdin": "0 1 100",
+          "stdout": "0 0 0\n"
+        },
+        {
+          "stdin": "1000000 1 0",
+          "stdout": "8388608000 139810133 20\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "abc 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1.5 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 0.5",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "-1 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1000001 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 0 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 -1 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000001 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 -1",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 101",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 0 extra",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 0 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "99999999999999999999999999999 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 25 \n\t",
+          "stdout": "11 0 11\n"
+        }
+      ],
+      "verificationVariants": [],
+      "artifacts": [
+        "main.cpp и текстовый договор единиц.",
+        "Доказательство границ всех промежуточных значений.",
+        "Таблица 30+2 входов, ожиданий и реальных stdout.",
+        "Один дефект с гипотезой, исправлением и повторной проверкой.",
+        "Ограничения модели: постоянная скорость, заданный overhead, без реального измерения сети."
+      ],
+      "rubric": [
+        {
+          "criterion": "Контракт и единицы",
+          "complete": "MiB и kbit/s согласованы, overhead определён.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Корректность расчёта",
+          "complete": "Есть точное округление вверх и согласованный формат минут.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Безопасность диапазонов",
+          "complete": "Границы доказаны, операции после валидации.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Строгий ввод",
+          "complete": "Пустой, повреждённый, лишний и вне диапазона ввод отклоняется.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Проверки и объяснение",
+          "complete": "30+2 результата сохранены, решение объясняется без копирования формулировок.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        }
+      ],
+      "completionRule": "Самопроверка: не менее 8/10, без нуля за корректность, безопасность и проверки. Это ручная рубрика, а не автоматический балл или блокировка следующего урока.",
+      "verification": "manual-output-comparison"
+    },
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\basics\\standard-io.ru.json"
+}

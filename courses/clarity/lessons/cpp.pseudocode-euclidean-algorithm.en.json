@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.pseudocode-euclidean-algorithm",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.algorithms",
+  "course": "C++ programming",
+  "module": "Algorithmic Thinking",
+  "locale": "en",
+  "title": "Euclid's algorithm: remainders, traces and invariants",
+  "goal": "Find a common divisor by repeatedly replacing a pair with a smaller problem.",
+  "prerequisites": [
+    {
+      "text": "You can divide with a remainder and read assignments and a condition. while is introduced here."
+    }
+  ],
+  "sections": [
+    {
+      "id": "model",
+      "title": "From the task to an operation",
+      "paragraphs": [
+        "The greatest common divisor of 48 and 18 is the largest positive number dividing both without a remainder. 48 = 2 × 18 + 12. The common divisors of 48 and 18 are the same as those of 18 and 12: subtracting a multiple preserves them.",
+        "While b is not zero, compute a % b, then set a to the old b and b to the remainder. while means repeat while the condition is true; != means not equal. The temporary variable remainder preserves the remainder before a changes.",
+        "For b > 0, the remainder is nonnegative and smaller than b. Thus the second number decreases to zero; division by zero never runs because the condition is tested before the body. The pair’s greatest common divisor stays the same at every step: this is the concrete invariant. We do not use the pair 0,0 here."
+      ]
+    },
+    {
+      "id": "worked-example",
+      "title": "Find a common divisor by repeatedly replacing a pair with a smaller problem.",
+      "paragraphs": [],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int a = 48;\n    int b = 18;\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n    return 0;\n}\n",
+        "output": "6\n",
+        "stdin": ""
+      },
+      "steps": [],
+      "trace": [
+        [
+          "remainder = 48 % 18",
+          "a: 48; b: 18",
+          "remainder: 12",
+          "48 = 2 × 18 + 12."
+        ],
+        [
+          "a = b; b = remainder",
+          "48; 18",
+          "a: 18; b: 12",
+          "Moved to a pair with the same common divisor."
+        ],
+        [
+          "18 % 12; replacement",
+          "18; 12",
+          "a: 12; b: 6",
+          "Remainder 6; the second number decreased."
+        ],
+        [
+          "12 % 6; replacement",
+          "12; 6",
+          "a: 6; b: 0",
+          "Remainder 0. The next while condition is false."
+        ],
+        [
+          "cout << a",
+          "6; 0",
+          "stdout: 6",
+          "The final nonzero a is the answer."
+        ]
+      ]
+    },
+    {
+      "id": "variation",
+      "title": "Change one condition and check the prediction",
+      "paragraphs": [
+        "Set a=35 and b=15. Write both pair replacements before running.",
+        "35 % 15 = 5, so the next pair is 15,5.",
+        "15 % 5 = 0; the answer is 5."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int a = 35;\n    int b = 15;\n    while (b != 0) {\n        int remainder = a % b;\n        a = b;\n        b = remainder;\n    }\n    std::cout << a << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "5\n"
+      }
+    },
+    {
+      "id": "diagnose",
+      "title": "When the result differs",
+      "paragraphs": [
+        "Setting a=b before computing a%b loses the old a: 18%18 gives 0 instead of 12."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now solve your own task",
+      "paragraphs": [
+        "Find the GCD of 27 and 18; show the pairs and explain why the loop finished.",
+        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What output follows the specified change? Set a=35 and b=15. Write both pair replacements before running.",
+      "options": [
+        "1\n",
+        "5\n"
+      ],
+      "correct": 1,
+      "feedback": "35 % 15 = 5, so the next pair is 15,5. 15 % 5 = 0; the answer is 5."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Find the GCD of 27 and 18; show the pairs and explain why the loop finished.",
+      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. The pairs are (27,18) → (18,9) → (9,0), so the GCD is 9. Assigning a=b first makes 18%18 yield 0 instead of 9 and breaks the first transition."
+    }
+  ],
+  "practice": {
+    "title": "Independent variation",
+    "task": "Find the GCD of 27 and 18; show the pairs and explain why the loop finished.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "",
+    "returnAnchor": "worked-example",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "",
+        "output": "9\n"
+      }
+    ],
+    "criteria": [
+      "Compare the output with the readable reference case below.",
+      "Explain each change using the objects or operations in this topic.",
+      "The pairs are (27,18) → (18,9) → (9,0), so the GCD is 9. Assigning a=b first makes 18%18 yield 0 instead of 9 and breaks the first transition."
+    ],
+    "hint": "35 % 15 = 5, so the next pair is 15,5. 15 % 5 = 0; the answer is 5.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Find the GCD of 27 and 18; show the pairs and explain why the loop finished.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Predict the result before running.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Write your solution in a separate starter; keep your previous work.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Compare actual output with your prediction and explain any difference.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "GCD",
+      "definition": "The greatest positive integer dividing both inputs without a remainder."
+    },
+    {
+      "term": "Remainder",
+      "definition": "For nonnegative a and positive b, a%b is between 0 and b-1."
+    },
+    {
+      "term": "GCD invariant",
+      "definition": "gcd(a,b) = gcd(b,a mod b), provided b>0."
+    },
+    {
+      "term": "Trace",
+      "definition": "A sequence of intermediate states such as a,b and remainder."
+    }
+  ],
+  "sourceRefs": [
+    "CS2023-AL",
+    "ISO-CPP"
+  ],
+  "extras": {
+    "lessonId": "cpp.pseudocode-euclidean-algorithm",
+    "locale": "en",
+    "visualization": null,
+    "sourceRefs": [
+      "CS2023-AL",
+      "ISO-CPP"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\algorithms\\pseudocode-euclidean-algorithm.en.json"
+}

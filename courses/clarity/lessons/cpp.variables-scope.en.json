@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.variables-scope",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "C++ programming",
+  "module": "C++ Foundations",
+  "locale": "en",
+  "title": "Variables, blocks, and lifetime: a state journal",
+  "goal": "Trace variable creation, reassignment and the boundary of a block.",
+  "prerequisites": [
+    {
+      "text": "You can declare an int and compute a product."
+    }
+  ],
+  "sections": [
+    {
+      "id": "model",
+      "title": "From the task to an operation",
+      "paragraphs": [
+        "int total = price*count creates total and computes its initial value once. Later price=80 changes price but does not recalculate total. A separate total=price*count statement is needed.",
+        "Scope is the region of source where a name is available. A local name declared inside inner braces is visible only up to that block’s closing brace. The local int object lives until the end of its block; do not keep a pointer to use afterward. Initialize a number before reading it."
+      ]
+    },
+    {
+      "id": "worked-example",
+      "title": "Trace variable creation, reassignment and the boundary of a block.",
+      "paragraphs": [],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int price = 120;\n    int count = 3;\n    int total = price * count;\n    price = 80;\n    std::cout << total << ' ' << price * count << '\\n';\n    {\n        int local = 5;\n        std::cout << local << '\\n';\n    }\n    return 0;\n}\n",
+        "output": "360 240\n5\n",
+        "stdin": ""
+      },
+      "steps": [],
+      "trace": [
+        [
+          "total = price * count",
+          "120; 3",
+          "total: 360",
+          "This initializes a new object with a number."
+        ],
+        [
+          "price = 80",
+          "price: 120; total: 360",
+          "price: 80; total: 360",
+          "The variables are not linked by a live formula."
+        ],
+        [
+          "cout << total << price*count",
+          "360; 80 × 3",
+          "stdout: 360 240",
+          "One stored old number and one new calculation."
+        ],
+        [
+          "{ local = 5; }",
+          "local absent",
+          "stdout: 5",
+          "Output occurs before local’s scope ends."
+        ]
+      ]
+    },
+    {
+      "id": "variation",
+      "title": "Change one condition and check the prediction",
+      "paragraphs": [
+        "After price=80, add total=price*count before output.",
+        "The new line assigns to the existing total; do not repeat int.",
+        "First 80×3=240 is stored in total; then both values print."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int price = 120;\n    int count = 3;\n    int total = price * count;\n    price = 80;\n    total = price * count;\n    std::cout << total << ' ' << price * count << '\\n';\n    {\n        int local = 5;\n        std::cout << local << '\\n';\n    }\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "240 240\n5\n"
+      }
+    },
+    {
+      "id": "diagnose",
+      "title": "When the result differs",
+      "paragraphs": [
+        "Using local after } is a name-visibility error; do not replace it by reading a new uninitialized number with the same name."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now solve your own task",
+      "paragraphs": [
+        "Create width=4, height=3 and area=width*height. Change width to 5; print the old area, then recalculate and print the new area.",
+        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What output follows the specified change? After price=80, add total=price*count before output.",
+      "options": [
+        "240 240\n5\n",
+        "Compilation fails"
+      ],
+      "correct": 0,
+      "feedback": "The new line assigns to the existing total; do not repeat int. First 80×3=240 is stored in total; then both values print."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Create width=4, height=3 and area=width*height. Change width to 5; print the old area, then recalculate and print the new area.",
+      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. After width=5, the stored area is still 12. Only another area=width*height produces 15. Without recalculation, both lines are 12: a variable does not store an automatically updating formula."
+    }
+  ],
+  "practice": {
+    "title": "Independent variation",
+    "task": "Create width=4, height=3 and area=width*height. Change width to 5; print the old area, then recalculate and print the new area.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "",
+    "returnAnchor": "worked-example",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "",
+        "output": "12\n15\n"
+      }
+    ],
+    "criteria": [
+      "Compare the output with the readable reference case below.",
+      "Explain each change using the objects or operations in this topic.",
+      "After width=5, the stored area is still 12. Only another area=width*height produces 15. Without recalculation, both lines are 12: a variable does not store an automatically updating formula."
+    ],
+    "hint": "The new line assigns to the existing total; do not repeat int. First 80×3=240 is stored in total; then both values print.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Create width=4, height=3 and area=width*height. Change width to 5; print the old area, then recalculate and print the new area.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Predict the result before running.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Write your solution in a separate starter; keep your previous work.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Compare actual output with your prediction and explain any difference.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Variable",
+      "definition": "In these examples a named typed object with state; mutation is allowed unless the object is const."
+    },
+    {
+      "term": "Assignment",
+      "definition": "Replacing the value of an existing object, as in stock = 7;."
+    },
+    {
+      "term": "Name scope",
+      "definition": "The program region in which a name can be found under language rules."
+    },
+    {
+      "term": "Object lifetime",
+      "definition": "The period in which an object exists during execution, rather than a source line or merely name visibility."
+    },
+    {
+      "term": "Shadowing",
+      "definition": "An inner declaration with the same name hides the outer declaration during lookup in that block."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-SCOPE",
+    "CPP20-LIFETIME",
+    "CPP20-INIT-GENERAL",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.variables-scope",
+    "locale": "en",
+    "visualization": null,
+    "sourceRefs": [
+      "CPP20-SCOPE",
+      "CPP20-LIFETIME",
+      "CPP20-INIT-GENERAL",
+      "CPP-GUIDELINES"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\basics\\variables-scope.en.json"
+}

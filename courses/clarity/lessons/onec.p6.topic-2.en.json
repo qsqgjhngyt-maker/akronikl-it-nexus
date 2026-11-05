@@ -1,0 +1,369 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p6.topic-2",
+  "courseId": "onec",
+  "moduleId": "onec.p6",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Registers and accounting models",
+  "locale": "en",
+  "title": "Balances:30 receipt,10 expense and another customer",
+  "goal": "Write two own recorder sets and verify 20, time boundaries and dimension isolation.",
+  "prerequisites": [
+    {
+      "text": "onec.p5; P1–P3; explicit contracts, types, collections and failure handling.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "Dimensions say where; resources say how much",
+      "paragraphs": [
+        "For service obligations, customer is a dimension and minutes a resource. Receipt 30 increases obligation; expense 10 reduces it. Sign follows business meaning, not whether an event is good or bad. Balance 20 derives from movements; manually maintaining it in a card too creates two sources of truth.",
+        "Add balance accumulation register Обязательства with Клиент: CatalogRef.Клиенты dimension and Минуты: Number(15,2) resource, selected among ЗаявкаУслуги movements. Keep Трудозатраты as turnover-kind; do not change an existing populated register’s kind."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Native worked example",
+      "paragraphs": [
+        "Excerpt only; the complete source below belongs to the stated server common module."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Движение.ВидДвижения = ВидДвиженияНакопления.Расход;\nДвижение.Минуты = 10;\nЗаписи.Записать(Истина);",
+        "output": "Three True:20, no earlier rows and no other-customer rows."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Receipt",
+              "Own requestα,30",
+              "Obligation increases."
+            ],
+            [
+              "Expense",
+              "Own requestβ,10",
+              "Obligation decreases."
+            ],
+            [
+              "Balance",
+              "Customer/time",
+              "20."
+            ],
+            [
+              "Controls",
+              "Earlier/other customer",
+              "No rows."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Recorders explain origin",
+      "paragraphs": [
+        "Each movement links to a document, explaining the balance. Movement period and document date can have distinct meanings under configuration rules. A total screenshot without drill-down is insufficient. Preserve recorder identity and compare recorder-filtered sets when reposting.",
+        "Preparation creates an own customer/service and 30/10 documents. The function writes receipt 30 and expense 10 using their recorder filters. A positive expense value with Expense direction reduces balance; do not also negate it without a different explicit contract."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Balance depends on time",
+      "paragraphs": [
+        "After receipt 30 atD1, balance is 30; after expense 10 atD2, it is 20. Specify boundary inclusion and time precision. Period turnover and point-in-time balance are different quantities. Before the first movement, expect the agreed zero rather than a stale report result.",
+        "Expect 20 on Nov 3, no earlier rows on Nov 1 and none for another own customer. These independently test arithmetic, time and dimensions. Do not compare against the whole infobase total. References and recorders trace every movement."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Discriminating semantic control",
+      "paragraphs": [
+        "A compilable wrong value is not a syntax-only test."
+      ],
+      "code": {
+        "language": "text",
+        "source": "In another copy change expense 10 to 11; expected 20 must differ from 19.",
+        "output": "The independent original expectation fails; preserve the original copy."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Mutation",
+              "In another copy change expense 10 to 11; expected 20 must differ from 19.",
+              "Only another own copy."
+            ],
+            [
+              "Check",
+              "Three True:20, no earlier rows and no other-customer rows.",
+              "Observe the failed claim."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "An invariant detects duplicate writes",
+      "paragraphs": [
+        "Opening+receipts−expenses=closing. Verify independently, then repost the receipt. A duplicated 30 must not turn 20 into 50. Add another customer and check dimension isolation. Prohibiting negative balance needs an explicit business rule and reliable concurrent checking inP10.",
+        "Expense 11 is a compilable negative control yielding 19 rather than 20. Write(True) replaces the filtered recorder set; an incorrect/missing filter is dangerous. The code clears no entire register or earlier documents. Record created identities and work only in your copy."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "A helper definition is duplicated inside the startup handler. Keep one module-level helper and only its call inside startup.",
+        "Whole-register totals replace the own-key control. Filter by the actual customer/service/recorder reference for this experiment.",
+        "A runnable result is treated as proof of all accounting/security behavior. Record each checked mechanism and retain untested concurrency/edition limits."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "For a remaining balance use",
+      "options": [
+        "Balances",
+        "Turnovers only",
+        "A customer title"
+      ],
+      "correct": 0,
+      "feedback": "Add balance accumulation register Обязательства with Клиент: CatalogRef.Клиенты dimension and Минуты: Number(15,2) resource, selected among ЗаявкаУслуги movements. Keep Трудозатраты as turnover-kind; do not change an existing populated register’s kind."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Receipt 30 minus expense 10 gives",
+      "options": [
+        "40",
+        "20",
+        "−40"
+      ],
+      "correct": 1,
+      "feedback": "Preparation creates an own customer/service and 30/10 documents. The function writes receipt 30 and expense 10 using their recorder filters. A positive expense value with Expense direction reduces balance; do not also negate it without a different explicit contract."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "A recorder filter bounds",
+      "options": [
+        "The platform",
+        "Colour only",
+        "The replacement scope"
+      ],
+      "correct": 2,
+      "feedback": "Expect 20 on Nov 3, no earlier rows on Nov 1 and none for another own customer. These independently test arithmetic, time and dimensions. Do not compare against the whole infobase total. References and recorders trace every movement."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Check another customer and explain unfiltered-replacement risk.",
+      "feedback": "Other sets retained; no whole-register overwrite."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Balances:30 receipt,10 expense and another customer",
+    "task": "Check another customer and explain unfiltered-replacement risk.",
+    "environment": "Own synthetic infobase and original metadata; no real accounting, mandatory Studio or Sandbox.",
+    "externalRoute": "Installed official 1C Designer → server module → managed application",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытОстатковОбязательств() Экспорт\n    Набор = НовыйНаборРегистров(30,10);\n    Для Индекс = 0 По 1 Цикл\n        Записи = РегистрыНакопления.Обязательства.СоздатьНаборЗаписей(); Записи.Отбор.Регистратор.Установить(?(Индекс = 0,Набор.Первая,Набор.Вторая));\n        Движение = Записи.Добавить(); Движение.Период = Дата(2026,11,2,14,0,0); Движение.Клиент = Набор.Клиент;\n        Движение.ВидДвижения = ?(Индекс = 0,ВидДвиженияНакопления.Приход,ВидДвиженияНакопления.Расход);\n        Движение.Минуты = ?(Индекс = 0,30,10); Записи.Записать(Истина);\n    КонецЦикла;\n    Остаток = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,3),Новый Структура(\"Клиент\",Набор.Клиент));\n    До = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,1),Новый Структура(\"Клиент\",Набор.Клиент));\n    Другой = Справочники.Клиенты.СоздатьЭлемент(); Другой.Наименование = \"Учебный без движений\"; Другой.Записать();\n    ЧужойОстаток = РегистрыНакопления.Обязательства.Остатки(Дата(2026,11,3),Новый Структура(\"Клиент\",Другой.Ссылка));\n    Возврат Новый Структура(\"ОстатокВерный,ДоНет,РазныеКлиенты,Клиент\",Остаток.Количество() = 1 И Остаток[0].Минуты = 20,До.Количество() = 0,ЧужойОстаток.Количество() = 0,Набор.Клиент);\nКонецФункции\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "copy",
+        "title": "Identify the own experiment copy",
+        "where": "Own-copy Designer",
+        "action": "Retain P5 work and its DT. Use a new separately restored copy; preserve older fields/functions and do not reload a full CF over custom work.",
+        "why": "Keep prior work independent.",
+        "expected": "Own copy/path and provenance identified.",
+        "troubleshooting": "Check actual directories rather than list-entry names.",
+        "before": "P5 work, backup and exact own-copy path retained."
+      },
+      {
+        "id": "metadata",
+        "title": "Prepare the stated metadata",
+        "where": "Конфигуратор → дерево конфигурации",
+        "action": "Accumulation registers → Обязательства, Balances; Клиент: CatalogRef.Клиенты; Минуты: Number 15,2. Select it under ЗаявкаУслуги movements. Retain old fields/Трудозатраты.",
+        "why": "The native function needs these actual platform objects.",
+        "expected": "Names/types/recorder connections match.",
+        "troubleshooting": "Inspect existing objects before adding duplicates; retain old UUIDs/fields.",
+        "before": "Own copy/path and provenance identified."
+      },
+      {
+        "id": "source",
+        "title": "Place the complete function",
+        "where": "Конфигуратор → Общие → Общие модули → УчебныеРегистры",
+        "action": "Create a server/server-call common module without Global/Privileged. Append the complete source below outside other procedures. If НовыйНаборРегистров is already present, keep its one matching definition and append only the new experiment function.",
+        "why": "Definitions have explicit server scope.",
+        "expected": "One definition per function; earlier code retained.",
+        "troubleshooting": "Do not nest functions inside startup or duplicate shared preparation.",
+        "before": "Names/types/recorder connections match."
+      },
+      {
+        "id": "call",
+        "title": "Add only the client call",
+        "where": "Модуль приложения → ПриНачалеРаботыСистемы",
+        "action": "Результат = УчебныеРегистры.ОпытОстатковОбязательств();\nСообщить(Результат.ОстатокВерный);\nСообщить(Результат.ДоНет);\nСообщить(Результат.РазныеКлиенты);",
+        "why": "Print every independent claim.",
+        "expected": "Caller is inside the existing handler.",
+        "troubleshooting": "Keep one startup handler and retain its earlier source.",
+        "before": "One definition per function; earlier code retained."
+      },
+      {
+        "id": "run",
+        "title": "Save, update and run once",
+        "where": "Ctrl+S → F7 → Предприятие",
+        "action": "Review changes, apply only to this copy and run once. Record actual booleans and created customer/service/document/account identities.",
+        "why": "Observe real 1C, then reconcile with the prediction.",
+        "expected": "Three True:20, no earlier rows and no other-customer rows.",
+        "troubleshooting": "Retain the actual module/line and failed claim; never change expected values to conceal a defect.",
+        "before": "Caller is inside the existing handler."
+      },
+      {
+        "id": "retain",
+        "title": "Preserve observations and stop startup repetition",
+        "where": "Конфигуратор после закрытия Предприятия",
+        "action": "Remove only this startup call, retaining functions and records. Investigate the negative example only in another own copy and retain both protocols.",
+        "why": "Reopening must not silently recreate datasets.",
+        "expected": "Work retained; no automatic repetition.",
+        "troubleshooting": "Do not clear whole registers or remove prior work.",
+        "before": "Three True:20, no earlier rows and no other-customer rows."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Own copy/path and provenance identified."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "Names/types/recorder connections match."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "One definition per function; earlier code retained."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "Caller is inside the existing handler."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "Three True:20, no earlier rows and no other-customer rows."
+      },
+      {
+        "label": "Observation 6",
+        "input": "",
+        "output": "Work retained; no automatic repetition."
+      }
+    ],
+    "criteria": [
+      "Field roles distinguished.",
+      "Two sources and 20 reread.",
+      "Other sets retained; no whole-register overwrite.",
+      "Actual source, version and per-field observations with own identities.",
+      "Separate compilable negative control and retained original; no server grading/authorship claim.",
+      "In another copy change expense 10 to 11; expected 20 must differ from 19."
+    ],
+    "hint": "Keep one module-level helper and only its call inside startup.",
+    "exercises": [
+      {
+        "level": "Basic",
+        "task": "Identify dimension/resource/direction/recorder.",
+        "criteria": "Field roles distinguished."
+      },
+      {
+        "level": "Applied",
+        "task": "Write 30/10 and verify 20 at the specified time.",
+        "criteria": "Two sources and 20 reread."
+      },
+      {
+        "level": "Advanced",
+        "task": "Check another customer and explain unfiltered-replacement risk.",
+        "criteria": "Other sets retained; no whole-register overwrite."
+      }
+    ],
+    "sourceFile": "code/pedagogy/register-balances-first.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "register",
+    "recorder",
+    "dimension",
+    "resource",
+    "reference",
+    "transaction",
+    "posting",
+    "bsl"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p6-balances.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.full.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "For a remaining balance use",
+        "options": [
+          "Balances",
+          "Turnovers only",
+          "A customer title"
+        ],
+        "correct": 0,
+        "explanation": "Add balance accumulation register Обязательства with Клиент: CatalogRef.Клиенты dimension and Минуты: Number(15,2) resource, selected among ЗаявкаУслуги movements. Keep Трудозатраты as turnover-kind; do not change an existing populated register’s kind."
+      },
+      {
+        "question": "Receipt 30 minus expense 10 gives",
+        "options": [
+          "40",
+          "20",
+          "−40"
+        ],
+        "correct": 1,
+        "explanation": "Preparation creates an own customer/service and 30/10 documents. The function writes receipt 30 and expense 10 using their recorder filters. A positive expense value with Expense direction reduces balance; do not also negate it without a different explicit contract."
+      },
+      {
+        "question": "A recorder filter bounds",
+        "options": [
+          "The platform",
+          "Colour only",
+          "The replacement scope"
+        ],
+        "correct": 2,
+        "explanation": "Expect 20 on Nov 3, no earlier rows on Nov 1 and none for another own customer. These independently test arithmetic, time and dimensions. Do not compare against the whole infobase total. References and recorders trace every movement."
+      }
+    ]
+  }
+}

@@ -1,0 +1,398 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.oop-principles",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.oop",
+  "course": "C++ programming",
+  "module": "Object-Oriented Programming",
+  "locale": "en",
+  "title": "Objects, abstraction and responsibility boundaries",
+  "goal": "Build a domain model and explain why its operations preserve an invariant.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–4: input, functions, sequences, ownership, testing and multifile builds."
+    },
+    {
+      "text": "Direct prerequisites: cpp.property-testing-benchmarks, cpp.structures"
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "From a record to a domain object",
+      "paragraphs": [
+        "In Module 3 a structure grouped related data, such as a sensor reading and its unit. In the language an object has storage, a type and a lifetime; an int variable is an object too. Design uses a more specific idea: a representation of a domain concept together with the operations allowed on it.",
+        "Not every record needs a hierarchy. If every combination of fields is meaningful, a plain struct with public data and free functions can be clearer. When values must satisfy a relationship, such as a counter remaining between zero and one hundred, the type should control changes. Begin with that requirement rather than with class syntax."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "Reading a first class",
+      "paragraphs": [
+        "In Counter the name after class declares a new type. The value_ field belongs separately to each instance, and =0 supplies its initial value. Members before public: are private in a class. Members after public: form operations callers can use. The semicolon following the closing brace completes the class declaration.",
+        "Counter a,b creates two independent objects. Calling a.add(7) selects a, so value_ inside the method denotes a's field. The value() const method observes state; const prevents ordinary modification of fields through this object. Constructors receive their own lesson. For now, a field initializer and the automatically generated constructor establish the starting state."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Worked model",
+      "paragraphs": [
+        "Build a domain model and explain why its operations preserve an invariant."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nstruct Reading { int value; };\nbool acceptable(const Reading& r){ return r.value>=0&&r.value<=100; }\nint main(){ Reading a{42},b{101}; std::cout<<acceptable(a)<<' '<<acceptable(b)<<'\\n'; }\n",
+        "output": "1 0\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Create records with an accepted and a rejected value.",
+        "acceptable only observes each record.",
+        "Compare bool results one and zero."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Invariant and operation contract",
+      "paragraphs": [
+        "An invariant is a statement that holds after construction and after every public operation finishes. Counter promises a value between zero and one hundred. The add contract accepts only a nonnegative increment that fits the remaining capacity. Success returns true; rejection returns false and preserves the previous value. These are observable promises that tests can check.",
+        "The n>100-value_ check happens before addition. Testing value_+n>100 is less safe because a sufficiently large n could overflow int before comparison. Here the remaining capacity stays within zero to one hundred, and the first condition rejects negative increments. The pre-call invariant and these checks justify the post-call invariant, beyond a single successful demonstration."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "Abstraction hides decisions",
+      "paragraphs": [
+        "A caller needs add and value, rather than the spelling or representation of a private field. The representation can later change while the contract remains stable. Abstraction selects the observable properties needed for a task. This reduces the number of details a reader must hold in mind when checking a program.",
+        "Hiding a field alone does not create a useful interface. Unrestricted getValue/setValue operations can still violate the meaning of a type. Names such as reserve, ship or accept express intent and conditions better than a universal setter. Conversely, a simple immutable record should not acquire methods merely to look object oriented."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "Responsibility and dependencies",
+      "paragraphs": [
+        "The counter is responsible for a valid value, not for reading cin, selecting a UI language or saving a project. Separation lets you test an object without a browser or a file. The application parses input first, invokes domain operations second and formats output last. Each part has a distinct reason to change.",
+        "Do not move every function into a giant Application class. Examine responsibilities by asking which requirement would force this code to change. A new input format should not require changing counter arithmetic. Collaboration between small types is often more useful than a deep hierarchy; inheritance comes after ownership and contracts in this module."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Contract boundary check",
+      "paragraphs": [
+        "Build a domain model and explain why its operations preserve an invariant."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nclass Counter {\n int value_=0;\npublic:\n bool add(int n){if(n<0||n>100-value_)return false;value_+=n;return true;}\n int value() const {return value_;}\n};\nint main(){Counter a,b; a.add(7); bool ok=a.add(94);std::cout<<a.value()<<' '<<b.value()<<' '<<ok<<'\\n';}\n",
+        "output": "7 0 0\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Each Counter starts with its own zero.",
+        "Seven succeeds; ninety-four is rejected before mutation.",
+        "a=7, b=0 and false produce 7 0 0."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Testing two objects",
+      "paragraphs": [
+        "In the worked example a accepts seven, then rejects ninety-four, while b remains zero. The output is 7 0 0: the first state, the second state and the last success flag. That final zero does not indicate a damaged object. Rejection is an expected operation result, distinct from a malformed input stream.",
+        "An independent test should modify only a and observe b. It catches an accidentally shared static field. Also test repeated rejection, a zero increment and filling exactly to capacity. Compare state before and after a rejected call. Checking only the returned bool misses an implementation that changes a field before returning false."
+      ]
+    },
+    {
+      "id": "concept-7",
+      "title": "Laboratory protocol",
+      "paragraphs": [
+        "The laboratory reads an operation count from zero to twenty and exactly that many integer increments. It validates all input syntax before producing a domain result. An increment such as minus one or one hundred and one is a domain rejection and increases rejected. An unknown token or a missing number makes the entire input invalid.",
+        "For three increments 30 80 20, the state trace is zero, thirty, thirty, fifty, with one rejection. Write that trace before running the program. Test the maximum int separately: the contract rejects it without overflowing. The supplied cases are checkable examples; add an independent case and an invariant explanation rather than relying solely on matching stdout."
+      ]
+    },
+    {
+      "id": "concept-8",
+      "title": "Choosing a model",
+      "paragraphs": [
+        "Compare two solutions to the same task: an open structure with a validation function, and a class with private state. Identify places where the first permits a forgotten check and describe the extra code required by the second. Choose object oriented design for manageable dependencies and invariants, rather than assuming every free function needs a class.",
+        "During review explain who owns state, who can change it and what a test observes. These runs do not establish safety for arbitrary programs. They support a contract for a bounded model and specific checked cases. The next lesson develops interfaces with related fields, const correctness and operations that preserve several conditions together."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What happens when add(101) is called on zero?",
+      "options": [
+        "Rejection preserves zero.",
+        "The value becomes 101.",
+        "An exception is mandatory."
+      ],
+      "correct": 0,
+      "feedback": "The capacity check runs before assigning the field, so 101 cannot fit in the remaining 100. Returning false reports rejection; it neither stores the rejected value nor requires an exception."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Why compare n with 100-value_?",
+      "options": [
+        "It is always faster than subtraction.",
+        "To check capacity before a potentially unsafe addition.",
+        "Class syntax requires this check."
+      ],
+      "correct": 1,
+      "feedback": "The expression value_+n could overflow before comparison. Subtraction is safe because the invariant bounds value_ to 0…100, while the earlier n<0 check rejects negative increments."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Does every record need a class?",
+      "options": [
+        "Yes; every function requires inheritance.",
+        "Only if the record stores int.",
+        "No; the choice depends on invariants and responsibility."
+      ],
+      "correct": 2,
+      "feedback": "A class is justified when its operations must jointly protect a constraint or responsibility. For a plain record whose states are all valid, a public struct and free functions may be clearer."
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "What does an independent second instance check?",
+      "options": [
+        "The absence of accidentally shared state.",
+        "Processor speed.",
+        "Header order."
+      ],
+      "correct": 0,
+      "feedback": "Changing only a should leave b unchanged, exposing an accidental static field in place of instance state. This tests independence, not performance or include order."
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "What does private provide by itself?",
+      "options": [
+        "Encryption of the field.",
+        "A compile-time restriction on ordinary access.",
+        "Automatic range validation."
+      ],
+      "correct": 1,
+      "feedback": "private restricts ordinary client access to a member at compile time. It does not encrypt bytes or validate ranges; the public operations must implement those checks."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Test independence of two Counters.",
+      "feedback": "Next: Classes, interfaces and state"
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: Objects, abstraction and responsibility boundaries",
+    "task": "Read n=0…20 and exactly n integer increments. Counter starts at zero and accepts a nonnegative increment only if it fits the remaining capacity of 100; rejection preserves state. Print the value and rejection count separated by a space. Invalid syntax, count or trailing tokens: invalid.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\nclass Counter { int value_=0; public: int value()const{return value_;} /* TODO: checked add */ };\nint main(){std::cout<<\"pending\\n\";}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "0",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "0",
+        "output": "0 0\n"
+      },
+      {
+        "label": "Case 2",
+        "input": "3 30 80 20",
+        "output": "50 1\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "3 -1 100 1",
+        "output": "100 2\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "2 0 100",
+        "output": "100 0\n"
+      },
+      {
+        "label": "Case 5",
+        "input": "1 2147483647",
+        "output": "0 1\n"
+      },
+      {
+        "label": "Case 6",
+        "input": "20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ",
+        "output": "0 0\n"
+      },
+      {
+        "label": "Case 7",
+        "input": "-1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 8",
+        "input": "21",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 9",
+        "input": "2 1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 10",
+        "input": "1 x",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 11",
+        "input": "0 tail",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 12",
+        "input": "",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "Identify the value, add, value() and initial zero.",
+      "States are 0,30,30,50 with one rejection.",
+      "Explain remaining-capacity bounds and the risk of value+n.",
+      "Changing one leaves the other unchanged.",
+      "Include source, actual results, an independent case and limits of the conclusion."
+    ],
+    "hint": "An invariant is a statement that holds after construction and after every public operation finishes. Counter promises a value between zero and one hundred. The add contract accepts only a nonnegative increment that fits the remaining capacity. Success returns true; rejection returns false and preserves the previous value. These are observable promises that tests can check.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Restate the contract and distinguish malformed input from domain rejection.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Separate Counter fields from operations.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Trace 30,80,20 without running.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Open Task and Code Studio: the task stays alongside the editor on desktop or in a phone tab. Save your own code before replacing an example.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Complete the starter; pending marks unfinished work rather than a correct result.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Run every reference case and record actual stdout and exit status.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Compare an open record with a class for this task.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Save source, a verification table and an invariant explanation; add one independent case.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Object",
+      "definition": "Storage with a type and lifetime; it need not be an instance of a user-defined class."
+    },
+    {
+      "term": "Abstraction",
+      "definition": "Selected observable properties that hide decisions a client does not need."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A condition established at construction and preserved by public operations."
+    },
+    {
+      "term": "Contract",
+      "definition": "Conditions governing valid calls, results, effects and rejection."
+    },
+    {
+      "term": "State",
+      "definition": "Values that determine an object's subsequent observable behaviour."
+    },
+    {
+      "term": "Member function",
+      "definition": "A function member invoked on a selected object."
+    },
+    {
+      "term": "Responsibility",
+      "definition": "A coherent task assigned to a type and a reason for changing its code."
+    },
+    {
+      "term": "Instance",
+      "definition": "A particular object of a type with its own state."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-CLASS"
+  ],
+  "extras": {
+    "lessonId": "cpp.oop-principles",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Objects, abstraction and responsibility boundaries",
+      "description": "A stepwise textual model; actual execution happens in Code Studio.",
+      "steps": [
+        {
+          "title": "From a record to a domain object",
+          "description": "In Module 3 a structure grouped related data, such as a sensor reading and its unit. In the language an object has storage, a type and a lifetime; an int variable is an object too. Design uses a more specific idea: a representation of a domain concept together with the operations allowed on it."
+        },
+        {
+          "title": "Reading a first class",
+          "description": "In Counter the name after class declares a new type. The value_ field belongs separately to each instance, and =0 supplies its initial value. Members before public: are private in a class. Members after public: form operations callers can use. The semicolon following the closing brace completes the class declaration."
+        },
+        {
+          "title": "Invariant and operation contract",
+          "description": "An invariant is a statement that holds after construction and after every public operation finishes. Counter promises a value between zero and one hundred. The add contract accepts only a nonnegative increment that fits the remaining capacity. Success returns true; rejection returns false and preserves the previous value. These are observable promises that tests can check."
+        },
+        {
+          "title": "Responsibility and dependencies",
+          "description": "The counter is responsible for a valid value, not for reading cin, selecting a UI language or saving a project. Separation lets you test an object without a browser or a file. The application parses input first, invokes domain operations second and formats output last. Each part has a distinct reason to change."
+        },
+        {
+          "title": "Laboratory protocol",
+          "description": "The laboratory reads an operation count from zero to twenty and exactly that many integer increments. It validates all input syntax before producing a domain result. An increment such as minus one or one hundred and one is a domain rejection and increases rejected. An unknown token or a missing number makes the entire input invalid."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-CLASS"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\oop\\oop-principles.en.json"
+}

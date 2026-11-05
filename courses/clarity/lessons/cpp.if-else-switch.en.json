@@ -1,0 +1,354 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.if-else-switch",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.structured-programming",
+  "course": "C++ programming",
+  "module": "Structured Programming",
+  "locale": "en",
+  "title": "Branching: decisions, ranges, and switch",
+  "goal": "Build a complete input classification and show that every valid case receives exactly one answer.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+    },
+    {
+      "text": "Follow the prerequisite links: cpp.standard-io, cpp.relations-logic. New constructs are introduced before the assignment."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "A decision starts with a contract",
+      "paragraphs": [
+        "A condition selects a path through one program. First list valid inputs, the result for each class, and the rejection policy. A score from 0 to 100 has an invalid class outside the range and separate intervals inside it.",
+        "Check extraction from cin before comparing the value. Successfully reading a number does not make it a valid score. Boundary values 0, 59, 60, 84, 85, 100 and their neighbours turn prose requirements into a verifiable table."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "if, else, and one selected path",
+      "paragraphs": [
+        "if evaluates a condition, contextually converts the result to bool, and executes its body when true. else executes only when false. Braces group statements and expose the scope of local variables; use them even for short branches.",
+        "Two independent if statements can both execute. An if/else if chain selects the first true branch. For descending thresholds test >=85 before >=60: the earlier failure already establishes the next interval’s upper bound."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Classifying a sign",
+      "paragraphs": [
+        "Separate branches cover negative, zero, and positive inputs."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main() {\n    int x{};\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) { std::cout << \"negative\\n\"; }\n    else if (x == 0) { std::cout << \"zero\\n\"; }\n    else { std::cout << \"positive\\n\"; }\n}\n",
+        "output": "zero\n",
+        "stdin": "0"
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Coverage and disjointness",
+      "paragraphs": [
+        "Draw a number line and mark whether each boundary is included. x>=60 && x<85 denotes a half-open interval. In C++, 60<=x<85 first produces a bool and then compares 0 or 1 with 85; it does not express a mathematical comparison chain.",
+        "Guard checks help prevent invalid operations: reject a zero divisor before dividing. Short-circuit && and || were introduced in Module 2; here they support a safety argument rather than hiding several actions inside a condition."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "switch for discrete selection",
+      "paragraphs": [
+        "switch matches an integer or enumeration against constant case labels. It suits command codes but does not replace arbitrary ranges or string comparisons. default handles the remaining values and is especially useful for untrusted input.",
+        "A case label does not stop execution. break exits the switch; return exits the function. Without either, control continues into the next case. Sharing a body between labels is valid; an intentional transition between bodies needs explanation and [[fallthrough]]."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Menu codes",
+      "paragraphs": [
+        "break preserves one result per code."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main() {\n    int code{};\n    if (!(std::cin >> code)) { std::cout << \"invalid\\n\"; return 0; }\n    switch (code) {\n        case 1: std::cout << \"open\\n\"; break;\n        case 2: std::cout << \"save\\n\"; break;\n        default: std::cout << \"unknown\\n\"; break;\n    }\n}\n",
+        "output": "open\n",
+        "stdin": "1"
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "Nesting and clarity",
+      "paragraphs": [
+        "An else binds to the nearest unmatched if. Braces remove ambiguity for the reader. An early invalid return reduces nesting in the main logic: after that guard, the range is known to be valid.",
+        "Do not replace a long classification with nested ?: merely to shorten it. The conditional operator suits two simple values; several rejection reasons are clearer as explicit checks. A comment should explain a domain threshold rather than restating >=."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Checking a decision and the next step",
+      "paragraphs": [
+        "Choose an input that reaches each branch, then test both sides of every threshold and failed extraction. A middle-of-range example cannot detect > substituted for >=; a boundary table can.",
+        "Keep a table of input, expected result, and actual result with a short coverage argument. A loop will later repeat the decision for a sequence, multiplying any classification error. Establish one correct step before arranging repetition."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What distinguishes two if statements from if/else if?",
+      "options": [
+        "There is no difference",
+        "Two if statements can execute both bodies",
+        "else if is always evaluated"
+      ],
+      "correct": 1,
+      "feedback": "A chain selects its first true branch."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Does x>60 include 60?",
+      "options": [
+        "No",
+        "Only inside switch",
+        "Yes"
+      ],
+      "correct": 0,
+      "feedback": "A strict comparison excludes the boundary."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Why is 0<=x<=100 not a range check?",
+      "options": [
+        "Replace every <= with ==",
+        "C++ cannot compare integers",
+        "The first comparison gives a bool to the second"
+      ],
+      "correct": 2,
+      "feedback": "Write 0<=x && x<=100."
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "What does break end inside switch?",
+      "options": [
+        "The entire program",
+        "The nearest switch",
+        "Always main"
+      ],
+      "correct": 1,
+      "feedback": "return exits a function; break has a different scope."
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "What is needed to accept this lab?",
+      "options": [
+        "Source, actual results, original tests, and a contract explanation",
+        "Only a completed flag",
+        "Only a copied reference"
+      ],
+      "correct": 0,
+      "feedback": "A progress flag is not evidence of independent mastery."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "A threshold belongs to the contract rather than being an arbitrary constant.",
+      "feedback": "Next: The for loop: invariants, boundaries, and cost. Preserve the lab and its verification table."
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: Branching: decisions, ranges, and switch",
+    "task": "Classify an integer score: invalid outside 0…100, retry below 60, pass from 60 to 84, distinction from 85.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "0",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "0",
+        "output": "retry\n"
+      },
+      {
+        "label": "Case 2",
+        "input": "59",
+        "output": "retry\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "60",
+        "output": "pass\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "84",
+        "output": "pass\n"
+      },
+      {
+        "label": "Case 5",
+        "input": "85",
+        "output": "distinction\n"
+      },
+      {
+        "label": "Case 6",
+        "input": "100",
+        "output": "distinction\n"
+      },
+      {
+        "label": "Case 7",
+        "input": "-1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 8",
+        "input": "101",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 9",
+        "input": "",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 10",
+        "input": "85 x",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "A threshold belongs to the contract rather than being an arbitrary constant.",
+      "At 85 check >= versus >. In a switch inspect each break.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "hint": "A threshold belongs to the contract rather than being an arbitrary constant.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Restate the input, output, and rejection contract in your own words.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Draw the state and state the invariant: A threshold belongs to the contract rather than being an arbitrary constant.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Start from the scaffold, implement the valid path, then add boundary checks.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Add two original cases including one rejection; explain the result without consulting the reference.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Preserve source, a result table, and a short cost-and-limit analysis.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Coverage",
+      "definition": "every input has defined behaviour."
+    },
+    {
+      "term": "Disjointness",
+      "definition": "a valid input belongs to exactly one class."
+    },
+    {
+      "term": "Guard",
+      "definition": "an early rejection before an operation with a stricter precondition."
+    },
+    {
+      "term": "Branch",
+      "definition": "an execution path selected by a condition."
+    },
+    {
+      "term": "case",
+      "definition": "a constant selection label inside switch."
+    },
+    {
+      "term": "Fallthrough",
+      "definition": "continuing into the next case body without exiting."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-SELECTION",
+    "CPP20-LOGIC"
+  ],
+  "extras": {
+    "lessonId": "cpp.if-else-switch",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Stepwise map: Branching: decisions, ranges, and switch",
+      "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+      "steps": [
+        {
+          "title": "A decision starts with a contract",
+          "description": "A condition selects a path through one program. First list valid inputs, the result for each class, and the rejection policy. A score from 0 to 100 has an invalid class outside the range and separate intervals inside it."
+        },
+        {
+          "title": "if, else, and one selected path",
+          "description": "if evaluates a condition, contextually converts the result to bool, and executes its body when true. else executes only when false. Braces group statements and expose the scope of local variables; use them even for short branches."
+        },
+        {
+          "title": "Coverage and disjointness",
+          "description": "Draw a number line and mark whether each boundary is included. x>=60 && x<85 denotes a half-open interval. In C++, 60<=x<85 first produces a bool and then compares 0 or 1 with 85; it does not express a mathematical comparison chain."
+        },
+        {
+          "title": "switch for discrete selection",
+          "description": "switch matches an integer or enumeration against constant case labels. It suits command codes but does not replace arbitrary ranges or string comparisons. default handles the remaining values and is especially useful for untrusted input."
+        },
+        {
+          "title": "Nesting and clarity",
+          "description": "An else binds to the nearest unmatched if. Braces remove ambiguity for the reader. An early invalid return reduces nesting in the main logic: after that guard, the range is known to be valid."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-SELECTION",
+      "CPP20-LOGIC"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\structured\\if-else-switch.en.json"
+}

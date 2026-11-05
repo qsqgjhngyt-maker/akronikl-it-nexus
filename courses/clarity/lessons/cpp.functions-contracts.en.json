@@ -1,0 +1,343 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.functions-contracts",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.structured-programming",
+  "course": "C++ programming",
+  "module": "Structured Programming",
+  "locale": "en",
+  "title": "Functions: parameters, results, and contracts",
+  "goal": "Separate validation, computation, and presentation so a small function can be checked without a console.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+    },
+    {
+      "text": "Follow the prerequisite links: cpp.while-do-while. New constructs are introduced before the assignment."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "Calls and definitions",
+      "paragraphs": [
+        "In int twice(int value), twice names the function, the first int is the return type, and value is a local parameter. The body runs when called, not when the compiler encounters its definition. return 2*value finishes this invocation and supplies its result to the caller.",
+        "Define a teaching function before main so its declaration is visible at the call site. int result=twice(4) supplies the argument 4 and stores the result 8. Calling it does not print anything by itself; output is a separate operation."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "Values, references, and const",
+      "paragraphs": [
+        "An int value parameter receives a separate value: changing it does not change the caller’s int. int& binds to the original object and permits mutation. const int& prevents mutation through that reference but neither copies the object nor makes it permanently const.",
+        "Small integers are usually passed by value. The int& result parameter in checkedArea lets the function store the validated area in the caller’s object. A reference must name a live object; a reference to a local variable cannot be used after that variable’s lifetime ends."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Copy and mutation",
+      "paragraphs": [
+        "A copied parameter and a reference parameter have different mutation effects."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint copied(int value) {\n    ++value;\n    return value;\n}\n\nvoid changed(int& value) {\n    ++value;\n}\n\nint main() {\n    int original = 4;\n    int result = copied(original);\n    std::cout << original << ' ' << result << '\\n';\n    changed(original);\n    std::cout << original << '\\n';\n}\n",
+        "output": "4 5\n5\n",
+        "stdin": ""
+      },
+      "steps": [
+        "original starts at 4. Calling copied(original) creates a separate parameter value=4; result initialization is not complete yet.",
+        "++value changes the parameter from 4 to 5. original is still 4 because the parameter is a copy.",
+        "return value yields 5. The call ends and result is initialized to 5. The first output line is 4 5.",
+        "changed(original) binds its int& parameter to original. There is no separate copied integer here.",
+        "++value now changes original from 4 to 5. result stays 5. The second output line is 5.",
+        "For your own prediction, start at original=10: expect 10 11, then 11. Explain each state before running."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Preconditions and postconditions",
+      "paragraphs": [
+        "The twice contract bounds its input so 2*value fits the type. That is straightforward for -1000 through 1000, but not for arbitrary int. A precondition is the caller’s obligation; a postcondition is the guaranteed result property when that obligation holds.",
+        "Do not treat malformed external input as a violation that can be ignored. At the boundary, main checks extraction and ranges before an internal function receives values. For an expected rejection, a bool result with an explicitly documented output parameter is useful."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "Pure computation and side effects",
+      "paragraphs": [
+        "A calculation function should not secretly read cin or change a global accumulator. The same arguments yield the same result without changing the environment. A unit test can then pass arguments directly and compare the result without replacing the console.",
+        "An output reference makes mutation visible in the signature but needs an exact rule: leave it unchanged on false. Calculate into a temporary and assign only on success. This is a simple form of operation atomicity."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Rejection without mutation",
+      "paragraphs": [
+        "A negative width must not mutate a previously established result."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\nint main() {\n    int result{17};\n    bool ok = checkedArea(-1, 2, result);\n    std::cout << ok << ' ' << result << '\\n';\n    ok = checkedArea(3, 4, result);\n    std::cout << ok << ' ' << result << '\\n';\n}\n",
+        "output": "0 17\n1 12\n",
+        "stdin": ""
+      },
+      "steps": [
+        "result starts at 17. checkedArea(-1,2,result) checks width first: -1 is outside 0..1000.",
+        "return false ends this call before assigning result. ok is false and result remains 17; output is 0 17.",
+        "checkedArea(3,4,result) passes all bounds. result becomes 12 and the call returns true; output is 1 12.",
+        "A CLI line invalid alone cannot show that result stayed 17. This direct call observes both the returned bool and the output parameter."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "Decomposition without unnecessary coupling",
+      "paragraphs": [
+        "Split the task into validation, calculation, and presentation. Each function should answer one question and have a meaningful name. Avoid ten unrelated parameters when one value suffices; a later struct will group related data.",
+        "Local variables in separate calls are independent. Returning a result by value is safe; returning a local object’s address is not. Recursion, authored templates, and overloading are unnecessary here and are not hidden lab requirements."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Testing a function separately from input",
+      "paragraphs": [
+        "Build an argument table: lower boundary, a normal value, upper boundary, and nearby rejections. Check that read-only operations leave the original object unchanged and that a false result preserves the output parameter.",
+        "Then add integration cases for cin: empty input, a wrong type, and an extra token. A successful unit test does not establish parser correctness. Next, pass a whole sequence to a function using the standard span view."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What happens when an int is passed by value?",
+      "options": [
+        "A reference to the original int is created",
+        "The parameter holds a separate value",
+        "The original int is deleted"
+      ],
+      "correct": 1,
+      "feedback": "Mutating the parameter does not mutate the original int."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What does checkedArea rejection guarantee?",
+      "options": [
+        "The output result is unchanged",
+        "The object is destroyed",
+        "result becomes zero"
+      ],
+      "correct": 0,
+      "feedback": "This is an explicit function contract."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "How can a parameter read a large string without copying?",
+      "options": [
+        "Destroy its owner before calling",
+        "int*",
+        "const std::string&"
+      ],
+      "correct": 2,
+      "feedback": "The owner is alive during the call and mutation through the parameter is forbidden."
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "What does return value do?",
+      "options": [
+        "Necessarily prints",
+        "Ends the current call with a result",
+        "Ends all loops in all functions"
+      ],
+      "correct": 1,
+      "feedback": "Output and returning a result are separate operations."
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "What is needed to accept this lab?",
+      "options": [
+        "Source, actual results, original tests, and a contract explanation",
+        "Only a completed flag",
+        "Only a copied reference"
+      ],
+      "correct": 0,
+      "feedback": "A progress flag is not evidence of independent mastery."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "A signature communicates what a function reads, returns, and changes.",
+      "feedback": "Next: array, vector, and span: ownership and views. Preserve the lab and its verification table."
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: Functions: parameters, results, and contracts",
+    "task": "Implement bool checkedArea(int w,int h,int& result): dimensions are 0…1000 and rejection leaves result unchanged. main reads exactly two dimensions and prints the area or invalid.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "3 4",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "3 4",
+        "output": "12\n"
+      },
+      {
+        "label": "Case 2",
+        "input": "0 1000",
+        "output": "0\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "1000 1000",
+        "output": "1000000\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "-1 2",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 5",
+        "input": "1001 1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 6",
+        "input": "3",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 7",
+        "input": "3 4 x",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "A direct rejection test observes false and unchanged result=17; a valid 3×4 call observes true and 12.",
+      "Do not assign result before every check succeeds. Do not return a reference to a local variable.",
+      "Save source, actual output, exit status and an explanation of the validation order."
+    ],
+    "hint": "Check every width/height bound first. On any rejection return false before assigning result. Only the success path computes width*height.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Restate the input, output, and rejection contract in your own words.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Record result=17 before a rejected call. Afterward observe false and exactly the same 17.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Start from the scaffold, implement the valid path, then add boundary checks.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Add two original cases including one rejection; explain the result without consulting the reference.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Save your source, the observed state table and supported input bounds.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Contract",
+      "definition": "caller obligations and operation guarantees."
+    },
+    {
+      "term": "Side effect",
+      "definition": "an observable change beyond the return value."
+    },
+    {
+      "term": "Argument",
+      "definition": "an expression supplied in a function call."
+    },
+    {
+      "term": "Parameter",
+      "definition": "a local input name in a function declaration."
+    },
+    {
+      "term": "Precondition",
+      "definition": "an obligation before performing an operation."
+    },
+    {
+      "term": "Postcondition",
+      "definition": "a guarantee after an operation whose preconditions hold."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-FUNCTIONS",
+    "CPP20-REFERENCES"
+  ],
+  "extras": {
+    "lessonId": "cpp.functions-contracts",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Stepwise map: Functions: parameters, results, and contracts",
+      "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+      "steps": [
+        {
+          "title": "Calls and definitions",
+          "description": "In int twice(int value), twice names the function, the first int is the return type, and value is a local parameter. The body runs when called, not when the compiler encounters its definition. return 2*value finishes this invocation and supplies its result to the caller."
+        },
+        {
+          "title": "Values, references, and const",
+          "description": "An int value parameter receives a separate value: changing it does not change the caller’s int. int& binds to the original object and permits mutation. const int& prevents mutation through that reference but neither copies the object nor makes it permanently const."
+        },
+        {
+          "title": "Preconditions and postconditions",
+          "description": "The twice contract bounds its input so 2*value fits the type. That is straightforward for -1000 through 1000, but not for arbitrary int. A precondition is the caller’s obligation; a postcondition is the guaranteed result property when that obligation holds."
+        },
+        {
+          "title": "Pure computation and side effects",
+          "description": "A calculation function should not secretly read cin or change a global accumulator. The same arguments yield the same result without changing the environment. A unit test can then pass arguments directly and compare the result without replacing the console."
+        },
+        {
+          "title": "Decomposition without unnecessary coupling",
+          "description": "Split the task into validation, calculation, and presentation. Each function should answer one question and have a meaningful name. Avoid ten unrelated parameters when one value suffices; a later struct will group related data."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-FUNCTIONS",
+      "CPP20-REFERENCES"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\structured\\functions-contracts.en.json"
+}

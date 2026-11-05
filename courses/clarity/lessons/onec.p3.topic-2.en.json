@@ -1,0 +1,350 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p3.topic-2",
+  "courseId": "onec",
+  "moduleId": "onec.p3",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Modules, functions and collections",
+  "locale": "en",
+  "title": "Functions and parameters: return a cost while preserving the original minutes",
+  "goal": "Extract a cost calculation into a function with explicit inputs, a result and rejection of invalid values.",
+  "prerequisites": [
+    {
+      "text": "The preceding language lesson; saving, updating and launching your own infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "Give a reusable calculation a name",
+      "paragraphs": [
+        "The same cost formula must serve different requests. A function is a named part of a program that accepts inputs and returns a value to the calling expression. Стоимость(30, 1200) passes 30 minutes and an hourly rate of 1200. The function does not need to know which screen supplied them.",
+        "A procedure performs an action; it does not return an expression value as this function does. Сообщить displays information to a person. Displaying 600 alone does not give the caller a number it can add to another cost. Here the function returns a number, the handler assigns it to Результат, and only then displays it."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Trace the main example",
+      "paragraphs": [
+        "The function returns a cost; the handler separately displays it and the unchanged original duration."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Функция Стоимость(Знач Минуты, Знач ТарифЗаЧас)\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(ТарифЗаЧас) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Минуты и тариф должны быть числами\";\n    КонецЕсли;\n    Если Минуты < 0 Или ТарифЗаЧас < 0 Тогда\n        ВызватьИсключение \"Минуты и тариф не могут быть отрицательными\";\n    КонецЕсли;\n    Возврат Окр(Минуты * ТарифЗаЧас / 60, 2);\nКонецФункции\n\nПроцедура ПриНачалеРаботыСистемы()\n    Минуты = 30;\n    Результат = Стоимость(Минуты, 1200);\n    Сообщить(Результат);\n    Сообщить(Минуты);\nКонецПроцедуры",
+        "output": "Two messages: 600 and 30."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Call",
+              "Minutes=30; hourly rate=1200",
+              "Two numeric parameters."
+            ],
+            [
+              "Check",
+              "Types and ranges are valid",
+              "Calculation is allowed."
+            ],
+            [
+              "Return",
+              "30 × 1200 / 60",
+              "Результат=600."
+            ],
+            [
+              "Back to caller",
+              "Сообщить(Минуты)",
+              "The original variable remains 30."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Arguments outside, parameters inside",
+      "paragraphs": [
+        "Минуты and ТарифЗаЧас in the declaration are parameters. The caller’s variable and the literal 1200 are arguments for this call. Position determines their correspondence. Two numeric arguments can have the right type yet the wrong meaning. Minutes must be divided by 60 when the rate is hourly.",
+        "Знач on these numeric parameters keeps parameter assignments from modifying the caller’s variable by reference. It is not a promise of a deep copy of every mutable collection. Mutable data needs an explicit contract describing allowed changes and copying; the collections lesson develops that distinction."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "State the contract before the formula",
+      "paragraphs": [
+        "This function accepts two nonnegative numbers, returns a cost rounded to two decimal places, and neither writes documents nor changes the caller’s duration. Type checks precede arithmetic; range checks precede calculation. Zero minutes is valid and costs zero in this particular exercise.",
+        "A negative duration raises an exception instead of silently becoming a free service. Returning zero for invalid input would hide an input error in a legitimate total. Callers must know both the valid result and the rejected inputs. A consistent result type on valid calls makes later calculations and tests easier."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "A changed argument and an explicit rejection",
+      "paragraphs": [
+        "Run the invalid call separately and inspect its error instead of expecting a legitimate monetary result."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Стоимость(45, 1200);\n// Separate experiment: Стоимость(-1, 1200);",
+        "output": "45 minutes costs 900; −1 is rejected before calculation."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "45 minutes",
+              "45 × 1200 / 60",
+              "900."
+            ],
+            [
+              "−1 minute",
+              "Range check",
+              "Exception; no valid cost."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Declarations and execution are different",
+      "paragraphs": [
+        "The complete example declares a top-level function and a ПриНачалеРаботыСистемы event procedure. The platform invokes the procedure at startup; that procedure invokes the function. Declaring the function does not execute it. Do not place its declaration inside the previous handler. Preserve the old module and replace this training module’s complete text.",
+        "Trace startup → handler → function → return to handler → two messages. For 30 and 1200, the cost is 600 and the original duration remains 30. Try 45 next. In a separately preserved experiment try −1 and inspect the rejection; keep a known working version."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "Displaying a message does not replace returning the number. Return the number, assign it in the caller and only then display it.",
+        "Swapping minutes and the hourly rate changes argument meaning. Label units and argument order before calling.",
+        "Знач does not promise a deep copy of mutable objects. Define copying and allowed changes separately for a mutable collection; this example uses numbers."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What does Результат receive from Стоимость(30, 1200)?",
+      "options": [
+        "The displayed text",
+        "The number 600",
+        "The original document"
+      ],
+      "correct": 1,
+      "feedback": "Возврат supplies the value to the calling expression."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What happens for −1 minute?",
+      "options": [
+        "A free service",
+        "A changed infobase",
+        "Explicit rejection before calculation"
+      ],
+      "correct": 2,
+      "feedback": "The range check precedes arithmetic."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Where is the function declared?",
+      "options": [
+        "At module level outside the procedure",
+        "Inside Сообщить",
+        "Inside the handler"
+      ],
+      "correct": 0,
+      "feedback": "The example does not nest function declarations."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Build a table for 0, 1, 60, −1 minutes and a text input; execute valid rows and separate rejection experiments.",
+      "feedback": "0, 20, 1200; negative and text inputs are rejected; the working source is preserved."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Functions and parameters: return a cost while preserving the original minutes",
+    "task": "Build a table for 0, 1, 60, −1 minutes and a text input; execute valid rows and separate rejection experiments.",
+    "environment": "Official locally installed training platform; a separate personal file infobase, no Studio required.",
+    "externalRoute": "Designer → managed application module of your training copy",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "Функция Стоимость(Знач Минуты, Знач ТарифЗаЧас)\n    Если ТипЗнч(Минуты) <> Тип(\"Число\") Или ТипЗнч(ТарифЗаЧас) <> Тип(\"Число\") Тогда\n        ВызватьИсключение \"Минуты и тариф должны быть числами\";\n    КонецЕсли;\n    Если Минуты < 0 Или ТарифЗаЧас < 0 Тогда\n        ВызватьИсключение \"Минуты и тариф не могут быть отрицательными\";\n    КонецЕсли;\n    Возврат Окр(Минуты * ТарифЗаЧас / 60, 2);\nКонецФункции\n\nПроцедура ПриНачалеРаботыСистемы()\n    Минуты = 30;\n    Результат = Стоимость(Минуты, 1200);\n    Сообщить(Результат);\n    Сообщить(Минуты);\nКонецПроцедуры\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "predict",
+        "title": "Predict the result",
+        "where": "Nexus → this lesson’s worked example",
+        "action": "Label parameters and arguments; calculate 600 manually and explain the second message, 30.",
+        "why": "An expectation makes a wrong result detectable.",
+        "expected": "Two messages: 600 and 30.",
+        "troubleshooting": "Use the trace to separate each instruction; do not copy a displayed total without explaining it.",
+        "before": "Your own training infobase opens and its startup handler already works. Preserve the preceding source before replacing this exercise body."
+      },
+      {
+        "id": "prepare-source",
+        "title": "Preserve your preceding work",
+        "where": "Your infobase → Designer → configuration root → managed application module",
+        "action": "Close only your Enterprise session. Open your training infobase in Designer and open its managed application module from the configuration root. Preserve the entire preceding text separately: this example includes its declarations and one startup handler.",
+        "why": "The next exercise must not destroy the preceding version.",
+        "expected": "The intended module is open and the earlier source remains available.",
+        "troubleshooting": "If you cannot identify the infobase, return to the startup list and check its entry and directory.",
+        "before": "Two messages: 600 and 30."
+      },
+      {
+        "id": "enter-code",
+        "title": "Enter this example",
+        "where": "Designer → the module text window",
+        "action": "Replace the text of this training module with the complete main example. The function is outside the procedure. Do not nest the complete example inside the previous handler or keep two handlers with the same name.",
+        "why": "The function returns a cost; the handler separately displays it and the unchanged original duration.",
+        "expected": "The exact exercise source is entered in the intended context.",
+        "troubleshooting": "Check ordinary quotes, semicolons and matching block endings. A syntax rejection is not execution.",
+        "before": "The intended module is open and the earlier source remains available."
+      },
+      {
+        "id": "run-check",
+        "title": "Save, update and execute",
+        "where": "Designer → Ctrl+S → Configuration / Update database configuration (F7) → Debug / Start (F5)",
+        "action": "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+        "why": "Only the installed platform executes this BSL.",
+        "expected": "Two messages: 600 and 30.",
+        "troubleshooting": "For old output close your client, verify the infobase and update again. For a different value find the first trace step that differs.",
+        "before": "The exact exercise source is entered in the intended context."
+      },
+      {
+        "id": "vary-record",
+        "title": "Change one condition and retain evidence",
+        "where": "The same module, then Enterprise mode and Nexus notes",
+        "action": "Change 30 to 45 in the handler, save, update and run. In a separate copy try −1, inspect the rejection and restore the working source.",
+        "why": "A changed input tests understanding beyond copying the example.",
+        "expected": "45 produces 900 and 45. −1 produces no accepted cost.",
+        "troubleshooting": "Do not replace the exception with zero. If the full example was nested inside the previous procedure, restore the module and place declarations at the top level.",
+        "before": "Two messages: 600 and 30."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Two messages: 600 and 30."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "The intended module is open and the earlier source remains available."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "The exact exercise source is entered in the intended context."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "Two messages: 600 and 30."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "45 produces 900 and 45. −1 produces no accepted cost."
+      }
+    ],
+    "criteria": [
+      "Return value, displayed message and original variable are distinguished.",
+      "600 + 900 = 1500; original durations remain unchanged.",
+      "0, 20, 1200; negative and text inputs are rejected; the working source is preserved.",
+      "Source version, predicted and actual outputs.",
+      "One changed input and a trace explaining its result; no automatic grading claim.",
+      "Do not replace the exception with zero. If the full example was nested inside the previous procedure, restore the module and place declarations at the top level."
+    ],
+    "hint": "Return the number, assign it in the caller and only then display it.",
+    "exercises": [
+      {
+        "level": "Basic",
+        "task": "Label parameters and arguments; calculate 600 manually and explain the second message, 30.",
+        "criteria": "Return value, displayed message and original variable are distinguished."
+      },
+      {
+        "level": "Applied",
+        "task": "Use the same function for 30 and 45 minutes at 1200 per hour and add the returned values.",
+        "criteria": "600 + 900 = 1500; original durations remain unchanged."
+      },
+      {
+        "level": "Advanced",
+        "task": "Build a table for 0, 1, 60, −1 minutes and a text input; execute valid rows and separate rejection experiments.",
+        "criteria": "0, 20, 1200; negative and text inputs are rejected; the working source is preserved."
+      }
+    ],
+    "sourceFile": "code/pedagogy/functions-parameters-first.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "bsl",
+    "module",
+    "procedure",
+    "variable"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p3-parameters.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.full.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "What does Результат receive from Стоимость(30, 1200)?",
+        "options": [
+          "The displayed text",
+          "The number 600",
+          "The original document"
+        ],
+        "correct": 1,
+        "explanation": "Возврат supplies the value to the calling expression."
+      },
+      {
+        "question": "What happens for −1 minute?",
+        "options": [
+          "A free service",
+          "A changed infobase",
+          "Explicit rejection before calculation"
+        ],
+        "correct": 2,
+        "explanation": "The range check precedes arithmetic."
+      },
+      {
+        "question": "Where is the function declared?",
+        "options": [
+          "At module level outside the procedure",
+          "Inside Сообщить",
+          "Inside the handler"
+        ],
+        "correct": 0,
+        "explanation": "The example does not nest function declarations."
+      }
+    ]
+  }
+}

@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.relations-logic",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "C++ programming",
+  "module": "C++ Foundations",
+  "locale": "en",
+  "title": "Comparisons and logic: conditions as testable contracts",
+  "goal": "Check a range with two conditions and distinguish “and” from “or”.",
+  "prerequisites": [
+    {
+      "text": "You know comparisons, bool and a range boundary."
+    }
+  ],
+  "sections": [
+    {
+      "id": "model",
+      "title": "From the task to an operation",
+      "paragraphs": [
+        "A valid age in 0..120 means age>=0 AND age<=120. && is true only when both parts are true. || is true when at least one part is true. ! reverses truth and falsehood. Comparisons produce bool results.",
+        "&& and || evaluate their second part only when needed: a false first part settles && as false; a true first part settles || as true. This short-circuiting can protect division by checking its divisor first. This example only uses safe comparisons."
+      ]
+    },
+    {
+      "id": "worked-example",
+      "title": "Check a range with two conditions and distinguish “and” from “or”.",
+      "paragraphs": [],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int age = 25;\n    bool valid = age >= 0 && age <= 120;\n    bool outside = age < 0 || age > 120;\n    std::cout << valid << ' ' << outside << '\\n';\n    return 0;\n}\n",
+        "output": "1 0\n",
+        "stdin": ""
+      },
+      "steps": [],
+      "trace": [
+        [
+          "age >= 0",
+          "25 >= 0",
+          "true",
+          "The lower bound is satisfied."
+        ],
+        [
+          "age <= 120",
+          "25 <= 120",
+          "true",
+          "Both && parts are true: valid=true."
+        ],
+        [
+          "age < 0 || age > 120",
+          "false; false",
+          "outside: false",
+          "Neither bound is violated; bool prints as 1/0."
+        ]
+      ]
+    },
+    {
+      "id": "variation",
+      "title": "Change one condition and check the prediction",
+      "paragraphs": [
+        "Check age=120, then age=121.",
+        "Equality at 120 is valid because of <=.",
+        "121 exceeds the upper bound but satisfies the lower one."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int age = 121;\n    bool valid = age >= 0 && age <= 120;\n    bool outside = age < 0 || age > 120;\n    std::cout << valid << ' ' << outside << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "1 0\n"
+      }
+    },
+    {
+      "id": "diagnose",
+      "title": "When the result differs",
+      "paragraphs": [
+        "age>=0 || age<=120 accepts 250 because the first part is true. Range membership needs &&."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now solve your own task",
+      "paragraphs": [
+        "Check score in 0..100; print valid for -1,0,100,101 and explain both bounds.",
+        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What output follows the specified change? Check age=120, then age=121.",
+      "options": [
+        "1 0\n",
+        "0 1\n"
+      ],
+      "correct": 0,
+      "feedback": "Equality at 120 is valid because of <=. 121 exceeds the upper bound but satisfies the lower one."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Check score in 0..100; print valid for -1,0,100,101 and explain both bounds.",
+      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. For score=-1,0,100,101, valid must be 0,1,1,0. score>=0 || score<=100 incorrectly accepts 101; membership in the range requires &&."
+    }
+  ],
+  "practice": {
+    "title": "Independent variation",
+    "task": "Check score in 0..100; print valid for -1,0,100,101 and explain both bounds.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "",
+    "returnAnchor": "worked-example",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "",
+        "output": "1\n"
+      }
+    ],
+    "criteria": [
+      "Compare the output with the readable reference case below.",
+      "Explain each change using the objects or operations in this topic.",
+      "For score=-1,0,100,101, valid must be 0,1,1,0. score>=0 || score<=100 incorrectly accepts 101; membership in the range requires &&."
+    ],
+    "hint": "Equality at 120 is valid because of <=. 121 exceeds the upper bound but satisfies the lower one.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Check score in 0..100; print valid for -1,0,100,101 and explain both bounds.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Predict the result before running.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Write your solution in a separate starter; keep your previous work.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Compare actual output with your prediction and explain any difference.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Predicate",
+      "definition": "Here, a bool expression describing a property to check."
+    },
+    {
+      "term": "Logical AND",
+      "definition": "Built-in && is true when both operands are true; the right operand is skipped when the left is false."
+    },
+    {
+      "term": "Logical OR",
+      "definition": "Built-in || is true when at least one operand is true; the right operand is skipped when the left is true."
+    },
+    {
+      "term": "Negation",
+      "definition": "! reverses true and false after converting the operand to bool."
+    },
+    {
+      "term": "Short-circuit evaluation",
+      "definition": "Skipping the right operand when the left already determines a built-in logical expression’s result."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-RELATIONAL",
+    "CPP20-EQUALITY",
+    "CPP20-LOGIC",
+    "CPP20-BOOL",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.relations-logic",
+    "locale": "en",
+    "visualization": null,
+    "sourceRefs": [
+      "CPP20-RELATIONAL",
+      "CPP20-EQUALITY",
+      "CPP20-LOGIC",
+      "CPP20-BOOL",
+      "CPP-GUIDELINES"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\basics\\relations-logic.en.json"
+}

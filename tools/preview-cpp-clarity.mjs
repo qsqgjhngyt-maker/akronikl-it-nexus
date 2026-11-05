@@ -20,6 +20,7 @@ const {clarityIds}=await import(pathToFileURL(path.join(frontend,prefix.slice(1)
 const files=[...clarityIds.flatMap(id=>['ru','en'].map(locale=>({id,locale}))),{file:'core/cpp-clarity-presentation.js'}];
 const pilot=args.includes('--pilot'),pilotHtml=pilot?pilotPreviewHtml(prefix,scope.sourceCommit):null;
 if(pilot)files.push(...['core/cpp-clarity-r3-renderer.mjs','core/cpp-clarity-r3-session.mjs','core/cpp-clarity-r3-state.mjs','sandbox/code-studio.js','courses/cpp-clarity-r3/courses.json',...['cpp.programming-process','onec.p2.topic-1','onec.p7.topic-2'].flatMap(id=>['ru','en'].map(l=>'courses/cpp-clarity-r3/lessons/'+id+'.'+l+'.json'))].map(file=>({file})));
+if(pilot)files.push(...manifest.files.filter(r=>r.file.startsWith(prefix.slice(1)+'/courses/clarity/')||r.file.startsWith(prefix.slice(1)+'/core/clarity-course-')).map(r=>({file:r.file.slice(prefix.length)})));
 const bindings=pilot?[{file:'pilot-preview',sha256:createHash('sha256').update(pilotHtml).digest('hex')}]:[];
 const {goldLessonPath}=await import(pathToFileURL(path.join(frontend,prefix.slice(1),'core/academy-gold-catalog.js')));
 for(const x of files){const file=x.file||goldLessonPath(x.id,x.locale),bytes=await readFile(path.join(frontend,prefix.slice(1),file));bindings.push({file,sha256:createHash('sha256').update(bytes).digest('hex')})}

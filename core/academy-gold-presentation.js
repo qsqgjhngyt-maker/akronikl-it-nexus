@@ -290,3 +290,9 @@ export function academyGoldMarkup(gold){
  const title=gold.locale==='en'?'Extended material and earlier laboratory':'Углубление и прежняя лабораторная';
  return html.slice(0,start)+clarityMarkup(gold)+'<details class="gold-depth" data-gold-depth><summary>'+title+'</summary>'+html.slice(start,-6).replace('id="cppLab"','id="cppEarlierLab"')+'</details></div>';
 }
+
+// Точечное использование прежних инструментов в новом уроке, без прежней полной страницы.
+export function clarityLessonToolsMarkup(gold){const lang=gold.locale,t=(ru,en)=>label(lang,ru,en);return {
+ explanation:`<div class="academy-gold" data-gold-lesson="${E(gold.lessonId)}" lang="${E(lang)}">${gold.visualization?goldVisualizationMarkup(gold):''}<details class="clarification"><summary>${E(t('Справочные источники','Reference sources'))}</summary><ul>${(gold.sourceRefs||[]).map(id=>sourceLink(id,lang)).join('')}</ul></details></div>`,
+ practice:`<div class="academy-gold" data-gold-lesson="${E(gold.lessonId)}" lang="${E(lang)}">${goldDeliveryMarkup(gold.laboratory?.delivery,lang)}${modulePracticumMarkup(gold.blockPracticum,lang)}${modulePracticumMarkup(gold.modulePracticum,lang)}</div>`
+};}

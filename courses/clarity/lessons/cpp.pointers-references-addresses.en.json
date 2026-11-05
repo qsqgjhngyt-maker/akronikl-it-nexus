@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.pointers-references-addresses",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "C++ programming",
+  "module": "C++ Foundations",
+  "locale": "en",
+  "title": "Objects, copies, references, and pointers: links without unsafe memory",
+  "goal": "Distinguish a copied number, another name for an object and a pointer to an object.",
+  "prerequisites": [
+    {
+      "text": "You can create an int, assign values, read statements in order and print numbers."
+    }
+  ],
+  "sections": [
+    {
+      "id": "model",
+      "title": "From the task to an operation",
+      "paragraphs": [
+        "int copy = original creates a separate object. int& ref = original creates a reference: ref is another name for original, not a separate copy of its number. copy = 9 does not change the original; ref = 6 makes the original 6.",
+        "int* ptr = &original creates a pointer. & obtains the address of an existing object; *ptr accesses the object at that address. Relationship diagram: ref → original ← ptr; copy is separate. These are named relationships, not invented numeric addresses.",
+        "*ptr = 8 changes the number in original. ptr = &other changes the pointer itself: *ptr now denotes other, while ref still denotes original. Dereference only a pointer to a live suitable object; do not dereference nullptr or a pointer to a destroyed object. const restricts modification through the corresponding name; a reference does not generally extend an object’s lifetime."
+      ]
+    },
+    {
+      "id": "worked-example",
+      "title": "Distinguish a copied number, another name for an object and a pointer to an object.",
+      "paragraphs": [],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int original = 4;\n    int copy = original;\n    int& ref = original;\n    int* ptr = &original;\n    copy = 9;\n    ref = 6;\n    *ptr = 8;\n    int other = 20;\n    ptr = &other;\n    *ptr = 21;\n    std::cout << original << ' ' << copy << ' ' << ref << ' ' << other << '\\n';\n    return 0;\n}\n",
+        "output": "8 9 8 21\n",
+        "stdin": ""
+      },
+      "steps": [],
+      "trace": [
+        [
+          "copy = original",
+          "original: 4",
+          "original: 4; copy: 4",
+          "Two objects: later changes are independent."
+        ],
+        [
+          "ref; ptr",
+          "original: 4",
+          "ref → original ← ptr",
+          "Two ways to access the same object."
+        ],
+        [
+          "copy = 9",
+          "4; 4",
+          "original: 4; copy: 9",
+          "Changed only the copy."
+        ],
+        [
+          "ref = 6",
+          "original: 4",
+          "original: 6; ref: 6",
+          "Both names denote the same object."
+        ],
+        [
+          "*ptr = 8",
+          "original: 6",
+          "original: 8; ref: 8",
+          "ptr still points to original."
+        ],
+        [
+          "ptr = &other; *ptr = 21",
+          "original: 8; other: 20",
+          "original: 8; other: 21",
+          "Retargeted the pointer; the reference was not retargeted."
+        ]
+      ]
+    },
+    {
+      "id": "variation",
+      "title": "Change one condition and check the prediction",
+      "paragraphs": [
+        "Replace ref = 6 with ref = 10 and remove only *ptr = 8. Predict the four numbers.",
+        "copy remains separate; after retargeting, ptr changes other.",
+        "Before output, original and ref are 10, copy is 9, other is 21."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int original = 4;\n    int copy = original;\n    int& ref = original;\n    int* ptr = &original;\n    copy = 9;\n    ref = 10;\n    int other = 20;\n    ptr = &other;\n    *ptr = 21;\n    std::cout << original << ' ' << copy << ' ' << ref << ' ' << other << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "10 9 10 21\n"
+      }
+    },
+    {
+      "id": "diagnose",
+      "title": "When the result differs",
+      "paragraphs": [
+        "The claim “ref = other retargets the reference” is false: it assigns the current number from other to original. Do not test this using destroyed objects."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now solve your own task",
+      "paragraphs": [
+        "Start with original=10. Create a copy, a reference and a pointer. Set the copy to 11, set the original through the reference to 12, then through the pointer to 13. Print original/copy/ref.",
+        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What output follows the specified change? Replace ref = 6 with ref = 10 and remove only *ptr = 8. Predict the four numbers.",
+      "options": [
+        "10 9 10 21\n",
+        "Compilation fails"
+      ],
+      "correct": 0,
+      "feedback": "copy remains separate; after retargeting, ptr changes other. Before output, original and ref are 10, copy is 9, other is 21."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Start with original=10. Create a copy, a reference and a pointer. Set the copy to 11, set the original through the reference to 12, then through the pointer to 13. Print original/copy/ref.",
+      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. The copy stays 11, while original and ref are 13. Declaring int ref=original instead of int& ref=original makes the last value 12 rather than 13: ref becomes a separate object."
+    }
+  ],
+  "practice": {
+    "title": "Independent variation",
+    "task": "Start with original=10. Create a copy, a reference and a pointer. Set the copy to 11, set the original through the reference to 12, then through the pointer to 13. Print original/copy/ref.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "",
+    "returnAnchor": "worked-example",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "",
+        "output": "13 11 13\n"
+      }
+    ],
+    "criteria": [
+      "Compare the output with the readable reference case below.",
+      "Explain each change using the objects or operations in this topic.",
+      "The copy stays 11, while original and ref are 13. Declaring int ref=original instead of int& ref=original makes the last value 12 rather than 13: ref becomes a separate object."
+    ],
+    "hint": "copy remains separate; after retargeting, ptr changes other. Before output, original and ref are 10, copy is 9, other is 21.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Start with original=10. Create a copy, a reference and a pointer. Set the copy to 11, set the original through the reference to 12, then through the pointer to 13. Print original/copy/ref.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Predict the result before running.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Write your solution in a separate starter; keep your previous work.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Compare actual output with your prediction and explain any difference.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Reference T&",
+      "definition": "In our declarations, an alias of an existing object; it needs initialization and cannot be reseated."
+    },
+    {
+      "term": "Pointer T*",
+      "definition": "A separate object holding a pointer value, such as the address of a suitable live T or nullptr."
+    },
+    {
+      "term": "Address-of &",
+      "definition": "In &value, produces a pointer to the value object."
+    },
+    {
+      "term": "Indirection *",
+      "definition": "In *pointer, refers to the pointed-to object; access needs a valid pointer and valid lifetime."
+    },
+    {
+      "term": "nullptr",
+      "definition": "A null pointer value; it must not be dereferenced."
+    },
+    {
+      "term": "Dangling pointer",
+      "definition": "A pointer whose former object has ended its lifetime; being non-null does not prove safe access."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-REFERENCES",
+    "CPP20-POINTERS",
+    "CPP20-UNARY",
+    "CPP20-LIFETIME",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.pointers-references-addresses",
+    "locale": "en",
+    "visualization": null,
+    "sourceRefs": [
+      "CPP20-REFERENCES",
+      "CPP20-POINTERS",
+      "CPP20-UNARY",
+      "CPP20-LIFETIME",
+      "CPP-GUIDELINES"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\basics\\pointers-references-addresses.en.json"
+}

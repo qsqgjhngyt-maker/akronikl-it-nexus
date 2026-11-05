@@ -37,12 +37,11 @@ try{
  const lessons=(await clarityLessons()).sort((a,b)=>b.locale.localeCompare(a.locale)),observations=[],screens=[];
  for(const g of lessons){
   if(g.lessonId==='cpp.programming-process'){await page.evaluate(({id,locale})=>{location.hash='#course=cpp&lesson='+id+'&locale='+locale+'&stage=practice'}, {id:g.lessonId,locale:g.locale});await page.locator('[data-r3-topic][lang="'+g.locale+'"]').waitFor();await page.locator('#editor').waitFor();assert.equal(await page.locator('#editor:enabled,#runCode:enabled').count(),0);const expected=await page.locator('[data-expected-output]').allTextContents();assert.ok(expected.includes('350\n')&&expected.includes('140\n'));assert.match(await page.locator('.practice-card').first().textContent(),/75/);observations.push({lessonId:g.lessonId,locale:g.locale,status:'PASS',pilot:true,url:page.url()});continue;}
-  await goldLessonRoute(page,g.lessonId,g.locale);
-  await page.locator('[data-clarity-lesson="'+g.lessonId+'"][lang="'+g.locale+'"]').waitFor();
-  const block=page.locator('[data-clarity-lab-expected]');await block.scrollIntoViewIfNeeded();assert.equal(await block.locator('pre code').textContent(),g.clarity.laboratory.cases[0].stdout);
-  assert.equal(await page.locator('[data-clarity-open]:enabled').count(),0,'Public preview does not bypass local-copy access');
-  if(g.lessonId==='cpp.programming-process'){const criteria=await page.locator('[data-clarity-laboratory] ol').first().textContent();for(const n of ['75','350','140'])assert.ok(criteria.includes(n));for(const n of ['123','360'])assert.ok(!criteria.includes(n))}
-  observations.push({lessonId:g.lessonId,locale:g.locale,stdout:await block.locator('pre code').textContent(),url:page.url(),status:'PASS'});
+  await page.evaluate(({id,locale})=>location.hash='#'+new URLSearchParams({course:'cpp',lesson:id,locale,stage:'practice'}),{id:g.lessonId,locale:g.locale});
+  await page.locator('[data-r3-topic="'+g.lessonId+'"][lang="'+g.locale+'"]').waitFor();
+  const block=page.locator('[data-r3-panel="practice"] [data-expected-output]').first();await block.scrollIntoViewIfNeeded();assert.equal(await block.textContent(),g.clarity.laboratory.cases[0].stdout);
+  assert.equal(await page.locator('#editor:enabled,#runCode:enabled,[data-answer]:enabled').count(),0,'Public preview keeps account/vault access boundaries');
+  observations.push({lessonId:g.lessonId,locale:g.locale,stdout:await block.textContent(),url:page.url(),status:'PASS'});
   if(g.locale==='ru'&&['cpp.programming-process','cpp.first-cpp-program','cpp.pointers-references-addresses'].includes(g.lessonId)){
    const file=g.lessonId.slice(4)+'-preview-browser.png';await page.screenshot({path:path.join(out,file)});screens.push(file);
   }

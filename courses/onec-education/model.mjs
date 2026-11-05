@@ -28,7 +28,7 @@ export function createCandidateStore(storage,courseId,curriculum=null){
  }
  return{read,
   async saveClarityDraft(id,draft,{expectedStateRevision,isCurrent=()=>true}={}){
-   if(courseId!=='onec'||!['onec.p2.topic-1','onec.p7.topic-2'].includes(id))throw Error('R3_TOPIC_REJECTED');
+   const {CLARITY_COURSES}=await import('../../core/clarity-course-registry.mjs');if(CLARITY_COURSES[id]?.courseId!==courseId)throw Error('R3_TOPIC_REJECTED');
    lessonId(id);if(!isCurrent())throw Error('ONEC_VIEW_CHANGED');storage.getItem(key);
    const [{prepareClarityDraft,validateWorkReferences},{ownedOnec}]=await Promise.all([import('../../core/cpp-clarity-r3-state.mjs'),import('./studio-store.mjs')]);
    if(!globalThis.navigator?.locks?.request)throw Error('COURSE_WRITER_UNAVAILABLE');

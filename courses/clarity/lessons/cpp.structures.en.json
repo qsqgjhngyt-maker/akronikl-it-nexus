@@ -1,0 +1,339 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.structures",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.structured-programming",
+  "course": "C++ programming",
+  "module": "Structured Programming",
+  "locale": "en",
+  "title": "Structures: records, invariants, and updates",
+  "goal": "Group related fields and mutate a record only after validating the whole operation.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+    },
+    {
+      "text": "Follow the prerequisite links: cpp.char-arrays-strings, cpp.functions-contracts. New constructs are introduced before the assignment."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "Declaring a record",
+      "paragraphs": [
+        "struct Item { int id{}; int stock{}; }; defines a type with two fields that are public by default. The closing brace needs a semicolon. Item item{7,12} creates an object; item.stock accesses that object’s field.",
+        "{} initializers establish defined initial values. Fields may have different types, such as string name and int stock. A structure is neither a database table nor automatic validation: domain rules determine valid values."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "A record copy and a reference",
+      "paragraphs": [
+        "Item backup=item copies field values. Changing backup.stock does not change item.stock. const Item& reads the original without a copy; Item& permits mutation. Choose according to intent and document which fields may change.",
+        "Inserting a copy into vector<Item> stores a separate record. A reference to an element can be invalidated by vector reallocation, just like a span. Do not retain it across push_back without establishing address stability."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "An independent record copy",
+      "paragraphs": [
+        "Changing a copy leaves the original unchanged."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item original{7, 10};\n    Item backup = original;\n    bool ok = issue(backup, 3);\n    std::cout << ok << ' ' << original.stock << ' ' << backup.stock << '\\n';\n}\n",
+        "output": "1 10 7\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "A domain invariant",
+      "paragraphs": [
+        "For stock, require id>0 and 0<=stock<=1000. issue(amount) is allowed only when 0<=amount<=stock. Success reduces stock and leaves id unchanged; rejection leaves the whole record unchanged.",
+        "A public struct does not prevent assigning negative stock. At this stage, functions and tests enforce discipline. Module 5 will use encapsulation to restrict access; do not claim the structure already protects its own data."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "Validate, then commit",
+      "paragraphs": [
+        "Check the existing record and argument first. Compute a temporary new value, establish its bounds, and then assign. A single mutation point makes the absence of partial updates easier to establish.",
+        "When several fields change, prepare a candidate copy and replace the original only after every check passes. This is an in-memory transaction pattern, not a promise of filesystem or Cloud Sync transactions."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Rejection preserves fields",
+      "paragraphs": [
+        "An impossible issue changes neither id nor stock."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item value{7, 2};\n    bool ok = issue(value, 3);\n    std::cout << ok << ' ' << value.id << ' ' << value.stock << '\\n';\n}\n",
+        "output": "0 7 2\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "A collection of records",
+      "paragraphs": [
+        "A vector<Item> stores catalogue records in one logical collection. Searching by id is O(n); uniqueness requires checking before insertion. An id field neither creates an index nor automatically guarantees uniqueness.",
+        "Print named fields rather than relying on raw memory layout. sizeof(Item) may include padding. Dumping an arbitrary structure’s bytes is not a portable storage format; a textual format follows in the files lesson."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Before-and-after tests",
+      "paragraphs": [
+        "Test issuing zero, issuing all stock, excessive and negative requests, and an invalid original record. Compare every field before and after rejection. Separately verify independence of the original and its backup copy.",
+        "Evidence consists of source, state tables, and an invariant explanation. Next, an enumeration distinguishes status from arbitrary integers, while variant represents commands of different shapes without reading inactive storage."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Does a public struct prevent assigning negative stock?",
+      "options": [
+        "Only inside vector",
+        "Yes, automatically",
+        "No; checked operations and later encapsulation are needed"
+      ],
+      "correct": 2,
+      "feedback": "Grouping fields is not the same as protecting their values."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What does issue change on rejection?",
+      "options": [
+        "Only id",
+        "Nothing in the record",
+        "It necessarily clears stock"
+      ],
+      "correct": 1,
+      "feedback": "Rejection without mutation is part of the contract."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Are fields independent after Item b=a?",
+      "options": [
+        "Yes, for this value-only record",
+        "a is destroyed",
+        "No, b is always a reference"
+      ],
+      "correct": 0,
+      "feedback": "Copying these int fields does not create a reference."
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "Does an id field guarantee uniqueness?",
+      "options": [
+        "Only with sizeof",
+        "Yes",
+        "No; insertion must check it"
+      ],
+      "correct": 2,
+      "feedback": "A structure groups data but does not create an index."
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "What is needed to accept this lab?",
+      "options": [
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation",
+        "Only a completed flag"
+      ],
+      "correct": 1,
+      "feedback": "A progress flag is not evidence of independent mastery."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "A record groups data; functions and invariants define valid changes.",
+      "feedback": "Next: Enumerations, aliases, and variant data. Preserve the lab and its verification table."
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: Structures: records, invariants, and updates",
+    "task": "Read id, stock, and amount: id 1…1000, stock 0…1000, amount 0…1000. issue(Item&,amount) rejects excess without mutation. Print ok/rejected and the resulting stock; malformed input is invalid.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "7 10 3",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "7 10 3",
+        "output": "ok 7\n"
+      },
+      {
+        "label": "Case 2",
+        "input": "7 0 0",
+        "output": "ok 0\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "7 2 3",
+        "output": "rejected 2\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "7 1000 1000",
+        "output": "ok 0\n"
+      },
+      {
+        "label": "Case 5",
+        "input": "0 2 1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 6",
+        "input": "7 2 -1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 7",
+        "input": "7 2 1 extra",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "A record groups data; functions and invariants define valid changes.",
+      "Rejection must preserve the whole record, not merely stock. Do not serialize sizeof(struct) bytes as a portable format.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "hint": "A record groups data; functions and invariants define valid changes.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Restate the input, output, and rejection contract in your own words.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Draw the state and state the invariant: A record groups data; functions and invariants define valid changes.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Start from the scaffold, implement the valid path, then add boundary checks.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Add two original cases including one rejection; explain the result without consulting the reference.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Preserve source, a result table, and a short cost-and-limit analysis.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Field",
+      "definition": "a named component of a structure object."
+    },
+    {
+      "term": "Record invariant",
+      "definition": "a condition true of every valid state."
+    },
+    {
+      "term": "Aggregate",
+      "definition": "a simple composite object supporting memberwise initialization."
+    },
+    {
+      "term": "Record copy",
+      "definition": "a separate object initialized from field values."
+    },
+    {
+      "term": "Failure atomicity",
+      "definition": "a rejected operation preserves the previous state."
+    },
+    {
+      "term": "Padding",
+      "definition": "layout bytes that are not data fields."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-CLASS",
+    "CPP20-LIFETIME"
+  ],
+  "extras": {
+    "lessonId": "cpp.structures",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Stepwise map: Structures: records, invariants, and updates",
+      "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+      "steps": [
+        {
+          "title": "Declaring a record",
+          "description": "struct Item { int id{}; int stock{}; }; defines a type with two fields that are public by default. The closing brace needs a semicolon. Item item{7,12} creates an object; item.stock accesses that object’s field."
+        },
+        {
+          "title": "A record copy and a reference",
+          "description": "Item backup=item copies field values. Changing backup.stock does not change item.stock. const Item& reads the original without a copy; Item& permits mutation. Choose according to intent and document which fields may change."
+        },
+        {
+          "title": "A domain invariant",
+          "description": "For stock, require id>0 and 0<=stock<=1000. issue(amount) is allowed only when 0<=amount<=stock. Success reduces stock and leaves id unchanged; rejection leaves the whole record unchanged."
+        },
+        {
+          "title": "Validate, then commit",
+          "description": "Check the existing record and argument first. Compute a temporary new value, establish its bounds, and then assign. A single mutation point makes the absence of partial updates easier to establish."
+        },
+        {
+          "title": "A collection of records",
+          "description": "A vector<Item> stores catalogue records in one logical collection. Searching by id is O(n); uniqueness requires checking before insertion. An id field neither creates an index nor automatically guarantees uniqueness."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-CLASS",
+      "CPP20-LIFETIME"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\structured\\structures.en.json"
+}

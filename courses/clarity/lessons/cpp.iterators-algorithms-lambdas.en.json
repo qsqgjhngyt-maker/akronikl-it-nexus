@@ -1,0 +1,403 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.iterators-algorithms-lambdas",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.classic-algorithms",
+  "course": "C++ programming",
+  "module": "Classic Algorithms",
+  "locale": "en",
+  "title": "Iterators, STL algorithms and lambdas",
+  "goal": "Compose small algorithms while specifying their ranges, destinations and callback behavior.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–3: validated input, functions, vector, records, references and lifetimes."
+    },
+    {
+      "text": "Direct learning dependencies: cpp.sorting-basic, cpp.standard-sequences. New constructs are explained before the task."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "A container and a traversal position",
+      "paragraphs": [
+        "A container owns and organizes elements; an iterator identifies a position in a sequence. A vector iterator resembles a pointer, but reason through its permitted operations: dereference, advance and comparison. *it is the element, while it is the access mechanism. Copying an iterator does not copy the container.",
+        "begin() identifies the first element when one exists; end() is the past-the-end position. An empty container has begin()==end(), a valid empty range. end is not the last element and must not be dereferenced. An algorithm stops before reading it, and a search result must be checked before accessing its element."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "Why ranges are half-open",
+      "paragraphs": [
+        "[first,last) includes first and excludes last. Adjacent ranges [a,b) and [b,c) join without duplicating b, and equal boundaries naturally express emptiness. last must be reachable from first through valid advances. Iterators from different vectors do not form a range even if their addresses happen to look nearby.",
+        "For a vector, last−first counts elements in a valid range. That does not mean every iterator pair supports subtraction. Name the category and establish that both positions belong to one range first. Diagnose boundary errors on paper and with safe checks rather than deliberately reading beyond end."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Categories constrain algorithms and cost",
+      "paragraphs": [
+        "Input iterators support reading while advancing; forward iterators add multipass traversal, bidirectional iterators add backward steps, and random-access iterators add constant-time movement by an arbitrary distance. Contiguous iterators additionally describe contiguous storage. These are semantic and operational contracts, not identical container implementations.",
+        "Ordinary std::sort requires random-access iterators, so a vector fits while an arbitrary linked list does not. find scans forward and needs weaker capabilities. Later, binary search will show how few comparisons can coexist with many forward advances. Algorithm cost must include the cost of its iterator operations."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Algorithms as range contracts",
+      "paragraphs": [
+        "Read every argument and the accumulator type before comparing the results."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\n#include <numeric>\n#include <iterator>\nint main(){std::vector<int>a{4,1,3,2},b;int offset=10;std::transform(a.begin(),a.end(),std::back_inserter(b),[offset](int x){return x+offset;});std::sort(b.begin(),b.end(),[](int a,int b){return a>b;});auto p=std::find_if(b.begin(),b.end(),[](int x){return x%2==0;});std::cout<<std::accumulate(b.begin(),b.end(),0)<<' '<<*p<<' '<<std::distance(b.begin(),p)<<'\\n';std::vector<int>empty;std::cout<<(std::find(empty.begin(),empty.end(),7)==empty.end())<<' '<<std::accumulate(empty.begin(),empty.end(),0)<<'\\n';}",
+        "output": "50 14 0\n1 0\n",
+        "stdin": ""
+      },
+      "steps": [
+        "a.begin()/a.end() bound exactly four elements; end is not the last value.",
+        "back_inserter(b) appends using push_back, so an initially empty b is a valid destination.",
+        "[offset] copies 10 into the lambda object; (int x) is its call parameter and return supplies the transformed item.",
+        "a>b is a strict descending order. find_if returns the first even element, an iterator to 14.",
+        "A separate empty vector demonstrates find==end and a zero sum; end must never be dereferenced."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "Search and a predicate",
+      "paragraphs": [
+        "std::find(first,last,value) returns the first equal element or last. std::find_if uses a predicate, a callable bool rule for an element. The example finds the first even number. “First” follows the current range order, so sorting beforehand can change the selected record without changing whether a match exists.",
+        "Check it!=end before *it. A vector position can be obtained by subtracting begin only for compatible iterators. A position is not automatically a domain ID: rearrangement and erasure change it. A project’s stable ID belongs in the record; an iterator serves only the current access."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "Destination size is not capacity",
+      "paragraphs": [
+        "std::transform reads input and writes transformed elements to a destination. An empty vector has no writable elements at begin, even after reserve: capacity is allocated but size stays zero. Resize the destination or use back_inserter, which appends with push_back. The example chooses a separate output vector that grows through appending.",
+        "Do not append to the same vector whose range is being traversed: reallocation can invalidate input iterators. In-place algorithms have specific conditions too; the shown doubling transform writes each item to its existing position. If an operation changes length, define input/output ownership and overlap rules beforehand."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Keep a position instead of an invalid iterator",
+      "paragraphs": [
+        "Check a safe vector-reallocation scenario without executing invalid access."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main(){std::vector<int>a{1,2,3};auto pos=std::find(a.begin(),a.end(),2)-a.begin();a.reserve(a.capacity()+20);std::cout<<a[static_cast<std::size_t>(pos)]<<'\\n';}",
+        "output": "2\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Find 2 and establish from the input that the result is not end.",
+        "Subtracting iterators produces integer position 1 before the container changes.",
+        "reserve(capacity()+20) requests greater capacity; old iterators cannot be used after reallocation.",
+        "Apply the index to the current vector: values and order have not changed.",
+        "Insertion or erasure before that position changes its meaning; use a stable domain ID and search again in that scenario."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Lambda syntax and capture lifetime",
+      "paragraphs": [
+        "[capture](parameters){body} creates a callable object. In [threshold](int x){return x>=threshold;}, threshold is copied at creation, x arrives at each invocation, and return gives the decision. Value capture keeps the original threshold even if the outer variable later changes. Empty brackets capture no local variables.",
+        "[&sum] accesses the original variable, which must remain alive during invocation. This can suit an immediate sequential algorithm, but returning such a lambda requires lifetime reasoning. A sorting predicate must not mutate keys or contradict itself. a>b gives a strict descending order; a>=b does not."
+      ]
+    },
+    {
+      "id": "concept-7",
+      "title": "Accumulation and result types",
+      "paragraphs": [
+        "std::accumulate from <numeric> updates an accumulator sequentially starting at init. init determines the accumulator type: 0 and 0LL are different contracts. The lab uses 0LL for up to 64 doubled values with magnitude at most 10000. Casting an already overflowed sum to long long afterward does not repair it.",
+        "An empty range returns init. Explain the arguments and side effects of any custom accumulation operation. Do not silently replace accumulate with a parallel reduction and assume identical ordering, especially for floating point. Here the contract uses sequential integer computation and exact stdout."
+      ]
+    },
+    {
+      "id": "concept-8",
+      "title": "A pipeline and its engineering checks",
+      "paragraphs": [
+        "The lab validates all input, filters x>=threshold, sorts descending, doubles and sums. State a contract after each stage: selected count is at most n, order follows a>b, and doubling preserves length. Empty output must yield a zero sum and an empty line, not an attempt to read a first item.",
+        "Compare the library pipeline with a simple manual implementation on small data. Explain reserve invalidation, index meaning after insertion and the use of separate buffers. Next, search a prepared range: its ordering becomes the following algorithm’s precondition rather than an accidental property of one test input."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "May end be dereferenced? ",
+      "options": [
+        "No",
+        "Always",
+        "Only in an empty vector"
+      ],
+      "correct": 0,
+      "feedback": "end denotes the position past the last item."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "std::sort requires…",
+      "options": [
+        "Any input iterator",
+        "A random access iterator",
+        "Only int*"
+      ],
+      "correct": 1,
+      "feedback": "The algorithm uses arbitrary offsets."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "A strict descending comparator? ",
+      "options": [
+        "a>=b",
+        "a==b",
+        "a>b"
+      ],
+      "correct": 2,
+      "feedback": "Equality must not mean precedes."
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "Capture [limit] stores…",
+      "options": [
+        "A copy at creation time",
+        "An automatic live connection",
+        "Lifetime extension for any reference"
+      ],
+      "correct": 0,
+      "feedback": "Later external changes do not alter that copy."
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "Why use 0LL? ",
+      "options": [
+        "To sort",
+        "To choose a long long accumulator",
+        "To grow the vector"
+      ],
+      "correct": 1,
+      "feedback": "The initial value determines the accumulation type."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Test comp(x,x) for x<=y.",
+      "feedback": "Next: Linear and binary search: preconditions and boundaries. Save the lab and independent tests."
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: Iterators, STL algorithms and lambdas",
+    "task": "Read n in 0…64, a threshold in −10000…10000 and n values in the same range. Keep values >= threshold, sort descending and double them. First line: count and sum separated by a space; second: resulting values separated by spaces, even for an empty result. Invalid or extra input gives invalid.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\nint main(){ std::cout << \"pending\\n\"; }\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "0 0",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "0 0",
+        "output": "0 0\n\n"
+      },
+      {
+        "label": "Case 2",
+        "input": "4 2 1 3 2 -1",
+        "output": "2 10\n6 4\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "3 -2 -3 -2 -1",
+        "output": "2 -6\n-2 -4\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "3 2 2 2 2",
+        "output": "3 12\n4 4 4\n"
+      },
+      {
+        "label": "Case 5",
+        "input": "3 5 -1 0 1",
+        "output": "0 0\n\n"
+      },
+      {
+        "label": "Case 6",
+        "input": "3 -10000 10000 -10000 0",
+        "output": "3 0\n20000 0 -20000\n"
+      },
+      {
+        "label": "Case 7",
+        "input": "64 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000 10000",
+        "output": "64 1280000\n20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000 20000\n"
+      },
+      {
+        "label": "Case 8",
+        "input": "-1 0",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 9",
+        "input": "65 0",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 10",
+        "input": "0 10001",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 11",
+        "input": "1 0 x",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 12",
+        "input": "1 0",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 13",
+        "input": "0 0 trailing",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "Intermediate collections match a manual trace.",
+      "No end dereference.",
+      "Explain the difference without dangling references.",
+      "Preserve the source and separate result; test duplicates.",
+      "Preserve sources, inputs, actual outputs and rejection explanations."
+    ],
+    "hint": "Start summation with 0LL.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Restate the input domain, format, bounds and rejection policy.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "List positions in [begin,end) for an empty vector.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "First implement complete input validation without partial results.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Implement filtering, descending sorting, doubling and summation.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Change threshold capture from value to reference and modify it before invocation.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Run all reference cases; for files check existence and content too.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Save the source, observed-results table and invariant explanation; add an independent case.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Half-open range",
+      "definition": "Includes first and excludes last; empty when first==last."
+    },
+    {
+      "term": "Iterator",
+      "definition": "A navigation object with specified valid operations."
+    },
+    {
+      "term": "Random access",
+      "definition": "A category supporting constant-time offsets and distances."
+    },
+    {
+      "term": "Predicate",
+      "definition": "A callable whose result acts as a Boolean condition."
+    },
+    {
+      "term": "Comparator",
+      "definition": "A strict weak ordering defining which element precedes another."
+    },
+    {
+      "term": "Capture",
+      "definition": "Including external values or references in a lambda closure."
+    },
+    {
+      "term": "Invalidation",
+      "definition": "An iterator or view becoming invalid after an owner mutation."
+    },
+    {
+      "term": "Initial accumulator",
+      "definition": "The value and type from which accumulate begins a fold."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-ITERATORS",
+    "CPP20-SORT"
+  ],
+  "extras": {
+    "lessonId": "cpp.iterators-algorithms-lambdas",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Iterators, STL algorithms and lambdas",
+      "description": "A textual step model of the concepts, not C++ execution or a performance measurement.",
+      "steps": [
+        {
+          "title": "[3,1,2]",
+          "description": "The source vector contains 3,1,2; threshold limit=2 is captured by value."
+        },
+        {
+          "title": "copy_if",
+          "description": "Predicate x>=2 retains 3 and 2; the source vector remains unchanged."
+        },
+        {
+          "title": "sort >",
+          "description": "Strict comparator a>b orders descending; [begin,end) contains two elements."
+        },
+        {
+          "title": "transform ×2",
+          "description": "Doubling bounded values yields 6,4. Output storage is prepared before writing."
+        },
+        {
+          "title": "count 2 sum 10",
+          "description": "accumulate starting at 0LL yields 10; the lab prints 2 10 and then 6 4 on a separate line."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-ITERATORS",
+      "CPP20-SORT"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\classic\\iterators-algorithms-lambdas.en.json"
+}

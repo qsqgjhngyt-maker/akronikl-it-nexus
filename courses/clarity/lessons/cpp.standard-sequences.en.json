@@ -1,0 +1,334 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.standard-sequences",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.structured-programming",
+  "course": "C++ programming",
+  "module": "Structured Programming",
+  "locale": "en",
+  "title": "array, vector, and span: ownership and views",
+  "goal": "Choose a container according to size requirements and pass its data to a function without losing bounds.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+    },
+    {
+      "text": "Follow the prerequisite links: cpp.functions-contracts. New constructs are introduced before the assignment."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "Why three types exist",
+      "paragraphs": [
+        "std::array<int,3> is an object containing three ints with its size encoded in the type. std::vector<int> owns a sequence whose size can change. std::span<const int> is a non-owning view of existing ints and their count.",
+        "Angle brackets supply arguments to a library template: the element type and, for array, the extent. You do not need to author a template yet. Include <array>, <vector>, and <span> for their corresponding names."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "Size is not capacity",
+      "paragraphs": [
+        "vector.size() counts existing elements; capacity() counts how many can fit without reallocation. reserve(10) provides capacity but leaves size at zero. After reserve, v[0] is invalid until push_back or resize has created that element.",
+        "push_back(value) appends an element; empty() tests size()==0. Teaching programs bound the sequence to at most 100 values. In an exception-disabled environment, allocation failure is not promised to be catchable; do not use it as normal input validation."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "One function, three owners",
+      "paragraphs": [
+        "span passes a range independently of its storage form."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <array>\n#include <vector>\n#include <span>\nint sum(std::span<const int> values) {\n    int result{};\n    for (int value : values) { result += value; }\n    return result;\n}\nint main() {\n    std::array<int, 3> a{1, 2, 3};\n    std::vector<int> v{4, 5};\n    int raw[2]{6, 7};\n    std::cout << sum(a) << ' ' << sum(v) << ' ' << sum(raw) << ' ' << sum(std::span<const int>{}) << '\\n';\n}\n",
+        "output": "6 9 13 0\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Traversal and auto",
+      "paragraphs": [
+        "for(int value : values) obtains a copy of each element. for(const auto& value : values) reads without copying; auto deduces a static type and is not dynamic typing. Mutating elements requires a non-const auto& reference.",
+        "Use an index when position matters. Compare it with size() and avoid subtracting one from a zero unsigned size. Prove !empty() before accessing the last element; front and back also require a nonempty container."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "span passes a range",
+      "paragraphs": [
+        "sum(std::span<const int> values) accepts a read-only range. Compatible arrays, vectors, and built-in arrays can supply it. Inside, size(), empty(), [], and range-for are available; the function does not own the elements’ memory.",
+        "An empty span is valid when the algorithm handles it. In C++20 these types’ operator[] is not input validation: the index must be below size(). Do not execute out-of-bounds accesses as demonstrations; identify the violated precondition on paper."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "reserve does not create elements",
+      "paragraphs": [
+        "Observe size without assuming an exact capacity value."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\nint main() {\n    std::vector<int> values;\n    values.reserve(10);\n    std::cout << values.size() << ' ' << (values.capacity() >= 10) << '\\n';\n    values.push_back(7);\n    std::cout << values.size() << ' ' << values[0] << '\\n';\n}\n",
+        "output": "0 1\n1 7\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "View lifetime",
+      "paragraphs": [
+        "The owner must remain alive throughout span use. When a growing vector reallocates, pointers, references, and spans into the old buffer become invalid. reserve may reduce reallocations but cannot replace a lifetime argument.",
+        "Finish modifying a container before creating a short-lived span, then process it without resizing the owner. Do not retain a view into a local vector after its function returns. const in span<const int> restricts writes through the view but does not extend lifetime."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Choice and evidence",
+      "paragraphs": [
+        "Use array for a small fixed set, vector for a dynamic count, and span for a viewing parameter. This separates storage from the algorithm. Linear summation needs O(n) time and O(1) additional memory regardless of the owner.",
+        "Test the same function with three owners and an empty view. Separately record size before and after reserve and push_back. Next, compare these abstractions with a traditional array while preserving identical boundary rules."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What does reserve(10) change for an empty vector?",
+      "options": [
+        "Capacity, but not the element count",
+        "It makes v[9] valid",
+        "It creates ten ints"
+      ],
+      "correct": 0,
+      "feedback": "push_back or resize creates elements."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Who owns span data?",
+      "options": [
+        "The compiler keeps them forever",
+        "Always the span itself",
+        "Another object"
+      ],
+      "correct": 2,
+      "feedback": "A view does not extend its owner lifetime."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "When is v[0] valid?",
+      "options": [
+        "When capacity()>0",
+        "When size()>0",
+        "After declaring an empty vector"
+      ],
+      "correct": 1,
+      "feedback": "Capacity does not imply an element exists."
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "What may happen to a span after vector reallocation?",
+      "options": [
+        "It becomes invalid",
+        "It automatically updates its address",
+        "It copies the data itself"
+      ],
+      "correct": 0,
+      "feedback": "Create the view after resizing the owner."
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "What is needed to accept this lab?",
+      "options": [
+        "Only a completed flag",
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation"
+      ],
+      "correct": 2,
+      "feedback": "A progress flag is not evidence of independent mastery."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "A view carries bounds but neither owns elements nor extends their lifetime.",
+      "feedback": "Next: One-dimensional arrays: indexing, filtering, and search. Preserve the lab and its verification table."
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: array, vector, and span: ownership and views",
+    "task": "Read n in 0…100 and n values in -1000…1000 into a vector. A span<const int> function computes the sum; print size and sum. Reject extra input as invalid.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "0",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "0",
+        "output": "0 0\n"
+      },
+      {
+        "label": "Case 2",
+        "input": "1 -5",
+        "output": "1 -5\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "3 1 2 3",
+        "output": "3 6\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "2 1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 5",
+        "input": "1 1001",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 6",
+        "input": "0 extra",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "A view carries bounds but neither owns elements nor extends their lifetime.",
+      "Do not use a span after vector reallocation; create it after filling the vector.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "hint": "A view carries bounds but neither owns elements nor extends their lifetime.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Restate the input, output, and rejection contract in your own words.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Draw the state and state the invariant: A view carries bounds but neither owns elements nor extends their lifetime.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Start from the scaffold, implement the valid path, then add boundary checks.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Add two original cases including one rejection; explain the result without consulting the reference.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Preserve source, a result table, and a short cost-and-limit analysis.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Owner",
+      "definition": "an object managing the lifetime of stored elements."
+    },
+    {
+      "term": "View",
+      "definition": "access to another object’s elements under an explicit lifetime constraint."
+    },
+    {
+      "term": "size",
+      "definition": "the number of existing elements."
+    },
+    {
+      "term": "capacity",
+      "definition": "vector storage capacity before reallocation is needed."
+    },
+    {
+      "term": "reserve",
+      "definition": "increasing available capacity without creating elements."
+    },
+    {
+      "term": "Invalidation",
+      "definition": "loss of validity of an earlier address or view."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-VECTOR",
+    "CPP20-SPAN"
+  ],
+  "extras": {
+    "lessonId": "cpp.standard-sequences",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Stepwise map: array, vector, and span: ownership and views",
+      "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+      "steps": [
+        {
+          "title": "Why three types exist",
+          "description": "std::array<int,3> is an object containing three ints with its size encoded in the type. std::vector<int> owns a sequence whose size can change. std::span<const int> is a non-owning view of existing ints and their count."
+        },
+        {
+          "title": "Size is not capacity",
+          "description": "vector.size() counts existing elements; capacity() counts how many can fit without reallocation. reserve(10) provides capacity but leaves size at zero. After reserve, v[0] is invalid until push_back or resize has created that element."
+        },
+        {
+          "title": "Traversal and auto",
+          "description": "for(int value : values) obtains a copy of each element. for(const auto& value : values) reads without copying; auto deduces a static type and is not dynamic typing. Mutating elements requires a non-const auto& reference."
+        },
+        {
+          "title": "span passes a range",
+          "description": "sum(std::span<const int> values) accepts a read-only range. Compatible arrays, vectors, and built-in arrays can supply it. Inside, size(), empty(), [], and range-for are available; the function does not own the elements’ memory."
+        },
+        {
+          "title": "View lifetime",
+          "description": "The owner must remain alive throughout span use. When a growing vector reallocates, pointers, references, and spans into the old buffer become invalid. reserve may reduce reallocations but cannot replace a lifetime argument."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-VECTOR",
+      "CPP20-SPAN"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\structured\\standard-sequences.en.json"
+}

@@ -1,0 +1,339 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.char-arrays-strings",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.structured-programming",
+  "course": "C++ programming",
+  "module": "Structured Programming",
+  "locale": "en",
+  "title": "Strings: bytes, terminators, and safe views",
+  "goal": "Distinguish std::string, C strings, and string_view, with an explicit ASCII and UTF-8 policy.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+    },
+    {
+      "text": "Follow the prerequisite links: cpp.two-dimensional-arrays. New constructs are introduced before the assignment."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "Character arrays and C strings",
+      "paragraphs": [
+        "char word[4]{'c','a','t','\\0'} is a C string with three letters and a null terminator. char letters[3]{'c','a','t'} is a three-char array, but not a C string. Passing it to a function that searches for \\0 violates that function’s precondition.",
+        "The array size includes terminator storage; the text length before it does not. An embedded zero byte ends a C string before the buffer ends. Demonstrate the distinction with bounded valid examples, never by executing an unterminated read."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "std::string owns a sequence",
+      "paragraphs": [
+        "std::string tracks its own char count and may contain embedded \\0 data. size() counts chars, not visible letters. c_str() supplies a null-terminated compatibility buffer; do not retain its pointer across string mutation or owner destruction.",
+        "operator>> reads a whitespace-delimited token. getline reads a line without its terminating newline and retains internal spaces. Choose according to the format: a project name may contain spaces while a command code may be one ASCII token."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Length and terminator",
+      "paragraphs": [
+        "Array size includes the zero char; string tracks its length separately."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <string>\nint main() {\n    char word[]{\"cat\"};\n    std::string text{\"a\\0b\", 3};\n    std::cout << sizeof(word) << ' ' << text.size() << ' ' << static_cast<int>(text[1]) << '\\n';\n}\n",
+        "output": "4 3 0\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "ASCII and UTF-8",
+      "paragraphs": [
+        "In UTF-8 one code point can occupy several bytes. Four Cyrillic letters commonly occupy eight bytes, while a perceived character may itself contain several code points. size() promises neither code-point nor grapheme count.",
+        "The lab classifies only ASCII A…Z, a…z, 0…9, and ordinary space. Other bytes count as other without modifying the original string. This is an explicit limited contract, not Unicode normalization or collation."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "string_view does not own",
+      "paragraphs": [
+        "std::string_view from <string_view> holds a pointer and a length into another object’s text. It is convenient for read-only parameters but does not extend a std::string’s lifetime. A view’s substr creates another view; converting to std::string creates an owned copy.",
+        "A view need not end in \\0. Do not pass view.data() to a C-string API without proving termination. Never return a view into a local string or mutate an owner in a way that may relocate its buffer while the view is in use."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "A view with a live owner",
+      "paragraphs": [
+        "The middle view is not used after changing its owner."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <string>\n#include <string_view>\nint main() {\n    std::string owner{\"key=value\"};\n    std::string_view view{owner};\n    auto position = view.find('=');\n    if (position == std::string_view::npos) { std::cout << \"missing\\n\"; return 0; }\n    std::cout << view.substr(0, position) << '|' << view.substr(position + 1) << '\\n';\n}\n",
+        "output": "key|value\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "Search, emptiness, and byte classes",
+      "paragraphs": [
+        "find returns a position or std::string::npos. Check the result and bounds before substr because the current runtime does not support exceptions. An empty line may be valid under the format; it differs from a failed getline with no line available.",
+        "For <cctype>, pass a value representable as unsigned char or EOF; a negative char is invalid. Direct unsigned-char comparisons against ASCII boundaries avoid locale-dependent classification here. An individual UTF-8 byte must not be edited as though it were a whole letter."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Text-interface tests",
+      "paragraphs": [
+        "Test an empty line, spaces only, mixed letters and digits, internal spaces, and UTF-8. The lab limit is 200 bytes. Input must contain exactly one line; a second line, even empty, is extra data.",
+        "Preserve the original bytes and expected categories without claiming to count human-perceived characters. Next, a struct will group text, numbers, and status into one record without mixing their meanings."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What does size() count in a UTF-8 std::string?",
+      "options": [
+        "char elements, meaning bytes on the 8-bit-char target",
+        "Words",
+        "Always visible letters"
+      ],
+      "correct": 0,
+      "feedback": "Code points and graphemes require a separate algorithm."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Must string_view be null-terminated?",
+      "options": [
+        "Only after find",
+        "Yes",
+        "No"
+      ],
+      "correct": 2,
+      "feedback": "A view has a length, not a termination guarantee."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Are an empty line and no line equivalent?",
+      "options": [
+        "Yes",
+        "No; getline distinguishes them",
+        "Only for ASCII"
+      ],
+      "correct": 1,
+      "feedback": "An empty line can be read successfully."
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "What does npos after find mean?",
+      "options": [
+        "No match was found",
+        "The beginning of the string",
+        "The last valid index"
+      ],
+      "correct": 0,
+      "feedback": "Check the result before calculating a substring."
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "What is needed to accept this lab?",
+      "options": [
+        "Only a completed flag",
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation"
+      ],
+      "correct": 2,
+      "feedback": "A progress flag is not evidence of independent mastery."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Byte length and perceived-text length are different contracts.",
+      "feedback": "Next: Structures: records, invariants, and updates. Preserve the lab and its verification table."
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: Strings: bytes, terminators, and safe views",
+    "task": "Read one line of at most 200 bytes. Print bytes letters digits spaces other using ASCII classes; an empty line is valid, but no line or a second line is invalid.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "Ab 12!\n",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "Ab 12!\n",
+        "output": "6 2 2 1 1\n"
+      },
+      {
+        "label": "Case 2",
+        "input": "\n",
+        "output": "0 0 0 0 0\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "  \n",
+        "output": "2 0 0 2 0\n"
+      },
+      {
+        "label": "Case 5",
+        "input": "é\n",
+        "output": "2 0 0 0 2\n"
+      },
+      {
+        "label": "Case 6",
+        "input": "one\ntwo",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 7",
+        "input": "a\n\n",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "Byte length and perceived-text length are different contracts.",
+      "Do not retain string_view into a temporary string. Do not call isalpha with a potentially negative char.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "hint": "Byte length and perceived-text length are different contracts.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Restate the input, output, and rejection contract in your own words.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Draw the state and state the invariant: Byte length and perceived-text length are different contracts.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Start from the scaffold, implement the valid path, then add boundary checks.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Add two original cases including one rejection; explain the result without consulting the reference.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Preserve source, a result table, and a short cost-and-limit analysis.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Terminator",
+      "definition": "the zero char marking the end of a C string."
+    },
+    {
+      "term": "string_view",
+      "definition": "a non-owning char sequence with a length."
+    },
+    {
+      "term": "UTF-8",
+      "definition": "encoding code points using variable-length byte sequences."
+    },
+    {
+      "term": "Code point",
+      "definition": "a numeric position in the Unicode code space."
+    },
+    {
+      "term": "Grapheme",
+      "definition": "a perceived text unit, sometimes containing multiple code points."
+    },
+    {
+      "term": "npos",
+      "definition": "a special no-position value returned by search."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-STRING",
+    "CPP20-STRINGVIEW"
+  ],
+  "extras": {
+    "lessonId": "cpp.char-arrays-strings",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Stepwise map: Strings: bytes, terminators, and safe views",
+      "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+      "steps": [
+        {
+          "title": "Character arrays and C strings",
+          "description": "char word[4]{'c','a','t','\\0'} is a C string with three letters and a null terminator. char letters[3]{'c','a','t'} is a three-char array, but not a C string. Passing it to a function that searches for \\0 violates that function’s precondition."
+        },
+        {
+          "title": "std::string owns a sequence",
+          "description": "std::string tracks its own char count and may contain embedded \\0 data. size() counts chars, not visible letters. c_str() supplies a null-terminated compatibility buffer; do not retain its pointer across string mutation or owner destruction."
+        },
+        {
+          "title": "ASCII and UTF-8",
+          "description": "In UTF-8 one code point can occupy several bytes. Four Cyrillic letters commonly occupy eight bytes, while a perceived character may itself contain several code points. size() promises neither code-point nor grapheme count."
+        },
+        {
+          "title": "string_view does not own",
+          "description": "std::string_view from <string_view> holds a pointer and a length into another object’s text. It is convenient for read-only parameters but does not extend a std::string’s lifetime. A view’s substr creates another view; converting to std::string creates an owned copy."
+        },
+        {
+          "title": "Search, emptiness, and byte classes",
+          "description": "find returns a position or std::string::npos. Check the result and bounds before substr because the current runtime does not support exceptions. An empty line may be valid under the format; it differs from a failed getline with no line available."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-STRING",
+      "CPP20-STRINGVIEW"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\structured\\char-arrays-strings.en.json"
+}

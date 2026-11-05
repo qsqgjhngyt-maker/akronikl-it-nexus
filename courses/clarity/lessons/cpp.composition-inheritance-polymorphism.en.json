@@ -1,0 +1,393 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.composition-inheritance-polymorphism",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.oop",
+  "course": "C++ programming",
+  "module": "Object-Oriented Programming",
+  "locale": "en",
+  "title": "Composition, inheritance and polymorphism",
+  "goal": "Choose a suitable dependency and implement substitutable strategies with correct ownership.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–4: input, functions, sequences, ownership, testing and multifile builds."
+    },
+    {
+      "text": "Direct prerequisites: cpp.value-copy-move"
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "Start with composition",
+      "paragraphs": [
+        "Composition means containing other objects and delegating part of the work to them. Report stores Rate and calls rate_.apply from total. This is a has-a relationship rather than an is-a relationship. For a fixed set of dependencies it is simpler and needs no virtual functions, dynamic allocation or common base class.",
+        "Begin with a concrete requirement: changing a scoring strategy while retaining the caller. If variants are few and known at build time, a field, function parameter or template may suffice. Dynamic polymorphism is useful when implementation is selected at runtime and a client uses a shared contract. Choose it from requirements rather than treating it as an obligatory endpoint of object orientation."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "The base interface contract",
+      "paragraphs": [
+        "Rule declares virtual int apply(int) const=0. Virtual dispatch selects an implementation through a base reference or pointer. The =0 makes the operation pure virtual and the class abstract: Rule cannot be instantiated directly. A derived Regular or Urgent supplies a matching implementation to become concrete.",
+        "A contract includes more than a signature: valid arguments, result meaning and effect restrictions should be common to the implementations. If a client supplies any n between zero and one hundred, both strategies must handle the entire range. A derived type accepting only values below ten violates substitutability even if its code compiles."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Override and final",
+      "paragraphs": [
+        "override asks the compiler to verify that a method actually overrides a virtual base operation. Omitting const or changing a parameter type can instead declare a different member that hides the base name rather than overriding it. The example repeats int apply(int) const override explicitly. final prevents further derivation from a class or further overriding of a marked virtual method.",
+        "Do not add final without a reason if extensions are expected. A closed concrete strategy usefully demonstrates the interface boundary here. Nonvirtual operations are selected from the expression's static type; inheritance alone does not make them dynamically dispatched. Distinguish overloading, name hiding and overriding by their actual conditions."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Worked model",
+      "paragraphs": [
+        "Choose a suitable dependency and implement substitutable strategies with correct ownership."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nstruct Rate {int multiplier;int apply(int n)const{return multiplier*n;}};\nclass Report {Rate rate_;public:explicit Report(Rate r):rate_(r){}int total(int n)const{return rate_.apply(n);}};\nint main(){Report r{Rate{3}};std::cout<<r.total(4)<<'\\n';}\n",
+        "output": "12\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Report contains a Rate value.",
+        "total delegates multiplication by three.",
+        "Four yields twelve without inheritance."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "Ownership through a base type",
+      "paragraphs": [
+        "std::unique_ptr<Rule> can own an Urgent, while r->apply(n) selects Urgent's implementation. Deleting through that owning base pointer requires a suitable virtual base destructor. The interface therefore contains virtual ~Rule()=default. This connects exclusive ownership with destruction of the complete derived object.",
+        "The course does not execute deletion through an unsuitable nonvirtual base. Such a violation may cause undefined behaviour and is not an acceptable experiment. An observing Rule* need not own the object at all. Label the owner separately from an interface reference so dynamic method selection does not hide cleanup responsibility."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "Slicing and value semantics",
+      "paragraphs": [
+        "Passing a derived object as a base value copies only its base portion: slicing. An abstract Rule prevents such construction entirely, which is useful. A concrete base might allow compilation while losing derived behaviour. Polymorphic parameters therefore commonly use const Rule& or Rule* rather than values.",
+        "Do not use vector<Base> to hold heterogeneous derived objects. A vector<unique_ptr<Base>> can hold different owners when runtime dispatch is justified. For a small closed set of alternatives, the variant introduced in Module 3 may be appropriate. Compare costs, ownership needs and client complexity before choosing a representation."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Contract boundary check",
+      "paragraphs": [
+        "Choose a suitable dependency and implement substitutable strategies with correct ownership."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <memory>\nstruct Rule {virtual int apply(int)const=0;virtual ~Rule()=default;};\nstruct Double final:Rule {int apply(int n)const override{return n*2;}};\nint main(){std::unique_ptr<Rule> r=std::make_unique<Double>();std::cout<<r->apply(4)<<' ';\n std::cout<<(dynamic_cast<Double*>(r.get())!=nullptr)<<'\\n';}\n",
+        "output": "8 1\n",
+        "stdin": ""
+      },
+      "steps": [
+        "unique_ptr<Rule> owns Double.",
+        "Dynamic apply dispatch produces eight.",
+        "The pointer cast succeeds and virtual destruction handles cleanup."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "RTTI checks an assumption",
+      "paragraphs": [
+        "dynamic_cast<Derived*>(basePointer) checks a polymorphic object's dynamic type and returns nullptr on mismatch. The laboratory intentionally checks both outcomes for Urgent. Never dereference the cast result before checking it. This demonstrates the mechanism, while the actual score still uses the common apply operation.",
+        "A long chain of dynamic_cast checks often means the client knows too much about implementations. First consider adding an appropriate interface operation or using a closed set of alternatives. Do not use typeid(...).name() as portable output because the spelling is implementation dependent. A failing reference cast throws and is not needed here."
+      ]
+    },
+    {
+      "id": "concept-7",
+      "title": "Laboratory: strategies",
+      "paragraphs": [
+        "Input mode n selects Regular for mode zero and Urgent for mode one. Regular returns n and Urgent returns twice n. The range zero to one hundred keeps multiplication safe. The shared call contains no strategy condition after selection. A second output column records the safe dynamic_cast result for Urgent.",
+        "Run both strategies on zero, seven and one hundred, then test invalid input separately. Propose a third strategy without changing the shared invocation. If only selection and the new implementation change, the boundary is useful. Do not claim virtual calls are faster than ordinary calls: the task concerns dependencies, while cost requires measurement."
+      ]
+    },
+    {
+      "id": "concept-8",
+      "title": "A design decision rather than dogma",
+      "paragraphs": [
+        "Compare Report with a concrete Rate, a function accepting a callable and a Rule hierarchy. State when implementation is selected, who owns it and which requirements make the choice simpler or harder. Inheritance needs substitutability by contract; reusing two lines of code does not by itself create a subtype relationship.",
+        "In the final project Policy separates scoring from Board. Board stores task values and does not inherit from a container. This combines composition with a narrow interface. The next lesson allows operations to fail by exception and requires showing that owners clean up and the application's promised state remains available."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Why give the base a virtual destructor?",
+      "options": [
+        "For correct deletion through an owning base pointer.",
+        "To forbid polymorphism.",
+        "To accelerate cin input."
+      ],
+      "correct": 0,
+      "feedback": "unique_ptr<Rule> deletes through the base type even when the dynamic object is Urgent. A virtual destructor provides the appropriate derived destruction; virtual is not itself a speed optimization."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What does override check?",
+      "options": [
+        "The validity of n.",
+        "That a matching virtual base operation is overridden.",
+        "The object count in memory."
+      ],
+      "correct": 1,
+      "feedback": "override requires a matching virtual base operation with compatible parameters and cv/ref qualification. A missing const is diagnosed at compile time, but this mechanism does not validate the runtime range of n."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "What does a failing pointer dynamic_cast return?",
+      "options": [
+        "An arbitrary address.",
+        "It always throws runtime_error.",
+        "nullptr."
+      ],
+      "correct": 2,
+      "feedback": "A failing pointer cast returns nullptr, which must be checked before dereferencing. A failing reference cast has a different contract and must not be confused with pointer dynamic_cast."
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "Why can vector<Base> lose behaviour?",
+      "options": [
+        "Storing base values slices the derived portion.",
+        "The vector is always empty.",
+        "Base values preserve every derived part."
+      ],
+      "correct": 0,
+      "feedback": "A vector<Base> element stores a Base value rather than an arbitrary complete derived object. Creating that value slices the derived portion; justified polymorphic ownership needs a different representation."
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "When is composition simpler?",
+      "options": [
+        "When encryption is needed.",
+        "When containment and delegation suffice without a subtype relationship.",
+        "Whenever repeated code requires a base."
+      ],
+      "correct": 1,
+      "feedback": "Composition expresses a has-a relationship and delegates work to a contained object. Without a subtype contract or runtime substitution requirement, introducing a base class adds an unjustified dependency."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Check both pointer dynamic_cast outcomes.",
+      "feedback": "Next: Exceptions and error guarantees"
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: Composition, inheritance and polymorphism",
+    "task": "Read mode=0…1 and n=0…100 with no trailing token. Select Regular (n) or Urgent (2n) through unique_ptr<Rule>. Print the result and the bool outcome of dynamic_cast<Urgent*> separated by a space. The base has a virtual destructor. Invalid input: invalid.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\nstruct Rule { virtual int apply(int)const=0; virtual ~Rule()=default; };\nint main(){std::cout<<\"pending\\n\";}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "0 7",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "0 7",
+        "output": "7 0\n"
+      },
+      {
+        "label": "Case 2",
+        "input": "1 7",
+        "output": "14 1\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "1 0",
+        "output": "0 1\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "1 100",
+        "output": "200 1\n"
+      },
+      {
+        "label": "Case 5",
+        "input": "0 100",
+        "output": "100 0\n"
+      },
+      {
+        "label": "Case 6",
+        "input": "2 7",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 7",
+        "input": "0 -1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 8",
+        "input": "1 101",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 9",
+        "input": "1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 10",
+        "input": "0 1 x",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 11",
+        "input": "",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "No unjustified is-a relationship appears.",
+      "The dynamic type selects the implementation.",
+      "Explain the mismatched signature.",
+      "Check success and nullptr without dereferencing null.",
+      "Include source, actual results, an independent case and limits of the conclusion."
+    ],
+    "hint": "override asks the compiler to verify that a method actually overrides a virtual base operation. Omitting const or changing a parameter type can instead declare a different member that hides the base name rather than overriding it. The example repeats int apply(int) const override explicitly. final prevents further derivation from a class or further overriding of a marked virtual method.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Restate the contract and distinguish malformed input from domain rejection.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Draw Report and Rate using composition.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Predict a call through Rule&.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Open Task and Code Studio: the task stays alongside the editor on desktop or in a phone tab. Save your own code before replacing an example.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Complete the starter; pending marks unfinished work rather than a correct result.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Run every reference case and record actual stdout and exit status.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Add a third strategy.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Save source, a verification table and an invariant explanation; add one independent case.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Composition",
+      "definition": "Containing collaborating objects and delegating work to them."
+    },
+    {
+      "term": "Inheritance",
+      "definition": "A language-defined relationship between a derived and a base type."
+    },
+    {
+      "term": "Substitutability",
+      "definition": "A derived type satisfying the complete base contract."
+    },
+    {
+      "term": "Virtual operation",
+      "definition": "Enabling dynamic dispatch through a base interface."
+    },
+    {
+      "term": "Abstract class",
+      "definition": "A type with a pure virtual operation that cannot be instantiated directly."
+    },
+    {
+      "term": "Override",
+      "definition": "A request for compile-time verification of overriding."
+    },
+    {
+      "term": "Slicing",
+      "definition": "Copying only the base portion of a derived object into a base value."
+    },
+    {
+      "term": "Dynamic cast",
+      "definition": "A checked polymorphic cast with a defined failure outcome."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-CLASS"
+  ],
+  "extras": {
+    "lessonId": "cpp.composition-inheritance-polymorphism",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Composition, inheritance and polymorphism",
+      "description": "A stepwise textual model; actual execution happens in Code Studio.",
+      "steps": [
+        {
+          "title": "Start with composition",
+          "description": "Composition means containing other objects and delegating part of the work to them. Report stores Rate and calls rate_.apply from total. This is a has-a relationship rather than an is-a relationship. For a fixed set of dependencies it is simpler and needs no virtual functions, dynamic allocation or common base class."
+        },
+        {
+          "title": "The base interface contract",
+          "description": "Rule declares virtual int apply(int) const=0. Virtual dispatch selects an implementation through a base reference or pointer. The =0 makes the operation pure virtual and the class abstract: Rule cannot be instantiated directly. A derived Regular or Urgent supplies a matching implementation to become concrete."
+        },
+        {
+          "title": "Override and final",
+          "description": "override asks the compiler to verify that a method actually overrides a virtual base operation. Omitting const or changing a parameter type can instead declare a different member that hides the base name rather than overriding it. The example repeats int apply(int) const override explicitly. final prevents further derivation from a class or further overriding of a marked virtual method."
+        },
+        {
+          "title": "Slicing and value semantics",
+          "description": "Passing a derived object as a base value copies only its base portion: slicing. An abstract Rule prevents such construction entirely, which is useful. A concrete base might allow compilation while losing derived behaviour. Polymorphic parameters therefore commonly use const Rule& or Rule* rather than values."
+        },
+        {
+          "title": "Laboratory: strategies",
+          "description": "Input mode n selects Regular for mode zero and Urgent for mode one. Regular returns n and Urgent returns twice n. The range zero to one hundred keeps multiplication safe. The shared call contains no strategy condition after selection. A second output column records the safe dynamic_cast result for Urgent."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-CLASS"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\oop\\composition-inheritance-polymorphism.en.json"
+}

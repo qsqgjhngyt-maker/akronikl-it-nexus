@@ -22,7 +22,7 @@ test('SHA-256 matches the platform reference for standard, Unicode and block-bou
  for(const value of ['', 'abc', 'abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq', 'текст\r\n😀', ...[55,56,63,64,65,127,128,32768].map(n=>'a'.repeat(n)), 'a'.repeat(1000000)])assert.equal(sha256Utf8(value),createHash('sha256').update(value).digest('hex'));
 });
 test('allowlist and question shapes match both accepted editions exactly',async()=>{
- for(const [id,questions] of Object.entries(CLARITY_QUESTIONS))for(const language of ['ru','en']){
+ for(const [id,questions] of Object.entries(CLARITY_QUESTIONS).filter(([id])=>['cpp.programming-process','onec.p2.topic-1','onec.p7.topic-2'].includes(id)))for(const language of ['ru','en']){
   const l=JSON.parse(await fs.readFile(`review/cpp-clarity-r3/lessons/${id}.${language}.json`,'utf8'));
   assert.deepEqual(Object.fromEntries(l.selfcheck.map(q=>[q.id,q.kind==='free'?'free':q.options.length])),questions);
  }

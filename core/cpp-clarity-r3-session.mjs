@@ -1,3 +1,5 @@
+import {CLARITY_COURSES} from './clarity-course-registry.mjs';
+import {clarityContentRevision} from './cpp-clarity-r3-state.mjs';
 import {emptyClarityDraft,validateClarityDraft,prepareClarityDraft,validateWorkReferences,canonicalJson,sha256Utf8,snapshotDigests,CLARITY_CONTENT_REVISION} from './cpp-clarity-r3-state.mjs';
 import {verifiedAccount,accountStorageLocked} from './account-storage.js';
 import {readCourseStateStrict,courseWorkToken,withCourseStateWriter,patchLesson,patchPracticum,saveCppClarityDraft,saveState} from './storage.js';
@@ -74,7 +76,7 @@ export function createCppAccountAdapter(kind,id){
 }
 
 export function writeCppClarityDraft(id,draft,{expectedStateRevision,expectedContext}={}){
- if(id!=='cpp.programming-process')throw failure('R3_TOPIC_REJECTED');
+ if(CLARITY_COURSES[id]?.courseId!=='cpp')throw failure('R3_TOPIC_REJECTED');
  return withCourseStateWriter(()=>{
   const current=readCourseStateStrict(),entry=current.courses.cpp?.lessons?.[id];if(entry!==undefined&&(!entry||typeof entry!=='object'||Array.isArray(entry)))throw failure('COURSE_STATE_INVALID');
   const prepared=prepareClarityDraft(id,draft,{previous:entry?.clarityDraft??null,expectedStateRevision});
@@ -90,7 +92,7 @@ export function createClarityRunObserver({session,topicId,onResult=()=>{},onErro
  const shape=request=>({languageId:request.languageId,source:request.source,stdin:request.stdin,entryFile:request.entryFile,files:Object.entries(request.files||{}).map(([path,content])=>({path,content})),metadata:request.metadata});
  return {
   capture(request){
-   const ticket={runId:'run-'+crypto.randomUUID(),request:clone(request),binding:session.binding,contentRevision:CLARITY_CONTENT_REVISION,record:null};latest=ticket;
+   const ticket={runId:'run-'+crypto.randomUUID(),request:clone(request),binding:session.binding,contentRevision:clarityContentRevision(topicId),record:null};latest=ticket;
    try{const inputSnapshot=shape(ticket.request),digests=snapshotDigests(inputSnapshot);ticket.record={kind:'runtime',runId:ticket.runId,contentRevision:ticket.contentRevision,workspaceRevision:inputSnapshot.metadata.workspaceRevision,workBinding:clone(ticket.binding),inputSnapshot,...digests,output:{stdout:'',stderr:''},exitCode:null,providerId:'pending'};}catch(error){report(error);}
    return freeze(ticket);
   },
@@ -111,18 +113,22 @@ export async function createOnecClarityAdapter(store,topicId,isMounted=()=>true)
  const current=()=>!!account&&!accountStorageLocked()&&verifiedAccount()===account&&isMounted();
  const check=()=>{if(!current())throw failure('ACCOUNT_STORAGE_CONTEXT_CHANGED');};
  const receipt=p=>({workToken:p.sync.localRevision,binding:{kind:'project',id:p.id,expectedLocalRevision:p.sync.localRevision}});
+ const progressWrite=fn=>{check();if(!globalThis.navigator?.locks?.request)throw failure('COURSE_WRITER_UNAVAILABLE');return navigator.locks.request('nexus:onec-candidate:all-courses',()=>{check();const next=fn();check();if(canonicalJson(store.read())!==canonicalJson(next))throw failure('R3_ACK_MISSING');return next;});};
  let workId=null;
  return {
   isCurrent:current,
-  read(){check();const draft=store.read().lessons[topicId]?.clarityDraft||null;let p=null;if(draft?.workBinding){validateClarityDraft(topicId,draft);if(draft.workBinding.kind!=='project')throw failure('R3_BINDING_REJECTED');p=ownedOnec(draft.workBinding.id,'edit');workId=p.id;}return{draft,work:p?{workspace:p.workspace,code:p.workspace.files.find(f=>f.path===p.workspace.entryFile)?.content||'',stdin:''}:null,...(p?receipt(p):{workToken:null,binding:null})};},
-  createWork(work,title){check();return withProjectWriter(()=>{check();if(workId)throw failure('R3_WORK_ALREADY_BOUND');const p=createOnecWork({title,workspace:work.workspace,origin:{kind:'lesson-work',courseId:'onec',topicId}});workId=p.id;return receipt(p);});},
+  read(){check();const draft=store.read().lessons[topicId]?.clarityDraft||null;let p=null;if(draft?.workBinding){validateClarityDraft(topicId,draft);if(draft.workBinding.kind!=='project')throw failure('R3_BINDING_REJECTED');p=ownedOnec(draft.workBinding.id,'edit');workId=p.id;}return{entry:store.read().lessons[topicId]||{},draft,work:p?{workspace:p.workspace,code:p.workspace.files.find(f=>f.path===p.workspace.entryFile)?.content||'',stdin:''}:null,...(p?receipt(p):{workToken:null,binding:null})};},
+  createWork(work,title){check();return withProjectWriter(()=>{check();if(workId)throw failure('R3_WORK_ALREADY_BOUND');const p=createOnecWork({title,workspace:work.workspace,origin:{kind:'lesson-work',courseId:CLARITY_COURSES[topicId].courseId,topicId}});workId=p.id;return receipt(p);});},
   saveWork(work,expectedLocalRevision){check();return withProjectWriter(()=>{check();if(!workId)throw failure('R3_WORK_UNBOUND');return receipt(saveOnecWork(workId,work.workspace,{expectedLocalRevision}));});},
-  saveDraft(draft,expectedStateRevision){check();return store.saveClarityDraft(topicId,draft,{expectedStateRevision,isCurrent:current});}
+  saveDraft(draft,expectedStateRevision){check();return store.saveClarityDraft(topicId,draft,{expectedStateRevision,isCurrent:current});},
+  async recordAttempt(quiz,answers,metadata){check();const {gradeQuiz}=await import('../courses/onec-education/model.mjs');check();return progressWrite(()=>store.attempt(topicId,gradeQuiz(quiz,answers),answers,metadata));},
+  complete(attested,requiredRevision){return progressWrite(()=>store.complete(topicId,attested,requiredRevision));}
+
  };
 }
 
 export function createCppVaultAdapter({topicId,readData,commit,isCurrent}){
- if(topicId!=='cpp.programming-process')throw failure('R3_TOPIC_REJECTED');
+ if(CLARITY_COURSES[topicId]?.courseId!=='cpp')throw failure('R3_TOPIC_REJECTED');
  const projectId='exercise-lesson-'+topicId;
  const check=()=>{if(!isCurrent())throw failure('LOCAL_COPY_LOCKED');};
  function inspect(){check();const data=readData(),state=data?.state;if(!state||(state.schemaVersion!==undefined&&state.schemaVersion!==1)||!state.courses||typeof state.courses!=='object'||Array.isArray(state.courses)||!data.projects||typeof data.projects!=='object'||Array.isArray(data.projects))throw failure('COURSE_STATE_INVALID');
@@ -135,7 +141,8 @@ export function createCppVaultAdapter({topicId,readData,commit,isCurrent}){
  }
  const ensureEntry=next=>{next.state.courses.cpp??={courseId:'cpp'};next.state.courses.cpp.lessons??={};return next.state.courses.cpp.lessons[topicId]??={};};
  return {isCurrent,
-  read(){const s=inspect();return{work:s.work,workToken:s.workToken,binding:s.binding,draft:s.entry.clarityDraft||null};},
+  async progress(update){const s=inspect(),next=clone(s.data),entry=ensureEntry(next),patch=typeof update==='function'?update(clone(entry)):update;if(!patch||Object.keys(patch).some(k=>k!=='completed')||typeof patch.completed!=='boolean')throw failure('R3_PROGRESS_REJECTED');Object.assign(entry,patch);const receipt=await commit(next);check();if(!receipt||typeof receipt.id!=='string'||!Number.isSafeInteger(receipt.revision))throw failure('R3_ACK_MISSING');return inspect().entry;},
+  read(){const s=inspect();return{entry:s.entry,work:s.work,workToken:s.workToken,binding:s.binding,draft:s.entry.clarityDraft||null};},
   async saveWork(work,expected){const s=inspect();if(s.workToken!==expected)throw failure('COURSE_WORK_CONFLICT');const next=clone(s.data),entry=ensureEntry(next);Object.assign(entry,clone(work));if(s.project){next.projects[projectId].workspace=clone(work.workspace);next.projects[projectId].stdin=work.stdin;}
    const receipt=await commit(next);check();if(!receipt||typeof receipt.id!=='string'||!Number.isSafeInteger(receipt.revision))throw failure('R3_ACK_MISSING');const saved=inspect();return{workToken:saved.workToken,binding:saved.binding,...receipt};},
   async saveDraft(draft,expectedStateRevision){const s=inspect(),prepared=prepareClarityDraft(topicId,draft,{previous:s.entry.clarityDraft??null,expectedStateRevision});validateWorkReferences(topicId,prepared.value,s.work?{binding:s.binding,files:s.work.workspace.files}:null);const next=clone(s.data);ensureEntry(next).clarityDraft=prepared.value;const receipt=await commit(next);check();if(!receipt||typeof receipt.id!=='string'||!Number.isSafeInteger(receipt.revision))throw failure('R3_ACK_MISSING');return{stateRevision:prepared.value.stateRevision,draft:prepared.value,...receipt};}

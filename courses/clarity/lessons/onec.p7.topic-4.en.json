@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p7.topic-4",
+  "courseId": "onec",
+  "moduleId": "onec.p7",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Queries and performance",
+  "locale": "en",
+  "title": "Measurement plan and eliminating N+1",
+  "goal": "Compare two explicit queries with one batch selection using the same keys and 75 total.",
+  "prerequisites": [
+    {
+      "text": "onec.p6; P1–P3; explicit contracts, types, collections and failure handling.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "Convenient access can hide cost",
+      "paragraphs": [
+        "A100-request loop reading customer and rate can cause many individual calls. A shortCustomer.Descriptionexpression does not prove negligible cost. Map data sources and count calls. One form may tolerate this; bulk reporting may benefit from a combined selection. Measurements decide.",
+        "Count calls to Execute in our own code: two per-reference queries versus one IN(&Keys). This is a local measured boundary, not a count of internal SQL statements, packets or cache reads."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Reconcile the complete experiment",
+      "paragraphs": [
+        "Fewer explicit calls are demonstrable; elapsed time depends on conditions."
+      ],
+      "code": {
+        "language": "text",
+        "source": "// Two Execute calls for two references\n// versus one Execute with IN (&Keys)\n// Reconcile keys/2/75 before observed milliseconds.",
+        "output": "Эквивалентно=True and ВызовыУменьшены=True; retain observed timings without a speed guarantee."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Baseline",
+              "Two keys,two queries",
+              "30+45=75."
+            ],
+            [
+              "Change",
+              "Same keys,one query",
+              "2/75."
+            ],
+            [
+              "Measure",
+              "Both durations",
+              "Observations,not a standard."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Freeze the baseline",
+      "paragraphs": [
+        "Record version, volume, dataset, cold/warm state and measured operation. Network, cache and UI affect timing. Do not compare one cold baseline with a warmed new version. A small training infobase demonstrates method, not field p95 or industrial scaling.",
+        "Both paths use the same two references. One sums 30+45; the other returns 2/75. Check equivalence before timing. A professional larger comparison should also reconcile the complete key set and values by key."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Establish equivalence first",
+      "paragraphs": [
+        "Replace per-item reads with a query selecting required fields and correct relationships. Compare identities, rows, missing values, sums and required order. Losing request-free customers can make a report faster but wrong. Keep a small oracle dataset beside the benchmark so optimization does not change the task.",
+        "Record platform wall-clock milliseconds without claiming monotonic time. Zero and an occasionally slower batch are legitimate for this tiny dataset; no assertion requires it to be faster every run. The explicit 2 → 1 reduction is separate from observed duration."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "A case that distinguishes the wrong solution",
+      "paragraphs": [
+        "Faster data loss is not an acceptable optimization."
+      ],
+      "code": {
+        "language": "text",
+        "source": "In a separate copy omit one reference from the batch parameter.",
+        "output": "Эквивалентно=False: one row and an incomplete total."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Separate copy",
+              "In a separate copy omit one reference from the batch parameter.",
+              "Retain the accepted original."
+            ],
+            [
+              "Observe",
+              "Эквивалентно=False: one row and an incomplete total.",
+              "Faster data loss is not an acceptable optimization."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Make two distinct conclusions",
+      "paragraphs": [
+        "Report equivalence separately from call count and timing. Repeated runs reveal variability; one run is not p95. Unmeasured speedup remains a hypothesis. Do not enlargeNexusstartup budgets for the course; NEXUS-PERF-01 checks those independently.",
+        "Use a new copy for a larger synthetic dataset, consistent conditions and at least five runs per variant. Retain raw timings, version and cache assumptions. These are not field p95 or a change to frontend NEXUS-PERF-01."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "A customer name replaces its reference. Use the actual typed reference of the experiment, not its display label.",
+        "An equal sum is accepted without membership checks. Reconcile actual keys and row count before accepting the aggregate.",
+        "A tiny timing is promoted to a server performance guarantee. Retain raw observations and explicitly limit the environment and metric."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "First compare",
+      "options": [
+        "Only milliseconds",
+        "Data equivalence",
+        "Font size"
+      ],
+      "correct": 1,
+      "feedback": "A fast wrong answer remains wrong."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "2 → 1 means here",
+      "options": [
+        "Explicit Execute calls",
+        "All server SQL",
+        "Network p95"
+      ],
+      "correct": 0,
+      "feedback": "Internal operations are not counted."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Zero tiny-case duration",
+      "options": [
+        "Proves instant execution always",
+        "Proves a server SLA",
+        "Can reflect scale/resolution"
+      ],
+      "correct": 2,
+      "feedback": "Conditions and repeated observations are needed."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Run five repetitions on a larger own dataset and state limits.",
+      "feedback": "Raw runs/version/limits retained."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Measurement plan and eliminating N+1",
+    "task": "Run five repetitions on a larger own dataset and state limits.",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЧислаЗапросов() Экспорт\n    Д = НовыйНаборРегистров(); Ссылки = Новый Массив; Ссылки.Добавить(Д.Первая); Ссылки.Добавить(Д.Вторая);\n    Начало = ТекущаяУниверсальнаяДатаВМиллисекундах(); Сумма = 0; ОтдельныхВызовов = 0;\n    Для Каждого Ссылка Из Ссылки Цикл\n        Запрос = Новый Запрос(\"ВЫБРАТЬ З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Ссылка = &Ключ\");\n        Запрос.УстановитьПараметр(\"Ключ\", Ссылка); Сумма = Сумма + Запрос.Выполнить().Выгрузить()[0].Минуты; ОтдельныхВызовов = ОтдельныхВызовов + 1;\n    КонецЦикла;\n    ОтдельноМс = ТекущаяУниверсальнаяДатаВМиллисекундах() - Начало;\n    Начало = ТекущаяУниверсальнаяДатаВМиллисекундах();\n    Пакет = Новый Запрос(\"ВЫБРАТЬ З.Ссылка, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З ГДЕ З.Ссылка В (&Ключи)\");\n    Пакет.УстановитьПараметр(\"Ключи\",Ссылки); Таблица = Пакет.Выполнить().Выгрузить();\n    ПакетомМс = ТекущаяУниверсальнаяДатаВМиллисекундах() - Начало;\n    Возврат Новый Структура(\"Эквивалентно,ВызовыУменьшены,ОтдельноМс,ПакетомМс\",Сумма = 75 И Таблица.Количество() = 2 И Таблица.Итог(\"Минуты\") = Сумма, ОтдельныхВызовов = 2, ОтдельноМс, ПакетомМс);\nКонецФункции\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "step-1",
+        "title": "Preserve the starting state",
+        "where": "Own-copy Designer",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Keep the accepted work independent.",
+        "expected": "Separate copy opens with the earlier records.",
+        "troubleshooting": "A new list name alone does not create another database directory.",
+        "before": "Own path, prior sources and a restorable backup identified."
+      },
+      {
+        "id": "step-2",
+        "title": "Add the complete server source",
+        "where": "Конфигуратор → Общие → Общие модули → УчебныеЗапросы",
+        "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+        "why": "Database access has an explicit server boundary.",
+        "expected": "Definitions are module-level; no duplicate helper.",
+        "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
+        "before": "Separate copy opens with the earlier records."
+      },
+      {
+        "id": "step-3",
+        "title": "Prepare and call the experiment",
+        "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
+        "action": "Результат = УчебныеЗапросы.ОпытЧислаЗапросов();\nСообщить(Результат.Эквивалентно);\nСообщить(Результат.ВызовыУменьшены);\nСообщить(Результат.ОтдельноМс);\nСообщить(Результат.ПакетомМс);",
+        "why": "Print every named result instead of accepting compilation alone.",
+        "expected": "Only the stated caller is inside the existing startup handler.",
+        "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
+        "before": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "id": "step-4",
+        "title": "Save, update and run once",
+        "where": "Ctrl+S → F7 → Предприятие",
+        "action": "Run once, record both actual boolean claims and, for measurement, the two durations. Keep the created keys.",
+        "why": "Observe actual 1C data, not the browser diagram.",
+        "expected": "Эквивалентно=True and ВызовыУменьшены=True; retain observed timings without a speed guarantee.",
+        "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
+        "before": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "id": "step-5",
+        "title": "Retain both results",
+        "where": "Конфигуратор после закрытия Предприятия",
+        "action": "Remove only the startup call. Retain functions/data and investigate the negative control in another restored copy.",
+        "why": "Preserve provenance and avoid repeating data creation at every startup.",
+        "expected": "Original retained, negative experiment isolated, automatic caller removed.",
+        "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
+        "before": "Эквивалентно=True and ВызовыУменьшены=True; retain observed timings without a speed guarantee."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Separate copy opens with the earlier records."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "Эквивалентно=True and ВызовыУменьшены=True; retain observed timings without a speed guarantee."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "Original retained, negative experiment isolated, automatic caller removed."
+      }
+    ],
+    "criteria": [
+      "Counter boundary explicit.",
+      "Equivalence checked first.",
+      "Raw runs/version/limits retained.",
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits.",
+      "In a separate copy omit one reference from the batch parameter."
+    ],
+    "hint": "Use the actual typed reference of the experiment, not its display label.",
+    "exercises": [
+      {
+        "level": "Basic",
+        "task": "Distinguish an explicit call from internal platform requests.",
+        "criteria": "Counter boundary explicit."
+      },
+      {
+        "level": "Applied",
+        "task": "Retain both timings and prove 2 → 1 with the same set.",
+        "criteria": "Equivalence checked first."
+      },
+      {
+        "level": "Advanced",
+        "task": "Run five repetitions on a larger own dataset and state limits.",
+        "criteria": "Raw runs/version/limits retained."
+      }
+    ],
+    "sourceFile": "code/pedagogy/query-measurement-first.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p7-measurement.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.full.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "First compare",
+        "options": [
+          "Only milliseconds",
+          "Data equivalence",
+          "Font size"
+        ],
+        "correct": 1,
+        "explanation": "A fast wrong answer remains wrong."
+      },
+      {
+        "question": "2 → 1 means here",
+        "options": [
+          "Explicit Execute calls",
+          "All server SQL",
+          "Network p95"
+        ],
+        "correct": 0,
+        "explanation": "Internal operations are not counted."
+      },
+      {
+        "question": "Zero tiny-case duration",
+        "options": [
+          "Proves instant execution always",
+          "Proves a server SLA",
+          "Can reflect scale/resolution"
+        ],
+        "correct": 2,
+        "explanation": "Conditions and repeated observations are needed."
+      }
+    ]
+  }
+}

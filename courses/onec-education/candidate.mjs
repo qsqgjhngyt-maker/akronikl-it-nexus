@@ -53,11 +53,11 @@ function bindSupplement(supplement,r){
 if(!options.root&&/\/releases\/ui1a-[a-z0-9-]+\/courses\/onec-education\//.test(location.pathname))document.querySelector('.top a').href='../../../../index.html#view=academy';
 async function render(){if(!isCurrent())return;guideController?.dispose();guideController=null;glossaryController?.dispose();glossaryController=null;const ticket=++sequence,r=route(),w=words[r.locale];if(!options.preserveDocumentLanguage)document.documentElement.lang=r.locale;root.lang=r.locale;localeSelect.value=r.locale;
  try{
-  if(options.enableClarityPilot&&r.course==='onec'&&['onec.p2.topic-1','onec.p7.topic-2'].includes(r.topic)){
-   const [c,ui,session]=await Promise.all([asset('../onec/curriculum.json'),import('../../core/cpp-clarity-r3-renderer.mjs'),import('../../core/cpp-clarity-r3-session.mjs')]);
+  if(options.enableClarityPilot&&COURSE_IDS.includes(r.course)&&r.topic){
+   const [c,ui,session]=await Promise.all([asset('../'+r.course+'/curriculum.json'),import('../../core/cpp-clarity-r3-renderer.mjs'),import('../../core/cpp-clarity-r3-session.mjs')]);
    if(ticket!==sequence||!isCurrent())return;const store=createCandidateStore(storage,r.course,c),active=()=>isCurrent()&&ticket===sequence;
    const adapter=storage.authenticated?await session.createOnecClarityAdapter(store,r.topic,active):null;if(!active())return;
-   clarityController=await ui.mountClarityLesson(root,{topicId:r.topic,locale:r.locale,adapter,isCurrent:active});return;
+   clarityController=await ui.mountClarityLesson(root,{topicId:r.topic,locale:r.locale,adapter,isCurrent:active,openAssistant:options.openAssistant,onViewChange:options.onViewChange});if(active()){const [dictionary,topicContent]=await Promise.all([asset('glossary.v2.json'),asset('../'+r.course+'/'+c.modules.flatMap(m=>m.topics).find(t=>t.topicId===r.topic).content[r.locale])]);if(active())glossaryController=mountOnecGlossary(root,{dictionary,locale:r.locale,lesson:topicContent,isCurrent:active});}return;
   }
   const [c,shared,project,sources,supplement,dictionary,manualLabHelp]=await Promise.all([asset(`../${r.course}/curriculum.json`),asset('shared.v1.json'),asset('service-desk.v1.json'),asset('sources.v1.json'),asset('supplement.v1.json'),asset('glossary.v2.json'),asset('lab-route.v2.json')]);
   const store=createCandidateStore(storage,r.course,c),state=store.read(),p=progressFor(c,state),topic=c.modules.flatMap(m=>m.topics).find(t=>t.topicId===r.topic&&t.status==='IMPLEMENTED');

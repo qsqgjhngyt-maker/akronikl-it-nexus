@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p9.topic-2",
+  "courseId": "onec",
+  "moduleId": "onec.p9",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "DCS, reports and data processors",
+  "locale": "en",
+  "title": "Parameters, filters and grouping",
+  "goal": "Distinguish dataset parameters, detail filters and aggregate conditions using discriminating input.",
+  "prerequisites": [
+    {
+      "text": "onec.p8; P1–P3; explicit contracts, types, collections and failure handling.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "Filter level changes meaning",
+      "paragraphs": [
+        "Filtering rows before aggregation differs from filtering groups after it. “Requests longer than 30 minutes” is not “customers totaling more than 30.” A customer with two short requests distinguishes them. Settings must express the intended requirement.",
+        "The previous source retains the own-customer filter and applies minutes>30 to detail:30/45 yields 45. Moving the condition to sum(minutes)>30 is different: the customer total 75 includes both documents."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Reconcile the complete experiment",
+      "paragraphs": [
+        "Meaning follows evaluation level, not a similar label."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Details 30,45 → minutes>30 →45\nGroup sum(30,45)=75 → total>30 →75",
+        "output": "Different levels produce 45 versus 75; the primary report variant is retained."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Source",
+              "30/45",
+              "75 total."
+            ],
+            [
+              "Detail",
+              "Each row>30",
+              "45."
+            ],
+            [
+              "Group",
+              "Sum>30",
+              "75."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Parameters fix computation",
+      "paragraphs": [
+        "Supply virtual-table period, customer and status with correct types. A dynamic CurrentMonth parameter is convenient operationally but should be fixed for reproducible evidence. Avoid hidden conditions lost on reopening. A saved variant must restore every material value.",
+        "Source-period parameters constrain input before aggregation. Detail filters and group-total conditions act at different levels. The original report has a quick Customer filter; do not describe period/status quick fields as already implemented."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Grouping does not change units",
+      "paragraphs": [
+        "Customer minute sums remain minutes. For a per-document average, specify numerator and denominator; an average of group averages generally differs from the global average. Use customers with unequal request counts as a control. Apply rounding at the declared point.",
+        "In Designer open Reports → ЗаявкиПоКлиентам → Templates → ОсновнаяСхемаКомпоновкиДанных. Inspect Datasets, Resources and Settings. Retain the primary variant and create an own variant named by intent, such as Details above 30."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "A case that distinguishes the wrong solution",
+      "paragraphs": [
+        "20/20 deliberately distinguishes the levels."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Treat detail and aggregate filters as equivalent on 20/20.",
+        "output": "Zero detail rows versus a retained 40 group."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Separate copy",
+              "Treat detail and aggregate filters as equivalent on 20/20.",
+              "Retain the accepted original."
+            ],
+            [
+              "Observe",
+              "Zero detail rows versus a retained 40 group.",
+              "20/20 deliberately distinguishes the levels."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Tests distinguish similar reports",
+      "paragraphs": [
+        "Compare rows>30, groups>30, average and sum on one set. Specify expected identities and values beforehand, then save/reopen the variant. A missing-filter negative control must fail. If every variant accidentally yields one number, the dataset does not distinguish wrong implementations and must expand.",
+        "Reconcile all facts 75, details>30 → 45 and group total>30 → 75. Equal totals on another dataset do not prove equivalent rules. Add another own customer with 20/20: no detail exceeds 30, but its total 40 does."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "A displayed number is accepted without its source. Reconcile actual references, units and raw values before presentation.",
+        "An unavailable feature is described as already tested. Record the exact edition and leave unperformed checks explicitly pending.",
+        "Hash identity is mistaken for safety or authorship. Separate byte integrity, reviewed trust and learner contribution."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Detail>30 from 30/45 yields",
+      "options": [
+        "75",
+        "45",
+        "30"
+      ],
+      "correct": 1,
+      "feedback": "30 is excluded before aggregation."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "Total>30 on 20/20",
+      "options": [
+        "Retains 40",
+        "Always removes customer",
+        "Yields 20"
+      ],
+      "correct": 0,
+      "feedback": "The group sum is tested."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "The original quick filter",
+      "options": [
+        "Has any period",
+        "Has a password",
+        "Is confirmed for customer"
+      ],
+      "correct": 2,
+      "feedback": "Do not promise absent UI."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Add 20/20 for another customer and prove the difference.",
+      "feedback": "Discriminating 20/20 tested."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Parameters, filters and grouping",
+    "task": "Add 20/20 for another customer and prove the difference.",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытКомпоновки() Экспорт\n    Д = НовыйНаборРегистров();\n    Схема = Новый СхемаКомпоновкиДанных;\n    Источник = Схема.ИсточникиДанных.Добавить(); Источник.Имя = \"Основной\"; Источник.ТипИсточникаДанных = \"Local\";\n    Набор = Схема.НаборыДанных.Добавить(Тип(\"НаборДанныхЗапросСхемыКомпоновкиДанных\")); Набор.Имя = \"Заявки\"; Набор.ИсточникДанных = \"Основной\";\n    Набор.Запрос = \"ВЫБРАТЬ З.Ссылка КАК Ссылка, З.Клиент КАК Клиент, З.ДлительностьМинут КАК Минуты ИЗ Документ.ЗаявкаУслуги КАК З\";\n    Для Каждого Имя Из СтрРазделить(\"Ссылка,Клиент,Минуты\",\",\") Цикл\n        Поле = Набор.Поля.Добавить(Тип(\"ПолеНабораДанныхСхемыКомпоновкиДанных\")); Поле.ПутьКДанным = Имя; Поле.Поле = Имя; Поле.Заголовок = Имя;\n    КонецЦикла;\n    Настройки = Новый НастройкиКомпоновкиДанных;\n    Для Каждого Имя Из СтрРазделить(\"Ссылка,Минуты\",\",\") Цикл\n        Выбор = Настройки.Выбор.Элементы.Добавить(Тип(\"ВыбранноеПолеКомпоновкиДанных\")); Выбор.Поле = Новый ПолеКомпоновкиДанных(Имя); Выбор.Использование = Истина;\n    КонецЦикла;\n    Группа = Настройки.Структура.Добавить(Тип(\"ГруппировкаКомпоновкиДанных\")); Группа.Использование = Истина; Группа.Выбор.Элементы.Добавить(Тип(\"АвтоВыбранноеПолеКомпоновкиДанных\"));\n    Отбор = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); Отбор.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Клиент\"); Отбор.ВидСравнения = ВидСравненияКомпоновкиДанных.Равно; Отбор.ПравоеЗначение = Д.Клиент; Отбор.Использование = Истина;\n    Компоновщик = Новый КомпоновщикМакетаКомпоновкиДанных;\n    Макет = Компоновщик.Выполнить(Схема,Настройки,,,Тип(\"ГенераторМакетаКомпоновкиДанныхДляКоллекцииЗначений\"));\n    Процессор = Новый ПроцессорКомпоновкиДанных; Процессор.Инициализировать(Макет);\n    Вывод = Новый ПроцессорВыводаРезультатаКомпоновкиДанныхВКоллекциюЗначений; Таблица = Вывод.Вывести(Процессор);\n    ПолныйВерный = Таблица.Количество() = 2 И Таблица.Итог(\"Минуты\") = 75;\n    ОтборМинут = Настройки.Отбор.Элементы.Добавить(Тип(\"ЭлементОтбораКомпоновкиДанных\")); ОтборМинут.ЛевоеЗначение = Новый ПолеКомпоновкиДанных(\"Минуты\"); ОтборМинут.ВидСравнения = ВидСравненияКомпоновкиДанных.Больше; ОтборМинут.ПравоеЗначение = 30; ОтборМинут.Использование = Истина;\n    Макет = Компоновщик.Выполнить(Схема,Настройки,,,Тип(\"ГенераторМакетаКомпоновкиДанныхДляКоллекцииЗначений\")); Процессор.Инициализировать(Макет); Таблица = Вывод.Вывести(Процессор);\n    Возврат Новый Структура(\"ПолныйВерный,ОтборВерный\",ПолныйВерный,Таблица.Количество() = 1 И Таблица[0].Ссылка = Д.Вторая И Таблица.Итог(\"Минуты\") = 45);\nКонецФункции\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "step-1",
+        "title": "Preserve the starting state",
+        "where": "Own-copy Designer",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Keep the accepted work independent.",
+        "expected": "Separate copy opens with the earlier records.",
+        "troubleshooting": "A new list name alone does not create another database directory.",
+        "before": "Own path, prior sources and a restorable backup identified."
+      },
+      {
+        "id": "step-2",
+        "title": "Add the complete server source",
+        "where": "Конфигуратор → Общие → Общие модули → УчебныеОтчёты",
+        "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+        "why": "Database access has an explicit server boundary.",
+        "expected": "Definitions are module-level; no duplicate helper.",
+        "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
+        "before": "Separate copy opens with the earlier records."
+      },
+      {
+        "id": "step-3",
+        "title": "Prepare and call the experiment",
+        "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
+        "action": "Результат = УчебныеОтчёты.ОпытКомпоновки();\nСообщить(Результат.ПолныйВерный);\nСообщить(Результат.ОтборВерный);",
+        "why": "Print every named result instead of accepting compilation alone.",
+        "expected": "Only the stated caller is inside the existing startup handler.",
+        "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
+        "before": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "id": "step-4",
+        "title": "Save, update and run once",
+        "where": "Ctrl+S → F7 → Предприятие",
+        "action": "Run once and reconcile the own document references with 2/75 then 1/45.",
+        "why": "Observe actual 1C data, not the browser diagram.",
+        "expected": "Different levels produce 45 versus 75; the primary report variant is retained.",
+        "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
+        "before": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "id": "step-5",
+        "title": "Retain both results",
+        "where": "Конфигуратор после закрытия Предприятия",
+        "action": "Remove only the startup caller, retain all source and use another copy for the negative case.",
+        "why": "Preserve provenance and avoid repeating data creation at every startup.",
+        "expected": "Original retained, negative experiment isolated, automatic caller removed.",
+        "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
+        "before": "Different levels produce 45 versus 75; the primary report variant is retained."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Separate copy opens with the earlier records."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "Different levels produce 45 versus 75; the primary report variant is retained."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "Original retained, negative experiment isolated, automatic caller removed."
+      }
+    ],
+    "criteria": [
+      "Parameter/detail/aggregate separated.",
+      "Variant and source retained.",
+      "Discriminating 20/20 tested.",
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits.",
+      "Treat detail and aggregate filters as equivalent on 20/20."
+    ],
+    "hint": "Reconcile actual references, units and raw values before presentation.",
+    "exercises": [
+      {
+        "level": "Basic",
+        "task": "Classify all three restriction levels.",
+        "criteria": "Parameter/detail/aggregate separated."
+      },
+      {
+        "level": "Applied",
+        "task": "Run the source and inspect an own variant.",
+        "criteria": "Variant and source retained."
+      },
+      {
+        "level": "Advanced",
+        "task": "Add 20/20 for another customer and prove the difference.",
+        "criteria": "Discriminating 20/20 tested."
+      }
+    ],
+    "sourceFile": "code/pedagogy/report-dcs-first.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p9-filters.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.full.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "Detail>30 from 30/45 yields",
+        "options": [
+          "75",
+          "45",
+          "30"
+        ],
+        "correct": 1,
+        "explanation": "30 is excluded before aggregation."
+      },
+      {
+        "question": "Total>30 on 20/20",
+        "options": [
+          "Retains 40",
+          "Always removes customer",
+          "Yields 20"
+        ],
+        "correct": 0,
+        "explanation": "The group sum is tested."
+      },
+      {
+        "question": "The original quick filter",
+        "options": [
+          "Has any period",
+          "Has a password",
+          "Is confirmed for customer"
+        ],
+        "correct": 2,
+        "explanation": "Do not promise absent UI."
+      }
+    ]
+  }
+}

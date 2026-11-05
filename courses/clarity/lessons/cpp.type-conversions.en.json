@@ -1,0 +1,337 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.type-conversions",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "C++ programming",
+  "module": "C++ Foundations",
+  "locale": "en",
+  "title": "Type conversions: intent, information loss, and range checks",
+  "goal": "Compare conversion before division with conversion after the fraction is lost.",
+  "prerequisites": [
+    {
+      "text": "You understand int, double and integer division."
+    }
+  ],
+  "sections": [
+    {
+      "id": "model",
+      "title": "From the task to an operation",
+      "paragraphs": [
+        "If both operands are integers, 5/2 gives 2. Storing that result in double gives 2.0: the fraction has already been lost. static_cast<double>(count) explicitly obtains a double value from count before division. With a double operand, division is performed in a floating-point type.",
+        "An explicit conversion states intent but does not make every value safe. double→int discards the fraction toward zero, and the value must be within range. Brace initialization rejects many narrowing conversions to detect loss early. Here 5 and 2 are small and exactly representable."
+      ]
+    },
+    {
+      "id": "worked-example",
+      "title": "Compare conversion before division with conversion after the fraction is lost.",
+      "paragraphs": [],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int count = 5;\n    int people = 2;\n    double late = count / people;\n    double early = static_cast<double>(count) / people;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+        "output": "2 2.5\n",
+        "stdin": ""
+      },
+      "steps": [],
+      "trace": [
+        [
+          "count / people",
+          "int 5; int 2",
+          "int 2",
+          "Integer division happened first."
+        ],
+        [
+          "double late = 2",
+          "int 2",
+          "double 2",
+          "Conversion after division cannot recover the fraction."
+        ],
+        [
+          "static_cast<double>(count) / people",
+          "double 5; int 2",
+          "early: 2.5",
+          "A floating-point operand exists before division."
+        ]
+      ]
+    },
+    {
+      "id": "variation",
+      "title": "Change one condition and check the prediction",
+      "paragraphs": [
+        "Replace count=5 with count=7.",
+        "Integer 7/2 gives 3.",
+        "Floating-point 7.0/2 gives 3.5."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int count = 7;\n    int people = 2;\n    double late = count / people;\n    double early = static_cast<double>(count) / people;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "3 3.5\n"
+      }
+    },
+    {
+      "id": "diagnose",
+      "title": "When the result differs",
+      "paragraphs": [
+        "static_cast<double>(count/people) still converts a completed integer quotient and gives 2."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now solve your own task",
+      "paragraphs": [
+        "Divide 9 items between two people. Show the integer quotient and floating-point share; convert an operand before the operation.",
+        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What output follows the specified change? Replace count=5 with count=7.",
+      "options": [
+        "3 3.5\n",
+        "Compilation fails"
+      ],
+      "correct": 0,
+      "feedback": "Integer 7/2 gives 3. Floating-point 7.0/2 gives 3.5."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Divide 9 items between two people. Show the integer quotient and floating-point share; convert an operand before the operation.",
+      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. 9/2 gives 4, while static_cast<double>(items)/people gives 4.5. static_cast<double>(items/people) gives 4 because conversion happens after integer division."
+    }
+  ],
+  "practice": {
+    "title": "Independent variation",
+    "task": "Divide 9 items between two people. Show the integer quotient and floating-point share; convert an operand before the operation.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "",
+    "returnAnchor": "worked-example",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "",
+        "output": "4 4.5\n"
+      }
+    ],
+    "criteria": [
+      "Compare the output with the readable reference case below.",
+      "Explain each change using the objects or operations in this topic.",
+      "9/2 gives 4, while static_cast<double>(items)/people gives 4.5. static_cast<double>(items/people) gives 4 because conversion happens after integer division."
+    ],
+    "hint": "Integer 7/2 gives 3. Floating-point 7.0/2 gives 3.5.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Divide 9 items between two people. Show the integer quotient and floating-point share; convert an operand before the operation.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Predict the result before running.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Write your solution in a separate starter; keep your previous work.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Compare actual output with your prediction and explain any difference.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Implicit conversion",
+      "definition": "Conversion to a required type without an explicit cast in source."
+    },
+    {
+      "term": "Integral promotion",
+      "definition": "Promotion of a small integer type to int or unsigned int according to representability."
+    },
+    {
+      "term": "static_cast<T>(value)",
+      "definition": "An explicit permitted conversion to T, not a universal safety check."
+    },
+    {
+      "term": "Narrowing",
+      "definition": "A conversion risking range or precision loss; list initialization rejects specified cases."
+    },
+    {
+      "term": "Unsigned modulo",
+      "definition": "Unsigned-value behavior modulo two raised to the type’s width."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-CONVERSIONS",
+    "CPP20-ARITH-CONV",
+    "CPP20-INTEGRAL-CONV",
+    "CPP20-STATIC-CAST",
+    "CPP20-INIT",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.type-conversions",
+    "locale": "en",
+    "visualization": null,
+    "sourceRefs": [
+      "CPP20-CONVERSIONS",
+      "CPP20-ARITH-CONV",
+      "CPP20-INTEGRAL-CONV",
+      "CPP20-STATIC-CAST",
+      "CPP20-INIT",
+      "CPP-GUIDELINES"
+    ],
+    "blockPracticum": {
+      "title": "Practicum B: safe expressions and conversions",
+      "label": "CUMULATIVE PRACTICUM B",
+      "starterLabel": "Starter: make your own attempt",
+      "challenge": "Report goods, shipping, and average cost per item. Keep the total exact in cents and the average separately floating-point.",
+      "readiness": "Lessons 5–8: state, intermediate names, integer bounds, and conversion before division.",
+      "skills": [
+        {
+          "lessonId": "cpp.variables-scope",
+          "title": "Variables, blocks, and lifetime: a state journal"
+        },
+        {
+          "lessonId": "cpp.expressions-operators-blocks",
+          "title": "Expressions and operators: grouping, values, and clear steps"
+        },
+        {
+          "lessonId": "cpp.arithmetic-assignment",
+          "title": "Arithmetic and assignment: quotient, remainder, and safe intermediates"
+        },
+        {
+          "lessonId": "cpp.type-conversions",
+          "title": "Type conversions: intent, information loss, and range checks"
+        }
+      ],
+      "requirements": [
+        "1…1000 items; price and shipping 0…100000 cents.",
+        "Use long long before multiplying; maximum total is 100100000.",
+        "Calculate goods, one-time shipping, then an average with early double.",
+        "Invalid fixed parameters produce invalid before calculation."
+      ],
+      "milestones": [
+        "Write the formula and bounds.",
+        "Separate named stages.",
+        "Check three valid and one invalid variant.",
+        "Preserve the trace and conversion explanation."
+      ],
+      "walkthrough": [
+        "3 × 125 + 50 gives 425 cents; default average output is 141.667. This is an approximate display rather than a monetary rounding contract.",
+        "Variants with 2 and 1 items give simple averages of 150 and 175, providing independent formula checks."
+      ],
+      "starterCode": "#include <iostream>\n\nint main() {\n    const long long itemCount{3};\n    const long long unitPriceCents{125};\n    const long long deliveryCents{50};\n    long long totalCents = itemCount * unitPriceCents + deliveryCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+      "starterExpectedStdout": "total_cents=425\n",
+      "referenceCode": "#include <iostream>\n\nint main() {\n    const long long itemCount{3};\n    const long long unitPriceCents{125};\n    const long long deliveryCents{50};\n    if (itemCount < 1 || itemCount > 1000 || unitPriceCents < 0 || unitPriceCents > 100000 || deliveryCents < 0 || deliveryCents > 100000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long goodsCents = itemCount * unitPriceCents;\n    long long totalCents = goodsCents + deliveryCents;\n    double averageCents = static_cast<double>(totalCents) / itemCount;\n    std::cout << \"goods_cents=\" << goodsCents << '\\n';\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    std::cout << \"average_cents=\" << averageCents << '\\n';\n    return 0;\n}\n",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "goods_cents=375\ntotal_cents=425\naverage_cents=141.667\n"
+        }
+      ],
+      "verificationVariants": [
+        {
+          "id": "two-items",
+          "replace": [
+            {
+              "from": "const long long itemCount{3};",
+              "to": "const long long itemCount{2};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "goods_cents=250\ntotal_cents=300\naverage_cents=150\n"
+        },
+        {
+          "id": "one-item",
+          "replace": [
+            {
+              "from": "const long long itemCount{3};",
+              "to": "const long long itemCount{1};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "goods_cents=125\ntotal_cents=175\naverage_cents=175\n"
+        },
+        {
+          "id": "none-rejected",
+          "replace": [
+            {
+              "from": "const long long itemCount{3};",
+              "to": "const long long itemCount{0};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ],
+      "artifacts": [
+        "Source and unit contract.",
+        "Intermediate types and bounds table.",
+        "Four actual runs.",
+        "One explained and repaired defect."
+      ],
+      "rubric": [
+        {
+          "criterion": "Formula correctness",
+          "complete": "Shipping is added once.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "State and names",
+          "complete": "Stages have meaningful names.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Safety",
+          "complete": "Validation precedes operations and long long is chosen early.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Conversion",
+          "complete": "The average gets double before division.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Checks",
+          "complete": "All four runs and expectations are preserved.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        }
+      ],
+      "completionRule": "Self-check: at least 8/10 with no zero for correctness, safety, or checks. This is a manual rubric rather than an automatic grade or next-lesson gate.",
+      "verification": "manual-output-comparison"
+    },
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\basics\\type-conversions.en.json"
+}

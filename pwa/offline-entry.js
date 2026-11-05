@@ -71,7 +71,7 @@ document.querySelector('.side-nav').addEventListener('click',closeMobile);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=v=>structuredClone(v),label=v=>typeof v==='string'?v:v?.ru||v?.en||'';
 let clarityController=null,disposeTerms=null,disposeOrbit=null,goldPresentation=null,session=null,data=null,course=null,catalog=null,programming=null,studio=null,graphics=null,queue=Promise.resolve(),pending=0,saveFailed=false,renderSequence=0,cppLearningFilter='topics',locale=prefs.courseLocale;
-const assistantBridge=createLazyAssistantBridge({root,publicMode:true,readIdentity:()=>session,readReady:()=>root.dataset.akroniklRoute===location.hash,readRoute:()=>{const r=Object.fromEntries(new URLSearchParams(location.hash.slice(1)));if((r.lesson||r.practicum)&&!r.course)r.course='cpp';return r},readLocale:()=>prefs.mentorLocale||prefs.uiLocale,readCourseLocale:()=>locale,readEditor:()=>data?root.querySelector('#editor'):null});
+const assistantBridge=createLazyAssistantBridge({root,publicMode:true,readIdentity:()=>session,readReady:()=>root.dataset.akroniklRoute===location.hash,readRoute:()=>{const r=Object.fromEntries(new URLSearchParams(location.hash.slice(1)));if((r.lesson||r.practicum)&&!r.course)r.course='cpp';return r},readLocale:()=>prefs.mentorLocale||prefs.uiLocale,readCourseLocale:()=>['ru','en'].includes(new URLSearchParams(location.hash.slice(1)).get('locale'))?new URLSearchParams(location.hash.slice(1)).get('locale'):locale,readEditor:()=>data?root.querySelector('#editor'):null});
 function save(value){
  if(!session)return Promise.reject(Error('Откройте локальную копию.'));
  pending++;saveFailed=false;saved.textContent='Сохраняем изменения на устройстве…';
@@ -90,7 +90,7 @@ async function unlockView(){
  root.innerHTML=unlockMarkup(rows,requested);
  root.querySelector('form').onsubmit=async event=>{
   event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;
-  try{const previousHash=location.hash;session=await store.unlock(root.querySelector('#localCopy').value,root.querySelector('#localPhrase').value);data=session.read();saved.textContent='Открыта локальная копия · '+data.owner.displayName+'. Облачный вход не подтверждён.';document.querySelector('#lockLocal').hidden=false;document.querySelector('[data-local-name]').textContent=data.owner.displayName;document.querySelector('[data-local-avatar]').textContent=data.owner.displayName.slice(0,1).toLocaleUpperCase();location.hash=unlockRoute.get('lesson')==='cpp.programming-process'&&requested===session.id?'#'+new URLSearchParams({...Object.fromEntries(unlockRoute),stage:unlockRoute.get('stage')||'practice',view:'lesson'}):returnToStudio?'#view=code-studio':'#view=projects';if(location.hash===previousHash&&unlockRoute.get('lesson')==='cpp.programming-process')await render();}
+  try{const previousHash=location.hash;session=await store.unlock(root.querySelector('#localCopy').value,root.querySelector('#localPhrase').value);data=session.read();saved.textContent='Открыта локальная копия · '+data.owner.displayName+'. Облачный вход не подтверждён.';document.querySelector('#lockLocal').hidden=false;document.querySelector('[data-local-name]').textContent=data.owner.displayName;document.querySelector('[data-local-avatar]').textContent=data.owner.displayName.slice(0,1).toLocaleUpperCase();location.hash=!!course?.curriculum?.lessons?.some(t=>t.id===unlockRoute.get('lesson'))&&requested===session.id?'#'+new URLSearchParams({...Object.fromEntries(unlockRoute),stage:unlockRoute.get('stage')||'practice',view:'lesson'}):returnToStudio?'#view=code-studio':'#view=projects';if(location.hash===previousHash&&!!course?.curriculum?.lessons?.some(t=>t.id===unlockRoute.get('lesson')))await render();}
   catch{root.querySelector('#unlockStatus').textContent='Копия не открыта. Проверьте фразу; данные не изменены.'}
   finally{const input=root.querySelector('#localPhrase');if(input)input.value='';button.disabled=false}
  };
@@ -182,7 +182,7 @@ async function renderCurrent(seq){
  if(route.get('view')==='akronikl'){root.innerHTML=assistantPageMarkup(prefs.mentorLocale||prefs.uiLocale);return}
  if(['account','feedback','admin'].includes(route.get('view'))){root.innerHTML=serverView(route.get('view'));return}
  if(route.get('view')==='offline'){root.innerHTML='<section class="ps-hero glass-panel"><div><span class="eyebrow">NEXUS · БЕЗ ИНТЕРНЕТА</span><h1>Всё для вашей работы</h1><p>Академия, редактор и личные проекты доступны на устройстве. Возвращение сети не меняет ваши файлы автоматически.</p><div class="hero-actions"><a class="btn primary" href="#view=unlock">Личная копия</a><a class="btn" href="#view=compiler">Компилятор C++</a><a class="btn" href="/account/entry/#view=offline">Подготовка и перенос в аккаунт</a></div></div></section>';return}
- if((route.has('copy')&&!(route.get('lesson')==='cpp.programming-process'&&session?.id===route.get('copy')))||route.get('view')==='unlock')return unlockView();
+ if((route.has('copy')&&!(!!course?.curriculum?.lessons?.some(t=>t.id===route.get('lesson'))&&session?.id===route.get('copy')))||route.get('view')==='unlock')return unlockView();
  if(route.get('view')==='compiler')return compiler();
  if(route.get('view')==='computer-graphics'||route.get('course')==='computer-graphics'||data?.projects[route.get('project')]?.origin?.kind==='graphics-lab'){
   if(!needLocal())return;
@@ -194,11 +194,11 @@ async function renderCurrent(seq){
  if(['projects','project-studio'].includes(route.get('view')))return projectList();
  const kind=route.has('lesson')?'lesson':route.has('practicum')?'practicum':'exercise';
  const lessonId=route.get('lesson');
- if(lessonId==='cpp.programming-process'&&(!route.get('course')||route.get('course')==='cpp')){
+ if(course.curriculum.lessons.some(t=>t.id===lessonId)&&(!route.get('course')||route.get('course')==='cpp')){
   const [ui,state]=await Promise.all([import('../core/cpp-clarity-r3-renderer.mjs'),import('../core/cpp-clarity-r3-session.mjs')]);if(seq!==renderSequence)return;
   const boundSession=session,active=()=>seq===renderSequence&&session===boundSession&&(!boundSession||!!data);
   const adapter=boundSession?state.createCppVaultAdapter({topicId:lessonId,readData:()=>data,isCurrent:active,commit:async next=>{if(!active())throw Error('LOCAL_COPY_LOCKED');while(pending>0)await queue.catch(()=>{});if(!active())throw Error('LOCAL_COPY_LOCKED');const receipt=await save(next);if(!active())throw Error('LOCAL_COPY_LOCKED');data=next;if(receipt.branched){const p=new URLSearchParams(location.hash.slice(1));p.set('copy',receipt.id);history.replaceState(null,'','#'+p);}return receipt;}}):null;
-  clarityController=await ui.mountClarityLesson(root,{topicId:lessonId,locale:route.get('locale')||locale,adapter,isCurrent:active});return;
+  clarityController=await ui.mountClarityLesson(root,{topicId:lessonId,locale:route.get('locale')||locale,adapter,isCurrent:active,onViewChange:view=>{if(!active())return;assistantBridge.invalidate();root.dataset.akroniklRoute=view.hash;assistantBridge.bindEditor();},openAssistant:button=>{if(active())void assistantBridge.open(button);}});return;
  }
 
  if(lessonId){await prepareCppGoldLesson(course,lessonId,locale,async()=>{goldPresentation??=await import('../core/academy-gold-presentation.js');await goldPresentation.ensureGoldStyles()});if(seq!==renderSequence)return;}

@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.algorithm-definition-properties",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.algorithms",
+  "course": "C++ programming",
+  "module": "Algorithmic Thinking",
+  "locale": "en",
+  "title": "Algorithms: precision, termination and correctness",
+  "goal": "Check that a rule gives a definite result and finishes.",
+  "prerequisites": [
+    {
+      "text": "You can multiply, divide with a remainder and distinguish starting data from a result. The first topic’s program frame is retained."
+    }
+  ],
+  "sections": [
+    {
+      "id": "model",
+      "title": "From the task to an operation",
+      "paragraphs": [
+        "Express 125 seconds as whole minutes and remaining seconds. A minute has 60 seconds: two groups fit into 125 and 5 seconds remain. An algorithm is a precise sequence of steps for cases like these.",
+        "In C++, / between integers gives the integer quotient and % gives the remainder. The divisor is always 60 here, so division by zero cannot occur. Check the result: 2 × 60 + 5 = 125 and 0 ≤ 5 < 60. This is a postcondition, a property after execution.",
+        "Our steps execute once, so they finish. A repeating algorithm needs a separate reason to finish: for example, one fewer item remains after each step. A useful property kept by the steps is called an invariant: the processed part has already been counted correctly. Check a concrete calculation before proving a general case."
+      ]
+    },
+    {
+      "id": "worked-example",
+      "title": "Check that a rule gives a definite result and finishes.",
+      "paragraphs": [],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int seconds = 125;\n    int minutes = seconds / 60;\n    int remainder = seconds % 60;\n    std::cout << minutes << ' ' << remainder << '\\n';\n    return 0;\n}\n",
+        "output": "2 5\n",
+        "stdin": ""
+      },
+      "steps": [],
+      "trace": [
+        [
+          "seconds = 125",
+          "—",
+          "seconds: 125",
+          "Set a nonnegative number of seconds."
+        ],
+        [
+          "seconds / 60",
+          "125 / 60",
+          "minutes: 2",
+          "Two whole minutes fit."
+        ],
+        [
+          "seconds % 60",
+          "125 - 120",
+          "remainder: 5",
+          "The remainder is below 60; 2 × 60 + 5 reconstructs the input."
+        ]
+      ]
+    },
+    {
+      "id": "variation",
+      "title": "Change one condition and check the prediction",
+      "paragraphs": [
+        "Set seconds to 60, then to 0.",
+        "Exactly one minute leaves no remaining seconds.",
+        "For zero, both quotient and remainder are zero."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int seconds = 0;\n    int minutes = seconds / 60;\n    int remainder = seconds % 60;\n    std::cout << minutes << ' ' << remainder << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "1 0\n"
+      }
+    },
+    {
+      "id": "diagnose",
+      "title": "When the result differs",
+      "paragraphs": [
+        "Printing only minutes loses 5 seconds: the algorithm finished but did not provide the complete required result."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now solve your own task",
+      "paragraphs": [
+        "Split 190 seconds into minutes and seconds. Check reconstruction of the input and the remainder bounds.",
+        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What output follows the specified change? Set seconds to 60, then to 0.",
+      "options": [
+        "1 0\n",
+        "0 0\n"
+      ],
+      "correct": 0,
+      "feedback": "Exactly one minute leaves no remaining seconds. For zero, both quotient and remainder are zero."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Split 190 seconds into minutes and seconds. Check reconstruction of the input and the remainder bounds.",
+      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. For 190 seconds, both values are needed: 3 minutes and 10 seconds; 3 × 60 + 10 = 190 and the remainder is in 0..59. Printing only minutes loses 10 seconds."
+    }
+  ],
+  "practice": {
+    "title": "Independent variation",
+    "task": "Split 190 seconds into minutes and seconds. Check reconstruction of the input and the remainder bounds.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "",
+    "returnAnchor": "worked-example",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "",
+        "output": "3 10\n"
+      }
+    ],
+    "criteria": [
+      "Compare the output with the readable reference case below.",
+      "Explain each change using the objects or operations in this topic.",
+      "For 190 seconds, both values are needed: 3 minutes and 10 seconds; 3 × 60 + 10 = 190 and the remainder is in 0..59. Printing only minutes loses 10 seconds."
+    ],
+    "hint": "Exactly one minute leaves no remaining seconds. For zero, both quotient and remainder are zero.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Split 190 seconds into minutes and seconds. Check reconstruction of the input and the remainder bounds.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Predict the result before running.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Write your solution in a separate starter; keep your previous work.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Compare actual output with your prediction and explain any difference.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Definiteness",
+      "definition": "The intended action of each step is unambiguous."
+    },
+    {
+      "term": "Invariant",
+      "definition": "A property that remains true across specified state transitions."
+    },
+    {
+      "term": "Postcondition",
+      "definition": "A property that must hold when the algorithm finishes."
+    },
+    {
+      "term": "Termination measure",
+      "definition": "A well-founded quantity that decreases as execution makes progress."
+    }
+  ],
+  "sourceRefs": [
+    "CS2023-AL",
+    "ISO-CPP"
+  ],
+  "extras": {
+    "lessonId": "cpp.algorithm-definition-properties",
+    "locale": "en",
+    "visualization": null,
+    "sourceRefs": [
+      "CS2023-AL",
+      "ISO-CPP"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\algorithms\\algorithm-definition-properties.en.json"
+}

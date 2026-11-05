@@ -1,0 +1,466 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.one-dimensional-arrays",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.structured-programming",
+  "course": "C++ programming",
+  "module": "Structured Programming",
+  "locale": "en",
+  "title": "One-dimensional arrays: indexing, filtering, and search",
+  "goal": "Connect every index to a valid range and distinguish storage capacity from logical length.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+    },
+    {
+      "text": "Follow the prerequisite links: cpp.standard-sequences. New constructs are introduced before the assignment."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "The object and its elements",
+      "paragraphs": [
+        "int values[4]{} creates four zero-initialized ints with indices 0,1,2,3. Four is the count, not the final index. A built-in array’s bound in ordinary C++ must be a constant expression; int a[n] with a runtime n is not a standard solution.",
+        "Use vector for a changing size, or a fixed buffer with a separate count<=capacity. {} initialization never permits access beyond the array. All buffer elements exist, but only the first count may represent task data."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "Arrays in parameters",
+      "paragraphs": [
+        "An int a[] parameter is adjusted to int*, so the declaration does not carry the length into the function. sizeof that parameter measures a pointer. Do not derive length using sizeof(a)/sizeof(a[0]) inside such a function.",
+        "Pass span<const int> or an explicit pointer/length pair with a proven contract. Here span preserves bounds. At the actual array declaration, sizeof applies to the array, but a clear interface remains preferable."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Capacity and length",
+      "paragraphs": [
+        "Process only the first count elements in a fixed array."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <span>\nint main() {\n    int buffer[5]{4, 7, 0, 0, 0};\n    std::span<const int> values{buffer, 2};\n    int sum{};\n    for (int value : values) { sum += value; }\n    std::cout << values.size() << ' ' << sum << '\\n';\n}\n",
+        "output": "2 11\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Linear search",
+      "paragraphs": [
+        "Search left to right, comparing each element with the target. Return the first matching index. If none matches, return a separate flag or size() as an end position; callers must check that result before indexing.",
+        "An empty range has no match. Duplicates require a policy: first, last, or all indices. The lab counts qualifying elements, so each visited index contributes once even when values repeat."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "Stable filtering",
+      "paragraphs": [
+        "To select nonnegative values, traverse the input and append qualifying values to a new vector. Relative order is preserved, and an empty result is valid. Sum only selected values; do not confuse an element count with a sum of indices.",
+        "In-place filtering can use a write index with write<=read: read the original element before writing a selected one. That requires another invariant. Begin with two containers so memory optimization does not obscure correctness."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "The first match",
+      "paragraphs": [
+        "size represents no match and is never dereferenced."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <array>\n#include <span>\nstd::size_t findFirst(std::span<const int> values, int target) {\n    for (std::size_t i = 0; i < values.size(); ++i) { if (values[i] == target) { return i; } }\n    return values.size();\n}\nint main() {\n    std::array<int, 4> values{4, 2, 4, 9};\n    std::cout << findFirst(values, 4) << ' ' << findFirst(values, 7) << '\\n';\n}\n",
+        "output": "0 4\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Read the contract and independently derive the expected result for the given input.",
+        "Trace state after each significant operation and identify the established preconditions.",
+        "Run the source, compare stdout and exit code, then check the additional cases."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "Minimum and empty input",
+      "paragraphs": [
+        "An empty range has no minimum. Do not initialize the minimum to zero when all values may be positive. After checking nonemptiness, start with the first element and compare the rest; a later structure can carry an explicit presence flag.",
+        "For n<=100 and |value|<=1000, the absolute sum is at most 100000. For a[i], establish both i<count and count<=capacity. The compiler is not required to diagnose a violation."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Comparing representations",
+      "paragraphs": [
+        "The same span-based algorithm should return identical results for int[], array, and vector. Ownership, resizing, and interfaces differ, not the sequence’s mathematical meaning. Avoid coupling a computation to a global buffer.",
+        "Test an empty set, one negative value, one zero, all selected, none selected, and duplicates. Record expected order and count for each. Next, add a second coordinate while explicitly checking matrix shape."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What does a search index equal to size() mean?",
+      "options": [
+        "The first element",
+        "The last element",
+        "An end position that must not be dereferenced"
+      ],
+      "correct": 2,
+      "feedback": "Only indices below size() are valid."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What is the final index of four elements?",
+      "options": [
+        "4",
+        "3",
+        "5"
+      ],
+      "correct": 1,
+      "feedback": "Indices form [0,4)."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Does an empty set have a minimum?",
+      "options": [
+        "No; absence needs explicit handling",
+        "Always its first element",
+        "Always zero"
+      ],
+      "correct": 0,
+      "feedback": "Do not read a[0] before checking nonemptiness."
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "Does sequential filtering with push_back preserve order?",
+      "options": [
+        "Only for unique values",
+        "No, it always reverses it",
+        "Yes"
+      ],
+      "correct": 2,
+      "feedback": "Each accepted element is appended after the previous one."
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "What is needed to accept this lab?",
+      "options": [
+        "Only a copied reference",
+        "Source, actual results, original tests, and a contract explanation",
+        "Only a completed flag"
+      ],
+      "correct": 1,
+      "feedback": "A progress flag is not evidence of independent mastery."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "A data length must accompany element access.",
+      "feedback": "Next: Matrices: shape, traversal, and linear storage. Preserve the lab and its verification table."
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: One-dimensional arrays: indexing, filtering, and search",
+    "task": "Select nonnegative values from n<=100 integers in -1000…1000, preserving order. Print count sum, then selected values separated by spaces; an empty result has an empty second line.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "0",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "0",
+        "output": "0 0\n\n"
+      },
+      {
+        "label": "Case 2",
+        "input": "1 -2",
+        "output": "0 0\n\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "1 0",
+        "output": "1 0\n0\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "5 -2 4 0 -1 4",
+        "output": "3 8\n4 0 4\n"
+      },
+      {
+        "label": "Case 5",
+        "input": "2 1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 6",
+        "input": "1 0 x",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "The contract matches the task and defines units, empty input, and extra data.",
+      "Every published case matches and two explained original tests are included.",
+      "A data length must accompany element access.",
+      "Do not initialize a minimum from a[0] before checking nonemptiness. Do not use a VLA as standard C++20.",
+      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+    ],
+    "hint": "A data length must accompany element access.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Restate the input, output, and rejection contract in your own words.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Draw the state and state the invariant: A data length must accompany element access.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Start from the scaffold, implement the valid path, then add boundary checks.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Add two original cases including one rejection; explain the result without consulting the reference.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Preserve source, a result table, and a short cost-and-limit analysis.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Logical length",
+      "definition": "the number of elements belonging to the data."
+    },
+    {
+      "term": "Stable filtering",
+      "definition": "preserving selected elements’ relative order."
+    },
+    {
+      "term": "Index",
+      "definition": "an element position in [0,size)."
+    },
+    {
+      "term": "Duplicate",
+      "definition": "a repeated value at another position."
+    },
+    {
+      "term": "Linear search",
+      "definition": "checking successive elements until a match or the end."
+    },
+    {
+      "term": "End position",
+      "definition": "a completion marker, not an accessible element."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-ARRAY",
+    "CPP20-SPAN"
+  ],
+  "extras": {
+    "lessonId": "cpp.one-dimensional-arrays",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Stepwise map: One-dimensional arrays: indexing, filtering, and search",
+      "description": "This diagram explains reasoning; it does not execute C++ or automatically assess a solution.",
+      "steps": [
+        {
+          "title": "The object and its elements",
+          "description": "int values[4]{} creates four zero-initialized ints with indices 0,1,2,3. Four is the count, not the final index. A built-in array’s bound in ordinary C++ must be a constant expression; int a[n] with a runtime n is not a standard solution."
+        },
+        {
+          "title": "Arrays in parameters",
+          "description": "An int a[] parameter is adjusted to int*, so the declaration does not carry the length into the function. sizeof that parameter measures a pointer. Do not derive length using sizeof(a)/sizeof(a[0]) inside such a function."
+        },
+        {
+          "title": "Linear search",
+          "description": "Search left to right, comparing each element with the target. Return the first matching index. If none matches, return a separate flag or size() as an end position; callers must check that result before indexing."
+        },
+        {
+          "title": "Stable filtering",
+          "description": "To select nonnegative values, traverse the input and append qualifying values to a new vector. Relative order is preserved, and an empty result is valid. Sum only selected values; do not confuse an element count with a sum of indices."
+        },
+        {
+          "title": "Minimum and empty input",
+          "description": "An empty range has no minimum. Do not initialize the minimum to zero when all values may be positive. After checking nonemptiness, start with the first element and compare the rest; a later structure can carry an explicit presence flag."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-ARRAY",
+      "CPP20-SPAN"
+    ],
+    "blockPracticum": {
+      "title": "Cumulative practicum: One-dimensional arrays: indexing, filtering, and search",
+      "challenge": "Measurement summary: n in 0…100 followed by n integers in -1000…1000. Use span-based functions to compute count, sum, positive, and min; an empty set has min=none. Require exactly n values with no extra tail.",
+      "starterCode": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n",
+      "starterExpectedStdout": "pending\n",
+      "referenceCode": "#include <iostream>\n#include <span>\n#include <vector>\nlong long sum(std::span<const int> values) {\n    long long result{};\n    for (int value : values) { result += value; }\n    return result;\n}\nint positive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    std::vector<int> values;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) { std::cout << \"invalid\\n\"; return 0; }\n        values.push_back(value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << values.size() << ' ' << sum(values) << ' ' << positive(values) << ' ';\n    if (values.empty()) { std::cout << \"none\\n\"; return 0; }\n    int minimum = values[0];\n    for (int value : values) { if (value < minimum) { minimum = value; } }\n    std::cout << minimum << '\\n';\n}\n",
+      "cases": [
+        {
+          "stdin": "0",
+          "stdout": "0 0 0 none\n"
+        },
+        {
+          "stdin": "1 5",
+          "stdout": "1 5 1 5\n"
+        },
+        {
+          "stdin": "4 -2 0 3 3",
+          "stdout": "4 4 2 -2\n"
+        },
+        {
+          "stdin": "2 1",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 2 x",
+          "stdout": "invalid\n"
+        }
+      ],
+      "referenceFiles": {},
+      "starterFiles": {},
+      "metadata": {},
+      "steps": [
+        "Restate the input, output, and rejection contract in your own words.",
+        "Draw the state and state the invariant: A data length must accompany element access.",
+        "Start from the scaffold, implement the valid path, then add boundary checks.",
+        "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+        "Add two original cases including one rejection; explain the result without consulting the reference.",
+        "Preserve source, a result table, and a short cost-and-limit analysis."
+      ],
+      "rubric": [
+        {
+          "criterion": "Contract and bounds",
+          "points": 2,
+          "complete": "All requirements are supported by source and actual cases.",
+          "partial": "The main path is supported, but one significant case or argument is missing.",
+          "missing": "No verifiable result, or the core contract is violated."
+        },
+        {
+          "criterion": "Correctness and rejection without mutation",
+          "points": 2,
+          "complete": "All requirements are supported by source and actual cases.",
+          "partial": "The main path is supported, but one significant case or argument is missing.",
+          "missing": "No verifiable result, or the core contract is violated."
+        },
+        {
+          "criterion": "Tests and independent expectations",
+          "points": 2,
+          "complete": "All requirements are supported by source and actual cases.",
+          "partial": "The main path is supported, but one significant case or argument is missing.",
+          "missing": "No verifiable result, or the core contract is violated."
+        },
+        {
+          "criterion": "Structure and resources",
+          "points": 2,
+          "complete": "All requirements are supported by source and actual cases.",
+          "partial": "The main path is supported, but one significant case or argument is missing.",
+          "missing": "No verifiable result, or the core contract is violated."
+        },
+        {
+          "criterion": "Explanation and original extension",
+          "points": 2,
+          "complete": "All requirements are supported by source and actual cases.",
+          "partial": "The main path is supported, but one significant case or argument is missing.",
+          "missing": "No verifiable result, or the core contract is violated."
+        }
+      ],
+      "artifact": "source-code-and-test-report",
+      "verification": "manual-output-comparison",
+      "label": "CUMULATIVE PRACTICUM",
+      "readiness": "Modules 1–2: expressions, comparisons, types, references, and checked cin. Follow the prerequisite links: cpp.standard-sequences. New constructs are introduced before the assignment.",
+      "skills": [
+        {
+          "lessonId": "cpp.if-else-switch",
+          "title": "Branching: decisions, ranges, and switch"
+        },
+        {
+          "lessonId": "cpp.for-loop",
+          "title": "The for loop: invariants, boundaries, and cost"
+        },
+        {
+          "lessonId": "cpp.while-do-while",
+          "title": "while and do while: finite streams and termination"
+        },
+        {
+          "lessonId": "cpp.functions-contracts",
+          "title": "Functions: parameters, results, and contracts"
+        },
+        {
+          "lessonId": "cpp.standard-sequences",
+          "title": "array, vector, and span: ownership and views"
+        },
+        {
+          "lessonId": "cpp.one-dimensional-arrays",
+          "title": "One-dimensional arrays: indexing, filtering, and search"
+        }
+      ],
+      "requirements": [
+        "Measurement summary: n in 0…100 followed by n integers in -1000…1000. Use span-based functions to compute count, sum, positive, and min; an empty set has min=none. Require exactly n values with no extra tail.",
+        "The contract matches the task and defines units, empty input, and extra data.",
+        "Every published case matches and two explained original tests are included.",
+        "A data length must accompany element access."
+      ],
+      "milestones": [
+        "Restate the input, output, and rejection contract in your own words.",
+        "Draw the state and state the invariant: A data length must accompany element access.",
+        "Start from the scaffold, implement the valid path, then add boundary checks.",
+        "For every reference case, independently write the expectation before running; keep stdout and exit code.",
+        "Add two original cases including one rejection; explain the result without consulting the reference.",
+        "Preserve source, a result table, and a short cost-and-limit analysis."
+      ],
+      "walkthrough": [
+        "Buffers and tables often use built-in arrays in existing C++ code. Read them safely while keeping modern interfaces.",
+        "Next: Matrices: shape, traversal, and linear storage. Preserve the lab and its verification table."
+      ],
+      "artifacts": [
+        "All source files and the TU/includeRoots lists.",
+        "Contract, ownership model, and container-choice explanation.",
+        "Actual results for every case, eight unit checks, and two original counterexamples.",
+        "catalog-out.txt, explicit-save confirmation, and a fresh import."
+      ],
+      "completionRule": "Manual review at 8/10, every case and two original cases; explain connections to earlier lessons."
+    },
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\structured\\one-dimensional-arrays.en.json"
+}

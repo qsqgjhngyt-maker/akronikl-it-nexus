@@ -1,0 +1,348 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p2.topic-2",
+  "courseId": "onec",
+  "moduleId": "onec.p2",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "BSL fundamentals",
+  "locale": "en",
+  "title": "Value types: why number 30 differs from text “30”",
+  "goal": "Distinguish value types and explicitly convert suitable numeric text.",
+  "prerequisites": [
+    {
+      "text": "The preceding language lesson; saving, updating and launching your own infobase.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "Type and validity are separate",
+      "paragraphs": [
+        "A type determines which operations make sense for a value. Number 30 represents a quantity; string \"30\" stores two characters. Similar display does not make them interchangeable. ТипЗнч reports a type without changing the variable; ТекстМинут remains a string afterwards.",
+        "-1 is numeric but invalid as our request duration. Zero is numeric and valid under the chosen rule. A variable name changes neither its type nor the requirement. Record input type, domain validity and expected action separately."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Trace the main example",
+      "paragraphs": [
+        "The original text stays a string; a separately converted number participates in addition."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Минуты = 30;\nТекстМинут = \"30\";\nСообщить(ТипЗнч(Минуты));\nСообщить(ТипЗнч(ТекстМинут));\nПреобразованныеМинуты = Число(ТекстМинут);\nСообщить(ПреобразованныеМинуты + 15);",
+        "output": "The messages show number type Число, string type Строка and numeric result 45."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Минуты = 30",
+              "Number 30",
+              "A quantity."
+            ],
+            [
+              "ТекстМинут = \"30\"",
+              "Two-character string",
+              "Appearance does not change type."
+            ],
+            [
+              "Число(ТекстМинут)",
+              "Number 30",
+              "Explicit conversion."
+            ],
+            [
+              "30 + 15",
+              "45",
+              "Two numbers are added."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Explicit conversion preserves meaning",
+      "paragraphs": [
+        "Число(ТекстМинут) explicitly converts suitable numeric text. Store its result separately to compare the original representation and the new quantity. This promises no universal human-input parser: spaces, separators, units and empty input need an agreed rule.",
+        "ПреобразованныеМинуты = Число(ТекстМинут) obtains a new numeric value while preserving ТекстМинут. Keeping the original representation supports diagnosis and an explanation of acceptance. Do not calculate from arbitrary text with unknown units."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Empty does not mean zero",
+      "paragraphs": [
+        "Неопределено denotes an unspecified value in its context, not numeric zero or an empty string. An empty string already has a string type; zero already has a number type. ЗначениеЗаполнено can treat zero as unfilled, but that is not automatically the application rule for zero duration. Define the field’s meaning first.",
+        "Record three observations: numeric 0 has a number type; \"\" is a string; Неопределено is not a known duration. A technical filled-value predicate does not choose business rules. Replacing missing data with 0 can produce a plausible total while hiding the cause."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Zero is a known quantity",
+      "paragraphs": [
+        "A known zero quantity differs from an unspecified value."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Минуты = 0;\nСообщить(ТипЗнч(Минуты));\nСообщить(Минуты + 15);",
+        "output": "Число; 15."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "0",
+              "Numeric value",
+              "It participates in arithmetic."
+            ],
+            [
+              "0 + 15",
+              "15",
+              "Zero remains a known value."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Conversion boundaries",
+      "paragraphs": [
+        "Check input type, then range and the intended operation. ТипЗнч output observes a type; result 45 observes arithmetic after conversion. Explain both independently. Handling invalid numeric text is covered with exceptions later; silently turning unknown input into zero hides an error.",
+        "Parsing \"30\" does not establish acceptance of \"30 minutes\", arbitrary separators or empty input. Those need a separate contract and rejection handling. Exception handling is covered later; do not claim universal validation from one accepted input."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "Matching display means matching types. Compare ТипЗнч rather than displayed characters alone.",
+        "Empty or invalid input can always become zero. That destroys the distinction between known zero and missing/invalid input."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Which value has string type?",
+      "options": [
+        "30",
+        "\"30\"",
+        "0"
+      ],
+      "correct": 1,
+      "feedback": "Quotes denote text; similar display does not make it numeric."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "What does Число(ТекстМинут) do when its result is assigned elsewhere?",
+      "options": [
+        "Permanently changes the original variable’s type",
+        "Changes all infobase fields",
+        "Returns a number while the original text remains a string"
+      ],
+      "correct": 2,
+      "feedback": "Conversion returns a value; assigning it elsewhere leaves the source string intact."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Why should unknown duration not silently become zero?",
+      "options": [
+        "That loses the distinction between known zero and missing/invalid input",
+        "Zero never has a type",
+        "1C always prohibits zero"
+      ],
+      "correct": 0,
+      "feedback": "The domain defines whether zero is valid; absence and error are different states."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Specify duration input without silently converting errors into zero.",
+      "feedback": "Define accepted type/representation, range and response to unknown formats."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Value types: why number 30 differs from text “30”",
+    "task": "Specify duration input without silently converting errors into zero.",
+    "environment": "Official locally installed training platform; a separate personal file infobase, no Studio required.",
+    "externalRoute": "Designer → managed application module of your training copy",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "Минуты = 30;\nТекстМинут = \"30\";\nСообщить(ТипЗнч(Минуты));\nСообщить(ТипЗнч(ТекстМинут));\nПреобразованныеМинуты = Число(ТекстМинут);\nСообщить(ПреобразованныеМинуты + 15);\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "predict",
+        "title": "Predict the result",
+        "where": "Nexus → this lesson’s worked example",
+        "action": "Identify the types of 30, \"30\", 0, \"\" and Неопределено before running.",
+        "why": "An expectation makes a wrong result detectable.",
+        "expected": "The messages show number type Число, string type Строка and numeric result 45.",
+        "troubleshooting": "Use the trace to separate each instruction; do not copy a displayed total without explaining it.",
+        "before": "Your own training infobase opens and its startup handler already works. Preserve the preceding source before replacing this exercise body."
+      },
+      {
+        "id": "prepare-source",
+        "title": "Preserve your preceding work",
+        "where": "Your infobase → Designer → configuration root → managed application module",
+        "action": "Close only your own Enterprise session. Open your training copy in Designer. Preserve the previous module text separately. Keep one ПриНачалеРаботыСистемы handler; replace only the preceding exercise body inside it. Do not replace modules of an unfamiliar application.",
+        "why": "The next exercise must not destroy the preceding version.",
+        "expected": "The intended module is open and the earlier source remains available.",
+        "troubleshooting": "If you cannot identify the infobase, return to the startup list and check its entry and directory.",
+        "before": "The messages show number type Число, string type Строка and numeric result 45."
+      },
+      {
+        "id": "enter-code",
+        "title": "Enter this example",
+        "where": "Designer → the module text window",
+        "action": "Copy the main example between the existing handler declaration and КонецПроцедуры. Do not add another handler. Read the explanation and identify what changes after each line.",
+        "why": "The original text stays a string; a separately converted number participates in addition.",
+        "expected": "The exact exercise source is entered in the intended context.",
+        "troubleshooting": "Check ordinary quotes, semicolons and matching block endings. A syntax rejection is not execution.",
+        "before": "The intended module is open and the earlier source remains available."
+      },
+      {
+        "id": "run-check",
+        "title": "Save, update and execute",
+        "where": "Designer → Ctrl+S → Configuration / Update database configuration (F7) → Debug / Start (F5)",
+        "action": "Save your source, complete the database update and start Enterprise mode. Read the message area and compare each actual output with your prediction.",
+        "why": "Only the installed platform executes this BSL.",
+        "expected": "The messages show number type Число, string type Строка and numeric result 45.",
+        "troubleshooting": "For old output close your client, verify the infobase and update again. For a different value find the first trace step that differs.",
+        "before": "The exact exercise source is entered in the intended context."
+      },
+      {
+        "id": "vary-record",
+        "title": "Change one condition and retain evidence",
+        "where": "The same module, then Enterprise mode and Nexus notes",
+        "action": "Replace only \"30\" with \"20\", save, update and execute. Restore the main example after comparing.",
+        "why": "A changed input tests understanding beyond copying the example.",
+        "expected": "The final output is 35; the types remain number and string.",
+        "troubleshooting": "Text \"thirty minutes\" is outside the specified format. Do not substitute zero; retain the input and explain why explicit rejection is needed.",
+        "before": "The messages show number type Число, string type Строка and numeric result 45."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "The messages show number type Число, string type Строка and numeric result 45."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "The intended module is open and the earlier source remains available."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "The exact exercise source is entered in the intended context."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "The messages show number type Число, string type Строка and numeric result 45."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "The final output is 35; the types remain number and string."
+      }
+    ],
+    "criteria": [
+      "Number, string, number, string and undefined are distinguished.",
+      "35 after explicit conversion; the original text remains a string.",
+      "Define accepted type/representation, range and response to unknown formats.",
+      "Source version, predicted and actual outputs.",
+      "One changed input and a trace explaining its result; no automatic grading claim.",
+      "Text \"thirty minutes\" is outside the specified format. Do not substitute zero; retain the input and explain why explicit rejection is needed."
+    ],
+    "hint": "Compare ТипЗнч rather than displayed characters alone.",
+    "exercises": [
+      {
+        "level": "Guided",
+        "task": "Identify the types of 30, \"30\", 0, \"\" and Неопределено before running.",
+        "criteria": "Number, string, number, string and undefined are distinguished."
+      },
+      {
+        "level": "Changed condition",
+        "task": "Replace \"30\" with \"20\" and predict the final message.",
+        "criteria": "35 after explicit conversion; the original text remains a string."
+      },
+      {
+        "level": "Independent",
+        "task": "Specify duration input without silently converting errors into zero.",
+        "criteria": "Define accepted type/representation, range and response to unknown formats."
+      }
+    ],
+    "sourceFile": "code/pedagogy/types-and-conversion.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "variable",
+    "bsl",
+    "module"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p2-types.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.a2p2.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "Which value has string type?",
+        "options": [
+          "30",
+          "\"30\"",
+          "0"
+        ],
+        "correct": 1,
+        "explanation": "Quotes denote text; similar display does not make it numeric."
+      },
+      {
+        "question": "What does Число(ТекстМинут) do when its result is assigned elsewhere?",
+        "options": [
+          "Permanently changes the original variable’s type",
+          "Changes all infobase fields",
+          "Returns a number while the original text remains a string"
+        ],
+        "correct": 2,
+        "explanation": "Conversion returns a value; assigning it elsewhere leaves the source string intact."
+      },
+      {
+        "question": "Why should unknown duration not silently become zero?",
+        "options": [
+          "That loses the distinction between known zero and missing/invalid input",
+          "Zero never has a type",
+          "1C always prohibits zero"
+        ],
+        "correct": 0,
+        "explanation": "The domain defines whether zero is valid; absence and error are different states."
+      }
+    ]
+  }
+}

@@ -1,0 +1,416 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.algorithm-complexity",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.classic-algorithms",
+  "course": "C++ programming",
+  "module": "Classic Algorithms",
+  "locale": "en",
+  "title": "Complexity, invariants and correctness",
+  "goal": "Separate a correct result, termination and the cost of processing a growing input.",
+  "prerequisites": [
+    {
+      "text": "Modules 1–3: validated input, functions, vector, records, references and lifetimes."
+    },
+    {
+      "text": "Direct learning dependencies: cpp.stacks-queues, cpp.testing-diagnostics. New constructs are explained before the task."
+    }
+  ],
+  "sections": [
+    {
+      "id": "concept-1",
+      "title": "Input size belongs to the model",
+      "paragraphs": [
+        "For sorting, n usually counts records; for text it may count characters or bytes; a matrix needs two dimensions. Define it before writing O(n). A numeric value and its representation length are different sizes: a loop up to m can execute m steps although a binary representation of m needs roughly log₂m bits.",
+        "Also define the cost of a comparison. Here bounded integers are compared and one comparison counts as one operation. Comparing long strings can inspect several bytes, while reading a file includes I/O. A comparison-count estimate remains useful, but cannot silently be renamed the entire program’s running time."
+      ]
+    },
+    {
+      "id": "concept-2",
+      "title": "An exact counter and a cost function",
+      "paragraphs": [
+        "Let the selected operation be a counter increment in the body. One loop from 0 through n−1 performs it n times. If an inner loop visits j from i+1 through n−1, the total is (n−1)+(n−2)+…+0=n(n−1)/2. At n=4 there are six pairs; at n=0 there are none. Enumerate the pairs and compare them with a trace.",
+        "Condition checks, index increments and output have costs too, but this counter does not include them. The formula is exact for the explicitly selected operation. Changing the model changes coefficients and lower-order terms. Do not tune the counter to produce a preferred curve: specify what will be counted first."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Counting a chosen operation",
+      "paragraphs": [
+        "Relate two loop structures to two definitions of work."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main(){\n int n;\n if(!(std::cin>>n)||n<0||n>128){std::cout<<\"invalid\\n\";return 0;}\n std::cin >> std::ws; if(!std::cin.eof()){std::cout<<\"invalid\\n\";return 0;}\n long long linear=0,pairs=0;\n for(int i=0;i<n;++i) ++linear;\n for(int i=0;i<n;++i) for(int j=i+1;j<n;++j) ++pairs;\n std::cout<<\"linear \"<<linear<<\"\\npairs \"<<pairs<<'\\n';\n}",
+        "output": "linear 4\npairs 6\n",
+        "stdin": "4"
+      },
+      "steps": [
+        "List the pairs for n=4 before running: (0,1), (0,2), (0,3), (1,2), (1,3), (2,3).",
+        "The first loop increments linear exactly n times; this is a selected cost model, not a processor instruction count.",
+        "The inner loop starts at i+1, so each unordered pair is counted once.",
+        "Inner lengths sum to (n−1)+(n−2)+…+0. Both totals are zero when n=0.",
+        "Compare the trace with n(n−1)/2; check the limit 128 and rejection before computation."
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "O, Ω and Θ without verbal shortcuts",
+      "paragraphs": [
+        "For nonnegative functions, O(g(n)) is an upper bound: some constant c>0 and threshold n₀ make T(n)≤c·g(n) for all later n. Ω gives a lower bound using the reverse inequality. Θ means both bounds hold at the same growth order. Thus T(n)=n(n−1)/2 is Θ(n²), although it also belongs to O(n³).",
+        "O does not mean “worst case”, nor does Ω mean “best case”. First choose a function, such as the maximum comparisons over all inputs of length n; then bound it with O or Θ. Asymptotics describes a family of sizes, so finite runs up to n=128 do not prove it. The implementation has a finite domain; the growth argument uses an explicitly stated abstract model."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "Best, average, worst and amortized cost",
+      "paragraphs": [
+        "Linear search can find the target immediately, scan the entire collection or fail to find it. Best and worst cases answer different questions. An average requires a probability model of inputs: one arbitrary seed is not an average case. A user-facing service also needs an acceptable maximum, particularly when another person chooses the input.",
+        "An amortized bound describes a sequence of operations, not a random input distribution. A vector append can occasionally reallocate the whole buffer: one append is expensive, while a series spreads that cost across its operations. “Usually” conceals the distinction unless the model is named. State whether your report estimates one query, a full sequence or index construction."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "An invariant explains the state",
+      "paragraphs": [
+        "A loop invariant is a statement true before each iteration. For a running sum it could be “sum equals the sum of the first i items”. Prove initialization, preservation by one step and the conclusion at termination. Merely having a variable i proves nothing; connect it to the processed input and the observable result.",
+        "For pair enumeration, the outer invariant says all pairs whose first index is below i have been counted exactly once. An inner step adds one new pair (i,j). The condition j>i excludes the diagonal and mirrored duplicates. This explains both the counter’s correctness and its cost, but write those conclusions separately."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "Doubling the size without a timer",
+      "paragraphs": [
+        "Derive exact values before making an asymptotic claim."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main(){\n long long n=8;\n long long pairs=n*(n-1)/2;\n long long doubled=(2*n)*(2*n-1)/2;\n std::cout<<pairs<<' '<<doubled<<'\\n';\n}",
+        "output": "28 120\n",
+        "stdin": ""
+      },
+      "steps": [
+        "Compute 8·7/2=28 and 16·15/2=120 manually first.",
+        "The ratio 120/28 need not equal four: the linear term still matters.",
+        "For n>1 rewrite T(2n)/T(n)=2(2n−1)/(n−1).",
+        "The ratio tends to four; this does not give a universal runtime formula.",
+        "Record the model and domain; the small constants keep long long arithmetic safe."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Termination, bounds and safe arithmetic",
+      "paragraphs": [
+        "A finite loop needs a termination variant: a nonnegative integer that decreases, such as n−i. Check it around continue and any counter updates inside the body. A search can decrease interval length. A wrong boundary update can leave the length unchanged and cause an otherwise correct comparison to repeat forever.",
+        "The lab accepts n=0…128, bounding pair count by 8128. Validate the range before looping; long long provides explicit headroom. The formula n·(n−1)/2 does not prevent overflow for arbitrary n. Unsigned n−1 at zero also needs care: prove its precondition or choose a loop form safe for an empty collection."
+      ]
+    },
+    {
+      "id": "concept-7",
+      "title": "Memory and preparation belong to the decision",
+      "paragraphs": [
+        "Distinguish storage for input from auxiliary algorithm storage. Sorting a copy uses another array even if the sorting algorithm itself is in-place. Recursion stores call state; a map uses nodes or buckets. O(1) auxiliary space does not mean zero bytes, and exact sizes depend on types, libraries and architecture.",
+        "Building a sorted index can pay off across many queries yet be wasteful for one search. Compare preparation plus q queries. Models n·q for repeated scans and n log n + q log n for an index help formulate a hypothesis. They omit constants and do not replace measuring a particular implementation on appropriate data."
+      ]
+    },
+    {
+      "id": "concept-8",
+      "title": "From a model to an auditable report",
+      "paragraphs": [
+        "A report should include the contract, definition of n, selected operation, exact formula or justified bounds and raw observations. Derive expectations before each run. If counts disagree, seek a minimal counterexample: empty, singleton or two-item input. Revising the expectation after seeing output destroys the check’s independence.",
+        "Nexus may prepare a compiler on first use, and UI/browser work affects latency. Those costs are not your algorithm’s comparison count. Use counters now; repeated timing methodology comes later in the module. The next lesson applies invariants and models to sorting and shows why “ascending” alone is not a complete sorting contract."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "What does the lab count for n=4?",
+      "options": [
+        "6 unordered pairs of distinct indices",
+        "16 pairs with repetition",
+        "4 timer comparisons"
+      ],
+      "correct": 0,
+      "feedback": "The inner lengths are 3+2+1+0."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "T(n)=3n²+2n implies…",
+      "options": [
+        "T(n) always equals n² nanoseconds",
+        "T(n)=Θ(n²)",
+        "T(n)=Θ(n)"
+      ],
+      "correct": 1,
+      "feedback": "Constant factors and lower terms do not change the order."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "O(log n) time states…",
+      "options": [
+        "An exact number of seconds",
+        "A mandatory lower bound",
+        "An upper bound on the chosen cost"
+      ],
+      "correct": 2,
+      "feedback": "A tight bound also needs a lower-bound argument."
+    },
+    {
+      "id": "check-3",
+      "kind": "choice",
+      "prompt": "Nested loops over n and m need…",
+      "options": [
+        "Analysis in both parameters",
+        "Always O(n²)",
+        "Always O(1)"
+      ],
+      "correct": 0,
+      "feedback": "Without a relation, the two parameters cannot be collapsed."
+    },
+    {
+      "id": "check-4",
+      "kind": "choice",
+      "prompt": "What does the n=128 test establish?",
+      "options": [
+        "Correctness for all integers",
+        "One boundary result within the domain",
+        "Absence of every UB"
+      ],
+      "correct": 1,
+      "feedback": "The test is useful but does not replace an invariant proof."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Compare 5n+7 and n² at n=2,10,100.",
+      "feedback": "Next: Sorting: contracts, stability and invariants. Save the lab and independent tests."
+    }
+  ],
+  "practice": {
+    "title": "Laboratory: Complexity, invariants and correctness",
+    "task": "Read exactly one integer n in 0…128. Print linear n and pairs n(n−1)/2 on separate lines, counting with loops. Empty, malformed, out-of-range input or extra tokens must produce only invalid.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\nint main(){ std::cout << \"pending\\n\"; }\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "0",
+    "returnAnchor": "example-1",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "0",
+        "output": "linear 0\npairs 0\n"
+      },
+      {
+        "label": "Case 2",
+        "input": "1",
+        "output": "linear 1\npairs 0\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "2",
+        "output": "linear 2\npairs 1\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "3",
+        "output": "linear 3\npairs 3\n"
+      },
+      {
+        "label": "Case 5",
+        "input": "4",
+        "output": "linear 4\npairs 6\n"
+      },
+      {
+        "label": "Case 6",
+        "input": "5",
+        "output": "linear 5\npairs 10\n"
+      },
+      {
+        "label": "Case 7",
+        "input": "6",
+        "output": "linear 6\npairs 15\n"
+      },
+      {
+        "label": "Case 8",
+        "input": "7",
+        "output": "linear 7\npairs 21\n"
+      },
+      {
+        "label": "Case 9",
+        "input": "8",
+        "output": "linear 8\npairs 28\n"
+      },
+      {
+        "label": "Case 10",
+        "input": "128",
+        "output": "linear 128\npairs 8128\n"
+      },
+      {
+        "label": "Case 11",
+        "input": "-1",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 12",
+        "input": "129",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 13",
+        "input": "x",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 14",
+        "input": "",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 15",
+        "input": "4 extra",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 16",
+        "input": "999999999999999999999999999999",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "Reject invalid input before computation; the upper boundary yields 8128.",
+      "Derive 3 and 0 pairs before running.",
+      "Derive n² and test 0,1,4.",
+      "Give O(nm) with both parameters and a space argument.",
+      "Preserve sources, inputs, actual outputs and rejection explanations."
+    ],
+    "hint": "Sum the inner loop lengths.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Restate the input domain, format, bounds and rejection policy.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "List pairs for n=3 and n=0.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "First implement complete input validation without partial results.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Implement both counters under the laboratory contract.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Change the inner loop to j=0..n-1.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Run all reference cases; for files check existence and content too.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Save the source, observed-results table and invariant explanation; add an independent case.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Input size",
+      "definition": "A parameter for resource analysis, such as record count n."
+    },
+    {
+      "term": "Cost model",
+      "definition": "Explicitly chosen operations and their relative costs, rather than CPU frequency."
+    },
+    {
+      "term": "O",
+      "definition": "An asymptotic upper bound up to a constant factor beyond some n."
+    },
+    {
+      "term": "Ω",
+      "definition": "An asymptotic lower bound for the same definition of cost."
+    },
+    {
+      "term": "Θ",
+      "definition": "Matching asymptotic upper and lower bounds."
+    },
+    {
+      "term": "Worst case",
+      "definition": "The maximum cost over valid inputs of a fixed size."
+    },
+    {
+      "term": "Amortization",
+      "definition": "A bound on a sequence of operations, rather than a random average input."
+    },
+    {
+      "term": "Auxiliary space",
+      "definition": "Working storage beyond the agreed input and output representation."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-ALGORITHMS"
+  ],
+  "extras": {
+    "lessonId": "cpp.algorithm-complexity",
+    "locale": "en",
+    "visualization": {
+      "kind": "journey",
+      "title": "Complexity, invariants and correctness",
+      "description": "A textual step model of the concepts, not C++ execution or a performance measurement.",
+      "steps": [
+        {
+          "title": "n = 4",
+          "description": "Choose input size 4. Count counter increments separately from printing and processor time."
+        },
+        {
+          "title": "linear = 4",
+          "description": "One loop visits i=0,1,2,3: four linear increments."
+        },
+        {
+          "title": "3 + 2 + 1",
+          "description": "For i=0 there are three j>i, then two, one and zero. These are distinct pairs, not the full 4×4 square."
+        },
+        {
+          "title": "pairs = 6",
+          "description": "Obtain 3+2+1+0=6=4·3/2; list the six pairs as an independent check."
+        },
+        {
+          "title": "Θ(n²)",
+          "description": "The general n(n−1)/2 formula is quadratic; the value 6 is not a nanosecond duration."
+        }
+      ]
+    },
+    "sourceRefs": [
+      "CPP20-ALGORITHMS"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\classic\\algorithm-complexity.en.json"
+}

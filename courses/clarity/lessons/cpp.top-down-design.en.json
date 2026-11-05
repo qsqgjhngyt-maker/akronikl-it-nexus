@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.top-down-design",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.algorithms",
+  "course": "C++ programming",
+  "module": "Algorithmic Thinking",
+  "locale": "en",
+  "title": "Top-down design: from requirements to functions",
+  "goal": "Split an order calculation into parts with explicit intermediate values.",
+  "prerequisites": [
+    {
+      "text": "You know integer variables, multiplication, division and statement order."
+    }
+  ],
+  "sections": [
+    {
+      "id": "model",
+      "title": "From the task to an operation",
+      "paragraphs": [
+        "Task: three items at 100, with a 10 percent discount. First compute the subtotal, then the discount amount, then the total. Decomposition splits a task into steps, each answering one question.",
+        "subtotal is the amount before discount; saving is what we subtract; total is what we pay. Compute percent as subtotal*discount/100. Here 300*10/100 is exactly 30. Integer division discards the fractional part: agree on this rounding rule beforehand.",
+        "Use price and quantity 0..1000 and discount 0..100: the intermediate product is at most 100000000 and fits a 32-bit int. The example satisfies these bounds; handling arbitrary input is a later step. We do not need user-defined functions before learning how they work."
+      ]
+    },
+    {
+      "id": "worked-example",
+      "title": "Split an order calculation into parts with explicit intermediate values.",
+      "paragraphs": [],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int price = 100;\n    int count = 3;\n    int discount = 10;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
+        "output": "300 30 270\n",
+        "stdin": ""
+      },
+      "steps": [],
+      "trace": [
+        [
+          "price * count",
+          "100; 3",
+          "subtotal: 300",
+          "Solved the first subtask."
+        ],
+        [
+          "subtotal * discount / 100",
+          "300; 10",
+          "saving: 30",
+          "Computed the amount to subtract, not the final total."
+        ],
+        [
+          "subtotal - saving",
+          "300; 30",
+          "total: 270",
+          "Connected the previous two results."
+        ]
+      ]
+    },
+    {
+      "id": "variation",
+      "title": "Change one condition and check the prediction",
+      "paragraphs": [
+        "Set discount=0, then discount=100.",
+        "At 0 percent, saving is 0.",
+        "At 100 percent, the entire subtotal is subtracted."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int price = 100;\n    int count = 3;\n    int discount = 100;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "300 0 300\n"
+      }
+    },
+    {
+      "id": "diagnose",
+      "title": "When the result differs",
+      "paragraphs": [
+        "Printing saving instead of total gives 30 rather than 270: a subtask was solved, but the wrong result was selected."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now solve your own task",
+      "paragraphs": [
+        "Calculate two items at 80 with a 25 percent discount. Print subtotal, saving and total separately and explain each number.",
+        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What output follows the specified change? Set discount=0, then discount=100.",
+      "options": [
+        "300 0 300\n",
+        "300 300 0\n"
+      ],
+      "correct": 0,
+      "feedback": "At 0 percent, saving is 0. At 100 percent, the entire subtotal is subtracted."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Calculate two items at 80 with a 25 percent discount. Print subtotal, saving and total separately and explain each number.",
+      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. For price=80, count=2 and discount=25, subtotal=160, saving=40 and total=120. The saving of 40 must not be reported as the final cost of 120."
+    }
+  ],
+  "practice": {
+    "title": "Independent variation",
+    "task": "Calculate two items at 80 with a 25 percent discount. Print subtotal, saving and total separately and explain each number.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "",
+    "returnAnchor": "worked-example",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "",
+        "output": "160 40 120\n"
+      }
+    ],
+    "criteria": [
+      "Compare the output with the readable reference case below.",
+      "Explain each change using the objects or operations in this topic.",
+      "For price=80, count=2 and discount=25, subtotal=160, saving=40 and total=120. The saving of 40 must not be reported as the final cost of 120."
+    ],
+    "hint": "At 0 percent, saving is 0. At 100 percent, the entire subtotal is subtracted.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Calculate two items at 80 with a 25 percent discount. Print subtotal, saving and total separately and explain each number.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Predict the result before running.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Write your solution in a separate starter; keep your previous work.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Compare actual output with your prediction and explain any difference.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Decomposition",
+      "definition": "Breaking a large problem into smaller problems with explicit boundaries."
+    },
+    {
+      "term": "Function",
+      "definition": "A named operation that receives arguments and can return a result."
+    },
+    {
+      "term": "Function contract",
+      "definition": "The expected inputs, outputs and valid calling conditions."
+    },
+    {
+      "term": "Cohesion",
+      "definition": "How closely a component's responsibilities belong together."
+    }
+  ],
+  "sourceRefs": [
+    "CS2023-SDF",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.top-down-design",
+    "locale": "en",
+    "visualization": null,
+    "sourceRefs": [
+      "CS2023-SDF",
+      "CPP-GUIDELINES"
+    ],
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\algorithms\\top-down-design.en.json"
+}

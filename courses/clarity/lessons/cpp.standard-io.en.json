@@ -1,0 +1,853 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.standard-io",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "C++ programming",
+  "module": "C++ Foundations",
+  "locale": "en",
+  "title": "Standard input and output: data contracts and a verifiable project",
+  "goal": "Read two numbers and identify input, computation and output.",
+  "prerequisites": [
+    {
+      "text": "You know if/else, ||, !, int and multiplication; stream state is introduced here."
+    }
+  ],
+  "sections": [
+    {
+      "id": "model",
+      "title": "From the task to an operation",
+      "paragraphs": [
+        "stdin is the program’s input text. Enter 4 3 in the input field: std::cin >> width >> height attempts to read two integers. A space or newline separates them. After successful input, width=4 and height=3. std::cout is a separate output; it does not populate stdin.",
+        "!(std::cin >> width >> height) is true when reading fails: ! negates the stream’s successful state. An early return ends main, so a failed read never reaches area calculation. width<0 || height<0 rejects negative sizes. Use dimensions 0..1000 for this example; upper bounds are checked before multiplication too.",
+        "This small protocol reads two numbers and does not require the absence of later words. Strict whole-line parsing and mixing cin with getline are separate later steps. Empty stdin produces invalid here, unlike examples containing data directly in the source."
+      ]
+    },
+    {
+      "id": "worked-example",
+      "title": "Read two numbers and identify input, computation and output.",
+      "paragraphs": [],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+        "output": "12\n",
+        "stdin": "4 3\n"
+      },
+      "steps": [],
+      "trace": [
+        [
+          "cin >> width >> height",
+          "stdin: 4 3",
+          "width: 4; height: 3",
+          "Both integers were read, so the first branch is skipped."
+        ],
+        [
+          "bounds",
+          "4; 3",
+          "valid",
+          "Dimensions are within 0..1000."
+        ],
+        [
+          "cout << width * height",
+          "4 × 3",
+          "stdout: 12",
+          "Output is computed only after the two checks."
+        ]
+      ]
+    },
+    {
+      "id": "variation",
+      "title": "Change one condition and check the prediction",
+      "paragraphs": [
+        "Keep the source: put 5 6 into stdin, then oops.",
+        "The two numeric tokens become width and height.",
+        "With oops, reading an int fails and multiplication never runs."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
+        "stdin": "4 3\n",
+        "output": "30\n"
+      }
+    },
+    {
+      "id": "diagnose",
+      "title": "When the result differs",
+      "paragraphs": [
+        "Computing after a failed read uses values not obtained from the user. Check reading before computation."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now solve your own task",
+      "paragraphs": [
+        "Read a price and quantity in 0..1000 with read and bounds checks. Print the product or invalid. Check 70 5, 70 0, -1 5 and empty input.",
+        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What output follows the specified change? Keep the source: put 5 6 into stdin, then oops.",
+      "options": [
+        "30\n",
+        "invalid\n"
+      ],
+      "correct": 0,
+      "feedback": "The two numeric tokens become width and height. With oops, reading an int fails and multiplication never runs."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Read a price and quantity in 0..1000 with read and bounds checks. Print the product or invalid. Check 70 5, 70 0, -1 5 and empty input.",
+      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. For inputs 70 5, 70 0, -1 5 and empty input, the answers are 350, 0, invalid, invalid. Calculation must not run after a failed read or a bounds violation."
+    }
+  ],
+  "practice": {
+    "title": "Independent variation",
+    "task": "Read a price and quantity in 0..1000 with read and bounds checks. Print the product or invalid. Check 70 5, 70 0, -1 5 and empty input.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "70 5\n",
+    "returnAnchor": "worked-example",
+    "cases": [
+      {
+        "label": "Case 1",
+        "input": "70 5\n",
+        "output": "350\n"
+      },
+      {
+        "label": "Case 2",
+        "input": "70 0\n",
+        "output": "0\n"
+      },
+      {
+        "label": "Case 3",
+        "input": "-1 5\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Case 4",
+        "input": "",
+        "output": "invalid\n"
+      }
+    ],
+    "criteria": [
+      "Compare the output with the readable reference case below.",
+      "Explain each change using the objects or operations in this topic.",
+      "For inputs 70 5, 70 0, -1 5 and empty input, the answers are 350, 0, invalid, invalid. Calculation must not run after a failed read or a bounds violation."
+    ],
+    "hint": "The two numeric tokens become width and height. With oops, reading an int fails and multiplication never runs.",
+    "steps": [
+      {
+        "where": "My program",
+        "action": "Read a price and quantity in 0..1000 with read and bounds checks. Print the product or invalid. Check 70 5, 70 0, -1 5 and empty input.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Predict the result before running.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Write your solution in a separate starter; keep your previous work.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "My program",
+        "action": "Compare actual output with your prediction and explain any difference.",
+        "why": "",
+        "expected": ""
+      }
+    ],
+    "modulePracticum": {
+      "title": "Module project: verifiable file-transfer time",
+      "label": "MODULE 2 PROJECT",
+      "starterLabel": "Starter: make your own attempt",
+      "challenge": "Implement a MiB-to-kbit/s transfer model with overhead, upward rounding, and strict finite input.",
+      "readiness": "All 12 lessons. Use main, long long, conditions, and streams; no loops, new/delete, or authored functions are required.",
+      "skills": [
+        {
+          "lessonId": "cpp.first-cpp-program",
+          "title": "Your first C++ program: from source to a verifiable report"
+        },
+        {
+          "lessonId": "cpp.tokens-identifiers-keywords",
+          "title": "Tokens and names: precise source with clear meaning"
+        },
+        {
+          "lessonId": "cpp.comments-constants-literals",
+          "title": "Comments, constants, and literals: meaning instead of magic numbers"
+        },
+        {
+          "lessonId": "cpp.data-types",
+          "title": "Data types: choosing values, initialization, and measuring a target"
+        },
+        {
+          "lessonId": "cpp.variables-scope",
+          "title": "Variables, blocks, and lifetime: a state journal"
+        },
+        {
+          "lessonId": "cpp.expressions-operators-blocks",
+          "title": "Expressions and operators: grouping, values, and clear steps"
+        },
+        {
+          "lessonId": "cpp.arithmetic-assignment",
+          "title": "Arithmetic and assignment: quotient, remainder, and safe intermediates"
+        },
+        {
+          "lessonId": "cpp.type-conversions",
+          "title": "Type conversions: intent, information loss, and range checks"
+        },
+        {
+          "lessonId": "cpp.relations-logic",
+          "title": "Comparisons and logic: conditions as testable contracts"
+        },
+        {
+          "lessonId": "cpp.increment-decrement-sizeof-conditional",
+          "title": "++ and --, sizeof and ?: — concise syntax with precise meaning"
+        },
+        {
+          "lessonId": "cpp.pointers-references-addresses",
+          "title": "Objects, copies, references, and pointers: links without unsafe memory"
+        },
+        {
+          "lessonId": "cpp.standard-io",
+          "title": "Standard input and output: data contracts and a verifiable project"
+        }
+      ],
+      "requirements": [
+        "Input m r h with the theory’s ranges: exactly three integer fields.",
+        "MiB=1048576 bytes and kbit/s=1000 bit/s; h is a payload-bit percentage.",
+        "All intermediate products use long long before the first multiplication.",
+        "stdout: seconds minutes remainder and newline; errors: invalid and newline.",
+        "Do not add pointers or references to the formula without a purpose; practicum C separately demonstrates that skill."
+      ],
+      "milestones": [
+        "Restate units and independently derive four baseline cases.",
+        "Complete the starter calculation and stdout.",
+        "Prove the numerator upper bound and nonzero denominator.",
+        "Run 30 reference cases and two original cases.",
+        "Preserve source, report, and self-review."
+      ],
+      "walkthrough": [
+        "1 MiB contains 8388608 bits. At 1000 kbit/s without overhead it takes 8.388608 seconds, rounded upward to 9.",
+        "At h=25 the payload is multiplied by 125/100, producing 10.48576 seconds and rounding to 11.",
+        "num/den supplies whole seconds and a nonzero remainder adds one, avoiding a potentially risky num+den−1 sum.",
+        "At maximum volume, minimum rate, and 100% overhead, the result is 16777216000 seconds: 279620266 minutes and 40 seconds."
+      ],
+      "starterCode": "#include <iostream>\n\nint main() {\n    long long mib{0};\n    long long rateKbit{0};\n    long long overheadPercent{0};\n    if (!(std::cin >> mib >> rateKbit >> overheadPercent)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || mib < 0 || mib > 1000000 || rateKbit < 1 || rateKbit > 1000000 || overheadPercent < 0 || overheadPercent > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    // Complete the bounded integer calculation and replace this placeholder.\n    std::cout << \"TODO\\n\";\n    return 0;\n}\n",
+      "starterExpectedStdout": "TODO\n",
+      "referenceCode": "#include <iostream>\n\nint main() {\n    long long mib{0};\n    long long rateKbit{0};\n    long long overheadPercent{0};\n    if (!(std::cin >> mib >> rateKbit >> overheadPercent)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || mib < 0 || mib > 1000000 || rateKbit < 1 || rateKbit > 1000000 || overheadPercent < 0 || overheadPercent > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    constexpr long long bytesPerMiB{1024LL * 1024};\n    constexpr long long bitsPerByte{8};\n    constexpr long long bitsPerKbit{1000};\n    long long numerator = mib * bytesPerMiB * bitsPerByte * (100 + overheadPercent);\n    long long denominator = 100LL * rateKbit * bitsPerKbit;\n    long long seconds = numerator / denominator + (numerator % denominator != 0);\n    std::cout << seconds << ' ' << seconds / 60 << ' ' << seconds % 60 << '\\n';\n    return 0;\n}\n",
+      "cases": [
+        {
+          "stdin": "0 1000 0",
+          "stdout": "0 0 0\n"
+        },
+        {
+          "stdin": "1 1000 0",
+          "stdout": "9 0 9\n"
+        },
+        {
+          "stdin": "1 1000 25",
+          "stdout": "11 0 11\n"
+        },
+        {
+          "stdin": "1000000 1 100",
+          "stdout": "16777216000 279620266 40\n"
+        },
+        {
+          "stdin": "1 1 0",
+          "stdout": "8389 139 49\n"
+        },
+        {
+          "stdin": "1 1000000 0",
+          "stdout": "1 0 1\n"
+        },
+        {
+          "stdin": "2 8192 0",
+          "stdout": "3 0 3\n"
+        },
+        {
+          "stdin": "125 1000 100",
+          "stdout": "2098 34 58\n"
+        },
+        {
+          "stdin": "1000000 1000000 100",
+          "stdout": "16778 279 38\n"
+        },
+        {
+          "stdin": "10 800 25",
+          "stdout": "132 2 12\n"
+        },
+        {
+          "stdin": "1 1000 100",
+          "stdout": "17 0 17\n"
+        },
+        {
+          "stdin": "0 1 100",
+          "stdout": "0 0 0\n"
+        },
+        {
+          "stdin": "1000000 1 0",
+          "stdout": "8388608000 139810133 20\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "abc 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1.5 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 0.5",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "-1 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1000001 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 0 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 -1 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000001 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 -1",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 101",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 0 extra",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 0 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "99999999999999999999999999999 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 25 \n\t",
+          "stdout": "11 0 11\n"
+        }
+      ],
+      "verificationVariants": [],
+      "artifacts": [
+        "main.cpp and a written unit contract.",
+        "A proof of intermediate bounds.",
+        "A table of 30+2 inputs, expectations, and actual stdout.",
+        "One defect with hypothesis, repair, and repeat check.",
+        "Model limits: constant rate, specified overhead, and no real-network measurement."
+      ],
+      "rubric": [
+        {
+          "criterion": "Contract and units",
+          "complete": "MiB, kbit/s, and overhead are consistent.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Calculation correctness",
+          "complete": "Upward rounding and minute formatting are consistent.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Range safety",
+          "complete": "Bounds are proven and operations follow validation.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Strict input",
+          "complete": "Empty, malformed, extra, and out-of-range input is rejected.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Checks and explanation",
+          "complete": "30+2 results are recorded and the solution is explained independently.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        }
+      ],
+      "completionRule": "Self-check: at least 8/10 with no zero for correctness, safety, or checks. This is a manual rubric rather than an automatic grade or next-lesson gate.",
+      "verification": "manual-output-comparison"
+    }
+  },
+  "terms": [
+    {
+      "term": "stdin",
+      "definition": "Standard input. Nexus supplies a finite character sequence followed by end of input."
+    },
+    {
+      "term": "Formatted extraction",
+      "definition": "Reading a typed value with >> according to parsing and stream-state rules."
+    },
+    {
+      "term": "fail()",
+      "definition": "Reports failed extraction or a more serious error; a value after failure is not treated as validated input."
+    },
+    {
+      "term": "eof()",
+      "definition": "Reports end of input already encountered rather than predicting future extraction success."
+    },
+    {
+      "term": "std::string",
+      "definition": "A library type for a sequence of characters; string algorithms are studied separately."
+    },
+    {
+      "term": "std::getline",
+      "definition": "Reads through a delimiter, usually newline; the delimiter is extracted but not included in the result."
+    },
+    {
+      "term": "std::ws",
+      "definition": "Consumes leading whitespace, including newlines and blank lines, up to a nonwhitespace character or end of input."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-INPUT",
+    "CPP20-STREAM-STATE",
+    "CPP20-WS",
+    "CPP20-STRING-IO",
+    "CPP20-FORMAT",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.standard-io",
+    "locale": "en",
+    "visualization": null,
+    "sourceRefs": [
+      "CPP20-INPUT",
+      "CPP20-STREAM-STATE",
+      "CPP20-WS",
+      "CPP20-STRING-IO",
+      "CPP20-FORMAT",
+      "CPP-GUIDELINES"
+    ],
+    "blockPracticum": {
+      "title": "Practicum C: objects, aliases, and an input contract",
+      "label": "CUMULATIVE PRACTICUM C",
+      "starterLabel": "Starter: make your own attempt",
+      "challenge": "Read stock, issue at most three, and report snapshot, updated value, and object identity.",
+      "readiness": "Lessons 9–12 and state tracing. Addresses are compared rather than printed as fixed numbers.",
+      "skills": [
+        {
+          "lessonId": "cpp.relations-logic",
+          "title": "Comparisons and logic: conditions as testable contracts"
+        },
+        {
+          "lessonId": "cpp.increment-decrement-sizeof-conditional",
+          "title": "++ and --, sizeof and ?: — concise syntax with precise meaning"
+        },
+        {
+          "lessonId": "cpp.pointers-references-addresses",
+          "title": "Objects, copies, references, and pointers: links without unsafe memory"
+        },
+        {
+          "lessonId": "cpp.standard-io",
+          "title": "Standard input and output: data contracts and a verifiable project"
+        }
+      ],
+      "requirements": [
+        "Exactly one integer within 0…100 and an optional whitespace tail.",
+        "The snapshot is independent; alias and selected access live stock.",
+        "Issue min(stock,3) with the explained ?:.",
+        "same_object=1 is checked by pointer equality."
+      ],
+      "milestones": [
+        "Draw objects.",
+        "Validate input.",
+        "Update through the reference and read through the pointer.",
+        "Preserve eight actual runs."
+      ],
+      "walkthrough": [
+        "snapshot copies the initial value. &alias yields stock’s address and selected holds that address.",
+        "issued≤stock makes subtraction safe. stock’s lifetime covers all accesses."
+      ],
+      "starterCode": "#include <iostream>\n\nint main() {\n    int stock{0};\n    if (!(std::cin >> stock)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"stock=\" << stock << '\\n';\n    return 0;\n}\n",
+      "starterExpectedStdout": "stock=8\n",
+      "referenceCode": "#include <iostream>\n\nint main() {\n    int stock{0};\n    if (!(std::cin >> stock)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || stock < 0 || stock > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int snapshot = stock;\n    int& alias = stock;\n    int* selected = &stock;\n    int issued = stock >= 3 ? 3 : stock;\n    alias -= issued;\n    std::cout << \"before=\" << snapshot << '\\n';\n    std::cout << \"after=\" << *selected << '\\n';\n    std::cout << \"issued=\" << issued << '\\n';\n    std::cout << \"same_object=\" << (&alias == selected) << '\\n';\n    return 0;\n}\n",
+      "cases": [
+        {
+          "stdin": "8",
+          "stdout": "before=8\nafter=5\nissued=3\nsame_object=1\n"
+        },
+        {
+          "stdin": "0",
+          "stdout": "before=0\nafter=0\nissued=0\nsame_object=1\n"
+        },
+        {
+          "stdin": "2",
+          "stdout": "before=2\nafter=0\nissued=2\nsame_object=1\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "-1",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "101",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "8 extra",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "8.5",
+          "stdout": "invalid\n"
+        }
+      ],
+      "verificationVariants": [],
+      "artifacts": [
+        "Source.",
+        "A symbolic object map.",
+        "Eight actual and expected stdout records.",
+        "A diagnosed defect without unsafe reads."
+      ],
+      "rubric": [
+        {
+          "criterion": "Correctness",
+          "complete": "Stock and issue agree.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Input",
+          "complete": "Tail and bounds are validated.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Objects",
+          "complete": "Copy and alias are distinguished.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Safety",
+          "complete": "All targets are alive and null is not read.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Checks",
+          "complete": "All eight results are preserved.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        }
+      ],
+      "completionRule": "Self-check: at least 8/10 with no zero for correctness, safety, or checks. This is a manual rubric rather than an automatic grade or next-lesson gate.",
+      "verification": "manual-output-comparison"
+    },
+    "modulePracticum": {
+      "title": "Module project: verifiable file-transfer time",
+      "label": "MODULE 2 PROJECT",
+      "starterLabel": "Starter: make your own attempt",
+      "challenge": "Implement a MiB-to-kbit/s transfer model with overhead, upward rounding, and strict finite input.",
+      "readiness": "All 12 lessons. Use main, long long, conditions, and streams; no loops, new/delete, or authored functions are required.",
+      "skills": [
+        {
+          "lessonId": "cpp.first-cpp-program",
+          "title": "Your first C++ program: from source to a verifiable report"
+        },
+        {
+          "lessonId": "cpp.tokens-identifiers-keywords",
+          "title": "Tokens and names: precise source with clear meaning"
+        },
+        {
+          "lessonId": "cpp.comments-constants-literals",
+          "title": "Comments, constants, and literals: meaning instead of magic numbers"
+        },
+        {
+          "lessonId": "cpp.data-types",
+          "title": "Data types: choosing values, initialization, and measuring a target"
+        },
+        {
+          "lessonId": "cpp.variables-scope",
+          "title": "Variables, blocks, and lifetime: a state journal"
+        },
+        {
+          "lessonId": "cpp.expressions-operators-blocks",
+          "title": "Expressions and operators: grouping, values, and clear steps"
+        },
+        {
+          "lessonId": "cpp.arithmetic-assignment",
+          "title": "Arithmetic and assignment: quotient, remainder, and safe intermediates"
+        },
+        {
+          "lessonId": "cpp.type-conversions",
+          "title": "Type conversions: intent, information loss, and range checks"
+        },
+        {
+          "lessonId": "cpp.relations-logic",
+          "title": "Comparisons and logic: conditions as testable contracts"
+        },
+        {
+          "lessonId": "cpp.increment-decrement-sizeof-conditional",
+          "title": "++ and --, sizeof and ?: — concise syntax with precise meaning"
+        },
+        {
+          "lessonId": "cpp.pointers-references-addresses",
+          "title": "Objects, copies, references, and pointers: links without unsafe memory"
+        },
+        {
+          "lessonId": "cpp.standard-io",
+          "title": "Standard input and output: data contracts and a verifiable project"
+        }
+      ],
+      "requirements": [
+        "Input m r h with the theory’s ranges: exactly three integer fields.",
+        "MiB=1048576 bytes and kbit/s=1000 bit/s; h is a payload-bit percentage.",
+        "All intermediate products use long long before the first multiplication.",
+        "stdout: seconds minutes remainder and newline; errors: invalid and newline.",
+        "Do not add pointers or references to the formula without a purpose; practicum C separately demonstrates that skill."
+      ],
+      "milestones": [
+        "Restate units and independently derive four baseline cases.",
+        "Complete the starter calculation and stdout.",
+        "Prove the numerator upper bound and nonzero denominator.",
+        "Run 30 reference cases and two original cases.",
+        "Preserve source, report, and self-review."
+      ],
+      "walkthrough": [
+        "1 MiB contains 8388608 bits. At 1000 kbit/s without overhead it takes 8.388608 seconds, rounded upward to 9.",
+        "At h=25 the payload is multiplied by 125/100, producing 10.48576 seconds and rounding to 11.",
+        "num/den supplies whole seconds and a nonzero remainder adds one, avoiding a potentially risky num+den−1 sum.",
+        "At maximum volume, minimum rate, and 100% overhead, the result is 16777216000 seconds: 279620266 minutes and 40 seconds."
+      ],
+      "starterCode": "#include <iostream>\n\nint main() {\n    long long mib{0};\n    long long rateKbit{0};\n    long long overheadPercent{0};\n    if (!(std::cin >> mib >> rateKbit >> overheadPercent)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || mib < 0 || mib > 1000000 || rateKbit < 1 || rateKbit > 1000000 || overheadPercent < 0 || overheadPercent > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    // Complete the bounded integer calculation and replace this placeholder.\n    std::cout << \"TODO\\n\";\n    return 0;\n}\n",
+      "starterExpectedStdout": "TODO\n",
+      "referenceCode": "#include <iostream>\n\nint main() {\n    long long mib{0};\n    long long rateKbit{0};\n    long long overheadPercent{0};\n    if (!(std::cin >> mib >> rateKbit >> overheadPercent)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || mib < 0 || mib > 1000000 || rateKbit < 1 || rateKbit > 1000000 || overheadPercent < 0 || overheadPercent > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    constexpr long long bytesPerMiB{1024LL * 1024};\n    constexpr long long bitsPerByte{8};\n    constexpr long long bitsPerKbit{1000};\n    long long numerator = mib * bytesPerMiB * bitsPerByte * (100 + overheadPercent);\n    long long denominator = 100LL * rateKbit * bitsPerKbit;\n    long long seconds = numerator / denominator + (numerator % denominator != 0);\n    std::cout << seconds << ' ' << seconds / 60 << ' ' << seconds % 60 << '\\n';\n    return 0;\n}\n",
+      "cases": [
+        {
+          "stdin": "0 1000 0",
+          "stdout": "0 0 0\n"
+        },
+        {
+          "stdin": "1 1000 0",
+          "stdout": "9 0 9\n"
+        },
+        {
+          "stdin": "1 1000 25",
+          "stdout": "11 0 11\n"
+        },
+        {
+          "stdin": "1000000 1 100",
+          "stdout": "16777216000 279620266 40\n"
+        },
+        {
+          "stdin": "1 1 0",
+          "stdout": "8389 139 49\n"
+        },
+        {
+          "stdin": "1 1000000 0",
+          "stdout": "1 0 1\n"
+        },
+        {
+          "stdin": "2 8192 0",
+          "stdout": "3 0 3\n"
+        },
+        {
+          "stdin": "125 1000 100",
+          "stdout": "2098 34 58\n"
+        },
+        {
+          "stdin": "1000000 1000000 100",
+          "stdout": "16778 279 38\n"
+        },
+        {
+          "stdin": "10 800 25",
+          "stdout": "132 2 12\n"
+        },
+        {
+          "stdin": "1 1000 100",
+          "stdout": "17 0 17\n"
+        },
+        {
+          "stdin": "0 1 100",
+          "stdout": "0 0 0\n"
+        },
+        {
+          "stdin": "1000000 1 0",
+          "stdout": "8388608000 139810133 20\n"
+        },
+        {
+          "stdin": "",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "abc 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1.5 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 0.5",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "-1 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1000001 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 0 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 -1 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000001 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 -1",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 101",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 0 extra",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 0 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "99999999999999999999999999999 1000 0",
+          "stdout": "invalid\n"
+        },
+        {
+          "stdin": "1 1000 25 \n\t",
+          "stdout": "11 0 11\n"
+        }
+      ],
+      "verificationVariants": [],
+      "artifacts": [
+        "main.cpp and a written unit contract.",
+        "A proof of intermediate bounds.",
+        "A table of 30+2 inputs, expectations, and actual stdout.",
+        "One defect with hypothesis, repair, and repeat check.",
+        "Model limits: constant rate, specified overhead, and no real-network measurement."
+      ],
+      "rubric": [
+        {
+          "criterion": "Contract and units",
+          "complete": "MiB, kbit/s, and overhead are consistent.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Calculation correctness",
+          "complete": "Upward rounding and minute formatting are consistent.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Range safety",
+          "complete": "Bounds are proven and operations follow validation.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Strict input",
+          "complete": "Empty, malformed, extra, and out-of-range input is rejected.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        },
+        {
+          "criterion": "Checks and explanation",
+          "complete": "30+2 results are recorded and the solution is explained independently.",
+          "points": 2,
+          "partial": "A working part is present, but explanation or evidence is incomplete.",
+          "missing": "No verifiable result for this criterion."
+        }
+      ],
+      "completionRule": "Self-check: at least 8/10 with no zero for correctness, safety, or checks. This is a manual rubric rather than an automatic grade or next-lesson gate.",
+      "verification": "manual-output-comparison"
+    },
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\basics\\standard-io.en.json"
+}

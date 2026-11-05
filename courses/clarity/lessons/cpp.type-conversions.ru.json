@@ -1,0 +1,337 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.type-conversions",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "Программирование на C++",
+  "module": "Основы C++",
+  "locale": "ru",
+  "title": "Преобразования типов: намерение, потеря информации и проверка диапазона",
+  "goal": "Сравним преобразование до деления и после потери дробной части.",
+  "prerequisites": [
+    {
+      "text": "Понимаете int, double и целое деление."
+    }
+  ],
+  "sections": [
+    {
+      "id": "model",
+      "title": "От задачи к действию",
+      "paragraphs": [
+        "Если оба операнда целые, 5/2 даёт 2. При записи этого результата в double получится 2.0: дробная часть уже потеряна. static_cast<double>(count) явно получает значение double из count до деления; с одним double деление выполняется в вещественном типе.",
+        "Явное преобразование показывает намерение, но не делает любое значение безопасным. При double→int дробь отбрасывается к нулю, а значение должно попадать в допустимый диапазон. Сужение в { } часто запрещено, чтобы обнаружить потерю раньше. Здесь 5 и 2 малы и точно представимы."
+      ]
+    },
+    {
+      "id": "worked-example",
+      "title": "Сравним преобразование до деления и после потери дробной части.",
+      "paragraphs": [],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int count = 5;\n    int people = 2;\n    double late = count / people;\n    double early = static_cast<double>(count) / people;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+        "output": "2 2.5\n",
+        "stdin": ""
+      },
+      "steps": [],
+      "trace": [
+        [
+          "count / people",
+          "int 5; int 2",
+          "int 2",
+          "Сначала сработало целое деление."
+        ],
+        [
+          "double late = 2",
+          "int 2",
+          "double 2",
+          "Преобразование после деления не восстанавливает дробь."
+        ],
+        [
+          "static_cast<double>(count) / people",
+          "double 5; int 2",
+          "early: 2.5",
+          "До деления появился вещественный операнд."
+        ]
+      ]
+    },
+    {
+      "id": "variation",
+      "title": "Изменим условие и проверим прогноз",
+      "paragraphs": [
+        "Замените count=5 на count=7.",
+        "7/2 целыми даёт 3.",
+        "Вещественное деление 7.0/2 даёт 3.5."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int count = 7;\n    int people = 2;\n    double late = count / people;\n    double early = static_cast<double>(count) / people;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "3 3.5\n"
+      }
+    },
+    {
+      "id": "diagnose",
+      "title": "Если результат не совпал",
+      "paragraphs": [
+        "static_cast<double>(count/people) всё ещё преобразует готовое целое частное и даст 2."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь выполните свою задачу",
+      "paragraphs": [
+        "Разделите 9 предметов между двумя людьми. Покажите целое частное и вещественную долю; преобразуйте операнд до операции.",
+        "В разделе «Практика» находится отдельная заготовка. Сначала запишите ожидаемый результат, затем изменяйте свою программу. Возвращение к примеру не заменяет ваш исходник."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Какой вывод получится после указанного изменения? Замените count=5 на count=7.",
+      "options": [
+        "3 3.5\n",
+        "Ошибка компиляции"
+      ],
+      "correct": 0,
+      "feedback": "7/2 целыми даёт 3. Вещественное деление 7.0/2 даёт 3.5."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Разделите 9 предметов между двумя людьми. Покажите целое частное и вещественную долю; преобразуйте операнд до операции.",
+      "feedback": "Сравните вывод с показанным ниже контрольным случаем. Объясните каждое изменение через объекты или операции этой темы. 9/2 даёт 4, а static_cast<double>(items)/people — 4.5. Преобразование static_cast<double>(items/people) даст 4: оно выполняется после целочисленного деления."
+    }
+  ],
+  "practice": {
+    "title": "Самостоятельная вариация",
+    "task": "Разделите 9 предметов между двумя людьми. Покажите целое частное и вещественную долю; преобразуйте операнд до операции.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    // Напишите своё решение здесь.\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "",
+    "returnAnchor": "worked-example",
+    "cases": [
+      {
+        "label": "Случай 1",
+        "input": "",
+        "output": "4 4.5\n"
+      }
+    ],
+    "criteria": [
+      "Сравните вывод с показанным ниже контрольным случаем.",
+      "Объясните каждое изменение через объекты или операции этой темы.",
+      "9/2 даёт 4, а static_cast<double>(items)/people — 4.5. Преобразование static_cast<double>(items/people) даст 4: оно выполняется после целочисленного деления."
+    ],
+    "hint": "7/2 целыми даёт 3. Вещественное деление 7.0/2 даёт 3.5.",
+    "steps": [
+      {
+        "where": "Моя программа",
+        "action": "Разделите 9 предметов между двумя людьми. Покажите целое частное и вещественную долю; преобразуйте операнд до операции.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя программа",
+        "action": "Предскажите результат до запуска.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя программа",
+        "action": "Напишите решение в отдельной заготовке; сохраните прежнюю работу.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя программа",
+        "action": "Сравните фактический вывод с прогнозом и объясните расхождение.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Неявное преобразование",
+      "definition": "Переход к требуемому типу без отдельной записи cast в исходнике."
+    },
+    {
+      "term": "Integral promotion",
+      "definition": "Повышение малого целочисленного типа до int либо unsigned int по представимости его значений."
+    },
+    {
+      "term": "static_cast<T>(value)",
+      "definition": "Явная запись разрешённого преобразования к T, не универсальная проверка безопасности."
+    },
+    {
+      "term": "Сужение",
+      "definition": "Преобразование с риском потери диапазона или точности; list-initialization запрещает определённые такие случаи."
+    },
+    {
+      "term": "Unsigned modulo",
+      "definition": "Правило значений беззнакового типа по модулю 2 в степени числа его разрядов."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-CONVERSIONS",
+    "CPP20-ARITH-CONV",
+    "CPP20-INTEGRAL-CONV",
+    "CPP20-STATIC-CAST",
+    "CPP20-INIT",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.type-conversions",
+    "locale": "ru",
+    "visualization": null,
+    "sourceRefs": [
+      "CPP20-CONVERSIONS",
+      "CPP20-ARITH-CONV",
+      "CPP20-INTEGRAL-CONV",
+      "CPP20-STATIC-CAST",
+      "CPP20-INIT",
+      "CPP-GUIDELINES"
+    ],
+    "blockPracticum": {
+      "title": "Практикум B: безопасные выражения и преобразования",
+      "label": "НАКОПИТЕЛЬНЫЙ ПРАКТИКУМ B",
+      "starterLabel": "Заготовка: начните с собственного решения",
+      "challenge": "Постройте отчёт о товарах, доставке и средней стоимости на предмет. Сумма точная в центах, среднее отдельное вещественное.",
+      "readiness": "Темы 5–8: состояние, промежуточные имена, целый диапазон, преобразование до деления.",
+      "skills": [
+        {
+          "lessonId": "cpp.variables-scope",
+          "title": "Переменные, блоки и время жизни: журнал состояний"
+        },
+        {
+          "lessonId": "cpp.expressions-operators-blocks",
+          "title": "Выражения и операторы: группировка, значение и понятные шаги"
+        },
+        {
+          "lessonId": "cpp.arithmetic-assignment",
+          "title": "Арифметика и присваивание: частное, остаток и безопасные промежуточные значения"
+        },
+        {
+          "lessonId": "cpp.type-conversions",
+          "title": "Преобразования типов: намерение, потеря информации и проверка диапазона"
+        }
+      ],
+      "requirements": [
+        "1…1000 предметов, цена и доставка 0…100000 центов.",
+        "Используйте long long до умножения, максимум суммы 100100000.",
+        "Сначала товары, затем разовая доставка, затем среднее с ранним double.",
+        "Некорректные фиксированные параметры дают invalid до расчёта."
+      ],
+      "milestones": [
+        "Запишите формулу и диапазон.",
+        "Разделите этапы на именованные результаты.",
+        "Проверьте три корректных и один ошибочный вариант.",
+        "Сохраните журнал и объяснение преобразования."
+      ],
+      "walkthrough": [
+        "Для 3 × 125 + 50 получаем 425 центов, среднее при обычном выводе 141.667. Это приближённое отображение, не договор денежного округления.",
+        "Варианты с 2 и 1 предметом дают простые средние 150 и 175. Они помогают проверить формулу независимо."
+      ],
+      "starterCode": "#include <iostream>\n\nint main() {\n    const long long itemCount{3};\n    const long long unitPriceCents{125};\n    const long long deliveryCents{50};\n    long long totalCents = itemCount * unitPriceCents + deliveryCents;\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    return 0;\n}\n",
+      "starterExpectedStdout": "total_cents=425\n",
+      "referenceCode": "#include <iostream>\n\nint main() {\n    const long long itemCount{3};\n    const long long unitPriceCents{125};\n    const long long deliveryCents{50};\n    if (itemCount < 1 || itemCount > 1000 || unitPriceCents < 0 || unitPriceCents > 100000 || deliveryCents < 0 || deliveryCents > 100000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long goodsCents = itemCount * unitPriceCents;\n    long long totalCents = goodsCents + deliveryCents;\n    double averageCents = static_cast<double>(totalCents) / itemCount;\n    std::cout << \"goods_cents=\" << goodsCents << '\\n';\n    std::cout << \"total_cents=\" << totalCents << '\\n';\n    std::cout << \"average_cents=\" << averageCents << '\\n';\n    return 0;\n}\n",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "goods_cents=375\ntotal_cents=425\naverage_cents=141.667\n"
+        }
+      ],
+      "verificationVariants": [
+        {
+          "id": "two-items",
+          "replace": [
+            {
+              "from": "const long long itemCount{3};",
+              "to": "const long long itemCount{2};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "goods_cents=250\ntotal_cents=300\naverage_cents=150\n"
+        },
+        {
+          "id": "one-item",
+          "replace": [
+            {
+              "from": "const long long itemCount{3};",
+              "to": "const long long itemCount{1};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "goods_cents=125\ntotal_cents=175\naverage_cents=175\n"
+        },
+        {
+          "id": "none-rejected",
+          "replace": [
+            {
+              "from": "const long long itemCount{3};",
+              "to": "const long long itemCount{0};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "invalid\n"
+        }
+      ],
+      "artifacts": [
+        "Исходник и контракт единиц.",
+        "Таблица типов и границ промежуточных выражений.",
+        "Четыре реальных запуска.",
+        "Один объяснённый исправленный дефект."
+      ],
+      "rubric": [
+        {
+          "criterion": "Корректность формулы",
+          "complete": "Доставка добавлена один раз.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Состояние и имена",
+          "complete": "Все этапы имеют понятные имена.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Безопасность",
+          "complete": "Проверки предшествуют операции, long long выбран заранее.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Преобразование",
+          "complete": "Среднее получает double до деления.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        },
+        {
+          "criterion": "Проверки",
+          "complete": "Все четыре запуска и ожидания сохранены.",
+          "points": 2,
+          "partial": "Есть рабочая часть, но объяснение или доказательства неполны.",
+          "missing": "Нет проверяемого результата по критерию."
+        }
+      ],
+      "completionRule": "Самопроверка: не менее 8/10, без нуля за корректность, безопасность и проверки. Это ручная рубрика, а не автоматический балл или блокировка следующего урока.",
+      "verification": "manual-output-comparison"
+    },
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\basics\\type-conversions.ru.json"
+}

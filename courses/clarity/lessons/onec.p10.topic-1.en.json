@@ -1,0 +1,345 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "onec.p10.topic-1",
+  "courseId": "onec",
+  "moduleId": "onec.p10",
+  "course": "1C:Enterprise 8 Programming — from foundations to professional development",
+  "module": "Reliability, security and diagnostics",
+  "locale": "en",
+  "title": "Locks and concurrent changes",
+  "goal": "Protect a balance check against concurrent changes and reproduce two-transaction ordering.",
+  "prerequisites": [
+    {
+      "text": "onec.p9; P1–P3; explicit contracts, types, collections and failure handling.",
+      "setup": true
+    }
+  ],
+  "sections": [
+    {
+      "id": "theory-1",
+      "title": "Individually correct, collectively wrong",
+      "paragraphs": [
+        "Two operations each read balance 10 and spend 7. Each passes alone; combined balance−4 breaks the rule. A post-read check without coordinated locking does not prevent the second transaction. Starting a transaction alone does not specify lock scope. Draw read A → readB → write A → write B before choosing an API.",
+        "The runnable local experiment creates own 30/45 documents. A transaction locks Document.ЗаявкаУслуги by the first reference, writes 99 and rolls back. Expect 30 and the untouched 45. This proves actual lock API/rollback, not a two-session race."
+      ]
+    },
+    {
+      "id": "example-1",
+      "title": "Reconcile the complete experiment",
+      "paragraphs": [
+        "The runnable local experiment creates own 30/45 documents. A transaction locks Document.ЗаявкаУслуги by the first reference, writes 99 and rolls back. Expect 30 and the untouched 45. This proves actual lock API/rollback, not a two-session race."
+      ],
+      "code": {
+        "language": "text",
+        "source": "Start → 30/45 → Two own references.\nTransaction → Lock first;write 99 → Second unchanged.\nRollback → 30/45 → Both checks True.",
+        "output": "30/45; Both checks True."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Start",
+              "30/45",
+              "Two own references."
+            ],
+            [
+              "Transaction",
+              "Lock first;write 99",
+              "Second unchanged."
+            ],
+            [
+              "Rollback",
+              "30/45",
+              "Both checks True."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-2",
+      "title": "Locks apply to data",
+      "paragraphs": [
+        "Managed locking identifies a data space and dimension values. Lock invariant-related data before deciding. Too-wide locks reduce concurrency; too-narrow locks miss conflicts. Scope depends on register, mode and operation; there is no universal line suitable for every solution.",
+        "Lock scope follows the invariant. A shared customer/period resource may need a broader key than one document reference. Define competing read/check/write operations first. Locking the entire infobase merely to avoid errors is not a justified design."
+      ]
+    },
+    {
+      "id": "theory-3",
+      "title": "Consistent ordering reduces deadlocks",
+      "paragraphs": [
+        "Two operations locking A/Bin opposite order can deadlock. Agree on stable-key order and keep transactions short. A timeout is failure, not a successful spend. Retrying needs idempotency and a fresh state read; blindly repeating external effects can duplicate them.",
+        "Draw a separate schedule: both actors read 10 and request 7. Correct serialization makes the second reread 3 and reject. A real test needs two permitted concurrent sessions with controlled pauses; a single-user training installation does not prove it."
+      ]
+    },
+    {
+      "id": "example-2",
+      "title": "A case that distinguishes the wrong solution",
+      "paragraphs": [
+        "In another copy replace rollback with commit:99 persists and the 30 assertion fails. Retain the failed protocol and corrected source. Timeouts, deadlocks and a server cluster remain separate scenarios until actually tested."
+      ],
+      "code": {
+        "language": "text",
+        "source": "In another copy commit instead of rolling back.",
+        "output": "The 30 assertion fails because 99 is persisted."
+      },
+      "tables": [
+        {
+          "caption": "Step-by-step reasoning",
+          "columns": [
+            "Action or state",
+            "Observation",
+            "Reason"
+          ],
+          "rows": [
+            [
+              "Separate copy",
+              "In another copy commit instead of rolling back.",
+              "Retain the accepted original."
+            ],
+            [
+              "Observe",
+              "The 30 assertion fails because 99 is persisted.",
+              "In another copy replace rollback with commit:99 persists and the 30 assertion fails. Retain the failed protocol and corrected source. Timeouts, deadlocks and a server cluster remain separate scenarios until actually tested."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theory-4",
+      "title": "Two sessions need separate evidence",
+      "paragraphs": [
+        "Single-sessiontrainingcannot prove this scenario. In a permitted multi-session stand, control barriers and record both traces and final balance. From 10, one spend 7 succeeds; the second rereads and rejects, result 3. Test an independent customer to show the lock does not block everything.",
+        "In another copy replace rollback with commit:99 persists and the 30 assertion fails. Retain the failed protocol and corrected source. Timeouts, deadlocks and a server cluster remain separate scenarios until actually tested."
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Check your explanation",
+      "paragraphs": [
+        "Success is inferred from an unavailable environment. Separate actual observations from a planned advanced scenario and name edition limits.",
+        "A failed attempt is removed to make the record look successful. Retain the original failure, its cause, correction and regression evidence.",
+        "An own-copy change is applied over the accepted original. Verify the actual directory and preserve source identities before making changes."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "check-0",
+      "kind": "choice",
+      "prompt": "Does a transaction choose the correct managed-lock scope itself?",
+      "options": [
+        "No",
+        "Always",
+        "For every register"
+      ],
+      "correct": 0,
+      "feedback": "Scope follows the invariant and operation."
+    },
+    {
+      "id": "check-1",
+      "kind": "choice",
+      "prompt": "After spending 7 from 10, another 7 should",
+      "options": [
+        "Succeed",
+        "Reject under a no-negative rule",
+        "Rename something"
+      ],
+      "correct": 1,
+      "feedback": "Current balance 3 is insufficient."
+    },
+    {
+      "id": "check-2",
+      "kind": "choice",
+      "prompt": "Does one training session prove a race?",
+      "options": [
+        "Yes",
+        "For minutes",
+        "No"
+      ],
+      "correct": 2,
+      "feedback": "Two controlled executions are needed."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Investigate the separate adverse case without claiming an unavailable environment was tested. In another copy commit instead of rolling back.",
+      "feedback": "Accepted original preserved; rejection and its limits explained."
+    }
+  ],
+  "practice": {
+    "kind": "installed-1c",
+    "title": "Locks and concurrent changes",
+    "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. In another copy commit instead of rolling back.",
+    "environment": "Separate own synthetic infobase; retain the prior module and its backup. Studio and Sandbox optional.",
+    "externalRoute": "Installed official 1C: Designer and Enterprise",
+    "files": [
+      {
+        "path": "lesson.bsl",
+        "content": "// Общая подготовка P6; определение в серверном модуле добавляется один раз.\nФункция НовыйНаборРегистров(ПервыеМинуты = 30, ВторыеМинуты = 45) Экспорт\n    Клиент = Справочники.Клиенты.СоздатьЭлемент(); Клиент.Наименование = \"Учебный P6 \" + Строка(Новый УникальныйИдентификатор); Клиент.Записать();\n    Услуга = Справочники.Услуги.СоздатьЭлемент(); Услуга.Наименование = \"Учебная P6\"; Услуга.Записать();\n    Ссылки = Новый Массив;\n    Для Индекс = 1 По 2 Цикл\n        Документ = Документы.ЗаявкаУслуги.СоздатьДокумент(); Документ.Дата = Дата(2026,11,2,11+Индекс,0,0);\n        Документ.Клиент = Клиент.Ссылка; Документ.Услуга = Услуга.Ссылка; Документ.Статус = Перечисления.СтатусыЗаявки.Новая;\n        Документ.ДлительностьМинут = ?(Индекс = 1,ПервыеМинуты,ВторыеМинуты); Документ.Записать(); Ссылки.Добавить(Документ.Ссылка);\n    КонецЦикла;\n    Возврат Новый Структура(\"Клиент,Услуга,Первая,Вторая\",Клиент.Ссылка,Услуга.Ссылка,Ссылки[0],Ссылки[1]);\nКонецФункции\n\nФункция ОпытЛокальнойБлокировки() Экспорт\n    Д = НовыйНаборРегистров(); НачатьТранзакцию();\n    Попытка\n        Блокировка = Новый БлокировкаДанных; Элемент = Блокировка.Добавить(\"Документ.ЗаявкаУслуги\"); Элемент.УстановитьЗначение(\"Ссылка\",Д.Первая); Блокировка.Заблокировать();\n        Объект = Д.Первая.ПолучитьОбъект(); Объект.ДлительностьМинут = 99; Объект.Записать(); ОтменитьТранзакцию();\n    Исключение\n        ОтменитьТранзакцию(); ВызватьИсключение;\n    КонецПопытки;\n    Возврат Новый Структура(\"ОткатСохранил,ДругойСохранен\",Д.Первая.ДлительностьМинут = 30,Д.Вторая.ДлительностьМинут = 45);\nКонецФункции\n"
+      }
+    ],
+    "returnAnchor": "example-1",
+    "steps": [
+      {
+        "id": "step-1",
+        "title": "Preserve the starting state",
+        "where": "Own-copy Designer",
+        "action": "Close Enterprise. Export a DT backup from Administration → Dump infobase; restore it into a new empty directory and verify the actual path. Preserve earlier functions/fields.",
+        "why": "Keep the accepted work independent.",
+        "expected": "Separate copy opens with the earlier records.",
+        "troubleshooting": "A new list name alone does not create another database directory.",
+        "before": "Own path, prior sources and a restorable backup identified."
+      },
+      {
+        "id": "step-2",
+        "title": "Add the complete server source",
+        "where": "Конфигуратор → Общие → Общие модули → УчебныеПрофессиональныеОпыты",
+        "action": "Create a server/server-call module without Global or Privileged. Paste the complete source below outside other procedures; retain a single shared preparation function if already present.",
+        "why": "Database access has an explicit server boundary.",
+        "expected": "Definitions are module-level; no duplicate helper.",
+        "troubleshooting": "Do not paste definitions inside startup or into an arbitrary Studio file.",
+        "before": "Separate copy opens with the earlier records."
+      },
+      {
+        "id": "step-3",
+        "title": "Prepare and call the experiment",
+        "where": "Конфигуратор → Модуль приложения → ПриНачалеРаботыСистемы",
+        "action": "Результат = УчебныеПрофессиональныеОпыты.ОпытЛокальнойБлокировки();\nСообщить(Результат.ОткатСохранил);\nСообщить(Результат.ДругойСохранен);",
+        "why": "Print every named result instead of accepting compilation alone.",
+        "expected": "Only the stated caller is inside the existing startup handler.",
+        "troubleshooting": "Keep one startup handler; ensure the common module is server-call enabled.",
+        "before": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "id": "step-4",
+        "title": "Save, update and run once",
+        "where": "Ctrl+S → F7 → Предприятие",
+        "action": "Run once and compare the fields with the worked trace. 30/45; Both checks True.",
+        "why": "Observe actual 1C data, not the browser diagram.",
+        "expected": "30/45; Both checks True.",
+        "troubleshooting": "Record the first failed assertion and module/line. Do not change the expectation merely to get True.",
+        "before": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "id": "step-5",
+        "title": "Retain both results",
+        "where": "Конфигуратор после закрытия Предприятия",
+        "action": "Remove only the startup call. Use another copy for the adverse case and keep both protocols.",
+        "why": "Preserve provenance and avoid repeating data creation at every startup.",
+        "expected": "Original retained, negative experiment isolated, automatic caller removed.",
+        "troubleshooting": "Do not clear registers or delete old documents to make a total agree.",
+        "before": "30/45; Both checks True."
+      }
+    ],
+    "cases": [
+      {
+        "label": "Observation 1",
+        "input": "",
+        "output": "Separate copy opens with the earlier records."
+      },
+      {
+        "label": "Observation 2",
+        "input": "",
+        "output": "Definitions are module-level; no duplicate helper."
+      },
+      {
+        "label": "Observation 3",
+        "input": "",
+        "output": "Only the stated caller is inside the existing startup handler."
+      },
+      {
+        "label": "Observation 4",
+        "input": "",
+        "output": "30/45; Both checks True."
+      },
+      {
+        "label": "Observation 5",
+        "input": "",
+        "output": "Original retained, negative experiment isolated, automatic caller removed."
+      }
+    ],
+    "criteria": [
+      "Show how two individually valid decisions produce−4.",
+      "Actual input/output and exact own source identified; unperformed stages marked NOT RUN.",
+      "Accepted original preserved; rejection and its limits explained.",
+      "Exact own source and version; actual keys, observations and expected versus actual table.",
+      "Original and changed-copy results, failed attempts and untested environment limits.",
+      "In another copy commit instead of rolling back."
+    ],
+    "hint": "Separate actual observations from a planned advanced scenario and name edition limits.",
+    "exercises": [
+      {
+        "level": "Basic",
+        "task": "Explain the checked boundary using the first trace. Reproduce the unsafe schedule in a model.",
+        "criteria": "Show how two individually valid decisions produce−4."
+      },
+      {
+        "level": "Applied",
+        "task": "Perform the stated available experiment and retain actual observations. Protect read and write in a permitted stand.",
+        "criteria": "Actual input/output and exact own source identified; unperformed stages marked NOT RUN."
+      },
+      {
+        "level": "Advanced",
+        "task": "Investigate the separate adverse case without claiming an unavailable environment was tested. In another copy commit instead of rolling back.",
+        "criteria": "Accepted original preserved; rejection and its limits explained."
+      }
+    ],
+    "sourceFile": "code/pedagogy/reliability-lock-first.bsl",
+    "setupGuide": true
+  },
+  "terms": [
+    "bsl",
+    "reference",
+    "query",
+    "transaction"
+  ],
+  "sourcePath": "courses/onec/lessons/en/p10-locks.json",
+  "assessment": {
+    "contentRevision": "2.0.0-pedagogy.1",
+    "sharedRefs": [
+      "onec.shared.v1@1.0.0",
+      "onec.full.shared.v1@1.0.0"
+    ],
+    "quiz": [
+      {
+        "question": "Does a transaction choose the correct managed-lock scope itself?",
+        "options": [
+          "No",
+          "Always",
+          "For every register"
+        ],
+        "correct": 0,
+        "explanation": "Scope follows the invariant and operation."
+      },
+      {
+        "question": "After spending 7 from 10, another 7 should",
+        "options": [
+          "Succeed",
+          "Reject under a no-negative rule",
+          "Rename something"
+        ],
+        "correct": 1,
+        "explanation": "Current balance 3 is insufficient."
+      },
+      {
+        "question": "Does one training session prove a race?",
+        "options": [
+          "Yes",
+          "For minutes",
+          "No"
+        ],
+        "correct": 2,
+        "explanation": "Two controlled executions are needed."
+      }
+    ]
+  }
+}

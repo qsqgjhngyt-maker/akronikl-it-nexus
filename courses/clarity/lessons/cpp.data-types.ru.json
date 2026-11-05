@@ -1,0 +1,335 @@
+{
+  "schemaVersion": 1,
+  "contentRevision": "clarity-courses-v1",
+  "id": "cpp.data-types",
+  "courseId": "cpp",
+  "moduleId": "cpp.section.cpp-basics",
+  "course": "Программирование на C++",
+  "module": "Основы C++",
+  "locale": "ru",
+  "title": "Типы данных: выбор значения, инициализация и измерение target",
+  "goal": "Выберем тип под смысл значения и увидим различие целого и дробного деления.",
+  "prerequisites": [
+    {
+      "text": "Знаете целые выражения, % и сравнение !=; смысл double/bool вводится здесь."
+    }
+  ],
+  "sections": [
+    {
+      "id": "model",
+      "title": "От задачи к действию",
+      "paragraphs": [
+        "Тип определяет допустимые значения и операции. int хранит целые, double — приближённые вещественные, bool — false/true, char — один элемент кодировки, а не произвольную букву любого языка. Для 5 целых предметов, поделённых между двумя людьми, целое частное равно 2; 5.0/2.0 даёт 2.5.",
+        "Запись 5.0 — литерал с плавающей точкой. В отличие от него, 5/2 выполняет целое деление ещё до помещения в другую переменную. Размер и точные границы типов зависят от платформы: не запоминайте размер указателя по одной машине. Переполнение знакового целого не является допустимым способом получить «следующее» число."
+      ]
+    },
+    {
+      "id": "worked-example",
+      "title": "Выберем тип под смысл значения и увидим различие целого и дробного деления.",
+      "paragraphs": [],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int whole = 5 / 2;\n    double share = 5.0 / 2.0;\n    bool hasRemainder = (5 % 2 != 0);\n    std::cout << whole << ' ' << share << ' ' << hasRemainder << '\\n';\n    return 0;\n}\n",
+        "output": "2 2.5 1\n",
+        "stdin": ""
+      },
+      "steps": [],
+      "trace": [
+        [
+          "5 / 2",
+          "int; int",
+          "whole: 2",
+          "Дробная часть не входит в целое частное."
+        ],
+        [
+          "5.0 / 2.0",
+          "double; double",
+          "share: 2.5",
+          "Эта половина представима точно."
+        ],
+        [
+          "5 % 2 != 0",
+          "1 != 0",
+          "hasRemainder: true",
+          "Без boolalpha true печатается как 1."
+        ]
+      ]
+    },
+    {
+      "id": "variation",
+      "title": "Изменим условие и проверим прогноз",
+      "paragraphs": [
+        "Замените в обоих делениях 5 на 6, сохранив .0 у double.",
+        "Оба частных теперь равны 3.",
+        "Условие hasRemainder пока всё ещё про 5! Измените и его отдельно: тогда последнее число станет 0."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int whole = 6 / 2;\n    double share = 6.0 / 2.0;\n    bool hasRemainder = (5 % 2 != 0);\n    std::cout << whole << ' ' << share << ' ' << hasRemainder << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "3 3 1\n"
+      }
+    },
+    {
+      "id": "diagnose",
+      "title": "Если результат не совпал",
+      "paragraphs": [
+        "double value = 5/2 даст 2, а не 2.5: тип места хранения не возвращает уже отброшенную часть."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь выполните свою задачу",
+      "paragraphs": [
+        "Сравните 7/2 и 7.0/2.0. Выведите оба результата и bool «есть остаток» для 7.",
+        "В разделе «Практика» находится отдельная заготовка. Сначала запишите ожидаемый результат, затем изменяйте свою программу. Возвращение к примеру не заменяет ваш исходник."
+      ]
+    }
+  ],
+  "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Какой вывод получится после указанного изменения? Замените в обоих делениях 5 на 6, сохранив .0 у double.",
+      "options": [
+        "3 2.5 1\n",
+        "3 3 1\n"
+      ],
+      "correct": 1,
+      "feedback": "Оба частных теперь равны 3. Условие hasRemainder пока всё ещё про 5! Измените и его отдельно: тогда последнее число станет 0."
+    },
+    {
+      "id": "explain",
+      "kind": "free",
+      "prompt": "Сравните 7/2 и 7.0/2.0. Выведите оба результата и bool «есть остаток» для 7.",
+      "feedback": "Сравните вывод с показанным ниже контрольным случаем. Объясните каждое изменение через объекты или операции этой темы. 7/2 даёт 3, 7.0/2.0 даёт 3.5, признак остатка — 1. double value=7/2 сохранит 3, а не 3.5: дробная часть уже отброшена при целочисленном делении."
+    }
+  ],
+  "practice": {
+    "title": "Самостоятельная вариация",
+    "task": "Сравните 7/2 и 7.0/2.0. Выведите оба результата и bool «есть остаток» для 7.",
+    "kind": "cpp-console",
+    "environment": "C++20",
+    "files": [
+      {
+        "path": "main.cpp",
+        "content": "#include <iostream>\n\nint main() {\n    // Напишите своё решение здесь.\n    return 0;\n}\n"
+      }
+    ],
+    "metadata": {},
+    "stdin": "",
+    "returnAnchor": "worked-example",
+    "cases": [
+      {
+        "label": "Случай 1",
+        "input": "",
+        "output": "3 3.5 1\n"
+      }
+    ],
+    "criteria": [
+      "Сравните вывод с показанным ниже контрольным случаем.",
+      "Объясните каждое изменение через объекты или операции этой темы.",
+      "7/2 даёт 3, 7.0/2.0 даёт 3.5, признак остатка — 1. double value=7/2 сохранит 3, а не 3.5: дробная часть уже отброшена при целочисленном делении."
+    ],
+    "hint": "Оба частных теперь равны 3. Условие hasRemainder пока всё ещё про 5! Измените и его отдельно: тогда последнее число станет 0.",
+    "steps": [
+      {
+        "where": "Моя программа",
+        "action": "Сравните 7/2 и 7.0/2.0. Выведите оба результата и bool «есть остаток» для 7.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя программа",
+        "action": "Предскажите результат до запуска.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя программа",
+        "action": "Напишите решение в отдельной заготовке; сохраните прежнюю работу.",
+        "why": "",
+        "expected": ""
+      },
+      {
+        "where": "Моя программа",
+        "action": "Сравните фактический вывод с прогнозом и объясните расхождение.",
+        "why": "",
+        "expected": ""
+      }
+    ]
+  },
+  "terms": [
+    {
+      "term": "Тип",
+      "definition": "Правила допустимых значений объекта и операций над ним; единицу задачи тип не всегда кодирует."
+    },
+    {
+      "term": "Инициализация",
+      "definition": "Задание начального значения при создании объекта. Здесь предпочитаем явно инициализировать каждый объект."
+    },
+    {
+      "term": "Диапазон",
+      "definition": "Множество представимых значений: конечный числовой тип не хранит произвольное математическое число."
+    },
+    {
+      "term": "Целевая среда, target",
+      "definition": "Среда, для которой собрана программа, включая модель типов и библиотеку; browser Clang/WASM — конкретный target."
+    },
+    {
+      "term": "sizeof",
+      "definition": "Оператор размера в C++-байтах. sizeof(char) равно 1; число битов в таком байте задаёт CHAR_BIT."
+    },
+    {
+      "term": "numeric_limits",
+      "definition": "Стандартное библиотечное средство получения свойств арифметического типа выбранной реализации."
+    },
+    {
+      "term": "Допуск",
+      "definition": "Допустимая величина отклонения, выбранная по условиям задачи; не универсальная гарантия точности double."
+    }
+  ],
+  "sourceRefs": [
+    "CPP20-TYPES",
+    "CPP20-INIT",
+    "CPP20-LIMITS",
+    "CPP20-SIZEOF",
+    "CPP20-AUTO",
+    "CPP-GUIDELINES"
+  ],
+  "extras": {
+    "lessonId": "cpp.data-types",
+    "locale": "ru",
+    "visualization": null,
+    "sourceRefs": [
+      "CPP20-TYPES",
+      "CPP20-INIT",
+      "CPP20-LIMITS",
+      "CPP20-SIZEOF",
+      "CPP20-AUTO",
+      "CPP-GUIDELINES"
+    ],
+    "blockPracticum": {
+      "title": "Практикум A: паспорт партии панелей",
+      "label": "ПРАКТИКУМ ПЕРВОГО БЛОКА",
+      "starterLabel": "Заготовка с объяснённым переводом единиц",
+      "challenge": "Создайте воспроизводимый отчёт для 4 панелей длиной 125 см: категория A, утверждено true, 500 см и 5 м. Сохраните результат по четырём навыкам первых тем.",
+      "readiness": "Можно начинать, если вы объясняете каркас main, выбираете имена с единицами, отличаете const/constexpr и инициализируете простые типы. Строка деления на double-коэффициент предоставлена как объяснённая опора до темы преобразований.",
+      "skills": [
+        {
+          "lessonId": "cpp.first-cpp-program",
+          "title": "Сборка и проверка вывода"
+        },
+        {
+          "lessonId": "cpp.tokens-identifiers-keywords",
+          "title": "Точные имена с единицами"
+        },
+        {
+          "lessonId": "cpp.comments-constants-literals",
+          "title": "Константы и причины в комментариях"
+        },
+        {
+          "lessonId": "cpp.data-types",
+          "title": "Типы и инициализация"
+        }
+      ],
+      "requirements": [
+        "stdin пуст: все исходные величины явно заданы и объяснены.",
+        "Пять строк: category=A, approved=1, length_cm=500, length_m=5, cm_per_m=100.",
+        "panelCount ограничен 0…100, panelLengthCm — 0…1000: произведение не больше 100000; long long хранит этот диапазон. В объявлении long long — имя целого типа из двух слов, синтаксис остальных частей прежний.",
+        "Для контрольных вариантов берём целое число метров: 0 панелей и 8 панелей по 125 см. Общие округления и полный ввод пока вне задания."
+      ],
+      "milestones": [
+        "До кода напишите контракт и ручной расчёт.",
+        "Дополните заготовку символьной меткой, флагом, комментарием причины и недостающими строками.",
+        "Проверьте основной и два изменённых сценария.",
+        "Приложите паспорт target и самооценку по рубрике."
+      ],
+      "walkthrough": [
+        "Количество × сантиметры на панель даёт общую длину в сантиметрах. Деление на double-коэффициент получает вещественный результат. Для наших малых значений преобразование точно; его общие правила изучаются позже.",
+        "Для произведения выбираем long long: его гарантированный диапазон покрывает 100000. Минимальный диапазон int этого сам по себе не обещает. Проверка границ — рассуждение до запуска, а не опыт с переполнением.",
+        "constexpr double centimetersPerMeter{100.0}; хранит неизменный коэффициент в вещественном типе. Он используется и в расчёте, и в отчёте. Новая форма отличается от прежнего constexpr int только выбранным типом и литералом."
+      ],
+      "starterCode": "#include <iostream>\n\nint main() {\n    constexpr double centimetersPerMeter{100.0};\n    const long long panelCount{4};\n    const long long panelLengthCm{125};\n    long long totalLengthCm = panelCount * panelLengthCm;\n    // Scaffold: the double factor makes the division floating-point.\n    double totalLengthMeters = totalLengthCm / centimetersPerMeter;\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    std::cout << \"length_m=\" << totalLengthMeters << '\\n';\n    return 0;\n}\n",
+      "starterExpectedStdout": "length_cm=500\nlength_m=5\n",
+      "referenceCode": "#include <iostream>\n\nint main() {\n    // Each complete panel contributes the same whole-centimeter length.\n    constexpr double centimetersPerMeter{100.0};\n    const long long panelCount{4};\n    const long long panelLengthCm{125};\n    long long totalLengthCm = panelCount * panelLengthCm;\n    double totalLengthMeters = totalLengthCm / centimetersPerMeter;\n    char category{'A'};\n    bool approved{true};\n    std::cout << \"category=\" << category << '\\n';\n    std::cout << \"approved=\" << approved << '\\n';\n    std::cout << \"length_cm=\" << totalLengthCm << '\\n';\n    std::cout << \"length_m=\" << totalLengthMeters << '\\n';\n    std::cout << \"cm_per_m=\" << centimetersPerMeter << '\\n';\n    return 0;\n}\n",
+      "cases": [
+        {
+          "stdin": "",
+          "stdout": "category=A\napproved=1\nlength_cm=500\nlength_m=5\ncm_per_m=100\n"
+        }
+      ],
+      "verificationVariants": [
+        {
+          "id": "zero-panels",
+          "replace": [
+            {
+              "from": "const long long panelCount{4};",
+              "to": "const long long panelCount{0};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "category=A\napproved=1\nlength_cm=0\nlength_m=0\ncm_per_m=100\n"
+        },
+        {
+          "id": "eight-panels",
+          "replace": [
+            {
+              "from": "const long long panelCount{4};",
+              "to": "const long long panelCount{8};"
+            }
+          ],
+          "stdin": "",
+          "stdout": "category=A\napproved=1\nlength_cm=1000\nlength_m=10\ncm_per_m=100\n"
+        }
+      ],
+      "artifacts": [
+        "main.cpp с объяснёнными именами и одним комментарием причины.",
+        "Таблица ожиданий и реальных stdout трёх сценариев.",
+        "Паспорт target и различение гарантий и наблюдений.",
+        "Самооценка и один разобранный дефект с повторной проверкой."
+      ],
+      "rubric": [
+        {
+          "criterion": "Контракт и сборка",
+          "points": 2,
+          "complete": "Все пять полей и успешная сборка",
+          "partial": "Часть требования выполнена, но доказательство или объяснение неполно.",
+          "missing": "Нет проверяемого результата по этому критерию."
+        },
+        {
+          "criterion": "Имена и единицы",
+          "points": 2,
+          "complete": "Роли и cm/m согласованы",
+          "partial": "Часть требования выполнена, но доказательство или объяснение неполно.",
+          "missing": "Нет проверяемого результата по этому критерию."
+        },
+        {
+          "criterion": "Константы и комментарий",
+          "points": 2,
+          "complete": "Коэффициент объяснён и используется в расчёте",
+          "partial": "Часть требования выполнена, но доказательство или объяснение неполно.",
+          "missing": "Нет проверяемого результата по этому критерию."
+        },
+        {
+          "criterion": "Типы и границы",
+          "points": 2,
+          "complete": "Начальные значения и диапазоны обоснованы",
+          "partial": "Часть требования выполнена, но доказательство или объяснение неполно.",
+          "missing": "Нет проверяемого результата по этому критерию."
+        },
+        {
+          "criterion": "Проверки и target",
+          "points": 2,
+          "complete": "Три сценария и реальный паспорт приложены",
+          "partial": "Часть требования выполнена, но доказательство или объяснение неполно.",
+          "missing": "Нет проверяемого результата по этому критерию."
+        }
+      ],
+      "completionRule": "Самооценка: 8 из 10 и без нулей за контракт, типы и проверки. Это редакционная рубрика, не автоматический балл, не блокировка и не доказательство освоения всего Module 2.",
+      "verification": "manual-output-comparison"
+    },
+    "laboratory": {}
+  },
+  "sourcePath": "courses\\cpp\\gold\\basics\\data-types.ru.json"
+}
