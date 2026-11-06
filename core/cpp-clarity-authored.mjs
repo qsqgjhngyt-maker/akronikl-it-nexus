@@ -16,7 +16,6 @@ export function authoredMarkup(lesson,{code,table,url}){
 }
 export const authoredStyles=`
  .r3-lesson[data-authored=true]{--r3-line:#50657a;font-size:17px;line-height:1.8}
- .r3-lesson[data-authored=true] .stage-body{background:#0b1929;padding:28px;border-radius:18px;margin-top:18px}
  .r3-lesson[data-authored=true] .authored-intro,.r3-lesson[data-authored=true] .authored-section{max-width:1000px;margin-left:auto;margin-right:auto}
  .r3-lesson[data-authored=true] .authored-section{background:#122438;border-color:#3d536a;padding:30px}
  .r3-lesson[data-authored=true] p{max-width:78ch}
@@ -24,15 +23,14 @@ export const authoredStyles=`
  .r3-lesson[data-authored=true] .lesson-map a{padding:8px 12px;border:1px solid #50657a;border-radius:8px;white-space:normal}
  .r3-lesson[data-authored=true] .example-label{color:#97e2ce;font-weight:700}
  .r3-lesson[data-authored=true] .example-output{border-left:3px solid #97e2ce;padding-left:16px}
- .r3-lesson[data-authored=true] .prediction-reveal{border:2px solid #82e6ce;background:#102d34}
+ .r3-lesson[data-authored=true] .prediction-reveal{border:2px solid #50657a;background:#0b1929}
  .r3-lesson[data-authored=true] summary{cursor:pointer;font-weight:650;min-height:32px}
- .r3-lesson[data-authored=true] .prediction-reveal td:nth-child(2){background:#24504b;font-weight:700}
+ .r3-lesson[data-authored=true] .prediction-reveal td:nth-child(2){background:#182e43;font-weight:700}
  .r3-lesson[data-authored=true] .lesson-reading{margin-top:32px;border-top:1px solid #50657a;padding-top:20px}
  .r3-lesson[data-authored=true] .lesson-reading article{margin:20px 0;padding:16px;background:#122438;border-radius:12px}
- .r3-lesson[data-authored=true] .question{background:#102c30}
  .r3-lesson[data-authored=true] [data-r3-editor]{border-top:3px solid #82e6ce;padding-top:16px}
  .r3-lesson[data-authored=true] :is(a,button,input,summary,textarea):focus-visible{outline:3px solid #f5d78c;outline-offset:3px}
- @media(max-width:720px){.r3-lesson[data-authored=true]{font-size:16px}.r3-lesson[data-authored=true] .stage-body{padding:12px}.r3-lesson[data-authored=true] .authored-section{padding:16px}.r3-lesson[data-authored=true] .lesson-map{grid-template-columns:1fr}.r3-lesson[data-authored=true] h1{font-size:1.7rem}.r3-lesson[data-authored=true] th,.r3-lesson[data-authored=true] td{padding:6px;min-width:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}.r3-lesson[data-authored=true] table{table-layout:fixed}.r3-lesson[data-authored=true] .prediction-reveal{padding:10px}}
+ @media(max-width:720px){.r3-lesson[data-authored=true]{font-size:16px}.r3-lesson[data-authored=true] .authored-section{padding:16px}.r3-lesson[data-authored=true] .lesson-map{grid-template-columns:1fr}.r3-lesson[data-authored=true] h1{font-size:1.7rem}.r3-lesson[data-authored=true] th,.r3-lesson[data-authored=true] td{padding:6px;min-width:0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}.r3-lesson[data-authored=true] table{table-layout:fixed}.r3-lesson[data-authored=true] .prediction-reveal{padding:10px}}
 
  .r3-lesson[data-authored=true] .lesson-diagram{margin:16px 0}
  .r3-lesson[data-authored=true] .lesson-diagram figcaption{font-weight:650}

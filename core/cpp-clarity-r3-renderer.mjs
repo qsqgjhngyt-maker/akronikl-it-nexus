@@ -31,7 +31,19 @@ function table(t){
  const attributes=wide?` data-wide-table tabindex="0" role="region" aria-label="${esc(t.caption)}"`:'';
  const note=wide?`<p class="table-scroll-note">${say('Таблицу можно прокрутить вправо.','Scroll the table to see more.')}</p>`:'';
  return `${note}<div class="table-wrap"${attributes}><table><caption>${esc(t.caption)}</caption><thead><tr>${t.columns.map(x=>`<th scope="col">${esc(x)}</th>`).join('')}</tr></thead><tbody>${t.rows.map(row=>`<tr>${row.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
-function code(source,output,stdin=''){const w=text();return `<div class="example-layout"><div><div class="example-label">${w.source}</div><pre><code>${esc(source)}</code></pre>${stdin?`<p>${say('Ввод примера','Example input')}</p><pre>${esc(stdin)}</pre>`:''}</div>${output!==undefined?`<div class="example-output"><div class="example-label">${w.output}</div><pre data-expected-output>${esc(output)}</pre></div>`:''}</div>`;}
+function code(source,output,stdin='',label=w.source){
+ const hasOutput=output!==undefined;
+ return `<div class="example-layout"${hasOutput?'':' data-example-single'}>
+  <div><div class="example-label">${label}</div><pre><code>${esc(source)}</code></pre>
+  ${stdin?`<p>${say('Ввод примера','Example input')}</p><pre>${esc(stdin)}</pre>`:''}</div>
+  ${hasOutput?`<div class="example-output"><div class="example-label">${w.output}</div><pre data-expected-output>${esc(output)}</pre></div>`:''}
+ </div>`;
+}
+function questionCode(example){
+ if(!example)return '';
+ const {source,stdin}=typeof example==='string'?{source:example}:example;
+ return code(source,undefined,stdin,external?w.source:say('Код для вопроса','Code for this question'));
+}
 function prerequisite(p){return `${esc(p.text)}${p.target?` <a href="${url(p.target,'explanation')}">${text().program} →</a>`:''}${p.setup?` <button class="button quiet" data-action="setup">${text().setup}</button>`:''}`;}
 const authorModule=lesson.authored?await import('./cpp-clarity-authored.mjs'):null;
  if(!live())return null;
@@ -62,7 +74,26 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  let d=draft();const requested=position(new URLSearchParams(location.hash.slice(1)),d.stage);route.stage=requested.stage;
  const idx=course.topics.findIndex(t=>t.id===topicId);
  const neighbor=(t,label)=>t?`<a href="${url(t.id,'explanation')}">${label}</a>`:'';
- function selfcheck(){return `<h1>${w.selfcheck}</h1><p>${esc(lesson.goal)}</p>${lesson.selfcheck.map(q=>{const a=d.answers[q.id];return `<form class="question" data-question="${q.id}"><fieldset><legend>${esc(q.prompt)}</legend>${q.code?typeof q.code==='string'?code(q.code):code(q.code.source,undefined,q.code.stdin||''):''}${q.kind==='free'?`<textarea data-answer="${q.id}" aria-label="${esc(q.prompt)}" ${adapter?'':'disabled'}>${esc(a?.value||'')}</textarea>`:q.options.map((v,i)=>`<label class="option"><input type="radio" name="${q.id}" value="${i}" data-answer="${q.id}" ${a?.value===i?'checked':''} ${adapter?'':'disabled'}><span>${esc(v)}</span></label>`).join('')}<button class="btn" ${adapter?'':'disabled'}>${q.kind==='free'?w.free:w.check}</button></fieldset><div data-feedback="${q.id}" role="status"></div>${q.recall?`<button type="button" class="btn" data-recall="${esc(q.recall)}">${say('Вспомнить теорию','Recall the rule')}</button>`:''}</form>`;}).join('')}<div data-course-checkpoint></div><a class="btn" href="${url(topicId,'practice')}">${w.practice} →</a>`;}
+ function selfcheck(){return `<h1>${w.selfcheck}</h1><p>${esc(lesson.goal)}</p>${lesson.selfcheck.map(q=>{const a=d.answers[q.id];return `<form class="question" data-question="${q.id}"><fieldset><legend>${esc(q.prompt)}</legend>${questionCode(q.code)}${q.kind==='free'?`<textarea data-answer="${q.id}" aria-label="${esc(q.prompt)}" ${adapter?'':'disabled'}>${esc(a?.value||'')}</textarea>`:q.options.map((v,i)=>`<label class="option"><input type="radio" name="${q.id}" value="${i}" data-answer="${q.id}" ${a?.value===i?'checked':''} ${adapter?'':'disabled'}><span>${esc(v)}</span></label>`).join('')}<button class="btn" ${adapter?'':'disabled'}>${q.kind==='free'?w.free:w.check}</button></fieldset><div data-feedback="${q.id}" role="status"></div>${q.recall?`<button type="button" class="btn" data-recall="${esc(q.recall)}">${say('Вспомнить теорию','Recall the rule')}</button>`:''}</form>`;}).join('')}<div data-course-checkpoint></div><a class="btn" href="${url(topicId,'practice')}">${w.practice} →</a>`;}
+ function practiceCases(p){
+  if(reported)return p.cases.map(c=>`<h3>${esc(c.label)}</h3><pre>${esc(c.input)}</pre>${c.output!==undefined?`<pre data-expected-output>${esc(c.output)}</pre>`:''}${c.table?table(c.table):''}`).join('');
+  if(!p.cases.length)return '';
+  return `<ol class="practice-cases">${p.cases.map(c=>{
+   const values=c.output?.trim().split(/\s+/);
+   const meaning=p.outputFields&&values?.length===p.outputFields.length
+    ?`<dl class="practice-case-meaning">${p.outputFields.map((label,i)=>`<div><dt>${esc(label)}</dt><dd>${esc(values[i])}</dd></div>`).join('')}</dl>`
+    :'';
+   return `<li class="practice-case">
+    <h3>${esc(c.label)}</h3>
+    <dl class="practice-case-io">
+     <div><dt>${say('Ввод в программу','Program input')}</dt><dd>${c.input?`<pre>${esc(c.input)}</pre>`:`<p>${say('Без ввода','No input')}</p>`}</dd></div>
+     ${c.output!==undefined?`<div><dt>${w.output}</dt><dd><pre data-expected-output>${esc(c.output)}</pre></dd></div>`:''}
+    </dl>
+    ${meaning}
+    ${c.table?table(c.table):''}
+   </li>`;
+  }).join('')}</ol>`;
+ }
  function practice(){
   const p=lesson.practice,canCreate=external&&p.files.length>0;
   return `<h1>${esc(p.title)}</h1><p class="goal">${esc(p.task)}</p>
@@ -74,13 +105,28 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
   <div class="work-actions">${p.recall?`<button type="button" class="btn" data-recall="${esc(p.recall)}">${say('Вспомнить теорию','Recall the rule')}</button>`:''}<a href="${url(topicId,'explanation',locale,p.returnAnchor)}">${w.example}</a><button class="btn" data-r3-export ${currentWork?'':'hidden'}>${say('Скачать мою работу','Download my work')}</button></div>
   ${reported?`<label>${w.reported}<textarea data-r3-report ${adapter?'':'disabled'}>${esc(d.reportDraft)}</textarea></label><button class="btn" data-r3-record ${adapter?'':'disabled'}>${say('Сохранить самоотчёт','Save self-report')}</button>`:''}
   <p data-r3-result role="status"></p><details data-r3-snapshot hidden><summary>${w.snapshot}</summary><pre></pre></details>
-  <section class="practice-card"><h2>${w.criteria}</h2>${p.cases.map(c=>`<h3>${esc(c.label)}</h3><pre>${esc(c.input)}</pre>${c.output!==undefined?`<pre data-expected-output>${esc(c.output)}</pre>`:''}${c.table?table(c.table):''}`).join('')}<ul>${p.criteria.map(c=>`<li>${esc(c)}</li>`).join('')}</ul><details><summary>${w.hint}</summary><p>${esc(p.hint)}</p></details></section>
+  <section class="practice-card"><h2>${w.criteria}</h2>${practiceCases(p)}<ul>${p.criteria.map(c=>`<li>${esc(c)}</li>`).join('')}</ul><details><summary>${w.hint}</summary><p>${esc(p.hint)}</p></details></section>
   ${external?'':practiceSteps({...p,steps:p.steps?.map(s=>({...s,action:s.action.replace('после подключения пилота','').replace('after pilot integration','').replace('once the pilot is connected','').replace(/\s+([.,])/g,'$1')}))})}
   <div data-course-progress></div>`;
  }
  root.innerHTML=`<div class="r3-lesson" lang="${locale}" data-authored="${!!author}" data-r3-topic="${topicId}"><style>${authorModule?.authoredStyles||''}
  .r3-lesson{--r3-line:#486377;line-height:1.7;max-width:1220px;margin:auto;min-width:0}.r3-lesson .option span,.r3-lesson .practice-card li{white-space:pre-wrap}.r3-lesson [data-onec-figure] img{max-width:100%}.r3-lesson [data-course-figures] .onec-shot-frame{position:relative;overflow:hidden}.r3-lesson [data-course-figures] svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.r3-lesson [hidden]{display:none!important}.r3-lesson .stage-body{padding:24px 0;min-width:0}.r3-lesson .lesson-section,.r3-lesson .question,.r3-lesson .practice-card{border:1px solid var(--r3-line);border-radius:14px;padding:24px;margin:20px 0}.r3-lesson .section-index{font-size:.8rem;opacity:.7}.r3-lesson .example-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,.65fr);gap:24px}.r3-lesson .example-layout>div{min-width:0}.r3-lesson pre{white-space:pre;overflow:auto;max-width:100%;background:#071522;color:#e6f1ff;padding:16px;border-radius:8px;line-height:1.7}.r3-lesson .table-wrap,.r3-lesson .trace-wrap{overflow:auto}.r3-lesson table{width:100%;border-collapse:collapse}.r3-lesson th,.r3-lesson td{padding:12px;border:1px solid var(--r3-line);text-align:left;vertical-align:top}.r3-lesson caption{font-weight:600;text-align:left}.r3-lesson .option{display:flex;gap:12px;padding:10px}.r3-lesson textarea[data-answer],.r3-lesson textarea[data-r3-report],.r3-lesson #stdin{display:block;width:100%;min-height:100px;padding:12px;color:inherit;background:transparent;border:1px solid var(--r3-line);border-radius:8px}.r3-lesson fieldset{border:0;padding:0;min-width:0;width:100%}.r3-lesson legend{font-weight:700;max-width:100%;overflow-wrap:anywhere}.r3-lesson .feedback{border-left:3px solid #82e6ce;padding:12px}.r3-lesson details,.r3-lesson .environment{padding:16px;border:1px solid var(--r3-line);border-radius:8px;margin:16px 0}.r3-lesson .work-actions{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.r3-lesson .r3-dialog{max-width:min(900px,94vw);max-height:85vh;overflow:auto;background:#102333;color:#e6edf5;border:1px solid var(--r3-line);border-radius:16px;padding:24px}.r3-lesson a:focus-visible,.r3-lesson button:focus-visible,.r3-lesson textarea:focus-visible{outline:3px solid #82e6ce;outline-offset:3px}.r3-lesson .code-studio{min-width:0}.r3-lesson .next-card{display:flex;gap:16px;flex-wrap:wrap}.r3-lesson [data-r3-save]{min-height:1.7em}
  .r3-lesson .breadcrumbs{margin-bottom:8px;font-size:.82rem;color:var(--muted,#a9c0d3)}
+ .r3-lesson[data-r3-topic^="cpp."] .stage-body{background:#0b1929;padding:28px;border-radius:18px;margin-top:18px}
+ .r3-lesson[data-r3-topic^="cpp."] :is(.lesson-section,.question,.practice-card){background:#122438;border-color:#3d536a}
+ .r3-lesson[data-r3-topic^="cpp."] .example-layout[data-example-single]{grid-template-columns:minmax(0,1fr)}
+ .r3-lesson .practice-cases{list-style:none;display:grid;gap:16px;padding:0}
+ .r3-lesson .practice-cases .practice-case{border:1px solid var(--r3-line);border-radius:10px;background:#0b1929;padding:16px;min-width:0;white-space:normal}
+ .r3-lesson .practice-case h3{margin:0 0 12px}
+ .r3-lesson .practice-case-io,.r3-lesson .practice-case-meaning{display:grid;gap:12px;margin:0}
+ .r3-lesson .practice-case-io{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .r3-lesson .practice-case-io > div{min-width:0}
+ .r3-lesson .practice-case-io dt{font-weight:700}
+ .r3-lesson .practice-case-io dd,.r3-lesson .practice-case-meaning dd{margin:0}
+ .r3-lesson .practice-case-io :is(pre,p){margin:6px 0 0;padding:10px 12px;border:1px solid var(--r3-line);border-radius:8px}
+ .r3-lesson .practice-case-meaning{grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));border-top:1px solid var(--r3-line);margin-top:12px;padding-top:10px}
+ .r3-lesson .practice-case-meaning dt{color:#c3d2e5}
+ .r3-lesson .practice-case-meaning dd{font-family:monospace;font-weight:700}
  .r3-lesson .lesson-context{
   position:sticky;top:var(--r3-shell-top,0px);z-index:5;
   padding:4px 8px;background:var(--panel,#102333);
@@ -115,6 +161,8 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  }
  @media(max-width:720px){
   .r3-lesson .example-layout{display:block}
+  .r3-lesson[data-r3-topic^="cpp."] .stage-body{padding:12px}
+  .r3-lesson .practice-case-io{grid-template-columns:minmax(0,1fr)}
   .r3-lesson .lesson-section,.r3-lesson .question,.r3-lesson .practice-card{padding:16px}
   .r3-lesson .lesson-context{padding-inline:5px}
   .r3-lesson .context-row .context-title{font-size:12px}

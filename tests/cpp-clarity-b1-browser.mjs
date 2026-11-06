@@ -51,6 +51,42 @@ try{
  }
  if(!before){
   if(algorithmization){
+   for(const locale of ['ru','en']){
+    const id='cpp.algorithm-definition-properties',ru=locale==='ru';
+    const background=()=>p.locator('.stage-body:visible').evaluate(el=>getComputedStyle(el).backgroundColor);
+    await p.setViewportSize({width:1366,height:900});
+    await go('cpp.programming-process',locale);
+    assert.equal(await background(),'rgb(11, 25, 41)');
+    await go(id,locale,'selfcheck');
+    assert.equal(await background(),'rgb(11, 25, 41)');
+    const question=p.locator('[data-question="predict"]');
+    assert.equal(await question.evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(18, 36, 56)');
+    assert.equal(await question.locator('.example-label').textContent(),ru?'Код для вопроса':'Code for this question');
+    assert.equal(await question.locator('[data-expected-output]').count(),0);
+    const sourceWidths=await question.locator('.example-layout').evaluate(el=>[el.clientWidth,el.querySelector('pre').clientWidth]);
+    assert.ok(sourceWidths[0]>600&&sourceWidths[0]-sourceWidths[1]<=1,JSON.stringify(sourceWidths));
+    await p.evaluate(()=>scrollTo(0,0));
+    await snap(id,locale,1366,'selfcheck-code');
+    await go(id,locale,'practice');
+    const cases=p.locator('.practice-cases .practice-case'),first=cases.first();
+    const io=first.locator('.practice-case-io'),fields=first.locator('.practice-case-meaning');
+    assert.deepEqual(await io.locator('dt').allTextContents(),ru?['Ввод в программу','Ожидаемый вывод']:['Program input','Expected output']);
+    assert.deepEqual(await io.locator('pre').allTextContents(),['29\n','2 5\n']);
+    assert.deepEqual(await fields.locator('dt').allTextContents(),ru?['Полные коробки','Оставшиеся детали']:['Full boxes','Leftover parts']);
+    assert.deepEqual(await fields.locator('dd').allTextContents(),['2','5']);
+    assert.equal(await cases.filter({hasText:'invalid'}).locator('.practice-case-meaning').count(),0);
+    for(const width of [1366,320]){
+     await p.setViewportSize({width,height:900});
+     await p.locator('.practice-cases').evaluate(el=>el.scrollIntoView({block:'start'}));
+     await p.evaluate(()=>scrollBy(0,-200));
+     const boxes=await io.locator(':scope > div').evaluateAll(xs=>xs.map(el=>{const {x,y,width}=el.getBoundingClientRect();return {x,y,width};}));
+     if(width===320)assert.ok(boxes[0].y<boxes[1].y&&boxes[0].width===boxes[1].width);
+     else assert.ok(boxes[0].x<boxes[1].x&&boxes[0].y===boxes[1].y);
+     assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+     await snap(id,locale,width,'practice-cases');
+    }
+    checks.push({id,locale,status:'PASS',scope:'Shared matte stage, full-width question code, named input and output, labelled values at 1366 and 320 px',sourceWidths});
+   }
    for(const id of ['cpp.first-cpp-program','cpp.pointers-references-addresses'])for(const locale of ['ru','en']){
     await go(id,locale);
     await p.setViewportSize({width:320,height:900});
