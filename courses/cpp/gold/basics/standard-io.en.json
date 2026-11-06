@@ -888,10 +888,10 @@
     "training": {
       "id": "clarity-training",
       "title": "Training",
-      "challenge": "Keep the source: put 5 6 into stdin, then oops.",
+      "challenge": "Control experiment: stdin contains oops followed by a newline. Predict the failed-read result.",
       "starterCode": "#include <iostream>\n\nint main() {\n    int width = 0;\n    int height = 0;\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n    return 0;\n}\n",
-      "stdin": "4 3\n",
-      "expectedStdout": "30\n",
+      "stdin": "oops\n",
+      "expectedStdout": "invalid\n",
       "hints": [
         "The two numeric tokens become width and height.",
         "With oops, reading an int fails and multiplication never runs."
@@ -950,5 +950,681 @@
     },
     "negative": "Computing after a failed read uses values not obtained from the user. Check reading before computation.",
     "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
+  },
+  "teachingEdition": {
+    "revision": "b1-author-v1",
+    "title": "Input and output: agree on the data before calculating",
+    "goal": "Read and validate data, explain the text left in a stream, and produce a report with a precise format.",
+    "prerequisites": [
+      {
+        "text": "All previous Module 2 lessons, simple if/else, and early return from Module 1."
+      },
+      {
+        "text": "Integer division, early long long multiplication, comparisons, bool, references, and live objects. No loops or authored functions are needed."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Did we actually read a number?",
+        "paragraphs": [
+          "Until now, the numbers were written in the source. Now a count arrives from outside: today 8, tomorrow the word eight or an empty field. How can the program tell whether it actually received a number?",
+          "Predict separate results for inputs 8 and eight. Parsing a number and validating its allowed range are different steps. The first example focuses on whether parsing succeeds."
+        ],
+        "prediction": [
+          "#include <iostream>\n\nint main() {\n    int count{0};\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"count=\" << count << '\\n';\n    return 0;\n}\n"
+        ],
+        "reveal": {
+          "title": "Compare your prediction and follow the steps",
+          "paragraphs": [
+            "std::cin >> count attempts to parse an int into an existing object. >> here extracts from a stream rather than shifting bits. Normal formatted extraction skips leading whitespace. cin >> a >> b extracts sequentially but may fail before reading the second value.",
+            "if (!(std::cin >> count)) checks failure of the operation. In this condition the stream indicates whether its post-read state is usable; ! negates that result. On failure we print invalid and return before using the number. Parsing success does not establish the domain range, which requires a separate check.",
+            "Keep the source unchanged and run once with 9 and once with oops. Record each input alongside its result. Without that input, count=9 does not identify the experiment."
+          ],
+          "tables": [
+            {
+              "caption": "Follow the difficult step",
+              "columns": [
+                "Exact input",
+                "Reading an int",
+                "First example’s stdout"
+              ],
+              "rows": [
+                [
+                  "8 followed by a newline",
+                  "Success",
+                  "count=8"
+                ],
+                [
+                  "eight followed by a newline",
+                  "Failure: the first token is not numeric",
+                  "invalid"
+                ],
+                [
+                  "Empty buffer",
+                  "Failure: no number is present",
+                  "invalid"
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n\nint main() {\n    int count{0};\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"count=\" << count << '\\n';\n    return 0;\n}\n",
+            "stdin": "8\n",
+            "output": "count=8\n"
+          }
+        }
+      },
+      {
+        "id": "concept-2",
+        "title": "A newline and the end of input",
+        "paragraphs": [
+          "Nexus supplies stdin as a finite buffer. After its last character, extraction can encounter EOF, end of input. In a live terminal, Enter normally adds a newline without closing the stream; more input may still arrive. A strict whole-tail check using ws can therefore wait for end of input in a live terminal.",
+          "eof() reports an already-set state, not whether another number exists. Do not replace extraction checks with while(!cin.eof()). Our finite-input task checks the actual extraction first and then, after ws, rejects a nonwhitespace tail."
+        ]
+      },
+      {
+        "id": "concept-3",
+        "title": "What fail and eof report",
+        "paragraphs": [
+          "fail() reports failed reading or bad state; eof() reports an encountered end. Both can be true when reading a number from an empty buffer. Successfully extracting the final number without trailing whitespace can set eof without an extraction failure. Thus eof alone does not mean an invalid number.",
+          "We stop processing on error here. Recovery with clear and discarding damaged input needs a separate policy and usually a loop; it is not a hidden requirement. An input number too large for long long must cause extraction failure rather than become trusted calculation data."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int count{0};\n    std::cin >> count;\n    std::cout << std::cin.fail() << ' ' << std::cin.eof() << '\\n';\n    return 0;\n}\n",
+          "stdin": "8\n",
+          "output": "0 0\n"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "Text remaining after a number",
+        "paragraphs": [
+          "<string> supplies std::string, a ready-made text type. std::string line; starts empty. std::getline(std::cin, line) stores characters before the newline and consumes the newline itself. After cin >> count that newline often remains, so the next getline can successfully obtain an empty line.",
+          "std::getline(std::cin >> std::ws, name) first removes all leading whitespace, then reads text. It suits a name without significant leading spaces but destroys blank lines and indentation. Do not use it when an empty line is meaningful data. The comma separates arguments to a library function; no authored functions are required."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <string>\n\nint main() {\n    int count{0};\n    std::string line;\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::getline(std::cin, line);\n    std::cout << count << '|' << line << '\\n';\n    return 0;\n}\n",
+          "stdin": "8 rest of line\n",
+          "output": "8| rest of line\n"
+        }
+      },
+      {
+        "id": "worked-line-ws",
+        "title": "A name after leading whitespace",
+        "paragraphs": [
+          "Use ws only when dropping blank lines is acceptable.",
+          "ws consumes leading spaces and newlines.",
+          "getline retains the internal space in the name.",
+          "Empty input is rejected."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string name;\n    if (!std::getline(std::cin >> std::ws, name)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"name=\" << name << '\\n';\n    return 0;\n}\n",
+          "stdin": " \n  Nexus Academy\n",
+          "output": "name=Nexus Academy\n"
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Parsed numbers and an unconsumed tail",
+        "paragraphs": [
+          "Integer extraction can successfully read the initial 8 in 8.5 and leave .5. Extraction success alone therefore does not prove that the entire input contains exactly the required integer fields. After all fields, use cin >> ws and check eof(): .5 or extra remains and is rejected. A whitespace-only tail is permitted.",
+          "The task uses the environment’s ordinary numeric format without changing locale. A C++ source literal 010 was octal; stdin text follows stream formatting and need not reproduce source-literal grammar. Parsing rules, not visual similarity, define the contract."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Text formatting does not change the stored number",
+        "paragraphs": [
+          "<iomanip> supplies setprecision. std::fixed selects fixed-point formatting and std::setprecision(2) then requests two fractional digits. The setting affects subsequent output on that stream. It changes text representation without making double exact decimal arithmetic.",
+          "Do not print prompts when the comparison contract requires only the answer. stdin already supplies input separately. Preserve exit status and exact newlines for manual checking; interface status text is not part of stdout."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <iomanip>\n\nint main() {\n    double lengthMeters{1.25};\n    std::cout << std::fixed << std::setprecision(2) << lengthMeters << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "1.25\n"
+        }
+      },
+      {
+        "id": "concept-7",
+        "title": "Combining skills: input and one shared object",
+        "paragraphs": [
+          "Read stock within 0…100, reject extra input, and create a snapshot, reference, and pointer to live stock. Issue at most three and report initial stock, remainder, and issued quantity. &alias == selected checks that both paths identify the same object without printing a numeric address.",
+          "This cumulative exercise combines input validation with object relationships and a stock update. The independent task below does not require completing the entire practicum at once."
+        ]
+      },
+      {
+        "id": "concept-8",
+        "title": "A final calculation: transfer time in seconds",
+        "paragraphs": [
+          "Input m r h: m is MiB, 1024 × 1024 bytes; r is kbit/s, 1000 bits per second; h is overhead as a percentage of payload bits. Ranges are 0…1000000 MiB, 1…1000000 kbit/s, and 0…100 percent. This is a constant-rate model rather than a real-network timing promise.",
+          "num = m × 1024 × 1024 × 8 × (100+h), den = 100 × r × 1000. Round upward to seconds using num/den + (num%den != 0). The comparison produces bool, converted to 0 or 1 in the sum. Maximum num is 1677721600000000 and den at most 100000000000; long long suffices and multiplication begins with long long.",
+          "stdout contains seconds, seconds/60, and seconds%60 separated by spaces and a final newline. This ensures seconds = 60 × minutes + remainder with remainder 0…59. Invalid, incomplete, fractional, overflowing, or extra nonwhitespace input yields only invalid. Add two original cases and explain which defect they expose."
+        ]
+      },
+      {
+        "id": "diagnose-wrong-input-direction",
+        "title": "Intentional: the wrong stream direction",
+        "paragraphs": [
+          "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+          "cin extracts with >>; cout inserts with <<."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int count{0};\n    std::cin << count;\n}\n",
+          "stdin": "",
+          "expectCompileFailure": true
+        },
+        "deep": {
+          "title": "Why might a terminal program still wait after Enter?",
+          "text": "A browser exercise supplies stdin as a finite buffer: the end of input follows its characters. In a live terminal, Enter adds a newline but often leaves the stream open. Checking that no further characters exist can therefore wait for input to finish. Do not transfer a finite-buffer contract to an interactive dialogue unchanged.",
+          "sourceId": "cpp20-istream.formatted.reqmts"
+        }
+      },
+      {
+        "id": "independent-work",
+        "title": "Now solve a different problem",
+        "paragraphs": [
+          "Read exactly two integers within 0…1000 and print items=boxes*itemsPerBox. Permit trailing whitespace; reject other tails and parsing failures with invalid. Begin the independent box calculation with input 4 6: expect items=24. Then separately test 4 6 extra, 4 6.5 and empty input: each must produce only invalid. Explain why parsing two numbers without inspecting the tail is insufficient.",
+          "Open Practice. Its starter and your current source are separate from the worked examples. Write a prediction before running, then explain the result in your own words."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Keep the first example’s source unchanged; stdin contains exactly oops followed by a newline. What is stdout?",
+        "options": [
+          "invalid\n",
+          "count=0\n",
+          "count=9\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes: parsing failed, so processing ends before count is used.",
+          "Initialising count to zero does not make parsing succeed. The failure branch prints invalid.",
+          "9 belongs to a different input. Here the token oops cannot be read as an int."
+        ],
+        "recall": "concept-1",
+        "code": "#include <iostream>\n\nint main() {\n    int count{0};\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"count=\" << count << '\\n';\n    return 0;\n}\n",
+        "execution": {
+          "source": "#include <iostream>\n\nint main() {\n    int count{0};\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"count=\" << count << '\\n';\n    return 0;\n}\n",
+          "stdin": "oops\n",
+          "expected": "invalid\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\n\nint main() {\n    int count{0};\n    if (!(std::cin >> count)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"count=\" << count << '\\n';\n    return 0;\n}\n"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          }
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "What does cin >> value failure mean?",
+        "options": [
+          "value may be trusted",
+          "Handle failure before using the value",
+          "Every number automatically equals zero"
+        ],
+        "correct": 1,
+        "feedback": "Initialization does not replace extraction checks.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "Does ws remove only one newline?",
+        "options": [
+          "Yes",
+          "No, all leading whitespace including blank lines",
+          "It reads nothing"
+        ],
+        "correct": 1,
+        "feedback": "It does not preserve meaningful leading spaces or blank lines.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "Why does the project reject 1 1000 0.5?",
+        "options": [
+          "A nonwhitespace .5 tail remains after integer h",
+          "All overhead is forbidden",
+          "MiB cannot be 1"
+        ],
+        "correct": 0,
+        "feedback": "Exactly three integer fields require a whole-tail check.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "concept-3",
+        "kind": "choice",
+        "prompt": "How can nonnegative num/den be rounded up when den>0?",
+        "options": [
+          "num/den",
+          "num/den + (num%den != 0)",
+          "static_cast<double>(num/den)"
+        ],
+        "correct": 1,
+        "feedback": "Add one second only for a nonzero remainder.",
+        "recall": "concept-8"
+      },
+      {
+        "id": "concept-4",
+        "kind": "choice",
+        "prompt": "What does fixed/setprecision(2) establish?",
+        "options": [
+          "Exact internal decimal double arithmetic",
+          "A selected text-output format",
+          "The end of stdin"
+        ],
+        "correct": 1,
+        "feedback": "Formatting and number representation are different layers.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Begin the independent box calculation with input 4 6: expect items=24. Then separately test 4 6 extra, 4 6.5 and empty input: each must produce only invalid. Explain why parsing two numbers without inspecting the tail is insufficient.",
+        "feedback": "Run each displayed input separately against the same source version.",
+        "recall": "concept-5"
+      }
+    ],
+    "practice": {
+      "title": "A reliable finite-input interface",
+      "task": "Read exactly two integers within 0…1000 and print items=boxes*itemsPerBox. Permit trailing whitespace; reject other tails and parsing failures with invalid. Begin the independent box calculation with input 4 6: expect items=24. Then separately test 4 6 extra, 4 6.5 and empty input: each must produce only invalid. Explain why parsing two numbers without inspecting the tail is insufficient.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"received\\n\";\n    return 0;\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "4 6\n",
+      "returnAnchor": "concept-5",
+      "recall": "concept-5",
+      "cases": [
+        {
+          "label": "Check 1",
+          "input": "4 6\n",
+          "output": "items=24\n"
+        },
+        {
+          "label": "Check 2",
+          "input": "0 8",
+          "output": "items=0\n"
+        },
+        {
+          "label": "Check 3",
+          "input": "1000 1000",
+          "output": "items=1000000\n"
+        },
+        {
+          "label": "Check 4",
+          "input": "3 8 \n\t",
+          "output": "items=24\n"
+        },
+        {
+          "label": "Check 5",
+          "input": "",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 6",
+          "input": "3",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 7",
+          "input": "x 8",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 8",
+          "input": "-1 8",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 9",
+          "input": "1001 8",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 10",
+          "input": "3 1001",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 11",
+          "input": "3 8 extra",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 12",
+          "input": "3 8.5",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 13",
+          "input": "999999999999999999999999999999 8",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 14",
+          "input": "4 6 extra",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 15",
+          "input": "4 6.5",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Provide an exact stdin/stdout contract.",
+        "Compare all 13 cases with actual results.",
+        "Do not ignore a fractional tail.",
+        "stdout contains only the contracted answer; preserve source and the test report together.",
+        "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+        "Run each displayed input separately against the same source version."
+      ],
+      "hint": "Begin the independent box calculation with input 4 6: expect items=24. Then separately test 4 6 extra, 4 6.5 and empty input: each must produce only invalid. Explain why parsing two numbers without inspecting the tail is insufficient.",
+      "steps": [
+        {
+          "where": "My independent work",
+          "action": "Separate parsing, range, and tail errors.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Check input before multiplying.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Use long long for the entire product.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Preserve every reference input, including empty input.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-istream.formatted.reqmts",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[istream.formatted.reqmts]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/istream.formatted.reqmts"
+      },
+      {
+        "id": "cpp20-istream.unformatted",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[istream.unformatted]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/istream.unformatted"
+      },
+      {
+        "id": "cpp20-istream.manip",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[istream.manip]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/istream.manip"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "4 6\n",
+        "expected": "items=24\n",
+        "label": "independent",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "0 8",
+        "expected": "items=0\n",
+        "label": "input-0",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "1000 1000",
+        "expected": "items=1000000\n",
+        "label": "input-1",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "3 8 \n\t",
+        "expected": "items=24\n",
+        "label": "input-2",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "invalid\n",
+        "label": "input-3",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "3",
+        "expected": "invalid\n",
+        "label": "input-4",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "x 8",
+        "expected": "invalid\n",
+        "label": "input-5",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "-1 8",
+        "expected": "invalid\n",
+        "label": "input-6",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "1001 8",
+        "expected": "invalid\n",
+        "label": "input-7",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "3 1001",
+        "expected": "invalid\n",
+        "label": "input-8",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "3 8 extra",
+        "expected": "invalid\n",
+        "label": "input-9",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "3 8.5",
+        "expected": "invalid\n",
+        "label": "input-10",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "999999999999999999999999999999 8",
+        "expected": "invalid\n",
+        "label": "input-11",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "4 6 extra",
+        "expected": "invalid\n",
+        "label": "transfer-invalid-13",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n",
+        "stdin": "4 6.5",
+        "expected": "invalid\n",
+        "label": "transfer-invalid-14",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    long long boxes{0};\n    long long itemsPerBox{0};\n    if (!(std::cin >> boxes >> itemsPerBox)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || boxes < 0 || boxes > 1000 || itemsPerBox < 0 || itemsPerBox > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    long long items = boxes * itemsPerBox;\n    std::cout << \"items=\" << items << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "concept-3",
+      "3": "concept-4",
+      "4": "concept-6",
+      "5": "concept-8"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      },
+      {
+        "sourceSection": 6,
+        "anchor": "concept-7"
+      },
+      {
+        "sourceSection": 7,
+        "anchor": "concept-8"
+      }
+    ],
+    "starterExpected": "received\n"
   }
 }

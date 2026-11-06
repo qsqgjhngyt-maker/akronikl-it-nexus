@@ -413,5 +413,419 @@
     },
     "negative": "Using local after } is a name-visibility error; do not replace it by reading a new uninitialized number with the same name.",
     "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
+  },
+  "teachingEdition": {
+    "revision": "b1-author-v1",
+    "title": "Variables: why one name can refer to different objects",
+    "goal": "Trace a changing stock count, distinguish a copy from its source, and explain what happens when a name is shadowed.",
+    "prerequisites": [
+      {
+        "text": "int, const, initialization, and output labels from the first block."
+      },
+      {
+        "text": "Reading sequential statements. A nested block needs neither if nor a loop."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Changing a stock count step by step",
+        "paragraphs": [
+          "int stock{10}; creates an object initialized to 10. stock = 7; changes that existing object rather than creating another stock. In assignment, the left side identifies the destination and the right side produces the new value. In int snapshot = stock;, a similar sign introduces the initial value of a new object.",
+          "Read statements top to bottom and record state after each. stock = stock - 3; reads the old stock, computes the difference, and stores it back. It is not the mathematical equation stock = stock − 3. These small values are safe, but range reasoning still applies."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "A snapshot does not follow its source",
+        "paragraphs": [
+          "There were 10 items in stock. We copied that count into snapshot and then reduced the stock to 7. Should the old snapshot also become 7?",
+          "Name the two objects first: stock holds the current count, while snapshot holds the count recorded earlier. Predict both numbers on the last line before opening the comparison."
+        ],
+        "prediction": [
+          "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    stock = 7;\n    std::cout << stock << ' ' << snapshot << '\\n';\n    return 0;\n}\n"
+        ],
+        "reveal": {
+          "title": "Compare your prediction and follow the steps",
+          "paragraphs": [
+            "int snapshot = stock; creates a second int holding the current value of the first. Changing stock later leaves snapshot unchanged. Equal values do not imply one object. We may label them S and C in a trace; these are symbolic identifiers rather than actual memory addresses.",
+            "Print both values after changing the original to test copying. Printing stock twice does not observe snapshot at all. References and pointers are introduced in lesson eleven; do not use them as an unexplained shortcut here.",
+            "What if snapshot = stock is added after stock = 7? That is a separate assignment: the snapshot becomes 7 at that statement."
+          ],
+          "tables": [
+            {
+              "caption": "Follow the difficult step",
+              "columns": [
+                "After statement",
+                "stock",
+                "snapshot"
+              ],
+              "rows": [
+                [
+                  "int stock{10};",
+                  "10",
+                  "not created yet"
+                ],
+                [
+                  "int snapshot = stock;",
+                  "10",
+                  "10"
+                ],
+                [
+                  "stock = 7;",
+                  "7",
+                  "10"
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    stock = 7;\n    std::cout << stock << ' ' << snapshot << '\\n';\n    return 0;\n}\n",
+            "stdin": "",
+            "output": "7 10\n"
+          }
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "An inner block changes an outer count",
+        "paragraphs": [
+          "A standalone pair of braces can form a nested block inside main. Its statements execute in sequence. A name adjustment declared within is available after its declaration inside the block, but not after its closing brace. An outer count remains visible inside unless another count declaration hides it.",
+          "Distinguish block braces from the initializer in int count{10};. One groups statements and the other provides an initial value. Indentation highlights boundaries, but braces rather than whitespace define them."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int count{10};\n    {\n        int adjustment{3};\n        count = count - adjustment;\n        std::cout << count << '\\n';\n    }\n    std::cout << count << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "7\n7\n"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "Two objects named count: which name is visible?",
+        "paragraphs": [
+          "The inner int count{3}; creates another object. count = 4; affects that object rather than the outer count{10}. After leaving the block, lookup finds the outer name again with value 10. The outer object was neither destroyed nor restored from a backup.",
+          "Shadowing is allowed in the shown nested block but often makes debugging harder. Prefer distinct meaningful names such as totalCount and batchCount in normal work. The intentional example teaches recognition of the false claim that changing the inner count changed the outer one."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int count{10};\n    std::cout << count << '\\n';\n    {\n        int count{3};\n        count = 4;\n        std::cout << count << '\\n';\n    }\n    std::cout << count << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "10\n4\n10\n"
+        },
+        "tables": [
+          {
+            "caption": "Which objects exist during shadowing",
+            "columns": [
+              "Location",
+              "Outer count",
+              "Inner count",
+              "Which count is visible"
+            ],
+            "rows": [
+              [
+                "Before block",
+                "10",
+                "absent",
+                "outer"
+              ],
+              [
+                "After int count{3}",
+                "10",
+                "3",
+                "inner"
+              ],
+              [
+                "After count = 4",
+                "10",
+                "4",
+                "inner"
+              ],
+              [
+                "After block",
+                "10",
+                "lifetime ended",
+                "outer"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "concept-5",
+        "title": "A hidden name does not end an object’s lifetime",
+        "paragraphs": [
+          "Scope concerns source regions and name lookup; lifetime concerns execution. The outer int still exists while control is in the inner block, even when its name is hidden. For the simple automatic ints here, lifetime begins after initialization and ends when their block is left. This is a bounded account of the current examples, not every C++ storage category.",
+          "Bytes potentially remaining somewhere do not make access after lifetime safe. We perform no such access and never read uninitialized values. The state table and block diagram are a language-level model, not a promise about physical stack placement."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Finding the first mismatch in a trace",
+        "paragraphs": [
+          "Before running, record events such as stock created, beforeSale copied, stock changed, and block left. List existing objects, visible names, and values at each event. Compare printed checkpoints with the table. The first disagreement can expose a mistaken mental model rather than a compiler defect.",
+          "Distinguish repairing a program from correcting your prediction. Both are useful if the original hypothesis and actual output are retained. Preserve failed predictions in the record because they identify the confusion that was resolved."
+        ]
+      },
+      {
+        "id": "diagnose-outside-block",
+        "title": "Intentional: a name outside its block",
+        "paragraphs": [
+          "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+          "localCount is unavailable after the block."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    { int localCount{3}; }\n    std::cout << localCount << '\\n';\n}\n",
+          "stdin": "",
+          "expectCompileFailure": true
+        },
+        "deep": {
+          "title": "Why is shadowing not a restoration of the old value?",
+          "text": "The outer object does not disappear when execution enters the block. A new declaration adds another object and name lookup selects the inner one. After the block, the inner object’s lifetime ends and lookup finds the outer one again. The final 10 was neither recalculated nor restored from a snapshot.",
+          "sourceId": "cpp20-basic.scope.block"
+        }
+      },
+      {
+        "id": "independent-work",
+        "title": "Now solve a different problem",
+        "paragraphs": [
+          "Print before, inside, after, and snapshot. The sale is declared inside a block, outer stock changes, and beforeSale retains the initial value. In a second experiment, declare a local stock{2} inside the block instead of changing the outer object. Predict before, inside, after and snapshot. Then return to distinct names and explain which declaration you removed.",
+          "Open Practice. Its starter and your current source are separate from the worked examples. Write a prediction before running, then explain the result in your own words."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "In the shadowing example, the outer count is 10; the inner one starts at 3 and becomes 4. What is printed before, inside and after the block?",
+        "options": [
+          "10\n4\n10\n",
+          "10\n4\n4\n",
+          "10\n3\n10\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Correct: the outer object kept 10 throughout the inner object’s lifetime.",
+          "The inner declaration created a different object. Assigning 4 did not access the outer count.",
+          "The inner count starts at 3, but it is assigned 4 before it is printed."
+        ],
+        "recall": "concept-4",
+        "code": "#include <iostream>\n\nint main() {\n    int count{10};\n    std::cout << count << '\\n';\n    {\n        int count{3};\n        count = 4;\n        std::cout << count << '\\n';\n    }\n    std::cout << count << '\\n';\n    return 0;\n}\n",
+        "execution": {
+          "source": "#include <iostream>\n\nint main() {\n    int count{10};\n    std::cout << count << '\\n';\n    {\n        int count{3};\n        count = 4;\n        std::cout << count << '\\n';\n    }\n    std::cout << count << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "expected": "10\n4\n10\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\n\nint main() {\n    int count{10};\n    std::cout << count << '\\n';\n    {\n        int count{3};\n        count = 4;\n        std::cout << count << '\\n';\n    }\n    std::cout << count << '\\n';\n    return 0;\n}\n"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          }
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "What does int copy = original; create?",
+        "options": [
+          "A separate object with the current value",
+          "Another name for the same object",
+          "A permanent formula link"
+        ],
+        "correct": 0,
+        "feedback": "Copying an int does not create an alias.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "Is a shadowed outer count necessarily destroyed?",
+        "options": [
+          "Yes",
+          "No: the name is hidden and the object still exists",
+          "Only when zero"
+        ],
+        "correct": 1,
+        "feedback": "Name lookup and lifetime are different concerns.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "adjustment is unavailable after the block. How can you repair the report?",
+        "options": [
+          "Read arbitrary bytes",
+          "Print inside or retain the required result in an outer object",
+          "Remove the header"
+        ],
+        "correct": 1,
+        "feedback": "The repair must respect scope and lifetime.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "In a second experiment, declare a local stock{2} inside the block instead of changing the outer object. Predict before, inside, after and snapshot. Then return to distinct names and explain which declaration you removed.",
+        "feedback": "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+        "recall": "concept-4"
+      }
+    ],
+    "practice": {
+      "title": "A warehouse state journal",
+      "task": "Print before, inside, after, and snapshot. The sale is declared inside a block, outer stock changes, and beforeSale retains the initial value. In a second experiment, declare a local stock{2} inside the block instead of changing the outer object. Predict before, inside, after and snapshot. Then return to distinct names and explain which declaration you removed.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n\nint main() {\n    int stock{12};\n    int beforeSale = stock;\n    stock = stock - 5;\n    std::cout << \"after=\" << stock << '\\n';\n    return 0;\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "",
+      "returnAnchor": "concept-3",
+      "recall": "concept-3",
+      "cases": [
+        {
+          "label": "Main transfer task",
+          "input": "",
+          "output": "before=12\ninside=7\nafter=7\nsnapshot=12\n"
+        }
+      ],
+      "criteria": [
+        "The initial snapshot remains unchanged.",
+        "stock retains its new value after the block.",
+        "Describe names and lifetimes without invented addresses.",
+        "Preserve three actual traces and their original predictions.",
+        "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation."
+      ],
+      "hint": "In a second experiment, declare a local stock{2} inside the block instead of changing the outer object. Predict before, inside, after and snapshot. Then return to distinct names and explain which declaration you removed.",
+      "steps": [
+        {
+          "where": "My independent work",
+          "action": "Predict every checkpoint.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Distinguish stock, beforeSale, and sold objects.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Complete output and compare with the trace.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Test sales of 0 and 12 from initial stock 12.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-basic.scope.block",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[basic.scope.block]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.scope.block"
+      },
+      {
+        "id": "cpp20-basic.life",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[basic.life]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.life"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\n\nint main() {\n    int stock{12};\n    int beforeSale = stock;\n    std::cout << \"before=\" << beforeSale << '\\n';\n    {\n        const int sold{5};\n        stock = stock - sold;\n        std::cout << \"inside=\" << stock << '\\n';\n    }\n    std::cout << \"after=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << beforeSale << '\\n';\n    return 0;\n}\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int stock{12};\n    int beforeSale = stock;\n    std::cout << \"before=\" << beforeSale << '\\n';\n    {\n        const int sold{5};\n        stock = stock - sold;\n        std::cout << \"inside=\" << stock << '\\n';\n    }\n    std::cout << \"after=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << beforeSale << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "before=12\ninside=7\nafter=7\nsnapshot=12\n",
+        "label": "independent",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int stock{12};\n    int beforeSale = stock;\n    std::cout << \"before=\" << beforeSale << '\\n';\n    {\n        const int sold{5};\n        stock = stock - sold;\n        std::cout << \"inside=\" << stock << '\\n';\n    }\n    std::cout << \"after=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << beforeSale << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int stock{12};\n    int beforeSale = stock;\n    std::cout << \"before=\" << beforeSale << '\\n';\n    {\n        const int sold{0};\n        stock = stock - sold;\n        std::cout << \"inside=\" << stock << '\\n';\n    }\n    std::cout << \"after=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << beforeSale << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "before=12\ninside=12\nafter=12\nsnapshot=12\n",
+        "label": "zero-sale",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int stock{12};\n    int beforeSale = stock;\n    std::cout << \"before=\" << beforeSale << '\\n';\n    {\n        const int sold{0};\n        stock = stock - sold;\n        std::cout << \"inside=\" << stock << '\\n';\n    }\n    std::cout << \"after=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << beforeSale << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int stock{12};\n    int beforeSale = stock;\n    std::cout << \"before=\" << beforeSale << '\\n';\n    {\n        const int sold{12};\n        stock = stock - sold;\n        std::cout << \"inside=\" << stock << '\\n';\n    }\n    std::cout << \"after=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << beforeSale << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "before=12\ninside=0\nafter=0\nsnapshot=12\n",
+        "label": "all-sold",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int stock{12};\n    int beforeSale = stock;\n    std::cout << \"before=\" << beforeSale << '\\n';\n    {\n        const int sold{12};\n        stock = stock - sold;\n        std::cout << \"inside=\" << stock << '\\n';\n    }\n    std::cout << \"after=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << beforeSale << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "concept-2",
+      "3": "concept-4",
+      "4": "concept-5"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      }
+    ],
+    "starterExpected": "after=7\n"
   }
 }

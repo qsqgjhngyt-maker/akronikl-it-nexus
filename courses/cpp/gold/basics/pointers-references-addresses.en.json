@@ -468,5 +468,459 @@
     },
     "negative": "The claim “ref = other retargets the reference” is false: it assigns the current number from other to original. Do not test this using destroyed objects.",
     "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
+  },
+  "teachingEdition": {
+    "revision": "b1-author-v1",
+    "title": "Copies, references and pointers: which object does a statement reach?",
+    "goal": "Follow names and pointers to their objects, redirect a pointer, and explain when access is valid.",
+    "prerequisites": [
+      {
+        "text": "Copying and assignment, scope and lifetime, bool, and simple if from Module 1."
+      },
+      {
+        "text": "The previous lesson’s expression distinctions and tracing one update at a time."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "One shared object and an independent copy",
+        "paragraphs": [
+          "Two people read the same counter, while a third writes its old value on paper. When the counter changes, the paper does not update itself. A copy and a reference can express that difference in a program.",
+          "value starts at 10. copy records the number, alias refers to the same object, and pointer stores a way to reach it. Predict the three numbers after two changes. In the diagram, A is a symbolic object label, not a real memory address."
+        ],
+        "prediction": [
+          "#include <iostream>\n\nint main() {\n    int value{10};\n    int copy = value;\n    int& alias = value;\n    int* pointer = &value;\n    alias = 12;\n    *pointer = 15;\n    std::cout << value << ' ' << copy << ' ' << alias << '\\n';\n    return 0;\n}\n"
+        ],
+        "reveal": {
+          "title": "Compare your prediction and follow the steps",
+          "paragraphs": [
+            "After int value{10};, int copy = value; creates an independent int. int& alias = value; creates a reference to the original object: alias is another way to refer to value, not a snapshot. alias = 12; changes value. Contrast this with lesson 5 copying.",
+            "In a declaration, & beside a type introduces a reference. In int* pointer = &value;, * beside the type declares a pointer and &value on the right obtains an address. Symbols have different roles in declarations and expressions; read the complete construct.",
+            "If you remove only *pointer = 15, what are the three numbers? They become 12, 10, 12: one change to the shared object is gone, but the copy is still independent."
+          ],
+          "tables": [
+            {
+              "caption": "Follow the difficult step",
+              "columns": [
+                "Step",
+                "Object A: value, alias, *pointer",
+                "Object B: copy"
+              ],
+              "rows": [
+                [
+                  "After declarations",
+                  "10; pointer → A",
+                  "10"
+                ],
+                [
+                  "alias = 12;",
+                  "12; same target",
+                  "10"
+                ],
+                [
+                  "*pointer = 15;",
+                  "15; same target",
+                  "10"
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n\nint main() {\n    int value{10};\n    int copy = value;\n    int& alias = value;\n    int* pointer = &value;\n    alias = 12;\n    *pointer = 15;\n    std::cout << value << ' ' << copy << ' ' << alias << '\\n';\n    return 0;\n}\n",
+            "stdin": "",
+            "output": "15 10 15\n"
+          }
+        }
+      },
+      {
+        "id": "concept-2",
+        "title": "Changing an object or changing the target",
+        "paragraphs": [
+          "pointer holds a pointer value, while *pointer refers to the target object. *pointer = 15; changes value. pointer = &second; changes the pointer itself so access now leads to second. These are different operations and different state-journal events.",
+          "A diagram may name objects A and B and draw pointer → A. These are symbolic labels rather than numeric addresses. Actual addresses depend on the run, target, and environment and must not become expected stdout or stable learning-object identifiers."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int first{5};\n    int second{9};\n    int* selected = &first;\n    selected = &second;\n    *selected = 7;\n    std::cout << first << ' ' << second << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "5 7\n"
+        },
+        "tables": [
+          {
+            "caption": "Redirecting access",
+            "columns": [
+              "Statement",
+              "Target of selected",
+              "first; second"
+            ],
+            "rows": [
+              [
+                "int* selected = &first;",
+                "first",
+                "5; 9"
+              ],
+              [
+                "selected = &second;",
+                "second",
+                "5; 9"
+              ],
+              [
+                "*selected = 7;",
+                "second",
+                "5; 7"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "concept-3",
+        "title": "Why a reference cannot be redirected",
+        "paragraphs": [
+          "After int& alias = first;, alias = second; copies second’s current value into first rather than switching the reference. selected = &second; really does reseat a pointer. Observe both original objects when testing or the distinction can remain invisible.",
+          "A reference is useful when access consistently names a known live object. A pointer can represent absence or selection, but does not by itself mean ownership. Neither references nor pointers here create or delete their targets."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int first{5};\n    int second{9};\n    int& alias = first;\n    alias = second;\n    second = 20;\n    std::cout << first << ' ' << alias << ' ' << second << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "9 9 20\n"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "An absent object and an object whose lifetime ended",
+        "paragraphs": [
+          "int* selected{nullptr}; explicitly means no selected object. Check selected != nullptr before reading *selected. The familiar if/else chooses a safe branch: absent when null, or the value when present. This checks absence rather than proving every aspect of pointer validity.",
+          "A non-null pointer can dangle after its target leaves an inner block. Checking nullptr does not extend lifetime. Every dereference here targets a live object; null and dangling pointers are never dereferenced, even as a bad experiment. Record that data outlive all access paths in your project."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int* selected{nullptr};\n    if (selected != nullptr) {\n        std::cout << *selected << '\\n';\n    } else {\n        std::cout << \"absent\\n\";\n    }\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "absent\n"
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Reading without permission to write through this path",
+        "paragraphs": [
+          "const int* observer = &value; permits reading *observer but not changing value through this pointer. The original value can remain an ordinary int: value = 14; is valid and the observer sees 14. Likewise const int& view prohibits mutation through view. Read-only access does not imply that the source object can never change.",
+          "Do not remove const through a guessed cast to silence a diagnostic. The negative example deliberately requires a build rejection when writing through const int*. A constant pointer itself, int* const, can be studied later; the introductory contract focuses on const before int."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int value{10};\n    const int* observer = &value;\n    const int& view = value;\n    value = 14;\n    std::cout << *observer << ' ' << view << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "14 14\n"
+        }
+      },
+      {
+        "id": "concept-6",
+        "title": "Checking relationships rather than incidental addresses",
+        "paragraphs": [
+          "The independent task begins with two objects: stock and snapshot. The reference selectedStock and pointer stockPointer should both lead to stock. Before each change, label the object it affects; the model has no separate object containing a “reference value”.",
+          "Repeat the operations from initial values 3 and 20, safely within range. Explain the null example separately without forcing a crash. Preserve both a legend-labeled diagram and stdout: a picture alone does not prove execution, and stdout alone does not explain object relationships."
+        ]
+      },
+      {
+        "id": "diagnose-write-through-const",
+        "title": "Intentional: writing through const int*",
+        "paragraphs": [
+          "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+          "This access path is read-only."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int value{10};\n    const int* observer = &value;\n    *observer = 20;\n}\n",
+          "stdin": "",
+          "expectCompileFailure": true
+        }
+      },
+      {
+        "id": "diagnose-uninitialized-reference",
+        "title": "Intentional: a reference without an object",
+        "paragraphs": [
+          "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+          "An ordinary local reference needs initialization."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int& alias;\n}\n",
+          "stdin": "",
+          "expectCompileFailure": true
+        },
+        "deep": {
+          "title": "Does a pointer have to own its target?",
+          "text": "No. The objects in this lesson are created by ordinary local declarations. A pointer provides access; it neither extends their lifetime nor has a reason to delete them. Ownership is a separate later topic. For now, check that the target exists at every access.",
+          "sourceId": "cpp20-dcl.ref"
+        }
+      },
+      {
+        "id": "independent-work",
+        "title": "Now solve a different problem",
+        "paragraphs": [
+          "Create a snapshot, reference, and pointer. Sell 3 through the reference and add 2 through the pointer. The snapshot must preserve its initial value. Add a second stock object, otherStock{20}. Redirect only stockPointer to it and add 1 through *stockPointer. Explain why selectedStock still refers to the first stock; report both stocks and the snapshot.",
+          "Open Practice. Its starter and your current source are separate from the worked examples. Write a prediction before running, then explain the result in your own words."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "After int first{5}; int second{9}; int& alias = first;, the program executes alias = second; and second = 20;. What are first and alias?",
+        "options": [
+          "9 9",
+          "5 20",
+          "20 20"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes. The value 9 was assigned to first, and alias remained bound to first.",
+          "alias = second assigns a number to first; it does not redirect the reference.",
+          "Changing second later does not change first: the assignment copied the value 9 only."
+        ],
+        "recall": "concept-3",
+        "code": "#include <iostream>\n\nint main() {\n    int first{5};\n    int second{9};\n    int& alias = first;\n    alias = second;\n    second = 20;\n    std::cout << first << ' ' << alias << '\\n';\n    return 0;\n}\n",
+        "execution": {
+          "source": "#include <iostream>\n\nint main() {\n    int first{5};\n    int second{9};\n    int& alias = first;\n    alias = second;\n    second = 20;\n    std::cout << first << ' ' << alias << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "expected": "9 9\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\n\nint main() {\n    int first{5};\n    int second{9};\n    int& alias = first;\n    alias = second;\n    second = 20;\n    std::cout << first << ' ' << alias << '\\n';\n    return 0;\n}\n"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          }
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "What does *p=7 do for a valid int* p?",
+        "options": [
+          "Changes the pointed-to object",
+          "Creates a new int",
+          "Always changes p’s address"
+        ],
+        "correct": 0,
+        "feedback": "Indirection refers to the target object.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "Does alias=second reseat int& alias=first?",
+        "options": [
+          "Yes",
+          "No, it copies the value into first",
+          "Only for zero"
+        ],
+        "correct": 1,
+        "feedback": "An ordinary reference is not reseated.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "Does p!=nullptr prove the target is alive?",
+        "options": [
+          "Yes",
+          "No, lifetime needs a separate contract",
+          "Only on a PC"
+        ],
+        "correct": 1,
+        "feedback": "A dangling pointer can remain non-null.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "concept-3",
+        "kind": "choice",
+        "prompt": "Can const int* observe a change to an ordinary source int?",
+        "options": [
+          "Yes, const restricts writes through this path",
+          "No, the source is frozen forever",
+          "Only through copying"
+        ],
+        "correct": 0,
+        "feedback": "Access-path properties differ from source-object properties.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Add a second stock object, otherStock{20}. Redirect only stockPointer to it and add 1 through *stockPointer. Explain why selectedStock still refers to the first stock; report both stocks and the snapshot.",
+        "feedback": "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+        "recall": "concept-2"
+      }
+    ],
+    "practice": {
+      "title": "One stock object, several access paths",
+      "task": "Create a snapshot, reference, and pointer. Sell 3 through the reference and add 2 through the pointer. The snapshot must preserve its initial value. Add a second stock object, otherStock{20}. Redirect only stockPointer to it and add 1 through *stockPointer. Explain why selectedStock still refers to the first stock; report both stocks and the snapshot.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    std::cout << \"stock=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << snapshot << '\\n';\n    return 0;\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "",
+      "returnAnchor": "concept-2",
+      "recall": "concept-2",
+      "cases": [
+        {
+          "label": "Main transfer task",
+          "input": "",
+          "output": "stock=9\nsnapshot=10\nalias=9\n"
+        }
+      ],
+      "criteria": [
+        "Every dereference targets live stock.",
+        "The copy is not presented as an alias.",
+        "Provide a legend, values, and actual stdout.",
+        "No new/delete, pointer arithmetic, or unsafe reads.",
+        "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation."
+      ],
+      "hint": "Add a second stock object, otherStock{20}. Redirect only stockPointer to it and add 1 through *stockPointer. Explain why selectedStock still refers to the first stock; report both stocks and the snapshot.",
+      "steps": [
+        {
+          "where": "My independent work",
+          "action": "Draw relationships before running.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Separate the updates into statements.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Compare final stock and snapshot.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Repeat with initial values 3 and 20.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-dcl.ref",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[dcl.ref]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.ref"
+      },
+      {
+        "id": "cpp20-dcl.ptr",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[dcl.ptr]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.ptr"
+      },
+      {
+        "id": "cpp20-basic.life",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[basic.life]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.life"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    int& selectedStock = stock;\n    int* stockPointer = &stock;\n    selectedStock -= 3;\n    *stockPointer += 2;\n    std::cout << \"stock=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << snapshot << '\\n';\n    std::cout << \"alias=\" << selectedStock << '\\n';\n    return 0;\n}\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    int& selectedStock = stock;\n    int* stockPointer = &stock;\n    selectedStock -= 3;\n    *stockPointer += 2;\n    std::cout << \"stock=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << snapshot << '\\n';\n    std::cout << \"alias=\" << selectedStock << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "stock=9\nsnapshot=10\nalias=9\n",
+        "label": "independent",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int stock{10};\n    int snapshot = stock;\n    int& selectedStock = stock;\n    int* stockPointer = &stock;\n    selectedStock -= 3;\n    *stockPointer += 2;\n    std::cout << \"stock=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << snapshot << '\\n';\n    std::cout << \"alias=\" << selectedStock << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int stock{3};\n    int snapshot = stock;\n    int& selectedStock = stock;\n    int* stockPointer = &stock;\n    selectedStock -= 3;\n    *stockPointer += 2;\n    std::cout << \"stock=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << snapshot << '\\n';\n    std::cout << \"alias=\" << selectedStock << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "stock=2\nsnapshot=3\nalias=2\n",
+        "label": "initial-three",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int stock{3};\n    int snapshot = stock;\n    int& selectedStock = stock;\n    int* stockPointer = &stock;\n    selectedStock -= 3;\n    *stockPointer += 2;\n    std::cout << \"stock=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << snapshot << '\\n';\n    std::cout << \"alias=\" << selectedStock << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int stock{20};\n    int snapshot = stock;\n    int& selectedStock = stock;\n    int* stockPointer = &stock;\n    selectedStock -= 3;\n    *stockPointer += 2;\n    std::cout << \"stock=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << snapshot << '\\n';\n    std::cout << \"alias=\" << selectedStock << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "stock=19\nsnapshot=20\nalias=19\n",
+        "label": "initial-twenty",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int stock{20};\n    int snapshot = stock;\n    int& selectedStock = stock;\n    int* stockPointer = &stock;\n    selectedStock -= 3;\n    *stockPointer += 2;\n    std::cout << \"stock=\" << stock << '\\n';\n    std::cout << \"snapshot=\" << snapshot << '\\n';\n    std::cout << \"alias=\" << selectedStock << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "concept-2",
+      "3": "concept-4",
+      "4": "concept-5",
+      "5": "concept-6"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      }
+    ],
+    "starterExpected": "stock=10\nsnapshot=10\n"
   }
 }

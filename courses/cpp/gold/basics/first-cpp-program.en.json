@@ -486,5 +486,426 @@
     },
     "negative": "A missing ; usually prevents a build. Replacing + with - may build but produces a different result. After a failed build, old stdout is not the output of the new source.",
     "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
+  },
+  "teachingEdition": {
+    "revision": "b1-author-v1",
+    "title": "Your first program: a message and an exit status",
+    "goal": "Build a small report, explain every line, and distinguish a build error from an incorrect answer.",
+    "prerequisites": [
+      {
+        "text": "Module 1: source → compilation → execution; syntax errors versus incorrect results."
+      },
+      {
+        "text": "Multiplication of small whole numbers. You do not need to write functions, loops, or keyboard input here."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "A greeting without an extra zero",
+        "paragraphs": [
+          "Imagine a program welcoming someone to the course. Its result should contain one line: Hello, C++! Will the reader also see quotation marks, braces or the 0 in return?",
+          "Read the short source below as instructions to the computer. You do not need to memorise every symbol yet. Predict the message, then open the explanation; we will give each part a purpose."
+        ],
+        "prediction": [
+          "#include <iostream>\n\nint main() {\n    std::cout << \"Hello, C++!\\n\";\n    return 0;\n}\n"
+        ],
+        "reveal": {
+          "title": "Compare your prediction and follow the steps",
+          "paragraphs": [
+            "Our first task is to print exactly Hello, C++! followed by a newline. Write that expectation before running. The editor contains source; the result panel shows consequences of execution. Similar text in both places does not make them the same thing.",
+            "Open main.cpp in Code Studio, insert the first example, and select Run. Leave stdin, the separate field for standard input, empty: this program reads nothing. The first run may download the pinned Clang/WASM compiler. Wait for the build result, then locate the output line and exit code.",
+            "If you replace only Hello with Welcome, which part of the output changes and which part stays the same? The 0 describes termination, not the greeting."
+          ],
+          "tables": [
+            {
+              "caption": "Follow the difficult step",
+              "columns": [
+                "Place",
+                "Text or observation",
+                "Purpose"
+              ],
+              "rows": [
+                [
+                  "Source",
+                  "std::cout << \"Hello, C++!\\n\";",
+                  "Specify the message"
+                ],
+                [
+                  "Standard output",
+                  "Hello, C++! followed by a newline",
+                  "Show the message to the reader"
+                ],
+                [
+                  "Exit status",
+                  "0",
+                  "Report successful completion to the environment"
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n\nint main() {\n    std::cout << \"Hello, C++!\\n\";\n    return 0;\n}\n",
+            "stdin": "",
+            "output": "Hello, C++!\n"
+          }
+        }
+      },
+      {
+        "id": "concept-2",
+        "title": "How the program learns about cout",
+        "paragraphs": [
+          "The #include preprocessing directive names the standard <iostream> header. It makes declarations for stream input and output available, including std::cout. It is not a print command and does not require an iostream.cpp file beside main.cpp.",
+          "The directive line does not end with ;. The environment supplies the corresponding library during the build. Include headers for facilities you actually use. The diagnostic example without <iostream> should fail to build."
+        ]
+      },
+      {
+        "id": "concept-3",
+        "title": "Where execution starts and ends",
+        "paragraphs": [
+          "In int main(), main names the entry point, int is the return-status type, and empty parentheses specify the no-parameter form. The body between { and } contains statements. In a hosted environment it runs after runtime setup. Functions will receive a full treatment later; for now explain the scaffold rather than inventing additional functions.",
+          "return 0; ends main successfully. It does not print 0. A special rule for main gives the same successful status when execution reaches its closing brace without an explicit return. Do not generalize that rule to every function. Most examples keep return explicit to make the status visible."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    std::cout << \"done\\n\";\n}\n",
+          "stdin": "",
+          "output": "done\n"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "Building an output line",
+        "paragraphs": [
+          "std is the standard-library namespace; :: selects cout within it. std::cout represents standard output. In this expression, << inserts the following value into the stream. The same symbol can mean a bit shift elsewhere, but the stream on the left determines its use here. You do not need operator-overloading theory yet.",
+          "Double quotes delimit a string literal: they appear in source but are not printed. Inside a literal, \\n denotes a newline; two source characters describe one control character. A chain of << operations can print a label, a number, and a newline. Spaces are not inserted automatically."
+        ]
+      },
+      {
+        "id": "concept-5",
+        "title": "A compiler diagnostic: where to start",
+        "paragraphs": [
+          "Output statements and return end with ;. A source newline does not replace it. Braces delimit the body of main; its closing brace needs no semicolon. Indentation helps people see structure but cannot repair a missing delimiter.",
+          "Start with the first meaningful build diagnostic and inspect the indicated line and the previous line. A compiler may detect a problem after its cause. Repair one defect, rebuild, and then evaluate the output. Exact diagnostic wording depends on the compiler and is not part of the program output contract."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "From a greeting to a report about boxes",
+        "paragraphs": [
+          "In int boxes = 3;, int supplies an integer type, boxes is the author-chosen name, and = 3 supplies the initial value. The object stores a value and its name lets later statements use it. This is a small scaffold; type ranges and scope are separate lessons. All values here are small enough for int.",
+          "int totalItems = boxes * itemsPerBox; evaluates the current values when totalItems is created. It is not a spreadsheet formula that stays linked forever. Editing initial values and rerunning the whole program performs a new calculation. The labels boxes= and items= make the output understandable without memorizing column positions."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int boxes = 3;\n    int itemsPerBox = 8;\n    int totalItems = boxes * itemsPerBox;\n    std::cout << \"boxes=\" << boxes << '\\n';\n    std::cout << \"items=\" << totalItems << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "boxes=3\nitems=24\n"
+        }
+      },
+      {
+        "id": "concept-7",
+        "title": "Checking that the answer is right",
+        "paragraphs": [
+          "For each experiment record source, empty stdin, expected stdout, actual stdout, and exit code. Distinguish a missing final newline from a wrong number. Calculate the product independently; copying the same mistaken formula into a check is not independent verification."
+        ]
+      },
+      {
+        "id": "diagnose-missing-semicolon",
+        "title": "Intentional: missing ;",
+        "paragraphs": [
+          "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+          "The build should report an error; restore ; after the output."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    std::cout << \"Hello, C++!\\n\"\n    return 0;\n}\n",
+          "stdin": "",
+          "expectCompileFailure": true
+        }
+      },
+      {
+        "id": "diagnose-missing-header",
+        "title": "Intentional: missing header",
+        "paragraphs": [
+          "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+          "Undeclared std::cout is not a calculation error."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "\nint main() {\n    std::cout << \"Hello, C++!\\n\";\n    return 0;\n}\n",
+          "stdin": "",
+          "expectCompileFailure": true
+        },
+        "deep": {
+          "title": "Why can main finish successfully without return?",
+          "text": "C++ gives main a special rule: reaching the end of its body has the effect of return 0. This does not apply to every function returning int. Compare the done example in this lesson with the first program: their messages differ, but both finish successfully.",
+          "sourceId": "cpp20-basic.start.main"
+        }
+      },
+      {
+        "id": "independent-work",
+        "title": "Now solve a different problem",
+        "paragraphs": [
+          "Complete the starter with exactly three lines: room=A, rows=2, seats=12. Preserve a record of repairing one intentional syntax defect separately from the working file. Explain why seats is calculated from two quantities rather than written as the answer 12. Then change only the row count to 3 and predict the new report.",
+          "Open Practice. Its starter and your current source are separate from the worked examples. Write a prediction before running, then explain the result in your own words."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Only Hello was replaced with Welcome in the greeting program. What goes to stdout?",
+        "options": [
+          "Welcome, C++!\n",
+          "Welcome, C++!\n0\n",
+          "\"Welcome, C++!\\n\"\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes. The text inside the literal changes; the newline remains.",
+          "return 0 reports a status to the environment. Nothing writes that zero to stdout.",
+          "Quotation marks delimit the literal and \\n encodes a newline; the source spelling is not printed verbatim."
+        ],
+        "recall": "concept-1",
+        "code": "#include <iostream>\n\nint main() {\n    std::cout << \"Welcome, C++!\\n\";\n    return 0;\n}\n",
+        "execution": {
+          "source": "#include <iostream>\n\nint main() {\n    std::cout << \"Welcome, C++!\\n\";\n    return 0;\n}\n",
+          "stdin": "",
+          "expected": "Welcome, C++!\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\n\nint main() {\n    std::cout << \"Welcome, C++!\\n\";\n    return 0;\n}\n"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          }
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "What reaches stdout in the first example?",
+        "options": [
+          "Hello, C++!\n",
+          "Hello, C++!\n0\n",
+          "The #include text"
+        ],
+        "correct": 0,
+        "feedback": "std::cout writes stdout. The interface reports the return status separately.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "What does << mean after std::cout?",
+        "options": [
+          "Always a bit shift",
+          "Insertion into the stream",
+          "The beginning of a comment"
+        ],
+        "correct": 1,
+        "feedback": "The left operand is a stream, so this is stream insertion; one symbol can have different roles in different expressions.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "Boxes is changed to 0 with 8 items per box. What should you check?",
+        "options": [
+          "boxes=0\nitems=0\n",
+          "boxes=0\nitems=8\n",
+          "A mandatory compilation error"
+        ],
+        "correct": 0,
+        "feedback": "Zero is valid in this model: 0 × 8 = 0. Do not invent an unstated restriction.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "concept-3",
+        "kind": "choice",
+        "prompt": "Why does a successful build not prove a correct report?",
+        "options": [
+          "The compiler does not know the agreed formula or domain labels",
+          "main never executes",
+          "stdout is always random"
+        ],
+        "correct": 0,
+        "feedback": "A valid program can use the wrong quantities or labels. You need a test defined beforehand.",
+        "recall": "concept-7"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Explain why seats is calculated from two quantities rather than written as the answer 12. Then change only the row count to 3 and predict the new report.",
+        "feedback": "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+        "recall": "concept-6"
+      }
+    ],
+    "practice": {
+      "title": "A classroom calculation report",
+      "task": "Complete the starter with exactly three lines: room=A, rows=2, seats=12. Preserve a record of repairing one intentional syntax defect separately from the working file. Explain why seats is calculated from two quantities rather than written as the answer 12. Then change only the row count to 3 and predict the new report.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n\nint main() {\n    int rows = 2;\n    int seatsPerRow = 6;\n    std::cout << \"room=A\\n\";\n    return 0;\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "",
+      "returnAnchor": "concept-6",
+      "recall": "concept-6",
+      "cases": [
+        {
+          "label": "Main transfer task",
+          "input": "",
+          "output": "room=A\nrows=2\nseats=12\n"
+        }
+      ],
+      "criteria": [
+        "The source is explained line by line and each name has meaning.",
+        "Baseline output is exact and the result is calculated.",
+        "Expectations of 0 and 18 seats for 0 and 3 rows and actual results are recorded.",
+        "A short record gives defect → phase → repair → repeat check.",
+        "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation."
+      ],
+      "hint": "Explain why seats is calculated from two quantities rather than written as the answer 12. Then change only the row count to 3 and predict the new report.",
+      "steps": [
+        {
+          "where": "My independent work",
+          "action": "Write the contract before editing; stdin is empty.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Calculate seats from rows and seatsPerRow; add labels and newlines.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Compare stdout and status with the expectation.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Remove one ; in a copy, record the first diagnostic, restore it, and rerun.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My independent work",
+          "action": "Also test rows=0 and rows=3 without changing the formula.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-basic.start.main",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[basic.start.main]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.start.main"
+      },
+      {
+        "id": "cpp20-iostream.objects",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[iostream.objects]",
+        "language": "English",
+        "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/iostream.objects"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\n\nint main() {\n    int rows = 2;\n    int seatsPerRow = 6;\n    int seats = rows * seatsPerRow;\n    std::cout << \"room=A\\n\";\n    std::cout << \"rows=\" << rows << '\\n';\n    std::cout << \"seats=\" << seats << '\\n';\n    return 0;\n}\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int rows = 2;\n    int seatsPerRow = 6;\n    int seats = rows * seatsPerRow;\n    std::cout << \"room=A\\n\";\n    std::cout << \"rows=\" << rows << '\\n';\n    std::cout << \"seats=\" << seats << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "room=A\nrows=2\nseats=12\n",
+        "label": "independent",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int rows = 2;\n    int seatsPerRow = 6;\n    int seats = rows * seatsPerRow;\n    std::cout << \"room=A\\n\";\n    std::cout << \"rows=\" << rows << '\\n';\n    std::cout << \"seats=\" << seats << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int rows = 0;\n    int seatsPerRow = 6;\n    int seats = rows * seatsPerRow;\n    std::cout << \"room=A\\n\";\n    std::cout << \"rows=\" << rows << '\\n';\n    std::cout << \"seats=\" << seats << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "room=A\nrows=0\nseats=0\n",
+        "label": "zero-rows",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int rows = 0;\n    int seatsPerRow = 6;\n    int seats = rows * seatsPerRow;\n    std::cout << \"room=A\\n\";\n    std::cout << \"rows=\" << rows << '\\n';\n    std::cout << \"seats=\" << seats << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int rows = 3;\n    int seatsPerRow = 6;\n    int seats = rows * seatsPerRow;\n    std::cout << \"room=A\\n\";\n    std::cout << \"rows=\" << rows << '\\n';\n    std::cout << \"seats=\" << seats << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "room=A\nrows=3\nseats=18\n",
+        "label": "three-rows",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int rows = 3;\n    int seatsPerRow = 6;\n    int seats = rows * seatsPerRow;\n    std::cout << \"room=A\\n\";\n    std::cout << \"rows=\" << rows << '\\n';\n    std::cout << \"seats=\" << seats << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    ],
+    "coverage": {
+      "1": "concept-3",
+      "2": "concept-1",
+      "3": "concept-6",
+      "4": "concept-7"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      },
+      {
+        "sourceSection": 6,
+        "anchor": "concept-7"
+      }
+    ],
+    "starterExpected": "room=A\n"
   }
 }

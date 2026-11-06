@@ -1,88 +1,147 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b1-author-v1",
   "id": "cpp.type-conversions",
   "courseId": "cpp",
   "moduleId": "cpp.section.cpp-basics",
   "course": "C++ programming",
   "module": "C++ Foundations",
   "locale": "en",
-  "title": "Type conversions: intent, information loss, and range checks",
-  "goal": "Compare conversion before division with conversion after the fraction is lost.",
+  "title": "Type conversions: choose the operation before information is lost",
+  "goal": "Choose where a conversion belongs, recognise mixed signedness, and explain what static_cast does not validate.",
   "prerequisites": [
     {
-      "text": "You understand int, double and integer division."
+      "text": "Integer division, ranges, long long, and intermediate values."
+    },
+    {
+      "text": "bool and simple comparisons from the laboratory; a protective if is scaffolded."
     }
   ],
   "sections": [
     {
-      "id": "model",
-      "title": "From the task to an operation",
+      "id": "concept-1",
+      "title": "Before or after the division",
       "paragraphs": [
-        "If both operands are integers, 5/2 gives 2. Storing that result in double gives 2.0: the fraction has already been lost. static_cast<double>(count) explicitly obtains a double value from count before division. With a double operand, division is performed in a floating-point type.",
-        "An explicit conversion states intent but does not make every value safe. double→int discards the fraction toward zero, and the value must be within range. Brace initialization rejects many narrowing conversions to detect loss early. Here 5 and 2 are small and exactly representable."
-      ]
-    },
-    {
-      "id": "worked-example",
-      "title": "Compare conversion before division with conversion after the fraction is lost.",
-      "paragraphs": [],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int count = 5;\n    int people = 2;\n    double late = count / people;\n    double early = static_cast<double>(count) / people;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
-        "output": "2 2.5\n",
-        "stdin": ""
-      },
-      "steps": [],
-      "trace": [
-        [
-          "count / people",
-          "int 5; int 2",
-          "int 2",
-          "Integer division happened first."
-        ],
-        [
-          "double late = 2",
-          "int 2",
-          "double 2",
-          "Conversion after division cannot recover the fraction."
-        ],
-        [
-          "static_cast<double>(count) / people",
-          "double 5; int 2",
-          "early: 2.5",
-          "A floating-point operand exists before division."
-        ]
-      ]
-    },
-    {
-      "id": "variation",
-      "title": "Change one condition and check the prediction",
-      "paragraphs": [
-        "Replace count=5 with count=7.",
-        "Integer 7/2 gives 3.",
-        "Floating-point 7.0/2 gives 3.5."
+        "Seven points are shared between two participants. You already know integer division loses the half. Writing static_cast<double> may seem sufficient, but what you place inside its parentheses matters.",
+        "One expression converts the completed quotient; the other converts the numerator before division. Predict both results and name the operand types at the moment / is evaluated."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int count = 7;\n    int people = 2;\n    double late = count / people;\n    double early = static_cast<double>(count) / people;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
-        "stdin": "",
-        "output": "3 3.5\n"
+      "prediction": [
+        "#include <iostream>\n\nint main() {\n    int total{7};\n    int count{2};\n    double late = static_cast<double>(total / count);\n    double early = static_cast<double>(total) / count;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n"
+      ],
+      "reveal": {
+        "title": "Compare your prediction and follow the steps",
+        "paragraphs": [
+          "With two ints, total / count performs integer division. Storing the result in double afterward cannot restore the fraction. static_cast<double>(total / count) first obtains integer 3 and then double 3.0; static_cast<double>(total) / count converts an operand first and gives 3.5 for 7 and 2.",
+          "In static_cast<double>(total), static_cast selects an explicit conversion, <double> specifies the destination type, and parentheses contain the expression. It is a language operator rather than a function we authored. Use it to state justified intent; unnecessary casts can obscure meaning.",
+          "The first double is printed below as 3, without .0: ordinary cout need not print a fractional suffix for a whole value. Change total to 9, keeping count=2: early conversion preserves 4.5, while late conversion gives 4."
+        ],
+        "tables": [
+          {
+            "caption": "Follow the difficult step",
+            "columns": [
+              "Expression",
+              "What / does",
+              "Result"
+            ],
+            "rows": [
+              [
+                "static_cast<double>(7 / 2)",
+                "int / int → 3",
+                "double 3.0"
+              ],
+              [
+                "static_cast<double>(7) / 2",
+                "double / double → 3.5",
+                "double 3.5"
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int total{7};\n    int count{2};\n    double late = static_cast<double>(total / count);\n    double early = static_cast<double>(total) / count;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "3 3.5\n"
+        }
       }
     },
     {
-      "id": "diagnose",
-      "title": "When the result differs",
+      "id": "concept-2",
+      "title": "How operands reach a common type",
       "paragraphs": [
-        "static_cast<double>(count/people) still converts a completed integer quotient and gives 2."
+        "Before many integer operations, bool, char, and short undergo integral promotions: to int when it represents all source values, otherwise to unsigned int. Thus adding two chars does not necessarily yield char. Type rules, not the length of the printed number, determine the result.",
+        "After promotions, arithmetic operators choose a common type. In our double-and-int examples the integer operand converts to double. Same-sign integer types convert toward the greater rank; mixed signs need additional rules. Rank is a language ordering rather than merely sizeof. Do not replace the rules with “the larger size always wins.”"
       ]
     },
     {
-      "id": "independent-work",
-      "title": "Now solve your own task",
+      "id": "concept-3",
+      "title": "Why −1 can compare greater than 1u",
       "paragraphs": [
-        "Divide 9 items between two people. Show the integer quotient and floating-point share; convert an operand before the operation.",
-        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+        "In this example debt is int and credit is unsigned int. Their ranks correspond, so int converts to unsigned int before comparison. −1 becomes the maximum unsigned int value and comparison with 1 is false. This follows defined conversion rules rather than a compiler defect.",
+        "Unsigned integer conversion is congruent modulo 2^N, where N is the destination width. We do not assume N=32 universally. The example compares with numeric_limits<unsigned int>::max() instead of demanding one numeric maximum. Repairing a domain comparison requires valid signs and ranges rather than blindly casting both sides to unsigned."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <limits>\n\nint main() {\n    int debt{-1};\n    unsigned int credit{1};\n    std::cout << (debt < credit) << '\\n';\n    std::cout << (static_cast<unsigned int>(debt) == std::numeric_limits<unsigned int>::max()) << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "0\n1\n"
+      }
+    },
+    {
+      "id": "concept-4",
+      "title": "A conversion does not validate the meaning of data",
+      "paragraphs": [
+        "Converting double 3.75 to int gives 3, and −3.75 gives −3: the fraction is discarded toward zero rather than rounded to the nearest integer. We execute only values whose truncated result is representable. Out-of-range floating-to-integer conversion is not a safe experiment.",
+        "Before narrowing, establish the destination range and domain rules. If a value must be a whole count, losing a fraction can be wrong even within range. static_cast does not automatically reject that domain error. int count{2.5}; usefully detects specified narrowing during the build; do not add a cast merely to silence it."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    double positive{3.75};\n    double negative{-3.75};\n    std::cout << static_cast<int>(positive) << ' ' << static_cast<int>(negative) << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "3 -3\n"
+      }
+    },
+    {
+      "id": "concept-5",
+      "title": "An exact total and an approximate average",
+      "paragraphs": [
+        "Widening before multiplication and converting before division solve the same design problem: choosing operation semantics before execution. Casting an already-overflowed or truncated result cannot repair the past.",
+        "Keep exact totals in integer minor units and calculate an approximate average separately. This distinguishes exact stored quantities from derived approximations. If every cent matters, formatting and rounding must be explicit contract rules rather than accidental cast consequences."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Testing cases where the fraction matters",
+      "paragraphs": [
+        "For the average, test 7/2, 0/2, 10/4, and rejection of zero count. The first and third expose premature integer division; zero alone cannot. Write expected values 3.5, 0, and 2.5 before running.",
+        "Practicum B combines named stages, integer-product bounds, and a floating-point average. Reference values allow simple output; full formatting is introduced in lesson 12. The diagram compares two specific division paths rather than executing arbitrary C++ conversions."
+      ]
+    },
+    {
+      "id": "diagnose-narrowing-fraction",
+      "title": "Intentional: prohibited narrowing",
+      "paragraphs": [
+        "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+        "Do not bypass the rejection without explaining required precision."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int count{3.5};\n    std::cout << count << '\\n';\n}\n",
+        "stdin": "",
+        "expectCompileFailure": true
+      },
+      "deep": {
+        "title": "Why is type size not a substitute for conversion rules?",
+        "text": "Size in bytes describes representation. Rank and conversion rules determine which type participates in an expression. int and unsigned int may have the same size, yet converting a negative value to unsigned changes its numerical meaning. Establish the task’s valid values before choosing a common type.",
+        "sourceId": "cpp20-expr.static.cast"
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Now solve a different problem",
+      "paragraphs": [
+        "Correct the average calculation without changing the input types. The protective if is provided: explain its bounds before running. In the independent task, share 11 points between 4 participants. Keep the original int values, validate ranges before calculating, and obtain average=2.75. Explain why converting after / would give another value.",
+        "Open Practice. Its starter and your current source are separate from the worked examples. Write a prediction before running, then explain the result in your own words."
       ]
     }
   ],
@@ -90,70 +149,134 @@
     {
       "id": "predict",
       "kind": "choice",
-      "prompt": "What output follows the specified change? Replace count=5 with count=7.",
+      "prompt": "With int total{9}; int count{2};, what will the example print for late and early?",
       "options": [
-        "3 3.5\n",
-        "Compilation fails"
+        "4 4.5\n",
+        "4.5 4.5\n",
+        "4 4\n"
       ],
       "correct": 0,
-      "feedback": "Integer 7/2 gives 3. Floating-point 7.0/2 gives 3.5."
+      "feedback": [
+        "Yes: only early changes the type before division.",
+        "For late, integer division happens before static_cast. The lost half is not recovered.",
+        "For early, the numerator is already double, so the second division is floating-point division."
+      ],
+      "recall": "concept-1",
+      "code": "#include <iostream>\n\nint main() {\n    int total{9};\n    int count{2};\n    double late = static_cast<double>(total / count);\n    double early = static_cast<double>(total) / count;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+      "execution": {
+        "source": "#include <iostream>\n\nint main() {\n    int total{9};\n    int count{2};\n    double late = static_cast<double>(total / count);\n    double early = static_cast<double>(total) / count;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "4 4.5\n",
+        "label": "predict",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int total{9};\n    int count{2};\n    double late = static_cast<double>(total / count);\n    double early = static_cast<double>(total) / count;\n    std::cout << late << ' ' << early << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    },
+    {
+      "id": "concept-0",
+      "kind": "choice",
+      "prompt": "How can total=7 and count=2 produce 3.5?",
+      "options": [
+        "static_cast<double>(total / count)",
+        "static_cast<double>(total) / count",
+        "total / count"
+      ],
+      "correct": 1,
+      "feedback": "An operand must become double before integer division.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "concept-1",
+      "kind": "choice",
+      "prompt": "Does static_cast<int>(3.75) round to nearest?",
+      "options": [
+        "Yes, 4",
+        "No, truncation toward zero gives 3",
+        "Always a build error"
+      ],
+      "correct": 1,
+      "feedback": "For a representable result the fraction is discarded.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "concept-2",
+      "kind": "choice",
+      "prompt": "What should precede narrowing?",
+      "options": [
+        "Establish range and acceptable precision loss",
+        "Only remove warnings",
+        "Check syntax color"
+      ],
+      "correct": 0,
+      "feedback": "A cast expresses intent but does not validate the domain contract.",
+      "recall": "concept-4"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Divide 9 items between two people. Show the integer quotient and floating-point share; convert an operand before the operation.",
-      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. 9/2 gives 4, while static_cast<double>(items)/people gives 4.5. static_cast<double>(items/people) gives 4 because conversion happens after integer division."
+      "prompt": "In the independent task, share 11 points between 4 participants. Keep the original int values, validate ranges before calculating, and obtain average=2.75. Explain why converting after / would give another value.",
+      "feedback": "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation.",
+      "recall": "concept-1"
     }
   ],
   "practice": {
-    "title": "Independent variation",
-    "task": "Divide 9 items between two people. Show the integer quotient and floating-point share; convert an operand before the operation.",
+    "title": "An average without premature truncation",
+    "task": "Correct the average calculation without changing the input types. The protective if is provided: explain its bounds before running. In the independent task, share 11 points between 4 participants. Keep the original int values, validate ranges before calculating, and obtain average=2.75. Explain why converting after / would give another value.",
     "kind": "cpp-console",
     "environment": "C++20",
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+        "content": "#include <iostream>\n\nint main() {\n    int totalPoints{11};\n    int participantCount{4};\n    // Protective scaffold: domain checks precede the division.\n    if (totalPoints < 0 || totalPoints > 1000 || participantCount < 1 || participantCount > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    double average = totalPoints / participantCount;\n    std::cout << \"average=\" << average << '\\n';\n    return 0;\n}\n"
       }
     ],
-    "metadata": {},
+    "metadata": {
+      "entryFile": "main.cpp"
+    },
     "stdin": "",
-    "returnAnchor": "worked-example",
+    "returnAnchor": "concept-1",
+    "recall": "concept-1",
     "cases": [
       {
-        "label": "Case 1",
+        "label": "Main transfer task",
         "input": "",
-        "output": "4 4.5\n"
+        "output": "average=2.75\n"
       }
     ],
     "criteria": [
-      "Compare the output with the readable reference case below.",
-      "Explain each change using the objects or operations in this topic.",
-      "9/2 gives 4, while static_cast<double>(items)/people gives 4.5. static_cast<double>(items/people) gives 4 because conversion happens after integer division."
+      "Source values remain exact integers.",
+      "Division follows count validation.",
+      "Identify where double is introduced.",
+      "Record actual before/after results.",
+      "Explain in words which object or intermediate value changes. Matching stdout does not replace that explanation."
     ],
-    "hint": "Integer 7/2 gives 3. Floating-point 7.0/2 gives 3.5.",
+    "hint": "In the independent task, share 11 points between 4 participants. Keep the original int values, validate ranges before calculating, and obtain average=2.75. Explain why converting after / would give another value.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Divide 9 items between two people. Show the integer quotient and floating-point share; convert an operand before the operation.",
+        "where": "My independent work",
+        "action": "Record the original incorrect result 3.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "My program",
-        "action": "Predict the result before running.",
+        "where": "My independent work",
+        "action": "Identify the division type before repair.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "My program",
-        "action": "Write your solution in a separate starter; keep your previous work.",
+        "where": "My independent work",
+        "action": "Move conversion to an operand.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "My program",
-        "action": "Compare actual output with your prediction and explain any difference.",
+        "where": "My independent work",
+        "action": "Test a multiple, nonmultiple, zero total, and zero count.",
         "why": "",
         "expected": ""
       }
@@ -333,5 +456,38 @@
     },
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\basics\\type-conversions.en.json"
+  "sourcePath": "courses\\cpp\\gold\\basics\\type-conversions.en.json",
+  "reading": [
+    {
+      "id": "cpp20-expr.static.cast",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.static.cast]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.static.cast"
+    },
+    {
+      "id": "cpp20-conv",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[conv]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/conv"
+    },
+    {
+      "id": "cpp20-expr.arith.conv",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.arith.conv]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.arith.conv"
+    }
+  ],
+  "authored": true
 }
