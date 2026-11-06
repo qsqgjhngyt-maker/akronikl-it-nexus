@@ -1,7 +1,7 @@
 import {readFile} from 'node:fs/promises';
 import {goldLessonPath} from '../../core/academy-gold-catalog.js';
-export const B1_NEW=['first-cpp-program','comments-constants-literals','variables-scope','expressions-operators-blocks','arithmetic-assignment','type-conversions','relations-logic','pointers-references-addresses','standard-io'].map(x=>'cpp.'+x);
-export const B1_IDS=[...B1_NEW.slice(0,2),'cpp.data-types',...B1_NEW.slice(2)];
+export const B1_NEW=['first-cpp-program','tokens-identifiers-keywords','comments-constants-literals','variables-scope','expressions-operators-blocks','arithmetic-assignment','type-conversions','relations-logic','increment-decrement-sizeof-conditional','pointers-references-addresses','standard-io'].map(x=>'cpp.'+x);
+export const B1_IDS=[...B1_NEW.slice(0,3),'cpp.data-types',...B1_NEW.slice(3)];
 export const B1_BASE='bf8eabb0a6ec40c3ed767f073ed6c02c321531b1';
 export async function b1Lesson(id,locale){const g=JSON.parse(await readFile(goldLessonPath(id,locale),'utf8')),l=JSON.parse(await readFile('courses/clarity/lessons/'+id+'.'+locale+'.json','utf8'));return {g,l};}
 export function record(id,locale,name,c){return {id,locale,name,source:c.source,stdin:c.stdin||'',files:c.files||{'main.cpp':c.source},metadata:c.metadata||{entryFile:'main.cpp'},expected:c.expected??c.output,expectCompileFailure:!!c.expectCompileFailure};}

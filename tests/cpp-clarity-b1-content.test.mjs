@@ -23,7 +23,16 @@ test('Принятый урок «Типы данных» и три образц
  }
 });
 test('R65-01: основной старый опыт использует точные source, stdin и expected последнего названного варианта',async()=>{
- for(const id of ['cpp.comments-constants-literals','cpp.relations-logic','cpp.standard-io'])for(const locale of ['ru','en']){const{g}=await b1Lesson(id,locale),t=g.clarity.training,v=t.variants.at(-1);assert.equal(t.starterCode,v.code);assert.equal(t.stdin,v.stdin);assert.equal(t.expectedStdout,v.stdout);}
+ for(const id of ['cpp.comments-constants-literals','cpp.relations-logic','cpp.standard-io','cpp.increment-decrement-sizeof-conditional'])for(const locale of ['ru','en']){const{g}=await b1Lesson(id,locale),t=g.clarity.training,v=t.variants.at(-1);assert.equal(t.starterCode,v.code);assert.equal(t.stdin,v.stdin);assert.equal(t.expectedStdout,v.stdout);}
 });
 test('Все исполняемые записи несут файлы и метаданные своей версии',async()=>{for(const r of await b1Programs()){assert.equal(r.files['main.cpp'],r.source);assert.equal(r.metadata.entryFile,'main.cpp');assert.equal(typeof r.stdin,'string');assert.ok(r.expectCompileFailure||typeof r.expected==='string');}});
+test('Завершение модуля сохраняет предыдущие десять тем и совпадает с границей учебного блока',async()=>{
+ const before='d551c75047c0e21a16d0fba49e4c8fd340975e7b';
+ const {B1_IDS}=await import('./helpers/cpp-clarity-b1-content.mjs');
+ const curriculum=JSON.parse(await readFile('courses/cpp/curriculum.json','utf8'));
+ const first=curriculum.lessons.find(t=>t.id===B1_IDS[0]);
+ const moduleIds=curriculum.lessons.filter(t=>t.sectionId===first.sectionId).sort((a,b)=>(a.learningOrder??a.order)-(b.learningOrder??b.order)).map(t=>t.id);
+ assert.deepEqual(B1_IDS,moduleIds);assert.equal(B1_IDS.length,12);
+ for(const id of B1_IDS.filter(id=>!['cpp.tokens-identifiers-keywords','cpp.increment-decrement-sizeof-conditional'].includes(id)))for(const locale of ['ru','en'])for(const p of [goldLessonPath(id,locale),'courses/clarity/lessons/'+id+'.'+locale+'.json'])assert.deepEqual(await readFile(p),execFileSync('git',['-c','core.longpaths=true','show',before+':'+p],{maxBuffer:2e6}));
+});
 test('Принятый экран «Типы данных» остаётся прежним после обобщения renderer',async()=>{const previous=await import('data:text/javascript;base64,'+execFileSync('git',['show',B1_BASE+':core/cpp-clarity-authored.mjs']).toString('base64')),current=await import('../core/cpp-clarity-authored.mjs');const callbacks={code:(...v)=>JSON.stringify(v),table:t=>JSON.stringify(t),url:(...v)=>v.join('/')};for(const locale of ['ru','en']){const{l}=await b1Lesson('cpp.data-types',locale),a=previous.authoredMarkup(l,callbacks),b=current.authoredMarkup(l,callbacks);assert.equal(a.explanation(),b.explanation());assert.equal(a.reading(),b.reading());for(const s of l.sections)assert.deepEqual(a.recall(s.id),b.recall(s.id));}});

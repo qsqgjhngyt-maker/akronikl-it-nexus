@@ -1,94 +1,199 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b1-author-v1",
   "id": "cpp.increment-decrement-sizeof-conditional",
   "courseId": "cpp",
   "moduleId": "cpp.section.cpp-basics",
   "course": "C++ programming",
   "module": "C++ Foundations",
   "locale": "en",
-  "title": "++ and --, sizeof and ?: — concise syntax with precise meaning",
-  "goal": "Observe a counter change, an expression value and a selected result separately.",
+  "title": "A counter and an expression result: when the number changes",
+  "goal": "Distinguish the result of ++/-- from the new object state, explain unevaluated sizeof, and select the appropriate branch of ?:.",
   "prerequisites": [
     {
-      "text": "You know assignment, comparisons and bool."
+      "text": "Assignment, bool, short-circuit evaluation, and sizeof(type)."
+    },
+    {
+      "text": "Types and safe ranges. Operator overloading is not required."
     }
   ],
   "sections": [
     {
-      "id": "model",
-      "title": "From the task to an operation",
+      "id": "concept-1",
+      "title": "The counter and the expression play different roles",
       "paragraphs": [
-        "i++ increments i, but the expression’s value is the old i. ++i increments first and yields the new value. Keep these operations in separate statements so there is no guessing about order. -- similarly subtracts one; check type bounds before changing a value.",
-        "The conditional expression condition ? a : b selects one of two values. sizeof gives a type or object size in C++ bytes; sizeof(char) is always 1, but a byte need not have exactly eight bits on every platform. sizeof here does not modify a variable."
-      ]
-    },
-    {
-      "id": "worked-example",
-      "title": "Observe a counter change, an expression value and a selected result separately.",
-      "paragraphs": [],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int i = 4;\n    int old = i++;\n    int next = ++i;\n    int larger = (old > next) ? old : next;\n    std::cout << old << ' ' << next << ' ' << i << ' ' << larger << ' ' << sizeof(char) << '\\n';\n    return 0;\n}\n",
-        "output": "4 6 6 6 1\n",
-        "stdin": ""
-      },
-      "steps": [],
-      "trace": [
-        [
-          "old = i++",
-          "i: 4",
-          "old: 4; i: 5",
-          "Captured the old value, then changed the counter."
-        ],
-        [
-          "next = ++i",
-          "i: 5",
-          "next: 6; i: 6",
-          "The updated counter became the expression value."
-        ],
-        [
-          "old > next ? old : next",
-          "4 > 6",
-          "larger: 6",
-          "The condition is false, so next is selected."
-        ],
-        [
-          "sizeof(char)",
-          "char",
-          "1",
-          "This is the guaranteed size of char, not a measurement of int or a pointer."
-        ]
-      ]
-    },
-    {
-      "id": "variation",
-      "title": "Change one condition and check the prediction",
-      "paragraphs": [
-        "Start with i=10 and keep the other statements.",
-        "After i++, the counter is 11 and old remains 10.",
-        "++i yields 12; the larger value selected is 12."
+        "A counter shows 3. We need to record its old number, then obtain the next number after one more increase. Two similar expressions, count++ and ++count, update the same object but produce values at different moments.",
+        "Predict the three printed numbers: oldValue, newValue and count. Follow one statement at a time. Looking only at the final count can hide why oldValue is not 4."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int i = 10;\n    int old = i++;\n    int next = ++i;\n    int larger = (old > next) ? old : next;\n    std::cout << old << ' ' << next << ' ' << i << ' ' << larger << ' ' << sizeof(char) << '\\n';\n    return 0;\n}\n",
-        "stdin": "",
-        "output": "10 12 12 12 1\n"
+      "prediction": [
+        "#include <iostream>\n\nint main() {\n    int count{3};\n    int oldValue = count++;\n    int newValue = ++count;\n    std::cout << oldValue << ' ' << newValue << ' ' << count << '\\n';\n    return 0;\n}\n"
+      ],
+      "reveal": {
+        "title": "Compare your prediction and follow the steps",
+        "paragraphs": [
+          "With int count{3}; int oldValue = count++; count becomes 4 while oldValue receives 3. Next, int newValue = ++count; makes count 5 and gives newValue 5. Keep separate columns for count afterward and expression result so the distinction remains visible.",
+          "-- subtracts 1 with the same prefix/postfix distinction. As standalone statements count++; and ++count; leave the same final count because the result is discarded. Choose clarity rather than claiming one form is faster for every type.",
+          "Starting at 8, the same increases would produce 8, 10, 10. The self-check reverses the direction: trace the decreases instead of reusing those numbers from memory."
+        ],
+        "tables": [
+          {
+            "caption": "Follow the difficult step",
+            "columns": [
+              "Statement",
+              "Result of the right-hand expression",
+              "count after the statement"
+            ],
+            "rows": [
+              [
+                "int count{3};",
+                "initial value 3",
+                "3"
+              ],
+              [
+                "int oldValue = count++;",
+                "3 is stored in oldValue",
+                "4"
+              ],
+              [
+                "int newValue = ++count;",
+                "5 is stored in newValue",
+                "5"
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int count{3};\n    int oldValue = count++;\n    int newValue = ++count;\n    std::cout << oldValue << ' ' << newValue << ' ' << count << '\\n';\n    return 0;\n}\n",
+          "stdin": "",
+          "output": "3 5 5\n"
+        }
       }
     },
     {
-      "id": "diagnose",
-      "title": "When the result differs",
+      "id": "concept-2",
+      "title": "One update per statement",
       "paragraphs": [
-        "Replacing old=i++ with old=++i changes old from 4 to 5. Do not explore ordering with an expression like i++ + ++i."
+        "Do not combine multiple updates of one object into a puzzle. Forms such as i++ + ++i can have undefined behavior and are unsuitable prediction experiments. Our updates occupy separate full statements, with output afterward.",
+        "Range restrictions remain: ++ on the maximum signed int is not permitted merely because the notation is short. Check preconditions first. We use 3…5 safely inside range and explain dangerous boundaries without execution."
       ]
     },
     {
-      "id": "independent-work",
-      "title": "Now solve your own task",
+      "id": "concept-3",
+      "title": "sizeof obtains a size without increasing the counter",
       "paragraphs": [
-        "Start with i=7. In separate statements obtain old with i--, then next with --i. Print old, next, i and select the smaller value using a conditional expression.",
-        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+        "In sizeof(++count) for an ordinary int, the operand is unevaluated and count stays 5. ++count has type int, so its size equals sizeof(int). Compare with == rather than demanding one byte count on every target. This extends the types lesson with an expression rule.",
+        "Unevaluated does not mean arbitrary text is valid: sizeof(stillUnknown) fails without a declaration. The compiler needs a valid operand and type. sizeof yields unsigned std::size_t; auto bytes = ... obtains it without an unnecessary cast."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int count{5};\n    auto bytes = sizeof(++count);\n    std::cout << (bytes == sizeof(int)) << ' ' << count << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "1 5\n"
+      },
+      "tables": [
+        {
+          "caption": "Size and state are separate observations",
+          "columns": [
+            "Check",
+            "Observation",
+            "Meaning"
+          ],
+          "rows": [
+            [
+              "bytes == sizeof(int)",
+              "1",
+              "sizes match; this is not a byte count"
+            ],
+            [
+              "count",
+              "5",
+              "the ++count operand was not evaluated"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "Only one branch is evaluated",
+      "paragraphs": [
+        "condition ? first : second checks the condition and evaluates first if true or second otherwise. With divisor=0 it selects 0 without evaluating 12/divisor. Zero is only a demonstration default, not a complete input-error report.",
+        "Both branches must be valid expressions even though only one is selected. Language rules determine the result type; we use two int branches. We avoid mixed signs and advanced value categories. Multi-statement branches are clearer as a separate if, treated fully next module."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    int divisor{0};\n    int quotient = divisor != 0 ? 12 / divisor : 0;\n    std::cout << \"quotient=\" << quotient << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "output": "quotient=0\n"
+      },
+      "tables": [
+        {
+          "caption": "Which branch is evaluated",
+          "columns": [
+            "divisor",
+            "divisor != 0",
+            "Selected expression",
+            "Result"
+          ],
+          "rows": [
+            [
+              "0",
+              "false",
+              "0",
+              "0"
+            ],
+            [
+              "3",
+              "true",
+              "12 / divisor",
+              "4"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "Issue no more than the stock allows",
+      "paragraphs": [
+        "requested <= available ? requested : available selects the smaller valid count. A separate assignment reduces available. Two steps expose the rule against issuing more than stock instead of mixing ++ and ?:.",
+        "First exclude negatives and values over 100. issued then lies from 0 to available and the remainder is nonnegative. Test requested=0, requested=available, and requested>available. These are distinct contract cases even if two produce the same stdout for a particular stock."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Check more than the final number",
+      "paragraphs": [
+        "For ++ record prior state, result, and final state. For sizeof record count before and after plus size equality. For ?: identify the chosen and skipped branches. A final number alone often hides a wrong explanation.",
+        "The table at the start is a record of the explained statements, not a live counter. Record your own prediction before running. The self-check changes both the starting value and the direction: use the rule rather than memorizing 3 5 5."
+      ]
+    },
+    {
+      "id": "diagnose-sizeof-unknown",
+      "title": "Intentional: an unknown name",
+      "paragraphs": [
+        "This is a separate faulty program for examining a diagnostic. It does not replace your work. Locate the cause first, then compare the build failure with a corrected version.",
+        "An unevaluated operand must still be valid."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n\nint main() {\n    std::cout << sizeof(stillUnknown) << '\\n';\n}\n",
+        "stdin": "",
+        "expectCompileFailure": true
+      },
+      "deep": {
+        "title": "Unevaluated does not mean unchecked",
+        "text": "sizeof(stillUnknown) does not become valid just because its operand is unevaluated. The name must be declared and the expression must be valid. Likewise, both ?: branches must be valid; selection can avoid an unwanted division at run time but cannot hide invalid source syntax.",
+        "sourceId": "cpp20-expr.post.incr"
+      }
+    },
+    {
+      "id": "independent-work",
+      "title": "Now solve a different problem",
+      "paragraphs": [
+        "There are 6 items in stock and 9 are requested. Use ?: to calculate issued, then reduce available in a separate statement. Print issued and remaining as shown in the expected report. The 0…100 validation is already provided before the calculation; explain why it must stay there.",
+        "Open Practice. Its starter and your current source are separate from the worked examples. Write a prediction before running, then explain the result in your own words."
       ]
     }
   ],
@@ -96,70 +201,157 @@
     {
       "id": "predict",
       "kind": "choice",
-      "prompt": "What output follows the specified change? Start with i=10 and keep the other statements.",
+      "prompt": "counter starts at 8. The program uses counter--, then --counter, then sizeof(++counter). What does the displayed program print?",
       "options": [
-        "10 12 12 12 1\n",
-        "Compilation fails"
+        "8 6 6 1\n",
+        "7 6 7 1\n",
+        "8 6 7 1\n"
       ],
       "correct": 0,
-      "feedback": "After i++, the counter is 11 and old remains 10. ++i yields 12; the larger value selected is 12."
+      "feedback": [
+        "Yes: postfix produces 8, prefix produces 6 after the second decrease, and sizeof does not change counter. The final 1 means that the sizes are equal.",
+        "The object becomes 7 after the first decrease, but counter-- produces the old 8. The sizeof operand is unevaluated.",
+        "The first two values are correct. ++counter inside sizeof for int is not evaluated, so counter remains 6."
+      ],
+      "recall": "concept-1",
+      "code": "#include <iostream>\n\nint main() {\n    int counter{8};\n    int previous = counter--;\n    int next = --counter;\n    auto bytes = sizeof(++counter);\n    std::cout << previous << ' ' << next << ' ' << counter << ' ' << (bytes == sizeof(int)) << '\\n';\n    return 0;\n}\n",
+      "execution": {
+        "source": "#include <iostream>\n\nint main() {\n    int counter{8};\n    int previous = counter--;\n    int next = --counter;\n    auto bytes = sizeof(++counter);\n    std::cout << previous << ' ' << next << ' ' << counter << ' ' << (bytes == sizeof(int)) << '\\n';\n    return 0;\n}\n",
+        "stdin": "",
+        "expected": "8 6 6 1\n",
+        "label": "predict",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int counter{8};\n    int previous = counter--;\n    int next = --counter;\n    auto bytes = sizeof(++counter);\n    std::cout << previous << ' ' << next << ' ' << counter << ' ' << (bytes == sizeof(int)) << '\\n';\n    return 0;\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        }
+      }
+    },
+    {
+      "id": "concept-0",
+      "kind": "choice",
+      "prompt": "After n=3; old=n++; what are old and n?",
+      "options": [
+        "4, 4",
+        "3, 4",
+        "3, 3"
+      ],
+      "correct": 1,
+      "feedback": "Postfix produces the old value and updates the object.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "concept-1",
+      "kind": "choice",
+      "prompt": "What is n after sizeof(++n) for int n=5?",
+      "options": [
+        "6",
+        "5",
+        "Unknown"
+      ],
+      "correct": 1,
+      "feedback": "The sizeof operand is unevaluated.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "concept-2",
+      "kind": "choice",
+      "prompt": "Does ?: evaluate both branches?",
+      "options": [
+        "Yes",
+        "Only the selected branch; both must be valid",
+        "Only on a PC"
+      ],
+      "correct": 1,
+      "feedback": "Evaluation selection does not remove validity rules.",
+      "recall": "concept-4"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Start with i=7. In separate statements obtain old with i--, then next with --i. Print old, next, i and select the smaller value using a conditional expression.",
-      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. After old=i--, old=7 and i=6; after next=--i, next=5, i=5 and smaller=5. Replacing the first i-- with --i makes old=6 instead of 7. Do not combine changes to i in an unsequenced expression."
+      "prompt": "For each case, identify the selected branch, the issued quantity and the remaining stock. Explain why calculating issued and updating available use separate statements.",
+      "feedback": "For each case, identify the selected branch, the issued quantity and the remaining stock. Explain why calculating issued and updating available use separate statements.",
+      "recall": "concept-4"
     }
   ],
   "practice": {
-    "title": "Independent variation",
-    "task": "Start with i=7. In separate statements obtain old with i--, then next with --i. Print old, next, i and select the smaller value using a conditional expression.",
+    "title": "Allocation from limited stock",
+    "task": "There are 6 items in stock and 9 are requested. Use ?: to calculate issued, then reduce available in a separate statement. Print issued and remaining as shown in the expected report. The 0…100 validation is already provided before the calculation; explain why it must stay there.",
     "kind": "cpp-console",
     "environment": "C++20",
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+        "content": "#include <iostream>\n\nint main() {\n    int available{6};\n    int requested{9};\n    if (available < 0 || available > 100 || requested < 0 || requested > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    // TODO: choose issued, update available, print the two report lines.\n    std::cout << \"available=\" << available << '\\n';\n    return 0;\n}\n"
       }
     ],
-    "metadata": {},
+    "metadata": {
+      "entryFile": "main.cpp"
+    },
     "stdin": "",
-    "returnAnchor": "worked-example",
+    "returnAnchor": "concept-4",
+    "recall": "concept-4",
     "cases": [
       {
-        "label": "Case 1",
+        "label": "Stock 6, request 9",
         "input": "",
-        "output": "7 5 5 5\n"
+        "output": "issued=6\nremaining=0\n"
+      },
+      {
+        "label": "Stock 6, request 0",
+        "input": "",
+        "output": "issued=0\nremaining=6\n"
+      },
+      {
+        "label": "Stock 6, request 6",
+        "input": "",
+        "output": "issued=6\nremaining=0\n"
+      },
+      {
+        "label": "Stock 6, request 2",
+        "input": "",
+        "output": "issued=2\nremaining=4\n"
+      },
+      {
+        "label": "Stock 6, request -1",
+        "input": "",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Stock 6, request 101",
+        "input": "",
+        "output": "invalid\n"
       }
     ],
     "criteria": [
-      "Compare the output with the readable reference case below.",
-      "Explain each change using the objects or operations in this topic.",
-      "After old=i--, old=7 and i=6; after next=--i, next=5, i=5 and smaller=5. Replacing the first i-- with --i makes old=6 instead of 7. Do not combine changes to i in an unsequenced expression."
+      "There are no hidden updates inside ?:; stock changes exactly once after selection.",
+      "Validation stays before the calculation. An invalid request prints invalid without issuing stock.",
+      "For each case, identify the selected branch, the issued quantity and the remaining stock. Explain why calculating issued and updating available use separate statements."
     ],
-    "hint": "After i++, the counter is 11 and old remains 10. ++i yields 12; the larger value selected is 12.",
+    "hint": "For each case, identify the selected branch, the issued quantity and the remaining stock. Explain why calculating issued and updating available use separate statements.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Start with i=7. In separate statements obtain old with i--, then next with --i. Print old, next, i and select the smaller value using a conditional expression.",
+        "where": "My independent work",
+        "action": "Predict issued and remaining for stock 6 and request 9.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "My program",
-        "action": "Predict the result before running.",
+        "where": "My independent work",
+        "action": "Check the provided validation, then use ?: to select the smaller quantity.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "My program",
-        "action": "Write your solution in a separate starter; keep your previous work.",
+        "where": "My independent work",
+        "action": "Reduce stock in a separate statement and print the two lines.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "My program",
-        "action": "Compare actual output with your prediction and explain any difference.",
+        "where": "My independent work",
+        "action": "Keep initial stock at 6 and test requests 0, 6, 2, −1 and 101. Start each run afresh.",
         "why": "",
         "expected": ""
       }
@@ -203,5 +395,48 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\basics\\increment-decrement-sizeof-conditional.en.json"
+  "sourcePath": "courses\\cpp\\gold\\basics\\increment-decrement-sizeof-conditional.en.json",
+  "reading": [
+    {
+      "id": "cpp20-expr.post.incr",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.post.incr]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.post.incr"
+    },
+    {
+      "id": "cpp20-expr.pre.incr",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.pre.incr]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.pre.incr"
+    },
+    {
+      "id": "cpp20-expr.sizeof",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.sizeof]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.sizeof"
+    },
+    {
+      "id": "cpp20-expr.cond",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.cond]",
+      "language": "English",
+      "purpose": "The precise rule discussed in this lesson. This is reference material; the explanation and examples above remain available offline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.cond"
+    }
+  ],
+  "authored": true
 }
