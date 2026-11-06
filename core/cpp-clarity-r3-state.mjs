@@ -1,6 +1,6 @@
 // Исполняемая часть контракта R3. Чистые функции: без Storage, DOM и записи данных.
 import {CLARITY_COURSES} from './clarity-course-registry.mjs';
-export const clarityContentRevision=id=>CLARITY_COURSES[id]?.pilot?'r3-stage-a-8bccaf5':'clarity-courses-v1';
+export const clarityContentRevision=id=>CLARITY_COURSES[id]?.contentRevision||(CLARITY_COURSES[id]?.pilot?'r3-stage-a-8bccaf5':'clarity-courses-v1');
 export const CLARITY_CONTENT_REVISION = 'r3-stage-a-8bccaf5';
 export const CLARITY_LIMITS = Object.freeze({answer:4096, output:16384, reportDraft:16384, snapshot:32768, draft:65536});
 export const CLARITY_QUESTIONS=Object.freeze(Object.fromEntries(Object.entries(CLARITY_COURSES).map(([id,t])=>[id,Object.freeze(t.questions)])));
