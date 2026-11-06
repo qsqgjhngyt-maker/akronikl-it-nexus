@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b3-author-v1",
   "id": "cpp.testing-diagnostics",
   "courseId": "cpp",
   "moduleId": "cpp.section.structured-programming",
@@ -8,7 +8,7 @@
   "module": "Structured Programming",
   "locale": "en",
   "title": "Testing: contracts, defects, and regression",
-  "goal": "Build a small test driver and distinguish a program defect from a build error or environment limitation.",
+  "goal": "Derive an expected result from the contract and select a test that catches one plausible defect.",
   "prerequisites": [
     {
       "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "An expectation before execution",
       "paragraphs": [
+        "If countPositive counts strictly positive values, −2, 0 and 4 give an expected 1 before execution. Record that expectation alongside the observation.",
         "A test has initial data, an action, and an independently derived expectation. Copying the current output as the expectation merely preserves a possible defect. For a small sum, derive and explain the result manually.",
         "First list input classes: empty range, one element, several elements, boundaries, and rejection. checkedArea needs valid-dimension tests and output-preservation tests on failure. These are different properties requiring distinct checks."
       ]
@@ -31,33 +32,30 @@
       "title": "Unit and integration",
       "paragraphs": [
         "A unit test calls a small function directly. An integration test runs main with textual input and checks parsing, computation, and output together. Passing the first does not imply the second because text conversion can be wrong.",
-        "A driver counts failures, prints a clear summary, and returns zero on success or nonzero on failure. Check stderr separately. A PASS message is insufficient if the exit code indicates failure."
+        "A driver counts failures, prints a clear summary, and returns zero on success or nonzero on failure. Check stderr separately. A PASS message is insufficient if the exit code indicates failure.",
+        "Call the function with an array and no cin. A separate integration test also checks how main reads input, calls the function and prints the result."
       ]
     },
     {
       "id": "example-1",
       "title": "An independent expectation",
       "paragraphs": [
-        "The expectation for {-2,0,4} is one, derived independently of the function."
+        "Independently count positives for −2, 0, 4 and compare with the assertion in main."
       ],
       "code": {
         "language": "cpp",
         "source": "#include <iostream>\n#include <array>\n#include <span>\nint countPositive(std::span<const int> values) {\n    int count{};\n    for (int value : values) { if (value > 0) { ++count; } }\n    return count;\n}\nint main() {\n    std::array<int, 3> values{-2, 0, 4};\n    bool pass = countPositive(values) == 1;\n    std::cout << (pass ? \"PASS\\n\" : \"FAIL\\n\");\n    return pass ? 0 : 1;\n}\n",
-        "output": "PASS\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Read the contract and independently derive the expected result for the given input.",
-        "Trace state after each significant operation and identify the established preconditions.",
-        "Run the source, compare stdout and exit code, then check the additional cases."
-      ]
+        "stdin": "",
+        "output": "PASS\n"
+      }
     },
     {
       "id": "concept-3",
       "title": "assert and external validation",
       "paragraphs": [
         "assert from <cassert> supports internal development-time expectations. It may disappear with NDEBUG, so input reading, range validation, and required side effects must not occur only inside assert.",
-        "The lab harness uses explicit if checks and a failure counter so results do not depend on NDEBUG. assert may additionally check an already computed internal property, but cannot replace a clear invalid response to external input."
+        "The lab harness uses explicit if checks and a failure counter so results do not depend on NDEBUG. assert may additionally check an already computed internal property, but cannot replace a clear invalid response to external input.",
+        "assert helps with internal invariants, but a build with NDEBUG can remove it. Keep ordinary control flow for rejecting user input."
       ]
     },
     {
@@ -65,25 +63,8 @@
       "title": "Diagnosis by phase",
       "paragraphs": [
         "A syntax error or unknown name is a compilation failure. A missing function definition commonly fails at linking. Wrong stdout from a built program is a logic defect. Unsupported exceptions or environment quotas are separate provider limitations.",
-        "An intentional compile-negative is a control expected to fail to build. Do not present it as a working lab solution. Compiler messages vary; check the phase and meaning rather than the entire message byte for byte."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "A test detects a safe mutation",
-      "paragraphs": [
-        "Two separate functions show why zero distinguishes > from >=."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nint correct(int value) { return value > 0 ? 1 : 0; }\nint mutant(int value) { return value >= 0 ? 1 : 0; }\nint main() {\n    std::cout << correct(0) << ' ' << mutant(0) << ' ' << (correct(0) != mutant(0)) << '\\n';\n}\n",
-        "output": "0 1 1\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Read the contract and independently derive the expected result for the given input.",
-        "Trace state after each significant operation and identify the established preconditions.",
-        "Run the source, compare stdout and exit code, then check the additional cases."
+        "An intentional compile-negative is a control expected to fail to build. Do not present it as a working lab solution. Compiler messages vary; check the phase and meaning rather than the entire message byte for byte.",
+        "First establish what ran: the compiler, linker or executable. A stdout mismatch after a run requires a different investigation from a missing executable."
       ]
     },
     {
@@ -91,19 +72,110 @@
       "title": "The defect-fixing cycle",
       "paragraphs": [
         "Reproduce a defect with minimal input first. Record the expectation and cause. Add a test that fails on the wrong implementation, fix the implementation, and rerun the complete set including previously passing cases.",
-        "A mutation experiment changes one safe operation, such as > to >= when counting positives. If every test stays green, the set cannot distinguish the implementations. Add a zero-valued case; do not infer that no defect exists."
+        "A mutation experiment changes one safe operation, such as > to >= when counting positives. If every test stays green, the set cannot distinguish the implementations. Add a zero-valued case; do not infer that no defect exists.",
+        "Change > 0 to >= 0 in a separate experiment. Both versions agree on 4 and −2; zero distinguishes them. Keep that test as a regression."
       ]
+    },
+    {
+      "id": "example-2",
+      "title": "A test detects a safe mutation",
+      "paragraphs": [
+        "On the same zero, compare the correct condition and the deliberate mutation. The third value shows whether the test distinguished them."
+      ],
+      "prediction": [
+        "#include <iostream>\nint correct(int value) { return value > 0 ? 1 : 0; }\nint mutant(int value) { return value >= 0 ? 1 : 0; }\nint main() {\n    std::cout << correct(0) << ' ' << mutant(0) << ' ' << (correct(0) != mutant(0)) << '\\n';\n}\n"
+      ],
+      "predictionInput": "",
+      "predictionBundle": {},
+      "reveal": {
+        "title": "Reveal output and trace execution",
+        "paragraphs": [
+          "A safe mutation demonstrates the test’s strength: the code compiles, but the observation on zero changes."
+        ],
+        "tables": [
+          {
+            "caption": "Trace for this run",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "What to check"
+            ],
+            "rows": [
+              [
+                "Contract version",
+                "value = 0",
+                "correct(0) = 0",
+                "Zero is not positive."
+              ],
+              [
+                "Mutation",
+                "value = 0",
+                "mutant(0) = 1",
+                "The >= condition incorrectly includes the boundary."
+              ],
+              [
+                "Compare",
+                "0 и 1",
+                "0 1 1",
+                "The third 1 means the results differ."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint correct(int value) { return value > 0 ? 1 : 0; }\nint mutant(int value) { return value >= 0 ? 1 : 0; }\nint main() {\n    std::cout << correct(0) << ' ' << mutant(0) << ' ' << (correct(0) != mutant(0)) << '\\n';\n}\n",
+          "stdin": "",
+          "output": "0 1 1\n"
+        }
+      }
     },
     {
       "id": "concept-6",
       "title": "Limits of the evidence",
       "paragraphs": [
         "Tests cover a finite case set and do not replace bounds or lifetime arguments. UBSan detects some violations, but silence does not prove complete safety. Combine tests with invariants.",
-        "Preserve versioned source, build instructions, inputs, expectations, actual results, and verification limits. Lesson rubrics remain manual; automatic Mastery is not claimed. Next, separate the application and driver into compilation units."
+        "Preserve versioned source, build instructions, inputs, expectations, actual results, and verification limits. Lesson rubrics remain manual; automatic Mastery is not claimed. Next, separate the application and driver into compilation units.",
+        "Five passing examples do not prove every input correct. They demonstrate specific checked properties. Record a provider limit as a separate fact."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Build a small test driver instead of reading from the console. Derive each expected count by hand from the definition of positive.",
+        "List five cases with their expected counts. Include empty input, all zeroes and mixed signs."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the comparison of the correct and mutated tests print for zero?",
+      "options": [
+        "0 1 1\n",
+        "0 0 0\n",
+        "1 1 0\n"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Yes. Zero distinguishes > from >=.",
+        "The mutation includes zero and gives 1.",
+        "The correct test does not count zero."
+      ],
+      "code": {
+        "source": "#include <iostream>\nint correct(int value) { return value > 0 ? 1 : 0; }\nint mutant(int value) { return value >= 0 ? 1 : 0; }\nint main() {\n    std::cout << correct(0) << ' ' << mutant(0) << ' ' << (correct(0) != mutant(0)) << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "execution": {
+        "source": "#include <iostream>\nint correct(int value) { return value > 0 ? 1 : 0; }\nint mutant(int value) { return value >= 0 ? 1 : 0; }\nint main() {\n    std::cout << correct(0) << ' ' << mutant(0) << ' ' << (correct(0) != mutant(0)) << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "0 1 1\n"
+      },
+      "recall": "example-2"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -114,7 +186,8 @@
         "Yes, in every build"
       ],
       "correct": 0,
-      "feedback": "Validate external data with ordinary program logic."
+      "feedback": "Validate external data with ordinary program logic.",
+      "recall": "concept-3"
     },
     {
       "id": "check-1",
@@ -126,7 +199,8 @@
         "From an independently explained contract"
       ],
       "correct": 2,
-      "feedback": "Otherwise a test may preserve the defect."
+      "feedback": "Otherwise a test may preserve the defect.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -138,7 +212,8 @@
         "Only font size"
       ],
       "correct": 1,
-      "feedback": "Parsing and computation can pass separately but fail together."
+      "feedback": "Parsing and computation can pass separately but fail together.",
+      "recall": "concept-2"
     },
     {
       "id": "check-3",
@@ -150,7 +225,8 @@
         "Yes"
       ],
       "correct": 0,
-      "feedback": "Invariants, bounds, and lifetime reasoning are also required."
+      "feedback": "Invariants, bounds, and lifetime reasoning are also required.",
+      "recall": "concept-6"
     },
     {
       "id": "check-4",
@@ -162,17 +238,19 @@
         "Source, actual results, original tests, and a contract explanation"
       ],
       "correct": 2,
-      "feedback": "A progress flag is not evidence of independent mastery."
+      "feedback": "A progress flag is not evidence of independent mastery.",
+      "recall": "concept-6"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "A useful test distinguishes the correct implementation from a plausible wrong one.",
-      "feedback": "Next: Multifile builds: headers, translation units, and ODR. Preserve the lab and its verification table."
+      "prompt": "Choose one of your five cases that catches changing > to >=. State the expected value, observation and exit code.",
+      "feedback": "Have the expectation ready before calling the function. One zero is the smallest test that catches this mutation.",
+      "recall": "concept-5"
     }
   ],
   "practice": {
-    "title": "Laboratory: Testing: contracts, defects, and regression",
+    "title": "Five tests for a counter",
     "task": "Write countPositive(span<const int>) and a driver with five independent datasets including empty, zero, and mixed-sign cases. Print PASS 5 on success; on mismatch print FAIL and return a nonzero exit code.",
     "kind": "cpp-console",
     "environment": "C++20",
@@ -193,51 +271,34 @@
       }
     ],
     "criteria": [
-      "The contract matches the task and defines units, empty input, and extra data.",
-      "Every published case matches and two explained original tests are included.",
+      "Show that the >= 0 version gives FAIL. Restoring > 0 should leave the line PASS 5.",
       "A useful test distinguishes the correct implementation from a plausible wrong one.",
       "Do not derive expected values by running the function under test. Do not classify provider limits as learner knowledge errors.",
-      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+      "Add two cases of your own, including a rejection if the interface allows one. Explain one boundary result.",
+      "Keep the source, exact input and observed output."
     ],
-    "hint": "A useful test distinguishes the correct implementation from a plausible wrong one.",
+    "hint": "Have the expectation ready before calling the function. One zero is the smallest test that catches this mutation.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Restate the input, output, and rejection contract in your own words.",
+        "where": "Before running",
+        "action": "List five cases with their expected counts. Include empty input, all zeroes and mixed signs.",
         "why": "",
         "expected": ""
       },
       {
         "where": "My program",
-        "action": "Draw the state and state the invariant: A useful test distinguishes the correct implementation from a plausible wrong one.",
+        "action": "Run the same function on every case. On a mismatch, print FAIL and return a nonzero exit code.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "My program",
-        "action": "Start from the scaffold, implement the valid path, then add boundary checks.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "For every reference case, independently write the expectation before running; keep stdout and exit code.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add two original cases including one rejection; explain the result without consulting the reference.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Preserve source, a result table, and a short cost-and-limit analysis.",
+        "where": "Check",
+        "action": "Show that the >= 0 version gives FAIL. Restoring > 0 should leave the line PASS 5.",
         "why": "",
         "expected": ""
       }
-    ]
+    ],
+    "recall": "concept-5"
   },
   "terms": [
     {
@@ -305,5 +366,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\structured\\testing-diagnostics.en.json"
+  "sourcePath": "courses\\cpp\\gold\\structured\\testing-diagnostics.en.json",
+  "reading": [
+    {
+      "id": "cpp20-assert",
+      "title": "C++20 [cassert.syn]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[cassert.syn]",
+      "language": "English",
+      "purpose": "Check the effect of NDEBUG on assert.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/cassert.syn"
+    },
+    {
+      "id": "cpp20-functions",
+      "title": "C++20 [dcl.fct.def]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[dcl.fct.def]",
+      "language": "English",
+      "purpose": "Find the rules for defining a function invoked by a separate driver.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.fct.def"
+    }
+  ],
+  "authored": true
 }

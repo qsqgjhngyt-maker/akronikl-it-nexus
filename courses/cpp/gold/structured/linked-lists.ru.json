@@ -504,5 +504,395 @@
       "catalog-out.txt, подтверждение явного сохранения и новый импорт."
     ],
     "completionRule": "Ручная проверка 8/10, все случаи и два собственных; объясните связь с предшествующими темами."
+  },
+  "teachingEdition": {
+    "revision": "b3-author-v1",
+    "title": "Связанные списки: инварианты узлов и владение",
+    "goal": "Покажите, кто владеет каждым узлом до и после изменения головы.",
+    "prerequisites": [
+      {
+        "text": "Module 1–2: выражения, сравнения, типы, ссылки и проверка cin."
+      },
+      {
+        "text": "Предыдущие темы по ссылкам: Время жизни, RAII и единственное владение, Структуры: запись, инвариант и обновление, Тестирование: контракт, дефект и регрессия. Новые конструкции вводятся в теории до задания."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Узел и голова",
+        "paragraphs": [
+          "Представьте цепочку карточек с одним владельцем у каждой следующей карточки. head владеет первой, next каждого узла — продолжением. Пустой head означает пустой список.",
+          "Node хранит value и unique_ptr<Node> next. head владеет первым узлом, каждый next — следующим. Пустой head означает пустой список. В корректной модели нет циклов владения и нет второго владельца того же узла.",
+          "Конструктор explicit Node(int v):value(v){} и -> уже разобраны в теме владения. Сырой Node* используется только как наблюдатель при обходе. Он не удаляет узел и не должен пережить изменение, уничтожающее этот узел."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Вставка в начало",
+        "paragraphs": [
+          "Создайте новый unique_ptr, перенесите head в newNode->next, затем перенесите newNode в head. На каждом шаге у каждого узла остаётся один владелец. Простое копирование unique_ptr запрещено и не заменяется копией сырого адреса.",
+          "Добавляя 1,2,3 в начало, получим 3,2,1. Это изменение порядка следует из выбранной операции, а не ошибка печати. Если нужен исходный порядок, добавляйте в хвост с другим инвариантом или используйте подходящий стандартный контейнер.",
+          "Чтобы добавить 3 перед 2 → 1, сначала передайте старую голову в next нового узла. После этого head получает нового владельца и вся цепочка остаётся достижимой."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Три вставки в начало",
+        "paragraphs": [
+          "Проследите три вставки. Строка с числами идёт в обратном порядке, а 0 после очистки показывает, что head пуст."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Node {\n    int value{};\n    std::unique_ptr<Node> next;\n    explicit Node(int n) : value(n) {}\n};\nvoid pushFront(std::unique_ptr<Node>& head, int value) {\n    auto node = std::make_unique<Node>(value);\n    node->next = std::move(head);\n    head = std::move(node);\n}\nvoid clear(std::unique_ptr<Node>& head) {\n    while (head) { auto next = std::move(head->next); head = std::move(next); }\n}\nint main() {\n    std::unique_ptr<Node> head;\n    for (int value : {1, 2, 3}) { pushFront(head, value); }\n    for (Node* node = head.get(); node; node = node->next.get()) { std::cout << node->value << ' '; }\n    std::cout << '\\n';\n    clear(head);\n    std::cout << bool(head) << '\\n';\n}\n",
+          "stdin": "",
+          "output": "3 2 1 \n0\n"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Удаление без потерянного владельца",
+        "paragraphs": [
+          "Для удаления головы сначала перенесите head->next во временный next, затем замените head на next. Старый узел уничтожится, а хвост останется у нового владельца. Сначала проверьте head: доступ -> у nullptr недопустим.",
+          "Не используйте наблюдатель на удалённый узел после операции. Рисунок до/после полезнее эксперимента с висячим указателем. Удаление узла в середине требует владельца ссылки на него; знание только его value недостаточно при повторах.",
+          "В примере удаления сначала move(head->next) сохраняет хвост отдельно. Лишь затем присваивание head разрушает старый первый узел."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Удаление головы",
+        "paragraphs": [
+          "Разберите удаление узла 1 из цепочки 1 → 2. Найдите момент, когда узел 2 получает нового владельца."
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Node {\n    int value{};\n    std::unique_ptr<Node> next;\n    explicit Node(int n) : value(n) {}\n};\nvoid pushFront(std::unique_ptr<Node>& head, int value) {\n    auto node = std::make_unique<Node>(value);\n    node->next = std::move(head);\n    head = std::move(node);\n}\nvoid clear(std::unique_ptr<Node>& head) {\n    while (head) { auto next = std::move(head->next); head = std::move(next); }\n}\nint main() {\n    std::unique_ptr<Node> head;\n    pushFront(head, 2);\n    pushFront(head, 1);\n    auto next = std::move(head->next);\n    head = std::move(next);\n    std::cout << head->value << '\\n';\n    clear(head);\n}\n"
+        ],
+        "predictionInput": "",
+        "predictionBundle": {},
+        "reveal": {
+          "title": "Открыть вывод и проследить выполнение",
+          "paragraphs": [
+            "Печатается 2. Это наблюдение показывает, что удаление головы сохранило хвост."
+          ],
+          "tables": [
+            {
+              "caption": "Трасса этого запуска",
+              "columns": [
+                "Действие",
+                "Состояние до",
+                "Состояние после",
+                "Что проверить"
+              ],
+              "rows": [
+                [
+                  "До удаления",
+                  "head → 1 → 2",
+                  "tail empty",
+                  "Узел 1 владеет узлом 2 через next."
+                ],
+                [
+                  "Сохранить продолжение",
+                  "head → 1 → 2",
+                  "next → 2, head → 1",
+                  "После move узел 1 больше не владеет хвостом."
+                ],
+                [
+                  "Заменить голову",
+                  "head → 1, next → 2",
+                  "head → 2",
+                  "Старый узел 1 уничтожен, узел 2 остаётся."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Node {\n    int value{};\n    std::unique_ptr<Node> next;\n    explicit Node(int n) : value(n) {}\n};\nvoid pushFront(std::unique_ptr<Node>& head, int value) {\n    auto node = std::make_unique<Node>(value);\n    node->next = std::move(head);\n    head = std::move(node);\n}\nvoid clear(std::unique_ptr<Node>& head) {\n    while (head) { auto next = std::move(head->next); head = std::move(next); }\n}\nint main() {\n    std::unique_ptr<Node> head;\n    pushFront(head, 2);\n    pushFront(head, 1);\n    auto next = std::move(head->next);\n    head = std::move(next);\n    std::cout << head->value << '\\n';\n    clear(head);\n}\n",
+            "stdin": "",
+            "output": "2\n"
+          }
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "Итеративное освобождение",
+        "paragraphs": [
+          "Цепочка unique_ptr может разрушаться рекурсивно через деструкторы next. Для огромного списка глубина может быть проблемой. Здесь количество ограничено 100, но дополнительно показываем итеративную очистку через извлечение next перед уничтожением головы.",
+          "Цикл while(head) отделяет хвост во временного владельца и затем заменяет голову. Каждый шаг уничтожает ровно один узел. После цикла head пуст, наблюдатели больше не используются. Это не требует shared_ptr или ручного delete.",
+          "Очистку выполняйте по одному узлу: отцепите хвост, уничтожьте голову, продолжайте с хвостом. Так не появляется глубокая цепочка вложенных деструкторов."
+        ]
+      },
+      {
+        "id": "concept-5",
+        "title": "Стоимость зависит от операции",
+        "paragraphs": [
+          "Вставка в начало и удаление головы имеют O(1) связных изменений. Поиск по значению — O(n). Утверждение «удаление O(1)» требует, чтобы нужная владеющая ссылка уже была известна; поиск этой позиции может стоить O(n).",
+          "vector хранит элементы компактно, список выделяет узлы отдельно и имеет расходы на связи. Для обычного каталога vector часто проще. Учебный список нужен для понимания владения; его не следует автоматически выбирать для итогового проекта.",
+          "Вставка у известной головы меняет фиксированное число связей. Поиск по неизвестному значению требует идти по узлам и может пройти их все."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Проверки структуры",
+        "paragraphs": [
+          "Проверьте пустой список, один узел, три узла с повторами, удаление головы и полную очистку. Счётчик живых узлов в дополнительном каркасе должен вернуться к нулю. Сумма значений проверяет данные, но сама не доказывает правильность всех связей.",
+          "Сохраните порядок обхода, число узлов и граф владельцев до/после. Далее адаптеры stack и queue позволят выбрать LIFO или FIFO без ручного связывания узлов и объединить команды с отменой в проекте.",
+          "Проверьте пустую цепочку, один узел и два одинаковых значения. Сравните вывод до очистки и состояние head после неё."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Теперь ваша задача",
+        "paragraphs": [
+          "Теперь число карточек приходит из ввода. Вставляйте в голову, сохраняйте повторы и проверьте пустоту после очистки.",
+          "Нарисуйте переходы для 2, 2, −1. Не перепутайте повтор значения с повтором одного и того же узла."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Какое значение останется в голове после показанного удаления?",
+        "options": [
+          "2\n",
+          "1\n",
+          "0\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Да. Новый владелец head получил узел 2.",
+          "Узел 1 уничтожается при замене головы.",
+          "В опыте хвост содержит узел 2."
+        ],
+        "code": {
+          "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Node {\n    int value{};\n    std::unique_ptr<Node> next;\n    explicit Node(int n) : value(n) {}\n};\nvoid pushFront(std::unique_ptr<Node>& head, int value) {\n    auto node = std::make_unique<Node>(value);\n    node->next = std::move(head);\n    head = std::move(node);\n}\nvoid clear(std::unique_ptr<Node>& head) {\n    while (head) { auto next = std::move(head->next); head = std::move(next); }\n}\nint main() {\n    std::unique_ptr<Node> head;\n    pushFront(head, 2);\n    pushFront(head, 1);\n    auto next = std::move(head->next);\n    head = std::move(next);\n    std::cout << head->value << '\\n';\n    clear(head);\n}\n",
+          "stdin": ""
+        },
+        "execution": {
+          "source": "#include <iostream>\n#include <memory>\n#include <utility>\nstruct Node {\n    int value{};\n    std::unique_ptr<Node> next;\n    explicit Node(int n) : value(n) {}\n};\nvoid pushFront(std::unique_ptr<Node>& head, int value) {\n    auto node = std::make_unique<Node>(value);\n    node->next = std::move(head);\n    head = std::move(node);\n}\nvoid clear(std::unique_ptr<Node>& head) {\n    while (head) { auto next = std::move(head->next); head = std::move(next); }\n}\nint main() {\n    std::unique_ptr<Node> head;\n    pushFront(head, 2);\n    pushFront(head, 1);\n    auto next = std::move(head->next);\n    head = std::move(next);\n    std::cout << head->value << '\\n';\n    clear(head);\n}\n",
+          "stdin": "",
+          "expected": "2\n"
+        },
+        "recall": "example-2"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "Какова стоимость поиска неизвестного значения в списке?",
+        "options": [
+          "O(n)",
+          "O(0)",
+          "Всегда O(1)"
+        ],
+        "correct": 0,
+        "feedback": "До нужного узла обычно нужно пройти цепочку.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Какой порядок дают pushFront(1), pushFront(2), pushFront(3)?",
+        "options": [
+          "2 1 3",
+          "1 2 3",
+          "3 2 1"
+        ],
+        "correct": 2,
+        "feedback": "Каждый новый узел становится головой.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "Кто освобождает узел в модели unique_ptr?",
+        "options": [
+          "Каждый наблюдатель",
+          "Его единственный владелец",
+          "Только сборщик мусора"
+        ],
+        "correct": 1,
+        "feedback": "Сырой Node* используется для наблюдения.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Почему показана итеративная очистка?",
+        "options": [
+          "Чтобы не полагаться на глубокую цепочку деструкторов",
+          "Чтобы создать второго владельца",
+          "Чтобы потерять хвост"
+        ],
+        "correct": 0,
+        "feedback": "Сначала отделяем next, затем разрушаем один узел.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "Что нужно для приёмки этой лабораторной?",
+        "options": [
+          "Только отметка completed",
+          "Только скопированный эталон",
+          "Исходник, реальные результаты, свои тесты и объяснение контракта"
+        ],
+        "correct": 2,
+        "feedback": "Отметка прогресса не равна доказательству самостоятельного освоения.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Для 3 2 2 −1 назовите порядок печати и объясните, почему после первой итерации очистки остаются оба узла со значением 2.",
+        "feedback": "Для печати берите невладеющий указатель на живой узел. Для очистки переносите next до уничтожения головы.",
+        "recall": "concept-5"
+      }
+    ],
+    "practice": {
+      "title": "Построить и очистить цепочку",
+      "task": "Прочитайте n в 0…100 и n значений в -1000…1000. Добавьте в начало списка, выведите обратный порядок одной строкой, затем итеративно очистите и выведите empty=1.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "0",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Пустая цепочка и пустая первая строка",
+          "input": "0",
+          "output": "\nempty=1\n"
+        },
+        {
+          "label": "Один узел",
+          "input": "1 7",
+          "output": "7\nempty=1\n"
+        },
+        {
+          "label": "Три разных значения",
+          "input": "3 1 2 3",
+          "output": "3 2 1\nempty=1\n"
+        },
+        {
+          "label": "Повтор сохраняется",
+          "input": "3 2 2 -1",
+          "output": "-1 2 2\nempty=1\n"
+        },
+        {
+          "label": "Случай 5",
+          "input": "2 1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Случай 6",
+          "input": "1 1001",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Проверьте обратный порядок и строку empty=1, включая пустую первую строку для n = 0. Введите неполный набор и ожидайте invalid.",
+        "Сначала переместите владеющую связь, затем уничтожайте узел.",
+        "Не теряйте хвост при удалении головы. Не обобщайте O(1) изменения связи на поиск позиции.",
+        "Добавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.",
+        "Сохраните исходник, точный ввод и фактический вывод."
+      ],
+      "hint": "Для печати берите невладеющий указатель на живой узел. Для очистки переносите next до уничтожения головы.",
+      "steps": [
+        {
+          "where": "До запуска",
+          "action": "Нарисуйте переходы для 2, 2, −1. Не перепутайте повтор значения с повтором одного и того же узла.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Моя программа",
+          "action": "Перед каждой заменой head перемещайте владеющую связь явно. Удаляйте цепочку итеративно после печати.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Проверка",
+          "action": "Проверьте обратный порядок и строку empty=1, включая пустую первую строку для n = 0. Введите неполный набор и ожидайте invalid.",
+          "why": "",
+          "expected": ""
+        }
+      ],
+      "recall": "concept-5"
+    },
+    "reading": [
+      {
+        "id": "cpp20-unique",
+        "title": "C++20 [unique.ptr]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[unique.ptr]",
+        "language": "English",
+        "purpose": "Сверьте, как unique_ptr передаёт владение и освобождает объект.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/unique.ptr"
+      },
+      {
+        "id": "cpp20-lifetime",
+        "title": "C++20 [basic.life]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[basic.life]",
+        "language": "English",
+        "purpose": "Уточните, когда доступ к узлу через наблюдающий указатель допустим.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.life"
+      }
+    ],
+    "coverage": {
+      "1": [
+        "concept-1"
+      ],
+      "2": [
+        "concept-2",
+        "example-1"
+      ],
+      "3": [
+        "concept-3",
+        "concept-4",
+        "example-2"
+      ],
+      "4": [
+        "independent-work"
+      ],
+      "5": [
+        "concept-5",
+        "concept-6"
+      ]
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Узел и голова",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "Вставка в начало",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Удаление без потерянного владельца",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Итеративное освобождение",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Стоимость зависит от операции",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Проверки структуры",
+        "anchor": "concept-6"
+      }
+    ]
   }
 }

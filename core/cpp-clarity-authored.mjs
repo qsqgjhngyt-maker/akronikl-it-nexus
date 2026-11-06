@@ -45,18 +45,23 @@ function decisionFlowchart(chart,say){
  </figure>`;
 }
 
-export function authoredMarkup(lesson,{code,table,url}){
+export function authoredMarkup(lesson,{code,table,url,programBundle}){
  const en=lesson.locale==='en',say=(ru,enText)=>en?enText:ru;
  const paragraphs=xs=>(xs||[]).map(x=>`<p>${esc(x)}</p>`).join('');
- const revealBody=s=>(s.tables||[]).map(table).join('')+paragraphs(s.paragraphs)+(s.code?code(s.code.source,s.code.output,s.code.stdin):'');
+ const program=spec=>{
+  if(!spec)return '';
+  const {source,output,stdin,files,metadata,outputFiles}=spec;
+  return files||metadata||outputFiles?code(source,output,stdin,undefined,spec):code(source,output,stdin);
+ };
+ const revealBody=s=>(s.tables||[]).map(table).join('')+paragraphs(s.paragraphs)+program(s.code);
  const diagram=s=>s.flowchart?decisionFlowchart(s.flowchart,say):s.diagram?`<figure class="lesson-diagram"><figcaption>${esc(s.diagram.caption)}</figcaption><pre>${esc(s.diagram.text)}</pre></figure>`:'';
- const optionalReading=deep=>deep?`<details class="optional-reading"><summary>${say('Разобраться глубже: ','Explore further: ')}${esc(deep.title)}</summary><p>${esc(deep.text)}</p>${deep.code?code(deep.code.source,deep.code.output,deep.code.stdin):''}<a href="#reading-${esc(deep.sourceId||'goldberg')}">${say('Источник и дальнейшее чтение','Source and further reading')}</a></details>`:'';
- const predictionInput=s=>s.predictionInput?`<p>${say('Ввод для прогноза','Prediction input')}</p><pre>${esc(s.predictionInput)}</pre>`:'';
- const sectionBody=s=>paragraphs(s.paragraphs)+diagram(s)+predictionInput(s)+(s.prediction?`<pre class="prediction-code"><code>${esc(s.prediction.join('\n'))}</code></pre>`:'')+(s.reveal?`<details class="prediction-reveal"><summary>${esc(s.reveal.title)}</summary>${revealBody(s.reveal)}</details>`:'')+(s.code?code(s.code.source,s.code.output,s.code.stdin):'')+(s.tables||[]).map(table).join('')+optionalReading(s.deep);
+ const optionalReading=deep=>deep?`<details class="optional-reading"><summary>${say('Разобраться глубже: ','Explore further: ')}${esc(deep.title)}</summary><p>${esc(deep.text)}</p>${program(deep.code)}<a href="#reading-${esc(deep.sourceId||'goldberg')}">${say('Источник и дальнейшее чтение','Source and further reading')}</a></details>`:'';
+ const predictionInput=s=>(s.predictionInput?`<p>${say('Ввод для прогноза','Prediction input')}</p><pre>${s.predictionInput.startsWith('\n')?'\n':''}${esc(s.predictionInput)}</pre>`:'')+(s.predictionBundle?programBundle(s.predictionBundle):'');
+ const sectionBody=s=>paragraphs(s.paragraphs)+diagram(s)+predictionInput(s)+(s.prediction?`<pre class="prediction-code"><code>${esc(s.prediction.join('\n'))}</code></pre>`:'')+(s.reveal?`<details class="prediction-reveal"><summary>${esc(s.reveal.title)}</summary>${revealBody(s.reveal)}</details>`:'')+program(s.code)+(s.tables||[]).map(table).join('')+optionalReading(s.deep);
  const reading=()=>`<section class="lesson-reading" id="lesson-reading"><h2>${say('Что почитать','Further reading')}</h2><p>${say('Всё необходимое для задания уже есть в уроке. Эти материалы можно открыть по желанию. Внешние ссылки требуют сети.','The lesson contains everything required for the task. These optional external sources require a connection.')}</p>${lesson.reading.map(s=>`<article id="reading-${esc(s.id)}"><h3>${esc(s.title)}</h3><p>${esc(s.author)} · ${esc(s.edition)} · ${esc(s.section)} · ${esc(s.language)}</p><p>${esc(s.purpose)}</p><a href="${esc(s.url)}" target="_blank" rel="noopener">${say('Открыть источник','Open source')} ↗</a></article>`).join('')}</section>`;
  return {
   explanation:()=>`<div class="authored-intro"><p class="eyebrow">${say('От наблюдения к своей программе','From an observation to your own program')}</p><h1>${esc(lesson.title)}</h1><p class="goal">${esc(lesson.goal)}</p>${paragraphs(lesson.prerequisites.map(p=>p.text))}<details class="lesson-map-wrap"><summary>${say('Содержание урока','Lesson contents')}</summary><nav class="lesson-map" aria-label="${say('Содержание урока','Lesson contents')}">${lesson.sections.map((s,i)=>`<a href="${url(lesson.id,'explanation',lesson.locale,s.id)}">${i+1}. ${esc(s.title)}</a>`).join('')}</nav></details></div>${lesson.sections.map((s,i)=>`<section class="lesson-section authored-section" id="${esc(s.id)}"><div class="section-index">${say('Шаг','Step')} ${i+1} / ${lesson.sections.length}</div><h2>${esc(s.title)}</h2>${sectionBody(s)}</section>`).join('')}<a class="btn primary" href="${url(lesson.id,'selfcheck')}">${say('Проверить, что я понял','Check my understanding')} →</a>${reading()}`,
-  recall:id=>{const s=lesson.sections.find(s=>s.id===id);return s?{title:s.title,body:paragraphs(s.paragraphs)+diagram(s)+(s.reveal?revealBody(s.reveal):s.code?code(s.code.source,s.code.output,s.code.stdin):'')+(s.tables||[]).map(table).join('')}:null;},
+  recall:id=>{const s=lesson.sections.find(s=>s.id===id);return s?{title:s.title,body:paragraphs(s.paragraphs)+diagram(s)+(s.reveal?revealBody(s.reveal):program(s.code))+(s.tables||[]).map(table).join('')}:null;},
   reading,
  };
 }

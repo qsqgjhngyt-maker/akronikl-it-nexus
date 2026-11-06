@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b3-author-v1",
   "id": "cpp.for-loop",
   "courseId": "cpp",
   "moduleId": "cpp.section.structured-programming",
@@ -8,7 +8,7 @@
   "module": "Structured Programming",
   "locale": "en",
   "title": "The for loop: invariants, boundaries, and cost",
-  "goal": "Repeat a known number of steps and explain the state before and after every iteration.",
+  "goal": "Explain how often a for body runs and what has accumulated by the next test.",
   "prerequisites": [
     {
       "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "The three header parts",
       "paragraphs": [
+        "A report of “five repeats” does not say which values were added. For n = 5, write i from 0 through 4 and the sum after each step. The test at i = 5 stops execution without adding anything.",
         "for(init; condition; update) runs init once and tests condition before every iteration. update follows the body. If the first condition is false, the body never runs, making n=0 a natural case.",
         "In for(int i=0; i<n; ++i), i exists in the condition, body, and update but not after the loop. It denotes the next index to process. The iteration count is n for a bounded nonnegative n."
       ]
@@ -31,33 +32,72 @@
       "title": "A half-open interval rather than a guess",
       "paragraphs": [
         "The index range [0,n) includes 0 and excludes n, giving exactly n positions. Values 1 through n can use i=1; i<=n, but mixing the first version’s start with the second version’s condition changes the count.",
-        "For n=3, the body sees i=0,1,2; the i=3 check terminates the loop. That final value is tested but not processed. Confusing a check with an execution often causes an off-by-one error."
+        "For n=3, the body sees i=0,1,2; the i=3 check terminates the loop. That final value is tested but not processed. Confusing a check with an execution often causes an off-by-one error.",
+        "The range [0,n) has length n. For n = 0, the first test 0 < 0 is false; sum stays at its initial zero."
       ]
     },
     {
       "id": "example-1",
       "title": "Summing a half-open range",
       "paragraphs": [
-        "Before a step, sum contains the sum of [0,i)."
+        "For n = 5, compute the sum before running. Mark the final condition test separately."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    int sum{};\n    for (int i = 0; i < n; ++i) { sum += i; }\n    std::cout << sum << '\\n';\n}\n",
-        "output": "10\n",
-        "stdin": "5"
-      },
-      "steps": [
-        "Read the contract and independently derive the expected result for the given input.",
-        "Trace state after each significant operation and identify the established preconditions.",
-        "Run the source, compare stdout and exit code, then check the additional cases."
-      ]
+      "prediction": [
+        "#include <iostream>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    int sum{};\n    for (int i = 0; i < n; ++i) { sum += i; }\n    std::cout << sum << '\\n';\n}\n"
+      ],
+      "predictionInput": "5",
+      "predictionBundle": {},
+      "reveal": {
+        "title": "Reveal output and trace execution",
+        "paragraphs": [
+          "The sum is 0 + 1 + 2 + 3 + 4. Adding 5 would mean the condition includes the right endpoint."
+        ],
+        "tables": [
+          {
+            "caption": "Trace for this run",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "What to check"
+            ],
+            "rows": [
+              [
+                "Initialization",
+                "n = 5",
+                "i = 0, sum = 0",
+                "No body execution yet."
+              ],
+              [
+                "Midway",
+                "i = 3, sum = 3",
+                "i = 4, sum = 6",
+                "The value added was 3."
+              ],
+              [
+                "Final iteration",
+                "i = 4, sum = 6",
+                "i = 5, sum = 10",
+                "The test 5 < 5 is false."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    int sum{};\n    for (int i = 0; i < n; ++i) { sum += i; }\n    std::cout << sum << '\\n';\n}\n",
+          "stdin": "5",
+          "output": "10\n"
+        }
+      }
     },
     {
       "id": "concept-3",
       "title": "An invariant as a short proof",
       "paragraphs": [
         "For the sum of n integers starting at zero, the invariant is: before each iteration, sum contains the sum of [0,i). At i=0 the range is empty, so sum=0. After sum+=i and ++i, the claim holds for the larger boundary.",
-        "When i==n, the invariant yields the required result. Prove termination separately: n-i is nonnegative before the body and decreases by one. A correct invariant cannot guarantee termination if the counter never advances."
+        "When i==n, the invariant yields the required result. Prove termination separately: n-i is nonnegative before the body and decreases by one. A correct invariant cannot guarantee termination if the counter never advances.",
+        "Before i = 3, 0, 1 and 2 have been added. After sum += i the sum is 6, and the next i = 4 again matches the processed prefix length."
       ]
     },
     {
@@ -65,25 +105,8 @@
       "title": "Accumulators and ranges",
       "paragraphs": [
         "Initialize an accumulator before the loop and update it inside. Resetting it on every iteration retains only the final contribution. With n<=1000 and values between -1000 and 1000, the absolute sum is at most 1000000.",
-        "Use long long for broader bounds and justify intermediate values before addition. A larger type does not make unbounded input safe. Handle an extraction failure inside the loop instead of repeatedly adding an old value."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Skipping odd values",
-      "paragraphs": [
-        "continue does not skip the for update."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nint main() {\n    int sum{};\n    for (int i = 1; i <= 6; ++i) {\n        if (i % 2 != 0) { continue; }\n        sum += i;\n    }\n    std::cout << sum << '\\n';\n}\n",
-        "output": "12\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Read the contract and independently derive the expected result for the given input.",
-        "Trace state after each significant operation and identify the established preconditions.",
-        "Run the source, compare stdout and exit code, then check the additional cases."
+        "Use long long for broader bounds and justify intermediate values before addition. A larger type does not make unbounded input safe. Handle an extraction failure inside the loop instead of repeatedly adding an old value.",
+        "In the task below keep two states: the sum of all values read and the number strictly above zero. −2 only changes the sum; zero increases neither accumulator."
       ]
     },
     {
@@ -91,19 +114,68 @@
       "title": "break and continue",
       "paragraphs": [
         "break exits the nearest loop. continue skips the rest of the body but still performs a for loop’s update. In filtering it can separate an unsuitable element, but it must not bypass the operation that obtains the next item.",
-        "Nested loops have separate counters; break exits only the inner loop. A complete r by c traversal performs r*c iterations. Establish dimension bounds before multiplying and estimating cost."
+        "Nested loops have separate counters; break exits only the inner loop. A complete r by c traversal performs r*c iterations. Establish dimension bounds before multiplying and estimating cost.",
+        "In the example, i = 3 skips the addition, but ++i still takes the loop to 4. Using break instead would stop the whole scan before 4 and 6."
       ]
+    },
+    {
+      "id": "example-2",
+      "title": "Skipping odd values",
+      "paragraphs": [
+        "Trace i = 3 and i = 4. Which of them contributes to the sum?"
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main() {\n    int sum{};\n    for (int i = 1; i <= 6; ++i) {\n        if (i % 2 != 0) { continue; }\n        sum += i;\n    }\n    std::cout << sum << '\\n';\n}\n",
+        "stdin": "",
+        "output": "12\n"
+      }
     },
     {
       "id": "concept-6",
       "title": "Measuring work",
       "paragraphs": [
         "A linear traversal performs work proportional to n: O(n), with O(1) extra memory for a fixed number of accumulators. This describes growth, not milliseconds or an exact instruction count.",
-        "Test n=0, n=1, the maximum n, and a failure midway through input. For a small n, record i, the condition, and sum before and after the body. Next, while will handle a stream whose length is not given in advance."
+        "Test n=0, n=1, the maximum n, and a failure midway through input. For a small n, record i, the condition, and sum before and after the body. Next, while will handle a stream whose length is not given in advance.",
+        "For n = 100 the body should read at most a hundred values. Test n = 0 and n = 1 first, then add a case missing the last value."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "An operator needs two results from a list of readings: the sum and the count of positive values. The bound n determines how many times to read; the sign only changes the second accumulator.",
+        "Trace −2, 0, 3 and 4 in a table: values read, current sum and positive count."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "For n = 5, what sum does the shown loop print?",
+      "options": [
+        "10\n",
+        "15\n",
+        "4\n"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Yes. The last value added is 4.",
+        "15 would include 5 as well.",
+        "4 is the last i, but the program prints the sum."
+      ],
+      "code": {
+        "source": "#include <iostream>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    int sum{};\n    for (int i = 0; i < n; ++i) { sum += i; }\n    std::cout << sum << '\\n';\n}\n",
+        "stdin": "5"
+      },
+      "execution": {
+        "source": "#include <iostream>\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) { std::cout << \"invalid\\n\"; return 0; }\n    int sum{};\n    for (int i = 0; i < n; ++i) { sum += i; }\n    std::cout << sum << '\\n';\n}\n",
+        "stdin": "5",
+        "expected": "10\n"
+      },
+      "recall": "example-1"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -114,7 +186,8 @@
         "Four"
       ],
       "correct": 0,
-      "feedback": "The body sees i=0,1,2; i=3 is only tested."
+      "feedback": "The body sees i=0,1,2; i=3 is only tested.",
+      "recall": "concept-1"
     },
     {
       "id": "check-1",
@@ -126,7 +199,8 @@
         "0"
       ],
       "correct": 2,
-      "feedback": "An empty sum requires no element access."
+      "feedback": "An empty sum requires no element access.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -138,7 +212,8 @@
         "After printing"
       ],
       "correct": 1,
-      "feedback": "Resetting in the body loses previous terms."
+      "feedback": "Resetting in the body loses previous terms.",
+      "recall": "concept-4"
     },
     {
       "id": "check-3",
@@ -150,7 +225,8 @@
         "No"
       ],
       "correct": 0,
-      "feedback": "continue skips the body remainder and then update executes."
+      "feedback": "continue skips the body remainder and then update executes.",
+      "recall": "concept-5"
     },
     {
       "id": "check-4",
@@ -162,18 +238,20 @@
         "Source, actual results, original tests, and a contract explanation"
       ],
       "correct": 2,
-      "feedback": "A progress flag is not evidence of independent mastery."
+      "feedback": "A progress flag is not evidence of independent mastery.",
+      "recall": "concept-6"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Before each iteration state which portion is already processed.",
-      "feedback": "Next: while and do while: finite streams and termination. Preserve the lab and its verification table."
+      "prompt": "Why is the second accumulator 2 for 4 −2 0 3 4, and why does replacing i < n with i <= n break even an input with the correct number of values?",
+      "feedback": "Before step i, exactly i values have been processed. On failed extraction, return before printing a result.",
+      "recall": "concept-5"
     }
   ],
   "practice": {
-    "title": "Laboratory: The for loop: invariants, boundaries, and cost",
-    "task": "Read n from 0 to 100 followed by exactly n integers from -1000 to 1000; print their sum and positive count. Reject extra tokens and incomplete data as invalid.",
+    "title": "Two accumulators in one pass",
+    "task": "Read n from 0 through 100, followed by exactly n integers from −1000 through 1000. Print the total and the count strictly above zero separated by a space. Print invalid for an invalid n, extra input, a missing value or failed extraction.",
     "kind": "cpp-console",
     "environment": "C++20",
     "files": [
@@ -228,50 +306,37 @@
       }
     ],
     "criteria": [
-      "The contract matches the task and defines units, empty input, and extra data.",
-      "Every published case matches and two explained original tests are included.",
+      "Explain 5 2 for 4 −2 0 3 4, then remove the last value and verify that no partial total is printed.",
       "Before each iteration state which portion is already processed.",
       "Do not reset the sum in the body. Test < versus <= only with a safe scalar counter.",
-      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+      "Add two cases of your own, including a rejection if the interface allows one. Explain one boundary result.",
+      "Keep the source, exact input and observed output."
     ],
-    "hint": "Before each iteration state which portion is already processed.",
+    "hint": "Before step i, exactly i values have been processed. On failed extraction, return before printing a result.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Restate the input, output, and rejection contract in your own words.",
+        "where": "Before running",
+        "action": "Trace −2, 0, 3 and 4 in a table: values read, current sum and positive count.",
         "why": "",
         "expected": ""
       },
       {
         "where": "My program",
-        "action": "Draw the state and state the invariant: Before each iteration state which portion is already processed.",
+        "action": "Initialize both accumulators before for. Check extraction and update the accumulators on each iteration, then check for trailing input.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "My program",
-        "action": "Start from the scaffold, implement the valid path, then add boundary checks.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "For every reference case, independently write the expectation before running; keep stdout and exit code.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add two original cases including one rejection; explain the result without consulting the reference.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Preserve source, a result table, and a short cost-and-limit analysis.",
+        "where": "Check",
+        "action": "Explain 5 2 for 4 −2 0 3 4, then remove the last value and verify that no partial total is printed.",
         "why": "",
         "expected": ""
       }
+    ],
+    "recall": "concept-5",
+    "outputFields": [
+      "Sum",
+      "Positive count"
     ]
   },
   "terms": [
@@ -340,5 +405,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\structured\\for-loop.en.json"
+  "sourcePath": "courses\\cpp\\gold\\structured\\for-loop.en.json",
+  "reading": [
+    {
+      "id": "cpp20-iteration",
+      "title": "C++20 [stmt.iter]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[stmt.iter]",
+      "language": "English",
+      "purpose": "Find the order of initialization, test, body and update in for.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.iter"
+    },
+    {
+      "id": "cpp20-sequencing",
+      "title": "C++20 [intro.execution]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[intro.execution]",
+      "language": "English",
+      "purpose": "Check what it means for one full-expression to complete before the next operation.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/intro.execution"
+    }
+  ],
+  "authored": true
 }

@@ -353,5 +353,400 @@
       "The original int is deleted"
     ],
     "correctIndex": 1
+  },
+  "teachingEdition": {
+    "revision": "b3-author-v1",
+    "title": "Functions: parameters, results, and contracts",
+    "goal": "Trace a function call and verify its promise about the result and state on rejection.",
+    "prerequisites": [
+      {
+        "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+      },
+      {
+        "text": "Follow the prerequisite links: cpp.while-do-while. New constructs are introduced before the assignment."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Calls and definitions",
+        "paragraphs": [
+          "If a sensor asks for a calculation and the result seems to disappear, locate the call. The function has an input, a return value and a caller that decides whether to store or print it.",
+          "In int twice(int value), twice names the function, the first int is the return type, and value is a local parameter. The body runs when called, not when the compiler encounters its definition. return 2*value finishes this invocation and supplies its result to the caller.",
+          "Define a teaching function before main so its declaration is visible at the call site. int result=twice(4) supplies the argument 4 and stores the result 8. Calling it does not print anything by itself; output is a separate operation."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Values, references, and const",
+        "paragraphs": [
+          "An int value parameter receives a separate value: changing it does not change the caller’s int. int& binds to the original object and permits mutation. const int& prevents mutation through that reference but neither copies the object nor makes it permanently const.",
+          "Small values usually travel by value. A large read-only object can be passed by const reference. A reference does not own its object, so never return a reference to a local variable.",
+          "In copied(original) the local parameter becomes 5, but original stays 4. After changed(original), the original object itself becomes 5. Compare the two output lines."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Copy and mutation",
+        "paragraphs": [
+          "Trace two calls with original = 4. In which one is the change visible to the caller?"
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint copied(int value) {\n    ++value;\n    return value;\n}\n\nvoid changed(int& value) {\n    ++value;\n}\n\nint main() {\n    int original = 4;\n    int result = copied(original);\n    std::cout << original << ' ' << result << '\\n';\n    changed(original);\n    std::cout << original << '\\n';\n}\n",
+          "stdin": "",
+          "output": "4 5\n5\n"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Preconditions and postconditions",
+        "paragraphs": [
+          "The twice contract bounds its input so 2*value fits the type. That is straightforward for -1000 through 1000, but not for arbitrary int. A precondition is the caller’s obligation; a postcondition is the guaranteed result property when that obligation holds.",
+          "Do not treat malformed external input as a violation that can be ignored. At the boundary, main checks extraction and ranges before an internal function receives values. For an expected rejection, a bool result with an explicitly documented output parameter is useful.",
+          "A precondition is the caller’s obligation before a call, and a postcondition is what can be checked afterward. checkedArea checks both dimensions itself and promises to preserve result on rejection."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Pure computation and side effects",
+        "paragraphs": [
+          "A calculation function should not secretly read cin or change a global accumulator. The same arguments yield the same result without changing the environment. A unit test can then pass arguments directly and compare the result without replacing the console.",
+          "An output reference makes mutation visible in the signature but needs an exact rule: leave it unchanged on false. Calculate into a temporary and assign only on success. This is a simple form of operation atomicity.",
+          "Make rejection observable. Starting result at 17 lets false and 17 prove separate facts: the call rejected, and the output object stayed unchanged."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Rejection without mutation",
+        "paragraphs": [
+          "The first call gets −1 and 2. The second gets 3 and 4. Predict the flag and result after each call separately."
+        ],
+        "prediction": [
+          "#include <iostream>\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\nint main() {\n    int result{17};\n    bool ok = checkedArea(-1, 2, result);\n    std::cout << ok << ' ' << result << '\\n';\n    ok = checkedArea(3, 4, result);\n    std::cout << ok << ' ' << result << '\\n';\n}\n"
+        ],
+        "predictionInput": "",
+        "predictionBundle": {},
+        "reveal": {
+          "title": "Reveal output and trace execution",
+          "paragraphs": [
+            "The first line, 0 17, shows rejection without modification. The second, 1 12, shows successful assignment."
+          ],
+          "tables": [
+            {
+              "caption": "Trace for this run",
+              "columns": [
+                "Action",
+                "Before",
+                "After",
+                "What to check"
+              ],
+              "rows": [
+                [
+                  "Initial state",
+                  "result = 17",
+                  "result = 17",
+                  "Use a distinctive initial value."
+                ],
+                [
+                  "checkedArea(-1, 2, result)",
+                  "17",
+                  "false, 17",
+                  "Validation runs before assignment."
+                ],
+                [
+                  "checkedArea(3, 4, result)",
+                  "17",
+                  "true, 12",
+                  "Both dimensions are valid, so the result is replaced."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\nint main() {\n    int result{17};\n    bool ok = checkedArea(-1, 2, result);\n    std::cout << ok << ' ' << result << '\\n';\n    ok = checkedArea(3, 4, result);\n    std::cout << ok << ' ' << result << '\\n';\n}\n",
+            "stdin": "",
+            "output": "0 17\n1 12\n"
+          }
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Decomposition without unnecessary coupling",
+        "paragraphs": [
+          "Split the task into validation, calculation, and presentation. Each function should answer one question and have a meaningful name. Avoid ten unrelated parameters when one value suffices; a later struct will group related data.",
+          "Local variables in separate calls are independent. Returning a result by value is safe; returning a local object’s address is not. Recursion, authored templates, and overloading are unnecessary here and are not hidden lab requirements.",
+          "Keep cin extraction in main. Then checkedArea(-1, 2, result) can be tested without a stream by comparing the state before and after directly."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Testing a function separately from input",
+        "paragraphs": [
+          "Build an argument table: lower boundary, a normal value, upper boundary, and nearby rejections. Check that read-only operations leave the original object unchanged and that a false result preserves the output parameter.",
+          "Then add integration cases for cin: empty input, a wrong type, and an extra token. A successful unit test does not establish parser correctness. Next, pass a whole sequence to a function using the standard span view.",
+          "Test rejection after a success using the same result. Resetting it to zero before every call can hide an incorrect write on rejection."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Now try your own task",
+        "paragraphs": [
+          "The worked example calls the function from test code. Now connect it to a new input source: two values entered by a user. Preservation of result remains a separate function test.",
+          "Choose two different initial result values. For each, record what must remain when a dimension is negative."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Which output proves that rejection preserved 17 and the successful call replaced it?",
+        "options": [
+          "0 17\n1 12\n",
+          "0 0\n1 12\n",
+          "1 -2\n1 12\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes. Both flags and values match the contract.",
+          "Zero in the first line would mean rejection erased 17.",
+          "The first dimension is negative, so that call must return false."
+        ],
+        "code": {
+          "source": "#include <iostream>\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\nint main() {\n    int result{17};\n    bool ok = checkedArea(-1, 2, result);\n    std::cout << ok << ' ' << result << '\\n';\n    ok = checkedArea(3, 4, result);\n    std::cout << ok << ' ' << result << '\\n';\n}\n",
+          "stdin": ""
+        },
+        "execution": {
+          "source": "#include <iostream>\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\nint main() {\n    int result{17};\n    bool ok = checkedArea(-1, 2, result);\n    std::cout << ok << ' ' << result << '\\n';\n    ok = checkedArea(3, 4, result);\n    std::cout << ok << ' ' << result << '\\n';\n}\n",
+          "stdin": "",
+          "expected": "0 17\n1 12\n"
+        },
+        "recall": "example-2"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "What happens when an int is passed by value?",
+        "options": [
+          "A reference to the original int is created",
+          "The parameter holds a separate value",
+          "The original int is deleted"
+        ],
+        "correct": 1,
+        "feedback": "Mutating the parameter does not mutate the original int.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "What does checkedArea rejection guarantee?",
+        "options": [
+          "The output result is unchanged",
+          "The object is destroyed",
+          "result becomes zero"
+        ],
+        "correct": 0,
+        "feedback": "This is an explicit function contract.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "How can a parameter read a large string without copying?",
+        "options": [
+          "Destroy its owner before calling",
+          "int*",
+          "const std::string&"
+        ],
+        "correct": 2,
+        "feedback": "The owner is alive during the call and mutation through the parameter is forbidden.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "What does return value do?",
+        "options": [
+          "Necessarily prints",
+          "Ends the current call with a result",
+          "Ends all loops in all functions"
+        ],
+        "correct": 1,
+        "feedback": "Output and returning a result are separate operations.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "What is needed to accept this lab?",
+        "options": [
+          "Source, actual results, original tests, and a contract explanation",
+          "Only a completed flag",
+          "Only a copied reference"
+        ],
+        "correct": 0,
+        "feedback": "A progress flag is not evidence of independent mastery.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "If result is already 12 after a successful call, what happens at checkedArea(-1, 4, result)? Why is invalid from main alone insufficient to prove result was preserved?",
+        "feedback": "Place the one assignment to result after all dimension checks. A width of 0 is valid.",
+        "recall": "concept-5"
+      }
+    ],
+    "practice": {
+      "title": "Checked area at the input boundary",
+      "task": "Implement bool checkedArea(int w, int h, int& result). For dimensions in 0–1000, store their product and return true. On rejection, return false and preserve result. In main read exactly two integers. Print the area or invalid.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "3 4",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Case 1",
+          "input": "3 4",
+          "output": "12\n"
+        },
+        {
+          "label": "Case 2",
+          "input": "0 1000",
+          "output": "0\n"
+        },
+        {
+          "label": "Case 3",
+          "input": "1000 1000",
+          "output": "1000000\n"
+        },
+        {
+          "label": "Case 4",
+          "input": "-1 2",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Case 5",
+          "input": "1001 1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Case 6",
+          "input": "3",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Case 7",
+          "input": "3 4 x",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Compare 0 1000, 1000 1000 and 3 4 x. Separately call the function with invalid dimensions and demonstrate that result stayed unchanged.",
+        "A direct rejection test observes false and unchanged result=17; a valid 3×4 call observes true and 12.",
+        "Do not assign result before every check succeeds. Do not return a reference to a local variable.",
+        "Add two cases of your own, including a rejection if the interface allows one. Explain one boundary result.",
+        "Keep the source, exact input and observed output."
+      ],
+      "hint": "Place the one assignment to result after all dimension checks. A width of 0 is valid.",
+      "steps": [
+        {
+          "where": "Before running",
+          "action": "Choose two different initial result values. For each, record what must remain when a dimension is negative.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Implement the function without cin or cout. Call it from main only after checking extraction and trailing input.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Check",
+          "action": "Compare 0 1000, 1000 1000 and 3 4 x. Separately call the function with invalid dimensions and demonstrate that result stayed unchanged.",
+          "why": "",
+          "expected": ""
+        }
+      ],
+      "recall": "concept-5"
+    },
+    "reading": [
+      {
+        "id": "cpp20-functions",
+        "title": "C++20 [dcl.fct.def]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[dcl.fct.def]",
+        "language": "English",
+        "purpose": "Locate how a function definition joins its declaration, parameter list and body.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.fct.def"
+      },
+      {
+        "id": "cpp20-references",
+        "title": "C++20 [dcl.ref]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[dcl.ref]",
+        "language": "English",
+        "purpose": "Check how a reference binds to an object and what const changes.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.ref"
+      }
+    ],
+    "coverage": {
+      "1": [
+        "concept-1"
+      ],
+      "2": [
+        "concept-2",
+        "example-1"
+      ],
+      "3": [
+        "concept-3",
+        "concept-4",
+        "example-2"
+      ],
+      "4": [
+        "independent-work"
+      ],
+      "5": [
+        "concept-5",
+        "concept-6"
+      ]
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Calls and definitions",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "Values, references, and const",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Preconditions and postconditions",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Pure computation and side effects",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Decomposition without unnecessary coupling",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Testing a function separately from input",
+        "anchor": "concept-6"
+      }
+    ]
   }
 }

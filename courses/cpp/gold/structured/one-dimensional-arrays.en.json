@@ -477,5 +477,389 @@
       "catalog-out.txt, explicit-save confirmation, and a fresh import."
     ],
     "completionRule": "Manual review at 8/10, every case and two original cases; explain connections to earlier lessons."
+  },
+  "teachingEdition": {
+    "revision": "b3-author-v1",
+    "title": "One-dimensional arrays: indexing, filtering, and search",
+    "goal": "Carry the length with the data and trace which elements actually contribute.",
+    "prerequisites": [
+      {
+        "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+      },
+      {
+        "text": "Follow the prerequisite links: cpp.standard-sequences. New constructs are introduced before the assignment."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "The object and its elements",
+        "paragraphs": [
+          "A buffer has five slots but only two readings. The zeroes in the remaining slots do not represent three zero readings. Record capacity 5 and logical length 2 separately.",
+          "int values[4]{} creates four zero-initialized ints with indices 0,1,2,3. Four is the count, not the final index. A built-in array’s bound in ordinary C++ must be a constant expression; int a[n] with a runtime n is not a standard solution.",
+          "Use vector for a changing size, or a fixed buffer with a separate count<=capacity. {} initialization never permits access beyond the array. All buffer elements exist, but only the first count may represent task data."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Capacity and length",
+        "paragraphs": [
+          "The buffer has five slots, but the span covers two. Predict the length and sum."
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <span>\nint main() {\n    int buffer[5]{4, 7, 0, 0, 0};\n    std::span<const int> values{buffer, 2};\n    int sum{};\n    for (int value : values) { sum += value; }\n    std::cout << values.size() << ' ' << sum << '\\n';\n}\n"
+        ],
+        "predictionInput": "",
+        "predictionBundle": {},
+        "reveal": {
+          "title": "Reveal output and trace execution",
+          "paragraphs": [
+            "The output is 2 and 11. The full buffer happens to have the same sum because the spare slots are zero."
+          ],
+          "tables": [
+            {
+              "caption": "Trace for this run",
+              "columns": [
+                "Action",
+                "Before",
+                "After",
+                "What to check"
+              ],
+              "rows": [
+                [
+                  "Create view",
+                  "[4, 7, 0, 0, 0]",
+                  "size = 2",
+                  "The view ends before the first spare slot."
+                ],
+                [
+                  "Add 4 and 7",
+                  "sum = 0",
+                  "sum = 11",
+                  "Two iterations, two values."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <span>\nint main() {\n    int buffer[5]{4, 7, 0, 0, 0};\n    std::span<const int> values{buffer, 2};\n    int sum{};\n    for (int value : values) { sum += value; }\n    std::cout << values.size() << ' ' << sum << '\\n';\n}\n",
+            "stdin": "",
+            "output": "2 11\n"
+          }
+        }
+      },
+      {
+        "id": "concept-2",
+        "title": "Arrays in parameters",
+        "paragraphs": [
+          "An int a[] parameter is adjusted to int*, so the declaration does not carry the length into the function. sizeof that parameter measures a pointer. Do not derive length using sizeof(a)/sizeof(a[0]) inside such a function.",
+          "Pass span<const int> or an explicit pointer/length pair with a proven contract. Here span preserves bounds. At the actual array declaration, sizeof applies to the array, but a clear interface remains preferable.",
+          "A function parameter int a[] behaves as a pointer. sizeof(a) inside the function no longer recovers the array object’s size."
+        ]
+      },
+      {
+        "id": "concept-3",
+        "title": "Linear search",
+        "paragraphs": [
+          "Search left to right, comparing each element with the target. Return the first matching index. If none matches, return a separate flag or size() as an end position; callers must check that result before indexing.",
+          "An empty range has no match. Duplicates require a policy: first, last, or all indices. The lab counts qualifying elements, so each visited index contributes once even when values repeat.",
+          "The first match for 4 has index 0. Returning the last match gives 2 even though the values themselves have not changed."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "The first match",
+        "paragraphs": [
+          "For targets 4 and 7, mark the point where findFirst returns."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <array>\n#include <span>\nstd::size_t findFirst(std::span<const int> values, int target) {\n    for (std::size_t i = 0; i < values.size(); ++i) { if (values[i] == target) { return i; } }\n    return values.size();\n}\nint main() {\n    std::array<int, 4> values{4, 2, 4, 9};\n    std::cout << findFirst(values, 4) << ' ' << findFirst(values, 7) << '\\n';\n}\n",
+          "stdin": "",
+          "output": "0 4\n"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "Stable filtering",
+        "paragraphs": [
+          "To select nonnegative values, traverse the input and append qualifying values to a new vector. Relative order is preserved, and an empty result is valid. Sum only selected values; do not confuse an element count with a sum of indices.",
+          "In-place filtering can use a write index with write<=read: read the original element before writing a selected one. That requires another invariant. Begin with two containers so memory optimization does not obscure correctness.",
+          "For −2, 4, 0, −1, 4, the result 4, 0, 4 preserves both the duplicate and zero’s relative position."
+        ]
+      },
+      {
+        "id": "concept-5",
+        "title": "Minimum and empty input",
+        "paragraphs": [
+          "An empty range has no minimum. Do not initialize the minimum to zero when all values may be positive. After checking nonemptiness, start with the first element and compare the rest; a later structure can carry an explicit presence flag.",
+          "For n<=100 and |value|<=1000, the absolute sum is at most 100000. For a[i], establish both i<count and count<=capacity. The compiler is not required to diagnose a violation.",
+          "Empty data is valid when n is 0. It gives result length 0, but no first element for initializing a minimum."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Comparing representations",
+        "paragraphs": [
+          "The same span-based algorithm should return identical results for int[], array, and vector. Ownership, resizing, and interfaces differ, not the sequence’s mathematical meaning. Avoid coupling a computation to a global buffer.",
+          "Test an empty set, one negative value, one zero, all selected, none selected, and duplicates. Record expected order and count for each. Next, add a second coordinate while explicitly checking matrix shape.",
+          "Compare std::array for fixed storage, vector for a dynamic count and span for passing a range. In each case write down the valid indices."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Now try your own task",
+        "paragraphs": [
+          "Keep only nonnegative readings without reordering or deduplicating them. Use the first report line for count and sum.",
+          "Mark the positions retained from 5 −2 4 0 −1 4."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Which length and sum does the source print?",
+        "options": [
+          "2 11\n",
+          "5 11\n",
+          "2 7\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes, the view contains only 4 and 7.",
+          "5 is buffer capacity, not view length.",
+          "Both values contribute to the sum."
+        ],
+        "code": {
+          "source": "#include <iostream>\n#include <span>\nint main() {\n    int buffer[5]{4, 7, 0, 0, 0};\n    std::span<const int> values{buffer, 2};\n    int sum{};\n    for (int value : values) { sum += value; }\n    std::cout << values.size() << ' ' << sum << '\\n';\n}\n",
+          "stdin": ""
+        },
+        "execution": {
+          "source": "#include <iostream>\n#include <span>\nint main() {\n    int buffer[5]{4, 7, 0, 0, 0};\n    std::span<const int> values{buffer, 2};\n    int sum{};\n    for (int value : values) { sum += value; }\n    std::cout << values.size() << ' ' << sum << '\\n';\n}\n",
+          "stdin": "",
+          "expected": "2 11\n"
+        },
+        "recall": "example-1"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "What does a search index equal to size() mean?",
+        "options": [
+          "The first element",
+          "The last element",
+          "An end position that must not be dereferenced"
+        ],
+        "correct": 2,
+        "feedback": "Only indices below size() are valid.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "What is the final index of four elements?",
+        "options": [
+          "4",
+          "3",
+          "5"
+        ],
+        "correct": 1,
+        "feedback": "Indices form [0,4).",
+        "recall": "concept-1"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "Does an empty set have a minimum?",
+        "options": [
+          "No; absence needs explicit handling",
+          "Always its first element",
+          "Always zero"
+        ],
+        "correct": 0,
+        "feedback": "Do not read a[0] before checking nonemptiness.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Does sequential filtering with push_back preserve order?",
+        "options": [
+          "Only for unique values",
+          "No, it always reverses it",
+          "Yes"
+        ],
+        "correct": 2,
+        "feedback": "Each accepted element is appended after the previous one.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "What is needed to accept this lab?",
+        "options": [
+          "Only a copied reference",
+          "Source, actual results, original tests, and a contract explanation",
+          "Only a completed flag"
+        ],
+        "correct": 1,
+        "feedback": "A progress flag is not evidence of independent mastery.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "How do the results for 1 0 and 1 −2 differ? Which lines and element counts show the difference?",
+        "feedback": "Write out results for 0 and −2 separately. One is accepted, the other discarded.",
+        "recall": "concept-5"
+      }
+    ],
+    "practice": {
+      "title": "Stable selection of readings",
+      "task": "Select nonnegative values from n<=100 integers in -1000…1000, preserving order. Print count sum, then selected values separated by spaces; an empty result has an empty second line.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "0",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Case 1",
+          "input": "0",
+          "output": "0 0\n\n"
+        },
+        {
+          "label": "Case 2",
+          "input": "1 -2",
+          "output": "0 0\n\n"
+        },
+        {
+          "label": "Case 3",
+          "input": "1 0",
+          "output": "1 0\n0\n"
+        },
+        {
+          "label": "Case 4",
+          "input": "5 -2 4 0 -1 4",
+          "output": "3 8\n4 0 4\n"
+        },
+        {
+          "label": "Case 5",
+          "input": "2 1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Case 6",
+          "input": "1 0 x",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Check both lines, including an empty second line, and test incomplete input.",
+        "A data length must accompany element access.",
+        "Do not initialize a minimum from a[0] before checking nonemptiness. Do not use a VLA as standard C++20.",
+        "Add two cases of your own, including a rejection if the interface allows one. Explain one boundary result.",
+        "Keep the source, exact input and observed output."
+      ],
+      "hint": "Write out results for 0 and −2 separately. One is accepted, the other discarded.",
+      "steps": [
+        {
+          "where": "Before running",
+          "action": "Mark the positions retained from 5 −2 4 0 −1 4.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Scan from left to right and append only values ≥ 0. Keep the result length explicit.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Check",
+          "action": "Check both lines, including an empty second line, and test incomplete input.",
+          "why": "",
+          "expected": ""
+        }
+      ],
+      "recall": "concept-5"
+    },
+    "reading": [
+      {
+        "id": "cpp20-array",
+        "title": "C++20 [array]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[array]",
+        "language": "English",
+        "purpose": "Check how std::array stores elements and how indexing works.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/array"
+      },
+      {
+        "id": "cpp20-span",
+        "title": "C++20 [views.span]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[views.span]",
+        "language": "English",
+        "purpose": "Find the bounds and observers of a span.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/views.span"
+      }
+    ],
+    "coverage": {
+      "1": [
+        "concept-1"
+      ],
+      "2": [
+        "concept-2",
+        "example-1"
+      ],
+      "3": [
+        "concept-3",
+        "concept-4",
+        "example-2"
+      ],
+      "4": [
+        "independent-work"
+      ],
+      "5": [
+        "concept-5",
+        "concept-6"
+      ]
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "The object and its elements",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "Arrays in parameters",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Linear search",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Stable filtering",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Minimum and empty input",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Comparing representations",
+        "anchor": "concept-6"
+      }
+    ]
   }
 }

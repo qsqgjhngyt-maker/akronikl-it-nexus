@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b3-author-v1",
   "id": "cpp.unions-typedef-enums",
   "courseId": "cpp",
   "moduleId": "cpp.section.structured-programming",
@@ -8,7 +8,7 @@
   "module": "Structured Programming",
   "locale": "en",
   "title": "Enumerations, aliases, and variant data",
-  "goal": "Model restricted choices and different command shapes while checking the active alternative.",
+  "goal": "Separate a type alias from a distinct type and check the active alternative before accessing data.",
   "prerequisites": [
     {
       "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "enum class scopes names",
       "paragraphs": [
+        "Add and remove need a common interface but carry different meanings. An enum class names the choice, while a variant stores the chosen alternative and its data.",
         "enum class Mode { add, remove }; creates a distinct type. Values are written Mode::add and Mode::remove and do not implicitly become int. This prevents accidental mixing with another enumeration but does not validate an external numeric code.",
         "Parse input with if or switch and explicitly map accepted tokens to enumeration values. static_cast<Mode>(number) does not establish membership in the domain set. In switch, list valid alternatives and define how unexpected states are handled."
       ]
@@ -31,25 +32,8 @@
       "title": "using and typedef name existing types",
       "paragraphs": [
         "using Count=int; and typedef int Count; create aliases for int. They improve readability, but Count and int remain interchangeable. An alias does not automatically prevent a negative count or mixing units.",
-        "Prefer using for simple new declarations because name=type reads clearly. A truly distinct domain type can use a struct with checked operations; Module 5 develops that approach further."
-      ]
-    },
-    {
-      "id": "example-1",
-      "title": "Names and the active member",
-      "paragraphs": [
-        "The alias remains int; only the active union member is read."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nusing Count = int;\nenum class State { idle, ready };\nunion Storage { int count; double weight; };\nint main() {\n    Count n{3};\n    State state{State::ready};\n    Storage storage{};\n    storage.count = n;\n    std::cout << (state == State::ready) << ' ' << storage.count << '\\n';\n}\n",
-        "output": "1 3\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Read the contract and independently derive the expected result for the given input.",
-        "Trace state after each significant operation and identify the established preconditions.",
-        "Run the source, compare stdout and exit code, then check the additional cases."
+        "Prefer using for simple new declarations because name=type reads clearly. A truly distinct domain type can use a struct with checked operations; Module 5 develops that approach further.",
+        "Count and int are the same type here. f(Count) and f(int) cannot be different overloads. A wrapper or enumeration can give a distinct type."
       ]
     },
     {
@@ -57,41 +41,94 @@
       "title": "Why union requires discipline",
       "paragraphs": [
         "Union members share storage. Writing one member does not make every other representation a valid value. Active-member and lifetime rules are more demanding than a shared address.",
-        "In a valid introductory example, assign and read the same active int member. Do not type-pun through an inactive double or label its possible output portable. Special language exceptions are unnecessary for this task."
+        "In a valid introductory example, assign and read the same active int member. Do not type-pun through an inactive double or label its possible output portable. Special language exceptions are unnecessary for this task.",
+        "Storage has count written into it. Read count: inspecting weight to infer the bits is outside this portable experiment."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "Names and the active member",
+      "paragraphs": [
+        "Identify the active Storage value and separately check comparison with State::ready."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nusing Count = int;\nenum class State { idle, ready };\nunion Storage { int count; double weight; };\nint main() {\n    Count n{3};\n    State state{State::ready};\n    Storage storage{};\n    storage.count = n;\n    std::cout << (state == State::ready) << ' ' << storage.count << '\\n';\n}\n",
+        "stdin": "",
+        "output": "1 3\n"
+      }
     },
     {
       "id": "concept-4",
       "title": "variant stores an alternative and its tag",
       "paragraphs": [
         "std::variant<Add,Remove> from <variant> stores one active alternative and identifies it. Define command structs first, then choose an alternative while parsing a token. Using a library template does not require authoring a template.",
-        "std::get_if<Add>(&command) returns a pointer to Add or nullptr. Check it before ->amount. A wrong-type std::get involves an exception, so it is not used here: the current Clang/WASI environment disables exception support."
+        "std::get_if<Add>(&command) returns a pointer to Add or nullptr. Check it before ->amount. A wrong-type std::get involves an exception, so it is not used here: the current Clang/WASI environment disables exception support.",
+        "When Add{4} is active, get_if<Remove> returns nullptr. This check explains the first line before stock is changed."
       ]
     },
     {
       "id": "example-2",
       "title": "A checked alternative",
       "paragraphs": [
-        "get_if for a different type returns nullptr without throwing."
+        "For Add{4}, predict get_if<Remove> first, then the new stock starting at 3."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n",
-        "output": "1\n1 7\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Read the contract and independently derive the expected result for the given input.",
-        "Trace state after each significant operation and identify the established preconditions.",
-        "Run the source, compare stdout and exit code, then check the additional cases."
-      ]
+      "prediction": [
+        "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n"
+      ],
+      "predictionInput": "",
+      "predictionBundle": {},
+      "reveal": {
+        "title": "Reveal output and trace execution",
+        "paragraphs": [
+          "The first 1 answers the nullptr check. The second is the success flag, followed by new stock 7."
+        ],
+        "tables": [
+          {
+            "caption": "Trace for this run",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "What to check"
+            ],
+            "rows": [
+              [
+                "Command type",
+                "Add{4}",
+                "Remove? → nullptr",
+                "The wrong alternative is not dereferenced."
+              ],
+              [
+                "Check addition",
+                "stock = 3",
+                "3 + 4 ≤ 1000",
+                "The bound holds."
+              ],
+              [
+                "Update",
+                "stock = 3",
+                "true, stock = 7",
+                "Print 1 and 7."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n",
+          "stdin": "",
+          "output": "1\n1 7\n"
+        }
+      }
     },
     {
       "id": "concept-5",
       "title": "Dispatch and invariants",
       "paragraphs": [
         "Parsing and executing a command are different functions. The parser accepts only add and remove and checks amount. The executor examines the active alternative and then validates the stock update. Invalid input must not leave a half-prepared command.",
-        "A variant does not guarantee the domain validity of amount. With stock capped at 1000, check amount<=1000-stock before adding and amount<=stock before removing. These checks avoid calculating a known-invalid new state."
+        "A variant does not guarantee the domain validity of amount. With stock capped at 1000, check amount<=1000-stock before adding and amount<=stock before removing. These checks avoid calculating a known-invalid new state.",
+        "The active command can have the right type but be invalid for current stock. At stock 3, Remove{4} must reject after dispatch."
       ]
     },
     {
@@ -99,11 +136,46 @@
       "title": "Checking the choice",
       "paragraphs": [
         "Test both alternatives, an unknown command, zero amount, exceeding the stock cap, and insufficient stock. A get_if for the other type must return nullptr, which the program must not dereference.",
-        "Compare alias, enum class, union, and variant in a table covering distinct types, named values, active alternatives, and checked access. Next, move from choosing a representation to ownership: who releases a resource and who merely observes it."
+        "Compare alias, enum class, union, and variant in a table covering distinct types, named values, active alternatives, and checked access. Next, move from choosing a representation to ownership: who releases a resource and who merely observes it.",
+        "Write two Remove tests: exactly current stock and one more. For Add, check crossing the upper bound of 1000."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Now the command kind comes from input. Each alternative has its own allowed state transition.",
+        "Make a table for add, remove and an unknown word. Include rejection in both known alternatives."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What prints for Add{4} with stock 3?",
+      "options": [
+        "1\n1 7\n",
+        "0\n1 7\n",
+        "1\n0 3\n"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Yes: Remove is absent and Add succeeds.",
+        "get_if<Remove> returns nullptr, so the comparison is true.",
+        "3 + 4 is within the bound, so there is no rejection."
+      ],
+      "code": {
+        "source": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "execution": {
+        "source": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "1\n1 7\n"
+      },
+      "recall": "example-2"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -114,7 +186,8 @@
         "An arbitrary address"
       ],
       "correct": 1,
-      "feedback": "Check the pointer before accessing fields."
+      "feedback": "Check the pointer before accessing fields.",
+      "recall": "concept-4"
     },
     {
       "id": "check-1",
@@ -126,7 +199,8 @@
         "Yes"
       ],
       "correct": 0,
-      "feedback": "An alias names an existing type."
+      "feedback": "An alias names an existing type.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -138,7 +212,8 @@
         "Read the written active member"
       ],
       "correct": 2,
-      "feedback": "Shared storage does not make every interpretation valid."
+      "feedback": "Shared storage does not make every interpretation valid.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -150,7 +225,8 @@
         "It always copies"
       ],
       "correct": 1,
-      "feedback": "The current runtime does not support exceptions."
+      "feedback": "The current runtime does not support exceptions.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -162,17 +238,19 @@
         "Only a copied reference"
       ],
       "correct": 0,
-      "feedback": "A progress flag is not evidence of independent mastery."
+      "feedback": "A progress flag is not evidence of independent mastery.",
+      "recall": "concept-6"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "An alternative’s type does not eliminate validation of its data.",
-      "feedback": "Next: Lifetime, RAII, and unique ownership. Preserve the lab and its verification table."
+      "prompt": "Why is 3 remove 4 a correctly parsed command but a rejected operation? Which observation proves stock was preserved?",
+      "feedback": "Selecting the right type does not validate the amount. The old stock is part of the rejection result.",
+      "recall": "concept-5"
     }
   ],
   "practice": {
-    "title": "Laboratory: Enumerations, aliases, and variant data",
+    "title": "Add and remove commands",
     "task": "Read stock, add/remove, and amount in 0…1000. Store the command in variant<Add,Remove>; print rejected stock if it cannot apply, otherwise ok newStock. Malformed input is invalid.",
     "kind": "cpp-console",
     "environment": "C++20",
@@ -223,50 +301,37 @@
       }
     ],
     "criteria": [
-      "The contract matches the task and defines units, empty input, and extra data.",
-      "Every published case matches and two explained original tests are included.",
+      "Check 3 remove 3, 3 remove 4 and 1000 add 1. Verify invalid for an unknown command.",
       "An alternative’s type does not eliminate validation of its data.",
       "using does not create a strong type. Do not inspect bits by reading an inactive union member.",
-      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+      "Add two cases of your own, including a rejection if the interface allows one. Explain one boundary result.",
+      "Keep the source, exact input and observed output."
     ],
-    "hint": "An alternative’s type does not eliminate validation of its data.",
+    "hint": "Selecting the right type does not validate the amount. The old stock is part of the rejection result.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Restate the input, output, and rejection contract in your own words.",
+        "where": "Before running",
+        "action": "Make a table for add, remove and an unknown word. Include rejection in both known alternatives.",
         "why": "",
         "expected": ""
       },
       {
         "where": "My program",
-        "action": "Draw the state and state the invariant: An alternative’s type does not eliminate validation of its data.",
+        "action": "Construct the variant after parsing. Inspect the alternative, validate its operation and change stock only on success.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "My program",
-        "action": "Start from the scaffold, implement the valid path, then add boundary checks.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "For every reference case, independently write the expectation before running; keep stdout and exit code.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add two original cases including one rejection; explain the result without consulting the reference.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Preserve source, a result table, and a short cost-and-limit analysis.",
+        "where": "Check",
+        "action": "Check 3 remove 3, 3 remove 4 and 1000 add 1. Verify invalid for an unknown command.",
         "why": "",
         "expected": ""
       }
+    ],
+    "recall": "concept-5",
+    "outputFields": [
+      "Status",
+      "Stock"
     ]
   },
   "terms": [
@@ -335,5 +400,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\structured\\unions-typedef-enums.en.json"
+  "sourcePath": "courses\\cpp\\gold\\structured\\unions-typedef-enums.en.json",
+  "reading": [
+    {
+      "id": "cpp20-enum",
+      "title": "C++20 [dcl.enum]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[dcl.enum]",
+      "language": "English",
+      "purpose": "Check scoping rules for enum class enumerators.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.enum"
+    },
+    {
+      "id": "cpp20-variant",
+      "title": "C++20 [variant.get]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[variant.get]",
+      "language": "English",
+      "purpose": "Check the result of get_if when the alternative does not match.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/variant.get"
+    }
+  ],
+  "authored": true
 }

@@ -503,5 +503,400 @@
       "catalog-out.txt, explicit-save confirmation, and a fresh import."
     ],
     "completionRule": "Manual review at 8/10, every case and two original cases; explain connections to earlier lessons."
+  },
+  "teachingEdition": {
+    "revision": "b3-author-v1",
+    "title": "Stream states and reliable line parsing",
+    "goal": "Identify which stream flag was set and what is needed to resume reading records.",
+    "prerequisites": [
+      {
+        "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+      },
+      {
+        "text": "Follow the prerequisite links: cpp.formatted-io. New constructs are introduced before the assignment."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Flags describe a past operation",
+        "paragraphs": [
+          "The final number 8 can be read successfully exactly at end of input. Record “extracted a value” and “reached the end” separately. Both can happen together.",
+          "good() means no error-state flags are set. eof() reports an encountered end, fail() tests failbit or badbit, and bad() reports a serious stream error. bool(stream) checks for absence of failbit and badbit; eofbit alone need not make it false.",
+          "Successfully extracting a final number without trailing whitespace can produce eof=true and fail=false. An oversized final numeric token may set both. eof alone therefore cannot distinguish success, empty exhaustion, and malformed input."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Flags after the last extraction",
+        "paragraphs": [
+          "Supply exactly 8 with no trailing newline. Predict fail(), eof() and bool(stream)."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    int value{};\n    std::cin >> value;\n    std::cout << std::cin.fail() << ' ' << std::cin.eof() << ' ' << bool(std::cin) << '\\n';\n}\n",
+          "stdin": "8",
+          "output": "0 1 1\n"
+        }
+      },
+      {
+        "id": "concept-2",
+        "title": "Reset state and remove the cause",
+        "paragraphs": [
+          "clear() resets flags but does not remove an invalid buffered character. ignore(max,'\\n') can discard a damaged line; obtain max from numeric_limits<streamsize>::max(). Clear first and then consume input, otherwise ignore may not proceed.",
+          "Recovery is a format decision, not a universal patch. If each line is one record, skipping to the newline preserves the next record boundary. With multiline records, that strategy may destroy useful data and needs a different protocol.",
+          "After bad, the stream still contains those same characters. clear removes the error state, and ignore consumes the damaged line. Both are needed in that order."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "clear and progress",
+        "paragraphs": [
+          "Supply bad and 7 on separate lines. Mark why another extraction without advancing would try bad again."
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <limits>\nint main() {\n    int value{};\n    if (!(std::cin >> value)) {\n        std::cin.clear();\n        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\\n');\n    }\n    if (std::cin >> value) { std::cout << value << '\\n'; }\n    else { std::cout << \"invalid\\n\"; }\n}\n"
+        ],
+        "predictionInput": "bad\n7\n",
+        "predictionBundle": {},
+        "reveal": {
+          "title": "Reveal output and trace execution",
+          "paragraphs": [
+            "The program prints 7. Clearing the flag without discarding the invalid line would not produce that result."
+          ],
+          "tables": [
+            {
+              "caption": "Trace for this run",
+              "columns": [
+                "Action",
+                "Before",
+                "After",
+                "What to check"
+              ],
+              "rows": [
+                [
+                  "First >>",
+                  "bad\\n7\\n",
+                  "fail = true",
+                  "The b prevents integer extraction."
+                ],
+                [
+                  "clear + ignore",
+                  "bad\\n7\\n",
+                  "7\\n",
+                  "Reset the flag first, then consume the line."
+                ],
+                [
+                  "Second >>",
+                  "7\\n",
+                  "value = 7",
+                  "The next number is extracted."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <limits>\nint main() {\n    int value{};\n    if (!(std::cin >> value)) {\n        std::cin.clear();\n        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\\n');\n    }\n    if (std::cin >> value) { std::cout << value << '\\n'; }\n    else { std::cout << \"invalid\\n\"; }\n}\n",
+            "stdin": "bad\n7\n",
+            "output": "7\n"
+          }
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "A line as the parsing unit",
+        "paragraphs": [
+          "getline obtains a line, then istringstream from <sstream> parses only that line. A local parser failure does not poison the main cin state. Count accepted and rejected records and continue with the next line.",
+          "After required fields, consume permitted whitespace and check the local line’s end. Under a strict contract, 12x is not the integer 12: numeric extraction may stop before x. Give empty lines an explicit policy; the lab rejects them.",
+          "Parse one line in a separate istringstream. If the line is bad, the failure stays local and does not block the next getline on the outer stream."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Remainders after operator>>",
+        "paragraphs": [
+          "After cin>>n, a newline commonly remains. The next getline receives the current line’s remainder, possibly empty. Preserve that remainder when significant. If the next record starts on another line, explicitly finish the current record under the format.",
+          "std::ws consumes all leading whitespace, including blank lines, not just one newline. Do not apply it before getline when blank lines or leading spaces matter. Decide which characters may be discarded before choosing an operation.",
+          "After >> reads a count, the newline may still be pending. The next getline returns the remainder of that line. If blank records matter, ws can discard data."
+        ]
+      },
+      {
+        "id": "concept-5",
+        "title": "Bounding the work",
+        "paragraphs": [
+          "Even valid streams need row-count and line-size limits. The lab permits at most 100 lines of at most 200 bytes, with one number from -1000 to 1000 per line. Resource-limit violations produce overall invalid; a malformed individual record increments rejected.",
+          "This distinction separates data errors from environmental failures. Nexus buffers finite stdin before running; a large network stream would need a streaming limit before accumulating a whole line. That larger scale is not claimed here.",
+          "Limit both line count and line length. Even a line later rejected as malformed counts toward the processing limit."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Recovery evidence",
+        "paragraphs": [
+          "Use valid, bad, valid and establish that the final record is processed. Add an empty line, a number without a final newline, an oversized numeric token, and an extra field. Check accepted count, rejection count, and sum separately.",
+          "Preserve each line boundary and the local parser flags. Next, turn these cases into repeatable unit and integration tests; a Run button by itself does not establish quality.",
+          "Supply 2, bad and 3 on separate lines. Success is determined by the state after each line, not by the fact that the last line was read."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Now try your own task",
+        "paragraphs": [
+          "The log contains damaged records. Count accepted and rejected lines separately without losing data after a bad line.",
+          "Trace the three accumulator states for 2, bad and 3."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "What prints after recovering from bad followed by 7?",
+        "options": [
+          "7\n",
+          "invalid\n",
+          "0\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes. clear and ignore let the next line be read.",
+          "The position also advances beyond the invalid line after clearing the state.",
+          "The initial value is not printed; extraction writes 7."
+        ],
+        "code": {
+          "source": "#include <iostream>\n#include <limits>\nint main() {\n    int value{};\n    if (!(std::cin >> value)) {\n        std::cin.clear();\n        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\\n');\n    }\n    if (std::cin >> value) { std::cout << value << '\\n'; }\n    else { std::cout << \"invalid\\n\"; }\n}\n",
+          "stdin": "bad\n7\n"
+        },
+        "execution": {
+          "source": "#include <iostream>\n#include <limits>\nint main() {\n    int value{};\n    if (!(std::cin >> value)) {\n        std::cin.clear();\n        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\\n');\n    }\n    if (std::cin >> value) { std::cout << value << '\\n'; }\n    else { std::cout << \"invalid\\n\"; }\n}\n",
+          "stdin": "bad\n7\n",
+          "expected": "7\n"
+        },
+        "recall": "example-2"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "Does clear() remove an invalid character?",
+        "options": [
+          "Yes, all stdin",
+          "No; it resets flags",
+          "Only the final digit"
+        ],
+        "correct": 1,
+        "feedback": "After clear, make a separate format-aware progress step.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Can eof be true after a successful number?",
+        "options": [
+          "Yes",
+          "Only with bad",
+          "No"
+        ],
+        "correct": 0,
+        "feedback": "Success depends on absence of fail/bad, not eof alone.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "What does ws do to blank lines?",
+        "options": [
+          "It converts them to zeros",
+          "It always preserves them",
+          "It may consume them"
+        ],
+        "correct": 2,
+        "feedback": "ws skips leading whitespace.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "How can one record error be isolated?",
+        "options": [
+          "Retry without progress",
+          "Parse each line with a local istringstream",
+          "Treat every fail as success"
+        ],
+        "correct": 1,
+        "feedback": "The local parser state does not poison the main line stream.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "What is needed to accept this lab?",
+        "options": [
+          "Source, actual results, original tests, and a contract explanation",
+          "Only a completed flag",
+          "Only a copied reference"
+        ],
+        "correct": 0,
+        "feedback": "A progress flag is not evidence of independent mastery.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Why should the next getline see 3 after a bad line? Identify which stream holds failbit and which accumulators change.",
+        "feedback": "A good record must contain exactly one number. Reaching the end of the outer stream does not validate the final token.",
+        "recall": "concept-5"
+      }
+    ],
+    "practice": {
+      "title": "Parse a line-based log",
+      "task": "Process up to 100 lines of at most 200 bytes each. Each must contain exactly one integer in -1000…1000. Print accepted rejected sum; skip malformed lines and reject resource-limit excess as invalid.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "No lines",
+          "input": "",
+          "output": "0 0 0\n"
+        },
+        {
+          "label": "Bad line between two numbers",
+          "input": "2\nbad\n3",
+          "output": "2 1 5\n"
+        },
+        {
+          "label": "One blank line",
+          "input": "\n",
+          "output": "0 1 0\n"
+        },
+        {
+          "label": "Two fields on the first line",
+          "input": "1 2\n4\n",
+          "output": "1 1 4\n"
+        },
+        {
+          "label": "Case 5",
+          "input": "999999999999999999999999",
+          "output": "0 1 0\n"
+        },
+        {
+          "label": "Case 6",
+          "input": "1001\n-1000\n",
+          "output": "1 1 -1000\n"
+        }
+      ],
+      "criteria": [
+        "Verify that 2, bad, 3 gives 2 1 5. Distinguish an empty stream, a blank line and a line with two numbers.",
+        "Resetting a flag and removing malformed input are different operations.",
+        "Do not treat fail&&eof as a successful number. Do not discard blank records using ws.",
+        "Add two cases of your own, including a rejection if the interface allows one. Explain one boundary result.",
+        "Keep the source, exact input and observed output."
+      ],
+      "hint": "A good record must contain exactly one number. Reaching the end of the outer stream does not validate the final token.",
+      "steps": [
+        {
+          "where": "Before running",
+          "action": "Trace the three accumulator states for 2, bad and 3.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Read outer lines with getline and validate each using a local stream. Check trailing fields and limits.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Check",
+          "action": "Verify that 2, bad, 3 gives 2 1 5. Distinguish an empty stream, a blank line and a line with two numbers.",
+          "why": "",
+          "expected": ""
+        }
+      ],
+      "recall": "concept-5",
+      "outputFields": [
+        "Accepted",
+        "Rejected",
+        "Sum"
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-stream-state",
+        "title": "C++20 [basic.ios.members]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[basic.ios.members]",
+        "language": "English",
+        "purpose": "Find the stream state observers and clear rules.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.ios.members"
+      },
+      {
+        "id": "cpp20-string-io",
+        "title": "C++20 [string.io]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[string.io]",
+        "language": "English",
+        "purpose": "Check how getline treats a delimiter and when it reports failure.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/string.io"
+      }
+    ],
+    "coverage": {
+      "1": [
+        "concept-1"
+      ],
+      "2": [
+        "concept-2",
+        "example-2"
+      ],
+      "3": [
+        "concept-3",
+        "concept-4",
+        "example-1"
+      ],
+      "4": [
+        "independent-work"
+      ],
+      "5": [
+        "concept-5",
+        "concept-6"
+      ]
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Flags describe a past operation",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "Reset state and remove the cause",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "A line as the parsing unit",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Remainders after operator>>",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Bounding the work",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Recovery evidence",
+        "anchor": "concept-6"
+      }
+    ]
   }
 }

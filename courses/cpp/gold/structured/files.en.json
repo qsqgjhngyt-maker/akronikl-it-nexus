@@ -385,5 +385,436 @@
       "For sizeof"
     ],
     "correctIndex": 0
+  },
+  "teachingEdition": {
+    "revision": "b3-author-v1",
+    "title": "Files: formats, failures, and explicit saving",
+    "goal": "Separate an input file, an output artifact and a saved project file. Verify each transition separately.",
+    "prerequisites": [
+      {
+        "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+      },
+      {
+        "text": "Follow the prerequisite links: cpp.multifile-build, cpp.streams-state. New constructs are introduced before the assignment."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "A file as a resource",
+        "paragraphs": [
+          "Within one run the program writes 73 to sample.txt, closes the stream and opens a reader. Predict stdout first, then check the file’s contents itself.",
+          "ifstream from <fstream> reads a file; ofstream writes one. Construction associates the stream with a path, and destruction closes the resource. Check opening through bool(stream). RAII cleanup is useful, but successful opening does not guarantee every later operation succeeds.",
+          "A regular ofstream may truncate an existing file. Do not open an input file for writing before validating its data. The lab writes a separate report.txt and preserves records.txt."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Write and read within one run",
+        "paragraphs": [
+          "Trace what appears after closing output and what the reader extracts from sample.txt."
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <fstream>\nint main() {\n    std::ofstream output{\"sample.txt\"};\n    output << \"73\\n\";\n    output.close();\n    if (!output) { std::cout << \"write-error\\n\"; return 0; }\n    std::ifstream input{\"sample.txt\"};\n    int value{};\n    if (!(input >> value)) { std::cout << \"read-error\\n\"; return 0; }\n    std::cout << value << '\\n';\n}\n"
+        ],
+        "predictionInput": "",
+        "predictionBundle": {},
+        "reveal": {
+          "title": "Reveal output and trace execution",
+          "paragraphs": [
+            "Both stdout and sample.txt contain 73 and a newline. This verifies writing and reading within one run."
+          ],
+          "tables": [
+            {
+              "caption": "Trace for this run",
+              "columns": [
+                "Action",
+                "Before",
+                "After",
+                "What to check"
+              ],
+              "rows": [
+                [
+                  "Write",
+                  "sample.txt",
+                  "73\\n",
+                  "The stream is checked after close."
+                ],
+                [
+                  "Read",
+                  "sample.txt → 73",
+                  "value = 73",
+                  "A new stream opens within the same run."
+                ],
+                [
+                  "Two results",
+                  "value = 73",
+                  "stdout + sample.txt",
+                  "Stdout and the artifact are separate observations."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <fstream>\nint main() {\n    std::ofstream output{\"sample.txt\"};\n    output << \"73\\n\";\n    output.close();\n    if (!output) { std::cout << \"write-error\\n\"; return 0; }\n    std::ifstream input{\"sample.txt\"};\n    int value{};\n    if (!(input >> value)) { std::cout << \"read-error\\n\"; return 0; }\n    std::cout << value << '\\n';\n}\n",
+            "stdin": "",
+            "output": "73\n",
+            "outputFiles": {
+              "sample.txt": "73\n"
+            }
+          }
+        }
+      },
+      {
+        "id": "concept-2",
+        "title": "The format is an interface",
+        "paragraphs": [
+          "A text format defines encoding, delimiters, field counts, and bounds. The lab records.txt contains one integer in -1000…1000 per line, at most 100 lines of 200 bytes. An empty file is valid; a blank line is malformed.",
+          "Parse each line using a local istringstream and reject trailing data. Do not save a struct by dumping its memory: padding, type sizes, and byte order may differ. A textual contract is easier to verify manually and with two compilers.",
+          "An empty records.txt file is valid, but a blank line is one malformed record. The line delimiter and value bounds are part of the format contract."
+        ]
+      },
+      {
+        "id": "concept-3",
+        "title": "Read and write failures",
+        "paragraphs": [
+          "A missing file produces missing; a malformed record produces invalid. Do not treat every stopped getline as normal completion: check bad and unexpected failure without eof. A partial import must not generate a successful final report.",
+          "After writing, call close and check the stream: flushing can fail late. The lab distinguishes write-error from invalid. This does not promise atomic replacement after a crash; that needs a separate storage strategy.",
+          "Distinguish an absent records.txt, a bad record inside it and a report.txt write failure. The program reports separate outcomes and only opens the report after a successful import."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "The Nexus virtual filesystem",
+        "paragraphs": [
+          "A program sees relative files supplied with its request. Absolute paths, .., and system directories are unavailable. Every run receives a fresh runtime filesystem; a previous run’s file does not appear automatically in the next. stdin is not a substitute for testing file input.",
+          "Limits are 128 files, 512 KiB per file, 2 MiB for input and runtime files, and 2 MiB of writes per run. Exceeding them is a provider limitation distinct from an algorithm defect. Do not raise quotas to bypass an exercise.",
+          "The second example gets its text from input.txt in the request files, not stdin. Open the input-file list to check what was read."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "A file supplied from the project VFS",
+        "paragraphs": [
+          "Open input.txt and identify where the printed line came from."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <fstream>\n#include <string>\nint main() {\n    std::ifstream input{\"input.txt\"};\n    if (!input) { std::cout << \"missing\\n\"; return 0; }\n    std::string line;\n    std::getline(input, line);\n    std::cout << line << '\\n';\n}\n",
+          "stdin": "",
+          "output": "NEXUS_LOG_V1\n",
+          "files": {
+            "input.txt": "NEXUS_LOG_V1\n"
+          }
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "An artifact and a personal project",
+        "paragraphs": [
+          "The result panel lists new or changed runtime files. Downloading saves a separate copy. Saving text results transfers them into the VFS only through an explicit action and when no conflicting edits exist. A program cannot silently replace source code.",
+          "A binary result downloads as bytes rather than becoming an editor text file. A conflict preserves the project source. For another run, explicitly save a permitted text file, then rerun the reader and compare contents.",
+          "If report.txt appears among the run results, inspect its bytes first. Save it to the project explicitly only when you want it available for another run."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Roundtrip evidence",
+        "paragraphs": [
+          "Separately test a missing file, a valid import, malformed data, export, and report.txt contents. Then confirm saving into the project and a fresh run. Reading within the same run does not establish that final step.",
+          "Use synthetic data only; do not put keys or personal work into evidence. Next, a linked list demonstrates node-resource management, while the final project combines records, commands, tests, and file formats.",
+          "Compare a missing file, an empty file and a file containing a newline. Separately verify that invalid did not create a new report.txt."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Now try your own task",
+        "paragraphs": [
+          "Build a report for a different format: one integer per line in the input file. Print the operation status and put report data in a separate artifact.",
+          "Write expected stdout and report.txt for a file with lines 2, −1 and 4. Record what should happen if the second line is changed to bad."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "What is stdout when writing and reading succeed in the shown run?",
+        "options": [
+          "73\n",
+          "missing\n",
+          "write-error\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Correct. The reader extracts 73 from the file just written.",
+          "This run creates the file before reading it.",
+          "That is the write-failure branch; the write succeeds in this experiment."
+        ],
+        "code": {
+          "source": "#include <iostream>\n#include <fstream>\nint main() {\n    std::ofstream output{\"sample.txt\"};\n    output << \"73\\n\";\n    output.close();\n    if (!output) { std::cout << \"write-error\\n\"; return 0; }\n    std::ifstream input{\"sample.txt\"};\n    int value{};\n    if (!(input >> value)) { std::cout << \"read-error\\n\"; return 0; }\n    std::cout << value << '\\n';\n}\n",
+          "stdin": ""
+        },
+        "execution": {
+          "source": "#include <iostream>\n#include <fstream>\nint main() {\n    std::ofstream output{\"sample.txt\"};\n    output << \"73\\n\";\n    output.close();\n    if (!output) { std::cout << \"write-error\\n\"; return 0; }\n    std::ifstream input{\"sample.txt\"};\n    int value{};\n    if (!(input >> value)) { std::cout << \"read-error\\n\"; return 0; }\n    std::cout << value << '\\n';\n}\n",
+          "stdin": "",
+          "expected": "73\n"
+        },
+        "recall": "example-1"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "Does stdout exported prove saving into a personal project?",
+        "options": [
+          "Yes, automatically",
+          "No; inspect the artifact and explicitly save it",
+          "Only with empty stdin"
+        ],
+        "correct": 1,
+        "feedback": "Check the runtime-to-VFS boundary separately.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Can ofstream truncate an existing file?",
+        "options": [
+          "Yes, under ordinary write opening",
+          "Only with cin",
+          "No"
+        ],
+        "correct": 0,
+        "feedback": "Write output to a separate path after validating input.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "What is needed after writing to check a late error?",
+        "options": [
+          "Delete the input",
+          "Merely print written",
+          "Close and check stream state"
+        ],
+        "correct": 2,
+        "feedback": "Flushing can fail too.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Will a runtime file automatically appear in the next run?",
+        "options": [
+          "Yes",
+          "No; explicit acceptance into the project is needed",
+          "Only with a short name"
+        ],
+        "correct": 1,
+        "feedback": "Every run receives a fresh request file set.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "What is needed to accept this lab?",
+        "options": [
+          "Source, actual results, original tests, and a contract explanation",
+          "Only a completed flag",
+          "Only a copied reference"
+        ],
+        "correct": 0,
+        "feedback": "A progress flag is not evidence of independent mastery.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Why does exported alone fail to prove report.txt is saved in the project? How can you check bytes and availability in a fresh run separately?",
+        "feedback": "For the empty-file test, keep records.txt in the bundle with zero bytes. For missing, remove it only from a separate test copy.",
+        "recall": "concept-5"
+      }
+    ],
+    "practice": {
+      "title": "Import records.txt and produce report.txt",
+      "task": "Read at most 100 lines of up to 200 bytes from records.txt, exactly one integer in −1000 through 1000 per line. An empty file is valid; a blank line is invalid. On success, write the count and sum separated by a space and followed by a newline to report.txt, then print exported. A missing file gives missing, malformed input gives invalid and a write failure gives write-error. Check the artifact separately.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        },
+        {
+          "path": "records.txt",
+          "content": "2\n-1\n4\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Three records",
+          "input": "",
+          "output": "exported\n",
+          "files": {
+            "records.txt": "2\n-1\n4\n"
+          },
+          "outputFiles": {
+            "report.txt": "3 5\n"
+          }
+        },
+        {
+          "label": "File exists with zero bytes",
+          "input": "",
+          "output": "exported\n",
+          "files": {
+            "records.txt": ""
+          },
+          "outputFiles": {
+            "report.txt": "0 0\n"
+          }
+        },
+        {
+          "label": "File is absent",
+          "input": "",
+          "output": "missing\n",
+          "files": {}
+        },
+        {
+          "label": "Malformed second line",
+          "input": "",
+          "output": "invalid\n",
+          "files": {
+            "records.txt": "2\nbad\n"
+          }
+        },
+        {
+          "label": "Two fields instead of one",
+          "input": "",
+          "output": "invalid\n",
+          "files": {
+            "records.txt": "1 2\n"
+          }
+        },
+        {
+          "label": "One blank line",
+          "input": "",
+          "output": "invalid\n",
+          "files": {
+            "records.txt": "\n"
+          }
+        },
+        {
+          "label": "Integer out of range",
+          "input": "",
+          "output": "invalid\n",
+          "files": {
+            "records.txt": "999999999999999999999999"
+          }
+        }
+      ],
+      "criteria": [
+        "Verify the status and artifact bytes separately. On success expect exported and 3 5 followed by a newline in the file. Test missing input and a malformed record.",
+        "Creating a runtime file and saving it into a personal project are separate actions.",
+        "Do not open the input with ofstream before validation. Do not assume ambient runtime persistence between runs.",
+        "Add two cases of your own, including a rejection if the interface allows one. Explain one boundary result.",
+        "Keep the source, exact input and observed output."
+      ],
+      "hint": "For the empty-file test, keep records.txt in the bundle with zero bytes. For missing, remove it only from a separate test copy.",
+      "steps": [
+        {
+          "where": "Before running",
+          "action": "Write expected stdout and report.txt for a file with lines 2, −1 and 4. Record what should happen if the second line is changed to bad.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Parse one line at a time. Open report.txt only after validating all records and check the stream after close.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Check",
+          "action": "Verify the status and artifact bytes separately. On success expect exported and 3 5 followed by a newline in the file. Test missing input and a malformed record.",
+          "why": "",
+          "expected": ""
+        }
+      ],
+      "recall": "concept-5"
+    },
+    "reading": [
+      {
+        "id": "cpp20-file",
+        "title": "C++20 [fstreams]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[fstreams]",
+        "language": "English",
+        "purpose": "Check the behaviour of ifstream, ofstream and close.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/fstreams"
+      },
+      {
+        "id": "cpp20-stream-state",
+        "title": "C++20 [basic.ios.members]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[basic.ios.members]",
+        "language": "English",
+        "purpose": "Find the stream state observers used after reading and writing.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.ios.members"
+      }
+    ],
+    "coverage": {
+      "1": [
+        "concept-1",
+        "example-1"
+      ],
+      "2": [
+        "concept-2",
+        "concept-3"
+      ],
+      "3": [
+        "concept-4",
+        "concept-5",
+        "example-2"
+      ],
+      "4": [
+        "independent-work"
+      ],
+      "5": [
+        "concept-3",
+        "concept-6"
+      ]
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "A file as a resource",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "The format is an interface",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Read and write failures",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "The Nexus virtual filesystem",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "An artifact and a personal project",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Roundtrip evidence",
+        "anchor": "concept-6"
+      }
+    ]
   }
 }

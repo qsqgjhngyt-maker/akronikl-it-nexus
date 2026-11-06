@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b3-author-v1",
   "id": "cpp.multifile-build",
   "courseId": "cpp",
   "moduleId": "cpp.section.structured-programming",
@@ -8,7 +8,7 @@
   "module": "Структурное программирование",
   "locale": "ru",
   "title": "Многофайловая сборка: заголовки, TU и ODR",
-  "goal": "Разделите интерфейс и реализацию и соберите приложение и тестовый драйвер как разные программы.",
+  "goal": "Свяжите заголовок, определения и список компилируемых файлов. Объясните, чем ошибка компоновки отличается от ошибки в исходнике.",
   "prerequisites": [
     {
       "text": "Module 1–2: выражения, сравнения, типы, ссылки и проверка cin."
@@ -22,34 +22,31 @@
       "id": "concept-1",
       "title": "Объявление и определение",
       "paragraphs": [
+        "Объявление int twice(int) позволяет разобрать вызов в main. Чтобы получить 12, при сборке должно найтись ещё и тело, которое умножает 6 на 2.",
         "int twice(int); объявляет имя, параметры и результат без тела. int twice(int x){return 2*x;} определяет функцию. Вызывающий файл должен видеть совместимое объявление, а итоговая программа — нужное определение.",
         "Заголовок domain.hpp хранит общий интерфейс, domain.cpp включает его и задаёт тело, main.cpp включает тот же заголовок и вызывает функцию. Так компилятор проверяет соответствие реализации интерфейсу, а не полагается на вручную повторённую сигнатуру."
-      ]
-    },
-    {
-      "id": "concept-2",
-      "title": "Единица трансляции",
-      "paragraphs": [
-        "После обработки #include содержимое исходного .cpp с подключёнными заголовками образует translation unit, TU. Каждый .cpp компилируется отдельно. Заголовок обычно не добавляют самостоятельной единицей сборки и не включают .cpp в другой .cpp.",
-        "includeRoots задаёт каталоги поиска пользовательских заголовков. Для include/domain.hpp и #include \"domain.hpp\" добавьте include. translationUnits перечисляет main.cpp и src/domain.cpp. Путь файла — часть проекта, а не абсолютный путь компьютера."
       ]
     },
     {
       "id": "example-1",
       "title": "Объявление перед вызовом",
       "paragraphs": [
-        "Одна TU сначала видит объявление, затем определение."
+        "Найдите отдельно объявление, вызов и определение в одном файле."
       ],
       "code": {
         "language": "cpp",
         "source": "#include <iostream>\nint twice(int);\nint main() { std::cout << twice(6) << '\\n'; }\nint twice(int value) { return 2 * value; }\n",
-        "output": "12\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
-        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
-        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+        "stdin": "",
+        "output": "12\n"
+      }
+    },
+    {
+      "id": "concept-2",
+      "title": "Единица трансляции",
+      "paragraphs": [
+        "После обработки #include содержимое исходного .cpp с подключёнными заголовками образует translation unit, TU. Каждый .cpp компилируется отдельно. Заголовок обычно не добавляют самостоятельной единицей сборки и не включают .cpp в другой .cpp.",
+        "includeRoots задаёт каталоги поиска пользовательских заголовков. Для include/domain.hpp и #include \"domain.hpp\" добавьте include. translationUnits перечисляет main.cpp и src/domain.cpp. Путь файла — часть проекта, а не абсолютный путь компьютера.",
+        "Одна единица трансляции начинается с .cpp и включает заголовки после обработки include. Для примера ниже main.cpp и src/domain.cpp — две единицы трансляции; include/domain.hpp входит через include."
       ]
     },
     {
@@ -57,7 +54,8 @@
       "title": "Защита заголовка",
       "paragraphs": [
         "#ifndef DOMAIN_HPP / #define DOMAIN_HPP / #endif предотвращают повторное включение содержимого в одной TU. Имя guard должно быть уникальным для заголовка. Это защита от повторного объявления структуры в одной TU, а не средство объединить несколько определений функции по всей программе.",
-        "Заголовок должен включать нужные ему стандартные заголовки самостоятельно. Не полагайтесь на случайный порядок include в main.cpp. Не помещайте using namespace std в публичный заголовок: оно меняет окружение каждого включающего файла."
+        "Заголовок должен включать нужные ему стандартные заголовки самостоятельно. Не полагайтесь на случайный порядок include в main.cpp. Не помещайте using namespace std в публичный заголовок: оно меняет окружение каждого включающего файла.",
+        "Защита заголовка действует при повторном включении в пределах одной единицы трансляции. Во второй единице те же директивы обрабатываются заново."
       ]
     },
     {
@@ -65,33 +63,99 @@
       "title": "ODR и линковка",
       "paragraphs": [
         "One Definition Rule требует согласованности определений; обычная внешняя функция должна иметь одно определение в программе. Поместив её тело в заголовок и включив его в два .cpp, можно получить multiple definition при линковке. inline имеет специальные правила, но не является случайной заплаткой.",
-        "Если объявление видно, но domain.cpp не включён в сборку, компиляция вызывающего файла может пройти, а линковка даст unresolved symbol. Различайте этот случай и ошибку неизвестного имени до линковки. В уроке есть оба намеренных отрицательных контроля."
+        "Если объявление видно, но domain.cpp не включён в сборку, компиляция вызывающего файла может пройти, а линковка даст unresolved symbol. Различайте этот случай и ошибку неизвестного имени до линковки. В уроке есть оба намеренных отрицательных контроля.",
+        "Если исключить src/domain.cpp из списка, объявление останется доступным, но линкер не найдёт checkedArea. Отдельно проверьте, что includeRoots содержит include."
       ]
     },
     {
       "id": "example-2",
       "title": "Две настоящие TU",
       "paragraphs": [
-        "main.cpp и src/domain.cpp собираются вместе, заголовок ищется в include."
+        "Откройте входные файлы. Проследите, как main.cpp получает объявление, а src/domain.cpp даёт определение. Затем предскажите результат для 3 4."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include \"domain.hpp\"\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
-        "output": "12\n",
-        "stdin": "3 4"
+      "prediction": [
+        "#include <iostream>\n#include \"domain.hpp\"\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n"
+      ],
+      "predictionInput": "3 4",
+      "predictionBundle": {
+        "files": {
+          "include/domain.hpp": "#ifndef DOMAIN_HPP\n#define DOMAIN_HPP\nbool checkedArea(int width, int height, int& result);\n#endif\n",
+          "src/domain.cpp": "#include \"domain.hpp\"\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\n"
+        },
+        "metadata": {
+          "translationUnits": [
+            "main.cpp",
+            "src/domain.cpp"
+          ],
+          "includeRoots": [
+            "include"
+          ]
+        }
       },
-      "steps": [
-        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
-        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
-        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
-      ]
+      "reveal": {
+        "title": "Открыть вывод и проследить выполнение",
+        "paragraphs": [
+          "Две единицы трансляции дают исполняемую программу. Заголовок сообщает интерфейс обеим, но не заменяет src/domain.cpp."
+        ],
+        "tables": [
+          {
+            "caption": "Трасса этого запуска",
+            "columns": [
+              "Действие",
+              "Состояние до",
+              "Состояние после",
+              "Что проверить"
+            ],
+            "rows": [
+              [
+                "Компиляция main.cpp",
+                "include/domain.hpp",
+                "checkedArea declared",
+                "Объявление позволяет скомпилировать вызов."
+              ],
+              [
+                "Компиляция src/domain.cpp",
+                "checkedArea definition",
+                "object code",
+                "Здесь находится тело."
+              ],
+              [
+                "Компоновка и запуск",
+                "3 4",
+                "12",
+                "Две единицы связаны, затем вызов записывает 12."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include \"domain.hpp\"\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+          "stdin": "3 4",
+          "output": "12\n",
+          "files": {
+            "include/domain.hpp": "#ifndef DOMAIN_HPP\n#define DOMAIN_HPP\nbool checkedArea(int width, int height, int& result);\n#endif\n",
+            "src/domain.cpp": "#include \"domain.hpp\"\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\n"
+          },
+          "metadata": {
+            "translationUnits": [
+              "main.cpp",
+              "src/domain.cpp"
+            ],
+            "includeRoots": [
+              "include"
+            ]
+          }
+        }
+      }
     },
     {
       "id": "concept-5",
       "title": "Приложение и тесты собираются отдельно",
       "paragraphs": [
         "У приложения один main в main.cpp, у тестового драйвера другой в tests.cpp. Не добавляйте оба в одну сборку. Соберите приложение из main.cpp и domain.cpp, а тесты из tests.cpp и domain.cpp, разделяя наборы translationUnits.",
-        "В Code Studio создайте файлы через панель и явно выберите нужный entry. Если проект автоматически собирает все .cpp, храните драйвер в отдельном проекте или временно исключите его из выбранной сборки. Не переименовывайте пользовательские исходники без сохранённой копии."
+        "В Code Studio создайте файлы через панель и явно выберите нужный entry. Если проект автоматически собирает все .cpp, храните драйвер в отдельном проекте или временно исключите его из выбранной сборки. Не переименовывайте пользовательские исходники без сохранённой копии.",
+        "Тестовый драйвер вызывает ту же функцию с собственным main. Для приложения и тестов выбирайте разные точки входа и общий файл реализации."
       ]
     },
     {
@@ -99,11 +163,72 @@
       "title": "Воспроизводимая сборка",
       "paragraphs": [
         "Сохраните список путей, includeRoots, translationUnits и стандарт C++20. Для desktop-компилятора эквивалентный принцип: -Iinclude main.cpp src/domain.cpp. Команды не должны содержать пути или секреты чужого компьютера.",
-        "Проверьте успешную сборку, пропущенное определение, повторное определение и восстановление после исправления. Сравните stdout и exit code. Далее файловый импорт потребует той же точности: наличие имени файла не доказывает, что его данные сохранены между запусками."
+        "Проверьте успешную сборку, пропущенное определение, повторное определение и восстановление после исправления. Сравните stdout и exit code. Далее файловый импорт потребует той же точности: наличие имени файла не доказывает, что его данные сохранены между запусками.",
+        "Запишите список .cpp, каталог заголовка, stdout и exit code. Такой журнал позволяет повторить сборку без догадок о том, какие файлы вошли."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь ваша задача",
+      "paragraphs": [
+        "Подготовьте консольную точку входа и отдельную проверку контракта. Обе пользуются одним заголовком и одной реализацией функции.",
+        "Назовите два набора .cpp: для приложения и для тестового драйвера. В каждом должен быть один main."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что выведет показанная сборка из двух .cpp при входе 3 4?",
+      "options": [
+        "12\n",
+        "invalid\n",
+        "-7\n"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Верно. Вызов проходит проверку и записывает площадь.",
+        "3 и 4 входят в диапазон, а других токенов нет.",
+        "−7 — начальное значение, которое заменяется при успехе."
+      ],
+      "code": {
+        "source": "#include <iostream>\n#include \"domain.hpp\"\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+        "stdin": "3 4",
+        "files": {
+          "include/domain.hpp": "#ifndef DOMAIN_HPP\n#define DOMAIN_HPP\nbool checkedArea(int width, int height, int& result);\n#endif\n",
+          "src/domain.cpp": "#include \"domain.hpp\"\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\n"
+        },
+        "metadata": {
+          "translationUnits": [
+            "main.cpp",
+            "src/domain.cpp"
+          ],
+          "includeRoots": [
+            "include"
+          ]
+        }
+      },
+      "execution": {
+        "source": "#include <iostream>\n#include \"domain.hpp\"\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cin >> std::ws;\n    int result{-7};\n    if (!std::cin.eof() || !checkedArea(width, height, result)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << result << '\\n';\n}\n",
+        "stdin": "3 4",
+        "files": {
+          "include/domain.hpp": "#ifndef DOMAIN_HPP\n#define DOMAIN_HPP\nbool checkedArea(int width, int height, int& result);\n#endif\n",
+          "src/domain.cpp": "#include \"domain.hpp\"\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\n"
+        },
+        "metadata": {
+          "translationUnits": [
+            "main.cpp",
+            "src/domain.cpp"
+          ],
+          "includeRoots": [
+            "include"
+          ]
+        },
+        "expected": "12\n"
+      },
+      "recall": "example-2"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -114,7 +239,8 @@
         "Нет, guard действует внутри одной TU"
       ],
       "correct": 2,
-      "feedback": "Обычное определение разместите в одном .cpp."
+      "feedback": "Обычное определение разместите в одном .cpp.",
+      "recall": "concept-3"
     },
     {
       "id": "check-1",
@@ -126,7 +252,8 @@
         "Успешный тест"
       ],
       "correct": 1,
-      "feedback": "Проверьте список TU и совместимость объявления."
+      "feedback": "Проверьте список TU и совместимость объявления.",
+      "recall": "concept-4"
     },
     {
       "id": "check-2",
@@ -138,7 +265,8 @@
         "По одному на каждый .cpp"
       ],
       "correct": 0,
-      "feedback": "Тестовый драйвер и приложение собирают раздельно."
+      "feedback": "Тестовый драйвер и приложение собирают раздельно.",
+      "recall": "concept-5"
     },
     {
       "id": "check-3",
@@ -150,7 +278,8 @@
         "Нет, включите заголовок и соберите обе TU"
       ],
       "correct": 2,
-      "feedback": "Разделение интерфейса и реализации требует явной сборки."
+      "feedback": "Разделение интерфейса и реализации требует явной сборки.",
+      "recall": "concept-2"
     },
     {
       "id": "check-4",
@@ -162,17 +291,19 @@
         "Только отметка completed"
       ],
       "correct": 1,
-      "feedback": "Отметка прогресса не равна доказательству самостоятельного освоения."
+      "feedback": "Отметка прогресса не равна доказательству самостоятельного освоения.",
+      "recall": "concept-6"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Заголовок сообщает интерфейс; выбранные TU определяют, что реально собрано.",
-      "feedback": "Далее: Файлы: формат, ошибки и явное сохранение. Сохраните лабораторную и таблицу проверок."
+      "prompt": "Почему приложение с одним main.cpp знает сигнатуру checkedArea, но не собирается до исполняемой программы? Какой файл включить в сборку?",
+      "feedback": "Добавление include даёт объявление. Для линковки нужен src/domain.cpp в списке единиц трансляции.",
+      "recall": "concept-5"
     }
   ],
   "practice": {
-    "title": "Лабораторная: Многофайловая сборка: заголовки, TU и ODR",
+    "title": "Собрать приложение и тест раздельно",
     "task": "Разделите checkedArea между include/domain.hpp, src/domain.cpp и main.cpp. Проверьте чтение двух размеров 0…1000 и итог area либо invalid. Соберите отдельный тестовый драйвер без второго main в приложении.",
     "kind": "cpp-console",
     "environment": "C++20",
@@ -229,51 +360,34 @@
       }
     ],
     "criteria": [
-      "Контракт соответствует задаче; единицы, пустой ввод и лишние данные определены.",
-      "Все опубликованные случаи совпали; добавлены два объяснённых собственных теста.",
+      "Сверьте 3 4 и −1 2. В отдельном эксперименте пропустите файл реализации и классифицируйте ошибку. Не добавляйте второй main в эту же сборку.",
       "Заголовок сообщает интерфейс; выбранные TU определяют, что реально собрано.",
       "Не включайте .cpp и не собирайте два main вместе. Header guard не является программной базой определений.",
-      "Есть исходник, фактический вывод, exit code и объяснение O(n) либо другого обоснованного роста."
+      "Добавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.",
+      "Сохраните исходник, точный ввод и фактический вывод."
     ],
-    "hint": "Заголовок сообщает интерфейс; выбранные TU определяют, что реально собрано.",
+    "hint": "Добавление include даёт объявление. Для линковки нужен src/domain.cpp в списке единиц трансляции.",
     "steps": [
       {
-        "where": "Моя программа",
-        "action": "Перепишите контракт входа, результата и отказов своими словами.",
+        "where": "До запуска",
+        "action": "Назовите два набора .cpp: для приложения и для тестового драйвера. В каждом должен быть один main.",
         "why": "",
         "expected": ""
       },
       {
         "where": "Моя программа",
-        "action": "Нарисуйте состояние и сформулируйте инвариант: Заголовок сообщает интерфейс; выбранные TU определяют, что реально собрано.",
+        "action": "Сохраните заголовок в include и реализацию в src. В Code Studio выбирайте файлы приложения для основного запуска и отдельно собирайте тест с той же реализацией.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "Моя программа",
-        "action": "Начните с заготовки, реализуйте допустимый путь, затем добавьте проверки границ.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Для каждого контрольного случая независимо запишите ожидание до запуска; сохраните stdout и exit code.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Выполните ещё два собственных случая, включая один отказ; объясните результат без ссылки на эталон.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Сохраните исходник, таблицу фактов и краткий разбор стоимости и ограничений.",
+        "where": "Проверка",
+        "action": "Сверьте 3 4 и −1 2. В отдельном эксперименте пропустите файл реализации и классифицируйте ошибку. Не добавляйте второй main в эту же сборку.",
         "why": "",
         "expected": ""
       }
-    ]
+    ],
+    "recall": "concept-5"
   },
   "terms": [
     {
@@ -341,5 +455,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\structured\\multifile-build.ru.json"
+  "sourcePath": "courses\\cpp\\gold\\structured\\multifile-build.ru.json",
+  "reading": [
+    {
+      "id": "cpp20-odr",
+      "title": "C++20 [basic.def.odr]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[basic.def.odr]",
+      "language": "English",
+      "purpose": "Сверьте правило определения обычной функции и отличие от inline.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.def.odr"
+    },
+    {
+      "id": "cpp20-tu",
+      "title": "C++20 [lex.separate]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[lex.separate]",
+      "language": "English",
+      "purpose": "Найдите, из каких частей образуется единица трансляции.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/lex.separate"
+    }
+  ],
+  "authored": true
 }

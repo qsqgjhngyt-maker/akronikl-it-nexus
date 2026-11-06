@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b3-author-v1",
   "id": "cpp.stacks-queues",
   "courseId": "cpp",
   "moduleId": "cpp.section.structured-programming",
@@ -8,7 +8,7 @@
   "module": "Structured Programming",
   "locale": "en",
   "title": "Stacks, queues, and the final command catalogue",
-  "goal": "Choose LIFO or FIFO, check emptiness, and connect module skills in a verifiable project.",
+  "goal": "Predict removal order and explain why undo and a task queue keep different histories.",
   "prerequisites": [
     {
       "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "LIFO and FIFO",
       "paragraphs": [
+        "Three requests arrive as 1, 2, 3. A queue starts at 1 and a stack starts at 3. Record the required order before choosing an adapter.",
         "std::stack<T> from <stack> provides last in, first out: the most recently pushed element is removed first. std::queue<T> from <queue> provides first in, first out: the earliest element is processed first. These are access disciplines, not physical representations.",
         "Both adapt an underlying suitable container. A teaching queue does not require reimplementing a linked list. Justify the choice by ordering, size, and operations; arbitrary indexed access is not part of these interfaces."
       ]
@@ -31,59 +32,94 @@
       "title": "Operations and preconditions",
       "paragraphs": [
         "push adds an element, empty checks absence, and size gives the count. stack top reads the top; queue front reads the beginning and back the end. These read operations require a nonempty adapter.",
-        "pop removes an element but returns no value. Read the required value with top/front before pop. Do not retain a reference to the removed element. Calling pop on empty is not a valid way to discover emptiness."
+        "pop removes an element but returns no value. Read the required value with top/front before pop. Do not retain a reference to the removed element. Calling pop on empty is not a valid way to discover emptiness.",
+        "top and front inspect a value, while pop removes it. Copy or move the value before pop if it is needed later. Do not inspect an empty adapter."
       ]
     },
     {
       "id": "example-1",
       "title": "Same input, different order",
       "paragraphs": [
-        "Read top and front only from nonempty adapters."
+        "Trace the stack and queue with the same input 1, 2, 3. Record the pair before pop and the pair after it."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <stack>\n#include <queue>\nint main() {\n    std::stack<int> stack;\n    std::queue<int> queue;\n    for (int value : {1, 2, 3}) { stack.push(value); queue.push(value); }\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n    stack.pop(); queue.pop();\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n}\n",
-        "output": "3 1\n2 2\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Read the contract and independently derive the expected result for the given input.",
-        "Trace state after each significant operation and identify the established preconditions.",
-        "Run the source, compare stdout and exit code, then check the additional cases."
-      ]
+      "prediction": [
+        "#include <iostream>\n#include <stack>\n#include <queue>\nint main() {\n    std::stack<int> stack;\n    std::queue<int> queue;\n    for (int value : {1, 2, 3}) { stack.push(value); queue.push(value); }\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n    stack.pop(); queue.pop();\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n}\n"
+      ],
+      "predictionInput": "",
+      "predictionBundle": {},
+      "reveal": {
+        "title": "Reveal output and trace execution",
+        "paragraphs": [
+          "The first line distinguishes LIFO and FIFO. The matching second line does not erase their different removal orders."
+        ],
+        "tables": [
+          {
+            "caption": "Trace for this run",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "What to check"
+            ],
+            "rows": [
+              [
+                "push 1, 2, 3",
+                "empty",
+                "top = 3, front = 1",
+                "Different orders for the same pushes."
+              ],
+              [
+                "First print",
+                "top = 3, front = 1",
+                "3 1",
+                "Printing removes nothing."
+              ],
+              [
+                "pop and print",
+                "stack removes 3, queue removes 1",
+                "2 2",
+                "The next value matches for different reasons."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <stack>\n#include <queue>\nint main() {\n    std::stack<int> stack;\n    std::queue<int> queue;\n    for (int value : {1, 2, 3}) { stack.push(value); queue.push(value); }\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n    stack.pop(); queue.pop();\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n}\n",
+          "stdin": "",
+          "output": "3 1\n2 2\n"
+        }
+      }
     },
     {
       "id": "concept-3",
       "title": "Undo as state history",
       "paragraphs": [
         "For a small catalogue, save the previous validated state in a stack before a successful mutation. undo restores top and removes it. A rejected command must not add history, or undo would depend on user errors.",
-        "A whole-state copy is simple but uses memory proportional to record count per step. Inverse operations are more compact but harder to justify. The project uses bounded snapshots and explicit record and command limits."
-      ]
-    },
-    {
-      "id": "concept-4",
-      "title": "Queueing and execution",
-      "paragraphs": [
-        "A parser validates command syntax and queues the command. The executor reads front and applies domain checks to the current state. A syntactically valid command can still be rejected because stock is insufficient at execution time.",
-        "Order matters: add followed by remove can differ from the reverse order. Process the finite queue sequentially and print one result per command for reproducibility. Concurrency and blocking queues are outside this lesson."
+        "A whole-state copy is simple but uses memory proportional to record count per step. Inverse operations are more compact but harder to justify. The project uses bounded snapshots and explicit record and command limits.",
+        "The undo example records stock 5 before changing it to 8. Undo restores 5 and removes the snapshot. A rejected request that changes nothing must not add a snapshot."
       ]
     },
     {
       "id": "example-2",
       "title": "History only for successful updates",
       "paragraphs": [
-        "Push the previous state before a successful update and pop it when undoing."
+        "Locate when 5 is stored and the snapshot is removed. Compare history before and after undo."
       ],
       "code": {
         "language": "cpp",
         "source": "#include <iostream>\n#include <stack>\nint main() {\n    int stock{5};\n    std::stack<int> history;\n    history.push(stock);\n    stock += 3;\n    std::cout << stock << '\\n';\n    if (!history.empty()) { stock = history.top(); history.pop(); }\n    std::cout << stock << ' ' << history.empty() << '\\n';\n}\n",
-        "output": "8\n5 1\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Read the contract and independently derive the expected result for the given input.",
-        "Trace state after each significant operation and identify the established preconditions.",
-        "Run the source, compare stdout and exit code, then check the additional cases."
+        "stdin": "",
+        "output": "8\n5 1\n"
+      }
+    },
+    {
+      "id": "concept-4",
+      "title": "Queueing and execution",
+      "paragraphs": [
+        "A parser validates command syntax and queues the command. The executor reads front and applies domain checks to the current state. A syntactically valid command can still be rejected because stock is insufficient at execution time.",
+        "Order matters: add followed by remove can differ from the reverse order. Process the finite queue sequentially and print one result per command for reproducibility. Concurrency and blocking queues are outside this lesson.",
+        "A queue handles the earlier request first. After the first pop its front becomes 2, although the stack reaches 2 from the opposite end."
       ]
     },
     {
@@ -91,7 +127,8 @@
       "title": "Project integration",
       "paragraphs": [
         "The final project uses a record vector, a queue of typed commands, a stack of snapshots for undo, contracted functions, and text import/export. The previous lesson’s list remains a separate learning artifact with a justified comparison rather than an unnecessary catalogue dependency.",
-        "Split the work into parsing, domain operations, report formatting, and main. Build the application and test driver separately. Assessment includes design explanations and original tests; a working reference does not prove learner mastery."
+        "Split the work into parsing, domain operations, report formatting, and main. Build the application and test driver separately. Assessment includes design explanations and original tests; a working reference does not prove learner mastery.",
+        "In the capstone, separate record state, the queue of pending commands and history of successful changes. Each structure has a different observable rule."
       ]
     },
     {
@@ -99,11 +136,46 @@
       "title": "Order tests and final defence",
       "paragraphs": [
         "The lab supplies identical values to a stack and queue and compares reverse and original order. Test empty, singleton, and duplicate inputs. Guard every top/front with empty and read before each pop.",
-        "For the project, demonstrate rejection without mutation, two undos, empty history, a malformed file, and a saved-report roundtrip. In the defence explain ownership, bounds, and complexity, then change one requirement and add a test. This provides evidence of independent understanding."
+        "For the project, demonstrate rejection without mutation, two undos, empty history, a malformed file, and a saved-report roundtrip. In the defence explain ownership, bounds, and complexity, then change one requirement and add a test. This provides evidence of independent understanding.",
+        "A single value cannot distinguish LIFO from FIFO: both structures print the same result. Three distinct values distinguish order, while duplicates test that values are not lost."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Print the entire removal order instead of two observations. Keep both lines even for empty input.",
+        "Write the two expected lines for 1, 2, 3 and separately for the empty input set."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Which two lines do stack and queue print in the shown example?",
+      "options": [
+        "3 1\n2 2\n",
+        "1 3\n2 2\n",
+        "3 1\n3 1\n"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Yes. They start at opposite ends and then both reach 2.",
+        "The first value comes from the stack and the second from the queue.",
+        "After pop, top and front no longer refer to the removed values."
+      ],
+      "code": {
+        "source": "#include <iostream>\n#include <stack>\n#include <queue>\nint main() {\n    std::stack<int> stack;\n    std::queue<int> queue;\n    for (int value : {1, 2, 3}) { stack.push(value); queue.push(value); }\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n    stack.pop(); queue.pop();\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "execution": {
+        "source": "#include <iostream>\n#include <stack>\n#include <queue>\nint main() {\n    std::stack<int> stack;\n    std::queue<int> queue;\n    for (int value : {1, 2, 3}) { stack.push(value); queue.push(value); }\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n    stack.pop(); queue.pop();\n    std::cout << stack.top() << ' ' << queue.front() << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "3 1\n2 2\n"
+      },
+      "recall": "example-1"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -114,7 +186,8 @@
         "No; read top/front first"
       ],
       "correct": 2,
-      "feedback": "pop removes an element and returns void."
+      "feedback": "pop removes an element and returns void.",
+      "recall": "concept-2"
     },
     {
       "id": "check-1",
@@ -126,7 +199,8 @@
         "2"
       ],
       "correct": 1,
-      "feedback": "A stack implements LIFO."
+      "feedback": "A stack implements LIFO.",
+      "recall": "concept-1"
     },
     {
       "id": "check-2",
@@ -138,7 +212,8 @@
         "Yes, always"
       ],
       "correct": 0,
-      "feedback": "History represents successful domain mutations."
+      "feedback": "History represents successful domain mutations.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -150,7 +225,8 @@
         "After establishing nonemptiness"
       ],
       "correct": 2,
-      "feedback": "Empty access violates its precondition."
+      "feedback": "Empty access violates its precondition.",
+      "recall": "concept-2"
     },
     {
       "id": "check-4",
@@ -162,17 +238,19 @@
         "Only a completed flag"
       ],
       "correct": 1,
-      "feedback": "A progress flag is not evidence of independent mastery."
+      "feedback": "A progress flag is not evidence of independent mastery.",
+      "recall": "concept-6"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Removal order is part of the domain contract.",
-      "feedback": "The module concludes with a project and defence. Module 4 continues with search, sorting, and algorithm analysis."
+      "prompt": "How do 1, 2, 3 expose a defect if both branches use a stack? Why would a single element miss it?",
+      "feedback": "Check order, count and duplicates. Call pop after reading the current value.",
+      "recall": "concept-5"
     }
   ],
   "practice": {
-    "title": "Laboratory: Stacks, queues, and the final command catalogue",
+    "title": "Complete removal order",
     "task": "Read n in 0…100 and n integers in -1000…1000. Fill a stack and queue, then print their removal orders on two lines. Empty input data produces two empty lines.",
     "kind": "cpp-console",
     "environment": "C++20",
@@ -187,22 +265,22 @@
     "returnAnchor": "example-1",
     "cases": [
       {
-        "label": "Case 1",
+        "label": "Two blank lines",
         "input": "0",
         "output": "\n\n"
       },
       {
-        "label": "Case 2",
+        "label": "One element",
         "input": "1 7",
         "output": "7\n7\n"
       },
       {
-        "label": "Case 3",
+        "label": "Different orders",
         "input": "3 1 2 3",
         "output": "3 2 1\n1 2 3\n"
       },
       {
-        "label": "Case 4",
+        "label": "Duplicates are retained",
         "input": "3 2 2 -1",
         "output": "-1 2 2\n2 2 -1\n"
       },
@@ -218,47 +296,29 @@
       }
     ],
     "criteria": [
-      "The contract matches the task and defines units, empty input, and extra data.",
-      "Every published case matches and two explained original tests are included.",
+      "For 3 1 2 3 compare 3 2 1 with 1 2 3. For n = 0 check two blank lines; for extra input expect invalid.",
       "Removal order is part of the domain contract.",
       "Do not add history for a rejected command. Do not read front/top on an empty adapter.",
-      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+      "Add two cases of your own, including a rejection if the interface allows one. Explain one boundary result.",
+      "Keep the source, exact input and observed output."
     ],
-    "hint": "Removal order is part of the domain contract.",
+    "hint": "Check order, count and duplicates. Call pop after reading the current value.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Restate the input, output, and rejection contract in your own words.",
+        "where": "Before running",
+        "action": "Write the two expected lines for 1, 2, 3 and separately for the empty input set.",
         "why": "",
         "expected": ""
       },
       {
         "where": "My program",
-        "action": "Draw the state and state the invariant: Removal order is part of the domain contract.",
+        "action": "After validation fill both adapters. Print each sequence, checking empty before top or front.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "My program",
-        "action": "Start from the scaffold, implement the valid path, then add boundary checks.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "For every reference case, independently write the expectation before running; keep stdout and exit code.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add two original cases including one rejection; explain the result without consulting the reference.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Preserve source, a result table, and a short cost-and-limit analysis.",
+        "where": "Check",
+        "action": "For 3 1 2 3 compare 3 2 1 with 1 2 3. For n = 0 check two blank lines; for extra input expect invalid.",
         "why": "",
         "expected": ""
       }
@@ -594,7 +654,8 @@
       ],
       "completionRule": "Manual acceptance: at least 8/10, no zero for correctness or tests, all required cases pass, and the defence is completed. Copying the reference and a completed flag do not imply automatic skill assessment.",
       "verification": "manual-output-comparison"
-    }
+    },
+    "recall": "concept-5"
   },
   "terms": [
     {
@@ -994,5 +1055,28 @@
     },
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\structured\\stacks-queues.en.json"
+  "sourcePath": "courses\\cpp\\gold\\structured\\stacks-queues.en.json",
+  "reading": [
+    {
+      "id": "cpp20-adapters",
+      "title": "C++20 [container.adaptors]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[container.adaptors]",
+      "language": "English",
+      "purpose": "Check the stack and queue interfaces and roles of top, front and pop.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/container.adaptors"
+    },
+    {
+      "id": "cpp20-vector",
+      "title": "C++20 [vector]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[vector]",
+      "language": "English",
+      "purpose": "Compare an adapter with a container that actually stores elements.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/vector"
+    }
+  ],
+  "authored": true
 }

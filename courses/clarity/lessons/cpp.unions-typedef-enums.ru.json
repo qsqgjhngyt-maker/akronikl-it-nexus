@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b3-author-v1",
   "id": "cpp.unions-typedef-enums",
   "courseId": "cpp",
   "moduleId": "cpp.section.structured-programming",
@@ -8,7 +8,7 @@
   "module": "Структурное программирование",
   "locale": "ru",
   "title": "Перечисления, alias и варианты данных",
-  "goal": "Моделируйте ограниченный выбор значений и разные формы команды с проверкой активного варианта.",
+  "goal": "Отделите имя типа от нового типа и проверяйте активную альтернативу до доступа к данным.",
   "prerequisites": [
     {
       "text": "Module 1–2: выражения, сравнения, типы, ссылки и проверка cin."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "enum class ограничивает имена",
       "paragraphs": [
+        "Команде «добавить» и команде «убрать» нужен общий интерфейс, но смысл у них разный. enum class годится для имени выбора, а variant хранит выбранный вид и его данные.",
         "enum class Mode { add, remove }; создаёт отдельный тип. Значения пишутся Mode::add и Mode::remove; они не преобразуются неявно в int. Это предотвращает случайное смешение Mode с другим перечислением, но не заменяет проверку внешнего числового кода.",
         "Разберите вход через if или switch и явно сопоставьте допустимые токены значениям перечисления. static_cast<Mode>(number) не доказывает принадлежность предметному набору. В switch перечислите допустимые варианты и определите политику непредусмотренного состояния."
       ]
@@ -31,25 +32,8 @@
       "title": "using и typedef — имена, а не новые типы",
       "paragraphs": [
         "using Count=int; и typedef int Count; задают alias того же типа int. Это улучшает читаемость, но Count и int остаются взаимозаменяемы. Не обещайте, что alias автоматически запрещает отрицательное количество или смешение единиц.",
-        "Для простых новых объявлений предпочитаем using: порядок имя=тип легче читать. Настоящий отдельный предметный тип можно построить через struct с проверяемыми операциями; усиление этого подхода продолжится в Module 5."
-      ]
-    },
-    {
-      "id": "example-1",
-      "title": "Имена и активный член",
-      "paragraphs": [
-        "Alias остаётся int; читается только активный член union."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nusing Count = int;\nenum class State { idle, ready };\nunion Storage { int count; double weight; };\nint main() {\n    Count n{3};\n    State state{State::ready};\n    Storage storage{};\n    storage.count = n;\n    std::cout << (state == State::ready) << ' ' << storage.count << '\\n';\n}\n",
-        "output": "1 3\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
-        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
-        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
+        "Для простых новых объявлений предпочитаем using: порядок имя=тип легче читать. Настоящий отдельный предметный тип можно построить через struct с проверяемыми операциями; усиление этого подхода продолжится в Module 5.",
+        "Count и int в примере — один тип. Функции f(Count) и f(int) нельзя развести в разные перегрузки. Для отдельного типа нужна отдельная оболочка или перечисление."
       ]
     },
     {
@@ -57,41 +41,94 @@
       "title": "Почему union требует дисциплины",
       "paragraphs": [
         "Члены union используют общее хранилище. Запись в один член не означает, что все остальные представления стали допустимыми значениями. Общие правила активного члена и времени жизни сложнее простого совпадения адресов.",
-        "В корректном учебном примере присвойте и прочитайте один активный int-член. Не выполняйте type punning через неактивный double и не называйте возможный вывод переносимым результатом. Специальные исключения языка не нужны для решения нашей задачи."
+        "В корректном учебном примере присвойте и прочитайте один активный int-член. Не выполняйте type punning через неактивный double и не называйте возможный вывод переносимым результатом. Специальные исключения языка не нужны для решения нашей задачи.",
+        "В Storage записан count. Читайте именно count: просмотр weight для проверки битов не входит в этот переносимый опыт."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "Имена и активный член",
+      "paragraphs": [
+        "Определите, какое значение активно в Storage, и отдельно проверьте сравнение с State::ready."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nusing Count = int;\nenum class State { idle, ready };\nunion Storage { int count; double weight; };\nint main() {\n    Count n{3};\n    State state{State::ready};\n    Storage storage{};\n    storage.count = n;\n    std::cout << (state == State::ready) << ' ' << storage.count << '\\n';\n}\n",
+        "stdin": "",
+        "output": "1 3\n"
+      }
     },
     {
       "id": "concept-4",
       "title": "variant хранит альтернативу и её признак",
       "paragraphs": [
         "std::variant<Add,Remove> из <variant> содержит одну активную альтернативу и информацию о ней. Сначала объявляем структуры команд, затем выбираем вариант при разборе токена. Использование библиотечного шаблона не требует написания собственного template.",
-        "std::get_if<Add>(&command) возвращает указатель на Add либо nullptr. Проверка указателя предшествует ->amount. std::get с неверным типом связан с исключением, поэтому здесь не используется: текущий Clang/WASI собран без поддержки исключений."
+        "std::get_if<Add>(&command) возвращает указатель на Add либо nullptr. Проверка указателя предшествует ->amount. std::get с неверным типом связан с исключением, поэтому здесь не используется: текущий Clang/WASI собран без поддержки исключений.",
+        "Когда активен Add{4}, get_if<Remove> возвращает nullptr. Эта проверка объясняет первую строку ещё до изменения запаса."
       ]
     },
     {
       "id": "example-2",
       "title": "Проверенная альтернатива",
       "paragraphs": [
-        "get_if другого типа даёт nullptr без исключения."
+        "Для Add{4} сначала предскажите результат get_if<Remove>, затем новый запас из 3."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n",
-        "output": "1\n1 7\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Прочитайте контракт и независимо вычислите ожидаемый ответ для указанного ввода.",
-        "Проследите состояние после каждой значимой операции; отметьте проверенные предусловия.",
-        "Запустите исходник, сравните stdout и exit code, затем проверьте дополнительные случаи."
-      ]
+      "prediction": [
+        "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n"
+      ],
+      "predictionInput": "",
+      "predictionBundle": {},
+      "reveal": {
+        "title": "Открыть вывод и проследить выполнение",
+        "paragraphs": [
+          "Первая единица отвечает на вопрос о nullptr. Вторая — флаг успешной операции, за ней новый запас 7."
+        ],
+        "tables": [
+          {
+            "caption": "Трасса этого запуска",
+            "columns": [
+              "Действие",
+              "Состояние до",
+              "Состояние после",
+              "Что проверить"
+            ],
+            "rows": [
+              [
+                "Тип команды",
+                "Add{4}",
+                "Remove? → nullptr",
+                "Неверная альтернатива не разыменовывается."
+              ],
+              [
+                "Проверка прибавления",
+                "stock = 3",
+                "3 + 4 ≤ 1000",
+                "Ограничение выполнено."
+              ],
+              [
+                "Изменение",
+                "stock = 3",
+                "true, stock = 7",
+                "Печатаются 1 и 7."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n",
+          "stdin": "",
+          "output": "1\n1 7\n"
+        }
+      }
     },
     {
       "id": "concept-5",
       "title": "Диспетчеризация и инвариант",
       "paragraphs": [
         "Разбор команды и её выполнение — разные функции. Парсер принимает только add и remove и проверяет amount. Исполнитель смотрит на активную альтернативу, затем проверяет возможность изменения запаса. Неверный ввод не должен создавать полуподготовленную команду.",
-        "Variant не гарантирует предметную корректность поля amount. Для запасов до 1000 сначала проверяйте amount<=1000-stock при добавлении и amount<=stock при удалении. Эти сравнения избегают вычисления заведомо недопустимого нового состояния."
+        "Variant не гарантирует предметную корректность поля amount. Для запасов до 1000 сначала проверяйте amount<=1000-stock при добавлении и amount<=stock при удалении. Эти сравнения избегают вычисления заведомо недопустимого нового состояния.",
+        "Активная команда может быть корректного типа, но недопустимой для текущего stock. При запасе 3 Remove{4} должна отказать после выбора альтернативы."
       ]
     },
     {
@@ -99,11 +136,46 @@
       "title": "Проверка выбора",
       "paragraphs": [
         "Проверьте обе альтернативы, неверное имя команды, нулевое количество, переполнение предметного запаса и недостаток. Отдельный get_if на другой тип должен дать nullptr, и программа не разыменовывает его.",
-        "Сравните гарантии alias, enum class, union и variant в таблице: отдельный тип, имя значения, активная альтернатива, проверка доступа. Далее вопрос выбора памяти сменится вопросом владения: кто освобождает ресурс и кто лишь наблюдает."
+        "Сравните гарантии alias, enum class, union и variant в таблице: отдельный тип, имя значения, активная альтернатива, проверка доступа. Далее вопрос выбора памяти сменится вопросом владения: кто освобождает ресурс и кто лишь наблюдает.",
+        "Составьте две проверки для Remove: ровно текущий запас и на единицу больше. Для Add проверьте переход через верхнюю границу 1000."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь ваша задача",
+      "paragraphs": [
+        "Теперь вид команды приходит с входа. У каждой альтернативы свой допустимый переход состояния.",
+        "Составьте таблицу для add, remove и неизвестного слова. Добавьте отказ в каждой из двух известных альтернатив."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что напечатается для Add{4} при запасе 3?",
+      "options": [
+        "1\n1 7\n",
+        "0\n1 7\n",
+        "1\n0 3\n"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Да: Remove отсутствует, Add успешен.",
+        "get_if<Remove> вернёт nullptr, поэтому сравнение истинно.",
+        "3 + 4 допустимо, поэтому отказа нет."
+      ],
+      "code": {
+        "source": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "execution": {
+        "source": "#include <iostream>\n#include <variant>\n#include <string>\nstruct Add { int amount{}; };\nstruct Remove { int amount{}; };\nusing Command = std::variant<Add, Remove>;\nbool executeStock(int& stock, const Command& command) {\n    if (const auto* add = std::get_if<Add>(&command)) {\n        if (add->amount < 0 || add->amount > 1000 - stock) { return false; }\n        stock += add->amount;\n        return true;\n    }\n    const auto* remove = std::get_if<Remove>(&command);\n    if (!remove || remove->amount < 0 || remove->amount > stock) { return false; }\n    stock -= remove->amount;\n    return true;\n}\nint main() {\n    Command value = Add{4};\n    std::cout << (std::get_if<Remove>(&value) == nullptr) << '\\n';\n    int stock{3};\n    bool ok = executeStock(stock, value);\n    std::cout << ok << ' ' << stock << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "1\n1 7\n"
+      },
+      "recall": "example-2"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -114,7 +186,8 @@
         "Произвольный адрес"
       ],
       "correct": 1,
-      "feedback": "Проверьте указатель до доступа к полям."
+      "feedback": "Проверьте указатель до доступа к полям.",
+      "recall": "concept-4"
     },
     {
       "id": "check-1",
@@ -126,7 +199,8 @@
         "Да"
       ],
       "correct": 0,
-      "feedback": "Alias даёт имя существующему типу."
+      "feedback": "Alias даёт имя существующему типу.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -138,7 +212,8 @@
         "Только записанный активный член"
       ],
       "correct": 2,
-      "feedback": "Общее хранилище не делает все интерпретации допустимыми."
+      "feedback": "Общее хранилище не делает все интерпретации допустимыми.",
+      "recall": "concept-3"
     },
     {
       "id": "check-3",
@@ -150,7 +225,8 @@
         "Он всегда копирует"
       ],
       "correct": 1,
-      "feedback": "Текущий runtime не поддерживает исключения."
+      "feedback": "Текущий runtime не поддерживает исключения.",
+      "recall": "concept-4"
     },
     {
       "id": "check-4",
@@ -162,17 +238,19 @@
         "Только скопированный эталон"
       ],
       "correct": 0,
-      "feedback": "Отметка прогресса не равна доказательству самостоятельного освоения."
+      "feedback": "Отметка прогресса не равна доказательству самостоятельного освоения.",
+      "recall": "concept-6"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Тип варианта не отменяет проверку его данных.",
-      "feedback": "Далее: Время жизни, RAII и единственное владение. Сохраните лабораторную и таблицу проверок."
+      "prompt": "Почему 3 remove 4 — корректно разобранная команда, но отклонённая операция? Какое наблюдение доказывает сохранность запаса?",
+      "feedback": "Выбор правильного типа не доказывает допустимость количества. Для отказа старый stock нужен в ответе.",
+      "recall": "concept-5"
     }
   ],
   "practice": {
-    "title": "Лабораторная: Перечисления, alias и варианты данных",
+    "title": "Команды add и remove",
     "task": "Прочитайте stock, add/remove и amount в 0…1000. Храните команду в variant<Add,Remove>; при невозможном изменении выведите rejected stock, иначе ok newStock. Неверный формат — invalid.",
     "kind": "cpp-console",
     "environment": "C++20",
@@ -223,50 +301,37 @@
       }
     ],
     "criteria": [
-      "Контракт соответствует задаче; единицы, пустой ввод и лишние данные определены.",
-      "Все опубликованные случаи совпали; добавлены два объяснённых собственных теста.",
+      "Проверьте 3 remove 3, 3 remove 4 и 1000 add 1. Для неизвестной команды проверьте invalid.",
       "Тип варианта не отменяет проверку его данных.",
       "using не создаёт сильный тип. Не читайте неактивный union для исследования битов.",
-      "Есть исходник, фактический вывод, exit code и объяснение O(n) либо другого обоснованного роста."
+      "Добавьте два собственных случая, один с отказом, если формат допускает отказ. Объясните один граничный результат.",
+      "Сохраните исходник, точный ввод и фактический вывод."
     ],
-    "hint": "Тип варианта не отменяет проверку его данных.",
+    "hint": "Выбор правильного типа не доказывает допустимость количества. Для отказа старый stock нужен в ответе.",
     "steps": [
       {
-        "where": "Моя программа",
-        "action": "Перепишите контракт входа, результата и отказов своими словами.",
+        "where": "До запуска",
+        "action": "Составьте таблицу для add, remove и неизвестного слова. Добавьте отказ в каждой из двух известных альтернатив.",
         "why": "",
         "expected": ""
       },
       {
         "where": "Моя программа",
-        "action": "Нарисуйте состояние и сформулируйте инвариант: Тип варианта не отменяет проверку его данных.",
+        "action": "Создайте variant только после чтения. Разберите альтернативу, проверьте её операцию и измените stock лишь при успехе.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "Моя программа",
-        "action": "Начните с заготовки, реализуйте допустимый путь, затем добавьте проверки границ.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Для каждого контрольного случая независимо запишите ожидание до запуска; сохраните stdout и exit code.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Выполните ещё два собственных случая, включая один отказ; объясните результат без ссылки на эталон.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Сохраните исходник, таблицу фактов и краткий разбор стоимости и ограничений.",
+        "where": "Проверка",
+        "action": "Проверьте 3 remove 3, 3 remove 4 и 1000 add 1. Для неизвестной команды проверьте invalid.",
         "why": "",
         "expected": ""
       }
+    ],
+    "recall": "concept-5",
+    "outputFields": [
+      "Статус",
+      "Запас"
     ]
   },
   "terms": [
@@ -335,5 +400,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\structured\\unions-typedef-enums.ru.json"
+  "sourcePath": "courses\\cpp\\gold\\structured\\unions-typedef-enums.ru.json",
+  "reading": [
+    {
+      "id": "cpp20-enum",
+      "title": "C++20 [dcl.enum]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[dcl.enum]",
+      "language": "English",
+      "purpose": "Сверьте правила областей имён для enum class.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/dcl.enum"
+    },
+    {
+      "id": "cpp20-variant",
+      "title": "C++20 [variant.get]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[variant.get]",
+      "language": "English",
+      "purpose": "Проверьте результат get_if при несовпадении альтернативы.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/variant.get"
+    }
+  ],
+  "authored": true
 }

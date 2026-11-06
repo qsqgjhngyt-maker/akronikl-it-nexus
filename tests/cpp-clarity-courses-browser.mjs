@@ -1,5 +1,6 @@
 // Полный core/app, синтетический Account DTO. Не проверяет серверный вход.
 import assert from 'node:assert/strict';import http from 'node:http';import path from 'node:path';import {readFile,mkdir,writeFile} from 'node:fs/promises';import {pathToFileURL} from 'node:url';import {staticMime} from '../pwa/static-mime.js';
+import {goldLessonPath} from '../core/academy-gold-catalog.js';
 const out=path.resolve(process.env.NEXUS_CLARITY_R3_EVIDENCE||'cpp-clarity-evidence/all-courses'),frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR);await mkdir(out,{recursive:true});const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),prefix='/releases/'+manifest.assetGeneration;
 const server=http.createServer(async(req,res)=>{try{const u=new URL(req.url,'http://127.0.0.1');if(u.pathname==='/__app__'){res.setHeader('content-type','text/html');return res.end('<!doctype html><html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="'+prefix+'/styles/app.css"><body><main id="app"></main></body></html>');}if(u.pathname.startsWith('/api/')){res.writeHead(401,{'content-type':'application/json'});return res.end('{"error":{"code":"SYNTHETIC_NO_SERVER_SESSION"}}');}const file=path.resolve(frontend,'.'+decodeURIComponent(u.pathname));if(!file.startsWith(frontend+path.sep))throw Error('PATH');res.setHeader('content-type',staticMime(file));res.end(await readFile(file));}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE)),browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH}),context=await browser.newContext(),errors=[],blocked=[],checks=[];await context.route('**/*',route=>{if(!route.request().url().startsWith(origin)){blocked.push(route.request().url().split('?')[0]);return route.abort();}return route.continue();});let failure;
@@ -49,6 +50,7 @@ try{
   assert.equal(await lesson.locator('[data-r3-panel="explanation"] h1').count(),1);
   assert.ok(await p.locator('#sidebar').isVisible());
   let linkAndButtonBoundaries=0;
+  let labReference;
   for(const stage of ['selfcheck','practice','explanation']){
    await lesson.locator('[data-stage="'+stage+'"]').click();
    const panel=lesson.locator('[data-r3-panel="'+stage+'"]');
@@ -57,10 +59,22 @@ try{
    const {boundaries,collisions}=await panel.evaluate(adjacentControls);
    linkAndButtonBoundaries+=boundaries;
    assert.deepEqual(collisions,[],topic.id+' '+locale+' '+stage+' control spacing');
+   if(course.id==='cpp'&&stage==='practice'){
+    const gold=JSON.parse(await readFile(goldLessonPath(topic.id,locale),'utf8'));
+    const qt=gold.laboratory.target==='qt-wasm'||gold.runtimeTarget==='qt-wasm';
+    assert.equal(await panel.locator('[data-action="lab-window"]').count(),qt?0:1);
+    const reference=panel.locator('[data-lab-reference]');
+    assert.equal(await reference.getAttribute('open'),null);
+    await reference.evaluate(el=>el.open=true);
+    const source=gold.teachingEdition?.referenceProgram||(topic.id==='cpp.programming-process'?gold.clarity.laboratory.referenceCode:gold.laboratory.referenceCode);
+    assert.equal(await reference.locator('[data-reference-source] code').textContent(),source);
+    await reference.evaluate(el=>el.open=false);
+    labReference=qt?'Qt reference in Project Studio workflow':'Console reference and work window entry';
+   }
   }
   assert.equal(await lesson.locator('[data-gold-depth]').count(),0);
   assert.equal(await p.evaluate(()=>document.querySelector('#app').dataset.akroniklRoute),new URL(p.url()).hash);
-  checks.push({id:topic.id,locale,stages:3,linkAndButtonBoundaries});
+  checks.push({id:topic.id,locale,stages:3,linkAndButtonBoundaries,labReference});
   if(checks.length%20===0)console.log('Opened '+checks.length+'/302 lesson editions');
  }
 

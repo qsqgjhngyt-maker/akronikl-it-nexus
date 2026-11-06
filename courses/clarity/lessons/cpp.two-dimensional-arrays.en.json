@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b3-author-v1",
   "id": "cpp.two-dimensional-arrays",
   "courseId": "cpp",
   "moduleId": "cpp.section.structured-programming",
@@ -8,7 +8,7 @@
   "module": "Structured Programming",
   "locale": "en",
   "title": "Matrices: shape, traversal, and linear storage",
-  "goal": "Map two coordinates to an index and validate rectangular shape before computing.",
+  "goal": "Translate a coordinate to an index and check a rectangular shape at its boundaries.",
   "prerequisites": [
     {
       "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Two coordinates",
       "paragraphs": [
+        "A seating table has two dimensions. In a 2×3 shape, the second row starts after three seats, so coordinate (1,2) points at the sixth and final value.",
         "A matrix has rows rows and cols columns. Element (r,c) is valid when 0<=r<rows and 0<=c<cols. In std::array<std::array<int,3>,2>, the outer size is two rows and the inner size is three columns. A built-in int a[2][3] is also an array of rows.",
         "a[r][c] first selects a row and then its element. Swapping indices does not safely transpose an arbitrary matrix: rectangular dimensions may produce out-of-bounds access. Check both coordinates independently."
       ]
@@ -31,25 +32,8 @@
       "title": "Nested traversal",
       "paragraphs": [
         "The outer loop visits rows; the inner loop visits columns in the current row. Set rowSum=0 before the inner loop and initialize total once before both loops. Mixing these state levels leaves only the final row’s sum.",
-        "With rows*cols elements, a complete traversal is O(rows*cols). If either dimension is zero, there are no elements. The lab explicitly permits zero dimensions so the algorithm never depends on a[0] existing."
-      ]
-    },
-    {
-      "id": "example-1",
-      "title": "A coordinate into an index",
-      "paragraphs": [
-        "The final position (1,2) in 2x3 gives index 5."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <array>\nint main() {\n    std::array<int, 6> data{1, 2, 3, 4, 5, 6};\n    int cols{3};\n    std::cout << data[1 * cols + 2] << '\\n';\n}\n",
-        "output": "6\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Read the contract and independently derive the expected result for the given input.",
-        "Trace state after each significant operation and identify the established preconditions.",
-        "Run the source, compare stdout and exit code, then check the additional cases."
+        "With rows*cols elements, a complete traversal is O(rows*cols). If either dimension is zero, there are no elements. The lab explicitly permits zero dimensions so the algorithm never depends on a[0] existing.",
+        "The outer counter selects a row and the inner counter selects a column. For 2×0 there are two outer steps but no element in either row."
       ]
     },
     {
@@ -57,33 +41,30 @@
       "title": "A flat buffer",
       "paragraphs": [
         "In row-major storage, the index is r*cols+c. The preceding r rows occupy r*cols positions, then c selects a column. In a 2x3 matrix, (1,2) maps to 5, the last of six elements. This follows from the representation rather than a magic conversion.",
-        "vector<int> data(rows*cols) creates elements, unlike reserve. Validate dimensions before multiplying. Dimensions up to 10 give at most 100 elements; values in -1000…1000 have an absolute total at most 100000."
+        "vector<int> data(rows*cols) creates elements, unlike reserve. Validate dimensions before multiplying. Dimensions up to 10 give at most 100 elements; values in -1000…1000 have an absolute total at most 100000.",
+        "In r * cols + c the stride is the source column count. A square test may hide an accidental substitution of rows for cols."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "A coordinate into an index",
+      "paragraphs": [
+        "Substitute r = 1, c = 2 and cols = 3. Name the index separately from the value read."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <array>\nint main() {\n    std::array<int, 6> data{1, 2, 3, 4, 5, 6};\n    int cols{3};\n    std::cout << data[1 * cols + 2] << '\\n';\n}\n",
+        "stdin": "",
+        "output": "6\n"
+      }
     },
     {
       "id": "concept-4",
       "title": "Rectangularity and nested vectors",
       "paragraphs": [
         "vector<vector<int>> can contain rows of different lengths. Its type does not establish rectangularity. Before running a matrix algorithm, verify that every row has cols elements; define cols separately when the outer vector is empty.",
-        "Flat storage simplifies the total size but requires an indexing formula. Nested storage exposes rows clearly but gives each row a separate owned buffer. Choose a representation for the required operations rather than bracket appearance."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Transposing 2x3",
-      "paragraphs": [
-        "The new 3x2 shape needs a new width in its indexing formula."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <array>\nint main() {\n    std::array<int, 6> data{1, 2, 3, 4, 5, 6};\n    std::array<int, 6> result{};\n    for (int r = 0; r < 2; ++r) { for (int c = 0; c < 3; ++c) { result[c * 2 + r] = data[r * 3 + c]; } }\n    for (int r = 0; r < 3; ++r) { std::cout << result[r * 2] << ' ' << result[r * 2 + 1] << '\\n'; }\n}\n",
-        "output": "1 4\n2 5\n3 6\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Read the contract and independently derive the expected result for the given input.",
-        "Trace state after each significant operation and identify the established preconditions.",
-        "Run the source, compare stdout and exit code, then check the additional cases."
+        "Flat storage simplifies the total size but requires an indexing formula. Nested storage exposes rows clearly but gives each row a separate owned buffer. Choose a representation for the required operations rather than bracket appearance.",
+        "Rows {1, 2} and {3} can belong to the same nested vector. For a matrix, verify equal lengths first or maintain rectangularity by construction."
       ]
     },
     {
@@ -91,19 +72,110 @@
       "title": "Rows, columns, and transposition",
       "paragraphs": [
         "A column sum fixes c and varies r. A square matrix’s main diagonal has r==c; a rectangular generalization has length min(rows,cols) if the contract defines it that way. Never assume square shape without validation.",
-        "A transpose has cols rows and rows columns. Write result[c*rows+r]=data[r*cols+c] into a new buffer. An in-place transpose requires another algorithm and is not an implicit requirement here."
+        "A transpose has cols rows and rows columns. Write result[c*rows+r]=data[r*cols+c] into a new buffer. An in-place transpose requires another algorithm and is not an implicit requirement here.",
+        "Transposition maps (r,c) to (c,r). A 2×3 shape becomes 3×2, so the new row stride is 2."
       ]
+    },
+    {
+      "id": "example-2",
+      "title": "Transposing 2x3",
+      "paragraphs": [
+        "Before running, draw three rows of two cells. Move 2 and 4 to their new coordinates."
+      ],
+      "prediction": [
+        "#include <iostream>\n#include <array>\nint main() {\n    std::array<int, 6> data{1, 2, 3, 4, 5, 6};\n    std::array<int, 6> result{};\n    for (int r = 0; r < 2; ++r) { for (int c = 0; c < 3; ++c) { result[c * 2 + r] = data[r * 3 + c]; } }\n    for (int r = 0; r < 3; ++r) { std::cout << result[r * 2] << ' ' << result[r * 2 + 1] << '\\n'; }\n}\n"
+      ],
+      "predictionInput": "",
+      "predictionBundle": {},
+      "reveal": {
+        "title": "Reveal output and trace execution",
+        "paragraphs": [
+          "The original first column becomes the new first row. A rectangular example makes the dimension swap visible."
+        ],
+        "tables": [
+          {
+            "caption": "Trace for this run",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "What to check"
+            ],
+            "rows": [
+              [
+                "Move 2",
+                "data(0,1)",
+                "result(1,0)",
+                "Row and column swap."
+              ],
+              [
+                "Move 4",
+                "data(1,0)",
+                "result(0,1)",
+                "The new width is 2."
+              ],
+              [
+                "Output",
+                "3×2",
+                "1 4 / 2 5 / 3 6",
+                "Print three rows."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <array>\nint main() {\n    std::array<int, 6> data{1, 2, 3, 4, 5, 6};\n    std::array<int, 6> result{};\n    for (int r = 0; r < 2; ++r) { for (int c = 0; c < 3; ++c) { result[c * 2 + r] = data[r * 3 + c]; } }\n    for (int r = 0; r < 3; ++r) { std::cout << result[r * 2] << ' ' << result[r * 2 + 1] << '\\n'; }\n}\n",
+          "stdin": "",
+          "output": "1 4\n2 5\n3 6\n"
+        }
+      }
     },
     {
       "id": "concept-6",
       "title": "Shape tests",
       "paragraphs": [
         "A square example can hide reversed dimensions. Include 2x3 and 3x2, one row, one column, and a zero dimension. Label original positions with distinct values to expose permutations.",
-        "Keep a table of (r,c,index,value), expected sums, and operation counts. Incomplete or excess input must reject the whole record as invalid. Next, character sequences introduce another distinction: a byte, a character, and a terminator are different things."
+        "Keep a table of (r,c,index,value), expected sums, and operation counts. Incomplete or excess input must reject the whole record as invalid. Next, character sequences introduce another distinction: a byte, a character, and a terminator are different things.",
+        "Distinguish 0×3 from 2×0. Neither contains elements, but a row report for 2×0 has two sums and one for 0×3 has none."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "An operator wants a grand total and a sum for each row. The order of rows is retained even with zero columns.",
+        "For 2×3 mark the boundaries between input rows. For 2×0 draw two empty rows."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the 2×3 transposition print?",
+      "options": [
+        "1 4\n2 5\n3 6\n",
+        "1 2 3\n4 5 6\n",
+        "1 3\n5 2\n4 6\n"
+      ],
+      "correct": 0,
+      "feedback": [
+        "Correct: three rows of two values.",
+        "This is the original 2×3 shape.",
+        "Coordinates transfer as pairs (r,c) → (c,r)."
+      ],
+      "code": {
+        "source": "#include <iostream>\n#include <array>\nint main() {\n    std::array<int, 6> data{1, 2, 3, 4, 5, 6};\n    std::array<int, 6> result{};\n    for (int r = 0; r < 2; ++r) { for (int c = 0; c < 3; ++c) { result[c * 2 + r] = data[r * 3 + c]; } }\n    for (int r = 0; r < 3; ++r) { std::cout << result[r * 2] << ' ' << result[r * 2 + 1] << '\\n'; }\n}\n",
+        "stdin": ""
+      },
+      "execution": {
+        "source": "#include <iostream>\n#include <array>\nint main() {\n    std::array<int, 6> data{1, 2, 3, 4, 5, 6};\n    std::array<int, 6> result{};\n    for (int r = 0; r < 2; ++r) { for (int c = 0; c < 3; ++c) { result[c * 2 + r] = data[r * 3 + c]; } }\n    for (int r = 0; r < 3; ++r) { std::cout << result[r * 2] << ' ' << result[r * 2 + 1] << '\\n'; }\n}\n",
+        "stdin": "",
+        "expected": "1 4\n2 5\n3 6\n"
+      },
+      "recall": "example-2"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -114,7 +186,8 @@
         "6"
       ],
       "correct": 1,
-      "feedback": "1*3+2=5, with six elements in total."
+      "feedback": "1*3+2=5, with six elements in total.",
+      "recall": "concept-3"
     },
     {
       "id": "check-1",
@@ -126,7 +199,8 @@
         "Always 2x3"
       ],
       "correct": 0,
-      "feedback": "Rows and columns exchange roles."
+      "feedback": "Rows and columns exchange roles.",
+      "recall": "concept-5"
     },
     {
       "id": "check-2",
@@ -138,7 +212,8 @@
         "No; row lengths need checking"
       ],
       "correct": 2,
-      "feedback": "Each row has an independent size."
+      "feedback": "Each row has an independent size.",
+      "recall": "concept-4"
     },
     {
       "id": "check-3",
@@ -150,7 +225,8 @@
         "It requires reading two values"
       ],
       "correct": 1,
-      "feedback": "Two empty rows contain no elements."
+      "feedback": "Two empty rows contain no elements.",
+      "recall": "concept-2"
     },
     {
       "id": "check-4",
@@ -162,17 +238,19 @@
         "Only a copied reference"
       ],
       "correct": 0,
-      "feedback": "A progress flag is not evidence of independent mastery."
+      "feedback": "A progress flag is not evidence of independent mastery.",
+      "recall": "concept-6"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Establish the shape before applying an index formula.",
-      "feedback": "Next: Strings: bytes, terminators, and safe views. Preserve the lab and its verification table."
+      "prompt": "Why does 2×0 print two zero row sums while 0×3 prints an empty second line? Which loop tests determine that?",
+      "feedback": "Two shapes may share a grand total yet have different row sums.",
+      "recall": "concept-5"
     }
   ],
   "practice": {
-    "title": "Laboratory: Matrices: shape, traversal, and linear storage",
+    "title": "Sums by row in a rectangle",
     "task": "Read rows and cols in 0…10 and exactly rows*cols integers in -1000…1000. Print the total and a line of row sums; with rows=0 the second line is empty.",
     "kind": "cpp-console",
     "environment": "C++20",
@@ -223,51 +301,34 @@
       }
     ],
     "criteria": [
-      "The contract matches the task and defines units, empty input, and extra data.",
-      "Every published case matches and two explained original tests are included.",
+      "Compare 2×3 and 3×2 using the same six numbers. Check 0×3 and an input missing the final value.",
       "Establish the shape before applying an index formula.",
       "Do not test matrix code only with a square shape. Do not obtain cols from a[0] when there are no rows.",
-      "Source, actual output, exit code, and a justified complexity explanation are preserved."
+      "Add two cases of your own, including a rejection if the interface allows one. Explain one boundary result.",
+      "Keep the source, exact input and observed output."
     ],
-    "hint": "Establish the shape before applying an index formula.",
+    "hint": "Two shapes may share a grand total yet have different row sums.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Restate the input, output, and rejection contract in your own words.",
+        "where": "Before running",
+        "action": "For 2×3 mark the boundaries between input rows. For 2×0 draw two empty rows.",
         "why": "",
         "expected": ""
       },
       {
         "where": "My program",
-        "action": "Draw the state and state the invariant: Establish the shape before applying an index formula.",
+        "action": "Validate both dimensions before scanning. Save the sum of a finished row even when the inner loop has zero iterations.",
         "why": "",
         "expected": ""
       },
       {
-        "where": "My program",
-        "action": "Start from the scaffold, implement the valid path, then add boundary checks.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "For every reference case, independently write the expectation before running; keep stdout and exit code.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Add two original cases including one rejection; explain the result without consulting the reference.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Preserve source, a result table, and a short cost-and-limit analysis.",
+        "where": "Check",
+        "action": "Compare 2×3 and 3×2 using the same six numbers. Check 0×3 and an input missing the final value.",
         "why": "",
         "expected": ""
       }
-    ]
+    ],
+    "recall": "concept-5"
   },
   "terms": [
     {
@@ -335,5 +396,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\structured\\two-dimensional-arrays.en.json"
+  "sourcePath": "courses\\cpp\\gold\\structured\\two-dimensional-arrays.en.json",
+  "reading": [
+    {
+      "id": "cpp20-array",
+      "title": "C++20 [array]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[array]",
+      "language": "English",
+      "purpose": "Check indexing of a fixed-size sequence.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/array"
+    },
+    {
+      "id": "cpp20-vector",
+      "title": "C++20 [vector]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[vector]",
+      "language": "English",
+      "purpose": "Check what vector guarantees about its elements regardless of their internal shape.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/vector"
+    }
+  ],
+  "authored": true
 }

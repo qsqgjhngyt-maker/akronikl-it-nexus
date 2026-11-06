@@ -350,5 +350,404 @@
       "Including libraries"
     ],
     "correctIndex": 0
+  },
+  "teachingEdition": {
+    "revision": "b3-author-v1",
+    "title": "Structures: records, invariants, and updates",
+    "goal": "Track the fields of one record and demonstrate that rejection preserves it.",
+    "prerequisites": [
+      {
+        "text": "Modules 1–2: expressions, comparisons, types, references, and checked cin."
+      },
+      {
+        "text": "Follow the prerequisite links: cpp.char-arrays-strings, cpp.functions-contracts. New constructs are introduced before the assignment."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Declaring a record",
+        "paragraphs": [
+          "A shelf holds item 7 with 10 units. Separate arrays make it easy to mix up indices. An Item record ties the identifier and stock to one object.",
+          "struct Item { int id{}; int stock{}; }; defines a type with two fields that are public by default. The closing brace needs a semicolon. Item item{7,12} creates an object; item.stock accesses that object’s field.",
+          "{} initializers establish defined initial values. Fields may have different types, such as string name and int stock. A structure is neither a database table nor automatic validation: domain rules determine valid values."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "A record copy and a reference",
+        "paragraphs": [
+          "Item backup=item copies field values. Changing backup.stock does not change item.stock. const Item& reads the original without a copy; Item& permits mutation. Choose according to intent and document which fields may change.",
+          "Inserting a copy into vector<Item> stores a separate record. A reference to an element can be invalidated by vector reallocation, just like a span. Do not retain it across push_back without establishing address stability.",
+          "Item backup = original copies both fields. Changing backup.stock leaves original.stock alone. Pass a reference to the original if that is what should change."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "An independent record copy",
+        "paragraphs": [
+          "Compare original and backup after issuing three units from backup."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item original{7, 10};\n    Item backup = original;\n    bool ok = issue(backup, 3);\n    std::cout << ok << ' ' << original.stock << ' ' << backup.stock << '\\n';\n}\n",
+          "stdin": "",
+          "output": "1 10 7\n"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "A domain invariant",
+        "paragraphs": [
+          "For stock, require id>0 and 0<=stock<=1000. issue(amount) is allowed only when 0<=amount<=stock. Success reduces stock and leaves id unchanged; rejection leaves the whole record unchanged.",
+          "A public struct does not prevent assigning negative stock. At this stage, functions and tests enforce discipline. Module 5 will use encapsulation to restrict access; do not claim the structure already protects its own data.",
+          "Even a valid record can become invalid through direct assignment. Preserve stock ≥ 0 in every operation, not only at initialization."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Validate, then commit",
+        "paragraphs": [
+          "Check the existing record and argument first. Compute a temporary new value, establish its bounds, and then assign. A single mutation point makes the absence of partial updates easier to establish.",
+          "When several fields change, prepare a candidate copy and replace the original only after every check passes. This is an in-memory transaction pattern, not a promise of filesystem or Cloud Sync transactions.",
+          "A request for 3 with stock 2 must return false. Check both stock and id: rejection must not partially mutate the record."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Rejection preserves fields",
+        "paragraphs": [
+          "Before issuing, record id = 7 and stock = 2. After requesting 3, check the flag and both fields separately."
+        ],
+        "prediction": [
+          "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item value{7, 2};\n    bool ok = issue(value, 3);\n    std::cout << ok << ' ' << value.id << ' ' << value.stock << '\\n';\n}\n"
+        ],
+        "predictionInput": "",
+        "predictionBundle": {},
+        "reveal": {
+          "title": "Reveal output and trace execution",
+          "paragraphs": [
+            "The flag 0 records rejection. The values 7 and 2 show that neither field changed."
+          ],
+          "tables": [
+            {
+              "caption": "Trace for this run",
+              "columns": [
+                "Action",
+                "Before",
+                "After",
+                "What to check"
+              ],
+              "rows": [
+                [
+                  "Start",
+                  "id = 7",
+                  "stock = 2",
+                  "Remember the whole record."
+                ],
+                [
+                  "Check amount",
+                  "amount = 3",
+                  "3 > 2",
+                  "Return before subtraction."
+                ],
+                [
+                  "Print",
+                  "false, id = 7, stock = 2",
+                  "0 7 2",
+                  "Both fields are unchanged."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item value{7, 2};\n    bool ok = issue(value, 3);\n    std::cout << ok << ' ' << value.id << ' ' << value.stock << '\\n';\n}\n",
+            "stdin": "",
+            "output": "0 7 2\n"
+          }
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "A collection of records",
+        "paragraphs": [
+          "A vector<Item> stores catalogue records in one logical collection. Searching by id is O(n); uniqueness requires checking before insertion. An id field neither creates an index nor automatically guarantees uniqueness.",
+          "Print named fields rather than relying on raw memory layout. sizeof(Item) may include padding. Dumping an arbitrary structure’s bytes is not a portable storage format; a textual format follows in the files lesson.",
+          "In vector<Item>, iterating with auto item changes a copy. Use a reference to update the selected object, and verify that the id was found before accessing it."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Before-and-after tests",
+        "paragraphs": [
+          "Test issuing zero, issuing all stock, excessive and negative requests, and an invalid original record. Compare every field before and after rejection. Separately verify independence of the original and its backup copy.",
+          "Evidence consists of source, state tables, and an invariant explanation. Next, an enumeration distinguishes status from arbitrary integers, while variant represents commands of different shapes without reading inactive storage.",
+          "Check three requests: below stock, exactly stock, and one above. For rejection compare a snapshot of every field before and after."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Now try your own task",
+        "paragraphs": [
+          "Build a console boundary for issuing stock. A malformed request and a valid but impossible request need different results.",
+          "Record the state for 7 2 2 and 7 2 3. State the expected flag and final stock."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "What does the rejection check print for item 7?",
+        "options": [
+          "0 7 2\n",
+          "0 7 -1\n",
+          "1 7 2\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes. The request exceeds stock and the record remains intact.",
+          "Stock −1 would mean mutation before validation.",
+          "A request for 3 from stock 2 cannot succeed."
+        ],
+        "code": {
+          "source": "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item value{7, 2};\n    bool ok = issue(value, 3);\n    std::cout << ok << ' ' << value.id << ' ' << value.stock << '\\n';\n}\n",
+          "stdin": ""
+        },
+        "execution": {
+          "source": "#include <iostream>\nstruct Item { int id{}; int stock{}; };\nbool issue(Item& item, int amount) {\n    if (item.id < 1 || item.id > 1000 || item.stock < 0 || item.stock > 1000 || amount < 0 || amount > item.stock) { return false; }\n    item.stock -= amount;\n    return true;\n}\nint main() {\n    Item value{7, 2};\n    bool ok = issue(value, 3);\n    std::cout << ok << ' ' << value.id << ' ' << value.stock << '\\n';\n}\n",
+          "stdin": "",
+          "expected": "0 7 2\n"
+        },
+        "recall": "example-2"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "Does a public struct prevent assigning negative stock?",
+        "options": [
+          "Only inside vector",
+          "Yes, automatically",
+          "No; checked operations and later encapsulation are needed"
+        ],
+        "correct": 2,
+        "feedback": "Grouping fields is not the same as protecting their values.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "What does issue change on rejection?",
+        "options": [
+          "Only id",
+          "Nothing in the record",
+          "It necessarily clears stock"
+        ],
+        "correct": 1,
+        "feedback": "Rejection without mutation is part of the contract.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "Are fields independent after Item b=a?",
+        "options": [
+          "Yes, for this value-only record",
+          "a is destroyed",
+          "No, b is always a reference"
+        ],
+        "correct": 0,
+        "feedback": "Copying these int fields does not create a reference.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Does an id field guarantee uniqueness?",
+        "options": [
+          "Only with sizeof",
+          "Yes",
+          "No; insertion must check it"
+        ],
+        "correct": 2,
+        "feedback": "A structure groups data but does not create an index.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "What is needed to accept this lab?",
+        "options": [
+          "Only a copied reference",
+          "Source, actual results, original tests, and a contract explanation",
+          "Only a completed flag"
+        ],
+        "correct": 1,
+        "feedback": "A progress flag is not evidence of independent mastery.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "For 7 2 3 explain why rejected differs from invalid and which fields must stay unchanged.",
+        "feedback": "Check amount > stock before modifying stock. Issuing stock never changes id.",
+        "recall": "concept-5"
+      }
+    ],
+    "practice": {
+      "title": "Issue stock with state-preserving rejection",
+      "task": "Read id, stock, and amount: id 1…1000, stock 0…1000, amount 0…1000. issue(Item&,amount) rejects excess without mutation. Print ok/rejected and the resulting stock; malformed input is invalid.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "7 10 3",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Case 1",
+          "input": "7 10 3",
+          "output": "ok 7\n"
+        },
+        {
+          "label": "Case 2",
+          "input": "7 0 0",
+          "output": "ok 0\n"
+        },
+        {
+          "label": "Case 3",
+          "input": "7 2 3",
+          "output": "rejected 2\n"
+        },
+        {
+          "label": "Case 4",
+          "input": "7 1000 1000",
+          "output": "ok 0\n"
+        },
+        {
+          "label": "Case 5",
+          "input": "0 2 1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Case 6",
+          "input": "7 2 -1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Case 7",
+          "input": "7 2 1 extra",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "For an excessive request, compare both fields with the snapshot. id = 0 must give invalid rather than rejected.",
+        "A record groups data; functions and invariants define valid changes.",
+        "Rejection must preserve the whole record, not merely stock. Do not serialize sizeof(struct) bytes as a portable format.",
+        "Add two cases of your own, including a rejection if the interface allows one. Explain one boundary result.",
+        "Keep the source, exact input and observed output."
+      ],
+      "hint": "Check amount > stock before modifying stock. Issuing stock never changes id.",
+      "steps": [
+        {
+          "where": "Before running",
+          "action": "Record the state for 7 2 2 and 7 2 3. State the expected flag and final stock.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Read and validate the three integers. Pass Item by reference only to the operation that mutates it after validation.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Check",
+          "action": "For an excessive request, compare both fields with the snapshot. id = 0 must give invalid rather than rejected.",
+          "why": "",
+          "expected": ""
+        }
+      ],
+      "recall": "concept-5",
+      "outputFields": [
+        "Status",
+        "Final stock"
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-class",
+        "title": "C++20 [class]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[class]",
+        "language": "English",
+        "purpose": "Check declaration and access rules for structure members.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
+      },
+      {
+        "id": "cpp20-lifetime",
+        "title": "C++20 [basic.life]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[basic.life]",
+        "language": "English",
+        "purpose": "Find why a reference to a record requires the object to be alive.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.life"
+      }
+    ],
+    "coverage": {
+      "1": [
+        "concept-1"
+      ],
+      "2": [
+        "concept-2",
+        "example-1"
+      ],
+      "3": [
+        "concept-3",
+        "concept-4",
+        "example-2"
+      ],
+      "4": [
+        "independent-work"
+      ],
+      "5": [
+        "concept-5",
+        "concept-6"
+      ]
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Declaring a record",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "A record copy and a reference",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "A domain invariant",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Validate, then commit",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "A collection of records",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Before-and-after tests",
+        "anchor": "concept-6"
+      }
+    ]
   }
 }
