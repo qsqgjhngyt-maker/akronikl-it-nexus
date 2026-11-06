@@ -186,7 +186,33 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  }
  function remember(){if(!session||!live())return;const next={x:Math.max(0,scrollX),y:Math.max(0,scrollY)};if(canonicalJson(session.draft.positions[route.stage])!==canonicalJson(next))session.change(d=>{d.positions[route.stage]=next;});}
  let acceptedHash=location.hash;
- async function showStage(stage,anchor='',rememberOld=true){if(!live())return;if(rememberOld)remember();route.stage=stage;if(session&&session.draft.stage!==stage)session.change(d=>{d.stage=stage;});for(const s of stages){panel(s).hidden=s!==stage;const a=root.querySelector('[data-stage="'+s+'"]');s===stage?a.setAttribute('aria-current','step'):a.removeAttribute('aria-current');a.querySelector('[data-current-marker]').hidden=s!==stage;}setToolsOpen(false);panel(stage).focus({preventScroll:true});if(stage==='practice')await ensureEditor();if(!live())return;acceptedHash=location.hash;notifyView();const position=draft().positions[stage];requestAnimationFrame(()=>{if(!live()||route.stage!==stage)return;const focused=root.getRootNode().activeElement||document.activeElement;if(focused?.matches('input,textarea,button,a'))return;if(anchor)root.querySelector('#'+CSS.escape(anchor))?.scrollIntoView({block:'start'});else scrollTo(position.x,position.y);});}
+ async function showStage(stage,anchor='',rememberOld=true){
+  if(!live())return;
+  if(rememberOld)remember();
+  route.stage=stage;
+  if(session&&session.draft.stage!==stage)session.change(d=>{d.stage=stage;});
+  for(const s of stages){
+   panel(s).hidden=s!==stage;
+   const tab=root.querySelector('[data-stage="'+s+'"]');
+   if(s===stage)tab.setAttribute('aria-current','step');
+   else tab.removeAttribute('aria-current');
+   tab.querySelector('[data-current-marker]').hidden=s!==stage;
+  }
+  setToolsOpen(false);
+  panel(stage).focus({preventScroll:true});
+  if(stage==='practice')await ensureEditor();
+  if(!live())return;
+  acceptedHash=location.hash;
+  notifyView();
+  const position=draft().positions[stage];
+  requestAnimationFrame(()=>{
+   if(!live()||route.stage!==stage)return;
+   const focused=root.getRootNode().activeElement||document.activeElement;
+   if(focused?.matches('input,textarea,button,a'))return;
+   if(anchor)root.querySelector('#'+CSS.escape(anchor))?.scrollIntoView({block:'start'});
+   else scrollTo({left:position.x,top:position.y,behavior:'instant'});
+  });
+ }
  function download(){if(!session?.isCurrent())return;const value=session.exportBuffer(),blob=new Blob([JSON.stringify(value,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=topicId+'-my-work.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  let lastEditable=null;
  const abort=new AbortController(),listen=(node,event,fn)=>node.addEventListener(event,fn,{signal:abort.signal});

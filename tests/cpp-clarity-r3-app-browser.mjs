@@ -26,6 +26,7 @@ await p.locator('#editor').fill('// synthetic full app work\nint main(){}');awai
  await p.evaluate(()=>location.hash='#course=cpp&lesson=cpp.first-cpp-program&stage=explanation&locale=ru');
  const lesson=p.locator('[data-r3-topic="cpp.first-cpp-program"]');
  await lesson.locator('[data-stage="explanation"][aria-current="step"]').waitFor();
+ await p.evaluate(async()=>{await document.fonts.ready;});
  const header=lesson.locator('.lesson-context');
  const toggle=header.locator('[data-action="tools"]');
  for(const width of [1366,390,320]){
@@ -47,7 +48,8 @@ await p.locator('#editor').fill('// synthetic full app work\nint main(){}');awai
   assert.ok(compact.tabsFit&&!compact.overflow,width+' tab overflow');
   assert.equal(await header.locator('[aria-current="step"]').count(),1);
   const readingTop=await lesson.locator('.authored-intro').evaluate(node=>node.getBoundingClientRect().top);
-  await toggle.focus();await p.keyboard.press('Enter');
+  await toggle.evaluate(button=>button.focus({preventScroll:true}));
+  await p.keyboard.press('Enter');
   await header.locator('.lesson-tools').waitFor({state:'visible'});
   const opened=await measure();
   assert.equal(opened.height,compact.height);
@@ -63,9 +65,10 @@ await p.locator('#editor').fill('// synthetic full app work\nint main(){}');awai
  await lesson.locator('.lesson-map-wrap summary').click();
  await lesson.locator('.lesson-map a[href$="at=concept-4"]').click();
  await p.waitForFunction(()=>{
-  const section=document.querySelector('#concept-4').getBoundingClientRect();
+  const section=document.querySelector('#concept-4');
   const header=document.querySelector('.lesson-context').getBoundingClientRect();
-  return section.top>=header.bottom&&section.top<header.bottom+45;
+  const top=section.getBoundingClientRect().top;
+  return top>=header.bottom&&Math.abs(top-parseFloat(getComputedStyle(section).scrollMarginTop))<2;
  },null,{timeout:5000});
  const readingPosition=await p.evaluate(()=>scrollY);
  await lesson.locator('[data-stage="selfcheck"]').click();
