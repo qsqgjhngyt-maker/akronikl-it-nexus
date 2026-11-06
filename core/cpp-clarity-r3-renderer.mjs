@@ -134,8 +134,8 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  }
  function workspaceCallout(p){
   const projects=[
-   [p.blockPracticum,'block-practicum',say('Практикум блока','Block practicum')],
-   [p.modulePracticum,'module-practicum',say('Итоговый практикум','Module practicum')],
+   [p.blockPracticum||lesson.extras?.blockPracticum,'block-practicum',say('Практикум блока','Block practicum')],
+   [p.modulePracticum||lesson.extras?.modulePracticum,'module-practicum',say('Итоговый практикум','Module practicum')],
   ].filter(([item])=>item);
   return `<section class="environment" data-r3-workspace-callout>
    <h2>${say('Где выполнять работу','Where to do the work')}</h2>

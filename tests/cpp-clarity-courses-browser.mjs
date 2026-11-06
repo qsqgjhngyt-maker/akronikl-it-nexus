@@ -50,7 +50,7 @@ try{
   assert.equal(await lesson.locator('[data-r3-panel="explanation"] h1').count(),1);
   assert.ok(await p.locator('#sidebar').isVisible());
   let linkAndButtonBoundaries=0;
-  let labReference;
+  let labReference,practicumReferences=0;
   for(const stage of ['selfcheck','practice','explanation']){
    await lesson.locator('[data-stage="'+stage+'"]').click();
    const panel=lesson.locator('[data-r3-panel="'+stage+'"]');
@@ -70,11 +70,29 @@ try{
     assert.equal(await reference.locator('[data-reference-source] code').textContent(),source);
     await reference.evaluate(el=>el.open=false);
     labReference=qt?'Qt reference in Project Studio workflow':'Console reference and work window entry';
+    for(const [key,anchor] of [['blockPracticum','block-practicum'],['modulePracticum','module-practicum']]){
+     if(!gold[key])continue;
+     assert.equal(await panel.locator('[data-r3-workspace-callout] a[href*="at='+anchor+'"]').count(),1);
+     const project=panel.locator('#'+anchor);
+     const summary=project.locator('summary').filter({hasText:locale==='ru'?'Эталон: раскройте после собственной попытки':'Reference: open after your own attempt'});
+     assert.equal(await summary.count(),1);
+     const code=await summary.evaluate(el=>{
+      const details=el.parentElement;
+      if(details.open)throw Error('Reference exposed before request');
+      details.open=true;
+      const code=details.querySelector('pre code').textContent;
+      details.open=false;
+      return code;
+     });
+     assert.equal(code,gold[key].referenceCode);
+     assert.equal(await project.locator('[data-gold-open-editor]').count(),0);
+     practicumReferences++;
+    }
    }
   }
   assert.equal(await lesson.locator('[data-gold-depth]').count(),0);
   assert.equal(await p.evaluate(()=>document.querySelector('#app').dataset.akroniklRoute),new URL(p.url()).hash);
-  checks.push({id:topic.id,locale,stages:3,linkAndButtonBoundaries,labReference});
+  checks.push({id:topic.id,locale,stages:3,linkAndButtonBoundaries,labReference,practicumReferences});
   if(checks.length%20===0)console.log('Opened '+checks.length+'/302 lesson editions');
  }
 
