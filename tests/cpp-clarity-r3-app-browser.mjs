@@ -31,7 +31,11 @@ await p.locator('#editor').fill('// synthetic full app work\nint main(){}');awai
  for(const width of [1366,390,320]){
   await p.setViewportSize({width,height:900});
   await p.evaluate(()=>scrollTo({top:520,behavior:'instant'}));
-  await p.waitForFunction(()=>Math.abs(scrollY-520)<2);
+  await p.waitForFunction(()=>{
+   const header=document.querySelector('.lesson-context').getBoundingClientRect();
+   const shell=document.querySelector('.topbar').getBoundingClientRect();
+   return Math.abs(scrollY-520)<2&&Math.abs(header.top-shell.bottom)<1;
+  });
   const measure=()=>header.evaluate(node=>{
    const box=node.getBoundingClientRect();
    return {top:box.top,bottom:box.bottom,height:box.height,shellBottom:document.querySelector('.topbar').getBoundingClientRect().bottom,
@@ -42,9 +46,13 @@ await p.locator('#editor').fill('// synthetic full app work\nint main(){}');awai
   assert.ok(compact.height<=80 && compact.top>=compact.shellBottom-1,width+' header geometry');
   assert.ok(compact.tabsFit&&!compact.overflow,width+' tab overflow');
   assert.equal(await header.locator('[aria-current="step"]').count(),1);
+  const readingTop=await lesson.locator('.authored-intro').evaluate(node=>node.getBoundingClientRect().top);
   await toggle.focus();await p.keyboard.press('Enter');
   await header.locator('.lesson-tools').waitFor({state:'visible'});
-  assert.deepEqual(await measure(),compact);
+  const opened=await measure();
+  assert.equal(opened.height,compact.height);
+  assert.ok(opened.top>=opened.shellBottom-1&&opened.tabsFit&&!opened.overflow);
+  assert.equal(await lesson.locator('.authored-intro').evaluate(node=>node.getBoundingClientRect().top),readingTop);
   await p.keyboard.press('Tab');
   assert.ok(await header.locator('[data-action="outline"]').evaluate(el=>el===document.activeElement));
   await p.keyboard.press('Escape');
