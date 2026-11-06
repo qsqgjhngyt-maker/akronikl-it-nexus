@@ -9,7 +9,7 @@ try{const p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));
   await p.locator('[data-r3-panel="'+stage+'"]').waitFor({state:'visible'});
   assert.ok(await p.locator('#sidebar').isVisible());
   assert.equal(await p.evaluate(()=>document.querySelector('#app').dataset.akroniklRoute),new URL(p.url()).hash);
-  await p.locator('[data-r3-assistant]').click();
+  await p.locator('[data-action="tools"]').click();await p.locator('[data-r3-assistant]').click();
   await p.locator('[data-akronikl-panel]').waitFor();
   assert.ok(await p.locator('[data-akronikl-message]').isVisible());
   await p.locator('[data-akronikl-close]').click();
@@ -22,6 +22,52 @@ await p.locator('#editor').fill('// synthetic full app work\nint main(){}');awai
  await p.evaluate(()=>location.hash='#course=cpp&lesson=cpp.first-cpp-program&stage=practice');await p.locator('[data-r3-topic="cpp.first-cpp-program"]').waitFor();await p.locator('#editor').fill('// synthetic legacy work\nint main(){}');await p.evaluate(()=>location.hash='#course=cpp&lesson=cpp.pointers-references-addresses');await p.locator('[data-r3-topic="cpp.pointers-references-addresses"]').waitFor();await p.evaluate(()=>location.hash='#course=cpp&lesson=cpp.first-cpp-program&stage=practice');await p.locator('[data-r3-topic="cpp.first-cpp-program"]').waitFor();assert.match(await p.locator('#editor').inputValue(),/synthetic legacy/);await p.evaluate(()=>location.hash='#course=cpp&lesson=cpp.programming-process&stage=practice');await p.locator('[data-r3-topic]').waitFor();await p.locator('#editor').waitFor();assert.match(await p.locator('#editor').inputValue(),/synthetic full app/);checks.push('Full app: pilot, first program and pointers; legacy and pilot work restored');
  await p.evaluate(()=>location.hash='#view=offline');await p.locator('[data-offline-center]').waitFor();assert.ok(await p.locator('[data-local-import]').isVisible());checks.push('Offline centre lazy route renders and binds');
  for(const id of ['onec.p2.topic-1','onec.p7.topic-2']){await p.evaluate(id=>location.hash='#course=onec&lesson='+id,id);await p.locator('[data-r3-topic="'+id+'"]').waitFor();await p.locator('[data-stage="selfcheck"]').click();assert.ok(await p.locator('[data-r3-panel="selfcheck"]').isVisible());for(const stage of ['explanation','selfcheck','practice'])await assistantAfterStage(stage);}checks.push('Both 1C pilots route through the actual platform and ShadowRoot');assert.deepEqual(errors,[]);console.log('PASS full core/app routes, legacy persistence, offline centre and both 1C pilots');
+ // The compact bar stays usable at phone widths, including after following a section link.
+ await p.evaluate(()=>location.hash='#course=cpp&lesson=cpp.first-cpp-program&stage=explanation&locale=ru');
+ const lesson=p.locator('[data-r3-topic="cpp.first-cpp-program"]');
+ await lesson.locator('[data-stage="explanation"][aria-current="step"]').waitFor();
+ const header=lesson.locator('.lesson-context');
+ const toggle=header.locator('[data-action="tools"]');
+ for(const width of [1366,390,320]){
+  await p.setViewportSize({width,height:900});
+  await p.evaluate(()=>scrollTo({top:520,behavior:'instant'}));
+  await p.waitForFunction(()=>Math.abs(scrollY-520)<2);
+  const measure=()=>header.evaluate(node=>{
+   const box=node.getBoundingClientRect();
+   return {top:box.top,bottom:box.bottom,height:box.height,shellBottom:document.querySelector('.topbar').getBoundingClientRect().bottom,
+    overflow:document.documentElement.scrollWidth>innerWidth+1,
+    tabsFit:[...node.querySelectorAll('[data-stage]')].every(link=>link.scrollWidth<=link.clientWidth+1&&link.getBoundingClientRect().bottom<=box.bottom)};
+  });
+  const compact=await measure();
+  assert.ok(compact.height<=80 && compact.top>=compact.shellBottom-1,width+' header geometry');
+  assert.ok(compact.tabsFit&&!compact.overflow,width+' tab overflow');
+  assert.equal(await header.locator('[aria-current="step"]').count(),1);
+  await toggle.focus();await p.keyboard.press('Enter');
+  await header.locator('.lesson-tools').waitFor({state:'visible'});
+  assert.deepEqual(await measure(),compact);
+  await p.keyboard.press('Tab');
+  assert.ok(await header.locator('[data-action="outline"]').evaluate(el=>el===document.activeElement));
+  await p.keyboard.press('Escape');
+  assert.equal(await toggle.getAttribute('aria-expanded'),'false');
+  assert.ok(await toggle.evaluate(el=>el===document.activeElement));
+  assert.equal(await p.evaluate(()=>scrollY),520);
+ }
+ await lesson.locator('.lesson-map-wrap summary').click();
+ await lesson.locator('.lesson-map a[href$="at=concept-4"]').click();
+ await p.waitForFunction(()=>{
+  const section=document.querySelector('#concept-4').getBoundingClientRect();
+  const header=document.querySelector('.lesson-context').getBoundingClientRect();
+  return section.top>=header.bottom&&section.top<header.bottom+45;
+ },null,{timeout:5000});
+ const readingPosition=await p.evaluate(()=>scrollY);
+ await lesson.locator('[data-stage="selfcheck"]').click();
+ const greeting=lesson.locator('[data-question="concept-0"]');
+ assert.match(await greeting.locator('pre code').textContent(),/Hello, C\+\+!/);
+ await lesson.locator('[data-stage="explanation"]').click();
+ await p.waitForFunction(y=>Math.abs(scrollY-y)<2,readingPosition);
+ await p.setViewportSize({width:1366,height:900});
+ checks.push('Compact lesson navigation at 1366/390/320, menu focus, heading anchor and restored reading position');
+
  // Отмена монтирования после создания header должна убрать обработчики общего root.
  await p.evaluate(async prefix=>{
   const ui=await import(prefix+'/core/cpp-clarity-r3-renderer.mjs'),state=await import(prefix+'/core/cpp-clarity-r3-session.mjs');

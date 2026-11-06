@@ -75,11 +75,90 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
   <div data-course-progress></div>`;
  }
  root.innerHTML=`<div class="r3-lesson" lang="${locale}" data-authored="${!!author}" data-r3-topic="${topicId}"><style>${authorModule?.authoredStyles||''}
- .r3-lesson{--r3-line:#486377;line-height:1.7;max-width:1220px;margin:auto;min-width:0}.r3-lesson .option span,.r3-lesson .practice-card li{white-space:pre-wrap}.r3-lesson [data-onec-figure] img{max-width:100%}.r3-lesson [data-course-figures] .onec-shot-frame{position:relative;overflow:hidden}.r3-lesson [data-course-figures] svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.r3-lesson .lesson-tools-toggle{display:none}.r3-lesson .lesson-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.r3-lesson .lesson-section,.r3-lesson .stage-body li[id]{scroll-margin-top:calc(var(--r3-shell-top,0px) + var(--r3-context-height,220px) + 12px)}.r3-lesson [hidden]{display:none!important}.r3-lesson .lesson-context{position:sticky;top:var(--r3-shell-top,0px);background:var(--panel,#102333);z-index:5;border:1px solid var(--r3-line);border-radius:14px;padding:14px 20px}.r3-lesson .breadcrumbs{font-size:.82rem;opacity:.8}.r3-lesson .context-title{font-weight:700;margin:8px 0}.r3-lesson .course-controls,.r3-lesson .stages{display:flex;gap:16px;flex-wrap:wrap}.r3-lesson .stages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:12px}.r3-lesson .stages a{padding:8px;text-align:center;border:1px solid var(--r3-line);border-radius:8px}.r3-lesson [aria-current=step]{background:#24594b;color:#e8fff7;border:3px solid #82e6ce;font-weight:750}.r3-lesson .stage-location{margin:8px 0 0;font-size:.85rem;font-weight:650}.r3-lesson .topic-marker{display:inline-block;border:1px solid var(--r3-line);border-radius:6px;padding:1px 7px;font-size:.78rem;margin-right:6px}.r3-lesson [data-current-marker]{font-size:.75em}.r3-lesson .stage-body{padding:24px 0;min-width:0}.r3-lesson .lesson-section,.r3-lesson .question,.r3-lesson .practice-card{border:1px solid var(--r3-line);border-radius:14px;padding:24px;margin:20px 0;scroll-margin-top:220px}.r3-lesson .section-index{font-size:.8rem;opacity:.7}.r3-lesson .example-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,.65fr);gap:24px}.r3-lesson .example-layout>div{min-width:0}.r3-lesson pre{white-space:pre;overflow:auto;max-width:100%;background:#071522;color:#e6f1ff;padding:16px;border-radius:8px;line-height:1.7}.r3-lesson .table-wrap,.r3-lesson .trace-wrap{overflow:auto}.r3-lesson table{width:100%;border-collapse:collapse}.r3-lesson th,.r3-lesson td{padding:12px;border:1px solid var(--r3-line);text-align:left;vertical-align:top}.r3-lesson caption{font-weight:600;text-align:left}.r3-lesson .option{display:flex;gap:12px;padding:10px}.r3-lesson textarea[data-answer],.r3-lesson textarea[data-r3-report],.r3-lesson #stdin{display:block;width:100%;min-height:100px;padding:12px;color:inherit;background:transparent;border:1px solid var(--r3-line);border-radius:8px}.r3-lesson fieldset{border:0;padding:0;min-width:0;width:100%}.r3-lesson legend{font-weight:700;max-width:100%;overflow-wrap:anywhere}.r3-lesson .feedback{border-left:3px solid #82e6ce;padding:12px}.r3-lesson details,.r3-lesson .environment{padding:16px;border:1px solid var(--r3-line);border-radius:8px;margin:16px 0}.r3-lesson .work-actions{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.r3-lesson .r3-dialog{max-width:min(900px,94vw);max-height:85vh;overflow:auto;background:#102333;color:#e6edf5;border:1px solid var(--r3-line);border-radius:16px;padding:24px}.r3-lesson a:focus-visible,.r3-lesson button:focus-visible,.r3-lesson textarea:focus-visible{outline:3px solid #82e6ce;outline-offset:3px}.r3-lesson .code-studio{min-width:0}.r3-lesson .next-card{display:flex;gap:16px;flex-wrap:wrap}.r3-lesson [data-r3-save]{min-height:1.7em}
- @media(max-width:720px){.r3-lesson .example-layout{display:block}.r3-lesson .lesson-context{padding:10px}.r3-lesson .stages{gap:5px;font-size:.8rem}.r3-lesson .lesson-section,.r3-lesson .question,.r3-lesson .practice-card{padding:16px}.r3-lesson .course-controls{gap:10px;font-size:.85rem}}
- @media(max-width:720px){.r3-lesson .lesson-context{padding:10px;line-height:1.35}.r3-lesson .lesson-tools-toggle{display:inline-block;padding:6px 10px;font-size:12px}.r3-lesson .lesson-tools{display:none;margin:8px 0}.r3-lesson [data-tools-open] .lesson-tools{display:flex}.r3-lesson .breadcrumbs{font-size:11px}.r3-lesson .context-title{font-size:14px;line-height:1.35;margin:5px 0}.r3-lesson .stages{gap:5px;margin-top:8px;font-size:12px}.r3-lesson .stages a{padding:8px 2px;line-height:1.35;font-size:clamp(11px,3.5vw,12px);white-space:normal;overflow-wrap:normal;hyphens:manual}.r3-lesson .stages a>span[aria-hidden]{display:none}.r3-lesson [data-current-marker]{display:block;white-space:normal}.r3-lesson .stage-location{font-size:12px;margin:5px 0 0}.r3-lesson .course-controls{gap:8px}.r3-lesson .course-controls>*{font-size:13px}.r3-lesson .topic-marker{font-size:11px}}
- </style><header class="lesson-context"><nav class="breadcrumbs" aria-label="${say('Вы здесь','You are here')}"><a href="#view=academy">${say('Академия','Academy')}</a> › <a href="#course=${lesson.courseId}">${esc(course.title[locale])}</a> › <span>${esc(topic.module[locale])}</span></nav><p class="context-title"><span class="topic-marker">${say('Тема','Topic')} ${idx+1} / ${course.topics.length}</span> ${esc(topic.title[locale])}</p><button type="button" class="btn lesson-tools-toggle" data-action="tools" aria-controls="r3-tools" aria-expanded="false">${say('Навигация и инструменты','Navigation and tools')} ▾</button><div class="lesson-tools" id="r3-tools"><nav class="course-controls" aria-label="${w.program}"><button class="btn" data-action="outline">${w.program}</button>${neighbor(course.topics[idx-1],'← '+w.previous)}${neighbor(course.topics[idx+1],w.next+' →')}</nav>${openAssistant?`<button type="button" class="btn" data-r3-assistant>${say('Разобрать с Akronikl','Discuss with Akronikl')}</button>`:''}</div><nav class="stages" aria-label="${say('Раздел урока','Lesson stage')}">${stages.map(s=>`<a data-stage="${s}" aria-label="${esc(w[s])}" href="${url(topicId,s)}"><span aria-hidden="true">${stages.indexOf(s)+1}.</span> ${s==='selfcheck'&&locale==='ru'?'Само&shy;проверка':w[s]}<span data-current-marker hidden> · ${say('вы здесь','you are here')}</span></a>`).join('')}</nav><p class="stage-location" data-r3-location></p></header><p data-r3-save role="status" aria-live="polite">${adapter?say('Ответы и работа сохраняются на этом устройстве.','Answers and work are saved on this device.'):(external?say('Просмотр материалов. Войдите в аккаунт, чтобы сохранять ответы и работу.','Read-only materials. Sign in to save answers and work.'):say('Просмотр материалов. Войдите в аккаунт или откройте личную копию C++, чтобы сохранять работу.','Read-only materials. Sign in or open your C++ local copy to save work.'))}</p><button class="btn" data-r3-retry hidden>${say('Повторить сохранение','Retry saving')}</button><button class="btn" data-r3-export hidden>${say('Скачать несохранённую работу','Download unsaved work')}</button>${stages.map(s=>`<section data-r3-panel="${s}" class="stage-body" tabindex="-1" ${s===route.stage?'':'hidden'}>${s==='explanation'?explanation():s==='selfcheck'?selfcheck():practice()}</section>`).join('')}<p>${w.notCompleted}</p></div>`;
- const contextHeader=root.querySelector('.lesson-context'),shellHeader=document.querySelector('.topbar');const updateContextOffset=()=>{if(!live())return;root.querySelector('.r3-lesson').style.setProperty('--r3-shell-top',shellHeader?Math.max(0,shellHeader.getBoundingClientRect().height)+8+'px':'0px');root.querySelector('.r3-lesson').style.setProperty('--r3-context-height',contextHeader.getBoundingClientRect().height+'px');};updateContextOffset();if(typeof ResizeObserver!=='undefined'){contextObserver=new ResizeObserver(updateContextOffset);contextObserver.observe(contextHeader);if(shellHeader)contextObserver.observe(shellHeader);}
+ .r3-lesson{--r3-line:#486377;line-height:1.7;max-width:1220px;margin:auto;min-width:0}.r3-lesson .option span,.r3-lesson .practice-card li{white-space:pre-wrap}.r3-lesson [data-onec-figure] img{max-width:100%}.r3-lesson [data-course-figures] .onec-shot-frame{position:relative;overflow:hidden}.r3-lesson [data-course-figures] svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.r3-lesson [hidden]{display:none!important}.r3-lesson .stage-body{padding:24px 0;min-width:0}.r3-lesson .lesson-section,.r3-lesson .question,.r3-lesson .practice-card{border:1px solid var(--r3-line);border-radius:14px;padding:24px;margin:20px 0}.r3-lesson .section-index{font-size:.8rem;opacity:.7}.r3-lesson .example-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,.65fr);gap:24px}.r3-lesson .example-layout>div{min-width:0}.r3-lesson pre{white-space:pre;overflow:auto;max-width:100%;background:#071522;color:#e6f1ff;padding:16px;border-radius:8px;line-height:1.7}.r3-lesson .table-wrap,.r3-lesson .trace-wrap{overflow:auto}.r3-lesson table{width:100%;border-collapse:collapse}.r3-lesson th,.r3-lesson td{padding:12px;border:1px solid var(--r3-line);text-align:left;vertical-align:top}.r3-lesson caption{font-weight:600;text-align:left}.r3-lesson .option{display:flex;gap:12px;padding:10px}.r3-lesson textarea[data-answer],.r3-lesson textarea[data-r3-report],.r3-lesson #stdin{display:block;width:100%;min-height:100px;padding:12px;color:inherit;background:transparent;border:1px solid var(--r3-line);border-radius:8px}.r3-lesson fieldset{border:0;padding:0;min-width:0;width:100%}.r3-lesson legend{font-weight:700;max-width:100%;overflow-wrap:anywhere}.r3-lesson .feedback{border-left:3px solid #82e6ce;padding:12px}.r3-lesson details,.r3-lesson .environment{padding:16px;border:1px solid var(--r3-line);border-radius:8px;margin:16px 0}.r3-lesson .work-actions{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.r3-lesson .r3-dialog{max-width:min(900px,94vw);max-height:85vh;overflow:auto;background:#102333;color:#e6edf5;border:1px solid var(--r3-line);border-radius:16px;padding:24px}.r3-lesson a:focus-visible,.r3-lesson button:focus-visible,.r3-lesson textarea:focus-visible{outline:3px solid #82e6ce;outline-offset:3px}.r3-lesson .code-studio{min-width:0}.r3-lesson .next-card{display:flex;gap:16px;flex-wrap:wrap}.r3-lesson [data-r3-save]{min-height:1.7em}
+ .r3-lesson .breadcrumbs{margin-bottom:8px;font-size:.82rem;color:var(--muted,#a9c0d3)}
+ .r3-lesson .lesson-context{
+  position:sticky;top:var(--r3-shell-top,0px);z-index:5;
+  padding:4px 8px;background:var(--panel,#102333);
+  border:1px solid var(--r3-line);border-radius:10px;
+ }
+ .r3-lesson .context-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+ .r3-lesson .context-row .context-title{display:flex;align-items:center;gap:6px;flex:1;min-width:0;max-width:none;margin:0;font-size:.88rem;font-weight:700}
+ .r3-lesson .topic-marker{flex:none;padding:0 5px;border:1px solid var(--r3-line);border-radius:5px;font-size:.7rem;white-space:nowrap}
+ .r3-lesson .lesson-topic-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .r3-lesson .lesson-tools-toggle{min-height:30px;padding:0 8px;border-radius:7px;font-size:12px;flex:none}
+ .r3-lesson .lesson-tools{
+  position:absolute;inset-inline:0;top:calc(100% + 4px);padding:12px;
+  max-height:calc(100dvh - var(--r3-shell-top,0px) - var(--r3-context-height,80px) - 12px);
+  overflow:auto;overscroll-behavior:contain;
+  background:var(--panel,#102333);border:1px solid var(--r3-line);border-radius:10px;
+  box-shadow:0 10px 24px #0005;
+ }
+ .r3-lesson .lesson-tools p{margin:0 0 8px;font-weight:700}
+ .r3-lesson .course-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+ .r3-lesson .course-controls a{padding:6px 8px}
+ .r3-lesson .course-controls button{white-space:normal}
+ .r3-lesson .stages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .r3-lesson .stages a{
+  position:relative;display:grid;place-items:center;min-height:36px;
+  padding:2px;text-align:center;line-height:1.15;font-size:clamp(11px,2.8vw,14px);
+  border:1px solid var(--r3-line);border-radius:7px;overflow-wrap:anywhere;
+ }
+ .r3-lesson .stages [aria-current=step]{background:#24594b;color:#e8fff7;border-color:#82e6ce;font-weight:750}
+ .r3-lesson [data-current-marker]{position:absolute;bottom:2px;width:12px;height:2px;background:currentColor;border-radius:2px}
+ .r3-lesson :is(.lesson-section,.stage-body [id],.stage-body :is(a,button,input,textarea,select,summary)){
+  scroll-margin-top:calc(var(--r3-shell-top,0px) + var(--r3-context-height,80px) + 12px)
+ }
+ @media(max-width:720px){
+  .r3-lesson .example-layout{display:block}
+  .r3-lesson .lesson-section,.r3-lesson .question,.r3-lesson .practice-card{padding:16px}
+  .r3-lesson .lesson-context{padding-inline:5px}
+  .r3-lesson .context-row .context-title{font-size:12px}
+  .r3-lesson .topic-marker-label{display:none}
+  .r3-lesson .breadcrumbs{font-size:11px}
+  .r3-lesson .stages{gap:4px}
+ }
+ </style>
+ <nav class="breadcrumbs" aria-label="${say('Вы здесь','You are here')}">
+  <a href="#view=academy">${say('Академия','Academy')}</a> ›
+  <a href="#course=${lesson.courseId}">${esc(course.title[locale])}</a> ›
+  <span>${esc(topic.module[locale])}</span>
+ </nav>
+ <header class="lesson-context">
+  <div class="context-row">
+   <p class="context-title">
+    <span class="topic-marker"><span class="topic-marker-label">${say('Тема','Topic')} </span>${idx+1}/${course.topics.length}</span>
+    <span class="lesson-topic-name" title="${esc(topic.title[locale])}">${esc(topic.title[locale])}</span>
+   </p>
+   <button type="button" class="btn lesson-tools-toggle" data-action="tools"
+     aria-label="${say('Навигация по уроку','Lesson navigation')}" aria-controls="r3-tools" aria-expanded="false">${say('Меню','Menu')}</button>
+  </div>
+  <div class="lesson-tools" id="r3-tools" hidden>
+   <p>${esc(topic.title[locale])}</p>
+   <nav class="course-controls" aria-label="${w.program}">
+    <button type="button" class="btn" data-action="outline">${w.program}</button>
+    ${neighbor(course.topics[idx-1],'← '+w.previous)}${neighbor(course.topics[idx+1],w.next+' →')}
+    ${openAssistant?`<button type="button" class="btn" data-r3-assistant>${say('Разобрать с Akronikl','Discuss with Akronikl')}</button>`:''}
+   </nav>
+  </div>
+  <nav class="stages" aria-label="${say('Раздел урока','Lesson stage')}">
+   ${stages.map(stage=>`<a data-stage="${stage}" aria-label="${esc(w[stage])}" href="${url(topicId,stage)}"><span>${stage==='selfcheck'&&locale==='ru'?'Само&shy;проверка':w[stage]}</span><span data-current-marker aria-hidden="true" hidden></span></a>`).join('')}
+  </nav>
+ </header><p data-r3-save role="status" aria-live="polite">${adapter?say('Ответы и работа сохраняются на этом устройстве.','Answers and work are saved on this device.'):(external?say('Просмотр материалов. Войдите в аккаунт, чтобы сохранять ответы и работу.','Read-only materials. Sign in to save answers and work.'):say('Просмотр материалов. Войдите в аккаунт или откройте личную копию C++, чтобы сохранять работу.','Read-only materials. Sign in or open your C++ local copy to save work.'))}</p><button class="btn" data-r3-retry hidden>${say('Повторить сохранение','Retry saving')}</button><button class="btn" data-r3-export hidden>${say('Скачать несохранённую работу','Download unsaved work')}</button>${stages.map(s=>`<section data-r3-panel="${s}" class="stage-body" tabindex="-1" ${s===route.stage?'':'hidden'}>${s==='explanation'?explanation():s==='selfcheck'?selfcheck():practice()}</section>`).join('')}<p>${w.notCompleted}</p></div>`;
+ const contextHeader=root.querySelector('.lesson-context');
+ const shellHeader=document.querySelector('.topbar');
+ const lessonElement=root.querySelector('.r3-lesson');
+ const updateContextOffset=()=>{
+  if(!live())return;
+  lessonElement.style.setProperty('--r3-shell-top',(shellHeader?.getBoundingClientRect().height??0)+'px');
+  lessonElement.style.setProperty('--r3-context-height',contextHeader.getBoundingClientRect().height+'px');
+ };
+ updateContextOffset();
+ if(typeof ResizeObserver!=='undefined'){
+  contextObserver=new ResizeObserver(updateContextOffset);
+  contextObserver.observe(contextHeader);
+  if(shellHeader)contextObserver.observe(shellHeader);
+ }
  if(author){const readingButton=document.createElement('button');readingButton.type='button';readingButton.className='btn';readingButton.dataset.action='reading';readingButton.textContent=say('Что почитать по теме','Topic reading');root.querySelector('.course-controls').append(readingButton);}
  const panel=s=>root.querySelector('[data-r3-panel="'+s+'"]');
  function feedback(q){
@@ -107,11 +186,29 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  }
  function remember(){if(!session||!live())return;const next={x:Math.max(0,scrollX),y:Math.max(0,scrollY)};if(canonicalJson(session.draft.positions[route.stage])!==canonicalJson(next))session.change(d=>{d.positions[route.stage]=next;});}
  let acceptedHash=location.hash;
- async function showStage(stage,anchor='',rememberOld=true){if(!live())return;if(rememberOld)remember();route.stage=stage;if(session&&session.draft.stage!==stage)session.change(d=>{d.stage=stage;});for(const s of stages){panel(s).hidden=s!==stage;const a=root.querySelector('[data-stage="'+s+'"]');s===stage?a.setAttribute('aria-current','step'):a.removeAttribute('aria-current');a.querySelector('[data-current-marker]').hidden=s!==stage;}root.querySelector('[data-r3-location]').textContent=say('Сейчас: ','Now: ')+w[stage]+' · '+say('раздел ','stage ')+(stages.indexOf(stage)+1)+say(' из 3',' of 3');panel(stage).focus({preventScroll:true});if(stage==='practice')await ensureEditor();if(!live())return;acceptedHash=location.hash;notifyView();const position=draft().positions[stage];requestAnimationFrame(()=>{if(!live()||route.stage!==stage)return;const focused=root.getRootNode().activeElement||document.activeElement;if(focused?.matches('input,textarea,button,a'))return;if(anchor)root.querySelector('#'+CSS.escape(anchor))?.scrollIntoView({block:'start'});else scrollTo(position.x,position.y);});}
+ async function showStage(stage,anchor='',rememberOld=true){if(!live())return;if(rememberOld)remember();route.stage=stage;if(session&&session.draft.stage!==stage)session.change(d=>{d.stage=stage;});for(const s of stages){panel(s).hidden=s!==stage;const a=root.querySelector('[data-stage="'+s+'"]');s===stage?a.setAttribute('aria-current','step'):a.removeAttribute('aria-current');a.querySelector('[data-current-marker]').hidden=s!==stage;}setToolsOpen(false);panel(stage).focus({preventScroll:true});if(stage==='practice')await ensureEditor();if(!live())return;acceptedHash=location.hash;notifyView();const position=draft().positions[stage];requestAnimationFrame(()=>{if(!live()||route.stage!==stage)return;const focused=root.getRootNode().activeElement||document.activeElement;if(focused?.matches('input,textarea,button,a'))return;if(anchor)root.querySelector('#'+CSS.escape(anchor))?.scrollIntoView({block:'start'});else scrollTo(position.x,position.y);});}
  function download(){if(!session?.isCurrent())return;const value=session.exportBuffer(),blob=new Blob([JSON.stringify(value,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=topicId+'-my-work.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
  let lastEditable=null;
  const abort=new AbortController(),listen=(node,event,fn)=>node.addEventListener(event,fn,{signal:abort.signal});
- listen(root,'focusin',event=>{if(event.target.matches('textarea,input'))lastEditable=event.target;});
+ const toolsToggle=contextHeader.querySelector('[data-action="tools"]');
+ const toolsPanel=contextHeader.querySelector('.lesson-tools');
+ function setToolsOpen(open){
+  toolsPanel.hidden=!open;
+  toolsToggle.setAttribute('aria-expanded',String(open));
+ }
+ listen(window,'pointerdown',event=>{
+  if(live()&&!toolsPanel.hidden&&!event.composedPath().includes(contextHeader)&&!root.querySelector('dialog[open]'))setToolsOpen(false);
+ });
+ listen(contextHeader,'keydown',event=>{
+  if(event.key!=='Escape'||toolsPanel.hidden)return;
+  event.preventDefault();
+  setToolsOpen(false);
+  toolsToggle.focus({preventScroll:true});
+ });
+ listen(root,'focusin',event=>{
+  if(!toolsPanel.hidden&&event.target.closest('.stage-body'))setToolsOpen(false);
+  if(event.target.matches('textarea,input'))lastEditable=event.target;
+ });
  listen(root,'input',event=>{if(!session||!live())return;const el=event.target;if(el.dataset.answer){const id=el.dataset.answer;session.change(d=>{d.answers[id]={value:el.type==='radio'?Number(el.value):el.value,checked:false,contentRevision};});feedback(lesson.selfcheck.find(q=>q.id===id));}if(el.hasAttribute('data-r3-report'))session.change(d=>{d.reportDraft=el.value;});});
  listen(root,'submit',event=>{const q=lesson.selfcheck.find(q=>q.id===event.target.dataset.question);if(!q)return;event.preventDefault();if(!session||!live()||!draft().answers[q.id])return;session.change(d=>{d.answers[q.id].checked=q.kind!=='free';d.answers[q.id].contentRevision=contentRevision;});feedback(q);void session.flush().catch(()=>{});});
  function dialog(title,body){const opener=root.getRootNode().activeElement||document.activeElement,node=document.createElement('dialog');node.className='r3-dialog';node.innerHTML=`<h2>${esc(title)}</h2><button class="btn" data-close>${w.close}</button>${body}`;root.querySelector('.r3-lesson').append(node);node.querySelector('[data-close]').onclick=()=>node.close();node.onclose=()=>{node.remove();opener?.focus();};node.showModal();return node;}
@@ -122,7 +219,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
   try{
    if(author&&button.dataset.action==='reading')dialog(say('Что почитать по теме','Topic reading'),author.reading());
    if(author&&button.dataset.recall){const content=author.recall(button.dataset.recall);if(content){const target=lastEditable&&root.contains(lastEditable)?lastEditable:button,x=scrollX,y=scrollY,start=target.selectionStart,end=target.selectionEnd,top=target.scrollTop,left=target.scrollLeft;const node=dialog(content.title,content.body);node.onclose=()=>{node.remove();if(!live())return;target.focus({preventScroll:true});if(typeof start==='number')target.setSelectionRange(start,end);target.scrollTop=top;target.scrollLeft=left;scrollTo(x,y);};}}
-   if(button.dataset.action==='tools'){const header=root.querySelector('.lesson-context'),open=!header.hasAttribute('data-tools-open');header.toggleAttribute('data-tools-open',open);button.setAttribute('aria-expanded',String(open));}
+   if(button===toolsToggle)setToolsOpen(toolsPanel.hidden);
    if(button.hasAttribute('data-r3-assistant')&&openAssistant){notifyView();openAssistant(button,{courseId:lesson.courseId,lessonId:topicId,sectionId:route.stage,locale});}
    if(button.hasAttribute('data-r3-export'))download();
    if(button.hasAttribute('data-r3-retry'))await session?.retry();

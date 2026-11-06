@@ -20,7 +20,7 @@ try{
   }
   if(['cpp.variables-scope','cpp.pointers-references-addresses'].includes(id)){await p.setViewportSize({width:390,height:900});await p.locator('#'+(id==='cpp.variables-scope'?'concept-4':'concept-2')+' table').scrollIntoViewIfNeeded();await snap(id,locale,390,'objects');}
   await go(id,locale,'selfcheck');const q=l.selfcheck.find(q=>q.id==='predict');
-  assert.equal(await p.locator('[data-question="predict"] pre code').textContent(),q.code);
+  for(const question of l.selfcheck.filter(q=>q.execution))assert.equal(await p.locator('[data-question="'+question.id+'"] pre code').textContent(),question.execution.source);
   await p.locator('[data-answer="predict"][value="1"]').check();await p.locator('[data-question="predict"] fieldset button').click();assert.equal((await p.locator('[data-feedback="predict"]').textContent()).includes(q.feedback[1]),true);
   await p.locator('[data-answer="predict"][value="0"]').check();await p.locator('[data-question="predict"] fieldset button').click();
   const own='B1 '+id+' '+locale+' — собственное объяснение';await p.locator('[data-answer="explain"]').fill(own);await saved();await p.locator('[data-answer="explain"]').focus();

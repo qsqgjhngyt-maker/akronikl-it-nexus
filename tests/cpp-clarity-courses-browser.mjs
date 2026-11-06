@@ -32,7 +32,7 @@ try{
  await p.evaluate(()=>location.hash='#course=cpp&lesson=cpp.functions-contracts&stage=practice&locale=ru');await p.locator('[data-r3-topic="cpp.functions-contracts"] #editor').waitFor();
  await p.locator('#editor').fill('// retained independent work\nint main(){}');await p.locator('#stdin').fill('3 4');await p.waitForFunction(()=>document.querySelector('[data-r3-save]')?.dataset.state==='saved');
  const editor=await p.locator('#editor').elementHandle();await p.locator('[data-stage="explanation"]').click();await p.locator('[data-stage="practice"]').click();assert.ok(await p.locator('#editor').evaluate((node,old)=>node===old,editor));assert.match(await p.locator('#editor').inputValue(),/retained independent/);
- await p.locator('[data-r3-assistant]').click();await p.locator('[data-akronikl-panel]').waitFor();await p.locator('[data-akronikl-close]').click();
+ await p.locator('[data-action="tools"]').click();await p.locator('[data-r3-assistant]').click();await p.locator('[data-akronikl-panel]').waitFor();await p.locator('[data-akronikl-close]').click();
  for(const id of ['cpp.pointers-references-addresses','cpp.multifile-build','cpp.qt-graphical-adapter','onec.p8.topic-1','1c-enterprise.a1.orientation']){
   await p.evaluate(id=>location.hash='#'+new URLSearchParams({course:id.startsWith('cpp.')?'cpp':id.startsWith('onec.')?'onec':'1c-enterprise',lesson:id,locale:'ru',stage:'practice'}),id);const lesson=p.locator('[data-r3-topic="'+id+'"]');await lesson.waitFor();
   if(id==='cpp.multifile-build'){await lesson.locator('#editor').waitFor();assert.ok((await lesson.locator('#editor').evaluate(e=>e.__nexusCodeStudio.getSnapshot())).files.some(f=>f.path==='main.cpp'));}
