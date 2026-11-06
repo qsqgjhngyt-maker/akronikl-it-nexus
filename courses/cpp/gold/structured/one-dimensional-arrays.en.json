@@ -724,11 +724,11 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n#include <vector>\n\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> kept;\n    int sum{};\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        // TODO: decide whether to keep value, then update kept and sum.\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << kept.size() << ' ' << sum << '\\n';\n    for (std::size_t i = 0; i < kept.size(); ++i) {\n        if (i != 0) std::cout << ' ';\n        std::cout << kept[i];\n    }\n    std::cout << '\\n';\n}\n"
         }
       ],
       "metadata": {},
-      "stdin": "0",
+      "stdin": "5 -2 4 0 -1 4",
       "returnAnchor": "example-1",
       "cases": [
         {
@@ -774,23 +774,29 @@
         {
           "where": "Before running",
           "action": "Mark the positions retained from 5 −2 4 0 −1 4.",
-          "why": "",
-          "expected": ""
+          "why": "A duplicate is a separate reading, and zero is nonnegative.",
+          "expected": "For −2, 4, 0, −1, 4 keep 4, 0, 4."
         },
         {
           "where": "My program",
           "action": "Scan from left to right and append only values ≥ 0. Keep the result length explicit.",
-          "why": "",
-          "expected": ""
+          "why": "Left-to-right scanning preserves order without sorting.",
+          "expected": "The starter gives 0 0 and a blank line; selection gives 3 8 and 4 0 4."
         },
         {
           "where": "Check",
           "action": "Check both lines, including an empty second line, and test incomplete input.",
-          "why": "",
-          "expected": ""
+          "why": "A blank result line is still part of the format.",
+          "expected": "1 0 selects zero. 1 −2 leaves the second line blank."
         }
       ],
-      "recall": "concept-5"
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 3,
+        "stdout": "0 0\n\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

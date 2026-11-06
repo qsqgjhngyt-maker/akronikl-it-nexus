@@ -263,7 +263,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        "content": "#include <fstream>\n#include <iostream>\n#include <sstream>\n#include <string>\n\nint main() {\n    std::ifstream input{\"records.txt\"};\n    if (!input) {\n        std::cout << \"missing\\n\";\n        return 0;\n    }\n    std::string line;\n    int count{}, sum{};\n    while (std::getline(input, line)) {\n        if (++count > 100 || line.size() > 200) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        std::istringstream record{line};\n        // TODO: прочитайте одно целое, проверьте диапазон и хвост строки, затем прибавьте значение.\n    }\n    // TODO: проверьте состояние читателя, запишите count и sum в report.txt,\n    // закройте и проверьте писателя перед печатью exported.\n    std::cout << \"todo\\n\";\n}\n"
       },
       {
         "path": "records.txt",
@@ -347,23 +347,29 @@
       {
         "where": "До запуска",
         "action": "Набросайте ожидаемые stdout и report.txt для файла со строками 2, −1, 4. Запишите, что должно произойти, если вторую строку заменить на bad.",
-        "why": "",
-        "expected": ""
+        "why": "Статус в консоли и содержимое файла описывают разные результаты одного запуска.",
+        "expected": "Для строк 2, −1, 4 ожидаются exported и файл со строкой 3 5. После bad новый отчёт не создаётся."
       },
       {
         "where": "Моя программа",
         "action": "Разбирайте файл построчно. Открывайте report.txt только после успешной проверки всех строк, проверяйте поток после close.",
-        "why": "",
-        "expected": ""
+        "why": "Открытие писателя слишком рано может создать пустой отчёт даже для испорченного ввода.",
+        "expected": "У заготовки для трёх строк есть todo, файла результата ещё нет. После реализации статус успеха появляется после close."
       },
       {
         "where": "Проверка",
         "action": "Проверьте статус и байты артефакта отдельно. Для успешного ввода дождитесь exported и содержимого 3 5 с переводом строки. Проверьте отсутствие файла и отказ на неверной записи.",
-        "why": "",
-        "expected": ""
+        "why": "Для отсутствия, пустого файла и повреждённой строки нужны три различимых наблюдения.",
+        "expected": "Пустой файл даёт exported и 0 0. Отсутствие даёт missing, испорченная строка — invalid."
       }
     ],
-    "recall": "concept-5"
+    "recall": "concept-5",
+    "starterRevision": "b3-starter-v2",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "todo\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {

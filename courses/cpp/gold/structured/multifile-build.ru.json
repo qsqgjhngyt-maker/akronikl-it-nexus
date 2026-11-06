@@ -710,7 +710,7 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include \"domain.hpp\"\n#include <iostream>\n\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    // Реализуйте checkedArea в src/domain.cpp и компилируйте оба файла .cpp.\n    int result{17};\n    if (!checkedArea(width, height, result)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << result << '\\n';\n}\n"
         },
         {
           "path": "include/domain.hpp",
@@ -718,7 +718,7 @@
         },
         {
           "path": "src/domain.cpp",
-          "content": "#include \"domain.hpp\"\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\n"
+          "content": "#include \"domain.hpp\"\n\nbool checkedArea(int width, int height, int& result) {\n    // TODO: проверьте оба размера. Записывайте result только при успехе.\n    return false;\n}\n"
         }
       ],
       "metadata": {
@@ -771,23 +771,29 @@
         {
           "where": "До запуска",
           "action": "Назовите два набора .cpp: для приложения и для тестового драйвера. В каждом должен быть один main.",
-          "why": "",
-          "expected": ""
+          "why": "Два main одновременно меняют состав программы и приводят к ошибке линковки.",
+          "expected": "У приложения main.cpp и src/domain.cpp. У тестов свой main и тот же src/domain.cpp."
         },
         {
           "where": "Моя программа",
           "action": "Сохраните заголовок в include и реализацию в src. В Code Studio выбирайте файлы приложения для основного запуска и отдельно собирайте тест с той же реализацией.",
-          "why": "",
-          "expected": ""
+          "why": "Заголовок сообщает типы, а определения приходят из отдельных единиц трансляции.",
+          "expected": "До реализации 3 4 даёт invalid. После заполнения тела и сборки обоих файлов — 12."
         },
         {
           "where": "Проверка",
           "action": "Сверьте 3 4 и −1 2. В отдельном эксперименте пропустите файл реализации и классифицируйте ошибку. Не добавляйте второй main в эту же сборку.",
-          "why": "",
-          "expected": ""
+          "why": "Намеренный пропуск .cpp позволяет отличить компиляцию от компоновки.",
+          "expected": "Без src/domain.cpp вызов не линкуется. При полной сборке −1 2 даёт invalid."
         }
       ],
-      "recall": "concept-5"
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "invalid\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

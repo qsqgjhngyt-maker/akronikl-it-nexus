@@ -257,11 +257,11 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        "content": "#include <iostream>\n\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum{};\n    int positive{};\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        // TODO: обновите оба накопителя. Проследите шаг при value == 0.\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << sum << ' ' << positive << '\\n';\n}\n"
       }
     ],
     "metadata": {},
-    "stdin": "0",
+    "stdin": "4 -2 0 3 4",
     "returnAnchor": "example-1",
     "cases": [
       {
@@ -317,27 +317,33 @@
       {
         "where": "До запуска",
         "action": "Разметьте −2, 0, 3, 4 в таблице: сколько уже прочитано, текущая сумма и число положительных.",
-        "why": "",
-        "expected": ""
+        "why": "Сумма и число положительных меняются по разным правилам.",
+        "expected": "После −2, 0, 3, 4 пары равны (−2,0), (−2,0), (1,1), (5,2)."
       },
       {
         "where": "Моя программа",
         "action": "Инициализируйте оба накопителя до for. В каждой итерации проверьте чтение и измените накопители, затем проверьте хвост ввода.",
-        "why": "",
-        "expected": ""
+        "why": "Накопители должны пережить тело цикла; i отсчитывает только завершённые чтения.",
+        "expected": "В заготовке 0 0. После обновления сумма 5, число положительных 2."
       },
       {
         "where": "Проверка",
         "action": "Для 4 −2 0 3 4 объясните 5 2, затем уберите последнее число и проверьте, что частичный итог не печатается.",
-        "why": "",
-        "expected": ""
+        "why": "Неполный набор проверяет, что программа не выдаёт частичный отчёт.",
+        "expected": "4 −2 0 3 4 даёт 5 2, без последнего числа — invalid."
       }
     ],
     "recall": "concept-5",
     "outputFields": [
       "Сумма",
       "Число положительных"
-    ]
+    ],
+    "starterRevision": "b3-starter-v2",
+    "starterObservation": {
+      "case": 2,
+      "stdout": "0 0\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {

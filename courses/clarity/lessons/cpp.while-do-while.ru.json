@@ -257,11 +257,11 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        "content": "#include <iostream>\n#include <sstream>\n#include <string>\n\nbool parseValue(const std::string& token, int& value) {\n    std::istringstream input{token};\n    if (!(input >> value) || value < -1000 || value > 1000) {\n        return false;\n    }\n    input >> std::ws;\n    return input.eof();\n}\n\nint main() {\n    int count{};\n    int sum{};\n    std::string token;\n    while (std::cin >> token) {\n        int value{};\n        if (!parseValue(token, value)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        // TODO: обработайте маркер 0, проверьте лимит и обновите состояние.\n        // Если остановились на маркере, проверьте хвост ввода.\n    }\n    std::cout << count << ' ' << sum << '\\n';\n}\n"
       }
     ],
     "metadata": {},
-    "stdin": "",
+    "stdin": "2 -3 0",
     "returnAnchor": "example-1",
     "cases": [
       {
@@ -317,27 +317,33 @@
       {
         "where": "До запуска",
         "action": "Разделите случаи «конец ввода», «маркер», «нечитаемый токен» и «допустимое число».",
-        "why": "",
-        "expected": ""
+        "why": "Остановка цикла бывает нормальной и ошибочной, а сообщения должны отличаться.",
+        "expected": "Отдельно записаны четыре исхода: EOF, 0, неверный токен и допустимое число."
       },
       {
         "where": "Моя программа",
         "action": "Продвигайтесь по одному токену. После проверки числа и границ увеличьте счётчик только для ненулевого значения.",
-        "why": "",
-        "expected": ""
+        "why": "У каждого повтора есть действие: принять число, обработать маркер либо отказать.",
+        "expected": "В заготовке для 2 −3 0 вывод 0 0, после реализации — 2 −1."
       },
       {
         "where": "Проверка",
         "action": "Сравните 2 3, 2 3 0 и 2 3 0 99. Последний ввод должен быть отклонён в лабораторной.",
-        "why": "",
-        "expected": ""
+        "why": "Число после маркера отличает лабораторную от примера.",
+        "expected": "2 3 и 2 3 0 дают 2 5. Ввод 2 3 0 99 даёт invalid."
       }
     ],
     "recall": "concept-5",
     "outputFields": [
       "Принято чисел",
       "Сумма"
-    ]
+    ],
+    "starterRevision": "b3-starter-v2",
+    "starterObservation": {
+      "case": 3,
+      "stdout": "0 0\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {

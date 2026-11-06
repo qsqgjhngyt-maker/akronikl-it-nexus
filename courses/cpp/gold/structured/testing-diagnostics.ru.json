@@ -594,7 +594,7 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <array>\n#include <iostream>\n#include <span>\n\nint countPositive(std::span<const int> values) {\n    int count{};\n    // TODO: посчитайте строго положительные значения.\n    return count;\n}\n\nint main() {\n    const std::array<int, 3> mixed{-2, 0, 4};\n    bool pass = countPositive(mixed) == 1;\n    // TODO: добавьте ещё четыре независимые проверки с готовыми ожиданиями.\n    // Сохраните случай, обнаруживающий ошибочное включение нуля.\n\n    if (!pass) {\n        std::cout << \"FAIL\\n\";\n        return 1;\n    }\n    // TODO: печатайте PASS и число проверок после добавления всех пяти.\n    std::cout << \"todo\\n\";\n}\n"
         }
       ],
       "metadata": {},
@@ -619,23 +619,29 @@
         {
           "where": "До запуска",
           "action": "Выпишите пять наборов с ожиданиями. Включите пустой, одни нули и смешанные знаки.",
-          "why": "",
-          "expected": ""
+          "why": "Независимое ожидание позволяет обнаружить ошибку в самом счётчике.",
+          "expected": "Записаны пять наборов и их ожидаемые количества до вызова функции."
         },
         {
           "where": "Моя программа",
           "action": "Прогоняйте одну функцию для каждого набора. При несовпадении печатайте FAIL и верните ненулевой exit code.",
-          "why": "",
-          "expected": ""
+          "why": "Ненулевой exit code делает отказ наблюдаемым для инструмента проверки.",
+          "expected": "Заготовка даёт FAIL и exit code 1. Исправленный драйвер даёт PASS 5 и код 0."
         },
         {
           "where": "Проверка",
           "action": "Докажите, что версия с >= 0 приводит к FAIL. После возврата > 0 должна остаться строка PASS 5.",
-          "why": "",
-          "expected": ""
+          "why": "Без проверки нуля правдоподобная мутация может пройти тесты.",
+          "expected": "Смена > на >= приводит к FAIL на наборе с нулём."
         }
       ],
-      "recall": "concept-5"
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "FAIL\n",
+        "exitCode": 1
+      }
     },
     "reading": [
       {

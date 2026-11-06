@@ -710,7 +710,7 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include \"domain.hpp\"\n#include <iostream>\n\nint main() {\n    int width{}, height{};\n    if (!(std::cin >> width >> height)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    // Implement checkedArea in src/domain.cpp, then compile both .cpp files.\n    int result{17};\n    if (!checkedArea(width, height, result)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << result << '\\n';\n}\n"
         },
         {
           "path": "include/domain.hpp",
@@ -718,7 +718,7 @@
         },
         {
           "path": "src/domain.cpp",
-          "content": "#include \"domain.hpp\"\nbool checkedArea(int width, int height, int& result) {\n    if (width < 0 || width > 1000 || height < 0 || height > 1000) { return false; }\n    result = width * height;\n    return true;\n}\n"
+          "content": "#include \"domain.hpp\"\n\nbool checkedArea(int width, int height, int& result) {\n    // TODO: validate both dimensions. Write to result only on success.\n    return false;\n}\n"
         }
       ],
       "metadata": {
@@ -771,23 +771,29 @@
         {
           "where": "Before running",
           "action": "Name two .cpp sets: one for the app and one for the test driver. Each must have exactly one main.",
-          "why": "",
-          "expected": ""
+          "why": "Compiling two main functions changes the program inputs and causes a link error.",
+          "expected": "The app uses main.cpp and src/domain.cpp. The test uses its own main with the same src/domain.cpp."
         },
         {
           "where": "My program",
           "action": "Keep the header in include and implementation in src. Build the application from its selected files in Code Studio, and build the test separately with the same implementation.",
-          "why": "",
-          "expected": ""
+          "why": "A header supplies types; definitions come from the translation units.",
+          "expected": "Before implementation 3 4 gives invalid. Completing the body and building both files gives 12."
         },
         {
           "where": "Check",
           "action": "Check 3 4 and −1 2. In a separate experiment omit the implementation file and classify the failure. Do not put a second main in that same build.",
-          "why": "",
-          "expected": ""
+          "why": "Omitting a .cpp deliberately distinguishes compilation from linking.",
+          "expected": "Without src/domain.cpp the call fails to link. A complete build gives invalid for −1 2."
         }
       ],
-      "recall": "concept-5"
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "invalid\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

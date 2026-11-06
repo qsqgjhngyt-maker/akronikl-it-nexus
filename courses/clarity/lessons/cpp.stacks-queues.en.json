@@ -120,6 +120,29 @@
         "A parser validates command syntax and queues the command. The executor reads front and applies domain checks to the current state. A syntactically valid command can still be rejected because stock is insufficient at execution time.",
         "Order matters: add followed by remove can differ from the reverse order. Process the finite queue sequentially and print one result per command for reproducibility. Concurrency and blocking queues are outside this lesson.",
         "A queue handles the earlier request first. After the first pop its front becomes 2, although the stack reaches 2 from the opposite end."
+      ],
+      "tables": [
+        {
+          "caption": "Identical input 1, 2, 3",
+          "columns": [
+            "State",
+            "What you observe"
+          ],
+          "rows": [
+            [
+              "Before the first pop",
+              "Stack top is 3; queue front is 1."
+            ],
+            [
+              "After the first pop",
+              "The stack removed 3; the queue removed 1. Both now offer 2."
+            ],
+            [
+              "Full removal order",
+              "Stack 3 → 2 → 1, queue 1 → 2 → 3."
+            ]
+          ]
+        }
       ]
     },
     {
@@ -257,11 +280,11 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        "content": "#include <iostream>\n#include <queue>\n#include <stack>\n\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::stack<int> newestFirst;\n    std::queue<int> oldestFirst;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        // TODO: put value in both adapters.\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    // TODO: print and remove stack elements, checking empty before top.\n    std::cout << '\\n';\n    // TODO: print and remove queue elements, checking empty before front.\n    std::cout << '\\n';\n}\n"
       }
     ],
     "metadata": {},
-    "stdin": "0",
+    "stdin": "3 1 2 3",
     "returnAnchor": "example-1",
     "cases": [
       {
@@ -307,20 +330,20 @@
       {
         "where": "Before running",
         "action": "Write the two expected lines for 1, 2, 3 and separately for the empty input set.",
-        "why": "",
-        "expected": ""
+        "why": "Two removal orders are easier to compare against written expectations.",
+        "expected": "For 1,2,3 expect 3 2 1 and 1 2 3. For empty input expect two blank lines."
       },
       {
         "where": "My program",
         "action": "After validation fill both adapters. Print each sequence, checking empty before top or front.",
-        "why": "",
-        "expected": ""
+        "why": "Reading and removing are separate operations that both require a nonempty adapter.",
+        "expected": "The starter gives two blank lines even for three values. The completed version prints all three on both lines."
       },
       {
         "where": "Check",
         "action": "For 3 1 2 3 compare 3 2 1 with 1 2 3. For n = 0 check two blank lines; for extra input expect invalid.",
-        "why": "",
-        "expected": ""
+        "why": "A single value cannot distinguish LIFO from FIFO, but three distinct values can.",
+        "expected": "A duplicate test preserves both equal values, while 0 x gives invalid."
       }
     ],
     "modulePracticum": {
@@ -655,7 +678,13 @@
       "completionRule": "Manual acceptance: at least 8/10, no zero for correctness or tests, all required cases pass, and the defence is completed. Copying the reference and a completed flag do not imply automatic skill assessment.",
       "verification": "manual-output-comparison"
     },
-    "recall": "concept-5"
+    "recall": "concept-5",
+    "starterRevision": "b3-starter-v2",
+    "starterObservation": {
+      "case": 2,
+      "stdout": "\n\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {

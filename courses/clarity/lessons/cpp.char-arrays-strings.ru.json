@@ -257,7 +257,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        "content": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string line;\n    if (!std::getline(std::cin, line) || line.size() > 200) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::string extra;\n    if (std::getline(std::cin, extra)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int letters{}, digits{}, spaces{}, other{};\n    for (unsigned char byte : line) {\n        // TODO: учтите byte ровно в одной из четырёх категорий ASCII.\n    }\n    std::cout << line.size() << ' ' << letters << ' ' << digits\n              << ' ' << spaces << ' ' << other << '\\n';\n}\n"
       }
     ],
     "metadata": {},
@@ -312,20 +312,20 @@
       {
         "where": "До запуска",
         "action": "Разметьте A, b, пробел, 1, 2 и !. Затем отдельно спрогнозируйте, что произойдёт с é.",
-        "why": "",
-        "expected": ""
+        "why": "Классифицируется каждый байт, поэтому сумма четырёх счётчиков должна совпасть с длиной.",
+        "expected": "Для Ab 12! подписаны 2 буквы, 2 цифры, 1 пробел и 1 прочий байт."
       },
       {
         "where": "Моя программа",
         "action": "Разрешите пустую строку и отвергните отсутствие записи, длину выше лимита и вторую строку. Сравнивайте байты с ASCII-диапазонами.",
-        "why": "",
-        "expected": ""
+        "why": "getline отличает запись длиной ноль от отсутствия записи.",
+        "expected": "Заготовка печатает 6 0 0 0 0, после классификации — 6 2 2 1 1."
       },
       {
         "where": "Проверка",
         "action": "Сумма letters, digits, spaces и other должна равняться bytes. Сравните пустую строку с пустым вводом и проверьте UTF-8.",
-        "why": "",
-        "expected": ""
+        "why": "Многобайтовый символ проверяет единицу измерения отчёта.",
+        "expected": "Пустая строка даёт пять нулей. Отсутствующая строка отклоняется, é даёт 2 other."
       }
     ],
     "recall": "concept-5",
@@ -335,7 +335,13 @@
       "Цифры",
       "Пробелы",
       "Прочие байты"
-    ]
+    ],
+    "starterRevision": "b3-starter-v2",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "6 0 0 0 0\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {

@@ -257,7 +257,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        "content": "#include <iostream>\n#include <string>\n#include <variant>\n\nstruct Add { int amount; };\nstruct Remove { int amount; };\nusing Command = std::variant<Add, Remove>;\n\nbool apply(int& stock, const Command& command) {\n    // TODO: find the active alternative, check its bound, then update stock.\n    return false;\n}\n\nint main() {\n    int stock{}, amount{};\n    std::string action;\n    if (!(std::cin >> stock >> action >> amount) ||\n        stock < 0 || stock > 1000 || amount < 0 || amount > 1000 ||\n        (action != \"add\" && action != \"remove\")) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    const Command command = action == \"add\" ? Command{Add{amount}} : Command{Remove{amount}};\n    const bool accepted = apply(stock, command);\n    std::cout << (accepted ? \"ok \" : \"rejected \") << stock << '\\n';\n}\n"
       }
     ],
     "metadata": {},
@@ -312,27 +312,33 @@
       {
         "where": "Before running",
         "action": "Make a table for add, remove and an unknown word. Include rejection in both known alternatives.",
-        "why": "",
-        "expected": ""
+        "why": "Add and Remove have different rejection boundaries.",
+        "expected": "Unknown command, excessive Add and excessive Remove are distinguished."
       },
       {
         "where": "My program",
         "action": "Construct the variant after parsing. Inspect the alternative, validate its operation and change stock only on success.",
-        "why": "",
-        "expected": ""
+        "why": "Check the active alternative before accessing its data.",
+        "expected": "The starter gives rejected 3 for 3 add 4; the completed branch gives ok 7."
       },
       {
         "where": "Check",
         "action": "Check 3 remove 3, 3 remove 4 and 1000 add 1. Verify invalid for an unknown command.",
-        "why": "",
-        "expected": ""
+        "why": "Either command can reject after successful parsing.",
+        "expected": "3 remove 3 gives ok 0. 3 remove 4 and 1000 add 1 preserve stock."
       }
     ],
     "recall": "concept-5",
     "outputFields": [
       "Status",
       "Stock"
-    ]
+    ],
+    "starterRevision": "b3-starter-v2",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "rejected 3\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {

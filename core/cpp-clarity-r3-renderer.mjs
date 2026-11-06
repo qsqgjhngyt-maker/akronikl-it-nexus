@@ -31,12 +31,12 @@ function table(t){
  const attributes=wide?` data-wide-table tabindex="0" role="region" aria-label="${esc(t.caption)}"`:'';
  const note=wide?`<p class="table-scroll-note">${say('Таблицу можно прокрутить вправо.','Scroll the table to see more.')}</p>`:'';
  return `${note}<div class="table-wrap"${attributes}><table><caption>${esc(t.caption)}</caption><thead><tr>${t.columns.map(x=>`<th scope="col">${esc(x)}</th>`).join('')}</tr></thead><tbody>${t.rows.map(row=>`<tr>${row.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
-function programFiles(files,label){
+function programFiles(files,label,after=''){
  if(!files)return '';
  const entries=Object.entries(files);
  return entries.length?`<details class="program-files"><summary>${label}</summary>${entries.map(([path,content])=>
   `<p>${esc(path)}</p><pre data-program-file="${esc(path)}"><code>${esc(content)}</code></pre>`
- ).join('')}</details>`:`<p>${say('Входных файлов нет','No input files')}</p>`;
+ ).join('')}${after}</details>`:`<p>${say('Входных файлов нет','No input files')}</p>`;
 }
 function programBundle(bundle){
  const metadata=bundle?.metadata;
@@ -71,7 +71,9 @@ const authorModule=lesson.authored?await import('./cpp-clarity-authored.mjs'):nu
  if(!live())return null;
  const author=authorModule?.authoredMarkup(lesson,{code,table,url,programBundle});
 function explanation(){if(author)return author.explanation();const w=text();return `<div class="intro"><div class="eyebrow">${w.goal}</div><h1>${esc(lesson.title)}</h1><p class="goal">${esc(lesson.goal)}</p><div class="prerequisites"><strong>${w.required}</strong><ul>${lesson.prerequisites.map(p=>`<li>${prerequisite(p)}</li>`).join('')}</ul></div></div>${lesson.sections.map((s,i)=>`<section class="lesson-section" id="${s.id}"><div class="section-index">${String(i+1).padStart(2,'0')} / ${String(lesson.sections.length).padStart(2,'0')}</div><h2>${esc(s.title)}</h2>${s.paragraphs.map(p=>`<p>${esc(p)}</p>`).join('')}${s.code?code(s.code.source,s.code.output,s.code.stdin):''}${s.steps?.length?`<ol>${s.steps.map(step=>`<li>${esc(step)}</li>`).join('')}</ol>`:''}${(s.tables||[]).map(table).join('')}${s.trace?`<div class="trace-wrap"><table><caption>${route.locale==='ru'?'Разбор выполнения по шагам':'Execution, step by step'}</caption><thead><tr>${w.trace.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${s.trace.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:''}${(s.clarifications||[]).map(clarification).join('')}</section>`).join('')}<div class="next-card"><span>${w.notCompleted}</span><a class="button primary" href="${url(route.id,'selfcheck')}">${w.selfcheck} →</a></div>`;}
-function practiceSteps(p){const w=text();return p.steps?`<section class="practice-card practice-steps"><h2>${w.practice}: ${route.locale==='ru'?'по шагам':'step by step'}</h2><ol class="steps">${p.steps.map(s=>`<li ${s.id?`id="step-${esc(s.id)}"`:''}><div class="where">${esc(s.where)}</div><p>${esc(s.action)}</p><p class="muted">${esc(s.why)}</p><p>${esc(s.expected)}</p>${s.code?code(s.code):''}${s.before?`<details><summary>${say('Перед этим шагом','Before this step')}</summary><p>${esc(s.before)}</p></details>`:''}${s.troubleshooting?`<details><summary>${say('Если не получилось','Troubleshooting')}</summary><p>${esc(s.troubleshooting)}</p></details>`:''}${s.figures?.length?`<div data-course-figures="${esc(s.id)}"></div>`:''}</li>`).join('')}</ol></section>`:'';}
+function practiceSteps(p){const w=text();
+ const notes=s=>p.starterRevision?`<p data-step-why><strong>${say('Зачем','Why')}</strong> ${esc(s.why)}</p><p data-step-expected><strong>${say('Что должно получиться','What to expect')}</strong> ${esc(s.expected)}</p>`:`<p class="muted">${esc(s.why)}</p><p>${esc(s.expected)}</p>`;
+ return p.steps?`<section class="practice-card practice-steps"><h2>${w.practice}: ${route.locale==='ru'?'по шагам':'step by step'}</h2><ol class="steps">${p.steps.map(s=>`<li ${s.id?`id="step-${esc(s.id)}"`:''}><div class="where">${esc(s.where)}</div><p>${esc(s.action)}</p>${notes(s)}${s.code?code(s.code):''}${s.before?`<details><summary>${say('Перед этим шагом','Before this step')}</summary><p>${esc(s.before)}</p></details>`:''}${s.troubleshooting?`<details><summary>${say('Если не получилось','Troubleshooting')}</summary><p>${esc(s.troubleshooting)}</p></details>`:''}${s.figures?.length?`<div data-course-figures="${esc(s.id)}"></div>`:''}</li>`).join('')}</ol></section>`:'';}
 function queryTransfer(t){return t?`<details class="clarification query-transfer"><summary>${esc(t.title)}</summary><p>${esc(t.text)}</p>${t.functions.map(f=>`<pre><code>${esc(f)}</code></pre>`).join('')}<p>${esc(t.execution)}</p><pre><code>${esc(t.calls)}</code></pre></details>`:'';}
  const draft=()=>session?.draft||publicDraft;
  const external=CLARITY_COURSES[topicId].courseId!=='cpp',qt=CLARITY_COURSES[topicId].runtime==='qt-project',reported=external||qt;
@@ -130,7 +132,14 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  }
  function starterDisclosure(p){
   const files=Object.fromEntries(p.files.map(({path,content})=>[path,content]));
-  return programFiles(files,say('Посмотреть заготовку','View the starter files'));
+  const result=p.starterObservation;
+  const preview=result?`<div data-starter-observation>
+   <p><strong>${say('Первый запуск заготовки','First run of the starter')}</strong></p>
+   <p>${esc(p.cases[result.case].label)}. ${say('Вывод до выполнения TODO','Output before completing the TODOs')}.</p>
+   <pre data-starter-output>\n${esc(result.stdout)}</pre>
+   <p>${say('Код завершения','Exit code')} ${result.exitCode}</p>
+  </div>`:'';
+  return programFiles(files,say('Посмотреть заготовку','View the starter files'),preview);
  }
  function workspaceCallout(p){
   const projects=[

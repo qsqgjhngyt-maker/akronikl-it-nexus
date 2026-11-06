@@ -412,6 +412,29 @@
           "std::move from <utility> permits a move; the call alone neither relocates memory nor destroys the object. auto q=std::move(p) move-constructs the unique_ptr: q becomes the owner and p becomes empty. Copying a unique_ptr is forbidden.",
           "The T object retains its address during this ownership transfer. An observer remains usable while q owns the live object, but not after q.reset(). Other moved-from types are not necessarily empty unless their documentation promises it.",
           "After move, two independent facts are checked: the previous unique_ptr is empty, and the new owner has the same object address. reset destroys the object after those checks."
+        ],
+        "tables": [
+          {
+            "caption": "One object changes owners",
+            "columns": [
+              "State",
+              "What you observe"
+            ],
+            "rows": [
+              [
+                "make_unique",
+                "owner owns Trace{5}; observer points at the live object."
+              ],
+              [
+                "std::move(owner)",
+                "owner is empty and next owns the same Trace{5}. The address can still be compared."
+              ],
+              [
+                "next.reset()",
+                "The object is destroyed and next is empty. Observe destroy 5 instead of using observer."
+              ]
+            ]
+          }
         ]
       },
       {
@@ -595,11 +618,11 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n#include <memory>\n#include <utility>\n\nstruct Trace {\n    int value;\n    explicit Trace(int n) : value(n) { std::cout << \"create \" << value << '\\n'; }\n    ~Trace() { std::cout << \"destroy \" << value << '\\n'; }\n};\n\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    auto owner = std::make_unique<Trace>(n);\n    const Trace* observer = owner.get();\n    // TODO: transfer ownership, check both owner states while observer is live,\n    // update the value through the new owner, then release it explicitly.\n}\n"
         }
       ],
       "metadata": {},
-      "stdin": "0",
+      "stdin": "4",
       "returnAnchor": "example-1",
       "cases": [
         {
@@ -640,23 +663,29 @@
         {
           "where": "Before running",
           "action": "Write the four-line order for N = 4. Mark separately when the observer ceases to be usable.",
-          "why": "",
-          "expected": ""
+          "why": "The log lets you verify destruction without reading a destroyed object.",
+          "expected": "For N=4 the trace is create 4, moved 1 1, value 5, destroy 5."
         },
         {
           "where": "My program",
           "action": "Create the owner, verify transfer, increment through the new owner and call reset.",
-          "why": "",
-          "expected": ""
+          "why": "Transfer changes the owner; updating the value requires a separate operation.",
+          "expected": "The starter prints only create 4 and destroy 4. Completion adds the move check and changed value."
         },
         {
           "where": "Check",
           "action": "Check N = 0 and N = 1000, then reject a trailing token without printing create.",
-          "why": "",
-          "expected": ""
+          "why": "Boundary inputs check both the value range and absence of resource creation on rejection.",
+          "expected": "N=0 and N=1000 each create one object. 4 x rejects before creation."
         }
       ],
-      "recall": "concept-5"
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 1,
+        "stdout": "create 4\ndestroy 4\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

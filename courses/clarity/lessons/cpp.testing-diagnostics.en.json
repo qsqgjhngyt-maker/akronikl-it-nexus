@@ -257,7 +257,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        "content": "#include <array>\n#include <iostream>\n#include <span>\n\nint countPositive(std::span<const int> values) {\n    int count{};\n    // TODO: implement the contract for strictly positive values.\n    return count;\n}\n\nint main() {\n    const std::array<int, 3> mixed{-2, 0, 4};\n    bool pass = countPositive(mixed) == 1;\n    // TODO: add four more independent tests with expected counts.\n    // Keep a test that catches accidentally including zero.\n\n    if (!pass) {\n        std::cout << \"FAIL\\n\";\n        return 1;\n    }\n    // TODO: print PASS and the number of checks once all five are present.\n    std::cout << \"todo\\n\";\n}\n"
       }
     ],
     "metadata": {},
@@ -282,23 +282,29 @@
       {
         "where": "Before running",
         "action": "List five cases with their expected counts. Include empty input, all zeroes and mixed signs.",
-        "why": "",
-        "expected": ""
+        "why": "An independent expectation can reveal a defect in the counter itself.",
+        "expected": "Five sets and their expected counts are written before calling the function."
       },
       {
         "where": "My program",
         "action": "Run the same function on every case. On a mismatch, print FAIL and return a nonzero exit code.",
-        "why": "",
-        "expected": ""
+        "why": "A nonzero exit code makes failure observable to a test runner.",
+        "expected": "The starter gives FAIL with exit code 1. The finished driver gives PASS 5 and code 0."
       },
       {
         "where": "Check",
         "action": "Show that the >= 0 version gives FAIL. Restoring > 0 should leave the line PASS 5.",
-        "why": "",
-        "expected": ""
+        "why": "Without a zero case a plausible mutation can pass.",
+        "expected": "Changing > to >= produces FAIL on a set containing zero."
       }
     ],
-    "recall": "concept-5"
+    "recall": "concept-5",
+    "starterRevision": "b3-starter-v2",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "FAIL\n",
+      "exitCode": 1
+    }
   },
   "terms": [
     {

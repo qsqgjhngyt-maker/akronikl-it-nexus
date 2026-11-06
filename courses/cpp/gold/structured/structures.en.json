@@ -603,7 +603,7 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n\nstruct Item {\n    int id;\n    int stock;\n};\n\nbool issue(Item& item, int amount) {\n    // TODO: verify amount against item.stock before changing the record.\n    return false;\n}\n\nint main() {\n    Item item{};\n    int amount{};\n    if (!(std::cin >> item.id >> item.stock >> amount) ||\n        item.id < 1 || item.id > 1000 ||\n        item.stock < 0 || item.stock > 1000 ||\n        amount < 0 || amount > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    const bool accepted = issue(item, amount);\n    std::cout << (accepted ? \"ok \" : \"rejected \") << item.stock << '\\n';\n}\n"
         }
       ],
       "metadata": {},
@@ -658,27 +658,33 @@
         {
           "where": "Before running",
           "action": "Record the state for 7 2 2 and 7 2 3. State the expected flag and final stock.",
-          "why": "",
-          "expected": ""
+          "why": "A whole-record snapshot catches accidental mutation of another field.",
+          "expected": "7 2 2 requires ok 0; 7 2 3 requires rejected 2."
         },
         {
           "where": "My program",
           "action": "Read and validate the three integers. Pass Item by reference only to the operation that mutates it after validation.",
-          "why": "",
-          "expected": ""
+          "why": "The rejection concerns this Item, so the operation receives a reference to it.",
+          "expected": "The starter rejects even 7 10 3. The implementation gives ok 7 and preserves id."
         },
         {
           "where": "Check",
           "action": "For an excessive request, compare both fields with the snapshot. id = 0 must give invalid rather than rejected.",
-          "why": "",
-          "expected": ""
+          "why": "Malformed input and insufficient stock are different contract outcomes.",
+          "expected": "Both id and stock survive rejection. id=0 gives invalid."
         }
       ],
       "recall": "concept-5",
       "outputFields": [
         "Status",
         "Final stock"
-      ]
+      ],
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "rejected 10\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

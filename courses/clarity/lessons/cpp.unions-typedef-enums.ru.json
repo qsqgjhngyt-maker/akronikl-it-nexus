@@ -257,7 +257,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        "content": "#include <iostream>\n#include <string>\n#include <variant>\n\nstruct Add { int amount; };\nstruct Remove { int amount; };\nusing Command = std::variant<Add, Remove>;\n\nbool apply(int& stock, const Command& command) {\n    // TODO: определите активную альтернативу, проверьте границу и только затем измените stock.\n    return false;\n}\n\nint main() {\n    int stock{}, amount{};\n    std::string action;\n    if (!(std::cin >> stock >> action >> amount) ||\n        stock < 0 || stock > 1000 || amount < 0 || amount > 1000 ||\n        (action != \"add\" && action != \"remove\")) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    const Command command = action == \"add\" ? Command{Add{amount}} : Command{Remove{amount}};\n    const bool accepted = apply(stock, command);\n    std::cout << (accepted ? \"ok \" : \"rejected \") << stock << '\\n';\n}\n"
       }
     ],
     "metadata": {},
@@ -312,27 +312,33 @@
       {
         "where": "До запуска",
         "action": "Составьте таблицу для add, remove и неизвестного слова. Добавьте отказ в каждой из двух известных альтернатив.",
-        "why": "",
-        "expected": ""
+        "why": "У Add и Remove разные недопустимые границы.",
+        "expected": "Отдельно отмечены неизвестная команда, слишком большой Add и слишком большой Remove."
       },
       {
         "where": "Моя программа",
         "action": "Создайте variant только после чтения. Разберите альтернативу, проверьте её операцию и измените stock лишь при успехе.",
-        "why": "",
-        "expected": ""
+        "why": "Тип альтернативы проверяется раньше чтения её данных.",
+        "expected": "Заготовка для 3 add 4 даёт rejected 3, выполненная ветвь даёт ok 7."
       },
       {
         "where": "Проверка",
         "action": "Проверьте 3 remove 3, 3 remove 4 и 1000 add 1. Для неизвестной команды проверьте invalid.",
-        "why": "",
-        "expected": ""
+        "why": "Обе команды могут отказать после успешного разбора ввода.",
+        "expected": "3 remove 3 даёт ok 0. 3 remove 4 и 1000 add 1 сохраняют запас."
       }
     ],
     "recall": "concept-5",
     "outputFields": [
       "Статус",
       "Запас"
-    ]
+    ],
+    "starterRevision": "b3-starter-v2",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "rejected 3\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {

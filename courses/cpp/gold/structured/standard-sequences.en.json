@@ -470,6 +470,29 @@
           "The owner must remain alive throughout span use. When a growing vector reallocates, pointers, references, and spans into the old buffer become invalid. reserve may reduce reallocations but cannot replace a lifetime argument.",
           "Finish modifying a container before creating a short-lived span, then process it without resizing the owner. Do not retain a view into a local vector after its function returns. const in span<const int> restricts writes through the view but does not extend lifetime.",
           "Create the view after filling the vector. If appending later relocates storage, the old view does not update. In this experiment read safely only after the vector is filled."
+        ],
+        "tables": [
+          {
+            "caption": "Vector owner and borrowed range",
+            "columns": [
+              "State",
+              "What you observe"
+            ],
+            "rows": [
+              [
+                "Fill vector",
+                "v stores 4 and 5. No view exists yet."
+              ],
+              [
+                "Pass a span",
+                "v still owns the two elements. The view supplies a start and length 2."
+              ],
+              [
+                "Growth with reallocation",
+                "v remains the owner, but element addresses can change. Stop using the old span."
+              ]
+            ]
+          }
         ]
       },
       {
@@ -598,11 +621,11 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n#include <span>\n#include <vector>\n\nint sum(std::span<const int> values) {\n    int result{};\n    // TODO: visit every value in this view and accumulate its contribution.\n    return result;\n}\n\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> values;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        values.push_back(value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    // TODO: form the view now that its owner is populated.\n    const std::span<const int> view{};\n    std::cout << values.size() << ' ' << sum(view) << '\\n';\n}\n"
         }
       ],
       "metadata": {},
-      "stdin": "0",
+      "stdin": "3 1 2 3",
       "returnAnchor": "example-1",
       "cases": [
         {
@@ -648,27 +671,33 @@
         {
           "where": "Before running",
           "action": "Sketch n = 0 and n = 3: who owns the data before and inside the call?",
-          "why": "",
-          "expected": ""
+          "why": "Choosing storage and choosing a function range are separate decisions.",
+          "expected": "The vector owns the data before and during the call; span specifies the range."
         },
         {
           "where": "My program",
           "action": "Validate every value before appending. Create the view only after the last push_back.",
-          "why": "",
-          "expected": ""
+          "why": "A view created before filling does not get the new length automatically.",
+          "expected": "The starter gives 3 0; passing the populated range and summing gives 3 6."
         },
         {
           "where": "Check",
           "action": "Check 3 1 2 3, the empty range and a short input. Explain why reserve by itself does not change the result.",
-          "why": "",
-          "expected": ""
+          "why": "An empty range and missing input require different results.",
+          "expected": "0 gives 0 0, while 2 1 is rejected."
         }
       ],
       "recall": "concept-5",
       "outputFields": [
         "Size",
         "Sum"
-      ]
+      ],
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 2,
+        "stdout": "3 0\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

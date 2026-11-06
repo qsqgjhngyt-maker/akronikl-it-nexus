@@ -756,11 +756,11 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n#include <sstream>\n#include <string>\n\nbool readRecord(const std::string& line, int& value) {\n    std::istringstream record{line};\n    // TODO: примите ровно одно целое в диапазоне, после него разрешены только пробелы.\n    return false;\n}\n\nint main() {\n    std::string line;\n    int lines{}, accepted{}, rejected{}, sum{};\n    while (std::getline(std::cin, line)) {\n        if (++lines > 100 || line.size() > 200) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        int value{};\n        if (readRecord(line, value)) {\n            ++accepted;\n            sum += value;\n        } else {\n            ++rejected;\n        }\n    }\n    std::cout << accepted << ' ' << rejected << ' ' << sum << '\\n';\n}\n"
         }
       ],
       "metadata": {},
-      "stdin": "",
+      "stdin": "2\nbad\n3",
       "returnAnchor": "example-1",
       "cases": [
         {
@@ -806,20 +806,20 @@
         {
           "where": "До запуска",
           "action": "Нарисуйте три состояния накопителей для 2, bad и 3.",
-          "why": "",
-          "expected": ""
+          "why": "Ошибка одной строки не должна прекращать подсчёт остальных.",
+          "expected": "После 2, bad, 3 состояния равны (1,0,2), (1,1,2), (2,1,5)."
         },
         {
           "where": "Моя программа",
           "action": "Читайте внешние строки через getline, а каждую проверяйте локальным потоком. Учитывайте хвост и лимиты.",
-          "why": "",
-          "expected": ""
+          "why": "Отдельный поток локализует failbit в пределах текущей записи.",
+          "expected": "Заготовка даёт 0 3 0, заполнение локального разбора даёт 2 1 5."
         },
         {
           "where": "Проверка",
           "action": "Проверьте, что 2, bad, 3 дают 2 1 5. Отличите пустой поток, пустую строку и строку с двумя числами.",
-          "why": "",
-          "expected": ""
+          "why": "Пустой поток, пустая запись и лишнее поле отличают разные состояния ввода.",
+          "expected": "Поток без строк даёт 0 0 0. Одна пустая строка увеличивает число отклонённых."
         }
       ],
       "recall": "concept-5",
@@ -827,7 +827,13 @@
         "Принято",
         "Отклонено",
         "Сумма"
-      ]
+      ],
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 1,
+        "stdout": "0 3 0\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

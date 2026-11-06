@@ -602,7 +602,7 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n#include <string>\n\nint main() {\n    std::string line;\n    if (!std::getline(std::cin, line) || line.size() > 200) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::string extra;\n    if (std::getline(std::cin, extra)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int letters{}, digits{}, spaces{}, other{};\n    for (unsigned char byte : line) {\n        // TODO: count byte in exactly one of the four ASCII categories.\n    }\n    std::cout << line.size() << ' ' << letters << ' ' << digits\n              << ' ' << spaces << ' ' << other << '\\n';\n}\n"
         }
       ],
       "metadata": {},
@@ -657,20 +657,20 @@
         {
           "where": "Before running",
           "action": "Label A, b, space, 1, 2 and !. Predict separately what happens with é.",
-          "why": "",
-          "expected": ""
+          "why": "Each byte is classified, so the four counts must sum to the length.",
+          "expected": "Ab 12! contains 2 letters, 2 digits, 1 space and 1 other byte."
         },
         {
           "where": "My program",
           "action": "Allow an empty line and reject no record, an overlong line or a second line. Compare bytes against ASCII ranges.",
-          "why": "",
-          "expected": ""
+          "why": "getline distinguishes a zero-length record from no record.",
+          "expected": "The starter prints 6 0 0 0 0; classification gives 6 2 2 1 1."
         },
         {
           "where": "Check",
           "action": "The sum of letters, digits, spaces and other must equal bytes. Compare a blank line with absent input and test UTF-8.",
-          "why": "",
-          "expected": ""
+          "why": "A multibyte character tests the report’s unit of measurement.",
+          "expected": "A blank line gives five zeroes. An absent line is rejected, and é gives 2 other bytes."
         }
       ],
       "recall": "concept-5",
@@ -680,7 +680,13 @@
         "Digits",
         "Spaces",
         "Other bytes"
-      ]
+      ],
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "6 0 0 0 0\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

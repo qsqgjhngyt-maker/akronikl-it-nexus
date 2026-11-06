@@ -598,7 +598,7 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iomanip>\n#include <iostream>\n\nint main() {\n    int priceCents{}, quantity{};\n    if (!(std::cin >> priceCents >> quantity) ||\n        priceCents < 0 || priceCents > 100000 ||\n        quantity < 0 || quantity > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    const int totalCents = priceCents * quantity;\n    // TODO: print whole units and exactly two digits for the remainder.\n    std::cout << \"total=\" << totalCents << '\\n';\n}\n"
         }
       ],
       "metadata": {},
@@ -648,23 +648,29 @@
         {
           "where": "Before running",
           "action": "Calculate the whole part and remainder by hand for 5×1 and 125×2.",
-          "why": "",
-          "expected": ""
+          "why": "Storing cents separates calculation and formatting without rounding a double.",
+          "expected": "For 5×1 the parts are 0 and 5; for 125×2 they are 2 and 50."
         },
         {
           "where": "My program",
           "action": "Validate both fields, multiply, and print quotient and remainder around a dot. Apply width to the remainder only.",
-          "why": "",
-          "expected": ""
+          "why": "Padding is needed only for the fractional part of the text report.",
+          "expected": "The starter prints total=5; formatting gives total=0.05."
         },
         {
           "where": "Check",
           "action": "Compare full lines total=0.05 and total=2.50. Check maximum inputs and a fractional token.",
-          "why": "",
-          "expected": ""
+          "why": "Numeric equality does not guarantee matching text.",
+          "expected": "125 2 prints total=2.50; fractional input 1 2.5 gives invalid."
         }
       ],
-      "recall": "concept-5"
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "total=5\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

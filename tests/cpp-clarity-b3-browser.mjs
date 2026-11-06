@@ -13,7 +13,7 @@ const scope=JSON.parse(await readFile(path.join(process.env.NEXUS_FRONTEND_DIR,'
 const f=await clarityLocalFixture(path.join(out,'b3-vault'));
 const p=f.page,prefix='/releases/'+f.generation,editions=[],runtime=[],checks=[];
 const viewOnly=process.argv.includes('--view-only');
-const sample=new Set(['cpp.if-else-switch','cpp.functions-contracts','cpp.two-dimensional-arrays','cpp.multifile-build','cpp.files','cpp.stacks-queues']);
+const sample=new Set(['cpp.if-else-switch','cpp.functions-contracts','cpp.two-dimensional-arrays','cpp.multifile-build','cpp.files','cpp.linked-lists','cpp.stacks-queues']);
 const go=async(page,id,locale='ru',stage='explanation')=>{
  await page.evaluate(({id,locale,stage})=>location.hash='#'+new URLSearchParams({course:'cpp',lesson:id,locale,stage}),{id,locale,stage});
  const lesson=page.locator('[data-r3-topic="'+id+'"][lang="'+locale+'"]');
@@ -63,6 +63,14 @@ try{
    await p.screenshot({path:path.join(out,slug+'-320.png')});
    await p.setViewportSize({width:1366,height:900});
   }
+  for(const section of l.sections.filter(s=>s.id.startsWith('concept-')&&s.tables?.length)){
+   const table=explanation.locator('#'+section.id+' table');
+   assert.deepEqual(await table.locator('caption').allTextContents(),section.tables.map(t=>t.caption));
+   await p.setViewportSize({width:320,height:900});await anchor(table.first());
+   assert.ok(await table.first().evaluate(el=>el.getBoundingClientRect().right<=innerWidth+1&&document.documentElement.scrollWidth<=innerWidth+1));
+   await p.screenshot({path:path.join(out,'state-'+id.slice(4)+'-'+section.id+'-'+locale+'-320.png')});
+   await p.setViewportSize({width:1366,height:900});
+  }
   await lesson.locator('[data-stage="selfcheck"]').click();
   const q=l.selfcheck.find(q=>q.id==='predict'),form=lesson.locator('[data-question="predict"]');
   assert.equal(await form.locator('.example-layout pre code').textContent(),q.code.source);
@@ -74,6 +82,11 @@ try{
   await lesson.locator('[data-stage="practice"]').click();
   const editor=lesson.locator('#editor');
   await editor.waitFor();
+  const practice=lesson.locator('[data-r3-panel="practice"]'),starter=practice.locator('.program-files:has([data-starter-output])');
+  assert.deepEqual(await fileMap(starter.locator('[data-program-file]')),Object.fromEntries(l.practice.files.map(f=>[f.path,f.content])));
+  assert.equal(await starter.locator('[data-starter-output]').textContent(),l.practice.starterObservation.stdout);
+  assert.equal(await practice.locator('[data-step-why]').count(),3);
+  assert.equal(await practice.locator('[data-step-expected]').count(),3);
   const cases=lesson.locator('.practice-cases > li');
   assert.equal(await cases.count(),l.practice.cases.length);
   assert.deepEqual(await cases.locator('[data-expected-output]').allTextContents(),l.practice.cases.map(c=>c.output));
@@ -91,9 +104,14 @@ try{
  }
 
  for(const locale of ['ru','en']){
-  const lesson=await go(p,'cpp.while-do-while',locale,'practice'),editor=lesson.locator('#editor');
-  await editor.fill('// retained learner draft\nint main(){}\n');
+  let lesson=await go(p,'cpp.while-do-while',locale,'practice');
+  const legacy=(await b1Lesson('cpp.while-do-while',locale)).g.laboratory.starterCode+'// retained learner edits\n';
+  await lesson.locator('#editor').fill(legacy);
   await lesson.locator('#stdin').fill('3 -1 0');
+  await p.waitForFunction(()=>document.querySelector('[data-r3-save]')?.dataset.state==='saved');
+  await go(p,'cpp.for-loop',locale,'practice');
+  lesson=await go(p,'cpp.while-do-while',locale,'practice');
+  const editor=lesson.locator('#editor');assert.equal(await editor.inputValue(),legacy);
   const retained=await editor.elementHandle();
   const opener=lesson.locator('[data-action="lab-window"]');
   for(const width of [1366,390,320]){
@@ -114,7 +132,7 @@ try{
    await p.screenshot({path:path.join(out,'workbench-'+locale+'-'+width+'.png')});
    if(width<=900)await window.locator('[data-gold-work-tab="editor"]').click();
    assert.equal(await window.locator('#stdin').inputValue(),'3 -1 0');
-   assert.equal(await window.locator('#editor').inputValue(),'// retained learner draft\nint main(){}\n');
+   assert.equal(await window.locator('#editor').inputValue(),legacy);
    await p.keyboard.press('Escape');await window.waitFor({state:'detached'});
    assert.ok(await opener.evaluate(el=>el===document.activeElement));
    assert.ok(await editor.evaluate((el,old)=>el===old,retained));
@@ -135,7 +153,7 @@ try{
   await p.evaluate(()=>location.hash='#view=compiler');
   await p.locator('#prepareCompiler').click();
   await p.waitForFunction(()=>/полностью проверен и готов/.test(document.querySelector('#runtimeStatus')?.textContent||''),{},{timeout:300000});
-  const programs=await module3GoldPrograms();
+  const programs=await module3GoldPrograms({includeAuthoredStarters:true});
   for(const program of programs)for(const [index,c] of program.cases.entries()){
    const request={languageId:'cpp',source:program.source,stdin:c.stdin,entryFile:'main.cpp',files:programFiles(program,c),metadata:program.metadata};
    const actual=await p.evaluate(async({prefix,request})=>{
@@ -163,6 +181,9 @@ try{
 
   const multi=(await b1Lesson('cpp.multifile-build','ru')).g.laboratory;
   await go(p,'cpp.multifile-build','ru','practice');await p.locator('#editor').fill(multi.referenceCode);
+  await p.locator('#editor').evaluate((editor,files)=>{
+   for(const [path,content] of Object.entries(files))editor.__nexusCodeStudio.workspace.updateFile(path,content);
+  },multi.referenceFiles);
   await p.locator('#stdin').fill('3 4');await watchRun(p,'12\n');
   const lab=(await b1Lesson('cpp.files','ru')).g.laboratory;
   await go(p,'cpp.files','ru','practice');await p.locator('#editor').fill(lab.referenceCode);

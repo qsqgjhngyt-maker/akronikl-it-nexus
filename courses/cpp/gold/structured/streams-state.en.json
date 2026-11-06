@@ -756,11 +756,11 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n#include <sstream>\n#include <string>\n\nbool readRecord(const std::string& line, int& value) {\n    std::istringstream record{line};\n    // TODO: accept exactly one integer in range, with whitespace only after it.\n    return false;\n}\n\nint main() {\n    std::string line;\n    int lines{}, accepted{}, rejected{}, sum{};\n    while (std::getline(std::cin, line)) {\n        if (++lines > 100 || line.size() > 200) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        int value{};\n        if (readRecord(line, value)) {\n            ++accepted;\n            sum += value;\n        } else {\n            ++rejected;\n        }\n    }\n    std::cout << accepted << ' ' << rejected << ' ' << sum << '\\n';\n}\n"
         }
       ],
       "metadata": {},
-      "stdin": "",
+      "stdin": "2\nbad\n3",
       "returnAnchor": "example-1",
       "cases": [
         {
@@ -806,20 +806,20 @@
         {
           "where": "Before running",
           "action": "Trace the three accumulator states for 2, bad and 3.",
-          "why": "",
-          "expected": ""
+          "why": "One bad line must not stop counting later records.",
+          "expected": "After 2, bad, 3 the states are (1,0,2), (1,1,2), (2,1,5)."
         },
         {
           "where": "My program",
           "action": "Read outer lines with getline and validate each using a local stream. Check trailing fields and limits.",
-          "why": "",
-          "expected": ""
+          "why": "A separate stream confines failbit to the current record.",
+          "expected": "The starter gives 0 3 0; completing local parsing gives 2 1 5."
         },
         {
           "where": "Check",
           "action": "Verify that 2, bad, 3 gives 2 1 5. Distinguish an empty stream, a blank line and a line with two numbers.",
-          "why": "",
-          "expected": ""
+          "why": "No lines, a blank record and an extra field distinguish input states.",
+          "expected": "No lines gives 0 0 0. One blank line increments the rejected count."
         }
       ],
       "recall": "concept-5",
@@ -827,7 +827,13 @@
         "Accepted",
         "Rejected",
         "Sum"
-      ]
+      ],
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 1,
+        "stdout": "0 3 0\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

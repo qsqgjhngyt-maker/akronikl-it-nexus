@@ -556,6 +556,29 @@
           "Для удаления головы сначала перенесите head->next во временный next, затем замените head на next. Старый узел уничтожится, а хвост останется у нового владельца. Сначала проверьте head: доступ -> у nullptr недопустим.",
           "Не используйте наблюдатель на удалённый узел после операции. Рисунок до/после полезнее эксперимента с висячим указателем. Удаление узла в середине требует владельца ссылки на него; знание только его value недостаточно при повторах.",
           "В примере удаления сначала move(head->next) сохраняет хвост отдельно. Лишь затем присваивание head разрушает старый первый узел."
+        ],
+        "tables": [
+          {
+            "caption": "Удаление головы из цепочки 1 → 2 → 3",
+            "columns": [
+              "Состояние",
+              "Что видно"
+            ],
+            "rows": [
+              [
+                "До удаления",
+                "head → 1 → 2 → 3. Узел 1 владеет продолжением."
+              ],
+              [
+                "tail = move(head->next)",
+                "head → 1 и отдельно tail → 2 → 3. Узел 1 больше не владеет узлом 2."
+              ],
+              [
+                "head = move(tail)",
+                "Узел 1 уничтожен, head → 2 → 3. Цепочка хвоста сохранена."
+              ]
+            ]
+          }
         ]
       },
       {
@@ -757,11 +780,11 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n#include <memory>\n#include <utility>\n\nstruct Node {\n    int value;\n    std::unique_ptr<Node> next;\n};\n\nvoid pushFront(std::unique_ptr<Node>& head, int value) {\n    // TODO: создайте узел, передайте ему старую голову и назначьте новую голову.\n}\n\nvoid clear(std::unique_ptr<Node>& head) {\n    // TODO: отсоединяйте следующего владельца до уничтожения текущего узла.\n}\n\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::unique_ptr<Node> head;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        pushFront(head, value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    for (Node* node = head.get(); node; node = node->next.get()) {\n        if (node != head.get()) std::cout << ' ';\n        std::cout << node->value;\n    }\n    std::cout << '\\n';\n    clear(head);\n    std::cout << \"empty=\" << (!head) << '\\n';\n}\n"
         }
       ],
       "metadata": {},
-      "stdin": "0",
+      "stdin": "3 1 2 3",
       "returnAnchor": "example-1",
       "cases": [
         {
@@ -807,23 +830,29 @@
         {
           "where": "До запуска",
           "action": "Нарисуйте переходы для 2, 2, −1. Не перепутайте повтор значения с повтором одного и того же узла.",
-          "why": "",
-          "expected": ""
+          "why": "Повторяющиеся числа могут принадлежать разным узлам. Имена узлов показывают, какая связь меняется.",
+          "expected": "У каждого узла есть один владелец после каждого шага. Оба узла со значением 2 остаются в цепочке."
         },
         {
           "where": "Моя программа",
           "action": "Перед каждой заменой head перемещайте владеющую связь явно. Удаляйте цепочку итеративно после печати.",
-          "why": "",
-          "expected": ""
+          "why": "Если уничтожить голову прежде переноса next, освобождение захватит хвост.",
+          "expected": "Заготовка оставляет первую строку пустой. После вставок 1, 2, 3 голова ведёт к цепочке 3 → 2 → 1."
         },
         {
           "where": "Проверка",
           "action": "Проверьте обратный порядок и строку empty=1, включая пустую первую строку для n = 0. Введите неполный набор и ожидайте invalid.",
-          "why": "",
-          "expected": ""
+          "why": "Проверка empty=1 сама по себе проходит и на пустой заготовке. Нужна проверка списка до очистки.",
+          "expected": "Для 3 1 2 3 первая строка 3 2 1, вторая empty=1. Для n=0 первая строка остаётся пустой."
         }
       ],
-      "recall": "concept-5"
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 2,
+        "stdout": "\nempty=1\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

@@ -388,6 +388,29 @@
           "In row-major storage, the index is r*cols+c. The preceding r rows occupy r*cols positions, then c selects a column. In a 2x3 matrix, (1,2) maps to 5, the last of six elements. This follows from the representation rather than a magic conversion.",
           "vector<int> data(rows*cols) creates elements, unlike reserve. Validate dimensions before multiplying. Dimensions up to 10 give at most 100 elements; values in -1000…1000 have an absolute total at most 100000.",
           "In r * cols + c the stride is the source column count. A square test may hide an accidental substitution of rows for cols."
+        ],
+        "tables": [
+          {
+            "caption": "One buffer with shape 2×3",
+            "columns": [
+              "State",
+              "What you observe"
+            ],
+            "rows": [
+              [
+                "(0, 2)",
+                "Index 0 × 3 + 2 = 2, value 3."
+              ],
+              [
+                "(1, 0)",
+                "Index 1 × 3 + 0 = 3, value 4. This begins the second row."
+              ],
+              [
+                "(1, 2)",
+                "Index 1 × 3 + 2 = 5, value 6."
+              ]
+            ]
+          }
         ]
       },
       {
@@ -483,6 +506,25 @@
           "A square example can hide reversed dimensions. Include 2x3 and 3x2, one row, one column, and a zero dimension. Label original positions with distinct values to expose permutations.",
           "Keep a table of (r,c,index,value), expected sums, and operation counts. Incomplete or excess input must reject the whole record as invalid. Next, character sequences introduce another distinction: a byte, a character, and a terminator are different things.",
           "Distinguish 0×3 from 2×0. Neither contains elements, but a row report for 2×0 has two sums and one for 0×3 has none."
+        ],
+        "tables": [
+          {
+            "caption": "Same element count, different rows",
+            "columns": [
+              "State",
+              "What you observe"
+            ],
+            "rows": [
+              [
+                "0×3",
+                "No rows. Total 0 and a blank second output line."
+              ],
+              [
+                "2×0",
+                "Two rows with no elements. Total 0 and a second output line of 0 0."
+              ]
+            ]
+          }
         ]
       },
       {
@@ -602,7 +644,7 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n#include <vector>\n\nint main() {\n    int rows{}, cols{};\n    if (!(std::cin >> rows >> cols) || rows < 0 || rows > 10 ||\n        cols < 0 || cols > 10) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int total{};\n    std::vector<int> rowSums(rows, 0);\n    for (int r = 0; r < rows; ++r) {\n        for (int c = 0; c < cols; ++c) {\n            int value{};\n            if (!(std::cin >> value) || value < -1000 || value > 1000) {\n                std::cout << \"invalid\\n\";\n                return 0;\n            }\n            // TODO: update this row's sum and the grand total.\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << total << '\\n';\n    for (int r = 0; r < rows; ++r) {\n        if (r != 0) std::cout << ' ';\n        std::cout << rowSums[r];\n    }\n    std::cout << '\\n';\n}\n"
         }
       ],
       "metadata": {},
@@ -657,23 +699,29 @@
         {
           "where": "Before running",
           "action": "For 2×3 mark the boundaries between input rows. For 2×0 draw two empty rows.",
-          "why": "",
-          "expected": ""
+          "why": "An equal number of elements does not imply an equal shape or report.",
+          "expected": "For 2×3, mark two groups of three values. For 2×0, mark two rows with no values."
         },
         {
           "where": "My program",
           "action": "Validate both dimensions before scanning. Save the sum of a finished row even when the inner loop has zero iterations.",
-          "why": "",
-          "expected": ""
+          "why": "The outer step selects the row; the inner step updates only that row's sum.",
+          "expected": "The starter prints 0 and 0 0 for the 2×3 case. With accumulation implemented the lines become 21 and 6 15."
         },
         {
           "where": "Check",
           "action": "Compare 2×3 and 3×2 using the same six numbers. Check 0×3 and an input missing the final value.",
-          "why": "",
-          "expected": ""
+          "why": "Swapping dimensions and testing empty dimensions exposes defects a square matrix hides.",
+          "expected": "For 0×3 the second line is blank; for 2×0 it is 0 0. A short input gives invalid."
         }
       ],
-      "recall": "concept-5"
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "0\n0 0\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

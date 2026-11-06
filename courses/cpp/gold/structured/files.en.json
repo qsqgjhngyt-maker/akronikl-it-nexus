@@ -644,7 +644,7 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <fstream>\n#include <iostream>\n#include <sstream>\n#include <string>\n\nint main() {\n    std::ifstream input{\"records.txt\"};\n    if (!input) {\n        std::cout << \"missing\\n\";\n        return 0;\n    }\n    std::string line;\n    int count{}, sum{};\n    while (std::getline(input, line)) {\n        if (++count > 100 || line.size() > 200) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        std::istringstream record{line};\n        // TODO: read one integer, check the range and trailing data, then add it.\n    }\n    // TODO: verify the input stream, write count and sum to report.txt,\n    // then check the writer after close() before printing exported.\n    std::cout << \"todo\\n\";\n}\n"
         },
         {
           "path": "records.txt",
@@ -728,23 +728,29 @@
         {
           "where": "Before running",
           "action": "Write expected stdout and report.txt for a file with lines 2, −1 and 4. Record what should happen if the second line is changed to bad.",
-          "why": "",
-          "expected": ""
+          "why": "A console status and a file’s contents are separate results of one run.",
+          "expected": "For 2, −1, 4 expect exported and a file containing 3 5. A bad line must create no new report."
         },
         {
           "where": "My program",
           "action": "Parse one line at a time. Open report.txt only after validating all records and check the stream after close.",
-          "why": "",
-          "expected": ""
+          "why": "Opening the writer too early can create an empty report even for invalid input.",
+          "expected": "For three lines the starter prints todo and has no output file. After implementation the success message comes after close."
         },
         {
           "where": "Check",
           "action": "Verify the status and artifact bytes separately. On success expect exported and 3 5 followed by a newline in the file. Test missing input and a malformed record.",
-          "why": "",
-          "expected": ""
+          "why": "A missing file, an empty file and a malformed line require three distinct observations.",
+          "expected": "An empty file gives exported and 0 0. A missing file gives missing; a malformed line gives invalid."
         }
       ],
-      "recall": "concept-5"
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "todo\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

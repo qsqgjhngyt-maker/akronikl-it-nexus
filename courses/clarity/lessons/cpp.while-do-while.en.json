@@ -257,11 +257,11 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        "content": "#include <iostream>\n#include <sstream>\n#include <string>\n\nbool parseValue(const std::string& token, int& value) {\n    std::istringstream input{token};\n    if (!(input >> value) || value < -1000 || value > 1000) {\n        return false;\n    }\n    input >> std::ws;\n    return input.eof();\n}\n\nint main() {\n    int count{};\n    int sum{};\n    std::string token;\n    while (std::cin >> token) {\n        int value{};\n        if (!parseValue(token, value)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        // TODO: handle the zero marker, check the count limit and update\n        // the state. Verify the rest of the input if you stop at a marker.\n    }\n    std::cout << count << ' ' << sum << '\\n';\n}\n"
       }
     ],
     "metadata": {},
-    "stdin": "",
+    "stdin": "2 -3 0",
     "returnAnchor": "example-1",
     "cases": [
       {
@@ -317,27 +317,33 @@
       {
         "where": "Before running",
         "action": "Separate end of input, the sentinel, a malformed token and a valid value.",
-        "why": "",
-        "expected": ""
+        "why": "A loop can stop normally or on an error, and the outputs must distinguish them.",
+        "expected": "EOF, 0, malformed input and a valid number each have a distinct outcome."
       },
       {
         "where": "My program",
         "action": "Advance one token at a time. After validating the token and its range, increment the counter only for a nonzero value.",
-        "why": "",
-        "expected": ""
+        "why": "Each iteration must accept a value, handle the marker or reject input.",
+        "expected": "The starter gives 0 0 for 2 −3 0; the completed run gives 2 −1."
       },
       {
         "where": "Check",
         "action": "Compare 2 3, 2 3 0 and 2 3 0 99. The last input must be rejected by the lab.",
-        "why": "",
-        "expected": ""
+        "why": "A value after the marker distinguishes the lab from the example.",
+        "expected": "2 3 and 2 3 0 give 2 5. 2 3 0 99 gives invalid."
       }
     ],
     "recall": "concept-5",
     "outputFields": [
       "Values accepted",
       "Sum"
-    ]
+    ],
+    "starterRevision": "b3-starter-v2",
+    "starterObservation": {
+      "case": 3,
+      "stdout": "0 0\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {

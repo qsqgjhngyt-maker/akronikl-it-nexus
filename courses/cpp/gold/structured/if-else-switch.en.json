@@ -669,11 +669,11 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n\nint main() {\n    int score{};\n    if (!(std::cin >> score) || score < 0 || score > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    // TODO: choose exactly one label for this valid score.\n    // Use the 59/60 and 84/85 boundary pairs from your table.\n    std::cout << \"todo\\n\";\n}\n"
         }
       ],
       "metadata": {},
-      "stdin": "0",
+      "stdin": "85",
       "returnAnchor": "example-1",
       "cases": [
         {
@@ -739,23 +739,29 @@
         {
           "where": "Before running",
           "action": "Label the four neighbours 59, 60, 84 and 85 in a table before writing conditions.",
-          "why": "",
-          "expected": ""
+          "why": "Adjacent scores show where the outcome changes.",
+          "expected": "59 → retry, 60 and 84 → pass, 85 → distinction."
         },
         {
           "where": "My program",
           "action": "Implement the input guard, then check thresholds in descending order in one chain.",
-          "why": "",
-          "expected": ""
+          "why": "Early rejection leaves only valid scores for classification.",
+          "expected": "The starter gives todo for 85. The completed branch prints one line, distinction."
         },
         {
           "where": "Check",
           "action": "Compare 84 and 85. Change >=85 to >85 in a separate experiment and identify the case that fails.",
-          "why": "",
-          "expected": ""
+          "why": "Using > instead of >= fails at the threshold itself.",
+          "expected": "With >85, the case 85 fails. 85 x must give invalid."
         }
       ],
-      "recall": "concept-5"
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 4,
+        "stdout": "todo\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

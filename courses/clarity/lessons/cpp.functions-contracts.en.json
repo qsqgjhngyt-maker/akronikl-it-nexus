@@ -257,7 +257,7 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+        "content": "#include <iostream>\n\nbool checkedArea(int w, int h, int& result) {\n    // TODO: validate both dimensions and store the area only on success. Preserve result on rejection.\n    return false;\n}\n\nint main() {\n    int w{}, h{};\n    if (!(std::cin >> w >> h)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    int result{17};\n    if (!std::cin.eof() || !checkedArea(w, h, result)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << result << '\\n';\n}\n"
       }
     ],
     "metadata": {},
@@ -312,23 +312,29 @@
       {
         "where": "Before running",
         "action": "Choose two different initial result values. For each, record what must remain when a dimension is negative.",
-        "why": "",
-        "expected": ""
+        "why": "A nonzero initial value makes an accidental write on rejection visible.",
+        "expected": "Two trace rows for the same result: flag and value after a valid and an invalid call."
       },
       {
         "where": "My program",
         "action": "Implement the function without cin or cout. Call it from main only after checking extraction and trailing input.",
-        "why": "",
-        "expected": ""
+        "why": "The function has its own contract. It must also work in a test with no stdin.",
+        "expected": "The starter prints invalid for 3 4. After implementation, a successful call writes 12."
       },
       {
         "where": "Check",
         "action": "Compare 0 1000, 1000 1000 and 3 4 x. Separately call the function with invalid dimensions and demonstrate that result stayed unchanged.",
-        "why": "",
-        "expected": ""
+        "why": "The invalid message checks main's report, but not the state of the output parameter.",
+        "expected": "0 1000 gives 0. A rejected call after success preserves the previous result."
       }
     ],
-    "recall": "concept-5"
+    "recall": "concept-5",
+    "starterRevision": "b3-starter-v2",
+    "starterObservation": {
+      "case": 0,
+      "stdout": "invalid\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {

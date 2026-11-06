@@ -556,6 +556,29 @@
           "To remove the head, first move head->next into a temporary next, then replace head with next. The old node is destroyed while the tail retains an owner. Check head first: -> through nullptr is invalid.",
           "Do not use an observer of a removed node afterward. A before-and-after diagram is more useful than executing a dangling pointer. Removing an interior node requires the owning link; its value alone is insufficient when duplicates exist.",
           "In the removal example move(head->next) first saves the tail separately. Assigning head only afterward destroys the old first node."
+        ],
+        "tables": [
+          {
+            "caption": "Remove the head of 1 → 2 → 3",
+            "columns": [
+              "State",
+              "What you observe"
+            ],
+            "rows": [
+              [
+                "Before removal",
+                "head → 1 → 2 → 3. Node 1 owns the tail."
+              ],
+              [
+                "tail = move(head->next)",
+                "head → 1 and separately tail → 2 → 3. Node 1 no longer owns node 2."
+              ],
+              [
+                "head = move(tail)",
+                "Node 1 is destroyed, and head → 2 → 3. The tail survives."
+              ]
+            ]
+          }
         ]
       },
       {
@@ -757,11 +780,11 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n#include <memory>\n#include <utility>\n\nstruct Node {\n    int value;\n    std::unique_ptr<Node> next;\n};\n\nvoid pushFront(std::unique_ptr<Node>& head, int value) {\n    // TODO: create a node, give it the old head, then replace head.\n}\n\nvoid clear(std::unique_ptr<Node>& head) {\n    // TODO: detach the next owner before destroying each current head.\n}\n\nint main() {\n    int n{};\n    if (!(std::cin >> n) || n < 0 || n > 100) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::unique_ptr<Node> head;\n    for (int i = 0; i < n; ++i) {\n        int value{};\n        if (!(std::cin >> value) || value < -1000 || value > 1000) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        pushFront(head, value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    for (Node* node = head.get(); node; node = node->next.get()) {\n        if (node != head.get()) std::cout << ' ';\n        std::cout << node->value;\n    }\n    std::cout << '\\n';\n    clear(head);\n    std::cout << \"empty=\" << (!head) << '\\n';\n}\n"
         }
       ],
       "metadata": {},
-      "stdin": "0",
+      "stdin": "3 1 2 3",
       "returnAnchor": "example-1",
       "cases": [
         {
@@ -807,23 +830,29 @@
         {
           "where": "Before running",
           "action": "Draw transitions for 2, 2 and −1. Distinguish equal values from reusing the same node.",
-          "why": "",
-          "expected": ""
+          "why": "Equal values may belong to distinct nodes. Node identities show which link changes.",
+          "expected": "Each node has one owner after every step. Both nodes containing 2 stay in the chain."
         },
         {
           "where": "My program",
           "action": "Move the owning link explicitly before each head replacement. Clear the chain iteratively after printing.",
-          "why": "",
-          "expected": ""
+          "why": "Destroying the head before moving next releases the tail with it.",
+          "expected": "The starter leaves the first line blank. After inserting 1, 2, 3 the head leads to 3 → 2 → 1."
         },
         {
           "where": "Check",
           "action": "Check reverse order and empty=1, including an empty first line for n = 0. Test incomplete input and expect invalid.",
-          "why": "",
-          "expected": ""
+          "why": "The empty=1 check also passes for an empty starter. Check the list before clearing as well.",
+          "expected": "For 3 1 2 3 the first line is 3 2 1 and the second is empty=1. For n=0 the first line is blank."
         }
       ],
-      "recall": "concept-5"
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 2,
+        "stdout": "\nempty=1\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

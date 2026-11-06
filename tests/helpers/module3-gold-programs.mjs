@@ -8,7 +8,7 @@ export function programFiles(p,c){
  const data=c.files===undefined?Object.fromEntries(Object.entries(p.files).filter(([f])=>!Object.hasOwn(code,f))):c.files;
  return{...code,...data,'main.cpp':p.source};
 }
-export async function module3GoldPrograms(){
+export async function module3GoldPrograms({includeAuthoredStarters=process.env.NEXUS_B3_STARTERS==='1'}={}){
  const unique=new Map();
  const add=(g,part,source,cases,files={},metadata={},expectation='exact',diagnostic)=>{
   assert.ok(source.includes('int main('),g.lessonId+' '+part);
@@ -18,6 +18,12 @@ export async function module3GoldPrograms(){
  };
  for(const g of await module3GoldLessons()){
   for(const e of g.workedExamples)add(g,'example-'+e.id,e.code,[{stdin:e.stdin,stdout:e.expectedStdout,outputFiles:e.outputFiles},...(e.cases||[])],e.files,e.metadata);
+  const authored=g.teachingEdition?.practice;
+  if(includeAuthoredStarters&&authored?.starterObservation){
+   const {'main.cpp':main,...files}=Object.fromEntries(authored.files.map(f=>[f.path,f.content]));
+   const {stdout,exitCode}=authored.starterObservation;
+   add(g,'authored-starter',main,[{stdin:authored.stdin,stdout,exitCode}],files,authored.metadata);
+  }
   for(const [part,a]of [['lab',g.laboratory],['block',g.blockPracticum],['project',g.modulePracticum]])if(a){
    add(g,part+'-starter',a.starterCode,[{stdin:a.cases[0].stdin,stdout:a.starterExpectedStdout}],a.starterFiles,a.metadata);
    add(g,part+'-reference',a.referenceCode,a.cases,a.referenceFiles,a.metadata);

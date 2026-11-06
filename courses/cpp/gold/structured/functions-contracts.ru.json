@@ -606,7 +606,7 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n\nbool checkedArea(int w, int h, int& result) {\n    // TODO: проверьте размеры и запишите площадь только при успехе. При отказе сохраните result.\n    return false;\n}\n\nint main() {\n    int w{}, h{};\n    if (!(std::cin >> w >> h)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    int result{17};\n    if (!std::cin.eof() || !checkedArea(w, h, result)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << result << '\\n';\n}\n"
         }
       ],
       "metadata": {},
@@ -661,23 +661,29 @@
         {
           "where": "До запуска",
           "action": "Придумайте два разных исходных значения result. Для каждого запишите, что должно остаться при отрицательном размере.",
-          "why": "",
-          "expected": ""
+          "why": "Начальное значение, отличное от нуля, делает случайную запись при отказе заметной.",
+          "expected": "Две строки трассы для одного result: флаг и значение после допустимого и после недопустимого вызова."
         },
         {
           "where": "Моя программа",
           "action": "Сделайте отдельную функцию без cin и cout. Подключите вызов только после проверки чтения и хвоста в main.",
-          "why": "",
-          "expected": ""
+          "why": "У функции есть свой контракт. Она должна работать и в тесте, где stdin отсутствует.",
+          "expected": "С заготовкой 3 4 даёт invalid. После реализации успешный вызов записывает 12."
         },
         {
           "where": "Проверка",
           "action": "Сравните 0 1000, 1000 1000 и 3 4 x. Отдельно вызовите функцию с отказом и докажите, что result сохранился.",
-          "why": "",
-          "expected": ""
+          "why": "Вывод invalid проверяет сообщение main, но не состояние выходного параметра.",
+          "expected": "Для 0 1000 получается 0. Отказ после успеха сохраняет предыдущее значение result."
         }
       ],
-      "recall": "concept-5"
+      "recall": "concept-5",
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "invalid\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {

@@ -603,7 +603,7 @@
       "files": [
         {
           "path": "main.cpp",
-          "content": "#include <iostream>\nint main() {\n    // Implement the stated input, validation, and computation contract.\n    std::cout << \"pending\\n\";\n}\n"
+          "content": "#include <iostream>\n\nstruct Item {\n    int id;\n    int stock;\n};\n\nbool issue(Item& item, int amount) {\n    // TODO: сравните amount с item.stock до изменения записи.\n    return false;\n}\n\nint main() {\n    Item item{};\n    int amount{};\n    if (!(std::cin >> item.id >> item.stock >> amount) ||\n        item.id < 1 || item.id > 1000 ||\n        item.stock < 0 || item.stock > 1000 ||\n        amount < 0 || amount > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    const bool accepted = issue(item, amount);\n    std::cout << (accepted ? \"ok \" : \"rejected \") << item.stock << '\\n';\n}\n"
         }
       ],
       "metadata": {},
@@ -658,27 +658,33 @@
         {
           "where": "До запуска",
           "action": "Запишите состояние для 7 2 2 и 7 2 3. Укажите ожидаемый флаг и итоговый запас.",
-          "why": "",
-          "expected": ""
+          "why": "Снимок всей записи обнаружит случайное изменение даже другого поля.",
+          "expected": "7 2 2 требует ok 0; 7 2 3 — rejected 2."
         },
         {
           "where": "Моя программа",
           "action": "Прочитайте и проверьте три числа. Передавайте Item по ссылке только в функцию, которая меняет его после проверки.",
-          "why": "",
-          "expected": ""
+          "why": "Отказ относится к операции над конкретным Item, поэтому передаётся ссылка на запись.",
+          "expected": "Заготовка отвергает даже 7 10 3. Реализация даёт ok 7 и сохраняет id."
         },
         {
           "where": "Проверка",
           "action": "При превышении запаса сравните оба поля со снимком. Для id = 0 должно быть invalid, а не rejected.",
-          "why": "",
-          "expected": ""
+          "why": "Неверный формат и нехватка запаса — разные части контракта.",
+          "expected": "При отказе сохранены id и stock. Для id=0 получено invalid."
         }
       ],
       "recall": "concept-5",
       "outputFields": [
         "Статус",
         "Итоговый запас"
-      ]
+      ],
+      "starterRevision": "b3-starter-v2",
+      "starterObservation": {
+        "case": 0,
+        "stdout": "rejected 10\n",
+        "exitCode": 0
+      }
     },
     "reading": [
       {
