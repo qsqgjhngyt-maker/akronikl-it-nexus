@@ -22,7 +22,7 @@ try{
   assert.equal(await p.locator('.authored-section').count(),l.sections.length);assert.equal(await p.locator('.optional-reading[open]').count(),0);
   await p.locator('.prediction-reveal summary').click();
   for(const s of l.sections){
-   const section=p.locator('section.authored-section[id="'+s.id+'"]');const expected=[s.reveal?.code,s.code].filter(Boolean),actual=await section.locator('.example-layout').evaluateAll(xs=>xs.map(e=>({source:e.querySelector('pre code')?.textContent,output:e.querySelector('[data-expected-output]')?.textContent,input:e.querySelector('p+pre')?.textContent||''})));
+   const section=p.locator('section.authored-section[id="'+s.id+'"]');const expected=[s.reveal?.code,s.code,s.deep?.code].filter(Boolean),actual=await section.locator('.example-layout').evaluateAll(xs=>xs.map(e=>({source:e.querySelector('pre code')?.textContent,output:e.querySelector('[data-expected-output]')?.textContent,input:e.querySelector('p+pre')?.textContent||''})));
    assert.equal(actual.length,expected.length,id+' '+s.id+' rendered programs');
    for(let i=0;i<expected.length;i++){assert.equal(actual[i].source,expected[i].source);assert.equal(actual[i].output,expected[i].output);assert.equal(actual[i].input,expected[i].stdin||'');requests.push({id,locale,name:s.id,source:actual[i].source,stdin:actual[i].input,expected:actual[i].output,expectCompileFailure:!!expected[i].expectCompileFailure,files:{'main.cpp':actual[i].source},metadata:{entryFile:'main.cpp'},evidence:'Rendered DOM'});}
    if(s.tables)assert.equal(await section.locator('table').count(),s.tables.length);
@@ -51,6 +51,52 @@ try{
  }
  if(!before){
   if(algorithmization){
+   for(const locale of ['ru','en']){
+    await go('cpp.programming-process',locale);
+    const detail=p.locator('.clarification:has(.clarification-links)');
+    const links=detail.locator('.clarification-links a');
+    await detail.locator('summary').click();
+    const destinations=await links.evaluateAll(xs=>xs.map(a=>new URLSearchParams(a.hash.slice(1)).get('lesson')));
+    assert.deepEqual(destinations,['cpp.standard-io','cpp.relations-logic']);
+    for(const width of [1366,390,320]){
+     await p.setViewportSize({width,height:900});
+     await detail.scrollIntoViewIfNeeded();
+     const gap=await links.evaluateAll(([a,b])=>{
+      const left=a.getBoundingClientRect(),right=b.getBoundingClientRect();
+      return right.top>=left.bottom?right.top-left.bottom:right.left-left.right;
+     });
+     assert.ok(gap>=7,locale+' '+width+' link gap '+gap);
+     assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+     await snap('cpp.programming-process',locale,width,'clarification-links');
+    }
+    await detail.locator('summary').focus();await p.keyboard.press('Tab');
+    assert.ok(await links.first().evaluate(el=>el===document.activeElement));
+    await p.keyboard.press('Tab');
+    assert.ok(await links.last().evaluate(el=>el===document.activeElement));
+    await p.keyboard.press('Enter');await p.locator('[data-r3-topic="cpp.relations-logic"]').waitFor();
+    checks.push({id:'cpp.programming-process',locale,status:'PASS',scope:'Clarification links spaced at 1366, 390 and 320 px; keyboard focus and navigation'});
+   }
+   for(const id of ['cpp.algorithm-representations','cpp.flowcharts'])for(const locale of ['ru','en']){
+    await go(id,locale);
+    const figure=p.locator('.lesson-flowchart'),svg=figure.getByRole('img'),transcript=figure.locator('details');
+    assert.equal(await svg.locator('.flowchart-decision').count(),3);
+    const {l}=await b1Lesson(id,locale),chart=l.sections.find(s=>s.flowchart).flowchart;
+    assert.equal(await svg.locator('desc').textContent(),chart.paths.join(' '));
+    assert.deepEqual(await transcript.locator('li').allTextContents(),chart.paths);
+    for(const width of [1366,683,390,320]){
+     await p.setViewportSize({width,height:900});
+     await svg.scrollIntoViewIfNeeded();
+     assert.ok(await svg.evaluate(el=>{
+      const {width}=el.getBoundingClientRect(),scale=el.getScreenCTM().a;
+      return width>190&&scale*18>=11&&document.documentElement.scrollWidth<=innerWidth+1;
+     }),id+' '+locale+' '+width+' chart fit');
+     await snap(id,locale,width,'flowchart');
+    }
+    await transcript.locator('summary').focus();await p.keyboard.press('Enter');
+    assert.ok(await transcript.locator('li').first().isVisible());
+    await p.keyboard.press('Enter');assert.equal(await transcript.getAttribute('open'),null);
+    checks.push({id,locale,status:'PASS',scope:'SVG decisions and text equivalent at 1366, 683, 390 and 320 px; keyboard disclosure'});
+   }
    for(const locale of ['ru','en']){
     const id='cpp.algorithm-definition-properties',ru=locale==='ru';
     const background=()=>p.locator('.stage-body:visible').evaluate(el=>getComputedStyle(el).backgroundColor);
@@ -129,6 +175,10 @@ try{
    await cold.evaluate(({id,locale})=>location.hash='#'+new URLSearchParams({course:'cpp',lesson:id,locale,stage:'explanation'}),{id,locale});
    const lesson=cold.locator('[data-r3-topic="'+id+'"][lang="'+locale+'"]');
    await lesson.locator('.lesson-section').first().waitFor();
+   if(algorithmization&&['cpp.algorithm-representations','cpp.flowcharts'].includes(id)){
+    assert.ok(await lesson.locator('.lesson-flowchart svg').isVisible());
+    assert.equal(await lesson.locator('.flowchart-decision').count(),3);
+   }
    if(id==='cpp.programming-process')assert.ok(await lesson.locator('.example-layout').first().isVisible());
    else{
     await lesson.locator('.prediction-reveal summary').click();

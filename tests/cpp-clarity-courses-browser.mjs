@@ -3,6 +3,42 @@ import assert from 'node:assert/strict';import http from 'node:http';import path
 const out=path.resolve(process.env.NEXUS_CLARITY_R3_EVIDENCE||'cpp-clarity-evidence/all-courses'),frontend=path.resolve(process.env.NEXUS_FRONTEND_DIR);await mkdir(out,{recursive:true});const manifest=JSON.parse(await readFile(path.join(frontend,'BUILD_MANIFEST.json'))),prefix='/releases/'+manifest.assetGeneration;
 const server=http.createServer(async(req,res)=>{try{const u=new URL(req.url,'http://127.0.0.1');if(u.pathname==='/__app__'){res.setHeader('content-type','text/html');return res.end('<!doctype html><html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="'+prefix+'/styles/app.css"><body><main id="app"></main></body></html>');}if(u.pathname.startsWith('/api/')){res.writeHead(401,{'content-type':'application/json'});return res.end('{"error":{"code":"SYNTHETIC_NO_SERVER_SESSION"}}');}const file=path.resolve(frontend,'.'+decodeURIComponent(u.pathname));if(!file.startsWith(frontend+path.sep))throw Error('PATH');res.setHeader('content-type',staticMime(file));res.end(await readFile(file));}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 const {chromium}=await import(pathToFileURL(process.env.NEXUS_PLAYWRIGHT_MODULE)),browser=await chromium.launch({headless:true,executablePath:process.env.NEXUS_CHROME_PATH}),context=await browser.newContext(),errors=[],blocked=[],checks=[];await context.route('**/*',route=>{if(!route.request().url().startsWith(origin)){blocked.push(route.request().url().split('?')[0]);return route.abort();}return route.continue();});let failure;
+function adjacentControls(panel){
+ const selector='a[href],button:not([hidden])';
+ const textRects=element=>{
+  const walker=document.createTreeWalker(element,NodeFilter.SHOW_TEXT),rects=[];
+  for(let node=walker.nextNode();node;node=walker.nextNode()){
+   const text=node.textContent,trimmed=text.trim();
+   if(!trimmed)continue;
+   const start=text.indexOf(trimmed),range=document.createRange();
+   range.setStart(node,start);range.setEnd(node,start+trimmed.length);
+   rects.push(...range.getClientRects());
+  }
+  return rects.filter(rect=>rect.width);
+ };
+ const details=[...panel.querySelectorAll('details:not([open]):not([hidden])')];
+ for(const node of details)node.open=true;
+ const collisions=[];
+ let boundaries=0;
+ for(const control of panel.querySelectorAll(selector)){
+  const next=control.nextElementSibling;
+  if(!next?.matches(selector))continue;
+  const first=[...control.getClientRects()].at(-1),second=next.getClientRects()[0];
+  if(!first?.width||!second?.width)continue;
+  boundaries++;
+  const rowOverlap=Math.min(first.bottom,second.bottom)-Math.max(first.top,second.top);
+  const gap=Math.max(second.left-first.right,first.left-second.right);
+  if(rowOverlap<=1||gap>=3)continue;
+  // Bordered editor tabs can touch while their text stays separated by padding.
+  const a=textRects(control).at(-1),b=textRects(next)[0];
+  if(!a||!b)continue;
+  const textOverlap=Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top);
+  const textGap=Math.max(b.left-a.right,a.left-b.right);
+  if(textOverlap>1&&textGap<3)collisions.push([control.textContent.trim(),next.textContent.trim(),textGap]);
+ }
+ for(const node of details)node.open=false;
+ return {boundaries,collisions};
+}
 try{
  const p=await context.newPage();p.setDefaultTimeout(12000);p.on('pageerror',e=>errors.push(e.message));
  await p.goto(origin+'/__app__#view=academy');await p.evaluate(async prefix=>{const a=await import(prefix+'/core/account-storage.js');a.initializeAccountStorage({accountId:'synthetic-all-courses',status:'active',displayName:'Synthetic'});await import(prefix+'/core/app.js');},prefix);
@@ -12,10 +48,19 @@ try{
   const lesson=p.locator('[data-r3-topic="'+topic.id+'"][lang="'+locale+'"]');await lesson.waitFor();
   assert.equal(await lesson.locator('[data-r3-panel="explanation"] h1').count(),1);
   assert.ok(await p.locator('#sidebar').isVisible());
-  for(const stage of ['selfcheck','practice','explanation']){await lesson.locator('[data-stage="'+stage+'"]').click();await lesson.locator('[data-r3-panel="'+stage+'"]').waitFor({state:'visible'});assert.equal(await lesson.locator('[data-current-marker]:visible').count(),1);}
+  let linkAndButtonBoundaries=0;
+  for(const stage of ['selfcheck','practice','explanation']){
+   await lesson.locator('[data-stage="'+stage+'"]').click();
+   const panel=lesson.locator('[data-r3-panel="'+stage+'"]');
+   await panel.waitFor({state:'visible'});
+   assert.equal(await lesson.locator('[data-current-marker]:visible').count(),1);
+   const {boundaries,collisions}=await panel.evaluate(adjacentControls);
+   linkAndButtonBoundaries+=boundaries;
+   assert.deepEqual(collisions,[],topic.id+' '+locale+' '+stage+' control spacing');
+  }
   assert.equal(await lesson.locator('[data-gold-depth]').count(),0);
   assert.equal(await p.evaluate(()=>document.querySelector('#app').dataset.akroniklRoute),new URL(p.url()).hash);
-  checks.push({id:topic.id,locale,stages:3});
+  checks.push({id:topic.id,locale,stages:3,linkAndButtonBoundaries});
   if(checks.length%20===0)console.log('Opened '+checks.length+'/302 lesson editions');
  }
 

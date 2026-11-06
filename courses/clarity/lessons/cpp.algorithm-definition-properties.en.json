@@ -22,9 +22,9 @@
       "id": "concept-1",
       "title": "Turn an informal task into precise steps",
       "paragraphs": [
-        "An instruction such as 'repeat until the number is small' leaves 'small' undefined. An algorithm needs an explicit condition, state update and result.",
-        "We can state a Euclidean step precisely: while b is not zero, replace (a,b) by (b,a modulo b). With a suitable input domain, a programmer can implement and test the process.",
-        "In the previous lesson, price and count determined a calculation. Now agree on the result before writing code. For age, decide whether 120 is allowed and what the program reports on failed input."
+        "The instruction “convert seconds to minutes” leaves a question: what should happen to the remainder? For 125 seconds we want two integers: 2 whole minutes and 5 seconds.",
+        "Start with 0 minutes and a remainder of 125. While the remainder is at least 60, subtract 60 from it and add one minute. Print the resulting minutes and remainder. Both the step and the stopping rule are now precise.",
+        "Predict the result for 59 and 60 seconds before writing code. There are no subtractions for 59 and exactly one for 60. This checks that the condition includes equality."
       ]
     },
     {
@@ -55,9 +55,9 @@
       "id": "concept-4",
       "title": "Correctness requires more than stopping",
       "paragraphs": [
-        "A program may halt quickly and still produce the wrong result. We must establish both a terminating process and a postcondition satisfied by its output.",
-        "In Euclid's algorithm, replacing (a,b) with (b,a mod b) preserves the greatest common divisor; when b becomes zero, a is the answer. This illustrates invariant-based reasoning.",
-        "A defective program may always print valid and stop. Input 121 immediately disproves its postcondition even though the run terminates."
+        "Imagine the program stops at one minute and a remainder of 65. The total is still 125, but 65 seconds contains another whole minute. Halting alone tells you nothing about whether the answer is correct.",
+        "Trace the pairs (minutes, remainder): (0, 125) → (1, 65) → (2, 5). Each added minute compensates for the 60 seconds subtracted. The equality 60 × minutes + remainder = original seconds holds at the start and after each step. A property preserved this way is called an invariant.",
+        "We subtract 60 only from a remainder of at least 60, so the remainder stays nonnegative. When the condition becomes false, 0 ≤ remainder < 60. Together with the invariant, this gives the required postcondition. Would the equality alone be enough?"
       ]
     },
     {
@@ -66,7 +66,7 @@
       "paragraphs": [
         "A nonnegative quantity that strictly decreases often explains termination. But you must check that each transition actually reduces the quantity under the preconditions.",
         "Changing a loop requires revisiting its invariant and exit condition. Forgetting to update a counter can turn a correct finite loop into an infinite one.",
-        "Imagine converting time by repeatedly subtracting 60. When the remainder is at least 60, a step subtracts 60 and adds one minute. The quantity 60·minutes + remainder stays constant. The remainder decreases until it is below 60."
+        "Return to the remaining seconds. Every step decreases the remainder by exactly 60 and keeps it nonnegative. There cannot be infinitely many such subtractions. If you remove the subtraction, the test “remainder ≥ 60” stays true for 125."
       ]
     },
     {

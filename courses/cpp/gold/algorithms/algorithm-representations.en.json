@@ -458,6 +458,11 @@
             ],
             "rows": [
               [
+                "Failed to read x",
+                "invalid",
+                "oops"
+              ],
+              [
                 "x < 0",
                 "negative",
                 "−5"
@@ -492,28 +497,61 @@
         "id": "concept-4",
         "title": "Flowcharts visualize control flow",
         "paragraphs": [
-          "An oval commonly denotes start/end, a rectangle an action, and a diamond a condition. Arrows indicate the next step, with true/false paths labeled.",
-          "A flowchart is only useful if a reader can follow every input to the correct output. Unlabeled branches or arrows are a source of confusion.",
-          "For x=0 the first decision is no and the second is yes. If we drop the second decision, zero silently falls into the positive branch."
+          "An oval marks the start or end. A parallelogram shows reading or printing, and a diamond asks a question with yes and no answers. A rectangle would represent an action that changes data.",
+          "Start by reading x. If reading fails, the branch immediately prints invalid. If it succeeds, the next diamond tests x < 0.",
+          "For x = 0, reading succeeds, x < 0 is false, and x == 0 is true. Compare the resulting zero with the table row and pseudocode."
         ],
-        "diagram": {
-          "caption": "Paths after successful input",
-          "text": "◇ x < 0?\n├─ yes → [negative] → end\n└─ no  → ◇ x = 0?\n          ├─ yes → [zero] → end\n          └─ no  → [positive] → end"
+        "flowchart": {
+          "caption": "Flowchart for classifying the sign",
+          "input": "Read x",
+          "decisions": [
+            {
+              "condition": "Read OK?",
+              "branch": "no",
+              "output": "invalid"
+            },
+            {
+              "condition": "x < 0?",
+              "branch": "yes",
+              "output": "negative"
+            },
+            {
+              "condition": "x == 0?",
+              "branch": "yes",
+              "output": "zero"
+            }
+          ],
+          "fallback": "positive",
+          "paths": [
+            "Start → read x. If reading fails, print invalid and end.",
+            "If reading succeeds, test x < 0. If yes, print negative and end.",
+            "Otherwise test x == 0. If yes, print zero. If no, print positive. End after printing."
+          ]
         }
       },
       {
         "id": "concept-5",
         "title": "Code is a concrete implementation",
         "paragraphs": [
-          "Compare each pseudocode condition with the corresponding C++ branch. The remainder operator % is commonly used to test parity through x%2==0.",
-          "Check x=-5, x=0 and x=7. Equal observed results across these examples support consistency, though finite tests do not prove all possible cases.",
-          "Parity is a different requirement. For −5 the remainder after dividing by 2 is nonzero, so the result is odd. Testing oddness need not assume that the remainder always equals 1."
+          "Find the same decisions in C++ as in the flowchart. The read check prints invalid and ends the program. Then x < 0 selects negative and x == 0 selects zero. The final else runs only when both comparisons are false.",
+          "For input 7, reading succeeds, both sign checks say no, and the program prints positive. Match that line to the table, pseudocode, and the bottom path in the flowchart. Repeat for −5, 0, and oops."
         ],
         "code": {
           "language": "cpp",
-          "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
-          "stdin": "8\n",
-          "output": "even\n"
+          "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+          "stdin": "7\n",
+          "output": "positive\n"
+        },
+        "deep": {
+          "title": "A separate task: parity",
+          "text": "Change the requirement: now decide whether x is divisible by 2 with no remainder. The test x % 2 == 0 gives even for 8. For −5 the remainder is nonzero, so the output is odd. Predict the result for 0 and compare with the sign task.",
+          "sourceId": "cpp20-expr.mul",
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
+            "stdin": "8\n",
+            "output": "even\n"
+          }
         }
       },
       {
@@ -881,6 +919,18 @@
           "entryFile": "main.cpp"
         },
         "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+        "stdin": "-5\n",
+        "label": "example-case-4",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "negative\n"
       }
     ],
     "coverage": {

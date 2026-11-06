@@ -1,12 +1,58 @@
 // Авторская подача включается только у явно согласованной темы.
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// A decision ladder follows the next check down and exits to the right.
+function decisionFlowchart(chart,say){
+ const x=90,exitX=325,resultX=266,firstY=164,step=88;
+ const lastY=firstY+(chart.decisions.length-1)*step;
+ const fallbackY=lastY+78,endY=fallbackY+70;
+ const label=(text,x,y,cls='')=>`<text class="${cls}" x="${x}" y="${y}">${esc(text)}</text>`;
+ const terminal=(text,y)=>`<ellipse cx="${x}" cy="${y}" rx="53" ry="20"/>${label(text,x,y)}`;
+ const io=(text,x,y,halfWidth)=>`<path d="M${x-halfWidth+9} ${y-20}H${x+halfWidth}l-9 40H${x-halfWidth}Z"/>${label(text,x,y)}`;
+ const arrow=(line,tip)=>`<path class="flowchart-arrow" d="${line} ${tip}"/>`;
+ const down=(from,to)=>arrow(`M${x} ${from}V${to}`,`m-4-7 4 7 4-7`);
+ const branchLabel=branch=>branch==='yes'?say('да','yes'):say('нет','no');
+ const decisions=chart.decisions.map((decision,i)=>{
+  const y=firstY+i*step,next=i===chart.decisions.length-1?fallbackY-20:y+step-29;
+  return `<g>
+   <path class="flowchart-decision" d="M${x} ${y-29}l82 29-82 29-82-29Z"/>
+   ${label(decision.condition,x,y)}
+   ${arrow(`M${x+82} ${y}H${resultX-44}`,`m-7-4 7 4-7 4`)}
+   ${label(branchLabel(decision.branch),196,y-11,'flowchart-branch')}
+   ${io(decision.output,resultX,y,49)}
+   <path class="flowchart-arrow" d="M${resultX+45} ${y}H${exitX}"/>
+   ${down(y+29,next)}
+   ${label(branchLabel(decision.branch==='yes'?'no':'yes'),x+24,(y+29+next)/2,'flowchart-branch')}
+  </g>`;
+ }).join('');
+ return `<figure class="lesson-flowchart">
+  <figcaption>${esc(chart.caption)}</figcaption>
+  <svg viewBox="0 0 336 ${endY+28}" role="img" aria-label="${esc(chart.caption)}">
+   <desc>${esc(chart.paths.join(' '))}</desc>
+   ${terminal(say('Начало','Start'),27)}
+   ${down(47,71)}
+   ${io(chart.input,x,91,65)}
+   ${down(111,firstY-29)}
+   ${decisions}
+   ${io(chart.fallback,x,fallbackY,56)}
+   ${down(fallbackY+20,endY-20)}
+   ${arrow(`M${exitX} ${firstY}V${endY}H${x+53}`,`m7-4-7 4 7 4`)}
+   ${terminal(say('Конец','End'),endY)}
+  </svg>
+  <details><summary>${say('Маршруты схемы текстом','Flowchart paths in text')}</summary>
+   <ul>${chart.paths.map(line=>`<li>${esc(line)}</li>`).join('')}</ul>
+  </details>
+ </figure>`;
+}
+
 export function authoredMarkup(lesson,{code,table,url}){
  const en=lesson.locale==='en',say=(ru,enText)=>en?enText:ru;
  const paragraphs=xs=>(xs||[]).map(x=>`<p>${esc(x)}</p>`).join('');
  const revealBody=s=>(s.tables||[]).map(table).join('')+paragraphs(s.paragraphs)+(s.code?code(s.code.source,s.code.output,s.code.stdin):'');
- const diagram=s=>s.diagram?`<figure class="lesson-diagram"><figcaption>${esc(s.diagram.caption)}</figcaption><pre>${esc(s.diagram.text)}</pre></figure>`:'';
+ const diagram=s=>s.flowchart?decisionFlowchart(s.flowchart,say):s.diagram?`<figure class="lesson-diagram"><figcaption>${esc(s.diagram.caption)}</figcaption><pre>${esc(s.diagram.text)}</pre></figure>`:'';
+ const optionalReading=deep=>deep?`<details class="optional-reading"><summary>${say('Разобраться глубже: ','Explore further: ')}${esc(deep.title)}</summary><p>${esc(deep.text)}</p>${deep.code?code(deep.code.source,deep.code.output,deep.code.stdin):''}<a href="#reading-${esc(deep.sourceId||'goldberg')}">${say('Источник и дальнейшее чтение','Source and further reading')}</a></details>`:'';
  const predictionInput=s=>s.predictionInput?`<p>${say('Ввод для прогноза','Prediction input')}</p><pre>${esc(s.predictionInput)}</pre>`:'';
- const sectionBody=s=>paragraphs(s.paragraphs)+diagram(s)+predictionInput(s)+(s.prediction?`<pre class="prediction-code"><code>${esc(s.prediction.join('\n'))}</code></pre>`:'')+(s.reveal?`<details class="prediction-reveal"><summary>${esc(s.reveal.title)}</summary>${revealBody(s.reveal)}</details>`:'')+(s.code?code(s.code.source,s.code.output,s.code.stdin):'')+(s.tables||[]).map(table).join('')+(s.deep?`<details class="optional-reading"><summary>${say('Разобраться глубже: ','Explore further: ')}${esc(s.deep.title)}</summary><p>${esc(s.deep.text)}</p><a href="#reading-${esc(s.deep.sourceId||'goldberg')}">${say('Источник и дальнейшее чтение','Source and further reading')}</a></details>`:'');
+ const sectionBody=s=>paragraphs(s.paragraphs)+diagram(s)+predictionInput(s)+(s.prediction?`<pre class="prediction-code"><code>${esc(s.prediction.join('\n'))}</code></pre>`:'')+(s.reveal?`<details class="prediction-reveal"><summary>${esc(s.reveal.title)}</summary>${revealBody(s.reveal)}</details>`:'')+(s.code?code(s.code.source,s.code.output,s.code.stdin):'')+(s.tables||[]).map(table).join('')+optionalReading(s.deep);
  const reading=()=>`<section class="lesson-reading" id="lesson-reading"><h2>${say('Что почитать','Further reading')}</h2><p>${say('Всё необходимое для задания уже есть в уроке. Эти материалы можно открыть по желанию. Внешние ссылки требуют сети.','The lesson contains everything required for the task. These optional external sources require a connection.')}</p>${lesson.reading.map(s=>`<article id="reading-${esc(s.id)}"><h3>${esc(s.title)}</h3><p>${esc(s.author)} · ${esc(s.edition)} · ${esc(s.section)} · ${esc(s.language)}</p><p>${esc(s.purpose)}</p><a href="${esc(s.url)}" target="_blank" rel="noopener">${say('Открыть источник','Open source')} ↗</a></article>`).join('')}</section>`;
  return {
   explanation:()=>`<div class="authored-intro"><p class="eyebrow">${say('От наблюдения к своей программе','From an observation to your own program')}</p><h1>${esc(lesson.title)}</h1><p class="goal">${esc(lesson.goal)}</p>${paragraphs(lesson.prerequisites.map(p=>p.text))}<details class="lesson-map-wrap"><summary>${say('Содержание урока','Lesson contents')}</summary><nav class="lesson-map" aria-label="${say('Содержание урока','Lesson contents')}">${lesson.sections.map((s,i)=>`<a href="${url(lesson.id,'explanation',lesson.locale,s.id)}">${i+1}. ${esc(s.title)}</a>`).join('')}</nav></details></div>${lesson.sections.map((s,i)=>`<section class="lesson-section authored-section" id="${esc(s.id)}"><div class="section-index">${say('Шаг','Step')} ${i+1} / ${lesson.sections.length}</div><h2>${esc(s.title)}</h2>${sectionBody(s)}</section>`).join('')}<a class="btn primary" href="${url(lesson.id,'selfcheck')}">${say('Проверить, что я понял','Check my understanding')} →</a>${reading()}`,
@@ -34,6 +80,14 @@ export const authoredStyles=`
 
  .r3-lesson[data-authored=true] .lesson-diagram{margin:16px 0}
  .r3-lesson[data-authored=true] .lesson-diagram figcaption{font-weight:650}
+ .r3-lesson .lesson-flowchart{margin:18px 0}
+ .r3-lesson .lesson-flowchart figcaption{font-weight:700}
+ .r3-lesson .lesson-flowchart svg{display:block;width:100%;max-width:360px;height:auto;margin:12px auto}
+ .r3-lesson .lesson-flowchart svg :is(path,ellipse){fill:#172d44;stroke:#93abc2;stroke-width:1.7}
+ .r3-lesson .lesson-flowchart svg .flowchart-decision{fill:#243b52}
+ .r3-lesson .lesson-flowchart svg .flowchart-arrow{fill:none;stroke:#b1c8de;stroke-linejoin:round;stroke-linecap:round}
+ .r3-lesson .lesson-flowchart text{fill:#f0f6ff;font:600 18px system-ui,sans-serif;text-anchor:middle;dominant-baseline:central}
+ .r3-lesson .lesson-flowchart .flowchart-branch{fill:#bcd5e9;font-size:16px}
  .r3-lesson[data-authored=true] .table-scroll-note{display:none}
  .r3-lesson[data-authored=true] [data-wide-table]:focus-visible{outline:2px solid #f5d78c;outline-offset:2px}
  @media(max-width:480px){

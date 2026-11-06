@@ -459,12 +459,9 @@
         "title": "Order validation before shipping price",
         "paragraphs": [
           "An order totals exactly 1000. Is delivery free? Start at the input, follow validation and find the edge at the threshold.",
+          "The top parallelogram reads the order total. The right-hand boxes show what the selected branch prints. After printing, every path leads to the End oval.",
           "Mark the chosen path before running."
         ],
-        "diagram": {
-          "caption": "Order total flowchart",
-          "text": "Start → read total\n◇ Input read?\n├─ no  → invalid → end\n└─ yes → ◇ Total < 0?\n          ├─ yes → invalid → end\n          └─ no  → ◇ Total ≥ 1000?\n                   ├─ yes → free → end\n                   └─ no  → 150 → end"
-        },
         "prediction": [
           "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}"
         ],
@@ -482,6 +479,33 @@
             "stdin": "1000\n",
             "output": "free\n"
           }
+        },
+        "flowchart": {
+          "caption": "Flowchart for the shipping fee",
+          "input": "Read total",
+          "decisions": [
+            {
+              "condition": "Read OK?",
+              "branch": "no",
+              "output": "invalid"
+            },
+            {
+              "condition": "total < 0?",
+              "branch": "yes",
+              "output": "invalid"
+            },
+            {
+              "condition": "total ≥ 1000?",
+              "branch": "yes",
+              "output": "free"
+            }
+          ],
+          "fallback": "150",
+          "paths": [
+            "Start → read the order total. If reading fails, print invalid and end.",
+            "If reading succeeds, test total < 0. If yes, print invalid and end.",
+            "Otherwise test total ≥ 1000. If yes, print free. If no, print 150. End after printing."
+          ]
         }
       },
       {
@@ -928,6 +952,18 @@
           "entryFile": "main.cpp"
         },
         "expected": "retry\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
+        "stdin": "999\n",
+        "label": "example-case-4",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "150\n"
       }
     ],
     "coverage": {

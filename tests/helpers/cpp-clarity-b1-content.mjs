@@ -9,7 +9,7 @@ export async function b1Lesson(id,locale){const g=JSON.parse(await readFile(gold
 export function record(id,locale,name,c){return {id,locale,name,source:c.source,stdin:c.stdin||'',files:c.files||{'main.cpp':c.source},metadata:c.metadata||{entryFile:'main.cpp'},expected:c.expected??c.output,expectCompileFailure:!!c.expectCompileFailure};}
 export const b1Programs=()=>authoredPrograms(B1_NEW);
 export async function authoredPrograms(ids){const rows=[];for(const id of ids)for(const locale of ['ru','en']){const {g,l}=await b1Lesson(id,locale);
-for(const s of l.sections)for(const c of [s.code,s.reveal?.code].filter(Boolean))rows.push(record(id,locale,s.id,c));
+for(const s of l.sections)for(const c of [s.code,s.reveal?.code,s.deep?.code].filter(Boolean))rows.push(record(id,locale,s.id,c));
 for(const q of l.selfcheck)if(q.execution)rows.push(record(id,locale,'question-'+q.id,q.execution));
 for(const c of g.teachingEdition.verificationCases)rows.push(record(id,locale,c.label,c));
 rows.push(record(id,locale,'starter',{source:l.practice.files[0].content,stdin:l.practice.stdin,expected:g.teachingEdition.starterExpected,files:{'main.cpp':l.practice.files[0].content},metadata:l.practice.metadata}));
