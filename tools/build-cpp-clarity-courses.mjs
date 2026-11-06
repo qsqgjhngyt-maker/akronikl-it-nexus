@@ -5,6 +5,8 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 const read=async p=>JSON.parse(await readFile(p,'utf8'));
 const write=async(p,v)=>{await mkdir(path.dirname(p),{recursive:true});await writeFile(p,JSON.stringify(v,null,2)+'\n');};
+// Сохранить историческое написание метаданных C++ на любой ОС; это не путь для чтения.
+const cppSourceRef=p=>p.replaceAll('/','\\');
 const pilots=new Set(['cpp.programming-process','onec.p2.topic-1','onec.p7.topic-2']);
 const catalog=[],registry={},audit=[];
 const cpp=await read('courses/cpp/curriculum.json');
@@ -72,8 +74,9 @@ for(const topic of cppCatalog.topics){
   const practice={title:lab.title,task:lab.challenge,kind:qt?'qt-project':'cpp-console',environment:g.target||'C++20',files,metadata:lab.metadata||{},stdin:lab.stdin??lab.cases[0]?.stdin??'',returnAnchor:c?'worked-example':'example-1',cases:lab.cases.map((x,i)=>({label:x.purpose||say(locale,'Случай ','Case ')+(i+1),input:qt?(x.actions||[]).join('\n'):x.stdin,output:qt?x.expected:x.stdout})),criteria:lab.rubric,hint:c?c.training.hints.join(' '):g.practice.find(p=>p.level==='applied')?.hint||g.practice[0].hint,steps:numberedSteps(lab.steps,locale,qt?'Project Studio':say(locale,'Моя программа','My program')),...(g.modulePracticum?{modulePracticum:g.modulePracticum}:{}),...(g.delivery?{delivery:g.delivery}:{})};
   const lesson={schemaVersion:1,contentRevision:'clarity-courses-v1',id:topic.id,courseId:'cpp',moduleId:topic.moduleId,course:cppCatalog.title[locale],module:topic.module[locale],locale,title:g.title,goal:c?.goal||g.lead,prerequisites:(c?.prerequisites||g.prerequisites).map(text=>({text})),sections,selfcheck:questions,practice,terms:g.concepts,sourceRefs:g.sourceRefs,extras:{lessonId:topic.id,locale,visualization:c?null:g.visualization,sourceRefs:g.sourceRefs,blockPracticum:g.blockPracticum,modulePracticum:g.modulePracticum,laboratory:{delivery:g.laboratory.delivery}},sourcePath:source};
   if(g.teachingEdition){const a=g.teachingEdition;assert.equal(topic.id,'cpp.data-types','Author edition needs explicit topic review');Object.assign(lesson,{contentRevision:a.revision,title:a.title,goal:a.goal,prerequisites:a.prerequisites,sections:a.sections,selfcheck:a.selfcheck,practice:a.practice,reading:a.reading,authored:true});}
+  lesson.sourcePath=cppSourceRef(source);
   await write('courses/clarity/lessons/'+topic.id+'.'+locale+'.json',lesson);
-  if(locale==='ru'){registry[topic.id]={courseId:'cpp',languageId:'cpp',runtime:lesson.practice.kind,questions:Object.fromEntries(lesson.selfcheck.map(q=>[q.id,q.kind==='free'?'free':q.options.length])),...(g.teachingEdition?{contentRevision:g.teachingEdition.revision}:{})};audit.push({id:topic.id,source,sections:lesson.sections.map(s=>s.id),runtime:lesson.practice.kind});}
+  if(locale==='ru'){registry[topic.id]={courseId:'cpp',languageId:'cpp',runtime:lesson.practice.kind,questions:Object.fromEntries(lesson.selfcheck.map(q=>[q.id,q.kind==='free'?'free':q.options.length])),...(g.teachingEdition?{contentRevision:g.teachingEdition.revision}:{})};audit.push({id:topic.id,source:cppSourceRef(source),sections:lesson.sections.map(s=>s.id),runtime:lesson.practice.kind});}
  }
 }
 for(const courseId of ['onec','1c-enterprise']){
