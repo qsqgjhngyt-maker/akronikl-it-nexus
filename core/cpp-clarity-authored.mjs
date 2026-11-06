@@ -100,5 +100,8 @@ export const authoredStyles=`
   .r3-lesson[data-authored=true] .table-wrap[data-wide-table]{overscroll-behavior-x:contain}
   .r3-lesson[data-authored=true] .table-wrap[data-wide-table] table{min-width:432px;table-layout:auto}
   .r3-lesson[data-authored=true] [data-wide-table] :is(th,td){min-width:108px;overflow-wrap:break-word}
+  .r3-lesson[data-authored=true] [data-wide-table=state] table{min-width:360px}
+  .r3-lesson[data-authored=true] [data-wide-table=state] :is(th,td){overflow-wrap:normal;word-break:normal}
+  .r3-lesson[data-authored=true] [data-wide-table=state] :is(th,td):first-child{white-space:nowrap}
  }
 `;

@@ -27,8 +27,9 @@ const words = {
  w.free=say('Сохранить объяснение','Save explanation');w.freeSaved=say('Объяснение сохранено; правильность автоматически не оценивается.','Explanation saved; correctness is not graded automatically.');
  const url=(id=topicId,stage=route.stage,language=locale,anchor='')=>'#'+new URLSearchParams({course:CLARITY_COURSES[id]?.courseId||lesson.courseId,lesson:id,stage,locale:language,...(anchor?{at:anchor}:{}),...(id===topicId&&new URLSearchParams(location.hash.slice(1)).has('copy')?{copy:new URLSearchParams(location.hash.slice(1)).get('copy')}:{})});
 function table(t){
- const wide=lesson.authored&&t.columns.length>=3;
- const attributes=wide?` data-wide-table tabindex="0" role="region" aria-label="${esc(t.caption)}"`:'';
+ const state=lesson.authored&&lesson.moduleId==='cpp.section.structured-programming'&&t.columns.length===2;
+ const wide=lesson.authored&&(t.columns.length>=3||state);
+ const attributes=wide?` data-wide-table${state?'="state"':''} tabindex="0" role="region" aria-label="${esc(t.caption)}"`:'';
  const note=wide?`<p class="table-scroll-note">${say('Таблицу можно прокрутить вправо.','Scroll the table to see more.')}</p>`:'';
  return `${note}<div class="table-wrap"${attributes}><table><caption>${esc(t.caption)}</caption><thead><tr>${t.columns.map(x=>`<th scope="col">${esc(x)}</th>`).join('')}</tr></thead><tbody>${t.rows.map(row=>`<tr>${row.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;}
 function programFiles(files,label,after=''){
@@ -115,6 +116,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
     </dl>
     ${programFiles(c.files,say('Входные файлы для проверки','Input files for this case'))}
     ${programFiles(c.outputFiles,say('Ожидаемые файлы результата','Expected output files'))}
+    ${c.fileChecks?.length?'<h4>'+say('Свойства файлов результата','Output file checks')+'</h4><ul>'+c.fileChecks.map(({path,description})=>'<li><code>'+esc(path)+'</code> · '+esc(description)+'</li>').join('')+'</ul>':''}
     ${meaning}
     ${c.table?table(c.table):''}
    </li>`;
@@ -136,6 +138,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
   const preview=result?`<div data-starter-observation>
    <p><strong>${say('Первый запуск заготовки','First run of the starter')}</strong></p>
    <p>${esc(p.cases[result.case].label)}. ${say('Вывод до выполнения TODO','Output before completing the TODOs')}.</p>
+   ${result.stdout===''?'<p>'+say('Заготовка пока ничего не печатает.','The starter produces no output yet.')+'</p>':''}
    <pre data-starter-output>\n${esc(result.stdout)}</pre>
    <p>${say('Код завершения','Exit code')} ${result.exitCode}</p>
   </div>`:'';

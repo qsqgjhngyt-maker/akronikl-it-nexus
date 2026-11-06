@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b4-author-v1",
   "id": "cpp.property-testing-benchmarks",
   "courseId": "cpp",
   "moduleId": "cpp.section.classic-algorithms",
@@ -8,7 +8,7 @@
   "module": "Classic Algorithms",
   "locale": "en",
   "title": "Property checking and honest experiments",
-  "goal": "Combine an independent oracle, metamorphic properties, a safe mutation and a reproducible measurement log.",
+  "goal": "Check the sorting contract independently of the timer and collect a reproducible measurement log.",
   "prerequisites": [
     {
       "text": "Modules 1–3: validated input, functions, vector, records, references and lifetimes."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Examples, properties and proofs",
       "paragraphs": [
+        "The row 3, 1, 3, −2 exercises duplicates and negatives. One example gives an observation, while a property defines a check for every valid row.",
         "An example connects one input to an expected output. A property describes a class of inputs, such as sorted output preserving the input multiset. A proof explains why the algorithm satisfies the condition over its valid modeled domain. These forms of evidence complement one another; a passing test does not turn into a proof.",
         "Start with independent small expectations: [3,1,3] must become [1,3,3], not [1,3]. Add general properties next. They can detect failures on unfamiliar data, but the properties themselves need scrutiny. For record sorting, keys alone are insufficient: check IDs and associated fields, using original labels to check stability."
       ]
@@ -31,27 +32,8 @@
       "title": "Oracles and independence",
       "paragraphs": [
         "An oracle supplies an expected answer. It can be a linear scan for search, a hand-built table for small inputs, or a library sort plus multiset checks for an educational sort. Two copies of one function are not independent oracles. State the assumptions behind your chosen method.",
-        "Test properties against known-bad outputs too. An all-zero array may be ordered but lose the input; a reversed array can preserve multiplicities while violating order. Such negative controls show that the checker distinguishes substantive defects rather than always returning true."
-      ]
-    },
-    {
-      "id": "example-1",
-      "title": "Three properties across input classes",
-      "paragraphs": [
-        "Check a substantive contract instead of one familiar stdout line."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main(){std::vector<std::vector<int>>inputs{{},{7},{3,1,3,-2},{0,0,0},{9,7,5,3,1}};int checked=0;for(const auto&source:inputs){auto sorted=source;std::sort(sorted.begin(),sorted.end());auto twice=sorted;std::sort(twice.begin(),twice.end());auto reversed=source;std::reverse(reversed.begin(),reversed.end());std::sort(reversed.begin(),reversed.end());if(!std::is_sorted(sorted.begin(),sorted.end())||!std::is_permutation(source.begin(),source.end(),sorted.begin(),sorted.end())||twice!=sorted||reversed!=sorted)return 2;++checked;}std::cout<<checked<<\" properties\\n\";}",
-        "output": "5 properties\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Inputs cover empty, singleton, duplicates, all-equal and reverse cases.",
-        "is_sorted checks order and is_permutation preserves the multiplicity of every value.",
-        "Sorting again must be idempotent: the result does not change.",
-        "Sorting a reversal must produce the same integer result under the same order.",
-        "The label “5 properties” counts five processed datasets; it is not statistical proof over all inputs."
+        "Test properties against known-bad outputs too. An all-zero array may be ordered but lose the input; a reversed array can preserve multiplicities while violating order. Such negative controls show that the checker distinguishes substantive defects rather than always returning true.",
+        "Check ordering on neighboring pairs. Verify permutation separately, because an empty result also passes an order check."
       ]
     },
     {
@@ -59,43 +41,93 @@
       "title": "Metamorphic relations",
       "paragraphs": [
         "When a large exact answer is inconvenient, relate several runs. Sorting an already sorted integer result should not change it: idempotence. A permutation or reversal of the input should sort to the same value array. Doubling each permitted integer preserves relative order provided arithmetic does not overflow.",
-        "A relation must fit the contract. Permuting input records can change the tied-label order of a stable sort, so entire-record output equality need not hold. Shifting all search keys requires shifting the target too. Justify the relation first, then test it under explicit arithmetic bounds."
+        "A relation must fit the contract. Permuting input records can change the tied-label order of a stable sort, so entire-record output equality need not hold. Shifting all search keys requires shifting the target too. Justify the relation first, then test it under explicit arithmetic bounds.",
+        "Sorting an already sorted result leaves it unchanged. Reversing the original changes input order, but sorting gives the same result."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "Three properties across input classes",
+      "paragraphs": [
+        "Inspect the checks on the row with two threes and predict the final counter."
+      ],
+      "prediction": [
+        "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::vector<std::vector<int>> inputs{\n        {}, {7}, {3, 1, 3, -2}, {0, 0, 0}, {9, 7, 5, 3, 1}};\n    int checked = 0;\n    for (const auto &source : inputs) {\n        auto sorted = source;\n        std::sort(sorted.begin(), sorted.end());\n        auto twice = sorted;\n        std::sort(twice.begin(), twice.end());\n        auto reversed = source;\n        std::reverse(reversed.begin(), reversed.end());\n        std::sort(reversed.begin(), reversed.end());\n        if (!std::is_sorted(sorted.begin(), sorted.end()) ||\n            !std::is_permutation(source.begin(), source.end(),\n                                 sorted.begin(), sorted.end()) ||\n            twice != sorted || reversed != sorted) {\n            return 2;\n        }\n        ++checked;\n    }\n    std::cout << checked << \" properties\\n\";\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Reveal the output and walkthrough",
+        "paragraphs": [
+          "The program increments checked once per passing input. The line 5 properties reports five input sets, with properties checked inside each pass."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "Sort",
+                "3 1 3 -2",
+                "-2 1 3 3",
+                "Neighbors are ordered and both threes survive."
+              ],
+              [
+                "Sort again",
+                "-2 1 3 3",
+                "-2 1 3 3",
+                "The result is unchanged."
+              ],
+              [
+                "Reverse the input and sort",
+                "-2 3 1 3",
+                "-2 1 3 3",
+                "The permuted input gives the same sorted row."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::vector<std::vector<int>> inputs{\n        {}, {7}, {3, 1, 3, -2}, {0, 0, 0}, {9, 7, 5, 3, 1}};\n    int checked = 0;\n    for (const auto &source : inputs) {\n        auto sorted = source;\n        std::sort(sorted.begin(), sorted.end());\n        auto twice = sorted;\n        std::sort(twice.begin(), twice.end());\n        auto reversed = source;\n        std::reverse(reversed.begin(), reversed.end());\n        std::sort(reversed.begin(), reversed.end());\n        if (!std::is_sorted(sorted.begin(), sorted.end()) ||\n            !std::is_permutation(source.begin(), source.end(),\n                                 sorted.begin(), sorted.end()) ||\n            twice != sorted || reversed != sorted) {\n            return 2;\n        }\n        ++checked;\n    }\n    std::cout << checked << \" properties\\n\";\n}",
+          "stdin": "",
+          "output": "5 properties\n"
+        }
+      }
     },
     {
       "id": "concept-4",
       "title": "Generation, shrinking and safe mutation",
       "paragraphs": [
         "Combine fixed input classes with several saved seeds. Shrink a failing case by removing items or simplifying values while preserving failure, then keep the minimal case in regression. An extension exhaustively enumerates lengths up to six over {-1,0,1}: 1093 collections, not every input in the general domain.",
-        "A mutation is a small intentional implementation change that a test should detect. The example truncates a pass while keeping every index valid. Success means detecting the defect, not the mutant working correctly. Do not use an invalid std::sort comparator, out-of-bounds access or signed overflow as the mutation; a defined but wrong result is sufficient."
-      ]
-    },
-    {
-      "id": "concept-5",
-      "title": "Which clock and which region?",
-      "paragraphs": [
-        "Use std::chrono::steady_clock for durations: its readings do not move backward as time progresses. end−start is a duration; duration_cast converts units. elapsed_ns names nanoseconds as a unit, not a promise of nanosecond resolution or accuracy. A very short measured interval may legitimately produce zero.",
-        "Copy input before start, then validate and write files after end. The measured region is the selected sort, not the whole process. C++ compilation, compiler download, UI and Worker startup are separate costs. End-to-end user latency needs another protocol, which this lab does not perform."
+        "A mutation is a small intentional implementation change that a test should detect. The example truncates a pass while keeping every index valid. Success means detecting the defect, not the mutant working correctly. Do not use an invalid std::sort comparator, out-of-bounds access or signed overflow as the mutation; a defined but wrong result is sufficient.",
+        "The mutant stops before the final pair. For [3, 1, 2] it leaves [1, 3, 2], and the check finds 3 > 2."
       ]
     },
     {
       "id": "example-2",
       "title": "A safe defect that must be detected",
       "paragraphs": [
-        "Distinguish a successful test from success of an incorrect algorithm."
+        "Trace the version with the wrong upper bound. Find the element that exposes the defect."
       ],
       "code": {
         "language": "cpp",
-        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main(){std::vector<int>original{3,1,2},mutant=original;for(std::size_t i=0;i+2<mutant.size();++i)if(mutant[i+1]<mutant[i])std::swap(mutant[i+1],mutant[i]);if(std::is_sorted(mutant.begin(),mutant.end()))return 2;std::cout<<\"mutation detected\\n\";}",
-        "output": "mutation detected\n",
-        "stdin": ""
-      },
-      "steps": [
-        "The defect truncates the pass and leaves an element insufficiently processed.",
-        "All indices remain in bounds; the experiment does not execute intentional UB.",
-        "On [3,1,2], the incorrect step leaves [1,3,2].",
-        "The order check sees 3>2; detecting that failure makes the experiment successful.",
-        "If your test also accepts the mutant, add a distinguishing case rather than changing the expected result to match the bad program."
+        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::vector<int> original{3, 1, 2}, mutant = original;\n    for (std::size_t i = 0; i + 2 < mutant.size(); ++i) {\n        if (mutant[i + 1] < mutant[i]) {\n            std::swap(mutant[i + 1], mutant[i]);\n        }\n    }\n    if (std::is_sorted(mutant.begin(), mutant.end())) {\n        return 2;\n    }\n    std::cout << \"mutation detected\\n\";\n}",
+        "stdin": "",
+        "output": "mutation detected\n"
+      }
+    },
+    {
+      "id": "concept-5",
+      "title": "Which clock and which region?",
+      "paragraphs": [
+        "Use std::chrono::steady_clock for durations: its readings do not move backward as time progresses. end−start is a duration; duration_cast converts units. elapsed_ns names nanoseconds as a unit, not a promise of nanosecond resolution or accuracy. A very short measured interval may legitimately produce zero.",
+        "Copy input before start, then validate and write files after end. The measured region is the selected sort, not the whole process. C++ compilation, compiler download, UI and Worker startup are separate costs. End-to-end user latency needs another protocol, which this lab does not perform.",
+        "Use steady_clock for elapsed time. Make the copy before the first reading and check the result after the second."
       ]
     },
     {
@@ -103,7 +135,8 @@
       "title": "Warmup, repeats and uncontrolled factors",
       "paragraphs": [
         "Before five recorded runs per algorithm, the lab performs one unrecorded warmup pass. Every run receives a fresh copy of base; otherwise insertion would see already sorted input after the first run. Validate every result so a fast wrong answer cannot enter the comparison table as an achievement.",
-        "The teaching code runs std_sort before insertion, which can itself introduce order bias. Browser load, scheduling, caches and compiler settings also affect observations. A serious comparison needs more sizes and input classes, run-order control, more repeats and environment details. Do not label this small protocol an already completed research benchmark."
+        "The teaching code runs std_sort before insertion, which can itself introduce order bias. Browser load, scheduling, caches and compiler settings also affect observations. A serious comparison needs more sizes and input classes, run-order control, more repeats and environment details. Do not label this small protocol an already completed research benchmark.",
+        "Warm up each algorithm with a separate call. Each of its five recorded runs starts with the same original values."
       ]
     },
     {
@@ -111,7 +144,8 @@
       "title": "Raw samples and an honest conclusion",
       "paragraphs": [
         "timings.tsv has ten rows after the header: algorithm, iteration, elapsed_ns. Check five distinct iterations 0…4 per algorithm and nonnegative integer durations. Native and WASI timing numbers are not required to match exactly. Retain all samples instead of only the most flattering minimum.",
-        "Median and spread help describe observations, but five values at one size give a limited picture. State size, data class, preparation and the exact timed region. Say so if differences are comparable to noise. O(n²) versus O(n log n) follows from models and growth reasoning; seconds can investigate a practical hypothesis without supplying that foundation."
+        "Median and spread help describe observations, but five values at one size give a limited picture. State size, data class, preparation and the exact timed region. Say so if differences are comparable to noise. O(n²) versus O(n log n) follows from models and growth reasoning; seconds can investigate a practical hypothesis without supplying that foundation.",
+        "When elapsed_ns is 0, the clock resolution may be insufficient for such a small input. Preserve the observation with the others."
       ]
     },
     {
@@ -119,11 +153,42 @@
       "title": "The final project and its defence",
       "paragraphs": [
         "The project connects eight topics: catalogue validation, ID/value indexes, stable recursive merging, binary boundaries, frequencies and an RNG audit. Its report has deterministic ordering. A separate driver checks functions; the separate lab supplies raw timings. Do not link two mains or confuse saving an artifact with an automatic Cloud push.",
-        "In the defence, explain an index invariant, preparation/query costs, rejection without a partial report and a counterexample to a wrong solution. Then implement a small requirement with independent tests. Public cases and references support learning rather than a protected examination service; completed flags and passing runs do not automatically create mastery or a university grade."
+        "In the defence, explain an index invariant, preparation/query costs, rejection without a partial report and a counterexample to a wrong solution. Then implement a small requirement with independent tests. Public cases and references support learning rather than a protected examination service; completed flags and passing runs do not automatically create mastery or a university grade.",
+        "The capstone combines experiment, correctness checks and limits. Begin with your own measurement log so the evidence is retained."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Separate property checks from timing. Save the ten observed durations and explain the limits of any conclusion.",
+        "Write the expected row for 4 3 1 3 -2 and a counterexample that drops a duplicate."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What does the program print when all five inputs pass their checks?",
+      "options": [
+        "5 properties\n",
+        "20 properties",
+        "4 properties"
+      ],
+      "correct": 0,
+      "feedback": "checked increments for each input that passes all checks, yielding 5 properties.",
+      "code": {
+        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::vector<std::vector<int>> inputs{\n        {}, {7}, {3, 1, 3, -2}, {0, 0, 0}, {9, 7, 5, 3, 1}};\n    int checked = 0;\n    for (const auto &source : inputs) {\n        auto sorted = source;\n        std::sort(sorted.begin(), sorted.end());\n        auto twice = sorted;\n        std::sort(twice.begin(), twice.end());\n        auto reversed = source;\n        std::reverse(reversed.begin(), reversed.end());\n        std::sort(reversed.begin(), reversed.end());\n        if (!std::is_sorted(sorted.begin(), sorted.end()) ||\n            !std::is_permutation(source.begin(), source.end(),\n                                 sorted.begin(), sorted.end()) ||\n            twice != sorted || reversed != sorted) {\n            return 2;\n        }\n        ++checked;\n    }\n    std::cout << checked << \" properties\\n\";\n}",
+        "stdin": ""
+      },
+      "execution": {
+        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::vector<std::vector<int>> inputs{\n        {}, {7}, {3, 1, 3, -2}, {0, 0, 0}, {9, 7, 5, 3, 1}};\n    int checked = 0;\n    for (const auto &source : inputs) {\n        auto sorted = source;\n        std::sort(sorted.begin(), sorted.end());\n        auto twice = sorted;\n        std::sort(twice.begin(), twice.end());\n        auto reversed = source;\n        std::reverse(reversed.begin(), reversed.end());\n        std::sort(reversed.begin(), reversed.end());\n        if (!std::is_sorted(sorted.begin(), sorted.end()) ||\n            !std::is_permutation(source.begin(), source.end(),\n                                 sorted.begin(), sorted.end()) ||\n            twice != sorted || reversed != sorted) {\n            return 2;\n        }\n        ++checked;\n    }\n    std::cout << checked << \" properties\\n\";\n}",
+        "stdin": "",
+        "expected": "5 properties\n"
+      },
+      "recall": "example-1"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -134,7 +199,8 @@
         "Only on empty input"
       ],
       "correct": 0,
-      "feedback": "Deleting every element also gives a sorted result."
+      "feedback": "Deleting every element also gives a sorted result.",
+      "recall": "concept-2"
     },
     {
       "id": "check-1",
@@ -146,7 +212,8 @@
         "No duplicates"
       ],
       "correct": 1,
-      "feedback": "Sorting again leaves the resulting value order unchanged."
+      "feedback": "Sorting again leaves the resulting value order unchanged.",
+      "recall": "concept-3"
     },
     {
       "id": "check-2",
@@ -158,7 +225,8 @@
         "The sorting call"
       ],
       "correct": 2,
-      "feedback": "Copy preparation and checks are outside the clock boundaries."
+      "feedback": "Copy preparation and checks are outside the clock boundaries.",
+      "recall": "concept-5"
     },
     {
       "id": "check-3",
@@ -170,7 +238,8 @@
         "Only on failure"
       ],
       "correct": 0,
-      "feedback": "Resolution and rounding can produce zero observed duration."
+      "feedback": "Resolution and rounding can produce zero observed duration.",
+      "recall": "concept-7"
     },
     {
       "id": "check-4",
@@ -182,13 +251,15 @@
         "Asymptotic behavior automatically"
       ],
       "correct": 1,
-      "feedback": "A small experiment cannot replace analysis and a representative benchmark."
+      "feedback": "A small experiment cannot replace analysis and a representative benchmark.",
+      "recall": "concept-8"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Find input for a mutant skipping the last insertion.",
-      "feedback": "Save the Module 4 project and defense. Module 5 introduces classes, encapsulation and RAII; full OOP, templates and exceptions are not yet completed topics."
+      "prompt": "Give a sorted output that should fail the permutation check for 3, 1, 3, −2.",
+      "feedback": "For example −2, 1, 3. The order is correct, and one of the threes is missing.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -199,119 +270,240 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main(){ std::cout << \"pending\\n\"; }\n"
+        "content": "#include <iostream>\n#include <algorithm>\n#include <chrono>\n#include <fstream>\n#include <vector>\n\nusing Clock = std::chrono::steady_clock;\n\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 128) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> source;\n    for (int i = 0; i < n; ++i) {\n        int value;\n        if (!(std::cin >> value) || value < -10000 || value > 10000) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        source.push_back(value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    auto standardRun = source;\n    std::sort(standardRun.begin(), standardRun.end());\n    // TODO: Add insertion sort and its separate warm-up.\n    // TODO: Verify the contract and apply a safe mutation to a separate\n    // copy.\n    // TODO: Time five runs per algorithm and write timings.tsv.\n    std::cout << \"warmup \" << standardRun.size() << '\\n';\n}\n"
       }
     ],
     "metadata": {},
-    "stdin": "0",
+    "stdin": "4 3 1 3 -2",
     "returnAnchor": "example-1",
     "cases": [
       {
         "label": "Case 1",
         "input": "0",
-        "output": "contracts PASS\nsamples 10\nmutation detected\n"
+        "output": "contracts PASS\nsamples 10\nmutation detected\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "timing-table",
+            "algorithms": [
+              "std_sort",
+              "insertion"
+            ],
+            "repetitions": 5
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Tab-separated columns algorithm, iteration and elapsed_ns. Each algorithm (std_sort, insertion) has 5 rows numbered 0–4. elapsed_ns is an integer ≥ 0."
+          }
+        ]
       },
       {
         "label": "Case 2",
         "input": "1 5",
-        "output": "contracts PASS\nsamples 10\nmutation detected\n"
+        "output": "contracts PASS\nsamples 10\nmutation detected\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "timing-table",
+            "algorithms": [
+              "std_sort",
+              "insertion"
+            ],
+            "repetitions": 5
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Tab-separated columns algorithm, iteration and elapsed_ns. Each algorithm (std_sort, insertion) has 5 rows numbered 0–4. elapsed_ns is an integer ≥ 0."
+          }
+        ]
       },
       {
-        "label": "Case 3",
+        "label": "First substantive run",
         "input": "4 3 1 3 -2",
-        "output": "contracts PASS\nsamples 10\nmutation detected\n"
+        "output": "contracts PASS\nsamples 10\nmutation detected\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "timing-table",
+            "algorithms": [
+              "std_sort",
+              "insertion"
+            ],
+            "repetitions": 5
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Tab-separated columns algorithm, iteration and elapsed_ns. Each algorithm (std_sort, insertion) has 5 rows numbered 0–4. elapsed_ns is an integer ≥ 0."
+          }
+        ]
       },
       {
         "label": "Case 4",
         "input": "4 1 2 3 4",
-        "output": "contracts PASS\nsamples 10\nmutation detected\n"
+        "output": "contracts PASS\nsamples 10\nmutation detected\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "timing-table",
+            "algorithms": [
+              "std_sort",
+              "insertion"
+            ],
+            "repetitions": 5
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Tab-separated columns algorithm, iteration and elapsed_ns. Each algorithm (std_sort, insertion) has 5 rows numbered 0–4. elapsed_ns is an integer ≥ 0."
+          }
+        ]
       },
       {
         "label": "Case 5",
         "input": "128 127 126 125 124 123 122 121 120 119 118 117 116 115 114 113 112 111 110 109 108 107 106 105 104 103 102 101 100 99 98 97 96 95 94 93 92 91 90 89 88 87 86 85 84 83 82 81 80 79 78 77 76 75 74 73 72 71 70 69 68 67 66 65 64 63 62 61 60 59 58 57 56 55 54 53 52 51 50 49 48 47 46 45 44 43 42 41 40 39 38 37 36 35 34 33 32 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0",
-        "output": "contracts PASS\nsamples 10\nmutation detected\n"
+        "output": "contracts PASS\nsamples 10\nmutation detected\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "timing-table",
+            "algorithms": [
+              "std_sort",
+              "insertion"
+            ],
+            "repetitions": 5
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Tab-separated columns algorithm, iteration and elapsed_ns. Each algorithm (std_sort, insertion) has 5 rows numbered 0–4. elapsed_ns is an integer ≥ 0."
+          }
+        ]
       },
       {
-        "label": "Case 6",
+        "label": "Input error · 6",
         "input": "129",
-        "output": "invalid\n"
+        "output": "invalid\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "absent"
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "No file is created."
+          }
+        ]
       },
       {
-        "label": "Case 7",
+        "label": "Input error · 7",
         "input": "-1",
-        "output": "invalid\n"
+        "output": "invalid\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "absent"
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "No file is created."
+          }
+        ]
       },
       {
-        "label": "Case 8",
+        "label": "Input error · 8",
         "input": "2 1",
-        "output": "invalid\n"
+        "output": "invalid\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "absent"
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "No file is created."
+          }
+        ]
       },
       {
-        "label": "Case 9",
+        "label": "Input error · 9",
         "input": "1 x",
-        "output": "invalid\n"
+        "output": "invalid\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "absent"
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "No file is created."
+          }
+        ]
       },
       {
-        "label": "Case 10",
+        "label": "Input error · 10",
         "input": "0 extra",
-        "output": "invalid\n"
+        "output": "invalid\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "absent"
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "No file is created."
+          }
+        ]
       },
       {
-        "label": "Case 11",
+        "label": "Input error · 11",
         "input": "1 10001",
-        "output": "invalid\n"
+        "output": "invalid\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "absent"
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "No file is created."
+          }
+        ]
       }
     ],
     "criteria": [
-      "Preserve 10 timing-table rows and checks outside timing.",
-      "Separate ordering, permutation and idempotence.",
-      "Derive summaries from preserved values with units.",
-      "Alternate order and record compiler, flags, environment and limits.",
-      "Preserve sources, inputs, actual outputs and rejection explanations."
+      "The result −2, 1, 3, 3 passes, and the row missing a 3 fails.",
+      "Ten measurement rows after the header, five per algorithm.",
+      "For 0 there are ten measurements. For 2 1 there is only invalid and no timings.tsv.",
+      "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
     ],
-    "hint": "Zero ns is valid.",
+    "hint": "For example −2, 1, 3. The order is correct, and one of the threes is missing.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Restate the input domain, format, bounds and rejection policy.",
-        "why": "",
-        "expected": ""
+        "where": "Before running",
+        "action": "Write the expected row for 4 3 1 3 -2 and a counterexample that drops a duplicate.",
+        "why": "This separates ordering from value preservation.",
+        "expected": "The result −2, 1, 3, 3 passes, and the row missing a 3 fails."
       },
       {
-        "where": "My program",
-        "action": "Name three sort properties.",
-        "why": "",
-        "expected": ""
+        "where": "In my program",
+        "action": "Run both sorts with separate copies and inspect timings.tsv.",
+        "why": "Identical inputs and separate timing windows give comparable observations.",
+        "expected": "Ten measurement rows after the header, five per algorithm."
       },
       {
-        "where": "My program",
-        "action": "First implement complete input validation without partial results.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Complete the 2×5 timing protocol.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Compare median and minimum of your measurements.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Run all reference cases; for files check existence and content too.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Save the source, observed-results table and invariant explanation; add an independent case.",
-        "why": "",
-        "expected": ""
+        "where": "After running",
+        "action": "Repeat with input 0, then incomplete input 2 1.",
+        "why": "An empty set is valid, while a partially parsed set must be rejected.",
+        "expected": "For 0 there are ten measurements. For 2 1 there is only invalid and no timings.tsv."
       }
     ],
     "modulePracticum": {
@@ -718,6 +910,13 @@
       },
       "testDriver": "#include \"domain.hpp\"\n#include <sstream>\n#include <iostream>\nint main(){int passed=0;auto check=[&passed](bool value){if(value)++passed;return value;};\n if(!check(valid_word(\"alpha\")))return 1;\n if(!check(!valid_word(\"Upper\")))return 1;\n std::istringstream input(\"3 3 same 10 1 a 20 2 same 20\");std::vector<Record>r;\n if(!check(load_records(input,r)&&r.size()==3))return 1;\n std::istringstream duplicate(\"2 1 a 0 1 b 0\");if(!check(!load_records(duplicate,r)&&r.size()==3))return 1;\n std::istringstream empty(\"0\");std::vector<Record>e;if(!check(load_records(empty,e)&&e.empty()))return 1;\n std::istringstream bad(\"1 2 a x\");if(!check(!load_records(bad,e)&&e.empty()))return 1;\n auto values=index_value(r);if(!check(values[1].id==1&&values[2].id==2))return 1;\n auto ids=index_id(r);if(!check(find_record(ids,2)==\"found 2 same 20\"))return 1;\n if(!check(find_record(ids,4)==\"missing\"))return 1;\n if(!check(range_sum(values,20,20)==40))return 1;\n if(!check(frequency(r,\"same\")==2))return 1;\n if(!check(random_audit(2026)))return 1;\n std::cout<<\"PASS \"<<passed<<'\\n';\n}\n",
       "testExpectedStdout": "PASS 12\n"
+    },
+    "recall": "example-1",
+    "starterRevision": "b4-starter-v1",
+    "starterObservation": {
+      "case": 2,
+      "stdout": "warmup 4\n",
+      "exitCode": 0
     }
   },
   "terms": [
@@ -1199,5 +1398,28 @@
     },
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\classic\\property-testing-benchmarks.en.json"
+  "sourcePath": "courses\\cpp\\gold\\classic\\property-testing-benchmarks.en.json",
+  "reading": [
+    {
+      "id": "cpp20-steady",
+      "title": "C++20 [time.clock.steady]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[time.clock.steady]",
+      "language": "English",
+      "purpose": "Consult the C++20 requirements in [time.clock.steady] after working through the examples.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/time.clock.steady"
+    },
+    {
+      "id": "cpp20-sort",
+      "title": "C++20 [alg.sorting]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[alg.sorting]",
+      "language": "English",
+      "purpose": "Consult the C++20 requirements in [alg.sorting] after working through the examples.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/alg.sorting"
+    }
+  ],
+  "authored": true
 }

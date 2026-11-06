@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b4-author-v1",
   "id": "cpp.search-linear-binary",
   "courseId": "cpp",
   "moduleId": "cpp.section.classic-algorithms",
@@ -8,7 +8,7 @@
   "module": "Classic Algorithms",
   "locale": "en",
   "title": "Linear and binary search: preconditions and boundaries",
-  "goal": "Find a first match and a duplicate interval while proving the required ordering is available.",
+  "goal": "Find the first position of a key and count its repeats while preserving the half-open interval invariant.",
   "prerequisites": [
     {
       "text": "Modules 1–3: validated input, functions, vector, records, references and lifetimes."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "What does “find” mean?",
       "paragraphs": [
+        "If shelf labels are 1, 2, 2, 2, 5, saying you found a 2 does not tell you where that group starts.",
         "Search can ask whether a key exists, where its first match is, how many matches exist, or which records satisfy a range. These answers are not interchangeable. For each target, the lab returns the target, its first matching index and its count; absence uses index −1 and count zero.",
         "An index is a position in the current ordered collection, not a permanent record ID. Rearrangement can make an old position identify something else. Store a domain ID in the record and search for it again. Duplicate values may be allowed while duplicate IDs are rejected by a separate project contract."
       ]
@@ -31,27 +32,8 @@
       "title": "Linear search as a baseline oracle",
       "paragraphs": [
         "A linear scan checks items in sequence and needs no sorting. Stop at the first equality for a first match, or continue to count all matches. This is easy to inspect on small data and makes a useful independent oracle for a more complex search. Do not reuse the very boundary defect you intend to check inside the oracle.",
-        "Absence requires inspecting all n items; a first-position match needs one equality check. For one query on a small collection, sorting a copy may cost more than scanning. Start with a correct simple solution and estimate how many queries could repay an index before calling binary search unconditionally better."
-      ]
-    },
-    {
-      "id": "example-1",
-      "title": "Shrinking a half-open interval",
-      "paragraphs": [
-        "Compare a manual lower bound with the library boundary on sorted input."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nstd::size_t lower(const std::vector<int>&a,int x){std::size_t first=0,last=a.size();while(first<last){const auto mid=first+(last-first)/2;if(a[mid]<x)first=mid+1;else last=mid;}return first;}\nint main(){int n,x;if(!(std::cin>>n>>x)||n<0||n>128){std::cout<<\"invalid\\n\";return 0;}std::vector<int>a;for(int i=0;i<n;++i){int v;if(!(std::cin>>v)){std::cout<<\"invalid\\n\";return 0;}a.push_back(v);}if(!std::is_sorted(a.begin(),a.end())){std::cout<<\"unsorted\\n\";return 0;}auto i=lower(a,x);auto expected=std::lower_bound(a.begin(),a.end(),x)-a.begin();if(i!=static_cast<std::size_t>(expected))return 2;std::cout<<i<<' '<<(i<a.size()&&a[i]==x)<<'\\n';}",
-        "output": "1 1\n",
-        "stdin": "5 2 1 2 2 2 5"
-      },
-      "steps": [
-        "first=0 and last=5; the boundary is one of the positions from 0 through 5.",
-        "At mid=2 the value equals 2, so the boundary is not to the right: last=2.",
-        "Equality at mid=1 gives last=1; value 1 at mid=0 is smaller, so first=1.",
-        "Now first==last==1. The boundary is found; i<size protects the later read when no match exists.",
-        "Try empty, singleton and unsorted input; the last is rejected before binary search."
+        "Absence requires inspecting all n items; a first-position match needs one equality check. For one query on a small collection, sorting a copy may cost more than scanning. Start with a correct simple solution and estimate how many queries could repay an index before calling binary search unconditionally better.",
+        "On a small set, scanning every index gives an independent answer to compare with binary search."
       ]
     },
     {
@@ -59,7 +41,8 @@
       "title": "Sorting is sufficient, but understand partitioning",
       "paragraphs": [
         "For ascending lower_bound, element<target must hold on an initial segment and fail afterward. That is partitioning for the particular target. A fully sorted range supplies it for every target, so the lab requires sorting and checks is_sorted first. Arbitrary unsorted input does not give the algorithm a meaningful-result obligation.",
-        "Index construction and queries must use compatible ordering. Sorting records by name does not prepare an ID search. Silently sorting inside every query changes both cost and position meaning. Design the required index and specify when mutations require rebuilding it."
+        "Index construction and queries must use compatible ordering. Sorting records by name does not prepare an ID search. Silently sorting inside every query changes both cost and position meaning. Design the required index and specify when mutations require rebuilding it.",
+        "For lower_bound, elements < key come first. None may appear after the predicate first becomes false."
       ]
     },
     {
@@ -67,35 +50,71 @@
       "title": "A half-open lower-bound invariant",
       "paragraphs": [
         "Maintain first=0 and last=n. Elements before first are known to be smaller than target; elements from last through n−1 are known not to be smaller. The insertion position lies between first and last, including both boundary positions. While first<last, mid=first+(last−first)/2 identifies a valid element to compare.",
-        "If a[mid]<target, the boundary is to its right, so set first=mid+1. Otherwise set last=mid because mid may itself be the first suitable position. Both branches strictly decrease last−first, proving termination. At first==last the boundary is found, but it can be n; reading a[n] remains invalid."
+        "If a[mid]<target, the boundary is to its right, so set first=mid+1. Otherwise set last=mid because mid may itself be the first suitable position. Both branches strictly decrease last−first, proving termination. At first==last the boundary is found, but it can be n; reading a[n] remains invalid.",
+        "In [lo, hi), test index mid. If the value is too small, discard mid and everything to its left; otherwise retain mid as a possible boundary."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "Shrinking a half-open interval",
+      "paragraphs": [
+        "Mark the interval before each comparison. What index remains when lo meets hi?"
+      ],
+      "prediction": [
+        "#include <iostream>\n#include <vector>\n#include <algorithm>\nstd::size_t lower(const std::vector<int> &a, int x) {\n    std::size_t first = 0, last = a.size();\n    while (first < last) {\n        const auto mid = first + (last - first) / 2;\n        if (a[mid] < x) {\n            first = mid + 1;\n        } else {\n            last = mid;\n        }\n    }\n    return first;\n}\nint main() {\n    int n, x;\n    if (!(std::cin >> n >> x) || n < 0 || n > 128) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> a;\n    for (int i = 0; i < n; ++i) {\n        int v;\n        if (!(std::cin >> v)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        a.push_back(v);\n    }\n    if (!std::is_sorted(a.begin(), a.end())) {\n        std::cout << \"unsorted\\n\";\n        return 0;\n    }\n    auto i = lower(a, x);\n    auto expected = std::lower_bound(a.begin(), a.end(), x) - a.begin();\n    if (i != static_cast<std::size_t>(expected)) {\n        return 2;\n    }\n    std::cout << i << ' ' << (i < a.size() && a[i] == x) << '\\n';\n}"
+      ],
+      "predictionInput": "5 2 1 2 2 2 5",
+      "reveal": {
+        "title": "Reveal the output and walkthrough",
+        "paragraphs": [
+          "The two numbers are the lower boundary position and an exact-match flag. The lab prints the repeat count in place of that flag."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "mid = 2",
+                "[0, 5)",
+                "[0, 2)",
+                "a[2] = 2, so hi = 2."
+              ],
+              [
+                "mid = 1",
+                "[0, 2)",
+                "[0, 1)",
+                "a[1] = 2, so hi = 1."
+              ],
+              [
+                "mid = 0",
+                "[0, 1)",
+                "[1, 1)",
+                "a[0] = 1, so lo = 1. Checking a[1] == 2 gives 1."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nstd::size_t lower(const std::vector<int> &a, int x) {\n    std::size_t first = 0, last = a.size();\n    while (first < last) {\n        const auto mid = first + (last - first) / 2;\n        if (a[mid] < x) {\n            first = mid + 1;\n        } else {\n            last = mid;\n        }\n    }\n    return first;\n}\nint main() {\n    int n, x;\n    if (!(std::cin >> n >> x) || n < 0 || n > 128) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> a;\n    for (int i = 0; i < n; ++i) {\n        int v;\n        if (!(std::cin >> v)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        a.push_back(v);\n    }\n    if (!std::is_sorted(a.begin(), a.end())) {\n        std::cout << \"unsorted\\n\";\n        return 0;\n    }\n    auto i = lower(a, x);\n    auto expected = std::lower_bound(a.begin(), a.end(), x) - a.begin();\n    if (i != static_cast<std::size_t>(expected)) {\n        return 2;\n    }\n    std::cout << i << ' ' << (i < a.size() && a[i] == x) << '\\n';\n}",
+          "stdin": "5 2 1 2 2 2 5",
+          "output": "1 1\n"
+        }
+      }
     },
     {
       "id": "concept-5",
       "title": "Duplicates, upper bound and safe absence",
       "paragraphs": [
         "lower_bound returns the first element not less than target; upper_bound returns the first strictly greater element. Their half-open interval contains all ties, and vector-iterator subtraction gives the count. On [1,2,2,2,9] for target 2 the positions are 1 and 4, giving three matches. For absent target 3 both boundaries equal 4.",
-        "Check whether the matching interval is empty before reading a record. With custom comparators, lower_bound calls comp(element,target), while upper_bound calls comp(target,element); this matters when searching structures with a numeric key. Successful compilation does not prove the two predicates describe the same order."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Comparisons and advances are different counts",
-      "paragraphs": [
-        "Count comparisons on a vector without transferring its access cost to a list."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <vector>\nint main(){std::vector<int>a(128);for(int i=0;i<128;++i)a[i]=2*i;int count=0;std::size_t first=0,last=a.size();while(first<last){auto mid=first+(last-first)/2;++count;if(a[mid]<127)first=mid+1;else last=mid;}std::cout<<first<<' '<<count<<'\\n';}",
-        "output": "64 7\n",
-        "stdin": ""
-      },
-      "steps": [
-        "The vector contains 128 even values 0…254; the boundary for 127 is 64.",
-        "Each step counts one comparison a[mid]<127, not every instruction.",
-        "The first step chooses index 64; later comparisons exclude the remaining candidates.",
-        "Seven comparisons confirm this trace; another target can require eight.",
-        "Advancing a forward iterator to a midpoint is not constant time, so equal comparison counts do not imply equal advancement counts."
+        "Check whether the matching interval is empty before reading a record. With custom comparators, lower_bound calls comp(element,target), while upper_bound calls comp(target,element); this matters when searching structures with a numeric key. Successful compilation does not prove the two predicates describe the same order.",
+        "For key 2 the first boundary is 1 and the second is 4. Their difference, 4 − 1, gives three matches."
       ]
     },
     {
@@ -103,15 +122,30 @@
       "title": "Comparisons, advances and total cost",
       "paragraphs": [
         "Each comparison roughly halves the candidates, giving logarithmic comparison growth. A vector supports constant-time midpoint access, allowing logarithmic search on a prepared range. A standard boundary search on a forward range can have logarithmic comparisons yet linear iterator advances. Do not call their total time identical from comparison counts alone.",
-        "The lab reads n values and q queries, validates input and ordering, then searches. Total processing includes O(n+q) reading and O(n) validation, not just O(q log n). A service reusing an index can account for preparation separately, but that must match the actual data lifecycle."
+        "The lab reads n values and q queries, validates input and ordering, then searches. Total processing includes O(n+q) reading and O(n) validation, not just O(q log n). A service reusing an index can account for preparation separately, but that must match the actual data lifecycle.",
+        "The second example prints position 64 and seven comparisons for 128 values. A linear scan for the first boundary would inspect 65 keys on the same array."
       ]
+    },
+    {
+      "id": "example-2",
+      "title": "Comparisons and advances are different counts",
+      "paragraphs": [
+        "Look for key 127 in 0, 2, …, 254. The first qualifying value is 128 at index 64. Trace the seven binary-search comparisons separately."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\n#include <vector>\nint main() {\n    std::vector<int> a(128);\n    for (int i = 0; i < 128; ++i) {\n        a[i] = 2 * i;\n    }\n    int count = 0;\n    std::size_t first = 0, last = a.size();\n    while (first < last) {\n        auto mid = first + (last - first) / 2;\n        ++count;\n        if (a[mid] < 127) {\n            first = mid + 1;\n        } else {\n            last = mid;\n        }\n    }\n    std::cout << first << ' ' << count << '\\n';\n}",
+        "stdin": "",
+        "output": "64 7\n"
+      }
     },
     {
       "id": "concept-7",
       "title": "How boundary logic fails",
       "paragraphs": [
         "Using first=mid instead of mid+1 can leave a one-candidate interval unchanged. On paper, first=3,last=4 gives mid=3, so length does not decrease. There is no need to run an infinite loop in the working runtime: demonstrate the broken variant or simulate a bounded number of steps separately.",
-        "(first+last)/2 can overflow for large boundaries; first+(last−first)/2 avoids that problem under valid bounds. Do not mix half-open update rules with a closed interval or use size−1 on an empty array. Choose one convention and align every update, condition and final check with it."
+        "(first+last)/2 can overflow for large boundaries; first+(last−first)/2 avoids that problem under valid bounds. Do not mix half-open update rules with a closed interval or use size−1 on an empty array. Choose one convention and align every update, condition and final check with it.",
+        "Check lo < size before reading an element: key 6 lands at boundary 5 in a five-element set."
       ]
     },
     {
@@ -119,11 +153,42 @@
       "title": "Tests and the transition to recursion",
       "paragraphs": [
         "Compare the library interval with an independent linear count on empty, singleton, all-equal and mixed collections. Query before the minimum, the minimum, a duplicate, a gap, the maximum and after it. Unsorted input should be explicitly rejected, not yield an arbitrary position. Missing queries and extra tokens test the application contract too.",
-        "The cumulative practicum connects stable record sorting with boundary search under the same key. Keep original labels and explain preparation separately from querying. Recursion comes next: shrinking a subproblem remains central, but function calls store continuation state instead of only two loop variables."
+        "The cumulative practicum connects stable record sorting with boundary search under the same key. Keep original labels and explain preparation separately from querying. Recursion comes next: shrinking a subproblem remains central, but function calls store continuation state instead of only two loop variables.",
+        "Parse the whole input first. Then check sortedness, and only then run binary search."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Expand one lower boundary into a report for several keys. For duplicates, also check the upper boundary.",
+        "Write both boundaries for key 2 in [1, 2, 2, 2, 9]."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Change the key from 2 to 4. What are the boundary index and exact-match flag?",
+      "options": [
+        "4 0\n",
+        "4 1",
+        "-1 0"
+      ],
+      "correct": 0,
+      "feedback": "The first element ≥ 4 is 5 at position 4. It is unequal to 4, so the match flag is 0.",
+      "code": {
+        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nstd::size_t lower(const std::vector<int> &a, int x) {\n    std::size_t first = 0, last = a.size();\n    while (first < last) {\n        const auto mid = first + (last - first) / 2;\n        if (a[mid] < x) {\n            first = mid + 1;\n        } else {\n            last = mid;\n        }\n    }\n    return first;\n}\nint main() {\n    int n, x;\n    if (!(std::cin >> n >> x) || n < 0 || n > 128) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> a;\n    for (int i = 0; i < n; ++i) {\n        int v;\n        if (!(std::cin >> v)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        a.push_back(v);\n    }\n    if (!std::is_sorted(a.begin(), a.end())) {\n        std::cout << \"unsorted\\n\";\n        return 0;\n    }\n    auto i = lower(a, x);\n    auto expected = std::lower_bound(a.begin(), a.end(), x) - a.begin();\n    if (i != static_cast<std::size_t>(expected)) {\n        return 2;\n    }\n    std::cout << i << ' ' << (i < a.size() && a[i] == x) << '\\n';\n}",
+        "stdin": "5 4 1 2 2 2 5"
+      },
+      "execution": {
+        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nstd::size_t lower(const std::vector<int> &a, int x) {\n    std::size_t first = 0, last = a.size();\n    while (first < last) {\n        const auto mid = first + (last - first) / 2;\n        if (a[mid] < x) {\n            first = mid + 1;\n        } else {\n            last = mid;\n        }\n    }\n    return first;\n}\nint main() {\n    int n, x;\n    if (!(std::cin >> n >> x) || n < 0 || n > 128) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> a;\n    for (int i = 0; i < n; ++i) {\n        int v;\n        if (!(std::cin >> v)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        a.push_back(v);\n    }\n    if (!std::is_sorted(a.begin(), a.end())) {\n        std::cout << \"unsorted\\n\";\n        return 0;\n    }\n    auto i = lower(a, x);\n    auto expected = std::lower_bound(a.begin(), a.end(), x) - a.begin();\n    if (i != static_cast<std::size_t>(expected)) {\n        return 2;\n    }\n    std::cout << i << ' ' << (i < a.size() && a[i] == x) << '\\n';\n}",
+        "stdin": "5 4 1 2 2 2 5",
+        "expected": "4 0\n"
+      },
+      "recall": "example-1"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -134,7 +199,8 @@
         "Index 3"
       ],
       "correct": 0,
-      "feedback": "It is the first position not less than 2."
+      "feedback": "It is the first position not less than 2.",
+      "recall": "concept-4"
     },
     {
       "id": "check-1",
@@ -146,7 +212,8 @@
         "lower−1"
       ],
       "correct": 1,
-      "feedback": "The two boundaries define a half-open interval."
+      "feedback": "The two boundaries define a half-open interval.",
+      "recall": "concept-5"
     },
     {
       "id": "check-2",
@@ -158,7 +225,8 @@
         "Both boundaries at end"
       ],
       "correct": 2,
-      "feedback": "An empty range is valid and is not dereferenced."
+      "feedback": "An empty range is valid and is not dereferenced.",
+      "recall": "concept-7"
     },
     {
       "id": "check-3",
@@ -170,7 +238,8 @@
         "Does not compare values"
       ],
       "correct": 0,
-      "feedback": "A comparison bound is not a bound on every step."
+      "feedback": "A comparison bound is not a bound on every step.",
+      "recall": "concept-6"
     },
     {
       "id": "check-4",
@@ -182,28 +251,30 @@
         "Always hi−1"
       ],
       "correct": 1,
-      "feedback": "The sum lo+hi can overflow in general."
+      "feedback": "The sum lo+hi can overflow in general.",
+      "recall": "concept-4"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Trace absent 4 in the same collection.",
-      "feedback": "Next: Recursion and divide-and-conquer. Save the lab and independent tests."
+      "prompt": "Explain how to distinguish a missing key 4, a well-formed unsorted array, and incomplete input.",
+      "feedback": "A missing key gives 4 -1 0, a well-formed unsorted array gives unsorted, and a parse error gives invalid.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
     "title": "Laboratory: Linear and binary search: preconditions and boundaries",
-    "task": "Read n in 0…64 and q in 0…32, followed by n sorted integers and q keys in −10000…10000. Print queries q, then key first count for each key. first is the zero-based first index or −1. Unsorted, incomplete, extra or malformed input produces only invalid.",
+    "task": "Read n in 0…64, q in 0…32, then n integers and q keys in −10000…10000. Print only invalid for malformed input, trailing tokens or out-of-range values. If the full input is valid but the array decreases anywhere, print only unsorted. Otherwise print queries q and one key first count line per key. first is the first zero-based match, or −1 if absent.",
     "kind": "cpp-console",
     "environment": "C++20",
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main(){ std::cout << \"pending\\n\"; }\n"
+        "content": "#include <iostream>\n#include <algorithm>\n#include <vector>\n\nint main() {\n    int n, q;\n    if (!(std::cin >> n >> q) || n < 0 || n > 64 || q < 0 || q > 32) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> values, keys;\n    for (int i = 0; i < n; ++i) {\n        int value;\n        if (!(std::cin >> value) || value < -10000 || value > 10000) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        values.push_back(value);\n    }\n    for (int i = 0; i < q; ++i) {\n        int key;\n        if (!(std::cin >> key) || key < -10000 || key > 10000) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        keys.push_back(key);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    if (!std::is_sorted(values.begin(), values.end())) {\n        std::cout << \"unsorted\\n\";\n        return 0;\n    }\n    std::cout << \"queries \" << q << '\\n';\n    // TODO: Find both bounds for each key and print its first index and\n    // multiplicity.\n}\n"
       }
     ],
     "metadata": {},
-    "stdin": "0 0",
+    "stdin": "5 6 1 2 2 2 9 0 1 2 3 9 10",
     "returnAnchor": "example-1",
     "cases": [
       {
@@ -222,7 +293,7 @@
         "output": "queries 3\n6 -1 0\n7 0 1\n8 -1 0\n"
       },
       {
-        "label": "Case 4",
+        "label": "First substantive run",
         "input": "5 6 1 2 2 2 9 0 1 2 3 9 10",
         "output": "queries 6\n0 -1 0\n1 0 1\n2 1 3\n3 -1 0\n9 4 1\n10 -1 0\n"
       },
@@ -237,93 +308,75 @@
         "output": "queries 4\n0 0 1\n31 31 1\n63 63 1\n64 -1 0\n"
       },
       {
-        "label": "Case 7",
+        "label": "Valid input, array out of order",
         "input": "3 1 1 3 2 2",
         "output": "unsorted\n"
       },
       {
-        "label": "Case 8",
+        "label": "Input error · 8",
         "input": "-1 0",
         "output": "invalid\n"
       },
       {
-        "label": "Case 9",
+        "label": "Input error · 9",
         "input": "0 33",
         "output": "invalid\n"
       },
       {
-        "label": "Case 10",
+        "label": "Input error · 10",
         "input": "1 1 2",
         "output": "invalid\n"
       },
       {
-        "label": "Case 11",
+        "label": "Input error · 11",
         "input": "0 1 x",
         "output": "invalid\n"
       },
       {
-        "label": "Case 12",
+        "label": "Input error · 12",
         "input": "0 0 tail",
         "output": "invalid\n"
       },
       {
-        "label": "Case 13",
+        "label": "Input error · 13",
         "input": "65 0",
         "output": "invalid\n"
       }
     ],
     "criteria": [
-      "Report first index and duplicate count.",
-      "Positions 1 and 3.",
-      "Include first, last and absent keys.",
-      "Check a two-boundary sum on an empty interval.",
-      "Preserve sources, inputs, actual outputs and rejection explanations."
+      "Boundaries 1 and 4, giving line 2 1 3.",
+      "Key 2 gives 2 1 3, key 3 gives 3 -1 0.",
+      "Expect unsorted and invalid respectively.",
+      "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
     ],
-    "hint": "Reject unsorted input first.",
+    "hint": "A missing key gives 4 -1 0, a well-formed unsorted array gives unsorted, and a parse error gives invalid.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Restate the input domain, format, bounds and rejection policy.",
-        "why": "",
-        "expected": ""
+        "where": "Before running",
+        "action": "Write both boundaries for key 2 in [1, 2, 2, 2, 9].",
+        "why": "The difference gives the multiplicity without scanning the group.",
+        "expected": "Boundaries 1 and 4, giving line 2 1 3."
       },
       {
-        "where": "My program",
-        "action": "Find lower/upper for 2 in [1,2,2,5].",
-        "why": "",
-        "expected": ""
+        "where": "In my program",
+        "action": "Run your solution on the multi-key check case.",
+        "why": "One run shows duplicates and missing keys.",
+        "expected": "Key 2 gives 2 1 3, key 3 gives 3 -1 0."
       },
       {
-        "where": "My program",
-        "action": "First implement complete input validation without partial results.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Complete the multiple-query lab.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Compare linear and binary comparisons on 128 items.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Run all reference cases; for files check existence and content too.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Save the source, observed-results table and invariant explanation; add an independent case.",
-        "why": "",
-        "expected": ""
+        "where": "After running",
+        "action": "Compare 3 1 1 3 2 2 with 1 1 2.",
+        "why": "The first input parses fully, and the second ends before its key.",
+        "expected": "Expect unsorted and invalid respectively."
       }
-    ]
+    ],
+    "recall": "example-1",
+    "starterRevision": "b4-starter-v1",
+    "starterObservation": {
+      "case": 3,
+      "stdout": "queries 6\n",
+      "exitCode": 0
+    }
   },
   "terms": [
     {
@@ -526,5 +579,18 @@
     },
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\classic\\search-linear-binary.en.json"
+  "sourcePath": "courses\\cpp\\gold\\classic\\search-linear-binary.en.json",
+  "reading": [
+    {
+      "id": "cpp20-binary",
+      "title": "C++20 [alg.binary.search]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[alg.binary.search]",
+      "language": "English",
+      "purpose": "Consult the C++20 requirements in [alg.binary.search] after working through the examples.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/alg.binary.search"
+    }
+  ],
+  "authored": true
 }

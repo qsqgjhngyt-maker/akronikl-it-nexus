@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b4-author-v1",
   "id": "cpp.property-testing-benchmarks",
   "courseId": "cpp",
   "moduleId": "cpp.section.classic-algorithms",
@@ -8,7 +8,7 @@
   "module": "Классические задачи",
   "locale": "ru",
   "title": "Проверка свойств и честный эксперимент",
-  "goal": "Соедините независимый oracle, метаморфные свойства, безопасную мутацию и воспроизводимый журнал измерений.",
+  "goal": "Проверьте контракт сортировки независимо от таймера и соберите воспроизводимый журнал измерений.",
   "prerequisites": [
     {
       "text": "Module 1–3: ввод с проверкой, функции, vector, структуры, ссылки и время жизни."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Пример, свойство и доказательство",
       "paragraphs": [
+        "Ряд 3, 1, 3, −2 помогает проверить повторы и отрицательные числа. Один такой пример даёт наблюдение, а свойство формулирует проверку для каждого допустимого ряда.",
         "Пример связывает конкретный вход с ожидаемым выходом. Свойство описывает условие для класса входов: результат сортировки упорядочен и является перестановкой исходного мультимножества. Доказательство объясняет, почему алгоритм удовлетворяет условию для всех допустимых входов в модели. Эти три вида обоснования дополняют друг друга; один зелёный тест не превращается в доказательство.",
         "Начинайте с независимых маленьких ожиданий: [3,1,3] должно стать [1,3,3], а не [1,3]. Затем проверяйте общие свойства. Они помогают обнаружить ошибку на незнакомом наборе, но сами должны быть правильными. Для сортировки записей сохранение только ключей недостаточно: проверяйте ID и связанные поля, а устойчивость — по исходным меткам."
       ]
@@ -31,27 +32,8 @@
       "title": "Oracle и независимость",
       "paragraphs": [
         "Oracle — способ получить эталонное ожидание. Для поиска это может быть простой линейный проход, для маленького набора — ручная таблица, для учебной сортировки — библиотечная функция вместе с проверкой мультимножества. Сравнение двух копий одной функции не создаёт независимый oracle. Укажите, на каких предположениях основан выбранный способ.",
-        "Свойства надо проверять и на заведомо неверных результатах. Массив из нулей может быть упорядочен, но не сохранять вход. Массив правильных значений в обратном порядке сохраняет мультимножество, но не порядок. Такие отрицательные контроли показывают, что проверяющий код действительно различает существенные ошибки, а не просто всегда возвращает true."
-      ]
-    },
-    {
-      "id": "example-1",
-      "title": "Три свойства и несколько классов входа",
-      "paragraphs": [
-        "Проверьте содержательный контракт вместо одной знакомой строки stdout."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main(){std::vector<std::vector<int>>inputs{{},{7},{3,1,3,-2},{0,0,0},{9,7,5,3,1}};int checked=0;for(const auto&source:inputs){auto sorted=source;std::sort(sorted.begin(),sorted.end());auto twice=sorted;std::sort(twice.begin(),twice.end());auto reversed=source;std::reverse(reversed.begin(),reversed.end());std::sort(reversed.begin(),reversed.end());if(!std::is_sorted(sorted.begin(),sorted.end())||!std::is_permutation(source.begin(),source.end(),sorted.begin(),sorted.end())||twice!=sorted||reversed!=sorted)return 2;++checked;}std::cout<<checked<<\" properties\\n\";}",
-        "output": "5 properties\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Набор включает пустой, единичный, повторяющийся, одинаковый и обратный ввод.",
-        "is_sorted проверяет порядок, is_permutation — сохранность количества каждого значения.",
-        "Повторная сортировка должна быть идемпотентной: результат не меняется.",
-        "Сортировка обратной перестановки должна дать тот же результат для целых по одному порядку.",
-        "Название «5 properties» означает пять обработанных наборов; это не статистическое доказательство для всех входов."
+        "Свойства надо проверять и на заведомо неверных результатах. Массив из нулей может быть упорядочен, но не сохранять вход. Массив правильных значений в обратном порядке сохраняет мультимножество, но не порядок. Такие отрицательные контроли показывают, что проверяющий код действительно различает существенные ошибки, а не просто всегда возвращает true.",
+        "Упорядоченность можно проверить соседними парами. Отдельно подтвердите перестановку, иначе пустой результат тоже пройдёт проверку порядка."
       ]
     },
     {
@@ -59,43 +41,93 @@
       "title": "Метаморфные отношения",
       "paragraphs": [
         "Когда точный большой ответ неудобно выписать, используйте связь между несколькими запусками. Для целых по одному порядку сортировка уже отсортированного результата не должна ничего менять: это идемпотентность. Перестановка исходного массива и его обратный порядок должны после сортировки дать тот же массив значений. Удвоение каждого допустимого целого сохраняет относительный порядок, если нет переполнения.",
-        "Отношение должно соответствовать контракту. Для устойчивой сортировки записей произвольная перестановка входа может изменить порядок равных меток, поэтому равенство всего результата уже не обязательно. Для поиска смещение всех ключей требует такого же изменения target. Сначала докажите связь на бумаге, затем превращайте её в тест, явно ограничивая арифметику."
+        "Отношение должно соответствовать контракту. Для устойчивой сортировки записей произвольная перестановка входа может изменить порядок равных меток, поэтому равенство всего результата уже не обязательно. Для поиска смещение всех ключей требует такого же изменения target. Сначала докажите связь на бумаге, затем превращайте её в тест, явно ограничивая арифметику.",
+        "Сортировка уже отсортированного результата оставляет его прежним. Разворот исходного ряда меняет порядок входа, но сортировка возвращает тот же ряд."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "Три свойства и несколько классов входа",
+      "paragraphs": [
+        "Разберите, что проверяется на ряду с двумя тройками, и предскажите итоговый счётчик."
+      ],
+      "prediction": [
+        "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::vector<std::vector<int>> inputs{\n        {}, {7}, {3, 1, 3, -2}, {0, 0, 0}, {9, 7, 5, 3, 1}};\n    int checked = 0;\n    for (const auto &source : inputs) {\n        auto sorted = source;\n        std::sort(sorted.begin(), sorted.end());\n        auto twice = sorted;\n        std::sort(twice.begin(), twice.end());\n        auto reversed = source;\n        std::reverse(reversed.begin(), reversed.end());\n        std::sort(reversed.begin(), reversed.end());\n        if (!std::is_sorted(sorted.begin(), sorted.end()) ||\n            !std::is_permutation(source.begin(), source.end(),\n                                 sorted.begin(), sorted.end()) ||\n            twice != sorted || reversed != sorted) {\n            return 2;\n        }\n        ++checked;\n    }\n    std::cout << checked << \" properties\\n\";\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Открыть вывод и разбор",
+        "paragraphs": [
+          "Программа увеличивает checked один раз для каждого прошедшего входа. Строка 5 properties сообщает о пяти наборах входных данных, а свойства проверяются внутри каждого прохода."
+        ],
+        "tables": [
+          {
+            "caption": "Что происходит по шагам",
+            "columns": [
+              "Действие",
+              "До",
+              "После",
+              "Почему"
+            ],
+            "rows": [
+              [
+                "Отсортировать",
+                "3 1 3 -2",
+                "-2 1 3 3",
+                "Соседние значения упорядочены, обе тройки сохранены."
+              ],
+              [
+                "Повторить сортировку",
+                "-2 1 3 3",
+                "-2 1 3 3",
+                "Результат не меняется."
+              ],
+              [
+                "Развернуть исходник и отсортировать",
+                "-2 3 1 3",
+                "-2 1 3 3",
+                "Для переставленного входа наблюдается тот же отсортированный ряд."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::vector<std::vector<int>> inputs{\n        {}, {7}, {3, 1, 3, -2}, {0, 0, 0}, {9, 7, 5, 3, 1}};\n    int checked = 0;\n    for (const auto &source : inputs) {\n        auto sorted = source;\n        std::sort(sorted.begin(), sorted.end());\n        auto twice = sorted;\n        std::sort(twice.begin(), twice.end());\n        auto reversed = source;\n        std::reverse(reversed.begin(), reversed.end());\n        std::sort(reversed.begin(), reversed.end());\n        if (!std::is_sorted(sorted.begin(), sorted.end()) ||\n            !std::is_permutation(source.begin(), source.end(),\n                                 sorted.begin(), sorted.end()) ||\n            twice != sorted || reversed != sorted) {\n            return 2;\n        }\n        ++checked;\n    }\n    std::cout << checked << \" properties\\n\";\n}",
+          "stdin": "",
+          "output": "5 properties\n"
+        }
+      }
     },
     {
       "id": "concept-4",
       "title": "Генерация, уменьшение и безопасная мутация",
       "paragraphs": [
         "Смешивайте фиксированные классы входов с несколькими сохранёнными seed. Найденный отказ уменьшайте: удаляйте элементы или упрощайте значения, пока сохраняется расхождение. Затем добавьте минимальный случай в постоянную регрессию. Отдельный перенос — полный перебор длин до шести над {-1,0,1}; это 1093 набора, но не все допустимые входы общего контракта.",
-        "Мутация — намеренное небольшое изменение реализации, которое проверка должна заметить. В примере сокращён проход, но все индексы остаются допустимыми. Успех означает обнаруженный дефект, а не успешную работу мутанта. Не запускайте неверный comparator в std::sort, обращение за границу или переполнение знакового типа как «полезную мутацию»: для этого урока достаточно определённого и безопасного ошибочного результата."
-      ]
-    },
-    {
-      "id": "concept-5",
-      "title": "Какие часы и какой участок",
-      "paragraphs": [
-        "Для длительности используется std::chrono::steady_clock: его показания не идут назад при обычном продвижении времени. Разность end−start — duration, а duration_cast переводит её в выбранные единицы. Запись elapsed_ns обозначает наносекунды как единицу, но не гарантирует наносекундное разрешение или точность. На коротком участке нулевой результат допустим.",
-        "Подготовка копии входа выполняется до start, проверка результата и запись файла — после end. Значит измеряется выбранная сортировка, а не весь процесс. Сборка C++, скачивание компилятора, UI и запуск Worker — другие расходы; их нельзя смешать с этим счётчиком. Для полного пользовательского времени нужен отдельный протокол, которого эта лабораторная не выполняет."
+        "Мутация — намеренное небольшое изменение реализации, которое проверка должна заметить. В примере сокращён проход, но все индексы остаются допустимыми. Успех означает обнаруженный дефект, а не успешную работу мутанта. Не запускайте неверный comparator в std::sort, обращение за границу или переполнение знакового типа как «полезную мутацию»: для этого урока достаточно определённого и безопасного ошибочного результата.",
+        "Мутант прекращает проход раньше последней пары. Для [3, 1, 2] он оставляет [1, 3, 2], а проверка замечает 3 > 2."
       ]
     },
     {
       "id": "example-2",
       "title": "Безопасный дефект, который должен быть найден",
       "paragraphs": [
-        "Отделите успешную работу теста от успешной работы неверного алгоритма."
+        "Проследите работу версии с неверной верхней границей. Проверьте, какой именно элемент выдаёт дефект."
       ],
       "code": {
         "language": "cpp",
-        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main(){std::vector<int>original{3,1,2},mutant=original;for(std::size_t i=0;i+2<mutant.size();++i)if(mutant[i+1]<mutant[i])std::swap(mutant[i+1],mutant[i]);if(std::is_sorted(mutant.begin(),mutant.end()))return 2;std::cout<<\"mutation detected\\n\";}",
-        "output": "mutation detected\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Дефект ограничивает проход и оставляет один элемент без необходимой обработки.",
-        "Все индексы остаются внутри вектора: намеренное UB не запускается.",
-        "Конкретный вход [3,1,2] после ошибочного шага превращается в [1,3,2].",
-        "Проверка порядка видит 3>2; именно обнаружение этой ошибки считается успешным опытом.",
-        "Если тест проходит и для мутанта, добавьте различающий случай, а не исправляйте ожидаемый ответ под неверную программу."
+        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::vector<int> original{3, 1, 2}, mutant = original;\n    for (std::size_t i = 0; i + 2 < mutant.size(); ++i) {\n        if (mutant[i + 1] < mutant[i]) {\n            std::swap(mutant[i + 1], mutant[i]);\n        }\n    }\n    if (std::is_sorted(mutant.begin(), mutant.end())) {\n        return 2;\n    }\n    std::cout << \"mutation detected\\n\";\n}",
+        "stdin": "",
+        "output": "mutation detected\n"
+      }
+    },
+    {
+      "id": "concept-5",
+      "title": "Какие часы и какой участок",
+      "paragraphs": [
+        "Для длительности используется std::chrono::steady_clock: его показания не идут назад при обычном продвижении времени. Разность end−start — duration, а duration_cast переводит её в выбранные единицы. Запись elapsed_ns обозначает наносекунды как единицу, но не гарантирует наносекундное разрешение или точность. На коротком участке нулевой результат допустим.",
+        "Подготовка копии входа выполняется до start, проверка результата и запись файла — после end. Значит измеряется выбранная сортировка, а не весь процесс. Сборка C++, скачивание компилятора, UI и запуск Worker — другие расходы; их нельзя смешать с этим счётчиком. Для полного пользовательского времени нужен отдельный протокол, которого эта лабораторная не выполняет.",
+        "Для длительности возьмите steady_clock. Сделайте копию до первого чтения часов, проверьте результат после второго."
       ]
     },
     {
@@ -103,7 +135,8 @@
       "title": "Разогрев, повторы и неконтролируемые факторы",
       "paragraphs": [
         "Перед пятью учитываемыми запусками каждого алгоритма лабораторная делает один неучитываемый разогревающий проход. Каждый запуск получает свежую копию того же base; иначе insertion после первой сортировки получила бы уже упорядоченный ввод. Результат проверяется после каждого замера, чтобы быстрый неправильный ответ не попал в сравнительную таблицу как достижение.",
-        "Учебный код выполняет сначала серию std_sort, затем insertion; такой порядок сам может вносить смещение. Нагрузка браузера, планировщик, кэш и режим компиляции тоже влияют на наблюдение. Для серьёзного сравнения нужны дополнительные размеры и классы входов, управление порядком серий, больше повторов и описание среды. Не приписывайте этому небольшому протоколу уже выполненный исследовательский benchmark."
+        "Учебный код выполняет сначала серию std_sort, затем insertion; такой порядок сам может вносить смещение. Нагрузка браузера, планировщик, кэш и режим компиляции тоже влияют на наблюдение. Для серьёзного сравнения нужны дополнительные размеры и классы входов, управление порядком серий, больше повторов и описание среды. Не приписывайте этому небольшому протоколу уже выполненный исследовательский benchmark.",
+        "Сначала прогрейте каждый алгоритм отдельным вызовом. Пять записей каждого алгоритма должны начинаться с одинаковых исходных значений."
       ]
     },
     {
@@ -111,7 +144,8 @@
       "title": "Сырые samples и честное заключение",
       "paragraphs": [
         "timings.tsv содержит десять строк после заголовка: algorithm, iteration, elapsed_ns. Проверьте по пять уникальных iteration 0…4 для каждого алгоритма и неотрицательные целые длительности. Не требуйте точного совпадения этих чисел между native и WASI. Сохраните весь набор, а не только минимальное время, которое выглядит наиболее выгодно.",
-        "Медиана и разброс помогают описать наблюдение, но пять значений и один размер дают лишь ограниченную картину. Укажите размер, класс данных, подготовку и точный измеряемый участок. Если различие сравнимо с шумом, так и напишите. Анализ O(n²) и O(n log n) обосновывается моделью и доказательством роста; секунды могут проверить практическую гипотезу, но не заменить её основание."
+        "Медиана и разброс помогают описать наблюдение, но пять значений и один размер дают лишь ограниченную картину. Укажите размер, класс данных, подготовку и точный измеряемый участок. Если различие сравнимо с шумом, так и напишите. Анализ O(n²) и O(n log n) обосновывается моделью и доказательством роста; секунды могут проверить практическую гипотезу, но не заменить её основание.",
+        "Если elapsed_ns равно 0, разрешения часов могло не хватить для такого малого входа. Сохраните это наблюдение рядом с остальными."
       ]
     },
     {
@@ -119,11 +153,42 @@
       "title": "Итоговый проект и защита",
       "paragraphs": [
         "Проект связывает восемь тем: проверку входного каталога, индексы по ID и значению, устойчивое рекурсивное слияние, бинарные границы, частоты и аудит RNG. Файловый отчёт имеет детерминированный порядок. Отдельный драйвер проверяет функции, а отдельная лабораторная сохраняет raw timings. Не объединяйте два main в одну сборку и не путайте сохранённый артефакт с автоматическим Cloud push.",
-        "На защите объясните инвариант одного индекса, стоимость подготовки и запроса, безопасный отказ без частичного отчёта и контрпример к неверному решению. Затем добавьте небольшое требование и независимые тесты. Публичные случаи и эталон помогают учиться, но не являются защищённой экзаменационной системой; completed и зелёный запуск не создают автоматически Mastery или университетскую оценку."
+        "На защите объясните инвариант одного индекса, стоимость подготовки и запроса, безопасный отказ без частичного отчёта и контрпример к неверному решению. Затем добавьте небольшое требование и независимые тесты. Публичные случаи и эталон помогают учиться, но не являются защищённой экзаменационной системой; completed и зелёный запуск не создают автоматически Mastery или университетскую оценку.",
+        "Итоговый проект объединяет эксперимент, проверку результата и разбор ограничений. Начните со своего файла измерений, чтобы не потерять доказательства."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Теперь ваша задача",
+      "paragraphs": [
+        "Разделите проверку свойств и измерение. Сохраните десять фактических длительностей и объясните границы выводов.",
+        "Выпишите ожидаемый ряд для 4 3 1 3 -2 и контрпример потери повтора."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Что выведет программа, если все пять входов проходят проверки?",
+      "options": [
+        "5 properties\n",
+        "20 properties",
+        "4 properties"
+      ],
+      "correct": 0,
+      "feedback": "checked увеличивается за каждый вход, который прошёл все проверки. Поэтому в выводе 5 properties.",
+      "code": {
+        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::vector<std::vector<int>> inputs{\n        {}, {7}, {3, 1, 3, -2}, {0, 0, 0}, {9, 7, 5, 3, 1}};\n    int checked = 0;\n    for (const auto &source : inputs) {\n        auto sorted = source;\n        std::sort(sorted.begin(), sorted.end());\n        auto twice = sorted;\n        std::sort(twice.begin(), twice.end());\n        auto reversed = source;\n        std::reverse(reversed.begin(), reversed.end());\n        std::sort(reversed.begin(), reversed.end());\n        if (!std::is_sorted(sorted.begin(), sorted.end()) ||\n            !std::is_permutation(source.begin(), source.end(),\n                                 sorted.begin(), sorted.end()) ||\n            twice != sorted || reversed != sorted) {\n            return 2;\n        }\n        ++checked;\n    }\n    std::cout << checked << \" properties\\n\";\n}",
+        "stdin": ""
+      },
+      "execution": {
+        "source": "#include <iostream>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::vector<std::vector<int>> inputs{\n        {}, {7}, {3, 1, 3, -2}, {0, 0, 0}, {9, 7, 5, 3, 1}};\n    int checked = 0;\n    for (const auto &source : inputs) {\n        auto sorted = source;\n        std::sort(sorted.begin(), sorted.end());\n        auto twice = sorted;\n        std::sort(twice.begin(), twice.end());\n        auto reversed = source;\n        std::reverse(reversed.begin(), reversed.end());\n        std::sort(reversed.begin(), reversed.end());\n        if (!std::is_sorted(sorted.begin(), sorted.end()) ||\n            !std::is_permutation(source.begin(), source.end(),\n                                 sorted.begin(), sorted.end()) ||\n            twice != sorted || reversed != sorted) {\n            return 2;\n        }\n        ++checked;\n    }\n    std::cout << checked << \" properties\\n\";\n}",
+        "stdin": "",
+        "expected": "5 properties\n"
+      },
+      "recall": "example-1"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -134,7 +199,8 @@
         "Только для пустого входа"
       ],
       "correct": 0,
-      "feedback": "Удаление всех элементов тоже даёт упорядоченный результат."
+      "feedback": "Удаление всех элементов тоже даёт упорядоченный результат.",
+      "recall": "concept-2"
     },
     {
       "id": "check-1",
@@ -146,7 +212,8 @@
         "Отсутствие повторов"
       ],
       "correct": 1,
-      "feedback": "Повторная сортировка не меняет уже полученный порядок значений."
+      "feedback": "Повторная сортировка не меняет уже полученный порядок значений.",
+      "recall": "concept-3"
     },
     {
       "id": "check-2",
@@ -158,7 +225,8 @@
         "Вызов сортировки"
       ],
       "correct": 2,
-      "feedback": "Подготовка копий и проверки вынесены за границы часов."
+      "feedback": "Подготовка копий и проверки вынесены за границы часов.",
+      "recall": "concept-5"
     },
     {
       "id": "check-3",
@@ -170,7 +238,8 @@
         "Только при ошибке"
       ],
       "correct": 0,
-      "feedback": "Разрешение и округление допускают нулевую наблюдаемую длительность."
+      "feedback": "Разрешение и округление допускают нулевую наблюдаемую длительность.",
+      "recall": "concept-7"
     },
     {
       "id": "check-4",
@@ -182,13 +251,15 @@
         "Асимптотику автоматически"
       ],
       "correct": 1,
-      "feedback": "Малый эксперимент не заменяет анализ и репрезентативный benchmark."
+      "feedback": "Малый эксперимент не заменяет анализ и репрезентативный benchmark.",
+      "recall": "concept-8"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Найдите вход для мутанта, пропускающего последнюю вставку.",
-      "feedback": "Сохраните проект и защиту Module 4. В Module 5 перейдём к классам, инкапсуляции и RAII; полное ООП, шаблоны и исключения ещё не являются пройденными темами."
+      "prompt": "Придумайте упорядоченный результат, который должен провалить проверку перестановки для 3, 1, 3, −2.",
+      "feedback": "Например −2, 1, 3. Порядок верный, но потеряна одна тройка.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -199,119 +270,240 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\nint main(){ std::cout << \"pending\\n\"; }\n"
+        "content": "#include <iostream>\n#include <algorithm>\n#include <chrono>\n#include <fstream>\n#include <vector>\n\nusing Clock = std::chrono::steady_clock;\n\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 128) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<int> source;\n    for (int i = 0; i < n; ++i) {\n        int value;\n        if (!(std::cin >> value) || value < -10000 || value > 10000) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        source.push_back(value);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    auto standardRun = source;\n    std::sort(standardRun.begin(), standardRun.end());\n    // TODO: Добавьте сортировку вставками и её отдельный прогрев.\n    // TODO: Проверьте контракт и внесите безопасную мутацию в отдельную\n    // копию.\n    // TODO: Отмерьте пять запусков каждого алгоритма и запишите\n    // timings.tsv.\n    std::cout << \"warmup \" << standardRun.size() << '\\n';\n}\n"
       }
     ],
     "metadata": {},
-    "stdin": "0",
+    "stdin": "4 3 1 3 -2",
     "returnAnchor": "example-1",
     "cases": [
       {
         "label": "Случай 1",
         "input": "0",
-        "output": "contracts PASS\nsamples 10\nmutation detected\n"
+        "output": "contracts PASS\nsamples 10\nmutation detected\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "timing-table",
+            "algorithms": [
+              "std_sort",
+              "insertion"
+            ],
+            "repetitions": 5
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Столбцы algorithm, iteration и elapsed_ns разделены табуляцией. Для каждого алгоритма (std_sort, insertion) по 5 строк с номерами 0…4. elapsed_ns — целое ≥ 0."
+          }
+        ]
       },
       {
         "label": "Случай 2",
         "input": "1 5",
-        "output": "contracts PASS\nsamples 10\nmutation detected\n"
+        "output": "contracts PASS\nsamples 10\nmutation detected\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "timing-table",
+            "algorithms": [
+              "std_sort",
+              "insertion"
+            ],
+            "repetitions": 5
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Столбцы algorithm, iteration и elapsed_ns разделены табуляцией. Для каждого алгоритма (std_sort, insertion) по 5 строк с номерами 0…4. elapsed_ns — целое ≥ 0."
+          }
+        ]
       },
       {
-        "label": "Случай 3",
+        "label": "Первый содержательный запуск",
         "input": "4 3 1 3 -2",
-        "output": "contracts PASS\nsamples 10\nmutation detected\n"
+        "output": "contracts PASS\nsamples 10\nmutation detected\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "timing-table",
+            "algorithms": [
+              "std_sort",
+              "insertion"
+            ],
+            "repetitions": 5
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Столбцы algorithm, iteration и elapsed_ns разделены табуляцией. Для каждого алгоритма (std_sort, insertion) по 5 строк с номерами 0…4. elapsed_ns — целое ≥ 0."
+          }
+        ]
       },
       {
         "label": "Случай 4",
         "input": "4 1 2 3 4",
-        "output": "contracts PASS\nsamples 10\nmutation detected\n"
+        "output": "contracts PASS\nsamples 10\nmutation detected\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "timing-table",
+            "algorithms": [
+              "std_sort",
+              "insertion"
+            ],
+            "repetitions": 5
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Столбцы algorithm, iteration и elapsed_ns разделены табуляцией. Для каждого алгоритма (std_sort, insertion) по 5 строк с номерами 0…4. elapsed_ns — целое ≥ 0."
+          }
+        ]
       },
       {
         "label": "Случай 5",
         "input": "128 127 126 125 124 123 122 121 120 119 118 117 116 115 114 113 112 111 110 109 108 107 106 105 104 103 102 101 100 99 98 97 96 95 94 93 92 91 90 89 88 87 86 85 84 83 82 81 80 79 78 77 76 75 74 73 72 71 70 69 68 67 66 65 64 63 62 61 60 59 58 57 56 55 54 53 52 51 50 49 48 47 46 45 44 43 42 41 40 39 38 37 36 35 34 33 32 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0",
-        "output": "contracts PASS\nsamples 10\nmutation detected\n"
+        "output": "contracts PASS\nsamples 10\nmutation detected\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "timing-table",
+            "algorithms": [
+              "std_sort",
+              "insertion"
+            ],
+            "repetitions": 5
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Столбцы algorithm, iteration и elapsed_ns разделены табуляцией. Для каждого алгоритма (std_sort, insertion) по 5 строк с номерами 0…4. elapsed_ns — целое ≥ 0."
+          }
+        ]
       },
       {
-        "label": "Случай 6",
+        "label": "Ошибка ввода · 6",
         "input": "129",
-        "output": "invalid\n"
+        "output": "invalid\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "absent"
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Файл не создаётся."
+          }
+        ]
       },
       {
-        "label": "Случай 7",
+        "label": "Ошибка ввода · 7",
         "input": "-1",
-        "output": "invalid\n"
+        "output": "invalid\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "absent"
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Файл не создаётся."
+          }
+        ]
       },
       {
-        "label": "Случай 8",
+        "label": "Ошибка ввода · 8",
         "input": "2 1",
-        "output": "invalid\n"
+        "output": "invalid\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "absent"
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Файл не создаётся."
+          }
+        ]
       },
       {
-        "label": "Случай 9",
+        "label": "Ошибка ввода · 9",
         "input": "1 x",
-        "output": "invalid\n"
+        "output": "invalid\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "absent"
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Файл не создаётся."
+          }
+        ]
       },
       {
-        "label": "Случай 10",
+        "label": "Ошибка ввода · 10",
         "input": "0 extra",
-        "output": "invalid\n"
+        "output": "invalid\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "absent"
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Файл не создаётся."
+          }
+        ]
       },
       {
-        "label": "Случай 11",
+        "label": "Ошибка ввода · 11",
         "input": "1 10001",
-        "output": "invalid\n"
+        "output": "invalid\n",
+        "fileProperties": {
+          "timings.tsv": {
+            "kind": "absent"
+          }
+        },
+        "fileChecks": [
+          {
+            "path": "timings.tsv",
+            "description": "Файл не создаётся."
+          }
+        ]
       }
     ],
     "criteria": [
-      "Сохранены 10 строк timing-table и проверки до/после.",
-      "Упорядоченность, перестановка, идемпотентность разделены.",
-      "Сводки выведены из сохранённых чисел с единицами.",
-      "Чередуется порядок, записаны compiler, flags, среда и ограничения.",
-      "Сохранены исходник, входы, фактические результаты и объяснение отказов."
+      "Результат −2, 1, 3, 3 проходит, ряд без второй 3 отклоняется.",
+      "Десять строк измерений после заголовка, по пять для каждого алгоритма.",
+      "Для 0 записаны десять измерений; для 2 1 только invalid и нет timings.tsv.",
+      "Добавьте свой корректный случай и один отказ. Сохраните исходник, вход, фактический вывод и файлы результата, если они нужны в задаче."
     ],
-    "hint": "Нулевые ns допустимы.",
+    "hint": "Например −2, 1, 3. Порядок верный, но потеряна одна тройка.",
     "steps": [
       {
-        "where": "Моя программа",
-        "action": "Перепишите область и формат входа, ограничения и политику отказа.",
-        "why": "",
-        "expected": ""
+        "where": "До запуска",
+        "action": "Выпишите ожидаемый ряд для 4 3 1 3 -2 и контрпример потери повтора.",
+        "why": "Так отдельно проверяются порядок и сохранность значений.",
+        "expected": "Результат −2, 1, 3, 3 проходит, ряд без второй 3 отклоняется."
       },
       {
-        "where": "Моя программа",
-        "action": "Назовите три свойства sort.",
-        "why": "",
-        "expected": ""
+        "where": "В моей программе",
+        "action": "Запустите обе сортировки с отдельными копиями и проверьте timings.tsv.",
+        "why": "Одинаковые входы и отдельные измерения дают сравнимые наблюдения.",
+        "expected": "Десять строк измерений после заголовка, по пять для каждого алгоритма."
       },
       {
-        "where": "Моя программа",
-        "action": "Сначала реализуйте полную проверку ввода без частичного результата.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Выполните лабораторный протокол 2×5 замеров.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Сравните медиану и минимум собственных замеров.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Выполните все контрольные случаи; для файлов проверьте также существование и содержимое.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Сохраните исходник, таблицу фактов и объяснение инварианта; добавьте собственный случай.",
-        "why": "",
-        "expected": ""
+        "where": "После запуска",
+        "action": "Повторите с вводом 0, затем с неполным 2 1.",
+        "why": "Пустой набор допустим, а измерять частично разобранный набор нельзя.",
+        "expected": "Для 0 записаны десять измерений; для 2 1 только invalid и нет timings.tsv."
       }
     ],
     "modulePracticum": {
@@ -718,6 +910,13 @@
       },
       "testDriver": "#include \"domain.hpp\"\n#include <sstream>\n#include <iostream>\nint main(){int passed=0;auto check=[&passed](bool value){if(value)++passed;return value;};\n if(!check(valid_word(\"alpha\")))return 1;\n if(!check(!valid_word(\"Upper\")))return 1;\n std::istringstream input(\"3 3 same 10 1 a 20 2 same 20\");std::vector<Record>r;\n if(!check(load_records(input,r)&&r.size()==3))return 1;\n std::istringstream duplicate(\"2 1 a 0 1 b 0\");if(!check(!load_records(duplicate,r)&&r.size()==3))return 1;\n std::istringstream empty(\"0\");std::vector<Record>e;if(!check(load_records(empty,e)&&e.empty()))return 1;\n std::istringstream bad(\"1 2 a x\");if(!check(!load_records(bad,e)&&e.empty()))return 1;\n auto values=index_value(r);if(!check(values[1].id==1&&values[2].id==2))return 1;\n auto ids=index_id(r);if(!check(find_record(ids,2)==\"found 2 same 20\"))return 1;\n if(!check(find_record(ids,4)==\"missing\"))return 1;\n if(!check(range_sum(values,20,20)==40))return 1;\n if(!check(frequency(r,\"same\")==2))return 1;\n if(!check(random_audit(2026)))return 1;\n std::cout<<\"PASS \"<<passed<<'\\n';\n}\n",
       "testExpectedStdout": "PASS 12\n"
+    },
+    "recall": "example-1",
+    "starterRevision": "b4-starter-v1",
+    "starterObservation": {
+      "case": 2,
+      "stdout": "warmup 4\n",
+      "exitCode": 0
     }
   },
   "terms": [
@@ -1199,5 +1398,28 @@
     },
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\classic\\property-testing-benchmarks.ru.json"
+  "sourcePath": "courses\\cpp\\gold\\classic\\property-testing-benchmarks.ru.json",
+  "reading": [
+    {
+      "id": "cpp20-steady",
+      "title": "C++20 [time.clock.steady]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[time.clock.steady]",
+      "language": "English",
+      "purpose": "Сверьте требования C++20 в [time.clock.steady] после работы с примерами урока.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/time.clock.steady"
+    },
+    {
+      "id": "cpp20-sort",
+      "title": "C++20 [alg.sorting]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[alg.sorting]",
+      "language": "English",
+      "purpose": "Сверьте требования C++20 в [alg.sorting] после работы с примерами урока.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/alg.sorting"
+    }
+  ],
+  "authored": true
 }

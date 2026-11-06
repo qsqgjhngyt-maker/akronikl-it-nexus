@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
-import {GOLD_STRUCTURED_LESSONS,goldLessonPath} from '../core/academy-gold-catalog.js';
+import {GOLD_CLASSIC_LESSONS,GOLD_STRUCTURED_LESSONS,goldLessonPath} from '../core/academy-gold-catalog.js';
 import {answerIsChecked,clarityContentRevision,emptyClarityDraft,validateClarityDraft} from '../core/cpp-clarity-r3-state.mjs';
 import {B2_IDS,B2_NEW,b1Lesson,authoredPrograms} from './helpers/cpp-clarity-b1-content.mjs';
 
@@ -17,7 +17,7 @@ test('B02 покрывает весь модуль из восьми тем и �
   goldLessonPath(id,locale).replaceAll('\\','/'),'courses/clarity/lessons/'+id+'.'+locale+'.json'
  ])).sort();
  const changed=execFileSync('git',['-c','core.longpaths=true','diff','--name-only',accepted,'--','courses/clarity/lessons','courses/cpp-clarity-r3/lessons','courses/cpp/gold'],{encoding:'utf8'}).trim().split(/\r?\n/).sort();
- const nextBlock=new Set(GOLD_STRUCTURED_LESSONS.flatMap(id=>['ru','en'].flatMap(locale=>[
+ const nextBlock=new Set([...GOLD_STRUCTURED_LESSONS,...GOLD_CLASSIC_LESSONS].flatMap(id=>['ru','en'].flatMap(locale=>[
   goldLessonPath(id,locale).replaceAll('\\','/'),'courses/clarity/lessons/'+id+'.'+locale+'.json'
  ])));
  assert.deepEqual(changed.filter(file=>!nextBlock.has(file)),expected);

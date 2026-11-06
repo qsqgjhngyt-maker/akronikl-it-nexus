@@ -3,14 +3,14 @@
 import {readFile,writeFile,mkdir,glob} from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {GOLD_STRUCTURED_LESSONS} from '../core/academy-gold-catalog.js';
+import {GOLD_CLASSIC_LESSONS,GOLD_STRUCTURED_LESSONS} from '../core/academy-gold-catalog.js';
 const read=async p=>JSON.parse(await readFile(p,'utf8'));
 const write=async(p,v)=>{await mkdir(path.dirname(p),{recursive:true});await writeFile(p,JSON.stringify(v,null,2)+'\n');};
 // Сохранить историческое написание метаданных C++ на любой ОС; это не путь для чтения.
 const cppSourceRef=p=>p.replaceAll('/','\\');
 const pilots=new Set(['cpp.programming-process','onec.p2.topic-1','onec.p7.topic-2']);
 const authoredIds=new Set(['cpp.algorithm-definition-properties','cpp.algorithm-representations','cpp.pseudocode-euclidean-algorithm','cpp.flowcharts','cpp.top-down-design','cpp.sequence-branching-loops','cpp.languages-compilation-debugging','cpp.tokens-identifiers-keywords','cpp.increment-decrement-sizeof-conditional','cpp.data-types','cpp.first-cpp-program','cpp.comments-constants-literals','cpp.variables-scope','cpp.expressions-operators-blocks','cpp.arithmetic-assignment','cpp.type-conversions','cpp.relations-logic','cpp.pointers-references-addresses','cpp.standard-io']);
-for(const id of GOLD_STRUCTURED_LESSONS)authoredIds.add(id);
+for(const id of [...GOLD_STRUCTURED_LESSONS,...GOLD_CLASSIC_LESSONS])authoredIds.add(id);
 const catalog=[],registry={},audit=[];
 const cpp=await read('courses/cpp/curriculum.json');
 const gold=new Map();for await(const p of glob('courses/cpp/gold/**/*.ru.json')){const g=await read(p);gold.set(g.lessonId,p);}

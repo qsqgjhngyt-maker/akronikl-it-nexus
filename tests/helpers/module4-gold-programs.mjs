@@ -8,7 +8,7 @@ export function programFiles(p,c){
  const data=c.files===undefined?Object.fromEntries(Object.entries(p.files).filter(([f])=>!Object.hasOwn(code,f))):c.files;
  return{...code,...data,'main.cpp':p.source};
 }
-export async function module4GoldPrograms(){
+export async function module4GoldPrograms({includeAuthored=process.env.NEXUS_B4_PROGRAMS==='1'}={}){
  const unique=new Map();
  const add=(g,part,source,cases,files={},metadata={},expectation='exact',diagnostic)=>{
   assert.ok(source.includes('int main('),g.lessonId+' '+part);
@@ -22,6 +22,22 @@ export async function module4GoldPrograms(){
    add(g,part+'-starter',a.starterCode,[{stdin:a.cases[0].stdin,stdout:a.starterExpectedStdout}],a.starterFiles,a.metadata);
    add(g,part+'-reference',a.referenceCode,a.cases,a.referenceFiles,a.metadata);
    if(a.testDriver)add(g,part+'-test-driver',a.testDriver,[{stdin:'',stdout:a.testExpectedStdout}],a.referenceFiles,a.metadata);
+  }
+  if(includeAuthored){
+   const edition=g.teachingEdition,practice=edition.practice;
+   const prediction=edition.selfcheck.find(q=>q.id==='predict');
+   for(const [i,e] of g.workedExamples.entries()){
+    const section=edition.sections.find(s=>s.id==='example-'+(i+1)),code=section.code||section.reveal.code;
+    const cases=[{stdin:e.stdin,stdout:e.expectedStdout,outputFiles:e.outputFiles},...(e.cases||[])];
+    if(prediction.recall===section.id&&!cases.some(c=>c.stdin===prediction.execution.stdin)){
+     cases.push({stdin:prediction.execution.stdin,stdout:prediction.execution.expected});
+    }
+    add(g,'authored-example-'+e.id,code.source,cases,code.files,code.metadata);
+   }
+   const files=Object.fromEntries(practice.files.map(f=>[f.path,f.content]));
+   const source=files['main.cpp'];delete files['main.cpp'];
+   add(g,'authored-starter',source,[{stdin:practice.stdin,stdout:practice.starterObservation.stdout,
+    exitCode:practice.starterObservation.exitCode}],files,practice.metadata);
   }
   for(const n of g.diagnosticExamples||[])add(g,'negative-'+n.id,n.code,[{stdin:'',stdout:''}],n.files,n.metadata,n.expectation,n.diagnostic);
   if(g.verificationMutation){const m=g.verificationMutation;assert.equal(g.laboratory.referenceCode.split(m.from).length,2);add(g,'safe-mutation',g.laboratory.referenceCode.replace(m.from,m.to),[{stdin:'',stdout:m.stdout,exitCode:m.exitCode}]);}

@@ -66,8 +66,17 @@ try{
   for(const section of l.sections.filter(s=>s.id.startsWith('concept-')&&s.tables?.length)){
    const table=explanation.locator('#'+section.id+' table');
    assert.deepEqual(await table.locator('caption').allTextContents(),section.tables.map(t=>t.caption));
-   await p.setViewportSize({width:320,height:900});await anchor(table.first());
-   assert.ok(await table.first().evaluate(el=>el.getBoundingClientRect().right<=innerWidth+1&&document.documentElement.scrollWidth<=innerWidth+1));
+   const region=explanation.locator('#'+section.id+' [data-wide-table="state"]');
+   await p.setViewportSize({width:320,height:900});await anchor(region);
+   assert.ok(await region.evaluate(el=>el.getBoundingClientRect().right<=innerWidth+1&&el.scrollWidth>el.clientWidth&&document.documentElement.scrollWidth<=innerWidth+1));
+   assert.ok(await table.locator('td:first-child').evaluateAll(cells=>cells.every(c=>getComputedStyle(c).whiteSpace==='nowrap')));
+   await region.focus();await p.keyboard.press('ArrowRight');
+   await region.evaluate(el=>new Promise((resolve,reject)=>{
+    const limit=performance.now()+1000;
+    const poll=()=>el.scrollLeft>0?resolve():performance.now()>limit?reject(Error('State table did not scroll from the keyboard')):requestAnimationFrame(poll);
+    poll();
+   }));
+   await region.evaluate(el=>el.scrollLeft=0);
    await p.screenshot({path:path.join(out,'state-'+id.slice(4)+'-'+section.id+'-'+locale+'-320.png')});
    await p.setViewportSize({width:1366,height:900});
   }

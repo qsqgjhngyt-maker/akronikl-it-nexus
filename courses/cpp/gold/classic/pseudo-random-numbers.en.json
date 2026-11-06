@@ -565,5 +565,719 @@
     ],
     "correctIndex": 0
   },
-  "locale": "en"
+  "locale": "en",
+  "teachingEdition": {
+    "revision": "b4-author-v1",
+    "title": "Pseudorandomness and reproducibility",
+    "goal": "Separate engine state from the distribution's range, then compare two files from the same experiment.",
+    "prerequisites": [
+      {
+        "text": "Modules 1–3: validated input, functions, vector, records, references and lifetimes."
+      },
+      {
+        "text": "Direct learning dependencies: cpp.associative-containers. New constructs are explained before the task."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "A deterministic sequence and state",
+        "paragraphs": [
+          "Engine state makes the experiment repeatable. Here two new engines start from the same seed and receive the same number of calls.",
+          "A pseudorandom engine computes an output from its state and updates that state. Equal initial states and equal call histories produce equal streams. The output may look random without being physical randomness. An extra call, even for debugging output, shifts all later values.",
+          "A seed initializes state under the engine’s rules. Copying an engine copies state rather than magically creating an independent source. Recreating an engine from the same seed at every step restarts its sequence. Create one engine for a series and explicitly define where a new reproducible experiment begins."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "A named engine versus a library choice",
+        "paragraphs": [
+          "std::mt19937 has standard-specified parameters, and C++20 specifies a check value for its default-constructed engine’s 10000th output. This enables an exact cross-environment check of that stream. default_random_engine is an implementation choice, so sharing its type name does not prove two platforms use the same algorithm.",
+          "Exactly 10000 calls in the worked example yield 4123659995. This is a narrow assertion about that engine, not every <random> generator. Do not transfer that precision to mapping into a desired range: a distribution is a separate step with its own contract and potentially its own state.",
+          "For mt19937 itself, the standard specifies a check value for the 10,000th call from the default initial state."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "A standardized engine and an explicit check",
+        "paragraphs": [
+          "This runs the engine alone. Verify its check value separately from the later distribution."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <random>\nint main() {\n    std::mt19937 e;\n    std::mt19937::result_type value = 0;\n    for (int i = 0; i < 10000; ++i) {\n        value = e();\n    }\n    std::cout << value << '\\n';\n}",
+          "stdin": "",
+          "output": "4123659995\n"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "A distribution specifies a law and range",
+        "paragraphs": [
+          "uniform_int_distribution<int>(lo,hi) produces uniform integers over a closed range, including both endpoints. Check lo≤hi before constructing it. The lab bounds endpoints to −1000…1000 to avoid relying on int extremes. lo==hi is valid: every result is the range’s single value.",
+          "The algorithm mapping engine outputs to a distribution can differ between standard libraries. The same mt19937 and seed therefore need not yield the same distributed array on libc++ and libstdc++. This lesson checks range, length and replay within one implementation; cross-environment defect replay uses the saved actual-number file.",
+          "uniform_int_distribution<int>(−3, 3) returns integers with both endpoints included. This maps engine results into the desired range."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Why a remainder can introduce bias",
+        "paragraphs": [
+          "Imagine a uniform source over 0…7 and a desired output over 0…2. Remainder modulo three gives three preimages each for zero and one, but only two for two. The output is therefore biased despite the uniform source. A small sample can accidentally hide this structural bias.",
+          "Discarding six and seven before taking the remainder leaves two preimages per result in this toy model. That explains rejection sampling without directing you to implement a production distribution. A standard distribution expresses the intent more clearly, but still needs valid bounds and a reproducibility policy.",
+          "Taking eight equiprobable values modulo three gives residues 0 and 1 three outcomes each and residue 2 only two."
+        ]
+      },
+      {
+        "id": "concept-5",
+        "title": "Replay is a controlled experiment",
+        "paragraphs": [
+          "The lab creates two engines with one seed and two distributions with matching parameters, then makes the same calls in the same order. The arrays must match within the current implementation. Save samples.txt, repeat.txt, compiler/runtime and parameters. Do not infer replay solely from a printed “yes”; compare the actual files.",
+          "Different seeds need not produce different observed arrays: n=0 makes both empty, lo==hi makes every value identical, and short samples can coincide too. A mandatory “different seeds, different arrays” test would invent a guarantee. List the promised properties before testing plausible-sounding assumptions.",
+          "The two sequences in one run are compared after 512 steps. Across libraries compare the properties guaranteed by the contract."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Distribution: the same seed within one implementation",
+        "paragraphs": [
+          "Both engines and distributions are created side by side. Predict three values for sequence equality, bounds and length."
+        ],
+        "prediction": [
+          "#include <iostream>\n#include <random>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::mt19937 a(2026), b(2026);\n    std::uniform_int_distribution<int> da(-3, 3), db(-3, 3);\n    std::vector<int> x, y;\n    for (int i = 0; i < 512; ++i) {\n        x.push_back(da(a));\n        y.push_back(db(b));\n    }\n    bool bounded = std::all_of(x.begin(), x.end(),\n                               [](int n) { return n >= -3 && n <= 3; });\n    std::cout << (x == y) << ' ' << bounded << ' ' << x.size() << '\\n';\n}"
+        ],
+        "predictionInput": "",
+        "reveal": {
+          "title": "Reveal the output and walkthrough",
+          "paragraphs": [
+            "The ones are flags and 512 is the value count. The lab saves both sequences so repeatability can be checked."
+          ],
+          "tables": [
+            {
+              "caption": "What happens at each step",
+              "columns": [
+                "Action",
+                "Before",
+                "After",
+                "Why"
+              ],
+              "rows": [
+                [
+                  "Create two engines",
+                  "seed = 2026",
+                  "a, b",
+                  "The initial state is the same."
+                ],
+                [
+                  "Generate pairs",
+                  "0",
+                  "512",
+                  "Each distribution receives the same sequence of calls."
+                ],
+                [
+                  "Compare sequences",
+                  "x, y",
+                  "1 1 512",
+                  "Arrays agree, every value is in range, and the length is 512."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n#include <random>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::mt19937 a(2026), b(2026);\n    std::uniform_int_distribution<int> da(-3, 3), db(-3, 3);\n    std::vector<int> x, y;\n    for (int i = 0; i < 512; ++i) {\n        x.push_back(da(a));\n        y.push_back(db(b));\n    }\n    bool bounded = std::all_of(x.begin(), x.end(),\n                               [](int n) { return n >= -3 && n <= 3; });\n    std::cout << (x == y) << ' ' << bounded << ' ' << x.size() << '\\n';\n}",
+            "stdin": "",
+            "output": "1 1 512\n"
+          }
+        }
+      },
+      {
+        "id": "concept-6",
+        "title": "Properties, frequencies and false conclusions",
+        "paragraphs": [
+          "Check exact length, each value’s bounds and replay of the corresponding runs. all_of is true on an empty range, so verify length separately. These checks do not prove uniformity: always printing lo can satisfy them. Explaining the actual distribution choice and inspecting source are part of the manual rubric.",
+          "A histogram helps explore data, but a uniform law does not require perfectly equal counts in every finite sample. A statistical test needs a hypothesis, sample size and false-positive policy. This lesson does not substitute an arbitrary threshold; it checks deterministic contract properties and preserves observations.",
+          "Sequence equality and bounds can be checked exactly. Frequencies in a small sample vary even with a correct distribution."
+        ]
+      },
+      {
+        "id": "concept-7",
+        "title": "Test generation and security boundaries",
+        "paragraphs": [
+          "Random cases supplement empty, minimum, maximum, all-equal and already ordered inputs rather than replacing them. Save the seed of a discovered failure, then shrink the actual data to a comprehensible counterexample. A small fixed regression case is usually more useful than hoping to rediscover the defect randomly.",
+          "mt19937 is not intended for cryptographic tasks. This browser runtime does not treat random_device as a guaranteed system-entropy source. Do not use the educational generator for security-critical values. Sampling without replacement and shuffling have their own contracts; sorting with a “random comparator” is not a safe substitute because it violates ordering requirements.",
+          "To reproduce a failure, keep the seed, n and bounds. Secrets require a source designed for cryptography."
+        ]
+      },
+      {
+        "id": "concept-8",
+        "title": "Lab artifacts and the next experiment",
+        "paragraphs": [
+          "Before running, record n, seed, endpoints and expected logical results. Afterward check both file shapes, line counts, bounds and equality. Keep source and environment details. Across native and WASI, compare the promised properties; different raw distributed numbers alone are not a runtime defect.",
+          "The next lesson uses fixed data to compare algorithms and separate clocks to observe cost. Saved inputs let you separate computation differences from generation differences. Input class, program version, verification method and raw samples become part of a reproducible engineering experiment.",
+          "At n = 0 both samples are empty. Still create both files so a check can distinguish them from missing files."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Now try your own task",
+        "paragraphs": [
+          "Move n, seed and the bounds to input. Compare the files for equality and check each line's range.",
+          "Predict both files for 1 5489 7 7."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Which three numbers does the check print in this run?",
+        "options": [
+          "1 1 512\n",
+          "0 1 512",
+          "1 0 512"
+        ],
+        "correct": 0,
+        "feedback": "Within one environment both engines start identically, the distributions match, and each sequence contains 512 values from −3 through 3.",
+        "code": {
+          "source": "#include <iostream>\n#include <random>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::mt19937 a(2026), b(2026);\n    std::uniform_int_distribution<int> da(-3, 3), db(-3, 3);\n    std::vector<int> x, y;\n    for (int i = 0; i < 512; ++i) {\n        x.push_back(da(a));\n        y.push_back(db(b));\n    }\n    bool bounded = std::all_of(x.begin(), x.end(),\n                               [](int n) { return n >= -3 && n <= 3; });\n    std::cout << (x == y) << ' ' << bounded << ' ' << x.size() << '\\n';\n}",
+          "stdin": ""
+        },
+        "execution": {
+          "source": "#include <iostream>\n#include <random>\n#include <vector>\n#include <algorithm>\nint main() {\n    std::mt19937 a(2026), b(2026);\n    std::uniform_int_distribution<int> da(-3, 3), db(-3, 3);\n    std::vector<int> x, y;\n    for (int i = 0; i < 512; ++i) {\n        x.push_back(da(a));\n        y.push_back(db(b));\n    }\n    bool bounded = std::all_of(x.begin(), x.end(),\n                               [](int n) { return n >= -3 && n <= 3; });\n    std::cout << (x == y) << ' ' << bounded << ' ' << x.size() << '\\n';\n}",
+          "stdin": "",
+          "expected": "1 1 512\n"
+        },
+        "recall": "example-2"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "Does one seed guarantee identical distribution files across libraries? ",
+        "options": [
+          "No",
+          "Always",
+          "Only for n=100"
+        ],
+        "correct": 0,
+        "feedback": "Distribution algorithms may differ across implementations.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "Is mt19937 suitable for a session secret? ",
+        "options": [
+          "With a large seed",
+          "No",
+          "After sorting"
+        ],
+        "correct": 1,
+        "feedback": "It is a noncryptographic engine.",
+        "recall": "concept-7"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "lo==hi means…",
+        "options": [
+          "An invalid range",
+          "Always an empty sample",
+          "Always that single value"
+        ],
+        "correct": 2,
+        "feedback": "A closed singleton interval is valid.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Checking n=0 requires…",
+        "options": [
+          "Two existing empty files",
+          "No files",
+          "One zero line in each"
+        ],
+        "correct": 0,
+        "feedback": "The contract distinguishes absence from empty content.",
+        "recall": "concept-8"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "Unequal frequencies in a small sample…",
+        "options": [
+          "Prove a broken engine",
+          "Do not prove nonuniformity",
+          "Always mean modulo bias"
+        ],
+        "correct": 1,
+        "feedback": "A statistical claim needs a protocol and sufficient data.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "At n = 1 and lo = hi = 7, what must both files contain for any valid seed?",
+        "feedback": "Each file has one line containing 7. The valid range has only one value.",
+        "recall": "independent-work"
+      }
+    ],
+    "practice": {
+      "title": "Laboratory: Pseudorandomness and reproducibility",
+      "task": "Read n seed lo hi with no extra tokens: n=0…128, seed=0…4294967295, −1000<=lo<=hi<=1000. Create two identically initialized mt19937 engines and two uniform_int_distribution objects; save n integers on separate lines in samples.txt and repeat.txt. Print count N, repeatable yes, bounded yes on separate lines. Both files must exist, agree and satisfy the bounds; exact cross-library sequences are unspecified. Invalid input gives invalid.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n#include <fstream>\n#include <random>\n#include <vector>\n\nint main() {\n    int n, lo, hi;\n    long long seed;\n    if (!(std::cin >> n >> seed >> lo >> hi) || n < 0 || n > 128 ||\n        seed < 0 || seed > 4294967295LL || lo < -1000 || hi > 1000 ||\n        lo > hi) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n\n    std::mt19937 first(seed), second(seed);\n    std::uniform_int_distribution<int> drawFirst(lo, hi),\n        drawSecond(lo, hi);\n    std::vector<int> samples, repeat;\n    // TODO: Make n pairs of draws and verify equality and bounds.\n    // TODO: Write both files and print the verified properties.\n    std::cout << \"generated \" << samples.size() << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "32 2026 -3 3",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Case 1",
+          "input": "0 0 0 0",
+          "output": "count 0\nrepeatable yes\nbounded yes\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "integer-lines",
+              "count": 0,
+              "min": 0,
+              "max": 0
+            },
+            "repeat.txt": {
+              "kind": "equal-file",
+              "other": "samples.txt"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "An empty file (0 lines)."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "Contents match samples.txt."
+            }
+          ]
+        },
+        {
+          "label": "Case 2",
+          "input": "1 5489 7 7",
+          "output": "count 1\nrepeatable yes\nbounded yes\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "integer-lines",
+              "count": 1,
+              "min": 7,
+              "max": 7
+            },
+            "repeat.txt": {
+              "kind": "equal-file",
+              "other": "samples.txt"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "Lines: 1. Each line contains one integer from 7 through 7."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "Contents match samples.txt."
+            }
+          ]
+        },
+        {
+          "label": "First substantive run",
+          "input": "32 2026 -3 3",
+          "output": "count 32\nrepeatable yes\nbounded yes\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "integer-lines",
+              "count": 32,
+              "min": -3,
+              "max": 3
+            },
+            "repeat.txt": {
+              "kind": "equal-file",
+              "other": "samples.txt"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "Lines: 32. Each line contains one integer from -3 through 3."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "Contents match samples.txt."
+            }
+          ]
+        },
+        {
+          "label": "Case 4",
+          "input": "128 4294967295 -1000 1000",
+          "output": "count 128\nrepeatable yes\nbounded yes\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "integer-lines",
+              "count": 128,
+              "min": -1000,
+              "max": 1000
+            },
+            "repeat.txt": {
+              "kind": "equal-file",
+              "other": "samples.txt"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "Lines: 128. Each line contains one integer from -1000 through 1000."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "Contents match samples.txt."
+            }
+          ]
+        },
+        {
+          "label": "Case 5",
+          "input": "5 17 -2 -1",
+          "output": "count 5\nrepeatable yes\nbounded yes\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "integer-lines",
+              "count": 5,
+              "min": -2,
+              "max": -1
+            },
+            "repeat.txt": {
+              "kind": "equal-file",
+              "other": "samples.txt"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "Lines: 5. Each line contains one integer from -2 through -1."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "Contents match samples.txt."
+            }
+          ]
+        },
+        {
+          "label": "Input error · 6",
+          "input": "-1 0 0 1",
+          "output": "invalid\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "absent"
+            },
+            "repeat.txt": {
+              "kind": "absent"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "No file is created."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "No file is created."
+            }
+          ]
+        },
+        {
+          "label": "Input error · 7",
+          "input": "129 0 0 1",
+          "output": "invalid\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "absent"
+            },
+            "repeat.txt": {
+              "kind": "absent"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "No file is created."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "No file is created."
+            }
+          ]
+        },
+        {
+          "label": "Input error · 8",
+          "input": "1 -1 0 1",
+          "output": "invalid\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "absent"
+            },
+            "repeat.txt": {
+              "kind": "absent"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "No file is created."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "No file is created."
+            }
+          ]
+        },
+        {
+          "label": "Input error · 9",
+          "input": "1 4294967296 0 1",
+          "output": "invalid\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "absent"
+            },
+            "repeat.txt": {
+              "kind": "absent"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "No file is created."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "No file is created."
+            }
+          ]
+        },
+        {
+          "label": "Input error · 10",
+          "input": "1 0 2 1",
+          "output": "invalid\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "absent"
+            },
+            "repeat.txt": {
+              "kind": "absent"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "No file is created."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "No file is created."
+            }
+          ]
+        },
+        {
+          "label": "Input error · 11",
+          "input": "1 0 -1001 0",
+          "output": "invalid\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "absent"
+            },
+            "repeat.txt": {
+              "kind": "absent"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "No file is created."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "No file is created."
+            }
+          ]
+        },
+        {
+          "label": "Input error · 12",
+          "input": "1 0 0 1001",
+          "output": "invalid\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "absent"
+            },
+            "repeat.txt": {
+              "kind": "absent"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "No file is created."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "No file is created."
+            }
+          ]
+        },
+        {
+          "label": "Input error · 13",
+          "input": "0 0 0 0 extra",
+          "output": "invalid\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "absent"
+            },
+            "repeat.txt": {
+              "kind": "absent"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "No file is created."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "No file is created."
+            }
+          ]
+        },
+        {
+          "label": "Input error · 14",
+          "input": "x",
+          "output": "invalid\n",
+          "fileProperties": {
+            "samples.txt": {
+              "kind": "absent"
+            },
+            "repeat.txt": {
+              "kind": "absent"
+            }
+          },
+          "fileChecks": [
+            {
+              "path": "samples.txt",
+              "description": "No file is created."
+            },
+            {
+              "path": "repeat.txt",
+              "description": "No file is created."
+            }
+          ]
+        }
+      ],
+      "criteria": [
+        "Two files, each with a single line containing 7.",
+        "Each file contains 32 integers from −3 through 3, and the contents agree.",
+        "First two empty files, then invalid with no output files.",
+        "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
+      ],
+      "hint": "Each file has one line containing 7. The valid range has only one value.",
+      "steps": [
+        {
+          "where": "Before running",
+          "action": "Predict both files for 1 5489 7 7.",
+          "why": "A single-value range gives an unambiguous check.",
+          "expected": "Two files, each with a single line containing 7."
+        },
+        {
+          "where": "In my program",
+          "action": "Complete generation, run 32 2026 -3 3 and open both files.",
+          "why": "Stdout reports the summary, and the files let you verify it independently.",
+          "expected": "Each file contains 32 integers from −3 through 3, and the contents agree."
+        },
+        {
+          "where": "After running",
+          "action": "Check 0 0 0 0 and 1 0 2 1 in separate clean runs.",
+          "why": "A valid empty experiment needs to be distinguishable from rejection.",
+          "expected": "First two empty files, then invalid with no output files."
+        }
+      ],
+      "recall": "example-2",
+      "starterRevision": "b4-starter-v1",
+      "starterObservation": {
+        "case": 2,
+        "stdout": "generated 0\n",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-random",
+        "title": "C++20 [rand.predef]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[rand.predef]",
+        "language": "English",
+        "purpose": "Consult the C++20 requirements in [rand.predef] after working through the examples.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/rand.predef"
+      },
+      {
+        "id": "cpp20-distributions",
+        "title": "C++20 [rand.dist.general]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[rand.dist.general]",
+        "language": "English",
+        "purpose": "Consult the C++20 requirements in [rand.dist.general] after working through the examples.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/rand.dist.general"
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "example-1",
+      "3": "concept-3",
+      "4": "example-2",
+      "5": "independent-work"
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "A deterministic sequence and state",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "A named engine versus a library choice",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "A distribution specifies a law and range",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Why a remainder can introduce bias",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Replay is a controlled experiment",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Properties, frequencies and false conclusions",
+        "anchor": "concept-6"
+      },
+      {
+        "sourceTitle": "Test generation and security boundaries",
+        "anchor": "concept-7"
+      },
+      {
+        "sourceTitle": "Lab artifacts and the next experiment",
+        "anchor": "concept-8"
+      }
+    ]
+  }
 }

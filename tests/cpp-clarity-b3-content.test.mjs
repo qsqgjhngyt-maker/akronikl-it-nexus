@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
-import {GOLD_STRUCTURED_LESSONS,goldLessonPath} from '../core/academy-gold-catalog.js';
+import {GOLD_CLASSIC_LESSONS,GOLD_STRUCTURED_LESSONS,goldLessonPath} from '../core/academy-gold-catalog.js';
 import {answerIsChecked,clarityContentRevision,emptyClarityDraft,validateClarityDraft} from '../core/cpp-clarity-r3-state.mjs';
 import {b1Lesson} from './helpers/cpp-clarity-b1-content.mjs';
 
@@ -17,7 +17,10 @@ test('B03 включает все 18 тем и меняет только сво�
   goldLessonPath(id,locale).replaceAll('\\','/'),`courses/clarity/lessons/${id}.${locale}.json`
  ])).sort();
  const changed=execFileSync('git',['-c','core.longpaths=true','diff','--name-only',accepted,'--','courses/clarity/lessons','courses/cpp-clarity-r3/lessons','courses/cpp/gold'],{encoding:'utf8'}).trim().split(/\r?\n/).sort();
- assert.deepEqual(changed,expected);
+ const classic=new Set(GOLD_CLASSIC_LESSONS.flatMap(id=>['ru','en'].flatMap(locale=>[
+  goldLessonPath(id,locale).replaceAll('\\','/'),`courses/clarity/lessons/${id}.${locale}.json`
+ ])));
+ assert.deepEqual(changed.filter(file=>!classic.has(file)),expected);
 });
 
 test('B03 сохраняет разделы, старые вопросы, входы и исполняемые наборы',async()=>{
