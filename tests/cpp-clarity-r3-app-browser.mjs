@@ -26,7 +26,11 @@ await p.locator('#editor').fill('// synthetic full app work\nint main(){}');awai
  await p.evaluate(()=>location.hash='#course=cpp&lesson=cpp.first-cpp-program&stage=explanation&locale=ru');
  const lesson=p.locator('[data-r3-topic="cpp.first-cpp-program"]');
  await lesson.locator('[data-stage="explanation"][aria-current="step"]').waitFor();
- await p.evaluate(async()=>{await document.fonts.ready;});
+ await p.evaluate(async()=>{
+  await document.fonts.ready;
+  // showStage restores the initial position on the next animation frame.
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+ });
  const header=lesson.locator('.lesson-context');
  const toggle=header.locator('[data-action="tools"]');
  for(const width of [1366,390,320]){

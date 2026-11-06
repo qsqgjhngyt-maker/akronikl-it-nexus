@@ -94,7 +94,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  .r3-lesson .lesson-tools{
   position:absolute;inset-inline:0;top:calc(100% + 4px);padding:12px;
   max-height:calc(100dvh - var(--r3-shell-top,0px) - var(--r3-context-height,80px) - 12px);
-  overflow:auto;overscroll-behavior:contain;
+  overflow:auto;overscroll-behavior:contain;overflow-anchor:none;
   background:var(--panel,#102333);border:1px solid var(--r3-line);border-radius:10px;
   box-shadow:0 10px 24px #0005;
  }
@@ -232,8 +232,8 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  listen(contextHeader,'keydown',event=>{
   if(event.key!=='Escape'||toolsPanel.hidden)return;
   event.preventDefault();
-  setToolsOpen(false);
   toolsToggle.focus({preventScroll:true});
+  setToolsOpen(false);
  });
  listen(root,'focusin',event=>{
   if(!toolsPanel.hidden&&event.target.closest('.stage-body'))setToolsOpen(false);
