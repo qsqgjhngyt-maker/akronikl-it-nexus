@@ -1,88 +1,146 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b2-author-v1",
   "id": "cpp.flowcharts",
   "courseId": "cpp",
   "moduleId": "cpp.section.algorithms",
   "course": "C++ programming",
   "module": "Algorithmic Thinking",
   "locale": "en",
-  "title": "Flowcharts as testable execution models",
-  "goal": "Follow a flowchart’s arrows and check the free-delivery boundary.",
+  "title": "A flowchart you can follow",
+  "goal": "Read edges as precise transitions and test them at decision boundaries.",
   "prerequisites": [
     {
-      "text": "You understand if/else branching and comparisons."
+      "text": "You understand conditional alternatives."
+    },
+    {
+      "text": "You can prepare a decision table."
     }
   ],
   "sections": [
     {
-      "id": "model",
-      "title": "From the task to an operation",
+      "id": "concept-1",
+      "title": "The transition matters more than the shape",
       "paragraphs": [
-        "Delivery is free for an order total of at least 1000. A smaller nonnegative total has a fee of 150. A negative total is invalid. Follow the arrows: start → test total<0 → on “no”, test total>=1000 → one result → end.",
-        "A diamond is a question with labelled yes/no exits. A rectangle is an action such as output. >= includes equality; else if asks the next question only after the previous answer was no. The example’s number is in the source; stdin is empty."
+        "Start and end define procedure boundaries. An action modifies state; input/output interacts with the outside world; a decision chooses a path. Connections need clear direction.",
+        "Without labeled true/false branches, a reader must guess which path to follow. A sound flowchart allows manual execution without consulting its author.",
+        "Start by naming the path for one input. Each decision needs clear yes and no destinations. Failed input also needs an exit."
       ]
     },
     {
-      "id": "worked-example",
-      "title": "Follow a flowchart’s arrows and check the free-delivery boundary.",
-      "paragraphs": [],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int total = 1000;\n    if (total < 0) {\n        std::cout << \"invalid\\n\";\n    } else if (total >= 1000) {\n        std::cout << \"free\\n\";\n    } else {\n        std::cout << \"150\\n\";\n    }\n    return 0;\n}\n",
-        "output": "free\n",
-        "stdin": ""
-      },
-      "steps": [],
-      "trace": [
-        [
-          "total < 0",
-          "total: 1000",
-          "false",
-          "The order is valid; continue to the next question."
-        ],
-        [
-          "total >= 1000",
-          "1000 >= 1000",
-          "true",
-          "Equality is included, selecting free delivery."
-        ],
-        [
-          "cout",
-          "stdout: empty",
-          "stdout: free",
-          "The other branches do not run."
-        ]
-      ]
-    },
-    {
-      "id": "variation",
-      "title": "Change one condition and check the prediction",
+      "id": "concept-2",
+      "title": "Order validation before shipping price",
       "paragraphs": [
-        "Check total=999, then total=-1; name the questions visited.",
-        "For 999, both questions answer no.",
-        "For -1, the first question answers yes; the second is never needed."
+        "An order totals exactly 1000. Is delivery free? Start at the input, follow validation and find the edge at the threshold.",
+        "Mark the chosen path before running."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int total = 1000;\n    if (total < 0) {\n        std::cout << \"invalid\\n\";\n    } else if (total > 1000) {\n        std::cout << \"free\\n\";\n    } else {\n        std::cout << \"150\\n\";\n    }\n    return 0;\n}\n",
-        "stdin": "",
-        "output": "150\n"
+      "diagram": {
+        "caption": "Order total flowchart",
+        "text": "Start → read total\n◇ Input read?\n├─ no  → invalid → end\n└─ yes → ◇ Total < 0?\n          ├─ yes → invalid → end\n          └─ no  → ◇ Total ≥ 1000?\n                   ├─ yes → free → end\n                   └─ no  → 150 → end"
+      },
+      "prediction": [
+        "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}"
+      ],
+      "predictionInput": "1000\n",
+      "reveal": {
+        "title": "Compare your prediction and trace the steps",
+        "paragraphs": [
+          "Consider a delivery policy: negative order totals are invalid, orders totaling at least 1000 get free delivery, and smaller valid orders pay 150. Validation therefore precedes the threshold check.",
+          "Moving checks into the wrong order can apply a fee to invalid orders. The diagram makes the policy explicit before C++ code is written.",
+          "For a total of 1000, both decisions have a definite result. The negative check is false and >= 1000 is true. Write free, then compare the edges and output."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
+          "stdin": "1000\n",
+          "output": "free\n"
+        }
       }
     },
     {
-      "id": "diagnose",
-      "title": "When the result differs",
+      "id": "concept-3",
+      "title": "Tracing inputs and covering branches",
       "paragraphs": [
-        "Replacing >= with > incorrectly charges an order of exactly 1000. Test the boundary itself."
+        "For -1 the result is invalid; for 999 the delivery fee is 150; for 1000 it is free. These exercise distinct execution paths.",
+        "Testing only one friendly input does not establish branch behavior. Boundary cases distinguish > from >= and catch off-by-one defects."
+      ],
+      "tables": [
+        {
+          "caption": "Three paths through the checks",
+          "columns": [
+            "Input",
+            "Negative?",
+            "At threshold?",
+            "Output"
+          ],
+          "rows": [
+            [
+              "−1",
+              "yes",
+              "—",
+              "invalid"
+            ],
+            [
+              "999",
+              "no",
+              "no",
+              "150"
+            ],
+            [
+              "1000",
+              "no",
+              "yes",
+              "free"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "Decompose complex charts",
+      "paragraphs": [
+        "A high-level diagram reading 'validate order → calculate total → produce receipt' is usually clearer than a hundred small rectangles. Move inner details into subprocedures.",
+        "Specify the inputs and outputs of each component. A diagram neither replaces an interface contract nor removes the need for tests.",
+        "In a different task, “validated” means a score from 0 to 100. The diagram still begins with validation even though the threshold and output labels change."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main() {\n    int score;\n    if (!(std::cin >> score)) { std::cout << \"invalid\\n\"; return 0; }\n    if (score < 0 || score > 100) std::cout << \"invalid\\n\";\n    else if (score >= 60) std::cout << \"pass\\n\";\n    else std::cout << \"retry\\n\";\n}",
+        "stdin": "60\n",
+        "output": "pass\n"
+      }
+    },
+    {
+      "id": "concept-5",
+      "title": "Make visual models accessible and truthful",
+      "paragraphs": [
+        "A diagram's labels must match the conditions in the executable code. On small screens, the same transitions need an accessible textual explanation.",
+        "An interactive diagram is still a model rather than a compiler result. Compare it against actual outputs in Code Studio.",
+        "Compare the ≥ decision with the code. If the diagram changes ≥ to >, input 1000 follows a different edge. This test checks whether diagram and program agree."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Two tariffs, two distinct contracts",
+      "paragraphs": [
+        "The worked example uses an order-amount threshold; the laboratory uses distance. Do not carry x≥1000 into the kilometre program. Distances 1..5 cost 100, 6 costs 120, and 8 costs 160. The laboratory flow is input → valid distance? → distance>5? → extra charge → output. Label both yes and no exits at each decision."
+      ]
+    },
+    {
+      "id": "concept-7",
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "The laboratory accepts distance from 1 to 1000000; other values produce invalid.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
       ]
     },
     {
       "id": "independent-work",
-      "title": "Now solve your own task",
+      "title": "Try a separate task",
       "paragraphs": [
-        "Set a passing score of 60, with valid scores 0..100. Output invalid, pass or retry. Check -1,59,60,101.",
-        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+        "Draw the distance fare flowchart and implement it. Distances of 1–5 km cost 100 and every kilometre after the fifth adds 20. Accept integer distances 1..1000000. Print invalid for disallowed or unreadable input.",
+        "Predict the first case and one boundary case. Practice has a separate starter. After running it, explain which check or operation produced each result."
       ]
     }
   ],
@@ -90,70 +148,174 @@
     {
       "id": "predict",
       "kind": "choice",
-      "prompt": "What output follows the specified change? Check total=999, then total=-1; name the questions visited.",
+      "prompt": "Follow the diagram and code for total 999. What result follows?",
       "options": [
         "150\n",
+        "free\n",
         "invalid\n"
       ],
       "correct": 0,
-      "feedback": "For 999, both questions answer no. For -1, the first question answers yes; the second is never needed."
+      "feedback": [
+        "Yes. The total is valid and below the threshold.",
+        "Free delivery starts at 1000.",
+        "999 is readable and nonnegative."
+      ],
+      "recall": "concept-2",
+      "code": {
+        "source": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
+        "stdin": "999\n"
+      },
+      "execution": {
+        "source": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
+        "stdin": "999\n",
+        "label": "predict",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "150\n"
+      }
+    },
+    {
+      "id": "concept-0",
+      "kind": "choice",
+      "prompt": "What makes a flowchart traceable?",
+      "options": [
+        "Directed and labeled decision edges",
+        "Arbitrary shapes",
+        "Missing conditions"
+      ],
+      "correct": 0,
+      "feedback": "A reader needs both direction and branch meaning.",
+      "recall": "concept-1"
+    },
+    {
+      "id": "concept-1",
+      "kind": "choice",
+      "prompt": "What does testing 999 and 1000 reveal?",
+      "options": [
+        "A linker error",
+        "An inclusive/exclusive boundary defect",
+        "A memory leak"
+      ],
+      "correct": 1,
+      "feedback": "It distinguishes > from >=.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "concept-2",
+      "kind": "choice",
+      "prompt": "What happens with a negative order total?",
+      "options": [
+        "Calculate delivery price",
+        "Print free",
+        "Reject it before price checks"
+      ],
+      "correct": 2,
+      "feedback": "Input validation precedes the threshold decision.",
+      "recall": "concept-2"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Set a passing score of 60, with valid scores 0..100. Output invalid, pass or retry. Check -1,59,60,101.",
-      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. For -1, 59, 60, 101 the answers are invalid, retry, pass, invalid. Using > 60 instead of >= 60 incorrectly gives retry at the boundary score 60."
+      "prompt": "For input 6 km, give both decisions in your distance fare chart. Why does input 0 never reach the fare calculation?",
+      "feedback": "Explain which paths yield 100 at 5 km and 120 at 6 km.",
+      "recall": "concept-2"
     }
   ],
   "practice": {
-    "title": "Independent variation",
-    "task": "Set a passing score of 60, with valid scores 0..100. Output invalid, pass or retry. Check -1,59,60,101.",
+    "title": "Distance fare",
+    "task": "Draw the distance fare flowchart and implement it. Distances of 1–5 km cost 100 and every kilometre after the fifth adds 20. Accept integer distances 1..1000000. Print invalid for disallowed or unreadable input.",
     "kind": "cpp-console",
     "environment": "C++20",
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+        "content": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    // TODO: add the amount due after the first five kilometres.\n    std::cout << cost << '\\n';\n}\n"
       }
     ],
-    "metadata": {},
-    "stdin": "",
-    "returnAnchor": "worked-example",
+    "metadata": {
+      "entryFile": "main.cpp"
+    },
+    "stdin": "12\n",
+    "returnAnchor": "concept-2",
+    "recall": "concept-2",
     "cases": [
       {
-        "label": "Case 1",
+        "label": "New main input",
+        "input": "12\n",
+        "output": "240\n"
+      },
+      {
+        "label": "Check 1",
+        "input": "0\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Check 2",
+        "input": "5\n",
+        "output": "100\n"
+      },
+      {
+        "label": "Check 3",
+        "input": "8\n",
+        "output": "160\n"
+      },
+      {
+        "label": "Check 4",
+        "input": "oops\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Check 5",
+        "input": "1\n",
+        "output": "100\n"
+      },
+      {
+        "label": "Check 6",
+        "input": "6\n",
+        "output": "120\n"
+      },
+      {
+        "label": "Check 7",
+        "input": "1000000\n",
+        "output": "20000000\n"
+      },
+      {
+        "label": "Check 8",
+        "input": "1000001\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Check 9",
         "input": "",
-        "output": "pass\n"
+        "output": "invalid\n"
       }
     ],
     "criteria": [
-      "Compare the output with the readable reference case below.",
-      "Explain each change using the objects or operations in this topic.",
-      "For -1, 59, 60, 101 the answers are invalid, retry, pass, invalid. Using > 60 instead of >= 60 incorrectly gives retry at the boundary score 60."
+      "Label each decision exit.",
+      "Check extraction and range before applying the fare.",
+      "Explain which paths yield 100 at 5 km and 120 at 6 km."
     ],
-    "hint": "For 999, both questions answer no. For -1, the first question answers yes; the second is never needed.",
+    "hint": "The boundary of the new fare is 5 km. Follow the diagram for 5 and 6 before coding.",
     "steps": [
       {
         "where": "My program",
-        "action": "Set a passing score of 60, with valid scores 0..100. Output invalid, pass or retry. Check -1,59,60,101.",
+        "action": "Draw the input, validation and fare branches.",
         "why": "",
         "expected": ""
       },
       {
         "where": "My program",
-        "action": "Predict the result before running.",
+        "action": "Complete the starter while retaining distance validation.",
         "why": "",
         "expected": ""
       },
       {
         "where": "My program",
-        "action": "Write your solution in a separate starter; keep your previous work.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Compare actual output with your prediction and explain any difference.",
+        "action": "Compare 0, 5, 6 and 12 in the diagram and the program.",
         "why": "",
         "expected": ""
       }
@@ -191,5 +353,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\algorithms\\flowcharts.en.json"
+  "sourcePath": "courses\\cpp\\gold\\algorithms\\flowcharts.en.json",
+  "reading": [
+    {
+      "id": "cpp20-stmt.select",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[stmt.select]",
+      "language": "English",
+      "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.select"
+    },
+    {
+      "id": "cpp20-stmt.return",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[stmt.return]",
+      "language": "English",
+      "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.return"
+    }
+  ],
+  "authored": true
 }

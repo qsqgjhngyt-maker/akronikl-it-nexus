@@ -431,5 +431,540 @@
     },
     "negative": "Replacing >= with > incorrectly charges an order of exactly 1000. Test the boundary itself.",
     "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
+  },
+  "teachingEdition": {
+    "revision": "b2-author-v1",
+    "title": "A flowchart you can follow",
+    "goal": "Read edges as precise transitions and test them at decision boundaries.",
+    "prerequisites": [
+      {
+        "text": "You understand conditional alternatives."
+      },
+      {
+        "text": "You can prepare a decision table."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "The transition matters more than the shape",
+        "paragraphs": [
+          "Start and end define procedure boundaries. An action modifies state; input/output interacts with the outside world; a decision chooses a path. Connections need clear direction.",
+          "Without labeled true/false branches, a reader must guess which path to follow. A sound flowchart allows manual execution without consulting its author.",
+          "Start by naming the path for one input. Each decision needs clear yes and no destinations. Failed input also needs an exit."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Order validation before shipping price",
+        "paragraphs": [
+          "An order totals exactly 1000. Is delivery free? Start at the input, follow validation and find the edge at the threshold.",
+          "Mark the chosen path before running."
+        ],
+        "diagram": {
+          "caption": "Order total flowchart",
+          "text": "Start → read total\n◇ Input read?\n├─ no  → invalid → end\n└─ yes → ◇ Total < 0?\n          ├─ yes → invalid → end\n          └─ no  → ◇ Total ≥ 1000?\n                   ├─ yes → free → end\n                   └─ no  → 150 → end"
+        },
+        "prediction": [
+          "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}"
+        ],
+        "predictionInput": "1000\n",
+        "reveal": {
+          "title": "Compare your prediction and trace the steps",
+          "paragraphs": [
+            "Consider a delivery policy: negative order totals are invalid, orders totaling at least 1000 get free delivery, and smaller valid orders pay 150. Validation therefore precedes the threshold check.",
+            "Moving checks into the wrong order can apply a fee to invalid orders. The diagram makes the policy explicit before C++ code is written.",
+            "For a total of 1000, both decisions have a definite result. The negative check is false and >= 1000 is true. Write free, then compare the edges and output."
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
+            "stdin": "1000\n",
+            "output": "free\n"
+          }
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Tracing inputs and covering branches",
+        "paragraphs": [
+          "For -1 the result is invalid; for 999 the delivery fee is 150; for 1000 it is free. These exercise distinct execution paths.",
+          "Testing only one friendly input does not establish branch behavior. Boundary cases distinguish > from >= and catch off-by-one defects."
+        ],
+        "tables": [
+          {
+            "caption": "Three paths through the checks",
+            "columns": [
+              "Input",
+              "Negative?",
+              "At threshold?",
+              "Output"
+            ],
+            "rows": [
+              [
+                "−1",
+                "yes",
+                "—",
+                "invalid"
+              ],
+              [
+                "999",
+                "no",
+                "no",
+                "150"
+              ],
+              [
+                "1000",
+                "no",
+                "yes",
+                "free"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Decompose complex charts",
+        "paragraphs": [
+          "A high-level diagram reading 'validate order → calculate total → produce receipt' is usually clearer than a hundred small rectangles. Move inner details into subprocedures.",
+          "Specify the inputs and outputs of each component. A diagram neither replaces an interface contract nor removes the need for tests.",
+          "In a different task, “validated” means a score from 0 to 100. The diagram still begins with validation even though the threshold and output labels change."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    int score;\n    if (!(std::cin >> score)) { std::cout << \"invalid\\n\"; return 0; }\n    if (score < 0 || score > 100) std::cout << \"invalid\\n\";\n    else if (score >= 60) std::cout << \"pass\\n\";\n    else std::cout << \"retry\\n\";\n}",
+          "stdin": "60\n",
+          "output": "pass\n"
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Make visual models accessible and truthful",
+        "paragraphs": [
+          "A diagram's labels must match the conditions in the executable code. On small screens, the same transitions need an accessible textual explanation.",
+          "An interactive diagram is still a model rather than a compiler result. Compare it against actual outputs in Code Studio.",
+          "Compare the ≥ decision with the code. If the diagram changes ≥ to >, input 1000 follows a different edge. This test checks whether diagram and program agree."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Two tariffs, two distinct contracts",
+        "paragraphs": [
+          "The worked example uses an order-amount threshold; the laboratory uses distance. Do not carry x≥1000 into the kilometre program. Distances 1..5 cost 100, 6 costs 120, and 8 costs 160. The laboratory flow is input → valid distance? → distance>5? → extra charge → output. Label both yes and no exits at each decision."
+        ]
+      },
+      {
+        "id": "concept-7",
+        "title": "Input policy and execution limits",
+        "paragraphs": [
+          "The laboratory accepts distance from 1 to 1000000; other values produce invalid.",
+          "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Try a separate task",
+        "paragraphs": [
+          "Draw the distance fare flowchart and implement it. Distances of 1–5 km cost 100 and every kilometre after the fifth adds 20. Accept integer distances 1..1000000. Print invalid for disallowed or unreadable input.",
+          "Predict the first case and one boundary case. Practice has a separate starter. After running it, explain which check or operation produced each result."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Follow the diagram and code for total 999. What result follows?",
+        "options": [
+          "150\n",
+          "free\n",
+          "invalid\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes. The total is valid and below the threshold.",
+          "Free delivery starts at 1000.",
+          "999 is readable and nonnegative."
+        ],
+        "recall": "concept-2",
+        "code": {
+          "source": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
+          "stdin": "999\n"
+        },
+        "execution": {
+          "source": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
+          "stdin": "999\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          },
+          "expected": "150\n"
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "What makes a flowchart traceable?",
+        "options": [
+          "Directed and labeled decision edges",
+          "Arbitrary shapes",
+          "Missing conditions"
+        ],
+        "correct": 0,
+        "feedback": "A reader needs both direction and branch meaning.",
+        "recall": "concept-1"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "What does testing 999 and 1000 reveal?",
+        "options": [
+          "A linker error",
+          "An inclusive/exclusive boundary defect",
+          "A memory leak"
+        ],
+        "correct": 1,
+        "feedback": "It distinguishes > from >=.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "What happens with a negative order total?",
+        "options": [
+          "Calculate delivery price",
+          "Print free",
+          "Reject it before price checks"
+        ],
+        "correct": 2,
+        "feedback": "Input validation precedes the threshold decision.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "For input 6 km, give both decisions in your distance fare chart. Why does input 0 never reach the fare calculation?",
+        "feedback": "Explain which paths yield 100 at 5 km and 120 at 6 km.",
+        "recall": "concept-2"
+      }
+    ],
+    "practice": {
+      "title": "Distance fare",
+      "task": "Draw the distance fare flowchart and implement it. Distances of 1–5 km cost 100 and every kilometre after the fifth adds 20. Accept integer distances 1..1000000. Print invalid for disallowed or unreadable input.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    // TODO: add the amount due after the first five kilometres.\n    std::cout << cost << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "12\n",
+      "returnAnchor": "concept-2",
+      "recall": "concept-2",
+      "cases": [
+        {
+          "label": "New main input",
+          "input": "12\n",
+          "output": "240\n"
+        },
+        {
+          "label": "Check 1",
+          "input": "0\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 2",
+          "input": "5\n",
+          "output": "100\n"
+        },
+        {
+          "label": "Check 3",
+          "input": "8\n",
+          "output": "160\n"
+        },
+        {
+          "label": "Check 4",
+          "input": "oops\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 5",
+          "input": "1\n",
+          "output": "100\n"
+        },
+        {
+          "label": "Check 6",
+          "input": "6\n",
+          "output": "120\n"
+        },
+        {
+          "label": "Check 7",
+          "input": "1000000\n",
+          "output": "20000000\n"
+        },
+        {
+          "label": "Check 8",
+          "input": "1000001\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 9",
+          "input": "",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Label each decision exit.",
+        "Check extraction and range before applying the fare.",
+        "Explain which paths yield 100 at 5 km and 120 at 6 km."
+      ],
+      "hint": "The boundary of the new fare is 5 km. Follow the diagram for 5 and 6 before coding.",
+      "steps": [
+        {
+          "where": "My program",
+          "action": "Draw the input, validation and fare branches.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Complete the starter while retaining distance validation.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Compare 0, 5, 6 and 12 in the diagram and the program.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-stmt.select",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[stmt.select]",
+        "language": "English",
+        "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.select"
+      },
+      {
+        "id": "cpp20-stmt.return",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[stmt.return]",
+        "language": "English",
+        "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.return"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+    "starterExpected": "100\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+        "stdin": "12\n",
+        "label": "transfer-1",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "240\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+        "stdin": "0\n",
+        "label": "transfer-2",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+        "stdin": "5\n",
+        "label": "transfer-3",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "100\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+        "stdin": "8\n",
+        "label": "transfer-4",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "160\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+        "stdin": "oops\n",
+        "label": "transfer-5",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+        "stdin": "1\n",
+        "label": "transfer-6",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "100\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+        "stdin": "6\n",
+        "label": "transfer-7",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "120\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+        "stdin": "1000000\n",
+        "label": "transfer-8",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "20000000\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+        "stdin": "1000001\n",
+        "label": "transfer-9",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}",
+        "stdin": "",
+        "label": "transfer-10",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int distance;\n    if (!(std::cin >> distance)) { std::cout << \"invalid\\n\"; return 0; }\n    if (distance <= 0 || distance > 1000000) { std::cout << \"invalid\\n\"; return 0; }\n    int cost = 100;\n    if (distance > 5) cost += (distance - 5) * 20;\n    std::cout << cost << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
+        "stdin": "-1\n",
+        "label": "example-case-1",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}",
+        "stdin": "oops\n",
+        "label": "example-case-2",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int total;\n    if (!(std::cin >> total)) { std::cout << \"invalid\\n\"; return 0; }\n    if (total < 0) { std::cout << \"invalid\\n\"; return 0; }\n    if (total >= 1000) std::cout << \"free\\n\";\n    else std::cout << \"150\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int score;\n    if (!(std::cin >> score)) { std::cout << \"invalid\\n\"; return 0; }\n    if (score < 0 || score > 100) std::cout << \"invalid\\n\";\n    else if (score >= 60) std::cout << \"pass\\n\";\n    else std::cout << \"retry\\n\";\n}",
+        "stdin": "59\n",
+        "label": "example-case-3",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int score;\n    if (!(std::cin >> score)) { std::cout << \"invalid\\n\"; return 0; }\n    if (score < 0 || score > 100) std::cout << \"invalid\\n\";\n    else if (score >= 60) std::cout << \"pass\\n\";\n    else std::cout << \"retry\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "retry\n"
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "concept-2",
+      "3": "concept-3",
+      "4": "concept-6"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      },
+      {
+        "sourceSection": 6,
+        "anchor": "concept-7"
+      }
+    ]
   }
 }

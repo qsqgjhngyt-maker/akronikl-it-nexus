@@ -389,10 +389,10 @@
     "training": {
       "id": "clarity-training",
       "title": "Training",
-      "challenge": "Set seconds to 60, then to 0.",
-      "starterCode": "#include <iostream>\n\nint main() {\n    int seconds = 125;\n    int minutes = seconds / 60;\n    int remainder = seconds % 60;\n    std::cout << minutes << ' ' << remainder << '\\n';\n    return 0;\n}\n",
+      "challenge": "Control run: seconds is already 0. Predict the output of the displayed source.",
+      "starterCode": "#include <iostream>\n\nint main() {\n    int seconds = 0;\n    int minutes = seconds / 60;\n    int remainder = seconds % 60;\n    std::cout << minutes << ' ' << remainder << '\\n';\n    return 0;\n}\n",
       "stdin": "",
-      "expectedStdout": "1 0\n",
+      "expectedStdout": "0 0\n",
       "hints": [
         "Exactly one minute leaves no remaining seconds.",
         "For zero, both quotient and remainder are zero."
@@ -439,5 +439,523 @@
     },
     "negative": "Printing only minutes loses 5 seconds: the algorithm finished but did not provide the complete required result.",
     "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
+  },
+  "teachingEdition": {
+    "revision": "b2-author-v1",
+    "title": "When instructions become an algorithm",
+    "goal": "State a contract, trace the steps and distinguish a correct answer from a program that merely stops.",
+    "prerequisites": [
+      {
+        "text": "You can identify a problem's inputs and outputs."
+      },
+      {
+        "text": "Division with remainder helps but C++ syntax is not a prerequisite."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Turn an informal task into precise steps",
+        "paragraphs": [
+          "An instruction such as 'repeat until the number is small' leaves 'small' undefined. An algorithm needs an explicit condition, state update and result.",
+          "We can state a Euclidean step precisely: while b is not zero, replace (a,b) by (b,a modulo b). With a suitable input domain, a programmer can implement and test the process.",
+          "In the previous lesson, price and count determined a calculation. Now agree on the result before writing code. For age, decide whether 120 is allowed and what the program reports on failed input."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Definiteness and discreteness",
+        "paragraphs": [
+          "Discreteness means reasoning about a computation as a sequence of individual steps. Definiteness means the executor can identify the intended operation at each step.",
+          "Different programming languages may implement the same algorithm. Precise transitions let us trace intermediate states and compare implementations.",
+          "Reading and checking the range are two separate steps. With oops instead of an age, the program has no number to compare with 120."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    int age;\n    if (!(std::cin >> age)) { std::cout << \"invalid\\n\"; return 0; }\n    if (age >= 0 && age <= 120) std::cout << \"valid\\n\";\n    else std::cout << \"invalid\\n\";\n}",
+          "stdin": "25\n",
+          "output": "valid\n"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Termination, the input domain and generality",
+        "paragraphs": [
+          "A terminating algorithm must finish for every input in its stated domain. A condition such as n >= 0 matters: a loop designed for positive counts may misbehave outside that domain.",
+          "Generality means solving a class of related instances, not a single hard-coded example. A sound addition algorithm should work for multiple valid pairs.",
+          "Try 0, 120 and 121. The same rule must give valid, valid and invalid. Checking the boundary separates <= from <."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Correctness requires more than stopping",
+        "paragraphs": [
+          "A program may halt quickly and still produce the wrong result. We must establish both a terminating process and a postcondition satisfied by its output.",
+          "In Euclid's algorithm, replacing (a,b) with (b,a mod b) preserves the greatest common divisor; when b becomes zero, a is the answer. This illustrates invariant-based reasoning.",
+          "A defective program may always print valid and stop. Input 121 immediately disproves its postcondition even though the run terminates."
+        ]
+      },
+      {
+        "id": "concept-5",
+        "title": "Identify an exit condition before coding the loop",
+        "paragraphs": [
+          "A nonnegative quantity that strictly decreases often explains termination. But you must check that each transition actually reduces the quantity under the preconditions.",
+          "Changing a loop requires revisiting its invariant and exit condition. Forgetting to update a counter can turn a correct finite loop into an infinite one.",
+          "Imagine converting time by repeatedly subtracting 60. When the remainder is at least 60, a step subtracts 60 and adds one minute. The quantity 60·minutes + remainder stays constant. The remainder decreases until it is below 60."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Contract and postcondition",
+        "paragraphs": [
+          "A timer shows 125 seconds. A report needs whole minutes and the seconds left over. Which two numbers will the reader see?",
+          "Write both numbers before running the program. Then check whether they reconstruct the original time."
+        ],
+        "prediction": [
+          "#include <iostream>\nint main() {\n    int seconds;\n    if (!(std::cin >> seconds)) { std::cout << \"invalid\\n\"; return 0; }\n    if (seconds < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << seconds / 60 << ' ' << seconds % 60 << '\\n';\n}"
+        ],
+        "predictionInput": "125\n",
+        "reveal": {
+          "title": "Compare your prediction and trace the steps",
+          "paragraphs": [
+            "For 125 seconds, the result is 2 minutes and 5 seconds: 125 = 60·2 + 5. Zero produces 0 and 0. The general postcondition is seconds = 60·minutes + remainder with 0 ≤ remainder < 60. Integer / gives the quotient and % the remainder. Once nonnegative input has been checked, these operations match ordinary division.",
+            "Division and remainder produce the same result as repeated subtraction. Check reconstruction and the remainder bound. The pair 1 65 reconstructs 125, but violates the bound and is therefore incorrect."
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\nint main() {\n    int seconds;\n    if (!(std::cin >> seconds)) { std::cout << \"invalid\\n\"; return 0; }\n    if (seconds < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << seconds / 60 << ' ' << seconds % 60 << '\\n';\n}",
+            "stdin": "125\n",
+            "output": "2 5\n"
+          },
+          "tables": [
+            {
+              "caption": "The path for 125 seconds",
+              "columns": [
+                "Step",
+                "Known value",
+                "Check"
+              ],
+              "rows": [
+                [
+                  "std::cin",
+                  "125",
+                  "125 ≥ 0"
+                ],
+                [
+                  "125 / 60",
+                  "2",
+                  "Two whole minutes"
+                ],
+                [
+                  "125 % 60",
+                  "5",
+                  "0 ≤ 5 < 60"
+                ],
+                [
+                  "stdout",
+                  "2 5",
+                  "60 × 2 + 5 = 125"
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "concept-7",
+        "title": "Input policy and execution limits",
+        "paragraphs": [
+          "Integer inputs must fit the Code Studio int type. Failed extraction (text instead of a number or end of input) produces invalid; no further calculation is performed.",
+          "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Try a separate task",
+        "paragraphs": [
+          "Pack a nonnegative number of parts into boxes of 12. Print the full boxes and leftover parts separated by a space. Print invalid for a negative, missing or unreadable count.",
+          "Predict the first case and one boundary case. Practice has a separate starter. After running it, explain which check or operation produced each result."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Supply 61 seconds. What will the displayed program print?",
+        "options": [
+          "1 1\n",
+          "0 61\n",
+          "1 0\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes. 61 = 60 × 1 + 1.",
+          "61 cannot be the remainder because it still contains a whole minute.",
+          "That would be the result for 60 seconds. One second remains."
+        ],
+        "recall": "concept-6",
+        "code": {
+          "source": "#include <iostream>\nint main() {\n    int seconds;\n    if (!(std::cin >> seconds)) { std::cout << \"invalid\\n\"; return 0; }\n    if (seconds < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << seconds / 60 << ' ' << seconds % 60 << '\\n';\n}",
+          "stdin": "61\n"
+        },
+        "execution": {
+          "source": "#include <iostream>\nint main() {\n    int seconds;\n    if (!(std::cin >> seconds)) { std::cout << \"invalid\\n\"; return 0; }\n    if (seconds < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << seconds / 60 << ' ' << seconds % 60 << '\\n';\n}",
+          "stdin": "61\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\nint main() {\n    int seconds;\n    if (!(std::cin >> seconds)) { std::cout << \"invalid\\n\"; return 0; }\n    if (seconds < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << seconds / 60 << ' ' << seconds % 60 << '\\n';\n}"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          },
+          "expected": "1 1\n"
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "What property makes each step unambiguous?",
+        "options": [
+          "Definiteness",
+          "Generality",
+          "Efficiency"
+        ],
+        "correct": 0,
+        "feedback": "The executor can determine the next operation without guessing.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "How does correctness differ from termination?",
+        "options": [
+          "They are identical",
+          "An algorithm may halt and return a wrong result",
+          "Correctness does not require output"
+        ],
+        "correct": 1,
+        "feedback": "Finishing and producing the required result are separate obligations.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "What is a loop invariant?",
+        "options": [
+          "Another name for any variable",
+          "A number that must always be positive",
+          "A property preserved across transitions"
+        ],
+        "correct": 2,
+        "feedback": "An invariant supports reasoning about intermediate states.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Why is checking only 12 × boxes + leftover = 29 insufficient? Give an incorrect pair that still totals 29.",
+        "feedback": "Check 12 × boxes + leftover = the original count and 0 ≤ leftover < 12.",
+        "recall": "concept-6"
+      }
+    ],
+    "practice": {
+      "title": "Full boxes and leftover parts",
+      "task": "Pack a nonnegative number of parts into boxes of 12. Print the full boxes and leftover parts separated by a space. Print invalid for a negative, missing or unreadable count.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    // TODO: print full boxes and leftover items.\n    std::cout << \"0 0\\n\";\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "29\n",
+      "returnAnchor": "concept-6",
+      "recall": "concept-6",
+      "cases": [
+        {
+          "label": "29 items",
+          "input": "29\n",
+          "output": "2 5\n"
+        },
+        {
+          "label": "Exactly one box",
+          "input": "12\n",
+          "output": "1 0\n"
+        },
+        {
+          "label": "One short",
+          "input": "11\n",
+          "output": "0 11\n"
+        },
+        {
+          "label": "No items",
+          "input": "0\n",
+          "output": "0 0\n"
+        },
+        {
+          "label": "Negative count",
+          "input": "-1\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Failed extraction",
+          "input": "oops\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "No input",
+          "input": "",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Check extraction and nonnegativity before calculating.",
+        "Check 12 × boxes + leftover = the original count and 0 ≤ leftover < 12."
+      ],
+      "hint": "Name both parts of the result and check them separately for input 11.",
+      "steps": [
+        {
+          "where": "My program",
+          "action": "Write the contract and predict the result for 29.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Replace the temporary output with calculations.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Run the boundary cases and explain both result conditions.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-expr.mul",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[expr.mul]",
+        "language": "English",
+        "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
+      },
+      {
+        "id": "cpp20-stmt.iter",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[stmt.iter]",
+        "language": "English",
+        "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.iter"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}",
+    "starterExpected": "0 0\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}",
+        "stdin": "29\n",
+        "label": "transfer-1",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "2 5\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}",
+        "stdin": "12\n",
+        "label": "transfer-2",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "1 0\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}",
+        "stdin": "11\n",
+        "label": "transfer-3",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "0 11\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}",
+        "stdin": "0\n",
+        "label": "transfer-4",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "0 0\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}",
+        "stdin": "-1\n",
+        "label": "transfer-5",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}",
+        "stdin": "oops\n",
+        "label": "transfer-6",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}",
+        "stdin": "",
+        "label": "transfer-7",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int items;\n    if (!(std::cin >> items)) { std::cout << \"invalid\\n\"; return 0; }\n    if (items < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << items / 12 << ' ' << items % 12 << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int age;\n    if (!(std::cin >> age)) { std::cout << \"invalid\\n\"; return 0; }\n    if (age >= 0 && age <= 120) std::cout << \"valid\\n\";\n    else std::cout << \"invalid\\n\";\n}",
+        "stdin": "0\n",
+        "label": "example-case-1",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int age;\n    if (!(std::cin >> age)) { std::cout << \"invalid\\n\"; return 0; }\n    if (age >= 0 && age <= 120) std::cout << \"valid\\n\";\n    else std::cout << \"invalid\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "valid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int age;\n    if (!(std::cin >> age)) { std::cout << \"invalid\\n\"; return 0; }\n    if (age >= 0 && age <= 120) std::cout << \"valid\\n\";\n    else std::cout << \"invalid\\n\";\n}",
+        "stdin": "120\n",
+        "label": "example-case-2",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int age;\n    if (!(std::cin >> age)) { std::cout << \"invalid\\n\"; return 0; }\n    if (age >= 0 && age <= 120) std::cout << \"valid\\n\";\n    else std::cout << \"invalid\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "valid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int age;\n    if (!(std::cin >> age)) { std::cout << \"invalid\\n\"; return 0; }\n    if (age >= 0 && age <= 120) std::cout << \"valid\\n\";\n    else std::cout << \"invalid\\n\";\n}",
+        "stdin": "121\n",
+        "label": "example-case-3",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int age;\n    if (!(std::cin >> age)) { std::cout << \"invalid\\n\"; return 0; }\n    if (age >= 0 && age <= 120) std::cout << \"valid\\n\";\n    else std::cout << \"invalid\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int age;\n    if (!(std::cin >> age)) { std::cout << \"invalid\\n\"; return 0; }\n    if (age >= 0 && age <= 120) std::cout << \"valid\\n\";\n    else std::cout << \"invalid\\n\";\n}",
+        "stdin": "oops\n",
+        "label": "example-case-4",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int age;\n    if (!(std::cin >> age)) { std::cout << \"invalid\\n\"; return 0; }\n    if (age >= 0 && age <= 120) std::cout << \"valid\\n\";\n    else std::cout << \"invalid\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int seconds;\n    if (!(std::cin >> seconds)) { std::cout << \"invalid\\n\"; return 0; }\n    if (seconds < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << seconds / 60 << ' ' << seconds % 60 << '\\n';\n}",
+        "stdin": "60\n",
+        "label": "example-case-5",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int seconds;\n    if (!(std::cin >> seconds)) { std::cout << \"invalid\\n\"; return 0; }\n    if (seconds < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << seconds / 60 << ' ' << seconds % 60 << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "1 0\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int seconds;\n    if (!(std::cin >> seconds)) { std::cout << \"invalid\\n\"; return 0; }\n    if (seconds < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << seconds / 60 << ' ' << seconds % 60 << '\\n';\n}",
+        "stdin": "0\n",
+        "label": "example-case-6",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int seconds;\n    if (!(std::cin >> seconds)) { std::cout << \"invalid\\n\"; return 0; }\n    if (seconds < 0) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << seconds / 60 << ' ' << seconds % 60 << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "0 0\n"
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "concept-3",
+      "3": "concept-6",
+      "4": "concept-5"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      },
+      {
+        "sourceSection": 6,
+        "anchor": "concept-7"
+      }
+    ]
   }
 }

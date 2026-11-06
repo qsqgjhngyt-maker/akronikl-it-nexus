@@ -662,5 +662,555 @@
     },
     "negative": "If a new build failed, old output 12 does not prove the new statements ran. Find the current build diagnostics.",
     "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
+  },
+  "teachingEdition": {
+    "revision": "b2-author-v1",
+    "title": "What failed: the build, the run or the formula",
+    "goal": "Identify the failing stage and verify one correction with a reproducible experiment.",
+    "prerequisites": [
+      {
+        "text": "Basic conditions and input/output."
+      },
+      {
+        "text": "Algorithm, input and test case."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Source files and builds",
+        "paragraphs": [
+          "C++ is written in text files. A compiler handles source using selected language options, and diagnostic wording varies among tools.",
+          "Code Studio's actual capabilities depend on its runtime provider. Do not assume complete C++23 support merely from the tool name.",
+          "Run the tiny program and record Nexus C++. This control shows that the environment can build and run a small source file. Change one condition at a time next."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    std::cout << \"Nexus C++\\n\";\n}",
+          "stdin": "",
+          "output": "Nexus C++\n"
+        }
+      },
+      {
+        "id": "concept-2",
+        "title": "Preprocessing, compilation and linking",
+        "paragraphs": [
+          "Preprocessing handles directives such as #include. Compilation checks language constructs and translates code; linking resolves required symbols and libraries.",
+          "A missing semicolon typically causes a compilation error; a declared but undefined external function may cause a linker error."
+        ],
+        "diagram": {
+          "caption": "Where to look for the first cause",
+          "text": "main.cpp → process #include\n         → translate the source\n         → link the program\n         → run with the recorded stdin"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "A program can fail after a successful build",
+        "paragraphs": [
+          "Execution can encounter invalid input, forbidden operations and incorrect decisions. Integer division by zero must be prevented.",
+          "With two int operands, 10/3 is 3 rather than 3.333. This is the defined integer operation, not a compiler defect.",
+          "Input 10 2 produces 12 because this example promises a sum. The same output would be wrong for a quotient task. Begin with the expected result rather than a guess about the compiler."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a + b << '\\n';\n}",
+          "stdin": "10 2\n",
+          "output": "12\n"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "Debugging starts with reproduction",
+        "paragraphs": [
+          "A rectangle report for 4 by 3 expected 12, but the program printed 7. Before editing, find the operator that actually executes.",
+          "Record the observed result and explain why the build can still succeed."
+        ],
+        "prediction": [
+          "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n"
+        ],
+        "predictionInput": "4 3\n",
+        "reveal": {
+          "title": "Compare your prediction and trace the steps",
+          "paragraphs": [
+            "Record the command, input, expected output, actual output and first relevant diagnostic. Classify the phase of failure before editing.",
+            "Make one motivated correction and rerun both the failing case and earlier successful cases.",
+            "The area contract requires multiplication. For 4 and 3, record “expected 12, observed 7.” Build and execution succeeded, so inspect the formula first. Replace only + with *, then verify 4 3 and 1 1."
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n",
+            "stdin": "4 3\n",
+            "output": "7\n"
+          },
+          "tables": [
+            {
+              "caption": "Signals from different failure modes",
+              "columns": [
+                "Observation",
+                "Where to look",
+                "What to compare"
+              ],
+              "rows": [
+                [
+                  "No executable",
+                  "Syntax or link",
+                  "First build diagnostic"
+                ],
+                [
+                  "Program runs, input rejected",
+                  "Input contract",
+                  "Exact stdin and allowed range"
+                ],
+                [
+                  "Program prints 7 instead of 12",
+                  "Area formula",
+                  "Expected result for 4 3"
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Standards and portability",
+        "paragraphs": [
+          "These examples are checked in C++20 mode and use core language facilities. A language standard defines the rules, while a compiler selects a mode and reports diagnostics. Record the tool version and selected mode when comparing two machines.",
+          "Do not rely on identical diagnostic wording in a portable experiment. Check build success, exit status and exact stdout separately."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "A minimal reproducible example",
+        "paragraphs": [
+          "A syntax defect prevents a build, for example a missing semicolon. An execution defect or wrong result appears when running: division by zero is invalid, while integer 10/3 yields 3 rather than 3.333. For negative integers, C++ truncates the quotient toward zero: -8/3 is -2. Save source, input, expected and actual output; fix one cause and rerun earlier tests.",
+          "Compare the corrected source with the previous one. This pair changes exactly one operator and keeps the same extraction and range check. For 1 1 the defective version would give 2 and the correction gives 1."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n}\n",
+          "stdin": "4 3\n",
+          "output": "12\n"
+        }
+      },
+      {
+        "id": "concept-7",
+        "title": "Input policy and execution limits",
+        "paragraphs": [
+          "For the laboratory, a and b are limited to -1000000..1000000 and b must be nonzero. This also excludes quotient overflow.",
+          "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+        ]
+      },
+      {
+        "id": "diagnose-syntax",
+        "title": "Experiment: missing semicolon",
+        "paragraphs": [
+          "This version must be rejected during the build. Look at the first message near std::cout and the closing brace. Restore the semicolon and verify the control output Nexus C++."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    std::cout << \"Nexus C++\\n\"\n}",
+          "stdin": "",
+          "expectCompileFailure": true
+        }
+      },
+      {
+        "id": "diagnose-link",
+        "title": "Experiment: declared but not defined",
+        "paragraphs": [
+          "The compiler knows the signature of area and can translate the call. The linker still needs the function body. This single file lacks it, so the build cannot produce a runnable result. Add a definition with the same signature."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "int area(int width, int height);\n\nint main() {\n    return area(4, 3);\n}\n",
+          "stdin": "",
+          "expectCompileFailure": true
+        }
+      },
+      {
+        "id": "independent-work",
+        "title": "Try a separate task",
+        "paragraphs": [
+          "Debug the integer quotient program. The starter reads input and checks −1000000..1000000 and a nonzero divisor, but its formula is wrong. First reproduce the difference for 17 −5, then fix the operation. Print invalid for disallowed or unreadable input.",
+          "Predict the first case and one boundary case. Practice has a separate starter. After running it, explain which check or operation produced each result."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "For input 5 3, what does the shown source print before correcting its formula?",
+        "options": [
+          "8\n",
+          "15\n",
+          "invalid\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes. This source adds 5 and 3.",
+          "15 is the correct area, but it is not the observed output of this defective source.",
+          "The input is readable and passes the stated bounds."
+        ],
+        "recall": "concept-4",
+        "code": {
+          "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n",
+          "stdin": "5 3\n"
+        },
+        "execution": {
+          "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n",
+          "stdin": "5 3\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          },
+          "expected": "8\n"
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "When is a missing semicolon generally detected?",
+        "options": [
+          "Compilation",
+          "After process exit",
+          "In graphic design"
+        ],
+        "correct": 0,
+        "feedback": "It is a syntax issue.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "What is 10/3 when both values have type int?",
+        "options": [
+          "3.333",
+          "3",
+          "4"
+        ],
+        "correct": 1,
+        "feedback": "Integer division discards the fraction.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "What must be true before dividing a by b?",
+        "options": [
+          "The UI is colorful",
+          "a>0",
+          "b!=0"
+        ],
+        "correct": 2,
+        "feedback": "Zero division is invalid.",
+        "recall": "concept-7"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "For 17 −5, compare the starter’s result with the corrected program. Explain how this defect differs from a missing semicolon and why b = 0 is checked first.",
+        "feedback": "Name the starter’s failure mode and record source, input, expected and observed output before and after.",
+        "recall": "concept-4"
+      }
+    ],
+    "practice": {
+      "title": "Fixing integer division",
+      "task": "Debug the integer quotient program. The starter reads input and checks −1000000..1000000 and a nonzero divisor, but its formula is wrong. First reproduce the difference for 17 −5, then fix the operation. Print invalid for disallowed or unreadable input.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    // This placeholder builds but performs the wrong operation.\n    std::cout << a + b << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "17 -5\n",
+      "returnAnchor": "concept-4",
+      "recall": "concept-4",
+      "cases": [
+        {
+          "label": "New main input",
+          "input": "17 -5\n",
+          "output": "-3\n"
+        },
+        {
+          "label": "Check 1",
+          "input": "10 3\n",
+          "output": "3\n"
+        },
+        {
+          "label": "Check 2",
+          "input": "10 0\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 3",
+          "input": "-8 3\n",
+          "output": "-2\n"
+        },
+        {
+          "label": "Check 4",
+          "input": "oops\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 5",
+          "input": "-2147483648 -1\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 6",
+          "input": "1000000 -1000000\n",
+          "output": "-1\n"
+        },
+        {
+          "label": "Check 7",
+          "input": "1000001 1\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Check 8",
+          "input": "",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Retain the guard before division and check b=0.",
+        "Check truncation toward zero with a negative quotient.",
+        "Name the starter’s failure mode and record source, input, expected and observed output before and after."
+      ],
+      "hint": "Record expected and observed results for 17 −5, then make one change.",
+      "steps": [
+        {
+          "where": "My program",
+          "action": "Record a prediction and run the starter.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Fix one operation.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Repeat the run and test zero, sign and range.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-lex.phases",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[lex.phases]",
+        "language": "English",
+        "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/lex.phases"
+      },
+      {
+        "id": "cpp20-basic.def.odr",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[basic.def.odr]",
+        "language": "English",
+        "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/basic.def.odr"
+      },
+      {
+        "id": "cpp20-expr.mul",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[expr.mul]",
+        "language": "English",
+        "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+    "starterExpected": "12\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "17 -5\n",
+        "label": "transfer-1",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "-3\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "10 3\n",
+        "label": "transfer-2",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "3\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "10 0\n",
+        "label": "transfer-3",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "-8 3\n",
+        "label": "transfer-4",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "-2\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "oops\n",
+        "label": "transfer-5",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "-2147483648 -1\n",
+        "label": "transfer-6",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "1000000 -1000000\n",
+        "label": "transfer-7",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "-1\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "1000001 1\n",
+        "label": "transfer-8",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}",
+        "stdin": "",
+        "label": "transfer-9",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int a, b;\n    if (!(std::cin >> a >> b) || a < -1000000 || a > 1000000 || b < -1000000 || b > 1000000 || b == 0) {\n        std::cout << \"invalid\\n\"; return 0;\n    }\n    std::cout << a / b << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n",
+        "stdin": "1 1\n",
+        "label": "example-case-1",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width + height << '\\n';\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "2\n"
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n}\n",
+        "stdin": "1 1\n",
+        "label": "example-case-2",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int width, height;\n    if (!(std::cin >> width >> height) || width < 1 || width > 1000 ||\n        height < 1 || height > 1000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << width * height << '\\n';\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "1\n"
+      }
+    ],
+    "coverage": {
+      "1": "concept-2",
+      "2": "concept-2",
+      "3": "concept-4",
+      "4": "concept-6"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      },
+      {
+        "sourceSection": 6,
+        "anchor": "concept-7"
+      }
+    ]
   }
 }

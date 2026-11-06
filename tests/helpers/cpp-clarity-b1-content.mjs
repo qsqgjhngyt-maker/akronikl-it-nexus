@@ -2,10 +2,13 @@ import {readFile} from 'node:fs/promises';
 import {goldLessonPath} from '../../core/academy-gold-catalog.js';
 export const B1_NEW=['first-cpp-program','tokens-identifiers-keywords','comments-constants-literals','variables-scope','expressions-operators-blocks','arithmetic-assignment','type-conversions','relations-logic','increment-decrement-sizeof-conditional','pointers-references-addresses','standard-io'].map(x=>'cpp.'+x);
 export const B1_IDS=[...B1_NEW.slice(0,3),'cpp.data-types',...B1_NEW.slice(3)];
+export const B2_NEW=['algorithm-definition-properties','algorithm-representations','pseudocode-euclidean-algorithm','flowcharts','top-down-design','sequence-branching-loops','languages-compilation-debugging'].map(name=>'cpp.'+name);
+export const B2_IDS=['cpp.programming-process',...B2_NEW];
 export const B1_BASE='bf8eabb0a6ec40c3ed767f073ed6c02c321531b1';
 export async function b1Lesson(id,locale){const g=JSON.parse(await readFile(goldLessonPath(id,locale),'utf8')),l=JSON.parse(await readFile('courses/clarity/lessons/'+id+'.'+locale+'.json','utf8'));return {g,l};}
 export function record(id,locale,name,c){return {id,locale,name,source:c.source,stdin:c.stdin||'',files:c.files||{'main.cpp':c.source},metadata:c.metadata||{entryFile:'main.cpp'},expected:c.expected??c.output,expectCompileFailure:!!c.expectCompileFailure};}
-export async function b1Programs(){const rows=[];for(const id of B1_NEW)for(const locale of ['ru','en']){const {g,l}=await b1Lesson(id,locale);
+export const b1Programs=()=>authoredPrograms(B1_NEW);
+export async function authoredPrograms(ids){const rows=[];for(const id of ids)for(const locale of ['ru','en']){const {g,l}=await b1Lesson(id,locale);
 for(const s of l.sections)for(const c of [s.code,s.reveal?.code].filter(Boolean))rows.push(record(id,locale,s.id,c));
 for(const q of l.selfcheck)if(q.execution)rows.push(record(id,locale,'question-'+q.id,q.execution));
 for(const c of g.teachingEdition.verificationCases)rows.push(record(id,locale,c.label,c));

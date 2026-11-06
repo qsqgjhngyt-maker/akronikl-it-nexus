@@ -1,88 +1,148 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b2-author-v1",
   "id": "cpp.sequence-branching-loops",
   "courseId": "cpp",
   "moduleId": "cpp.section.algorithms",
   "course": "C++ programming",
   "module": "Algorithmic Thinking",
   "locale": "en",
-  "title": "Control flow: sequence, decisions and iteration",
-  "goal": "Compare sequence, selection and repetition while summing three numbers.",
+  "title": "Two decisions inside a repetition",
+  "goal": "Follow the order of operations, trace an accumulator and test the loop boundary.",
   "prerequisites": [
     {
-      "text": "You can assign and compare integers; while repetition is introduced below."
+      "text": "Basic integer arithmetic."
+    },
+    {
+      "text": "Reading conditions and state tables."
     }
   ],
   "sections": [
     {
-      "id": "model",
-      "title": "From the task to an operation",
+      "id": "concept-1",
+      "title": "Sequencing is ordered execution",
       "paragraphs": [
-        "A sequence runs statements in order. A branch selects a path. A loop repeats its body while a condition is true. The example adds 1,2,3: i is the next addend and sum is the sum already processed.",
-        "sum = sum + i computes a new sum from the old one. i = i + 1 advances to the next number. <= includes 3; while tests the condition before each iteration, meaning one execution of its body. After processing 3, i becomes 4 and execution stops."
+        "In a simple program, reading input comes before computation and printing. Reordering these steps may use an uninitialized or outdated result.",
+        "Record the values that exist after each statement to reason about execution precisely.",
+        "Read n → set the sum to 0 → visit values → print the sum. Move the print before the loop and it shows the initial zero even when the later loop calculates correctly."
       ]
     },
     {
-      "id": "worked-example",
-      "title": "Compare sequence, selection and repetition while summing three numbers.",
-      "paragraphs": [],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int sum = 0;\n    int i = 1;\n    while (i <= 3) {\n        sum = sum + i;\n        i = i + 1;\n    }\n    std::cout << sum << '\\n';\n    return 0;\n}\n",
-        "output": "6\n",
-        "stdin": ""
-      },
-      "steps": [],
-      "trace": [
-        [
-          "i <= 3; body",
-          "i: 1; sum: 0",
-          "i: 2; sum: 1",
-          "Added 1, then advanced i."
-        ],
-        [
-          "i <= 3; body",
-          "i: 2; sum: 1",
-          "i: 3; sum: 3",
-          "Added 2 to the previous sum of 1."
-        ],
-        [
-          "i <= 3; body",
-          "i: 3; sum: 3",
-          "i: 4; sum: 6",
-          "Added 3; 4 fails the next condition."
-        ]
-      ]
-    },
-    {
-      "id": "variation",
-      "title": "Change one condition and check the prediction",
+      "id": "concept-2",
+      "title": "Conditions select an alternative",
       "paragraphs": [
-        "Change the bound from 3 to 4. Predict the additional change to sum.",
-        "The first three iterations are unchanged: sum is already 6.",
-        "The fourth adds 4: 6+4=10."
+        "if executes its body when its condition is true; else handles the alternative. n%2==0 tests whether an integer is even.",
+        "Test both outcomes. Inclusive and exclusive comparisons behave differently at the boundary.",
+        "The choice comes after reading. Input 8 takes the even branch and 7 takes the other one. A loop repeats that choice for each k."
       ],
       "code": {
         "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int sum = 0;\n    int i = 1;\n    while (i <= 4) {\n        sum = sum + i;\n        i = i + 1;\n    }\n    std::cout << sum << '\\n';\n    return 0;\n}\n",
-        "stdin": "",
-        "output": "10\n"
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n)) { std::cout << \"invalid\\n\"; return 0; }\n    if (n % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
+        "stdin": "8\n",
+        "output": "even\n"
       }
     },
     {
-      "id": "diagnose",
-      "title": "When the result differs",
+      "id": "concept-3",
+      "title": "Loops describe repeated operations",
       "paragraphs": [
-        "Removing the increment keeps the condition true. Do not run an endless experiment: identify the missing step by reading."
+        "To sum even values from 1 to n, we visit each k and add it to sum only if it is even. A loop avoids manually repeating similar statements.",
+        "for groups initialization, continuation and update. With while, updating the counter normally belongs in the loop body.",
+        "Separate two tests. k <= n permits another iteration, while k % 2 == 0 decides whether that iteration changes the sum. At k=3 the loop continues without adding anything."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "A trace reveals state",
+      "paragraphs": [
+        "Sum the even numbers through 5. The counter also visits odd values. Which iterations change the sum?",
+        "Record the sum after each k, then reveal the trace."
+      ],
+      "prediction": [
+        "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+      ],
+      "predictionInput": "5\n",
+      "reveal": {
+        "title": "Compare your prediction and trace the steps",
+        "paragraphs": [
+          "At n=5, k visits 1 through 5. The sum changes at k=2 and k=4, reaching 6.",
+          "Write (k,sum) after each iteration. The invariant says that sum contains precisely the processed even integers."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+          "stdin": "5\n",
+          "output": "6\n"
+        },
+        "tables": [
+          {
+            "caption": "How the sum changes with n = 5",
+            "columns": [
+              "k",
+              "Added",
+              "Sum after body"
+            ],
+            "rows": [
+              [
+                "1",
+                "0",
+                "0"
+              ],
+              [
+                "2",
+                "2",
+                "2"
+              ],
+              [
+                "3",
+                "0",
+                "2"
+              ],
+              [
+                "4",
+                "4",
+                "6"
+              ],
+              [
+                "5",
+                "0",
+                "6"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "concept-5",
+      "title": "Termination and input bounds",
+      "paragraphs": [
+        "Without advancing k, a loop guarded by k<=n may not terminate. Huge inputs can also consume time or overflow an integer.",
+        "Our exercise limits n to 0..10000, where the sum fits a 32-bit int. Broader programs must choose appropriate bounds and types.",
+        "For n=5 the next k after the final iteration is 6, so the test is false. For every allowed n the counter increases until it leaves the range."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Zero iterations and the loop boundary",
+      "paragraphs": [
+        "In for (int k=1; k<=n; ++k), initialization happens once, the condition is checked before each iteration, and ++k runs after the body. For n=0, the condition is false immediately and the sum stays 0. For n=6, 6 is included: 2+4+6=12. Replacing <= with < loses the last item when it is even. The parity check inside the body does not replace the loop condition."
+      ]
+    },
+    {
+      "id": "concept-7",
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "Integer inputs must fit the Code Studio int type. Failed extraction (text instead of a number or end of input) produces invalid; no further calculation is performed.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
       ]
     },
     {
       "id": "independent-work",
-      "title": "Now solve your own task",
+      "title": "Try a separate task",
       "paragraphs": [
-        "Sum 1 through 5. Write i and sum after every iteration and explain the stopping condition.",
-        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+        "Sum multiples of three from 1 through n inclusive. Accept integers n from 0 to 10000, otherwise print invalid. For n = 0 the sum is zero. Use a loop with a filter so its state can be traced.",
+        "Predict the first case and one boundary case. Practice has a separate starter. After running it, explain which check or operation produced each result."
       ]
     }
   ],
@@ -90,70 +150,164 @@
     {
       "id": "predict",
       "kind": "choice",
-      "prompt": "What output follows the specified change? Change the bound from 3 to 4. Predict the additional change to sum.",
+      "prompt": "For n = 6, trace the final iteration. What does the program print?",
       "options": [
-        "10\n",
-        "Compilation fails"
+        "12\n",
+        "6\n",
+        "21\n"
       ],
       "correct": 0,
-      "feedback": "The first three iterations are unchanged: sum is already 6. The fourth adds 4: 6+4=10."
+      "feedback": [
+        "Yes. 2 + 4 + 6 = 12.",
+        "That is the result for n = 5 or the incorrect condition k < n.",
+        "21 sums every value, but the filter skips the odd ones."
+      ],
+      "recall": "concept-4",
+      "code": {
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+        "stdin": "6\n"
+      },
+      "execution": {
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+        "stdin": "6\n",
+        "label": "predict",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "12\n"
+      }
+    },
+    {
+      "id": "concept-0",
+      "kind": "choice",
+      "prompt": "Which construct repeats operations?",
+      "options": [
+        "for or while",
+        "if",
+        "return"
+      ],
+      "correct": 0,
+      "feedback": "A loop repeats while its guard holds.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "concept-1",
+      "kind": "choice",
+      "prompt": "What is the sum of even values from 1 to 5?",
+      "options": [
+        "9",
+        "6",
+        "15"
+      ],
+      "correct": 1,
+      "feedback": "2+4=6.",
+      "recall": "concept-4"
+    },
+    {
+      "id": "concept-2",
+      "kind": "choice",
+      "prompt": "How often does for(k=1;k<=0;++k) execute?",
+      "options": [
+        "Once",
+        "Forever",
+        "Zero times"
+      ],
+      "correct": 2,
+      "feedback": "The initial guard is false.",
+      "recall": "concept-6"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Sum 1 through 5. Write i and sum after every iteration and explain the stopping condition.",
-      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. After five iterations, sum is 1, 3, 6, 10, 15; i=6 then ends the loop. Using i<5 instead of i<=5 skips the final term and gives 10 instead of 15."
+      "prompt": "For n = 6, explain the difference between k <= n and k < n in the multiples-of-three task. Which test catches the defect?",
+      "feedback": "Explain why the sum changes only at k = 3 and k = 6 for n = 7.",
+      "recall": "concept-4"
     }
   ],
   "practice": {
-    "title": "Independent variation",
-    "task": "Sum 1 through 5. Write i and sum after every iteration and explain the stopping condition.",
+    "title": "Sum of multiples of three",
+    "task": "Sum multiples of three from 1 through n inclusive. Accept integers n from 0 to 10000, otherwise print invalid. For n = 0 the sum is zero. Use a loop with a filter so its state can be traced.",
     "kind": "cpp-console",
     "environment": "C++20",
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+        "content": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    // TODO: visit 1..n and add only multiples of three.\n    std::cout << sum << '\\n';\n}\n"
       }
     ],
-    "metadata": {},
-    "stdin": "",
-    "returnAnchor": "worked-example",
+    "metadata": {
+      "entryFile": "main.cpp"
+    },
+    "stdin": "7\n",
+    "returnAnchor": "concept-4",
+    "recall": "concept-4",
     "cases": [
       {
-        "label": "Case 1",
-        "input": "",
-        "output": "15\n"
+        "label": "Main input",
+        "input": "7\n",
+        "output": "9\n"
+      },
+      {
+        "label": "Empty range",
+        "input": "0\n",
+        "output": "0\n"
+      },
+      {
+        "label": "Before the boundary",
+        "input": "5\n",
+        "output": "3\n"
+      },
+      {
+        "label": "Boundary included",
+        "input": "6\n",
+        "output": "9\n"
+      },
+      {
+        "label": "Largest input",
+        "input": "10000\n",
+        "output": "16668333\n"
+      },
+      {
+        "label": "Negative number",
+        "input": "-1\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Above the range",
+        "input": "10001\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Failed extraction",
+        "input": "oops\n",
+        "output": "invalid\n"
       }
     ],
     "criteria": [
-      "Compare the output with the readable reference case below.",
-      "Explain each change using the objects or operations in this topic.",
-      "After five iterations, sum is 1, 3, 6, 10, 15; i=6 then ends the loop. Using i<5 instead of i<=5 skips the final term and gives 10 instead of 15."
+      "Advance the counter every iteration, including when nothing is added.",
+      "Include n and return 0 for the empty range.",
+      "Explain why the sum changes only at k = 3 and k = 6 for n = 7."
     ],
-    "hint": "The first three iterations are unchanged: sum is already 6. The fourth adds 4: 6+4=10.",
+    "hint": "Compare n = 5 and n = 6. Only the latter range contains 6.",
     "steps": [
       {
         "where": "My program",
-        "action": "Sum 1 through 5. Write i and sum after every iteration and explain the stopping condition.",
+        "action": "Trace n = 7.",
         "why": "",
         "expected": ""
       },
       {
         "where": "My program",
-        "action": "Predict the result before running.",
+        "action": "Complete the loop and filter.",
         "why": "",
         "expected": ""
       },
       {
         "where": "My program",
-        "action": "Write your solution in a separate starter; keep your previous work.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Compare actual output with your prediction and explain any difference.",
+        "action": "Check n = 0, 5, 6, 7 and the input bounds.",
         "why": "",
         "expected": ""
       }
@@ -191,5 +345,38 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\algorithms\\sequence-branching-loops.en.json"
+  "sourcePath": "courses\\cpp\\gold\\algorithms\\sequence-branching-loops.en.json",
+  "reading": [
+    {
+      "id": "cpp20-stmt.iter",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[stmt.iter]",
+      "language": "English",
+      "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.iter"
+    },
+    {
+      "id": "cpp20-stmt.select",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[stmt.select]",
+      "language": "English",
+      "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.select"
+    },
+    {
+      "id": "cpp20-expr.mul",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.mul]",
+      "language": "English",
+      "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
+    }
+  ],
+  "authored": true
 }

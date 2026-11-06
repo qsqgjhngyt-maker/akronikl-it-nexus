@@ -417,5 +417,507 @@
     },
     "negative": "Replacing == with != changes the meaning: 8 prints odd. Words, table and code must describe the same rule.",
     "next": "Continue to the extended material after this variation. It retains precise limits, more cases and the earlier laboratory; your previous completion and attempts remain valid for that earlier edition."
+  },
+  "teachingEdition": {
+    "revision": "b2-author-v1",
+    "title": "One algorithm in a table, diagram and code",
+    "goal": "Keep requirements, decision order and executable branches consistent on concrete inputs.",
+    "prerequisites": [
+      {
+        "text": "You understand inputs, outputs and conditional decisions."
+      },
+      {
+        "text": "C++ syntax is introduced within the examples."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Different representations expose different concerns",
+        "paragraphs": [
+          "Consider classifying an integer as negative, zero or positive. In natural language it seems obvious, but we might forget the zero case when implementing it.",
+          "A decision table enumerates all cases, pseudocode shows the evaluation order, a flowchart makes branches visible and C++ implements the transitions.",
+          "You are given the request “print the sign of a number.” Before writing if, agree on what zero means and what happens if reading fails. Carry those decisions into every representation."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Decision tables test completeness",
+        "paragraphs": [
+          "Write the conditions x<0, x==0 and x>0, each with one expected action. This reveals omitted or overlapping cases before code is written.",
+          "If a valid input does not belong to any row, the requirement is incomplete. For a sign classifier, the zero row is essential.",
+          "If two rows can match the same input, specify priority or make the conditions disjoint. Here the sign of the number picks exactly one row."
+        ],
+        "tables": [
+          {
+            "caption": "Decision table for integer x",
+            "columns": [
+              "Condition",
+              "Action",
+              "Test input"
+            ],
+            "rows": [
+              [
+                "x < 0",
+                "negative",
+                "−5"
+              ],
+              [
+                "x = 0",
+                "zero",
+                "0"
+              ],
+              [
+                "x > 0",
+                "positive",
+                "7"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "concept-3",
+        "title": "Pseudocode makes the sequence explicit",
+        "paragraphs": [
+          "A clear version reads: IF x<0 print negative; ELSE IF x==0 print zero; ELSE print positive. The logic can be reviewed by someone who does not yet know iostream.",
+          "Pseudocode conventions vary. Always state inputs, outputs and nesting unambiguously; pseudocode itself is not executable C++."
+        ],
+        "diagram": {
+          "caption": "Sign classifier pseudocode",
+          "text": "read x\nif reading fails → invalid and stop\nif x < 0 → negative\nelse if x = 0 → zero\nelse → positive"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "Flowcharts visualize control flow",
+        "paragraphs": [
+          "An oval commonly denotes start/end, a rectangle an action, and a diamond a condition. Arrows indicate the next step, with true/false paths labeled.",
+          "A flowchart is only useful if a reader can follow every input to the correct output. Unlabeled branches or arrows are a source of confusion.",
+          "For x=0 the first decision is no and the second is yes. If we drop the second decision, zero silently falls into the positive branch."
+        ],
+        "diagram": {
+          "caption": "Paths after successful input",
+          "text": "◇ x < 0?\n├─ yes → [negative] → end\n└─ no  → ◇ x = 0?\n          ├─ yes → [zero] → end\n          └─ no  → [positive] → end"
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Code is a concrete implementation",
+        "paragraphs": [
+          "Compare each pseudocode condition with the corresponding C++ branch. The remainder operator % is commonly used to test parity through x%2==0.",
+          "Check x=-5, x=0 and x=7. Equal observed results across these examples support consistency, though finite tests do not prove all possible cases.",
+          "Parity is a different requirement. For −5 the remainder after dividing by 2 is nonzero, so the result is odd. Testing oddness need not assume that the remainder always equals 1."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
+          "stdin": "8\n",
+          "output": "even\n"
+        }
+      },
+      {
+        "id": "concept-6",
+        "title": "From the decision table to code",
+        "paragraphs": [
+          "Zero often falls through a verbal rule about positive and negative numbers. Take input 0 and trace both checks.",
+          "Predict one output line before running. Then compare it with the table and flowchart."
+        ],
+        "prediction": [
+          "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}"
+        ],
+        "predictionInput": "0\n",
+        "reveal": {
+          "title": "Compare your prediction and trace the steps",
+          "paragraphs": [
+            "The sign table has three rows: x<0 → negative; x=0 → zero; x>0 → positive. They are mutually exclusive and cover the allowed integers. C++ uses == for equality and = for assignment. An if / else if / else chain selects one branch. Three independent if statements need a separate condition audit and are not always equivalent.",
+            "Find the two lines containing if in the code. Locate the input failure check and explain why zero produces exactly one line."
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+            "stdin": "0\n",
+            "output": "zero\n"
+          }
+        }
+      },
+      {
+        "id": "concept-7",
+        "title": "Input policy and execution limits",
+        "paragraphs": [
+          "Integer inputs must fit the Code Studio int type. Failed extraction (text instead of a number or end of input) produces invalid; no further calculation is performed.",
+          "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Try a separate task",
+        "paragraphs": [
+          "Classify temperatures from −50 to 50 inclusive. Print cold below 10, comfortable from 10 to 25 inclusive and hot above 25. Reject other or unreadable input as invalid. Make a decision table, pseudocode and a flowchart before implementation.",
+          "Predict the first case and one boundary case. Practice has a separate starter. After running it, explain which check or operation produced each result."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Trace the checks for x = −5. What is printed?",
+        "options": [
+          "negative\n",
+          "zero\n",
+          "positive\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Yes. The first test is true, so later branches are skipped.",
+          "The x == 0 test does not match −5.",
+          "The final else is reached only after both tests are false."
+        ],
+        "recall": "concept-6",
+        "code": {
+          "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+          "stdin": "-5\n"
+        },
+        "execution": {
+          "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+          "stdin": "-5\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          },
+          "expected": "negative\n"
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "What does a decision table help reveal?",
+        "options": [
+          "Missing combinations of conditions",
+          "It compiles the program",
+          "It translates the text to C++"
+        ],
+        "correct": 0,
+        "feedback": "It exposes omitted or contradictory cases.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "What shape commonly represents a condition in a flowchart?",
+        "options": [
+          "Rectangle",
+          "Diamond",
+          "Comment"
+        ],
+        "correct": 1,
+        "feedback": "A diamond denotes a decision and its alternative paths.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "Can a C++ compiler execute pseudocode unchanged?",
+        "options": [
+          "Yes",
+          "Only in an HTML file",
+          "No, it needs a concrete implementation"
+        ],
+        "correct": 2,
+        "feedback": "Pseudocode is a description rather than valid C++ source.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Where does 25 go if the middle row says 10 ≤ temperature < 25 and the hot row still says temperature > 25? How should the code express your decision?",
+        "feedback": "Name the paths for 10 and 25 in each representation and explain why both print comfortable.",
+        "recall": "concept-6"
+      }
+    ],
+    "practice": {
+      "title": "Three temperature bands",
+      "task": "Classify temperatures from −50 to 50 inclusive. Print cold below 10, comfortable from 10 to 25 inclusive and hot above 25. Reject other or unreadable input as invalid. Make a decision table, pseudocode and a flowchart before implementation.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    // TODO: choose exactly one temperature band.\n    std::cout << \"todo\\n\";\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "10\n",
+      "returnAnchor": "concept-6",
+      "recall": "concept-6",
+      "cases": [
+        {
+          "label": "Lower edge of middle band",
+          "input": "10\n",
+          "output": "comfortable\n"
+        },
+        {
+          "label": "One degree colder",
+          "input": "9\n",
+          "output": "cold\n"
+        },
+        {
+          "label": "Upper edge of middle band",
+          "input": "25\n",
+          "output": "comfortable\n"
+        },
+        {
+          "label": "One degree warmer",
+          "input": "26\n",
+          "output": "hot\n"
+        },
+        {
+          "label": "Minimum",
+          "input": "-50\n",
+          "output": "cold\n"
+        },
+        {
+          "label": "Maximum",
+          "input": "50\n",
+          "output": "hot\n"
+        },
+        {
+          "label": "Out of range",
+          "input": "51\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Failed extraction",
+          "input": "oops\n",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Validate before classification.",
+        "The three ranges together cover every valid integer.",
+        "Name the paths for 10 and 25 in each representation and explain why both print comfortable."
+      ],
+      "hint": "Take 9, 10, 25 and 26. Each input must match exactly one row.",
+      "steps": [
+        {
+          "where": "My program",
+          "action": "Write the ranges and boundary inputs.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Transfer the conditions and actions into pseudocode and the flowchart.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "My program",
+          "action": "Implement the branches and compare each run with the table.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-stmt.select",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[stmt.select]",
+        "language": "English",
+        "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.select"
+      },
+      {
+        "id": "cpp20-expr.mul",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[expr.mul]",
+        "language": "English",
+        "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n",
+    "starterExpected": "todo\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n",
+        "stdin": "10\n",
+        "label": "transfer-1",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "comfortable\n"
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n",
+        "stdin": "9\n",
+        "label": "transfer-2",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "cold\n"
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n",
+        "stdin": "25\n",
+        "label": "transfer-3",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "comfortable\n"
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n",
+        "stdin": "26\n",
+        "label": "transfer-4",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "hot\n"
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n",
+        "stdin": "-50\n",
+        "label": "transfer-5",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "cold\n"
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n",
+        "stdin": "50\n",
+        "label": "transfer-6",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "hot\n"
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n",
+        "stdin": "51\n",
+        "label": "transfer-7",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n",
+        "stdin": "oops\n",
+        "label": "transfer-8",
+        "files": {
+          "main.cpp": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    if (temperature < 10) std::cout << \"cold\\n\";\n    else if (temperature <= 25) std::cout << \"comfortable\\n\";\n    else std::cout << \"hot\\n\";\n}\n"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
+        "stdin": "-5\n",
+        "label": "example-case-1",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "odd\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+        "stdin": "7\n",
+        "label": "example-case-2",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "positive\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+        "stdin": "oops\n",
+        "label": "example-case-3",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      }
+    ],
+    "coverage": {
+      "1": "concept-2",
+      "2": "concept-4",
+      "3": "concept-5",
+      "4": "concept-6"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      },
+      {
+        "sourceSection": 6,
+        "anchor": "concept-7"
+      }
+    ]
   }
 }

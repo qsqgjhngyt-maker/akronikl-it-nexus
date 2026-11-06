@@ -408,5 +408,506 @@
     },
     "negative": "Если убрать увеличение i, условие останется истинным. Не запускайте бесконечный опыт: найдите отсутствующий шаг при чтении.",
     "next": "После вариации переходите к углублению: там сохранены точные ограничения, дополнительные случаи и прежняя лабораторная. Старое завершение и попытки сохраняют отношение к прежней редакции."
+  },
+  "teachingEdition": {
+    "revision": "b2-author-v1",
+    "title": "Две проверки внутри повторения",
+    "goal": "Понимайте порядок действий, ведите трассу накопителя и проверяйте границу цикла.",
+    "prerequisites": [
+      {
+        "text": "Понимание целых чисел и арифметики."
+      },
+      {
+        "text": "Чтение условий x>=0 и таблиц состояний."
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Следование — выполнение в строгом порядке",
+        "paragraphs": [
+          "Простой алгоритм читает данные, вычисляет результат и выводит его. Нельзя использовать вычисленный итог прежде, чем он получен.",
+          "Прослеживайте состояние после каждой инструкции: какие значения существуют и какие из них изменились. Так вы обнаружите ошибки раньше запуска.",
+          "Прочитать n → положить 0 в сумму → обойти значения → вывести сумму. Если перенести вывод перед обходом, он всегда покажет начальный ноль, даже если цикл потом посчитает правильно."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Условие выбирает альтернативный путь",
+        "paragraphs": [
+          "Оператор if выполняет тело при истинном условии; else — другой путь. Например, n%2==0 означает, что целое число чётное.",
+          "Тесты должны проверять обе ветви. Ошибка < вместо <= часто заметна только на граничном входе.",
+          "Выбор действия происходит после чтения. Для 8 ветвь чётная, для 7 — другая. В цикле такой выбор повторяется для каждого k."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n)) { std::cout << \"invalid\\n\"; return 0; }\n    if (n % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
+          "stdin": "8\n",
+          "output": "even\n"
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Цикл задаёт повторение действий",
+        "paragraphs": [
+          "Для суммы чётных чисел от 1 до n перебираем k и добавляем его к сумме, если k делится на 2. Вместо множества похожих строк используется единый цикл.",
+          "В for вместе располагаются инициализация, условие продолжения и обновление счётчика. В while обновление обычно пишется внутри тела.",
+          "Отделите две проверки. k <= n разрешает очередной проход, а k % 2 == 0 решает, менять ли сумму в этом проходе. При k=3 цикл идёт дальше, хотя прибавления нет."
+        ]
+      },
+      {
+        "id": "concept-4",
+        "title": "Трассировка раскрывает состояние",
+        "paragraphs": [
+          "Нужно сложить чётные числа до 5 включительно. Счётчик посетит и нечётные значения. На каких проходах меняется сумма?",
+          "Запишите сумму после каждого k. Затем раскройте трассу."
+        ],
+        "prediction": [
+          "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+        ],
+        "predictionInput": "5\n",
+        "reveal": {
+          "title": "Сверить прогноз и пройти шаги",
+          "paragraphs": [
+            "При n=5 счётчик k принимает 1,2,3,4,5. Сумма меняется только при k=2 и k=4: сначала 2, затем 6.",
+            "После обработки каждого k можно зафиксировать пару (k,sum). Сумма равна сумме чётных значений, уже рассмотренных циклом: это полезный инвариант."
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+            "stdin": "5\n",
+            "output": "6\n"
+          },
+          "tables": [
+            {
+              "caption": "Как меняется сумма при n = 5",
+              "columns": [
+                "k",
+                "Прибавили",
+                "Сумма после тела"
+              ],
+              "rows": [
+                [
+                  "1",
+                  "0",
+                  "0"
+                ],
+                [
+                  "2",
+                  "2",
+                  "2"
+                ],
+                [
+                  "3",
+                  "0",
+                  "2"
+                ],
+                [
+                  "4",
+                  "4",
+                  "6"
+                ],
+                [
+                  "5",
+                  "0",
+                  "6"
+                ]
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "concept-5",
+        "title": "Завершение и числовые ограничения",
+        "paragraphs": [
+          "Если k не увеличивается, цикл с условием k<=n может не завершиться. Если n слишком велико, возможны долгий запуск и переполнение суммы.",
+          "Наше упражнение принимает 0..10000: такой диапазон помещает сумму в 32-битный int. Для более общего кода выбирают подходящий тип и ограничение ресурсов.",
+          "При n=5 следующее после последнего прохода k равно 6, поэтому условие ложно. Для каждого допустимого n счётчик увеличивается, пока не выйдет из диапазона."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Нулевое число итераций и граница цикла",
+        "paragraphs": [
+          "В for (int k=1; k<=n; ++k) инициализация выполняется один раз, затем условие проверяется перед каждым проходом, а ++k — после тела. При n=0 условие сразу ложно и сумма остаётся 0. При n=6 число 6 включено: 2+4+6=12. Замена <= на < теряет последний элемент, если он чётный. Условие чётности внутри тела не заменяет условие продолжения цикла."
+        ]
+      },
+      {
+        "id": "concept-7",
+        "title": "Правила ввода и пределы исполнения",
+        "paragraphs": [
+          "Целые входы должны помещаться в int среды Code Studio. Неудачное чтение (текст вместо числа или конец ввода) даёт invalid; дальнейшие вычисления не выполняются.",
+          "Подавайте указанное число целых значений через пробелы. Лишние значения не входят в этот небольшой контракт ввода. Сохраняйте исходник, точный stdin, прогноз и фактический вывод. Эти примеры знакомят с логикой; следующие модули подробно разбирают типы, потоки и функции C++."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Попробуйте на другой задаче",
+        "paragraphs": [
+          "Сложите кратные трём числа от 1 до n включительно. Допустимые n — целые 0..10000, иначе выведите invalid. При n = 0 сумма равна нулю. Используйте цикл с условием отбора, чтобы можно было выписать трассу.",
+          "Сначала запишите прогноз для первого и одного граничного входа. В «Практике» уже есть отдельная заготовка. После запуска объясните, какая проверка или операция дала каждый результат."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "Для n = 6 проследите последний проход. Что выведет программа?",
+        "options": [
+          "12\n",
+          "6\n",
+          "21\n"
+        ],
+        "correct": 0,
+        "feedback": [
+          "Да. 2 + 4 + 6 = 12.",
+          "Так было бы при n = 5 или ошибочном k < n.",
+          "21 получается при сумме всех чисел, но отбор пропускает нечётные."
+        ],
+        "recall": "concept-4",
+        "code": {
+          "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+          "stdin": "6\n"
+        },
+        "execution": {
+          "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+          "stdin": "6\n",
+          "label": "predict",
+          "files": {
+            "main.cpp": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+          },
+          "metadata": {
+            "entryFile": "main.cpp"
+          },
+          "expected": "12\n"
+        }
+      },
+      {
+        "id": "concept-0",
+        "kind": "choice",
+        "prompt": "Какая конструкция повторяет участок действий?",
+        "options": [
+          "for или while",
+          "if",
+          "return"
+        ],
+        "correct": 0,
+        "feedback": "Цикл повторяет тело, пока выполняется условие.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "concept-1",
+        "kind": "choice",
+        "prompt": "Сколько даёт сумма чётных от 1 до 5?",
+        "options": [
+          "9",
+          "6",
+          "15"
+        ],
+        "correct": 1,
+        "feedback": "2+4=6.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "concept-2",
+        "kind": "choice",
+        "prompt": "Как сработает for(k=1;k<=0;++k)?",
+        "options": [
+          "Один раз",
+          "Бесконечно",
+          "Ни разу"
+        ],
+        "correct": 2,
+        "feedback": "Условие ложно перед первой итерацией.",
+        "recall": "concept-6"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "Для n = 6 объясните разницу между k <= n и k < n в задаче о кратных трём. Какой тест ловит ошибку?",
+        "feedback": "Объясните, почему для n = 7 меняется сумма только при k = 3 и k = 6.",
+        "recall": "concept-4"
+      }
+    ],
+    "practice": {
+      "title": "Сумма кратных трём",
+      "task": "Сложите кратные трём числа от 1 до n включительно. Допустимые n — целые 0..10000, иначе выведите invalid. При n = 0 сумма равна нулю. Используйте цикл с условием отбора, чтобы можно было выписать трассу.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    // TODO: visit 1..n and add only multiples of three.\n    std::cout << sum << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {
+        "entryFile": "main.cpp"
+      },
+      "stdin": "7\n",
+      "returnAnchor": "concept-4",
+      "recall": "concept-4",
+      "cases": [
+        {
+          "label": "Основной вход",
+          "input": "7\n",
+          "output": "9\n"
+        },
+        {
+          "label": "Пустой диапазон",
+          "input": "0\n",
+          "output": "0\n"
+        },
+        {
+          "label": "Перед границей",
+          "input": "5\n",
+          "output": "3\n"
+        },
+        {
+          "label": "Граница включена",
+          "input": "6\n",
+          "output": "9\n"
+        },
+        {
+          "label": "Максимальный вход",
+          "input": "10000\n",
+          "output": "16668333\n"
+        },
+        {
+          "label": "Отрицательное число",
+          "input": "-1\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Выше диапазона",
+          "input": "10001\n",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Ошибка чтения",
+          "input": "oops\n",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Счётчик движется на каждом проходе, в том числе без прибавления.",
+        "Граница n включена, пустой диапазон даёт 0.",
+        "Объясните, почему для n = 7 меняется сумма только при k = 3 и k = 6."
+      ],
+      "hint": "Сравните n = 5 и n = 6: только второй диапазон содержит 6.",
+      "steps": [
+        {
+          "where": "Моя программа",
+          "action": "Заполните трассу для n = 7.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Моя программа",
+          "action": "Дополните цикл и условие отбора.",
+          "why": "",
+          "expected": ""
+        },
+        {
+          "where": "Моя программа",
+          "action": "Сверьте n = 0, 5, 6, 7 и границы ввода.",
+          "why": "",
+          "expected": ""
+        }
+      ]
+    },
+    "reading": [
+      {
+        "id": "cpp20-stmt.iter",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[stmt.iter]",
+        "language": "English",
+        "purpose": "Нормы C++ для операций из примера. Для решения задания достаточно материала урока.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.iter"
+      },
+      {
+        "id": "cpp20-stmt.select",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[stmt.select]",
+        "language": "English",
+        "purpose": "Нормы C++ для операций из примера. Для решения задания достаточно материала урока.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.select"
+      },
+      {
+        "id": "cpp20-expr.mul",
+        "author": "ISO/IEC JTC1/SC22/WG21",
+        "title": "Working Draft, Standard for Programming Language C++",
+        "edition": "N4861, 2020",
+        "section": "[expr.mul]",
+        "language": "English",
+        "purpose": "Нормы C++ для операций из примера. Для решения задания достаточно материала урока.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
+      }
+    ],
+    "referenceProgram": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+    "starterExpected": "0\n",
+    "verificationCases": [
+      {
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+        "stdin": "7\n",
+        "label": "transfer-1",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "9\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+        "stdin": "0\n",
+        "label": "transfer-2",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "0\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+        "stdin": "5\n",
+        "label": "transfer-3",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "3\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+        "stdin": "6\n",
+        "label": "transfer-4",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "9\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+        "stdin": "10000\n",
+        "label": "transfer-5",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "16668333\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+        "stdin": "-1\n",
+        "label": "transfer-6",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+        "stdin": "10001\n",
+        "label": "transfer-7",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+        "stdin": "oops\n",
+        "label": "transfer-8",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 3 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "invalid\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n)) { std::cout << \"invalid\\n\"; return 0; }\n    if (n % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
+        "stdin": "7\n",
+        "label": "example-case-1",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n)) { std::cout << \"invalid\\n\"; return 0; }\n    if (n % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "odd\n"
+      },
+      {
+        "source": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}",
+        "stdin": "0\n",
+        "label": "example-case-2",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 10000) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int sum = 0;\n    for (int k = 1; k <= n; ++k) {\n        if (k % 2 == 0) sum += k;\n    }\n    std::cout << sum << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "0\n"
+      }
+    ],
+    "coverage": {
+      "1": "concept-1",
+      "2": "concept-4",
+      "3": "concept-5",
+      "4": "concept-6"
+    },
+    "sourceCoverage": [
+      {
+        "sourceSection": 0,
+        "anchor": "concept-1"
+      },
+      {
+        "sourceSection": 1,
+        "anchor": "concept-2"
+      },
+      {
+        "sourceSection": 2,
+        "anchor": "concept-3"
+      },
+      {
+        "sourceSection": 3,
+        "anchor": "concept-4"
+      },
+      {
+        "sourceSection": 4,
+        "anchor": "concept-5"
+      },
+      {
+        "sourceSection": 5,
+        "anchor": "concept-6"
+      },
+      {
+        "sourceSection": 6,
+        "anchor": "concept-7"
+      }
+    ]
   }
 }

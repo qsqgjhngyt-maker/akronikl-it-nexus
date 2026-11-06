@@ -1,88 +1,147 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b2-author-v1",
   "id": "cpp.algorithm-representations",
   "courseId": "cpp",
   "moduleId": "cpp.section.algorithms",
   "course": "C++ programming",
   "module": "Algorithmic Thinking",
   "locale": "en",
-  "title": "Representing algorithms: decision tables, pseudocode, flowcharts and code",
-  "goal": "Express one decision in words, a table and statements.",
+  "title": "One algorithm in a table, diagram and code",
+  "goal": "Keep requirements, decision order and executable branches consistent on concrete inputs.",
   "prerequisites": [
     {
-      "text": "You know remainders and input/output. This step explains if and comparison."
+      "text": "You understand inputs, outputs and conditional decisions."
+    },
+    {
+      "text": "C++ syntax is introduced within the examples."
     }
   ],
   "sections": [
     {
-      "id": "model",
-      "title": "From the task to an operation",
+      "id": "concept-1",
+      "title": "Different representations expose different concerns",
       "paragraphs": [
-        "8 is even because division by 2 leaves no remainder. Decision table: remainder 0 → even, remainder 1 → odd. Pseudocode is a human-readable description: “find the remainder; if zero, output even; otherwise output odd”.",
-        "In the code, % computes a remainder, == compares values, if selects an action when the condition is true and else when it is false. Parentheses hold the condition; braces hold the branch’s statements. Only one of the two branches executes. We use nonnegative integers here."
+        "Consider classifying an integer as negative, zero or positive. In natural language it seems obvious, but we might forget the zero case when implementing it.",
+        "A decision table enumerates all cases, pseudocode shows the evaluation order, a flowchart makes branches visible and C++ implements the transitions.",
+        "You are given the request “print the sign of a number.” Before writing if, agree on what zero means and what happens if reading fails. Carry those decisions into every representation."
       ]
     },
     {
-      "id": "worked-example",
-      "title": "Express one decision in words, a table and statements.",
-      "paragraphs": [],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int number = 8;\n    if (number % 2 == 0) {\n        std::cout << \"even\\n\";\n    } else {\n        std::cout << \"odd\\n\";\n    }\n    return 0;\n}\n",
-        "output": "even\n",
-        "stdin": ""
-      },
-      "steps": [],
-      "trace": [
-        [
-          "number = 8",
-          "—",
-          "number: 8",
-          "Set the number from the table."
-        ],
-        [
-          "number % 2",
-          "8 / 2 = 4",
-          "0",
-          "No remainder remains."
-        ],
-        [
-          "0 == 0",
-          "0; 0",
-          "true",
-          "The first branch prints even; the odd branch is skipped."
-        ]
-      ]
-    },
-    {
-      "id": "variation",
-      "title": "Change one condition and check the prediction",
+      "id": "concept-2",
+      "title": "Decision tables test completeness",
       "paragraphs": [
-        "Replace 8 with 7 and match the new path to the table.",
-        "7 has remainder 1 when divided by 2.",
-        "1 == 0 is false, so else executes."
+        "Write the conditions x<0, x==0 and x>0, each with one expected action. This reveals omitted or overlapping cases before code is written.",
+        "If a valid input does not belong to any row, the requirement is incomplete. For a sign classifier, the zero row is essential.",
+        "If two rows can match the same input, specify priority or make the conditions disjoint. Here the sign of the number picks exactly one row."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int number = 7;\n    if (number % 2 == 0) {\n        std::cout << \"even\\n\";\n    } else {\n        std::cout << \"odd\\n\";\n    }\n    return 0;\n}\n",
-        "stdin": "",
-        "output": "odd\n"
+      "tables": [
+        {
+          "caption": "Decision table for integer x",
+          "columns": [
+            "Condition",
+            "Action",
+            "Test input"
+          ],
+          "rows": [
+            [
+              "x < 0",
+              "negative",
+              "−5"
+            ],
+            [
+              "x = 0",
+              "zero",
+              "0"
+            ],
+            [
+              "x > 0",
+              "positive",
+              "7"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "concept-3",
+      "title": "Pseudocode makes the sequence explicit",
+      "paragraphs": [
+        "A clear version reads: IF x<0 print negative; ELSE IF x==0 print zero; ELSE print positive. The logic can be reviewed by someone who does not yet know iostream.",
+        "Pseudocode conventions vary. Always state inputs, outputs and nesting unambiguously; pseudocode itself is not executable C++."
+      ],
+      "diagram": {
+        "caption": "Sign classifier pseudocode",
+        "text": "read x\nif reading fails → invalid and stop\nif x < 0 → negative\nelse if x = 0 → zero\nelse → positive"
       }
     },
     {
-      "id": "diagnose",
-      "title": "When the result differs",
+      "id": "concept-4",
+      "title": "Flowcharts visualize control flow",
       "paragraphs": [
-        "Replacing == with != changes the meaning: 8 prints odd. Words, table and code must describe the same rule."
+        "An oval commonly denotes start/end, a rectangle an action, and a diamond a condition. Arrows indicate the next step, with true/false paths labeled.",
+        "A flowchart is only useful if a reader can follow every input to the correct output. Unlabeled branches or arrows are a source of confusion.",
+        "For x=0 the first decision is no and the second is yes. If we drop the second decision, zero silently falls into the positive branch."
+      ],
+      "diagram": {
+        "caption": "Paths after successful input",
+        "text": "◇ x < 0?\n├─ yes → [negative] → end\n└─ no  → ◇ x = 0?\n          ├─ yes → [zero] → end\n          └─ no  → [positive] → end"
+      }
+    },
+    {
+      "id": "concept-5",
+      "title": "Code is a concrete implementation",
+      "paragraphs": [
+        "Compare each pseudocode condition with the corresponding C++ branch. The remainder operator % is commonly used to test parity through x%2==0.",
+        "Check x=-5, x=0 and x=7. Equal observed results across these examples support consistency, though finite tests do not prove all possible cases.",
+        "Parity is a different requirement. For −5 the remainder after dividing by 2 is nonzero, so the result is odd. Testing oddness need not assume that the remainder always equals 1."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x % 2 == 0) std::cout << \"even\\n\";\n    else std::cout << \"odd\\n\";\n}",
+        "stdin": "8\n",
+        "output": "even\n"
+      }
+    },
+    {
+      "id": "concept-6",
+      "title": "From the decision table to code",
+      "paragraphs": [
+        "Zero often falls through a verbal rule about positive and negative numbers. Take input 0 and trace both checks.",
+        "Predict one output line before running. Then compare it with the table and flowchart."
+      ],
+      "prediction": [
+        "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}"
+      ],
+      "predictionInput": "0\n",
+      "reveal": {
+        "title": "Compare your prediction and trace the steps",
+        "paragraphs": [
+          "The sign table has three rows: x<0 → negative; x=0 → zero; x>0 → positive. They are mutually exclusive and cover the allowed integers. C++ uses == for equality and = for assignment. An if / else if / else chain selects one branch. Three independent if statements need a separate condition audit and are not always equivalent.",
+          "Find the two lines containing if in the code. Locate the input failure check and explain why zero produces exactly one line."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+          "stdin": "0\n",
+          "output": "zero\n"
+        }
+      }
+    },
+    {
+      "id": "concept-7",
+      "title": "Input policy and execution limits",
+      "paragraphs": [
+        "Integer inputs must fit the Code Studio int type. Failed extraction (text instead of a number or end of input) produces invalid; no further calculation is performed.",
+        "Supply the stated number of whitespace-separated integer tokens. Extra tokens are outside this small input contract. Keep a record of source, exact stdin, predicted output and observed output. These examples introduce the logic; the following modules develop C++ types, streams and functions in depth."
       ]
     },
     {
       "id": "independent-work",
-      "title": "Now solve your own task",
+      "title": "Try a separate task",
       "paragraphs": [
-        "Classify 14 as even/odd, then check 15. Write the rule in words for both cases before coding.",
-        "Practice contains a separate starter. Predict the result before changing your program. Returning to the example does not replace your source."
+        "Classify temperatures from −50 to 50 inclusive. Print cold below 10, comfortable from 10 to 25 inclusive and hot above 25. Reject other or unreadable input as invalid. Make a decision table, pseudocode and a flowchart before implementation.",
+        "Predict the first case and one boundary case. Practice has a separate starter. After running it, explain which check or operation produced each result."
       ]
     }
   ],
@@ -90,70 +149,164 @@
     {
       "id": "predict",
       "kind": "choice",
-      "prompt": "What output follows the specified change? Replace 8 with 7 and match the new path to the table.",
+      "prompt": "Trace the checks for x = −5. What is printed?",
       "options": [
-        "odd\n",
-        "Compilation fails"
+        "negative\n",
+        "zero\n",
+        "positive\n"
       ],
       "correct": 0,
-      "feedback": "7 has remainder 1 when divided by 2. 1 == 0 is false, so else executes."
+      "feedback": [
+        "Yes. The first test is true, so later branches are skipped.",
+        "The x == 0 test does not match −5.",
+        "The final else is reached only after both tests are false."
+      ],
+      "recall": "concept-6",
+      "code": {
+        "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+        "stdin": "-5\n"
+      },
+      "execution": {
+        "source": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}",
+        "stdin": "-5\n",
+        "label": "predict",
+        "files": {
+          "main.cpp": "#include <iostream>\nint main() {\n    int x;\n    if (!(std::cin >> x)) { std::cout << \"invalid\\n\"; return 0; }\n    if (x < 0) std::cout << \"negative\\n\";\n    else if (x == 0) std::cout << \"zero\\n\";\n    else std::cout << \"positive\\n\";\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "negative\n"
+      }
+    },
+    {
+      "id": "concept-0",
+      "kind": "choice",
+      "prompt": "What does a decision table help reveal?",
+      "options": [
+        "Missing combinations of conditions",
+        "It compiles the program",
+        "It translates the text to C++"
+      ],
+      "correct": 0,
+      "feedback": "It exposes omitted or contradictory cases.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "concept-1",
+      "kind": "choice",
+      "prompt": "What shape commonly represents a condition in a flowchart?",
+      "options": [
+        "Rectangle",
+        "Diamond",
+        "Comment"
+      ],
+      "correct": 1,
+      "feedback": "A diamond denotes a decision and its alternative paths.",
+      "recall": "concept-4"
+    },
+    {
+      "id": "concept-2",
+      "kind": "choice",
+      "prompt": "Can a C++ compiler execute pseudocode unchanged?",
+      "options": [
+        "Yes",
+        "Only in an HTML file",
+        "No, it needs a concrete implementation"
+      ],
+      "correct": 2,
+      "feedback": "Pseudocode is a description rather than valid C++ source.",
+      "recall": "concept-3"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Classify 14 as even/odd, then check 15. Write the rule in words for both cases before coding.",
-      "feedback": "Compare the output with the readable reference case below. Explain each change using the objects or operations in this topic. 14 must produce even and 15 must produce odd. Replacing == with != in the remainder check incorrectly produces odd for 14."
+      "prompt": "Where does 25 go if the middle row says 10 ≤ temperature < 25 and the hot row still says temperature > 25? How should the code express your decision?",
+      "feedback": "Name the paths for 10 and 25 in each representation and explain why both print comfortable.",
+      "recall": "concept-6"
     }
   ],
   "practice": {
-    "title": "Independent variation",
-    "task": "Classify 14 as even/odd, then check 15. Write the rule in words for both cases before coding.",
+    "title": "Three temperature bands",
+    "task": "Classify temperatures from −50 to 50 inclusive. Print cold below 10, comfortable from 10 to 25 inclusive and hot above 25. Reject other or unreadable input as invalid. Make a decision table, pseudocode and a flowchart before implementation.",
     "kind": "cpp-console",
     "environment": "C++20",
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n\nint main() {\n    // Write your own solution here.\n    return 0;\n}\n"
+        "content": "#include <iostream>\n\nint main() {\n    int temperature;\n    if (!(std::cin >> temperature) || temperature < -50 || temperature > 50) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    // TODO: choose exactly one temperature band.\n    std::cout << \"todo\\n\";\n}\n"
       }
     ],
-    "metadata": {},
-    "stdin": "",
-    "returnAnchor": "worked-example",
+    "metadata": {
+      "entryFile": "main.cpp"
+    },
+    "stdin": "10\n",
+    "returnAnchor": "concept-6",
+    "recall": "concept-6",
     "cases": [
       {
-        "label": "Case 1",
-        "input": "",
-        "output": "even\n"
+        "label": "Lower edge of middle band",
+        "input": "10\n",
+        "output": "comfortable\n"
+      },
+      {
+        "label": "One degree colder",
+        "input": "9\n",
+        "output": "cold\n"
+      },
+      {
+        "label": "Upper edge of middle band",
+        "input": "25\n",
+        "output": "comfortable\n"
+      },
+      {
+        "label": "One degree warmer",
+        "input": "26\n",
+        "output": "hot\n"
+      },
+      {
+        "label": "Minimum",
+        "input": "-50\n",
+        "output": "cold\n"
+      },
+      {
+        "label": "Maximum",
+        "input": "50\n",
+        "output": "hot\n"
+      },
+      {
+        "label": "Out of range",
+        "input": "51\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Failed extraction",
+        "input": "oops\n",
+        "output": "invalid\n"
       }
     ],
     "criteria": [
-      "Compare the output with the readable reference case below.",
-      "Explain each change using the objects or operations in this topic.",
-      "14 must produce even and 15 must produce odd. Replacing == with != in the remainder check incorrectly produces odd for 14."
+      "Validate before classification.",
+      "The three ranges together cover every valid integer.",
+      "Name the paths for 10 and 25 in each representation and explain why both print comfortable."
     ],
-    "hint": "7 has remainder 1 when divided by 2. 1 == 0 is false, so else executes.",
+    "hint": "Take 9, 10, 25 and 26. Each input must match exactly one row.",
     "steps": [
       {
         "where": "My program",
-        "action": "Classify 14 as even/odd, then check 15. Write the rule in words for both cases before coding.",
+        "action": "Write the ranges and boundary inputs.",
         "why": "",
         "expected": ""
       },
       {
         "where": "My program",
-        "action": "Predict the result before running.",
+        "action": "Transfer the conditions and actions into pseudocode and the flowchart.",
         "why": "",
         "expected": ""
       },
       {
         "where": "My program",
-        "action": "Write your solution in a separate starter; keep your previous work.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Compare actual output with your prediction and explain any difference.",
+        "action": "Implement the branches and compare each run with the table.",
         "why": "",
         "expected": ""
       }
@@ -191,5 +344,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\algorithms\\algorithm-representations.en.json"
+  "sourcePath": "courses\\cpp\\gold\\algorithms\\algorithm-representations.en.json",
+  "reading": [
+    {
+      "id": "cpp20-stmt.select",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[stmt.select]",
+      "language": "English",
+      "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/stmt.select"
+    },
+    {
+      "id": "cpp20-expr.mul",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.mul]",
+      "language": "English",
+      "purpose": "C++ rules for the operations in the example. The lesson contains what you need for the task.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
+    }
+  ],
+  "authored": true
 }

@@ -1,89 +1,148 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b2-author-v1",
   "id": "cpp.top-down-design",
   "courseId": "cpp",
   "moduleId": "cpp.section.algorithms",
   "course": "Программирование на C++",
   "module": "Алгоритмизация",
   "locale": "ru",
-  "title": "Нисходящее проектирование: от требований к функциям",
-  "goal": "Разделим расчёт заказа на понятные части с явными промежуточными числами.",
+  "title": "От чека к маленьким функциям",
+  "goal": "Разделите ввод, проверку, расчёт и вывод, затем проверяйте функции по промежуточным результатам.",
   "prerequisites": [
     {
-      "text": "Знаете целые переменные, умножение, деление и последовательность команд."
+      "text": "Умеете описывать алгоритм блок-схемой."
+    },
+    {
+      "text": "Достаточно знать арифметику; синтаксис функций поясняется по мере чтения."
     }
   ],
   "sections": [
     {
-      "id": "model",
-      "title": "От задачи к действию",
+      "id": "concept-1",
+      "title": "Начинайте с результата пользователя",
       "paragraphs": [
-        "Задача: три товара по 100, скидка 10 процентов. Сначала считаем стоимость без скидки, затем величину скидки, затем итог. Декомпозиция — разделение задачи на шаги, каждый из которых отвечает на один вопрос.",
-        "subtotal — сумма без скидки; saving — сколько вычитаем; total — сколько платим. Проценты считаем как subtotal*discount/100. В этом случае 300*10/100 равно 30 без остатка. При целых числах дробная часть отбрасывается: это правило округления нужно согласовать заранее.",
-        "Используем цену и количество 0..1000, скидку 0..100: промежуточное произведение не больше 100000000 и помещается даже в 32-битный int. В примере эти границы соблюдены; обработка произвольного ввода остаётся следующей ступенью. Не добавляем функции раньше объяснения их устройства."
-      ]
-    },
-    {
-      "id": "worked-example",
-      "title": "Разделим расчёт заказа на понятные части с явными промежуточными числами.",
-      "paragraphs": [],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int price = 100;\n    int count = 3;\n    int discount = 10;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
-        "output": "300 30 270\n",
-        "stdin": ""
-      },
-      "steps": [],
-      "trace": [
-        [
-          "price * count",
-          "100; 3",
-          "subtotal: 300",
-          "Решили первую подзадачу."
-        ],
-        [
-          "subtotal * discount / 100",
-          "300; 10",
-          "saving: 30",
-          "Вычислили вычитаемую сумму, а не итог."
-        ],
-        [
-          "subtotal - saving",
-          "300; 30",
-          "total: 270",
-          "Связали два предыдущих результата."
-        ]
-      ]
-    },
-    {
-      "id": "variation",
-      "title": "Изменим условие и проверим прогноз",
-      "paragraphs": [
-        "Поставьте discount=0, затем discount=100.",
-        "При 0 процентах saving равно 0.",
-        "При 100 процентах вычитается весь subtotal."
+        "Для калькулятора заказа верхний уровень звучит так: получить данные → проверить → рассчитать → показать итог. Сразу писать один гигантский main не нужно: сначала сформулируйте обязанности этапов.",
+        "На более низком уровне расчёт можно разделить на сумму без скидки и применение скидки. Отдельный этап проверки убедится, что цена и количество неотрицательны, а процент от 0 до 100.",
+        "В чеке нужна одна итоговая сумма. Начните с неё и спросите, какие данные нужны непосредственно перед выводом. Для итога со скидкой нужны промежуточная сумма и процент, а для промежуточной суммы — цена и количество."
       ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n\nint main() {\n    int price = 100;\n    int count = 3;\n    int discount = 100;\n    int subtotal = price * count;\n    int saving = subtotal * discount / 100;\n    int total = subtotal - saving;\n    std::cout << subtotal << ' ' << saving << ' ' << total << '\\n';\n    return 0;\n}\n",
-        "stdin": "",
-        "output": "300 0 300\n"
+      "diagram": {
+        "caption": "Верхний уровень main",
+        "text": "прочитать → проверить → вычислить → вывести\n                            │\n                            └─ subtotal → discountPrice"
       }
     },
     {
-      "id": "diagnose",
-      "title": "Если результат не совпал",
+      "id": "concept-2",
+      "title": "Контракты до деталей реализации",
       "paragraphs": [
-        "Если выводить saving вместо total, получится 30 вместо 270: подзадача решена, но выбран не тот результат."
+        "Функция subtotal(price,qty) вычисляет цену всех единиц. Её предусловие — корректные значения, а выход — целая сумма в выбранных единицах. Функция valid проверяет границы, возвращая true или false.",
+        "Названия должны отражать ответственность, а не способ работы: subtotal понятнее doStuff. Не стоит передавать в функцию печати внутренние детали расчёта, если достаточно уже готовой суммы.",
+        "Вызов valid отвечает только на вопрос о допустимости. Для цены 120 и количества 3 он возвращает true, но число 360 получается только в subtotal."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nbool valid(int price, int qty) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint main() {\n    int price, qty;\n    if (!(std::cin >> price >> qty)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << subtotal(price, qty) << '\\n';\n}",
+        "stdin": "120 3\n",
+        "output": "360\n"
+      }
+    },
+    {
+      "id": "concept-3",
+      "title": "Разделение вычисления и общения с пользователем",
+      "paragraphs": [
+        "std::cin и std::cout нужны на границе приложения, но чистые вычислительные функции лучше писать независимо от консоли. Тогда один и тот же расчёт используется в UI, тестах или API без копирования логики.",
+        "Например, valid и subtotal можно проверять отдельно, не читая ввод с клавиатуры. Это уменьшает сложность диагностики, но не отменяет интеграционный тест целой программы.",
+        "Чтобы проверить subtotal отдельно, дайте ему два аргумента и сравните возвращённое число. Чтобы проверить всю программу, подайте stdin и сравните stdout. Первый опыт локализует сбой, второй проверяет связь частей."
+      ]
+    },
+    {
+      "id": "concept-4",
+      "title": "Управление зависимостями",
+      "paragraphs": [
+        "Функции высшего уровня вызывают компоненты более низкого уровня. Если каждый компонент получает только необходимые аргументы, его легче заменить и протестировать.",
+        "Для учебного примера main знает о проверке и расчёте, но функция subtotal не должна читать текст из консоли или менять состояние приложения. Это создаёт более устойчивую архитектуру.",
+        "Не передавайте процент в subtotal: эта функция не вычисляет скидку. При изменении политики округления достаточно пересмотреть discountPrice и соответствующие проверки."
+      ]
+    },
+    {
+      "id": "concept-5",
+      "title": "Где искать ошибки в многошаговом расчёте",
+      "paragraphs": [
+        "Если итог неверен, проверяйте последовательно допустимость входа, промежуточную сумму и применение скидки. У каждой границы есть наблюдаемые тестовые данные.",
+        "В этом модуле мы используем простые int для доступности новичкам; денежная арифметика в реальных системах требует отдельно оговорённых единиц, переполнений и округления. Позже вы рассмотрите типы данных и библиотечные средства.",
+        "Если вывод не равен 270, проверьте по порядку: valid, subtotal=300, размер скидки=30. Совпадение одного промежуточного числа показывает, где искать следующую причину."
+      ]
+    },
+    {
+      "id": "concept-6",
+      "title": "Как читать вызов функции",
+      "paragraphs": [
+        "В чеке для трёх предметов по 100 со скидкой 10% нужна одна сумма. Пройдите от входа к каждому промежуточному числу.",
+        "Предскажите вывод. Если бы итог оказался неверным, с какого шага вы бы начали поиск?"
+      ],
+      "prediction": [
+        "#include <iostream>\nbool valid(int price, int qty, int discount) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000 && discount >= 0 && discount <= 100;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint discountPrice(int amount, int percent) {\n    return amount - amount * percent / 100;\n}\nint main() {\n    int price, qty, discount;\n    if (!(std::cin >> price >> qty >> discount)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty, discount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << discountPrice(subtotal(price, qty), discount) << '\\n';\n}"
+      ],
+      "predictionInput": "100 3 10\n",
+      "reveal": {
+        "title": "Сверить прогноз и пройти шаги",
+        "paragraphs": [
+          "bool valid(...) объявляет проверку с результатом true или false. Параметры получают значения аргументов при вызове; return возвращает результат вызывающей стороне. В discountPrice(subtotal(price, qty), discount) сначала нужно получить subtotal: для 100 и 3 это 300, затем скидка 10 даёт 300 − 30 = 270. Это зависимость данных, а не повод писать все вычисления в одну строку. Для отладки сохраните subtotal в отдельную переменную."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nbool valid(int price, int qty, int discount) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000 && discount >= 0 && discount <= 100;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint discountPrice(int amount, int percent) {\n    return amount - amount * percent / 100;\n}\nint main() {\n    int price, qty, discount;\n    if (!(std::cin >> price >> qty >> discount)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty, discount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << discountPrice(subtotal(price, qty), discount) << '\\n';\n}",
+          "stdin": "100 3 10\n",
+          "output": "270\n"
+        },
+        "tables": [
+          {
+            "caption": "Из аргументов в итог",
+            "columns": [
+              "Компонент",
+              "Получает",
+              "Возвращает"
+            ],
+            "rows": [
+              [
+                "valid",
+                "100, 3, 10",
+                "true"
+              ],
+              [
+                "subtotal",
+                "100, 3",
+                "300"
+              ],
+              [
+                "discountPrice",
+                "300, 10",
+                "270"
+              ],
+              [
+                "main",
+                "270",
+                "Печатает 270"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "concept-7",
+      "title": "Правила ввода и пределы исполнения",
+      "paragraphs": [
+        "Цена и количество: целые 0..1000; скидка: 0..100. Скидка в единицах суммы округляется вниз: итог = subtotal − (subtotal·discount)/100. Ограничения удерживают промежуточные произведения в диапазоне 32-битного int.",
+        "Подавайте указанное число целых значений через пробелы. Лишние значения не входят в этот небольшой контракт ввода. Сохраняйте исходник, точный stdin, прогноз и фактический вывод. Эти примеры знакомят с логикой; следующие модули подробно разбирают типы, потоки и функции C++."
       ]
     },
     {
       "id": "independent-work",
-      "title": "Теперь выполните свою задачу",
+      "title": "Попробуйте на другой задаче",
       "paragraphs": [
-        "Посчитайте два товара по 80 со скидкой 25 процентов. Выведите отдельно subtotal, saving и total; объясните каждое число.",
-        "В разделе «Практика» находится отдельная заготовка. Сначала запишите ожидаемый результат, затем изменяйте свою программу. Возвращение к примеру не заменяет ваш исходник."
+        "Соберите подробный чек для цены 37, количества 3 и скидки 15%. Напечатайте три числа через пробел: промежуточную сумму, скидку в единицах суммы и итог. Реализуйте valid, subtotal и discountPrice отдельно. Цена и количество целые 0..1000, скидка 0..100. Округляйте вниз сумму скидки перед вычитанием. При ошибке чтения или диапазона выведите invalid.",
+        "Сначала запишите прогноз для первого и одного граничного входа. В «Практике» уже есть отдельная заготовка. После запуска объясните, какая проверка или операция дала каждый результат."
       ]
     }
   ],
@@ -91,70 +150,164 @@
     {
       "id": "predict",
       "kind": "choice",
-      "prompt": "Какой вывод получится после указанного изменения? Поставьте discount=0, затем discount=100.",
+      "prompt": "Цена 100, количество 3, скидка 100%. Что напечатает этот исходник?",
       "options": [
-        "300 0 300\n",
-        "300 300 0\n"
+        "0\n",
+        "300\n",
+        "invalid\n"
       ],
       "correct": 0,
-      "feedback": "При 0 процентах saving равно 0. При 100 процентах вычитается весь subtotal."
+      "feedback": [
+        "Да. Допустимая скидка равна всей промежуточной сумме.",
+        "300 — промежуточная сумма. Затем из неё вычитается скидка.",
+        "Граница 100 включена в контракт."
+      ],
+      "recall": "concept-6",
+      "code": {
+        "source": "#include <iostream>\nbool valid(int price, int qty, int discount) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000 && discount >= 0 && discount <= 100;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint discountPrice(int amount, int percent) {\n    return amount - amount * percent / 100;\n}\nint main() {\n    int price, qty, discount;\n    if (!(std::cin >> price >> qty >> discount)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty, discount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << discountPrice(subtotal(price, qty), discount) << '\\n';\n}",
+        "stdin": "100 3 100\n"
+      },
+      "execution": {
+        "source": "#include <iostream>\nbool valid(int price, int qty, int discount) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000 && discount >= 0 && discount <= 100;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint discountPrice(int amount, int percent) {\n    return amount - amount * percent / 100;\n}\nint main() {\n    int price, qty, discount;\n    if (!(std::cin >> price >> qty >> discount)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty, discount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << discountPrice(subtotal(price, qty), discount) << '\\n';\n}",
+        "stdin": "100 3 100\n",
+        "label": "predict",
+        "files": {
+          "main.cpp": "#include <iostream>\nbool valid(int price, int qty, int discount) {\n    return price >= 0 && price <= 1000 && qty >= 0 && qty <= 1000 && discount >= 0 && discount <= 100;\n}\nint subtotal(int price, int qty) {\n    return price * qty;\n}\nint discountPrice(int amount, int percent) {\n    return amount - amount * percent / 100;\n}\nint main() {\n    int price, qty, discount;\n    if (!(std::cin >> price >> qty >> discount)) { std::cout << \"invalid\\n\"; return 0; }\n    if (!valid(price, qty, discount)) { std::cout << \"invalid\\n\"; return 0; }\n    std::cout << discountPrice(subtotal(price, qty), discount) << '\\n';\n}"
+        },
+        "metadata": {
+          "entryFile": "main.cpp"
+        },
+        "expected": "0\n"
+      }
+    },
+    {
+      "id": "concept-0",
+      "kind": "choice",
+      "prompt": "Почему полезно отделять чистую функцию от ввода-вывода?",
+      "options": [
+        "Её легче независимо тестировать и переиспользовать",
+        "Так нельзя получить результат",
+        "Чтобы компилятор не видел функцию"
+      ],
+      "correct": 0,
+      "feedback": "Вычисление не зависит от конкретного интерфейса.",
+      "recall": "concept-3"
+    },
+    {
+      "id": "concept-1",
+      "kind": "choice",
+      "prompt": "Какую обязанность несёт valid?",
+      "options": [
+        "Печать отчёта",
+        "Проверка входных ограничений",
+        "Сборка программы"
+      ],
+      "correct": 1,
+      "feedback": "Контракт valid описывает границы допустимых аргументов.",
+      "recall": "concept-2"
+    },
+    {
+      "id": "concept-2",
+      "kind": "choice",
+      "prompt": "Что является хорошей декомпозицией?",
+      "options": [
+        "Одна функция на 500 строк",
+        "Несколько функций со смешанными обязанностями",
+        "Небольшие функции с конкретной задачей и контрактом"
+      ],
+      "correct": 2,
+      "feedback": "Наличие понятных границ упрощает развитие.",
+      "recall": "concept-1"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Посчитайте два товара по 80 со скидкой 25 процентов. Выведите отдельно subtotal, saving и total; объясните каждое число.",
-      "feedback": "Сравните вывод с показанным ниже контрольным случаем. Объясните каждое изменение через объекты или операции этой темы. При price=80, count=2 и discount=25 получаются subtotal=160, saving=40, total=120. Нельзя выдать saving=40 за итоговую стоимость 120."
+      "prompt": "Покажите результат каждого вызова для входа 37 3 15. Если итог равен 94, какой шаг вы проверите первым?",
+      "feedback": "Объясните, где появляется 16 и почему скидка вместе с суммой к оплате восстанавливает промежуточную сумму.",
+      "recall": "concept-6"
     }
   ],
   "practice": {
-    "title": "Самостоятельная вариация",
-    "task": "Посчитайте два товара по 80 со скидкой 25 процентов. Выведите отдельно subtotal, saving и total; объясните каждое число.",
+    "title": "Чек со скидкой",
+    "task": "Соберите подробный чек для цены 37, количества 3 и скидки 15%. Напечатайте три числа через пробел: промежуточную сумму, скидку в единицах суммы и итог. Реализуйте valid, subtotal и discountPrice отдельно. Цена и количество целые 0..1000, скидка 0..100. Округляйте вниз сумму скидки перед вычитанием. При ошибке чтения или диапазона выведите invalid.",
     "kind": "cpp-console",
     "environment": "C++20",
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n\nint main() {\n    // Напишите своё решение здесь.\n    return 0;\n}\n"
+        "content": "#include <iostream>\n\n// TODO: define valid, subtotal and discountPrice above main.\nint main() {\n    int price, qty, discount;\n    if (!(std::cin >> price >> qty >> discount)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    // TODO: call valid, subtotal and discountPrice in order.\n    std::cout << \"todo\\n\";\n}\n"
       }
     ],
-    "metadata": {},
-    "stdin": "",
-    "returnAnchor": "worked-example",
+    "metadata": {
+      "entryFile": "main.cpp"
+    },
+    "stdin": "37 3 15\n",
+    "returnAnchor": "concept-6",
+    "recall": "concept-6",
     "cases": [
       {
-        "label": "Случай 1",
+        "label": "Чек для 37 × 3",
+        "input": "37 3 15\n",
+        "output": "111 16 95\n"
+      },
+      {
+        "label": "Скидки нет",
+        "input": "50 2 0\n",
+        "output": "100 0 100\n"
+      },
+      {
+        "label": "Весь заказ покрыт скидкой",
+        "input": "1000 1000 100\n",
+        "output": "1000000 1000000 0\n"
+      },
+      {
+        "label": "Дробная скидка меньше единицы",
+        "input": "1 1 1\n",
+        "output": "1 0 1\n"
+      },
+      {
+        "label": "Недопустимый процент",
+        "input": "50 2 101\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Цена выше предела",
+        "input": "1001 1 0\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Ошибка чтения",
+        "input": "oops\n",
+        "output": "invalid\n"
+      },
+      {
+        "label": "Нет ввода",
         "input": "",
-        "output": "160 40 120\n"
+        "output": "invalid\n"
       }
     ],
     "criteria": [
-      "Сравните вывод с показанным ниже контрольным случаем.",
-      "Объясните каждое изменение через объекты или операции этой темы.",
-      "При price=80, count=2 и discount=25 получаются subtotal=160, saving=40, total=120. Нельзя выдать saving=40 за итоговую стоимость 120."
+      "Каждая функция принимает только данные своего шага.",
+      "Проверьте результат discountPrice отдельно, затем проверьте три поля полного чека для 37 3 15.",
+      "Объясните, где появляется 16 и почему скидка вместе с суммой к оплате восстанавливает промежуточную сумму."
     ],
-    "hint": "При 0 процентах saving равно 0. При 100 процентах вычитается весь subtotal.",
+    "hint": "Разница между subtotal и суммой к оплате даёт скидку в единицах суммы.",
     "steps": [
       {
         "where": "Моя программа",
-        "action": "Посчитайте два товара по 80 со скидкой 25 процентов. Выведите отдельно subtotal, saving и total; объясните каждое число.",
+        "action": "Запишите контракты трёх функций.",
         "why": "",
         "expected": ""
       },
       {
         "where": "Моя программа",
-        "action": "Предскажите результат до запуска.",
+        "action": "Сверьте промежуточные числа 111 и 16.",
         "why": "",
         "expected": ""
       },
       {
         "where": "Моя программа",
-        "action": "Напишите решение в отдельной заготовке; сохраните прежнюю работу.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "Моя программа",
-        "action": "Сравните фактический вывод с прогнозом и объясните расхождение.",
+        "action": "Подключите функции в main и проверьте три поля при крайних процентах.",
         "why": "",
         "expected": ""
       }
@@ -192,5 +345,28 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\algorithms\\top-down-design.ru.json"
+  "sourcePath": "courses\\cpp\\gold\\algorithms\\top-down-design.ru.json",
+  "reading": [
+    {
+      "id": "cpp20-expr.call",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.call]",
+      "language": "English",
+      "purpose": "Нормы C++ для операций из примера. Для решения задания достаточно материала урока.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.call"
+    },
+    {
+      "id": "cpp20-expr.mul",
+      "author": "ISO/IEC JTC1/SC22/WG21",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "edition": "N4861, 2020",
+      "section": "[expr.mul]",
+      "language": "English",
+      "purpose": "Нормы C++ для операций из примера. Для решения задания достаточно материала урока.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/expr.mul"
+    }
+  ],
+  "authored": true
 }

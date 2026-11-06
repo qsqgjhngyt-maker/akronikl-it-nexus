@@ -8,7 +8,7 @@ const write=async(p,v)=>{await mkdir(path.dirname(p),{recursive:true});await wri
 // Сохранить историческое написание метаданных C++ на любой ОС; это не путь для чтения.
 const cppSourceRef=p=>p.replaceAll('/','\\');
 const pilots=new Set(['cpp.programming-process','onec.p2.topic-1','onec.p7.topic-2']);
-const authoredIds=new Set(['cpp.tokens-identifiers-keywords','cpp.increment-decrement-sizeof-conditional','cpp.data-types','cpp.first-cpp-program','cpp.comments-constants-literals','cpp.variables-scope','cpp.expressions-operators-blocks','cpp.arithmetic-assignment','cpp.type-conversions','cpp.relations-logic','cpp.pointers-references-addresses','cpp.standard-io']);
+const authoredIds=new Set(['cpp.algorithm-definition-properties','cpp.algorithm-representations','cpp.pseudocode-euclidean-algorithm','cpp.flowcharts','cpp.top-down-design','cpp.sequence-branching-loops','cpp.languages-compilation-debugging','cpp.tokens-identifiers-keywords','cpp.increment-decrement-sizeof-conditional','cpp.data-types','cpp.first-cpp-program','cpp.comments-constants-literals','cpp.variables-scope','cpp.expressions-operators-blocks','cpp.arithmetic-assignment','cpp.type-conversions','cpp.relations-logic','cpp.pointers-references-addresses','cpp.standard-io']);
 const catalog=[],registry={},audit=[];
 const cpp=await read('courses/cpp/curriculum.json');
 const gold=new Map();for await(const p of glob('courses/cpp/gold/**/*.ru.json')){const g=await read(p);gold.set(g.lessonId,p);}
