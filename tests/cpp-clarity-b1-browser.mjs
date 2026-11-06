@@ -6,7 +6,12 @@ const moduleIds=algorithmization?B2_IDS:B1_IDS;
 const runCase=algorithmization
  ?{id:'cpp.pseudocode-euclidean-algorithm',stdin:'84 30\n',output:/6 3/}
  :{id:'cpp.standard-io',stdin:'4 6\n',output:/items=24/};
-const out=path.resolve(process.env.NEXUS_CLARITY_EVIDENCE);await mkdir(out,{recursive:true});const f=await clarityLocalFixture(path.join(out,'b1-vault')),p=f.page,prefix='/releases/'+f.generation,checks=[],observations=[],requests=[],timings=[];let failure;const before=process.argv.includes('--before');
+const out=path.resolve(process.env.NEXUS_CLARITY_EVIDENCE);
+await mkdir(out,{recursive:true});
+const f=await clarityLocalFixture(path.join(out,block.toLowerCase()+'-vault'));
+const p=f.page,prefix='/releases/'+f.generation,checks=[],observations=[],requests=[],timings=[];
+let failure;
+const before=process.argv.includes('--before');
 const go=async(id,locale='ru',stage='explanation')=>{const start=Date.now();await p.evaluate(({id,locale,stage})=>location.hash='#'+new URLSearchParams({course:'cpp',lesson:id,locale,stage}),{id,locale,stage});await p.locator('[data-r3-topic="'+id+'"][lang="'+locale+'"]').waitFor();await p.locator('[data-r3-panel="'+stage+'"]:visible').waitFor();timings.push({id,locale,stage,ms:Date.now()-start});};
 const saved=()=>p.waitForFunction(()=>['saved','restored'].includes(document.querySelector('[data-r3-save]')?.dataset.state));
 const snap=async(id,locale,width,part)=>{await p.screenshot({path:path.join(out,(before?'before':'after')+'-'+id.slice(4)+'-'+locale+'-'+width+'-'+part+'.png')});};
