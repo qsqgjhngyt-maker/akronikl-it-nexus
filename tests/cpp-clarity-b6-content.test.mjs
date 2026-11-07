@@ -28,7 +28,7 @@ test('B06 связывает полный текст, прогноз, контр
    assert.deepEqual(original,old(source(id,locale)));
    assert.deepEqual(l.extras,before.extras);
    for(const key of ['sections','selfcheck','practice','reading'])assert.deepEqual(l[key],a[key]);
-   assert.equal(a.revision,'b6-author-v1');
+   assert.equal(a.revision,qt?'b6-author-v2':'b6-author-v1');
    assert.equal(l.contentRevision,clarityContentRevision(id));
    const anchors=new Set(l.sections.map(s=>s.id));
    assert.ok(before.sections.every(s=>anchors.has(s.id)));
@@ -44,7 +44,7 @@ test('B06 связывает полный текст, прогноз, контр
     const {recall,...next}=l.selfcheck.find(x=>x.id===q.id);assert.deepEqual(next,q);
    }
    assert.ok(p.steps.length===3&&p.steps.every(s=>s.action&&s.why&&s.expected));
-   assert.equal(p.starterRevision,'b6-starter-v1');
+   assert.equal(p.starterRevision,qt?'b6-starter-v2':'b6-starter-v1');
    assert.deepEqual(p.metadata,before.practice.metadata);
    const entry=qt?'src/gui.cpp':'main.cpp',starter=p.files.find(f=>f.path===entry)?.content;
    const allSources=p.files.map(f=>f.content).join('\n');
