@@ -26,6 +26,7 @@ export async function module6GoldPrograms({includeAuthored=process.env.NEXUS_B6_
    const entry=practice.metadata.entryFile||'main.cpp',source=files[entry];delete files[entry];
    const cases=g.runtimeTarget==='qt-wasm'?a.cases:[{stdin:practice.stdin,stdout:practice.starterObservation.stdout,exitCode:0}];
    add('authored-starter',source,cases,files,practice.metadata);
+   if(edition.referenceProgram)add('authored-lab-reference',edition.referenceProgram,practice.cases.map(c=>({stdin:'',actions:c.input.split('\n'),expected:c.output})),edition.referenceFiles,practice.metadata);
    for(const v of edition.verificationCases||[])add('authored-probe-'+v.id,v.source,[{stdin:v.stdin,stdout:v.output}],v.files,v.metadata);
   }
  }

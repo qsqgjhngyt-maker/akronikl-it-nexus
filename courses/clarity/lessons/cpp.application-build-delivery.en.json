@@ -209,8 +209,8 @@
       "id": "independent-work",
       "title": "Now try your own task",
       "paragraphs": [
-        "Start from a separate base TaskFlow copy, then implement your own OPEN/DONE and filter. Consult the reference after your attempt. For submission, identify the tested snapshot, tests and limits of ZIP portability within Nexus.",
-        "Predict every state of the alpha/beta scenario before running."
+        "Start from a separate base TaskFlow copy, then implement your own OPEN/DONE and a Completed tasks only toggle. The example filters open tasks: your version selects completed tasks while preserving stable ids. Consult the reference after your attempt. For submission, identify the tested snapshot, tests and limits of ZIP portability within Nexus.",
+        "Add alpha/beta, complete alpha and predict the Completed tasks only filter."
       ]
     }
   ],
@@ -320,13 +320,13 @@
   ],
   "practice": {
     "title": "Laboratory: Build, persistence and application submission",
-    "task": "In a new TaskFlow project implement open/done counts and an all/open GUI filter. Filtering must preserve the model, persistent ids and all NXTF1 data. Verify persistence, Stop→Run, model tests, a Studio checkpoint and portable ZIP within Nexus. For immutable final submission open Final assessment and use its starter.",
+    "task": "In a separate TaskFlow copy, add Open/Done counts for the whole model and a Completed tasks only toggle. The example filters open tasks; your independent version shows completed tasks. Store t.id in Qt::UserRole and save all tasks to NXTF1 regardless of filtering. Check repeated complete, explicit saving, Stop/Run, your tests, ZIP and preservation of a submitted snapshot after editing the working copy.",
     "kind": "qt-project",
     "environment": "C++20 / Qt 6.8.3 / Emscripten 3.1.56",
     "files": [
       {
         "path": "src/gui.cpp",
-        "content": "// TODO: Add OPEN/DONE and a stable-id filter without removing model items.\n#include \"task_model.hpp\"\n#include <QApplication>\n#include <QAccessible>\n#include <QWidget>\n#include <QVBoxLayout>\n#include <QLineEdit>\n#include <QPushButton>\n#include <QListWidget>\n#include <QLabel>\n#include <QFile>\n#include <memory>\n#include <sstream>\n#include <iostream>\nclass TaskWindow : public QWidget {\n    TaskModel model_;\n    QLineEdit *input_;\n    QListWidget *list_;\n    QLabel *status_;\n    QLabel *count_;\n    void refresh() {\n        count_->setText(QString(\"Tasks: %1\").arg(model_.tasks().size()));\n        list_->clear();\n        for (const auto &t : model_.tasks()) {\n            auto *item = new QListWidgetItem(\n                QString(t.done ? \"[done] \" : \"[ ] \") +\n                    QString::fromUtf8(t.title.data(), int(t.title.size())),\n                list_);\n            item->setData(Qt::UserRole, t.id);\n        }\n        std::cout << \"NEXUS_TASKS \" << model_.tasks().size() << std::endl;\n    }\n    void add() {\n        try {\n            const auto text = input_->text().toUtf8();\n            model_.add(\n                std::string(text.constData(), std::size_t(text.size())));\n            input_->clear();\n            status_->setText(\"Saved in the running application\");\n            refresh();\n        } catch (const std::exception &e) {\n            status_->setText(QString::fromUtf8(e.what()));\n        }\n    }\n\n  public:\n    TaskWindow() {\n        setWindowTitle(\"TaskFlow — C++ in Nexus\");\n        resize(460, 420);\n        auto *layout = new QVBoxLayout(this);\n        layout->addWidget(new QLabel(\"TaskFlow\", this));\n        input_ = new QLineEdit(this);\n        input_->setPlaceholderText(\"Enter a task\");\n        input_->setAccessibleName(\"Task title\");\n        layout->addWidget(input_);\n        auto *button = new QPushButton(\"Add task\", this);\n        layout->addWidget(button);\n        list_ = new QListWidget(this);\n        layout->addWidget(list_);\n        count_ = new QLabel(this);\n        layout->addWidget(count_);\n        status_ = new QLabel(\"Ready\", this);\n        status_->setWordWrap(true);\n        layout->addWidget(status_);\n        connect(button, &QPushButton::clicked, this, [this] { add(); });\n        connect(input_, &QLineEdit::returnPressed, this, [this] { add(); });\n        auto *done = new QPushButton(\"Complete selected\", this);\n        layout->addWidget(done);\n        connect(done, &QPushButton::clicked, this, [this] {\n            try {\n                if (!list_->currentItem()) {\n                    throw std::runtime_error(\"Select a task\");\n                }\n                model_.complete(\n                    list_->currentItem()->data(Qt::UserRole).toInt());\n                refresh();\n            } catch (const std::exception &e) {\n                status_->setText(QString::fromUtf8(e.what()));\n            }\n        });\n        auto *save = new QPushButton(\"Save application data\", this);\n        layout->addWidget(save);\n        connect(save, &QPushButton::clicked, this, [this] {\n            try {\n                std::ostringstream out;\n                model_.save(out);\n                QFile f(\"taskflow.txt\");\n                if (!f.open(QIODevice::WriteOnly) ||\n                    f.write(QByteArray::fromStdString(out.str())) < 0) {\n                    throw std::runtime_error(\"Cannot write data\");\n                }\n                status_->setText(\"Application data saved\");\n            } catch (const std::exception &e) {\n                status_->setText(QString::fromUtf8(e.what()));\n            }\n        });\n        QFile f(\"taskflow.txt\");\n        if (f.open(QIODevice::ReadOnly)) {\n            try {\n                const auto bytes = f.read(65537);\n                if (bytes.size() > 65536) {\n                    throw std::runtime_error(\"Data file is too large\");\n                }\n                std::istringstream in(bytes.toStdString());\n                model_.load(in);\n            } catch (const std::exception &e) {\n                status_->setText(QString::fromUtf8(e.what()));\n            }\n        }\n        refresh();\n        input_->setFocus();\n    }\n};\nint main(int argc, char **argv) {\n    static auto app = std::make_unique<QApplication>(argc, argv);\n#ifdef __EMSCRIPTEN__\n    QAccessible::setActive(true);\n#endif\n    static auto window = std::make_unique<TaskWindow>();\n    window->show();\n    QAccessible::setRootObject(window.get());\n#ifndef __EMSCRIPTEN__\n    return app->exec();\n#else\n    return 0;\n#endif\n}\n"
+        "content": "// TODO: Add OPEN/DONE and Completed tasks only using stable ids.\n#include \"task_model.hpp\"\n#include <QApplication>\n#include <QAccessible>\n#include <QWidget>\n#include <QVBoxLayout>\n#include <QLineEdit>\n#include <QPushButton>\n#include <QListWidget>\n#include <QLabel>\n#include <QFile>\n#include <memory>\n#include <sstream>\n#include <iostream>\nclass TaskWindow : public QWidget {\n    TaskModel model_;\n    QLineEdit *input_;\n    QListWidget *list_;\n    QLabel *status_;\n    QLabel *count_;\n    void refresh() {\n        count_->setText(QString(\"Tasks: %1\").arg(model_.tasks().size()));\n        list_->clear();\n        for (const auto &t : model_.tasks()) {\n            auto *item = new QListWidgetItem(\n                QString(t.done ? \"[done] \" : \"[ ] \") +\n                    QString::fromUtf8(t.title.data(), int(t.title.size())),\n                list_);\n            item->setData(Qt::UserRole, t.id);\n        }\n        std::cout << \"NEXUS_TASKS \" << model_.tasks().size() << std::endl;\n    }\n    void add() {\n        try {\n            const auto text = input_->text().toUtf8();\n            model_.add(\n                std::string(text.constData(), std::size_t(text.size())));\n            input_->clear();\n            status_->setText(\"Saved in the running application\");\n            refresh();\n        } catch (const std::exception &e) {\n            status_->setText(QString::fromUtf8(e.what()));\n        }\n    }\n\n  public:\n    TaskWindow() {\n        setWindowTitle(\"TaskFlow — C++ in Nexus\");\n        resize(460, 420);\n        auto *layout = new QVBoxLayout(this);\n        layout->addWidget(new QLabel(\"TaskFlow\", this));\n        input_ = new QLineEdit(this);\n        input_->setPlaceholderText(\"Enter a task\");\n        input_->setAccessibleName(\"Task title\");\n        layout->addWidget(input_);\n        auto *button = new QPushButton(\"Add task\", this);\n        layout->addWidget(button);\n        list_ = new QListWidget(this);\n        layout->addWidget(list_);\n        count_ = new QLabel(this);\n        layout->addWidget(count_);\n        status_ = new QLabel(\"Ready\", this);\n        status_->setWordWrap(true);\n        layout->addWidget(status_);\n        connect(button, &QPushButton::clicked, this, [this] { add(); });\n        connect(input_, &QLineEdit::returnPressed, this, [this] { add(); });\n        auto *done = new QPushButton(\"Complete selected\", this);\n        layout->addWidget(done);\n        connect(done, &QPushButton::clicked, this, [this] {\n            try {\n                if (!list_->currentItem()) {\n                    throw std::runtime_error(\"Select a task\");\n                }\n                model_.complete(\n                    list_->currentItem()->data(Qt::UserRole).toInt());\n                refresh();\n            } catch (const std::exception &e) {\n                status_->setText(QString::fromUtf8(e.what()));\n            }\n        });\n        auto *save = new QPushButton(\"Save application data\", this);\n        layout->addWidget(save);\n        connect(save, &QPushButton::clicked, this, [this] {\n            try {\n                std::ostringstream out;\n                model_.save(out);\n                QFile f(\"taskflow.txt\");\n                if (!f.open(QIODevice::WriteOnly) ||\n                    f.write(QByteArray::fromStdString(out.str())) < 0) {\n                    throw std::runtime_error(\"Cannot write data\");\n                }\n                status_->setText(\"Application data saved\");\n            } catch (const std::exception &e) {\n                status_->setText(QString::fromUtf8(e.what()));\n            }\n        });\n        QFile f(\"taskflow.txt\");\n        if (f.open(QIODevice::ReadOnly)) {\n            try {\n                const auto bytes = f.read(65537);\n                if (bytes.size() > 65536) {\n                    throw std::runtime_error(\"Data file is too large\");\n                }\n                std::istringstream in(bytes.toStdString());\n                model_.load(in);\n            } catch (const std::exception &e) {\n                status_->setText(QString::fromUtf8(e.what()));\n            }\n        }\n        refresh();\n        input_->setFocus();\n    }\n};\nint main(int argc, char **argv) {\n    static auto app = std::make_unique<QApplication>(argc, argv);\n#ifdef __EMSCRIPTEN__\n    QAccessible::setActive(true);\n#endif\n    static auto window = std::make_unique<TaskWindow>();\n    window->show();\n    QAccessible::setRootObject(window.get());\n#ifndef __EMSCRIPTEN__\n    return app->exec();\n#else\n    return 0;\n#endif\n}\n"
       },
       {
         "path": "include/task_model.hpp",
@@ -405,14 +405,14 @@
         "output": "New build text appears; an earlier submitted revision stays unchanged."
       },
       {
-        "label": "Filtering preserves persistent ids",
-        "input": "Add alpha and beta, complete alpha, enable Open tasks only and complete the remaining beta.",
-        "output": "Open: 0 Done: 2; both tasks are retained and filtering does not delete the model."
+        "label": "Your task: completed-task filter",
+        "input": "Add alpha and beta. Complete alpha, enable Completed tasks only and repeat complete for visible alpha. Disable the filter, complete beta, then enable it again.",
+        "output": "The first filtered view shows alpha: Open: 1 Done: 1. Repetition changes nothing. Both tasks are visible at the end: Open: 0 Done: 2."
       },
       {
         "label": "Saving with an active filter",
-        "input": "After the preceding scenario save data and stop/restart the application.",
-        "output": "NXTF1 contains both tasks; restarting with no filter shows both completed items."
+        "input": "Save both completed tasks with Completed tasks only enabled; Stop/Run.",
+        "output": "NXTF1 contains both tasks. Restarting without a filter shows both completed tasks; Open: 0 Done: 2."
       },
       {
         "label": "Submission revision",
@@ -421,7 +421,7 @@
       }
     ],
     "criteria": [
-      "After filtering:1 row, OPEN1 DONE1; after beta:0 rows, OPEN0 DONE2.",
+      "After filtering, alpha is visible: OPEN1 DONE1. After completing beta, both are visible: OPEN0 DONE2.",
       "Completing selected beta updates id 2; both tasks remain stored.",
       "Both tasks restore; the submission retains tested sources, README and observed results.",
       "Add one valid scenario and one rejection of your own. Keep the sources, input/actions and observed outcome. Your explanation is reviewed separately from execution."
@@ -430,13 +430,13 @@
     "steps": [
       {
         "where": "Before running",
-        "action": "Predict every state of the alpha/beta scenario before running.",
+        "action": "Add alpha/beta, complete alpha and predict the Completed tasks only filter.",
         "why": "Row count and task count differ after filtering.",
-        "expected": "After filtering:1 row, OPEN1 DONE1; after beta:0 rows, OPEN0 DONE2."
+        "expected": "After filtering, alpha is visible: OPEN1 DONE1. After completing beta, both are visible: OPEN0 DONE2."
       },
       {
         "where": "In my program",
-        "action": "Implement the filter using stable ids and count the whole model.",
+        "action": "Implement the completed-task filter using stable ids and count the whole model.",
         "why": "A hidden task remains a model object.",
         "expected": "Completing selected beta updates id 2; both tasks remain stored."
       },

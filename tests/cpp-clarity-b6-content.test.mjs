@@ -50,9 +50,11 @@ test('B06 связывает полный текст, прогноз, контр
    const allSources=p.files.map(f=>f.content).join('\n');
    assert.match(allSources,/TODO/);
    assert.equal(/\p{Script=Cyrillic}/u.test(allSources),locale==='ru');
-   assert.equal(p.cases.length,g.laboratory.cases.length);
+   assert.equal(p.cases.length,g.laboratory.cases.length+(id==='cpp.qt-graphical-adapter'?1:0));
    for(const [index,c] of p.cases.entries()){
     const gold=g.laboratory.cases[index];
+    const ownCase=qt&&(!gold||id==='cpp.application-build-delivery'&&[8,9].includes(index));
+    if(ownCase){assert.match(c.output,/Open|OPEN/);continue;}
     assert.deepEqual([c.input,c.output],qt?[(gold.actions||[]).join('\n'),gold.expected]:[gold.stdin,gold.stdout]);
     assert.ok(!c.output.includes('\\n'));
    }
@@ -74,6 +76,11 @@ test('B06 связывает полный текст, прогноз, контр
    if(qt){
     assert.equal(prediction.execution,undefined,'Qt must never be routed through the console predictor');
     assert.equal(p.starterObservation.kind,'qt-ui');
+    const reference=programs.find(p=>p.aliases.some(a=>a.lesson===id&&a.locale===locale&&a.part==='authored-lab-reference'));
+    assert.equal(reference.source,a.referenceProgram);
+    assert.notEqual(reference.source,g.laboratory.referenceCode);
+    assert.match(reference.source,id==='cpp.qt-graphical-adapter'?/Open tasks: %1/:/Completed tasks only/);
+    assert.match(p.task,id==='cpp.qt-graphical-adapter'?/Open tasks/:/Completed tasks only/);
     assert.ok(p.starterObservation.description);
     assert.deepEqual(new Set(p.files.map(f=>f.path)),new Set([entry,...Object.keys(g.laboratory.starterFiles)]));
    }else{

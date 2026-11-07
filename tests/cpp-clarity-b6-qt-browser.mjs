@@ -6,10 +6,10 @@ const out=path.resolve(process.env.NEXUS_M6_EVIDENCE);await mkdir(out,{recursive
 for(const b of(await module6GoldPrograms({includeAuthored:true})).filter(b=>b.target==='qt-wasm')){const files=Object.fromEntries(Object.entries(b.files).filter(([f])=>f!=='README.md')),key=createHash('sha256').update(JSON.stringify({source:b.source,files})).digest('hex');if(!unique.has(key))unique.set(key,b);}
 const log=()=>p.locator('[data-app="log"]').textContent(),waitLog=text=>p.waitForFunction(text=>document.querySelector('[data-app="log"]')?.textContent.includes(text),text,{timeout:120000});
 async function build(){await p.locator('#runCode').click();const iframe=p.locator('.nexus-application-panel iframe');await iframe.waitFor({timeout:180000});const frame=await(await iframe.elementHandle()).contentFrame();assert.ok(frame);await frame.getByRole('textbox',{name:'Task title',exact:true}).waitFor({timeout:120000});return frame;}
-async function selectFirstTask(frame){
+async function selectFirstTask(frame,row=0){
  // SDK сообщает геометрию именованного списка; реальные pointer events принимает контейнер Qt.
  const contents=frame.locator('.qt-window-contents').first(),list=await frame.getByText('Tasks',{exact:true}).boundingBox(),client=await contents.boundingBox();assert.ok(list&&client&&list.width>24&&list.height>24);
- await contents.click({position:{x:list.x-client.x+12,y:list.y-client.y+12}});
+ await contents.click({position:{x:list.x-client.x+12,y:list.y-client.y+12+18*row}});
 }
 try{
  await p.goto(f.origin+'/#view=home');await p.locator('.visual-home').waitFor();await f.waitReady();
@@ -30,9 +30,26 @@ try{
   if(b.source.includes('NEXUS_VIEW')){
    // Настоящая клавиатурная навигация в Qt, без вызова C++ модели из JS.
    await selectFirstTask(frame);await frame.getByRole('button',{name:'Complete selected',exact:true}).press('Enter');await waitLog('NEXUS_VIEW 2 OPEN 1 DONE 1');
-   const filter=frame.getByLabel('Open tasks only',{exact:true});await filter.press('Space');await waitLog('NEXUS_VIEW 1 OPEN 1 DONE 1');
-   await selectFirstTask(frame);await frame.getByRole('button',{name:'Complete selected',exact:true}).press('Enter');await waitLog('NEXUS_VIEW 0 OPEN 0 DONE 2');
+   const completed=b.source.includes('Completed tasks only');
+   const filter=frame.getByLabel(completed?'Completed tasks only':'Open tasks only',{exact:true});await filter.press('Space');await waitLog('NEXUS_VIEW 1 OPEN 1 DONE 1');
+   if(completed){
+    await selectFirstTask(frame);await frame.getByRole('button',{name:'Complete selected',exact:true}).press('Enter');
+    await filter.press('Space');await selectFirstTask(frame,1);
+   }else await selectFirstTask(frame);
+   await frame.getByRole('button',{name:'Complete selected',exact:true}).press('Enter');
+   await waitLog(completed?'NEXUS_VIEW 2 OPEN 0 DONE 2':'NEXUS_VIEW 0 OPEN 0 DONE 2');
+   if(completed){await filter.press('Space');await waitLog('NEXUS_VIEW 2 OPEN 0 DONE 2');}
+
    await p.setViewportSize({width:390,height:844});await p.locator('.nexus-application-panel iframe').scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,'module6-filter-390.png'),fullPage:true});
+  }
+  if(b.source.includes('Open tasks: %1')){
+   await frame.getByRole('textbox',{name:'Open tasks: 2',exact:true}).waitFor();
+   await selectFirstTask(frame);await frame.getByRole('button',{name:'Complete selected',exact:true}).press('Enter');
+   await frame.getByRole('textbox',{name:'Open tasks: 1',exact:true}).waitFor();
+   await selectFirstTask(frame);await frame.getByRole('button',{name:'Complete selected',exact:true}).press('Enter');
+   await frame.getByRole('textbox',{name:'Open tasks: 1',exact:true}).waitFor();
+   await selectFirstTask(frame,1);await frame.getByRole('button',{name:'Complete selected',exact:true}).press('Enter');
+   await frame.getByRole('textbox',{name:'Open tasks: 0',exact:true}).waitFor();
   }
   await frame.getByRole('button',{name:'Save application data',exact:true}).press('Enter');await p.waitForFunction(()=>document.querySelector('[data-app="status"]')?.textContent.includes('Данные приложения сохранены'));await p.locator('[data-app="data"]').click();await p.waitForTimeout(100);
   let saved=await p.evaluate(async({prefix,id})=>(await import(prefix+'/project-studio/project-store.js')).getProject(id),{prefix,id});const text=saved.workspace.files.find(x=>x.path==='taskflow.txt')?.content;assert.match(text||'',/alpha/);assert.match(text||'',/beta/);assert.equal(saved.workspace.files.find(x=>x.path==='src/gui.cpp').content,b.source);
