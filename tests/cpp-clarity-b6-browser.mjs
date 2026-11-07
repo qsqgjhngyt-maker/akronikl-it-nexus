@@ -22,6 +22,18 @@ const screenshot=async(locator,name)=>{
  await locator.evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
  await p.screenshot({path:path.join(out,name+'.png')});
 };
+const retainedFocus=async field=>{
+ const element=await field.elementHandle();
+ try{
+  // Closing a native dialog queues its close/focus events. Observe their result,
+  // rather than sampling between Escape and the browser's completed restoration.
+  await p.waitForFunction(el=>el===el.getRootNode().activeElement&&el.selectionStart===2&&el.selectionEnd===6,element,{timeout:3000});
+ }catch(error){
+  const state=await field.evaluate(el=>({focused:el===el.getRootNode().activeElement,active:el.getRootNode().activeElement?.outerHTML?.slice(0,500),start:el.selectionStart,end:el.selectionEnd,connected:el.isConnected,inert:!!el.closest('[inert]')}));
+  throw new Error('Recall focus/selection not restored: '+JSON.stringify(state),{cause:error});
+ }finally{await element.dispose();}
+ assert.deepEqual(await field.evaluate(el=>[el===el.getRootNode().activeElement,el.selectionStart,el.selectionEnd]),[true,2,6]);
+};
 let failure;
 try{
  await p.setViewportSize({width:1366,height:900});
@@ -107,7 +119,7 @@ try{
    await practice.locator('.work-actions [data-recall]').click();
    const recall=root.locator('dialog.r3-dialog[open]');await recall.waitFor();
    await p.keyboard.press('Escape');await recall.waitFor({state:'detached'});
-   assert.deepEqual(await report.evaluate(el=>[el===el.getRootNode().activeElement,el.selectionStart,el.selectionEnd]),[true,2,6]);
+   await retainedFocus(report);
    assert.equal(await report.inputValue(),note);
    const reference=practice.locator('[data-lab-reference]');await reference.locator('summary').first().click();
    assert.equal(await reference.locator('[data-reference-source] code').textContent(),g.teachingEdition.referenceProgram||g.laboratory.referenceCode);
@@ -145,7 +157,7 @@ try{
   await practice.locator('.work-actions [data-recall]').click();
   const recall=root.locator('dialog.r3-dialog[open]');await recall.waitFor();
   await p.keyboard.press('Escape');await recall.waitFor({state:'detached'});
-  assert.deepEqual(await editor.evaluate(el=>[el===el.getRootNode().activeElement,el.selectionStart,el.selectionEnd]),[true,2,6]);
+  await retainedFocus(editor);
   assert.equal(await editor.inputValue(),old);assert.equal(await stdin.inputValue(),l.practice.stdin+' ');
   const mobile=['cpp.callback-lifetime-subscriptions','cpp.responsive-work-cancellation'].includes(id);
   if(mobile)await p.setViewportSize({width:390,height:900});
