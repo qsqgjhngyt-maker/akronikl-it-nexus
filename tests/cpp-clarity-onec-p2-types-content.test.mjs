@@ -12,7 +12,10 @@ const json=async p=>JSON.parse(await readFile(p,'utf8')),hash=b=>createHash('sha
 const git=(...args)=>execFileSync('git',['-c','core.longpaths=true',...args],{maxBuffer:64e6});
 test('P2 types меняет одну редакционную пару и сохраняет принятый пилот, P1 и исходные курсы',()=>{
  for(const area of ['courses/cpp','courses/cpp-clarity-r3','courses/onec','courses/1c-enterprise','review/cpp-clarity-r3','courses/onec-education','core/clarity-course-progress.mjs','core/storage.js','project-studio','sandbox/qt'])assert.equal(git('diff','--name-only',base,'--',area).toString().trim(),'');
- assert.deepEqual(git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort(),['en','ru'].map(l=>`courses/clarity/lessons/${id}.${l}.json`));
+ const approved=[id,'onec.p2.topic-3'].flatMap(topic=>['en','ru'].map(l=>`courses/clarity/lessons/${topic}.${l}.json`));
+ assert.deepEqual(git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort(),approved.sort());
+ const acceptedTypes=['authoring','lessons'].flatMap(dir=>['en','ru'].map(l=>`courses/clarity/${dir}/${id}.${l}.json`));
+ assert.equal(git('diff','--name-only','7bafbe88e2eb07c972c33525afb8f0de365faa31','--',...acceptedTypes).toString().trim(),'','Accepted types edition remains byte-identical');
 });
 test('P2 types сохраняет исходную теорию и вопросы, согласует новую попытку и маршрут возврата',async()=>{
  for(const locale of ['ru','en']){

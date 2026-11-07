@@ -23,7 +23,8 @@ test('Принятая пара P1 и оба исходных курса сох�
  const changed=git('diff','--name-only',base,'--','courses/clarity/lessons').toString().trim().split(/\r?\n/).sort();
  const p1=slugs.flatMap(s=>['en','ru'].map(l=>`courses/clarity/lessons/onec.p1.${s}.${l}.json`));
  const p2Types=['en','ru'].map(l=>`courses/clarity/lessons/onec.p2.topic-2.${l}.json`);
- assert.deepEqual(changed,[...p1,...p2Types].sort());
+ const p2Conditions=['en','ru'].map(l=>`courses/clarity/lessons/onec.p2.topic-3.${l}.json`);
+ assert.deepEqual(changed,[...p1,...p2Types,...p2Conditions].sort());
  const acceptedP1=[...p1,...slugs.flatMap(s=>['en','ru'].map(l=>`courses/clarity/authoring/onec.p1.${s}.${l}.json`))];
  assert.equal(git('diff','--name-only','704c23616f1d8536416fb90a9b46502e1b0f1831','--',...acceptedP1).toString().trim(),'','Accepted P1 remains byte-identical');
 });
