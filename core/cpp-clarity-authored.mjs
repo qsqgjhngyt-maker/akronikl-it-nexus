@@ -57,11 +57,19 @@ export function authoredMarkup(lesson,{code,table,url,programBundle}){
  const diagram=s=>s.flowchart?decisionFlowchart(s.flowchart,say):s.diagram?`<figure class="lesson-diagram"><figcaption>${esc(s.diagram.caption)}</figcaption><pre>${esc(s.diagram.text)}</pre></figure>`:'';
  const optionalReading=deep=>deep?`<details class="optional-reading"><summary>${say('Разобраться глубже: ','Explore further: ')}${esc(deep.title)}</summary><p>${esc(deep.text)}</p>${program(deep.code)}<a href="#reading-${esc(deep.sourceId||'goldberg')}">${say('Источник и дальнейшее чтение','Source and further reading')}</a></details>`:'';
  const predictionInput=s=>(s.predictionInput?`<p>${say('Ввод для прогноза','Prediction input')}</p><pre>${s.predictionInput.startsWith('\n')?'\n':''}${esc(s.predictionInput)}</pre>`:'')+(s.predictionBundle?programBundle(s.predictionBundle):'');
- const sectionBody=s=>paragraphs(s.paragraphs)+diagram(s)+predictionInput(s)+(s.prediction?`<pre class="prediction-code"><code>${esc(s.prediction.join('\n'))}</code></pre>`:'')+(s.reveal?`<details class="prediction-reveal"><summary>${esc(s.reveal.title)}</summary>${revealBody(s.reveal)}</details>`:'')+program(s.code)+(s.tables||[]).map(table).join('')+optionalReading(s.deep);
+ const caseObservation=s=>{
+  const c=s.casePreview;if(!c)return '';
+  const qt=c.kind==='qt-ui',value=(v,key)=>qt?`<div data-authored-${key}>${paragraphs(v.split('\n'))}</div>`:`<pre data-authored-${key} tabindex="0" role="region" aria-label="${key==='input'?say('Ввод в программу (stdin)','Program input (stdin)'):say('Ожидаемый вывод (stdout)','Expected output (stdout)')}">\n${esc(v)}</pre>`;
+  return `<div class="authored-case-io" data-authored-case-preview>
+   <div><p class="example-label">${qt?say('Действия в окне','Actions in the window'):say('Ввод в программу (stdin)','Program input (stdin)')}</p>${value(c.input,'input')}</div>
+   <div><p class="example-label">${qt?say('Ожидаемое наблюдение','Expected observation'):say('Ожидаемый вывод (stdout)','Expected output (stdout)')}</p>${value(c.output,'output')}</div>
+  </div>`;
+ };
+ const sectionBody=s=>paragraphs(s.paragraphs)+caseObservation(s)+diagram(s)+predictionInput(s)+(s.prediction?`<pre class="prediction-code"><code>${esc(s.prediction.join('\n'))}</code></pre>`:'')+(s.reveal?`<details class="prediction-reveal"><summary>${esc(s.reveal.title)}</summary>${revealBody(s.reveal)}</details>`:'')+program(s.code)+(s.tables||[]).map(table).join('')+optionalReading(s.deep);
  const reading=()=>`<section class="lesson-reading" id="lesson-reading"><h2>${say('Что почитать','Further reading')}</h2><p>${say('Всё необходимое для задания уже есть в уроке. Эти материалы можно открыть по желанию. Внешние ссылки требуют сети.','The lesson contains everything required for the task. These optional external sources require a connection.')}</p>${lesson.reading.map(s=>`<article id="reading-${esc(s.id)}"><h3>${esc(s.title)}</h3><p>${esc(s.author)} · ${esc(s.edition)} · ${esc(s.section)} · ${esc(s.language)}</p><p>${esc(s.purpose)}</p><a href="${esc(s.url)}" target="_blank" rel="noopener">${say('Открыть источник','Open source')} ↗</a></article>`).join('')}</section>`;
  return {
   explanation:()=>`<div class="authored-intro"><p class="eyebrow">${say('От наблюдения к своей программе','From an observation to your own program')}</p><h1>${esc(lesson.title)}</h1><p class="goal">${esc(lesson.goal)}</p>${paragraphs(lesson.prerequisites.map(p=>p.text))}<details class="lesson-map-wrap"><summary>${say('Содержание урока','Lesson contents')}</summary><nav class="lesson-map" aria-label="${say('Содержание урока','Lesson contents')}">${lesson.sections.map((s,i)=>`<a href="${url(lesson.id,'explanation',lesson.locale,s.id)}">${i+1}. ${esc(s.title)}</a>`).join('')}</nav></details></div>${lesson.sections.map((s,i)=>`<section class="lesson-section authored-section" id="${esc(s.id)}"><div class="section-index">${say('Шаг','Step')} ${i+1} / ${lesson.sections.length}</div><h2>${esc(s.title)}</h2>${sectionBody(s)}</section>`).join('')}<a class="btn primary" href="${url(lesson.id,'selfcheck')}">${say('Проверить, что я понял','Check my understanding')} →</a>${reading()}`,
-  recall:id=>{const s=lesson.sections.find(s=>s.id===id);return s?{title:s.title,body:paragraphs(s.paragraphs)+diagram(s)+(s.reveal?revealBody(s.reveal):program(s.code))+(s.tables||[]).map(table).join('')}:null;},
+  recall:id=>{const s=lesson.sections.find(s=>s.id===id);return s?{title:s.title,body:paragraphs(s.paragraphs)+caseObservation(s)+diagram(s)+(s.reveal?revealBody(s.reveal):program(s.code))+(s.tables||[]).map(table).join('')}:null;},
   reading,
  };
 }
@@ -74,6 +82,10 @@ export const authoredStyles=`
  .r3-lesson[data-authored=true] .lesson-map a{padding:8px 12px;border:1px solid #50657a;border-radius:8px;white-space:normal}
  .r3-lesson[data-authored=true] .example-label{color:#97e2ce;font-weight:700}
  .r3-lesson[data-authored=true] .example-output{border-left:3px solid #97e2ce;padding-left:16px}
+ .r3-lesson[data-authored=true] .authored-case-io{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+ .r3-lesson[data-authored=true] .authored-case-io>div{min-width:0}
+ .r3-lesson[data-authored=true] .authored-case-io pre:focus-visible{outline:3px solid #f5d78c;outline-offset:3px}
+ @media(max-width:720px){.r3-lesson[data-authored=true] .authored-case-io{display:block}}
  .r3-lesson[data-authored=true] .prediction-reveal{border:2px solid #50657a;background:#0b1929}
  .r3-lesson[data-authored=true] summary{cursor:pointer;font-weight:650;min-height:32px}
  .r3-lesson[data-authored=true] .prediction-reveal td:nth-child(2){background:#182e43;font-weight:700}

@@ -29,6 +29,19 @@ try{
   const {g,l}=await b1Lesson(id,locale),root=await go(id,locale,'explanation');
   assert.equal(await root.getAttribute('data-authored'),'true');
   const prediction=l.selfcheck.find(q=>q.id==='predict');
+  for(const section of l.sections.filter(s=>s.casePreview)){
+   const preview=root.locator('#'+section.id+' [data-authored-case-preview]');
+   assert.equal(await preview.locator('[data-authored-input]').textContent(),section.casePreview.input);
+   assert.equal(await preview.locator('[data-authored-output]').textContent(),section.casePreview.output);
+  }
+  if(['cpp.event-queues-dispatch','cpp.application-build-delivery'].includes(id)){
+   const preview=root.locator('[data-authored-case-preview]').first();
+   await screenshot(preview,id.slice(4)+'-contract-'+locale+'-1366');
+   await p.setViewportSize({width:320,height:900});
+   assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+   await screenshot(preview,id.slice(4)+'-contract-'+locale+'-320');
+   await p.setViewportSize({width:1366,height:900});
+  }
   for(const section of l.sections.filter(s=>s.code||s.reveal)){
    const item=root.locator('#'+section.id),code=section.code||section.reveal.code;
    if(section.reveal)await item.locator('.prediction-reveal > summary').click();
@@ -62,6 +75,21 @@ try{
   await q.locator('[data-answer="predict"][value="1"]').check();
   await q.locator('fieldset button').click();
   assert.ok((await q.locator('[data-feedback="predict"]').textContent()).endsWith(prediction.feedback));
+  for(const question of l.selfcheck.filter(q=>q.id.startsWith('check-'))){
+   const target=l.sections.find(s=>s.id===question.recall);
+   const opener=root.locator('[data-question="'+question.id+'"] [data-recall]');
+   await opener.click();
+   const recall=root.locator('dialog.r3-dialog[open]');await recall.waitFor();
+   assert.equal(await recall.locator('h2').textContent(),target.title);
+   assert.ok((await recall.textContent()).includes(target.paragraphs[0]));
+   if(target.casePreview){
+    assert.equal(await recall.locator('[data-authored-input]').textContent(),target.casePreview.input);
+    assert.equal(await recall.locator('[data-authored-output]').textContent(),target.casePreview.output);
+   }
+   await p.keyboard.press('Escape');await recall.waitFor({state:'detached'});
+   const focus=await opener.evaluate(el=>{const active=el.getRootNode().activeElement||document.activeElement;return{ok:el===active,active:active?.outerHTML?.slice(0,350),wanted:el.outerHTML,document:document.activeElement?.tagName};});
+   assert.ok(focus.ok,JSON.stringify({id,locale,question:question.id,focus}));
+  }
   await root.locator('[data-stage="practice"]').click();
   if(l.practice.kind==='qt-project'){
    const practice=root.locator('[data-r3-panel="practice"]');
@@ -75,6 +103,12 @@ try{
    if(locale==='en')assert.equal(await report.inputValue(),note);
    await report.fill(note);
    await p.waitForFunction(()=>document.querySelector('[data-r3-save]')?.dataset.state==='saved');
+   await report.focus();await report.evaluate(el=>el.setSelectionRange(2,6));
+   await practice.locator('.work-actions [data-recall]').click();
+   const recall=root.locator('dialog.r3-dialog[open]');await recall.waitFor();
+   await p.keyboard.press('Escape');await recall.waitFor({state:'detached'});
+   assert.deepEqual(await report.evaluate(el=>[el===el.getRootNode().activeElement,el.selectionStart,el.selectionEnd]),[true,2,6]);
+   assert.equal(await report.inputValue(),note);
    const reference=practice.locator('[data-lab-reference]');await reference.locator('summary').first().click();
    assert.equal(await reference.locator('[data-reference-source] code').textContent(),g.teachingEdition.referenceProgram||g.laboratory.referenceCode);
    assert.equal(await reference.locator('[data-program-file="src/task_model.cpp"]').textContent(),g.laboratory.referenceFiles['src/task_model.cpp']);
@@ -107,6 +141,12 @@ try{
   const stdin=root.locator('#stdin');
   await stdin.fill(l.practice.stdin+' ');
   const retained=await editor.elementHandle(),opener=practice.locator('[data-action="lab-window"]');
+  await editor.focus();await editor.evaluate(el=>el.setSelectionRange(2,6));
+  await practice.locator('.work-actions [data-recall]').click();
+  const recall=root.locator('dialog.r3-dialog[open]');await recall.waitFor();
+  await p.keyboard.press('Escape');await recall.waitFor({state:'detached'});
+  assert.deepEqual(await editor.evaluate(el=>[el===el.getRootNode().activeElement,el.selectionStart,el.selectionEnd]),[true,2,6]);
+  assert.equal(await editor.inputValue(),old);assert.equal(await stdin.inputValue(),l.practice.stdin+' ');
   const mobile=['cpp.callback-lifetime-subscriptions','cpp.responsive-work-cancellation'].includes(id);
   if(mobile)await p.setViewportSize({width:390,height:900});
   await opener.click();

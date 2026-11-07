@@ -562,8 +562,13 @@
         "title": "Laboratory contract: input to observation",
         "paragraphs": [
           "Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid.",
-          "Trace the first reference scenario before running. Exact stdin: \"4 0 0 1 1\". Expected stdout: \"tasks 2 done 1 rejected 0\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
-        ]
+          "Before running, trace the reference case. Write the state after each action and explain any expected rejection. Then compare the observed result with the labelled expectation below."
+        ],
+        "casePreview": {
+          "kind": "console",
+          "input": "4 0 0 1 1",
+          "output": "tasks 2 done 1 rejected 0\n"
+        }
       },
       {
         "id": "concept-6",
@@ -585,9 +590,14 @@
         "id": "concept-8",
         "title": "Checking a boundary rejection",
         "paragraphs": [
-          "Read n=0…12 and n integer commands. Zero adds a task, up to eight. A positive value completes the existing id=position+1. Repeated completion succeeds without increasing done again. Other commands are rejected. Incomplete or trailing input produces invalid. The last reference case distinguishes a permitted command from a malformed protocol. Identify where rejection starts and which fields must remain unchanged.",
-          "Analyze this reference case: {\"stdin\":\"0 x\",\"stdout\":\"invalid\\n\"} Then change one boundary and state the new expectation before running. Compare the correct solution with a safe mutation in a project copy; the test must detect the behavioural change rather than merely report a successful build."
-        ]
+          "Input 0 x declares zero commands but contains an extra token. Reject the format before constructing or changing Board. Input 0 alone is valid and yields an empty board; trailing x does not become a model command.",
+          "Check the domain bound separately: a ninth addition at capacity 8 preserves the existing tasks and increments rejected. Compare that normal model report with invalid from format validation."
+        ],
+        "casePreview": {
+          "kind": "console",
+          "input": "0 x",
+          "output": "invalid\n"
+        }
       },
       {
         "id": "independent-work",
@@ -632,7 +642,7 @@
         ],
         "correct": 2,
         "feedback": "Repeated complete succeeds idempotently. done counts distinct completed tasks rather than successful complete calls.",
-        "recall": "concept-1"
+        "recall": "concept-5"
       },
       {
         "id": "check-1",
@@ -645,7 +655,7 @@
         ],
         "correct": 1,
         "feedback": "Once-per-TU inclusion does not remove processing in another TU. An ordinary definition belongs in the implementation.",
-        "recall": "concept-2"
+        "recall": "concept-1"
       },
       {
         "id": "check-2",
@@ -658,7 +668,7 @@
         ],
         "correct": 0,
         "feedback": "The declaration permits compilation of a call, but the program still needs its definition. A VFS file is not automatically a build input.",
-        "recall": "concept-3"
+        "recall": "concept-2"
       },
       {
         "id": "check-3",
@@ -671,7 +681,7 @@
         ],
         "correct": 0,
         "feedback": "Identity must survive representation and position changes. Deletion needs an explicit stable id and a separate issuance policy.",
-        "recall": "concept-4"
+        "recall": "concept-1"
       },
       {
         "id": "check-4",
@@ -684,7 +694,7 @@
         ],
         "correct": 0,
         "feedback": "Domain capacity differs from the container ability to allocate memory. Rejection must not alter existing tasks.",
-        "recall": "concept-5"
+        "recall": "concept-3"
       },
       {
         "id": "explain",
@@ -873,6 +883,11 @@
         "sourceTitle": "Checking a boundary rejection",
         "anchor": "concept-8"
       }
-    ]
+    ],
+    "adaptedSourceSections": [
+      "concept-5",
+      "concept-8"
+    ],
+    "contractAnchor": "concept-5"
   }
 }

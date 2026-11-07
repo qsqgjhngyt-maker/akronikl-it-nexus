@@ -37,10 +37,15 @@ test('B06 связывает полный текст, прогноз, контр
    assert.ok(Object.values(a.coverage).every(x=>anchors.has(x)));
    for(const [index,section] of g.sections.entries()){
     const next=l.sections.find(s=>s.id===`concept-${index+1}`);
-    if(a.adaptedSourceSections?.includes(next.id)){assert.ok(qt);assert.notDeepEqual(next.paragraphs,section.paragraphs);assert.ok(next.paragraphs.every(p=>p.length>80));}
+    if(a.adaptedSourceSections?.includes(next.id)){assert.ok(qt||next.id===a.contractAnchor||next.id==='concept-8'&&['cpp.event-testing-replay','cpp.multifile-event-application'].includes(id));assert.notDeepEqual(next.paragraphs,section.paragraphs);assert.ok(next.paragraphs.every(p=>p.length>80));}
     else assert.ok(section.paragraphs.every(text=>next.paragraphs.includes(text)));
    }
    assert.ok(l.selfcheck.every(q=>anchors.has(q.recall)));
+   const contract=l.sections.find(s=>s.id===a.contractAnchor);
+   assert.equal(contract.paragraphs[0],p.task);
+   const previewCase=qt?(id==='cpp.qt-graphical-adapter'?p.cases.at(-1):p.cases[8]):p.cases[p.starterObservation.case];
+   assert.deepEqual(contract.casePreview,{kind:qt?'qt-ui':'console',input:previewCase.input,output:previewCase.output});
+   assert.ok(!contract.paragraphs.join(' ').includes('\\n'));
    for(const q of before.selfcheck.filter(q=>q.kind==='choice')){
     const {recall,...next}=l.selfcheck.find(x=>x.id===q.id);assert.deepEqual(next,q);
    }
@@ -75,8 +80,6 @@ test('B06 связывает полный текст, прогноз, контр
     assert.equal(program.source,probe.source);assert.deepEqual(program.cases,[{stdin:probe.stdin,stdout:probe.output}]);
    }
    if(qt){
-    const contract=l.sections.find(s=>s.id===(id==='cpp.qt-graphical-adapter'?'concept-6':'concept-7'));
-    assert.equal(contract.paragraphs[0],p.task);
     assert.deepEqual(a.adaptedSourceSections,id==='cpp.qt-graphical-adapter'?['concept-1','concept-5','concept-6','concept-8']:['concept-3','concept-4','concept-7','concept-9']);
     assert.equal(prediction.execution,undefined,'Qt must never be routed through the console predictor');
     assert.equal(p.starterObservation.kind,'qt-ui');

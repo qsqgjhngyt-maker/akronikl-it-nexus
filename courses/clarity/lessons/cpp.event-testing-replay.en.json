@@ -123,8 +123,13 @@
       "title": "Laboratory contract: input to observation",
       "paragraphs": [
         "Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS.",
-        "Trace the first reference scenario before running. Exact stdin: \"3 3 -5 2\". Expected stdout: \"value 5 rejected 1 replay PASS\\n\" Relate each algorithm step to state changes, distinguishing rejection from the point where a change is committed."
-      ]
+        "Before running, trace the reference case. Write the state after each action and explain any expected rejection. Then compare the observed result with the labelled expectation below."
+      ],
+      "casePreview": {
+        "kind": "console",
+        "input": "3 3 -5 2",
+        "output": "value 5 rejected 1 replay PASS\n"
+      }
     },
     {
       "id": "concept-6",
@@ -146,9 +151,14 @@
       "id": "concept-8",
       "title": "Checking a boundary rejection",
       "paragraphs": [
-        "Read n=0…20 and n integer deltas. Initially value=0; accept delta=-10…10 when the result is in 0…10. Otherwise count one rejection without mutation. Two replays must agree; stdout includes value, rejected and replay PASS. The last reference case distinguishes a permitted command from a malformed protocol. Identify where rejection starts and which fields must remain unchanged.",
-        "Analyze this reference case: {\"stdin\":\"21\",\"stdout\":\"invalid\\n\"} Then change one boundary and state the new expectation before running. Compare the correct solution with a safe mutation in a project copy; the test must detect the behavioural change rather than merely report a successful build."
-      ]
+        "In the input below, 21 is the declared command count, not a model value. At most 20 commands are allowed, so parsing stops before replay. State range 0–10 is checked later inside replay; these rejections belong to different parts of the contract.",
+        "Then test the state-bound mutation 10→9 with a separate trace containing one command +10. Record the expectation before execution and explain why matching replays do not detect the same error in both runs."
+      ],
+      "casePreview": {
+        "kind": "console",
+        "input": "21",
+        "output": "invalid\n"
+      }
     },
     {
       "id": "probe-boundary-mutation",
@@ -205,7 +215,7 @@
       ],
       "correct": 2,
       "feedback": "After 3, an attempted-2 is rejected while retaining 3; then+2 yields 5. Clamping to zero would incorrectly yield 2.",
-      "recall": "concept-1"
+      "recall": "example-1"
     },
     {
       "id": "check-1",
@@ -231,7 +241,7 @@
       ],
       "correct": 0,
       "feedback": "Ten is valid under the original contract and rejected by the mutant. Ordinary 3 and the empty trace do not reach the changed bound.",
-      "recall": "concept-3"
+      "recall": "probe-boundary-mutation"
     },
     {
       "id": "check-3",
@@ -244,7 +254,7 @@
       ],
       "correct": 2,
       "feedback": "Replay comparison repeats one contract with the same input and pre-state. Continuing a run is not replaying it.",
-      "recall": "concept-4"
+      "recall": "concept-2"
     },
     {
       "id": "check-4",
@@ -257,7 +267,7 @@
       ],
       "correct": 0,
       "feedback": "A count of successful checks does not cancel a detected failure. The oracle must consider the complete protocol and exit code.",
-      "recall": "concept-5"
+      "recall": "concept-4"
     },
     {
       "id": "explain",
