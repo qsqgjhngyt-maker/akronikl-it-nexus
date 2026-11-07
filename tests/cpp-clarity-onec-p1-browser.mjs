@@ -71,6 +71,10 @@ try{
   const count=Number((await p.locator('[data-progress]').textContent()).split('/')[0]);assert.equal(count,ids.indexOf(id)+1,'Overview counts explicit completion without losing previous topics');
   checks.push({id,locale,stages:3,widths:[1366,390,320],images,recallCaret:'PASS',ownWorkPreserved:'PASS',assessment:'4/4 explicit; no automatic completion'});await p.close();
  }
+ const other=await context.newPage();await other.goto(origin+'/__p1__#course=onec&locale=ru');
+ await other.evaluate(async prefix=>{const a=await import(prefix+'/core/account-storage.js');a.initializeAccountStorage({account:{accountId:'synthetic-p1-other',status:'active',displayName:'Synthetic other'}});const m=await import(prefix+'/courses/onec-education/integration.mjs');const c=m.mountOnecIntegration(document.querySelector('#app'),{locale:'ru'});await c.ready;},prefix);
+ assert.equal((await other.locator('[data-progress]').textContent()).trim(),'0/52','Another account cannot inherit the four completed topics');await other.close();
+ checks.push({name:'Account progress isolation',firstAccountCompleted:4,otherAccountCompleted:0,status:'PASS'});
  assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
  // Real offline service worker, a fresh browser process and no private writer.
  process.env.NEXUS_NATIVE_EVIDENCE=path.join(out,'cold-offline');f=await nativeOfflineFixture('onec-p1');let p=await f.launch();await p.goto(f.origin+'/offline.html#view=home');await f.waitReady();
