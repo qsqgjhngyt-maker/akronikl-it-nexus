@@ -76,7 +76,7 @@ try{
    await report.fill(note);
    await p.waitForFunction(()=>document.querySelector('[data-r3-save]')?.dataset.state==='saved');
    const reference=practice.locator('[data-lab-reference]');await reference.locator('summary').first().click();
-   assert.equal(await reference.locator('[data-reference-source] code').textContent(),g.teachingEdition.referenceProgram);
+   assert.equal(await reference.locator('[data-reference-source] code').textContent(),g.teachingEdition.referenceProgram||g.laboratory.referenceCode);
    assert.equal(await reference.locator('[data-program-file="src/task_model.cpp"]').textContent(),g.laboratory.referenceFiles['src/task_model.cpp']);
    assert.equal(await report.inputValue(),note);
    assert.equal(await practice.locator('.practice-cases > li').count(),l.practice.cases.length);
@@ -114,7 +114,7 @@ try{
   assert.ok(await dialog.locator('#editor').evaluate((el,node)=>el===node,retained));
   if(mobile)await dialog.locator('[data-gold-work-tab="task"]').click();
   await reference.locator(':scope > summary').click();
-  assert.equal(await reference.locator('[data-reference-source] code').textContent(),g.teachingEdition.referenceProgram);
+  assert.equal(await reference.locator('[data-reference-source] code').textContent(),g.teachingEdition.referenceProgram||g.laboratory.referenceCode);
   if(mobile){
    await screenshot(dialog.locator('.practice-cases > li').nth(l.practice.starterObservation.case),id.slice(4)+'-workbench-'+locale);
    await dialog.locator('[data-gold-work-tab="editor"]').click();
