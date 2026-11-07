@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
-import {GOLD_CLASSIC_LESSONS,goldLessonPath} from '../core/academy-gold-catalog.js';
+import {GOLD_CLASSIC_LESSONS,GOLD_OOP_LESSONS,goldLessonPath} from '../core/academy-gold-catalog.js';
 import {answerIsChecked,clarityContentRevision,emptyClarityDraft,validateClarityDraft} from '../core/cpp-clarity-r3-state.mjs';
 import {b1Lesson} from './helpers/cpp-clarity-b1-content.mjs';
 import {module4GoldPrograms} from './helpers/module4-gold-programs.mjs';
@@ -18,7 +18,8 @@ test('B04 охватывает восемь тем и сохраняет при�
  assert.deepEqual(curriculum.sections.find(s=>s.id==='cpp.section.classic-algorithms').lessonIds,GOLD_CLASSIC_LESSONS);
  const expected=GOLD_CLASSIC_LESSONS.flatMap(id=>['ru','en'].flatMap(locale=>[sourcePath(id,locale),lessonPath(id,locale)])).sort();
  const changed=git('diff','--name-only',accepted,'--','courses/clarity/lessons','courses/cpp-clarity-r3/lessons','courses/cpp/gold').trim().split(/\r?\n/).sort();
- assert.deepEqual(changed,expected);
+ const later=new Set(GOLD_OOP_LESSONS.flatMap(id=>['ru','en'].flatMap(locale=>[sourcePath(id,locale),lessonPath(id,locale)])));
+ assert.deepEqual(changed.filter(p=>!later.has(p)),expected);
 });
 
 test('B04 сохраняет учебные контракты и связывает объяснение, прогноз и работу',async()=>{

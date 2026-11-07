@@ -224,3 +224,44 @@ jobs:
           path: cpp-clarity-b4-evidence/
           retention-days: 30
           if-no-files-found: error
+
+  oop:
+    name: B05 — объектно-ориентированное программирование
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NEXUS_CLARITY_EVIDENCE: ${{ github.workspace }}/cpp-clarity-b5-evidence
+      NEXUS_M5_EVIDENCE: ${{ github.workspace }}/cpp-clarity-b5-evidence/native
+      NEXUS_B5_PROGRAMS: '1'
+      NEXUS_FRONTEND_DIR: ${{ github.workspace }}/cpp-clarity-frontend
+      NEXUS_PINNED_RUNTIME_DIR: ${{ github.workspace }}/cpp-clarity-runtime
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Проверить 18 редакций и выполнить C++20 с UBSan
+        run: |
+          node --test tests/cpp-clarity-b5-content.test.mjs
+          node tools/check-academy-gold-module5-examples.mjs
+      - name: Собрать кандидата с закреплённым runtime
+        run: |
+          npm ci --prefix server-access --ignore-scripts
+          npm ci --prefix tools/qa-browser-driver
+          node tools/qa-browser-driver/node_modules/playwright/cli.js install --with-deps chromium
+          node tools/build-cpp-clarity-candidate.mjs
+          node tools/prepare-academy-gold-runtime-fixture.mjs
+      - name: Проверить уроки, рабочее окно и реальные результаты Clang/WASI
+        run: node tests/cpp-clarity-b5-browser.mjs
+      - name: Сохранить evidence B05
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpp-clarity-b5-${{ github.sha }}
+          path: cpp-clarity-b5-evidence/
+          retention-days: 30
+          if-no-files-found: error

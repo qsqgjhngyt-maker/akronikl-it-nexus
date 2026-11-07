@@ -27,7 +27,7 @@ const words = {
  w.free=say('Сохранить объяснение','Save explanation');w.freeSaved=say('Объяснение сохранено; правильность автоматически не оценивается.','Explanation saved; correctness is not graded automatically.');
  const url=(id=topicId,stage=route.stage,language=locale,anchor='')=>'#'+new URLSearchParams({course:CLARITY_COURSES[id]?.courseId||lesson.courseId,lesson:id,stage,locale:language,...(anchor?{at:anchor}:{}),...(id===topicId&&new URLSearchParams(location.hash.slice(1)).has('copy')?{copy:new URLSearchParams(location.hash.slice(1)).get('copy')}:{})});
 function table(t){
- const state=lesson.authored&&lesson.moduleId==='cpp.section.structured-programming'&&t.columns.length===2;
+ const state=lesson.authored&&t.columns.length===2&&(lesson.moduleId==='cpp.section.structured-programming'||t.kind==='state');
  const wide=lesson.authored&&(t.columns.length>=3||state);
  const attributes=wide?` data-wide-table${state?'="state"':''} tabindex="0" role="region" aria-label="${esc(t.caption)}"`:'';
  const note=wide?`<p class="table-scroll-note">${say('Таблицу можно прокрутить вправо.','Scroll the table to see more.')}</p>`:'';

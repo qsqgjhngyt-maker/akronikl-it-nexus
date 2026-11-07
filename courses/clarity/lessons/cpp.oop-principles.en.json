@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b5-author-v1",
   "id": "cpp.oop-principles",
   "courseId": "cpp",
   "moduleId": "cpp.section.oop",
@@ -8,7 +8,7 @@
   "module": "Object-Oriented Programming",
   "locale": "en",
   "title": "Objects, abstraction and responsibility boundaries",
-  "goal": "Build a domain model and explain why its operations preserve an invariant.",
+  "goal": "Build a counter that stays valid after success and rejection, and explain each method's responsibility.",
   "prerequisites": [
     {
       "text": "Modules 1–4: input, functions, sequences, ownership, testing and multifile builds."
@@ -22,34 +22,31 @@
       "id": "concept-1",
       "title": "From a record to a domain object",
       "paragraphs": [
+        "A class has at most 100 places. Reading holds a measurement, while Counter will decide whether more participants can be admitted.",
         "In Module 3 a structure grouped related data, such as a sensor reading and its unit. In the language an object has storage, a type and a lifetime; an int variable is an object too. Design uses a more specific idea: a representation of a domain concept together with the operations allowed on it.",
         "Not every record needs a hierarchy. If every combination of fields is meaningful, a plain struct with public data and free functions can be clearer. When values must satisfy a relationship, such as a counter remaining between zero and one hundred, the type should control changes. Begin with that requirement rather than with class syntax."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "A reading and a separate check",
+      "paragraphs": [
+        "Compare the validity of 42 and 101. A record holds the value, and a separate function holds the rule."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nstruct Reading {\n    int value;\n};\nbool acceptable(const Reading &r) { return r.value >= 0 && r.value <= 100; }\nint main() {\n    Reading a{42}, b{101};\n    std::cout << acceptable(a) << ' ' << acceptable(b) << '\\n';\n}\n",
+        "stdin": "",
+        "output": "1 0\n"
+      }
     },
     {
       "id": "concept-2",
       "title": "Reading a first class",
       "paragraphs": [
         "In Counter the name after class declares a new type. The value_ field belongs separately to each instance, and =0 supplies its initial value. Members before public: are private in a class. Members after public: form operations callers can use. The semicolon following the closing brace completes the class declaration.",
-        "Counter a,b creates two independent objects. Calling a.add(7) selects a, so value_ inside the method denotes a's field. The value() const method observes state; const prevents ordinary modification of fields through this object. Constructors receive their own lesson. For now, a field initializer and the automatically generated constructor establish the starting state."
-      ]
-    },
-    {
-      "id": "example-1",
-      "title": "Worked model",
-      "paragraphs": [
-        "Build a domain model and explain why its operations preserve an invariant."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nstruct Reading { int value; };\nbool acceptable(const Reading& r){ return r.value>=0&&r.value<=100; }\nint main(){ Reading a{42},b{101}; std::cout<<acceptable(a)<<' '<<acceptable(b)<<'\\n'; }\n",
-        "output": "1 0\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Create records with an accepted and a rejected value.",
-        "acceptable only observes each record.",
-        "Compare bool results one and zero."
+        "Counter a,b creates two independent objects. Calling a.add(7) selects a, so value_ inside the method denotes a's field. The value() const method observes state; const prevents ordinary modification of fields through this object. Constructors receive their own lesson. For now, a field initializer and the automatically generated constructor establish the starting state.",
+        "The call a.add(7) acts on that particular a. Object b has its own field even when both are declared on one line."
       ]
     },
     {
@@ -57,15 +54,71 @@
       "title": "Invariant and operation contract",
       "paragraphs": [
         "An invariant is a statement that holds after construction and after every public operation finishes. Counter promises a value between zero and one hundred. The add contract accepts only a nonnegative increment that fits the remaining capacity. Success returns true; rejection returns false and preserves the previous value. These are observable promises that tests can check.",
-        "The n>100-value_ check happens before addition. Testing value_+n>100 is less safe because a sufficiently large n could overflow int before comparison. Here the remaining capacity stays within zero to one hundred, and the first condition rejects negative increments. The pre-call invariant and these checks justify the post-call invariant, beyond a single successful demonstration."
+        "The n>100-value_ check happens before addition. Testing value_+n>100 is less safe because a sufficiently large n could overflow int before comparison. Here the remaining capacity stays within zero to one hundred, and the first condition rejects negative increments. The pre-call invariant and these checks justify the post-call invariant, beyond a single successful demonstration.",
+        "After seven places are taken, 93 remain. A request for 94 is rejected before assignment, leaving seven taken."
       ]
+    },
+    {
+      "id": "example-2",
+      "title": "Counter rejects before changing state",
+      "paragraphs": [
+        "Now follow how the boundary rule becomes part of the object's operation. Predict the three numbers before revealing the output."
+      ],
+      "prediction": [
+        "#include <iostream>\nclass Counter {\n    int value_ = 0;\n\n  public:\n    bool add(int n) {\n        if (n < 0 || n > 100 - value_) {\n            return false;\n        }\n        value_ += n;\n        return true;\n    }\n    int value() const { return value_; }\n};\nint main() {\n    Counter a, b;\n    a.add(7);\n    bool ok = a.add(94);\n    std::cout << a.value() << ' ' << b.value() << ' ' << ok << '\\n';\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Reveal the output and walkthrough",
+        "paragraphs": [
+          "The line 7 0 0 contains a's state, b's state and the latest success flag. The rejected operation preserved both states."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "Create a and b",
+                "∅",
+                "a = 0, b = 0",
+                "The initializer applies to each instance."
+              ],
+              [
+                "a.add(7)",
+                "a = 0",
+                "a = 7",
+                "7 fits within the remaining 100 places."
+              ],
+              [
+                "a.add(94)",
+                "a = 7, b = 0",
+                "a = 7, b = 0, ok = 0",
+                "94 exceeds the remaining 93, so no assignment happens."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nclass Counter {\n    int value_ = 0;\n\n  public:\n    bool add(int n) {\n        if (n < 0 || n > 100 - value_) {\n            return false;\n        }\n        value_ += n;\n        return true;\n    }\n    int value() const { return value_; }\n};\nint main() {\n    Counter a, b;\n    a.add(7);\n    bool ok = a.add(94);\n    std::cout << a.value() << ' ' << b.value() << ' ' << ok << '\\n';\n}\n",
+          "stdin": "",
+          "output": "7 0 0\n"
+        }
+      }
     },
     {
       "id": "concept-4",
       "title": "Abstraction hides decisions",
       "paragraphs": [
         "A caller needs add and value, rather than the spelling or representation of a private field. The representation can later change while the contract remains stable. Abstraction selects the observable properties needed for a task. This reduces the number of details a reader must hold in mind when checking a program.",
-        "Hiding a field alone does not create a useful interface. Unrestricted getValue/setValue operations can still violate the meaning of a type. Names such as reserve, ship or accept express intent and conditions better than a universal setter. Conversely, a simple immutable record should not acquire methods merely to look object oriented."
+        "Hiding a field alone does not create a useful interface. Unrestricted getValue/setValue operations can still violate the meaning of a type. Names such as reserve, ship or accept express intent and conditions better than a universal setter. Conversely, a simple immutable record should not acquire methods merely to look object oriented.",
+        "A caller can ask for value() and request add(n). A private field makes changes pass through the checked operation."
       ]
     },
     {
@@ -73,25 +126,8 @@
       "title": "Responsibility and dependencies",
       "paragraphs": [
         "The counter is responsible for a valid value, not for reading cin, selecting a UI language or saving a project. Separation lets you test an object without a browser or a file. The application parses input first, invokes domain operations second and formats output last. Each part has a distinct reason to change.",
-        "Do not move every function into a giant Application class. Examine responsibilities by asking which requirement would force this code to change. A new input format should not require changing counter arithmetic. Collaboration between small types is often more useful than a deep hierarchy; inheritance comes after ownership and contracts in this module."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Contract boundary check",
-      "paragraphs": [
-        "Build a domain model and explain why its operations preserve an invariant."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nclass Counter {\n int value_=0;\npublic:\n bool add(int n){if(n<0||n>100-value_)return false;value_+=n;return true;}\n int value() const {return value_;}\n};\nint main(){Counter a,b; a.add(7); bool ok=a.add(94);std::cout<<a.value()<<' '<<b.value()<<' '<<ok<<'\\n';}\n",
-        "output": "7 0 0\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Each Counter starts with its own zero.",
-        "Seven succeeds; ninety-four is rejected before mutation.",
-        "a=7, b=0 and false produce 7 0 0."
+        "Do not move every function into a giant Application class. Examine responsibilities by asking which requirement would force this code to change. A new input format should not require changing counter arithmetic. Collaboration between small types is often more useful than a deep hierarchy; inheritance comes after ownership and contracts in this module.",
+        "main parses the increments, and Counter holds the rules. This lets a test call add without preparing console input."
       ]
     },
     {
@@ -99,7 +135,8 @@
       "title": "Testing two objects",
       "paragraphs": [
         "In the worked example a accepts seven, then rejects ninety-four, while b remains zero. The output is 7 0 0: the first state, the second state and the last success flag. That final zero does not indicate a damaged object. Rejection is an expected operation result, distinct from a malformed input stream.",
-        "An independent test should modify only a and observe b. It catches an accidentally shared static field. Also test repeated rejection, a zero increment and filling exactly to capacity. Compare state before and after a rejected call. Checking only the returned bool misses an implementation that changes a field before returning false."
+        "An independent test should modify only a and observe b. It catches an accidentally shared static field. Also test repeated rejection, a zero increment and filling exactly to capacity. Compare state before and after a rejected call. Checking only the returned bool misses an implementation that changes a field before returning false.",
+        "Observe three quantities after add(94): a's value, b's value and the returned bool. The trace labels their roles."
       ]
     },
     {
@@ -107,7 +144,8 @@
       "title": "Laboratory protocol",
       "paragraphs": [
         "The laboratory reads an operation count from zero to twenty and exactly that many integer increments. It validates all input syntax before producing a domain result. An increment such as minus one or one hundred and one is a domain rejection and increases rejected. An unknown token or a missing number makes the entire input invalid.",
-        "For three increments 30 80 20, the state trace is zero, thirty, thirty, fifty, with one rejection. Write that trace before running the program. Test the maximum int separately: the contract rejects it without overflowing. The supplied cases are checkable examples; add an independent case and an invariant explanation rather than relying solely on matching stdout."
+        "For three increments 30 80 20, the state trace is zero, thirty, thirty, fifty, with one rejection. Write that trace before running the program. Test the maximum int separately: the contract rejects it without overflowing. The supplied cases are checkable examples; add an independent case and an invariant explanation rather than relying solely on matching stdout.",
+        "Token x breaks the whole input format. Number −1 parses successfully, but the operation rejects it and increments the rejection count."
       ]
     },
     {
@@ -115,11 +153,42 @@
       "title": "Choosing a model",
       "paragraphs": [
         "Compare two solutions to the same task: an open structure with a validation function, and a class with private state. Identify places where the first permits a forgotten check and describe the extra code required by the second. Choose object oriented design for manageable dependencies and invariants, rather than assuming every free function needs a class.",
-        "During review explain who owns state, who can change it and what a test observes. These runs do not establish safety for arbitrary programs. They support a contract for a bounded model and specific checked cases. The next lesson develops interfaces with related fields, const correctness and operations that preserve several conditions together."
+        "During review explain who owns state, who can change it and what a test observes. These runs do not establish safety for arbitrary programs. They support a contract for a bounded model and specific checked cases. The next lesson develops interfaces with related fields, const correctness and operations that preserve several conditions together.",
+        "In your explanation, identify the line that keeps value_ at most 100, then explain why it works even for a very large positive n."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Apply the contract to an input list of increments. Validate the whole format before calling add.",
+        "Trace 30, 80, 20 and mark the remaining capacity before each call."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "Which three values follow the successful add(7) and rejected add(94)?",
+      "options": [
+        "7 0 0\n",
+        "101 0 0",
+        "7 7 0"
+      ],
+      "correct": 0,
+      "feedback": "The check runs before addition. a remains 7, b was never changed, and false prints as 0.",
+      "code": {
+        "source": "#include <iostream>\nclass Counter {\n    int value_ = 0;\n\n  public:\n    bool add(int n) {\n        if (n < 0 || n > 100 - value_) {\n            return false;\n        }\n        value_ += n;\n        return true;\n    }\n    int value() const { return value_; }\n};\nint main() {\n    Counter a, b;\n    a.add(7);\n    bool ok = a.add(94);\n    std::cout << a.value() << ' ' << b.value() << ' ' << ok << '\\n';\n}\n",
+        "stdin": ""
+      },
+      "execution": {
+        "source": "#include <iostream>\nclass Counter {\n    int value_ = 0;\n\n  public:\n    bool add(int n) {\n        if (n < 0 || n > 100 - value_) {\n            return false;\n        }\n        value_ += n;\n        return true;\n    }\n    int value() const { return value_; }\n};\nint main() {\n    Counter a, b;\n    a.add(7);\n    bool ok = a.add(94);\n    std::cout << a.value() << ' ' << b.value() << ' ' << ok << '\\n';\n}\n",
+        "stdin": "",
+        "expected": "7 0 0\n"
+      },
+      "recall": "example-2"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -130,7 +199,8 @@
         "An exception is mandatory."
       ],
       "correct": 0,
-      "feedback": "The capacity check runs before assigning the field, so 101 cannot fit in the remaining 100. Returning false reports rejection; it neither stores the rejected value nor requires an exception."
+      "feedback": "The capacity check runs before assigning the field, so 101 cannot fit in the remaining 100. Returning false reports rejection; it neither stores the rejected value nor requires an exception.",
+      "recall": "concept-3"
     },
     {
       "id": "check-1",
@@ -142,7 +212,8 @@
         "Class syntax requires this check."
       ],
       "correct": 1,
-      "feedback": "The expression value_+n could overflow before comparison. Subtraction is safe because the invariant bounds value_ to 0…100, while the earlier n<0 check rejects negative increments."
+      "feedback": "The expression value_+n could overflow before comparison. Subtraction is safe because the invariant bounds value_ to 0…100, while the earlier n<0 check rejects negative increments.",
+      "recall": "concept-3"
     },
     {
       "id": "check-2",
@@ -154,7 +225,8 @@
         "No; the choice depends on invariants and responsibility."
       ],
       "correct": 2,
-      "feedback": "A class is justified when its operations must jointly protect a constraint or responsibility. For a plain record whose states are all valid, a public struct and free functions may be clearer."
+      "feedback": "A class is justified when its operations must jointly protect a constraint or responsibility. For a plain record whose states are all valid, a public struct and free functions may be clearer.",
+      "recall": "concept-8"
     },
     {
       "id": "check-3",
@@ -166,7 +238,8 @@
         "Header order."
       ],
       "correct": 0,
-      "feedback": "Changing only a should leave b unchanged, exposing an accidental static field in place of instance state. This tests independence, not performance or include order."
+      "feedback": "Changing only a should leave b unchanged, exposing an accidental static field in place of instance state. This tests independence, not performance or include order.",
+      "recall": "concept-6"
     },
     {
       "id": "check-4",
@@ -178,13 +251,15 @@
         "Automatic range validation."
       ],
       "correct": 1,
-      "feedback": "private restricts ordinary client access to a member at compile time. It does not encrypt bytes or validate ranges; the public operations must implement those checks."
+      "feedback": "private restricts ordinary client access to a member at compile time. It does not encrypt bytes or validate ranges; the public operations must implement those checks.",
+      "recall": "concept-4"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Test independence of two Counters.",
-      "feedback": "Next: Classes, interfaces and state"
+      "prompt": "For 30, 80, 20, write the state after each call and explain the rejection count separately.",
+      "feedback": "The states are 30, 30, 50. The request for 80 exceeds the remaining 70, so there is one rejection.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -195,11 +270,11 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\nclass Counter { int value_=0; public: int value()const{return value_;} /* TODO: checked add */ };\nint main(){std::cout<<\"pending\\n\";}\n"
+        "content": "#include <iostream>\nclass Counter {\n    int value_ = 0;\n\n  public:\n    bool add(int n) {\n        // TODO: Check the increment before addition and change value_ only\n        // on success.\n        return false;\n    }\n    int value() const { return value_; }\n};\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 20) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int amounts[20]{};\n    for (int i = 0; i < n; ++i) {\n        if (!(std::cin >> amounts[i])) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    Counter c;\n    int rejected = 0;\n    for (int i = 0; i < n; ++i) {\n        if (!c.add(amounts[i])) {\n            ++rejected;\n        }\n    }\n    std::cout << c.value() << ' ' << rejected << '\\n';\n}\n"
       }
     ],
     "metadata": {},
-    "stdin": "0",
+    "stdin": "3 30 80 20",
     "returnAnchor": "example-1",
     "cases": [
       {
@@ -208,7 +283,7 @@
         "output": "0 0\n"
       },
       {
-        "label": "Case 2",
+        "label": "First substantive run",
         "input": "3 30 80 20",
         "output": "50 1\n"
       },
@@ -233,93 +308,73 @@
         "output": "0 0\n"
       },
       {
-        "label": "Case 7",
+        "label": "Input error · 7",
         "input": "-1",
         "output": "invalid\n"
       },
       {
-        "label": "Case 8",
+        "label": "Input error · 8",
         "input": "21",
         "output": "invalid\n"
       },
       {
-        "label": "Case 9",
+        "label": "Input error · 9",
         "input": "2 1",
         "output": "invalid\n"
       },
       {
-        "label": "Case 10",
+        "label": "Input error · 10",
         "input": "1 x",
         "output": "invalid\n"
       },
       {
-        "label": "Case 11",
+        "label": "Input error · 11",
         "input": "0 tail",
         "output": "invalid\n"
       },
       {
-        "label": "Case 12",
+        "label": "Input error · 12",
         "input": "",
         "output": "invalid\n"
       }
     ],
     "criteria": [
-      "Identify the value, add, value() and initial zero.",
-      "States are 0,30,30,50 with one rejection.",
-      "Explain remaining-capacity bounds and the risk of value+n.",
-      "Changing one leaves the other unchanged.",
-      "Include source, actual results, an independent case and limits of the conclusion."
+      "States 0 → 30 → 30 → 50, one rejection.",
+      "The output is 50 1.",
+      "The first gives 0 1, the second invalid.",
+      "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
     ],
-    "hint": "An invariant is a statement that holds after construction and after every public operation finishes. Counter promises a value between zero and one hundred. The add contract accepts only a nonnegative increment that fits the remaining capacity. Success returns true; rejection returns false and preserves the previous value. These are observable promises that tests can check.",
+    "hint": "The states are 30, 30, 50. The request for 80 exceeds the remaining 70, so there is one rejection.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Restate the contract and distinguish malformed input from domain rejection.",
-        "why": "",
-        "expected": ""
+        "where": "Before running",
+        "action": "Trace 30, 80, 20 and mark the remaining capacity before each call.",
+        "why": "The check uses capacity before the field changes.",
+        "expected": "States 0 → 30 → 30 → 50, one rejection."
       },
       {
-        "where": "My program",
-        "action": "Separate Counter fields from operations.",
-        "why": "",
-        "expected": ""
+        "where": "In my program",
+        "action": "Complete Counter::add and run 3 30 80 20.",
+        "why": "This input checks that work continues after a rejection.",
+        "expected": "The output is 50 1."
       },
       {
-        "where": "My program",
-        "action": "Trace 30,80,20 without running.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Open Task and Code Studio: the task stays alongside the editor on desktop or in a phone tab. Save your own code before replacing an example.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Complete the starter; pending marks unfinished work rather than a correct result.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Run every reference case and record actual stdout and exit status.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Compare an open record with a class for this task.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Save source, a verification table and an invariant explanation; add one independent case.",
-        "why": "",
-        "expected": ""
+        "where": "After running",
+        "action": "Compare 1 2147483647 with 1 x.",
+        "why": "A valid int and a parsing error follow different paths.",
+        "expected": "The first gives 0 1, the second invalid."
       }
+    ],
+    "recall": "example-2",
+    "starterRevision": "b5-starter-v1",
+    "starterObservation": {
+      "case": 1,
+      "stdout": "0 3\n",
+      "exitCode": 0
+    },
+    "outputFields": [
+      "Counter value",
+      "Rejection count"
     ]
   },
   "terms": [
@@ -394,5 +449,18 @@
     ],
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\oop\\oop-principles.en.json"
+  "sourcePath": "courses\\cpp\\gold\\oop\\oop-principles.en.json",
+  "reading": [
+    {
+      "id": "cpp20-class",
+      "title": "C++20 [class]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[class]",
+      "language": "English",
+      "purpose": "Consult the C++20 requirements in [class] after working through the examples.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
+    }
+  ],
+  "authored": true
 }

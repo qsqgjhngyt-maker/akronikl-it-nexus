@@ -529,5 +529,417 @@
       "diagnostic": "Level",
       "explanation": "This is a separate negative control. Keep it out of the working main.cpp."
     }
-  ]
+  ],
+  "teachingEdition": {
+    "revision": "b5-author-v1",
+    "title": "Construction and lifetime completion",
+    "goal": "Trace member construction and destruction, then check the live-object count at scope boundaries.",
+    "prerequisites": [
+      {
+        "text": "Modules 1–4: input, functions, sequences, ownership, testing and multifile builds."
+      },
+      {
+        "text": "Direct prerequisites: cpp.classes-objects-state-control"
+      }
+    ],
+    "sections": [
+      {
+        "id": "concept-1",
+        "title": "Initialization precedes the body",
+        "paragraphs": [
+          "A machine has parts A and B. Both must exist before ready is printed. The members are still alive during stop.",
+          "A constructor establishes an object's initial state. Its name matches the class and it has no return type. In Level(int n):value_(n), the part after the colon is a member initializer list. The field is created with n directly. Assignment inside the body happens later, after the member has already had to be created.",
+          "Prefer direct initialization, especially for const members, references and types without a default constructor. An uninitialized built-in int can hold an indeterminate value that must not be read. A =0 field initializer supplies a useful default, but does not replace validation of domain requirements on constructor arguments."
+        ]
+      },
+      {
+        "id": "concept-2",
+        "title": "Declaration order controls initialization",
+        "paragraphs": [
+          "Members are initialized in their declaration order inside the class, regardless of their order in the initializer list. The constructor body executes afterwards. Machine therefore creates a, then b, then prints ready. Rearranging a and b in the initializer list is not a way to change their lifetimes.",
+          "If the second member needs the first during construction, declare the dependency earlier. Fix a compiler warning about reordered initialization instead of ignoring it. Do not demonstrate the rule by reading a member whose lifetime has not begun. A safe trace prints identifiers of initialized parts and reveals order without undefined behaviour.",
+          "The declaration is Part a, b. A therefore constructs before B even if the initializer list is reordered."
+        ]
+      },
+      {
+        "id": "example-1",
+        "title": "Two Machine members and cleanup order",
+        "paragraphs": [
+          "Before revealing the output, order the six construction, readiness and cleanup events."
+        ],
+        "prediction": [
+          "#include <iostream>\nstruct Part {\n    char id;\n    explicit Part(char c) : id(c) { std::cout << '+' << id << ' '; }\n    ~Part() { std::cout << '-' << id << ' '; }\n};\nstruct Machine {\n    Part a, b;\n    Machine() : a('A'), b('B') { std::cout << \"ready \"; }\n    ~Machine() { std::cout << \"stop \"; }\n};\nint main() {\n    {\n        Machine m;\n    }\n    std::cout << '\\n';\n}"
+        ],
+        "predictionInput": "",
+        "reveal": {
+          "title": "Reveal the output and walkthrough",
+          "paragraphs": [
+            "In +A +B ready stop -B -A, spaces separate events. Each constructed member has one matching destruction."
+          ],
+          "tables": [
+            {
+              "caption": "What happens at each step",
+              "columns": [
+                "Action",
+                "Before",
+                "After",
+                "Why"
+              ],
+              "rows": [
+                [
+                  "Construct members",
+                  "∅",
+                  "+A +B",
+                  "Declaration order is a, b."
+                ],
+                [
+                  "Run Machine bodies",
+                  "A, B",
+                  "ready stop",
+                  "Both members remain available during the destructor body."
+                ],
+                [
+                  "Destroy members",
+                  "A, B",
+                  "-B -A",
+                  "Members are destroyed in reverse order."
+                ]
+              ]
+            }
+          ],
+          "code": {
+            "language": "cpp",
+            "source": "#include <iostream>\nstruct Part {\n    char id;\n    explicit Part(char c) : id(c) { std::cout << '+' << id << ' '; }\n    ~Part() { std::cout << '-' << id << ' '; }\n};\nstruct Machine {\n    Part a, b;\n    Machine() : a('A'), b('B') { std::cout << \"ready \"; }\n    ~Machine() { std::cout << \"stop \"; }\n};\nint main() {\n    {\n        Machine m;\n    }\n    std::cout << '\\n';\n}\n",
+            "stdin": "",
+            "output": "+A +B ready stop -B -A \n"
+          }
+        }
+      },
+      {
+        "id": "concept-3",
+        "title": "Explicit construction and caller intent",
+        "paragraphs": [
+          "A one-argument constructor can participate in an implicit conversion when its declaration permits it. explicit prevents that copy-initialization conversion while allowing an explicit Level{7}. Calling show(l) with an existing Level is clear; show(7) in the negative example must fail to compile.",
+          "This matters for units, identifiers and resources: the integer seven should not accidentally become seven metres or an opened handle. explicit neither checks a range nor automatically makes a type safe. Separate the decisions about permitted conversions from the decisions about which values satisfy the construction contract.",
+          "explicit requires the caller to create a Level deliberately. show(l) receives an existing object."
+        ]
+      },
+      {
+        "id": "example-2",
+        "title": "Explicit Level construction",
+        "paragraphs": [
+          "Read the explicit Level{7} construction, const-reference parameter and single value() observation."
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\nclass Level {\n    int value_;\n\n  public:\n    explicit Level(int n) : value_(n) {}\n    int value() const { return value_; }\n};\nvoid show(const Level &l) { std::cout << l.value() << '\\n'; }\nint main() {\n    Level l{7};\n    show(l);\n}\n",
+          "stdin": "",
+          "output": "7\n"
+        }
+      },
+      {
+        "id": "concept-4",
+        "title": "Destruction reverses construction",
+        "paragraphs": [
+          "A destructor is spelled ~Type() and has no parameters. Automatic objects are destroyed in reverse order of successful construction when their scope ends. The complete object's destructor body runs first, followed by its members in reverse declaration order. The Machine trace therefore ends with stop, minus B, minus A.",
+          "Reverse order follows dependencies: a later part may rely on an earlier part and should finish first. Do not manually call the destructor of an ordinary local object; later automatic destruction would make the program incorrect. Scopes, containers and standard-library owners suffice for ordinary course work. Placement new is outside this lesson's requirements.",
+          "After the Machine destructor body, members are destroyed in reverse order. Thus stop is followed by −B and −A."
+        ]
+      },
+      {
+        "id": "concept-5",
+        "title": "Owning a resource counter",
+        "paragraphs": [
+          "Lease stores an int& referring to an external active counter. Its constructor increments it and its destructor decrements it. The counter outlives every Lease because it is declared earlier in an outer scope. A reference does not own the integer or extend its lifetime. That is an important precondition of this teaching model.",
+          "Copying Lease is deleted with =delete. Otherwise two copies could decrement a counter after just one original increment, violating ownership accounting. We do not implement a custom move yet; that has a separate lesson. A deleted operation is a compile-time prohibition rather than a special result produced while the program runs.",
+          "The active counter lives in outer main and outlives each Lease. A destructor can safely decrement it through its reference."
+        ]
+      },
+      {
+        "id": "concept-6",
+        "title": "Tracing a nested scope",
+        "paragraphs": [
+          "With mode zero, only a exists: the output contains one inside the scope, one before its end and zero afterwards. With mode one, b is created too; one, two, one, zero shows that b is destroyed after the inner if and a later. Mode two intentionally follows the same path and checks the stated input contract.",
+          "Write an event, live-object and active-count table before running. The counter is not a universal memory leak detector, but checks acquire/release pairing in this model. Do not inspect a destroyed b to discover what happened; observe the counter whose lifetime continues. No Lease owners remain after the outer scope ends.",
+          "For mode = 1, draw two nested boxes. Entering the inner scope adds b, leaving removes b, and leaving the outer scope removes a."
+        ]
+      },
+      {
+        "id": "concept-7",
+        "title": "Construction failure and cleanup",
+        "paragraphs": [
+          "If construction of a complete object fails with an exception, that complete object's destructor is not called. Members that were successfully constructed are cleaned up. Throwing is studied later; the design implication already matters: do not leave ownership in an unprotected raw pointer between constructor steps.",
+          "Destructors should finish without throwing exceptions. Output in tracing examples makes order visible; it is not a model for complicated cleanup with recoverable failures. Handle a file-saving error in an explicit operation before destruction. Prefer established RAII owners for real resources because they reduce the number of manual release paths.",
+          "If construction of a complete object fails, its own destructor does not run. Fully constructed members are cleaned up by their destructors."
+        ]
+      },
+      {
+        "id": "concept-8",
+        "title": "Laboratory and transfer",
+        "paragraphs": [
+          "Save the Lease source and traces for all three permitted modes. Explain declaration order, the beginning of lifetime, scope exit and destruction order as separate events. Change nesting safely and predict the new sequence first. Invalid input must be rejected before any Lease objects are created.",
+          "The cumulative Window practicum combines the invariant with initialization of the closed, degenerate interval [0,0], which contains the point zero. Resource discipline next transfers to unique_ptr and standard containers. The goal is not to write a destructor for every class. When members already manage their resources, a user-written destructor is often unnecessary.",
+          "In the practicum, connect lifetime observations with a resource invariant. Save a trace to explain every active count."
+        ]
+      },
+      {
+        "id": "independent-work",
+        "title": "Now try your own task",
+        "paragraphs": [
+          "In the lab, count live Leases instead of printing event labels. Disable copying so each increment corresponds to one object.",
+          "Draw two nested scopes for mode = 1."
+        ]
+      }
+    ],
+    "selfcheck": [
+      {
+        "id": "predict",
+        "kind": "choice",
+        "prompt": "In what order does the program print Machine's construction and destruction events?",
+        "options": [
+          "+A +B ready stop -B -A \n",
+          "+A +B ready -B -A stop",
+          "+B +A ready stop -A -B"
+        ],
+        "correct": 0,
+        "feedback": "First come members in declaration order, then the constructor body, destructor body and members in reverse order.",
+        "code": {
+          "source": "#include <iostream>\nstruct Part {\n    char id;\n    explicit Part(char c) : id(c) { std::cout << '+' << id << ' '; }\n    ~Part() { std::cout << '-' << id << ' '; }\n};\nstruct Machine {\n    Part a, b;\n    Machine() : a('A'), b('B') { std::cout << \"ready \"; }\n    ~Machine() { std::cout << \"stop \"; }\n};\nint main() {\n    {\n        Machine m;\n    }\n    std::cout << '\\n';\n}\n",
+          "stdin": ""
+        },
+        "execution": {
+          "source": "#include <iostream>\nstruct Part {\n    char id;\n    explicit Part(char c) : id(c) { std::cout << '+' << id << ' '; }\n    ~Part() { std::cout << '-' << id << ' '; }\n};\nstruct Machine {\n    Part a, b;\n    Machine() : a('A'), b('B') { std::cout << \"ready \"; }\n    ~Machine() { std::cout << \"stop \"; }\n};\nint main() {\n    {\n        Machine m;\n    }\n    std::cout << '\\n';\n}\n",
+          "stdin": "",
+          "expected": "+A +B ready stop -B -A \n"
+        },
+        "recall": "example-1"
+      },
+      {
+        "id": "check-0",
+        "kind": "choice",
+        "prompt": "In what order are members initialized?",
+        "options": [
+          "In their declaration order inside the class.",
+          "In initializer-list order.",
+          "Alphabetically."
+        ],
+        "correct": 0,
+        "feedback": "Members are initialized in declaration order before the constructor body runs. Rearranging the initializer list does not change lifetime order and should not contradict the declarations.",
+        "recall": "concept-2"
+      },
+      {
+        "id": "check-1",
+        "kind": "choice",
+        "prompt": "What does explicit Level(int) do?",
+        "options": [
+          "It checks the range 0…100.",
+          "It prevents the corresponding implicit conversion.",
+          "It deletes the destructor."
+        ],
+        "correct": 1,
+        "feedback": "explicit prevents the corresponding implicit conversion from int to Level. Explicit Level{7} remains allowed, while domain-range validation must be implemented separately.",
+        "recall": "concept-3"
+      },
+      {
+        "id": "check-2",
+        "kind": "choice",
+        "prompt": "Should you manually destroy an ordinary local object?",
+        "options": [
+          "Yes; before every return.",
+          "Yes; before first use.",
+          "No; scope exit performs destruction."
+        ],
+        "correct": 2,
+        "feedback": "An ordinary local object is destroyed automatically on scope exit. A manual destructor call without correctly reestablishing lifetime would make the later automatic destruction invalid.",
+        "recall": "concept-4"
+      },
+      {
+        "id": "check-3",
+        "kind": "choice",
+        "prompt": "Is the complete destructor called after constructor failure?",
+        "options": [
+          "No; successfully constructed subobjects are cleaned up.",
+          "Yes; always twice.",
+          "No members are cleaned up."
+        ],
+        "correct": 0,
+        "feedback": "The complete object was not successfully constructed, so its own destructor is not invoked. Completed subobjects are destroyed in reverse order, allowing RAII members to release resources.",
+        "recall": "concept-7"
+      },
+      {
+        "id": "check-4",
+        "kind": "choice",
+        "prompt": "Why can active be read after Lease is destroyed?",
+        "options": [
+          "The Lease reference extends int lifetime.",
+          "The integer remains alive in the outer scope.",
+          "Reading a destroyed int is always valid."
+        ],
+        "correct": 1,
+        "feedback": "active is declared earlier in the outer scope and remains alive after the Lease owners are destroyed. The Lease reference observes the integer; it does not extend its lifetime.",
+        "recall": "concept-5"
+      },
+      {
+        "id": "explain",
+        "kind": "free",
+        "prompt": "For mode = 0, explain each value in 1 1 0. Where did a's lifetime end?",
+        "feedback": "After creating a, one Lease is active. No inner object is created, and leaving the outer scope destroys a.",
+        "recall": "independent-work"
+      }
+    ],
+    "practice": {
+      "title": "Laboratory: Construction and lifetime completion",
+      "task": "Read exactly one mode=0…2. Construct Lease a and print active; for a nonzero mode construct b in an inner scope and print active. Print active after the inner scope and again after a is destroyed, ending the line. Lease increments the counter on construction and decrements on destruction; copying is forbidden. Invalid input: invalid.",
+      "kind": "cpp-console",
+      "environment": "C++20",
+      "files": [
+        {
+          "path": "main.cpp",
+          "content": "#include <iostream>\nclass Lease {\n    int &active_;\n\n  public:\n    explicit Lease(int &n) : active_(n) {\n        // TODO: Record construction of this Lease in the external counter.\n    }\n    Lease(const Lease &) = delete;\n    Lease &operator=(const Lease &) = delete;\n    ~Lease() {\n        // TODO: Record the end of this Lease's lifetime exactly once.\n    }\n};\nint main() {\n    int mode;\n    if (!(std::cin >> mode) || mode < 0 || mode > 2) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof()) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    int active = 0;\n    {\n        Lease a{active};\n        std::cout << active << ' ';\n        if (mode) {\n            Lease b{active};\n            std::cout << active << ' ';\n        }\n        std::cout << active << ' ';\n    }\n    std::cout << active << '\\n';\n}\n"
+        }
+      ],
+      "metadata": {},
+      "stdin": "1",
+      "returnAnchor": "example-1",
+      "cases": [
+        {
+          "label": "Case 1",
+          "input": "0",
+          "output": "1 1 0\n"
+        },
+        {
+          "label": "First substantive run",
+          "input": "1",
+          "output": "1 2 1 0\n"
+        },
+        {
+          "label": "Case 3",
+          "input": "2",
+          "output": "1 2 1 0\n"
+        },
+        {
+          "label": "Input error · 4",
+          "input": "-1",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 5",
+          "input": "3",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 6",
+          "input": "x",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 7",
+          "input": "1 x",
+          "output": "invalid\n"
+        },
+        {
+          "label": "Input error · 8",
+          "input": "",
+          "output": "invalid\n"
+        }
+      ],
+      "criteria": [
+        "Entries give 1 and 2, exits give 1 and 0.",
+        "Output 1 2 1 0.",
+        "Expect 1 1 0, then 1 2 1 0, then invalid.",
+        "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
+      ],
+      "hint": "After creating a, one Lease is active. No inner object is created, and leaving the outer scope destroys a.",
+      "steps": [
+        {
+          "where": "Before running",
+          "action": "Draw two nested scopes for mode = 1.",
+          "why": "The boxes connect destruction to the active count.",
+          "expected": "Entries give 1 and 2, exits give 1 and 0."
+        },
+        {
+          "where": "In my program",
+          "action": "Complete the Lease constructor and destructor, then run input 1.",
+          "why": "One construction and one cleanup operation must apply to each object.",
+          "expected": "Output 1 2 1 0."
+        },
+        {
+          "where": "After running",
+          "action": "Compare inputs 0, 2 and 1 x.",
+          "why": "This separates the zero branch, inner scope and trailing token.",
+          "expected": "Expect 1 1 0, then 1 2 1 0, then invalid."
+        }
+      ],
+      "recall": "example-1",
+      "starterRevision": "b5-starter-v1",
+      "starterObservation": {
+        "case": 1,
+        "stdout": "0 0 0 0\n",
+        "exitCode": 0
+      }
+    },
+    "reading": [
+      {
+        "id": "cpp20-class",
+        "title": "C++20 [class]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[class]",
+        "language": "English",
+        "purpose": "Consult the C++20 requirements in [class] after working through the examples.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
+      },
+      {
+        "id": "cpp20-dtor",
+        "title": "C++20 [class.dtor]",
+        "author": "ISO C++ Working Group (WG21)",
+        "edition": "N4861",
+        "section": "[class.dtor]",
+        "language": "English",
+        "purpose": "Consult the C++20 requirements in [class.dtor] after working through the examples.",
+        "url": "https://timsong-cpp.github.io/cppwp/n4861/class.dtor"
+      }
+    ],
+    "coverage": {
+      "1": "example-1",
+      "2": "concept-1",
+      "3": "concept-5",
+      "4": "concept-6",
+      "5": "concept-5"
+    },
+    "sourceCoverage": [
+      {
+        "sourceTitle": "Initialization precedes the body",
+        "anchor": "concept-1"
+      },
+      {
+        "sourceTitle": "Declaration order controls initialization",
+        "anchor": "concept-2"
+      },
+      {
+        "sourceTitle": "Explicit construction and caller intent",
+        "anchor": "concept-3"
+      },
+      {
+        "sourceTitle": "Destruction reverses construction",
+        "anchor": "concept-4"
+      },
+      {
+        "sourceTitle": "Owning a resource counter",
+        "anchor": "concept-5"
+      },
+      {
+        "sourceTitle": "Tracing a nested scope",
+        "anchor": "concept-6"
+      },
+      {
+        "sourceTitle": "Construction failure and cleanup",
+        "anchor": "concept-7"
+      },
+      {
+        "sourceTitle": "Laboratory and transfer",
+        "anchor": "concept-8"
+      }
+    ]
+  }
 }

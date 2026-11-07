@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "contentRevision": "clarity-courses-v1",
+  "contentRevision": "b5-author-v1",
   "id": "cpp.design-testability-refactoring",
   "courseId": "cpp",
   "moduleId": "cpp.section.oop",
@@ -8,7 +8,7 @@
   "module": "Object-Oriented Programming",
   "locale": "en",
   "title": "Design, testability and refactoring",
-  "goal": "Build a maintainable application, preserve behaviour through refactoring and defend design choices with tests.",
+  "goal": "Separate parsing and domain operations, then preserve results when extracting code into multiple files.",
   "prerequisites": [
     {
       "text": "Modules 1–4: input, functions, sequences, ownership, testing and multifile builds."
@@ -22,6 +22,7 @@
       "id": "concept-1",
       "title": "Maintainability as a checkable property",
       "paragraphs": [
+        "A task list has an input format, validity rules and a minute total. If input changes, valid and total should still work on in-memory values.",
         "Maintainability becomes visible when a requirement changes: can a rule be changed locally while the rest remains understandable? Do not judge it solely by class count. The project has Task values, a Board owner, Policy strategies, input parsing and report output. Each represents a decision that may change independently.",
         "Begin with concrete scenarios: a normal score equals minutes and an urgent score doubles them. Add import rejection, unique IDs and export. These requirements define test boundaries. An abstraction without a change example remains a hypothesis, so review includes a small new requirement and an assessment of the affected files."
       ]
@@ -31,33 +32,30 @@
       "title": "Cohesion and dependencies",
       "paragraphs": [
         "High cohesion means a module's parts serve one understandable responsibility. Low coupling means changing an internal decision does not force changes across many clients. Board validates task invariants without opening files or reading cin. A test can therefore construct a candidate in memory without preparing a browser interface.",
-        "Policy reaches total as a const reference. Board neither owns it nor selects the mode; it uses its contract. main owns the concrete strategy through unique_ptr. The signature exposes dependency direction. A global singleton added for convenience would hide test inputs and couple otherwise independent runs."
+        "Policy reaches total as a const reference. Board neither owns it nor selects the mode; it uses its contract. main owns the concrete strategy through unique_ptr. The signature exposes dependency direction. A global singleton added for convenience would hide test inputs and couple otherwise independent runs.",
+        "Discount is passed explicitly. A price check requires neither global-state changes nor a file."
       ]
+    },
+    {
+      "id": "example-1",
+      "title": "Discount as an explicit dependency",
+      "paragraphs": [
+        "Compute prices for 1000 cents under the two supplied discounts."
+      ],
+      "code": {
+        "language": "cpp",
+        "source": "#include <iostream>\nstruct Discount {\n    int percent;\n    int apply(int cents) const { return cents * (100 - percent) / 100; }\n};\nint price(int cents, const Discount &policy) { return policy.apply(cents); }\nint main() {\n    std::cout << price(1000, Discount{10}) << ' '\n              << price(1000, Discount{0}) << '\\n';\n}\n",
+        "stdin": "",
+        "output": "900 1000\n"
+      }
     },
     {
       "id": "concept-3",
       "title": "Refactoring preserves behaviour",
       "paragraphs": [
         "Refactoring changes code structure while preserving agreed observable behaviour. First capture the current contract in tests, then move total computation out of main into a domain function and rerun them. Changing output format and internal architecture simultaneously makes a mismatch harder to diagnose.",
-        "Do not enshrine every accidental detail of an old implementation. A contract may intentionally change, but document that separately from refactoring. The laboratory fixes line order and messages while leaving function placement flexible. This allows extracting domain code into a header and cpp file without changing results for the same inputs."
-      ]
-    },
-    {
-      "id": "example-1",
-      "title": "Worked model",
-      "paragraphs": [
-        "Build a maintainable application, preserve behaviour through refactoring and defend design choices with tests."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\nstruct Discount {int percent;int apply(int cents)const{return cents*(100-percent)/100;}};\nint price(int cents,const Discount& policy){return policy.apply(cents);}\nint main(){std::cout<<price(1000,Discount{10})<<' '<<price(1000,Discount{0})<<'\\n';}\n",
-        "output": "900 1000\n",
-        "stdin": ""
-      },
-      "steps": [
-        "Discount is supplied explicitly without global state.",
-        "Ten percent off one thousand cents yields nine hundred.",
-        "Zero discount yields one thousand; compare the calls."
+        "Do not enshrine every accidental detail of an old implementation. A contract may intentionally change, but document that separately from refactoring. The laboratory fixes line order and messages while leaving function placement flexible. This allows extracting domain code into a header and cpp file without changing results for the same inputs.",
+        "Keep inputs and outputs before extracting functions. After building the two cpp files, repeat those cases."
       ]
     },
     {
@@ -65,33 +63,71 @@
       "title": "A test driver without magic",
       "paragraphs": [
         "A separate driver constructs Board and both Policy types, checks normal and urgent totals, copy independence and replacement failures. checks increases only for a successful condition. Any failed condition prints FAIL and produces a nonzero final exit code. A printed PASS string alone is therefore not sufficient evidence of correctness.",
-        "The driver replaces main.cpp while using the same domain.cpp and report.cpp. Two main functions cannot be linked into one executable. In Nexus use a separate project copy or explicitly replace the main file after saving it. includeRoots and translationUnits state the build inputs; a tests directory is not compiled automatically."
+        "The driver replaces main.cpp while using the same domain.cpp and report.cpp. Two main functions cannot be linked into one executable. In Nexus use a separate project copy or explicitly replace the main file after saving it. includeRoots and translationUnits state the build inputs; a tests directory is not compiled automatically.",
+        "The driver checks total on populated and empty sequences. It returns a nonzero exit on failure."
       ]
+    },
+    {
+      "id": "example-2",
+      "title": "A driver checks populated and empty inputs",
+      "paragraphs": [
+        "Connect PASS 2 to the driver's two concrete conditions."
+      ],
+      "prediction": [
+        "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nint total(const std::vector<Task> &tasks) {\n    int n = 0;\n    for (const auto &t : tasks) {\n        n += t.minutes;\n    }\n    return n;\n}\nint main() {\n    const std::vector<Task> tasks{{1, 5}, {2, 8}};\n    bool ok = total(tasks) == 13 && total({}) == 0;\n    std::cout << (ok ? \"PASS 2\\n\" : \"FAIL\\n\");\n    return ok ? 0 : 1;\n}"
+      ],
+      "predictionInput": "",
+      "reveal": {
+        "title": "Reveal the output and walkthrough",
+        "paragraphs": [
+          "PASS 2 is tied to two checked inputs. If either fails, the driver sets a nonzero exit."
+        ],
+        "tables": [
+          {
+            "caption": "What happens at each step",
+            "columns": [
+              "Action",
+              "Before",
+              "After",
+              "Why"
+            ],
+            "rows": [
+              [
+                "Populated sequence",
+                "{1,5}, {2,8}",
+                "total = 13",
+                "Minutes are summed."
+              ],
+              [
+                "Empty sequence",
+                "{}",
+                "total = 0",
+                "The initial value determines the result."
+              ],
+              [
+                "Combine checks",
+                "13 == 13, 0 == 0",
+                "PASS 2, exit = 0",
+                "Both conditions must hold."
+              ]
+            ]
+          }
+        ],
+        "code": {
+          "language": "cpp",
+          "source": "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nint total(const std::vector<Task> &tasks) {\n    int n = 0;\n    for (const auto &t : tasks) {\n        n += t.minutes;\n    }\n    return n;\n}\nint main() {\n    const std::vector<Task> tasks{{1, 5}, {2, 8}};\n    bool ok = total(tasks) == 13 && total({}) == 0;\n    std::cout << (ok ? \"PASS 2\\n\" : \"FAIL\\n\");\n    return ok ? 0 : 1;\n}\n",
+          "stdin": "",
+          "output": "PASS 2\n"
+        }
+      }
     },
     {
       "id": "concept-5",
       "title": "The strong import guarantee",
       "paragraphs": [
         "Board::replace takes a candidate by value, validates size, ranges and unique IDs, then swaps. Controlled failure occurs before swap. On exception the original tasks remain and the candidate cleans itself up. Tests include invalid data and injected failure on valid data, because those are different rejection causes.",
-        "The guarantee concerns Board state rather than every action in main. Status output and file creation follow the import attempt. The report describes current state even after candidate rejection. This protocol exposes preservation through public observations without accessing private fields or claiming a filesystem transaction."
-      ]
-    },
-    {
-      "id": "example-2",
-      "title": "Contract boundary check",
-      "paragraphs": [
-        "Build a maintainable application, preserve behaviour through refactoring and defend design choices with tests."
-      ],
-      "code": {
-        "language": "cpp",
-        "source": "#include <iostream>\n#include <vector>\nstruct Task {int id,minutes;};\nint total(const std::vector<Task>& tasks){int n=0;for(const auto& t:tasks)n+=t.minutes;return n;}\nint main(){const std::vector<Task> tasks{{1,5},{2,8}};bool ok=total(tasks)==13&&total({})==0;std::cout<<(ok?\"PASS 2\\n\":\"FAIL\\n\");return ok?0:1;}\n",
-        "output": "PASS 2\n",
-        "stdin": ""
-      },
-      "steps": [
-        "total reads no cin and is callable by the driver.",
-        "Check the ordinary and empty collections.",
-        "PASS 2 requires both conditions; otherwise exit is one."
+        "The guarantee concerns Board state rather than every action in main. Status output and file creation follow the import attempt. The report describes current state even after candidate rejection. This protocol exposes preservation through public observations without accessing private fields or claiming a filesystem transaction.",
+        "In the capstone Board, rejection occurs before swap. Its subsequent report must show the original task {1,10}."
       ]
     },
     {
@@ -99,7 +135,8 @@
       "title": "Files and explicit artifacts",
       "paragraphs": [
         "The project reads data/tasks.txt and creates board-report.txt in the run filesystem. The web runtime does not promise to write generated output back into the personal project automatically. After verification use the normal explicit save action for result files. Existence during one run does not establish persistence after restart or on another device.",
-        "Export checking includes opening the stream, writing, closing and checking its state after close. File destruction releases the resource, while reporting success requires an explicit error check. A missing input file, an empty file and a file containing zero tasks are three different cases and should remain distinct."
+        "Export checking includes opening the stream, writing, closing and checking its state after close. File destruction releases the resource, while reporting success requires an explicit error check. A missing input file, an empty file and a file containing zero tasks are three different cases and should remain distinct.",
+        "board-report.txt appears in the run filesystem. After comparing its lines, explicitly save it into the project."
       ]
     },
     {
@@ -107,7 +144,8 @@
       "title": "An ADR and alternative review",
       "paragraphs": [
         "A short ADR records context, alternatives, a decision and consequences. Compare an open vector plus functions with private Board state, a concrete policy with a virtual interface, and immediate mutation with candidate preparation. Explain which requirement justifies the added complexity and what you would choose for a smaller application.",
-        "Arguments should refer to requirements and checkable properties. A pattern name or customary practice is insufficient. State limits: up to twenty tasks, integer minutes, no network or GUI, and explicitly saved exports. Neither this architecture nor its tests prove arbitrary production readiness; they provide a reproducible foundation for subsequent work."
+        "Arguments should refer to requirements and checkable properties. A pattern name or customary practice is insufficient. State limits: up to twenty tasks, integer minutes, no network or GUI, and explicitly saved exports. Neither this architecture nor its tests prove arbitrary production readiness; they provide a reproducible foundation for subsequent work.",
+        "Connect an ADR decision to a requirement. For example, Policy allows scoring changes while retaining Board's operations."
       ]
     },
     {
@@ -115,11 +153,42 @@
       "title": "Defending the cumulative project",
       "paragraphs": [
         "Deliver sources, input files, actual stdout, the saved report, results from the separate driver and an ADR. A teacher or partner then chooses an unseen case within the allowed domain and a small requirement change. For example, add a scoring strategy and show which files and tests actually needed changes.",
-        "Completion should not depend on matching the reference source text. Explain the invariant, ownership, independent copy, polymorphic call, failure guarantee and template constraint. Module 6 builds on these foundations for application architecture and events. A later course-wide assessment should integrate modules rather than replace their practice with one final quiz."
+        "Completion should not depend on matching the reference source text. Explain the invariant, ownership, independent copy, polymorphic call, failure guarantee and template constraint. Module 6 builds on these foundations for application architecture and events. A later course-wide assessment should integrate modules rather than replace their practice with one final quiz.",
+        "Use a new valid input and explain which checks confirm behavior preservation after extracting functions."
+      ]
+    },
+    {
+      "id": "independent-work",
+      "title": "Now try your own task",
+      "paragraphs": [
+        "Implement valid and total independently of main. Extract their definitions into a separate translation unit and repeat the cases.",
+        "Separate id/minutes bounds, uniqueness and summation."
       ]
     }
   ],
   "selfcheck": [
+    {
+      "id": "predict",
+      "kind": "choice",
+      "prompt": "What appears in stdout after both total checks pass?",
+      "options": [
+        "PASS 2\n",
+        "FAIL",
+        "PASS 1"
+      ],
+      "correct": 0,
+      "feedback": "Both conditions are true. Stdout contains PASS 2, and return ok?0:1 yields exit 0.",
+      "code": {
+        "source": "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nint total(const std::vector<Task> &tasks) {\n    int n = 0;\n    for (const auto &t : tasks) {\n        n += t.minutes;\n    }\n    return n;\n}\nint main() {\n    const std::vector<Task> tasks{{1, 5}, {2, 8}};\n    bool ok = total(tasks) == 13 && total({}) == 0;\n    std::cout << (ok ? \"PASS 2\\n\" : \"FAIL\\n\");\n    return ok ? 0 : 1;\n}\n",
+        "stdin": ""
+      },
+      "execution": {
+        "source": "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nint total(const std::vector<Task> &tasks) {\n    int n = 0;\n    for (const auto &t : tasks) {\n        n += t.minutes;\n    }\n    return n;\n}\nint main() {\n    const std::vector<Task> tasks{{1, 5}, {2, 8}};\n    bool ok = total(tasks) == 13 && total({}) == 0;\n    std::cout << (ok ? \"PASS 2\\n\" : \"FAIL\\n\");\n    return ok ? 0 : 1;\n}\n",
+        "stdin": "",
+        "expected": "PASS 2\n"
+      },
+      "recall": "example-2"
+    },
     {
       "id": "check-0",
       "kind": "choice",
@@ -130,7 +199,8 @@
         "The source line count."
       ],
       "correct": 0,
-      "feedback": "Refactoring changes internal structure while preserving agreed results for the same inputs. A new output format or business rule changes the contract separately; internal addresses and line counts are usually not client promises."
+      "feedback": "Refactoring changes internal structure while preserving agreed results for the same inputs. A new output format or business rule changes the contract separately; internal addresses and line counts are usually not client promises.",
+      "recall": "concept-3"
     },
     {
       "id": "check-1",
@@ -142,7 +212,8 @@
         "To hide every error."
       ],
       "correct": 1,
-      "feedback": "Board can be tested with in-memory values without preparing an input stream. Parsing cin stays with the caller; this separates responsibilities rather than imposing a language restriction on classes."
+      "feedback": "Board can be tested with in-memory values without preparing an input stream. Parsing cin stays with the caller; this separates responsibilities rather than imposing a language restriction on classes.",
+      "recall": "concept-2"
     },
     {
       "id": "check-2",
@@ -154,7 +225,8 @@
         "It replaces the application while checking shared domain code."
       ],
       "correct": 2,
-      "feedback": "The driver shares domain.cpp and report.cpp but supplies its own test entry point. Build it instead of the application main; two competing entry points do not form one test executable."
+      "feedback": "The driver shares domain.cpp and report.cpp but supplies its own test entry point. Build it instead of the application main; two competing entry points do not form one test executable.",
+      "recall": "concept-4"
     },
     {
       "id": "check-3",
@@ -166,7 +238,8 @@
         "Yes; on each cout operation."
       ],
       "correct": 0,
-      "feedback": "A generated file initially exists only in that run's filesystem. Explicitly saving selected result files transfers them into the project; cout promises neither file persistence nor device synchronization."
+      "feedback": "A generated file initially exists only in that run's filesystem. Explicitly saving selected result files transfers them into the project; cout promises neither file persistence nor device synchronization.",
+      "recall": "concept-6"
     },
     {
       "id": "check-4",
@@ -178,13 +251,15 @@
         "Yes; if the code was copied."
       ],
       "correct": 1,
-      "feedback": "A test supports particular observations for specified inputs and a contract. New requirements may reach unchecked behaviour, requiring analysis, additional cases and an explanation of correctness."
+      "feedback": "A test supports particular observations for specified inputs and a contract. New requirements may reach unchecked behaviour, requiring analysis, additional cases and an explanation of correctness.",
+      "recall": "concept-8"
     },
     {
       "id": "explain",
       "kind": "free",
-      "prompt": "Add a Board copy-independence test.",
-      "feedback": "Next: Module 6: application architecture and events. Preserve the cumulative project."
+      "prompt": "Why is a successful build insufficient after extracting valid and total into cpp/header?",
+      "feedback": "Repeat valid and invalid inputs, comparing stdout and exit. Linkage alone does not confirm the previous calculations.",
+      "recall": "independent-work"
     }
   ],
   "practice": {
@@ -195,11 +270,11 @@
     "files": [
       {
         "path": "main.cpp",
-        "content": "#include <iostream>\n#include <vector>\n#include <concepts>\n#include <span>\nstruct Task {int id,minutes;}; /* TODO: independent valid and total operations */\nint main(){std::cout<<\"pending\\n\";}\n"
+        "content": "#include <iostream>\n#include <vector>\nstruct Task {\n    int id, minutes;\n};\nbool valid(const std::vector<Task> &tasks) {\n    // TODO: Check each task's bounds and ID uniqueness without reading cin.\n    return true;\n}\nint total(const std::vector<Task> &tasks) {\n    int minutes = 0;\n    // TODO: Count minutes in the supplied sequence independently of input.\n    return minutes;\n}\nint main() {\n    int n;\n    if (!(std::cin >> n) || n < 0 || n > 20) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::vector<Task> tasks;\n    for (int i = 0; i < n; ++i) {\n        Task t;\n        if (!(std::cin >> t.id >> t.minutes)) {\n            std::cout << \"invalid\\n\";\n            return 0;\n        }\n        tasks.push_back(t);\n    }\n    std::cin >> std::ws;\n    if (!std::cin.eof() || !valid(tasks)) {\n        std::cout << \"invalid\\n\";\n        return 0;\n    }\n    std::cout << \"tasks \" << tasks.size() << \" minutes \" << total(tasks)\n              << '\\n';\n}\n"
       }
     ],
     "metadata": {},
-    "stdin": "0",
+    "stdin": "2 1 5 2 8",
     "returnAnchor": "example-1",
     "cases": [
       {
@@ -208,7 +283,7 @@
         "output": "tasks 0 minutes 0\n"
       },
       {
-        "label": "Case 2",
+        "label": "First substantive run",
         "input": "2 1 5 2 8",
         "output": "tasks 2 minutes 13\n"
       },
@@ -223,102 +298,71 @@
         "output": "tasks 1 minutes 0\n"
       },
       {
-        "label": "Case 5",
+        "label": "Input error · 5",
         "input": "2 1 4 1 7",
         "output": "invalid\n"
       },
       {
-        "label": "Case 6",
+        "label": "Input error · 6",
         "input": "1 0 3",
         "output": "invalid\n"
       },
       {
-        "label": "Case 7",
+        "label": "Input error · 7",
         "input": "1 1 -1",
         "output": "invalid\n"
       },
       {
-        "label": "Case 8",
+        "label": "Input error · 8",
         "input": "1 1 101",
         "output": "invalid\n"
       },
       {
-        "label": "Case 9",
+        "label": "Input error · 9",
         "input": "1 1",
         "output": "invalid\n"
       },
       {
-        "label": "Case 10",
+        "label": "Input error · 10",
         "input": "21",
         "output": "invalid\n"
       },
       {
-        "label": "Case 11",
+        "label": "Input error · 11",
         "input": "0 x",
         "output": "invalid\n"
       },
       {
-        "label": "Case 12",
+        "label": "Input error · 12",
         "input": "",
         "output": "invalid\n"
       }
     ],
     "criteria": [
-      "Separate parsing, invariant and scoring rule.",
-      "The driver checks zero and thirteen and fails with nonzero exit.",
-      "The same inputs produce the same results.",
-      "Changing the copy leaves the original intact.",
-      "Include source, actual results, an independent case and limits of the conclusion."
+      "For {1,5},{2,8}, valid is true and total is 13.",
+      "Output tasks 2 minutes 13.",
+      "Both versions give tasks 0 minutes 0 and invalid.",
+      "Add one valid input of your own and one rejection. Keep your source, input, observed output and any files required by the task."
     ],
-    "hint": "Refactoring changes code structure while preserving agreed observable behaviour. First capture the current contract in tests, then move total computation out of main into a domain function and rerun them. Changing output format and internal architecture simultaneously makes a mismatch harder to diagnose.",
+    "hint": "Repeat valid and invalid inputs, comparing stdout and exit. Linkage alone does not confirm the previous calculations.",
     "steps": [
       {
-        "where": "My program",
-        "action": "Restate the contract and distinguish malformed input from domain rejection.",
-        "why": "",
-        "expected": ""
+        "where": "Before running",
+        "action": "Separate id/minutes bounds, uniqueness and summation.",
+        "why": "Each rule can be tested without cin.",
+        "expected": "For {1,5},{2,8}, valid is true and total is 13."
       },
       {
-        "where": "My program",
-        "action": "Name main, Board and Policy responsibilities.",
-        "why": "",
-        "expected": ""
+        "where": "In my program",
+        "action": "Complete the functions and run 2 1 5 2 8.",
+        "why": "This checks pair parsing and passing the complete sequence.",
+        "expected": "Output tasks 2 minutes 13."
       },
       {
-        "where": "My program",
-        "action": "Test total on empty and ordinary input.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Open Task and Code Studio: the task stays alongside the editor on desktop or in a phone tab. Save your own code before replacing an example.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Complete the starter; pending marks unfinished work rather than a correct result.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Run every reference case and record actual stdout and exit status.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Write an ADR for virtual Policy.",
-        "why": "",
-        "expected": ""
-      },
-      {
-        "where": "My program",
-        "action": "Save source, a verification table and an invariant explanation; add one independent case.",
-        "why": "",
-        "expected": ""
+        "where": "After running",
+        "action": "Compare 0 and 2 1 4 1 7 before and after extracting the domain.",
+        "why": "A duplicate ID tests the invariant, and rerunning tests preservation.",
+        "expected": "Both versions give tasks 0 minutes 0 and invalid."
       }
     ],
     "modulePracticum": {
@@ -748,6 +792,13 @@
         "The project reads data/tasks.txt and creates board-report.txt in the run filesystem. The web runtime does not promise to write generated output back into the personal project automatically. After verification use the normal explicit save action for result files. Existence during one run does not establish persistence after restart or on another device.",
         "A short ADR records context, alternatives, a decision and consequences. Compare an open vector plus functions with private Board state, a concrete policy with a virtual interface, and immediate mutation with candidate preparation. Explain which requirement justifies the added complexity and what you would choose for a smaller application."
       ]
+    },
+    "recall": "example-2",
+    "starterRevision": "b5-starter-v1",
+    "starterObservation": {
+      "case": 1,
+      "stdout": "tasks 2 minutes 0\n",
+      "exitCode": 0
     }
   },
   "terms": [
@@ -1250,5 +1301,18 @@
     },
     "laboratory": {}
   },
-  "sourcePath": "courses\\cpp\\gold\\oop\\design-testability-refactoring.en.json"
+  "sourcePath": "courses\\cpp\\gold\\oop\\design-testability-refactoring.en.json",
+  "reading": [
+    {
+      "id": "cpp20-class",
+      "title": "C++20 [class]",
+      "author": "ISO C++ Working Group (WG21)",
+      "edition": "N4861",
+      "section": "[class]",
+      "language": "English",
+      "purpose": "Consult the C++20 requirements in [class] after working through the examples.",
+      "url": "https://timsong-cpp.github.io/cppwp/n4861/class"
+    }
+  ],
+  "authored": true
 }
