@@ -196,8 +196,8 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  root.innerHTML=`<div class="r3-lesson" lang="${locale}" data-authored="${!!author}" data-r3-topic="${topicId}"><style>${authorModule?.authoredStyles||''}
  .r3-lesson{--r3-line:#486377;line-height:1.7;max-width:1220px;margin:auto;min-width:0}.r3-lesson .option span,.r3-lesson .practice-card li{white-space:pre-wrap}.r3-lesson [data-onec-figure] img{max-width:100%}.r3-lesson [data-course-figures] .onec-shot-frame{position:relative;overflow:hidden}.r3-lesson [data-course-figures] svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.r3-lesson [hidden]{display:none!important}.r3-lesson .stage-body{padding:24px 0;min-width:0}.r3-lesson .lesson-section,.r3-lesson .question,.r3-lesson .practice-card{border:1px solid var(--r3-line);border-radius:14px;padding:24px;margin:20px 0}.r3-lesson .section-index{font-size:.8rem;opacity:.7}.r3-lesson .example-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,.65fr);gap:24px}.r3-lesson .example-layout>div{min-width:0}.r3-lesson pre{white-space:pre;overflow:auto;max-width:100%;background:#071522;color:#e6f1ff;padding:16px;border-radius:8px;line-height:1.7}.r3-lesson .table-wrap,.r3-lesson .trace-wrap{overflow:auto}.r3-lesson table{width:100%;border-collapse:collapse}.r3-lesson th,.r3-lesson td{padding:12px;border:1px solid var(--r3-line);text-align:left;vertical-align:top}.r3-lesson caption{font-weight:600;text-align:left}.r3-lesson .option{display:flex;gap:12px;padding:10px}.r3-lesson textarea[data-answer],.r3-lesson textarea[data-r3-report],.r3-lesson #stdin{display:block;width:100%;min-height:100px;padding:12px;color:inherit;background:transparent;border:1px solid var(--r3-line);border-radius:8px}.r3-lesson fieldset{border:0;padding:0;min-width:0;width:100%}.r3-lesson legend{font-weight:700;max-width:100%;overflow-wrap:anywhere}.r3-lesson .feedback{border-left:3px solid #82e6ce;padding:12px}.r3-lesson details,.r3-lesson .environment{padding:16px;border:1px solid var(--r3-line);border-radius:8px;margin:16px 0}.r3-lesson .work-actions{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.r3-lesson .r3-dialog{max-width:min(900px,94vw);max-height:85vh;overflow:auto;background:#102333;color:#e6edf5;border:1px solid var(--r3-line);border-radius:16px;padding:24px}.r3-lesson a:focus-visible,.r3-lesson button:focus-visible,.r3-lesson textarea:focus-visible{outline:3px solid #82e6ce;outline-offset:3px}.r3-lesson .code-studio{min-width:0}.r3-lesson .next-card{display:flex;gap:16px;flex-wrap:wrap}.r3-lesson [data-r3-save]{min-height:1.7em}
  .r3-lesson .breadcrumbs{margin-bottom:8px;font-size:.82rem;color:var(--muted,#a9c0d3)}
- .r3-lesson[data-r3-topic^="cpp."] .stage-body{background:#0b1929;padding:28px;border-radius:18px;margin-top:18px}
- .r3-lesson[data-r3-topic^="cpp."] :is(.lesson-section,.question,.practice-card){background:#122438;border-color:#3d536a}
+ .r3-lesson[data-r3-topic] .stage-body{background:#0b1929;padding:28px;border-radius:18px;margin-top:18px}
+ .r3-lesson[data-r3-topic] :is(.lesson-section,.question,.practice-card){background:#122438;border-color:#3d536a}
  .r3-lesson[data-r3-topic^="cpp."] .example-layout[data-example-single]{grid-template-columns:minmax(0,1fr)}
  .r3-lesson .clarification-links{display:flex;flex-wrap:wrap;gap:8px 16px;list-style:none;margin:0;padding:0}
  .r3-lesson .clarification-links li{max-width:100%;min-width:0}
@@ -248,7 +248,7 @@ function queryTransfer(t){return t?`<details class="clarification query-transfer
  }
  @media(max-width:720px){
   .r3-lesson .example-layout{display:block}
-  .r3-lesson[data-r3-topic^="cpp."] .stage-body{padding:12px}
+  .r3-lesson[data-r3-topic] .stage-body{padding:12px}
   .r3-lesson .practice-case-io{grid-template-columns:minmax(0,1fr)}
   .r3-lesson .lesson-section,.r3-lesson .question,.r3-lesson .practice-card{padding:16px}
   .r3-lesson .lesson-context{padding-inline:5px}
