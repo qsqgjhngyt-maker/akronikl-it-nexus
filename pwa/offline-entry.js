@@ -194,6 +194,15 @@ async function renderCurrent(seq){
  if(['projects','project-studio'].includes(route.get('view')))return projectList();
  const kind=route.has('lesson')?'lesson':route.has('practicum')?'practicum':'exercise';
  const lessonId=route.get('lesson');
+ // Публичное чтение 1С без подключения её личного хранилища к C++ vault.
+ if(lessonId&&['onec','1c-enterprise'].includes(route.get('course'))){
+  const [{CLARITY_COURSES},ui]=await Promise.all([import('../core/clarity-course-registry.mjs'),import('../core/cpp-clarity-r3-renderer.mjs')]);if(seq!==renderSequence)return;
+  if(CLARITY_COURSES[lessonId]?.courseId===route.get('course')){
+   const active=()=>seq===renderSequence;
+   const mounted=await ui.mountClarityLesson(root,{topicId:lessonId,locale:route.get('locale')||locale,adapter:null,isCurrent:active,onViewChange:view=>{if(active())root.dataset.akroniklRoute=view.hash;}});
+   if(!active()){mounted?.dispose();return;}clarityController=mounted;return;
+  }
+ }
  if(course.curriculum.lessons.some(t=>t.id===lessonId)&&(!route.get('course')||route.get('course')==='cpp')){
   const [ui,state]=await Promise.all([import('../core/cpp-clarity-r3-renderer.mjs'),import('../core/cpp-clarity-r3-session.mjs')]);if(seq!==renderSequence)return;
   const boundSession=session,active=()=>seq===renderSequence&&session===boundSession&&(!boundSession||!!data);

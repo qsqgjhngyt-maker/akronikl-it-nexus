@@ -15,7 +15,7 @@ const lesson=(id,locale)=>`courses/clarity/lessons/${id}.${locale}.json`;
 
 test('B06 изменяет ровно24 источника и24 урока, сохраняя принятые B01–B05 и R3',async()=>{
  const expected=GOLD_EVENT_LESSONS.flatMap(id=>['ru','en'].flatMap(locale=>[source(id,locale),lesson(id,locale)])).sort();
- const changed=git('diff','--name-only',base,'--','courses/cpp/gold','courses/clarity/lessons','courses/cpp-clarity-r3/lessons').trim().split(/\r?\n/).sort();
+ const changed=git('diff','--name-only',base,'--','courses/cpp/gold','courses/clarity/lessons','courses/cpp-clarity-r3/lessons').trim().split(/\r?\n/).filter(p=>!p.startsWith('courses/clarity/lessons/')||p.startsWith('courses/clarity/lessons/cpp.')).sort();
  assert.deepEqual(changed,expected);
 });
 

@@ -16,7 +16,7 @@ test('B02 покрывает весь модуль из восьми тем и �
  const expected=B2_NEW.flatMap(id=>['ru','en'].flatMap(locale=>[
   goldLessonPath(id,locale).replaceAll('\\','/'),'courses/clarity/lessons/'+id+'.'+locale+'.json'
  ])).sort();
- const changed=execFileSync('git',['-c','core.longpaths=true','diff','--name-only',accepted,'--','courses/clarity/lessons','courses/cpp-clarity-r3/lessons','courses/cpp/gold'],{encoding:'utf8'}).trim().split(/\r?\n/).sort();
+ const changed=execFileSync('git',['-c','core.longpaths=true','diff','--name-only',accepted,'--','courses/clarity/lessons','courses/cpp-clarity-r3/lessons','courses/cpp/gold'],{encoding:'utf8'}).trim().split(/\r?\n/).filter(p=>!p.startsWith('courses/clarity/lessons/')||p.startsWith('courses/clarity/lessons/cpp.')).sort();
  const nextBlock=new Set([...GOLD_STRUCTURED_LESSONS,...GOLD_CLASSIC_LESSONS,...GOLD_OOP_LESSONS,...GOLD_EVENT_LESSONS].flatMap(id=>['ru','en'].flatMap(locale=>[
   goldLessonPath(id,locale).replaceAll('\\','/'),'courses/clarity/lessons/'+id+'.'+locale+'.json'
  ])));

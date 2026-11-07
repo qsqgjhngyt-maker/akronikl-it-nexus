@@ -3,12 +3,14 @@
 import {readFile,writeFile,mkdir,glob} from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {GOLD_CLASSIC_LESSONS,GOLD_EVENT_LESSONS,GOLD_OOP_LESSONS,GOLD_STRUCTURED_LESSONS} from '../core/academy-gold-catalog.js';
 const read=async p=>JSON.parse(await readFile(p,'utf8'));
 const write=async(p,v)=>{await mkdir(path.dirname(p),{recursive:true});await writeFile(p,JSON.stringify(v,null,2)+'\n');};
 // Сохранить историческое написание метаданных C++ на любой ОС; это не путь для чтения.
 const cppSourceRef=p=>p.replaceAll('/','\\');
 const pilots=new Set(['cpp.programming-process','onec.p2.topic-1','onec.p7.topic-2']);
+const onecAuthored=new Set(['onec.p1.architecture','onec.p1.infobase','onec.p1.lifecycle','onec.p1.tools']);
 const authoredIds=new Set(['cpp.algorithm-definition-properties','cpp.algorithm-representations','cpp.pseudocode-euclidean-algorithm','cpp.flowcharts','cpp.top-down-design','cpp.sequence-branching-loops','cpp.languages-compilation-debugging','cpp.tokens-identifiers-keywords','cpp.increment-decrement-sizeof-conditional','cpp.data-types','cpp.first-cpp-program','cpp.comments-constants-literals','cpp.variables-scope','cpp.expressions-operators-blocks','cpp.arithmetic-assignment','cpp.type-conversions','cpp.relations-logic','cpp.pointers-references-addresses','cpp.standard-io']);
 for(const id of [...GOLD_STRUCTURED_LESSONS,...GOLD_CLASSIC_LESSONS,...GOLD_OOP_LESSONS,...GOLD_EVENT_LESSONS])authoredIds.add(id);
 const catalog=[],registry={},audit=[];
@@ -107,8 +109,14 @@ for(const courseId of ['onec','1c-enterprise']){
    const code=g.codeFile?await readFile('courses/onec-education/'+g.codeFile,'utf8'):null;
    const practice={kind:'installed-1c',title:g.lab.title,task:g.exercises.at(-1).task,environment:g.lab.environment,externalRoute:g.experience?.route?.program||'',files:code?[{path:'lesson.bsl',content:code}]:[],returnAnchor:'example-1',steps:g.experience?.route?.steps||g.lab.steps.map((action,i)=>({where:g.lab.environment,action,expected:g.lab.expected[i]||'',why:''})),cases:g.lab.expected.map((output,i)=>({label:say(locale,'Наблюдение ','Observation ')+(i+1),input:'',output})),criteria:[...g.exercises.map(e=>e.criteria),...g.lab.evidence,g.lab.negative],hint:g.mistakes[0]?.[1]||'',exercises:g.exercises,sourceFile:g.codeFile||null,setupGuide:true};
    const lesson={schemaVersion:1,contentRevision:'clarity-courses-v1',id:t.topicId,courseId,moduleId:m.moduleId,course:c.title[locale],module:m.title[locale],locale,title:g.title,goal:g.goal,prerequisites:g.prerequisites.map(text=>({text,setup:true})),sections,selfcheck:questions,practice,terms:g.experience?.termIds||[],sourcePath:source,assessment:{contentRevision:g.contentRevision,sharedRefs:g.sharedRefs||[],quiz:g.quiz}};
+   if(onecAuthored.has(t.topicId)){
+    const authoringPath='courses/clarity/authoring/'+t.topicId+'.'+locale+'.json',a=await read(authoringPath);
+    assert.equal(a.id,t.topicId);assert.equal(a.locale,locale);assert.equal(a.source.path,source);
+    assert.equal(a.source.sha256,createHash('sha256').update(await readFile(source)).digest('hex'),'Original source changed: '+source);
+    Object.assign(lesson,{contentRevision:a.revision,title:a.title,goal:a.goal,prerequisites:a.prerequisites,sections:a.sections,selfcheck:a.selfcheck,practice:a.practice,reading:a.reading,assessment:a.assessment,authored:true,authoringPath});
+   }
    await write('courses/clarity/lessons/'+t.topicId+'.'+locale+'.json',lesson);
-   if(locale==='ru'){registry[t.topicId]={courseId,languageId:'bsl',runtime:'installed-1c',questions:Object.fromEntries(questions.map(q=>[q.id,q.kind==='free'?'free':q.options.length]))};audit.push({id:t.topicId,source,sections:sections.map(s=>s.id),runtime:'installed-1c'});}
+   if(locale==='ru'){registry[t.topicId]={courseId,languageId:'bsl',runtime:'installed-1c',questions:Object.fromEntries(lesson.selfcheck.map(q=>[q.id,q.kind==='free'?'free':q.options.length])),...(lesson.authored?{contentRevision:lesson.contentRevision}:{})};audit.push({id:t.topicId,source,sections:lesson.sections.map(s=>s.id),runtime:'installed-1c'});}
   }
  }
 }

@@ -30,6 +30,38 @@ concurrency:
   group: cpp-clarity-01-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  onec-p1:
+    name: 1С P1 — уроки, наглядность, работа и offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXUS_CLARITY_EVIDENCE: ${{ github.workspace }}/onec-p1-evidence
+      NEXUS_FRONTEND_DIR: ${{ github.workspace }}/onec-p1-frontend
+      NEXUS_PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/qa-browser-driver/node_modules/playwright/index.mjs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Проверить содержание и собрать отдельный непубликованный кандидат
+        run: |
+          npm ci --prefix server-access --ignore-scripts
+          npm ci --prefix tools/qa-browser-driver
+          node tools/qa-browser-driver/node_modules/playwright/cli.js install --with-deps chromium
+          node --test tests/cpp-clarity-onec-p1-content.test.mjs
+          node tools/build-cpp-clarity-candidate.mjs
+      - name: Проверить восемь редакций, настоящие изображения, редактор и холодный offline
+        run: node tests/cpp-clarity-onec-p1-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: onec-p1-${{ github.sha }}
+          path: onec-p1-evidence/
+          retention-days: 30
+          if-no-files-found: error
   candidate:
     runs-on: ubuntu-latest
     timeout-minutes: 60
